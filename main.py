@@ -221,9 +221,28 @@ class ViewVideo(request_handler.RequestHandler):
         if user_video:
             awarded_points = user_video.points
 
+        from urllib import urlencode, urlopen
+        def get_subs(video_url):
+            qs = {
+                'video_url': video_url,
+                'language' : 'en',
+            }
+            url = 'http://www.universalsubtitles.org/api/1.0/subtitles?' + urlencode(qs)
+
+            result = urlopen(url)
+            raw = unicode(result.read(), encoding='utf8')
+            subs = simplejson.loads(raw)
+            # filter out any blank lines (why do they exist?)
+            subs = [s for s in subs if s['text'].strip()]
+            return subs
+
+        # todo: cache video subtitles, store them in the datastore
+        subs = get_subs(video.youtube_url)
+
         template_values = {
                             'playlist': playlist,
                             'video': video,
+                            'transcript': subs,
                             'videos': videos,
                             'video_path': video_path,
                             'video_points_base': consts.VIDEO_POINTS_BASE,

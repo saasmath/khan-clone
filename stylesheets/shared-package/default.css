@@ -1135,6 +1135,7 @@ span.video_extra_links {
     float: right;
     position: relative;
     z-index: 100;
+    margin-bottom: 10px;
 }
 span.video_extra_links div.video-energy-points {
     float: left;

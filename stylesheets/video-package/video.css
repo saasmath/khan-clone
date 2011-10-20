@@ -161,3 +161,41 @@
 	top: 1px;
 }
 .video_extra_links {float:right;}
+
+#transcript {
+    clear: both;
+    max-height: 300px;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 10px;
+    margin-bottom: 10px;
+
+    /* needed so that child elements offsetTop is relative to #transcript */
+    position: relative;
+}
+
+#transcript .subtitle {
+    padding: 0px;
+    border: 1px solid transparent;
+    margin-right: 15px;
+    overflow: hidden;
+}
+
+#transcript .subtitle.active {
+    background: #EEE;
+    border: 1px solid #CCC;
+    border-radius: 5px;
+}
+
+#transcript .subtitle span.time {
+    color: #777;
+    margin-right: 10px;
+    display: block;
+    float: left;
+}
+
+#transcript .subtitle a {
+    color: #000;
+    text-decoration: none;
+    display: block;
+}
