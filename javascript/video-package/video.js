@@ -144,6 +144,9 @@ var InteractiveTranscript = {
     // interval for triggering ticks
     tickIvl: null,
 
+    // used for distinguishing between programmatic and user scroll events
+    lastScrollTop: 0,
+
     init: function() {
         this.subtitles = $("#transcript");
 
@@ -172,18 +175,23 @@ var InteractiveTranscript = {
         this.currentSubtitle.addClass("active")[0];
 
         this.subtitles.scroll($.proxy(function(ev) {
-            console.log(ev);
+            var currentScrollTop = ev.target.scrollTop;
 
-            // todo: this is buggy, need a better check for non-user triggered scrolling
-            if(!scrollingProgrammatically) {
-                console.log("turning off autoScroll for 5s")
+            // scrollingProgrammatically is not completely reliable, so
+            // only turn off autoscroll if we're scrolling by a large amount
+            var tolerance = 3;
+            var disableScroll = (!scrollingProgrammatically &&
+                Math.abs(currentScrollTop - this.lastScrollTop) >= tolerance);
+
+            if(disableScroll) {
                 this.autoScroll = false;
                 clearInterval( this.resumeScrollIvl );
                 this.resumeScrollIvl = setTimeout($.proxy(function() {
-                    console.log("resuming autoScroll");
                     this.autoScroll = true;
-                }, this), 5000);
+                }, this), 20000);
             }
+
+            this.lastScrollTop = currentScrollTop;
         }, this));
     },
 
@@ -193,6 +201,11 @@ var InteractiveTranscript = {
         // Continually update the active subtitle position
         this.tick();
         this.tickIvl = setInterval($.proxy(this.tick, this), 333);
+    },
+
+    stop: function() {
+        clearInterval(this.tickIvl);
+        this.tickIvl = null;
     },
 
     tick: function() {
@@ -223,11 +236,6 @@ var InteractiveTranscript = {
         this.subtitleJump( lines[ i - 1 ] );
     },
 
-    stop: function() {
-        clearInterval(this.tickIvl);
-        this.tickIvl = null;
-    },
-
     // Jump to a specific subtitle (either via click or automatically)
     subtitleJump: function( nextSubtitle ) {
         if ( nextSubtitle == this.currentSubtitle ) {
@@ -250,11 +258,9 @@ var InteractiveTranscript = {
         //     }
         // }
 
-        console.log("scrolling");
         if ( this.autoScroll ) {
             // Adjust the viewport to animate to the new position
             var pos = this.desiredPos($("#transcript"), this.currentSubtitle);
-            console.log('scrolling to', pos);
             this.subtitles.scrollTo( pos );
         }
     },
@@ -296,7 +302,6 @@ jQuery.fn.scrollTo = function( pos ) {
         this.scrollview( "scrollTo", 0, pos, 200 );
 
     } else {
-        console.log('scrollingProgrammatically = true');
         scrollingProgrammatically = true;
         this.stop().animate( { scrollTop: pos }, {
             duration: 200,
@@ -305,7 +310,6 @@ jQuery.fn.scrollTo = function( pos ) {
                 // Use a timeout in hopes that this gets run after that happens
                 setTimeout( function() {
                     scrollingProgrammatically = false;
-                    console.log('scrollingProgrammatically = false');
                 }, 1 );
             }
         } );
