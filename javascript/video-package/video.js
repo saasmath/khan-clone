@@ -123,7 +123,6 @@ var Video = {
 };
 
 // todo: when play is pushed on the video player, tick
-// todo: bug with programmatic scroll not covering all non user scroll events
 
 var InteractiveTranscript = {
     // container for all subtitles
