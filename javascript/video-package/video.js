@@ -138,6 +138,9 @@ var InteractiveTranscript = {
     // turn automatic scrolling on or off. Disabled when user manually uses the scrollbar
     autoScroll: true,
 
+    // used to know if we've already scheduled a timeout due to visiblity
+    visibleResume: false,
+
     // interval for resuming scrolling after a manual scroll
     resumeScrollIvl: null,
 
@@ -245,18 +248,25 @@ var InteractiveTranscript = {
         $(nextSubtitle).addClass("active");
         this.currentSubtitle = nextSubtitle;
 
-        // if ( !this.autoScroll ) {
-        //     // Resume scrolling if the subtitle view is positioned over the active subtitle
-        //     var subtitleTop = this.currentSubtitle.offsetTop;
-        //     var visibleTop = this.subtitles.scrollTop()
-        //     var visibleBottom = visibleTop + this.subtitles[0].offsetHeight;
-        //     var subtitleVisible =   subtitleTop >= visibleTop &&
-        //                             subtitleTop <= visibleBottom;
+        if ( !this.autoScroll ) {
+            // Resume scrolling if the subtitle view is positioned over the active subtitle
+            var subtitleTop = this.currentSubtitle.offsetTop;
+            var visibleTop = this.subtitles.scrollTop()
+            var visibleBottom = visibleTop + this.subtitles[0].offsetHeight;
+            var subtitleVisible =   subtitleTop >= visibleTop &&
+                                    subtitleTop <= visibleBottom;
 
-        //     if ( subtitleVisible ) {
-        //         // todo: resume scrolling when active subtitle appears in visible window
-        //     }
-        // }
+            if ( subtitleVisible ) {
+                // resume autoscrolling in 5 s
+                if (!this.visibleResume) {
+                    this.visibleResume = true;
+                    setTimeout($.proxy(function() {
+                        this.autoScroll = true;
+                        this.visibleResume = false;
+                    }, this), 5000);
+                }
+            }
+        }
 
         if ( this.autoScroll ) {
             // Adjust the viewport to animate to the new position
