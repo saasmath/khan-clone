@@ -47,6 +47,7 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
+import goals
 
 import models
 from models import UserExercise, Exercise, UserData, Video, Playlist, ProblemLog, VideoPlaylist, ExerciseVideo, Setting, UserVideo, UserPlaylist, VideoLog
@@ -925,6 +926,11 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/exercisenumbertrivia', exercisestats.report_json.ExerciseNumberTrivia),
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
+
+    ('/goals/view', goals.ViewGoals),
+    ('/goals/new', goals.CreateNewGoal),
+    ('/goals/create', goals.CreateGoal),
+    ('/goals/delete', goals.DeleteGoal),
 
     ('/robots.txt', robots.RobotsTxt),
 
