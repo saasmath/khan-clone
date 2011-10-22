@@ -102,7 +102,7 @@ class CommonCore(request_handler.RequestHandler):
             
             for record in reader:
                 
-                if not record["youtube_id"] == "#N/A":
+                if record["youtube_id"] and not record["youtube_id"] == "#N/A":
                     
                     entry = yt_service.GetYouTubeVideoEntry(video_id=record["youtube_id"])
                     
@@ -114,7 +114,7 @@ class CommonCore(request_handler.RequestHandler):
                         video_url = "https://gdata.youtube.com/feeds/api/users/"+ yt_account + "/uploads/" + record["youtube_id"]
                         updated_entry = yt_service.UpdateVideoEntry(entry, video_url)  
                           
-                        logging.info("***PROCESSED*** Title: " + entry.media.title.text)
+                        logging.info("***PROCESSED*** Title: " + entry.media.title.text + " | Keywords: " + entry.media.keywords.text)
                                 
                         if not updated_entry:
                                 logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"])  
