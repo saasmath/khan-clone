@@ -718,7 +718,7 @@ def remove_coworker():
     return True
 
 @route("/api/v1/user/goals", methods=["GET"])
-@oauth_required()
+@oauth_optional()
 @jsonp
 @jsonify
 def get_user_goals():
@@ -766,7 +766,7 @@ def create_user_goal():
     if valid_count == 0:
         api_invalid_param_response("No objectives specified.")
 
-    Goal.create(user_data, goal_data, title, objective_descriptors) 
+    Goal.create(user_data, goal_data, title, objective_descriptors)
 
     return api_created_response("Goal created")
 
