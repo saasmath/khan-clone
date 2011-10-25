@@ -13,13 +13,8 @@ var GoalCreator = {
     init: function() {
         // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
-            var url = $(this).attr('href');
+            var video_name = $(this).attr('data-id');
             var span = $(this).children('span');
-
-            // Parse "/video/XXX?Playlist..."
-            var start_idx = url.indexOf('/video/')+7;
-            var length = url.indexOf('?') - start_idx;
-            var video_name = url.substr(start_idx, length);
             var video_title = span.text();
 
             $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
@@ -97,12 +92,14 @@ var GoalCreator = {
         $.each(KnowledgeMap.getBadgeElements(), function(index, badge) {
             var exercise = badge.dataID;
             var found = false;
+
             $.each(GoalCreator.objectives, function(index2, objective) {
                 if (objective.type == 'exercise_proficiency' && objective.id == exercise)
                 {
                     found = true;
                 }
             });
+
             var goalIcon = $(badge.badgeElement).children('.exercise-goal-icon');
             if (found)
             {
@@ -144,6 +141,29 @@ var GoalCreator = {
         });
 
         $('#goal-video-count').html(count);
+
+        $('#library-content-main').find('.vl').each(function(index, element) {
+            var video_name = $(element).attr('data-id');
+            var found = false;
+
+            $.each(GoalCreator.objectives, function(index2, objective) {
+                if (objective.type == 'watch_video' && objective.id == video_name)
+                {
+                    found = true;
+                }
+            });
+
+            var goalIcon = $(element).children('.video-goal-icon');
+            if (found)
+            {
+                if (goalIcon.length == 0)
+                    $('<span class="video-goal-icon"><img src="/images/flag.png"></span>').insertBefore($(element).children('span')[0]);
+            }
+            else
+            {
+                goalIcon.detach();
+            }
+        });
     },
 
     submit: function() {
