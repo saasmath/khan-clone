@@ -17,18 +17,20 @@ class Goal(db.Model):
     @staticmethod
     def create_internal(userdata, goal_data, title, objective_descriptors):
         parent_list = GoalList.get_from_data(goal_data, GoalList)
-        if len(parent_list) == 0:
+        if not parent_list:
             # Create a parent object for all the goals & objectives
-            parent_list = GoalList(userdata)
-            parent_list.user = userdata.user
-            parent_list.put()
+            parent_obj = GoalList(userdata)
+            parent_obj.user = userdata.user
+            parent_obj.put()
 
             # Update UserData
-            userdata.goal_list = parent_list
+            userdata.goal_list = parent_obj
             userdata.put()
+        else:
+            parent_obj = parent_list[0]
 
         # Create the new goal
-        new_goal = Goal(parent_list[0])
+        new_goal = Goal(parent_obj)
         new_goal.title = title
         new_goal.put()
 
