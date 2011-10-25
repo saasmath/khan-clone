@@ -13,27 +13,23 @@ var GoalCreator = {
     init: function() {
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
             var url = $(this).attr('href');
-            $(this).attr('href', 'javascript:onVideoClicked()'); // TomY TODO
+            var span = $(this).children('span');
+
+            // Parse "/video/XXX?Playlist..."
+            var start_idx = url.indexOf('/video/')+7;
+            var length = url.indexOf('?') - start_idx;
+            var video_name = url.substr(start_idx, length);
+            var video_title = span.text();
+
+            $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
         });
     },
-
-    showExercises: function() {
-        $('#goal-choose-exercises').show();
-        $('#goal-choose-videos').hide();
-    },
-    updateExercise: function(objective) {
-        var html = '<b>Proficiency:</b> ' + objective.name;
-        html += ' <a href="javascript:GoalCreator.onExerciseBadgeClicked(\'' + objective.exercise + '\');"><img src="/images/circled_cross.png"></a>';
-        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="exercise_proficiency">';
-        html += '<input type="hidden" name="objective' + objective.idx + '_exercise" value="' + objective.exercise + '">';
-        objective.element.html(html);
-    },
-    onExerciseClicked: function(node, evt) {
+    toggleObjectiveInternal: function(type, id, name) {
         var idx = 1;
         var found_index = -1;
 
         $.each(GoalCreator.objectives, function(index, objective) {
-            if (objective.type == 'exercise_proficiency' && objective.exercise == node.id) {
+            if (objective.type == type && objective.id == id) {
                 found_index = index;
             }
 
@@ -46,19 +42,38 @@ var GoalCreator = {
             var objective = GoalCreator.objectives[found_index];
             objective.element.detach();
             GoalCreator.objectives.splice(found_index, 1);
+            return null;
         } else {
-            newElement = $('<div style="float:left;background-color:#e0ffe0;margin:5px;padding:5px"></div>');
+            var newElement = $('<div style="float:left;background-color:#e0ffe0;margin:5px;padding:5px"></div>');
             var newObjective = {
                 idx: idx,
                 element: newElement,
-                type: 'exercise_proficiency',
-                exercise: node.id,
-                name: node.name,
+                type: type,
+                id: id,
+                name: name,
             };
-            GoalCreator.objectives.push(newObjective);
 
-            GoalCreator.updateExercise(newObjective);
+            GoalCreator.objectives.push(newObjective);
             newElement.appendTo('#objective_list');
+            return newObjective;
+        }
+    },
+
+    showExercises: function() {
+        $('#goal-choose-exercises').show();
+        $('#goal-choose-videos').hide();
+    },
+    updateExercise: function(objective) {
+        var html = '<b>Proficiency:</b> ' + objective.name;
+        html += ' <a href="javascript:GoalCreator.onExerciseBadgeClicked(\'' + objective.id + '\');"><img src="/images/circled_cross.png"></a>';
+        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="exercise_proficiency">';
+        html += '<input type="hidden" name="objective' + objective.idx + '_exercise" value="' + objective.id + '">';
+        objective.element.html(html);
+    },
+    onExerciseClicked: function(node, evt) {
+        var newObjective = GoalCreator.toggleObjectiveInternal('exercise_proficiency', node.id, node.name);
+        if (newObjective) {
+            GoalCreator.updateExercise(newObjective);
         }
 
         GoalCreator.updateExerciseCount();
@@ -80,7 +95,7 @@ var GoalCreator = {
             var exercise = badge.dataID;
             var found = false;
             $.each(GoalCreator.objectives, function(index2, objective) {
-                if (objective.type == 'exercise_proficiency' && objective.exercise == exercise)
+                if (objective.type == 'exercise_proficiency' && objective.id == exercise)
                 {
                     found = true;
                 }
@@ -98,9 +113,34 @@ var GoalCreator = {
         });
     },
 
+    updateVideo: function(objective) {
+        var html = '<b>Video:</b> ' + objective.name;
+        html += ' <a href="javascript:GoalCreator.onVideoClicked(\'' + objective.id + '\', null);"><img src="/images/circled_cross.png"></a>';
+        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="watch_video">';
+        html += '<input type="hidden" name="objective' + objective.idx + '_video" value="' + objective.id + '">';
+        objective.element.html(html);
+    },
+    onVideoClicked: function(id, title) {
+        var newObjective = GoalCreator.toggleObjectiveInternal('watch_video', id, title);
+        if (newObjective) {
+            GoalCreator.updateVideo(newObjective);
+        }
+
+        GoalCreator.updateVideoCount();
+    },
     showVideos: function() {
         $('#goal-choose-exercises').hide();
         $('#goal-choose-videos').show();
+    },
+    updateVideoCount: function() {
+        var count = 0;
+
+        $.each(GoalCreator.objectives, function(index, objective) {
+            if (objective.type == 'watch_video')
+                count++;
+        });
+
+        $('#goal-video-count').html(count);
     },
 };
 

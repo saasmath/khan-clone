@@ -10,9 +10,12 @@ from google.appengine.ext import db
 class Goal(db.Model):
     title = db.StringProperty()
 
-    # This function should always be run in a transaction (TomY TODO)
     @staticmethod
     def create(userdata, goal_data, title):
+        return db.run_in_transaction(Goal.create_internal, userdata, goal_data, title)
+
+    @staticmethod
+    def create_internal(userdata, goal_data, title):
         parent_list = GoalList.get_from_data(goal_data, GoalList)
         if len(parent_list) == 0:
             # Create a parent object for all the goals & objectives
