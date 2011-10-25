@@ -6,6 +6,7 @@ import logging
 from models_goals import Goal, GoalList, GoalObjective, GoalObjectiveExerciseProficiency, GoalObjectiveWatchVideo
 
 from google.appengine.ext import db
+from api.auth.xsrf import ensure_xsrf_cookie
 
 class ViewGoals(request_handler.RequestHandler):
 
@@ -26,7 +27,8 @@ class ViewGoals(request_handler.RequestHandler):
         self.render_jinja2_template("goals/showgoals.html", context)
 
 class CreateNewGoal(request_handler.RequestHandler):
-
+   
+    @ensure_xsrf_cookie
     def get(self):
         user_data = models.UserData.current()
 
