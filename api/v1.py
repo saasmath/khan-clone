@@ -15,6 +15,7 @@ from exercises import attempt_problem, reset_streak
 from phantom_users.phantom_util import api_create_phantom
 import util
 import notifications
+from goals import GoalList
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -715,3 +716,12 @@ def remove_coworker():
             user_data_coworker.put()
 
     return True
+
+@route("/api/v1/user/goals", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def get_user_goals():
+    user_data = models.UserData.current()
+    return GoalList.get_visible_for_user(user_data)
+

@@ -1,0 +1,187 @@
+{% extends "page_template.html" %}
+
+{% import 'macros/exercises.html' as exercise_macros %}
+
+{% block meta_page_title %}Create New Goal | {% endblock meta_page_title %}
+
+{% block pagescript %}
+<script>
+
+var GoalCreator = {
+    objectives: [],
+
+    init: function() {
+        $('#goal-choose-videos').find('.vl').each(function(index, element) {
+            var url = $(this).attr('href');
+            var span = $(this).children('span');
+
+            // Parse "/video/XXX?Playlist..."
+            var start_idx = url.indexOf('/video/')+7;
+            var length = url.indexOf('?') - start_idx;
+            var video_name = url.substr(start_idx, length);
+            var video_title = span.text();
+
+            $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
+        });
+    },
+    toggleObjectiveInternal: function(type, id, name) {
+        var idx = 1;
+        var found_index = -1;
+
+        $.each(GoalCreator.objectives, function(index, objective) {
+            if (objective.type == type && objective.id == id) {
+                found_index = index;
+            }
+
+            if (objective.idx >= idx)
+                idx = objective.idx+1;
+        });
+
+        if (found_index >= 0) {
+            // Remove objective
+            var objective = GoalCreator.objectives[found_index];
+            objective.element.detach();
+            GoalCreator.objectives.splice(found_index, 1);
+            return null;
+        } else {
+            var newElement = $('<div style="float:left;background-color:#e0ffe0;margin:5px;padding:5px"></div>');
+            var newObjective = {
+                idx: idx,
+                element: newElement,
+                type: type,
+                id: id,
+                name: name,
+            };
+
+            GoalCreator.objectives.push(newObjective);
+            newElement.appendTo('#objective_list');
+            return newObjective;
+        }
+    },
+
+    showExercises: function() {
+        $('#goal-choose-exercises').show();
+        $('#goal-choose-videos').hide();
+    },
+    updateExercise: function(objective) {
+        var html = '<b>Proficiency:</b> ' + objective.name;
+        html += ' <a href="javascript:GoalCreator.onExerciseBadgeClicked(\'' + objective.id + '\');"><img src="/images/circled_cross.png"></a>';
+        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="exercise_proficiency">';
+        html += '<input type="hidden" name="objective' + objective.idx + '_exercise" value="' + objective.id + '">';
+        objective.element.html(html);
+    },
+    onExerciseClicked: function(node, evt) {
+        var newObjective = GoalCreator.toggleObjectiveInternal('exercise_proficiency', node.id, node.name);
+        if (newObjective) {
+            GoalCreator.updateExercise(newObjective);
+        }
+
+        GoalCreator.updateExerciseCount();
+    },
+    onExerciseBadgeClicked: function(id) {
+        this.onExerciseClicked(KnowledgeMap.dictNodes[id], null);
+    },
+    updateExerciseCount: function() {
+        var count = 0;
+
+        $.each(GoalCreator.objectives, function(index, objective) {
+            if (objective.type == 'exercise_proficiency')
+                count++;
+        });
+
+        $('#goal-exercise-count').html(count);
+
+        $.each(KnowledgeMap.getBadgeElements(), function(index, badge) {
+            var exercise = badge.dataID;
+            var found = false;
+            $.each(GoalCreator.objectives, function(index2, objective) {
+                if (objective.type == 'exercise_proficiency' && objective.id == exercise)
+                {
+                    found = true;
+                }
+            });
+            var goalIcon = $(badge.badgeElement).children('.exercise-goal-icon');
+            if (found)
+            {
+                if (goalIcon.length == 0)
+                    $('<div class="exercise-goal-icon"><img src="/images/flag.png"></div>').appendTo(badge.badgeElement);
+            }
+            else
+            {
+                goalIcon.detach();
+            }
+        });
+    },
+
+    updateVideo: function(objective) {
+        var html = '<b>Video:</b> ' + objective.name;
+        html += ' <a href="javascript:GoalCreator.onVideoClicked(\'' + objective.id + '\', null);"><img src="/images/circled_cross.png"></a>';
+        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="watch_video">';
+        html += '<input type="hidden" name="objective' + objective.idx + '_video" value="' + objective.id + '">';
+        objective.element.html(html);
+    },
+    onVideoClicked: function(id, title) {
+        var newObjective = GoalCreator.toggleObjectiveInternal('watch_video', id, title);
+        if (newObjective) {
+            GoalCreator.updateVideo(newObjective);
+        }
+
+        GoalCreator.updateVideoCount();
+    },
+    showVideos: function() {
+        $('#goal-choose-exercises').hide();
+        $('#goal-choose-videos').show();
+    },
+    updateVideoCount: function() {
+        var count = 0;
+
+        $.each(GoalCreator.objectives, function(index, objective) {
+            if (objective.type == 'watch_video')
+                count++;
+        });
+
+        $('#goal-video-count').html(count);
+    },
+};
+
+$(function() {
+    GoalCreator.init();
+    GoalCreator.showExercises();
+    Drawer.init();
+    KnowledgeMap.initFilter();
+    KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
+});
+
+</script>
+{% endblock pagescript %}
+
+{% block pagecontent %}
+<div><h1>Create a new goal:<h1></div>
+<form action="/goals/create">
+  <div>
+    <h2>Goal title: <input type="text" name="title"></input> <input type="submit" value="Create New Goal" method="post"></input></h2>
+  </div>
+  <div><h2>Objectives:</h2><div id="objective_list"></div></div>
+</form>
+
+<div style="clear: left;"></div>
+<div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showExercises();">Choose exercises</a> (<span id="goal-exercise-count">0</span> selected)</div>
+<div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showVideos();">Choose videos</a> (<span>0</span> selected)</div>
+
+<div id="goal-choose-exercises" style="clear: left; display: none;">
+  <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+    {{ exercise_macros.exercise_legend() }}
+    {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, recent_graph_dicts, graph_dicts, 'creategoal') }}
+
+    <div id="dashboard-map">
+        {{ exercise_macros.knowledgemap(graph_dicts, map_coords) }}
+    </div>
+</div>
+</div>
+
+<div id="goal-choose-videos" style="clear: left; display: none;">
+{{ library_content }}
+</div>
+
+{% endblock pagecontent %}
+

@@ -654,6 +654,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
     question_sort_order = db.IntegerProperty(default = -1, indexed=False)
     user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default = 0, indexed=False)
+    goal_list = db.ReferenceProperty()
 
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
@@ -964,6 +965,16 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.count_feedback_notification = models_discussion.FeedbackNotification.gql("WHERE user = :1", self.user).count()
             self.put()
         return self.count_feedback_notification
+
+    def get_goal_data(self):
+        goal_list_key = UserData.goal_list.get_value_for_datastore(self)
+        if not goal_list_key:
+            return []
+
+        # Do a single ancestor query on the Goal List
+        query = db.Query()
+        query.ancestor(goal_list_key)
+        return query
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()

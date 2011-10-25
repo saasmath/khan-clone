@@ -1,0 +1,34 @@
+{% extends "page_template.html" %}
+
+{% block meta_page_title %}View Goals | {% endblock meta_page_title %}
+
+{% block pagecontent %}
+
+{% if status == 'notloggedin' %}
+
+<div><h1>You must log in to create goals.</h1></div>
+
+{% else %}
+
+{% if status == 'success' %}
+<div>Sucessfully created goal.</div>
+{% elif status == 'failed' %}
+<div>Failed to create goal.</div>
+{% endif %}
+
+<div><h1>Goals: {{ goals_count }}<h1></div>
+{% for goal in goals %}
+  <div>Goal: {{ goal.title|escape }}</div>
+  <ul>
+  {% for objective in goal.objectives %}
+    <li>Objective: {{ objective.type }}: {{ objective.description|escape }}. Progress: {{ objective.progress }}</li>
+  {% endfor %}
+  </ul>
+  <form action="/goals/delete"><input type="hidden" name="id" value="{{goal.id|escape}}"></input><input type="submit" value="Delete"></input></form>
+{% endfor %}
+
+<div><h3><a href="/goals/new">New goal...</a></h3></div>
+
+{% endif %}
+{% endblock pagecontent %}
+

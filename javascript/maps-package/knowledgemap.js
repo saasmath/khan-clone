@@ -12,6 +12,8 @@ var KnowledgeMap = {
     filteredNodes: {},
     updateFilterTimeout: null,
 
+    nodeClickHandler: null,
+
     allExercisesVisibleBeforeFiltering: false,
     colors: {
         blue: "#0080C9",
@@ -96,6 +98,10 @@ var KnowledgeMap = {
         google.maps.event.addListener(this.map, "click", function(){KnowledgeMap.onClick();});
 
         this.giveNasaCredit();
+    },
+
+    setNodeClickHandler: function(click_handler) {
+        this.nodeClickHandler = click_handler;
     },
 
     panToNode: function(dataID) {
@@ -434,6 +440,10 @@ var KnowledgeMap = {
             
             evt.stopPropagation();
         }
+        else if (KnowledgeMap.nodeClickHandler)
+        {
+            KnowledgeMap.nodeClickHandler(node, evt);
+        }
         else
         {
             // Go to exercise via true link click.
@@ -637,6 +647,10 @@ var KnowledgeMap = {
     clearFilter: function() {
         $('#dashboard-filter-text').val('');
         this.doFilter();
+    },
+
+    getBadgeElements: function() {
+        return KnowledgeMap.badgeElements;
     },
 
     doFilter: function() {
