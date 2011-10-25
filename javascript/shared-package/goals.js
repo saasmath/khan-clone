@@ -11,13 +11,15 @@ var totalProgress = function(objectives) {
     return progress * 100;
 };
 var renderGoals = function() {
-    var goal = Goals[0];
-    var goalsEl = $("#goals-tmpl").tmplPlugin({
-        title: goal.title,
-        progress: totalProgress(goal.objectives).toFixed(0)
-    });
+    if (Goals.length) {
+        var goal = Goals[0];
+        var goalsEl = $("#goals-tmpl").tmplPlugin({
+            title: goal.title,
+            progress: totalProgress(goal.objectives).toFixed(0)
+        });
 
-    $("#goals-container").html(goalsEl);
+        $("#goals-container").html(goalsEl);
+    }
 };
 var updateGoals = function() {
     $.ajax({
