@@ -929,7 +929,6 @@ application = webapp2.WSGIApplication([
 
     ('/goals/view', goals.ViewGoals),
     ('/goals/new', goals.CreateNewGoal),
-    ('/goals/create', goals.CreateGoal),
     ('/goals/delete', goals.DeleteGoal),
 
     ('/robots.txt', robots.RobotsTxt),

@@ -15,7 +15,7 @@ from exercises import attempt_problem, reset_streak
 from phantom_users.phantom_util import api_create_phantom
 import util
 import notifications
-from goals import GoalList
+from goals import GoalList, Goal
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -725,3 +725,47 @@ def get_user_goals():
     user_data = models.UserData.current()
     return GoalList.get_visible_for_user(user_data)
 
+# LOGIN? TomY TODO
+@route("/api/v1/user/goals/create", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def create_user_goal():
+    user_data = models.UserData.current()
+    goal_data = user_data.get_goal_data()
+    title = request.request_string("title")
+
+    logging.error("Title: " + title)
+
+    if not title:
+        return { "error": "Invalid title" }
+
+    objectives = []
+    objective_descriptors = []
+    valid_count = 0
+
+    for idx in xrange(1,40):
+        base_str = 'objective'+str(idx)
+        if request.request_string(base_str+'_type'):
+            objective_descriptor = {}
+            objective_descriptor['type'] = request.request_string(base_str+'_type');
+            objective_descriptors.append(objective_descriptor)
+
+            if objective_descriptor['type'] == 'exercise_proficiency':
+                objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
+                if not objective_descriptor['exercise']:
+                    return { "error": "Internal error: Could not find exercise." }
+                valid_count += 1
+
+            if objective_descriptor['type'] == 'watch_video':
+                objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
+                if not objective_descriptor['video']:
+                    return { "error": "Internal error: Could not find video." }
+                valid_count += 1
+
+    if valid_count == 0:
+        return { "error": "No objectives specified." }
+
+    Goal.create(user_data, goal_data, title, objective_descriptors) 
+
+    return { "success": 1 }

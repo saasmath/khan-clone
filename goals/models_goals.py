@@ -11,11 +11,11 @@ class Goal(db.Model):
     title = db.StringProperty()
 
     @staticmethod
-    def create(userdata, goal_data, title):
-        return db.run_in_transaction(Goal.create_internal, userdata, goal_data, title)
+    def create(userdata, goal_data, title, objective_descriptors):
+        return db.run_in_transaction(Goal.create_internal, userdata, goal_data, title, objective_descriptors)
 
     @staticmethod
-    def create_internal(userdata, goal_data, title):
+    def create_internal(userdata, goal_data, title, objective_descriptors):
         parent_list = GoalList.get_from_data(goal_data, GoalList)
         if not parent_list:
             # Create a parent object for all the goals & objectives
@@ -33,6 +33,13 @@ class Goal(db.Model):
         new_goal = Goal(parent_obj)
         new_goal.title = title
         new_goal.put()
+
+        for descriptor in objective_descriptors:
+            if descriptor['type'] == 'exercise_proficiency':
+                GoalObjectiveExerciseProficiency.create(new_goal, descriptor['exercise'])
+            if descriptor['type'] == 'watch_video':
+                GoalObjectiveWatchVideo.create(new_goal, descriptor['video'])
+
         return new_goal
 
     def get_visible_data(self, objectives):

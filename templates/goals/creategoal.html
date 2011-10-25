@@ -11,6 +11,7 @@ var GoalCreator = {
     objectives: [],
 
     init: function() {
+        // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
             var url = $(this).attr('href');
             var span = $(this).children('span');
@@ -23,6 +24,8 @@ var GoalCreator = {
 
             $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
         });
+
+        $('#create-goal').submit(GoalCreator.submit);
     },
     toggleObjectiveInternal: function(type, id, name) {
         var idx = 1;
@@ -142,6 +145,24 @@ var GoalCreator = {
 
         $('#goal-video-count').html(count);
     },
+
+    submit: function() {
+        $.ajax({
+            url: "/api/v1/user/goals/create",
+            type: 'POST',
+            dataType: 'json',
+            data: $(this).serialize(),
+            success: function(json) {
+                if (json.error) {
+                    alert('Error: ' + json.error); // TomY TODO
+                } else {
+                    document.location = '/goals/view';
+                }
+            },
+            failure: function() { alert('Failure!'); }, // TomY TODO
+        });
+        return false;
+    },
 };
 
 $(function() {
@@ -157,9 +178,9 @@ $(function() {
 
 {% block pagecontent %}
 <div><h1>Create a new goal:<h1></div>
-<form action="/goals/create">
+<form id="create-goal" action="javascript:">
   <div>
-    <h2>Goal title: <input type="text" name="title"></input> <input type="submit" value="Create New Goal" method="post"></input></h2>
+    <h2>Goal title: <input type="text" name="title"></input> <input type="submit" value="Create New Goal"></input></h2>
   </div>
   <div><h2>Objectives:</h2><div id="objective_list"></div></div>
 </form>
