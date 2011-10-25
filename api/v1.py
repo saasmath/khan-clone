@@ -2,7 +2,7 @@ import copy
 import datetime
 import logging
 
-from flask import request, current_app
+from flask import request, current_app, Response
 
 import models
 import layer_cache
@@ -21,7 +21,7 @@ from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
-from api.api_util import api_error_response
+from api.api_util import api_error_response, api_invalid_param_response, api_created_response
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -732,15 +732,15 @@ def get_user_goals():
 @jsonify
 def create_user_goal():
     user_data = models.UserData.current()
+    if not user_data:
+        api_invalid_param_response("User not logged in")
+
     goal_data = user_data.get_goal_data()
     title = request.request_string("title")
 
-    logging.error("Title: " + title)
-
     if not title:
-        return { "error": "Invalid title" }
+        return api_invalid_param_response('Invalid title')
 
-    objectives = []
     objective_descriptors = []
     valid_count = 0
 
@@ -754,18 +754,37 @@ def create_user_goal():
             if objective_descriptor['type'] == 'exercise_proficiency':
                 objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
                 if not objective_descriptor['exercise']:
-                    return { "error": "Internal error: Could not find exercise." }
+                    api_invalid_param_response("Internal error: Could not find exercise.")
                 valid_count += 1
 
             if objective_descriptor['type'] == 'watch_video':
                 objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
                 if not objective_descriptor['video']:
-                    return { "error": "Internal error: Could not find video." }
+                    api_invalid_param_response("Internal error: Could not find video.")
                 valid_count += 1
 
     if valid_count == 0:
-        return { "error": "No objectives specified." }
+        api_invalid_param_response("No objectives specified.")
 
     Goal.create(user_data, goal_data, title, objective_descriptors) 
 
-    return { "success": 1 }
+    return api_created_response("Goal created")
+
+# LOGIN? TomY TODO
+@route("/api/v1/user/goals/delete", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_goal():
+    user_data = models.UserData.current()
+    if not user_data:
+        api_invalid_param_response("User not logged in")
+
+    goal_data = user_data.get_goal_data()
+
+    goal_to_delete = request.request_int('id')
+    if not GoalList.delete_goal(user_data, goal_to_delete):
+        return { "error": "Internal error: Failed to delete goal." }
+
+    return "Goal deleted"
+

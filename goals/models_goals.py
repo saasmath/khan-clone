@@ -95,8 +95,9 @@ class GoalList(db.Model):
                 for child in children:
                     child.delete()
                 goal.delete()
-                break
-        return
+                return True
+
+        return False
 
 class GoalObjective():
     def type(self):
