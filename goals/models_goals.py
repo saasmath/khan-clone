@@ -6,26 +6,22 @@ import models
 import logging
 
 from google.appengine.ext import db
+from google.appengine.ext.db import polymodel, Key
 
 class Goal(db.Model):
     title = db.StringProperty()
 
     @staticmethod
-    def create(userdata, goal_data, title, objective_descriptors):
-        return db.run_in_transaction(Goal.create_internal, userdata, goal_data, title, objective_descriptors)
-
-    @staticmethod
-    def create_internal(userdata, goal_data, title, objective_descriptors):
+    def create(user_data, goal_data, title, objective_descriptors):
         parent_list = GoalList.get_from_data(goal_data, GoalList)
         if not parent_list:
             # Create a parent object for all the goals & objectives
-            parent_obj = GoalList(userdata)
-            parent_obj.user = userdata.user
-            parent_obj.put()
+            key = Key.from_path('GoalList', 1, parent=user_data.key())
+            parent_obj = GoalList.get_or_insert(str(key), user=user_data.user)
 
             # Update UserData
-            userdata.goal_list = parent_obj
-            userdata.put()
+            user_data.goal_list = parent_obj
+            user_data.put()
         else:
             parent_obj = parent_list[0]
 
@@ -97,10 +93,14 @@ class GoalList(db.Model):
                 for child in children:
                     child.delete()
                 goal.delete()
-                break
-        return
+                return True
 
-class GoalObjective():
+        return False
+
+class GoalObjective(polymodel.PolyModel):
+    # Objective status
+    completion = db.FloatProperty()
+
     def type(self):
         return '';
 
@@ -108,14 +108,14 @@ class GoalObjective():
         return '';
 
     def progress(self):
-        return 0;
+        if self.completion == None:
+            return 0
+        return self.completion
 
-class GoalObjectiveExerciseProficiency(db.Model, GoalObjective):
+class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     exercise = db.ReferenceProperty(models.Exercise)
     exercise_display_name = db.StringProperty()
-    # Objective status
-    completion = db.FloatProperty()
 
     @staticmethod
     def create(parent_goal, exercise):
@@ -131,17 +131,10 @@ class GoalObjectiveExerciseProficiency(db.Model, GoalObjective):
     def description(self):
         return self.exercise_display_name;
 
-    def progress(self):
-        if self.completion == None:
-            return 0
-        return self.completion
-
-class GoalObjectiveWatchVideo(db.Model, GoalObjective):
+class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     video = db.ReferenceProperty(models.Video)
     video_title = db.StringProperty()
-    # Objective status
-    completion = db.FloatProperty()
 
     @staticmethod
     def create(parent_goal, video):
@@ -156,9 +149,4 @@ class GoalObjectiveWatchVideo(db.Model, GoalObjective):
 
     def description(self):
         return self.video_title;
-
-    def progress(self):
-        if self.completion == None:
-            return 0
-        return self.completion
 

@@ -150,16 +150,14 @@ var GoalCreator = {
         $.ajax({
             url: "/api/v1/user/goals/create",
             type: 'POST',
-            dataType: 'json',
+            dataType: 'text',
             data: $(this).serialize(),
             success: function(json) {
-                if (json.error) {
-                    alert('Error: ' + json.error); // TomY TODO
-                } else {
-                    document.location = '/goals/view';
-                }
+                document.location = '/goals/view';
             },
-            failure: function() { alert('Failure!'); }, // TomY TODO
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert('Failure: ' + textStatus);
+            }, // TomY TODO
         });
         return false;
     },

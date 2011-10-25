@@ -2,6 +2,35 @@
 
 {% block meta_page_title %}View Goals | {% endblock meta_page_title %}
 
+{% block pagescript %}
+<script>
+var GoalViewer = {
+    init: function() {
+        $('#delete-goal').submit(GoalViewer.deleteGoal);
+    },
+    deleteGoal: function() {
+        $.ajax({
+            url: "/api/v1/user/goals/delete",
+            type: 'POST',
+            dataType: 'text',
+            data: $(this).serialize(),
+            success: function(json) {
+                document.location = '/goals/view';
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert('Failure: ' + textStatus);
+            }, // TomY TODO
+        });
+        return false;
+    },
+};
+
+$(function() {
+    GoalViewer.init();
+});
+</script>
+{% endblock pagescript %}
+
 {% block pagecontent %}
 
 {% if status == 'notloggedin' %}
@@ -24,7 +53,7 @@
     <li>Objective: {{ objective.type }}: {{ objective.description|escape }}. Progress: {{ objective.progress }}</li>
   {% endfor %}
   </ul>
-  <form action="/goals/delete"><input type="hidden" name="id" value="{{goal.id|escape}}"></input><input type="submit" value="Delete"></input></form>
+  <form action="javascript:" id="delete-goal"><input type="hidden" name="id" value="{{goal.id|escape}}"></input><input type="submit" value="Delete"></input></form>
 {% endfor %}
 
 <div><h3><a href="/goals/new">New goal...</a></h3></div>
