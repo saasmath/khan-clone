@@ -104,3 +104,21 @@ class DeleteGoal(request_handler.RequestHandler):
         context['goals_count'] = len(context['goals'])
         self.render_jinja2_template("goals/showgoals.html", context)
 
+
+# a videolog was just created. update any goals the user has.
+def update_goals_just_watched_video(user_data, user_video):
+    goal_data = user_data.get_goal_data()
+    objectives = GoalList.get_from_data(goal_data, GoalObjective)
+    changes = []
+    for objective in objectives:
+        if isinstance(objective, GoalObjectiveWatchVideo):
+            obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(objective)
+            video = user_video.video;
+            if obj_key == video.key():
+                # update progress of objective
+                if user_video.completed:
+                    objective.completion = 1.0
+                else:
+                    objective.completion = min(float(user_video.seconds_watched) / user_video.duration, 1.0)
+                changes.append(objective)
+    db.put(changes)

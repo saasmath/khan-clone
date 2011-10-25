@@ -14,13 +14,12 @@ var renderGoals = function() {
     var goal = Goals[0];
     var goalsEl = $("#goals-tmpl").tmplPlugin({
         title: goal.title,
-        progress: totalProgress(goal.objectives)
+        progress: totalProgress(goal.objectives).toFixed(0)
     });
 
     $("#goals-container").html(goalsEl);
 };
-
-$(function() {
+var updateGoals = function() {
     $.ajax({
         url: "/api/v1/user/goals",
         success: function(data) {
@@ -28,4 +27,6 @@ $(function() {
             renderGoals();
         }
     });
-});
+};
+
+$(function() { updateGoals() });

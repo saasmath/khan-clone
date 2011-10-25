@@ -406,7 +406,11 @@ var VideoStats = {
         $.ajax({type: "GET",
                 url: "/logvideoprogress",
                 data: data,
-                success: function (data) { VideoStats.finishSave(data, percent); },
+                success: function (data) {
+                    VideoStats.finishSave(data, percent);
+                    // todo: Do this inline with the response
+                    updateGoals();
+                },
                 error: function () {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
@@ -946,7 +950,7 @@ var SearchResultHighlight = {
         textElements.each(function(index, textElement) {
             var pos = textElement.data.toLowerCase().indexOf(word);
             if (pos >= 0) {
-                // Split text element into three elements 
+                // Split text element into three elements
                 var highlightText = textElement.splitText(pos);
                 highlightText.splitText(word.length);
 

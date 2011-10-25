@@ -1348,6 +1348,9 @@ class VideoLog(db.Model):
         user_video.last_watched = datetime.datetime.now()
         user_video.duration = video.duration
 
+        from goals import update_goals_just_watched_video
+        update_goals_just_watched_video(user_data, user_video)
+
         user_data.last_activity = user_video.last_watched
 
         video_points_total = points.VideoPointCalculator(user_video)
