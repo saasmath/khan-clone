@@ -89,9 +89,9 @@ def update_goals_just_watched_video(user_data, user_video):
         if obj_key == video.key():
             # update progress of objective
             if user_video.completed:
-                objective.completion = 1.0
+                objective.progress = 1.0
             else:
-                objective.completion = min(float(user_video.seconds_watched) / user_video.duration, 1.0)
+                objective.progress = min(float(user_video.seconds_watched) / user_video.duration, 1.0)
             changes.append(objective)
     db.put(changes)
 
@@ -105,8 +105,8 @@ def update_goals_just_did_exercise(user_data, user_exercise):
         if obj_key == exercise.key():
             # update progress of objective
             if exercise.name in user_data.proficient_exercises:
-                objective.completion = 1.0
+                objective.progress = 1.0
             else:
-                objective.completion = user_exercise.progress
+                objective.progress = user_exercise.progress
             changes.append(objective)
     db.put(changes)

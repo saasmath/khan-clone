@@ -129,7 +129,7 @@ class Exercise(db.Model):
 
     @property
     def ka_url(self):
-        return util.absolute_url("/exercises?exid=%s" % self.name)
+        return util.absolute_url(self.relative_url)
 
     @staticmethod
     def get_by_name(name):
