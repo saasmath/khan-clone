@@ -47,8 +47,8 @@
 {% block pagecontent %}
 <div id="background">
   <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
-    <div id="dashboard-header">
-        <div id="dashboard-nav">
+    <div class="dashboard-header">
+        <div class="dashboard-nav">
    
                 <form id="addexercise" action="/updateexercise" method="post">
                     <input type="hidden" name="v_position" value="0" /><input type="hidden" name="h_position" value="0" />
@@ -69,7 +69,7 @@
                 </form>
      
         </div>
-        <div id="dashboard-title"><img src="/images/dashboard-icon-active.png" id="dashboard-icon" width=22 height=22 /> Exercises <a href="#" id="collapse-drawer" class="toggle-drawer"><img src="/images/expand-left.png" width="25" height="25"/></a></div>
+        <div class="dashboard-title"><img src="/images/dashboard-icon-active.png" id="dashboard-icon" width=22 height=22 /> Exercises <a href="#" id="collapse-drawer" class="toggle-drawer"><img src="/images/expand-left.png" width="25" height="25"/></a></div>
             <a href="#" id="expand-drawer" class="toggle-drawer"><img src="/images/expand-right.png" width="25" height="25" /></a>
         </div>
     <div id="dashboard-drawer" class="drawer-hoverable">

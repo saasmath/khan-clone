@@ -15,9 +15,15 @@ var GoalCreator = {
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
             var video_name = $(this).attr('data-id');
             var span = $(this).children('span');
-            var video_title = span.text();
 
-            $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
+            var image = $(span).css('background-image');
+            if (image.indexOf('indicator-complete') == -1)
+            {
+                var video_title = span.text();
+                $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
+            } else {
+                $(this).attr('href', 'javascript:');
+            }
         });
 
         $('#create-goal').submit(GoalCreator.submit);
@@ -60,6 +66,7 @@ var GoalCreator = {
     showExercises: function() {
         $('#goal-choose-exercises').show();
         $('#goal-choose-videos').hide();
+        Drawer.resize();
     },
     updateExercise: function(objective) {
         var html = '<b>Proficiency:</b> ' + objective.name;
@@ -69,6 +76,9 @@ var GoalCreator = {
         objective.element.html(html);
     },
     onExerciseClicked: function(node, evt) {
+        if (node.status == 'Proficient')
+            return; // Cannot select exercises the user is proficient in
+
         var newObjective = GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', node.id, node.name);
         if (newObjective) {
             GoalCreator.updateExercise(newObjective);
@@ -131,6 +141,7 @@ var GoalCreator = {
     showVideos: function() {
         $('#goal-choose-exercises').hide();
         $('#goal-choose-videos').show();
+        Drawer.resize();
     },
     updateVideoCount: function() {
         var count = 0;
@@ -185,8 +196,8 @@ var GoalCreator = {
 
 $(function() {
     GoalCreator.init();
-    GoalCreator.showExercises();
     Drawer.init();
+    GoalCreator.showExercises();
     KnowledgeMap.initFilter();
     KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
 });
@@ -207,19 +218,27 @@ $(function() {
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showExercises();">Choose exercises</a> (<span id="goal-exercise-count">0</span> selected)</div>
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showVideos();">Choose videos</a> (<span>0</span> selected)</div>
 
-<div id="goal-choose-exercises" style="clear: left; display: none;">
-  <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+<div id="container" style="clear: left" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+  <div id="goal-choose-exercises" style="display: none;">
     {{ exercise_macros.exercise_legend() }}
-    {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, recent_graph_dicts, graph_dicts, 'creategoal') }}
+    {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, null, graph_dicts, 'creategoal') }}
 
     <div id="dashboard-map">
         {{ exercise_macros.knowledgemap(graph_dicts, map_coords) }}
     </div>
-</div>
-</div>
+  </div>
 
-<div id="goal-choose-videos" style="clear: left; display: none;">
+  <div id="goal-choose-videos" style="display: none;">
+    <div class="dashboard-header">
+      <div class="dashboard-nav">
+        {{ templatetags.playlist_browser("browse") }}
+      </div>
+      <div class="dashboard-title"><img src="/images/video.png" id="dashboard-icon" width=22 height=22 /> Videos </div>
+    </div>
+    <div class="dashboard-content">
 {{ library_content }}
+    </div>
+  </div>
 </div>
 
 {% endblock pagecontent %}

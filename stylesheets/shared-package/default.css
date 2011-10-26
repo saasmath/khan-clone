@@ -1469,7 +1469,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         font-weight: normal;
     }
 
-    #container #dashboard-header {
+    #container .dashboard-header {
         background: #fafafa;
         border-width: 0 0 1px 0;
         border-color: #ddd;
@@ -1479,20 +1479,20 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         position: relative;
         z-index: 0;
     }
-    #container #dashboard-header #collapse-drawer {
+    #container .dashboard-header #collapse-drawer {
         position: absolute;
         right: 0;
         top: 5px;
         border: none;
     }
-    #container #dashboard-header #expand-drawer {
+    #container .dashboard-header #expand-drawer {
         position: absolute;
         left: 0;
         top: 5px;
         border: none;
     }
 
-    #container #dashboard-header #dashboard-title {
+    #container .dashboard-header .dashboard-title {
         background: #fafafa;
         border-right: 1px solid #bbb;
         color: #444;
@@ -1508,25 +1508,23 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         box-shadow: 2px 0px 3px rgba(0, 0, 0, .1);
         z-index: 1;
     }
-        #container #dashboard-header #dashboard-title #dashboard-icon {
+        #container .dashboard-header .dashboard-title #dashboard-icon {
             position: relative;
             top: 1px;
             width: 16px;
             height: 16px;
         }
 
-    #container #dashboard-header #dashboard-nav {
+    #container .dashboard-header .dashboard-nav {
         float: right;
         font-weight: bold;
         position: relative;
         top: 3px;
     }
-    #container #dashboard-header #dashboard-nav span.selected a {
+    #container .dashboard-header .dashboard-nav span.selected a {
         border: none;
         color: #333;
         cursor: default;
-    }
-    #container #dashboard-map {
     }
 
     #container #dashboard-map #map-canvas {
@@ -1534,6 +1532,20 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         left: 350px;
         margin-left: 0;
         margin-right: 350px;
+    }
+
+    /* Specifically for videos (i.e. in New Goal view) */
+    #container .dashboard-header .dashboard-nav .playlist_browser {
+        margin: 0px;
+    }
+    #container .dashboard-header .dashboard-nav .playlist_browser_title { 
+        margin-top: 2px;
+    }
+    #container .dashboard-content {
+        width: 1179px;
+        height: 800px;
+        overflow-y: auto;
+        padding-left: 20px;
     }
 
 .exercise-filter-count,#exercise-all-exercises {
@@ -1791,7 +1803,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     overflow: visible;
     min-width: 950px;
 }
-#container #dashboard-header.single-exercise {
+#container .dashboard-header.single-exercise {
     border: 1px solid #ccc;
     border-top: none;
 }
