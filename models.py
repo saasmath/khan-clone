@@ -974,7 +974,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
         # Do a single ancestor query on the Goal List
         query = db.Query()
         query.ancestor(goal_list_key)
-        return query
+        return [entity for entity in query]
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
