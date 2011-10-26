@@ -21,14 +21,12 @@ var renderGoals = function() {
         $("#goals-container").html(goalsEl);
     }
 };
-var updateGoals = function() {
-    $.ajax({
-        url: "/api/v1/user/goals",
-        success: function(data) {
-            Goals = data;
-            renderGoals();
-        }
-    });
+var updateGoals = function(data) {
+    Goals = data;
+    renderGoals();
+};
+var requestGoals = function() {
+    $.ajax({ url: "/api/v1/user/goals", success: updateGoals });
 };
 
-$(function() { updateGoals() });
+$(function() { requestGoals() });
