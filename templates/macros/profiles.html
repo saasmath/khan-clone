@@ -16,6 +16,11 @@
 <a href="{{ profiles.get_graph_url(graph_type, None, user_data_coach, list_id) }}" class="graph-link graph-link-header header {% if graph_type == selected_graph_type %}graph-link-selected{% endif %}">{{ graph_name|escape }}</a>
 {%- endmacro %}
 
+{% macro api_link(user_data, page_name, api_function, selected_api_function) -%}
+<a href="{{ profiles.get_api_url(api_function, user_data, None, None) }}" class="graph-link graph-link-header header {% if api_function == selected_api_function %}graph-link-selected{% endif %}">{{ page_name|escape }}</a>
+{%- endmacro %}
+
+
 {% macro graph_calendar_picker(user_data, graph_type) -%}
 <input type="text" id="targetDatepicker" value="Today"/>
 <script>

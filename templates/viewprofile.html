@@ -3,27 +3,51 @@
 {% import 'macros/user.html' as user_macros %}
 {% import 'macros/profiles.html' as profile_macros %}
 
-{% block meta_page_title %}User Profile | {% endblock meta_page_title %}
-{% block profile_name %}
-<span id="user-info" class="has-details">
-    <img src="/images/darth.png" />
+{% block pagescript %}{% raw %}
+<script id="profile-goals-tmpl" type="text/x-jquery-tmpl">
+{{each(iGoal, goal) data}}
+<!-- TomY TODO make this prettier -->
+<div>
+  <div>Goal: ${goal.title}</div>
+  {{each(iObjective, objective) goal.objectives}}
+  <div>
+      {{if objective.type == 'watch_video'}}
+        Watch video: 
+      {{/if}}
+      {{if objective.type == 'exercise_proficiency'}}
+        Become proficient in:
+      {{/if}}
+      <a href="${objective.url}">${objective.description}</a>
+      (${(objective.progress*100).toFixed(0)}% complete)
+      </div>
+    {{/each}}
+  </div>
+  {{/each}}
+<div><h3><a href="/goals/new">New goal...</a></h3></div>
+</script>
+{% endraw %}{% endblock pagescript %}
 
-    {% if logged_in %}
-        <span id="name">{{ student_nickname|escape }}{{ user_macros.simple_student_info(user_data_student) }}</span>
-    {% else %}
-        <span id="phantom-login"><a href="{{ login_url|escape }}">Log in to save your progress</a></span>
-    {% endif %}
+    {% block meta_page_title %}User Profile | {% endblock meta_page_title %}
+    {% block profile_name %}
+    <span id="user-info" class="has-details">
+        <img src="/images/darth.png" />
 
-</span>
-{% endblock profile_name %}
+        {% if logged_in %}
+            <span id="name">{{ student_nickname|escape }}{{ user_macros.simple_student_info(user_data_student) }}</span>
+        {% else %}
+            <span id="phantom-login"><a href="{{ login_url|escape }}">Log in to save your progress</a></span>
+        {% endif %}
 
-{% block high_level_stats %}
-    <span id="videos-watched">
-        <span class="profile-header-icon"><img src="/images/video-camera-icon-shadow.png" /></span>
-        <span class="count">
-            {{ count_videos_completed }} / {{ count_videos }}<br />
-            <span class="label">Videos Completed</span>
-        </span>
+    </span>
+    {% endblock profile_name %}
+
+    {% block high_level_stats %}
+        <span id="videos-watched">
+            <span class="profile-header-icon"><img src="/images/video-camera-icon-shadow.png" /></span>
+            <span class="count">
+                {{ count_videos_completed }} / {{ count_videos }}<br />
+                <span class="label">Videos Completed</span>
+            </span>
     </span>
     <span id="exercises-completed" >
         <span class="profile-header-icon"><img src="/images/generic-exercise-icon-shadow.png" /></span>
@@ -69,6 +93,10 @@
         <li>
             {{ profile_macros.graph_link(user_data_student, "Exercise Progress Over Time", "exercisesovertime", selected_graph_type) }}
             <p class="accordion-content">Shows how many exercises you've completed over time. </p>
+        </li>
+        <li>
+            {{ profile_macros.api_link(user_data_student, "Goals", "user/goals", selected_graph_type) }}
+            <p class="accordion-content">Shows progress on your current goals.</p>
         </li>
     </ul>
 {% endblock graph_accordion %}

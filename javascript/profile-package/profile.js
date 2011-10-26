@@ -232,6 +232,8 @@ var Profile = {
     },
 
     loadGraph: function(href, fNoHistoryEntry) {
+        var apiCall = null;
+
         if (!href) return;
 
         if (this.fLoadingGraph) {
@@ -243,17 +245,22 @@ var Profile = {
         this.fLoadingGraph = true;
         this.fLoadedGraph = true;
 
+        if (href.indexOf('/api/v1/user/goals') > -1) {
+            apiCall = 'profile-goals';
+        }
+
         $.ajax({type: "GET",
                 url: Timezone.append_tz_offset_query_param(href),
                 data: {},
-                success: function(data){ Profile.finishLoadGraph(data, href, fNoHistoryEntry); },
+                dataType: apiCall ? 'json' : 'html',
+                success: function(data){ Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCall); },
                 error: function() { Profile.finishLoadGraphError(); }
         });
         $("#graph-content").html("");
         this.showGraphThrobber(true);
     },
 
-    finishLoadGraph: function(data, href, fNoHistoryEntry) {
+    finishLoadGraph: function(data, href, fNoHistoryEntry, apiCall) {
 
         this.fLoadingGraph = false;
 
@@ -266,7 +273,12 @@ var Profile = {
 
         this.showGraphThrobber(false);
         this.styleSublinkFromHref(href);
-        $("#graph-content").html(data);
+
+        if (apiCall) {
+            $("#graph-content").html($('#' + apiCall + '-tmpl').tmplPlugin({ data: data }));
+        } else {
+            $("#graph-content").html(data);
+        }
     },
 
     finishLoadGraphError: function() {

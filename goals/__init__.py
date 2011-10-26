@@ -78,35 +78,6 @@ class CreateNewGoal(request_handler.RequestHandler):
         }
         self.render_jinja2_template("goals/creategoal.html", context)
 
-class DeleteGoal(request_handler.RequestHandler):
-
-    def get(self):
-        user_data = models.UserData.current()
-
-        context = {}
-        if user_data == None:
-            context['status'] = 'notloggedin'
-            self.render_jinja2_template("goals/showgoals.html", context)
-            return
-
-        context['status'] = 'none'
-        context['goals'] = GoalList.get_visible_for_user(user_data)
-
-        goal_data = user_data.get_goal_data()
-
-
-        goal_to_delete = self.request.get('id')
-        GoalList.delete_goal(user_data, goal_to_delete)
-
-        for goal in context['goals']:
-            if str(goal['id']) == str(goal_to_delete):
-                context['goals'].remove(goal)
-                break;
-
-        context['goals_count'] = len(context['goals'])
-        self.render_jinja2_template("goals/showgoals.html", context)
-
-
 # a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
     goal_data = user_data.get_goal_data()

@@ -49,6 +49,7 @@ class Goal(db.Model):
                 objective_ret['type'] = objective.type()
                 objective_ret['description'] = objective.description()
                 objective_ret['progress'] = objective.progress()
+                objective_ret['url'] = objective.url()
                 goal_ret['objectives'].append(objective_ret)
         return goal_ret
 
@@ -102,10 +103,13 @@ class GoalObjective(polymodel.PolyModel):
     completion = db.FloatProperty()
 
     def type(self):
-        return '';
+        return ''
 
     def description(self):
-        return '';
+        return ''
+
+    def url(self):
+        return ''
 
     def progress(self):
         if self.completion == None:
@@ -115,12 +119,14 @@ class GoalObjective(polymodel.PolyModel):
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     exercise = db.ReferenceProperty(models.Exercise)
+    exercise_name = db.StringProperty()
     exercise_display_name = db.StringProperty()
 
     @staticmethod
     def create(parent_goal, exercise):
         new_objective = GoalObjectiveExerciseProficiency(parent_goal)
         new_objective.exercise = exercise
+        new_objective.exercise_name = exercise.name
         new_objective.exercise_display_name = models.Exercise.to_display_name(exercise.name)
         new_objective.put()
         return new_objective
@@ -131,15 +137,20 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def description(self):
         return self.exercise_display_name;
 
+    def url(self):
+        return '/exercises?exid=' + self.exercise_name
+
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     video = db.ReferenceProperty(models.Video)
+    video_readable_id = db.StringProperty()
     video_title = db.StringProperty()
 
     @staticmethod
     def create(parent_goal, video):
         new_objective = GoalObjectiveWatchVideo(parent_goal)
         new_objective.video = video
+        new_objective.video_readable_id = video.readable_id
         new_objective.video_title = video.title
         new_objective.put()
         return new_objective
@@ -149,4 +160,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
 
     def description(self):
         return self.video_title;
+
+    def url(self):
+        return '/video/' + self.video_readable_id
 
