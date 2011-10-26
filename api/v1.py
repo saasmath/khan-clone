@@ -734,13 +734,13 @@ def get_user_goals():
 def create_user_goal():
     user_data = models.UserData.current()
     if not user_data:
-        api_invalid_param_response("User not logged in")
+        api_invalid_param_response("User is not logged in.")
 
     goal_data = user_data.get_goal_data()
     title = request.request_string("title")
 
     if not title:
-        return api_invalid_param_response('Invalid title')
+        return api_invalid_param_response('Title is invalid.')
 
     objective_descriptors = []
     valid_count = 0
@@ -754,18 +754,23 @@ def create_user_goal():
 
             if objective_descriptor['type'] == 'GoalObjectiveExerciseProficiency':
                 objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
-                if not objective_descriptor['exercise']:
-                    api_invalid_param_response("Internal error: Could not find exercise.")
+                if not objective_descriptor['exercise'] or not objective_descriptor['exercise'].is_visible_to_current_user():
+                    return api_invalid_param_response("Internal error: Could not find exercise.")
+                if user_data.is_proficient_at(objective_descriptor['exercise'].name):
+                    return api_invalid_param_response("Exercise has already been completed.")
                 valid_count += 1
 
             if objective_descriptor['type'] == 'GoalObjectiveWatchVideo':
                 objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
                 if not objective_descriptor['video']:
-                    api_invalid_param_response("Internal error: Could not find video.")
+                    return api_invalid_param_response("Internal error: Could not find video.")
+                user_video = models.UserVideo.get_for_video_and_user_data(objective_descriptor['video'], user_data)
+                if user_video and user_video.completed:
+                    return api_invalid_param_response("Video has already been watched.")
                 valid_count += 1
 
     if valid_count == 0:
-        api_invalid_param_response("No objectives specified.")
+        return api_invalid_param_response("No objectives specified.")
 
     Goal.create(user_data, goal_data, title, objective_descriptors)
 
