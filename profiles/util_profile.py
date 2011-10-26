@@ -16,6 +16,8 @@ from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
 
+from api.auth.xsrf import ensure_xsrf_cookie
+
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
 
@@ -131,6 +133,7 @@ class ViewClassProfile(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
+    @ensure_xsrf_cookie
     def get(self):
         student = UserData.current() or UserData.pre_phantom()
 

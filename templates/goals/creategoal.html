@@ -173,7 +173,7 @@ var GoalCreator = {
             dataType: 'text',
             data: $(this).serialize(),
             success: function(json) {
-                document.location = '/goals/view';
+                document.location = '/profile?k#/?graph_url=/api/v1/user/goals'; // Take the user to the goals list in their profile
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 alert('Failure: ' + textStatus);
