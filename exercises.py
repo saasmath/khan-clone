@@ -435,6 +435,9 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
 
+        from goals import update_goals_just_did_exercise
+        update_goals_just_did_exercise(user_data, user_exercise)
+
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])
 
