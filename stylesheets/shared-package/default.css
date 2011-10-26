@@ -3456,3 +3456,9 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
   top:0px;
   left:66px;
 }
+
+.fieldError {
+    border: 1px solid #c00;
+    background: #fee;
+}
+
