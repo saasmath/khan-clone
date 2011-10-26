@@ -8,8 +8,10 @@ from models_goals import Goal, GoalList, GoalObjective, GoalObjectiveExercisePro
 from google.appengine.ext import db
 from api.auth.xsrf import ensure_xsrf_cookie
 
+# TomY TODO Get rid of this
 class ViewGoals(request_handler.RequestHandler):
 
+    @ensure_xsrf_cookie
     def get(self):
 
         user_data = models.UserData.current()

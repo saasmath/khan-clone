@@ -64,12 +64,12 @@ var GoalCreator = {
     updateExercise: function(objective) {
         var html = '<b>Proficiency:</b> ' + objective.name;
         html += ' <a href="javascript:GoalCreator.onExerciseBadgeClicked(\'' + objective.id + '\');"><img src="/images/circled_cross.png"></a>';
-        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="exercise_proficiency">';
+        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="GoalObjectiveExerciseProficiency">';
         html += '<input type="hidden" name="objective' + objective.idx + '_exercise" value="' + objective.id + '">';
         objective.element.html(html);
     },
     onExerciseClicked: function(node, evt) {
-        var newObjective = GoalCreator.toggleObjectiveInternal('exercise_proficiency', node.id, node.name);
+        var newObjective = GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', node.id, node.name);
         if (newObjective) {
             GoalCreator.updateExercise(newObjective);
         }
@@ -83,7 +83,7 @@ var GoalCreator = {
         var count = 0;
 
         $.each(GoalCreator.objectives, function(index, objective) {
-            if (objective.type == 'exercise_proficiency')
+            if (objective.type == 'GoalObjectiveExerciseProficiency')
                 count++;
         });
 
@@ -94,7 +94,7 @@ var GoalCreator = {
             var found = false;
 
             $.each(GoalCreator.objectives, function(index2, objective) {
-                if (objective.type == 'exercise_proficiency' && objective.id == exercise)
+                if (objective.type == 'GoalObjectiveExerciseProficiency' && objective.id == exercise)
                 {
                     found = true;
                 }
@@ -116,12 +116,12 @@ var GoalCreator = {
     updateVideo: function(objective) {
         var html = '<b>Video:</b> ' + objective.name;
         html += ' <a href="javascript:GoalCreator.onVideoClicked(\'' + objective.id + '\', null);"><img src="/images/circled_cross.png"></a>';
-        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="watch_video">';
+        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="GoalObjectiveWatchVideo">';
         html += '<input type="hidden" name="objective' + objective.idx + '_video" value="' + objective.id + '">';
         objective.element.html(html);
     },
     onVideoClicked: function(id, title) {
-        var newObjective = GoalCreator.toggleObjectiveInternal('watch_video', id, title);
+        var newObjective = GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', id, title);
         if (newObjective) {
             GoalCreator.updateVideo(newObjective);
         }
@@ -136,7 +136,7 @@ var GoalCreator = {
         var count = 0;
 
         $.each(GoalCreator.objectives, function(index, objective) {
-            if (objective.type == 'watch_video')
+            if (objective.type == 'GoalObjectiveWatchVideo')
                 count++;
         });
 
@@ -147,7 +147,7 @@ var GoalCreator = {
             var found = false;
 
             $.each(GoalCreator.objectives, function(index2, objective) {
-                if (objective.type == 'watch_video' && objective.id == video_name)
+                if (objective.type == 'GoalObjectiveWatchVideo' && objective.id == video_name)
                 {
                     found = true;
                 }

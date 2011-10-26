@@ -752,13 +752,13 @@ def create_user_goal():
             objective_descriptor['type'] = request.request_string(base_str+'_type');
             objective_descriptors.append(objective_descriptor)
 
-            if objective_descriptor['type'] == 'exercise_proficiency':
+            if objective_descriptor['type'] == 'GoalObjectiveExerciseProficiency':
                 objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
                 if not objective_descriptor['exercise']:
                     api_invalid_param_response("Internal error: Could not find exercise.")
                 valid_count += 1
 
-            if objective_descriptor['type'] == 'watch_video':
+            if objective_descriptor['type'] == 'GoalObjectiveWatchVideo':
                 objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
                 if not objective_descriptor['video']:
                     api_invalid_param_response("Internal error: Could not find video.")

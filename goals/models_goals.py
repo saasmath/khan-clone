@@ -31,9 +31,9 @@ class Goal(db.Model):
         new_goal.put()
 
         for descriptor in objective_descriptors:
-            if descriptor['type'] == 'exercise_proficiency':
+            if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
                 GoalObjectiveExerciseProficiency.create(new_goal, descriptor['exercise'])
-            if descriptor['type'] == 'watch_video':
+            if descriptor['type'] == 'GoalObjectiveWatchVideo':
                 GoalObjectiveWatchVideo.create(new_goal, descriptor['video'])
 
         return new_goal
