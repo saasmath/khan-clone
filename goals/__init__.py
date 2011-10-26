@@ -27,7 +27,7 @@ class ViewGoals(request_handler.RequestHandler):
         self.render_jinja2_template("goals/showgoals.html", context)
 
 class CreateNewGoal(request_handler.RequestHandler):
-   
+
     @ensure_xsrf_cookie
     def get(self):
         user_data = models.UserData.current()
@@ -81,17 +81,32 @@ class CreateNewGoal(request_handler.RequestHandler):
 # a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
     goal_data = user_data.get_goal_data()
-    objectives = GoalList.get_from_data(goal_data, GoalObjective)
+    objectives = GoalList.get_from_data(goal_data, GoalObjectiveWatchVideo)
     changes = []
     for objective in objectives:
-        if isinstance(objective, GoalObjectiveWatchVideo):
-            obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(objective)
-            video = user_video.video;
-            if obj_key == video.key():
-                # update progress of objective
-                if user_video.completed:
-                    objective.completion = 1.0
-                else:
-                    objective.completion = min(float(user_video.seconds_watched) / user_video.duration, 1.0)
-                changes.append(objective)
+        obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(objective)
+        video = user_video.video;
+        if obj_key == video.key():
+            # update progress of objective
+            if user_video.completed:
+                objective.completion = 1.0
+            else:
+                objective.completion = min(float(user_video.seconds_watched) / user_video.duration, 1.0)
+            changes.append(objective)
+    db.put(changes)
+
+def update_goals_just_did_exercise(user_data, user_exercise):
+    goal_data = user_data.get_goal_data()
+    objectives = GoalList.get_from_data(goal_data, GoalObjectiveExerciseProficiency)
+    changes = []
+    for objective in objectives:
+        obj_key = GoalObjectiveExerciseProficiency.exercise.get_value_for_datastore(objective)
+        exercise = user_exercise.exercise_model
+        if obj_key == exercise.key():
+            # update progress of objective
+            if exercise.name in user_data.proficient_exercises:
+                objective.completion = 1.0
+            else:
+                objective.completion = user_exercise.progress
+            changes.append(objective)
     db.put(changes)
