@@ -98,6 +98,18 @@ class GoalList(db.Model):
 
         return False
 
+    @staticmethod
+    def delete_all_goals(user_data):
+        # Fetch data from datastore
+        goal_data = user_data.get_goal_data()
+        goals = GoalList.get_from_data(goal_data, Goal)
+
+        for goal in goals:
+            children = goal.get_objectives(goal_data)
+            for child in children:
+                child.delete()
+            goal.delete()
+
 class GoalObjective(polymodel.PolyModel):
     # Objective status
     progress = db.FloatProperty(default=0.0)

@@ -21,7 +21,7 @@ from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
-from api.api_util import api_error_response, api_invalid_param_response, api_created_response
+from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -723,8 +723,55 @@ def remove_coworker():
 @jsonp
 @jsonify
 def get_user_goals():
+    student = models.UserData.current() or models.UserData.pre_phantom()
+
+    user_override = request.request_user_data("student_email")
+    if user_override and user_override.key_email != student.key_email:
+        if not user_override.is_visible_to(student):
+            return api_unauthorized_response("Cannot view this profile")
+        else:
+            # Allow access to this student's profile
+            student = user_override
+
+    return GoalList.get_visible_for_user(student)
+
+@route("/api/v1/user/students/goals", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_student_goals():
     user_data = models.UserData.current()
-    return GoalList.get_visible_for_user(user_data)
+    if not user_data:
+        return api_invalid_param_response("User is not logged in.")
+
+    student_list = None
+
+    # TomY TODO test/improve the performance of this
+    
+    student_list_key = request.request_string('list_id')
+    if student_list_key and student_list_key != 'allstudents':
+        student_lists = models.StudentList.get_for_coach(user_data.key())
+        for list in student_lists:
+            if str(list.key()) == student_list_key:
+                student_list = list
+                break
+        if not student_list:
+            return api_invalid_param_response("Invalid list ID.")
+
+    if student_list:
+        students = student_list.get_students_data()
+    else:
+        students = user_data.get_students_data()
+
+    return_data = []
+    for student in students:
+        student_data = {}
+        student_data['email'] = student.email
+        student_data['nickname'] = student.nickname
+        student_data['goals'] = GoalList.get_visible_for_user(student)
+        return_data.append(student_data)
+
+    return return_data
 
 # LOGIN? TomY TODO
 @route("/api/v1/user/goals/create", methods=["POST"])
@@ -734,7 +781,11 @@ def get_user_goals():
 def create_user_goal():
     user_data = models.UserData.current()
     if not user_data:
-        api_invalid_param_response("User is not logged in.")
+        return api_invalid_param_response("User is not logged in.")
+
+    user_override = request.request_user_data("email")
+    if user_data.developer and user_override and user_override.key_email != user_data.key_email:
+        user_data = user_override
 
     goal_data = user_data.get_goal_data()
     title = request.request_string("title")
@@ -784,7 +835,7 @@ def create_user_goal():
 def delete_user_goal():
     user_data = models.UserData.current()
     if not user_data:
-        api_invalid_param_response("User not logged in")
+        return api_invalid_param_response("User not logged in")
 
     goal_data = user_data.get_goal_data()
 
@@ -794,3 +845,20 @@ def delete_user_goal():
 
     return "Goal deleted"
 
+# Developer only perhaps? TomY TODO
+@route("/api/v1/user/goals/deleteall", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_goals():
+    user_data = models.UserData.current()
+    if not user_data.developer:
+        return api_unauthorized_response("UNAUTHORIZED");
+
+    user_override = request.request_user_data("email")
+    if user_override and user_override.key_email != user_data.key_email:
+        user_data = user_override
+
+    GoalList.delete_all_goals(user_data)
+
+    return "Goals deleted"
