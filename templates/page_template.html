@@ -82,15 +82,12 @@
     <body class="light">
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
+    <div id="goals-nav-container" style="display: none">
+    </div>
     <div id="page-container">
     <div id="page-container-inner">
         {# Facebook connect root #}
         <div id="fb-root"></div>
-
-        <script id="goals-tmpl" type="text/x-jquery-tmpl">
-            <span><a href="/goals/view">${title}</a>: ${progress}%</span>
-            <span class="separator"></span>
-        </script>
 
         {# Make script-requiring elements visible. #}
         <script>document.writeln('<style scoped type="text/css">a[href="#"], .requires_script { visibility: visible; }</style>');</script>
@@ -204,5 +201,26 @@
     {%- endif -%}
 
     {{ gae_mini_profiler.profiler_includes() }}
+
+    {#- templates for goals -#}
+    {# goal drawer #}
+    <script id="goals-tmpl" type="text/x-jquery-tmpl">
+        <a id="goals-drawer">${title}: ${progress}%</a>
+        <span class="separator"></span>
+    </script>
+
+    {#- active goal nav bar -#}
+    {%- raw -%}
+    <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
+        <div>
+            <div><a href="/profile?graph_url=/api/v1/user/goals">${title}</a>: ${progress}%</div>
+            <ul class="inline-list">
+            {{each objectives}}
+                <li><a class="objective" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+            {{/each}}
+            </ul>
+        </div>
+    </script>
+    {%- endraw -%}
     </body>
 </html>
