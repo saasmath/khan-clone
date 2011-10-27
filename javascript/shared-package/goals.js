@@ -13,21 +13,48 @@ var totalProgress = function(objectives) {
     }
     return progress * 100;
 };
+var renderAllGoalsUI = function() {
+    renderGoals();
+    renderNavGoal();
+    renderCurrentGoals();
+
+    // event handlers
+    $(".activate.simple-button").click(function(ev) {
+        ev.preventDefault();
+        var id = $(ev.target).closest(".goal").data('id')
+        $.ajax({
+            type: 'post',
+            url: "/api/v1/user/goals/" + id + "/activate",
+        });
+        UIChangeActiveGoal(id);
+    })
+    $("#goals-drawer").toggle(showNavGoal, showCurrentGoals, showDrawer);
+}
+var UIChangeActiveGoal = function(id) {
+    $.each(Goals.all, function(i, goal) {
+        if (goal.id == id) {
+            Goals.active = goal;
+            goal.active = true;
+        }
+        else {
+            goal.active = false;
+        }
+    });
+    renderAllGoalsUI();
+};
 var updateGoals = function(data) {
     Goals.all = data;
     $.each(Goals.all, function(i, goal) {
         goal.progress = totalProgress(goal.objectives).toFixed(0);
+        if (goal.active) {
+            Goals.active = goal;
+        }
     });
-    Goals.active = Goals.all[1];
-
-    renderGoals();
-    renderNavGoal();
-    renderCurrentGoals();
+    renderAllGoalsUI();
 };
 var requestGoals = function() {
     $.ajax({ url: "/api/v1/user/goals", success: updateGoals });
 };
-
 var renderGoals = function() {
     if (Goals.active) {
         var goalsEl = $("#goals-tmpl").tmplPlugin(Goals.active);
@@ -39,7 +66,7 @@ var renderNavGoal = function() {
         var goalsEl = $("#goals-nav-tmpl").tmplPlugin(Goals.active);
         $('#goals-nav-container').html(goalsEl);
     }
-    $("#goals-drawer").toggle(showNavGoal, showCurrentGoals, showDrawer);
+
 };
 var renderCurrentGoals = function() {
     if (Goals.all.length) {

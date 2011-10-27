@@ -829,4 +829,18 @@ def delete_user_goal():
 
     return "Goal deleted"
 
+@route("/api/v1/user/goals/<id>/activate", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def activate_user_goal(id):
+    user_data = models.UserData.current()
+    if not user_data:
+        api_invalid_param_response("User not logged in")
+
+    if not GoalList.activate_goal(user_data, id):
+        return { "error": "Internal error: Failed to activate goal." }
+
+    return "Goal activated"
+
 

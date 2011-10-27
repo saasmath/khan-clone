@@ -10,6 +10,7 @@ from google.appengine.ext.db import polymodel, Key
 
 class Goal(db.Model):
     title = db.StringProperty()
+    active = False
 
     @staticmethod
     def create(user_data, goal_data, title, objective_descriptors):
@@ -43,6 +44,7 @@ class Goal(db.Model):
         goal_ret['id'] = self.key().id()
         goal_ret['title'] = self.title
         goal_ret['objectives'] = []
+        goal_ret['active'] = self.active
         for objective in objectives:
             if objective.parent_key() == self.key():
                 objective_ret = {}
@@ -71,14 +73,14 @@ class GoalList(db.Model):
             goal_data = user_data.get_goal_data()
             goals = GoalList.get_from_data(goal_data, Goal)
             objectives = GoalList.get_from_data(goal_data, GoalObjective)
+            goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
 
-            goals_ret = []
-
+            # annotate the active goal, this is icky
             for goal in goals:
-                # Copy goals and sort objectives by goal
-                goals_ret.append(goal.get_visible_data(objectives))
+                if goal.key() == GoalList.active.get_value_for_datastore(goal_list):
+                    goal.active = True
 
-            return goals_ret
+            return [goal.get_visible_data(objectives) for goal in goals]
 
         return None
 
@@ -94,6 +96,23 @@ class GoalList(db.Model):
                 for child in children:
                     child.delete()
                 goal.delete()
+                return True
+
+        return False
+
+    @staticmethod
+    def activate_goal(user_data, id):
+        # Fetch data from datastore
+        goal_data = user_data.get_goal_data()
+        goals = GoalList.get_from_data(goal_data, Goal)
+        goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
+
+
+        id = int(id)
+        for goal in goals:
+            if goal.key().id() == id:
+                goal_list.active = goal
+                goal_list.put()
                 return True
 
         return False

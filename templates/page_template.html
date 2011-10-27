@@ -212,8 +212,13 @@
     {#- active goal nav bar -#}
     {%- raw -%}
     <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal">
-            <div><a href="/profile?graph_url=/api/v1/user/goals">${title}</a>: ${progress}%</div>
+        <div class="goal" data-id="${id}">
+            <div>
+                <a href="/profile?graph_url=/api/v1/user/goals">${title}</a>:
+                ${progress}%
+                {{if active}}(active!){{/if}}
+                <a class="simple-button action-gradient green activate" href="#">Activate</a>
+            </div>
             <ul class="inline-list">
             {{each objectives}}
                 <li><a class="objective" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
