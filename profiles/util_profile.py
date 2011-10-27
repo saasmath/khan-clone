@@ -80,6 +80,7 @@ def get_coach_student_and_student_list(request_handler):
 
 class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
+    @ensure_xsrf_cookie
     def get(self):
         coach = UserData.current()
 

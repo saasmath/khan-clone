@@ -247,6 +247,8 @@ var Profile = {
 
         if (href.indexOf('/api/v1/user/goals') > -1) {
             apiCall = 'profile-goals';
+        } else if (href.indexOf('/api/v1/user/students/goals') > -1) {
+            apiCall = 'profile-student-goals';
         }
 
         $.ajax({type: "GET",
