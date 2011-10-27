@@ -80,10 +80,10 @@
     </head>
 
     <body class="light">
+    <div id="goals-current-container" style="display: none"></div>
+    <div id="goals-nav-container" style="display: none"></div>
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
-    <div id="goals-nav-container" style="display: none">
-    </div>
     <div id="page-container">
     <div id="page-container-inner">
         {# Facebook connect root #}
@@ -212,7 +212,7 @@
     {#- active goal nav bar -#}
     {%- raw -%}
     <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
-        <div>
+        <div class="goal">
             <div><a href="/profile?graph_url=/api/v1/user/goals">${title}</a>: ${progress}%</div>
             <ul class="inline-list">
             {{each objectives}}
@@ -220,6 +220,14 @@
             {{/each}}
             </ul>
         </div>
+    </script>
+
+    <script id="goals-all-tmpl" type="text/x-jquery-tmpl">
+        <div class="all-goals">
+            {{each goals}}
+            {{tmplPlugin($value) "#goals-nav-tmpl"}}
+            {{/each}}
+        </body>
     </script>
     {%- endraw -%}
     </body>

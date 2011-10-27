@@ -64,11 +64,11 @@ body {
     margin: 0;
     color: #444;
     line-height: 22px;
-    background: url(/images/light-page-bg.png) repeat-x;
 }
 
 
 #outer-wrapper {
+    background: url(/images/light-page-bg.png) repeat-x;
     min-height: 100%;
     height: auto !important;
     height: 100%;
@@ -246,7 +246,7 @@ input.simple-button {
     -webkit-border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-top-left-radius: 0;
-    
+
     -moz-border-radius-bottomright: 5px;
     -moz-border-radius-topright: 5px;
     -webkit-border-bottom-right-radius: 5px;
@@ -1461,7 +1461,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     #dashboard-filter-clear {
         height: 26px;
         padding-top: 4px;
-        
+
         position: absolute;
         top: 10px;
         top: 12px\9;
@@ -1546,7 +1546,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     #container .dashboard-header .dashboard-nav .playlist_browser {
         margin: 0px;
     }
-    #container .dashboard-header .dashboard-nav .playlist_browser_title { 
+    #container .dashboard-header .dashboard-nav .playlist_browser_title {
         margin-top: 2px;
     }
     #container .dashboard-content {
