@@ -748,10 +748,18 @@ def autocomplete():
         playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
 
     return {
-            "query": query, 
-            "videos": video_results, 
+            "query": query,
+            "videos": video_results,
             "playlists": playlist_results
     }
+
+@route("/api/v1/user/goals", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_goals():
+    user_data = models.UserData.current()
+    return GoalList.get_visible_for_user(user_data)
 
 # LOGIN? TomY TODO
 @route("/api/v1/user/goals/create", methods=["POST"])
