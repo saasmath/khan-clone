@@ -15,12 +15,21 @@ var GoalCreator = {
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
             var video_name = $(this).attr('data-id');
             var span = $(this).children('span');
-            var video_title = span.text();
 
-            $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
+            var image = $(span).css('background-image');
+            if (image.indexOf('indicator-complete') == -1)
+            {
+                var video_title = span.text();
+                $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
+            } else {
+                $(this).attr('href', 'javascript:');
+            }
         });
 
-        $('#create-goal').submit(GoalCreator.submit);
+        var form = $('#create-goal');
+        form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
+
+        GoalCreator.updateDescription();
     },
     toggleObjectiveInternal: function(type, id, name) {
         var idx = 1;
@@ -52,14 +61,76 @@ var GoalCreator = {
             };
 
             GoalCreator.objectives.push(newObjective);
-            newElement.appendTo('#objective_list');
+            newElement.appendTo('#objective-list');
             return newObjective;
         }
+    },
+    updateDescription: function() {
+        var message = '';
+        if (GoalCreator.objectives.length == 0) {
+            message = 'This goal currently has no objectives selected. Select exercises or videos to complete below.';
+        } else {
+            var matchingObjectives;
+
+            message = '<div>To complete this goal, you must:</div><ul>';
+
+            // Exercises
+            matchingObjectives = [];
+            $.each(GoalCreator.objectives, function(idx, objective) {
+                if (objective.type == 'GoalObjectiveExerciseProficiency')
+                    matchingObjectives.push(objective);
+            });
+            if (matchingObjectives.length > 0) {
+                message += '<li>Become proficient in exercise';
+                if (matchingObjectives.length == 1) {
+                    message += ' <b>' + matchingObjectives[0].name + '</b>';
+                } else {
+                    message += 's ';
+                    $.each(matchingObjectives, function(idx, objective) {
+                        if (idx == 0)
+                            message += '<b>' + objective.name + '</b>';
+                        else if (idx < matchingObjectives.length-1)
+                            message += ', <b>' + objective.name + '</b>';
+                        else
+                            message += ' and <b>' + objective.name + '</b>';
+                    });
+                }
+                message += '.</li>';
+            }
+
+            // Videos
+            matchingObjectives = [];
+            $.each(GoalCreator.objectives, function(idx, objective) {
+                if (objective.type == 'GoalObjectiveWatchVideo')
+                    matchingObjectives.push(objective);
+            });
+            if (matchingObjectives.length > 0) {
+                message += '<li>Watch video';
+                if (matchingObjectives.length == 1) {
+                    message += ' <b>' + matchingObjectives[0].name + '</b>';
+                } else {
+                    message += 's ';
+                    $.each(matchingObjectives, function(idx, objective) {
+                        if (idx == 0)
+                            message += '<b>' + objective.name + '</b>';
+                        else if (idx < matchingObjectives.length-1)
+                            message += ', <b>' + objective.name + '</b>';
+                        else
+                            message += ' and <b>' + objective.name + '</b>';
+                    });
+                }
+                message += '.</li>';
+            }
+
+            message += '</ul>';
+        }
+        $('#goal-description').html(message);
     },
 
     showExercises: function() {
         $('#goal-choose-exercises').show();
         $('#goal-choose-videos').hide();
+        Drawer.resize();
     },
     updateExercise: function(objective) {
         var html = '<b>Proficiency:</b> ' + objective.name;
@@ -69,12 +140,16 @@ var GoalCreator = {
         objective.element.html(html);
     },
     onExerciseClicked: function(node, evt) {
+       if (node.status == 'Proficient')
+           return; // Cannot select exercises the user is proficient in
+
         var newObjective = GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', node.id, node.name);
         if (newObjective) {
             GoalCreator.updateExercise(newObjective);
         }
 
         GoalCreator.updateExerciseCount();
+        GoalCreator.updateDescription();
     },
     onExerciseBadgeClicked: function(id) {
         this.onExerciseClicked(KnowledgeMap.dictNodes[id], null);
@@ -127,10 +202,12 @@ var GoalCreator = {
         }
 
         GoalCreator.updateVideoCount();
+        GoalCreator.updateDescription();
     },
     showVideos: function() {
         $('#goal-choose-exercises').hide();
         $('#goal-choose-videos').show();
+        Drawer.resize();
     },
     updateVideoCount: function() {
         var count = 0;
@@ -166,18 +243,46 @@ var GoalCreator = {
         });
     },
 
+    validate: function(form) {
+        var error = '';
+
+        var titleField = form.find('input[name="title"]');
+        if (titleField.val() == '')
+        {
+            error = 'You must give your goal a name.';
+            titleField.addClass('fieldError');
+        } else {
+            titleField.removeClass('fieldError');
+        }
+
+        if (GoalCreator.objectives.length == 0)
+        {
+            error = 'You must select at least one objective to complete.';
+        }
+
+        if (error != '') {
+            $('#goal-commit-response').html(error);
+            return false;
+        }
+        return true;
+    },
     submit: function() {
+        var form = $('#create-goal');
+
+        if (!GoalCreator.validate(form))
+            return;
+
         $.ajax({
             url: "/api/v1/user/goals/create",
             type: 'POST',
             dataType: 'text',
-            data: $(this).serialize(),
+            data: $(form).serialize(),
             success: function(json) {
                 document.location = '/profile?k#/?graph_url=/api/v1/user/goals'; // Take the user to the goals list in their profile
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                alert('Failure: ' + textStatus);
-            }, // TomY TODO
+                $('#goal-commit-response').html('Goal creation failed: ' + jqXHR.responseText);
+            },
         });
         return false;
     },
@@ -185,8 +290,8 @@ var GoalCreator = {
 
 $(function() {
     GoalCreator.init();
-    GoalCreator.showExercises();
     Drawer.init();
+    GoalCreator.showExercises();
     KnowledgeMap.initFilter();
     KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
 });
@@ -198,28 +303,40 @@ $(function() {
 <div><h1>Create a new goal:<h1></div>
 <form id="create-goal" action="javascript:">
   <div>
-    <h2>Goal title: <input type="text" name="title"></input> <input type="submit" value="Create New Goal"></input></h2>
+    <span id="goal-commit-response" style="color:#f00"></span>
+    <h2>Goal title: <input type="text" name="title"></input> <a href="javascript:GoalCreator.submit();" style="float: right;"><span class="simple-button action-gradient">Create New Goal<span></a></h2>
   </div>
-  <div><h2>Objectives:</h2><div id="objective_list"></div></div>
+  <div>
+    <h2>Objectives:</h2>
+    <div id="objective-list"></div>
+    <div id="goal-description" style="clear: left;"></div>
+  </div>
 </form>
 
-<div style="clear: left;"></div>
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showExercises();">Choose exercises</a> (<span id="goal-exercise-count">0</span> selected)</div>
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showVideos();">Choose videos</a> (<span>0</span> selected)</div>
 
-<div id="goal-choose-exercises" style="clear: left; display: none;">
-  <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+<div id="container" style="clear: left" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+  <div id="goal-choose-exercises" style="display: none;">
     {{ exercise_macros.exercise_legend() }}
-    {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, recent_graph_dicts, graph_dicts, 'creategoal') }}
+    {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, null, graph_dicts, 'creategoal') }}
 
     <div id="dashboard-map">
         {{ exercise_macros.knowledgemap(graph_dicts, map_coords) }}
     </div>
-</div>
-</div>
+  </div>
 
-<div id="goal-choose-videos" style="clear: left; display: none;">
+  <div id="goal-choose-videos" style="display: none;">
+    <div class="dashboard-header">
+      <div class="dashboard-nav">
+        {{ templatetags.playlist_browser("browse") }}
+      </div>
+      <div class="dashboard-title"><img src="/images/video.png" id="dashboard-icon" width=22 height=22 /> Videos </div>
+    </div>
+    <div class="dashboard-content">
 {{ library_content }}
+    </div>
+  </div>
 </div>
 
 {% endblock pagecontent %}

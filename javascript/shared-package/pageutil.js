@@ -21,7 +21,7 @@ function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
     var o = {
                 "label": match.title,
                 "title": match.title,
-                "value": match.url,
+                "value": match.ka_url,
                 "key": match.key,
                 "fPlaylist": fPlaylist
             }
@@ -39,7 +39,7 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
         source: function(req, fxnCallback) {
 
             // Get autocomplete matches
-            $.getJSON("/autocomplete", {"q": req.term}, function(data) {
+            $.getJSON("/api/v1/autocomplete", {"q": req.term}, function(data) {
 
                 var matches = [];
 
@@ -595,7 +595,7 @@ var Drawer = {
         var jelDrawer = $("#dashboard-drawer");
         var leftDrawer = fExpanded ? -1 * (jelDrawer.width() + 20) : 0;
 
-        var jelTitle = $("#dashboard-title");
+        var jelTitle = $(".dashboard-title");
         var leftTitle = fExpanded ? -1 * (jelTitle.width() +10 ): 5;
 
         jelTitle.animate({left: leftTitle}, 500);
@@ -622,6 +622,11 @@ var Drawer = {
         jel.height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
         // Account for padding in the dashboard drawer
         jelDrawerInner.height(jelDrawerInner.height() - 20);
+
+        $(".dashboard-content").each(function(index, element) {
+            var yTop = $(element).offset().top;
+            $(element).height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
+        });
 
         if (window.KnowledgeMap && KnowledgeMap.map)
             google.maps.event.trigger(KnowledgeMap.map, 'resize');

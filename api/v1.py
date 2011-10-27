@@ -15,6 +15,7 @@ from exercises import attempt_problem, reset_streak
 from phantom_users.phantom_util import api_create_phantom
 import util
 import notifications
+from autocomplete import video_title_dicts, playlist_title_dicts
 from goals import GoalList, Goal
 
 from api import route
@@ -22,6 +23,8 @@ from api.decorators import jsonify, jsonp, compress, decompress, etag
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_created_response
+
+import simplejson as json
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -164,6 +167,13 @@ def exercises():
 @jsonify
 def exercises(exercise_name):
     return models.Exercise.get_by_name(exercise_name)
+
+@route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
+@jsonp
+@jsonify
+def exercise_info(exercise_name):
+    exerciselist = models.Exercise.get_by_name(exercise_name).followup_exercises
+    return [models.Exercise.get_by_name(exercise_name) for exercise_name in exerciselist]
 
 @route("/api/v1/exercises/<exercise_name>/videos", methods=["GET"])
 @jsonp
@@ -718,13 +728,30 @@ def remove_coworker():
 
     return True
 
-@route("/api/v1/user/goals", methods=["GET"])
-@oauth_optional()
+@route("/api/v1/autocomplete", methods=["GET"])
 @jsonp
 @jsonify
-def get_user_goals():
-    user_data = models.UserData.current()
-    return GoalList.get_visible_for_user(user_data)
+def autocomplete():
+
+    video_results = []
+    playlist_results = []
+
+    query = request.request_string("q", default="").strip().lower()
+    if query:
+
+        max_results_per_type = 10
+
+        video_results = filter(lambda video_dict: query in video_dict["title"].lower(), video_title_dicts())
+        playlist_results = filter(lambda playlist_dict: query in playlist_dict["title"].lower(), playlist_title_dicts())
+
+        video_results = sorted(video_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
+        playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
+
+    return {
+            "query": query, 
+            "videos": video_results, 
+            "playlists": playlist_results
+    }
 
 # LOGIN? TomY TODO
 @route("/api/v1/user/goals/create", methods=["POST"])
@@ -734,13 +761,13 @@ def get_user_goals():
 def create_user_goal():
     user_data = models.UserData.current()
     if not user_data:
-        api_invalid_param_response("User not logged in")
+        api_invalid_param_response("User is not logged in.")
 
     goal_data = user_data.get_goal_data()
     title = request.request_string("title")
 
     if not title:
-        return api_invalid_param_response('Invalid title')
+        return api_invalid_param_response('Title is invalid.')
 
     objective_descriptors = []
     valid_count = 0
@@ -754,18 +781,23 @@ def create_user_goal():
 
             if objective_descriptor['type'] == 'GoalObjectiveExerciseProficiency':
                 objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
-                if not objective_descriptor['exercise']:
-                    api_invalid_param_response("Internal error: Could not find exercise.")
+                if not objective_descriptor['exercise'] or not objective_descriptor['exercise'].is_visible_to_current_user():
+                    return api_invalid_param_response("Internal error: Could not find exercise.")
+                if user_data.is_proficient_at(objective_descriptor['exercise'].name):
+                    return api_invalid_param_response("Exercise has already been completed.")
                 valid_count += 1
 
             if objective_descriptor['type'] == 'GoalObjectiveWatchVideo':
                 objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
                 if not objective_descriptor['video']:
-                    api_invalid_param_response("Internal error: Could not find video.")
+                    return api_invalid_param_response("Internal error: Could not find video.")
+                user_video = models.UserVideo.get_for_video_and_user_data(objective_descriptor['video'], user_data)
+                if user_video and user_video.completed:
+                    return api_invalid_param_response("Video has already been watched.")
                 valid_count += 1
 
     if valid_count == 0:
-        api_invalid_param_response("No objectives specified.")
+        return api_invalid_param_response("No objectives specified.")
 
     Goal.create(user_data, goal_data, title, objective_descriptors)
 
@@ -788,4 +820,5 @@ def delete_user_goal():
         return { "error": "Internal error: Failed to delete goal." }
 
     return "Goal deleted"
+
 
