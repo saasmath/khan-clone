@@ -18,18 +18,22 @@ class Goal(db.Model):
         if not parent_list:
             # Create a parent object for all the goals & objectives
             key = Key.from_path('GoalList', 1, parent=user_data.key())
-            parent_obj = GoalList.get_or_insert(str(key), user=user_data.user)
+            goal_list = GoalList.get_or_insert(str(key), user=user_data.user)
 
             # Update UserData
-            user_data.goal_list = parent_obj
+            user_data.goal_list = goal_list
             user_data.put()
         else:
-            parent_obj = parent_list[0]
+            goal_list = parent_list[0]
 
         # Create the new goal
-        new_goal = Goal(parent_obj)
+        new_goal = Goal(goal_list)
         new_goal.title = title
         new_goal.put()
+
+        # Set the goal active
+        goal_list.active = new_goal
+        goal_list.put()
 
         for descriptor in objective_descriptors:
             if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
