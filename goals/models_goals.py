@@ -101,12 +101,22 @@ class GoalList(db.Model):
         return False
 
     @staticmethod
-    def activate_goal(user_data, id):
+    def delete_all_goals(user_data):
         # Fetch data from datastore
         goal_data = user_data.get_goal_data()
         goals = GoalList.get_from_data(goal_data, Goal)
-        goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
 
+        for goal in goals:
+            children = goal.get_objectives(goal_data)
+            for child in children:
+                child.delete()
+            goal.delete()
+
+    @staticmethod
+    def activate_goal(user_data, id):
+        # Fetch data from datastore
+        goal_data = user_data.get_goal_data()
+        goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
 
         id = int(id)
         for goal in goals:
