@@ -1244,6 +1244,13 @@ class UserVideo(db.Model):
     def points(self):
         return points.VideoPointCalculator(self)
 
+    @property
+    def progress(self):
+        if self.completed:
+            return 1.0
+        else:
+            return min(1.0, float(self.seconds_watched) / self.duration)
+
 class VideoLog(db.Model):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)

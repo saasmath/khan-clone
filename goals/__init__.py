@@ -90,10 +90,7 @@ def update_goals_just_watched_video(user_data, user_video):
         video = user_video.video;
         if obj_key == video.key():
             # update progress of objective
-            if user_video.completed:
-                objective.progress = 1.0
-            else:
-                objective.progress = min(float(user_video.seconds_watched) / user_video.duration, 1.0)
+            objective.progress = user_video.progress
             changes.append(objective)
     db.put(changes)
 
