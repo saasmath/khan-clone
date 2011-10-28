@@ -33,9 +33,9 @@ class Goal(db.Model):
 
         for descriptor in objective_descriptors:
             if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
-                GoalObjectiveExerciseProficiency.create(new_goal, descriptor['exercise'])
+                GoalObjectiveExerciseProficiency.create(new_goal, descriptor['exercise'], user_data)
             if descriptor['type'] == 'GoalObjectiveWatchVideo':
-                GoalObjectiveWatchVideo.create(new_goal, descriptor['video'])
+                GoalObjectiveWatchVideo.create(new_goal, descriptor['video'], user_data)
 
         return new_goal
 
@@ -128,11 +128,14 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     exercise_name = db.StringProperty()
 
     @staticmethod
-    def create(parent_goal, exercise):
+    def create(parent_goal, exercise, user_data):
         new_objective = GoalObjectiveExerciseProficiency(parent_goal)
         new_objective.exercise = exercise
         new_objective.exercise_name = exercise.name
         new_objective.description = models.Exercise.to_display_name(exercise.name)
+
+        new_objective.progress = user_data.get_or_insert_exercise(exercise).progress
+
         new_objective.put()
         return new_objective
 
@@ -144,10 +147,14 @@ class GoalObjectiveWatchVideo(GoalObjective):
     video = db.ReferenceProperty(models.Video)
 
     @staticmethod
-    def create(parent_goal, video):
+    def create(parent_goal, video, user_data):
         new_objective = GoalObjectiveWatchVideo(parent_goal)
         new_objective.video = video
         new_objective.description = video.title
+
+        user_video = UserVideo.get_for_video_and_user_data(video, user_data)
+        new_objective.progress = user_video.progress
+
         new_objective.put()
         return new_objective
 
