@@ -3,30 +3,6 @@
 {% import 'macros/user.html' as user_macros %}
 {% import 'macros/profiles.html' as profile_macros %}
 
-{% block pagescript %}{% raw %}
-<script id="profile-goals-tmpl" type="text/x-jquery-tmpl">
-{{each(iGoal, goal) data}}
-<!-- TomY TODO make this prettier -->
-<div>
-  <div>Goal: ${goal.title}</div>
-  {{each(iObjective, objective) goal.objectives}}
-  <div>
-      {{if objective.type == 'GoalObjectiveWatchVideo'}}
-        Watch video: 
-      {{/if}}
-      {{if objective.type == 'GoalObjectiveExerciseProficiency'}}
-        Become proficient in:
-      {{/if}}
-      <a href="${objective.url}">${objective.description}</a>
-      (${(objective.progress*100).toFixed(0)}% complete)
-      </div>
-    {{/each}}
-  </div>
-  {{/each}}
-<div><h3><a href="/goals/new">New goal...</a></h3></div>
-</script>
-{% endraw %}{% endblock pagescript %}
-
     {% block meta_page_title %}User Profile | {% endblock meta_page_title %}
     {% block profile_name %}
     <span id="user-info" class="has-details">

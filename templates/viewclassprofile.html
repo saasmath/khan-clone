@@ -12,24 +12,12 @@
 <script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
 <!-- TomY TODO make this prettier -->
 {{each(idx, student) data}}
-  <div>Student: ${student.nickname}</div>
-
-  {{each(idx2, goal) student.goals}}
-    <div>Goal: ${goal.title}</div>
-
-    {{each(idx3, objective) goal.objectives}}
-      <div>
-        {{if objective.type == 'GoalObjectiveWatchVideo'}}
-          Watch video: 
-        {{/if}}
-        {{if objective.type == 'GoalObjectiveExerciseProficiency'}}
-          Become proficient in:
-        {{/if}}
-        <a href="${objective.url}">${objective.description}</a>
-        (${(objective.progress*100).toFixed(0)}% complete)
-      </div>
-    {{/each}}
-  {{/each}}
+  <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${nickname}</a></div>
+  {{if goals}}
+    {{tmplPlugin(goals) "#goals-nav-tmpl"}}
+  {{else}}
+    Student has no goals.
+  {{/if}}
 {{/each}}
 </script>
 {% endraw %}
