@@ -233,6 +233,7 @@ var Profile = {
 
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCall = null;
+        var apiDataName;
 
         if (!href) return;
 
@@ -246,23 +247,25 @@ var Profile = {
         this.fLoadedGraph = true;
 
         if (href.indexOf('/api/v1/user/goals') > -1) {
-            apiCall = 'profile-goals';
+            apiCall = 'goals-all';
+            apiDataName = 'goals';
         } else if (href.indexOf('/api/v1/user/students/goals') > -1) {
             apiCall = 'profile-student-goals';
+            apiDataName = 'data';
         }
 
         $.ajax({type: "GET",
                 url: Timezone.append_tz_offset_query_param(href),
                 data: {},
                 dataType: apiCall ? 'json' : 'html',
-                success: function(data){ Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCall); },
+                success: function(data){ Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCall, apiDataName); },
                 error: function() { Profile.finishLoadGraphError(); }
         });
         $("#graph-content").html("");
         this.showGraphThrobber(true);
     },
 
-    finishLoadGraph: function(data, href, fNoHistoryEntry, apiCall) {
+    finishLoadGraph: function(data, href, fNoHistoryEntry, apiCall, apiDataName) {
 
         this.fLoadingGraph = false;
 
@@ -277,7 +280,9 @@ var Profile = {
         this.styleSublinkFromHref(href);
 
         if (apiCall) {
-            $("#graph-content").html($('#' + apiCall + '-tmpl').tmplPlugin({ data: data }));
+            var context = {};
+            context[apiDataName] = data;
+            $("#graph-content").html($('#' + apiCall + '-tmpl').tmplPlugin(context));
         } else {
             $("#graph-content").html(data);
         }

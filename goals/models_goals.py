@@ -75,6 +75,9 @@ class GoalList(db.Model):
         if user_data:
             # Fetch data from datastore
             goal_data = user_data.get_goal_data()
+            if len(goal_data) == 0:
+                return None
+
             goals = GoalList.get_from_data(goal_data, Goal)
             objectives = GoalList.get_from_data(goal_data, GoalObjective)
             goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
