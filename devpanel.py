@@ -106,21 +106,21 @@ class CommonCore(request_handler.RequestHandler):
                     
                     entry = yt_service.GetYouTubeVideoEntry(video_id=record["youtube_id"])
                     
-                    if entry and record["keyword"] not in entry.media.keywords.text:
+                    # if entry and record["keyword"] not in entry.media.keywords.text:
+                    if entry:
                                     
                         keywords = entry.media.keywords.text or "" 
                                     
                         entry.media.keywords.text = keywords + "," + record["keyword"]
                         video_url = "https://gdata.youtube.com/feeds/api/users/"+ yt_account + "/uploads/" + record["youtube_id"]
-                        updated_entry = yt_service.UpdateVideoEntry(entry, video_url)  
-                          
-                        logging.info("***PROCESSED*** Title: " + entry.media.title.text + " | Keywords: " + entry.media.keywords.text)
-                                
-                        if not updated_entry:
-                                logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"])  
-                
-                        cc_videos.append(record)
-                    
+                        
+                        try:
+                            updated_entry = yt_service.UpdateVideoEntry(entry, video_url)
+                            logging.info("***PROCESSED*** Title: " + entry.media.title.text + " | Keywords: " + entry.media.keywords.text)
+                            cc_videos.append(record)
+                        except Exception:
+                            logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"])                            
+                        
             f.close() 
             
         else:         
