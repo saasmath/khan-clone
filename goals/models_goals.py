@@ -154,13 +154,11 @@ class GoalObjective(polymodel.PolyModel):
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     exercise = db.ReferenceProperty(models.Exercise)
-    exercise_name = db.StringProperty()
 
     @staticmethod
     def create(parent_goal, exercise, user_data):
         new_objective = GoalObjectiveExerciseProficiency(parent_goal)
         new_objective.exercise = exercise
-        new_objective.exercise_name = exercise.name
         new_objective.description = models.Exercise.to_display_name(exercise.name)
 
         new_objective.progress = user_data.get_or_insert_exercise(exercise).progress
