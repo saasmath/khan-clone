@@ -4,9 +4,10 @@ ul.inline-list, ul.inline-list li {
 
 a.objective {
     display: inline-block;
-    width: 110px;
+    width: 140px;
     height: 25px;
     border: 1px solid #000;
     margin: 10px;
     padding: 2px;
+    overflow: hidden;
 }

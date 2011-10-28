@@ -82,30 +82,16 @@ class CreateNewGoal(request_handler.RequestHandler):
 
 # a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
-    goal_data = user_data.get_goal_data()
-    objectives = GoalList.get_from_data(goal_data, GoalObjectiveWatchVideo)
-    changes = []
-    for objective in objectives:
-        obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(objective)
-        video = user_video.video;
-        if obj_key == video.key():
-            # update progress of objective
-            objective.progress = user_video.progress
-            changes.append(objective)
-    db.put(changes)
+    update_goals(user_data, user_video, GoalObjectiveWatchVideo)
 
 def update_goals_just_did_exercise(user_data, user_exercise):
+    update_goals(user_data, user_exercise, GoalObjectiveExerciseProficiency)
+
+def update_goals(user_data, user_entity, kind):
     goal_data = user_data.get_goal_data()
-    objectives = GoalList.get_from_data(goal_data, GoalObjectiveExerciseProficiency)
+    objectives = GoalList.get_from_data(goal_data, kind)
     changes = []
     for objective in objectives:
-        obj_key = GoalObjectiveExerciseProficiency.exercise.get_value_for_datastore(objective)
-        exercise = user_exercise.exercise_model
-        if obj_key == exercise.key():
-            # update progress of objective
-            if exercise.name in user_data.proficient_exercises:
-                objective.progress = 1.0
-            else:
-                objective.progress = user_exercise.progress
+        if objective.record_progress(user_data, user_entity):
             changes.append(objective)
     db.put(changes)
