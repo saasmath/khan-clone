@@ -121,6 +121,7 @@ class GoalList(db.Model):
         # Fetch data from datastore
         goal_data = user_data.get_goal_data()
         goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
+        goals = GoalList.get_from_data(goal_data, Goal)
 
         id = int(id)
         for goal in goals:
@@ -135,6 +136,17 @@ class GoalObjective(polymodel.PolyModel):
     # Objective status
     progress = db.FloatProperty(default=0.0)
     description = db.StringProperty()
+
+    def url():
+        '''url to which the objective points when used as a nav bar.'''
+        raise Exception
+
+    def record_progress(self):
+        return False
+
+    def record_complete(self):
+        self.progress = 1.0
+        return True
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
@@ -156,6 +168,15 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def url(self):
         return self.exercise.relative_url
 
+    def record_progress(self, user_data, user_exercise):
+        if self.exercise.key() == user_exercise.exercise_model.key():
+            if user_data.is_proficient_at(user_exercise.exercise):
+                self.progress = 1.0
+            else:
+                self.progress = user_exercise.progress
+            return True
+        return False
+
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     video = db.ReferenceProperty(models.Video)
@@ -166,7 +187,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
         new_objective.video = video
         new_objective.description = video.title
 
-        user_video = UserVideo.get_for_video_and_user_data(video, user_data)
+        user_video = models.UserVideo.get_for_video_and_user_data(video, user_data)
         new_objective.progress = user_video.progress
 
         new_objective.put()
@@ -174,3 +195,11 @@ class GoalObjectiveWatchVideo(GoalObjective):
 
     def url(self):
         return self.video.ka_url
+
+    def record_progress(self, user_data, user_video):
+        obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(self)
+        video_key = models.UserVideo.video.get_value_for_datastore(user_video)
+        if obj_key == video_key:
+            self.progress = user_video.progress
+            return True
+        return False

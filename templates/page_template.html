@@ -216,12 +216,14 @@
             <div>
                 <a href="/profile?graph_url=/api/v1/user/goals">${title}</a>:
                 ${progress}%
-                {{if active}}(active!){{/if}}
+                {{if active}}(active!)
+                {{else}}
                 <a class="simple-button action-gradient green activate" href="#">Activate</a>
+                {{/if}}
             </div>
             <ul class="inline-list">
             {{each objectives}}
-                <li><a class="objective" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+                <li><a class="objective" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
             {{/each}}
             </ul>
         </div>
