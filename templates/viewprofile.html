@@ -72,7 +72,10 @@
         </li>
         <li>
             {{ profile_macros.api_link(user_data_student, "Goals", "user/goals", selected_graph_type) }}
-            <p class="accordion-content">Shows progress on your current goals.</p>
+            <p class="accordion-content">
+                Shows progress on your current goals.
+                <a href="/goals/new">Create a new goal</a>
+            </p>
         </li>
     </ul>
 {% endblock graph_accordion %}

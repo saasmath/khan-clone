@@ -28,8 +28,9 @@ var GoalCreator = {
 
         var form = $('#create-goal');
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
+        form.find('input[name="title"]').val("New Goal").change(function() { GoalCreator.updateViewAndDescription(); } );
 
-        GoalCreator.updateDescription();
+        GoalCreator.updateViewAndDescription();
     },
     toggleObjectiveInternal: function(type, id, name) {
         var idx = 1;
@@ -47,25 +48,32 @@ var GoalCreator = {
         if (found_index >= 0) {
             // Remove objective
             var objective = GoalCreator.objectives[found_index];
-            objective.element.detach();
             GoalCreator.objectives.splice(found_index, 1);
             return null;
         } else {
-            var newElement = $('<div style="float:left;background-color:#e0ffe0;margin:5px;padding:5px"></div>');
             var newObjective = {
-                idx: idx,
-                element: newElement,
                 type: type,
+                description: name,
+                progress: 0,
+                url: 'javascript:',
+
+                idx: idx,
                 id: id,
-                name: name,
             };
 
             GoalCreator.objectives.push(newObjective);
-            newElement.appendTo('#objective-list');
             return newObjective;
         }
     },
-    updateDescription: function() {
+    updateViewAndDescription: function() {
+        var goalObject = {
+            title: $('#create-goal').find('input[name="title"]').val(),
+            objectives: GoalCreator.objectives
+        };
+
+        var view = $("#goals-nav-tmpl").tmplPlugin(goalObject);
+        $("#goal-view").html(view);
+
         var message = '';
         if (GoalCreator.objectives.length == 0) {
             message = 'This goal currently has no objectives selected. Select exercises or videos to complete below.';
@@ -83,16 +91,16 @@ var GoalCreator = {
             if (matchingObjectives.length > 0) {
                 message += '<li>Become proficient in exercise';
                 if (matchingObjectives.length == 1) {
-                    message += ' <b>' + matchingObjectives[0].name + '</b>';
+                    message += ' <b>' + matchingObjectives[0].description + '</b>';
                 } else {
                     message += 's ';
                     $.each(matchingObjectives, function(idx, objective) {
                         if (idx == 0)
-                            message += '<b>' + objective.name + '</b>';
+                            message += '<b>' + objective.description + '</b>';
                         else if (idx < matchingObjectives.length-1)
-                            message += ', <b>' + objective.name + '</b>';
+                            message += ', <b>' + objective.description + '</b>';
                         else
-                            message += ' and <b>' + objective.name + '</b>';
+                            message += ' and <b>' + objective.description + '</b>';
                     });
                 }
                 message += '.</li>';
@@ -107,16 +115,16 @@ var GoalCreator = {
             if (matchingObjectives.length > 0) {
                 message += '<li>Watch video';
                 if (matchingObjectives.length == 1) {
-                    message += ' <b>' + matchingObjectives[0].name + '</b>';
+                    message += ' <b>' + matchingObjectives[0].description + '</b>';
                 } else {
                     message += 's ';
                     $.each(matchingObjectives, function(idx, objective) {
                         if (idx == 0)
-                            message += '<b>' + objective.name + '</b>';
+                            message += '<b>' + objective.description + '</b>';
                         else if (idx < matchingObjectives.length-1)
-                            message += ', <b>' + objective.name + '</b>';
+                            message += ', <b>' + objective.description + '</b>';
                         else
-                            message += ' and <b>' + objective.name + '</b>';
+                            message += ' and <b>' + objective.description + '</b>';
                     });
                 }
                 message += '.</li>';
@@ -132,24 +140,14 @@ var GoalCreator = {
         $('#goal-choose-videos').hide();
         Drawer.resize();
     },
-    updateExercise: function(objective) {
-        var html = '<b>Proficiency:</b> ' + objective.name;
-        html += ' <a href="javascript:GoalCreator.onExerciseBadgeClicked(\'' + objective.id + '\');"><img src="/images/circled_cross.png"></a>';
-        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="GoalObjectiveExerciseProficiency">';
-        html += '<input type="hidden" name="objective' + objective.idx + '_exercise" value="' + objective.id + '">';
-        objective.element.html(html);
-    },
     onExerciseClicked: function(node, evt) {
        if (node.status == 'Proficient')
            return; // Cannot select exercises the user is proficient in
 
-        var newObjective = GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', node.id, node.name);
-        if (newObjective) {
-            GoalCreator.updateExercise(newObjective);
-        }
+        GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', node.id, node.name);
 
         GoalCreator.updateExerciseCount();
-        GoalCreator.updateDescription();
+        GoalCreator.updateViewAndDescription();
     },
     onExerciseBadgeClicked: function(id) {
         this.onExerciseClicked(KnowledgeMap.dictNodes[id], null);
@@ -188,21 +186,11 @@ var GoalCreator = {
         });
     },
 
-    updateVideo: function(objective) {
-        var html = '<b>Video:</b> ' + objective.name;
-        html += ' <a href="javascript:GoalCreator.onVideoClicked(\'' + objective.id + '\', null);"><img src="/images/circled_cross.png"></a>';
-        html += '<input type="hidden" name="objective' + objective.idx + '_type" value="GoalObjectiveWatchVideo">';
-        html += '<input type="hidden" name="objective' + objective.idx + '_video" value="' + objective.id + '">';
-        objective.element.html(html);
-    },
     onVideoClicked: function(id, title) {
-        var newObjective = GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', id, title);
-        if (newObjective) {
-            GoalCreator.updateVideo(newObjective);
-        }
+        GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', id, title);
 
         GoalCreator.updateVideoCount();
-        GoalCreator.updateDescription();
+        GoalCreator.updateViewAndDescription();
     },
     showVideos: function() {
         $('#goal-choose-exercises').hide();
@@ -307,8 +295,8 @@ $(function() {
     <h2>Goal title: <input type="text" name="title"></input> <a href="javascript:GoalCreator.submit();" style="float: right;"><span class="simple-button action-gradient">Create New Goal<span></a></h2>
   </div>
   <div>
-    <h2>Objectives:</h2>
-    <div id="objective-list"></div>
+    <h2>Preview:</h2>
+    <div id="goal-view"></div>
     <div id="goal-description" style="clear: left;"></div>
   </div>
 </form>
