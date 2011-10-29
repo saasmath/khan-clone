@@ -798,12 +798,15 @@ def get_student_goals():
     else:
         students = user_data.get_students_data()
 
+    students = sorted(students, key=lambda student: student.nickname)
+    user_exercise_graphs = models.UserExerciseGraph.get(students)
+
     return_data = []
-    for student in students:
+    for idx, student in enumerate(students):
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
-        student_data['goals'] = GoalList.get_visible_for_user(student)
+        student_data['goals'] = GoalList.get_visible_for_user(student, user_exercise_graphs[idx])
         return_data.append(student_data)
 
     return return_data

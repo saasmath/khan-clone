@@ -43,7 +43,7 @@ class Goal(db.Model):
 
         return new_goal
 
-    def get_visible_data(self, objectives):
+    def get_visible_data(self, objectives, user_exercise_graph):
         goal_ret = {}
         goal_ret['id'] = self.key().id()
         goal_ret['title'] = self.title
@@ -56,6 +56,7 @@ class Goal(db.Model):
                 objective_ret['description'] = objective.description
                 objective_ret['progress'] = objective.progress
                 objective_ret['url'] = objective.url()
+                objective_ret['status'] = objective.getStatus(user_exercise_graph)
                 goal_ret['objectives'].append(objective_ret)
         return goal_ret
 
@@ -71,7 +72,7 @@ class GoalList(db.Model):
         return [entity for entity in data if isinstance(entity, type)]
 
     @staticmethod
-    def get_visible_for_user(user_data):
+    def get_visible_for_user(user_data, user_exercise_graph = None):
         if user_data:
             # Fetch data from datastore
             goal_data = user_data.get_goal_data()
@@ -87,7 +88,7 @@ class GoalList(db.Model):
                 if goal.key() == GoalList.active.get_value_for_datastore(goal_list):
                     goal.active = True
 
-            return [goal.get_visible_data(objectives) for goal in goals]
+            return [goal.get_visible_data(objectives, user_exercise_graph) for goal in goals]
 
         return None
 
@@ -178,6 +179,30 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             return True
         return False
 
+    def getStatus(self, user_exercise_graph):
+        if not user_exercise_graph:
+            return ""
+
+        exercise_name = self.exercise.name
+        graph_dict = user_exercise_graph.graph_dict(exercise_name)
+        student_review_exercise_names = user_exercise_graph.review_exercise_names()
+        status = ""
+
+        if graph_dict["proficient"]:
+
+            if exercise_name in student_review_exercise_names:
+                status = "review"
+            else:
+                status = "proficient"
+#                if not graph_dict["explicitly_proficient"]:
+ #                   status = "Proficient (due to proficiency in a more advanced module)"
+                    
+        elif graph_dict["struggling"]:
+            status = "struggling"
+        elif graph_dict["total_done"] > 0:
+            status = "started"
+        return status
+
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     video = db.ReferenceProperty(models.Video)
@@ -204,3 +229,12 @@ class GoalObjectiveWatchVideo(GoalObjective):
             self.progress = user_video.progress
             return True
         return False
+
+    def getStatus(self, user_exercise_graph):
+        if self.progress == 1.0:
+            return "proficient"
+
+        if self.progress > 0:
+            return "started"
+
+        return ""

@@ -11,3 +11,50 @@ a.objective {
     padding: 2px;
     overflow: hidden;
 }
+
+#class-student-goal .student-name {
+    display: inline-block;
+    width: 100px;
+    font-size: 10pt;
+}
+#class-student-goal .goal {
+    display: inline-block;
+    width: 650px;
+}
+
+#class-student-goal a.objective {
+    display: inline-block;
+    margin: 0px;
+    padding: 0px;
+
+    width: 100px;
+    height: 18px;
+    font-size: 8pt;
+}
+
+a.objective.proficient {
+    background-color: #0080C9;
+    color: #eee !important;
+}
+a.objective.suggested {
+    background-color: #73982C;
+    color: #eee !important;
+}
+a.objective.review {
+    background-color: #E35D04;
+    color: #eee !important;
+}
+a.objective.review.light {
+    background-color: #f2b891;
+    color: #333 !important;
+}
+a.objective.not-started {
+    background-color: #ccc;
+}
+a.objective.struggling {
+    background-color: #C30202;
+    color: #dfdfdf !important;
+}
+a.objective.started {
+    background-color: #c7e5f7;
+}

@@ -232,8 +232,7 @@ var Profile = {
     },
 
     loadGraph: function(href, fNoHistoryEntry) {
-        var apiCall = null;
-        var apiDataName;
+        var apiCallback = null;
 
         if (!href) return;
 
@@ -247,25 +246,23 @@ var Profile = {
         this.fLoadedGraph = true;
 
         if (href.indexOf('/api/v1/user/goals') > -1) {
-            apiCall = 'goals-all';
-            apiDataName = 'goals';
+            apiCallback = this.renderUserGoals;
         } else if (href.indexOf('/api/v1/user/students/goals') > -1) {
-            apiCall = 'profile-student-goals';
-            apiDataName = 'data';
+            apiCallback = this.renderStudentGoals;
         }
 
         $.ajax({type: "GET",
                 url: Timezone.append_tz_offset_query_param(href),
                 data: {},
-                dataType: apiCall ? 'json' : 'html',
-                success: function(data){ Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCall, apiDataName); },
+                dataType: apiCallback ? 'json' : 'html',
+                success: function(data){ Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback); },
                 error: function() { Profile.finishLoadGraphError(); }
         });
         $("#graph-content").html("");
         this.showGraphThrobber(true);
     },
 
-    finishLoadGraph: function(data, href, fNoHistoryEntry, apiCall, apiDataName) {
+    finishLoadGraph: function(data, href, fNoHistoryEntry, apiCallback) {
 
         this.fLoadingGraph = false;
 
@@ -279,13 +276,60 @@ var Profile = {
         this.showGraphThrobber(false);
         this.styleSublinkFromHref(href);
 
-        if (apiCall) {
-            var context = {};
-            context[apiDataName] = data;
-            $("#graph-content").html($('#' + apiCall + '-tmpl').tmplPlugin(context));
+        if (apiCallback) {
+            apiCallback(data);
         } else {
             $("#graph-content").html(data);
         }
+    },
+
+    renderUserGoals: function(data) {
+        $("#graph-content").html($('#goals-all-tmpl').tmplPlugin({'goals':data}));
+    },
+    renderStudentGoals: function(data) {
+        var goal_list = []
+
+        $.each(data, function(idx1, student) {
+            if (student.goals != undefined) {
+                $.each(student.goals, function(idx2, goal) {
+                    // Sort objectives by status
+                    var statuses = ['started','struggling','proficient'];
+                    var proficient_count = 0;
+                    goal.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
+                    $.each(goal.objectives, function(idx3, objective) {
+                        if (objective.status == 'proficient')
+                            proficient_count++;
+                    });
+                    goal_list.push({student:student,goal:goal,proficient_count:proficient_count});
+                });
+            } else {
+                goal_list.push({student:student,proficient_count:-1});
+            }
+        });
+        
+        $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
+
+        $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
+    },
+    updateStudentGoals: function(goal_list) {
+        var sort = $("#student-goals-sort").val();
+
+        if (sort == 'Name') {
+            goal_list.sort(function(a,b) {
+                if (b.student.nickname > a.student.nickname)
+                    return -1;
+                if (b.student.nickname < a.student.nickname)
+                    return 1;
+                return 0;
+            });
+        } else if (sort == 'Progress') {
+            goal_list.sort(function(a,b) { return a.proficient_count - b.proficient_count; });
+        }
+        
+        $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
+
+        $("#student-goals-sort").val(sort);
+        $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
     },
 
     finishLoadGraphError: function() {

@@ -10,15 +10,28 @@
 
 {% raw %}
 <script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
-<!-- TomY TODO make this prettier -->
-{{each(idx, student) data}}
-  <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${nickname}</a></div>
-  {{if goals}}
-    {{tmplPlugin(goals) "#goals-nav-tmpl"}}
+<div>
+  <div>Sort by:</div>
+  <div><select id="student-goals-sort"><option>Name</option><option>Progress</option><option>Start date</option></select>
+</div>
+<div id="class-student-goal">
+{{each(idx, row) goal_list}}
+  <div>
+  <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a></div>
+  {{if row.goal}}
+    <div class="goal" data-id="${row.goal.id}">
+        <ul class="inline-list">
+        {{each row.goal.objectives}}
+            <li><a class="objective ${$value.status} action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+        {{/each}}
+        </ul>
+    </div>
   {{else}}
     Student has no goals.
   {{/if}}
+  </div>
 {{/each}}
+</div>
 </script>
 {% endraw %}
 {% endblock pagescript %}
@@ -114,6 +127,12 @@
             {{ profile_macros.class_api_link(user_data_coach, "Goals", "user/students/goals", selected_graph_type, list_id) }}
             <p class="accordion-content">
                 Shows active student goals and progress toward completion of those goals.
+                <span class="graph-options">
+                    <span class="progress-legend exercise-color started">Started</span>                
+                    <span class="progress-legend exercise-color proficient">Proficient</span>
+                    <span class="progress-legend exercise-color review light">Review</span>
+                    <span class="progress-legend exercise-color struggling">Struggling</span>
+                </span>
             </p>
         </li>
     </ul>
