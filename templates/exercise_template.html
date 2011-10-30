@@ -71,8 +71,8 @@
 
         {% elif alternate_hints_treatment == "full_solution" %}
 
-            jQuery( Khan ).bind( "checkAnswer", function(e, correct) {
-                if ( correct ) return;
+            jQuery( Khan ).bind( "checkAnswer", function(e, pass) {
+                if ( pass === true ) return;
 
                 // Show all hints if incorrectly answered
                 while ( !jQuery( "#hint" ).is( ":disabled" ) ) {
