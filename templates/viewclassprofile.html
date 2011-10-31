@@ -12,7 +12,7 @@
 <script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
 <div>
   <div>Sort by:</div>
-  <div><select id="student-goals-sort"><option>Name</option><option>Progress</option><option>Start date</option></select>
+  <div><select id="student-goals-sort"><option value="name">Name</option><option value="progress">Progress</option><option value="created">Start date</option></select>
 </div>
 <div id="class-student-goal">
 {{each(idx, row) goal_list}}
@@ -20,6 +20,9 @@
   <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a>
     {{if row.student.goal_count > 1}}
       (${row.goal_idx}/${row.student.goal_count})
+    {{/if}}
+    {{if row.goal}}
+      <div class="goal-start-time">${row.goal.created_ago}</div>
     {{/if}}
   </div>
   {{if row.goal}}

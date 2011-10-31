@@ -316,7 +316,7 @@ var Profile = {
     updateStudentGoals: function(goal_list) {
         var sort = $("#student-goals-sort").val();
 
-        if (sort == 'Name') {
+        if (sort == 'name') {
             goal_list.sort(function(a,b) {
                 if (b.student.nickname > a.student.nickname)
                     return -1;
@@ -324,8 +324,22 @@ var Profile = {
                     return 1;
                 return a.goal_idx-b.goal_idx;
             });
-        } else if (sort == 'Progress') {
+        } else if (sort == 'progress') {
             goal_list.sort(function(a,b) { return a.proficient_count - b.proficient_count; });
+        } else if (sort == 'created') {
+            goal_list.sort(function(a,b) {
+                if (a.goal && !b.goal)
+                    return -1;
+                if (b.goal && !a.goal)
+                    return 1;
+                if (a.goal && b.goal) {
+                    if (b.goal.created > a.goal.created)
+                        return -1;
+                    if (b.goal.created < a.goal.created)
+                        return 1;
+                }
+                return 0;
+            });
         }
         
         $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));

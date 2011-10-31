@@ -17,6 +17,9 @@ a.objective {
     width: 120px;
     font-size: 10pt;
 }
+#class-student-goal .goal-start-time {
+    font-size: 8pt;
+}
 #class-student-goal .goal {
     display: inline-block;
     width: 650px;
@@ -28,7 +31,7 @@ a.objective {
     padding: 0px;
 
     width: 100px;
-    height: 18px;
+    height: 24px;
     font-size: 8pt;
 }
 

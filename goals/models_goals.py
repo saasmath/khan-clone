@@ -4,12 +4,14 @@
 import datetime
 import models
 import logging
+import templatefilters
 
 from google.appengine.ext import db
 from google.appengine.ext.db import polymodel, Key
 
 class Goal(db.Model):
     title = db.StringProperty()
+    createdDate = db.DateTimeProperty()
     active = False
 
     @staticmethod
@@ -29,6 +31,7 @@ class Goal(db.Model):
         # Create the new goal
         new_goal = Goal(goal_list)
         new_goal.title = title
+        new_goal.createdDate = datetime.datetime.now()
         new_goal.put()
 
         # Set the goal active
@@ -49,6 +52,8 @@ class Goal(db.Model):
         goal_ret['title'] = self.title
         goal_ret['objectives'] = []
         goal_ret['active'] = self.active
+        goal_ret['created'] = self.createdDate
+        goal_ret['created_ago'] = templatefilters.timesince_ago(self.createdDate)
         for objective in objectives:
             if objective.parent_key() == self.key():
                 objective_ret = {}
