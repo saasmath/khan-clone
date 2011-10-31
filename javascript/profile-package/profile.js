@@ -290,6 +290,7 @@ var Profile = {
         var goal_list = []
 
         $.each(data, function(idx1, student) {
+            student.goal_count = 0;
             if (student.goals != undefined) {
                 $.each(student.goals, function(idx2, goal) {
                     // Sort objectives by status
@@ -300,14 +301,15 @@ var Profile = {
                         if (objective.status == 'proficient')
                             proficient_count++;
                     });
-                    goal_list.push({student:student,goal:goal,proficient_count:proficient_count});
+                    student.goal_count++;
+                    goal_list.push({student:student,goal:goal,proficient_count:proficient_count,goal_idx:student.goal_count});
                 });
             } else {
                 goal_list.push({student:student,proficient_count:-1});
             }
         });
         
-        $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
+        Profile.updateStudentGoals(goal_list);
 
         $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
     },
@@ -320,7 +322,7 @@ var Profile = {
                     return -1;
                 if (b.student.nickname < a.student.nickname)
                     return 1;
-                return 0;
+                return a.goal_idx-b.goal_idx;
             });
         } else if (sort == 'Progress') {
             goal_list.sort(function(a,b) { return a.proficient_count - b.proficient_count; });

@@ -214,7 +214,10 @@ class GoalObjectiveWatchVideo(GoalObjective):
         new_objective.description = video.title
 
         user_video = models.UserVideo.get_for_video_and_user_data(video, user_data)
-        new_objective.progress = user_video.progress
+        if user_video:
+            new_objective.progress = user_video.progress
+        else:
+            new_objective.progress = 0.0
 
         new_objective.put()
         return new_objective

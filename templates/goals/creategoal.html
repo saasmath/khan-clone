@@ -256,9 +256,20 @@ var GoalCreator = {
     },
     submit: function() {
         var form = $('#create-goal');
+        var html = '';
 
         if (!GoalCreator.validate(form))
             return;
+
+        $.each(GoalCreator.objectives, function(idx, objective) {
+            html += '<input type="hidden" name="objective' + objective.idx + '_type" value="' + objective.type + '">';
+            if (objective.type == 'GoalObjectiveExerciseProficiency') {
+                html += '<input type="hidden" name="objective' + objective.idx + '_exercise" value="' + objective.id + '">';
+            } else if (objective.type == 'GoalObjectiveWatchVideo') {
+            html += '<input type="hidden" name="objective' + objective.idx + '_video" value="' + objective.id + '">';
+            }
+        });
+        $('#goal-hidden-values').html(html);
 
         $.ajax({
             url: "/api/v1/user/goals/create",
@@ -272,6 +283,9 @@ var GoalCreator = {
                 $('#goal-commit-response').html('Goal creation failed: ' + jqXHR.responseText);
             },
         });
+
+        $('#goal-hidden-values').html('');
+
         return false;
     },
 };
@@ -292,12 +306,13 @@ $(function() {
 <form id="create-goal" action="javascript:">
   <div>
     <span id="goal-commit-response" style="color:#f00"></span>
-    <h2>Goal title: <input type="text" name="title"></input> <a href="javascript:GoalCreator.submit();" style="float: right;"><span class="simple-button action-gradient">Create New Goal<span></a></h2>
+    <h2>Goal title: <input type="text" name="title"></input> <a onclick="javascript:GoalCreator.submit();" style="float: right;"><span class="simple-button action-gradient">Create New Goal<span></a></h2>
   </div>
   <div>
     <h2>Preview:</h2>
     <div id="goal-view"></div>
     <div id="goal-description" style="clear: left;"></div>
+    <div id="goal-hidden-values"></div>
   </div>
 </form>
 

@@ -17,7 +17,11 @@
 <div id="class-student-goal">
 {{each(idx, row) goal_list}}
   <div>
-  <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a></div>
+  <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a>
+    {{if row.student.goal_count > 1}}
+      (${row.goal_idx}/${row.student.goal_count})
+    {{/if}}
+  </div>
   {{if row.goal}}
     <div class="goal" data-id="${row.goal.id}">
         <ul class="inline-list">
