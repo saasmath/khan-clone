@@ -7,6 +7,51 @@
 
 {% block pagescript %}
 {{ js_css_packages.css_package("studentlists") }}
+ name="student-goals-filter"
+{% raw %}
+<script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
+<div>
+  <div>Sort by:</div>
+  <div><select id="student-goals-sort"><option value="name">Name</option><option value="progress">Progress</option><option value="created">Start date</option><option value="updated">Updated date</option></select></div>
+</div>
+<div>
+  <div>Filter by:</div>
+  <div>
+    <input type="radio" name="student-goals-filter" id="student-goals-filter-all" checked>All</input>
+    <input type="radio" name="student-goals-filter" id="student-goals-filter-most-recent" selected>Recently updated</input>
+    <input type="radio" name="student-goals-filter" id="student-goals-filter-in-progress" selected>In progress</input>
+  </div>
+</div>
+<div id="class-student-goal">
+{{each(idx, row) goal_list}}
+{{if row.visible}}
+  <div>
+  <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a>
+    {{if row.student.goal_count > 1 && row.show_counts }}
+      (${row.goal_idx}/${row.student.goal_count})
+    {{/if}}
+    {{if row.goal}}
+      <div class="goal-start-time">Started ${row.goal.created_ago}</div>
+      <div class="goal-update-time">Updated ${row.goal.updated_ago}</div>
+    {{/if}}
+  </div>
+  {{if row.goal}}
+    <div class="goal" data-id="${row.goal.id}">
+        <ul class="inline-list">
+        {{each row.goal.objectives}}
+            <li><a class="objective ${$value.status} action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+        {{/each}}
+        </ul>
+    </div>
+  {{else}}
+    Student has no goals.
+  {{/if}}
+  </div>
+{{/if}}
+{{/each}}
+</div>
+</script>
+{% endraw %}
 {% endblock pagescript %}
 
 {% block pagesubmenu %}
@@ -94,6 +139,18 @@
             {{ profile_macros.class_graph_link(user_data_coach, "Class Points per Minute", "classenergypointsperminute", selected_graph_type, list_id) }}
             <p class="accordion-content">
                 Shows your total class energy points per minute as a continuously updating rolling average.
+            </p>
+        </li>
+        <li>
+            {{ profile_macros.class_api_link(user_data_coach, "Goals", "user/students/goals", selected_graph_type, list_id) }}
+            <p class="accordion-content">
+                Shows active student goals and progress toward completion of those goals.
+                <span class="graph-options">
+                    <span class="progress-legend exercise-color started">Started</span>                
+                    <span class="progress-legend exercise-color proficient">Proficient</span>
+                    <span class="progress-legend exercise-color review light">Review</span>
+                    <span class="progress-legend exercise-color struggling">Struggling</span>
+                </span>
             </p>
         </li>
     </ul>

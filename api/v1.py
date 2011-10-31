@@ -22,7 +22,7 @@ from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
-from api.api_util import api_error_response, api_invalid_param_response, api_created_response
+from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
 
 import simplejson as json
 
@@ -737,7 +737,6 @@ def autocomplete():
     playlist_results = []
 
     query = request.request_string("q", default="").strip().lower()
-
     if query:
 
         max_results_per_type = 10
@@ -749,7 +748,169 @@ def autocomplete():
         playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
 
     return {
-            "query": query, 
-            "videos": video_results, 
+            "query": query,
+            "videos": video_results,
             "playlists": playlist_results
     }
+
+@route("/api/v1/user/goals", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_goals():
+    student = models.UserData.current() or models.UserData.pre_phantom()
+
+    user_override = request.request_user_data("student_email")
+    if user_override and user_override.key_email != student.key_email:
+        if not user_override.is_visible_to(student):
+            return api_unauthorized_response("Cannot view this profile")
+        else:
+            # Allow access to this student's profile
+            student = user_override
+
+    return GoalList.get_visible_for_user(student)
+
+@route("/api/v1/user/students/goals", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_student_goals():
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User is not logged in.")
+
+    student_list = None
+
+    # TomY TODO test/improve the performance of this
+    
+    student_list_key = request.request_string('list_id')
+    if student_list_key and student_list_key != 'allstudents':
+        student_lists = models.StudentList.get_for_coach(user_data.key())
+        for list in student_lists:
+            if str(list.key()) == student_list_key:
+                student_list = list
+                break
+        if not student_list:
+            return api_invalid_param_response("Invalid list ID.")
+
+    if student_list:
+        students = student_list.get_students_data()
+    else:
+        students = user_data.get_students_data()
+
+    students = sorted(students, key=lambda student: student.nickname)
+    user_exercise_graphs = models.UserExerciseGraph.get(students)
+
+    return_data = []
+    for idx, student in enumerate(students):
+        student_data = {}
+        student_data['email'] = student.email
+        student_data['nickname'] = student.nickname
+        student_data['goals'] = GoalList.get_visible_for_user(student, user_exercise_graphs[idx])
+        return_data.append(student_data)
+
+    return return_data
+
+# LOGIN? TomY TODO
+@route("/api/v1/user/goals/create", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def create_user_goal():
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User is not logged in.")
+
+    user_override = request.request_user_data("email")
+    if user_data.developer and user_override and user_override.key_email != user_data.key_email:
+        user_data = user_override
+
+    goal_data = user_data.get_goal_data()
+    title = request.request_string("title")
+
+    if not title:
+        return api_invalid_param_response('Title is invalid.')
+
+    objective_descriptors = []
+    valid_count = 0
+
+    for idx in xrange(1,40):
+        base_str = 'objective'+str(idx)
+        if request.request_string(base_str+'_type'):
+            objective_descriptor = {}
+            objective_descriptor['type'] = request.request_string(base_str+'_type');
+            objective_descriptors.append(objective_descriptor)
+
+            if objective_descriptor['type'] == 'GoalObjectiveExerciseProficiency':
+                objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
+                if not objective_descriptor['exercise'] or not objective_descriptor['exercise'].is_visible_to_current_user():
+                    return api_invalid_param_response("Internal error: Could not find exercise.")
+                if user_data.is_proficient_at(objective_descriptor['exercise'].name):
+                    return api_invalid_param_response("Exercise has already been completed.")
+                valid_count += 1
+
+            if objective_descriptor['type'] == 'GoalObjectiveWatchVideo':
+                objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
+                if not objective_descriptor['video']:
+                    return api_invalid_param_response("Internal error: Could not find video.")
+                user_video = models.UserVideo.get_for_video_and_user_data(objective_descriptor['video'], user_data)
+                if user_video and user_video.completed:
+                    return api_invalid_param_response("Video has already been watched.")
+                valid_count += 1
+
+    if valid_count == 0:
+        return api_invalid_param_response("No objectives specified.")
+
+    Goal.create(user_data, goal_data, title, objective_descriptors)
+
+    return api_created_response("Goal created")
+
+# LOGIN? TomY TODO
+@route("/api/v1/user/goals/delete", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_goal():
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    goal_data = user_data.get_goal_data()
+
+    goal_to_delete = request.request_int('id')
+    if not GoalList.delete_goal(user_data, goal_to_delete):
+        return { "error": "Internal error: Failed to delete goal." }
+
+    return "Goal deleted"
+
+@route("/api/v1/user/goals/<id>/activate", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def activate_user_goal(id):
+    user_data = models.UserData.current()
+    if not user_data:
+        api_invalid_param_response("User not logged in")
+
+    if not GoalList.activate_goal(user_data, id):
+        return { "error": "Internal error: Failed to activate goal." }
+
+    return "Goal activated"
+
+# Developer only perhaps? TomY TODO
+@route("/api/v1/user/goals/deleteall", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_goals():
+    user_data = models.UserData.current()
+    if not user_data.developer:
+        return api_unauthorized_response("UNAUTHORIZED");
+
+    user_override = request.request_user_data("email")
+    if user_override and user_override.key_email != user_data.key_email:
+        user_data = user_override
+
+    GoalList.delete_all_goals(user_data)
+
+    return "Goals deleted"

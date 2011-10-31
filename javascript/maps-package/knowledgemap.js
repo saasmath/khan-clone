@@ -29,9 +29,9 @@ var KnowledgeMap = {
                     Normal: "/images/node-not-started.png?" + KA_VERSION
                       },
             Summative: {
-                    Normal: "images/node-challenge-not-started.png?" + KA_VERSION,
-                    Proficient: "images/node-challenge-complete.png?" + KA_VERSION,
-                    Suggested: "images/node-challenge-suggested.png?" + KA_VERSION
+                    Normal: "/images/node-challenge-not-started.png?" + KA_VERSION,
+                    Proficient: "/images/node-challenge-complete.png?" + KA_VERSION,
+                    Suggested: "/images/node-challenge-suggested.png?" + KA_VERSION
                        }
     },
     latLngHome: new google.maps.LatLng(-0.064844, 0.736268),

@@ -80,17 +80,14 @@
     </head>
 
     <body class="light">
+    <div id="goals-current-container" style="display: none"></div>
+    <div id="goals-nav-container" style="display: none"></div>
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
     <div id="page-container">
     <div id="page-container-inner">
         {# Facebook connect root #}
         <div id="fb-root"></div>
-
-        <script id="goals-tmpl" type="text/x-jquery-tmpl">
-            <span><a href="/goals/view">${title}</a>: ${progress}%</span>
-            <span class="separator"></span>
-        </script>
 
         {# Make script-requiring elements visible. #}
         <script>document.writeln('<style scoped type="text/css">a[href="#"], .requires_script { visibility: visible; }</style>');</script>
@@ -204,5 +201,42 @@
     {%- endif -%}
 
     {{ gae_mini_profiler.profiler_includes() }}
+
+    {#- templates for goals -#}
+    {# goal drawer #}
+    <script id="goals-tmpl" type="text/x-jquery-tmpl">
+        <a id="goals-drawer">${title}: ${progress}%</a>
+        <span class="separator"></span>
+    </script>
+
+    {#- active goal nav bar -#}
+    {%- raw -%}
+    <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
+        <div class="goal" data-id="${id}">
+            <div>
+                <a href="/profile?graph_url=/api/v1/user/goals">${title}</a>:
+                ${progress}%
+                {{if active}}(active!)
+                {{else}}
+                <a class="simple-button action-gradient green activate" href="#">Activate</a>
+                {{/if}}
+                (Started ${created_ago})
+            </div>
+            <ul class="inline-list">
+            {{each objectives}}
+                <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+            {{/each}}
+            </ul>
+        </div>
+    </script>
+
+    <script id="goals-all-tmpl" type="text/x-jquery-tmpl">
+        <div class="all-goals">
+            {{each goals}}
+            {{tmplPlugin($value) "#goals-nav-tmpl"}}
+            {{/each}}
+        </body>
+    </script>
+    {%- endraw -%}
     </body>
 </html>
