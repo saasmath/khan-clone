@@ -12,6 +12,10 @@ a.objective {
     overflow: hidden;
 }
 
+#goals-current-container, #goals-nav-container {
+    margin-left: 100px;
+}
+
 #class-student-goal .student-name {
     display: inline-block;
     width: 120px;
