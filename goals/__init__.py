@@ -92,6 +92,6 @@ def update_goals(user_data, user_entity, kind):
     objectives = GoalList.get_from_data(goal_data, kind)
     changes = []
     for objective in objectives:
-        if objective.record_progress(user_data, user_entity):
+        if objective.record_progress(user_data, goal_data, user_entity):
             changes.append(objective)
     db.put(changes)
