@@ -93,7 +93,7 @@ var GoalCreator = {
             objectives: GoalCreator.objectives
         };
 
-        var view = $("#goals-nav-tmpl").tmplPlugin(goalObject);
+        var view = $("#goals-create-tmpl").tmplPlugin(goalObject);
         $("#goal-view").html(view);
 
         var message = '';
@@ -325,14 +325,13 @@ $(function() {
 
 {% block pagecontent %}
 <article>
-<div><h1 class="section-headline">Create a new goal:<h1></div>
 <form id="create-goal" action="javascript:">
-  <div>
+  <div class="section-headline">
     <span id="goal-commit-response" style="color:#f00"></span>
-    <h2>Goal title: <input type="text" name="title"></input> <a onclick="javascript:GoalCreator.submit();" style="float: right;"><span class="simple-button action-gradient">Create New Goal<span></a></h2>
+    <a onclick="javascript:GoalCreator.submit();" style="float: right;"><span class="simple-button action-gradient">Create New Goal<span></a>
+    <h2><input type="text" name="title"></input></h2>
   </div>
   <div>
-    <h2>Preview:</h2>
     <div id="goal-view"></div>
     <div id="goal-description" style="clear: left;"></div>
     <div id="goal-hidden-values"></div>
@@ -341,8 +340,6 @@ $(function() {
 
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showExercises();">Choose exercises</a> (<span id="goal-exercise-count">0</span> selected)</div>
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showVideos();">Choose videos</a> (<span>0</span> selected)</div>
-<a href="#" class="any-exercise simple-button action-gradient green">5 Exercises</a>
-<a href="#" class="any-video simple-button action-gradient green">5 Videos</a>
 
 <div id="container" style="clear: left" class="dashboard{% if not logged_in %} unregistered{% endif %}">
   <div id="goal-choose-exercises" style="display: none;">
@@ -367,5 +364,18 @@ $(function() {
   </div>
 </div>
 </article>
+
+{%- raw -%}
+<script id="goals-create-tmpl" type="text/x-jquery-tmpl">
+    <div class="goal">
+        <ul class="inline-list">
+        {{each objectives}}
+            <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+        {{/each}}
+        </ul>
+    </div>
+</script>
+{%- endraw -%}
+
 {% endblock pagecontent %}
 
