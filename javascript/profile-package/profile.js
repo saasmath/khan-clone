@@ -291,30 +291,51 @@ var Profile = {
 
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
+            student.most_recent_update = null;
+
             if (student.goals != undefined) {
                 $.each(student.goals, function(idx2, goal) {
                     // Sort objectives by status
                     var statuses = ['started','struggling','proficient'];
-                    var proficient_count = 0;
+                    var progress_count = 0;
                     goal.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
                     $.each(goal.objectives, function(idx3, objective) {
                         if (objective.status == 'proficient')
-                            proficient_count++;
+                            progress_count += 1000;
+                        else if (objective.status == 'started' || objective.status == 'struggling')
+                            progress_count += 1;
                     });
+
+                    if (!student.most_recent_update || goal.updated > student.most_recent_update)
+                        student.most_recent_update = goal;
+
                     student.goal_count++;
-                    goal_list.push({student:student,goal:goal,proficient_count:proficient_count,goal_idx:student.goal_count});
+                    goal_list.push({
+                        student: student,
+                        goal: goal,
+                        progress_count: progress_count,
+                        goal_idx: student.goal_count,
+                        visible: true,
+                        show_counts: true,
+                    });
                 });
             } else {
-                goal_list.push({student:student,proficient_count:-1});
+                goal_list.push({student:student,progress_count:-1});
             }
         });
         
         Profile.updateStudentGoals(goal_list);
 
         $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
+        $("input[name=\"student-goals-filter\"]").change(function() { Profile.updateStudentGoals(goal_list) });
     },
     updateStudentGoals: function(goal_list) {
         var sort = $("#student-goals-sort").val();
+        var filter = 'all';
+        if ($('#student-goals-filter-most-recent').is(":checked"))
+            filter = 'most-recent';
+        if ($('#student-goals-filter-in-progress').is(":checked"))
+            filter = 'in-progress';
 
         if (sort == 'name') {
             goal_list.sort(function(a,b) {
@@ -325,7 +346,7 @@ var Profile = {
                 return a.goal_idx-b.goal_idx;
             });
         } else if (sort == 'progress') {
-            goal_list.sort(function(a,b) { return a.proficient_count - b.proficient_count; });
+            goal_list.sort(function(a,b) { return b.progress_count - a.progress_count; });
         } else if (sort == 'created') {
             goal_list.sort(function(a,b) {
                 if (a.goal && !b.goal)
@@ -340,12 +361,40 @@ var Profile = {
                 }
                 return 0;
             });
+        } else if (sort == 'updated') {
+            goal_list.sort(function(a,b) {
+                if (a.goal && !b.goal)
+                    return -1;
+                if (b.goal && !a.goal)
+                    return 1;
+                if (a.goal && b.goal) {
+                    if (b.goal.updated > a.goal.updated)
+                        return 1;
+                    if (b.goal.updated < a.goal.updated)
+                        return -1;
+                }
+                return 0;
+            });
         }
+
+        $.each(goal_list, function(idx, row) {
+            if (filter == 'most-recent') {
+                row.visible = !row.goal || (row.goal == row.student.most_recent_update);
+            } else if (filter == 'in-progress') {
+                row.visible = row.goal && (row.progress_count > 0);
+            } else {
+                row.visible = true;
+            }
+            row.show_counts = !(filter == 'most-recent');
+        });
         
         $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
 
         $("#student-goals-sort").val(sort);
         $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
+
+        $('#student-goals-filter-'+filter).prop("checked", true);
+        $("input[name=\"student-goals-filter\"]").change(function() { Profile.updateStudentGoals(goal_list) });
     },
 
     finishLoadGraphError: function() {

@@ -24,6 +24,9 @@ a.objective {
 #class-student-goal .goal-start-time {
     font-size: 8pt;
 }
+#class-student-goal .goal-update-time {
+    font-size: 8pt;
+}
 #class-student-goal .goal {
     display: inline-block;
     width: 650px;

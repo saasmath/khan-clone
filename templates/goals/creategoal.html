@@ -5,6 +5,9 @@
 {% block meta_page_title %}Create New Goal | {% endblock meta_page_title %}
 
 {% block pagescript %}
+<style>
+        #page_sub_nav { display: none; }
+</style>
 <script>
 
 var GoalCreator = {
@@ -311,7 +314,8 @@ $(function() {
 {% endblock pagescript %}
 
 {% block pagecontent %}
-<div><h1>Create a new goal:<h1></div>
+<article id="create-goal">
+<div><h1 class="section-headline">Create a new goal:<h1></div>
 <form id="create-goal" action="javascript:">
   <div>
     <span id="goal-commit-response" style="color:#f00"></span>
@@ -352,6 +356,6 @@ $(function() {
     </div>
   </div>
 </div>
-
+</article>
 {% endblock pagecontent %}
 

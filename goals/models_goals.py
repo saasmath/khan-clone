@@ -11,6 +11,7 @@ from google.appengine.ext.db import polymodel, Key
 class Goal(db.Model):
     title = db.StringProperty()
     createdDate = db.DateTimeProperty()
+    updateDate = db.DateTimeProperty()
     active = False
 
     @staticmethod
@@ -31,6 +32,7 @@ class Goal(db.Model):
         new_goal = Goal(goal_list)
         new_goal.title = title
         new_goal.createdDate = datetime.datetime.now()
+        new_goal.updateDate = datetime.datetime.now()
         new_goal.put()
 
         # Set the goal active
@@ -55,6 +57,8 @@ class Goal(db.Model):
         goal_ret['active'] = self.active
         goal_ret['created'] = self.createdDate
         goal_ret['created_ago'] = templatefilters.timesince_ago(self.createdDate)
+        goal_ret['updated'] = self.updateDate
+        goal_ret['updated_ago'] = templatefilters.timesince_ago(self.updateDate)
         for objective in objectives:
             if objective.parent_key() == self.key():
                 objective_ret = {}
@@ -154,6 +158,12 @@ class GoalObjective(polymodel.PolyModel):
     def record_progress(self):
         return False
 
+    def update_parent(self, goal_data):
+        parent_goal = [goal for goal in GoalList.get_from_data(goal_data, Goal) if self.parent_key() == goal.key()]
+        if parent_goal:
+            parent_goal[0].updateDate = datetime.datetime.now()
+            parent_goal[0].put()
+
     def record_complete(self):
         self.progress = 1.0
 
@@ -179,13 +189,14 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def url(self):
         return self.exercise.relative_url
 
-    def record_progress(self, user_data, user_exercise):
+    def record_progress(self, user_data, goal_data, user_exercise):
         if self.exercise.key() == user_exercise.exercise_model.key():
             if user_data.is_proficient_at(user_exercise.exercise):
                 self.progress = 1.0
             else:
                 self.progress = user_exercise.progress
             return True
+        self.update_parent(goal_data)
         return False
 
     def getStatus(self, user_exercise_graph):
@@ -253,11 +264,12 @@ class GoalObjectiveWatchVideo(GoalObjective):
     def url(self):
         return self.video.ka_url
 
-    def record_progress(self, user_data, user_video):
+    def record_progress(self, user_data, goal_data, user_video):
         obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(self)
         video_key = models.UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
+            self.update_parent(goal_data)
             return True
         return False
 

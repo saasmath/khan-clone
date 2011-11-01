@@ -3,6 +3,9 @@
 {% block meta_page_title %}View Goals | {% endblock meta_page_title %}
 
 {% block pagescript %}
+<style>
+        #page_sub_nav { display: none; }
+</style>
 <script>
 // TomY TODO: Delete this whole file once all this functionality has moved into the user profile
 var GoalViewer = {
@@ -33,10 +36,10 @@ $(function() {
 {% endblock pagescript %}
 
 {% block pagecontent %}
-
+<article id="show-goals">
 {% if status == 'notloggedin' %}
 
-<div><h1>You must log in to create goals.</h1></div>
+<div><h1 class="section-headline">You must log in to create goals.</h1></div>
 
 {% else %}
 
@@ -46,7 +49,7 @@ $(function() {
 <div>Failed to create goal.</div>
 {% endif %}
 
-<div><h1>Goals: {{ goals_count }}<h1></div>
+<div><h1 class="section-headline">Goals: {{ goals_count }}<h1></div>
 {% for goal in goals %}
   <div>Goal: {{ goal.title|escape }}</div>
   <ul>
@@ -60,5 +63,6 @@ $(function() {
 <div><h3><a href="/goals/new">New goal...</a></h3></div>
 
 {% endif %}
+</article>
 {% endblock pagecontent %}
 
