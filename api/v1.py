@@ -274,7 +274,12 @@ def user_data_other():
     if user_data:
         user_data_student = get_visible_user_data_from_request()
         if user_data_student:
-            return user_data_student
+            student_data = user_data_student
+	    list_names = []
+	    for sl in student_data.student_lists:
+		list_names.append(StudentList.get_by_key_name(sl).name)
+            student_data.student_lists = list_names
+	    return student_data
 
     return None
 
