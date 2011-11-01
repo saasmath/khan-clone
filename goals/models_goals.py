@@ -3,7 +3,6 @@
 
 import datetime
 import models
-import logging
 import templatefilters
 
 from google.appengine.ext import db
@@ -45,6 +44,8 @@ class Goal(db.Model):
                 GoalObjectiveExerciseProficiency.create(new_goal, descriptor['exercise'], user_data)
             if descriptor['type'] == 'GoalObjectiveWatchVideo':
                 GoalObjectiveWatchVideo.create(new_goal, descriptor['video'], user_data)
+            if descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
+                GoalObjectiveAnyExerciseProficiency(new_goal, description="Any exercise").put()
 
         return new_goal
 
@@ -165,7 +166,10 @@ class GoalObjective(polymodel.PolyModel):
 
     def record_complete(self):
         self.progress = 1.0
-        return True
+
+    @property
+    def is_completed(self):
+        return self.progress >= 1.0
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
@@ -175,7 +179,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def create(parent_goal, exercise, user_data):
         new_objective = GoalObjectiveExerciseProficiency(parent_goal)
         new_objective.exercise = exercise
-        new_objective.description = models.Exercise.to_display_name(exercise.name)
+        new_objective.description = exercise.display_name
 
         new_objective.progress = user_data.get_or_insert_exercise(exercise).progress
 
@@ -212,12 +216,31 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
                 status = "proficient"
 #                if not graph_dict["explicitly_proficient"]:
  #                   status = "Proficient (due to proficiency in a more advanced module)"
-                    
+
         elif graph_dict["struggling"]:
             status = "struggling"
         elif graph_dict["total_done"] > 0:
             status = "started"
         return status
+
+class GoalObjectiveAnyExerciseProficiency(GoalObjective):
+    # which exercise fulfilled this objective, set upon completion
+    exercise = db.ReferenceProperty(models.Exercise)
+
+    def url(self):
+        return "/exercisedashboard"
+
+    def record_complete(self, exercise):
+        super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
+        self.exercise = exercise
+        self.description = models.Exercise.to_display_name(exercise.name)
+        return True
+
+    def getStatus(self, user_exercise_graph):
+        if self.exercise:
+            return "proficient"
+        else:
+            return ""
 
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
