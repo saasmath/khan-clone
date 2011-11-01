@@ -374,6 +374,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if attempt_number == 1:
             user_exercise.schedule_review(completed)
 
+        just_earned_proficiency = False
+
         if completed:
 
             user_exercise.total_done += 1
@@ -409,6 +411,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                     user_exercise.streak_start = 0.0
 
                 if user_exercise.streak >= exercise.required_streak and not explicitly_proficient:
+                    just_earned_proficiency = True
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
@@ -436,7 +439,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
 
         from goals import update_goals_just_did_exercise
-        update_goals_just_did_exercise(user_data, user_exercise)
+        update_goals_just_did_exercise(user_data, user_exercise, just_earned_proficiency)
 
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])

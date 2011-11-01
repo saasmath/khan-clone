@@ -2,8 +2,8 @@ import request_handler
 import models
 import knowledgemap
 import library
-import logging
-from models_goals import Goal, GoalList, GoalObjective, GoalObjectiveExerciseProficiency, GoalObjectiveWatchVideo
+from models_goals import Goal, GoalList, GoalObjectiveExerciseProficiency, \
+    GoalObjectiveWatchVideo, GoalObjectiveAnyExerciseProficiency
 
 from google.appengine.ext import db
 from api.auth.xsrf import ensure_xsrf_cookie
@@ -84,8 +84,24 @@ class CreateNewGoal(request_handler.RequestHandler):
 def update_goals_just_watched_video(user_data, user_video):
     update_goals(user_data, user_video, GoalObjectiveWatchVideo)
 
-def update_goals_just_did_exercise(user_data, user_exercise):
-    update_goals(user_data, user_exercise, GoalObjectiveExerciseProficiency)
+def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
+    goal_data = user_data.get_goal_data()
+    specific_exercises = GoalList.get_from_data(goal_data, GoalObjectiveExerciseProficiency)
+    any_exercises = GoalList.get_from_data(goal_data, GoalObjectiveAnyExerciseProficiency)
+    changes = []
+    for ex_obj in specific_exercises:
+        if ex_obj.record_progress(user_data, user_exercise):
+            changes.append(ex_obj)
+
+    if became_proficient:
+        # mark off an unfinished any_exercise as complete.
+        for ex_obj in any_exercises:
+            if not ex_obj.is_completed:
+                ex_obj.record_complete(user_exercise.exercise_model)
+                changes.append(ex_obj)
+                break
+
+    db.put(changes)
 
 def update_goals(user_data, user_entity, kind):
     goal_data = user_data.get_goal_data()

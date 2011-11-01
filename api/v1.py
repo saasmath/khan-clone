@@ -782,7 +782,7 @@ def get_student_goals():
     student_list = None
 
     # TomY TODO test/improve the performance of this
-    
+
     student_list_key = request.request_string('list_id')
     if student_list_key and student_list_key != 'allstudents':
         student_lists = models.StudentList.get_for_coach(user_data.key())
@@ -847,6 +847,9 @@ def create_user_goal():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
                 if user_data.is_proficient_at(objective_descriptor['exercise'].name):
                     return api_invalid_param_response("Exercise has already been completed.")
+                valid_count += 1
+
+            if objective_descriptor['type'] == 'GoalObjectiveAnyExerciseProficiency':
                 valid_count += 1
 
             if objective_descriptor['type'] == 'GoalObjectiveWatchVideo':

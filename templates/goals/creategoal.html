@@ -296,6 +296,15 @@ $(function() {
     GoalCreator.showExercises();
     KnowledgeMap.initFilter();
     KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
+
+    $(".any-exercise.simple-button").click(function() {
+        for(var i = 0; i<5; i++) {
+            var id = "any"+i.toString();
+            GoalCreator.toggleObjectiveInternal('GoalObjectiveAnyExerciseProficiency', id, "Any exercise");
+        }
+        GoalCreator.updateExerciseCount();
+        GoalCreator.updateViewAndDescription();
+    });
 });
 
 </script>
@@ -318,6 +327,8 @@ $(function() {
 
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showExercises();">Choose exercises</a> (<span id="goal-exercise-count">0</span> selected)</div>
 <div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showVideos();">Choose videos</a> (<span>0</span> selected)</div>
+<a href="#" class="any-exercise simple-button action-gradient green">5 Exercises</a>
+<a href="#" class="any-video simple-button action-gradient green">5 Videos</a>
 
 <div id="container" style="clear: left" class="dashboard{% if not logged_in %} unregistered{% endif %}">
   <div id="goal-choose-exercises" style="display: none;">
