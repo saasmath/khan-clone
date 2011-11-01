@@ -29,6 +29,25 @@ var GoalCreator = {
             }
         });
 
+        $(".any-exercise.simple-button").click(function(ev) {
+            ev.preventDefault();
+            for(var i = 0; i<5; i++) {
+                var id = "any"+i.toString();
+                GoalCreator.toggleObjectiveInternal('GoalObjectiveAnyExerciseProficiency', id, "Any exercise");
+            }
+            GoalCreator.updateExerciseCount();
+            GoalCreator.updateViewAndDescription();
+        });
+        $(".any-video.simple-button").click(function(ev) {
+            ev.preventDefault();
+            for(var i = 0; i<5; i++) {
+                var id = "any"+i.toString();
+                GoalCreator.toggleObjectiveInternal('GoalObjectiveAnyVideo', id, "Any video");
+            }
+            GoalCreator.updateVideoCount();
+            GoalCreator.updateViewAndDescription();
+        });
+
         var form = $('#create-goal');
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
         form.find('input[name="title"]').val("New Goal").change(function() { GoalCreator.updateViewAndDescription(); } );
@@ -299,22 +318,13 @@ $(function() {
     GoalCreator.showExercises();
     KnowledgeMap.initFilter();
     KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
-
-    $(".any-exercise.simple-button").click(function() {
-        for(var i = 0; i<5; i++) {
-            var id = "any"+i.toString();
-            GoalCreator.toggleObjectiveInternal('GoalObjectiveAnyExerciseProficiency', id, "Any exercise");
-        }
-        GoalCreator.updateExerciseCount();
-        GoalCreator.updateViewAndDescription();
-    });
 });
 
 </script>
 {% endblock pagescript %}
 
 {% block pagecontent %}
-<article id="create-goal">
+<article>
 <div><h1 class="section-headline">Create a new goal:<h1></div>
 <form id="create-goal" action="javascript:">
   <div>

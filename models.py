@@ -1352,9 +1352,6 @@ class VideoLog(db.Model):
         user_video.last_watched = datetime.datetime.now()
         user_video.duration = video.duration
 
-        from goals import update_goals_just_watched_video
-        update_goals_just_watched_video(user_data, user_video)
-
         user_data.last_activity = user_video.last_watched
 
         video_points_total = points.VideoPointCalculator(user_video)
@@ -1367,6 +1364,9 @@ class VideoLog(db.Model):
 
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
+
+        from goals import update_goals_just_watched_video
+        update_goals_just_watched_video(user_data, user_video)
 
         if video_points_received > 0:
             video_log.points_earned = video_points_received
