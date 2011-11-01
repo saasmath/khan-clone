@@ -39,7 +39,7 @@
     <div class="goal" data-id="${row.goal.id}">
         <ul class="inline-list">
         {{each row.goal.objectives}}
-            <li><a class="objective ${$value.status} ${$value.type} action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+            <li><a class="objective ${$value.status} ${$value.type} action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
         {{/each}}
         </ul>
     </div>

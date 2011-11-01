@@ -158,7 +158,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':
                         user_exercise = user_data.get_or_insert_exercise(objective['exercise'])
                         chooser = random.randint(1,200)
-                        if chooser < 30:
+                        if chooser < 60:
                             if chooser > 15:
                                 count = 1
                                 hints = 0
@@ -205,7 +205,7 @@ def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
     any_exercises = GoalList.get_from_data(goal_data, GoalObjectiveAnyExerciseProficiency)
     changes = []
     for ex_obj in specific_exercises:
-        if ex_obj.record_progress(user_data, user_exercise):
+        if ex_obj.record_progress(user_data, goal_data, user_exercise):
             changes.append(ex_obj)
 
     if became_proficient:
