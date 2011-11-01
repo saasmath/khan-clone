@@ -861,6 +861,9 @@ def create_user_goal():
                     return api_invalid_param_response("Video has already been watched.")
                 valid_count += 1
 
+            if objective_descriptor['type'] == 'GoalObjectiveAnyVideo':
+                valid_count += 1
+
     if valid_count == 0:
         return api_invalid_param_response("No objectives specified.")
 

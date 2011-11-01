@@ -46,6 +46,8 @@ class Goal(db.Model):
                 GoalObjectiveWatchVideo.create(new_goal, descriptor['video'], user_data)
             if descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
                 GoalObjectiveAnyExerciseProficiency(new_goal, description="Any exercise").put()
+            if descriptor['type'] == "GoalObjectiveAnyVideo":
+                GoalObjectiveAnyVideo(new_goal, description="Any video").put()
 
         return new_goal
 
@@ -171,6 +173,15 @@ class GoalObjective(polymodel.PolyModel):
     def is_completed(self):
         return self.progress >= 1.0
 
+    def getStatus(self, user_exercise_graph):
+        if self.is_completed:
+            return "proficient"
+
+        if self.progress > 0:
+            return "started"
+
+        return ""
+
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     exercise = db.ReferenceProperty(models.Exercise)
@@ -233,14 +244,8 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     def record_complete(self, exercise):
         super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
         self.exercise = exercise
-        self.description = models.Exercise.to_display_name(exercise.name)
+        self.description = exercise.display_name
         return True
-
-    def getStatus(self, user_exercise_graph):
-        if self.exercise:
-            return "proficient"
-        else:
-            return ""
 
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
@@ -273,11 +278,15 @@ class GoalObjectiveWatchVideo(GoalObjective):
             return True
         return False
 
-    def getStatus(self, user_exercise_graph):
-        if self.progress == 1.0:
-            return "proficient"
+class GoalObjectiveAnyVideo(GoalObjective):
+    # which video fulfilled this objective, set upon completion
+    video = db.ReferenceProperty(models.Exercise)
 
-        if self.progress > 0:
-            return "started"
+    def url(self):
+        return "/"
 
-        return ""
+    def record_complete(self, video):
+        super(GoalObjectiveAnyVideo, self).record_complete()
+        self.video = video
+        self.description = video.title
+        return True
