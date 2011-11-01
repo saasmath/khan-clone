@@ -298,12 +298,15 @@ var Profile = {
                     // Sort objectives by status
                     var statuses = ['started','struggling','proficient'];
                     var progress_count = 0;
+                    var found_struggling = false;
                     goal.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
                     $.each(goal.objectives, function(idx3, objective) {
                         if (objective.status == 'proficient')
                             progress_count += 1000;
                         else if (objective.status == 'started' || objective.status == 'struggling')
                             progress_count += 1;
+                        if (objective.status == 'struggling')
+                            found_struggling = true;
                     });
 
                     if (!student.most_recent_update || goal.updated > student.most_recent_update)
@@ -317,6 +320,7 @@ var Profile = {
                         goal_idx: student.goal_count,
                         visible: true,
                         show_counts: true,
+                        struggling: found_struggling,
                     });
                 });
             } else {
@@ -327,15 +331,15 @@ var Profile = {
         Profile.updateStudentGoals(goal_list);
 
         $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
-        $("input[name=\"student-goals-filter\"]").change(function() { Profile.updateStudentGoals(goal_list) });
+        $("input.student-goals-filter").change(function() { Profile.updateStudentGoals(goal_list) });
     },
     updateStudentGoals: function(goal_list) {
         var sort = $("#student-goals-sort").val();
-        var filter = 'all';
-        if ($('#student-goals-filter-most-recent').is(":checked"))
-            filter = 'most-recent';
-        if ($('#student-goals-filter-in-progress').is(":checked"))
-            filter = 'in-progress';
+        var filters = {};
+
+        $("input.student-goals-filter").each(function(idx, element) {
+            filters[$(element).attr('name')] = $(element).is(":checked");
+        });
 
         if (sort == 'name') {
             goal_list.sort(function(a,b) {
@@ -378,14 +382,20 @@ var Profile = {
         }
 
         $.each(goal_list, function(idx, row) {
-            if (filter == 'most-recent') {
-                row.visible = !row.goal || (row.goal == row.student.most_recent_update);
-            } else if (filter == 'in-progress') {
-                row.visible = row.goal && (row.progress_count > 0);
-            } else {
-                row.visible = true;
+            row.visible = true;
+            if (filters['most-recent']) {
+                row.visible = row.visible && (!row.goal || (row.goal == row.student.most_recent_update));
             }
-            row.show_counts = !(filter == 'most-recent');
+            if (filters['in-progress']) {
+                row.visible = row.visible && (row.goal && (row.progress_count > 0));
+            } 
+            if (filters['active']) {
+                row.visible = row.visible && (row.goal && row.goal.active);
+            } 
+            if (filters['struggling']) {
+                row.visible = row.visible && (row.struggling);
+            } 
+            row.show_counts = !filters['most-recent'] && !filters['active'];
         });
         
         $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
@@ -393,8 +403,10 @@ var Profile = {
         $("#student-goals-sort").val(sort);
         $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
 
-        $('#student-goals-filter-'+filter).prop("checked", true);
-        $("input[name=\"student-goals-filter\"]").change(function() { Profile.updateStudentGoals(goal_list) });
+        $("input.student-goals-filter").each(function(idx, element) {
+            $(element).prop("checked", filters[$(element).attr('name')]);
+        });
+        $("input.student-goals-filter").change(function() { Profile.updateStudentGoals(goal_list) });
     },
 
     finishLoadGraphError: function() {

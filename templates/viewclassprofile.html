@@ -7,26 +7,26 @@
 
 {% block pagescript %}
 {{ js_css_packages.css_package("studentlists") }}
- name="student-goals-filter"
 {% raw %}
 <script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
-<div>
+<div id="student-goals-sort-block">
   <div>Sort by:</div>
   <div><select id="student-goals-sort"><option value="name">Name</option><option value="progress">Progress</option><option value="created">Start date</option><option value="updated">Updated date</option></select></div>
 </div>
-<div>
+<div id="student-goals-filter-block">
   <div>Filter by:</div>
   <div>
-    <input type="radio" name="student-goals-filter" id="student-goals-filter-all" checked>All</input>
-    <input type="radio" name="student-goals-filter" id="student-goals-filter-most-recent" selected>Recently updated</input>
-    <input type="radio" name="student-goals-filter" id="student-goals-filter-in-progress" selected>In progress</input>
+    <input type="checkbox" class="student-goals-filter" name="most-recent">Recently updated only</input>
+    <input type="checkbox" class="student-goals-filter" name="in-progress">In progress only</input>
+    <input type="checkbox" class="student-goals-filter" name="active">Active only</input>
+    <input type="checkbox" class="student-goals-filter" name="struggling">Struggling only</input>
   </div>
 </div>
 <div id="class-student-goal">
 {{each(idx, row) goal_list}}
 {{if row.visible}}
   <div>
-  <div class="student-name"><a href="/profile?k&student_email=${email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a>
+  <div class="student-name"><a href="/profile?k&student_email=${row.student.email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a>
     {{if row.student.goal_count > 1 && row.show_counts }}
       (${row.goal_idx}/${row.student.goal_count})
     {{/if}}
@@ -39,7 +39,7 @@
     <div class="goal" data-id="${row.goal.id}">
         <ul class="inline-list">
         {{each row.goal.objectives}}
-            <li><a class="objective ${$value.status} action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+            <li><a class="objective ${$value.status} ${$value.type} action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
         {{/each}}
         </ul>
     </div>

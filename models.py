@@ -1286,7 +1286,7 @@ class VideoLog(db.Model):
         return query
 
     @staticmethod
-    def add_entry(user_data, video, seconds_watched, last_second_watched):
+    def add_entry(user_data, video, seconds_watched, last_second_watched, detect_cheat=True):
 
         user_video = UserVideo.get_for_video_and_user_data(video, user_data, insert_if_missing=True)
 
@@ -1302,7 +1302,7 @@ class VideoLog(db.Model):
         # If the last video logged is not this video and the times being credited
         # overlap, don't give points for this video. Can only get points for one video
         # at a time.
-        if last_video_log and last_video_log.key_for_video() != video.key():
+        if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
             dt_now = datetime.datetime.now()
             if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
                 return (None, None, 0)

@@ -12,9 +12,13 @@ a.objective {
     overflow: hidden;
 }
 
+#student-goals-sort-block, #student-goals-filter-block {
+    display: inline-block;
+}
+
 #class-student-goal .student-name {
     display: inline-block;
-    width: 120px;
+    width: 180px;
     font-size: 10pt;
 }
 #class-student-goal .goal-start-time {
@@ -29,38 +33,58 @@ a.objective {
 }
 
 #class-student-goal a.objective {
-    display: inline-block;
+    display: block;
+    float: left;
     margin: 0px;
-    padding: 0px;
+    margin-right: -1px;
+    margin-bottom: -1px;
+    padding: 3px;
 
-    width: 100px;
-    height: 24px;
+    width: 94px;
+    height: 20px;
     font-size: 8pt;
 }
 
-a.objective.proficient {
+#class-student-goal a.objective.GoalObjectiveExerciseProficiency {
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+}
+
+a.objective.GoalObjectiveExerciseProficiency.proficient {
     background-color: #0080C9;
     color: #eee !important;
 }
-a.objective.suggested {
+a.objective.GoalObjectiveExerciseProficiency.suggested {
     background-color: #73982C;
     color: #eee !important;
 }
-a.objective.review {
+a.objective.GoalObjectiveExerciseProficiency.review {
     background-color: #E35D04;
     color: #eee !important;
 }
-a.objective.review.light {
+a.objective.GoalObjectiveExerciseProficiency.review.light {
     background-color: #f2b891;
     color: #333 !important;
 }
-a.objective.not-started {
+a.objective.GoalObjectiveExerciseProficiency.not-started {
     background-color: #ccc;
 }
-a.objective.struggling {
+a.objective.GoalObjectiveExerciseProficiency.struggling {
     background-color: #C30202;
     color: #dfdfdf !important;
 }
-a.objective.started {
+a.objective.GoalObjectiveExerciseProficiency.started {
     background-color: #c7e5f7;
+}
+
+#class-student-goal a.objective.GoalObjectiveWatchVideo {
+    background-color: #ccc;
+    height: 18px;
+}
+#class-student-goal a.objective.GoalObjectiveWatchVideo.proficient {
+    background-color: #00C940;
+}
+#class-student-goal a.objective.GoalObjectiveWatchVideo.started {
+    background-color: #c7f795;
 }

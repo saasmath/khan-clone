@@ -928,6 +928,7 @@ application = webapp2.WSGIApplication([
 
     ('/goals/view', goals.ViewGoals),
     ('/goals/new', goals.CreateNewGoal),
+    ('/goals/admincreaterandom', goals.CreateRandomGoalData),
 
     ('/robots.txt', robots.RobotsTxt),
 
