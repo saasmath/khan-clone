@@ -1,15 +1,32 @@
 ul.inline-list, ul.inline-list li {
-    display: inline;
+    display: inline-block;
 }
 
 a.objective {
     display: inline-block;
-    width: 140px;
-    height: 25px;
+    width: 120px;
     border: 1px solid #000;
-    margin: 10px;
-    padding: 2px;
+    margin: 2px 5px;
+    padding: 1px 5px;
+    white-space: nowrap;
     overflow: hidden;
+}
+
+.progress-bar {
+    position: relative;
+    border: 1px solid #000;
+    padding: 2px;
+    margin: 2px 5px;
+}
+
+.bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 0%;
+    background: #c7e5f7;
+    z-index: -1;
 }
 
 #student-goals-sort-block, #student-goals-filter-block {
@@ -17,7 +34,9 @@ a.objective {
 }
 
 #goals-current-container, #goals-nav-container {
-    margin-left: 100px;
+    margin: 0 auto;
+    max-width: 1200px;
+    min-width: 1000px;
 }
 
 #class-student-goal .student-name {

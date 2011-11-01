@@ -21,15 +21,15 @@ var renderAllGoalsUI = function() {
     // event handlers
     $(".activate.simple-button").click(function(ev) {
         ev.preventDefault();
-        var id = $(ev.target).closest(".goal").data('id')
+        var id = $(ev.target).data('goal-id');
         $.ajax({
             type: 'post',
-            url: "/api/v1/user/goals/" + id + "/activate",
+            url: "/api/v1/user/goals/" + id + "/activate"
         });
         UIChangeActiveGoal(id);
-    })
+    });
     $("#goals-drawer").toggle(showNavGoal, showCurrentGoals, showDrawer);
-}
+};
 var UIChangeActiveGoal = function(id) {
     $.each(Goals.all, function(i, goal) {
         if (goal.id == id) {
@@ -86,6 +86,6 @@ var showCurrentGoals = function() {
 var showDrawer = function() {
     $("#goals-nav-container").slideUp();
     $("#goals-current-container").slideUp();
-}
+};
 
-$(function() { requestGoals() });
+$(function() { requestGoals(); });
