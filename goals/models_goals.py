@@ -239,7 +239,7 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     exercise = db.ReferenceProperty(models.Exercise)
 
     def url(self):
-        return "/exercisedashboard"
+        return self.exercise.relative_url if self.exercise else "/exercisedashboard"
 
     def record_complete(self, exercise):
         super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
@@ -280,10 +280,10 @@ class GoalObjectiveWatchVideo(GoalObjective):
 
 class GoalObjectiveAnyVideo(GoalObjective):
     # which video fulfilled this objective, set upon completion
-    video = db.ReferenceProperty(models.Exercise)
+    video = db.ReferenceProperty(models.Video)
 
     def url(self):
-        return "/"
+        return self.video.ka_url if self.video else "/"
 
     def record_complete(self, video):
         super(GoalObjectiveAnyVideo, self).record_complete()

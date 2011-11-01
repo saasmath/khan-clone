@@ -2,8 +2,9 @@ import request_handler
 import models
 import knowledgemap
 import library
-from models_goals import Goal, GoalList, GoalObjectiveExerciseProficiency, \
-    GoalObjectiveWatchVideo, GoalObjectiveAnyExerciseProficiency
+from models_goals import Goal, GoalList, GoalObjective, \
+    GoalObjectiveExerciseProficiency, GoalObjectiveAnyExerciseProficiency, \
+    GoalObjectiveWatchVideo, GoalObjectiveAnyVideo
 
 from google.appengine.ext import db
 from api.auth.xsrf import ensure_xsrf_cookie
@@ -82,7 +83,21 @@ class CreateNewGoal(request_handler.RequestHandler):
 
 # a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
-    update_goals(user_data, user_video, GoalObjectiveWatchVideo)
+    goal_data = user_data.get_goal_data()
+    specific_videos = GoalList.get_from_data(goal_data, GoalObjectiveWatchVideo)
+    any_videos = GoalList.get_from_data(goal_data, GoalObjectiveAnyVideo)
+    changes = []
+    for objective in specific_videos:
+        if objective.record_progress(user_data, goal_data, user_video):
+            changes.append(objective)
+
+    if user_video.completed:
+        for vid_obj in any_videos:
+            if not vid_obj.is_completed:
+                vid_obj.record_complete(user_video.video)
+                changes.append(vid_obj)
+                break
+    db.put(changes)
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
     goal_data = user_data.get_goal_data()
@@ -100,14 +115,4 @@ def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
                 ex_obj.record_complete(user_exercise.exercise_model)
                 changes.append(ex_obj)
                 break
-
-    db.put(changes)
-
-def update_goals(user_data, user_entity, kind):
-    goal_data = user_data.get_goal_data()
-    objectives = GoalList.get_from_data(goal_data, kind)
-    changes = []
-    for objective in objectives:
-        if objective.record_progress(user_data, goal_data, user_entity):
-            changes.append(objective)
     db.put(changes)
