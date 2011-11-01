@@ -74,33 +74,6 @@ a.objective {
     border-radius: 3px;
 }
 
-a.objective.GoalObjectiveExerciseProficiency.proficient {
-    background-color: #0080C9;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.suggested {
-    background-color: #73982C;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.review {
-    background-color: #E35D04;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.review.light {
-    background-color: #f2b891;
-    color: #333 !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.not-started {
-    background-color: #ccc;
-}
-a.objective.GoalObjectiveExerciseProficiency.struggling {
-    background-color: #C30202;
-    color: #dfdfdf !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.started {
-    background-color: #c7e5f7;
-}
-
 #class-student-goal a.objective.GoalObjectiveWatchVideo {
     background-color: #ccc;
     height: 18px;
