@@ -26,7 +26,7 @@
 {{each(idx, row) goal_list}}
 {{if row.visible}}
   <div>
-  <div class="student-name"><a href="/profile?k&student_email=${row.student.email}#/?graph_url=/api/v1/user/goals">${row.student.nickname}</a>
+  <div class="student-name"><a href="/profile?k&student_email=${row.student.email}#/?graph_url=/api/v1/user/goals%3Fstudent_email=${row.student.email}">${row.student.nickname}</a>
     {{if row.student.goal_count > 1 && row.show_counts }}
       (${row.goal_idx}/${row.student.goal_count})
     {{/if}}

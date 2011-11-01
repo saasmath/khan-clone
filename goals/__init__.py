@@ -124,6 +124,12 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                 )
             user_data.user_nickname=nickname
             user_data.coaches = [ login_user.user_email ]
+            user_data.badges = ''
+            user_data.all_proficient_exercises = ''
+            user_data.proficient_exercises = ''
+            user_data.videos_completed = 0
+            user_data.points = 0
+            user_data.total_seconds_watched = 0
             user_data.put()
 
             # Delete user exercise & video progress

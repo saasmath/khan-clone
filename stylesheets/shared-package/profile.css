@@ -499,3 +499,9 @@ div.graph-notification {
 
 
 .sharebar {z-index:0; position:absolute;padding-left:100px;}
+
+#individual_report #vital-statistics #stats-charts.coach-view {
+    min-height: 700px;
+    height: 800px;
+}
+
