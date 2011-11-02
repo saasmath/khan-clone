@@ -11,6 +11,7 @@ javascript = {
             "pageutil.js",
             "api.js",
             "social.js",
+            "gae_bingo.js",
             "goals.js",
         ]
     },
@@ -72,6 +73,7 @@ javascript = {
             "utils/angles.js",
             "utils/answer-types.js",
             "utils/calculus.js",
+            "utils/congruence.js",
             "utils/convert-values.js",
             "utils/d3.js",
             "utils/derivative-intuition.js",
