@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import datetime
 import models
 import templatefilters
 import logging
@@ -38,9 +37,9 @@ class Goal(db.Model):
         objectives = []
         for descriptor in objective_descriptors:
             if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
-                objectives.append(GoalObjectiveExerciseProficiency.create(descriptor['exercise'], user_data))
+                objectives.append(GoalObjectiveExerciseProficiency(descriptor['exercise'], user_data))
             if descriptor['type'] == 'GoalObjectiveWatchVideo':
-                objectives.append(GoalObjectiveWatchVideo.create(descriptor['video'], user_data))
+                objectives.append(GoalObjectiveWatchVideo(descriptor['video'], user_data))
             if descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
                 objectives.append(GoalObjectiveAnyExerciseProficiency(description="Any exercise"))
             if descriptor['type'] == "GoalObjectiveAnyVideo":
@@ -85,7 +84,7 @@ class GoalList(db.Model):
         return [entity for entity in data if isinstance(entity, type)]
 
     @staticmethod
-    def get_visible_for_user(user_data, user_exercise_graph = None):
+    def get_visible_for_user(user_data, user_exercise_graph=None):
         if user_data:
             # Fetch data from datastore
             goal_data = user_data.get_goal_data()
@@ -147,6 +146,9 @@ class GoalObjective(object):
     progress = 0.0
     description = None
 
+    def __init__(self, description):
+        self.description = description
+
     def url():
         '''url to which the objective points when used as a nav bar.'''
         raise Exception
@@ -174,14 +176,11 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     exercise_name = None
 
-    @staticmethod
-    def create(exercise, user_data):
-        new_objective = GoalObjectiveExerciseProficiency()
-        new_objective.exercise_name = exercise.name
-        new_objective.description = exercise.display_name
-
-        new_objective.progress = user_data.get_or_insert_exercise(exercise).progress
-        return new_objective
+    def __init__(self, exercise, user_data):
+        self = GoalObjectiveExerciseProficiency()
+        self.exercise_name = exercise.name
+        self.description = exercise.display_name
+        self.progress = user_data.get_or_insert_exercise(exercise).progress
 
     def url(self):
         exercise = models.Exercise.get_by_name(self.exercise_name)
@@ -242,20 +241,17 @@ class GoalObjectiveWatchVideo(GoalObjective):
     video_key = None
     video_readable_id = None
 
-    @staticmethod
-    def create(video, user_data):
-        new_objective = GoalObjectiveWatchVideo()
-        new_objective.video_key = str(video.key())
-        new_objective.video_readable_id = video.readable_id
-        new_objective.description = video.title
+    def __init__(self, video, user_data):
+        self = GoalObjectiveWatchVideo()
+        self.video_key = str(video.key())
+        self.video_readable_id = video.readable_id
+        self.description = video.title
 
         user_video = models.UserVideo.get_for_video_and_user_data(video, user_data)
         if user_video:
-            new_objective.progress = user_video.progress
+            self.progress = user_video.progress
         else:
-            new_objective.progress = 0.0
-
-        return new_objective
+            self.progress = 0.0
 
     def url(self):
         return models.Video.get_ka_url(self.video_readable_id)
