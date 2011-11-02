@@ -177,7 +177,6 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     exercise_name = None
 
     def __init__(self, exercise, user_data):
-        self = GoalObjectiveExerciseProficiency()
         self.exercise_name = exercise.name
         self.description = exercise.display_name
         self.progress = user_data.get_or_insert_exercise(exercise).progress
@@ -200,14 +199,13 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         if not user_exercise_graph:
             return ""
 
-        exercise_name = self.exercise_name
-        graph_dict = user_exercise_graph.graph_dict(exercise_name)
+        graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
         student_review_exercise_names = user_exercise_graph.review_exercise_names()
         status = ""
 
         if graph_dict["proficient"]:
 
-            if exercise_name in student_review_exercise_names:
+            if self.exercise_name in student_review_exercise_names:
                 status = "review"
             else:
                 status = "proficient"
@@ -242,7 +240,6 @@ class GoalObjectiveWatchVideo(GoalObjective):
     video_readable_id = None
 
     def __init__(self, video, user_data):
-        self = GoalObjectiveWatchVideo()
         self.video_key = str(video.key())
         self.video_readable_id = video.readable_id
         self.description = video.title
