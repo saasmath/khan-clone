@@ -266,8 +266,8 @@ class GoalObjectiveWatchVideo(GoalObjective):
 
 class GoalObjectiveAnyVideo(GoalObjective):
     # which video fulfilled this objective, set upon completion
-    video = db.ReferenceProperty(models.Video)
-    video_readable_id = db.StringProperty()
+    video_key = None
+    video_readable_id = None
 
     def url(self):
         if self.video_readable_id:
@@ -277,7 +277,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
 
     def record_complete(self, video):
         super(GoalObjectiveAnyVideo, self).record_complete()
-        self.video = video
+        self.video_key = str(video.key())
         self.video_readable_id = video.readable_id
         self.description = video.title
         return True
