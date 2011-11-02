@@ -163,12 +163,6 @@ class GoalObjective(object):
     def record_progress(self):
         return False
 
-    def update_parent(self, goal_data):
-        parent_goal = [goal for goal in GoalList.get_from_data(goal_data, Goal) if self.parent_key() == goal.key()]
-        if parent_goal:
-            parent_goal[0].updated_on = datetime.datetime.now()
-            parent_goal[0].put()
-
     def record_complete(self):
         self.progress = 1.0
 
@@ -209,7 +203,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             else:
                 self.progress = user_exercise.progress
             return True
-        self.update_parent(goal_data) # todo obsolete this by updating via goal not objective?
+
         return False
 
     def get_status(self, user_exercise_graph):
@@ -280,7 +274,6 @@ class GoalObjectiveWatchVideo(GoalObjective):
         video_key = models.UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
-            self.update_parent(goal_data)
             return True
         return False
 

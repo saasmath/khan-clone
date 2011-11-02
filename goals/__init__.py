@@ -189,52 +189,51 @@ class CreateRandomGoalData(request_handler.RequestHandler):
 
 def goals_with_objectives(user_data):
     goal_data = user_data.get_goal_data()
-    goals = GoalList.get_from_data(goal_data, Goal)
-    objectives = GoalList.get_from_data(goal_data, GoalObjective)
-
-    # kind of gross, another argument for storing objectives directly on goal
-    objectives_by_goal = {}
-    for objective in objectives:
-        l = objectives_by_goal.get(objective.parent_key(), [])
-        l.append(objective)
-        objectives_by_goal[objective.parent_key()] = l
-
-    for goal in goals:
-        goal_objectives = objectives_by_goal[goal.key()]
-        yield goal, goal_objectives
+    return GoalList.get_from_data(goal_data, Goal)
 
 # a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
     changes = []
-    for goal, objectives in goals_with_objectives(user_data):
-        specific_videos = GoalList.get_from_data(objectives, GoalObjectiveWatchVideo)
+    for goal in goals_with_objectives(user_data):
+        changed = False
+        specific_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveWatchVideo)
         for objective in specific_videos:
             if objective.record_progress(user_data, [goal], user_video):
-                changes.append(objective)
+                changed = True
 
-        any_videos = GoalList.get_from_data(objectives, GoalObjectiveAnyVideo)
+        any_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyVideo)
         if user_video.completed:
             for vid_obj in any_videos:
                 if not vid_obj.is_completed:
                     vid_obj.record_complete(user_video.video)
-                    changes.append(vid_obj)
+                    changed = True
                     break
-    db.put(changes)
+        if changed:
+            changes.append(goal)
+
+    if changes:
+        db.put(changes)
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
     changes = []
-    for goal, objectives in goals_with_objectives(user_data):
-        specific_exercises = GoalList.get_from_data(objectives, GoalObjectiveExerciseProficiency)
+    for goal in goals_with_objectives(user_data):
+        changed = False
+
+        specific_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveExerciseProficiency)
         for ex_obj in specific_exercises:
             if ex_obj.record_progress(user_data, [goal], user_exercise):
-                changes.append(ex_obj)
+                changed = True
 
-        any_exercises = GoalList.get_from_data(objectives, GoalObjectiveAnyExerciseProficiency)
+        any_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyExerciseProficiency)
         if became_proficient:
             # mark off an unfinished any_exercise as complete.
             for ex_obj in any_exercises:
                 if not ex_obj.is_completed:
                     ex_obj.record_complete(user_exercise.exercise_model)
-                    changes.append(ex_obj)
+                    changed = True
                     break
-    db.put(changes)
+        if changed:
+            changes.append(goal)
+
+    if changes:
+        db.put(changes)
