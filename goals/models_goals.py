@@ -12,8 +12,8 @@ from google.appengine.ext.db import Key
 
 class Goal(db.Model):
     title = db.StringProperty()
-    createdDate = db.DateTimeProperty()
-    updateDate = db.DateTimeProperty()
+    createdDate = db.DateTimeProperty(auto_now_add=True)
+    updateDate = db.DateTimeProperty(auto_now=True)
     objectives = ObjectProperty()
     active = False
 
@@ -34,27 +34,29 @@ class Goal(db.Model):
         # Create the new goal
         new_goal = Goal(goal_list)
         new_goal.title = title
-        new_goal.createdDate = datetime.datetime.now()
-        new_goal.updateDate = datetime.datetime.now()
+
+        objectives = []
+        for descriptor in objective_descriptors:
+            if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
+                objectives.append(GoalObjectiveExerciseProficiency.create(descriptor['exercise'], user_data))
+            if descriptor['type'] == 'GoalObjectiveWatchVideo':
+                objectives.append(GoalObjectiveWatchVideo.create(descriptor['video'], user_data))
+            if descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
+                objectives.append(GoalObjectiveAnyExerciseProficiency(description="Any exercise"))
+            if descriptor['type'] == "GoalObjectiveAnyVideo":
+                objectives.append(GoalObjectiveAnyVideo(description="Any video"))
+
+        new_goal.objectives = objectives
+        logging.critical(new_goal.objectives)
         new_goal.put()
 
         # Set the goal active
         goal_list.active = new_goal
         goal_list.put()
 
-        for descriptor in objective_descriptors:
-            if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
-                GoalObjectiveExerciseProficiency.create(new_goal, descriptor['exercise'], user_data)
-            if descriptor['type'] == 'GoalObjectiveWatchVideo':
-                GoalObjectiveWatchVideo.create(new_goal, descriptor['video'], user_data)
-            if descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
-                GoalObjectiveAnyExerciseProficiency(new_goal, description="Any exercise").put()
-            if descriptor['type'] == "GoalObjectiveAnyVideo":
-                GoalObjectiveAnyVideo(new_goal, description="Any video").put()
-
         return new_goal
 
-    def get_visible_data(self, objectives, user_exercise_graph):
+    def get_visible_data(self, user_exercise_graph):
         goal_ret = {}
         goal_ret['id'] = self.key().id()
         goal_ret['title'] = self.title
@@ -64,15 +66,14 @@ class Goal(db.Model):
         goal_ret['created_ago'] = templatefilters.timesince_ago(self.createdDate)
         goal_ret['updated'] = self.updateDate
         goal_ret['updated_ago'] = templatefilters.timesince_ago(self.updateDate)
-        for objective in objectives:
-            if objective.parent_key() == self.key():
-                objective_ret = {}
-                objective_ret['type'] = objective.class_name()
-                objective_ret['description'] = objective.description
-                objective_ret['progress'] = objective.progress
-                objective_ret['url'] = objective.url()
-                objective_ret['status'] = objective.getStatus(user_exercise_graph)
-                goal_ret['objectives'].append(objective_ret)
+        for objective in self.objectives:
+            objective_ret = {}
+            objective_ret['type'] = objective.__class__.__name__
+            objective_ret['description'] = objective.description
+            objective_ret['progress'] = objective.progress
+            objective_ret['url'] = objective.url()
+            objective_ret['status'] = objective.getStatus(user_exercise_graph)
+            goal_ret['objectives'].append(objective_ret)
         return goal_ret
 
     def get_objectives(self, data):
