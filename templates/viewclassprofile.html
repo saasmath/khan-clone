@@ -8,36 +8,34 @@
 {% block pagescript %}
 {{ js_css_packages.css_package("studentlists") }}
 {% raw %}
-<script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
-<div id="class-student-goal">
-{{each(idx, row) goal_list}}
-{{if row.visible}}
-  <div data-id="${row.student.email}">
-  <div class="student-name"><a href="/profile?k&student_email=${row.student.email}#/?graph_url=/api/v1/user/goals%3Fstudent_email=${row.student.email}">${row.student.nickname}</a>
-    {{if row.student.goal_count > 1 && row.show_counts }}
-      (${row.goal_idx}/${row.student.goal_count})
-    {{/if}}
-    {{if row.goal}}
-      <div class="goal-start-time">Started ${row.goal.created_ago}</div>
-      <div class="goal-update-time">Updated ${row.goal.updated_ago}</div>
-    {{/if}}
-  </div>
-  {{if row.goal}}
-    <div class="goal" data-id="${row.goal.id}">
-        <ul class="inline-list">
-        {{each row.goal.objectives}}
-            <li><a class="objective ${$value.status} ${$value.type} action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
-        {{/each}}
-        </ul>
+
+<script id="profile-student-objective-tmpl" type="text/html">
+<li><a class="objective action-gradient seethrough" data-bind="student_objective_css: $data, css: {filtered: !filter_match()}, click: click_fn, text: description"></a></li>
+</script>
+
+<script id="profile-student-goal-tmpl" type="text/html">
+<div data-bind="visible: visible()">
+  <div class="student-name"><a data-bind="text: student.nickname, attr: {href: student.profile_url}"></a>
+    <span data-bind="visible: student.goal_count > 1 && show_counts">(<span data-bind="text: goal_idx" />/<span data-bind="text: student.goal_count" />)</span>
+    <div data-bind="visible: goal">
+      <div class="goal-start-time">Started <span data-bind="text: goal.created_ago"/></div>
+      <div class="goal-update-time">Updated <span data-bind="text: goal.updated_ago"/></div>
     </div>
-  {{else}}
-    Student has no goals.
-  {{/if}}
   </div>
-{{/if}}
-{{/each}}
+  <div data-bind="visible: goal" class="goal">
+    <ul class="inline-list" data-bind="template: { name: 'profile-student-objective-tmpl', foreach: goal.objectives }"></ul>
+  </div>
+  <div data-bind="visible: !goal">Student has no goals.</div>
 </div>
 </script>
+
+<script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
+<div id="class-student-goals">
+  <div>Sorted by <span data-bind="text: sort_desc" />. <span data-bind="text: filter_desc" />.</div>
+  <div id="class-student-goal" data-bind="template: { name: 'profile-student-goal-tmpl', foreach: row_data }"></div>
+</div>
+</script>
+
 {% endraw %}
 {% endblock pagescript %}
 

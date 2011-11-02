@@ -73,6 +73,7 @@ class Goal(db.Model):
             objective_ret['description'] = objective.description
             objective_ret['progress'] = objective.progress
             objective_ret['url'] = objective.url()
+            objective_ret['internal_id'] = objective.internal_id()
             objective_ret['status'] = objective.get_status(user_exercise_graph)
             goal_ret['objectives'].append(objective_ret)
         return goal_ret
@@ -187,6 +188,9 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         exercise = Exercise.get_by_name(self.exercise_name)
         return exercise.relative_url
 
+    def internal_id(self):
+        return self.exercise_name
+
     def record_progress(self, user_data, goal_data, user_exercise):
         if self.exercise_name == user_exercise.exercise:
             if user_data.is_proficient_at(user_exercise.exercise):
@@ -254,6 +258,9 @@ class GoalObjectiveWatchVideo(GoalObjective):
 
     def url(self):
         return Video.get_ka_url(self.video_readable_id)
+
+    def internal_id(self):
+        return self.video_readable_id
 
     def record_progress(self, user_data, goal_data, user_video):
         obj_key = db.Key(self.video_key)

@@ -8,6 +8,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.tmpl.min.js",
+            "knockout-latest.min.js",
             "pageutil.js",
             "api.js",
             "social.js",

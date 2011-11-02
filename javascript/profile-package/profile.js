@@ -289,12 +289,18 @@ var Profile = {
     renderUserGoals: function(data) {
         $("#graph-content").html($('#goals-all-tmpl').tmplPlugin({'goals':data}));
     },
+
     renderStudentGoals: function(data) {
-        var goal_list = []
+        var goals_model = {
+            'sort_desc': ko.observable(''),
+            'filter_desc': ko.observable(''),
+            'row_data': ko.observableArray([]),
+        }; 
 
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
+            student.profile_url = "/profile?k&student_email="+student.email+"#/?graph_url=/api/v1/user/goals%3Fstudent_email="+student.email;
 
             if (student.goals != undefined) {
                 $.each(student.goals, function(idx2, goal) {
@@ -302,8 +308,9 @@ var Profile = {
                     var statuses = ['started','struggling','proficient'];
                     var progress_count = 0;
                     var found_struggling = false;
-                    var objective_names = '';
+
                     goal.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
+
                     $.each(goal.objectives, function(idx3, objective) {
                         if (objective.status == 'proficient')
                             progress_count += 1000;
@@ -311,69 +318,101 @@ var Profile = {
                             progress_count += 1;
                         if (objective.status == 'struggling')
                             found_struggling = true;
-                        objective_names += objective.description.toLowerCase() + '$$';
+
+                        objective.filter_match = ko.observable(true);
+
+                        if (objective.type == 'GoalObjectiveExerciseProficiency') {
+                            objective.click_fn = function() {
+                                Profile.collapseAccordion();
+                                Profile.loadGraph('/profile/graph/exerciseproblems?student_email='+student.email+'&exercise_name='+objective.internal_id);
+                            };
+                        } else {
+                            // TomY TODO Do something here for videos?
+                            objective.click_fn = function() { };
+                        }
                     });
 
                     if (!student.most_recent_update || goal.updated > student.most_recent_update)
                         student.most_recent_update = goal;
 
                     student.goal_count++;
-                    goal_list.push({
+                    goals_model.row_data.push({
                         student: student,
                         goal: goal,
                         progress_count: progress_count,
                         goal_idx: student.goal_count,
-                        visible: true,
-                        show_counts: true,
+                        visible: ko.observable(true),
+                        show_counts: ko.observable(true),
                         struggling: found_struggling,
-                        objective_names: objective_names,
                     });
                 });
             } else {
-                goal_list.push({student:student,progress_count:-1});
+                goals_model.row_data.push({
+                    student: student,
+                    progress_count: -1,
+                    visible: true,
+                });
             }
         });
 
-        $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
-        $("input.student-goals-filter-check").change(function() { Profile.updateStudentGoals(goal_list) });
-        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(goal_list) });
-        
-        Profile.updateStudentGoals(goal_list);
-    },
-    updateStudentGoals: function(goal_list) {
-        var sort = $("#student-goals-sort").val();
-        var filters = {};
+        $("#graph-content").html($('#profile-student-goals-tmpl').html());
 
-        $("input.student-goals-filter-check").each(function(idx, element) {
-            filters[$(element).attr('name')] = $(element).is(":checked");
-        });
+
+        ko.bindingHandlers.student_objective_css = {
+            update: function(element, valueAccessor) {
+                var objective = ko.utils.unwrapObservable(valueAccessor())
+                $(element).addClass(objective.status);
+                $(element).addClass(objective.type);
+            },
+        };
+        ko.applyBindings(goals_model, $("#class-student-goals").get(0));
+
+        $("#student-goals-sort").change(function() { Profile.sortStudentGoals(goals_model) });
+
+        $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(goals_model) });
+        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(goals_model) });
+        
+        Profile.sortStudentGoals(goals_model);
+        Profile.filterStudentGoals(goals_model);
+    },
+    sortStudentGoals: function(goals_model) {
+        var sort = $("#student-goals-sort").val();
 
         if (sort == 'name') {
-            goal_list.sort(function(a,b) {
+            goals_model.row_data.sort(function(a,b) {
                 if (b.student.nickname > a.student.nickname)
                     return -1;
                 if (b.student.nickname < a.student.nickname)
                     return 1;
                 return a.goal_idx-b.goal_idx;
             });
+
+            goals_model.sort_desc('student name');
+            
         } else if (sort == 'progress') {
-            goal_list.sort(function(a,b) { return b.progress_count - a.progress_count; });
+            goals_model.row_data.sort(function(a,b) { return b.progress_count - a.progress_count; });
+
+            goals_model.sort_desc('goal progress');
+
         } else if (sort == 'created') {
-            goal_list.sort(function(a,b) {
+            goals_model.row_data.sort(function(a,b) {
                 if (a.goal && !b.goal)
                     return -1;
                 if (b.goal && !a.goal)
                     return 1;
                 if (a.goal && b.goal) {
                     if (b.goal.created > a.goal.created)
-                        return -1;
-                    if (b.goal.created < a.goal.created)
                         return 1;
+                    if (b.goal.created < a.goal.created)
+                        return -1;
                 }
                 return 0;
             });
+
+            goals_model.sort_desc('goal creation time');
+
         } else if (sort == 'updated') {
-            goal_list.sort(function(a,b) {
+            goals_model.row_data.sort(function(a,b) {
                 if (a.goal && !b.goal)
                     return -1;
                 if (b.goal && !a.goal)
@@ -386,47 +425,88 @@ var Profile = {
                 }
                 return 0;
             });
-        }
 
-        $.each(goal_list, function(idx, row) {
-            row.visible = true;
+            goals_model.sort_desc('last work logged time');
+        }
+    },
+    filterStudentGoals: function(goals_model) {
+        var filter_text = $.trim($("#student-goals-search").val().toLowerCase());
+        var filters = {};
+        $("input.student-goals-filter-check").each(function(idx, element) {
+            filters[$(element).attr('name')] = $(element).is(":checked");
+        });
+
+        var filters_desc = '';
+        if (filters['most-recent']) {
+            filters_desc += 'most recently worked on goals';
+        }
+        if (filters['active']) {
+            if (filters_desc != '') filters_desc += ', ';
+            filters_desc += 'active goals';
+        }
+        if (filters['in-progress']) {
+            if (filters_desc != '') filters_desc += ', ';
+            filters_desc += 'goals in progress';
+        }
+        if (filters['struggling']) {
+            if (filters_desc != '') filters_desc += ', ';
+            filters_desc += 'students who are struggling';
+        }
+        if (filter_text != '') {
+            if (filters_desc != '') filters_desc += ', ';
+            filters_desc += 'students/goals matching "' + filter_text + '"';
+        }
+        if (filters_desc != '')
+            goals_model.filter_desc('Showing only ' + filters_desc);
+        else
+            goals_model.filter_desc('No filters applied');
+
+        $.each(goals_model.row_data(), function(idx, row) {
+            var row_visible = true;
             if (filters['most-recent']) {
-                row.visible = row.visible && (!row.goal || (row.goal == row.student.most_recent_update));
+                row_visible = row_visible && (!row.goal || (row.goal == row.student.most_recent_update));
             }
             if (filters['in-progress']) {
-                row.visible = row.visible && (row.goal && (row.progress_count > 0));
+                row_visible = row_visible && (row.goal && (row.progress_count > 0));
             } 
             if (filters['active']) {
-                row.visible = row.visible && (row.goal && row.goal.active);
+                row_visible = row_visible && (row.goal && row.goal.active);
             } 
             if (filters['struggling']) {
-                row.visible = row.visible && (row.struggling);
+                row_visible = row_visible && (row.struggling);
             } 
-            row.show_counts = !filters['most-recent'] && !filters['active'];
-        });
-        
-        $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
-    },
-    filterStudentGoals: function(goal_list) {
-        var filter = $.trim($("#student-goals-search").val().toLowerCase());
-        $.each(goal_list, function(idx, row) {
-            if (row.visible) {
-                var visible = true;
-                if (filter == '') {
-                    visible = true;
+
+            if (row_visible) {
+                if (filter_text == '') {
+                    if (row.goal) {
+                        $.each(row.goal.objectives, function(idx2, objective) {
+                            objective.filter_match(true);
+                        });
+                    }
                 } else {
-                    if (row.student.nickname.toLowerCase().indexOf(filter) >= 0)
-                        visible = true;
-                    else if (row.objective_names.indexOf(filter) >= 0)
-                        visible = true;
-                    else
-                        visible = false;
+                    if (row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
+                        if (row.goal) {
+                            $.each(row.goal.objectives, function(idx2, objective) {
+                                objective.filter_match(true);
+                            });
+                        }
+                    } else {
+                        row_visible = false;
+                        if (row.goal) {
+                            $.each(row.goal.objectives, function(idx2, objective) {
+                                if (objective.description.toLowerCase().indexOf(filter_text) >= 0) {
+                                    objective.filter_match(true);
+                                    row_visible = true;
+                                } else {
+                                    objective.filter_match(false);
+                                }
+                            });
+                        }
+                    }
                 }
-                if (visible)
-                    $('#class-student-goal div[data-id="'+row.student.email+'"]').show();
-                else
-                    $('#class-student-goal div[data-id="'+row.student.email+'"]').hide();
             }
+            row.visible(row_visible);
+            row.show_counts(!filters['most-recent'] && !filters['active']);
         });
     },
 
