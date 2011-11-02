@@ -302,6 +302,7 @@ var Profile = {
                     var statuses = ['started','struggling','proficient'];
                     var progress_count = 0;
                     var found_struggling = false;
+                    var objective_names = '';
                     goal.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
                     $.each(goal.objectives, function(idx3, objective) {
                         if (objective.status == 'proficient')
@@ -310,6 +311,7 @@ var Profile = {
                             progress_count += 1;
                         if (objective.status == 'struggling')
                             found_struggling = true;
+                        objective_names += objective.description.toLowerCase() + '$$';
                     });
 
                     if (!student.most_recent_update || goal.updated > student.most_recent_update)
@@ -324,6 +326,7 @@ var Profile = {
                         visible: true,
                         show_counts: true,
                         struggling: found_struggling,
+                        objective_names: objective_names,
                     });
                 });
             } else {
@@ -331,10 +334,8 @@ var Profile = {
             }
         });
 
-        $("#graph-content").html($('#profile-student-goals-header-tmpl').tmplPlugin({'goal_list':goal_list}));
-
         $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
-        $("input.student-goals-filter").change(function() { Profile.updateStudentGoals(goal_list) });
+        $("input.student-goals-filter-check").change(function() { Profile.updateStudentGoals(goal_list) });
         $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(goal_list) });
         
         Profile.updateStudentGoals(goal_list);
@@ -343,7 +344,7 @@ var Profile = {
         var sort = $("#student-goals-sort").val();
         var filters = {};
 
-        $("input.student-goals-filter").each(function(idx, element) {
+        $("input.student-goals-filter-check").each(function(idx, element) {
             filters[$(element).attr('name')] = $(element).is(":checked");
         });
 
@@ -404,7 +405,7 @@ var Profile = {
             row.show_counts = !filters['most-recent'] && !filters['active'];
         });
         
-        $("#student-goals-content-block").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
+        $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
     },
     filterStudentGoals: function(goal_list) {
         var filter = $.trim($("#student-goals-search").val().toLowerCase());
@@ -415,6 +416,8 @@ var Profile = {
                     visible = true;
                 } else {
                     if (row.student.nickname.toLowerCase().indexOf(filter) >= 0)
+                        visible = true;
+                    else if (row.objective_names.indexOf(filter) >= 0)
                         visible = true;
                     else
                         visible = false;

@@ -30,7 +30,11 @@ a.objective {
 }
 
 #student-goals-sort-block, #student-goals-filter-block, #student-goals-search-block {
-    display: inline-block;
+    display: block;
+    margin: 3px;
+}
+.student-goals-filter {
+    display: block;
 }
 
 #goals-current-container, #goals-nav-container {

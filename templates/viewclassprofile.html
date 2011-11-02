@@ -8,29 +8,6 @@
 {% block pagescript %}
 {{ js_css_packages.css_package("studentlists") }}
 {% raw %}
-<script id="profile-student-goals-header-tmpl" type="text/x-jquery-tmpl">
-<div id="student-goals-sort-block">
-  <div>Sort by:</div>
-  <div><select id="student-goals-sort"><option value="name">Name</option><option value="progress">Progress</option><option value="created">Start date</option><option value="updated">Updated date</option></select></div>
-</div>
-<div id="student-goals-filter-block">
-  <div>Filter by:</div>
-  <div>
-    <input type="checkbox" class="student-goals-filter" name="most-recent">Recently updated only</input>
-    <input type="checkbox" class="student-goals-filter" name="in-progress">In progress only</input>
-    <input type="checkbox" class="student-goals-filter" name="active">Active only</input>
-    <input type="checkbox" class="student-goals-filter" name="struggling">Struggling only</input>
-  </div>
-</div>
-<div id="student-goals-search-block">
-  <div>Find by name:</div>
-  <div>
-    <input type="text" id="student-goals-search"></input>
-  </div>
-</div>
-<div id="student-goals-content-block">
-</div>
-</script>
 <script id="profile-student-goals-tmpl" type="text/x-jquery-tmpl">
 <div id="class-student-goal">
 {{each(idx, row) goal_list}}
@@ -153,15 +130,34 @@
         </li>
         <li>
             {{ profile_macros.class_api_link(user_data_coach, "Goals", "user/students/goals", selected_graph_type, list_id) }}
-            <p class="accordion-content">
+            <div class="accordion-content">
                 Shows active student goals and progress toward completion of those goals.
-                <span class="graph-options">
+                <div class="graph-options">
                     <span class="progress-legend exercise-color started">Started</span>                
                     <span class="progress-legend exercise-color proficient">Proficient</span>
                     <span class="progress-legend exercise-color review light">Review</span>
                     <span class="progress-legend exercise-color struggling">Struggling</span>
-                </span>
-            </p>
+                    <div id="student-goals-sort-block">
+                      <div>Sort by:</div>
+                      <div><select id="student-goals-sort"><option value="name">Name</option><option value="progress">Progress</option><option value="created">Start date</option><option value="updated">Updated date</option></select></div>
+                    </div>
+                    <div id="student-goals-filter-block">
+                      <div>Filter by:</div>
+                      <div>
+                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="most-recent" />Recently updated only</span>
+                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="in-progress" />In progress only</span>
+                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="active" />Active only</span>
+                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="struggling" />Struggling only</span>
+                      </div>
+                    </div>
+                    <div id="student-goals-search-block">
+                      <div>Find by name:</div>
+                      <div>
+                        <input type="text" id="student-goals-search"></input>
+                      </div>
+                    </div>
+                </div>
+            </div>
         </li>
     </ul>
 {% endblock graph_accordion %}
