@@ -1005,7 +1005,11 @@ class Video(Searchable, db.Model):
 
     @property
     def ka_url(self):
-        return util.absolute_url('/video/%s' % self.readable_id)
+        return self.get_ka_url(self.readable_id)
+
+    @staticmethod
+    def get_ka_url(readable_id):
+        return util.absolute_url('/video/%s' % readable_id)
 
     @property
     def download_urls(self):

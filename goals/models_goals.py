@@ -4,6 +4,7 @@
 import datetime
 import models
 import templatefilters
+import logging
 
 from google.appengine.ext import db
 from google.appengine.ext.db import polymodel, Key
@@ -184,12 +185,12 @@ class GoalObjective(polymodel.PolyModel):
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
-    exercise = db.ReferenceProperty(models.Exercise)
+    exercise_name = db.StringProperty()
 
     @staticmethod
     def create(parent_goal, exercise, user_data):
         new_objective = GoalObjectiveExerciseProficiency(parent_goal)
-        new_objective.exercise = exercise
+        new_objective.exercise_name = exercise.name
         new_objective.description = exercise.display_name
 
         new_objective.progress = user_data.get_or_insert_exercise(exercise).progress
@@ -198,10 +199,11 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         return new_objective
 
     def url(self):
-        return self.exercise.relative_url
+        exercise = models.Exercise.get_by_name(self.exercise_name)
+        return exercise.relative_url
 
     def record_progress(self, user_data, goal_data, user_exercise):
-        if self.exercise.key() == user_exercise.exercise_model.key():
+        if self.exercise_name == user_exercise.exercise:
             if user_data.is_proficient_at(user_exercise.exercise):
                 self.progress = 1.0
             else:
@@ -214,7 +216,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         if not user_exercise_graph:
             return ""
 
-        exercise_name = self.exercise.name
+        exercise_name = self.exercise_name
         graph_dict = user_exercise_graph.graph_dict(exercise_name)
         student_review_exercise_names = user_exercise_graph.review_exercise_names()
         status = ""
@@ -236,25 +238,30 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 
 class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     # which exercise fulfilled this objective, set upon completion
-    exercise = db.ReferenceProperty(models.Exercise)
+    exercise_name = db.StringProperty()
 
     def url(self):
-        return self.exercise.relative_url if self.exercise else "/exercisedashboard"
+        if not self.exercise_name:
+            return "/exercisedashboard"
+        exercise = models.Exercise.get_by_name(self.exercise_name)
+        return exercise.relative_url
 
     def record_complete(self, exercise):
         super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
-        self.exercise = exercise
+        self.exercise_name = exercise.name
         self.description = exercise.display_name
         return True
 
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     video = db.ReferenceProperty(models.Video)
+    video_readable_id = db.StringProperty()
 
     @staticmethod
     def create(parent_goal, video, user_data):
         new_objective = GoalObjectiveWatchVideo(parent_goal)
         new_objective.video = video
+        new_objective.video_readable_id = video.readable_id
         new_objective.description = video.title
 
         user_video = models.UserVideo.get_for_video_and_user_data(video, user_data)
@@ -267,7 +274,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
         return new_objective
 
     def url(self):
-        return self.video.ka_url
+        return models.Video.get_ka_url(self.video_readable_id)
 
     def record_progress(self, user_data, goal_data, user_video):
         obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(self)
@@ -281,6 +288,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
 class GoalObjectiveAnyVideo(GoalObjective):
     # which video fulfilled this objective, set upon completion
     video = db.ReferenceProperty(models.Video)
+    video_readable_id = db.StringProperty()
 
     def url(self):
         return self.video.ka_url if self.video else "/"
@@ -288,5 +296,6 @@ class GoalObjectiveAnyVideo(GoalObjective):
     def record_complete(self, video):
         super(GoalObjectiveAnyVideo, self).record_complete()
         self.video = video
+        self.video_readable_id = video.readable_id
         self.description = video.title
         return True
