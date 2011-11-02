@@ -12,8 +12,8 @@ from google.appengine.ext.db import Key
 
 class Goal(db.Model):
     title = db.StringProperty()
-    createdDate = db.DateTimeProperty(auto_now_add=True)
-    updateDate = db.DateTimeProperty(auto_now=True)
+    created_on = db.DateTimeProperty(auto_now_add=True)
+    updated_on = db.DateTimeProperty(auto_now=True)
     objectives = ObjectProperty()
     active = False
 
@@ -62,10 +62,10 @@ class Goal(db.Model):
         goal_ret['title'] = self.title
         goal_ret['objectives'] = []
         goal_ret['active'] = self.active
-        goal_ret['created'] = self.createdDate
-        goal_ret['created_ago'] = templatefilters.timesince_ago(self.createdDate)
-        goal_ret['updated'] = self.updateDate
-        goal_ret['updated_ago'] = templatefilters.timesince_ago(self.updateDate)
+        goal_ret['created'] = self.created_on
+        goal_ret['created_ago'] = templatefilters.timesince_ago(self.created_on)
+        goal_ret['updated'] = self.updated_on
+        goal_ret['updated_ago'] = templatefilters.timesince_ago(self.updated_on)
         for objective in self.objectives:
             objective_ret = {}
             objective_ret['type'] = objective.__class__.__name__
@@ -166,7 +166,7 @@ class GoalObjective(object):
     def update_parent(self, goal_data):
         parent_goal = [goal for goal in GoalList.get_from_data(goal_data, Goal) if self.parent_key() == goal.key()]
         if parent_goal:
-            parent_goal[0].updateDate = datetime.datetime.now()
+            parent_goal[0].updated_on = datetime.datetime.now()
             parent_goal[0].put()
 
     def record_complete(self):
