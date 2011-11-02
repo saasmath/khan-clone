@@ -29,7 +29,7 @@ a.objective {
     z-index: -1;
 }
 
-#student-goals-sort-block, #student-goals-filter-block {
+#student-goals-sort-block, #student-goals-filter-block, #student-goals-search-block {
     display: inline-block;
 }
 
