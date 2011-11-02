@@ -171,8 +171,10 @@ input.simple-button {
 .simple-button:hover {
     border-color: #aaa;
     color: #0075b1 !important;
-    top: 1px;
     text-decoration: none !important;
+}
+.simple-button:active {
+    top: 1px;
 }
 /* A blue color scheme for the simple button */
 .simple-button.blue {
@@ -929,7 +931,6 @@ footer {
         background-color: #fafafa;
         border:1px solid #C6D1AD;
         font-size:10px;
-        font-style: italic;
         padding: 0;
         height: 24px;
         width: 160px;
@@ -941,6 +942,9 @@ footer {
         /* For IE */
         height: 22px\9;
         padding-top: 5px\9;
+    }
+    .simple-input.placeholder {
+        font-style: italic;
     }
     .light #top-header #page_search #search-input {
         background-image: url(/images/non-repeating-sprites.3.png);

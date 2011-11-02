@@ -6,7 +6,6 @@ a.objective {
     display: inline-block;
     width: 120px;
     border: 1px solid #000;
-    margin: 2px 5px;
     padding: 1px 5px;
     white-space: nowrap;
     overflow: hidden;
@@ -27,6 +26,11 @@ a.objective {
     width: 0%;
     background: #c7e5f7;
     z-index: -1;
+}
+
+.goal {
+    padding: 5px;
+    border: 1px solid #ccc;
 }
 
 #student-goals-sort-block, #student-goals-filter-block {
@@ -83,4 +87,22 @@ a.objective {
 }
 #class-student-goal a.objective.GoalObjectiveWatchVideo.started {
     background-color: #c7f795;
+}
+
+input#goal-title {
+    font-size: 16px;
+    padding: 5px;
+    height: auto;
+    min-width: 250px;
+}
+#create-goal-view {
+    height: 35px;
+}
+
+#goal-description {
+    font-size: 14px;
+}
+
+#goal-description ul, #goal-description ul li {
+    display: inline;
 }

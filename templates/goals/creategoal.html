@@ -47,10 +47,12 @@ var GoalCreator = {
             GoalCreator.updateVideoCount();
             GoalCreator.updateViewAndDescription();
         });
-
+        
+        $('#goal-title').focus(function(){ $(this).animate({width: '600px'});}).blur(function(){ $(this).animate({width: '250px'});});
+        
         var form = $('#create-goal');
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
-        form.find('input[name="title"]').val("New Goal").change(function() { GoalCreator.updateViewAndDescription(); } );
+        form.find('input[name="title"]').change(function() { GoalCreator.updateViewAndDescription(); } );
 
         GoalCreator.updateViewAndDescription();
     },
@@ -94,7 +96,7 @@ var GoalCreator = {
         };
 
         var view = $("#goals-create-tmpl").tmplPlugin(goalObject);
-        $("#goal-view").html(view);
+        $("#create-goal-view").html(view);
 
         var message = '';
         if (GoalCreator.objectives.length == 0) {
@@ -102,7 +104,7 @@ var GoalCreator = {
         } else {
             var matchingObjectives;
 
-            message = '<div>To complete this goal, you must:</div><ul>';
+            message = 'To complete this goal, I will have to <ul>';
 
             // Exercises
             matchingObjectives = [];
@@ -111,7 +113,7 @@ var GoalCreator = {
                     matchingObjectives.push(objective);
             });
             if (matchingObjectives.length > 0) {
-                message += '<li>Become proficient in exercise';
+                message += '<li>become proficient in exercise';
                 if (matchingObjectives.length == 1) {
                     message += ' <b>' + matchingObjectives[0].description + '</b>';
                 } else {
@@ -125,7 +127,7 @@ var GoalCreator = {
                             message += ' and <b>' + objective.description + '</b>';
                     });
                 }
-                message += '.</li>';
+                message += ', and </li>';
             }
 
             // Videos
@@ -135,7 +137,7 @@ var GoalCreator = {
                     matchingObjectives.push(objective);
             });
             if (matchingObjectives.length > 0) {
-                message += '<li>Watch video';
+                message += '<li>watch video';
                 if (matchingObjectives.length == 1) {
                     message += ' <b>' + matchingObjectives[0].description + '</b>';
                 } else {
@@ -160,6 +162,8 @@ var GoalCreator = {
     showExercises: function() {
         $('#goal-choose-exercises').show();
         $('#goal-choose-videos').hide();
+        $('#show-vid-btn').removeClass("blue");
+        $('#show-ex-btn').addClass("blue");
         Drawer.resize();
     },
     onExerciseClicked: function(node, evt) {
@@ -217,6 +221,8 @@ var GoalCreator = {
     showVideos: function() {
         $('#goal-choose-exercises').hide();
         $('#goal-choose-videos').show();
+        $('#show-vid-btn').addClass("blue");
+        $('#show-ex-btn').removeClass("blue");
         Drawer.resize();
     },
     updateVideoCount: function() {
@@ -327,19 +333,19 @@ $(function() {
 <article>
 <form id="create-goal" action="javascript:">
   <div class="section-headline">
-    <span id="goal-commit-response" style="color:#f00"></span>
-    <a onclick="javascript:GoalCreator.submit();" style="float: right;"><span class="simple-button action-gradient">Create New Goal<span></a>
-    <h2><input type="text" name="title"></input></h2>
+  <a onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
+    <span id="goal-commit-response" style="color:#f00; float: right;"></span>
+    <input type="text" name="title" class="simple-input ui-corner-all" id="goal-title" placeholder="New Goal (click to edit title)"></input>
   </div>
   <div>
-    <div id="goal-view"></div>
-    <div id="goal-description" style="clear: left;"></div>
+    <div id="create-goal-view"></div>
+    <p id="goal-description" style="clear: left;"></p>
     <div id="goal-hidden-values"></div>
   </div>
 </form>
 
-<div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showExercises();">Choose exercises</a> (<span id="goal-exercise-count">0</span> selected)</div>
-<div style="float: left; margin-left: 10px;"><a href="javascript:GoalCreator.showVideos();">Choose videos</a> (<span>0</span> selected)</div>
+<a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
+<a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
 
 <div id="container" style="clear: left" class="dashboard{% if not logged_in %} unregistered{% endif %}">
   <div id="goal-choose-exercises" style="display: none;">
