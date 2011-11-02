@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 import request_handler
-import models
+from models import (UserData, UserExerciseGraph, UserExercise, Exercise,
+    Video, VideoLog)
 import knowledgemap
 import library
 import user_util
@@ -7,9 +10,9 @@ import datetime
 import random
 import logging
 import exercises
-from models_goals import Goal, GoalList, GoalObjective, \
-    GoalObjectiveExerciseProficiency, GoalObjectiveAnyExerciseProficiency, \
-    GoalObjectiveWatchVideo, GoalObjectiveAnyVideo
+from .models import (Goal, GoalList, GoalObjective,
+    GoalObjectiveExerciseProficiency, GoalObjectiveAnyExerciseProficiency,
+    GoalObjectiveWatchVideo, GoalObjectiveAnyVideo)
 
 from google.appengine.api import users
 from google.appengine.ext import db
@@ -21,7 +24,7 @@ class ViewGoals(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self):
 
-        user_data = models.UserData.current()
+        user_data = UserData.current()
 
         context = {}
 
@@ -39,7 +42,7 @@ class CreateNewGoal(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     def get(self):
-        user_data = models.UserData.current()
+        user_data = UserData.current()
 
         # TomY TODO: Replace this with decorator
         if user_data == None:
@@ -48,7 +51,7 @@ class CreateNewGoal(request_handler.RequestHandler):
             self.render_jinja2_template("goals/showgoals.html", context)
             return
 
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        user_exercise_graph = UserExerciseGraph.get(user_data)
         if user_data.reassess_from_graph(user_exercise_graph):
             user_data.put() # TomY TODO copied from exercises.py; is this necessary here?
 
@@ -91,9 +94,9 @@ class CreateRandomGoalData(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
-        login_user = models.UserData.current()
-        exercises_list = [exercise for exercise in models.Exercise.all()]
-        videos_list = [video for video in models.Video.all()]
+        login_user = UserData.current()
+        exercises_list = [exercise for exercise in Exercise.all()]
+        videos_list = [video for video in Video.all()]
 
         first_names = [ "Aston", "Stratford", "Leanian", "Patwin", "Renaldo", "Welford", "Maher", "Gregorio", "Roth", "Gawain", "Fiacre", "Coillcumhann", "Honi", "Westcot", "Walden", "Onfroi", "Merlow", "Atol", "Gimm", "Dumont", "Weorth", "Corcoran", "Sinley", "Perekin", "Galt", "Tequiefah", "Zina", "Hemi Skye", "Adelie", "Afric", "Laquinta", "Molli", "Cimberleigh", "Morissa", "Alastriona", "Ailisa", "Leontina", "Aruba", "Marilda", "Ascencion", "Lidoine", "Winema", "Eraman", "Karline", "Edwinna", "Yseult", "Florencia", "Bethsaida", "Aminah", "Onida" ]
         last_names = [ "Smith", "Jackson", "Martin", "Brown", "Roy", "Tremblay", "Lee", "Gagnon", "Wilson", "Clark", "Johnson", "White", "Williams", "Taylor", "Campbell", "Anderson", "Cooper", "Jones", "Lambert" ]
@@ -108,7 +111,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
 
             logging.info("Creating user " + nickname + ": (" + str(user_id+1) + "/" + str(user_count) + ")")
 
-            user_data = models.UserData.get_or_insert(
+            user_data = UserData.get_or_insert(
                 key_name="test_user_"+str(user_id),
                 user=user,
                 current_user=user,
@@ -133,12 +136,12 @@ class CreateRandomGoalData(request_handler.RequestHandler):
             user_data.put()
 
             # Delete user exercise & video progress
-            query = models.UserExercise.all()
+            query = UserExercise.all()
             query.filter('user = ', user)
             for user_exercise in query:
                 user_exercise.delete()
 
-            query = models.VideoLog.all()
+            query = VideoLog.all()
             query.filter('user = ', user)
             for user_video in query:
                 user_video.delete()
@@ -182,7 +185,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                     elif objective['type'] == 'GoalObjectiveWatchVideo':
                         seconds = random.randint(1,1200)
                         logging.info("Watching " + str(seconds) + " seconds of video " + objective['video'].title)
-                        models.VideoLog.add_entry(user_data, objective['video'], seconds, 0, detect_cheat=False)
+                        VideoLog.add_entry(user_data, objective['video'], seconds, 0, detect_cheat=False)
 
         #self.redirect('/')
         self.response.out.write('OK')
