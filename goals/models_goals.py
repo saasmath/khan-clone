@@ -72,7 +72,7 @@ class Goal(db.Model):
             objective_ret['description'] = objective.description
             objective_ret['progress'] = objective.progress
             objective_ret['url'] = objective.url()
-            objective_ret['status'] = objective.getStatus(user_exercise_graph)
+            objective_ret['status'] = objective.get_status(user_exercise_graph)
             goal_ret['objectives'].append(objective_ret)
         return goal_ret
 
@@ -176,7 +176,7 @@ class GoalObjective(object):
     def is_completed(self):
         return self.progress >= 1.0
 
-    def getStatus(self, user_exercise_graph):
+    def get_status(self, user_exercise_graph):
         if self.is_completed:
             return "proficient"
 
@@ -212,7 +212,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         self.update_parent(goal_data) # todo obsolete this by updating via goal not objective?
         return False
 
-    def getStatus(self, user_exercise_graph):
+    def get_status(self, user_exercise_graph):
         if not user_exercise_graph:
             return ""
 
