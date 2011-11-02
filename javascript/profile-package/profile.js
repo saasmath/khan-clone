@@ -327,11 +327,14 @@ var Profile = {
                 goal_list.push({student:student,progress_count:-1});
             }
         });
-        
-        Profile.updateStudentGoals(goal_list);
+
+        $("#graph-content").html($('#profile-student-goals-header-tmpl').tmplPlugin({'goal_list':goal_list}));
 
         $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
         $("input.student-goals-filter").change(function() { Profile.updateStudentGoals(goal_list) });
+        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(goal_list) });
+        
+        Profile.updateStudentGoals(goal_list);
     },
     updateStudentGoals: function(goal_list) {
         var sort = $("#student-goals-sort").val();
@@ -398,15 +401,27 @@ var Profile = {
             row.show_counts = !filters['most-recent'] && !filters['active'];
         });
         
-        $("#graph-content").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
-
-        $("#student-goals-sort").val(sort);
-        $("#student-goals-sort").change(function() { Profile.updateStudentGoals(goal_list) });
-
-        $("input.student-goals-filter").each(function(idx, element) {
-            $(element).prop("checked", filters[$(element).attr('name')]);
+        $("#student-goals-content-block").html($('#profile-student-goals-tmpl').tmplPlugin({'goal_list':goal_list}));
+    },
+    filterStudentGoals: function(goal_list) {
+        var filter = $.trim($("#student-goals-search").val().toLowerCase());
+        $.each(goal_list, function(idx, row) {
+            if (row.visible) {
+                var visible = true;
+                if (filter == '') {
+                    visible = true;
+                } else {
+                    if (row.student.nickname.toLowerCase().indexOf(filter) >= 0)
+                        visible = true;
+                    else
+                        visible = false;
+                }
+                if (visible)
+                    $('#class-student-goal div[data-id="'+row.student.email+'"]').show();
+                else
+                    $('#class-student-goal div[data-id="'+row.student.email+'"]').hide();
+            }
         });
-        $("input.student-goals-filter").change(function() { Profile.updateStudentGoals(goal_list) });
     },
 
     finishLoadGraphError: function() {

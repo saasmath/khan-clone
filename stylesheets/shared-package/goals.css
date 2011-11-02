@@ -29,11 +29,7 @@ a.objective {
     z-index: -1;
 }
 
-.activate.simple-button {
-    float: right;
-}
-
-#student-goals-sort-block, #student-goals-filter-block {
+#student-goals-sort-block, #student-goals-filter-block, #student-goals-search-block {
     display: inline-block;
 }
 
