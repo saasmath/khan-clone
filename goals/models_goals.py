@@ -76,9 +76,6 @@ class Goal(db.Model):
             goal_ret['objectives'].append(objective_ret)
         return goal_ret
 
-    def get_objectives(self, data):
-        return [entity for entity in data if isinstance(entity, GoalObjective) and entity.parent_key() == self.key()]
-
 class GoalList(db.Model):
     user = db.UserProperty()
     active = db.ReferenceProperty(Goal)
@@ -115,9 +112,6 @@ class GoalList(db.Model):
 
         for goal in goals:
             if str(goal.key().id()) == str(id):
-                children = goal.get_objectives(goal_data)
-                for child in children:
-                    child.delete()
                 goal.delete()
                 return True
 
@@ -130,9 +124,6 @@ class GoalList(db.Model):
         goals = GoalList.get_from_data(goal_data, Goal)
 
         for goal in goals:
-            children = goal.get_objectives(goal_data)
-            for child in children:
-                child.delete()
             goal.delete()
 
     @staticmethod
