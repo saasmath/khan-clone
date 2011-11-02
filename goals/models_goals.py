@@ -5,14 +5,16 @@ import datetime
 import models
 import templatefilters
 import logging
+from object_property import ObjectProperty
 
 from google.appengine.ext import db
-from google.appengine.ext.db import polymodel, Key
+from google.appengine.ext.db import Key
 
 class Goal(db.Model):
     title = db.StringProperty()
     createdDate = db.DateTimeProperty()
     updateDate = db.DateTimeProperty()
+    objectives = ObjectProperty()
     active = False
 
     @staticmethod
@@ -90,10 +92,9 @@ class GoalList(db.Model):
             # Fetch data from datastore
             goal_data = user_data.get_goal_data()
             if len(goal_data) == 0:
-                return None
+                return []
 
             goals = GoalList.get_from_data(goal_data, Goal)
-            objectives = GoalList.get_from_data(goal_data, GoalObjective)
             goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
 
             # annotate the active goal, this is icky
@@ -101,9 +102,9 @@ class GoalList(db.Model):
                 if goal.key() == GoalList.active.get_value_for_datastore(goal_list):
                     goal.active = True
 
-            return [goal.get_visible_data(objectives, user_exercise_graph) for goal in goals]
+            return [goal.get_visible_data(user_exercise_graph) for goal in goals]
 
-        return None
+        return []
 
     @staticmethod
     def delete_goal(user_data, id):
@@ -149,10 +150,10 @@ class GoalList(db.Model):
 
         return False
 
-class GoalObjective(polymodel.PolyModel):
+class GoalObjective(object):
     # Objective status
-    progress = db.FloatProperty(default=0.0)
-    description = db.StringProperty()
+    progress = 0.0
+    description = None
 
     def url():
         '''url to which the objective points when used as a nav bar.'''
@@ -185,17 +186,15 @@ class GoalObjective(polymodel.PolyModel):
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
-    exercise_name = db.StringProperty()
+    exercise_name = None
 
     @staticmethod
-    def create(parent_goal, exercise, user_data):
-        new_objective = GoalObjectiveExerciseProficiency(parent_goal)
+    def create(exercise, user_data):
+        new_objective = GoalObjectiveExerciseProficiency()
         new_objective.exercise_name = exercise.name
         new_objective.description = exercise.display_name
 
         new_objective.progress = user_data.get_or_insert_exercise(exercise).progress
-
-        new_objective.put()
         return new_objective
 
     def url(self):
@@ -209,7 +208,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             else:
                 self.progress = user_exercise.progress
             return True
-        self.update_parent(goal_data)
+        self.update_parent(goal_data) # todo obsolete this by updating via goal not objective?
         return False
 
     def getStatus(self, user_exercise_graph):
@@ -238,7 +237,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 
 class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     # which exercise fulfilled this objective, set upon completion
-    exercise_name = db.StringProperty()
+    exercise_name = None
 
     def url(self):
         if not self.exercise_name:
@@ -254,13 +253,13 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
 
 class GoalObjectiveWatchVideo(GoalObjective):
     # Objective definition (Chosen at goal creation time)
-    video = db.ReferenceProperty(models.Video)
-    video_readable_id = db.StringProperty()
+    video_key = None
+    video_readable_id = None
 
     @staticmethod
-    def create(parent_goal, video, user_data):
-        new_objective = GoalObjectiveWatchVideo(parent_goal)
-        new_objective.video = video
+    def create(video, user_data):
+        new_objective = GoalObjectiveWatchVideo()
+        new_objective.video_key = str(video.key())
         new_objective.video_readable_id = video.readable_id
         new_objective.description = video.title
 
@@ -270,14 +269,13 @@ class GoalObjectiveWatchVideo(GoalObjective):
         else:
             new_objective.progress = 0.0
 
-        new_objective.put()
         return new_objective
 
     def url(self):
         return models.Video.get_ka_url(self.video_readable_id)
 
     def record_progress(self, user_data, goal_data, user_video):
-        obj_key = GoalObjectiveWatchVideo.video.get_value_for_datastore(self)
+        obj_key = db.Key(self.video_key)
         video_key = models.UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
