@@ -225,10 +225,10 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     exercise_name = None
 
     def url(self):
-        if not self.exercise_name:
+        if self.exercise_name:
+            return models.Exercise.get_relative_url(self.exercise_name)
+        else:
             return "/exercisedashboard"
-        exercise = models.Exercise.get_by_name(self.exercise_name)
-        return exercise.relative_url
 
     def record_complete(self, exercise):
         super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
@@ -270,7 +270,10 @@ class GoalObjectiveAnyVideo(GoalObjective):
     video_readable_id = db.StringProperty()
 
     def url(self):
-        return self.video.ka_url if self.video else "/"
+        if self.video_readable_id:
+            return models.Video.get_ka_url(self.video_readable_id)
+        else:
+            return "/"
 
     def record_complete(self, video):
         super(GoalObjectiveAnyVideo, self).record_complete()

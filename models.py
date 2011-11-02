@@ -123,9 +123,13 @@ class Exercise(db.Model):
             "coverers", "prerequisites_ex", "assigned",
             ]
 
+    @staticmethod
+    def get_relative_url(exercise_name):
+        return "/exercises?exid=%s" % exercise_name
+
     @property
     def relative_url(self):
-        return "/exercises?exid=%s" % self.name
+        return Exercise.get_relative_url(self.name)
 
     @property
     def ka_url(self):
