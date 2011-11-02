@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import models
+from __future__ import absolute_import
+
+from models import Exercise, UserVideo, Video
 import templatefilters
 import logging
 from object_property import ObjectProperty
@@ -182,7 +184,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         self.progress = user_data.get_or_insert_exercise(exercise).progress
 
     def url(self):
-        exercise = models.Exercise.get_by_name(self.exercise_name)
+        exercise = Exercise.get_by_name(self.exercise_name)
         return exercise.relative_url
 
     def record_progress(self, user_data, goal_data, user_exercise):
@@ -224,7 +226,7 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
 
     def url(self):
         if self.exercise_name:
-            return models.Exercise.get_relative_url(self.exercise_name)
+            return Exercise.get_relative_url(self.exercise_name)
         else:
             return "/exercisedashboard"
 
@@ -244,18 +246,18 @@ class GoalObjectiveWatchVideo(GoalObjective):
         self.video_readable_id = video.readable_id
         self.description = video.title
 
-        user_video = models.UserVideo.get_for_video_and_user_data(video, user_data)
+        user_video = UserVideo.get_for_video_and_user_data(video, user_data)
         if user_video:
             self.progress = user_video.progress
         else:
             self.progress = 0.0
 
     def url(self):
-        return models.Video.get_ka_url(self.video_readable_id)
+        return Video.get_ka_url(self.video_readable_id)
 
     def record_progress(self, user_data, goal_data, user_video):
         obj_key = db.Key(self.video_key)
-        video_key = models.UserVideo.video.get_value_for_datastore(user_video)
+        video_key = UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
             return True
@@ -268,7 +270,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
 
     def url(self):
         if self.video_readable_id:
-            return models.Video.get_ka_url(self.video_readable_id)
+            return Video.get_ka_url(self.video_readable_id)
         else:
             return "/"
 
