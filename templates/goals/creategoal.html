@@ -74,7 +74,7 @@ var GoalCreator = {
             var objective = GoalCreator.objectives[found_index];
             GoalCreator.objectives.splice(found_index, 1);
             return null;
-        } else {
+        } else if (GoalCreator.objectives.length < 8) {
             var newObjective = {
                 type: type,
                 description: name,
@@ -104,7 +104,7 @@ var GoalCreator = {
         } else {
             var matchingObjectives;
 
-            message = 'To complete this goal, I will have to <ul>';
+            message = 'To complete this goal, you will have to <ul>';
 
             // Exercises
             matchingObjectives = [];
@@ -127,7 +127,7 @@ var GoalCreator = {
                             message += ' and <b>' + objective.description + '</b>';
                     });
                 }
-                message += ', and </li>';
+                message += '</li>';
             }
 
             // Videos
@@ -137,7 +137,7 @@ var GoalCreator = {
                     matchingObjectives.push(objective);
             });
             if (matchingObjectives.length > 0) {
-                message += '<li>watch video';
+                message += '<li>, and watch video';
                 if (matchingObjectives.length == 1) {
                     message += ' <b>' + matchingObjectives[0].description + '</b>';
                 } else {
@@ -330,7 +330,7 @@ $(function() {
 {% endblock pagescript %}
 
 {% block pagecontent %}
-<article>
+<article class="create-goal-page">
 <form id="create-goal" action="javascript:">
   <div class="section-headline">
   <a onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
@@ -344,8 +344,10 @@ $(function() {
   </div>
 </form>
 
+<span class="objective-type-picker">
 <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
 <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
+</span>
 
 <div id="container" style="clear: left" class="dashboard{% if not logged_in %} unregistered{% endif %}">
   <div id="goal-choose-exercises" style="display: none;">
@@ -374,9 +376,9 @@ $(function() {
 {%- raw -%}
 <script id="goals-create-tmpl" type="text/x-jquery-tmpl">
     <div class="goal">
-        <ul class="inline-list">
+        <ul class="inline-list objective-list">
         {{each objectives}}
-            <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+            <li class="objective"><a class="objective action-gradient seethrough ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
         {{/each}}
         </ul>
     </div>
