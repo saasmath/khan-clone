@@ -74,7 +74,7 @@ var GoalCreator = {
             var objective = GoalCreator.objectives[found_index];
             GoalCreator.objectives.splice(found_index, 1);
             return null;
-        } else if (GoalCreator.objectives.length < 8) {
+        } else if (GoalCreator.objectives.length < 10) {
             var newObjective = {
                 type: type,
                 description: name,
@@ -97,7 +97,11 @@ var GoalCreator = {
 
         var view = $("#goals-create-tmpl").tmplPlugin(goalObject);
         $("#create-goal-view").html(view);
-
+        
+        if (GoalCreator.objectives.length > 1) {
+            $('.goal li.objective').css('width', 100/GoalCreator.objectives.length + "%");
+        }
+        
         var message = '';
         if (GoalCreator.objectives.length == 0) {
             message = 'This goal currently has no objectives selected. Select exercises or videos to complete below.';

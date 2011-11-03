@@ -1,5 +1,6 @@
 ul.inline-list, ul.inline-list li {
-    display: inline-block;
+    display: block;
+    float: left;
 }
 
 .goal {
@@ -12,14 +13,13 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal li.objective {
-    width: 12.3%;
+    width: 50%;
 }
 
 .goal a.objective {
     border-right: 1px solid #CCC;
     display: block;
     line-height: 35px;
-    margin-right: -3px;
     overflow: hidden;
     padding: 0 5px;
     text-overflow: ellipsis;
@@ -142,6 +142,9 @@ input#goal-title:focus {
 }
 .create-goal-page #goal-choose-exercises .dashboard-nav {
     display: none;
+}
+.create-goal-page #goal-choose-videos .dashboard-header {
+    box-shadow: 0 1px 3px rgba(0,0,0, .1);
 }
 .create-goal-page #goal-choose-videos .dashboard-nav {
     top: 2px;
