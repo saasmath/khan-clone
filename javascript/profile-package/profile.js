@@ -302,7 +302,7 @@ var Profile = {
             student.most_recent_update = null;
             student.profile_url = "/profile?k&student_email="+student.email+"#/?graph_url=/api/v1/user/goals%3Fstudent_email="+student.email;
 
-            if (student.goals != undefined) {
+            if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
                     // Sort objectives by status
                     var statuses = ['started','struggling','proficient'];
@@ -349,8 +349,12 @@ var Profile = {
             } else {
                 goals_model.row_data.push({
                     student: student,
+                    goal: { objectives:[] },
                     progress_count: -1,
-                    visible: true,
+                    goal_idx: 0,
+                    visible: ko.observable(true),
+                    show_counts: ko.observable(false),
+                    struggling: false,
                 });
             }
         });

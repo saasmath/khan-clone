@@ -22,12 +22,12 @@
           <div class="goal-update-time">Updated <span data-bind="text: goal.updated_ago"/></div>
         </div>
       </div>
-      <div data-bind="visible: goal" class="goal">
+      <div data-bind="visible: goal.objectives.length > 0" class="goal">
         <ul class="inline-list" data-bind="foreach: goal.objectives">
           <li><a class="objective action-gradient seethrough" data-bind="student_objective_css: $data, css: {filtered: !filter_match()}, click: click_fn, text: description"></a></li>
         </ul>
       </div>
-      <div data-bind="visible: !goal">Student has no goals.</div>
+      <div data-bind="visible: goal.objectives.length == 0" class="goal">Student has no goals.</div>
     </div>
   </div>
 </div>

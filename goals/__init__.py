@@ -149,7 +149,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
             # Delete existing goals
             GoalList.delete_all_goals(user_data)
 
-            for goal_idx in xrange(1,random.randint(1,4)):
+            for goal_idx in xrange(1,random.randint(-1,4)):
                 # Create a random goal
                 objective_descriptors = []
 
