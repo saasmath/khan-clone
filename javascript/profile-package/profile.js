@@ -357,7 +357,6 @@ var Profile = {
 
         $("#graph-content").html($('#profile-student-goals-tmpl').html());
 
-
         ko.bindingHandlers.student_objective_css = {
             update: function(element, valueAccessor) {
                 var objective = ko.utils.unwrapObservable(valueAccessor())
@@ -377,33 +376,42 @@ var Profile = {
     },
     sortStudentGoals: function(goals_model) {
         var sort = $("#student-goals-sort").val();
+        var rows = $("#class-student-goal").children().get();
 
         if (sort == 'name') {
-            goals_model.row_data.sort(function(a,b) {
-                if (b.student.nickname > a.student.nickname)
+            rows.sort(function(a,b) {
+                a_data = ko.dataFor(a);
+                b_data = ko.dataFor(b);
+                if (b_data.student.nickname > a_data.student.nickname)
                     return -1;
-                if (b.student.nickname < a.student.nickname)
+                if (b_data.student.nickname < a_data.student.nickname)
                     return 1;
-                return a.goal_idx-b.goal_idx;
+                return a_data.goal_idx-b_data.goal_idx;
             });
 
             goals_model.sort_desc('student name');
             
         } else if (sort == 'progress') {
-            goals_model.row_data.sort(function(a,b) { return b.progress_count - a.progress_count; });
+            rows.sort(function(a,b) {
+                a_data = ko.dataFor(a);
+                b_data = ko.dataFor(b);
+                return b_data.progress_count - a_data.progress_count;
+            });
 
             goals_model.sort_desc('goal progress');
 
         } else if (sort == 'created') {
-            goals_model.row_data.sort(function(a,b) {
-                if (a.goal && !b.goal)
+            rows.sort(function(a,b) {
+                a_data = ko.dataFor(a);
+                b_data = ko.dataFor(b);
+                if (a_data.goal && !b_data.goal)
                     return -1;
-                if (b.goal && !a.goal)
+                if (b_data.goal && !a_data.goal)
                     return 1;
-                if (a.goal && b.goal) {
-                    if (b.goal.created > a.goal.created)
+                if (a_data.goal && b_data.goal) {
+                    if (b_data.goal.created > a_data.goal.created)
                         return 1;
-                    if (b.goal.created < a.goal.created)
+                    if (b_data.goal.created < a_data.goal.created)
                         return -1;
                 }
                 return 0;
@@ -412,15 +420,17 @@ var Profile = {
             goals_model.sort_desc('goal creation time');
 
         } else if (sort == 'updated') {
-            goals_model.row_data.sort(function(a,b) {
-                if (a.goal && !b.goal)
+            rows.sort(function(a,b) {
+                a_data = ko.dataFor(a);
+                b_data = ko.dataFor(b);
+                if (a_data.goal && !b_data.goal)
                     return -1;
-                if (b.goal && !a.goal)
+                if (b_data.goal && !a_data.goal)
                     return 1;
-                if (a.goal && b.goal) {
-                    if (b.goal.updated > a.goal.updated)
+                if (a_data.goal && b_data.goal) {
+                    if (b_data.goal.updated > a_data.goal.updated)
                         return 1;
-                    if (b.goal.updated < a.goal.updated)
+                    if (b_data.goal.updated < a_data.goal.updated)
                         return -1;
                 }
                 return 0;
@@ -428,6 +438,8 @@ var Profile = {
 
             goals_model.sort_desc('last work logged time');
         }
+
+        $.each(rows, function(idx, element) { $("#class-student-goal").append(element); });
     },
     filterStudentGoals: function(goals_model) {
         var filter_text = $.trim($("#student-goals-search").val().toLowerCase());
