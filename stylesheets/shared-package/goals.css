@@ -33,10 +33,34 @@ a.objective {
     display: inline-block;
 }
 
-#goals-current-container, #goals-nav-container {
-    margin: 0 auto;
-    max-width: 1200px;
-    min-width: 1000px;
+#goals-nav-container {
+    position: absolute;
+    width: 800px;
+    z-index: 200;
+}
+
+#goals-nav-container .drag-handle {
+    position: absolute;
+    right: 20px;
+    display: block;
+    padding: 4px 8px;
+    background: #fff;
+    border: 1px solid #000;
+}
+
+#goals-nav-container .drag-handle .close-cross {
+    position: relative;
+    top: 4px;
+    left: 4px;
+    width: 14px;
+    height: 14px;
+    opacity: .2;
+    /* whatever we need to do to make this work with IE */
+}
+
+#goals-nav-container .all-goals {
+    background: #fff;
+    border: 1px solid #000;
 }
 
 #class-student-goal .student-name {

@@ -80,8 +80,6 @@
     </head>
 
     <body class="light">
-    <div id="goals-current-container" style="display: none"></div>
-    <div id="goals-nav-container" style="display: none"></div>
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
     <div id="page-container">
@@ -93,6 +91,8 @@
         <script>document.writeln('<style scoped type="text/css">a[href="#"], .requires_script { visibility: visible; }</style>');</script>
 
             <header>
+                <div id="goals-nav-container" style="display: none"></div>
+
                 <div id="top-header">
                     <div id="top-header-links">
                         <span class="page_links" id="page_auth">
@@ -237,7 +237,9 @@
             {{tmplPlugin($value) "#goals-nav-tmpl"}}
             {{/each}}
             <a class="simple-button action-gradient green" href="/goals/new">New goal</a>
-        </body>
+            <a class="hide-goals" href="#">Hide goals</a>
+            <span class="drag-handle">Handle <img class="close-cross hide-goals" src="images/circled_cross.png"></span>
+        </div>
     </script>
     {%- endraw -%}
     </body>
