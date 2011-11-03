@@ -42,8 +42,10 @@ var UIChangeActiveGoal = function(id) {
     });
     renderAllGoalsUI();
 };
-var updateGoals = function(data) {
+var saveGoals = function(data) {
     Goals.all = data;
+
+    // anotate goals with progress counts and overall progress
     $.each(Goals.all, function(i, goal) {
         goal.progress = totalProgress(goal.objectives).toFixed(0);
         goal.objectiveProgress = 0;
@@ -53,15 +55,137 @@ var updateGoals = function(data) {
                 goal.objectiveProgress += 1;
             }
         });
+    });
+};
 
-        if (goal.active) {
-            Goals.active = goal;
+// todo: surely this is in a library somewhere?
+var parseQueryString = function(url) {
+    var querystring = decodeURIComponent(url.substring(url.indexOf('?')+1));
+    var pairs = querystring.split('&');
+    var qs = {};
+    var qslist = $.each(pairs, function(i, pair) {
+        var kv = pair.split("=");
+        qs[kv[0]] = kv[1];
+    });
+    return qs;
+};
+
+var findExerciseObjectiveFor = function(url) {
+    var matchingGoal = null;
+
+    var exid = parseQueryString(url).exid;
+    // find a goal with exactly this exercise
+    $.each(Goals.all, function(i, goal) {
+        var objective = $.grep(goal.objectives, function(ob) {
+            return ob.type == "GoalObjectiveExerciseProficiency" &&
+                exid == parseQueryString(ob.url).exid;
+        });
+        if (objective.length > 0) {
+            matchingGoal = goal;
+            return false;
         }
     });
+
+    if (matchingGoal === null) {
+        // find an exercise process goal
+        $.each(Goals.all, function(i, goal) {
+            var objective = $.grep(goal.objectives, function(ob) {
+                return ob.type == "GoalObjectiveAnyExerciseProficiency";
+            });
+            if (objective.length > 0) {
+                matchingGoal = goal;
+                return false;
+            }
+        });
+    }
+
+    return matchingGoal;
+};
+
+var findVideoObjectiveFor = function(url) {
+    var matchingGoal = null;
+
+    var getVideoId = function(url) {
+        var regex = /\/video\/([^\/?]+)/;
+        var matches = url.match(regex);
+        return matches[1];
+    };
+
+    var videoId = getVideoId(window.location.toString());
+
+    // find a goal with exactly this exercise
+    $.each(Goals.all, function(i, goal) {
+        var objective = $.grep(goal.objectives, function(ob) {
+            return ob.type == "GoalObjectiveWatchVideo" &&
+                videoId == getVideoId(ob.url);
+        });
+        if (objective.length > 0) {
+            matchingGoal = goal;
+            return false;
+        }
+    });
+
+    if (matchingGoal === null) {
+        // find an exercise process goal
+        $.each(Goals.all, function(i, goal) {
+            var objective = $.grep(goal.objectives, function(ob) {
+                return ob.type == "GoalObjectiveAnyVideo";
+            });
+            if (objective.length > 0) {
+                matchingGoal = goal;
+                return false;
+            }
+        });
+    }
+
+    return matchingGoal;
+};
+
+// find the most appriate goal to display for a given URL
+var findMatchingGoalFor = function(url) {
+    var matchingGoal = null;
+
+    if (window.location.pathname == "/exercises") {
+        matchingGoal = findExerciseObjectiveFor(url);
+        if (matchingGoal !== null) {
+            console.log('found a matching exercise goal');
+        }
+    }
+    else if (window.location.pathname.indexOf("/video") === 0) {
+        matchingGoal = findVideoObjectiveFor(url);
+        if (matchingGoal !== null) {
+            console.log('found a matching video goal');
+        }
+    }
+    // if we're not on a matching exercise or video page, just show the most recent goal
+    if (matchingGoal === null) {
+        matchingGoal = mostRecentlyUpdatedGoal(Goals.all);
+    }
+
+    return matchingGoal;
+};
+
+var mostRecentlyUpdatedGoal = function(goals) {
+    var matchingGoal = goals[0];
+    var minDate = new Date(matchingGoal.updated);
+
+    $.each(Goals.all, function(i, goal) {
+        var currentDate = new Date(goal.updated);
+        if (currentDate > minDate) {
+            matchingGoal = goal;
+            minDate = currentDate;
+        }
+    });
+
+    return matchingGoal;
+};
+
+var displayGoals = function() {
+    Goals.active = findMatchingGoalFor(window.location.toString());
     renderAllGoalsUI();
 };
 var requestGoals = function() {
-    $.ajax({ url: "/api/v1/user/goals", success: updateGoals });
+    $.ajax({ url: "/api/v1/user/goals", success: saveGoals });
 };
 var renderGoals = function() {
     if (Goals.active) {
@@ -83,6 +207,13 @@ var showGoals = function() {
 };
 var hideGoals = function() {
     $("#goals-nav-container").hide();
+};
+
+var updateGoals = function() {
+    $.ajax({ url: "/api/v1/user/goals", success: function(data) {
+        saveGoals(data);
+        displayGoals();
+     }});
 };
 
 var predefinedGoalsList = {
@@ -139,4 +270,4 @@ var createSimpleGoalDialog = {
     },
 };
 
-$(function() { requestGoals(); });
+$(function() { updateGoals(); });
