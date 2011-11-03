@@ -1,15 +1,41 @@
 ul.inline-list, ul.inline-list li {
-    display: inline-block;
+    display: block;
+    float: left;
 }
 
-a.objective {
-    display: inline-block;
-    width: 120px;
-    border: 1px solid #000;
-    margin: 2px 5px;
-    padding: 1px 5px;
-    white-space: nowrap;
+.goal {
+    border: 1px solid #ccc;
+    height: 35px;
+}
+
+.goal .objective-list {
+    width: 100%;
+}
+
+.goal li.objective {
+    width: 50%;
+}
+
+.goal a.objective {
+    border-right: 1px solid #CCC;
+    display: block;
+    line-height: 35px;
     overflow: hidden;
+    padding: 0 5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.goal a.objective.GoalObjectiveExerciseProficiency, .goal a.objective.GoalObjectiveWatchVideo {
+    padding-left: 20px    
+}
+
+.goal a.objective.GoalObjectiveExerciseProficiency {
+
+}
+
+.goal a.objective.GoalObjectiveWatchVideo {
+
 }
 
 .progress-bar {
@@ -30,7 +56,11 @@ a.objective {
 }
 
 #student-goals-sort-block, #student-goals-filter-block, #student-goals-search-block {
-    display: inline-block;
+    display: block;
+    margin: 3px;
+}
+.student-goals-filter {
+    display: block;
 }
 
 #goals-nav-container {
@@ -98,33 +128,6 @@ a.objective {
     border-radius: 3px;
 }
 
-a.objective.GoalObjectiveExerciseProficiency.proficient {
-    background-color: #0080C9;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.suggested {
-    background-color: #73982C;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.review {
-    background-color: #E35D04;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.review.light {
-    background-color: #f2b891;
-    color: #333 !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.not-started {
-    background-color: #ccc;
-}
-a.objective.GoalObjectiveExerciseProficiency.struggling {
-    background-color: #C30202;
-    color: #dfdfdf !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.started {
-    background-color: #c7e5f7;
-}
-
 #class-student-goal a.objective.GoalObjectiveWatchVideo {
     background-color: #ccc;
     height: 18px;
@@ -134,4 +137,59 @@ a.objective.GoalObjectiveExerciseProficiency.started {
 }
 #class-student-goal a.objective.GoalObjectiveWatchVideo.started {
     background-color: #c7f795;
+}
+
+#create-goal-view {
+    margin-top: 3px;
+}
+
+input#goal-title {
+    font-size: 16px;
+    padding: 5px 5px 5px 0;
+    height: auto;
+    min-width: 250px;
+    color: #333;
+    background-color: transparent;
+    border-color: transparent;
+}
+input#goal-title:focus {
+    background-color: #FAFAFA;
+    border-color: #C6D1AD;
+    padding-left: 5px;
+}
+
+#goal-description {
+    font-size: 14px;
+}
+
+#goal-description ul, #goal-description ul li {
+    display: inline;
+}
+.create-goal-page .dashboard {
+    margin-top: -23px;
+}
+.create-goal-page #goal-choose-exercises .dashboard-nav {
+    display: none;
+}
+.create-goal-page #goal-choose-videos .dashboard-header {
+    box-shadow: 0 1px 3px rgba(0,0,0, .1);
+}
+.create-goal-page #goal-choose-videos .dashboard-nav {
+    top: 2px;
+}
+.create-goal-page #goal-choose-videos .dashboard-content {
+    width: 1125px;
+}
+.objective-type-picker {
+    position: relative;
+    top: 6px;
+    z-index: 100;
+    left: 2px;
+}
+.objective-type-picker .simple-button {
+    padding: 10px 12px;
+    margin-left: -2px;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
 }

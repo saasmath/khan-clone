@@ -171,8 +171,10 @@ input.simple-button {
 .simple-button:hover {
     border-color: #aaa;
     color: #0075b1 !important;
-    top: 1px;
     text-decoration: none !important;
+}
+.simple-button:active {
+    top: 1px;
 }
 /* A blue color scheme for the simple button */
 .simple-button.blue {
@@ -376,7 +378,14 @@ img {
     -ms-interpolation-mode: bicubic;
     /* Fix IE image scaling so that it isn't crappy */
 }
-
+input[type=text], input[type=email] {
+    outline: none;
+}
+input[type=text]:focus, input[type=email]:focus {
+    -webkit-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+    -moz-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+    box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+}
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
 }
@@ -918,16 +927,11 @@ footer {
     display: block;
     padding: 0;
 }
-    .light #top-header #page_search #search-input,
-    #container #dashboard-filter-text {
-        background-image: url(/images/non-repeating-sprites.3.png);
-        background-position: -5px -867px;
+    .simple-input {
         background-color: #fafafa;
         border:1px solid #C6D1AD;
         font-size:10px;
-        font-style: italic;
         padding: 0;
-        padding-left: 25px;
         height: 24px;
         width: 160px;
 
@@ -939,30 +943,13 @@ footer {
         height: 22px\9;
         padding-top: 5px\9;
     }
-    .dark #top-header #page_search #search-input {
-        background-image: url(/images/non-repeating-sprites.3.png);
-        background-position: -215px -867px;
-        background-color: #36485C;
-        border:1px solid #1A222C;
-        color: #ddd;
-        font-size:10px;
+    .simple-input.placeholder {
         font-style: italic;
-        padding: 0;
+    }
+    .light #top-header #page_search #search-input {
+        background-image: url(/images/non-repeating-sprites.3.png);
+        background-position: -5px -867px;
         padding-left: 25px;
-        height: 24px;
-        width: 160px;
-
-        /* For jquery-ui autocomplete */
-        z-index: 100;
-        position: relative;
-
-        /* For IE */
-        height: 22px\9;
-        padding-top: 5px\9;
-
-        -webkit-box-shadow: inset 0 1px 3px #1A222C, 0 1px 0 #37495D;
-        -moz-box-shadow: inset 0 1px 3px #1A222C, 0 1px 0 #37495D;
-        box-shadow: inset 0 1px 3px #1A222C, 0 1px 0 #37495D;
     }
     #page_search #search-submit {
         display: none;
@@ -1449,14 +1436,8 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         background-image: none;
         border-color: #ccc;
         height: 24px\9;
-        outline: none;
         padding: 0 55px 0 5px;
         width: 260px;
-    }
-    #container #dashboard-filter-text:focus {
-        -webkit-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
-        -moz-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
-        box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
     }
     #dashboard-filter-clear {
         height: 26px;
