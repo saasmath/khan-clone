@@ -17,30 +17,8 @@ var renderAllGoalsUI = function() {
     renderGoals();
     renderCurrentGoals();
 
-    // event handlers
-    $(".activate.simple-button").click(function(ev) {
-        ev.preventDefault();
-        var id = $(ev.target).data('goal-id');
-        $.ajax({
-            type: 'post',
-            url: "/api/v1/user/goals/" + id + "/activate"
-        });
-        UIChangeActiveGoal(id);
-    });
     $("#goals-drawer").click(showGoals);
     $(".hide-goals").click(hideGoals);
-};
-var UIChangeActiveGoal = function(id) {
-    $.each(Goals.all, function(i, goal) {
-        if (goal.id == id) {
-            Goals.active = goal;
-            goal.active = true;
-        }
-        else {
-            goal.active = false;
-        }
-    });
-    renderAllGoalsUI();
 };
 var saveGoals = function(data) {
     Goals.all = data;
