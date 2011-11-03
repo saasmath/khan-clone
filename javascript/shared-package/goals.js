@@ -46,6 +46,14 @@ var updateGoals = function(data) {
     Goals.all = data;
     $.each(Goals.all, function(i, goal) {
         goal.progress = totalProgress(goal.objectives).toFixed(0);
+        goal.objectiveProgress = 0;
+
+        $.each(goal.objectives, function(i, ob) {
+            if (ob.progress >= 1) {
+                goal.objectiveProgress += 1;
+            }
+        });
+
         if (goal.active) {
             Goals.active = goal;
         }
