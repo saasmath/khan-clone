@@ -128,6 +128,7 @@ class ViewClassProfile(request_handler.RequestHandler):
                     'is_profile_empty': not coach.has_students(),
                     'selected_nav_link': 'coach',
                     "view": self.request_string("view", default=""),
+                    'stats_charts_class': 'coach-view',
                     }
             self.render_jinja2_template('viewclassprofile.html', template_values)
         else:

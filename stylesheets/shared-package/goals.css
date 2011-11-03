@@ -55,8 +55,12 @@ ul.inline-list, ul.inline-list li {
     z-index: -1;
 }
 
-#student-goals-sort-block, #student-goals-filter-block {
-    display: inline-block;
+#student-goals-sort-block, #student-goals-filter-block, #student-goals-search-block {
+    display: block;
+    margin: 3px;
+}
+.student-goals-filter {
+    display: block;
 }
 
 #goals-current-container, #goals-nav-container {

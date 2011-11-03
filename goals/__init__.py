@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 import request_handler
-import models
+from models import (UserData, UserExerciseGraph, UserExercise, Exercise,
+    Video, VideoLog)
 import knowledgemap
 import library
 import user_util
@@ -7,9 +10,9 @@ import datetime
 import random
 import logging
 import exercises
-from models_goals import Goal, GoalList, GoalObjective, \
-    GoalObjectiveExerciseProficiency, GoalObjectiveAnyExerciseProficiency, \
-    GoalObjectiveWatchVideo, GoalObjectiveAnyVideo
+from .models import (Goal, GoalList, GoalObjective,
+    GoalObjectiveExerciseProficiency, GoalObjectiveAnyExerciseProficiency,
+    GoalObjectiveWatchVideo, GoalObjectiveAnyVideo)
 
 from google.appengine.api import users
 from google.appengine.ext import db
@@ -21,7 +24,7 @@ class ViewGoals(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self):
 
-        user_data = models.UserData.current()
+        user_data = UserData.current()
 
         context = {}
 
@@ -39,7 +42,7 @@ class CreateNewGoal(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     def get(self):
-        user_data = models.UserData.current()
+        user_data = UserData.current()
 
         # TomY TODO: Replace this with decorator
         if user_data == None:
@@ -48,7 +51,7 @@ class CreateNewGoal(request_handler.RequestHandler):
             self.render_jinja2_template("goals/showgoals.html", context)
             return
 
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        user_exercise_graph = UserExerciseGraph.get(user_data)
         if user_data.reassess_from_graph(user_exercise_graph):
             user_data.put() # TomY TODO copied from exercises.py; is this necessary here?
 
@@ -91,13 +94,13 @@ class CreateRandomGoalData(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
-        login_user = models.UserData.current()
-        exercises_list = [exercise for exercise in models.Exercise.all()]
-        videos_list = [video for video in models.Video.all()]
+        login_user = UserData.current()
+        exercises_list = [exercise for exercise in Exercise.all()]
+        videos_list = [video for video in Video.all()]
 
         first_names = [ "Aston", "Stratford", "Leanian", "Patwin", "Renaldo", "Welford", "Maher", "Gregorio", "Roth", "Gawain", "Fiacre", "Coillcumhann", "Honi", "Westcot", "Walden", "Onfroi", "Merlow", "Atol", "Gimm", "Dumont", "Weorth", "Corcoran", "Sinley", "Perekin", "Galt", "Tequiefah", "Zina", "Hemi Skye", "Adelie", "Afric", "Laquinta", "Molli", "Cimberleigh", "Morissa", "Alastriona", "Ailisa", "Leontina", "Aruba", "Marilda", "Ascencion", "Lidoine", "Winema", "Eraman", "Karline", "Edwinna", "Yseult", "Florencia", "Bethsaida", "Aminah", "Onida" ]
         last_names = [ "Smith", "Jackson", "Martin", "Brown", "Roy", "Tremblay", "Lee", "Gagnon", "Wilson", "Clark", "Johnson", "White", "Williams", "Taylor", "Campbell", "Anderson", "Cooper", "Jones", "Lambert" ]
-        
+
         user_count = 35
         for user_id in xrange(0,user_count):
             # Create a new user
@@ -108,7 +111,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
 
             logging.info("Creating user " + nickname + ": (" + str(user_id+1) + "/" + str(user_count) + ")")
 
-            user_data = models.UserData.get_or_insert(
+            user_data = UserData.get_or_insert(
                 key_name="test_user_"+str(user_id),
                 user=user,
                 current_user=user,
@@ -124,15 +127,21 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                 )
             user_data.user_nickname=nickname
             user_data.coaches = [ login_user.user_email ]
+            user_data.badges = ''
+            user_data.all_proficient_exercises = ''
+            user_data.proficient_exercises = ''
+            user_data.videos_completed = 0
+            user_data.points = 0
+            user_data.total_seconds_watched = 0
             user_data.put()
 
             # Delete user exercise & video progress
-            query = models.UserExercise.all()
+            query = UserExercise.all()
             query.filter('user = ', user)
             for user_exercise in query:
                 user_exercise.delete()
 
-            query = models.VideoLog.all()
+            query = VideoLog.all()
             query.filter('user = ', user)
             for user_video in query:
                 user_video.delete()
@@ -158,7 +167,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':
                         user_exercise = user_data.get_or_insert_exercise(objective['exercise'])
                         chooser = random.randint(1,200)
-                        if chooser < 30:
+                        if chooser < 60:
                             if chooser > 15:
                                 count = 1
                                 hints = 0
@@ -176,43 +185,58 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                     elif objective['type'] == 'GoalObjectiveWatchVideo':
                         seconds = random.randint(1,1200)
                         logging.info("Watching " + str(seconds) + " seconds of video " + objective['video'].title)
-                        models.VideoLog.add_entry(user_data, objective['video'], seconds, 0, detect_cheat=False)
-    
+                        VideoLog.add_entry(user_data, objective['video'], seconds, 0, detect_cheat=False)
+
         #self.redirect('/')
         self.response.out.write('OK')
 
+def goals_with_objectives(user_data):
+    goal_data = user_data.get_goal_data()
+    return GoalList.get_from_data(goal_data, Goal)
+
 # a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
-    goal_data = user_data.get_goal_data()
-    specific_videos = GoalList.get_from_data(goal_data, GoalObjectiveWatchVideo)
-    any_videos = GoalList.get_from_data(goal_data, GoalObjectiveAnyVideo)
     changes = []
-    for objective in specific_videos:
-        if objective.record_progress(user_data, goal_data, user_video):
-            changes.append(objective)
+    for goal in goals_with_objectives(user_data):
+        changed = False
+        specific_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveWatchVideo)
+        for objective in specific_videos:
+            if objective.record_progress(user_data, [goal], user_video):
+                changed = True
 
-    if user_video.completed:
-        for vid_obj in any_videos:
-            if not vid_obj.is_completed:
-                vid_obj.record_complete(user_video.video)
-                changes.append(vid_obj)
-                break
-    db.put(changes)
+        any_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyVideo)
+        if user_video.completed:
+            for vid_obj in any_videos:
+                if not vid_obj.is_completed:
+                    vid_obj.record_complete(user_video.video)
+                    changed = True
+                    break
+        if changed:
+            changes.append(goal)
+
+    if changes:
+        db.put(changes)
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
-    goal_data = user_data.get_goal_data()
-    specific_exercises = GoalList.get_from_data(goal_data, GoalObjectiveExerciseProficiency)
-    any_exercises = GoalList.get_from_data(goal_data, GoalObjectiveAnyExerciseProficiency)
     changes = []
-    for ex_obj in specific_exercises:
-        if ex_obj.record_progress(user_data, user_exercise):
-            changes.append(ex_obj)
+    for goal in goals_with_objectives(user_data):
+        changed = False
 
-    if became_proficient:
-        # mark off an unfinished any_exercise as complete.
-        for ex_obj in any_exercises:
-            if not ex_obj.is_completed:
-                ex_obj.record_complete(user_exercise.exercise_model)
-                changes.append(ex_obj)
-                break
-    db.put(changes)
+        specific_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveExerciseProficiency)
+        for ex_obj in specific_exercises:
+            if ex_obj.record_progress(user_data, [goal], user_exercise):
+                changed = True
+
+        any_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyExerciseProficiency)
+        if became_proficient:
+            # mark off an unfinished any_exercise as complete.
+            for ex_obj in any_exercises:
+                if not ex_obj.is_completed:
+                    ex_obj.record_complete(user_exercise.exercise_model)
+                    changed = True
+                    break
+        if changed:
+            changes.append(goal)
+
+    if changes:
+        db.put(changes)
