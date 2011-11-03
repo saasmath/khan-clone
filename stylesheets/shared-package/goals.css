@@ -27,7 +27,7 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal a.objective.GoalObjectiveExerciseProficiency, .goal a.objective.GoalObjectiveWatchVideo {
-    padding-left: 20px    
+    padding-left: 20px
 }
 
 .goal a.objective.GoalObjectiveExerciseProficiency {
@@ -38,11 +38,18 @@ ul.inline-list, ul.inline-list li {
 
 }
 
+.all-goals {
+    padding: 10px;
+}
+
+.goal-with-progress {
+    margin: 10px;
+}
+
 .progress-bar {
     position: relative;
     border: 1px solid #000;
     padding: 2px;
-    margin: 2px 5px;
 }
 
 .bar {

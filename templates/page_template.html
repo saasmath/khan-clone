@@ -203,41 +203,37 @@
     {{ gae_mini_profiler.profiler_includes() }}
 
     {#- templates for goals -#}
-    {# goal drawer #}
+    {# goal summary area #}
     <script id="goals-tmpl" type="text/x-jquery-tmpl">
         <a id="goals-drawer">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progress}%</a>
         <span class="separator"></span>
     </script>
 
-    {#- active goal nav bar -#}
+    {#- goal book -#}
     {%- raw -%}
     <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal">
+        <div class="goal-with-progress">
             <div class="progress-bar">
                 <div class="bar" style="width: ${progress}%"></div>
                 <a href="/profile?graph_url=/api/v1/user/goals">${title}</a>
                 (started ${created_ago})
             </div>
+            <div class="goal">
             <ul class="inline-list">
             {{each objectives}}
                 <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
             {{/each}}
             </ul>
+            </div>
         </div>
     </script>
 
     <script id="goals-all-tmpl" type="text/x-jquery-tmpl">
         <div class="all-goals">
             {{each goals}}
-            {{if !$value.active}}
-                <a class="simple-button action-gradient green activate" href="#" data-goal-id="${$value.id}">
-                    Activate
-                </a>
-            {{/if}}
             {{tmplPlugin($value) "#goals-nav-tmpl"}}
             {{/each}}
             <a class="simple-button action-gradient green" href="/goals/new">New goal</a>
-            <a class="hide-goals" href="#">Hide goals</a>
             <span class="drag-handle">Handle <img class="close-cross hide-goals" src="/images/circled_cross.png"></span>
         </div>
     </script>
