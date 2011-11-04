@@ -162,7 +162,7 @@ var displayGoals = function() {
     Goals.active = findMatchingGoalFor(window.location.toString());
     renderAllGoalsUI();
 };
-var requestGoals = function() {
+var requestGoals = function(callback) {
     $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
 };
 var renderGoals = function() {
