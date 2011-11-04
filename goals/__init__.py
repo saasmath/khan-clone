@@ -28,7 +28,7 @@ class ViewGoals(request_handler.RequestHandler):
 
         context = {}
 
-        if user_data == None:
+        if user_data is None:
             context['status'] = 'notloggedin'
             self.render_jinja2_template("goals/showgoals.html", context)
             return
@@ -45,7 +45,7 @@ class CreateNewGoal(request_handler.RequestHandler):
         user_data = UserData.current()
 
         # TomY TODO: Replace this with decorator
-        if user_data == None:
+        if user_data is None:
             context = {}
             context['status'] = 'notloggedin'
             self.render_jinja2_template("goals/showgoals.html", context)

@@ -96,7 +96,7 @@ class Goal(db.Model):
 
     @property
     def is_completed(self):
-        return (self.completed_on != None)
+        return (self.completed_on is not None)
 
 class GoalList(db.Model):
     user = db.UserProperty()
