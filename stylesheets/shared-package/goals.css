@@ -32,7 +32,8 @@ ul.inline-list, ul.inline-list li {
     padding-left: 20px
 }
 
-.goal a.objective.GoalObjectiveExerciseProficiency:hover:before, .goal a.objective.GoalObjectiveWatchVideo:hover:before {
+#create-goal-view .goal a.objective.GoalObjectiveExerciseProficiency:hover:before, 
+#create-goal-view .goal a.objective.GoalObjectiveWatchVideo:hover:before {
     background: transparent url(/images/delete-icon-inset-small.png) no-repeat 2px 8px;
 }
 
@@ -184,6 +185,12 @@ input#goal-title {
     background-color: transparent;
     border-color: transparent;
 }
+input#goal-title::-webkit-input-placeholder {
+    color: #333;
+}
+input#goal-title:-moz-placeholder {
+    color: #333;
+}
 input#goal-title:focus {
     background-color: #FAFAFA;
     border-color: #C6D1AD;
@@ -232,6 +239,9 @@ input#goal-title:focus {
     width: 174px;
     float: left;
     text-align: center;
+}
+#create-goal-view .goal .simple-button:hover {
+    border-right-color: #fff !important;
 }
 
 .create-goal-page .dashboard {
