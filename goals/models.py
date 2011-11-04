@@ -90,8 +90,7 @@ class Goal(db.Model):
 
     def record_complete(self):
         # Is this goal complete?
-        uncompleted_objectives = [objective for objective in self.objectives if not objective.is_completed]
-        if len(uncompleted_objectives) == 0:
+        if all([o.is_completed for o in self.objectives]):
             self.completed_on = datetime.datetime.now()
 
     @property
@@ -113,6 +112,9 @@ class Goal(db.Model):
                     changed = True
                     break
 
+        if changed:
+            self.record_complete()
+
         return changed
 
     def just_did_exercise(self, user_data, user_exercise, became_proficient):
@@ -129,6 +131,9 @@ class Goal(db.Model):
                     ex_obj.record_complete(user_exercise.exercise_model)
                     changed = True
                     break
+
+        if changed:
+            self.record_complete()
 
         return changed
 
