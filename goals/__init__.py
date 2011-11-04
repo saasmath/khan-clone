@@ -34,7 +34,7 @@ class ViewGoals(request_handler.RequestHandler):
             return
 
         context['status'] = 'none'
-        context['goals'] = GoalList.get_visible_for_user(user_data)
+        context['goals'] = GoalList.get_visible_for_user(user_data, show_complete=True)
         context['goals_count'] = len(context['goals'])
         self.render_jinja2_template("goals/showgoals.html", context)
 

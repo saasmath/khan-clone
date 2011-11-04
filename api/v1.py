@@ -938,25 +938,48 @@ def create_user_goal():
 
     goal = Goal.create(user_data, goal_data, title, objective_descriptors)
 
-    return goal
+    return goal.get_visible_data(None)
 
 # LOGIN? TomY TODO
-@route("/api/v1/user/goals/delete", methods=["POST"])
+@route("/api/v1/user/goals/abandon/<id>", methods=["POST"])
 @oauth_optional()
 @jsonp
 @jsonify
-def delete_user_goal():
+def abandon_user_goal(id):
     user_data = models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
     goal_data = user_data.get_goal_data()
+    goal = GoalList.find_by_id(goal_data, id)
 
-    goal_to_delete = request.request_int('id')
-    if not GoalList.delete_goal(user_data, goal_to_delete):
-        return { "error": "Internal error: Failed to delete goal." }
+    if not goal:
+        return api_invalid_param_response("Could not find goal with ID " + str(id))
 
-    return "Goal deleted"
+    goal.abandon()
+    goal.put()
+
+    return goal.get_visible_data(None)
+
+# LOGIN? TomY TODO
+@route("/api/v1/user/goals/delete/<id>", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_goal(id):
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    goal_data = user_data.get_goal_data()
+    goal = GoalList.find_by_id(goal_data, id)
+
+    if not goal:
+        return api_invalid_param_response("Could not find goal with ID " + str(id))
+
+    goal.delete()
+
+    return {}
 
 @route("/api/v1/user/goals/<id>/activate", methods=["POST"])
 @oauth_optional()

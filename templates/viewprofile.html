@@ -158,6 +158,7 @@
           <div class="progress-bar">
             <div class="bar" data-bind="style: {width: progress+'%'}"></div>
             <span data-bind="text: title" /> (started <span data-bind="text: created_ago" />)
+            <a style="float: right; height: 10px; line-height: 10px;" class="simple-button action-gradient" data-bind="click: abandon, throbberLeft: abandon_inprogress">Abandon</a>
           </div>
           <div class="goal">
             <ul class="inline-list" data-bind="foreach: objectives">
@@ -174,6 +175,22 @@
         <div class="goal-with-progress">
           <div class="progress-bar">
             <span data-bind="text: title" /> (completed <span data-bind="text: completed_ago" /> in <span data-bind="text: completed_time" />)
+          </div>
+          <div class="goal">
+            <ul class="inline-list" data-bind="foreach: objectives">
+              <li><a class="objective action-gradient seethrough" data-bind="attr: {'href': url}">
+                <span data-bind="text: description" />
+              </a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div>Abandoned goals:</div>
+      <div class="student-goals" data-bind="foreach: abandoned_goals">
+        <div class="goal-with-progress">
+          <div class="progress-bar">
+            <span data-bind="text: title" /> (abandoned <span data-bind="text: completed_ago" /> after <span data-bind="text: completed_time" />)
           </div>
           <div class="goal">
             <ul class="inline-list" data-bind="foreach: objectives">

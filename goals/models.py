@@ -17,6 +17,7 @@ class Goal(db.Model):
     created_on = db.DateTimeProperty(auto_now_add=True)
     updated_on = db.DateTimeProperty(auto_now=True)
     completed_on = db.DateTimeProperty()
+    abandoned = db.BooleanProperty()
     objectives = ObjectProperty()
     active = False
 
@@ -76,6 +77,9 @@ class Goal(db.Model):
             completed_seconds = (td.seconds + td.days * 24 * 3600)
             goal_ret['completed_time'] = templatefilters.seconds_to_time_string(completed_seconds)
 
+            if self.abandoned:
+                goal_ret['abandoned'] = True
+
         for objective in self.objectives:
             objective_ret = {}
             objective_ret['type'] = objective.__class__.__name__
@@ -94,6 +98,10 @@ class Goal(db.Model):
         if len(uncompleted_objectives) == 0:
             self.completed_on = datetime.datetime.now()
 
+    def abandon(self):
+        self.completed_on = datetime.datetime.now()
+        self.abandoned = True
+
     @property
     def is_completed(self):
         return (self.completed_on != None)
@@ -105,6 +113,13 @@ class GoalList(db.Model):
     @staticmethod
     def get_from_data(data, type):
         return [entity for entity in data if isinstance(entity, type)]
+
+    @staticmethod
+    def find_by_id(data, id):
+        list = [goal for goal in GoalList.get_from_data(data, Goal) if str(goal.key().id()) == str(id)]
+        if list:
+            return list[0]
+        return None
 
     @staticmethod
     def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False):

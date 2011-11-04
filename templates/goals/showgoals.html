@@ -11,19 +11,33 @@
 var GoalViewer = {
     init: function() {
         $('#delete-goal').submit(GoalViewer.deleteGoal);
+        $('#abandon-goal').submit(GoalViewer.abandonGoal);
     },
     deleteGoal: function() {
         $.ajax({
-            url: "/api/v1/user/goals/delete",
+            url: "/api/v1/user/goals/delete/" + $(this).children('input[name="id"]').val(),
             type: 'POST',
-            dataType: 'text',
-            data: $(this).serialize(),
+            dataType: 'json',
             success: function(json) {
                 document.location = '/goals/view';
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 alert('Failure: ' + textStatus);
-            }, // TomY TODO
+            },
+        });
+        return false;
+    },
+    abandonGoal: function() {
+        $.ajax({
+            url: "/api/v1/user/goals/abandon/" + $(this).children('input[name="id"]').val(),
+            type: 'POST',
+            dataType: 'json',
+            success: function(json) {
+                document.location = '/goals/view';
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert('Failure: ' + textStatus);
+            },
         });
         return false;
     },
@@ -51,13 +65,20 @@ $(function() {
 
 <div><h1 class="section-headline">Goals: {{ goals_count }}<h1></div>
 {% for goal in goals %}
-  <div>Goal: {{ goal.title|escape }}</div>
+  <div>
+    Goal: {{ goal.title|escape }}
+    {% if goal.completed %}
+      {% if goal.abandoned %}(Abandoned){% else %}(Completed){% endif %}
+    {% endif %}  
+       
+  </div>
   <ul>
   {% for objective in goal.objectives %}
     <li>Objective: {{ objective.type }}: {{ objective.description|escape }}. Progress: {{ objective.progress }}</li>
   {% endfor %}
   </ul>
   <form action="javascript:" id="delete-goal"><input type="hidden" name="id" value="{{goal.id|escape}}"></input><input type="submit" value="Delete"></input></form>
+  <form action="javascript:" id="abandon-goal"><input type="hidden" name="id" value="{{goal.id|escape}}"></input><input type="submit" value="Abandon"></input></form>
 {% endfor %}
 
 <div><h3><a href="/goals/new">New goal...</a></h3></div>
