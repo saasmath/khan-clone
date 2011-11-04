@@ -212,7 +212,7 @@
 
     {#- goal book -#}
     {%- raw -%}
-    <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
+    <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
         <div class="goal">
             <p id="goal-description">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progress}%</p>
             <ul class="inline-list objective-list">
@@ -223,10 +223,10 @@
         </div>
     </script>
 
-    <script id="goals-all-tmpl" type="text/x-jquery-tmpl">
+    <script id="goalbook-tmpl" type="text/x-jquery-tmpl">
         <div class="all-goals">
             {{each goals}}
-            {{tmplPlugin($value) "#goals-nav-tmpl"}}
+            {{tmplPlugin($value) "#goalrow-tmpl"}}
             {{/each}}
             <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
             <span class="drag-handle">Handle <img class="close-cross hide-goals" src="/images/circled_cross.png"></span>
@@ -255,5 +255,15 @@
      </div>
     </script>
     {%- endraw -%}
+
+    {% if goals %}
+    <script type="text/javascript">
+    if (typeof(Goals) === "undefined") {
+        var Goals = {};
+    }
+    Goals.all = {{ goals }};
+    </script>
+    {% endif %}
+
     </body>
 </html>

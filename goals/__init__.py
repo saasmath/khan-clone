@@ -28,7 +28,7 @@ class ViewGoals(request_handler.RequestHandler):
 
         context = {}
 
-        if user_data == None:
+        if user_data is None:
             context['status'] = 'notloggedin'
             self.render_jinja2_template("goals/showgoals.html", context)
             return
@@ -45,7 +45,7 @@ class CreateNewGoal(request_handler.RequestHandler):
         user_data = UserData.current()
 
         # TomY TODO: Replace this with decorator
-        if user_data == None:
+        if user_data is None:
             context = {}
             context['status'] = 'notloggedin'
             self.render_jinja2_template("goals/showgoals.html", context)
@@ -190,53 +190,26 @@ class CreateRandomGoalData(request_handler.RequestHandler):
         #self.redirect('/')
         self.response.out.write('OK')
 
-# a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
-    goal_data = user_data.get_goal_data()
-    goals = GoalList.get_from_data(goal_data, Goal)
-    changes = []
-    for goal in goals:
-        changed = False
-        specific_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveWatchVideo)
-        for objective in specific_videos:
-            if objective.record_progress(user_data, goal, user_video):
-                changed = True
-
-        any_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyVideo)
-        if user_video.completed:
-            for vid_obj in any_videos:
-                if not vid_obj.is_completed:
-                    vid_obj.record_complete(user_video.video, goal)
-                    changed = True
-                    break
-        if changed:
-            changes.append(goal)
-
-    if changes:
-        db.put(changes)
+    update_goals(user_data, lambda goal: goal.just_watched_video(user_data, user_video))
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
+    update_goals(user_data, lambda goal: goal.just_did_exercise(user_data, user_exercise,
+        became_proficient))
+
+def update_goals(user_data, activity_fn):
+    if not user_data.has_current_goals:
+        return
+
     goal_data = user_data.get_goal_data()
     goals = GoalList.get_from_data(goal_data, Goal)
     changes = []
     for goal in goals:
-        changed = False
-
-        specific_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveExerciseProficiency)
-        for ex_obj in specific_exercises:
-            if ex_obj.record_progress(user_data, goal, user_exercise):
-                changed = True
-
-        any_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyExerciseProficiency)
-        if became_proficient:
-            # mark off an unfinished any_exercise as complete.
-            for ex_obj in any_exercises:
-                if not ex_obj.is_completed:
-                    ex_obj.record_complete(user_exercise.exercise_model, goal)
-                    changed = True
-                    break
-        if changed:
+        if activity_fn(goal):
             changes.append(goal)
-
     if changes:
+        # check to see if all goals are closed
+        if all([g.is_completed for g in goals]):
+            user_data.has_current_goals = False
+            changes.append(user_data)
         db.put(changes)

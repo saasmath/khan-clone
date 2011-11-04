@@ -60,7 +60,7 @@ var GoalCreator = {
                 type: type,
                 description: name,
                 progress: 0,
-                url: 'javascript:',
+                url: "javascript:GoalCreator.onSelectedObjectiveClicked('" + type + "', '" + id + "', '" + name + "');",
 
                 idx: idx,
                 id: id,
@@ -209,7 +209,7 @@ var GoalCreator = {
 
     onVideoClicked: function(id, title) {
         GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', id, title);
-
+    
         GoalCreator.updateVideoCount();
         GoalCreator.updateViewAndDescription();
     },
@@ -253,7 +253,13 @@ var GoalCreator = {
             }
         });
     },
-
+    onSelectedObjectiveClicked: function(type, name, id) {
+        GoalCreator.toggleObjectiveInternal(type, name, id);
+        GoalCreator.updateExerciseCount();
+        GoalCreator.updateVideoCount();
+        GoalCreator.updateViewAndDescription();
+    },
+    
     validate: function(form) {
         var error = '';
 
@@ -368,11 +374,11 @@ $(function() {
 
 {%- raw -%}
 <script id="goals-create-tmpl" type="text/x-jquery-tmpl">
-    <div class="goal">
-        <p id="goal-description"></p>
+    <div class="goal pulls">
+        <p id="goal-description" class="pulled"></p>
         <ul class="inline-list objective-list">
         {{each objectives}}
-            <li class="objective"><a class="objective action-gradient ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
         {{/each}}
         </ul>
     </div>

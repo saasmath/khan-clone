@@ -23,6 +23,11 @@ class Goal(db.Model):
 
     @staticmethod
     def create(user_data, goal_data, title, objective_descriptors):
+        put_user_data = False
+        if not user_data.has_current_goals:
+            user_data.has_current_goals = True
+            put_user_data = True
+
         parent_list = GoalList.get_from_data(goal_data, GoalList)
         if not parent_list:
             # Create a parent object for all the goals & objectives
@@ -31,9 +36,12 @@ class Goal(db.Model):
 
             # Update UserData
             user_data.goal_list = goal_list
-            user_data.put()
+            put_user_data = True
         else:
             goal_list = parent_list[0]
+
+        if put_user_data:
+            user_data.put()
 
         # Create the new goal
         new_goal = Goal(goal_list)
@@ -94,8 +102,7 @@ class Goal(db.Model):
 
     def record_complete(self):
         # Is this goal complete?
-        uncompleted_objectives = [objective for objective in self.objectives if not objective.is_completed]
-        if len(uncompleted_objectives) == 0:
+        if all([o.is_completed for o in self.objectives]):
             self.completed_on = datetime.datetime.now()
 
     def abandon(self):
@@ -104,7 +111,47 @@ class Goal(db.Model):
 
     @property
     def is_completed(self):
-        return (self.completed_on != None)
+        return (self.completed_on is not None)
+
+    def just_watched_video(self, user_data, user_video):
+        changed = False
+        specific_videos = GoalList.get_from_data(self.objectives, GoalObjectiveWatchVideo)
+        for objective in specific_videos:
+            if objective.record_progress(user_data, user_video):
+                changed = True
+
+        if user_video.completed:
+            any_videos = GoalList.get_from_data(self.objectives, GoalObjectiveAnyVideo)
+            for vid_obj in any_videos:
+                if not vid_obj.is_completed:
+                    vid_obj.record_complete(user_video.video)
+                    changed = True
+                    break
+
+        if changed:
+            self.record_complete()
+
+        return changed
+
+    def just_did_exercise(self, user_data, user_exercise, became_proficient):
+        changed = False
+        specific_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveExerciseProficiency)
+        for ex_obj in specific_exercises:
+            if ex_obj.record_progress(user_data, user_exercise):
+                changed = True
+
+        if became_proficient:
+            any_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveAnyExerciseProficiency)
+            for ex_obj in any_exercises:
+                if not ex_obj.is_completed:
+                    ex_obj.record_complete(user_exercise.exercise_model)
+                    changed = True
+                    break
+
+        if changed:
+            self.record_complete()
+
+        return changed
 
 class GoalList(db.Model):
     user = db.UserProperty()
@@ -199,12 +246,11 @@ class GoalObjective(object):
         '''url to which the objective points when used as a nav bar.'''
         raise Exception
 
-    def record_progress(self, parent_goal):
+    def record_progress(self):
         return False
 
-    def record_complete(self, parent_goal):
+    def record_complete(self):
         self.progress = 1.0
-        parent_goal.record_complete()
 
     @property
     def is_completed(self):
@@ -247,11 +293,10 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def internal_id(self):
         return self.exercise_name
 
-    def record_progress(self, user_data, parent_goal, user_exercise):
+    def record_progress(self, user_data, user_exercise):
         if self.exercise_name == user_exercise.exercise:
             if user_data.is_proficient_at(user_exercise.exercise):
                 self.progress = 1.0
-                parent_goal.record_complete()
             else:
                 self.progress = user_exercise.progress
             return True
@@ -294,8 +339,8 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     def internal_id(self):
         return ''
 
-    def record_complete(self, exercise, parent_goal):
-        super(GoalObjectiveAnyExerciseProficiency, self).record_complete(parent_goal)
+    def record_complete(self, exercise):
+        super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
         self.exercise_name = exercise.name
         self.description = exercise.display_name
         self.short_display_name = exercise.short_display_name
@@ -323,13 +368,11 @@ class GoalObjectiveWatchVideo(GoalObjective):
     def internal_id(self):
         return self.video_readable_id
 
-    def record_progress(self, user_data, parent_goal, user_video):
+    def record_progress(self, user_data, user_video):
         obj_key = db.Key(self.video_key)
         video_key = UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress
-            if self.is_completed:
-                parent_goal.record_complete()
             return True
         return False
 
@@ -347,8 +390,8 @@ class GoalObjectiveAnyVideo(GoalObjective):
     def internal_id(self):
         return ''
 
-    def record_complete(self, video, parent_goal):
-        super(GoalObjectiveAnyVideo, self).record_complete(parent_goal)
+    def record_complete(self, video):
+        super(GoalObjectiveAnyVideo, self).record_complete()
         self.video_key = str(video.key())
         self.video_readable_id = video.readable_id
         self.description = video.title

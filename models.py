@@ -95,7 +95,7 @@ class Setting(db.Model):
 
     @staticmethod
     def classtime_report_method(val = None):
-        return Setting._get_or_set_with_key("classtime_report_method", val) 
+        return Setting._get_or_set_with_key("classtime_report_method", val)
 
     @staticmethod
     def classtime_report_startdate(val = None):
@@ -795,13 +795,15 @@ class UserData(GAEBingoIdentityModel, db.Model):
     user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default = 0, indexed=False)
     goal_list = db.ReferenceProperty()
+    has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "expanded_all_exercises", "question_sort_order",
-            "last_login", "user", "current_user", "map_coords", "expanded_all_exercises",
-            "user_nickname", "user_email", "seconds_since_joined",
+            "last_login", "user", "current_user", "map_coords",
+            "expanded_all_exercises", "user_nickname", "user_email",
+            "seconds_since_joined", "goal_list", "has_current_goals"
     ]
 
     prof_conversion_accuracy_thresholds = [0.85, 0.90, 0.92, 0.94, 0.96]
@@ -1108,7 +1110,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
             # See http://meta.stackoverflow.com/questions/55483/proposed-consecutive-days-badge-tracking-change
             if util.hours_between(self.last_activity, dt_activity) >= 36:
                 self.start_consecutive_activity_date = dt_activity
-            
+
             self.last_activity = dt_activity
 
     def current_consecutive_activity_days(self):
@@ -1151,14 +1153,17 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
+    @property
+    def goal_list_key(self):
+        return UserData.goal_list.get_value_for_datastore(self)
+
     def get_goal_data(self):
-        goal_list_key = UserData.goal_list.get_value_for_datastore(self)
-        if not goal_list_key:
+        if not self.goal_list_key:
             return []
 
         # Do a single ancestor query on the Goal List
         query = db.Query()
-        query.ancestor(goal_list_key)
+        query.ancestor(self.goal_list_key)
         return [entity for entity in query]
 
 class Video(Searchable, db.Model):
@@ -1465,7 +1470,7 @@ class VideoLog(db.Model):
         query.order('time_watched')
 
         return query
-   
+
     @staticmethod
     def get_for_user_data_and_video(user_data, video):
         query = VideoLog.all()
@@ -1578,7 +1583,7 @@ class VideoLog(db.Model):
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used
             deferred.defer(commit_log_summary_coaches, video_log, user_data.coaches,
                 _queue = "log-summary-queue",
-                _url = "/_ah/queue/deferred_log_summary") 
+                _url = "/_ah/queue/deferred_log_summary")
 
         return (user_video, video_log, video_points_total)
 
@@ -1596,7 +1601,7 @@ class VideoLog(db.Model):
 
 # commit_video_log is used by our deferred video log insertion process
 def commit_video_log(video_log, user_data = None):
-    video_log.put() 
+    video_log.put()
 
 class DailyActivityLog(db.Model):
     user = db.UserProperty()
@@ -1629,8 +1634,8 @@ class DailyActivityLog(db.Model):
 class LogSummaryTypes:
     USER_ADJACENT_ACTIVITY = "UserAdjacentActivity"
     CLASS_DAILY_ACTIVITY = "ClassDailyActivity"
- 
-# Tracks the number of shards for each named log summary  
+
+# Tracks the number of shards for each named log summary
 class LogSummaryShardConfig(db.Model):
     name = db.StringProperty(required=True)
     num_shards = db.IntegerProperty(required=True, default=1)
@@ -1658,9 +1663,9 @@ class LogSummary(db.Model):
     user = db.UserProperty()
     start = db.DateTimeProperty()
     end = db.DateTimeProperty()
-    summary_type = db.StringProperty() 
+    summary_type = db.StringProperty()
     summary = object_property.ObjectProperty()
-    name = db.StringProperty(required=True) 
+    name = db.StringProperty(required=True)
 
     @staticmethod
     def get_start_of_period(activity, delta):
@@ -1668,10 +1673,10 @@ class LogSummary(db.Model):
 
         if delta == 1440:
             return datetime.datetime(date.year, date.month, date.day)
-        
+
         if delta == 60:
             return datetime.datetime(date.year, date.month, date.day, date.hour)
-        
+
         raise Exception("unhandled delta to get_key_name")
 
     @staticmethod
@@ -1683,7 +1688,7 @@ class LogSummary(db.Model):
         return LogSummary.get_name_by_dates(user_data, summary_type, LogSummary.get_start_of_period(activity, delta), LogSummary.get_end_of_period(activity, delta))
 
     @staticmethod
-    def get_name_by_dates(user_data, summary_type, start, end):    
+    def get_name_by_dates(user_data, summary_type, start, end):
         return "%s:%s:%s:%s" % (user_data.key_email, summary_type, start.strftime("%Y-%m-%d-%H-%M"), end.strftime("%Y-%m-%d-%H-%M"))
 
     # activity needs to have activity.time_started() and activity.time_done() functions
@@ -1697,7 +1702,7 @@ class LogSummary(db.Model):
 
         def txn(name, shard_name, user_data, activities, summary_class, summary_type, delta):
                 log_summary = LogSummary.get_by_key_name(shard_name)
-                             
+
                 if log_summary is None:
                     activity = activities[0]
 
@@ -1707,12 +1712,12 @@ class LogSummary(db.Model):
                                              start = LogSummary.get_start_of_period(activity, delta), \
                                              end = LogSummary.get_end_of_period(activity, delta), \
                                              summary_type = summary_type)
-                    
-                    log_summary.summary = summary_class() 
+
+                    log_summary.summary = summary_class()
 
                 for activity in activities:
                     log_summary.summary.add(user_data, activity)
-                
+
                 log_summary.put()
 
 
@@ -1725,22 +1730,22 @@ class LogSummary(db.Model):
 
         name = LogSummary.get_name(user_data, summary_type, activity, delta)
         config = LogSummaryShardConfig.get_or_insert(name, name=name)
-                
+
         index = random.randint(0, config.num_shards - 1)
         shard_name = str(index) + ":" + name
 
-        
-        # running function within a transaction because time might elapse between the get and the put 
+
+        # running function within a transaction because time might elapse between the get and the put
         # and two processes could get before either puts. Transactions will ensure that its mutually exclusive
         # since they are operating on the same entity
         try:
-            db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta) 
+            db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
         except TransactionFailedError:
             # if it is a transaction lock
             logging.info("increasing the number of shards to %i log summary: %s" %(config.num_shards+1, name))
             LogSummaryShardConfig.increase_shards(name, config.num_shards+1)
             shard_name = str(config.num_shards) + ":" + name
-            db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta) 
+            db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
 
     @staticmethod
     def get_description():
@@ -1807,7 +1812,7 @@ class ProblemLog(db.Model):
 
         query.filter('time_done >=', dt_a)
         query.filter('time_done <', dt_b)
-        
+
         query.order('time_done')
 
         return query
@@ -1918,8 +1923,8 @@ def commit_problem_log(problem_log_source, user_data = None):
 
         logging.info(problem_log.time_ended())
         problem_log.put()
-        
-        
+
+
     db.run_in_transaction(txn)
 
 # Represents a matching between a playlist and a video

@@ -1,7 +1,3 @@
-var Goals = {
-    all: [],
-    active: null
-};
 var totalProgress = function(objectives) {
     var progress = 0;
     if (objectives.length) {
@@ -21,7 +17,9 @@ var renderAllGoalsUI = function() {
     $(".hide-goals").click(hideGoals);
 };
 var saveGoals = function(data) {
-    Goals.all = data;
+    if (data) {
+        Goals.all = data;
+    }
 
     // anotate goals with progress counts and overall progress
     $.each(Goals.all, function(i, goal) {
@@ -162,8 +160,10 @@ var mostRecentlyUpdatedGoal = function(goals) {
 };
 
 var displayGoals = function() {
-    Goals.active = findMatchingGoalFor(window.location.toString());
-    renderAllGoalsUI();
+    if (Goals.all.length) {
+        Goals.active = findMatchingGoalFor(window.location.toString());
+        renderAllGoalsUI();
+    }
 };
 var requestGoals = function(callback) {
     $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
@@ -178,7 +178,7 @@ var renderGoals = function() {
 };
 var renderCurrentGoals = function() {
     if (Goals.all.length) {
-        var goalsEl = $("#goals-all-tmpl").tmplPlugin({goals: Goals.all});
+        var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: Goals.all});
         $("#goals-nav-container").html(goalsEl).draggable({
             handle: ".drag-handle"
         });
@@ -243,7 +243,7 @@ var createSimpleGoalDialog = {
                 createSimpleGoalDialog.hideDialog();
 
                 Goals.all.push(json);
-                updateGoals(Goals.all);
+                updateGoals();
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 Throbber.hide();
@@ -253,4 +253,8 @@ var createSimpleGoalDialog = {
     }
 };
 
-$(function() { requestGoals(updateGoals); });
+$(function() {
+    if ( typeof Goals !== 'undefined' && Goals.all ) {
+        updateGoals();
+    }
+});
