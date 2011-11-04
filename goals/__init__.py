@@ -190,14 +190,12 @@ class CreateRandomGoalData(request_handler.RequestHandler):
         #self.redirect('/')
         self.response.out.write('OK')
 
-def goals_with_objectives(user_data):
-    goal_data = user_data.get_goal_data()
-    return GoalList.get_from_data(goal_data, Goal)
-
 # a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
+    goal_data = user_data.get_goal_data()
+    goals = GoalList.get_from_data(goal_data, Goal)
     changes = []
-    for goal in goals_with_objectives(user_data):
+    for goal in goals:
         changed = False
         specific_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveWatchVideo)
         for objective in specific_videos:
@@ -218,8 +216,10 @@ def update_goals_just_watched_video(user_data, user_video):
         db.put(changes)
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
+    goal_data = user_data.get_goal_data()
+    goals = GoalList.get_from_data(goal_data, Goal)
     changes = []
-    for goal in goals_with_objectives(user_data):
+    for goal in goals:
         changed = False
 
         specific_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveExerciseProficiency)
