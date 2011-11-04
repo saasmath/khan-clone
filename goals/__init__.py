@@ -199,7 +199,7 @@ def update_goals_just_watched_video(user_data, user_video):
         changed = False
         specific_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveWatchVideo)
         for objective in specific_videos:
-            if objective.record_progress(user_data, [goal], user_video):
+            if objective.record_progress(user_data, user_video):
                 changed = True
 
         if user_video.completed:
@@ -224,7 +224,7 @@ def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
 
         specific_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveExerciseProficiency)
         for ex_obj in specific_exercises:
-            if ex_obj.record_progress(user_data, [goal], user_exercise):
+            if ex_obj.record_progress(user_data, user_exercise):
                 changed = True
 
         if became_proficient:

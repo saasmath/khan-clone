@@ -206,7 +206,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         exercise = Exercise.get_by_name(self.exercise_name)
         return exercise.relative_url
 
-    def record_progress(self, user_data, goal_data, user_exercise):
+    def record_progress(self, user_data, user_exercise):
         if self.exercise_name == user_exercise.exercise:
             if user_data.is_proficient_at(user_exercise.exercise):
                 self.progress = 1.0
@@ -275,7 +275,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
     def url(self):
         return Video.get_ka_url(self.video_readable_id)
 
-    def record_progress(self, user_data, goal_data, user_video):
+    def record_progress(self, user_data, user_video):
         obj_key = db.Key(self.video_key)
         video_key = UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
