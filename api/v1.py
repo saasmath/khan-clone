@@ -579,7 +579,7 @@ def attempt_problem_number(exercise_name, problem_number):
                 "attempt_correct": request.request_bool("complete"),
             }
             if user_data.has_current_goals:
-                api_actions['updateGoal'] = GoalList.get_visible_for_user(user_data)
+                api_actions['updateGoals'] = GoalList.get_visible_for_user(user_data)
             add_action_results(user_exercise, api_actions)
 
             return user_exercise
@@ -840,7 +840,7 @@ def get_user_current_goals():
             # Allow access to this student's profile
             student = user_override
 
-    return GoalList.get_visible_for_user(student)
+    return GoalList.get_visible_for_user(student, show_complete=False, nrecent=3)
 
 @route("/api/v1/user/students/goals", methods=["GET"])
 @oauth_optional()
@@ -983,20 +983,6 @@ def delete_user_goal(id):
     goal.delete()
 
     return {}
-
-@route("/api/v1/user/goals/<id>/activate", methods=["POST"])
-@oauth_optional()
-@jsonp
-@jsonify
-def activate_user_goal(id):
-    user_data = models.UserData.current()
-    if not user_data:
-        api_invalid_param_response("User not logged in")
-
-    if not GoalList.activate_goal(user_data, id):
-        return { "error": "Internal error: Failed to activate goal." }
-
-    return "Goal activated"
 
 # Developer only perhaps? TomY TODO
 @route("/api/v1/user/goals/deleteall", methods=["POST"])
