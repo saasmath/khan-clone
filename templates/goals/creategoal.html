@@ -374,8 +374,8 @@ $(function() {
 
 {%- raw -%}
 <script id="goals-create-tmpl" type="text/x-jquery-tmpl">
-    <div class="goal">
-        <p id="goal-description"></p>
+    <div class="goal pulls">
+        <p id="goal-description" class="pulled"></p>
         <ul class="inline-list objective-list">
         {{each objectives}}
             <li class="objective"><a class="objective simple-button action-gradient blue ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
