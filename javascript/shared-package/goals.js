@@ -173,7 +173,7 @@ var renderGoals = function() {
 };
 var renderCurrentGoals = function() {
     if (Goals.all.length) {
-        var goalsEl = $("#goals-all-tmpl").tmplPlugin({goals: Goals.all});
+        var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: Goals.all});
         $("#goals-nav-container").html(goalsEl).draggable({
             handle: ".drag-handle"
         });

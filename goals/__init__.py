@@ -206,7 +206,7 @@ def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
     goals = GoalList.get_from_data(goal_data, Goal)
     changes = []
     for goal in goals:
-        if goal.just_did_exercies(user_data, user_exercise, became_proficient):
+        if goal.just_did_exercise(user_data, user_exercise, became_proficient):
             changes.append(goal)
     if changes:
         db.put(changes)
