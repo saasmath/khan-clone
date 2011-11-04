@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 from models import Exercise, UserVideo, Video
 import templatefilters
-import logging
 from object_property import ObjectProperty
 
 from google.appengine.ext import db
@@ -48,7 +47,6 @@ class Goal(db.Model):
                 objectives.append(GoalObjectiveAnyVideo(description="Any video"))
 
         new_goal.objectives = objectives
-        logging.critical(new_goal.objectives)
         new_goal.put()
 
         # Set the goal active
@@ -71,6 +69,7 @@ class Goal(db.Model):
             objective_ret = {}
             objective_ret['type'] = objective.__class__.__name__
             objective_ret['description'] = objective.description
+            objective_ret['short_display_name'] = objective._get_short_display_name()
             objective_ret['progress'] = objective.progress
             objective_ret['url'] = objective.url()
             objective_ret['status'] = objective.get_status(user_exercise_graph)
@@ -143,10 +142,18 @@ class GoalList(db.Model):
 
         return False
 
+def shorten(s, n=12):
+    if len(s) <= n:
+        return s
+    chunk = (n - 3) / 2
+    even = 1 - (n % 2)
+    return s[:chunk + even] + '...' + s[-chunk:]
+
 class GoalObjective(object):
     # Objective status
     progress = 0.0
     description = None
+    _short_display_name = None
 
     def __init__(self, description):
         self.description = description
@@ -174,6 +181,17 @@ class GoalObjective(object):
 
         return ""
 
+    def _get_short_display_name(self):
+        if self._short_display_name:
+            return self._short_display_name
+        else:
+            return shorten(self.description)
+
+    def _set_short_display_name(self, value):
+        self._short_display_name = value
+
+    short_display_name = property(_get_short_display_name, _set_short_display_name)
+
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
     exercise_name = None
@@ -181,6 +199,7 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def __init__(self, exercise, user_data):
         self.exercise_name = exercise.name
         self.description = exercise.display_name
+        self.short_display_name = exercise.short_display_name
         self.progress = user_data.get_or_insert_exercise(exercise).progress
 
     def url(self):
@@ -234,6 +253,7 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
         super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
         self.exercise_name = exercise.name
         self.description = exercise.display_name
+        self.short_display_name = exercise.short_display_name
         return True
 
 class GoalObjectiveWatchVideo(GoalObjective):

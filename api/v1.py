@@ -919,9 +919,9 @@ def create_user_goal():
     if valid_count == 0:
         return api_invalid_param_response("No objectives specified.")
 
-    Goal.create(user_data, goal_data, title, objective_descriptors)
+    goal = Goal.create(user_data, goal_data, title, objective_descriptors)
 
-    return api_created_response("Goal created")
+    return goal
 
 # LOGIN? TomY TODO
 @route("/api/v1/user/goals/delete", methods=["POST"])

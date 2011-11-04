@@ -80,8 +80,6 @@
     </head>
 
     <body class="light">
-    <div id="goals-current-container" style="display: none"></div>
-    <div id="goals-nav-container" style="display: none"></div>
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
     <div id="page-container">
@@ -93,6 +91,8 @@
         <script>document.writeln('<style scoped type="text/css">a[href="#"], .requires_script { visibility: visible; }</style>');</script>
 
             <header>
+                <div id="goals-nav-container" style="display: none"></div>
+
                 <div id="top-header">
                     <div id="top-header-links">
                         <span class="page_links" id="page_auth">
@@ -163,6 +163,7 @@
     </div>
     </div>
     </div>
+    <div id="popup-dialog">&nbsp;</div>
     <div class="push"></div>
     {% block pagefooter %}
     {% include "page_footer_short.html" %}
@@ -203,41 +204,61 @@
     {{ gae_mini_profiler.profiler_includes() }}
 
     {#- templates for goals -#}
-    {# goal drawer #}
+    {# goal summary area #}
     <script id="goals-tmpl" type="text/x-jquery-tmpl">
-        <a id="goals-drawer">${title}: ${progress}%</a>
+        <a id="goals-drawer">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progress}%</a>
         <span class="separator"></span>
     </script>
 
-    {#- active goal nav bar -#}
+    {#- goal book -#}
     {%- raw -%}
     <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal">
+        <div class="goal-with-progress">
             <div class="progress-bar">
                 <div class="bar" style="width: ${progress}%"></div>
                 <a href="/profile?graph_url=/api/v1/user/goals">${title}</a>
                 (started ${created_ago})
             </div>
+            <div class="goal">
             <ul class="inline-list">
             {{each objectives}}
-                <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+                <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.short_display_name}</a></li>
             {{/each}}
             </ul>
+            </div>
         </div>
     </script>
 
     <script id="goals-all-tmpl" type="text/x-jquery-tmpl">
         <div class="all-goals">
             {{each goals}}
-            {{if !$value.active}}
-                <a class="simple-button action-gradient green activate" href="#" data-goal-id="${$value.id}">
-                    Activate
-                </a>
-            {{/if}}
             {{tmplPlugin($value) "#goals-nav-tmpl"}}
             {{/each}}
-            <a class="simple-button action-gradient green" href="/goals/new">New goal</a>
-        </body>
+            <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
+            <span class="drag-handle">Handle <img class="close-cross hide-goals" src="/images/circled_cross.png"></span>
+        </div>
+    </script>
+
+    <script id="goal-create-dialog" type="text/html">
+      <div class="dark-window">&nbsp;</div>
+      <div class="window-center">
+        <div id="goal-popup-dialog">
+          <div class="dialog-title"><p>Set a new learning goal</p>
+            <div class="dialog-button"><a class="simple-button action-gradient" href="javascript:createSimpleGoalDialog.hideDialog()">Cancel</a></div>
+          </div>
+          <div class="goal-popup-block">
+            <div>Choose a predefined goal to complete:</div>
+            <div><input type="radio" name="goal-type" value="five_exercises" checked /> Become proficient in any <b>5 exercises</b></div>
+            <div><input type="radio" name="goal-type" value="five_videos" /> Watch any <b>5 videos</b></div>
+            <div class="dialog-button" id="create-simple-goal-button"><a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.createSimpleGoal()">Add goal</a></div>
+            <div class="dialog-button" id="create-simple-goal-error"></div>
+          </div>
+          <div class="goal-popup-block">
+            <div>Or create a personalized goal:</div>
+            <div class="dialog-button"><a class="simple-button action-gradient green" href="/goals/new">Custom goal</a></div>
+          </div>
+       </div>
+     </div>
     </script>
     {%- endraw -%}
     </body>
