@@ -202,8 +202,8 @@ def update_goals_just_watched_video(user_data, user_video):
             if objective.record_progress(user_data, [goal], user_video):
                 changed = True
 
-        any_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyVideo)
         if user_video.completed:
+            any_videos = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyVideo)
             for vid_obj in any_videos:
                 if not vid_obj.is_completed:
                     vid_obj.record_complete(user_video.video)
@@ -227,9 +227,9 @@ def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
             if ex_obj.record_progress(user_data, [goal], user_exercise):
                 changed = True
 
-        any_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyExerciseProficiency)
         if became_proficient:
             # mark off an unfinished any_exercise as complete.
+            any_exercises = GoalList.get_from_data(goal.objectives, GoalObjectiveAnyExerciseProficiency)
             for ex_obj in any_exercises:
                 if not ex_obj.is_completed:
                     ex_obj.record_complete(user_exercise.exercise_model)
