@@ -201,7 +201,7 @@ var predefinedGoalsList = {
         "objective2_type": "GoalObjectiveAnyExerciseProficiency",
         "objective3_type": "GoalObjectiveAnyExerciseProficiency",
         "objective4_type": "GoalObjectiveAnyExerciseProficiency",
-        "objective5_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective5_type": "GoalObjectiveAnyExerciseProficiency"
     },
     "five_videos" : {
         "title": "Watch Five Videos",
@@ -209,8 +209,8 @@ var predefinedGoalsList = {
         "objective2_type": "GoalObjectiveAnyVideo",
         "objective3_type": "GoalObjectiveAnyVideo",
         "objective4_type": "GoalObjectiveAnyVideo",
-        "objective5_type": "GoalObjectiveAnyVideo",
-    },
+        "objective5_type": "GoalObjectiveAnyVideo"
+    }
 };
 
 var createSimpleGoalDialog = {
@@ -222,7 +222,8 @@ var createSimpleGoalDialog = {
         $("#popup-dialog").html('');
     },
     createSimpleGoal: function() {
-        var selected_type = $("#goal-popup-dialog").find("input[name=\"goal-type\"]:checked").val();
+        var selected_type = $("#goal-popup-dialog")
+            .find("input[name=\"goal-type\"]:checked").val();
         var goal = predefinedGoalsList[selected_type];
 
         $('#create-simple-goal-error').html('');
@@ -234,7 +235,7 @@ var createSimpleGoalDialog = {
             data: $.param(goal),
             success: function(json) {
                 Throbber.hide();
-                createSimpleGoalDialog.hideDialog(); 
+                createSimpleGoalDialog.hideDialog();
 
                 Goals.all.push(json);
                 updateGoals(Goals.all);
@@ -242,9 +243,9 @@ var createSimpleGoalDialog = {
             error: function(jqXHR, textStatus, errorThrown) {
                 Throbber.hide();
                 $('#create-simple-goal-error').html('Goal creation failed');
-            },
+            }
         });
-    },
+    }
 };
 
 $(function() { updateGoals(); });
