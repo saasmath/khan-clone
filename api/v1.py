@@ -840,7 +840,7 @@ def get_user_current_goals():
             # Allow access to this student's profile
             student = user_override
 
-    return GoalList.get_visible_for_user(student, show_complete=False, nrecent=3)
+    return GoalList.get_visible_for_user(student)
 
 @route("/api/v1/user/students/goals", methods=["GET"])
 @oauth_optional()
@@ -878,7 +878,8 @@ def get_student_goals():
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
-        student_data['goals'] = GoalList.get_visible_for_user(student, user_exercise_graphs[idx])
+        student_data['goals'] = GoalList.get_visible_for_user(student,
+            user_exercise_graphs[idx], nrecent=0)
         return_data.append(student_data)
 
     return return_data

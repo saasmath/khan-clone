@@ -162,7 +162,7 @@ class GoalList(db.Model):
         return None
 
     @staticmethod
-    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False, nrecent=0):
+    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False, nrecent=3):
         # todo: would be nice to combine show_complete and nrecent
         if user_data:
             # Fetch data from datastore
