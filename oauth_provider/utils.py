@@ -1,6 +1,5 @@
 import oauth
 from stores import GAEOAuthDataStore
-from google.appengine.ext.webapp import Response
 
 import config
 
@@ -40,6 +39,6 @@ def send_oauth_error(err,response):
     response.set_status(401, str(err.message))
     header = oauth.build_authenticate_header(realm=OAUTH_REALM_KEY_NAME)
     for k, v in header.iteritems():
-       response.headers.add_header(k, v)
+        response.headers.add_header(k, v)
     response.out.write(err.message.encode('utf-8'))
     
