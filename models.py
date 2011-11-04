@@ -803,7 +803,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
             "moderator", "expanded_all_exercises", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
             "expanded_all_exercises", "user_nickname", "user_email",
-            "seconds_since_joined", "goal_list", "has_current_goals"
+            "seconds_since_joined", "goal_list", "goal_list_key",
+            "has_current_goals"
     ]
 
     prof_conversion_accuracy_thresholds = [0.85, 0.90, 0.92, 0.94, 0.96]
