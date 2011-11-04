@@ -17,10 +17,9 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal a.objective {
-    background-color: lightBlue;
-    border-right: 1px solid #bbb;
+    border-right: 1px solid #fff !important;
     display: block;
-    line-height: 35px;
+    line-height: 33px;
     overflow: hidden;
     padding: 0 5px;
     position: relative;
@@ -32,12 +31,16 @@ ul.inline-list, ul.inline-list li {
     padding-left: 20px
 }
 
+.goal a.objective.GoalObjectiveExerciseProficiency:hover:before, .goal a.objective.GoalObjectiveWatchVideo:hover:before {
+    background: transparent url(/images/delete-icon-inset-small.png) no-repeat 2px 8px;
+}
+
 .goal a.objective.GoalObjectiveExerciseProficiency:before {
     display: block;
     content: " ";
     width: 20px;
     height: 35px;
-    background: transparent url(/images/generic-exercise-icon-inset-small.png) no-repeat 0 6px;
+    background: transparent url(/images/generic-exercise-icon-inset-small.png) no-repeat 0 4px;
     position: absolute;
     left: 0;
     top: 0;
@@ -48,7 +51,7 @@ ul.inline-list, ul.inline-list li {
     content: " ";
     width: 20px;
     height: 35px;
-    background: transparent url(/images/video-camera-icon-inset-small.png) no-repeat 0 6px;
+    background: transparent url(/images/video-camera-icon-inset-small.png) no-repeat 0 5px;
     position: absolute;
     left: 0;
     top: 0;
