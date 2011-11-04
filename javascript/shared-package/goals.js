@@ -163,7 +163,7 @@ var displayGoals = function() {
     renderAllGoalsUI();
 };
 var requestGoals = function(callback) {
-    $.ajax({ url: "/api/v1/user/goals", success: callback || saveGoals });
+    $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
 };
 var renderGoals = function() {
     if (Goals.active) {

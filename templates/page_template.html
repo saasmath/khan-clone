@@ -90,8 +90,8 @@
         {# Make script-requiring elements visible. #}
         <script>document.writeln('<style scoped type="text/css">a[href="#"], .requires_script { visibility: visible; }</style>');</script>
 
+            <div id="goals-nav-container" style="display: none"></div>
             <header>
-                <div id="goals-nav-container" style="display: none"></div>
 
                 <div id="top-header">
                     <div id="top-header-links">
@@ -213,19 +213,13 @@
     {#- goal book -#}
     {%- raw -%}
     <script id="goals-nav-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal-with-progress">
-            <div class="progress-bar">
-                <div class="bar" style="width: ${progress}%"></div>
-                <a href="/profile?graph_url=/api/v1/user/goals">${title}</a>
-                (started ${created_ago})
-            </div>
-            <div class="goal">
-            <ul class="inline-list">
+        <div class="goal">
+            <p id="goal-description">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progress}%</p>
+            <ul class="inline-list objective-list">
             {{each objectives}}
-                <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.short_display_name}</a></li>
+                <li class="objective" style="width: ${100/objectives.length}%"><a class="objective action-gradient ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
             {{/each}}
             </ul>
-            </div>
         </div>
     </script>
 

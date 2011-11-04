@@ -6,6 +6,7 @@ ul.inline-list, ul.inline-list li {
 .goal {
     border: 1px solid #ccc;
     height: 35px;
+    clear: both;
 }
 
 .goal .objective-list {
@@ -146,6 +147,11 @@ ul.inline-list, ul.inline-list li {
     width: 94px;
     height: 20px;
     font-size: 8pt;
+}
+
+#class-student-goal a.objective.filtered {
+    opacity: 0.4;
+    filter:alpha(opacity=40);
 }
 
 #class-student-goal a.objective.GoalObjectiveExerciseProficiency {
