@@ -287,7 +287,19 @@ var Profile = {
     },
 
     renderUserGoals: function(data) {
-        $("#graph-content").html($('#goals-all-tmpl').tmplPlugin({'goals':data}));
+        var goals_model = {
+            'current_goals': ko.observableArray([]),
+            'completed_goals': ko.observableArray([]),
+        };
+        $.each(Goals.all, function(idx, goal) {
+            if (goal.completed != undefined) {
+                goals_model.completed_goals.push(goal);
+            } else {
+                goals_model.current_goals.push(goal);
+            }
+        });
+        $("#graph-content").html($('#profile-goals-tmpl').tmplPlugin({'goals':data}));
+        ko.applyBindings(goals_model, $("#student-goals").get(0));
     },
 
     renderStudentGoals: function(data) {

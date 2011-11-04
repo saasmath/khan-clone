@@ -149,3 +149,41 @@
     {{ profiles.profile_recent_activity(user_data_student, view) }}
 {% endblock profile_extended_sections %}
 
+{% block pagescript %}
+{%- raw -%}
+    <script id="profile-goals-tmpl" type="text/x-jquery-tmpl">
+      <div>Current goals:</div>
+      <div class="student-goals" data-bind="foreach: current_goals">
+        <div class="goal-with-progress">
+          <div class="progress-bar">
+            <div class="bar" data-bind="style: {width: progress+'%'}"></div>
+            <span data-bind="text: title" /> (started <span data-bind="text: created_ago" />)
+          </div>
+          <div class="goal">
+            <ul class="inline-list" data-bind="foreach: objectives">
+              <li><a class="objective action-gradient seethrough" data-bind="attr: {'href': url, 'data-progress': progress}">
+                <span data-bind="text: description" /> (<span data-bind="text: (progress*100).toFixed(0)" />%)
+              </a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div>Completed goals:</div>
+      <div class="student-goals" data-bind="foreach: completed_goals">
+        <div class="goal-with-progress">
+          <div class="progress-bar">
+            <span data-bind="text: title" /> (completed <span data-bind="text: completed_ago" /> in <span data-bind="text: completed_time" />)
+          </div>
+          <div class="goal">
+            <ul class="inline-list" data-bind="foreach: objectives">
+              <li><a class="objective action-gradient seethrough" data-bind="attr: {'href': url}">
+                <span data-bind="text: description" />
+              </a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </script>
+{%- endraw -%}
+{% endblock pagescript %}
