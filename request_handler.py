@@ -17,6 +17,8 @@ from custom_exceptions import MissingVideoException, MissingExerciseException, S
 from app import App
 import cookie_util
 
+from api.jsonify import jsonify
+
 class RequestInputHandler(object):
 
     def request_string(self, key, default = ''):
@@ -308,6 +310,12 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         # mode but false for prod.
         hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
+
+        if user_data and user_data.has_current_goals:
+            from goals import GoalList
+            current_goals = GoalList.get_visible_for_user(user_data)
+            if current_goals:
+                template_values['goals'] = jsonify(current_goals)
 
         return template_values
 

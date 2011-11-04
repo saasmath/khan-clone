@@ -190,23 +190,26 @@ class CreateRandomGoalData(request_handler.RequestHandler):
         #self.redirect('/')
         self.response.out.write('OK')
 
-# a videolog was just created. update any goals the user has.
 def update_goals_just_watched_video(user_data, user_video):
-    goal_data = user_data.get_goal_data()
-    goals = GoalList.get_from_data(goal_data, Goal)
-    changes = []
-    for goal in goals:
-        if goal.just_watched_video(user_data, user_video):
-            changes.append(goal)
-    if changes:
-        db.put(changes)
+    update_goals(lambda goal: goal.just_watched_video(user_data, user_video))
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
+    update_goals(lambda goal: goal.just_did_exercise(user_data, user_exercise,
+        became_proficient))
+
+def update_goals(user_data, activity_fn):
+    if not user_data.has_current_goals:
+        return
+
     goal_data = user_data.get_goal_data()
     goals = GoalList.get_from_data(goal_data, Goal)
     changes = []
     for goal in goals:
-        if goal.just_did_exercise(user_data, user_exercise, became_proficient):
+        if activity_fn(goal):
             changes.append(goal)
     if changes:
+        # check to see if all goals are closed
+        if all([g.is_complete for g in goals]):
+            user_data.has_current_goals = False
+            changes.append(user_data)
         db.put(changes)

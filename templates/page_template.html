@@ -255,5 +255,15 @@
      </div>
     </script>
     {%- endraw -%}
+
+    {% if goals %}
+    <script type="text/javascript">
+    if (typeof(Goals) === "undefined") {
+        var Goals = {};
+    }
+    Goals.all = {{ goals }};
+    </script>
+    {% endif %}
+
     </body>
 </html>

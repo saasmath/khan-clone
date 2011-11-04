@@ -795,13 +795,15 @@ class UserData(GAEBingoIdentityModel, db.Model):
     user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default = 0, indexed=False)
     goal_list = db.ReferenceProperty()
+    has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "expanded_all_exercises", "question_sort_order",
-            "last_login", "user", "current_user", "map_coords", "expanded_all_exercises",
-            "user_nickname", "user_email", "seconds_since_joined",
+            "last_login", "user", "current_user", "map_coords",
+            "expanded_all_exercises", "user_nickname", "user_email",
+            "seconds_since_joined", "goal_list", "has_current_goals"
     ]
 
     prof_conversion_accuracy_thresholds = [0.85, 0.90, 0.92, 0.94, 0.96]
@@ -1151,14 +1153,17 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
+    @property
+    def goal_list_key(self):
+        return UserData.goal_list.get_value_for_datastore(self)
+
     def get_goal_data(self):
-        goal_list_key = UserData.goal_list.get_value_for_datastore(self)
-        if not goal_list_key:
+        if not self.goal_list_key:
             return []
 
         # Do a single ancestor query on the Goal List
         query = db.Query()
-        query.ancestor(goal_list_key)
+        query.ancestor(self.goal_list_key)
         return [entity for entity in query]
 
 class Video(Searchable, db.Model):

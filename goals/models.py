@@ -22,6 +22,11 @@ class Goal(db.Model):
 
     @staticmethod
     def create(user_data, goal_data, title, objective_descriptors):
+        put_user_data = False
+        if not user_data.has_current_goals:
+            user_data.has_current_goals = True
+            put_user_data = True
+
         parent_list = GoalList.get_from_data(goal_data, GoalList)
         if not parent_list:
             # Create a parent object for all the goals & objectives
@@ -30,9 +35,12 @@ class Goal(db.Model):
 
             # Update UserData
             user_data.goal_list = goal_list
-            user_data.put()
+            put_user_data = True
         else:
             goal_list = parent_list[0]
+
+        if put_user_data:
+            user_data.put()
 
         # Create the new goal
         new_goal = Goal(goal_list)
