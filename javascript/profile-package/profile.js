@@ -81,6 +81,16 @@ var Profile = {
                 Profile.historyChange();
             }
         }, 1000);
+
+        ko.bindingHandlers.throbberLeft = {
+            update: function(element, valueAccessor) {
+                var visible = valueAccessor()();
+                if (visible)
+                    Throbber.show($(element), true);
+                else
+                    Throbber.hide();
+            },
+        };
     },
 
 
@@ -280,30 +290,61 @@ var Profile = {
         this.styleSublinkFromHref(href);
 
         if (apiCallback) {
-            apiCallback(data);
+            apiCallback(data, href);
         } else {
             $("#graph-content").html(data);
         }
     },
 
-    renderUserGoals: function(data) {
+    renderUserGoals: function(data, href) {
         var goals_model = {
             'current_goals': ko.observableArray([]),
             'completed_goals': ko.observableArray([]),
+            'abandoned_goals': ko.observableArray([]),
         };
         $.each(data, function(idx, goal) {
             goal.progress = totalProgress(goal.objectives).toFixed(0);
             if (goal.completed != undefined) {
-                goals_model.completed_goals.push(goal);
+                if (goal.abandoned)
+                    goals_model.abandoned_goals.push(goal);
+                else
+                    goals_model.completed_goals.push(goal);
             } else {
                 goals_model.current_goals.push(goal);
             }
+
+            goal.abandon_inprogress = ko.observable(false);
+            goal.abandon = function() {
+                if (confirm("This action cannot be undone. Abandon goal?")) {
+                    goal.abandon_inprogress(true);
+                    $.ajax({
+                        url: "/api/v1/user/goals/abandon/" + goal.id,
+                        type: 'POST',
+                        dataType: 'json',
+                        success: function(json) {
+                            goal.abandon_inprogress(false);
+
+                            $.each(Goals.all, function(idx, other_goal) {
+                                if (goal.id == other_goal.id) {
+                                    Goals.all.splice(idx, 1);
+                                    return false;
+                                }
+                            });
+                            updateGoals(Goals.all);
+                            Profile.loadGraph(href);
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            goal.abandon_inprogress(false);
+                        },
+                    });
+                }
+            };
         });
         $("#graph-content").html($('#profile-goals-tmpl').tmplPlugin({'goals':data}));
         ko.applyBindings(goals_model, $("#student-goals").get(0));
     },
 
-    renderStudentGoals: function(data) {
+    renderStudentGoals: function(data, href) {
         var goals_model = {
             'sort_desc': ko.observable(''),
             'filter_desc': ko.observable(''),

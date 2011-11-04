@@ -142,18 +142,21 @@ var findMatchingGoalFor = function(url) {
 };
 
 var mostRecentlyUpdatedGoal = function(goals) {
-    var matchingGoal = goals[0];
-    var minDate = new Date(matchingGoal.updated);
+    if (goals.length > 0) {
+        var matchingGoal = goals[0];
+        var minDate = new Date(matchingGoal.updated);
 
-    $.each(Goals.all, function(i, goal) {
-        var currentDate = new Date(goal.updated);
-        if (currentDate > minDate) {
-            matchingGoal = goal;
-            minDate = currentDate;
-        }
-    });
+        $.each(Goals.all, function(i, goal) {
+            var currentDate = new Date(goal.updated);
+            if (currentDate > minDate) {
+                matchingGoal = goal;
+                minDate = currentDate;
+            }
+        });
 
-    return matchingGoal;
+        return matchingGoal;
+    }
+    return null;
 };
 
 var displayGoals = function() {
@@ -169,6 +172,8 @@ var renderGoals = function() {
     if (Goals.active) {
         var goalsEl = $("#goals-tmpl").tmplPlugin(Goals.active);
         $("#goals-container").html(goalsEl);
+    } else {
+        $("#goals-container").html('');
     }
 };
 var renderCurrentGoals = function() {
@@ -177,6 +182,8 @@ var renderCurrentGoals = function() {
         $("#goals-nav-container").html(goalsEl).draggable({
             handle: ".drag-handle"
         });
+    } else {
+        $("#goals-nav-container").html('');
     }
 };
 
