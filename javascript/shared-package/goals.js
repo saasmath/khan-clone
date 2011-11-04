@@ -247,7 +247,11 @@ var createSimpleGoalDialog = {
 };
 
 $(function() {
-    if ( typeof Goals !== 'undefined' && Goals.all ) {
-        updateGoals();
+    if (typeof(Goals) === "undefined") {
+        var Goals = {
+            all: [],
+            active: null
+        };
     }
+    updateGoals();
 });

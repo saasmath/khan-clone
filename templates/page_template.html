@@ -256,14 +256,17 @@
     </script>
     {%- endraw -%}
 
-    {% if goals %}
     <script type="text/javascript">
     if (typeof(Goals) === "undefined") {
-        var Goals = {};
+        var Goals = {
+            all: [],
+            active: null
+        };
     }
+    {-% if goals %-}
     Goals.all = {{ goals }};
+    {-% endif %-}
     </script>
-    {% endif %}
 
     </body>
 </html>

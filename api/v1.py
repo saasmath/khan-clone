@@ -572,12 +572,15 @@ def attempt_problem_number(exercise_name, problem_number):
                 # and the above pts-original points gives a wrong answer
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
-            add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_exercise_graph.states(exercise.name)),
-                "points_earned" : { "points" : points_earned },
-                "attempt_correct" : request.request_bool("complete"),
-                "updateGoals" : GoalList.get_visible_for_user(user_data)
-            })
+            api_actions = {
+                "exercise_message_html": templatetags.exercise_message(exercise,
+                    user_data.coaches, user_exercise_graph.states(exercise.name)),
+                "points_earned": {"points": points_earned},
+                "attempt_correct": request.request_bool("complete"),
+            }
+            if user_data.has_current_goals:
+                api_actions['updateGoal'] = GoalList.get_visible_for_user(user_data)
+            add_action_results(user_exercise, api_actions)
 
             return user_exercise
 
