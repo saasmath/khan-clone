@@ -162,8 +162,8 @@ var displayGoals = function() {
     Goals.active = findMatchingGoalFor(window.location.toString());
     renderAllGoalsUI();
 };
-var requestGoals = function() {
-    $.ajax({ url: "/api/v1/user/goals", success: saveGoals });
+var requestGoals = function(callback) {
+    $.ajax({ url: "/api/v1/user/goals", success: callback || saveGoals });
 };
 var renderGoals = function() {
     if (Goals.active) {
@@ -187,11 +187,9 @@ var hideGoals = function() {
     $("#goals-nav-container").hide();
 };
 
-var updateGoals = function() {
-    $.ajax({ url: "/api/v1/user/goals", success: function(data) {
-        saveGoals(data);
-        displayGoals();
-     }});
+var updateGoals = function(data) {
+    saveGoals(data);
+    displayGoals();
 };
 
 var predefinedGoalsList = {
@@ -248,4 +246,4 @@ var createSimpleGoalDialog = {
     }
 };
 
-$(function() { updateGoals(); });
+$(function() { requestGoals(updateGoals); });
