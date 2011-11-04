@@ -149,7 +149,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
             # Delete existing goals
             GoalList.delete_all_goals(user_data)
 
-            for goal_idx in xrange(1,random.randint(2,4)):
+            for goal_idx in xrange(1,random.randint(-1,4)):
                 # Create a random goal
                 objective_descriptors = []
 
@@ -166,7 +166,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
                 for objective in objective_descriptors:
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':
                         user_exercise = user_data.get_or_insert_exercise(objective['exercise'])
-                        chooser = random.randint(1,200)
+                        chooser = random.randint(1,120)
                         if chooser < 60:
                             if chooser > 15:
                                 count = 1

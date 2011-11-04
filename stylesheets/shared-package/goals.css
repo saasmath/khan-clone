@@ -146,6 +146,11 @@ ul.inline-list, ul.inline-list li {
     font-size: 8pt;
 }
 
+#class-student-goal a.objective.filtered {
+    opacity: 0.4;
+    filter:alpha(opacity=40);
+}
+
 #class-student-goal a.objective.GoalObjectiveExerciseProficiency {
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;

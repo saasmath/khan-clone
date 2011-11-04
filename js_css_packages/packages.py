@@ -43,6 +43,7 @@ javascript = {
             "jquery.address-1.4.min.js",
             "highcharts.js",
             "profile.js",
+            "knockout-latest.min.js",
         ]
     },
     "maps": {
