@@ -579,7 +579,7 @@ def attempt_problem_number(exercise_name, problem_number):
                 "attempt_correct": request.request_bool("complete"),
             }
             if user_data.has_current_goals:
-                api_actions['updateGoal'] = GoalList.get_visible_for_user(user_data)
+                api_actions['updateGoals'] = GoalList.get_visible_for_user(user_data)
             add_action_results(user_exercise, api_actions)
 
             return user_exercise
