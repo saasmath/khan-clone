@@ -6,6 +6,7 @@ ul.inline-list, ul.inline-list li {
 .goal {
     border: 1px solid #ccc;
     height: 35px;
+    clear: both;
 }
 
 .goal .objective-list {
