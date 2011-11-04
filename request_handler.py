@@ -306,8 +306,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         # overridable hide_analytics querystring that defaults to true in dev
         # mode but false for prod.
-        hide_analytics = os.environ.get('SERVER_SOFTWARE').startswith('Devel')
-        hide_analytics = self.request_bool("hide_analytics", hide_analytics)
+        hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
 
         return template_values
