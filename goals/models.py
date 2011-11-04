@@ -19,7 +19,6 @@ class Goal(db.Model):
     completed_on = db.DateTimeProperty()
     abandoned = db.BooleanProperty()
     objectives = ObjectProperty()
-    active = False
 
     @staticmethod
     def create(user_data, goal_data, title, objective_descriptors):
@@ -61,10 +60,6 @@ class Goal(db.Model):
         new_goal.objectives = objectives
         new_goal.put()
 
-        # Set the goal active
-        goal_list.active = new_goal
-        goal_list.put()
-
         return new_goal
 
     def get_visible_data(self, user_exercise_graph):
@@ -72,7 +67,6 @@ class Goal(db.Model):
         goal_ret['id'] = self.key().id()
         goal_ret['title'] = self.title
         goal_ret['objectives'] = []
-        goal_ret['active'] = self.active
         goal_ret['created'] = self.created_on
         goal_ret['created_ago'] = templatefilters.timesince_ago(self.created_on)
         goal_ret['updated'] = self.updated_on
@@ -155,7 +149,6 @@ class Goal(db.Model):
 
 class GoalList(db.Model):
     user = db.UserProperty()
-    active = db.ReferenceProperty(Goal)
 
     @staticmethod
     def get_from_data(data, type):
@@ -214,22 +207,6 @@ class GoalList(db.Model):
 
         for goal in goals:
             goal.delete()
-
-    @staticmethod
-    def activate_goal(user_data, id):
-        # Fetch data from datastore
-        goal_data = user_data.get_goal_data()
-        goal_list = GoalList.get_from_data(goal_data, GoalList)[0]
-        goals = GoalList.get_from_data(goal_data, Goal)
-
-        id = int(id)
-        for goal in goals:
-            if goal.key().id() == id:
-                goal_list.active = goal
-                goal_list.put()
-                return True
-
-        return False
 
 def shorten(s, n=12):
     if len(s) <= n:
