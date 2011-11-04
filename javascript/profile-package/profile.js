@@ -91,6 +91,16 @@ var Profile = {
                     Throbber.hide();
             },
         };
+        ko.bindingHandlers.goalObjectiveCSS = {
+            update: function(element, valueAccessor) {
+                var objective = ko.utils.unwrapObservable(valueAccessor())
+                $(element).addClass(objective.status);
+                if (objective.type == 'GoalObjectiveExerciseProficiency' || objective.type == 'GoalObjectiveAnyExerciseProficiency')
+                    $(element).addClass('exercise');
+                else if (objective.type == 'GoalObjectiveWatchVideo' || objective.type == 'GoalObjectiveAnyVideo')
+                    $(element).addClass('video');
+            },
+        };
     },
 
 
@@ -415,13 +425,6 @@ var Profile = {
 
         $("#graph-content").html($('#profile-student-goals-tmpl').html());
 
-        ko.bindingHandlers.student_objective_css = {
-            update: function(element, valueAccessor) {
-                var objective = ko.utils.unwrapObservable(valueAccessor())
-                $(element).addClass(objective.status);
-                $(element).addClass(objective.type);
-            },
-        };
         ko.applyBindings(goals_model, $("#class-student-goals").get(0));
 
         $("#student-goals-sort").change(function() { Profile.sortStudentGoals(goals_model) });

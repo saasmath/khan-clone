@@ -37,7 +37,7 @@ var GoalCreator = {
 
         GoalCreator.updateViewAndDescription();
     },
-    toggleObjectiveInternal: function(type, id, name) {
+    toggleObjectiveInternal: function(type, css, id, name) {
         var idx = 1;
         var found_index = -1;
 
@@ -58,9 +58,10 @@ var GoalCreator = {
         } else if (GoalCreator.objectives.length < 10) {
             var newObjective = {
                 type: type,
+                css: css,
                 description: name,
                 progress: 0,
-                url: "javascript:GoalCreator.onSelectedObjectiveClicked('" + type + "', '" + id + "', '" + name + "');",
+                url: "javascript:GoalCreator.onSelectedObjectiveClicked('" + type + "', '" + css + "', '" + id + "', '" + name + "');",
 
                 idx: idx,
                 id: id,
@@ -165,7 +166,7 @@ var GoalCreator = {
        if (node.status == 'Proficient')
            return; // Cannot select exercises the user is proficient in
 
-        GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', node.id, node.name);
+        GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', 'exercise', node.id, node.name);
 
         GoalCreator.updateExerciseCount();
         GoalCreator.updateViewAndDescription();
@@ -208,7 +209,7 @@ var GoalCreator = {
     },
 
     onVideoClicked: function(id, title) {
-        GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', id, title);
+        GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', 'video', id, title);
     
         GoalCreator.updateVideoCount();
         GoalCreator.updateViewAndDescription();
@@ -253,8 +254,8 @@ var GoalCreator = {
             }
         });
     },
-    onSelectedObjectiveClicked: function(type, name, id) {
-        GoalCreator.toggleObjectiveInternal(type, name, id);
+    onSelectedObjectiveClicked: function(type, css, name, id) {
+        GoalCreator.toggleObjectiveInternal(type, css, name, id);
         GoalCreator.updateExerciseCount();
         GoalCreator.updateVideoCount();
         GoalCreator.updateViewAndDescription();
@@ -378,7 +379,7 @@ $(function() {
         <p id="goal-description" class="pulled"></p>
         <ul class="inline-list objective-list">
         {{each objectives}}
-            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.css}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
         {{/each}}
         </ul>
     </div>
