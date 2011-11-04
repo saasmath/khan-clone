@@ -191,10 +191,10 @@ class CreateRandomGoalData(request_handler.RequestHandler):
         self.response.out.write('OK')
 
 def update_goals_just_watched_video(user_data, user_video):
-    update_goals(lambda goal: goal.just_watched_video(user_data, user_video))
+    update_goals(user_data, lambda goal: goal.just_watched_video(user_data, user_video))
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
-    update_goals(lambda goal: goal.just_did_exercise(user_data, user_exercise,
+    update_goals(user_data, lambda goal: goal.just_did_exercise(user_data, user_exercise,
         became_proficient))
 
 def update_goals(user_data, activity_fn):
@@ -209,7 +209,7 @@ def update_goals(user_data, activity_fn):
             changes.append(goal)
     if changes:
         # check to see if all goals are closed
-        if all([g.is_complete for g in goals]):
+        if all([g.is_completed for g in goals]):
             user_data.has_current_goals = False
             changes.append(user_data)
         db.put(changes)
