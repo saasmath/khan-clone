@@ -98,6 +98,40 @@ class Goal(db.Model):
     def is_completed(self):
         return (self.completed_on is not None)
 
+    def just_watched_video(self, user_data, user_video):
+        changed = False
+        specific_videos = GoalList.get_from_data(self.objectives, GoalObjectiveWatchVideo)
+        for objective in specific_videos:
+            if objective.record_progress(user_data, user_video):
+                changed = True
+
+        if user_video.completed:
+            any_videos = GoalList.get_from_data(self.objectives, GoalObjectiveAnyVideo)
+            for vid_obj in any_videos:
+                if not vid_obj.is_completed:
+                    vid_obj.record_complete(user_video.video)
+                    changed = True
+                    break
+
+        return changed
+
+    def just_did_exercise(self, user_data, user_exercise, became_proficient):
+        changed = False
+        specific_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveExerciseProficiency)
+        for ex_obj in specific_exercises:
+            if ex_obj.record_progress(user_data, user_exercise):
+                changed = True
+
+        if became_proficient:
+            any_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveAnyExerciseProficiency)
+            for ex_obj in any_exercises:
+                if not ex_obj.is_completed:
+                    ex_obj.record_complete(user_exercise.exercise_model)
+                    changed = True
+                    break
+
+        return changed
+
 class GoalList(db.Model):
     user = db.UserProperty()
     active = db.ReferenceProperty(Goal)
