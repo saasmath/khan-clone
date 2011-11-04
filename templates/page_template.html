@@ -163,6 +163,7 @@
     </div>
     </div>
     </div>
+    <div id="popup-dialog">&nbsp;</div>
     <div class="push"></div>
     {% block pagefooter %}
     {% include "page_footer_short.html" %}
@@ -233,9 +234,31 @@
             {{each goals}}
             {{tmplPlugin($value) "#goals-nav-tmpl"}}
             {{/each}}
-            <a class="simple-button action-gradient green" href="/goals/new">New goal</a>
-            <span class="drag-handle">Handle <img class="close-cross hide-goals" src="/images/circled_cross.png"></span>
+            <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
+            <span class="drag-handle">Handle <img class="close-cross hide-goals" src="images/circled_cross.png"></span>
         </div>
+    </script>
+
+    <script id="goal-create-dialog" type="text/html">
+      <div class="dark-window">&nbsp;</div>
+      <div class="window-center">
+        <div id="goal-popup-dialog">
+          <div class="dialog-title"><p>Set a new learning goal</p>
+            <div class="dialog-button"><a class="simple-button action-gradient" href="javascript:createSimpleGoalDialog.hideDialog()">Cancel</a></div>
+          </div>
+          <div class="goal-popup-block">
+            <div>Choose a predefined goal to complete:</div>
+            <div><input type="radio" name="goal-type" value="five_exercises" checked /> Become proficient in any <b>5 exercises</b></div>
+            <div><input type="radio" name="goal-type" value="five_videos" /> Watch any <b>5 videos</b></div>
+            <div class="dialog-button" id="create-simple-goal-button"><a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.createSimpleGoal()">Add goal</a></div>
+            <div class="dialog-button" id="create-simple-goal-error"></div>
+          </div>
+          <div class="goal-popup-block">
+            <div>Or create a personalized goal:</div>
+            <div class="dialog-button"><a class="simple-button action-gradient green" href="/goals/new">Custom goal</a></div>
+          </div>
+       </div>
+     </div>
     </script>
     {%- endraw -%}
     </body>
