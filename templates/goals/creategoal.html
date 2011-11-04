@@ -28,25 +28,6 @@ var GoalCreator = {
                 $(this).attr('href', 'javascript:');
             }
         });
-
-        $(".any-exercise.simple-button").click(function(ev) {
-            ev.preventDefault();
-            for(var i = 0; i<5; i++) {
-                var id = "any"+i.toString();
-                GoalCreator.toggleObjectiveInternal('GoalObjectiveAnyExerciseProficiency', id, "Any exercise");
-            }
-            GoalCreator.updateExerciseCount();
-            GoalCreator.updateViewAndDescription();
-        });
-        $(".any-video.simple-button").click(function(ev) {
-            ev.preventDefault();
-            for(var i = 0; i<5; i++) {
-                var id = "any"+i.toString();
-                GoalCreator.toggleObjectiveInternal('GoalObjectiveAnyVideo', id, "Any video");
-            }
-            GoalCreator.updateVideoCount();
-            GoalCreator.updateViewAndDescription();
-        });
         
         $('#goal-title').focus(function(){ $(this).animate({width: '600px'});}).blur(function(){ $(this).animate({width: '250px'});});
         
@@ -98,13 +79,23 @@ var GoalCreator = {
         var view = $("#goals-create-tmpl").tmplPlugin(goalObject);
         $("#create-goal-view").html(view);
         
+        if (GoalCreator.objectives.length == 0) {
+            $('#goal-info-section > #goal-description').remove();
+        }
+        if ( GoalCreator.objectives.length > 0 && $("#goal-info-section").children("#goal-description").length == 0 ) {
+            $('.goal #goal-description').remove().insertAfter('#create-goal-view');
+        }
+        if (GoalCreator.objectives.length >= 1) {
+            $('.goal #goal-description').remove();
+        }
         if (GoalCreator.objectives.length > 1) {
             $('.goal li.objective').css('width', 100/GoalCreator.objectives.length + "%");
+            $('.goal li.objective').last().children('a').css('border-right', 'none');
         }
         
         var message = '';
         if (GoalCreator.objectives.length == 0) {
-            message = 'This goal currently has no objectives selected. Select exercises or videos to complete below.';
+            message = 'This goal currently has no objectives selected. Select <b>up to 10</b> exercises or videos to complete below.';
         } else {
             var matchingObjectives;
 
@@ -275,9 +266,9 @@ var GoalCreator = {
             titleField.removeClass('fieldError');
         }
 
-        if (GoalCreator.objectives.length == 0)
+        if (GoalCreator.objectives.length < 2)
         {
-            error = 'You must select at least one objective to complete.';
+            error = "We'd like you to pick at least two (2) objectives";
         }
 
         if (error != '') {
@@ -341,19 +332,17 @@ $(function() {
     <span id="goal-commit-response" style="color:#f00; float: right;"></span>
     <input type="text" name="title" class="simple-input ui-corner-all" id="goal-title" placeholder="New Goal (click to edit title)"></input>
   </div>
-  <div>
+  <div id="goal-info-section">
     <div id="create-goal-view"></div>
-    <p id="goal-description" style="clear: left;"></p>
     <div id="goal-hidden-values"></div>
   </div>
 </form>
 
-<span class="objective-type-picker">
-<a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
-<a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
-</span>
-
-<div id="container" style="clear: left" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+<div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+    <div class="objective-type-picker clearfix">
+        <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
+        <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
+    </div>
   <div id="goal-choose-exercises" style="display: none;">
     {{ exercise_macros.exercise_legend() }}
     {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, null, graph_dicts, 'creategoal') }}
@@ -380,9 +369,10 @@ $(function() {
 {%- raw -%}
 <script id="goals-create-tmpl" type="text/x-jquery-tmpl">
     <div class="goal">
+        <p id="goal-description"></p>
         <ul class="inline-list objective-list">
         {{each objectives}}
-            <li class="objective"><a class="objective action-gradient seethrough ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+            <li class="objective"><a class="objective action-gradient ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
         {{/each}}
         </ul>
     </div>
