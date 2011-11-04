@@ -840,7 +840,7 @@ def get_user_current_goals():
             # Allow access to this student's profile
             student = user_override
 
-    return GoalList.get_visible_for_user(student)
+    return GoalList.get_visible_for_user(student, show_complete=False, nrecent=3)
 
 @route("/api/v1/user/students/goals", methods=["GET"])
 @oauth_optional()
