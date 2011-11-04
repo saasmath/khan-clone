@@ -159,8 +159,10 @@ var mostRecentlyUpdatedGoal = function(goals) {
 };
 
 var displayGoals = function() {
-    Goals.active = findMatchingGoalFor(window.location.toString());
-    renderAllGoalsUI();
+    if (Goals.all.length) {
+        Goals.active = findMatchingGoalFor(window.location.toString());
+        renderAllGoalsUI();
+    }
 };
 var requestGoals = function(callback) {
     $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
