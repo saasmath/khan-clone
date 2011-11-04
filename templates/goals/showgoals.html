@@ -64,7 +64,7 @@ $(function() {
 {% endif %}
 
 <div><h1 class="section-headline">Goals: {{ goals_count }}<h1></div>
-{% for goal in goals %}
+{% for goal in goals_list %}
   <div>
     Goal: {{ goal.title|escape }}
     {% if goal.completed %}
