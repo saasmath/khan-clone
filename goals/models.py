@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 from models import Exercise, UserVideo, Video
 import templatefilters
-import logging
 from object_property import ObjectProperty
 
 from google.appengine.ext import db
@@ -48,7 +47,6 @@ class Goal(db.Model):
                 objectives.append(GoalObjectiveAnyVideo(description="Any video"))
 
         new_goal.objectives = objectives
-        logging.critical(new_goal.objectives)
         new_goal.put()
 
         # Set the goal active
@@ -71,8 +69,6 @@ class Goal(db.Model):
             objective_ret = {}
             objective_ret['type'] = objective.__class__.__name__
             objective_ret['description'] = objective.description
-            logging.critical(objective.short_display_name)
-            logging.critical(objective._get_short_display_name())
             objective_ret['short_display_name'] = objective._get_short_display_name()
             objective_ret['progress'] = objective.progress
             objective_ret['url'] = objective.url()
