@@ -17,11 +17,13 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal a.objective {
-    border-right: 1px solid #CCC;
+    background-color: lightBlue;
+    border-right: 1px solid #bbb;
     display: block;
     line-height: 35px;
     overflow: hidden;
     padding: 0 5px;
+    position: relative;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -30,12 +32,26 @@ ul.inline-list, ul.inline-list li {
     padding-left: 20px
 }
 
-.goal a.objective.GoalObjectiveExerciseProficiency {
-
+.goal a.objective.GoalObjectiveExerciseProficiency:before {
+    display: block;
+    content: " ";
+    width: 20px;
+    height: 35px;
+    background: transparent url(/images/generic-exercise-icon-inset-small.png) no-repeat 0 6px;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 
-.goal a.objective.GoalObjectiveWatchVideo {
-
+.goal a.objective.GoalObjectiveWatchVideo:before {
+    display: block;
+    content: " ";
+    width: 20px;
+    height: 35px;
+    background: transparent url(/images/video-camera-icon-inset-small.png) no-repeat 0 6px;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 
 .all-goals {
@@ -165,6 +181,11 @@ input#goal-title:focus {
     padding-left: 5px;
 }
 
+.goal #goal-description {
+    line-height: 35px;
+    margin:0;
+    text-align: center;
+}
 #goal-description {
     font-size: 14px;
 }
@@ -172,9 +193,7 @@ input#goal-title:focus {
 #goal-description ul, #goal-description ul li {
     display: inline;
 }
-.create-goal-page .dashboard {
-    margin-top: -23px;
-}
+
 .create-goal-page #goal-choose-exercises .dashboard-nav {
     display: none;
 }
@@ -188,19 +207,31 @@ input#goal-title:focus {
     width: 1125px;
 }
 .objective-type-picker {
-    position: relative;
-    top: 6px;
+    position: absolute;
     z-index: 100;
-    left: 2px;
+    top: -1px;
 }
-.objective-type-picker .simple-button {
-    padding: 10px 12px;
-    margin-left: -2px;
+.objective-type-picker .simple-button, .goal .simple-button {
     border-radius: 0;
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
+    padding: 0;
+    line-height: 35px;
+    display: block;
+}
+.objective-type-picker .simple-button {
+    width: 174px;
+    float: left;
+    text-align: center;
 }
 
+.create-goal-page .dashboard {
+    margin-top: 18px;
+}
+
+.create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #playlist-jump > span {
+    font-weight: normal;
+}
 #goal-popup-dialog {
     position: relative;
 
