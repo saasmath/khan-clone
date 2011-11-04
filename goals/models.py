@@ -94,6 +94,10 @@ class Goal(db.Model):
         if len(uncompleted_objectives) == 0:
             self.completed_on = datetime.datetime.now()
 
+    @property
+    def is_completed(self):
+        return (self.completed_on != None)
+
 class GoalList(db.Model):
     user = db.UserProperty()
     active = db.ReferenceProperty(Goal)
@@ -103,7 +107,7 @@ class GoalList(db.Model):
         return [entity for entity in data if isinstance(entity, type)]
 
     @staticmethod
-    def get_visible_for_user(user_data, user_exercise_graph=None):
+    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False):
         if user_data:
             # Fetch data from datastore
             goal_data = user_data.get_goal_data()
@@ -118,7 +122,7 @@ class GoalList(db.Model):
                 if goal.key() == GoalList.active.get_value_for_datastore(goal_list):
                     goal.active = True
 
-            return [goal.get_visible_data(user_exercise_graph) for goal in goals]
+            return [goal.get_visible_data(user_exercise_graph) for goal in goals if show_complete or not goal.is_completed]
 
         return []
 

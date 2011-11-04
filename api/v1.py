@@ -820,6 +820,23 @@ def get_user_goals():
             # Allow access to this student's profile
             student = user_override
 
+    return GoalList.get_visible_for_user(student, show_complete=True)
+
+@route("/api/v1/user/goals/current", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_current_goals():
+    student = models.UserData.current() or models.UserData.pre_phantom()
+
+    user_override = request.request_user_data("student_email")
+    if user_override and user_override.key_email != student.key_email:
+        if not user_override.is_visible_to(student):
+            return api_unauthorized_response("Cannot view this profile")
+        else:
+            # Allow access to this student's profile
+            student = user_override
+
     return GoalList.get_visible_for_user(student)
 
 @route("/api/v1/user/students/goals", methods=["GET"])

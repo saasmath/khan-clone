@@ -291,7 +291,8 @@ var Profile = {
             'current_goals': ko.observableArray([]),
             'completed_goals': ko.observableArray([]),
         };
-        $.each(Goals.all, function(idx, goal) {
+        $.each(data, function(idx, goal) {
+            goal.progress = totalProgress(goal.objectives).toFixed(0);
             if (goal.completed != undefined) {
                 goals_model.completed_goals.push(goal);
             } else {
