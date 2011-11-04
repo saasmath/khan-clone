@@ -9,7 +9,6 @@
 {{ js_css_packages.css_package("studentlists") }}
 {% raw %}
 
-
 <script id="profile-student-goals-tmpl" type="text/html">
 <div id="class-student-goals">
   <div>Sorted by <span data-bind="text: sort_desc" />. <span data-bind="text: filter_desc" />.</div>
@@ -24,7 +23,7 @@
       </div>
       <div data-bind="visible: goal.objectives.length > 0" class="goal">
         <ul class="inline-list" data-bind="foreach: goal.objectives">
-          <li><a class="objective action-gradient seethrough" data-bind="student_objective_css: $data, css: {filtered: !filter_match()}, click: click_fn, text: description"></a></li>
+          <li><a class="objective exercise-color action-gradient seethrough" data-bind="student_objective_css: $data, css: {filtered: !filter_match()}, click: click_fn, text: description"></a></li>
         </ul>
       </div>
       <div data-bind="visible: goal.objectives.length == 0" class="goal">Student has no goals.</div>

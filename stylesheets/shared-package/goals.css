@@ -1,22 +1,55 @@
 ul.inline-list, ul.inline-list li {
-    display: inline-block;
+    display: block;
+    float: left;
 }
 
-a.objective {
-    display: inline-block;
-    width: 120px;
-    border: 1px solid #000;
-    margin: 2px 5px;
-    padding: 1px 5px;
-    white-space: nowrap;
+.goal {
+    border: 1px solid #ccc;
+    height: 35px;
+}
+
+.goal .objective-list {
+    width: 100%;
+}
+
+.goal li.objective {
+    width: 50%;
+}
+
+.goal a.objective {
+    border-right: 1px solid #CCC;
+    display: block;
+    line-height: 35px;
     overflow: hidden;
+    padding: 0 5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.goal a.objective.GoalObjectiveExerciseProficiency, .goal a.objective.GoalObjectiveWatchVideo {
+    padding-left: 20px
+}
+
+.goal a.objective.GoalObjectiveExerciseProficiency {
+
+}
+
+.goal a.objective.GoalObjectiveWatchVideo {
+
+}
+
+.all-goals {
+    padding: 10px;
+}
+
+.goal-with-progress {
+    margin: 10px;
 }
 
 .progress-bar {
     position: relative;
     border: 1px solid #000;
     padding: 2px;
-    margin: 2px 5px;
 }
 
 .bar {
@@ -37,10 +70,34 @@ a.objective {
     display: block;
 }
 
-#goals-current-container, #goals-nav-container {
-    margin: 0 auto;
-    max-width: 1200px;
-    min-width: 1000px;
+#goals-nav-container {
+    position: absolute;
+    width: 800px;
+    z-index: 200;
+}
+
+#goals-nav-container .drag-handle {
+    position: absolute;
+    right: 20px;
+    display: block;
+    padding: 4px 8px;
+    background: #fff;
+    border: 1px solid #000;
+}
+
+#goals-nav-container .drag-handle .close-cross {
+    position: relative;
+    top: 4px;
+    left: 4px;
+    width: 14px;
+    height: 14px;
+    opacity: .2;
+    /* whatever we need to do to make this work with IE */
+}
+
+#goals-nav-container .all-goals {
+    background: #fff;
+    border: 1px solid #000;
 }
 
 #class-student-goal .student-name {
@@ -83,33 +140,6 @@ a.objective {
     border-radius: 3px;
 }
 
-a.objective.GoalObjectiveExerciseProficiency.proficient {
-    background-color: #0080C9;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.suggested {
-    background-color: #73982C;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.review {
-    background-color: #E35D04;
-    color: #eee !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.review.light {
-    background-color: #f2b891;
-    color: #333 !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.not-started {
-    background-color: #ccc;
-}
-a.objective.GoalObjectiveExerciseProficiency.struggling {
-    background-color: #C30202;
-    color: #dfdfdf !important;
-}
-a.objective.GoalObjectiveExerciseProficiency.started {
-    background-color: #c7e5f7;
-}
-
 #class-student-goal a.objective.GoalObjectiveWatchVideo {
     background-color: #ccc;
     height: 18px;
@@ -119,4 +149,105 @@ a.objective.GoalObjectiveExerciseProficiency.started {
 }
 #class-student-goal a.objective.GoalObjectiveWatchVideo.started {
     background-color: #c7f795;
+}
+
+#create-goal-view {
+    margin-top: 3px;
+}
+
+input#goal-title {
+    font-size: 16px;
+    padding: 5px 5px 5px 0;
+    height: auto;
+    min-width: 250px;
+    color: #333;
+    background-color: transparent;
+    border-color: transparent;
+}
+input#goal-title:focus {
+    background-color: #FAFAFA;
+    border-color: #C6D1AD;
+    padding-left: 5px;
+}
+
+#goal-description {
+    font-size: 14px;
+}
+
+#goal-description ul, #goal-description ul li {
+    display: inline;
+}
+.create-goal-page .dashboard {
+    margin-top: -23px;
+}
+.create-goal-page #goal-choose-exercises .dashboard-nav {
+    display: none;
+}
+.create-goal-page #goal-choose-videos .dashboard-header {
+    box-shadow: 0 1px 3px rgba(0,0,0, .1);
+}
+.create-goal-page #goal-choose-videos .dashboard-nav {
+    top: 2px;
+}
+.create-goal-page #goal-choose-videos .dashboard-content {
+    width: 1125px;
+}
+.objective-type-picker {
+    position: relative;
+    top: 6px;
+    z-index: 100;
+    left: 2px;
+}
+.objective-type-picker .simple-button {
+    padding: 10px 12px;
+    margin-left: -2px;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+}
+
+#goal-popup-dialog {
+    position: relative;
+
+    width: 350px;
+    margin-left: -175px;
+
+    height: 200px;
+    margin-top: -300px;
+
+    background-color: #e4e4e4;
+    padding: 20px;
+    padding-top: 40px;
+
+    border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+
+    -moz-box-shadow: 0 3px 4px #444;
+    -webkit-box-shadow: 0 2px 4px #444;
+    box-shadow: 0 2px 4px #444;
+}
+#goal-popup-dialog .dialog-title {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 5px;
+
+    padding: 5px;
+    padding-left: 10px;
+}
+#goal-popup-dialog .dialog-title p {
+    font-size: 150%;
+   display: inline;
+}
+#goal-popup-dialog .dialog-button {
+    float: right;
+    margin: 5px;
+}
+#goal-popup-dialog .goal-popup-block {
+    clear: both;
+    background-color: #f4f4f4;
+    border: 1px solid #888;
+    margin: 10px;
+    padding: 5px 5px 36px 10px;
 }

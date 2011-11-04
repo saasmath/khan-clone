@@ -15,45 +15,155 @@ var totalProgress = function(objectives) {
 };
 var renderAllGoalsUI = function() {
     renderGoals();
-    renderNavGoal();
     renderCurrentGoals();
 
-    // event handlers
-    $(".activate.simple-button").click(function(ev) {
-        ev.preventDefault();
-        var id = $(ev.target).data('goal-id');
-        $.ajax({
-            type: 'post',
-            url: "/api/v1/user/goals/" + id + "/activate"
-        });
-        UIChangeActiveGoal(id);
-    });
-    $("#goals-drawer").toggle(showNavGoal, showCurrentGoals, showDrawer);
+    $("#goals-drawer").click(showGoals);
+    $(".hide-goals").click(hideGoals);
 };
-var UIChangeActiveGoal = function(id) {
-    $.each(Goals.all, function(i, goal) {
-        if (goal.id == id) {
-            Goals.active = goal;
-            goal.active = true;
-        }
-        else {
-            goal.active = false;
-        }
-    });
-    renderAllGoalsUI();
-};
-var updateGoals = function(data) {
+var saveGoals = function(data) {
     Goals.all = data;
+
+    // anotate goals with progress counts and overall progress
     $.each(Goals.all, function(i, goal) {
         goal.progress = totalProgress(goal.objectives).toFixed(0);
-        if (goal.active) {
-            Goals.active = goal;
+        goal.objectiveProgress = 0;
+
+        $.each(goal.objectives, function(i, ob) {
+            if (ob.progress >= 1) {
+                goal.objectiveProgress += 1;
+            }
+        });
+    });
+};
+
+// todo: surely this is in a library somewhere?
+var parseQueryString = function(url) {
+    var querystring = decodeURIComponent(url.substring(url.indexOf('?')+1));
+    var pairs = querystring.split('&');
+    var qs = {};
+    var qslist = $.each(pairs, function(i, pair) {
+        var kv = pair.split("=");
+        qs[kv[0]] = kv[1];
+    });
+    return qs;
+};
+
+var findExerciseObjectiveFor = function(url) {
+    var matchingGoal = null;
+
+    var exid = parseQueryString(url).exid;
+    // find a goal with exactly this exercise
+    $.each(Goals.all, function(i, goal) {
+        var objective = $.grep(goal.objectives, function(ob) {
+            return ob.type == "GoalObjectiveExerciseProficiency" &&
+                exid == parseQueryString(ob.url).exid;
+        });
+        if (objective.length > 0) {
+            matchingGoal = goal;
+            return false;
         }
     });
+
+    if (matchingGoal === null) {
+        // find an exercise process goal
+        $.each(Goals.all, function(i, goal) {
+            var objective = $.grep(goal.objectives, function(ob) {
+                return ob.type == "GoalObjectiveAnyExerciseProficiency";
+            });
+            if (objective.length > 0) {
+                matchingGoal = goal;
+                return false;
+            }
+        });
+    }
+
+    return matchingGoal;
+};
+
+var findVideoObjectiveFor = function(url) {
+    var matchingGoal = null;
+
+    var getVideoId = function(url) {
+        var regex = /\/video\/([^\/?]+)/;
+        var matches = url.match(regex);
+        return matches[1];
+    };
+
+    var videoId = getVideoId(window.location.toString());
+
+    // find a goal with exactly this exercise
+    $.each(Goals.all, function(i, goal) {
+        var objective = $.grep(goal.objectives, function(ob) {
+            return ob.type == "GoalObjectiveWatchVideo" &&
+                videoId == getVideoId(ob.url);
+        });
+        if (objective.length > 0) {
+            matchingGoal = goal;
+            return false;
+        }
+    });
+
+    if (matchingGoal === null) {
+        // find an exercise process goal
+        $.each(Goals.all, function(i, goal) {
+            var objective = $.grep(goal.objectives, function(ob) {
+                return ob.type == "GoalObjectiveAnyVideo";
+            });
+            if (objective.length > 0) {
+                matchingGoal = goal;
+                return false;
+            }
+        });
+    }
+
+    return matchingGoal;
+};
+
+// find the most appriate goal to display for a given URL
+var findMatchingGoalFor = function(url) {
+    var matchingGoal = null;
+
+    if (window.location.pathname == "/exercises") {
+        matchingGoal = findExerciseObjectiveFor(url);
+        if (matchingGoal !== null) {
+            console.log('found a matching exercise goal');
+        }
+    }
+    else if (window.location.pathname.indexOf("/video") === 0) {
+        matchingGoal = findVideoObjectiveFor(url);
+        if (matchingGoal !== null) {
+            console.log('found a matching video goal');
+        }
+    }
+    // if we're not on a matching exercise or video page, just show the most recent goal
+    if (matchingGoal === null) {
+        matchingGoal = mostRecentlyUpdatedGoal(Goals.all);
+    }
+
+    return matchingGoal;
+};
+
+var mostRecentlyUpdatedGoal = function(goals) {
+    var matchingGoal = goals[0];
+    var minDate = new Date(matchingGoal.updated);
+
+    $.each(Goals.all, function(i, goal) {
+        var currentDate = new Date(goal.updated);
+        if (currentDate > minDate) {
+            matchingGoal = goal;
+            minDate = currentDate;
+        }
+    });
+
+    return matchingGoal;
+};
+
+var displayGoals = function() {
+    Goals.active = findMatchingGoalFor(window.location.toString());
     renderAllGoalsUI();
 };
 var requestGoals = function() {
-    $.ajax({ url: "/api/v1/user/goals", success: updateGoals });
+    $.ajax({ url: "/api/v1/user/goals", success: saveGoals });
 };
 var renderGoals = function() {
     if (Goals.active) {
@@ -61,31 +171,80 @@ var renderGoals = function() {
         $("#goals-container").html(goalsEl);
     }
 };
-var renderNavGoal = function() {
-    if (Goals.active) {
-        var goalsEl = $("#goals-nav-tmpl").tmplPlugin(Goals.active);
-        $('#goals-nav-container').html(goalsEl);
-    }
-
-};
 var renderCurrentGoals = function() {
     if (Goals.all.length) {
         var goalsEl = $("#goals-all-tmpl").tmplPlugin({goals: Goals.all});
-        $("#goals-current-container").html(goalsEl);
+        $("#goals-nav-container").html(goalsEl).draggable({
+            handle: ".drag-handle"
+        });
     }
 };
 
-var showNavGoal = function() {
-    $("#goals-nav-container").slideDown();
-    $("#goals-current-container").slideUp();
+var showGoals = function() {
+    $("#goals-nav-container").show();
 };
-var showCurrentGoals = function() {
-    $("#goals-nav-container").slideUp();
-    $("#goals-current-container").slideDown();
-};
-var showDrawer = function() {
-    $("#goals-nav-container").slideUp();
-    $("#goals-current-container").slideUp();
+var hideGoals = function() {
+    $("#goals-nav-container").hide();
 };
 
-$(function() { requestGoals(); });
+var updateGoals = function() {
+    $.ajax({ url: "/api/v1/user/goals", success: function(data) {
+        saveGoals(data);
+        displayGoals();
+     }});
+};
+
+var predefinedGoalsList = {
+    "five_exercises" : {
+        "title": "Complete Five Exercises",
+        "objective1_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective2_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective3_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective4_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective5_type": "GoalObjectiveAnyExerciseProficiency",
+    },
+    "five_videos" : {
+        "title": "Watch Five Videos",
+        "objective1_type": "GoalObjectiveAnyVideo",
+        "objective2_type": "GoalObjectiveAnyVideo",
+        "objective3_type": "GoalObjectiveAnyVideo",
+        "objective4_type": "GoalObjectiveAnyVideo",
+        "objective5_type": "GoalObjectiveAnyVideo",
+    },
+};
+
+var createSimpleGoalDialog = {
+    showDialog: function() {
+        $("#popup-dialog").html($("#goal-create-dialog").html());
+    },
+    hideDialog: function() {
+        Throbber.hide();
+        $("#popup-dialog").html('');
+    },
+    createSimpleGoal: function() {
+        var selected_type = $("#goal-popup-dialog").find("input[name=\"goal-type\"]:checked").val();
+        var goal = predefinedGoalsList[selected_type];
+
+        $('#create-simple-goal-error').html('');
+        Throbber.show($("#create-simple-goal-button"), true);
+        $.ajax({
+            url: "/api/v1/user/goals/create",
+            type: 'POST',
+            dataType: 'json',
+            data: $.param(goal),
+            success: function(json) {
+                Throbber.hide();
+                createSimpleGoalDialog.hideDialog(); 
+
+                Goals.all.push(json);
+                updateGoals(Goals.all);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Throbber.hide();
+                $('#create-simple-goal-error').html('Goal creation failed');
+            },
+        });
+    },
+};
+
+$(function() { updateGoals(); });
