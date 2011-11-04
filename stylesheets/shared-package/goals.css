@@ -200,3 +200,49 @@ input#goal-title:focus {
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
 }
+
+#goal-popup-dialog {
+    position: relative;
+
+    width: 350px;
+    margin-left: -175px;
+
+    height: 200px;
+    margin-top: -300px;
+
+    background-color: #e4e4e4;
+    padding: 20px;
+    padding-top: 40px;
+
+    border-radius: 10px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+
+    -moz-box-shadow: 0 3px 4px #444;
+    -webkit-box-shadow: 0 2px 4px #444;
+    box-shadow: 0 2px 4px #444;
+}
+#goal-popup-dialog .dialog-title {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 5px;
+
+    padding: 5px;
+    padding-left: 10px;
+}
+#goal-popup-dialog .dialog-title p {
+    font-size: 150%;
+   display: inline;
+}
+#goal-popup-dialog .dialog-button {
+    float: right;
+    margin: 5px;
+}
+#goal-popup-dialog .goal-popup-block {
+    clear: both;
+    background-color: #f4f4f4;
+    border: 1px solid #888;
+    margin: 10px;
+    padding: 5px 5px 36px 10px;
+}
