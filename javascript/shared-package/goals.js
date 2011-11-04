@@ -245,4 +245,58 @@ var createSimpleGoalDialog = {
     },
 };
 
-$(function() { requestGoals(); });
+var predefinedGoalsList = {
+    "five_exercises" : {
+        "title": "Complete Five Exercises",
+        "objective1_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective2_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective3_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective4_type": "GoalObjectiveAnyExerciseProficiency",
+        "objective5_type": "GoalObjectiveAnyExerciseProficiency",
+    },
+    "five_videos" : {
+        "title": "Watch Five Videos",
+        "objective1_type": "GoalObjectiveAnyVideo",
+        "objective2_type": "GoalObjectiveAnyVideo",
+        "objective3_type": "GoalObjectiveAnyVideo",
+        "objective4_type": "GoalObjectiveAnyVideo",
+        "objective5_type": "GoalObjectiveAnyVideo",
+    },
+};
+
+
+var createSimpleGoalDialog = {
+    showDialog: function() {
+        $("#popup-dialog").html($("#goal-create-dialog").html());
+    },
+    hideDialog: function() {
+        Throbber.hide();
+        $("#popup-dialog").html('');
+    },
+    createSimpleGoal: function() {
+        var selected_type = $("#goal-popup-dialog").find("input[name=\"goal-type\"]:checked").val();
+        var goal = predefinedGoalsList[selected_type];
+
+        $('#create-simple-goal-error').html('');
+        Throbber.show($("#create-simple-goal-button"), true);
+        $.ajax({
+            url: "/api/v1/user/goals/create",
+            type: 'POST',
+            dataType: 'json',
+            data: $.param(goal),
+            success: function(json) {
+                Throbber.hide();
+                createSimpleGoalDialog.hideDialog(); 
+
+                Goals.all.push(json);
+                updateGoals(Goals.all);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                Throbber.hide();
+                $('#create-simple-goal-error').html('Goal creation failed');
+            },
+        });
+    },
+};
+
+$(function() { updateGoals(); });
