@@ -221,7 +221,7 @@
             <div class="goal">
             <ul class="inline-list">
             {{each objectives}}
-                <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.description} (${($value.progress*100).toFixed(0)}%)</a></li>
+                <li><a class="objective action-gradient seethrough" href="${$value.url}" data-progress="${$value.progress}">${$value.short_display_name}</a></li>
             {{/each}}
             </ul>
             </div>
