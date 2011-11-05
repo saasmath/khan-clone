@@ -59,11 +59,6 @@ ul.inline-list, ul.inline-list li {
     top: 0;
 }
 
-.goal a.objective.filtered {
-    opacity: 0.4;
-    filter:alpha(opacity=40);
-}
-
 .all-goals {
     padding: 10px;
 }
