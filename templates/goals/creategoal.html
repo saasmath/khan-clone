@@ -6,7 +6,8 @@
 
 {% block pagescript %}
 <style>
-        #page_sub_nav { display: none; }
+        #page_sub_nav, #top-header { display: none; }
+        #page-container, #page-container-inner { background-position-y: 0; }
 </style>
 <script>
 
@@ -109,18 +110,18 @@ var GoalCreator = {
                     matchingObjectives.push(objective);
             });
             if (matchingObjectives.length > 0) {
-                message += '<li>become proficient in exercise';
+                message += "<li class='exercise-objectives'>become proficient in exercise";
                 if (matchingObjectives.length == 1) {
-                    message += ' <b>' + matchingObjectives[0].description + '</b>';
+                    message += ' <em>' + matchingObjectives[0].description + '</em>';
                 } else {
                     message += 's ';
                     $.each(matchingObjectives, function(idx, objective) {
                         if (idx == 0)
-                            message += '<b>' + objective.description + '</b>';
+                            message += '<em>' + objective.description + '</em>';
                         else if (idx < matchingObjectives.length-1)
-                            message += ', <b>' + objective.description + '</b>';
+                            message += ', <em>' + objective.description + '</em>';
                         else
-                            message += ' and <b>' + objective.description + '</b>';
+                            message += ' and <em>' + objective.description + '</em>';
                     });
                 }
                 message += '</li>';
@@ -133,18 +134,18 @@ var GoalCreator = {
                     matchingObjectives.push(objective);
             });
             if (matchingObjectives.length > 0) {
-                message += '<li>, and watch video';
+                message += "<li class='video-ojectives'>, and watch video";
                 if (matchingObjectives.length == 1) {
-                    message += ' <b>' + matchingObjectives[0].description + '</b>';
+                    message += ' <em>' + matchingObjectives[0].description + '</em>';
                 } else {
                     message += 's ';
                     $.each(matchingObjectives, function(idx, objective) {
                         if (idx == 0)
-                            message += '<b>' + objective.description + '</b>';
+                            message += '<em>' + objective.description + '</em>';
                         else if (idx < matchingObjectives.length-1)
-                            message += ', <b>' + objective.description + '</b>';
+                            message += ', <em>' + objective.description + '</em>';
                         else
-                            message += ' and <b>' + objective.description + '</b>';
+                            message += ' and <em>' + objective.description + '</em>';
                     });
                 }
                 message += '.</li>';
