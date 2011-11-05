@@ -1158,6 +1158,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def goal_list_key(self):
         return UserData.goal_list.get_value_for_datastore(self)
 
+    @request_cache.cache_with_key_fxn(lambda self: "UserData_goals:%s" % self.user_id)
     def get_goal_data(self):
         if not self.goal_list_key:
             return []
