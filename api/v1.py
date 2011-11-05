@@ -288,13 +288,7 @@ def user_data_student():
     if user_data:
         user_data_student = get_visible_user_data_from_request(disable_coach_visibility = True)
         if user_data_student:
-            students_data = user_data_student.get_students_data()
-	    for s in students_data:
-	        list_names = []
-		for sl in s.student_lists:
-		    list_names.append(StudentList.get_by_key_name(sl).name)
-            students_data.student_lists = list_names		    
-	    return students_data
+            return user_data_student.get_students_data()
 
     return None
 
