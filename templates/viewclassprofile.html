@@ -22,8 +22,8 @@
         </div>
       </div>
       <div data-bind="visible: goal.objectives.length > 0" class="goal">
-        <ul class="inline-list" data-bind="foreach: goal.objectives">
-          <li><a class="objective exercise-color action-gradient seethrough" data-bind="student_objective_css: $data, css: {filtered: !filter_match()}, click: click_fn, text: description"></a></li>
+        <ul class="inline-list objective-list" data-bind="foreach: goal.objectives">
+          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient blue" data-bind="goalObjectiveCSS: $data, css: {filtered: !filter_match()}, click: click_fn, text: description"></a></li>
         </ul>
       </div>
       <div data-bind="visible: goal.objectives.length == 0" class="goal">Student has no goals.</div>

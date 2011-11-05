@@ -28,16 +28,16 @@ ul.inline-list, ul.inline-list li {
     white-space: nowrap;
 }
 
-.goal a.objective.GoalObjectiveExerciseProficiency, .goal a.objective.GoalObjectiveWatchVideo {
+.goal a.objective.exercise, .goal a.objective.video {
     padding-left: 20px
 }
 
-#create-goal-view .goal a.objective.GoalObjectiveExerciseProficiency:hover:before, 
-#create-goal-view .goal a.objective.GoalObjectiveWatchVideo:hover:before {
+#create-goal-view .goal a.objective.exercise:hover:before, 
+#create-goal-view .goal a.objective.video:hover:before {
     background: transparent url(/images/delete-icon-inset-small.png) no-repeat 2px 8px;
 }
 
-.goal a.objective.GoalObjectiveExerciseProficiency:before {
+.goal a.objective.exercise:before {
     display: block;
     content: " ";
     width: 20px;
@@ -48,7 +48,7 @@ ul.inline-list, ul.inline-list li {
     top: 0;
 }
 
-.goal a.objective.GoalObjectiveWatchVideo:before {
+.goal a.objective.video:before {
     display: block;
     content: " ";
     width: 20px;
@@ -57,6 +57,11 @@ ul.inline-list, ul.inline-list li {
     position: absolute;
     left: 0;
     top: 0;
+}
+
+.goal a.objective.filtered {
+    opacity: 0.4;
+    filter:alpha(opacity=40);
 }
 
 .all-goals {
@@ -135,41 +140,10 @@ ul.inline-list, ul.inline-list li {
 #class-student-goal .goal {
     display: inline-block;
     width: 650px;
+    vertical-align: top;
 }
-
-#class-student-goal a.objective {
-    display: block;
-    float: left;
-    margin: 0px;
-    margin-right: -1px;
-    margin-bottom: -1px;
-    padding: 3px;
-
-    width: 94px;
-    height: 20px;
-    font-size: 8pt;
-}
-
-#class-student-goal a.objective.filtered {
-    opacity: 0.4;
-    filter:alpha(opacity=40);
-}
-
-#class-student-goal a.objective.GoalObjectiveExerciseProficiency {
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px;
-}
-
-#class-student-goal a.objective.GoalObjectiveWatchVideo {
-    background-color: #ccc;
-    height: 18px;
-}
-#class-student-goal a.objective.GoalObjectiveWatchVideo.proficient {
-    background-color: #00C940;
-}
-#class-student-goal a.objective.GoalObjectiveWatchVideo.started {
-    background-color: #c7f795;
+#class-student-goal div {
+    clear: both;
 }
 
 #create-goal-view {
@@ -208,6 +182,13 @@ input#goal-title:focus {
 
 #goal-description ul, #goal-description ul li {
     display: inline;
+}
+
+#goal-description a {
+    float: right;
+    height: 24px;
+    line-height: 24px;
+    padding: 5px 12px;
 }
 
 .create-goal-page #goal-choose-exercises .dashboard-nav {
