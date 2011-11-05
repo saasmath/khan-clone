@@ -358,6 +358,7 @@ var Profile = {
         var goals_model = {
             'sort_desc': ko.observable(''),
             'filter_desc': ko.observable(''),
+            'show_updated': ko.observable(false),
             'row_data': ko.observableArray([]),
         }; 
 
@@ -451,6 +452,7 @@ var Profile = {
             });
 
             goals_model.sort_desc('student name');
+            goals_model.show_updated(false); // started
             
         } else if (sort == 'progress') {
             rows.sort(function(a,b) {
@@ -460,6 +462,7 @@ var Profile = {
             });
 
             goals_model.sort_desc('goal progress');
+            goals_model.show_updated(true); // updated
 
         } else if (sort == 'created') {
             rows.sort(function(a,b) {
@@ -479,6 +482,7 @@ var Profile = {
             });
 
             goals_model.sort_desc('goal creation time');
+            goals_model.show_updated(false); // started
 
         } else if (sort == 'updated') {
             rows.sort(function(a,b) {
@@ -498,6 +502,7 @@ var Profile = {
             });
 
             goals_model.sort_desc('last work logged time');
+            goals_model.show_updated(true); // updated
         }
 
         $.each(rows, function(idx, element) { $("#class-student-goal").append(element); });

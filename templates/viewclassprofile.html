@@ -16,17 +16,16 @@
     <div data-bind="visible: visible()">
       <div class="student-name"><a data-bind="text: student.nickname, attr: {href: student.profile_url}"></a>
         <span data-bind="visible: student.goal_count > 1 && show_counts">(<span data-bind="text: goal_idx" />/<span data-bind="text: student.goal_count" />)</span>
-        <div data-bind="visible: goal">
-          <div class="goal-start-time">Started <span data-bind="text: goal.created_ago"/></div>
-          <div class="goal-update-time">Updated <span data-bind="text: goal.updated_ago"/></div>
+        <div data-bind="visible: goal.objectives.length > 0">
+          <div class="goal-start-time" data-bind="visible: !$root.show_updated()">Started <span data-bind="text: goal.created_ago"/></div>
+          <div class="goal-update-time" data-bind="visible: $root.show_updated()">Updated <span data-bind="text: goal.updated_ago"/></div>
         </div>
       </div>
-      <div data-bind="visible: goal.objectives.length > 0" class="goal">
+      <div class="goal">
         <ul class="inline-list objective-list" data-bind="foreach: goal.objectives">
-          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient blue" data-bind="goalObjectiveCSS: $data, css: {filtered: !filter_match()}, click: click_fn, text: description"></a></li>
+          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient" data-bind="goalObjectiveCSS: $data, css: {blue: filter_match()}, click: click_fn, text: description"></a></li>
         </ul>
       </div>
-      <div data-bind="visible: goal.objectives.length == 0" class="goal">Student has no goals.</div>
     </div>
   </div>
 </div>
