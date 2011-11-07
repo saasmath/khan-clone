@@ -8,12 +8,12 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.tmpl.min.js",
+            "underscore.js",
             "pageutil.js",
             "api.js",
             "social.js",
             "../../gae_bingo/static/js/gae_bingo.js",
             "goals.js",
-            "underscore.js",
         ]
     },
     "video": {
