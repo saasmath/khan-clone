@@ -90,7 +90,7 @@ class Goal(db.Model):
             objective_ret['progress'] = objective.progress
             objective_ret['url'] = objective.url()
             objective_ret['internal_id'] = objective.internal_id()
-            objective_ret['status'] = objective.get_status(user_exercise_graph)
+            objective_ret['status'] = objective.get_status(user_exercise_graph=user_exercise_graph)
             goal_ret['objectives'].append(objective_ret)
         return goal_ret
 
@@ -238,7 +238,7 @@ class GoalObjective(object):
     def is_completed(self):
         return self.progress >= 1.0
 
-    def get_status(self, user_exercise_graph):
+    def get_status(self, **kwargs):
         if self.is_completed:
             return "proficient"
 
@@ -285,9 +285,10 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 
         return False
 
-    def get_status(self, user_exercise_graph):
+    def get_status(self, user_exercise_graph=None):
         if not user_exercise_graph:
-            return ""
+            # fall back to ['', 'started', 'proficient']
+            return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
         student_review_exercise_names = user_exercise_graph.review_exercise_names()
