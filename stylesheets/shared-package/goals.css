@@ -277,6 +277,7 @@ input#goal-title:focus {
     -moz-box-shadow: 0 3px 4px #444;
     -webkit-box-shadow: 0 2px 4px #444;
     box-shadow: 0 2px 4px #444;
+    z-index: 1000;
 }
 #goal-popup-dialog .dialog-title {
     position: absolute;
