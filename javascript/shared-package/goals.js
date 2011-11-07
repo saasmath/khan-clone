@@ -53,7 +53,7 @@ var detectEvents = function(oldGoals) {
                 if (newGoal.progress >= 1) {
                     console.log("Just finished goal!", newGoal);
                     alert("Yay, you just finished a goal! Insert feelgood effect here.");
-                    $("#goals-drawer").effect('highlight');
+                    $("#goals-congrats").show().fadeOut(3000);
                 }
                 else {
                     // now look for updated objectives
@@ -63,7 +63,7 @@ var detectEvents = function(oldGoals) {
                             console.log("Just worked on", newGoal, newObj);
                             if (newObj.progress >= 1) {
                                 console.log("Just finished objective", newObj);
-                                $("#goals-drawer").effect('highlight');
+                                $("#goals-congrats").show().fadeOut(3000);
                             }
                         }
                     });

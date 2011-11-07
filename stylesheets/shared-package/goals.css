@@ -313,3 +313,9 @@ input#goal-title:focus {
     display: inline-block;
     float: right;
 }
+
+#goals-congrats {
+    background: #f00;
+    color: #fff;
+    font-weight: bold;
+}
