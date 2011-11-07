@@ -29,9 +29,9 @@ var GoalCreator = {
                 $(this).attr('href', 'javascript:');
             }
         });
-        
+
         $('#goal-title').focus(function(){ $(this).animate({width: '600px'});}).blur(function(){ $(this).animate({width: '250px'});});
-        
+
         var form = $('#create-goal');
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
         form.find('input[name="title"]').change(function() { GoalCreator.updateViewAndDescription(); } );
@@ -80,7 +80,7 @@ var GoalCreator = {
 
         var view = $("#goals-create-tmpl").tmplPlugin(goalObject);
         $("#create-goal-view").html(view);
-        
+
         if (GoalCreator.objectives.length == 0) {
             $('#goal-info-section > #goal-description').remove();
         }
@@ -94,7 +94,7 @@ var GoalCreator = {
             $('.goal li.objective').css('width', 100/GoalCreator.objectives.length + "%");
             $('.goal li.objective').last().children('a').css('border-right', 'none');
         }
-        
+
         var message = '';
         if (GoalCreator.objectives.length == 0) {
             message = 'This goal currently has no objectives selected. Select <b>up to 10</b> exercises or videos to complete below.';
@@ -211,7 +211,7 @@ var GoalCreator = {
 
     onVideoClicked: function(id, title) {
         GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', 'video', id, title);
-    
+
         GoalCreator.updateVideoCount();
         GoalCreator.updateViewAndDescription();
     },
@@ -261,7 +261,7 @@ var GoalCreator = {
         GoalCreator.updateVideoCount();
         GoalCreator.updateViewAndDescription();
     },
-    
+
     validate: function(form) {
         var error = '';
 
