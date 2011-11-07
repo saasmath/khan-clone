@@ -213,8 +213,8 @@
     {#- goal book -#}
     {%- raw -%}
     <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
-        <p id="goal-description" class="pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progressStr}%</span></p>
         <div class="goal pulled">
+            <p class="goal-description pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progressStr}%</span></p>
             <ul class="inline-list objective-list">
             {{each objectives}}
                 <li class="objective" style="width: ${100/objectives.length}%">

@@ -182,21 +182,22 @@ input#goal-title:focus {
     padding-left: 5px;
 }
 
-.goal #goal-description {
+.goal .goal-description {
     line-height: 35px;
     margin:0;
     text-align: center;
 }
-#goal-description {
+.goal-description {
     font-size: 14px;
 }
 
-#goal-description.pulls {
+.goal-description.pulls {
     margin: 9px 0;
 }
 
-#goals-nav-container #goal-description.pulls {
+#goals-nav-container .goal-description.pulls {
     margin: 0;
+    text-align: left;
 }
 
 #goals-nav-container .goal.pulled {
@@ -204,11 +205,11 @@ input#goal-title:focus {
 }
 
 
-#goal-description ul, #goal-description ul li {
+.goal-description ul, .goal-description ul li {
     display: inline;
 }
 
-#goal-description a {
+.goal-description a {
     float: right;
     height: 24px;
     line-height: 24px;
@@ -306,7 +307,7 @@ input#goal-title:focus {
     margin-top: 20px;
 }
 
-#goal-description .summary-light {
+.goal-description .summary-light {
     color: #888;
     display: inline-block;
     float: right;
