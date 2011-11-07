@@ -50,7 +50,7 @@ class MoveMapNodes(request_handler.RequestHandler):
 class ViewExercise(request_handler.RequestHandler):
 
     _hints_ab_test_alternatives = {
-        'old': 17,  # The original, where it was unclear if a hint was costly after an attempt
+        'old': 7,  # The original, where it was unclear if a hint was costly after an attempt
         'more_visible': 1,  # Jace's shaking and pulsating emphasis on free hints after an attempt
         'solution_button': 1,  # David's show solution button in lieu of hint button after an attempt
         'full_solution': 1,  # Jason's just show the complete solution after an incorrect answer
@@ -217,7 +217,7 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)),
-            'alternate_hints_treatment': ab_test('Hints or Show Solution',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 5',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types)
