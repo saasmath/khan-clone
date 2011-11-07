@@ -90,7 +90,7 @@
         {# Make script-requiring elements visible. #}
         <script>document.writeln('<style scoped type="text/css">a[href="#"], .requires_script { visibility: visible; }</style>');</script>
 
-            <div id="goals-nav-container" style="display: none"></div>
+            <div id="goals-nav-container" style="display: none" class="ui-corner-bottom"></div>
             <header>
 
                 <div id="top-header">
@@ -213,13 +213,14 @@
     {#- goal book -#}
     {%- raw -%}
     <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal">
-            <p id="goal-description">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progress}%</p>
+        <p id="goal-description" class="pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progress}%</span></p>
+        <div class="goal pulled">
             <ul class="inline-list objective-list">
             {{each objectives}}
-                <li class="objective" style="width: ${100/objectives.length}%"><a class="objective action-gradient ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+                <li class="objective" style="width: ${100/objectives.length}%"><a class="objective simple-button action-gradient blue ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
             {{/each}}
             </ul>
+            <div style="clear: both;"></div>
         </div>
     </script>
 
@@ -228,8 +229,11 @@
             {{each goals}}
             {{tmplPlugin($value) "#goalrow-tmpl"}}
             {{/each}}
-            <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
-            <span class="drag-handle">Handle <img class="close-cross hide-goals" src="/images/circled_cross.png"></span>
+            <div id="goalbook-controls">
+                <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
+                <a class="simple-button action-gradient" href="/profile?k#/?graph_url=/api/v1/user/goals">Goal History</a>
+                <a class="hide-goals">Close <img class="close-cross" src="/images/circled_cross.png"></a>
+            </div>
         </div>
     </script>
 
@@ -263,8 +267,8 @@
             active: null
         };
     }
-    {%- if goals -%}
-    Goals.all = {{ goals }};
+    {%- if global_goals -%}
+    Goals.all = {{ global_goals }};
     {%- endif -%}
     </script>
 

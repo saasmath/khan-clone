@@ -179,19 +179,17 @@ var renderGoals = function() {
 var renderCurrentGoals = function() {
     if (Goals.all.length) {
         var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: Goals.all});
-        $("#goals-nav-container").html(goalsEl).draggable({
-            handle: ".drag-handle"
-        });
+        $("#goals-nav-container").html(goalsEl);
     } else {
         $("#goals-nav-container").html('');
     }
 };
 
 var showGoals = function() {
-    $("#goals-nav-container").show();
+    $("#goals-nav-container").slideDown('fast');
 };
 var hideGoals = function() {
-    $("#goals-nav-container").hide();
+    $("#goals-nav-container").slideUp('fast');
 };
 
 var updateGoals = function(data) {

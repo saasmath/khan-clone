@@ -107,29 +107,23 @@ class Bingo(RequestHandler):
         bingo_cache = BingoCache.get()
         
         conversion = self.request.get("convert", None)
-        if conversion:
-            try:
-                conversion = json.loads(conversion)
-            except json.JSONDecodeError, e:
-                logging.error("json.loads FAILED on input: %s", conversion)
-                raise e
 
         self.response.headers['Content-Type'] = 'text/json'
 
         experiment_names = bingo_cache.get_experiment_names_by_conversion_name(conversion)
-        
+
         status = 200
         response = None
         
         if conversion:
             
-            if len(experiment_names) > 0:
+            if experiment_names:
                 # send null message and score the conversion
                 status = 204
                 bingo(conversion)
             
             else:
-                # send error
+                # send error, conversion not found
                 status = 404
         
         else:

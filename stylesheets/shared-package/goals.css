@@ -5,7 +5,6 @@ ul.inline-list, ul.inline-list li {
 
 .goal {
     border: 1px solid #ccc;
-    height: 35px;
     clear: both;
 }
 
@@ -28,16 +27,24 @@ ul.inline-list, ul.inline-list li {
     white-space: nowrap;
 }
 
-.goal a.objective.exercise, .goal a.objective.video {
-    padding-left: 20px
+#goals-nav-container .goal a.objective {
+    line-height: 23px;
+}
+
+.goal a.objective.exercise, 
+.goal a.objective.video,
+.goal a.objective.GoalObjectiveExerciseProficiency,
+.goal a.objective.GoalObjectiveWatchVideo {
+    padding-left: 22px
 }
 
 #create-goal-view .goal a.objective.exercise:hover:before, 
-#create-goal-view .goal a.objective.video:hover:before {
+#create-goal-view .goal a.objective.video:hover:before, {
     background: transparent url(/images/delete-icon-inset-small.png) no-repeat 2px 8px;
 }
 
-.goal a.objective.exercise:before {
+.goal a.objective.exercise:before,
+.goal a.objective.GoalObjectiveExerciseProficiency:before {
     display: block;
     content: " ";
     width: 20px;
@@ -48,7 +55,8 @@ ul.inline-list, ul.inline-list li {
     top: 0;
 }
 
-.goal a.objective.video:before {
+.goal a.objective.video:before,
+.goal a.objective.GoalObjectiveWatchVideo:before {
     display: block;
     content: " ";
     width: 20px;
@@ -57,6 +65,13 @@ ul.inline-list, ul.inline-list li {
     position: absolute;
     left: 0;
     top: 0;
+}
+
+#goals-nav-container .GoalObjectiveExerciseProficiency:before {
+    background-position: 0 0;
+}
+#goals-nav-container .GoalObjectiveWatchVideo:before {
+    background-position: 0 1px;
 }
 
 .all-goals {
@@ -95,30 +110,31 @@ ul.inline-list, ul.inline-list li {
     position: absolute;
     width: 800px;
     z-index: 200;
-}
-
-#goals-nav-container .drag-handle {
-    position: absolute;
-    right: 20px;
-    display: block;
-    padding: 4px 8px;
     background: #fff;
-    border: 1px solid #000;
+    border: 1px solid #aaa;
+    border-top: none;
+
+    -webkit-box-shadow: 0 1px 6px rgba(0,0,0,.3);
+    -moz-box-shadow: 0 1px 6px rgba(0,0,0,.3);
+    box-shadow: 0 1px 6px rgba(0,0,0,.3);
 }
 
-#goals-nav-container .drag-handle .close-cross {
+#goals-nav-container .hide-goals {
+    cursor: pointer;
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    display: block;
+}
+
+#goals-nav-container .close-cross {
     position: relative;
-    top: 4px;
-    left: 4px;
+    top: 3px;
+    left: 0;
     width: 14px;
     height: 14px;
     opacity: .2;
     /* whatever we need to do to make this work with IE */
-}
-
-#goals-nav-container .all-goals {
-    background: #fff;
-    border: 1px solid #000;
 }
 
 #class-student-goal .student-name {
@@ -175,6 +191,19 @@ input#goal-title:focus {
     font-size: 14px;
 }
 
+#goal-description.pulls {
+    margin: 9px 0;
+}
+
+#goals-nav-container #goal-description.pulls {
+    margin: 0;
+}
+
+#goals-nav-container .goal.pulled {
+    margin: 3px 0 10px 0;
+}
+
+
 #goal-description ul, #goal-description ul li {
     display: inline;
 }
@@ -208,7 +237,7 @@ input#goal-title:focus {
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
     padding: 0;
-    line-height: 35px;
+    line-height: 33px;
     display: block;
 }
 .objective-type-picker .simple-button {
@@ -216,7 +245,7 @@ input#goal-title:focus {
     float: left;
     text-align: center;
 }
-#create-goal-view .goal .simple-button:hover {
+.goal .objective.simple-button.blue:hover {
     border-right-color: #fff !important;
 }
 
@@ -271,4 +300,14 @@ input#goal-title:focus {
     border: 1px solid #888;
     margin: 10px;
     padding: 5px 5px 36px 10px;
+}
+
+#goalbook-controls {
+    margin-top: 20px;
+}
+
+#goal-description .summary-light {
+    color: #888;
+    display: inline-block;
+    float: right;
 }
