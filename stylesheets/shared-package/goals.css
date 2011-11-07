@@ -31,14 +31,14 @@ ul.inline-list, ul.inline-list li {
     line-height: 23px;
 }
 
-.goal a.objective.exercise, 
+.goal a.objective.exercise,
 .goal a.objective.video,
 .goal a.objective.GoalObjectiveExerciseProficiency,
 .goal a.objective.GoalObjectiveWatchVideo {
     padding-left: 22px
 }
 
-#create-goal-view .goal a.objective.exercise:hover:before, 
+#create-goal-view .goal a.objective.exercise:hover:before,
 #create-goal-view .goal a.objective.video:hover:before, {
     background: transparent url(/images/delete-icon-inset-small.png) no-repeat 2px 8px;
 }
