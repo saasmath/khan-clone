@@ -152,12 +152,13 @@
 {% block pagescript %}
 {%- raw -%}
     <script id="profile-goals-tmpl" type="text/x-jquery-tmpl">
-      <h3>Current goals:</h3>
       <div class="student-goals" data-bind="foreach: current_goals">
         <div class="goal pulls">
           <p class="goal-description">
-            <span data-bind="text: title" /> (started <span data-bind="text: created_ago" />)
-            <a class="simple-button action-gradient" data-bind="click: abandon, throbberLeft: abandon_inprogress">Abandon</a>
+            <strong><span data-bind="text: title" /></strong> <span class="summary-light">(started <span data-bind="text: created_ago" />)</span>
+            <span class="goal-controls">
+                <a class="simple-button action-gradient" data-bind="click: abandon, throbberLeft: abandon_inprogress">Abandon</a>
+            </span>
           </p>
           <ul class="inline-list objective-list" data-bind="foreach: objectives">
             <li data-bind="style: {width: (100/$parent.objectives.length)+'%'}"><a class="objective simple-button action-gradient blue" data-bind="attr: {'href': url, 'data-progress': progress}, goalObjectiveCSS: $data">

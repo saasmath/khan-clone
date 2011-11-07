@@ -4,10 +4,12 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal {
-    border: 1px solid #ccc;
     clear: both;
+    position: relative;
 }
-
+.create-goal-page .goal {
+    border: 1px solid #ccc;
+}
 .goal .objective-list {
     width: 100%;
 }
@@ -185,7 +187,6 @@ input#goal-title:focus {
 .goal .goal-description {
     line-height: 35px;
     margin:0;
-    text-align: center;
 }
 .goal-description {
     font-size: 14px;
@@ -194,14 +195,19 @@ input#goal-title:focus {
 .goal-description.pulls {
     margin: 9px 0;
 }
+.goal-create-page .goal .goal-description {
+    text-align: center;
+}
 
 #goals-nav-container .goal-description.pulls {
     margin: 0;
     text-align: left;
+    line-height: 25px;
 }
 
 #goals-nav-container .goal.pulled {
-    margin: 3px 0 10px 0;
+    margin: 0 0 10px 0;
+    border: none;
 }
 
 
@@ -209,11 +215,11 @@ input#goal-title:focus {
     display: inline;
 }
 
-.goal-description a {
-    float: right;
-    height: 24px;
-    line-height: 24px;
-    padding: 5px 12px;
+.goal-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
 }
 
 .create-goal-page #goal-choose-exercises .dashboard-nav {
@@ -233,7 +239,7 @@ input#goal-title:focus {
     z-index: 100;
     top: -1px;
 }
-.objective-type-picker .simple-button, .goal .simple-button {
+.objective-type-picker .simple-button, .objective.simple-button {
     border-radius: 0;
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
