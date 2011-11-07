@@ -22,6 +22,8 @@ var saveGoals = function(newGoals) {
     if (newGoals) {
         oldGoals = Goals.all;
         Goals.all = newGoals;
+    } else {
+        console.log("warning, goals were updated without saveGoals, events lost!");
     }
 
     // anotate goals with progress counts and overall progress
@@ -33,50 +35,52 @@ var saveGoals = function(newGoals) {
         }).length;
     });
 
-    if (oldGoals !== null) {
-        // now look for recently completed goals or objectives
-        var goalsByIdNew = _.indexBy(newGoals, 'id');
-        var goalsById = _.indexBy(oldGoals, 'id');
+    return oldGoals;
+};
 
-        _.each(goalsById, function(g) { g.isUpdated = false; });
+var detectEvents = function(oldGoals) {
+    // now look for recently completed goals or objectives
+    var goalsByIdNew = _.indexBy(Goals.all, 'id');
+    var goalsById = _.indexBy(oldGoals, 'id');
 
-        _.each(goalsByIdNew, function(newGoal) {
-            oldGoal = goalsById[newGoal.id];
-            if (typeof oldGoal !== 'undefined') {
-                if (newGoal.progress !== oldGoal.progress) {
-                    // check to see if we just finished the goal
-                    if (newGoal.progress >= 1) {
-                        console.log("Just finished goal!", newGoal);
-                    }
-                    else {
-                        // now look for updated objectives
-                        _.each(newGoal.objectives, function(newObj, i) {
-                            var oldObj = oldGoal.objectives[i];
-                            if (newObj.progress !== oldObj.progress) {
-                                console.log("Just worked on", newGoal, newObj);
-                                if (newObj.progress >= 1) {
-                                    console.log("Just finished objective", newObj);
-                                }
+    _.each(goalsById, function(g) { g.isUpdated = false; });
+
+    _.each(goalsByIdNew, function(newGoal) {
+        oldGoal = goalsById[newGoal.id];
+        if (typeof oldGoal !== 'undefined') {
+            if (newGoal.progress !== oldGoal.progress) {
+                // check to see if we just finished the goal
+                if (newGoal.progress >= 1) {
+                    console.log("Just finished goal!", newGoal);
+                    alert("Yay, you just finished a goal! Insert feelgood effect here.");
+                    $("#goals-drawer").effect('highlight');
+                }
+                else {
+                    // now look for updated objectives
+                    _.each(newGoal.objectives, function(newObj, i) {
+                        var oldObj = oldGoal.objectives[i];
+                        if (newObj.progress !== oldObj.progress) {
+                            console.log("Just worked on", newGoal, newObj);
+                            if (newObj.progress >= 1) {
+                                console.log("Just finished objective", newObj);
+                                $("#goals-drawer").effect('highlight');
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             }
-            else {
-                console.log("Found a brand new goal!", newGoal);
-            }
-            oldGoal.isUpdated = true;
-        });
+        }
+        else {
+            console.log("Found a brand new goal!", newGoal);
+        }
+        oldGoal.isUpdated = true;
+    });
 
-        _(goalsById).chain()
-            .filter(function(g) { return g.isUpdated === false; })
-            .each(function(goal) {
-                console.log("This goal has no update and will disappear!", goal);
-            });
-    }
-    else {
-        console.log("warning, goals were updated withouth saveGoals, events lost!");
-    }
+    _(goalsById).chain()
+        .filter(function(g) { return g.isUpdated === false; })
+        .each(function(goal) {
+            console.log("This goal has no update and will disappear!", goal);
+        });
 };
 
 // todo: surely this is in a library somewhere?
@@ -245,11 +249,14 @@ var renderGoalbook = function() {
 
 
 var requestGoals = function(callback) {
-    $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
+    $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
 };
 var updateGoals = function(goals) {
-    saveGoals(goals);
+    var oldGoals = saveGoals(goals);
     displayGoals();
+    if (oldGoals) {
+       detectEvents(oldGoals);
+    }
 };
 
 var predefinedGoalsList = {

@@ -482,7 +482,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
 
         from goals import update_goals_just_did_exercise
-        update_goals_just_did_exercise(user_data, user_exercise, just_earned_proficiency)
+        goals_updated = update_goals_just_did_exercise(user_data,
+            user_exercise, just_earned_proficiency)
 
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])
@@ -500,7 +501,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                        _queue = "log-summary-queue",
                        _url = "/_ah/queue/deferred_log_summary")
 
-        return user_exercise, user_exercise_graph
+        return user_exercise, user_exercise_graph, goals_updated
 
 class ExerciseAdmin(request_handler.RequestHandler):
 
