@@ -3485,6 +3485,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background-color: #000;
     opacity: 0.45;
     filter:alpha(opacity=45);
+    z-index: 999;
 }
 .window-center {
     position: absolute;
