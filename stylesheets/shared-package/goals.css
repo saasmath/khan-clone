@@ -305,3 +305,9 @@ input#goal-title:focus {
 #goalbook-controls {
     margin-top: 20px;
 }
+
+#goal-description .summary-light {
+    color: #888;
+    display: inline-block;
+    float: right;
+}
