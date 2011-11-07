@@ -9,13 +9,6 @@ var totalProgress = function(objectives) {
     }
     return progress;
 };
-var renderAllGoalsUI = function() {
-    renderGoals();
-    renderCurrentGoals();
-
-    $("#goals-drawer").click(showGoals);
-    $(".hide-goals").click(hideGoals);
-};
 
 _.mixin({
     // like groupBy, but assumes there is a unique key for each element.
@@ -217,10 +210,22 @@ var displayGoals = function() {
         renderAllGoalsUI();
     }
 };
-var requestGoals = function(callback) {
-    $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
+
+var renderAllGoalsUI = function() {
+    renderGoalSummaryArea();
+    renderGoalbook();
+
+    $("#goals-drawer").click(showGoals);
+    $(".hide-goals").click(hideGoals);
 };
-var renderGoals = function() {
+var showGoals = function() {
+    $("#goals-nav-container").slideDown('fast');
+};
+var hideGoals = function() {
+    $("#goals-nav-container").slideUp('fast');
+};
+
+var renderGoalSummaryArea = function() {
     if (Goals.active) {
         var goalsEl = $("#goals-tmpl").tmplPlugin(Goals.active);
         $("#goals-container").html(goalsEl);
@@ -228,7 +233,8 @@ var renderGoals = function() {
         $("#goals-container").html('');
     }
 };
-var renderCurrentGoals = function() {
+
+var renderGoalbook = function() {
     if (Goals.all.length) {
         var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: Goals.all});
         $("#goals-nav-container").html(goalsEl);
@@ -237,13 +243,10 @@ var renderCurrentGoals = function() {
     }
 };
 
-var showGoals = function() {
-    $("#goals-nav-container").slideDown('fast');
-};
-var hideGoals = function() {
-    $("#goals-nav-container").slideUp('fast');
-};
 
+var requestGoals = function(callback) {
+    $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
+};
 var updateGoals = function(goals) {
     saveGoals(goals);
     displayGoals();
