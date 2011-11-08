@@ -214,7 +214,7 @@
     {#- goal book -#}
     {%- raw -%}
     <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal pulled">
+        <div class="goal pulled {{if active}}active{{/if}}">
             <p class="goal-description pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progressStr}%</span></p>
             <ul class="inline-list objective-list">
             {{each objectives}}

@@ -210,7 +210,11 @@ var mostRecentlyUpdatedGoal = function(goals) {
 
 var displayGoals = function() {
     if (Goals.all.length) {
+        _.each(Goals.all, function(g) { g.active = false;});
+
         Goals.active = findMatchingGoalFor(window.location.toString());
+        Goals.active.active = true;
+
         renderAllGoalsUI();
     }
 };
