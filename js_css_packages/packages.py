@@ -7,11 +7,11 @@ javascript = {
             "jquery.watermark.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
+            "underscore.js",
             "pageutil.js",
             "api.js",
             "social.js",
             "../../gae_bingo/static/js/gae_bingo.js",
-            "underscore.js",
         ]
     },
     "video": {
