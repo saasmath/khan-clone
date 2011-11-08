@@ -36,7 +36,7 @@ def current_logged_in_identity():
 
 # Optionally, you can provide a function that will retrieve the identitiy for a human-readable user_id string
 # Currently this is only used for debugging.  If not used, simply return None
-def retrieve_identity(user_id):
+def retrieve_identity(query):
     from models import UserData
-    user_data = UserData.get_from_user_id(user_id)
+    user_data = UserData.get_from_user_id(query)
     return user_data.gae_bingo_identity if user_data else None
