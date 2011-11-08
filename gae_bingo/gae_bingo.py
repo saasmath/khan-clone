@@ -117,15 +117,13 @@ def bingo(param):
     else:
 
         conversion_name = str(param)
-        canonical_name = None
         bingo_cache = BingoCache.get()
 
         # Bingo for all experiments associated with this conversion
         for experiment_name in bingo_cache.get_experiment_names_by_conversion_name(conversion_name):
 
-            if not canonical_name:
-                experiment = bingo_cache.get_experiment(experiment_name)
-                canonical_name = experiment.canonical_name
+            experiment = bingo_cache.get_experiment(experiment_name)
+            canonical_name = experiment.canonical_name
 
             score_conversion(experiment_name, canonical_name)
 
