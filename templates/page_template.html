@@ -97,8 +97,7 @@
                     <div id="top-header-links">
                         <span class="page_links" id="page_auth">
                             <span id="goals-congrats" style="display: none">You made progress!</span>
-                            <span id="goals-container">
-                            </span>
+                            <span id="goals-container"></span>
                             {% if logged_in %}
                                 <span id="user-info" class="badge-target">
                                     {{ user.user_info(username, user_data) }}
@@ -224,7 +223,7 @@
                         data-progress="${$value.progress}">
                             ${$value.description}
                             {{if $value.progress < 1}}
-                            <span class="objective-progress-meter" style="height: ${ Math.ceil($value.progress * ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 15 : 12)) + ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6) }px"></span>
+                            <span class="objective-progress-meter" style="height: ${ Math.ceil($value.progress * ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 13 : 12)) + ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6) }px"></span>
                             {{/if}}
                     </a>
                 </li>
