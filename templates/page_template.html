@@ -219,12 +219,13 @@
             <ul class="inline-list objective-list">
             {{each objectives}}
                 <li class="objective" style="width: ${100/objectives.length}%">
-                    <a class="objective simple-button action-gradient
-                                ${$value.type}
-                                {{if $value.progress < 1}}blue{{/if}}"
+                    <a class="objective simple-button action-gradient ${$value.type} {{if $value.progress == 1}}complete seethrough exercise-color started{{else}}blue{{/if}}"
                         href="${$value.url}"
                         data-progress="${$value.progress}">
                             ${$value.description}
+                            {{if $value.progress < 1}}
+                            <span class="objective-progress-meter" style="height: ${ Math.ceil($value.progress * ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 15 : 12)) + ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6) }px"></span>
+                            {{/if}}
                     </a>
                 </li>
             {{/each}}

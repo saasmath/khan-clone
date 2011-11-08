@@ -23,7 +23,7 @@
       </div>
       <div class="goal">
         <ul class="inline-list objective-list" data-bind="foreach: goal.objectives">
-          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient" data-bind="goalObjectiveCSS: $data, css: {blue: filter_match()}, click: click_fn, text: description"></a></li>
+          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient exercise-color seethrough" data-bind="goalObjectiveCSS: $data, css: {blue: filter_match()}, click: click_fn, text: description"></a></li>
         </ul>
       </div>
     </div>

@@ -19,7 +19,6 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal a.objective {
-    border-right: 1px solid #fff !important;
     display: block;
     line-height: 33px;
     overflow: hidden;
@@ -27,6 +26,9 @@ ul.inline-list, ul.inline-list li {
     position: relative;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+.goal a.objective.blue {
+    border-right: 1px solid #fff !important;
 }
 
 #goals-nav-container .goal a.objective {
@@ -36,17 +38,20 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.exercise,
 .goal a.objective.video,
 .goal a.objective.GoalObjectiveExerciseProficiency,
-.goal a.objective.GoalObjectiveWatchVideo {
+.goal a.objective.GoalObjectiveWatchVideo,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency,
+.goal a.objective.GoalObjectiveAnyVideo {
     padding-left: 22px
 }
 
 #create-goal-view .goal a.objective.exercise:hover:before,
-#create-goal-view .goal a.objective.video:hover:before, {
+#create-goal-view .goal a.objective.video:hover:before {
     background: transparent url(/images/delete-icon-inset-small.png) no-repeat 2px 8px;
 }
 
 .goal a.objective.exercise:before,
-.goal a.objective.GoalObjectiveExerciseProficiency:before {
+.goal a.objective.GoalObjectiveExerciseProficiency:before,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
     display: block;
     content: " ";
     width: 20px;
@@ -58,7 +63,8 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal a.objective.video:before,
-.goal a.objective.GoalObjectiveWatchVideo:before {
+.goal a.objective.GoalObjectiveWatchVideo:before,
+.goal a.objective.GoalObjectiveAnyVideo:before {
     display: block;
     content: " ";
     width: 20px;
@@ -69,11 +75,65 @@ ul.inline-list, ul.inline-list li {
     top: 0;
 }
 
-#goals-nav-container .GoalObjectiveExerciseProficiency:before {
+
+.goal a.objective.video .objective-progress-meter,
+.goal a.objective.GoalObjectiveWatchVideo .objective-progress-meter,
+.goal a.objective.GoalObjectiveAnyVideo .objective-progress-meter {
+    display: block;
+    content: " ";
+    width: 20px;
+    height: 20px;
+    background: transparent url(/images/video-camera-icon-full-small.png) no-repeat 0 1px;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.goal a.objective.exercise .objective-progress-meter,
+.goal a.objective.GoalObjectiveExerciseProficiency .objective-progress-meter,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency .objective-progress-meter {
+    display: block;
+    content: " ";
+    width: 20px;
+    height: 20px;
+    background: transparent url(/images/generic-exercise-icon-full-small.png) no-repeat 0 0px;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+#goals-nav-container .GoalObjectiveExerciseProficiency:before,
+#goals-nav-container .GoalObjectiveAnyExerciseProficiency:before {
     background-position: 0 0;
 }
-#goals-nav-container .GoalObjectiveWatchVideo:before {
+#goals-nav-container .GoalObjectiveWatchVideo:before,
+#goals-nav-container .GoalObjectiveAnyVideo:before {
     background-position: 0 1px;
+}
+
+.goal a.objective.exercise.complete:before,
+.goal a.objective.video.complete:before,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.goal a.objective.GoalObjectiveWatchVideo.complete:before,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
+    content: " ";
+    width: 16px;
+    height: 16px;
+    background: transparent url(/images/objective-complete-tick.png);
+    position: absolute;
+    top:3px;
+    left:2px;
+}
+.goal a.objective.exercise.complete,
+.goal a.objective.video.complete,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete,
+.goal a.objective.GoalObjectiveWatchVideo.complete,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency.complete {
+    text-decoration: line-through !important;
+    opacity: .7;
+    filter: alpha(opacity=75);
 }
 
 .all-goals {

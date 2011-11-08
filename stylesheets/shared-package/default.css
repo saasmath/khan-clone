@@ -229,6 +229,11 @@ input.simple-button {
 	color: #ffbb8d !important;
 	border-color:  #803503 !important;
 }
+.simple-button.seethrough {
+    color: #444 !important;
+    text-shadow: none;
+    border-color: #aaa !important;
+}
 .simple-button.with-icon {
     padding-left: 30px;
 }
