@@ -52,7 +52,7 @@
             <p class="accordion-content">
                 Shows you which exercises your class has worked on and completed.
                 <span class="graph-options">
-                    <span class="progress-legend exercise-color started">Started</span>                
+                    <span class="progress-legend exercise-color started">Started</span>
                     <span class="progress-legend exercise-color proficient">Proficient</span>
                     <span class="progress-legend exercise-color review light">Review</span>
                     <span class="progress-legend exercise-color struggling">Struggling</span>
@@ -108,7 +108,7 @@
 {{ js_css_packages.js_package("studentlists") }}
 <script type="text/javascript">
 $(function() {
-    ClassProfile.student_lists = {{student_lists_json}};
+    ClassProfile.studentLists = {{student_lists_json}};
     ClassProfile.init();
 })
 </script>

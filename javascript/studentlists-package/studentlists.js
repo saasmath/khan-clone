@@ -2,11 +2,11 @@ var StudentLists = {
 
     Data: {
         students: null,
-        students_by_id: null,
-        students_by_email: null,
-        student_lists: null,
-        student_lists_by_id: null,
-        coach_requests: null,
+        studentsById: null,
+        studentsByEmail: null,
+        studentLists: null,
+        studentListsById: null,
+        coachRequests: null,
 
         init: function() {
             this.generateListIndices();
@@ -14,15 +14,15 @@ var StudentLists = {
         },
 
         isStudentInList: function(student_id, list_id) {
-            var student = this.students_by_id[student_id];
-            return $.grep(student.student_lists, function(list, i) {
+            var student = this.studentsById[student_id];
+            return $.grep(student.studentLists, function(list, i) {
                 return list.key==list_id;
             }).length !== 0;
         },
 
         addList: function(student_list) {
-            this.student_lists.push(student_list);
-            this.student_lists_by_id[student_list.key] = student_list;
+            this.studentLists.push(student_list);
+            this.studentListsById[student_list.key] = student_list;
         },
 
         removeList: function(list_id) {
@@ -30,7 +30,7 @@ var StudentLists = {
                 StudentLists.Data.removeStudentFromList(s, list_id);
             });
 
-            this.student_lists = $.grep(this.student_lists, function(list) {
+            this.studentLists = $.grep(this.studentLists, function(list) {
                 return list.key != list_id;
             });
 
@@ -46,22 +46,22 @@ var StudentLists = {
         },
 
         removeStudentFromList: function(student, list_id) {
-            student.student_lists = $.grep(student.student_lists, function(list) {
+            student.studentLists = $.grep(student.studentLists, function(list) {
                 return list.key != list_id;
             });
         },
 
         addStudentToList: function(student, list_id) {
-            student.student_lists.push(this.student_lists_by_id[list_id]);
+            student.studentLists.push(this.studentListsById[list_id]);
         },
 
         generateListIndices: function() {
-            this.student_lists_by_id = _.indexBy(StudentLists.Data.student_lists, 'key');
+            this.studentListsById = _.indexBy(StudentLists.Data.studentLists, 'key');
         },
 
         generateStudentIndices: function() {
-            this.students_by_id = _.indexBy(StudentLists.Data.students, 'key');
-            this.students_by_email = _.indexBy(StudentLists.Data.students, 'email');
+            this.studentsById = _.indexBy(StudentLists.Data.students, 'key');
+            this.studentsByEmail = _.indexBy(StudentLists.Data.students, 'email');
         }
     },
 
@@ -96,7 +96,7 @@ var StudentLists = {
         event.preventDefault();
         var jelRow = $(event.currentTarget).parents('.student-row');
         var student_id = jelRow.data('student_id');
-        var student = StudentLists.Data.students_by_id[student_id];
+        var student = StudentLists.Data.studentsById[student_id];
 
         if (StudentLists.currentList == 'allstudents') {
             // this deletes the student-coach relationship: be sure
@@ -129,8 +129,8 @@ var StudentLists = {
             });
 
             // update data model
-            StudentLists.Data.coach_requests =
-                $.grep(StudentLists.Data.coach_requests, function(request) {
+            StudentLists.Data.coachRequests =
+                $.grep(StudentLists.Data.coachRequests, function(request) {
                     return request != email;
                 });
 
@@ -219,7 +219,7 @@ var StudentLists = {
                     $('#empty-class').hide();
                 });
 
-                var list = StudentLists.Data.student_lists_by_id[StudentLists.currentList];
+                var list = StudentLists.Data.studentListsById[StudentLists.currentList];
                 title = list.name;
                 titleHref = '/class_profile?list_id=' + list.key;
                 $('#delete-list').show();
@@ -341,7 +341,7 @@ var AddStudentTextBox = {
                         data: {'student_email': email},
                         success: function(data, status, jqxhr) {
                             // data model
-                            StudentLists.Data.coach_requests.push(email);
+                            StudentLists.Data.coachRequests.push(email);
 
                             // UI
                             AddStudentTextBox.jElement.val('');
@@ -417,7 +417,7 @@ var AddStudentToListTextBox = {
             text = this.jElement.val();
         }
 
-        var student = StudentLists.Data.students_by_email[text];
+        var student = StudentLists.Data.studentsByEmail[text];
         var list_id = StudentLists.currentList;
         EditListsMenu.addStudentToListAjax(student, list_id);
 
@@ -454,7 +454,7 @@ var EditListsMenu = {
         var jelNewList = jelUl.children('li');
 
         // add a line for each list
-        $.each(StudentLists.Data.student_lists, function(i, studentList) {
+        $.each(StudentLists.Data.studentLists, function(i, studentList) {
             var jel = $('<li class="list-option"><label><input type="checkbox">' + studentList.name + '</label></li>');
             var jelInput = jel.find('input');
 
@@ -483,7 +483,7 @@ var EditListsMenu = {
         var jelInput = $(event.currentTarget);
         var studentList = jelInput.data('student-list');
         var student_id = jelInput.closest('.student-row').data('student_id');
-        var student = StudentLists.Data.students_by_id[student_id];
+        var student = StudentLists.Data.studentsById[student_id];
         if (jelInput.get(0).checked)
             EditListsMenu.addStudentToListAjax(student, studentList.key);
         else
