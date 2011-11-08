@@ -18,9 +18,11 @@ class GAEBingoIdentityModel(db.Model):
 class ConversionTypes():
     Binary = "binary"
     Counting = "counting"
+
     @staticmethod
     def get_all_as_list():
         return [ConversionTypes.Binary, ConversionTypes.Counting]
+
     def __setattr__(self, attr, value):
         pass
 
