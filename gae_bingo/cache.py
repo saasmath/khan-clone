@@ -92,6 +92,11 @@ class BingoCache(object):
                 alternative_model.load_latest_counts()
                 alternative_model.put()
 
+        # When periodically persisting to datastore, also make sure memcache
+        # has relatively up-to-date participant/conversion counts for each alternative.
+        self.dirty = True
+        self.store_if_dirty()
+
     def log_cache_snapshot(self):
 
         # Log current data on live experiments to the datastore
@@ -111,8 +116,7 @@ class BingoCache(object):
         alternative_models = self.get_alternatives(experiment_model.name)
         for alternative_model in alternative_models:
             # When logging, we want to store the most recent value we've got
-            alternative_model.load_latest_counts()
-            log_entry = _GAEBingoSnapshotLog(parent=experiment_model, alternative_number=alternative_model.number, conversions=alternative_model.conversions, participants=alternative_model.participants)
+            log_entry = _GAEBingoSnapshotLog(parent=experiment_model, alternative_number=alternative_model.number, conversions=alternative_model.latest_conversions_count(), participants=alternative_model.latest_participants_count())
             log_entries.append(log_entry)
 
         return log_entries

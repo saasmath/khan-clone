@@ -73,10 +73,10 @@ def run_tests():
         if i in [0, 5]:
             assert(test_response("persist", use_last_cookies=True) == True)
 
-            # Wait 15 seconds for task queues to run
+            # Wait 20 seconds for task queues to run
             time.sleep(20)
 
-            assert(test_response("flush_memcache", use_last_cookies=True) == True)
+            assert(test_response("flush_all_memcache", use_last_cookies=True) == True)
 
     # Check total participants in A (should've only added 2 more in previous step)
     assert(test_response("count_participants_in", {"experiment_name": "monkeys"}) == 33)
@@ -102,7 +102,6 @@ def run_tests():
     for key in dict_conversions:
         assert(dict_conversions[str(key).lower()] == dict_conversions_server[str(key).lower()])
 
-    
     # Participate in experiment B, using cookies to maintain identity
     # and making sure alternatives for B are stable per identity
     last_response = None
@@ -154,14 +153,29 @@ def run_tests():
 
     # Test an experiment with a Counting type conversion by converting multiple times for a single user
     assert(test_response("participate_in_hippos") in [True, False])
-    for i in range(0, 5):
+
+    # Persist to the datastore before Counting stress test
+    assert(test_response("persist", use_last_cookies=True) == True)
+
+    # Wait 20 seconds for task queues to run
+    time.sleep(20)
+
+    # Hit Counting conversions multiple times
+    for i in range(0, 20):
+
+        if i % 5 == 0:
+            # Stress things out a bit by flushing the core bingo memcache in the middle of Counting conversions
+            # ...we'll make sure the counts aren't lost.
+            assert(test_response("flush_bingo_memcache", use_last_cookies=True) == True)
+
         assert(test_response("convert_in", {"conversion_name": "hippos_binary"}, use_last_cookies=True) == True)
         assert(test_response("convert_in", {"conversion_name": "hippos_counting"}, use_last_cookies=True) == True)
+
     dict_conversions_server = test_response("count_conversions_in", {"experiment_name": "hippos"})
     assert(1 == reduce(lambda a, b: a + b, map(lambda key: dict_conversions_server[key], dict_conversions_server)))
     dict_conversions_server = test_response("count_conversions_in", {"experiment_name": "hippos (2)"})
-    assert(5 == reduce(lambda a, b: a + b, map(lambda key: dict_conversions_server[key], dict_conversions_server)))
-    
+    assert(20 == reduce(lambda a, b: a + b, map(lambda key: dict_conversions_server[key], dict_conversions_server)))
+
     # Participate in experiment D (weight alternatives), keeping track of alternative returned count.
     dict_alternatives = {}
     for i in range(0, 75):
@@ -186,9 +200,9 @@ def run_tests():
 
     # Test persist and load from DS
     assert(test_response("persist") == True)
-    assert(test_response("flush_memcache") == True)
+    assert(test_response("flush_all_memcache") == True)
 
-    # Check experiments and converion counts remain after persist and memcache flush
+    # Check experiments and conversion counts remain after persist and memcache flush
     assert(test_response("count_experiments") == 7)
 
     dict_conversions_server = test_response("count_conversions_in", {"experiment_name": "chimpanzees (2)"})
