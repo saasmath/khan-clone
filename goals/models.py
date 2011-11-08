@@ -162,8 +162,7 @@ class GoalList(db.Model):
         return None
 
     @staticmethod
-    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False, nrecent=3):
-        # todo: would be nice to combine show_complete and nrecent
+    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False):
         if user_data:
             # Fetch data from datastore
             goal_data = user_data.get_goal_data()
@@ -172,17 +171,8 @@ class GoalList(db.Model):
 
             goals = GoalList.get_from_data(goal_data, Goal)
 
-            if not show_complete:
-                current_goals = [g for g in goals if not g.is_completed]
-
-                if nrecent > 0:
-                    # we actually return the 3 most recently completed goals as well
-                    recent_goals = [g for g in goals if g.is_completed]
-                    recent_goals.sort(key=lambda g: g.completed_on, reverse=True)
-                    goals = current_goals + recent_goals[:nrecent]
-
             return [goal.get_visible_data(user_exercise_graph)
-                for goal in goals]
+                for goal in goals if show_complete or not goal.is_completed]
 
         return []
 
