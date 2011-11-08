@@ -1,6 +1,6 @@
 import logging
 import pickle
-import random
+import hashlib
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred
@@ -288,10 +288,12 @@ class BingoIdentityCache(object):
 
     def persist_to_datastore(self, ident):
 
-        # Add the memcache value to a random memcache bucket which
+        # Add the memcache value to a memcache bucket which
         # will be persisted to the datastore when it overflows
         # or when the periodic cron job is run
-        bucket = random.randint(0, 50)
+        sig = hashlib.md5(str(ident)).hexdigest()
+        sig_num = int(sig, base=16)
+        bucket = sig_num % 51
         key = "_gae_bingo_identity_bucket:%s" % bucket
 
         list_identities = memcache.get(key) or []
