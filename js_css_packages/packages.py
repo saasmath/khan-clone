@@ -8,6 +8,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.tmpl.min.js",
+            "knockout-latest.debug.js",
             "pageutil.js",
             "api.js",
             "social.js",
@@ -44,7 +45,6 @@ javascript = {
             "jquery.address-1.4.min.js",
             "highcharts.js",
             "profile.js",
-            "knockout-latest.min.js",
         ]
     },
     "maps": {

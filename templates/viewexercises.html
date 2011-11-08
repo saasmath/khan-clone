@@ -36,7 +36,9 @@
 		}
 	}
 	
-    $(function(){Drawer.init(); KnowledgeMap.initFilter();});
+    $(function(){Drawer.init(); KnowledgeMap.init({{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}, {{json.dumps(admin)}});});
+
+    var graph_dict_data = {{ graph_dict_data }};
     
 </script>
 {% endblock pagescript %}
@@ -45,10 +47,10 @@
 <div id="background">
   <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     {{ exercise_macros.exercise_legend() }}
-    {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, recent_graph_dicts, graph_dicts) }}
+    {{ exercise_macros.exercise_dashboard() }}
 
     <div id="dashboard-map">
-        {{ exercise_macros.knowledgemap(graph_dicts, map_coords) }}
+        {{ exercise_macros.knowledgemap(map_coords) }}
     </div>
 </div>
 </div>

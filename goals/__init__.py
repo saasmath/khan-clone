@@ -51,38 +51,11 @@ class CreateNewGoal(request_handler.RequestHandler):
             self.render_jinja2_template("goals/showgoals.html", context)
             return
 
-        user_exercise_graph = UserExerciseGraph.get(user_data)
-        if user_data.reassess_from_graph(user_exercise_graph):
-            user_data.put() # TomY TODO copied from exercises.py; is this necessary here?
-
-        graph_dicts = user_exercise_graph.graph_dicts()
-        suggested_graph_dicts = user_exercise_graph.suggested_graph_dicts()
-        proficient_graph_dicts = user_exercise_graph.proficient_graph_dicts()
-        recent_graph_dicts = user_exercise_graph.recent_graph_dicts()
-        review_graph_dicts = user_exercise_graph.review_graph_dicts()
-
-        for graph_dict in suggested_graph_dicts:
-            graph_dict["status"] = "Suggested"
-
-        for graph_dict in proficient_graph_dicts:
-            graph_dict["status"] = "Proficient"
-
-        for graph_dict in review_graph_dicts:
-            graph_dict["status"] = "Review"
-
-            try:
-                suggested_graph_dicts.remove(graph_dict)
-            except ValueError:
-                pass
-
         # Get pregenerated library content from our in-memory/memcache two-layer cache
         library_content = library.library_content_html()
 
         context = {
-            'graph_dicts': graph_dicts,
-            'suggested_graph_dicts': suggested_graph_dicts,
-            'recent_graph_dicts': recent_graph_dicts,
-            'review_graph_dicts': review_graph_dicts,
+            'graph_dict_data': exercises.exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
