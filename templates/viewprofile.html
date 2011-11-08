@@ -55,11 +55,7 @@
             </p>
         </li>
         <li>
-			{% if user_data_student.is_pre_phantom %}
-				{{ profile_macros.api_link(user_data_student, "Exercise Progress", "exercises", selected_graph_type) }}
-			{% else %}
-				{{ profile_macros.api_link(user_data_student, "Exercise Progress", "user/exercises", selected_graph_type) }}
-			{% endif %}
+			{{ profile_macros.api_link(user_data_student, "Exercise Progress", "user/exercises", selected_graph_type) }}
             <p class="accordion-content">
                 Shows you which exercises you've worked on and completed.
                 <span class="graph-options">

@@ -254,8 +254,7 @@ var Profile = {
         this.fLoadedGraph = true;
 
         var apiCallback = null;
-        if (href.indexOf('/api/v1/user/exercises') > -1 ||
-            href.indexOf('/api/v1/exercises') > -1) {
+        if (href.indexOf('/api/v1/user/exercises') > -1) {
 			apiCallback = this.renderExercises;
         }
 
@@ -304,46 +303,35 @@ var Profile = {
 
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
-	 * Note that logged in users or phantom users who have done at least one
-	 * exercise will have meta data about each exercise. All other logged out,
-	 * "pre-phantom" users will only get the raw exercise models back.
 	 */
 	renderExercises: function(data) {
-		// Just check the first entry to see if it has user data.
-		// If it does, the exercise model will be encased in the user data.
-		// Otherwise, the exercise list is just the raw exercise data.
-		var hasUserData = !!(data[0] && data[0]["exercise_model"]);
-
 		// TODO: use a proper client side templating solution.
 		var html = [];
 		html.push( "<div id=\"module-progress\">" );
 		for ( var i = 0, exercise; exercise = data[i]; i++ ) {
-			var model = hasUserData ? exercise["exercise_model"] : exercise;
+			var model = exercise["exercise_model"];
 			var displayName = model["display_name"];
 			var shortName = model["short_display_name"] || displayName;
 			var stat = "Not started";
 			var color = "";
-			var totalDone = 0;
-			if ( hasUserData ) {
-				var states = exercise["exercise_states"];
-				var progressStr = Math.floor( exercise["progress"] * 100 ) + "%";
-				totalDone = exercise["total_done"];
+			var states = exercise["exercise_states"];
+			var progressStr = Math.floor( exercise["progress"] * 100 ) + "%";
+			var totalDone = exercise["total_done"];
 
-				if ( states["reviewing"] ) {
-					stat = "Review";
-					color = "review light";
-				} else if ( states["proficient"] ) {
-					// TODO: handle implicit proficiency - is that data in the API?
-					// (due to proficiency in a more advanced module)
-					stat = "Proficient";
-					color = "proficient";
-				} else if ( states["struggling"] ) {
-					stat = "Struggling";
-					color = "struggling";
-				} else if ( totalDone > 0 ) {
-					stat = "Started";
-					color = "started";
-				}
+			if ( states["reviewing"] ) {
+				stat = "Review";
+				color = "review light";
+			} else if ( states["proficient"] ) {
+				// TODO: handle implicit proficiency - is that data in the API?
+				// (due to proficiency in a more advanced module)
+				stat = "Proficient";
+				color = "proficient";
+			} else if ( states["struggling"] ) {
+				stat = "Struggling";
+				color = "struggling";
+			} else if ( totalDone > 0 ) {
+				stat = "Started";
+				color = "started";
 			}
 
 			if ( color ) {
@@ -415,14 +403,10 @@ var Profile = {
 			Profile.collapseAccordion();
 			// Extract the name from the ID, which has been prefixed.
 			var exerciseName = this.id.substring( "exercise-".length );
-			var emailParam = hasUserData ?
-				"&student_email=" + encodeURIComponent(Profile.email) :
-				"";
-
 			Profile.loadGraph(
 				"/profile/graph/exerciseproblems? " +
-				"exercise_name=" + exerciseName +
-				emailParam);
+				"exercise_name=" + exerciseName + "&" +
+				"student_email=" + encodeURIComponent(Profile.email));
 		});
 	},
 
