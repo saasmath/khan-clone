@@ -15,6 +15,7 @@ from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, playlist_title_dicts
+from profiles.util_profile import get_list
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -671,7 +672,7 @@ def user_video_logs(youtube_id):
 @oauth_optional()
 @jsonp
 @jsonify
-def get_user_studentlists():
+def get_user_studentlist():
     coach_data = models.UserData.current()
 
     if not coach_data:
@@ -690,6 +691,19 @@ def get_user_studentlists():
         'key': str(student_list.key())
     }
     return student_list_json
+
+@route("/api/v1/user/students/lists/<list_id>", methods=["DELETE"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_studentlist(list_id):
+    coach_data = models.UserData.current()
+
+    if not coach_data:
+        return None
+    student_list = get_list(coach_data, list_id)
+    student_list.delete()
+    return True
 
 @route("/api/v1/badges", methods=["GET"])
 @oauth_optional()

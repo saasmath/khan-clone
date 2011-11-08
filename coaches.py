@@ -250,6 +250,7 @@ class CreateStudentList(RequestHandler):
 
         self.render_json(student_list_json)
 
+# deprecated - use api method instead
 class DeleteStudentList(RequestHandler):
     @RequestHandler.exceptions_to_http(400)
     def post(self):
@@ -258,7 +259,8 @@ class DeleteStudentList(RequestHandler):
         if not coach_data:
             return
 
-        student_list = util_profile.get_list(coach_data, self)
+        student_list = util_profile.get_list(coach_data,
+            self.request_string('list_id'))
         student_list.delete()
         if not self.is_ajax_request():
             self.redirect_to('/students')

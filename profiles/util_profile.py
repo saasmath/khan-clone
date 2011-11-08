@@ -61,8 +61,7 @@ def get_student(coach, request_handler):
         raise Exception("Not your student!")
     return student
 
-def get_list(coach, request_handler):
-    list_id = request_handler.request_string('list_id')
+def get_list(coach, list_id):
     student_list = StudentList.get(list_id)
     if student_list is None:
         raise Exception("No list found with list_id='%s'." % list_id)
@@ -72,7 +71,7 @@ def get_list(coach, request_handler):
 
 def get_coach_student_and_student_list(request_handler):
     coach = UserData.current()
-    student_list = get_list(coach, request_handler)
+    student_list = get_list(coach, request_handler.request_string('list_id'))
     student = get_student(coach, request_handler)
     return (coach, student, student_list)
 

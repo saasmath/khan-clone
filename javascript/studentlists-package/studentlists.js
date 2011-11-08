@@ -314,9 +314,9 @@ var AddListTextBox = {
         if (StudentLists.currentList != 'allstudents' &&
             StudentLists.currentList != 'requests') {
                 $.ajax({
-                    type: 'POST',
-                    url: '/deletestudentlist',
-                    data: {'list_id': StudentLists.currentList}
+                    type: 'DELETE',
+                    url: '/api/v1/user/students/lists/' + StudentLists.currentList,
+                    data: {'_method': 'DELETE'}
                 });
 
                 $('#custom-lists li[data-list_id='+StudentLists.currentList+']').remove();
