@@ -398,7 +398,7 @@ def user_exercises_all():
                 user_exercise._user_data = student
                 user_exercise._user_exercise_graph = user_exercise_graph
                 results.append(user_exercise)
-                
+
             return results
 
     return None
@@ -584,7 +584,7 @@ def attempt_problem_number(exercise_name, problem_number):
 @jsonp
 @jsonify
 def hint_problem_number(exercise_name, problem_number):
-    
+
     user_data = models.UserData.current()
 
     if user_data:
@@ -666,6 +666,30 @@ def user_video_logs(youtube_id):
             return video_log_query.fetch(500)
 
     return None
+
+@route("/api/v1/user/students/lists", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_studentlists():
+    coach_data = models.UserData.current()
+
+    if not coach_data:
+        return None
+
+    list_name = request.request_string('list_name')
+    if not list_name:
+        raise Exception('Invalid list name')
+
+    student_list = models.StudentList(coaches=[coach_data.key()],
+        name=list_name)
+    student_list.put()
+
+    student_list_json = {
+        'name': student_list.name,
+        'key': str(student_list.key())
+    }
+    return student_list_json
 
 @route("/api/v1/badges", methods=["GET"])
 @oauth_optional()
@@ -795,8 +819,8 @@ def autocomplete():
         playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
 
     return {
-            "query": query, 
-            "videos": video_results, 
+            "query": query,
+            "videos": video_results,
             "playlists": playlist_results
     }
 

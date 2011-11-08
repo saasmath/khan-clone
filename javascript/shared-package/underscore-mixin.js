@@ -7,7 +7,7 @@ _.mixin({
         else
             keyExtractorFn = keyExtractor;
 
-        return _.reduce(seq, function(m, el) {
+        return _.reduce(sequence, function(m, el) {
             m[keyExtractorFn(el)] = el;
             return m;
         }, {});

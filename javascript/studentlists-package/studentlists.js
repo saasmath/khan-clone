@@ -282,7 +282,7 @@ var AddListTextBox = {
         Throbber.show(this.jElement);
         $.ajax({
             type: 'POST',
-            url: '/createstudentlist',
+            url: '/api/v1/user/students/lists',
             data: {'list_name': listname},
             dataType: 'json',
             success: function(data, status, jqxhr) {
