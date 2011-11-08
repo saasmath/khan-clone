@@ -37,5 +37,5 @@ def current_logged_in_identity():
 # If not used, simply return None
 def retrieve_identity(query):
     from models import UserData
-    user_data = UserData.all().filter('user = ', users.User(query)).get()
+    user_data = UserData.get_from_db_key_email(query)
     return user_data.gae_bingo_identity if user_data else None
