@@ -10,7 +10,7 @@ from .cache import BingoCache, bingo_and_identity_cache
 from .models import create_experiment_and_alternatives, ConversionTypes
 from .identity import identity
 
-def ab_test(canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary):
+def ab_test(canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary, family_name = None):
 
     bingo_cache, bingo_identity_cache = bingo_and_identity_cache()
 
@@ -60,7 +60,8 @@ def ab_test(canonical_name, alternative_params = None, conversion_name = None, c
                                     canonical_name,
                                     alternative_params, 
                                     conversion_name,
-                                    conversion_type
+                                    conversion_type, 
+                                    family_name
                                     )
 
                     bingo_cache.add_experiment(exp, alts)
@@ -123,11 +124,10 @@ def bingo(param):
         for experiment_name in bingo_cache.get_experiment_names_by_conversion_name(conversion_name):
 
             experiment = bingo_cache.get_experiment(experiment_name)
-            canonical_name = experiment.canonical_name
 
-            score_conversion(experiment_name, canonical_name)
+            score_conversion(experiment_name)
 
-def score_conversion(experiment_name, canonical_name):
+def score_conversion(experiment_name):
 
     bingo_cache, bingo_identity_cache = bingo_and_identity_cache()
 
@@ -144,7 +144,7 @@ def score_conversion(experiment_name, canonical_name):
         # Only allow multiple conversions for ConversionTypes.Counting experiments
         return
 
-    alternative = find_alternative_for_user(canonical_name, bingo_cache.get_alternatives(experiment_name))
+    alternative = find_alternative_for_user(experiment.hashable_name, bingo_cache.get_alternatives(experiment_name))
 
     alternative.increment_conversions()
 
@@ -208,7 +208,7 @@ def resume_experiment(canonical_name):
 
         bingo_cache.update_experiment(experiment)
 
-def find_alternative_for_user(experiment_name, alternatives):
+def find_alternative_for_user(experiment_hashable_name, alternatives):
 
     if os.environ["SERVER_SOFTWARE"].startswith('Development'):
         # If dev server, allow possible override of alternative
@@ -221,12 +221,12 @@ def find_alternative_for_user(experiment_name, alternatives):
             if len(matches) == 1:
                 return matches[0]
 
-    return modulo_choose(experiment_name, alternatives, identity())
+    return modulo_choose(experiment_hashable_name, alternatives, identity())
 
-def modulo_choose(experiment_name, alternatives, identity):
+def modulo_choose(experiment_hashable_name, alternatives, identity):
     alternatives_weight = sum(map(lambda alternative: alternative.weight, alternatives))
 
-    sig = hashlib.md5(experiment_name + str(identity)).hexdigest()
+    sig = hashlib.md5(experiment_hashable_name + str(identity)).hexdigest()
     sig_num = int(sig, base=16)
     index_weight = sig_num % alternatives_weight
 

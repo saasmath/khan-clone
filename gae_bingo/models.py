@@ -30,6 +30,7 @@ class _GAEBingoExperiment(db.Model):
     name = db.StringProperty()
     # Not necessarily unique. Experiments "monkeys" and "monkeys (2)" both have canonical_name "monkeys"
     canonical_name = db.StringProperty()
+    family_name = db.StringProperty()
     conversion_name = db.StringProperty()
     conversion_type = db.StringProperty(default=ConversionTypes.Binary, choices=set(ConversionTypes.get_all_as_list()))
     live = db.BooleanProperty(default = True)
@@ -50,6 +51,10 @@ class _GAEBingoExperiment(db.Model):
     @property
     def pretty_canonical_name(self):
         return self.canonical_name.capitalize().replace("_", " ")
+
+    @property
+    def hashable_name(self):
+        return self.family_name if self.family_name else self.canonical_name
 
     @property
     def status(self):
@@ -161,7 +166,7 @@ class _GAEBingoIdentityRecord(db.Model):
 
         return None
 
-def create_experiment_and_alternatives(experiment_name, canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary):
+def create_experiment_and_alternatives(experiment_name, canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary, family_name = None):
 
     if not experiment_name:
         raise Exception("gae_bingo experiments must be named.")
@@ -176,6 +181,7 @@ def create_experiment_and_alternatives(experiment_name, canonical_name, alternat
                 key_name = _GAEBingoExperiment.key_for_name(experiment_name),
                 name = experiment_name,
                 canonical_name = canonical_name,
+                family_name = family_name,
                 conversion_name = conversion_name,
                 conversion_type = conversion_type,
                 live = True,
