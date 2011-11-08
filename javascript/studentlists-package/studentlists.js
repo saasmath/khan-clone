@@ -17,7 +17,7 @@ var StudentLists = {
             var student = this.students_by_id[student_id];
             return $.grep(student.student_lists, function(list, i) {
                 return list.key==list_id;
-            }).length != 0;
+            }).length !== 0;
         },
 
         addList: function(student_list) {
@@ -198,7 +198,7 @@ var StudentLists = {
                 title = 'All students';
                 titleHref = '/class_profile';
                 $('#delete-list').hide();
-                if(StudentLists.Data.students.length == 0) {
+                if(StudentLists.Data.students.length === 0) {
                     $('#empty-class').show();
                 }
                 else {
@@ -235,9 +235,9 @@ var StudentLists = {
             AddStudentToListTextBox.jElement.show();
         }
 
-        var nstudentsStr = nstudents.toString() + ' '
-                                                + countstring
-                                                + (nstudents==1 ? '' : 's');
+        var nstudentsStr = nstudents.toString() + ' ' +
+                                                countstring +
+                                                (nstudents==1 ? '' : 's');
         $('#nstudents').text(nstudentsStr);
         $('.students-header h2 a').text(title).attr('href', titleHref);
     }
@@ -446,7 +446,7 @@ var EditListsMenu = {
         }
         var jelMenu = $(event.currentTarget);
         var jelUl = jelMenu.find('ul');
-        if (jelUl.length == 0) {
+        if (jelUl.length === 0) {
             jelUl = $('<ul></ul>');
             jelMenu.append(jelUl);
         }
