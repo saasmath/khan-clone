@@ -8,6 +8,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "underscore.js",
+            "underscore-mixin.js",
             "pageutil.js",
             "api.js",
             "social.js",

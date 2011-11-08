@@ -1,19 +1,3 @@
-var Util = {
-    toDict: function(sequence, key_extractor) {
-        var key_extractor_fn = null;
-        if ((typeof key_extractor) == "string")
-            key_extractor_fn = function(el) {return el[key_extractor];};
-        else
-            key_extractor_fn = key_extractor;
-
-        var dict = {};
-        $.each(sequence, function(i, item) {
-            dict[key_extractor_fn(item)] = item;
-        });
-        return dict;
-    }
-};
-
 var StudentLists = {
 
     Data: {
@@ -72,12 +56,12 @@ var StudentLists = {
         },
 
         generateListIndices: function() {
-            this.student_lists_by_id = Util.toDict(StudentLists.Data.student_lists, 'key');
+            this.student_lists_by_id = _.indexBy(StudentLists.Data.student_lists, 'key');
         },
 
         generateStudentIndices: function() {
-            this.students_by_id = Util.toDict(StudentLists.Data.students, 'key');
-            this.students_by_email = Util.toDict(StudentLists.Data.students, 'email');
+            this.students_by_id = _.indexBy(StudentLists.Data.students, 'key');
+            this.students_by_email = _.indexBy(StudentLists.Data.students, 'email');
         }
     },
 
