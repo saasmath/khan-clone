@@ -239,9 +239,10 @@ def replace_playlist_values(structure, playlist_dict):
 
 # Return specific user data requests from request
 # IFF currently logged in user has permission to view
-def get_visible_user_data_from_request(disable_coach_visibility = False):
+def get_visible_user_data_from_request(disable_coach_visibility=False,
+                                       user_data=None):
 
-    user_data = models.UserData.current()
+    user_data = user_data or models.UserData.current()
     if not user_data:
         return None
 
@@ -253,7 +254,10 @@ def get_visible_user_data_from_request(disable_coach_visibility = False):
             # current user_data, no need to check permission to view
             return user_data
 
-        if user_data_student and (user_data.developer or (not disable_coach_visibility and user_data_student.is_coached_by(user_data))):
+        if (user_data_student and
+                (user_data.developer or
+                        (not disable_coach_visibility and
+                         user_data_student.is_coached_by(user_data)))):
             return user_data_student
         else:
             return None
@@ -367,42 +371,50 @@ def log_user_video(youtube_id):
     return video_log
 
 @route("/api/v1/user/exercises", methods=["GET"])
-@oauth_required()
+@oauth_optional()
 @jsonp
 @jsonify
 def user_exercises_all():
+    """ Retrieves the list of exercise models wrapped inside of an object that
+    gives information about what sorts of progress and interaction the current
+    user has had with it.
+    
+    Defaults to a pre-phantom users, in which case the encasing object is
+    skeletal and contains little information.
+    
+    """
     user_data = models.UserData.current()
 
-    if user_data:
-        student = get_visible_user_data_from_request()
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+    student = get_visible_user_data_from_request(user_data=user_data)
+    exercises = models.Exercise.get_all_use_cache()
+    user_exercise_graph = models.UserExerciseGraph.get(student)
+    if student.is_pre_phantom:
+        user_exercises = []
+    else:
+        user_exercises = (models.UserExercise.all().
+                          filter("user =", student.user).
+                          fetch(10000))
 
-        if student:
-            exercises = models.Exercise.get_all_use_cache()
-            user_exercise_graph = models.UserExerciseGraph.get(student)
-            user_exercises = (models.UserExercise.all().
-                              filter("user =", student.user).
-                              fetch(10000))
+    user_exercises_dict = dict((user_exercise.exercise, user_exercise)
+                               for user_exercise in user_exercises)
 
-            user_exercises_dict = dict((user_exercise.exercise, user_exercise)
-                                       for user_exercise in user_exercises)
-
-            results = []
-            for exercise in exercises:
-                name = exercise.name
-                if name not in user_exercises_dict:
-                    user_exercise = models.UserExercise()
-                    user_exercise.exercise = name
-                    user_exercise.user = student.user
-                else:
-                    user_exercise = user_exercises_dict[name]
-                user_exercise.exercise_model = exercise
-                user_exercise._user_data = student
-                user_exercise._user_exercise_graph = user_exercise_graph
-                results.append(user_exercise)
+    results = []
+    for exercise in exercises:
+        name = exercise.name
+        if name not in user_exercises_dict:
+            user_exercise = models.UserExercise()
+            user_exercise.exercise = name
+            user_exercise.user = student.user
+        else:
+            user_exercise = user_exercises_dict[name]
+        user_exercise.exercise_model = exercise
+        user_exercise._user_data = student
+        user_exercise._user_exercise_graph = user_exercise_graph
+        results.append(user_exercise)
                 
-            return results
-
-    return None
+    return results
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
 @oauth_optional()
