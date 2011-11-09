@@ -3,12 +3,13 @@ import os
 
 from google.appengine.ext.webapp import RequestHandler
 
-from .gae_bingo import choose_alternative, delete_experiment, resume_experiment
+from .gae_bingo import choose_alternative, delete_experiment, resume_experiment, modulo_choose
 from .cache import BingoCache
 from .stats import describe_result_in_words
-from .config import can_control_experiments
+from .config import can_control_experiments, retrieve_identity
 from .jsonify import jsonify
 from .plots import get_experiment_timeline_data
+from .identity import identity
 
 class Experiments(RequestHandler):
 
@@ -133,3 +134,39 @@ class ControlExperiment(RequestHandler):
 
         self.response.headers["Content-Type"] = "application/json"
         self.response.out.write(jsonify(True))
+
+class Alternatives(RequestHandler):
+
+    def get(self):
+
+        if not can_control_experiments():
+            return
+
+        query = self.request.get("query")
+        if query:
+            id = retrieve_identity(query)
+        else:
+            id = identity()
+
+        if not id:
+            raise Exception("Error getting identity for query: %s" % str(query))
+        
+        bingo_cache = BingoCache.get()
+
+        chosen_alternatives = {}
+
+        for experiment_name in bingo_cache.experiments:
+            experiment = bingo_cache.get_experiment(experiment_name)
+
+            if experiment.canonical_name not in chosen_alternatives:
+                alternatives = bingo_cache.get_alternatives(experiment_name)
+                alternative = modulo_choose(experiment_name, alternatives, id)
+                chosen_alternatives[experiment.canonical_name] = str(alternative.content)
+
+        context = {
+            "identity": id,
+            "alternatives": chosen_alternatives,
+        }
+
+        self.response.headers["Content-Type"] = "application/json"
+        self.response.out.write(jsonify(context))
