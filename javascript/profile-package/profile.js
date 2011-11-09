@@ -360,6 +360,9 @@ var Profile = {
             'filter_desc': ko.observable(''),
             'show_updated': ko.observable(false),
             'row_data': ko.observableArray([]),
+            'show_counts': ko.observable(false),
+            'fastFilter': new KOFastFilter(),
+            'fastFilterCSS': new KOFastFilter({css:'blue'}),
         }; 
 
         $.each(data, function(idx1, student) {
@@ -401,15 +404,19 @@ var Profile = {
                         student.most_recent_update = goal;
 
                     student.goal_count++;
-                    goals_model.row_data.push({
+                    row = {
                         student: student,
                         goal: goal,
                         progress_count: progress_count,
                         goal_idx: student.goal_count,
                         visible: ko.observable(true),
-                        show_counts: ko.observable(true),
                         struggling: found_struggling,
+                    };
+
+                    $.each(goal.objectives, function(idx3, objective) {
+                        objective.row = row;
                     });
+                    goals_model.row_data.push(row);
                 });
             } else {
                 goals_model.row_data.push({
@@ -418,7 +425,6 @@ var Profile = {
                     progress_count: -1,
                     goal_idx: 0,
                     visible: ko.observable(true),
-                    show_counts: ko.observable(false),
                     struggling: false,
                 });
             }
@@ -518,10 +524,6 @@ var Profile = {
         if (filters['most-recent']) {
             filters_desc += 'most recently worked on goals';
         }
-        if (filters['active']) {
-            if (filters_desc != '') filters_desc += ', ';
-            filters_desc += 'active goals';
-        }
         if (filters['in-progress']) {
             if (filters_desc != '') filters_desc += ', ';
             filters_desc += 'goals in progress';
@@ -539,53 +541,48 @@ var Profile = {
         else
             goals_model.filter_desc('No filters applied');
 
-        $.each(goals_model.row_data(), function(idx, row) {
+        var rowFilter = function(row, objective, filters) {
             var row_visible = true;
+
             if (filters['most-recent']) {
                 row_visible = row_visible && (!row.goal || (row.goal == row.student.most_recent_update));
             }
             if (filters['in-progress']) {
                 row_visible = row_visible && (row.goal && (row.progress_count > 0));
             } 
-            if (filters['active']) {
-                row_visible = row_visible && (row.goal && row.goal.active);
-            } 
             if (filters['struggling']) {
                 row_visible = row_visible && (row.struggling);
             } 
-
             if (row_visible) {
-                if (filter_text == '') {
-                    if (row.goal) {
-                        $.each(row.goal.objectives, function(idx2, objective) {
-                            objective.filter_match(true);
-                        });
-                    }
-                } else {
-                    if (row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
-                        if (row.goal) {
-                            $.each(row.goal.objectives, function(idx2, objective) {
-                                objective.filter_match(true);
-                            });
-                        }
-                    } else {
-                        row_visible = false;
-                        if (row.goal) {
-                            $.each(row.goal.objectives, function(idx2, objective) {
-                                if (objective.description.toLowerCase().indexOf(filter_text) >= 0) {
-                                    objective.filter_match(true);
-                                    row_visible = true;
-                                } else {
-                                    objective.filter_match(false);
-                                }
-                            });
-                        }
-                    }
+                if (filter_text == '' || row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
+                    return true;
                 }
+                row_visible = false;
+                objective_visible = true;
+                $.each(row.goal.objectives, function(idx, goal_objective) {
+                    if ((goal_objective.description.toLowerCase().indexOf(filter_text) >= 0)) {
+                        row_visible = true;
+                    } else {
+                        if (goal_objective == objective)
+                            objective_visible = false;
+                    }
+                });
+                if (row_visible)
+                    return objective_visible;
+                return false;
+            } else {
+                return false;
             }
-            row.visible(row_visible);
-            row.show_counts(!filters['most-recent'] && !filters['active']);
+        };
+
+        goals_model.fastFilter.doFilter('#class-student-goals', function(row) {
+            return rowFilter(row, null, filters);
         });
+        goals_model.fastFilterCSS.doFilter('#class-student-goals', function(objective) {
+            return rowFilter(objective.row, objective, filters);
+        });
+
+        goals_model.show_counts(!filters['most-recent']);
     },
 
     finishLoadGraphError: function() {

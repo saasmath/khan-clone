@@ -9,6 +9,7 @@ javascript = {
             "jquery.hoverflow.js",
             "jquery.tmpl.min.js",
             "knockout-latest.debug.js",
+            "knockout-util.js",
             "pageutil.js",
             "api.js",
             "social.js",

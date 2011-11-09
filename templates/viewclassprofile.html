@@ -13,9 +13,9 @@
 <div id="class-student-goals">
   <div>Sorted by <span data-bind="text: sort_desc" />. <span data-bind="text: filter_desc" />.</div>
   <div id="class-student-goal" data-bind="foreach: row_data">
-    <div data-bind="visible: visible()">
+    <div data-bind="fastFilter: $parent.fastFilter">
       <div class="student-name"><a data-bind="text: student.nickname, attr: {href: student.profile_url}"></a>
-        <span data-bind="visible: student.goal_count > 1 && show_counts">(<span data-bind="text: goal_idx" />/<span data-bind="text: student.goal_count" />)</span>
+        <span data-bind="visible: student.goal_count > 1 && $parent.show_counts">(<span data-bind="text: goal_idx" />/<span data-bind="text: student.goal_count" />)</span>
         <div data-bind="visible: goal.objectives.length > 0">
           <div class="goal-start-time" data-bind="visible: !$root.show_updated()">Started <span data-bind="text: goal.created_ago"/></div>
           <div class="goal-update-time" data-bind="visible: $root.show_updated()">Updated <span data-bind="text: goal.updated_ago"/></div>
@@ -23,7 +23,7 @@
       </div>
       <div class="goal">
         <ul class="inline-list objective-list" data-bind="foreach: goal.objectives">
-          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient" data-bind="goalObjectiveCSS: $data, css: {blue: filter_match()}, click: click_fn, text: description"></a></li>
+          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient blue" data-bind="goalObjectiveCSS: $data, fastFilter: $root.fastFilterCSS, click: click_fn, text: description"></a></li>
         </ul>
       </div>
     </div>
@@ -139,7 +139,6 @@
                       <div>
                         <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="most-recent" />Recently updated only</span>
                         <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="in-progress" />In progress only</span>
-                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="active" />Active only</span>
                         <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="struggling" />Struggling only</span>
                       </div>
                     </div>
