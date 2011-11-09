@@ -11,6 +11,7 @@ javascript = {
             "api.js",
             "social.js",
             "../../gae_bingo/static/js/gae_bingo.js",
+            "handlebars.js",
         ]
     },
     "video": {
@@ -38,6 +39,9 @@ javascript = {
         ]
     },
     "profile": {
+        "templates": [
+            "profile.handlebars",
+        ],
         "files": [
             "jquery.address-1.4.min.js",
             "highcharts.js",

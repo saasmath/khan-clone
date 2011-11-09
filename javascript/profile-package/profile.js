@@ -305,17 +305,11 @@ var Profile = {
 	 * Renders the exercise blocks given the JSON blob about the exercises.
 	 */
 	renderExercises: function(data) {
-		// TODO: use a proper client side templating solution.
-		var html = [];
-		html.push( "<div id=\"module-progress\">" );
+		var templateContext = [];
 		for ( var i = 0, exercise; exercise = data[i]; i++ ) {
-			var model = exercise["exercise_model"];
-			var displayName = model["display_name"];
-			var shortName = model["short_display_name"] || displayName;
 			var stat = "Not started";
 			var color = "";
 			var states = exercise["exercise_states"];
-			var progressStr = Math.floor( exercise["progress"] * 100 ) + "%";
 			var totalDone = exercise["total_done"];
 
 			if ( states["reviewing"] ) {
@@ -339,28 +333,19 @@ var Profile = {
 			} else {
 				color = "transparent";
 			}
-
-			html.push(
-					"<div class=\"student-module-status ",
-						"exercise-progress-block exercise-color ", color, "\" ",
-						"id=\"exercise-", model["name"], "\">",
-					"<span class=\"exercise-display-name\"><nobr>",
-					shortName,
-					"</nobr></span>",
-					"<div class=\"hover-data\" style=\"display: none;\">",
-						"<div class=\"exercise-display-name\">",
-							displayName, "</div>",
-						"<div class=\"exercise-status\">Status: ",
-							stat, "</div>",
-						"<div class=\"exercise-progress\">Progress: ",
-							progressStr, "</div>",
-						"<div class=\"exercise-done\">Problems attempted: ",
-							totalDone, "</div>",
-					"</div>",
-					"</div>");
+			var model = exercise["exercise_model"];
+			templateContext.push({
+				"name": model["name"],
+				"color": color,
+				"status": stat,
+				"shortName": model["short_display_name"] || model["display_name"],
+				"displayName": model["display_name"],
+				"progress": Math.floor( exercise["progress"] * 100 ) + "%",
+				"totalDone": totalDone
+			});
 		}
-		html.push("<div style=\"clear:both\"></div></div>");
-        $("#graph-content").html( html.join("") );
+		var template = Templates.get( "profile" );
+        $("#graph-content").html( 'template: ' + template({ "exercises": templateContext }) );
 
 		var infoHover = $("#info-hover-container")
 		var lastHoverTime;

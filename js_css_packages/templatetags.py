@@ -1,8 +1,5 @@
 import os
 import cgi
-import logging
-
-from google.appengine.ext import webapp
 
 from app import App
 from js_css_packages import packages
@@ -22,16 +19,39 @@ def use_compressed_packages():
 
     return True
 
+def base_name(file_name):
+    return file_name[:file_name.index(".")]
+
 def js_package(package_name):
     package = packages.javascript[package_name]
     base_url = package.get("base_url") or "/javascript/%s-package" % package_name
-
+    
     if not use_compressed_packages():
+        templates = []
+        
+        # In debug mode, templates are served as inline <script> tags.
+        if "templates" in package:
+            for file_name in package["templates"]:
+                # Note - this does not work in production! static files are
+                # served from a different server and are not part of the main
+                # package. "clienttemplates" is a symlink to get around this
+                # limitation in development only.
+                path = ("clienttemplates/%s-package/%s" %
+                        (package_name, file_name))
+                handle = open(path, 'r')
+                contents = handle.read()
+                handle.close()
+                name = base_name(file_name)
+                templates.append(("<script type='text/x-handlerbars-template' " 
+                     	          "id='template_%s'>%s</script>") %
+                    	         (name, contents))
+
         list_js = []
-        for filename in package["files"]:
-            list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, filename))
-        return "".join(list_js)
+        for file_name in package["files"]:
+            list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, file_name))
+        return "\n".join(templates + list_js)
     else:
+        # TODO: handle pre-compiled templates
         return "<script type='text/javascript' src='%s/%s'></script>" % (util.static_url(base_url), package["hashed-filename"])
 
 def css_package(package_name):
