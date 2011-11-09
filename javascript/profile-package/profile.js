@@ -94,7 +94,7 @@ var Profile = {
         ko.bindingHandlers.goalObjectiveCSS = {
             update: function(element, valueAccessor) {
                 var objective = ko.utils.unwrapObservable(valueAccessor())
-                $(element).addClass(objective.status);
+                $(element).addClass(objective.status ? objective.status : "not-started");
                 if (objective.type == 'GoalObjectiveExerciseProficiency' || objective.type == 'GoalObjectiveAnyExerciseProficiency')
                     $(element).addClass('exercise');
                 else if (objective.type == 'GoalObjectiveWatchVideo' || objective.type == 'GoalObjectiveAnyVideo')

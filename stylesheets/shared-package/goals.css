@@ -255,7 +255,7 @@ input#goal-title:focus {
 .goal-description.pulls {
     margin: 9px 0;
 }
-.goal-create-page .goal .goal-description {
+.create-goal-page .goal .goal-description {
     text-align: center;
 }
 
