@@ -31,7 +31,7 @@ def class_exercises_over_time_graph_context(user_data, student_list):
     cache = models.ClassUserExerciseCache.get_by_key_name(models.ClassUserExerciseCache.get_key_name(user_data))
     if cache is not None: 
         #don't bother trying to update if the last update was less than 5 minutes ago
-        if cache.date_updated + timedelta(seconds=300) < datetime.now() and cache.update_data(user_data):   
+        if cache.date_updated + timedelta(seconds=300) > datetime.now() and cache.update_data(user_data):   
             cache.put() 
     else: 
         cache = models.ClassUserExerciseCache.generate(user_data)
