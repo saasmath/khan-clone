@@ -1,4 +1,5 @@
 import pickle
+import datetime
 import logging
 
 from google.appengine.ext import db
@@ -17,9 +18,11 @@ class GAEBingoIdentityModel(db.Model):
 class ConversionTypes():
     Binary = "binary"
     Counting = "counting"
+
     @staticmethod
     def get_all_as_list():
         return [ConversionTypes.Binary, ConversionTypes.Counting]
+
     def __setattr__(self, attr, value):
         pass
 
@@ -27,6 +30,7 @@ class _GAEBingoExperiment(db.Model):
     name = db.StringProperty()
     # Not necessarily unique. Experiments "monkeys" and "monkeys (2)" both have canonical_name "monkeys"
     canonical_name = db.StringProperty()
+    family_name = db.StringProperty()
     conversion_name = db.StringProperty()
     conversion_type = db.StringProperty(default=ConversionTypes.Binary, choices=set(ConversionTypes.get_all_as_list()))
     live = db.BooleanProperty(default = True)
@@ -43,6 +47,34 @@ class _GAEBingoExperiment(db.Model):
     @property
     def pretty_name(self):
         return self.name.capitalize().replace("_", " ")
+
+    @property
+    def pretty_canonical_name(self):
+        return self.canonical_name.capitalize().replace("_", " ")
+
+    @property
+    def hashable_name(self):
+        return self.family_name if self.family_name else self.canonical_name
+
+    @property
+    def status(self):
+        if self.live:
+            days_running = (datetime.datetime.now() - self.dt_started).days
+            
+            if days_running < 1:
+                return "Running for less than a day"
+            else:
+                return "Running for %s day%s" % (days_running, ("" if days_running == 1 else "s"))
+
+        else:
+            return "Ended manually"
+
+    @property
+    def y_axis_title(self):
+        if self.conversion_type == ConversionTypes.Counting:
+            "Average Conversions per Participant"
+        else:
+            "Conversions (%)"
 
     @staticmethod
     def key_for_name(name):
@@ -97,14 +129,19 @@ class _GAEBingoAlternative(db.Model):
         # be persisted.
         self.conversions = long(memcache.incr("%s:conversions" % self.key_for_self(), initial_value=self.conversions))
 
+    def latest_participants_count(self):
+        return max(self.participants, long(memcache.get("%s:participants" % self.key_for_self()) or 0))
+
+    def latest_conversions_count(self):
+        return max(self.conversions, long(memcache.get("%s:conversions" % self.key_for_self()) or 0))
+
     def reset_counts(self):
         memcache.delete_multi(["%s:participants" % self.key_for_self(), "%s:conversions" % self.key_for_self()])
 
     def load_latest_counts(self):
         # When persisting to datastore, we want to store the most recent value we've got
-        self.participants = max(self.participants, long(memcache.get("%s:participants" % self.key_for_self()) or 0))
-        self.conversions = max(self.conversions, long(memcache.get("%s:conversions" % self.key_for_self()) or 0))
-        
+        self.participants = self.latest_participants_count()
+        self.conversions = self.latest_conversions_count()
 
 class _GAEBingoSnapshotLog(db.Model):
     alternative_number = db.IntegerProperty()
@@ -129,7 +166,7 @@ class _GAEBingoIdentityRecord(db.Model):
 
         return None
 
-def create_experiment_and_alternatives(experiment_name, canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary):
+def create_experiment_and_alternatives(experiment_name, canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary, family_name = None):
 
     if not experiment_name:
         raise Exception("gae_bingo experiments must be named.")
@@ -144,6 +181,7 @@ def create_experiment_and_alternatives(experiment_name, canonical_name, alternat
                 key_name = _GAEBingoExperiment.key_for_name(experiment_name),
                 name = experiment_name,
                 canonical_name = canonical_name,
+                family_name = family_name,
                 conversion_name = conversion_name,
                 conversion_type = conversion_type,
                 live = True,

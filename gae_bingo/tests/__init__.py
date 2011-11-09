@@ -2,13 +2,13 @@ import os
 import logging
 import simplejson
 
-from google.appengine.ext.webapp import template, RequestHandler
+from google.appengine.ext.webapp import RequestHandler
 from google.appengine.api import memcache
 
 from gae_bingo.gae_bingo import ab_test, bingo, choose_alternative
 from gae_bingo.cache import BingoCache, BingoIdentityCache
 from gae_bingo.config import can_control_experiments
-from gae_bingo.dashboard import ControlExperiment
+from gae_bingo.api import ControlExperiment
 from gae_bingo.models import ConversionTypes
 
 # See gae_bingo/tests/run_tests.py for the full explanation/sequence of these tests
@@ -49,8 +49,10 @@ class RunStep(RequestHandler):
             v = self.end_and_choose()
         elif step == "persist":
             v = self.persist()
-        elif step == "flush_memcache":
-            v = self.flush_memcache()
+        elif step == "flush_bingo_memcache":
+            v = self.flush_bingo_memcache()
+        elif step == "flush_all_memcache":
+            v = self.flush_all_memcache()
 
         self.response.out.write(simplejson.dumps(v))
 
@@ -90,11 +92,11 @@ class RunStep(RequestHandler):
 
     def end_and_choose(self):
         bingo_cache = BingoCache.get()
-        choose_alternative(self.request.get("experiment_name"), int(self.request.get("alternative_number")))
+        choose_alternative(self.request.get("canonical_name"), int(self.request.get("alternative_number")))
 
     def count_participants_in(self):
         return reduce(lambda a, b: a + b, 
-                map(lambda alternative: alternative.participants, 
+                map(lambda alternative: alternative.latest_participants_count(), 
                     BingoCache.get().get_alternatives(self.request.get("experiment_name"))
                     )
                 )
@@ -103,7 +105,7 @@ class RunStep(RequestHandler):
         dict_conversions = {}
 
         for alternative in BingoCache.get().get_alternatives(self.request.get("experiment_name")):
-            dict_conversions[alternative.content] = alternative.conversions
+            dict_conversions[alternative.content] = alternative.latest_conversions_count()
 
         return dict_conversions
 
@@ -115,6 +117,10 @@ class RunStep(RequestHandler):
         BingoIdentityCache.persist_buckets_to_datastore()
         return True
 
-    def flush_memcache(self):
+    def flush_bingo_memcache(self):
+        memcache.delete(BingoCache.MEMCACHE_KEY)
+        return True
+
+    def flush_all_memcache(self):
         memcache.flush_all()
         return True

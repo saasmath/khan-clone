@@ -10,7 +10,8 @@ javascript = {
             "pageutil.js",
             "api.js",
             "social.js",
-            "gae_bingo.js",
+            "../../gae_bingo/static/js/gae_bingo.js",
+            "underscore.js",
         ]
     },
     "video": {
@@ -72,6 +73,7 @@ javascript = {
             "utils/angles.js",
             "utils/answer-types.js",
             "utils/calculus.js",
+            "utils/congruence.js",
             "utils/convert-values.js",
             "utils/d3.js",
             "utils/derivative-intuition.js",
@@ -86,9 +88,9 @@ javascript = {
             "utils/interactive.js",
             "utils/jquery-color.js",
             "utils/jquery.mobile.vmouse.js",
-            "utils/kinematics.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
             "utils/probability.js",

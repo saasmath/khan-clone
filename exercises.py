@@ -50,7 +50,7 @@ class MoveMapNodes(request_handler.RequestHandler):
 class ViewExercise(request_handler.RequestHandler):
 
     _hints_ab_test_alternatives = {
-        'old': 17,  # The original, where it was unclear if a hint was costly after an attempt
+        'old': 7,  # The original, where it was unclear if a hint was costly after an attempt
         'more_visible': 1,  # Jace's shaking and pulsating emphasis on free hints after an attempt
         'solution_button': 1,  # David's show solution button in lieu of hint button after an attempt
         'full_solution': 1,  # Jason's just show the complete solution after an incorrect answer
@@ -217,10 +217,11 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)), 
-            'alternate_hints_treatment': ab_test('Hints or Show Solution',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 8',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
-                ViewExercise._hints_conversion_types)
+                ViewExercise._hints_conversion_types,
+                'Hints or Show Solution Nov 5')
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
@@ -487,10 +488,11 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                        _queue="problem-log-queue",
                        _url="/_ah/queue/deferred_problemlog")
 
-        # Making a separate queue for the log summaries so we can clearly see how much they are getting used
-        # deferred.defer(models.commit_log_summary, problem_log, user_data,
-        #               _queue = "log-summary-queue",
-        #               _url = "/ah/queue/deferred_log_summary") 
+        if user_data is not None and user_data.coaches:
+            # Making a separate queue for the log summaries so we can clearly see how much they are getting used
+            deferred.defer(models.commit_log_summary_coaches, problem_log, user_data.coaches,
+                       _queue = "log-summary-queue",
+                       _url = "/_ah/queue/deferred_log_summary") 
 
         return user_exercise, user_exercise_graph
 
