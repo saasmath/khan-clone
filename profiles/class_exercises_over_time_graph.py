@@ -2,59 +2,44 @@ import logging
 
 from google.appengine.api import users
 
+from datetime import datetime, timedelta
 import models
 import util
 
 class ExerciseData:
-        def __init__(self, nickname, name, exid, days_until_proficient, proficient_date):
+        def __init__(self, nickname, exid, days_until_proficient, proficient_date):
             self.nickname = nickname
-            self.name = name
             self.exid = exid
             self.days_until_proficient = days_until_proficient
             self.proficient_date = proficient_date
 
         def display_name(self):
-            return models.Exercise.to_display_name(self.name)
+            return  models.Exercise.to_display_name(self.exid)
 
 def class_exercises_over_time_graph_context(user_data, student_list):
 
     if not user_data:
         return {}
 
-    end_date = None
-
+    all_students_data = user_data.get_students_data()
+    
     if student_list:
         students_data = student_list.get_students_data()
     else:
-        students_data = user_data.get_students_data()
+        students_data = all_students_data    
+    
+    cache = models.ClassUserExerciseCache.get_by_key_name(models.ClassUserExerciseCache.get_key_name(user_data))
+    if cache is not None: 
+        #don't bother trying to update if the last update was less than 5 minutes ago
+        if cache.date_updated > datetime.now() + timedelta(seconds=300) and cache.update_data(user_data):   
+            cache.put() 
+    else: 
+        cache = models.ClassUserExerciseCache.generate(user_data)
 
-    dict_student_exercises = {}
-    dict_exercises = {}
-
-    async_queries = []
-    for user_data_student in students_data:
-        query = models.UserExercise.all()
-        query.filter('user =', user_data_student.user)
-        query.filter('proficient_date >', None)
-        query.order('proficient_date')
-        async_queries.append(query)
-
-    # Wait for all queries to finish
-    results = util.async_queries(async_queries, limit=10000)
-
-    for i, user_data_student in enumerate(students_data):
-        student_nickname = user_data_student.nickname
-        dict_student_exercises[student_nickname] = { "nickname": student_nickname, "email": user_data_student.email, "exercises": [] }
-        
-        exercises = results[i].get_result()
-
-        for user_exercise in exercises:
-            joined = min(user_data.joined, user_exercise.proficient_date)
-            days_until_proficient = (user_exercise.proficient_date - joined).days
-            proficient_date = user_exercise.proficient_date.strftime('%m/%d/%Y')
-            data = ExerciseData(student_nickname, user_exercise.exercise, user_exercise.exercise, days_until_proficient, proficient_date)
-            dict_student_exercises[student_nickname]["exercises"].append(data)
-            end_date = user_exercise.proficient_date
+    if students_data != all_students_data:
+        dict_student_exercises = dict((k, cache.data[k.nickname]) for k in students_data)
+    else:
+        dict_student_exercises = cache.data
 
     return {
             "dict_student_exercises": dict_student_exercises,

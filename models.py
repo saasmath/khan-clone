@@ -29,6 +29,8 @@ import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
+from profiles import class_exercises_over_time_graph 
+
 
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
@@ -1064,6 +1066,30 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 emails.append(user_data_coach.email)
         return emails
 
+    def add_coach(self, user_data_coach):
+        
+        self.coaches.append(user_data_coach.key_email)
+        self.put()
+        ClassUserExerciseCache.add_student(self, user_data_coach)
+
+    def remove_coach(self, user_data_coach):
+        if self.student_lists:
+            actual_lists = StudentList.get(self.student_lists)
+            self.student_lists = [l.key() for l in actual_lists if user_data_coach.key() not in l.coaches]
+
+        try:
+            self.coaches.remove(user_data_coach.key_email)
+        except ValueError:
+            pass
+
+        try:
+            self.coaches.remove(user_data_coach.key_email.lower())
+        except ValueError:
+            pass
+
+        self.put()
+        ClassUserExerciseCache.remove_student(self, user_data_coach)
+
     def is_coached_by(self, user_data_coach):
         return user_data_coach.key_email in self.coaches or user_data_coach.key_email.lower() in self.coaches
 
@@ -2005,6 +2031,100 @@ class ExerciseVideo(db.Model):
             exercise_video_key_dict[video_key][ExerciseVideo.exercise.get_value_for_datastore(exercise_video)] = exercise_video
 
         return exercise_video_key_dict
+
+class ClassUserExerciseCache(db.Model):
+    date_updated = db.DateTimeProperty(auto_now=True)
+    data = object_property.UnvalidatedObjectProperty(default={}) # a dict of student nicknames to class_exercise_over_time.ExerciseData
+
+    @staticmethod
+    def get_key_name(user_data):
+        return user_data.key_email 
+
+    @staticmethod
+    def add_student(user_data_student, user_data_coach):
+
+        cache = ClassUserExerciseCache.get_by_key_name(ClassUserExerciseCache.get_key_name(user_data_coach))
+        if cache is None:
+            cache = ClassUserExerciseCache.generate(user_data_coach)
+        
+        query = UserExercise.all()
+        query.filter('user =', user_data_student.user)
+        query.filter('proficient_date >', None)
+        query.order('proficient_date')
+
+        exercises = query.fetch(10000)
+
+    
+        updated = cache.add_to_data(user_data_student, exercises)
+
+        updated = cache.update_data(user_data_coach) or updated # make sure that all other students are updated as putting will set the date_updated
+        if updated:
+            cache.put()
+
+    @staticmethod
+    def remove_student(user_data_student, user_data_coach):
+        cache = ClassUserExerciseCache.get_by_key_name(ClassUserExerciseCache.get_key_name(user_data_coach))
+        student_nickname = user_data_student.nickname
+        if cache.data.has_key(student_nickname):
+            del cache.data[student_nickname]
+            cache.put()
+
+    # takes a user and exercises and adds them to the data in the cache, returns whether anything has been changed  
+    def add_to_data(self, user_data_student, exercises):
+        student_nickname = user_data_student.nickname
+        updated = False
+        if not self.data.has_key(student_nickname):
+            updated = True
+            self.data[student_nickname] = { "nickname": student_nickname, "email": user_data_student.email, "exercises": [] }
+        
+        for user_exercise in exercises:
+            updated = True
+            joined = min(user_data_student.joined, user_exercise.proficient_date)
+            days_until_proficient = (user_exercise.proficient_date - joined).days
+            proficient_date = user_exercise.proficient_date.strftime('%m/%d/%Y')
+            data = class_exercises_over_time_graph.ExerciseData(student_nickname, user_exercise.exercise, days_until_proficient, proficient_date)
+            self.data[student_nickname]["exercises"].append(data)
+
+        return updated
+
+    def update_data(self, user_data_coach):
+        students_data = user_data_coach.get_students_data()
+        
+        max_students = 25
+        j=0
+        while j < len(students_data):
+            async_queries = []
+            for user_data_student in students_data[j:j + max_students]:
+                query = UserExercise.all()
+                query.filter('user =', user_data_student.user)
+                query.filter('proficient_date >', self.date_updated)
+                query.order('proficient_date')
+                async_queries.append(query)
+
+            # Wait for all queries to finish
+            results = util.async_queries(async_queries, limit=10000)
+            logging.info("got results %i:%i" %(j, j+max_students))
+            updated = False
+            for i, user_data_student in enumerate(students_data[j: j+max_students]):
+                updated = self.add_to_data(user_data_student, results[i].get_result()) or updated
+                logging.info(i)
+
+            j += max_students
+
+        return updated
+
+    @staticmethod
+    def generate(user_data_coach):
+        cache = ClassUserExerciseCache(
+            key_name=ClassUserExerciseCache.get_key_name(user_data_coach),
+            date_updated = None)
+        cache.update_data(user_data_coach)
+        cache.put()
+        return cache
+            
+        
+
+              
 
 # UserExerciseCache is an optimized-for-read-and-deserialization cache of user-specific exercise states.
 # It can be reconstituted at any time via UserExercise objects.

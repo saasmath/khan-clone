@@ -110,8 +110,7 @@ class RegisterCoach(RequestHandler):
         user_data_coach = self.request_user_data("coach")
         if user_data_coach:
             if not user_data.is_coached_by(user_data_coach):
-                user_data.coaches.append(user_data_coach.key_email)
-                user_data.put()
+                user_data.add_coach(user_data_coach)
 
             if not self.is_ajax_request():
                 self.redirect("/coaches")
@@ -173,38 +172,19 @@ class AcceptCoach(RequestHandler):
                 coach_request.delete()
 
                 if user_data.key_email == user_data_student.key_email and accept_coach:
-                    user_data_student.coaches.append(user_data_coach.key_email)
-                    user_data_student.put()
+                    user_data.add_coach(user_data_coach)
 
         if not self.is_ajax_request():
             self.redirect("/coaches")
 
 class UnregisterStudentCoach(RequestHandler):
-    @staticmethod
-    def remove_student_from_coach(student, coach):
-        if student.student_lists:
-            actual_lists = StudentList.get(student.student_lists)
-            student.student_lists = [l.key() for l in actual_lists if coach.key() not in l.coaches]
-
-        try:
-            student.coaches.remove(coach.key_email)
-        except ValueError:
-            pass
-
-        try:
-            student.coaches.remove(coach.key_email.lower())
-        except ValueError:
-            pass
-
-        student.put()
-
     def do_request(self, student, coach, redirect_to):
         if not UserData.current():
             self.redirect(util.create_login_url(self.request.uri))
             return
 
         if student and coach:
-            self.remove_student_from_coach(student, coach)
+            student.remove_coach(coach)
 
         if not self.is_ajax_request():
             self.redirect(redirect_to)
