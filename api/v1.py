@@ -332,7 +332,7 @@ def filter_query_by_request_dates(query, property):
     if request.request_string("dt_end"):
         try:
             dt_end = request.request_date_iso("dt_end")
-            query.filter("%s <=" % property, dt_end)
+            query.filter("%s <" % property, dt_end)
         except ValueError:
             raise ValueError("Invalid date format sent to dt_end, use ISO 8601 Combined.")
 
