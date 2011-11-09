@@ -51,7 +51,7 @@ class MoveMapNodes(request_handler.RequestHandler):
 class ViewExercise(request_handler.RequestHandler):
 
     _hints_ab_test_alternatives = {
-        'old': 17,  # The original, where it was unclear if a hint was costly after an attempt
+        'old': 7,  # The original, where it was unclear if a hint was costly after an attempt
         'more_visible': 1,  # Jace's shaking and pulsating emphasis on free hints after an attempt
         'solution_button': 1,  # David's show solution button in lieu of hint button after an attempt
         'full_solution': 1,  # Jason's just show the complete solution after an incorrect answer
@@ -218,7 +218,7 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)),
-            'alternate_hints_treatment': ab_test('Hints or Show Solution',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 5',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types)
@@ -514,7 +514,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
 
         from goals import update_goals_just_did_exercise
-        update_goals_just_did_exercise(user_data, user_exercise, just_earned_proficiency)
+        goals_updated = update_goals_just_did_exercise(user_data,
+            user_exercise, just_earned_proficiency)
 
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])
@@ -532,7 +533,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                        _queue = "log-summary-queue",
                        _url = "/_ah/queue/deferred_log_summary")
 
-        return user_exercise, user_exercise_graph
+        return user_exercise, user_exercise_graph, goals_updated
 
 class ExerciseAdmin(request_handler.RequestHandler):
 

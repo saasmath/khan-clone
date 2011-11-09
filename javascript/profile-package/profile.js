@@ -94,7 +94,7 @@ var Profile = {
         ko.bindingHandlers.goalObjectiveCSS = {
             update: function(element, valueAccessor) {
                 var objective = ko.utils.unwrapObservable(valueAccessor())
-                $(element).addClass(objective.status);
+                $(element).addClass(objective.status ? objective.status : "not-started");
                 if (objective.type == 'GoalObjectiveExerciseProficiency' || objective.type == 'GoalObjectiveAnyExerciseProficiency')
                     $(element).addClass('exercise');
                 else if (objective.type == 'GoalObjectiveWatchVideo' || objective.type == 'GoalObjectiveAnyVideo')
@@ -352,6 +352,16 @@ var Profile = {
         });
         $("#graph-content").html($('#profile-goals-tmpl').tmplPlugin({'goals':data}));
         ko.applyBindings(goals_model, $("#student-goals").get(0));
+        
+        $("#graph-content .goal").hover( 
+        function () {
+            $(this).find(".goal-description .summary-light").hide();
+            $(this).find(".goal-controls").show();
+        }, 
+        function () {
+            $(this).find(".goal-controls").hide();
+            $(this).find(".goal-description .summary-light").show();
+        });
     },
 
     renderStudentGoals: function(data, href) {

@@ -90,7 +90,7 @@ class Goal(db.Model):
             objective_ret['progress'] = objective.progress
             objective_ret['url'] = objective.url()
             objective_ret['internal_id'] = objective.internal_id()
-            objective_ret['status'] = objective.get_status(user_exercise_graph)
+            objective_ret['status'] = objective.get_status(user_exercise_graph=user_exercise_graph)
             goal_ret['objectives'].append(objective_ret)
         return goal_ret
 
@@ -162,8 +162,7 @@ class GoalList(db.Model):
         return None
 
     @staticmethod
-    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False, nrecent=3):
-        # todo: would be nice to combine show_complete and nrecent
+    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False):
         if user_data:
             # Fetch data from datastore
             goal_data = user_data.get_goal_data()
@@ -172,17 +171,8 @@ class GoalList(db.Model):
 
             goals = GoalList.get_from_data(goal_data, Goal)
 
-            if not show_complete:
-                current_goals = [g for g in goals if not g.is_completed]
-
-                if nrecent > 0:
-                    # we actually return the 3 most recently completed goals as well
-                    recent_goals = [g for g in goals if g.is_completed]
-                    recent_goals.sort(key=lambda g: g.completed_on, reverse=True)
-                    goals = current_goals + recent_goals[:nrecent]
-
             return [goal.get_visible_data(user_exercise_graph)
-                for goal in goals]
+                for goal in goals if show_complete or not goal.is_completed]
 
         return []
 
@@ -238,7 +228,7 @@ class GoalObjective(object):
     def is_completed(self):
         return self.progress >= 1.0
 
-    def get_status(self, user_exercise_graph):
+    def get_status(self, **kwargs):
         if self.is_completed:
             return "proficient"
 
@@ -285,9 +275,10 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 
         return False
 
-    def get_status(self, user_exercise_graph):
+    def get_status(self, user_exercise_graph=None):
         if not user_exercise_graph:
-            return ""
+            # fall back to ['', 'started', 'proficient']
+            return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
         student_review_exercise_names = user_exercise_graph.review_exercise_names()

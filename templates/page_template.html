@@ -96,8 +96,8 @@
                 <div id="top-header">
                     <div id="top-header-links">
                         <span class="page_links" id="page_auth">
-                            <span id="goals-container">
-                            </span>
+                            <span id="goals-congrats" style="display: none">You made progress!</span>
+                            <span id="goals-container"></span>
                             {% if logged_in %}
                                 <span id="user-info" class="badge-target">
                                     {{ user.user_info(username, user_data) }}
@@ -206,18 +206,27 @@
     {#- templates for goals -#}
     {# goal summary area #}
     <script id="goals-tmpl" type="text/x-jquery-tmpl">
-        <a id="goals-drawer">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progress}%</a>
+        <a id="goals-drawer">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progressStr}%</a>
         <span class="separator"></span>
     </script>
 
     {#- goal book -#}
     {%- raw -%}
     <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
-        <p id="goal-description" class="pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progress}%</span></p>
-        <div class="goal pulled">
+        <div class="goal pulled {{if active}}active{{/if}}">
+            <p class="goal-description pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progressStr}%</span></p>
             <ul class="inline-list objective-list">
             {{each objectives}}
-                <li class="objective" style="width: ${100/objectives.length}%"><a class="objective simple-button action-gradient blue ${$value.type}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+                <li class="objective" style="width: ${100/objectives.length}%">
+                    <a class="objective simple-button action-gradient ${$value.type} {{if $value.progress == 1}}complete seethrough exercise-color started{{else}}blue{{/if}}"
+                        href="${$value.url}"
+                        data-progress="${$value.progress}">
+                            ${$value.description}
+                            {{if $value.progress < 1}}
+                            <span class="objective-progress-meter" style="height: ${ Math.ceil($value.progress * ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 13 : 12)) + ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6) }px"></span>
+                            {{/if}}
+                    </a>
+                </li>
             {{/each}}
             </ul>
             <div style="clear: both;"></div>

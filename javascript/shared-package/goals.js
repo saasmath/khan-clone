@@ -7,31 +7,80 @@ var totalProgress = function(objectives) {
         });
         progress = progress/objectives.length;
     }
-    return progress * 100;
+    return progress;
 };
-var renderAllGoalsUI = function() {
-    renderGoals();
-    renderCurrentGoals();
 
-    $("#goals-drawer").click(showGoals);
-    $(".hide-goals").click(hideGoals);
-};
-var saveGoals = function(data) {
-    if (data) {
-        Goals.all = data;
+_.mixin({
+    // like groupBy, but assumes there is a unique key for each element.
+    indexBy: function(seq, key) {
+        return _.reduce(seq, function(m, el){ m[el[key]] = el; return m;}, {});
+    }
+});
+
+var saveGoals = function(newGoals) {
+    var oldGoals = null;
+    if (newGoals) {
+        oldGoals = Goals.all;
+        Goals.all = newGoals;
+    } else {
+        console.log("warning, goals were updated without saveGoals, events lost!");
     }
 
     // anotate goals with progress counts and overall progress
-    $.each(Goals.all, function(i, goal) {
-        goal.progress = totalProgress(goal.objectives).toFixed(0);
-        goal.objectiveProgress = 0;
-
-        $.each(goal.objectives, function(i, ob) {
-            if (ob.progress >= 1) {
-                goal.objectiveProgress += 1;
-            }
-        });
+    _.each(Goals.all, function(goal) {
+        goal.progress = totalProgress(goal.objectives);
+        goal.progressStr = (goal.progress * 100).toFixed(0);
+        goal.objectiveProgress = _.filter(goal.objectives, function(obj) {
+            return obj.progress >= 1;
+        }).length;
     });
+
+    return oldGoals;
+};
+
+var detectEvents = function(oldGoals) {
+    // now look for recently completed goals or objectives
+    var goalsByIdNew = _.indexBy(Goals.all, 'id');
+    var goalsById = _.indexBy(oldGoals, 'id');
+
+    _.each(goalsById, function(g) { g.isUpdated = false; });
+
+    _.each(goalsByIdNew, function(newGoal) {
+        oldGoal = goalsById[newGoal.id];
+        if (typeof oldGoal !== 'undefined') {
+            if (newGoal.progress !== oldGoal.progress) {
+                // check to see if we just finished the goal
+                if (newGoal.progress >= 1) {
+                    console.log("Just finished goal!", newGoal);
+                    alert("Yay, you just finished a goal! Insert feelgood effect here.");
+                    $("#goals-congrats").show().fadeOut(3000);
+                }
+                else {
+                    // now look for updated objectives
+                    _.each(newGoal.objectives, function(newObj, i) {
+                        var oldObj = oldGoal.objectives[i];
+                        if (newObj.progress !== oldObj.progress) {
+                            console.log("Just worked on", newGoal, newObj);
+                            if (newObj.progress >= 1) {
+                                console.log("Just finished objective", newObj);
+                                $("#goals-congrats").show().fadeOut(3000);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        else {
+            console.log("Found a brand new goal!", newGoal);
+        }
+        oldGoal.isUpdated = true;
+    });
+
+    _(goalsById).chain()
+        .filter(function(g) { return g.isUpdated === false; })
+        .each(function(goal) {
+            console.log("This goal has no update and will disappear!", goal);
+        });
 };
 
 // todo: surely this is in a library somewhere?
@@ -161,14 +210,30 @@ var mostRecentlyUpdatedGoal = function(goals) {
 
 var displayGoals = function() {
     if (Goals.all.length) {
+        _.each(Goals.all, function(g) { g.active = false;});
+
         Goals.active = findMatchingGoalFor(window.location.toString());
+        Goals.active.active = true;
+
         renderAllGoalsUI();
     }
 };
-var requestGoals = function(callback) {
-    $.ajax({ url: "/api/v1/user/goals/current", success: callback || saveGoals });
+
+var renderAllGoalsUI = function() {
+    renderGoalSummaryArea();
+    renderGoalbook();
+
+    $("#goals-drawer").click(showGoals);
+    $(".hide-goals").click(hideGoals);
 };
-var renderGoals = function() {
+var showGoals = function() {
+    $("#goals-nav-container").slideDown('fast');
+};
+var hideGoals = function() {
+    $("#goals-nav-container").slideUp('fast');
+};
+
+var renderGoalSummaryArea = function() {
     if (Goals.active) {
         var goalsEl = $("#goals-tmpl").tmplPlugin(Goals.active);
         $("#goals-container").html(goalsEl);
@@ -176,7 +241,8 @@ var renderGoals = function() {
         $("#goals-container").html('');
     }
 };
-var renderCurrentGoals = function() {
+
+var renderGoalbook = function() {
     if (Goals.all.length) {
         var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: Goals.all});
         $("#goals-nav-container").html(goalsEl);
@@ -185,16 +251,16 @@ var renderCurrentGoals = function() {
     }
 };
 
-var showGoals = function() {
-    $("#goals-nav-container").slideDown('fast');
-};
-var hideGoals = function() {
-    $("#goals-nav-container").slideUp('fast');
-};
 
-var updateGoals = function(data) {
-    saveGoals(data);
+var requestGoals = function(callback) {
+    $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
+};
+var updateGoals = function(goals) {
+    var oldGoals = saveGoals(goals);
     displayGoals();
+    if (oldGoals) {
+       detectEvents(oldGoals);
+    }
 };
 
 var predefinedGoalsList = {

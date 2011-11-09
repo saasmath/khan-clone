@@ -229,6 +229,11 @@ input.simple-button {
 	color: #ffbb8d !important;
 	border-color:  #803503 !important;
 }
+.simple-button.seethrough {
+    color: #444 !important;
+    text-shadow: none;
+    border-color: #aaa !important;
+}
 .simple-button.with-icon {
     padding-left: 30px;
 }
@@ -3485,6 +3490,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background-color: #000;
     opacity: 0.45;
     filter:alpha(opacity=45);
+    z-index: 999;
 }
 .window-center {
     position: absolute;

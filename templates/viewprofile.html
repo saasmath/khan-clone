@@ -35,7 +35,7 @@
     <span id="energy-points">
         <span title="{{student_points}} energy points" class="energy-points-badge">{{ student_points|thousands_separated }}</span><br />
         <span class="label">Total Energy Points</span>
-    </span>                    
+    </span>
 {% endblock high_level_stats %}
 
 {% block graph_accordion %}
@@ -152,12 +152,13 @@
 {% block pagescript %}
 {%- raw -%}
     <script id="profile-goals-tmpl" type="text/x-jquery-tmpl">
-      <h3>Current goals:</h3>
       <div class="student-goals" data-bind="foreach: current_goals">
         <div class="goal pulls">
-          <p id="goal-description">
-            <span data-bind="text: title" /> (started <span data-bind="text: created_ago" />)
-            <a class="simple-button action-gradient" data-bind="click: abandon, throbberLeft: abandon_inprogress">Abandon</a>
+          <p class="goal-description">
+            <strong><span data-bind="text: title" /></strong> <span class="summary-light">(started <span data-bind="text: created_ago" />)</span>
+            <span class="goal-controls">
+                <a class="simple-button action-gradient" data-bind="click: abandon, throbberLeft: abandon_inprogress">Abandon</a>
+            </span>
           </p>
           <ul class="inline-list objective-list" data-bind="foreach: objectives">
             <li data-bind="style: {width: (100/$parent.objectives.length)+'%'}"><a class="objective simple-button action-gradient blue" data-bind="attr: {'href': url, 'data-progress': progress}, goalObjectiveCSS: $data">
@@ -175,7 +176,7 @@
         <div>Completed goals:</div>
         <div class="student-goals" data-bind="foreach: completed_goals">
           <div class="goal pulls">
-            <p id="goal-description"><span data-bind="text: title" /> (completed <span data-bind="text: completed_ago" /> in <span data-bind="text: completed_time" />)</p>
+            <p class="goal-description"><span data-bind="text: title" /> (completed <span data-bind="text: completed_ago" /> in <span data-bind="text: completed_time" />)</p>
             <div class="goal pulls">
               <ul class="inline-list objective-list" data-bind="foreach: objectives">
                 <li data-bind="style: {width: (100/$parent.objectives.length)+'%'}"><a class="objective simple-button action-gradient" data-bind="attr: {'href': url}, goalObjectiveCSS: $data">
@@ -191,7 +192,7 @@
         <div>Abandoned goals:</div>
         <div class="student-goals" data-bind="foreach: abandoned_goals">
           <div class="goal pulls">
-            <p id="goal-description"><span data-bind="text: title" /> (completed <span data-bind="text: completed_ago" /> in <span data-bind="text: completed_time" />)</p>
+            <p class="goal-description"><span data-bind="text: title" /> (completed <span data-bind="text: completed_ago" /> in <span data-bind="text: completed_time" />)</p>
             <div class="goal pulls">
               <ul class="inline-list objective-list" data-bind="foreach: objectives">
                 <li data-bind="style: {width: (100/$parent.objectives.length)+'%'}"><a class="objective simple-button action-gradient" data-bind="attr: {'href': url}, goalObjectiveCSS: $data">

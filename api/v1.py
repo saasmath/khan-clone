@@ -542,7 +542,7 @@ def attempt_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
-            user_exercise, user_exercise_graph = attempt_problem(
+            user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
                     user_exercise,
                     problem_number,
@@ -574,7 +574,7 @@ def attempt_problem_number(exercise_name, problem_number):
                 "points_earned": {"points": points_earned},
                 "attempt_correct": request.request_bool("complete"),
             }
-            if user_data.has_current_goals:
+            if goals_updated or user_data.has_current_goals:
                 api_actions['updateGoals'] = GoalList.get_visible_for_user(user_data)
             add_action_results(user_exercise, api_actions)
 
@@ -601,7 +601,7 @@ def hint_problem_number(exercise_name, problem_number):
             attempt_number = request.request_int("attempt_number")
             count_hints = request.request_int("count_hints")
 
-            user_exercise, user_exercise_graph = attempt_problem(
+            user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
                     user_exercise,
                     problem_number,
@@ -883,7 +883,7 @@ def get_student_goals():
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
         student_data['goals'] = GoalList.get_visible_for_user(student,
-            user_exercise_graphs[idx], nrecent=0)
+            user_exercise_graphs[idx])
         return_data.append(student_data)
 
     return return_data

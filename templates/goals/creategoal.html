@@ -29,9 +29,9 @@ var GoalCreator = {
                 $(this).attr('href', 'javascript:');
             }
         });
-        
+
         $('#goal-title').focus(function(){ $(this).animate({width: '600px'});}).blur(function(){ $(this).animate({width: '250px'});});
-        
+
         var form = $('#create-goal');
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
         form.find('input[name="title"]').change(function() { GoalCreator.updateViewAndDescription(); } );
@@ -80,21 +80,21 @@ var GoalCreator = {
 
         var view = $("#goals-create-tmpl").tmplPlugin(goalObject);
         $("#create-goal-view").html(view);
-        
+
         if (GoalCreator.objectives.length == 0) {
-            $('#goal-info-section > #goal-description').remove();
+            $('#goal-info-section > .goal-description').remove();
         }
-        if ( GoalCreator.objectives.length > 0 && $("#goal-info-section").children("#goal-description").length == 0 ) {
-            $('.goal #goal-description').remove().insertAfter('#create-goal-view');
+        if ( GoalCreator.objectives.length > 0 && $("#goal-info-section").children(".goal-description").length == 0 ) {
+            $('#create-goal-view .goal .goal-description').remove().insertAfter('#create-goal-view');
         }
         if (GoalCreator.objectives.length >= 1) {
-            $('.goal #goal-description').remove();
+            $('#create-goal-view .goal .goal-description').remove();
         }
         if (GoalCreator.objectives.length > 1) {
             $('.goal li.objective').css('width', 100/GoalCreator.objectives.length + "%");
             $('.goal li.objective').last().children('a').css('border-right', 'none');
         }
-        
+
         var message = '';
         if (GoalCreator.objectives.length == 0) {
             message = 'This goal currently has no objectives selected. Select <b>up to 10</b> exercises or videos to complete below.';
@@ -153,7 +153,7 @@ var GoalCreator = {
 
             message += '</ul>';
         }
-        $('#goal-description').html(message);
+        $('.create-goal-page .goal-description').html(message);
     },
 
     showExercises: function() {
@@ -202,7 +202,7 @@ var GoalCreator = {
 
     onVideoClicked: function(id, title) {
         GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', 'video', id, title);
-    
+
         GoalCreator.updateVideoCount();
         GoalCreator.updateViewAndDescription();
     },
@@ -252,7 +252,7 @@ var GoalCreator = {
         GoalCreator.updateVideoCount();
         GoalCreator.updateViewAndDescription();
     },
-    
+
     validate: function(form) {
         var error = '';
 
@@ -371,7 +371,7 @@ $(function() {
 {%- raw -%}
 <script id="goals-create-tmpl" type="text/x-jquery-tmpl">
     <div class="goal pulls">
-        <p id="goal-description" class="pulled"></p>
+        <p class="goal-description" class="pulled"></p>
         <ul class="inline-list objective-list">
         {{each objectives}}
             <li class="objective"><a class="objective simple-button action-gradient blue ${$value.css}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>

@@ -4,10 +4,12 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal {
-    border: 1px solid #ccc;
     clear: both;
+    position: relative;
 }
-
+.create-goal-page .goal {
+    border: 1px solid #ccc;
+}
 .goal .objective-list {
     width: 100%;
 }
@@ -17,7 +19,6 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal a.objective {
-    border-right: 1px solid #fff !important;
     display: block;
     line-height: 33px;
     overflow: hidden;
@@ -26,25 +27,31 @@ ul.inline-list, ul.inline-list li {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.goal a.objective.blue {
+    border-right: 1px solid #fff !important;
+}
 
 #goals-nav-container .goal a.objective {
     line-height: 23px;
 }
 
-.goal a.objective.exercise, 
+.goal a.objective.exercise,
 .goal a.objective.video,
 .goal a.objective.GoalObjectiveExerciseProficiency,
-.goal a.objective.GoalObjectiveWatchVideo {
+.goal a.objective.GoalObjectiveWatchVideo,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency,
+.goal a.objective.GoalObjectiveAnyVideo {
     padding-left: 22px
 }
 
-#create-goal-view .goal a.objective.exercise:hover:before, 
-#create-goal-view .goal a.objective.video:hover:before, {
+#create-goal-view .goal a.objective.exercise:hover:before,
+#create-goal-view .goal a.objective.video:hover:before {
     background: transparent url(/images/delete-icon-inset-small.png) no-repeat 2px 8px;
 }
 
 .goal a.objective.exercise:before,
-.goal a.objective.GoalObjectiveExerciseProficiency:before {
+.goal a.objective.GoalObjectiveExerciseProficiency:before,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
     display: block;
     content: " ";
     width: 20px;
@@ -56,7 +63,8 @@ ul.inline-list, ul.inline-list li {
 }
 
 .goal a.objective.video:before,
-.goal a.objective.GoalObjectiveWatchVideo:before {
+.goal a.objective.GoalObjectiveWatchVideo:before,
+.goal a.objective.GoalObjectiveAnyVideo:before {
     display: block;
     content: " ";
     width: 20px;
@@ -67,11 +75,65 @@ ul.inline-list, ul.inline-list li {
     top: 0;
 }
 
-#goals-nav-container .GoalObjectiveExerciseProficiency:before {
+
+.goal a.objective.video .objective-progress-meter,
+.goal a.objective.GoalObjectiveWatchVideo .objective-progress-meter,
+.goal a.objective.GoalObjectiveAnyVideo .objective-progress-meter {
+    display: block;
+    content: " ";
+    width: 20px;
+    height: 20px;
+    background: transparent url(/images/video-camera-icon-full-small.png) no-repeat 0 1px;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.goal a.objective.exercise .objective-progress-meter,
+.goal a.objective.GoalObjectiveExerciseProficiency .objective-progress-meter,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency .objective-progress-meter {
+    display: block;
+    content: " ";
+    width: 20px;
+    height: 20px;
+    background: transparent url(/images/generic-exercise-icon-full-small.png) no-repeat 0 0px;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+#goals-nav-container .GoalObjectiveExerciseProficiency:before,
+#goals-nav-container .GoalObjectiveAnyExerciseProficiency:before {
     background-position: 0 0;
 }
-#goals-nav-container .GoalObjectiveWatchVideo:before {
+#goals-nav-container .GoalObjectiveWatchVideo:before,
+#goals-nav-container .GoalObjectiveAnyVideo:before {
     background-position: 0 1px;
+}
+
+.goal a.objective.exercise.complete:before,
+.goal a.objective.video.complete:before,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.goal a.objective.GoalObjectiveWatchVideo.complete:before,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
+    content: " ";
+    width: 16px;
+    height: 16px;
+    background: transparent url(/images/objective-complete-tick.png);
+    position: absolute;
+    top:3px;
+    left:2px;
+}
+.goal a.objective.exercise.complete,
+.goal a.objective.video.complete,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete,
+.goal a.objective.GoalObjectiveWatchVideo.complete,
+.goal a.objective.GoalObjectiveExerciseProficiency.complete,
+.goal a.objective.GoalObjectiveAnyExerciseProficiency.complete {
+    text-decoration: line-through !important;
+    opacity: .7;
+    filter: alpha(opacity=75);
 }
 
 .all-goals {
@@ -182,37 +244,42 @@ input#goal-title:focus {
     padding-left: 5px;
 }
 
-.goal #goal-description {
+.goal .goal-description {
     line-height: 35px;
     margin:0;
-    text-align: center;
 }
-#goal-description {
+.goal-description {
     font-size: 14px;
 }
 
-#goal-description.pulls {
+.goal-description.pulls {
     margin: 9px 0;
 }
+.create-goal-page .goal .goal-description {
+    text-align: center;
+}
 
-#goals-nav-container #goal-description.pulls {
+#goals-nav-container .goal-description.pulls {
     margin: 0;
+    text-align: left;
+    line-height: 25px;
 }
 
 #goals-nav-container .goal.pulled {
-    margin: 3px 0 10px 0;
+    margin: 0 0 10px 0;
+    border: none;
 }
 
 
-#goal-description ul, #goal-description ul li {
+.goal-description ul, .goal-description ul li {
     display: inline;
 }
 
-#goal-description a {
-    float: right;
-    height: 24px;
-    line-height: 24px;
-    padding: 5px 12px;
+.goal-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
 }
 
 .create-goal-page #goal-choose-exercises .dashboard-nav {
@@ -232,7 +299,7 @@ input#goal-title:focus {
     z-index: 100;
     top: -1px;
 }
-.objective-type-picker .simple-button, .goal .simple-button {
+.objective-type-picker .simple-button, .objective.simple-button {
     border-radius: 0;
     -webkit-border-radius: 0;
     -moz-border-radius: 0;
@@ -276,6 +343,7 @@ input#goal-title:focus {
     -moz-box-shadow: 0 3px 4px #444;
     -webkit-box-shadow: 0 2px 4px #444;
     box-shadow: 0 2px 4px #444;
+    z-index: 1000;
 }
 #goal-popup-dialog .dialog-title {
     position: absolute;
@@ -306,8 +374,14 @@ input#goal-title:focus {
     margin-top: 20px;
 }
 
-#goal-description .summary-light {
+.goal-description .summary-light {
     color: #888;
     display: inline-block;
     float: right;
+}
+
+#goals-congrats {
+    background: #f00;
+    color: #fff;
+    font-weight: bold;
 }

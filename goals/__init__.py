@@ -164,15 +164,17 @@ class CreateRandomGoalData(request_handler.RequestHandler):
         self.response.out.write('OK')
 
 def update_goals_just_watched_video(user_data, user_video):
-    update_goals(user_data, lambda goal: goal.just_watched_video(user_data, user_video))
+    fn = lambda goal: goal.just_watched_video(user_data, user_video)
+    return update_goals(user_data, fn)
 
 def update_goals_just_did_exercise(user_data, user_exercise, became_proficient):
-    update_goals(user_data, lambda goal: goal.just_did_exercise(user_data, user_exercise,
-        became_proficient))
+    fn = lambda goal: goal.just_did_exercise(user_data, user_exercise,
+        became_proficient)
+    return update_goals(user_data, fn)
 
 def update_goals(user_data, activity_fn):
     if not user_data.has_current_goals:
-        return
+        return False
 
     goal_data = user_data.get_goal_data()
     goals = GoalList.get_from_data(goal_data, Goal)
@@ -186,3 +188,4 @@ def update_goals(user_data, activity_fn):
             user_data.has_current_goals = False
             changes.append(user_data)
         db.put(changes)
+    return bool(changes)

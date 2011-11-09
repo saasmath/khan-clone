@@ -10,12 +10,12 @@ javascript = {
             "jquery.tmpl.min.js",
             "knockout-latest.debug.js",
             "knockout-util.js",
+            "underscore.js",
             "pageutil.js",
             "api.js",
             "social.js",
             "../../gae_bingo/static/js/gae_bingo.js",
             "goals.js",
-            "underscore.js",
         ]
     },
     "video": {
