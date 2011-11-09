@@ -1,29 +1,24 @@
 import re
 import os
-import logging
 import itertools
 import hashlib
 import urllib
 
 from google.appengine.ext import db
-from google.appengine.api import users
 from google.appengine.ext import deferred
 
-from app import App
 import consts
 import datetime
 import models
 import request_handler
-import util
 import user_util
 import points
 import layer_cache
 import knowledgemap
 import string
 import simplejson
-from badges import util_badges, last_action_cache, custom_badges
+from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from phantom_users.phantom_util import create_phantom
 from custom_exceptions import MissingExerciseException
 from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
@@ -361,13 +356,15 @@ def raw_exercise_contents(exercise_file):
         f = open(path)
         contents = f.read()
     except:
-        raise MissingExerciseException("Missing exercise file for exid '%s'" % exercise_file)
+        raise MissingExerciseException(
+                "Missing exercise file for exid '%s'" % exercise_file)
     finally:
         if f:
             f.close()
 
     if not len(contents):
-        raise MissingExerciseException("Missing exercise content for exid '%s'" % exercise.name)
+        raise MissingExerciseException(
+                "Missing exercise content for exid '%s'" % exercise_file)
 
     return contents
 
@@ -607,16 +604,10 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise.covers = []
             exercise.author = user
             exercise.summative = self.request_bool("summative", default=False)
-            path = os.path.join(os.path.dirname(__file__), exercise_name + '.html')
 
         v_position = self.request.get('v_position')
         h_position = self.request.get('h_position')
         short_display_name = self.request.get('short_display_name')
-
-        add_video = self.request.get('add_video')
-        delete_video = self.request.get('delete_video')
-        add_playlist = self.request.get('add_playlist')
-        delete_playlist = self.request.get('delete_playlist')
 
         exercise.prerequisites = []
         for c_check_prereq in range(0, 1000):

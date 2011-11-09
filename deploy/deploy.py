@@ -6,7 +6,6 @@ import optparse
 import datetime
 import urllib2
 import webbrowser
-import re
 import getpass
 
 sys.path.append(os.path.abspath("."))
@@ -197,6 +196,11 @@ def tidy_up():
                 [ os.renames(stuff, os.path.join(trashdir,stuff)) for stuff in please_remove ]
     
 
+def compile_handlebar_templates():
+    print "Compiling handlebar templates"
+    return 0 == popen_return_code(['python',
+                                   'deploy/compile_handlebar_templates.py'])
+
 def compress_js():
     print "Compressing javascript"
     compress.compress_all_javascript()
@@ -293,6 +297,7 @@ def main():
         print "Failed to compile templates, bailing."
         return
 
+    compile_handlebar_templates()
     compress_js()
     compress_css()
 

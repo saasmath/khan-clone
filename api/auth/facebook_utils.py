@@ -1,6 +1,4 @@
 import datetime
-import base64
-import logging
 import urllib
 
 from flask import request, redirect
@@ -8,7 +6,7 @@ from flask import request, redirect
 from app import App
 
 from api import route
-from api.auth.auth_util import oauth_error_response, get_response, get_parsed_params, append_url_params, authorize_token_redirect, access_token_response
+from api.auth.auth_util import oauth_error_response, get_response, get_parsed_params, authorize_token_redirect
 from api.auth.auth_models import OAuthMap
 
 from oauth_provider.oauth import OAuthError

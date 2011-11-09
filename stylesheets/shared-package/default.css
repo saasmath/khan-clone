@@ -2294,6 +2294,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     -moz-box-shadow: 1px 1px 3px rgba(0, 0, 0, .35);
     box-shadow: 1px 1px 3px rgba(0, 0, 0, .35);
 }
+#info-hover-container .exercise-display-name {
+    font-weight: bold;
+}
+#info-hover-container .exercise-progress,
+#info-hover-container .exercise-done {
+    font-style: italic;
+}
 #module-progress td.student-email {
     color: #555;
     vertical-align: middle;
@@ -2313,6 +2320,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 #module-progress td.student-email a:hover {
     text-decoration: underline;
 }
+
 /* End of teacher Dashboard Styles */
 
 /* One-Off Page Styles */
@@ -3499,4 +3507,3 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 
     padding: 30px;
 }
-
