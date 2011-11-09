@@ -1,5 +1,3 @@
-
-
 # Initialize flag and caches of the package list.
 _debug = False
 _javascript = None
@@ -31,6 +29,7 @@ def get_javascript():
                 "../../gae_bingo/static/js/gae_bingo.js",
                 "handlebars.js" if _debug else "handlebars.vm.js",
                 "templates.js",
+                "underscore.js",
             ]
         },
         "video": {
@@ -112,6 +111,7 @@ def get_javascript():
                 "utils/jquery.mobile.vmouse.js",
                 "utils/math-format.js",
                 "utils/math.js",
+                "utils/mean-and-median.js",
                 "utils/parabola-intuition.js",
                 "utils/polynomials.js",
                 "utils/probability.js",

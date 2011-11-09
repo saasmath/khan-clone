@@ -13,7 +13,8 @@ from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, reset_streak
 from phantom_users.phantom_util import api_create_phantom
 import notifications
-from gae_bingo.gae_bingo import bingo
+from gae_bingo.gae_bingo import bingo, ab_test
+from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
 
 from api import route
@@ -304,7 +305,7 @@ def filter_query_by_request_dates(query, property):
     if request.request_string("dt_end"):
         try:
             dt_end = request.request_date_iso("dt_end")
-            query.filter("%s <=" % property, dt_end)
+            query.filter("%s <" % property, dt_end)
         except ValueError:
             raise ValueError("Invalid date format sent to dt_end, use ISO 8601 Combined.")
 
@@ -441,11 +442,7 @@ def user_exercises_specific(exercise_name):
 
     return None
 
-@route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
-@oauth_optional()
-@jsonp
-@jsonify
-def user_exercises_specific(exercise_name):
+def user_followup_exercises(exercise_name):
     user_data = models.UserData.current()
 
     if user_data and exercise_name:
@@ -477,6 +474,13 @@ def user_exercises_specific(exercise_name):
         return user_exercises_dict.values()
 
     return None
+
+@route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def api_user_followups(exercise_name):
+    return user_followup_exercises(exercise_name)
 
 @route("/api/v1/user/playlists", methods=["GET"])
 @oauth_required()
@@ -579,11 +583,29 @@ def attempt_problem_number(exercise_name, problem_number):
                 # and the above pts-original points gives a wrong answer
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
-            add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_exercise_graph.states(exercise.name)),
+            user_states = user_exercise_graph.states(exercise.name)
+            sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
+            
+            action_results = {
+                "exercise_state": {
+                    "sees_graph" :  sees_graph,
+                    "state" : [state for state in user_states if user_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states, sees_graph) ,
+                },
                 "points_earned" : { "points" : points_earned },
                 "attempt_correct" : request.request_bool("complete")
-            })
+            };
+
+            if user_states["proficient"]:
+                followups = user_followup_exercises(exercise_name)
+
+                if followups:
+                    action_results["exercise_state"]["followups"] = followups
+                else :
+                    followups = [models.Exercise.get_by_name(exercise) for exercise in user_data.suggested_exercises[:3]]
+                    action_results["exercise_state"]["followups"] = followups
+
+            add_action_results(user_exercise, action_results)
 
             return user_exercise
 
@@ -624,8 +646,13 @@ def hint_problem_number(exercise_name, problem_number):
                     request.remote_addr,
                     )
 
+            user_states = user_exercise_graph.states(exercise.name)
             add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_exercise_graph.states(exercise.name)),
+                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                "exercise_state": {
+                    "state" : [state for state in user_states if user_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                }
             })
 
             # A hint will count against the user iff they haven't attempted the question yet and it's their first hint

@@ -49,7 +49,7 @@ def class_exercises_over_time_graph_context(user_data, student_list):
         exercises = results[i].get_result()
 
         for user_exercise in exercises:
-            joined = min(user_data.joined, user_exercise.proficient_date)
+            joined = min(user_data_student.joined, user_exercise.proficient_date)
             days_until_proficient = (user_exercise.proficient_date - joined).days
             proficient_date = user_exercise.proficient_date.strftime('%m/%d/%Y')
             data = ExerciseData(student_nickname, user_exercise.exercise, user_exercise.exercise, days_until_proficient, proficient_date)
