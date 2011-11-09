@@ -409,7 +409,7 @@ var VideoStats = {
                 success: function (data) {
                     VideoStats.finishSave(data, percent);
                     // todo: Do this inline with the response
-                    requestGoals(updateGoals);
+                    requestGoals();
                 },
                 error: function () {
                     // Restore pre-error stats so user can still get full

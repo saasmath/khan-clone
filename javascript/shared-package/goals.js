@@ -17,70 +17,22 @@ _.mixin({
     }
 });
 
+// anotate goal with progress counts and overall progress
+var annotateGoal = function(goal) {
+    goal.progress = totalProgress(goal.objectives);
+    goal.progressStr = (goal.progress * 100).toFixed(0);
+    goal.objectiveProgress = _.filter(goal.objectives, function(obj) {
+        return obj.progress >= 1;
+    }).length;
+};
+
 var saveGoals = function(newGoals) {
-    var oldGoals = null;
     if (newGoals) {
-        oldGoals = Goals.all;
         Goals.all = newGoals;
     } else {
         console.log("warning, goals were updated without saveGoals, events lost!");
     }
-
-    // anotate goals with progress counts and overall progress
-    _.each(Goals.all, function(goal) {
-        goal.progress = totalProgress(goal.objectives);
-        goal.progressStr = (goal.progress * 100).toFixed(0);
-        goal.objectiveProgress = _.filter(goal.objectives, function(obj) {
-            return obj.progress >= 1;
-        }).length;
-    });
-
-    return oldGoals;
-};
-
-var detectEvents = function(oldGoals) {
-    // now look for recently completed goals or objectives
-    var goalsByIdNew = _.indexBy(Goals.all, 'id');
-    var goalsById = _.indexBy(oldGoals, 'id');
-
-    _.each(goalsById, function(g) { g.isUpdated = false; });
-
-    _.each(goalsByIdNew, function(newGoal) {
-        oldGoal = goalsById[newGoal.id];
-        if (typeof oldGoal !== 'undefined') {
-            if (newGoal.progress !== oldGoal.progress) {
-                // check to see if we just finished the goal
-                if (newGoal.progress >= 1) {
-                    console.log("Just finished goal!", newGoal);
-                    alert("Yay, you just finished a goal! Insert feelgood effect here.");
-                    $("#goals-congrats").show().fadeOut(3000);
-                }
-                else {
-                    // now look for updated objectives
-                    _.each(newGoal.objectives, function(newObj, i) {
-                        var oldObj = oldGoal.objectives[i];
-                        if (newObj.progress !== oldObj.progress) {
-                            console.log("Just worked on", newGoal, newObj);
-                            if (newObj.progress >= 1) {
-                                console.log("Just finished objective", newObj);
-                                $("#goals-congrats").show().fadeOut(3000);
-                            }
-                        }
-                    });
-                }
-            }
-        }
-        else {
-            console.log("Found a brand new goal!", newGoal);
-        }
-        oldGoal.isUpdated = true;
-    });
-
-    _(goalsById).chain()
-        .filter(function(g) { return g.isUpdated === false; })
-        .each(function(goal) {
-            console.log("This goal has no update and will disappear!", goal);
-        });
+    _.each(Goals.all, annotateGoal);
 };
 
 // todo: surely this is in a library somewhere?
@@ -223,25 +175,18 @@ var renderAllGoalsUI = function() {
     renderGoalSummaryArea();
     renderGoalbook();
 
-    $("#goals-drawer").click(showGoals);
-    $(".hide-goals").click(hideGoals);
+    $("#goals-container").delegate("#goals-drawer", "click", showGoals);
+    $("#goals-nav-container").delegate(".hide-goals", "click", hideGoals);
 };
-var showGoals = function() {
-    $("#goals-nav-container").slideDown('fast');
-};
-var hideGoals = function() {
-    $("#goals-nav-container").slideUp('fast');
-};
-
-var renderGoalSummaryArea = function() {
-    if (Goals.active) {
-        var goalsEl = $("#goals-tmpl").tmplPlugin(Goals.active);
+var renderGoalSummaryArea = function(goal) {
+    goal = goal || Goals.active;
+    if (goal) {
+        var goalsEl = $("#goals-tmpl").tmplPlugin(goal);
         $("#goals-container").html(goalsEl);
     } else {
         $("#goals-container").html('');
     }
 };
-
 var renderGoalbook = function() {
     if (Goals.all.length) {
         var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: Goals.all});
@@ -250,17 +195,84 @@ var renderGoalbook = function() {
         $("#goals-nav-container").html('');
     }
 };
+var showGoals = function() {
+    $("#goals-nav-container").slideDown('fast');
+};
+var hideGoals = function() {
+    $("#goals-nav-container").slideUp('fast');
+};
 
 
-var requestGoals = function(callback) {
+var requestGoals = function() {
     $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
 };
 var updateGoals = function(goals) {
-    var oldGoals = saveGoals(goals);
+    saveGoals(goals);
     displayGoals();
-    if (oldGoals) {
-       detectEvents(oldGoals);
-    }
+};
+
+// todo: make these real events?
+var justWorkedOnGoal = function(goal) {
+    console.log("Just worked on goal", goal);
+};
+var justWorkedOnObjective = function(newGoal, newObj) {
+    console.log("Just worked on objective", newGoal, newObj);
+};
+var justFinishedGoal = function(goal) {
+    console.log("Just finished goal", goal);
+    $("#goals-congrats").text('Just finished goal!').show().fadeOut(3000);
+};
+var justFinishedObjective = function(newGoal, newObj) {
+    console.log("Just finished objective", newObj);
+    $("#goals-congrats").text('Just finished objective!').show().fadeOut(3000);
+};
+// assumes we already have Goals.all rendered. Incrementally updates what is
+// already present, and fires some fake events
+var incrementalUpdateGoals = function(updatedGoals) {
+    _.each(updatedGoals, function(newGoal) {
+        annotateGoal(newGoal);
+        oldGoal = _.find(Goals.all, function(g) { return g.id === newGoal.id; });
+
+        if (typeof oldGoal !== 'undefined') {
+            // rerender all linked views
+            if ( Goals.active.id === newGoal.id ) {
+                // this goal was the active goal, update the summary area
+                renderGoalSummaryArea(newGoal);
+            }
+            // update goal in goalbook
+            var newRow = $("#goalrow-tmpl").tmplPlugin(newGoal);
+            $(".all-goals .goal[data-id="+newGoal.id+"]").replaceWith(newRow);
+
+            // inspect old element to see what changed, fire events
+            justWorkedOnGoal(newGoal);
+            // check for goal completion
+            if (newGoal.progress !== oldGoal.progress) {
+                // check to see if we just finished the goal
+                if (newGoal.progress >= 1) {
+                    justFinishedGoal(newGoal);
+                }
+                else {
+                    // now look for updated objectives
+                    _.each(newGoal.objectives, function(newObj, i) {
+                        var oldObj = oldGoal.objectives[i];
+                        if (newObj.progress > oldObj.progress) {
+                            justWorkedOnObjective(newGoal, newObj);
+                            if (newObj.progress >= 1) {
+                                justFinishedObjective(newGoal, newObj);
+                            }
+                        }
+                    });
+                }
+            }
+
+            // overwrite old goal with new goal
+            _.extend(oldGoal, newGoal);
+        }
+        else {
+            // todo: remove this, do something better
+            console.log("Error: brand new goal appeared from somewhere");
+        }
+    });
 };
 
 var predefinedGoalsList = {
@@ -319,10 +331,11 @@ var createSimpleGoalDialog = {
 
 $(function() {
     if (typeof(Goals) === "undefined") {
-        var Goals = {
+        Goals = {
             all: [],
             active: null
         };
     }
-    updateGoals();
+    _.each(Goals.all, annotateGoal);
+    displayGoals();
 });
