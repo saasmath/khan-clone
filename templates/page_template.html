@@ -213,7 +213,7 @@
     {#- goal book -#}
     {%- raw -%}
     <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal pulled {{if active}}active{{/if}}">
+        <div class="goal pulled {{if active}}active{{/if}} {{if progress >= 1}}complete{{/if}}" data-id="${id}">
             <p class="goal-description pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progressStr}%</span></p>
             <ul class="inline-list objective-list">
             {{each objectives}}
@@ -270,7 +270,7 @@
     {%- endraw -%}
 
     <script type="text/javascript">
-    if (typeof(Goals) === "undefined") {
+    if (typeof Goals === "undefined") {
         var Goals = {
             all: [],
             active: null

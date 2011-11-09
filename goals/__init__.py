@@ -211,8 +211,9 @@ def update_goals(user_data, activity_fn):
             changes.append(goal)
     if changes:
         # check to see if all goals are closed
+        user_changes = []
         if all([g.is_completed for g in goals]):
             user_data.has_current_goals = False
-            changes.append(user_data)
-        db.put(changes)
-    return bool(changes)
+            user_changes = [user_data]
+        db.put(changes + user_changes)
+    return changes

@@ -84,4 +84,4 @@ $(function(){
   APIActionResults.register( "points_earned", updatePointDisplay );
 });
 
-$(function(){ APIActionResults.register( "updateGoals", updateGoals ); });
+$(function(){ APIActionResults.register( "updateGoals", incrementalUpdateGoals ); });
