@@ -240,7 +240,8 @@
             {{/each}}
             <div id="goalbook-controls">
                 <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
-                <a class="simple-button action-gradient" href="/profile?k#/?graph_url=/api/v1/user/goals">Goal History</a>
+                <a id="btn-goal-history" class="simple-button action-gradient" href="/profile?k#/?graph_url=/api/v1/user/goals">Goal History</a>
+                <a class="simple-button action-gradient" href="#" onclick="$('#goals-nav-container .goal').first().addClass('recently-completed');$('.recently-completed').children().each( function () { $(this).css('overflow', 'hidden').css('height', $(this).height()); }).end().animate({width: $('#btn-goal-history').width(), left: $('#btn-goal-history').position().left } ).animate({ top: $('#btn-goal-history').position().top - $('.recently-completed').position().top, height: $('#btn-goal-history').height(), height: '0', opacity: 'toggle' }, 'easeInOutCubic', function () {$(this).remove();});">Shrinky Dink</a>
                 <a class="hide-goals">Close <img class="close-cross" src="/images/circled_cross.png"></a>
             </div>
         </div>
