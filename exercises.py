@@ -217,10 +217,11 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)), 
-            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 5',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 8',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
-                ViewExercise._hints_conversion_types)
+                ViewExercise._hints_conversion_types,
+                'Hints or Show Solution Nov 5')
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
