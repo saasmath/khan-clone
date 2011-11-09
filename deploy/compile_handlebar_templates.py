@@ -16,19 +16,6 @@ def validate_env():
     except subprocess.CalledProcessError:
         sys.exit("Can't find handlebars. Did you install it?")
         
-def collect_files(path, accept):
-    """ Collect all files recursively within a specified dir that satisfies
-    the given accept method.
-    """
-    results = []
-    for name in [f for f in os.listdir(path) if not f in [".",".."]]:
-        file_path = os.path.join(path, name)
-        if os.path.isdir(file_path):
-            results = results + collect_files(file_path, accept)
-        elif accept(name):
-            results.append(file_path)
-    return results
-
 def compile_template(file_path):
     """ Compiles a single template. """
     try:
@@ -44,9 +31,11 @@ def compile_template(file_path):
 
 def compile_templates():
     root_path = os.path.join("..", "javascript")
-    files = collect_files(root_path, lambda name: name.endswith(".handlebars"))
-    for file_path in files:
-        compile_template(file_path)
+    for dir_path, dir_names, file_names in os.walk(root_path):
+        for file_name in file_names:
+            print file_name
+            if file_name.endswith(".handlebars"):
+                compile_template(os.path.join(dir_path, file_name))
 
 if __name__ == "__main__":
     validate_env()
