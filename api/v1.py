@@ -883,7 +883,7 @@ def get_student_goals():
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
         student_data['goals'] = GoalList.get_visible_for_user(student,
-            user_exercise_graphs[idx], nrecent=0)
+            user_exercise_graphs[idx])
         return_data.append(student_data)
 
     return return_data
