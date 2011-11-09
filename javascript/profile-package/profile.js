@@ -1,8 +1,13 @@
+/**
+ * Code to handle the logic for the profile page.
+ */
+// TODO: clean up all event listeners. This page does not remove any
+// event listeners when tearing down the graphs.
 
 var Profile = {
-
     version: 0,
-    initialGraphUrl: null,
+    initialGraphUrl: null, // Filled in by the template after script load.
+    email: null,  // Filled in by the template after script load.
     fLoadingGraph: false,
     fLoadedGraph: false,
 
@@ -21,12 +26,14 @@ var Profile = {
 			  });
 
 		$('.share-link').click(function() {
-		if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) )
-			$(this).next(".sharepop").toggle();
-		else
-			$(this).next(".sharepop").toggle("drop",{direction:'up'},"fast");
-		return false;
-				});
+			if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
+				$(this).next(".sharepop").toggle();
+			} else {
+				$(this).next(".sharepop").toggle(
+						"drop", { direction:'up' }, "fast" );
+			}
+			return false;
+		});
 
         if ($.address)
             $.address.externalChange(function(){ Profile.historyChange(); });
@@ -246,7 +253,7 @@ var Profile = {
             var list_id = $dropdown.data('selected').key;
             var qs = this.parseQueryString(url);
             qs['list_id'] = list_id;
-            qs['version']=Profile.version;
+            qs['version'] = Profile.version;
             qs['dt'] = $("#targetDatepicker").val();
             url = this.baseGraphHref(url) + '?' + this.reconstructQueryString(qs);
         }
@@ -255,8 +262,6 @@ var Profile = {
     },
 
     loadGraph: function(href, fNoHistoryEntry) {
-        var apiCallback = null;
-
         if (!href) return;
 
         if (this.fLoadingGraph) {
@@ -268,18 +273,26 @@ var Profile = {
         this.fLoadingGraph = true;
         this.fLoadedGraph = true;
 
+        var apiCallback = null;
         if (href.indexOf('/api/v1/user/goals') > -1) {
             apiCallback = this.renderUserGoals;
         } else if (href.indexOf('/api/v1/user/students/goals') > -1) {
             apiCallback = this.renderStudentGoals;
+        } else if (href.indexOf('/api/v1/user/exercises') > -1) {
+			apiCallback = this.renderExercises;
         }
 
-        $.ajax({type: "GET",
-                url: Timezone.append_tz_offset_query_param(href),
-                data: {},
-                dataType: apiCallback ? 'json' : 'html',
-                success: function(data){ Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback); },
-                error: function() { Profile.finishLoadGraphError(); }
+        $.ajax({
+			type: "GET",
+			url: Timezone.append_tz_offset_query_param(href),
+			data: {},
+			dataType: apiCallback ? 'json' : 'html',
+			success: function(data){
+				Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
+			},
+			error: function() {
+				Profile.finishLoadGraphError
+			}
         });
         $("#graph-content").html("");
         this.showGraphThrobber(true);
@@ -289,11 +302,11 @@ var Profile = {
 
         this.fLoadingGraph = false;
 
-        if (!fNoHistoryEntry)
-        {
+        if (!fNoHistoryEntry) {
             // Add history entry for browser
-            if ($.address)
+            if ($.address) {
                 $.address.parameter("graph_url", encodeURIComponent(href), false);
+			}
         }
 
         this.showGraphThrobber(false);
@@ -604,11 +617,105 @@ var Profile = {
         $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
     },
 
+	/**
+	 * Renders the exercise blocks given the JSON blob about the exercises.
+	 */
+	renderExercises: function(data, href) {
+		var templateContext = [];
+		for ( var i = 0, exercise; exercise = data[i]; i++ ) {
+			var stat = "Not started";
+			var color = "";
+			var states = exercise["exercise_states"];
+			var totalDone = exercise["total_done"];
+
+			if ( states["reviewing"] ) {
+				stat = "Review";
+				color = "review light";
+			} else if ( states["proficient"] ) {
+				// TODO: handle implicit proficiency - is that data in the API?
+				// (due to proficiency in a more advanced module)
+				stat = "Proficient";
+				color = "proficient";
+			} else if ( states["struggling"] ) {
+				stat = "Struggling";
+				color = "struggling";
+			} else if ( totalDone > 0 ) {
+				stat = "Started";
+				color = "started";
+			}
+
+			if ( color ) {
+				color = color + " action-gradient seethrough";
+			} else {
+				color = "transparent";
+			}
+			var model = exercise["exercise_model"];
+			templateContext.push({
+				"name": model["name"],
+				"color": color,
+				"status": stat,
+				"shortName": model["short_display_name"] || model["display_name"],
+				"displayName": model["display_name"],
+				"progress": Math.floor( exercise["progress"] * 100 ) + "%",
+				"totalDone": totalDone
+			});
+		}
+		var template = Templates.get( "profile" );
+        $("#graph-content").html( 'template: ' + template({ "exercises": templateContext }) );
+
+		var infoHover = $("#info-hover-container")
+		var lastHoverTime;
+		var mouseX;
+		var mouseY;
+		$("#module-progress .student-module-status").hover( 
+			function(e) {
+				var hoverTime = lastHoverTime = Date.now();
+				mouseX = e.pageX;
+				mouseY = e.pageY;
+				var self = this;
+				setTimeout(function() {
+					if (hoverTime != lastHoverTime) {
+						return;
+					}
+
+					var hoverData = $(self).children(".hover-data");
+					if ($.trim(hoverData.html())) {
+						infoHover.html($.trim(hoverData.html()));
+
+						var left = mouseX + 15;
+						var jelGraph = $("#graph-content");
+						var leftMax = jelGraph.offset().left +
+								jelGraph.width() - 150;
+
+						infoHover.css('left', Math.min(left, leftMax));
+						infoHover.css('top', mouseY + 5);
+						infoHover.css('cursor', 'pointer');
+						infoHover.show();
+					}
+				}, 100);
+			},
+			function(e){ 
+				lastHoverTime = null;
+				$("#info-hover-container").hide();
+			}
+		);
+		$("#module-progress .student-module-status").click(function(e) {
+			$("#info-hover-container").hide();
+			Profile.collapseAccordion();
+			// Extract the name from the ID, which has been prefixed.
+			var exerciseName = this.id.substring( "exercise-".length );
+			Profile.loadGraph(
+				"/profile/graph/exerciseproblems? " +
+				"exercise_name=" + exerciseName + "&" +
+				"student_email=" + encodeURIComponent(Profile.email));
+		});
+	},
+
+	// TODO: move history management out to a common utility
     historyChange: function(e) {
         var href = ($.address ? $.address.parameter("graph_url") : "") || this.initialGraphUrl;
         href = decodeURIComponent(href);
-        if (href)
-        {
+        if (href) {
             this.expandAccordionForHref(href);
             this.loadGraph(href, true);
         }
@@ -621,6 +728,7 @@ var Profile = {
             $("#graph-progress-bar").slideUp("fast");
     },
 
+	// TODO: move this out to a more generic utility file.
     parseQueryString: function(url) {
         var qs = {};
         var parts = url.split('?');
@@ -635,6 +743,7 @@ var Profile = {
         return qs;
     },
 
+	// TODO: move this out to a more generic utility file.
     reconstructQueryString: function(hash, kvjoin, eljoin) {
         kvjoin = kvjoin || '=';
         eljoin = eljoin || '&';

@@ -7,7 +7,6 @@ import re
 import StringIO
 import base64
 import copy
-from string import lower
 
 from js_css_packages import packages
 
@@ -19,8 +18,8 @@ PATH_PACKAGES = "js_css_packages/packages.py"
 PATH_PACKAGES_TEMP = "js_css_packages/packages.compresstemp.py"
 PATH_PACKAGES_HASH = "js_css_packages/packages_hash.py"
 
-packages_stylesheets = copy.deepcopy(packages.stylesheets)
-packages_javascript = copy.deepcopy(packages.javascript)
+packages_stylesheets = copy.deepcopy(packages.get_stylesheets())
+packages_javascript = copy.deepcopy(packages.get_javascript())
 if os.path.isfile(PATH_PACKAGES_HASH):
     import js_css_packages.packages_hash
     hashes = copy.deepcopy(js_css_packages.packages_hash.hashes)
@@ -32,11 +31,11 @@ def revert_js_css_hashes():
     popen_results(['hg', 'revert', '--no-backup', PATH_PACKAGES])
 
 def compress_all_javascript():
-    dict_packages = packages.javascript
+    dict_packages = packages.get_javascript()
     compress_all_packages(os.path.join("..", "javascript"), dict_packages, ".js")
 
 def compress_all_stylesheets():
-    dict_packages = packages.stylesheets
+    dict_packages = packages.get_stylesheets()
     compress_all_packages(os.path.join("..", "stylesheets"), dict_packages, ".css")
 
 # Combine all .js\.css files in all "-package" suffixed directories
