@@ -372,7 +372,7 @@ var Profile = {
             'row_data': ko.observableArray([]),
             'show_counts': ko.observable(false),
             'fastFilter': new KOFastFilter(),
-            'fastFilterCSS': new KOFastFilter({css:'blue'}),
+            'fastFilterCSS': new KOFastFilter({css:'matches-filter'}),
         }; 
 
         $.each(data, function(idx1, student) {
