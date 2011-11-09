@@ -3447,7 +3447,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 }
 
 #you-are-here{
-  position:absolute;
-  top:0px;
-  left:66px;
+  position:relative;
+  left:10px;
+  top:-10px;
 }
