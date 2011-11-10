@@ -119,12 +119,12 @@ class Bingo(RequestHandler):
             
             if experiment_names:
                 # send null message and score the conversion
-                status = 204
+                status = 204 if conversion is not 'hints_free_hint' else 205
                 bingo(conversion)
             
             else:
                 # send error, conversion not found
-                status = 404
+                status = 404 204 if conversion is not 'hints_free_hint' else 405
         
         else:
             # no luck, compadre
