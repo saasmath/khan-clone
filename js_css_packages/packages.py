@@ -16,6 +16,11 @@ def set_debug(debug=False):
 def get_javascript():
     return _javascript or {
         "shared": {
+            "templates": [
+                "streak-bar.handlebars",
+                "knowledgemap-exercise.handlebars",
+                "knowledgemap-admin-exercise.handlebars",
+            ],
             "files": [
                 "jquery.js",
                 "jquery-ui.js",

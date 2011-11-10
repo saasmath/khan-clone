@@ -26,24 +26,23 @@
           <input type="text" id="dashboard-filter-text" class="ui-corner-all simple-input" placeholder="Start typing the name of an exercise to find it" /><input id="dashboard-filter-clear" type="button" value="Clear" class="simple-button action-gradient ui-corner-right strict" style="display: none;"></input>
        </div>
        <div id="exercise-list">
-        <span class="exercise-sublist">
-        <h3>Suggested Exercises <span class="exercise-filter-count">(Showing <span data-bind="text: suggested_count"></span> of <span data-bind="text: suggested.length+review.length"></span>)</span></h3>
-         <div id="review-exercises" data-bind="template: {name: 'exercise-badge-tmpl', foreach: review}"></div>
-         <div id="suggested-exercises" data-bind="template: {name: 'exercise-badge-tmpl', foreach: suggested}"></div>
+        <span class="exercise-sublist" id="dashboard-suggested-exercises">
+        <h3>Suggested Exercises <span class="exercise-filter-count">(Showing X of Y)</span></h3>
+         <div class="exercise-content" id="dashboard-suggested-exercises-content"></div>
         </span>
         <br>
-        <span class="exercise-sublist">
-         <h3>Recent Exercises <span class="exercise-filter-count">(Showing <span data-bind="text: recent_count"></span> of <span data-bind="text: recent.length"></span>)</span></h3>
-         <div id="recent-exercises" data-bind="template: {name: 'exercise-badge-tmpl', foreach: recent}"></div>
+        <span class="exercise-sublist" id="dashboard-recent-exercises">
+         <h3>Recent Exercises <span class="exercise-filter-count">(Showing X of Y)</span></h3>
+         <div class="exercise-content" id="dashboard-recent-exercises-content"></div>
         </span>
         <br/>
-        <span class="exercise-sublist">
-         <h3>All Exercises <span class="exercise-filter-count">(Showing <span data-bind="text: all_count"></span> of <span data-bind="text: all_total"></span>)</span>
-             <span class="subheader" id="exercise-all-exercises">(<a href="#" data-bind="visible: showAll, click: toggleShowAll">Hide All</a><a href="#" data-bind="visible: !showAll(), click: toggleShowAll">Show All</a>)</span>
+        <span class="exercise-sublist" id="dashboard-all-exercises">
+         <h3>All Exercises <span class="exercise-filter-count">(Showing X of Y)</span>
+           <span class="subheader" id="exercise-all-exercises">(<a href="javascript: KnowledgeMap.toggleShowAll()" id="exercise-all-exercises-text">Show All</a>)</span>
          </h3>
-         <div id="all-exercises" data-bind="visible: showAll, template: {name: 'exercise-badge-tmpl', foreach: all}"></div>
+         <div class="exercise-content" id="dashboard-all-exercises-content"></div>
         </span>
-        <span id="exercise-no-results" data-bind="visible: (suggested_count+recent_count+all_count) == 0">No exercises match your query.</span>
+        <span id="exercise-no-results" style="display: none;">No exercises match your query.</span>
        </div>
     </div></div>
     </div>

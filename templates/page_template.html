@@ -267,38 +267,6 @@
        </div>
      </div>
     </script>
-
-    <script id="streak-bar-tmpl" type="text/html">
-      <div id="streak-bar-container" class="new">
-        <div class="streak-bar" data-bind="css: {proficient: progress >= 1, suggested: (status == 'Suggested' || (progress < 1 && progress > 0))}, attr: {title: 'Current progress: ' + progress_display}">
-          <div class="current-streak">
-            <ul class="unit-rating" data-bind="style: {width: '228px'}">
-              <li class="current-rating" data-bind="style: {width: (Math.min(1.0, progress)*228)+'px'}"></li>
-              <li class="streak-icon"></li>
-              <div data-bind="countToN: num_milestones-1, visible: num_milestones > 0">
-                <li class="level-label" data-bind="style: {left: (Math.round((index+1)*(228/(total+1))) + 1) + 'px'}""></li>
-              </div>
-              <li class="current-label" data-bind="style: {width: (Math.min(1.0, progress)*228)+'px'}"></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </script>
-
-    <script id="exercise-badge-tmpl" type="text/html">
-      <div class="exercise-badge" data-bind="fastFilter: $parent.fastFilter">
-        <div class="proficient-badge">
-          <img data-bind="attr: {src: badgeIcon}" height="80" width="76">
-          <div class="exercise-goal-icon" data-bind="visible: showBadge"><img src="/images/flag.png"></div>
-        </div>
-        <div class="energy-points-badge" data-bind="text: points"></div>
-        <div class="exercise-title">
-          <a data-bind="click: clickHandler, text: display_name" />
-        </div>
-        <span class="exercise-show simple-button action-gradient" data-id="name" style="display:none;"><img src="/images/map-target.png" title="Show in map" alt="Show in map"></span>
-        <div data-bind="template: {name: 'streak-bar-tmpl', data: $data}" />
-      </div>
-    </script>
     {%- endraw -%}
 
     <script type="text/javascript">

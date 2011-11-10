@@ -1470,10 +1470,11 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         position: absolute;
         top: 10px;
         top: 12px\9;
-        right: 23px;
+        right: 13px;
         z-index: 100;
     }
     #container #dashboard-drawer-inner {
+        position: relative;
         margin-right: 2px;
         overflow: auto;
         padding: 10px 3px 10px 5px;

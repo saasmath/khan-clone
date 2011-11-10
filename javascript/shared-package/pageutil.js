@@ -520,11 +520,6 @@ var Drawer = {
 
         $('#show-all-exercises').click(function() {Drawer.toggleAllExercises(true); return false;});
 
-        $('#dashboard-drawer .exercise-badge').click( function() {
-            window.location = $(".exercise-title a", this).attr("href");
-            return false;
-        });
-
         $('.toggle-drawer').click(function() {Drawer.toggle(); return false;});
 
         $(window).resize(function(){Drawer.resize();});
@@ -536,49 +531,8 @@ var Drawer = {
             $("#dashboard-drawer").removeClass("drawer-hoverable");
             var scroller = new iScroll('dashboard-drawer-inner', { hScroll: false, hScrollbar: false, vScrollbar: false });
         }
-        else
-        {
-            if (window.KnowledgeMap)
-            {
-                $(".exercise-badge").hover(
-                        function(){KnowledgeMap.onBadgeMouseover.apply(this);},
-                        function(){KnowledgeMap.onBadgeMouseout.apply(this);}
-                );
-                $(".exercise-edit").hover(
-                        function(){KnowledgeMap.onBadgeMouseover.apply(this);},
-                        function(){KnowledgeMap.onBadgeMouseout.apply(this);}
-                );
-                $(".exercise-show").click(KnowledgeMap.onShowExerciseClick);
-            }
-        }
 
         $('#dashboard-filter-text input[type=text]').placeholder();
-    },
-
-    toggleAllExercises: function(saveSetting) {
-
-        var fVisible = $('#all-exercises').is(':visible');
-
-        if (fVisible)
-        {
-            $('#all-exercises').slideUp(500);
-            $('#show-all-exercises').html('Show All');
-        }
-        else
-        {
-            $('#all-exercises').slideDown(500);
-            $('#show-all-exercises').html('Hide All');
-        }
-
-        if (saveSetting) {
-            $.post("/saveexpandedallexercises", {
-                "expanded": fVisible ? "0" : "1"
-            }); // Fire and forget
-        }
-    },
-
-    areExercisesVisible: function() {
-        return $('#all-exercises').is(':visible');
     },
 
     isExpanded: function() {
