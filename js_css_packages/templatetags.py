@@ -21,6 +21,28 @@ def use_compressed_packages():
 def base_name(file_name):
     return file_name[:file_name.index(".")]
 
+def get_inline_template(package_name, file_name):
+    """ Generate a string for <script> tag that contains the contents
+    of the specified template.
+    
+    This is used in debug mode so that templates can be changed without having
+    to precompile them to test.
+    Note - this does not work in production! Static files are
+    served from a different server and are not part of the main
+    package. "clienttemplates" is a symlink to get around this
+    limitation in development only.
+    
+    This logic is dependent on javascript/shared-package/templates.js
+    
+    """
+    path = "clienttemplates/%s-package/%s" % (package_name, file_name)
+    handle = open(path, 'r')
+    contents = handle.read()
+    handle.close()
+    name = base_name(file_name)
+    return ("<script type='text/x-handlerbars-template' " 
+         	"id='template_%s_%s'>%s</script>") % (package_name, name, contents)
+
 def js_package(package_name):
     if not use_compressed_packages():
         packages.set_debug(True)
@@ -33,19 +55,7 @@ def js_package(package_name):
         # In debug mode, templates are served as inline <script> tags.
         if "templates" in package:
             for file_name in package["templates"]:
-                # Note - this does not work in production! static files are
-                # served from a different server and are not part of the main
-                # package. "clienttemplates" is a symlink to get around this
-                # limitation in development only.
-                path = ("clienttemplates/%s-package/%s" %
-                        (package_name, file_name))
-                handle = open(path, 'r')
-                contents = handle.read()
-                handle.close()
-                name = base_name(file_name)
-                templates.append(("<script type='text/x-handlerbars-template' " 
-                     	          "id='template_%s'>%s</script>") %
-                    	         (name, contents))
+                templates.append(get_inline_template(package_name, file_name))
 
         list_js = []
         for file_name in package["files"]:

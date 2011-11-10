@@ -344,7 +344,7 @@ var Profile = {
 				"totalDone": totalDone
 			});
 		}
-		var template = Templates.get( "profile" );
+		var template = Templates.get( "profile.profile" );
         $("#graph-content").html( template({ "exercises": templateContext }) );
 
 		var infoHover = $("#info-hover-container")

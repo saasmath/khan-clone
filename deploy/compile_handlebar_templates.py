@@ -2,6 +2,7 @@
 import os
 import subprocess
 import sys
+import shutil
 
 def validate_env():
     """ Ensures that pre-requisites are met for compiling handlebar templates.
@@ -16,26 +17,55 @@ def validate_env():
     except subprocess.CalledProcessError:
         sys.exit("Can't find handlebars. Did you install it?")
         
-def compile_template(file_path):
-    """ Compiles a single template. """
+def compile_template(root_path, rel_path, file_name):
+    """ Compiles a single template into an output that can be used by the
+    JavaScript client.
+    
+    This logic is dependent on javascript/shared-package/templates.js
+    
+    """
     try:
-        # Append ".js" to the template name.
-        output_path = "%s/%s.js" % (os.path.dirname(file_path),
-                                    os.path.basename(file_path))
-        subprocess.call(["handlebars", "-m", "-f", output_path, file_path],
+        dir_path = os.path.join(root_path, rel_path)
+        
+        # Total hack to rename the file temporarily to be namespaced. There
+        # is no way to tell handlebars to prefix the resulting template with
+        # a namespace, so we need to rename the file temporarily.
+        qualified_name = file_name
+        while True:
+            head, tail = os.path.split(rel_path)
+            if tail:
+                qualified_name = "%s_%s" % (tail, qualified_name)
+            else:
+                break
+            rel_path = head
+        
+        input_path = os.path.join(dir_path, qualified_name)
+        shutil.copyfile(os.path.join(dir_path, file_name), input_path)
+        
+        # Append ".js" to the template name for the output name.
+        output_path = "%s.js" % os.path.join(dir_path, file_name)
+        
+        # "-m" for minified output
+        # "-f" specifies output file
+        subprocess.call(["handlebars", "-m", "-f", output_path, input_path],
                         stderr=subprocess.STDOUT,
                         stdout=subprocess.PIPE)
+        os.remove(input_path)
         print "Compiled to %s" % output_path
     except subprocess.CalledProcessError:
-        sys.exit("Error compiling %s" % file_path)
+        #sys.exit("Error compiling %s" % file_path)
+        pass
 
 def compile_templates():
     root_path = os.path.join("..", "javascript")
+    rel_path_index = len(root_path) + 1
     for dir_path, dir_names, file_names in os.walk(root_path):
         for file_name in file_names:
-            print file_name
             if file_name.endswith(".handlebars"):
-                compile_template(os.path.join(dir_path, file_name))
+                # os.path.relpath is not available until Python 2.6
+                compile_template(root_path,
+                                 dir_path[rel_path_index:],
+                                 file_name)
 
 if __name__ == "__main__":
     validate_env()
