@@ -39,8 +39,11 @@ Templates.fromScript_ = function( name ) {
  *     base name of the template file with no extension.
  */
 Templates.get = function( name ) {
-	// Canonical format for the namespaced name uses underscores internally.
-	name = name.replace( '.', '_' );
+	if ( name.indexOf( "." ) > -1 ) {
+		// Canonical format for the namespaced name uses underscores internally.
+		var parts = name.split( "." );
+		name = parts[0] + "-package_" + parts[1];
+	}
 
 	if (Templates.IS_DEBUG_) {
 		return Templates.cache_[name] ||

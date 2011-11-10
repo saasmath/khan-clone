@@ -41,7 +41,7 @@ def get_inline_template(package_name, file_name):
     handle.close()
     name = base_name(file_name)
     return ("<script type='text/x-handlerbars-template' " 
-         	"id='template_%s_%s'>%s</script>") % (package_name, name, contents)
+         	"id='template_%s-package_%s'>%s</script>") % (package_name, name, contents)
 
 def js_package(package_name):
     package = packages.javascript[package_name]
