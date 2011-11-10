@@ -44,11 +44,10 @@ def get_inline_template(package_name, file_name):
          	"id='template_%s_%s'>%s</script>") % (package_name, name, contents)
 
 def js_package(package_name):
+    package = packages.javascript[package_name]
+    base_url = (package.get("base_url") or
+                ("/javascript/%s-package" % package_name))
     if not use_compressed_packages():
-        package = packages.javascript[package_name]
-        base_url = (package.get("base_url") or
-                    ("/javascript/%s-package" % package_name))
-    
         templates = []
         
         # In debug mode, templates are served as inline <script> tags.
