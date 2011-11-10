@@ -413,7 +413,7 @@ def user_exercises_all():
         user_exercise._user_data = student
         user_exercise._user_exercise_graph = user_exercise_graph
         results.append(user_exercise)
-                
+
     return results
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])

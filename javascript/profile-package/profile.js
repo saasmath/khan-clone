@@ -243,8 +243,6 @@ var Profile = {
     },
 
     loadGraph: function(href, fNoHistoryEntry) {
-        var apiCallback = null;
-
         if (!href) return;
 
         if (this.fLoadingGraph) {
@@ -633,7 +631,7 @@ var Profile = {
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
 	 */
-	renderExercises: function(data) {
+	renderExercises: function(data, href) {
 		var templateContext = [];
 		for ( var i = 0, exercise; exercise = data[i]; i++ ) {
 			var stat = "Not started";
