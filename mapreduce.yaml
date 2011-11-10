@@ -11,7 +11,7 @@ mapreduce:
     - name: queue_name
       default: backfill-mapreduce-queue
     - name: processing_rate
-      default: 500
+      default: 350
 
 - name: BackfillCacheUserNickname
   mapper:
@@ -25,7 +25,7 @@ mapreduce:
     - name: queue_name
       default: backfill-mapreduce-queue
     - name: processing_rate
-      default: 500
+      default: 350
 
 - name: BackfillUserExerciseProgress
   mapper:
@@ -39,4 +39,4 @@ mapreduce:
     - name: queue_name
       default: backfill-mapreduce-queue
     - name: processing_rate
-      default: 500
+      default: 350
