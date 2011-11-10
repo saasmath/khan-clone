@@ -5,7 +5,6 @@ import pickle
 import re
 import simplejson
 import StringIO
-import sys
 from types import GeneratorType
 import zlib
 
@@ -311,11 +310,11 @@ class ProfilerWSGIMiddleware(object):
         self.recorder = None
         self.temporary_redirect = False
 
-        if config.should_profile(environ):
+        # Never profile calls to the profiler itself to avoid endless recursion.
+        if config.should_profile(environ) and not environ.get("PATH_INFO", "").startswith("/gae_mini_profiler/"):
 
             # Set a random ID for this request so we can look up stats later
             import base64
-            import os
             request_id = base64.urlsafe_b64encode(os.urandom(5))
 
             self.add_handler()

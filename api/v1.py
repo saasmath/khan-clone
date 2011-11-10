@@ -1,5 +1,4 @@
 import copy
-import datetime
 import logging
 
 from flask import request, current_app
@@ -13,8 +12,10 @@ from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, reset_streak
 from phantom_users.phantom_util import api_create_phantom
-import util
 import notifications
+from gae_bingo.gae_bingo import bingo, ab_test
+from gae_bingo.models import ConversionTypes
+from autocomplete import video_title_dicts, playlist_title_dicts
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -164,6 +165,13 @@ def exercises():
 def exercises(exercise_name):
     return models.Exercise.get_by_name(exercise_name)
 
+@route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
+@jsonp
+@jsonify
+def exercise_info(exercise_name):
+    exercise = models.Exercise.get_by_name(exercise_name)
+    return exercise.followup_exercises() if exercise else []
+
 @route("/api/v1/exercises/<exercise_name>/videos", methods=["GET"])
 @jsonp
 @jsonify
@@ -231,23 +239,29 @@ def replace_playlist_values(structure, playlist_dict):
 
 # Return specific user data requests from request
 # IFF currently logged in user has permission to view
-def get_visible_user_data_from_request(disable_coach_visibility = False):
+def get_visible_user_data_from_request(disable_coach_visibility=False,
+                                       user_data=None):
 
-    user_data = models.UserData.current()
+    user_data = user_data or models.UserData.current()
     if not user_data:
         return None
 
     if request.request_string("email"):
         user_data_student = request.request_user_data("email")
-	if user_data_student.user_email == user_data.user_email:
-	    # if email in request is that of the current user, simply return the
-	    # current user_data, no need to check permission to view
-	    return user_data
 
-        if user_data_student and (user_data.developer or (not disable_coach_visibility and user_data_student.is_coached_by(user_data))):
+        if user_data_student and user_data_student.user_email == user_data.user_email:
+            # if email in request is that of the current user, simply return the
+            # current user_data, no need to check permission to view
+            return user_data
+
+        if (user_data_student and
+                (user_data.developer or
+                        (not disable_coach_visibility and
+                         user_data_student.is_coached_by(user_data)))):
             return user_data_student
         else:
             return None
+
     else:
         return user_data
 
@@ -291,7 +305,7 @@ def filter_query_by_request_dates(query, property):
     if request.request_string("dt_end"):
         try:
             dt_end = request.request_date_iso("dt_end")
-            query.filter("%s <=" % property, dt_end)
+            query.filter("%s <" % property, dt_end)
         except ValueError:
             raise ValueError("Invalid date format sent to dt_end, use ISO 8601 Combined.")
 
@@ -340,8 +354,6 @@ def user_videos_specific(youtube_id):
 @jsonify
 def log_user_video(youtube_id):
     user_data = models.UserData.current()
-
-    points = 0
     video_log = None
 
     if user_data and youtube_id:
@@ -359,38 +371,50 @@ def log_user_video(youtube_id):
     return video_log
 
 @route("/api/v1/user/exercises", methods=["GET"])
-@oauth_required()
+@oauth_optional()
 @jsonp
 @jsonify
 def user_exercises_all():
+    """ Retrieves the list of exercise models wrapped inside of an object that
+    gives information about what sorts of progress and interaction the current
+    user has had with it.
+    
+    Defaults to a pre-phantom users, in which case the encasing object is
+    skeletal and contains little information.
+    
+    """
     user_data = models.UserData.current()
 
-    if user_data:
-        user_data_student = get_visible_user_data_from_request()
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+    student = get_visible_user_data_from_request(user_data=user_data)
+    exercises = models.Exercise.get_all_use_cache()
+    user_exercise_graph = models.UserExerciseGraph.get(student)
+    if student.is_pre_phantom:
+        user_exercises = []
+    else:
+        user_exercises = (models.UserExercise.all().
+                          filter("user =", student.user).
+                          fetch(10000))
 
-        if user_data_student:
-            exercises = models.Exercise.get_all_use_cache()
-            user_exercise_graph = models.UserExerciseGraph.get(user_data_student)
-            user_exercises = models.UserExercise.all().filter("user =", user_data_student.user).fetch(10000)
+    user_exercises_dict = dict((user_exercise.exercise, user_exercise)
+                               for user_exercise in user_exercises)
 
-            exercises_dict = dict((exercise.name, exercise) for exercise in exercises)
-            user_exercises_dict = dict((user_exercise.exercise, user_exercise) for user_exercise in user_exercises)
-
-            for exercise_name in exercises_dict:
-                if not exercise_name in user_exercises_dict:
-                    user_exercise = models.UserExercise()
-                    user_exercise.exercise = exercise_name
-                    user_exercise.user = user_data_student.user
-                    user_exercises_dict[exercise_name] = user_exercise
-
-            for exercise_name in user_exercises_dict:
-                user_exercises_dict[exercise_name].exercise_model = exercises_dict[exercise_name]
-                user_exercises_dict[exercise_name]._user_data = user_data_student
-                user_exercises_dict[exercise_name]._user_exercise_graph = user_exercise_graph
-
-            return user_exercises_dict.values()
-
-    return None
+    results = []
+    for exercise in exercises:
+        name = exercise.name
+        if name not in user_exercises_dict:
+            user_exercise = models.UserExercise()
+            user_exercise.exercise = name
+            user_exercise.user = student.user
+        else:
+            user_exercise = user_exercises_dict[name]
+        user_exercise.exercise_model = exercise
+        user_exercise._user_data = student
+        user_exercise._user_exercise_graph = user_exercise_graph
+        results.append(user_exercise)
+                
+    return results
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
 @oauth_optional()
@@ -417,6 +441,46 @@ def user_exercises_specific(exercise_name):
             return user_exercise
 
     return None
+
+def user_followup_exercises(exercise_name):
+    user_data = models.UserData.current()
+
+    if user_data and exercise_name:
+
+        user_data_student = get_visible_user_data_from_request()
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
+        user_exercises = models.UserExercise.all().filter("user =", user_data_student.user).fetch(10000)
+        followup_exercises = models.Exercise.get_by_name(exercise_name).followup_exercises()
+
+        followup_exercises_dict = dict((exercise.name, exercise) for exercise in followup_exercises)
+        user_exercises_dict = dict((user_exercise.exercise, user_exercise) for user_exercise in user_exercises
+                                                                            if user_exercise in followup_exercises)
+
+        # create user_exercises that haven't been attempted yet
+        for exercise_name in followup_exercises_dict:
+            if not exercise_name in user_exercises_dict:
+                user_exercise = models.UserExercise()
+                user_exercise.exercise = exercise_name
+                user_exercise.user = user_data_student.user
+                user_exercises_dict[exercise_name] = user_exercise
+
+        for exercise_name in user_exercises_dict:
+            if exercise_name in followup_exercises_dict:
+                user_exercises_dict[exercise_name].exercise_model = followup_exercises_dict[exercise_name]
+                user_exercises_dict[exercise_name]._user_data = user_data_student
+                user_exercises_dict[exercise_name]._user_exercise_graph = user_exercise_graph
+
+        return user_exercises_dict.values()
+
+    return None
+
+@route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def api_user_followups(exercise_name):
+    return user_followup_exercises(exercise_name)
 
 @route("/api/v1/user/playlists", methods=["GET"])
 @oauth_required()
@@ -519,10 +583,29 @@ def attempt_problem_number(exercise_name, problem_number):
                 # and the above pts-original points gives a wrong answer
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
-            add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_exercise_graph.states(exercise.name)),
-                "points_earned" : { "points" : points_earned, "point_display" : user_data.point_display }
-            })
+            user_states = user_exercise_graph.states(exercise.name)
+            sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
+            
+            action_results = {
+                "exercise_state": {
+                    "sees_graph" :  sees_graph,
+                    "state" : [state for state in user_states if user_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states, sees_graph) ,
+                },
+                "points_earned" : { "points" : points_earned },
+                "attempt_correct" : request.request_bool("complete")
+            };
+
+            if user_states["proficient"]:
+                followups = user_followup_exercises(exercise_name)
+
+                if followups:
+                    action_results["exercise_state"]["followups"] = followups
+                else :
+                    followups = [models.Exercise.get_by_name(exercise) for exercise in user_data.suggested_exercises[:3]]
+                    action_results["exercise_state"]["followups"] = followups
+
+            add_action_results(user_exercise, action_results)
 
             return user_exercise
 
@@ -535,6 +618,7 @@ def attempt_problem_number(exercise_name, problem_number):
 @jsonp
 @jsonify
 def hint_problem_number(exercise_name, problem_number):
+    
     user_data = models.UserData.current()
 
     if user_data:
@@ -543,25 +627,38 @@ def hint_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            attempt_number = request.request_int("attempt_number")
+            count_hints = request.request_int("count_hints")
+
             user_exercise, user_exercise_graph = attempt_problem(
                     user_data,
                     user_exercise,
                     problem_number,
-                    request.request_int("attempt_number"),
+                    attempt_number,
                     request.request_string("attempt_content"),
                     request.request_string("sha1"),
                     request.request_string("seed"),
                     request.request_bool("complete"),
-                    request.request_int("count_hints"),
+                    count_hints,
                     int(request.request_float("time_taken")),
                     request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
 
+            user_states = user_exercise_graph.states(exercise.name)
             add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_exercise_graph.states(exercise.name)),
+                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                "exercise_state": {
+                    "state" : [state for state in user_states if user_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                }
             })
+
+            # A hint will count against the user iff they haven't attempted the question yet and it's their first hint
+            if attempt_number == 0 and count_hints == 1:
+                bingo("hints_costly_hint")
+                bingo("hints_costly_hint_binary")
 
             return user_exercise
 
@@ -715,3 +812,41 @@ def remove_coworker():
             user_data_coworker.put()
 
     return True
+
+@route("/api/v1/autocomplete", methods=["GET"])
+@jsonp
+@jsonify
+def autocomplete():
+
+    video_results = []
+    playlist_results = []
+
+    query = request.request_string("q", default="").strip().lower()
+
+    if query:
+
+        max_results_per_type = 10
+
+        video_results = filter(lambda video_dict: query in video_dict["title"].lower(), video_title_dicts())
+        playlist_results = filter(lambda playlist_dict: query in playlist_dict["title"].lower(), playlist_title_dicts())
+
+        video_results = sorted(video_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
+        playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
+
+    return {
+            "query": query, 
+            "videos": video_results, 
+            "playlists": playlist_results
+    }
+
+@route("/api/v1/dev/problems", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def problem_logs():
+    problem_log_query = models.ProblemLog.all()
+    filter_query_by_request_dates(problem_log_query, "time_done")
+    problem_log_query.order("time_done")
+
+    return problem_log_query.fetch(request.request_int("max", default=500))

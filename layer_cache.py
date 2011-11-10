@@ -5,8 +5,15 @@ import pickle
 from google.appengine.api import memcache
 from google.appengine.ext import db
 
-import cachepy
 from app import App
+
+if App.is_dev_server:
+    # cachepy disables itself during development presumably to avoid confusion.
+    # Instead, alias it to request_cache. This means individual requests will
+    # behave more like production, but the cache will be flushed after a request.
+    import request_cache as cachepy
+else:
+    import cachepy
 
 # layer_cache provides an easy way to cache the result of functions across requests.
 # layer_cache uses cachepy's in-memory storage, memcache, and the datastore.
@@ -70,6 +77,11 @@ from app import App
 #
 # Persist the cached values across different uploaded app verions (disabled by default):
 # @layer_cache.cache(... persist_across_app_versions=True)
+#
+# If key has expired or is no longer in the current cache and throws an error when trying to be recomputed, then try getting resource from permanent key that is not set to expire
+# @layer_cache.cache(... expiration=60, permanent_cache_key = lambda object: "permanent_layer_cache_key_for_object_%s" % object.id())
+
+
 
 DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 25 # Expire after 25 days by default
 
@@ -79,24 +91,25 @@ class Layers:
     InAppMemory = 4
 
 def cache(
-        expiration=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
+        expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
         layer = Layers.Memcache | Layers.InAppMemory,
         persist_across_app_versions = False):
     def decorator(target):
         key = "__layer_cache_%s.%s__" % (target.__module__, target.__name__)
         def wrapper(*args, **kwargs):
-            return layer_cache_check_set_return(target, lambda *args, **kwargs: key, expiration, layer, persist_across_app_versions, *args, **kwargs)
+            return layer_cache_check_set_return(target, lambda *args, **kwargs: key, expiration, layer, persist_across_app_versions, None, *args, **kwargs)
         return wrapper
     return decorator
 
 def cache_with_key_fxn(
         key_fxn,
-        expiration=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
+        expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
         layer = Layers.Memcache | Layers.InAppMemory,
-        persist_across_app_versions = False):
+        persist_across_app_versions = False,
+        permanent_key_fxn = None):
     def decorator(target):
         def wrapper(*args, **kwargs):
-            return layer_cache_check_set_return(target, key_fxn, expiration, layer, persist_across_app_versions, *args, **kwargs)
+            return layer_cache_check_set_return(target, key_fxn, expiration, layer, persist_across_app_versions, permanent_key_fxn, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -106,22 +119,11 @@ def layer_cache_check_set_return(
         expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
         layer = Layers.Memcache | Layers.InAppMemory,
         persist_across_app_versions = False,
+        permanent_key_fxn = None,
         *args,
         **kwargs):
 
-    bust_cache = False
-    if "bust_cache" in kwargs:
-        bust_cache = kwargs["bust_cache"]
-        # delete from kwargs so it's not passed to the target
-        del kwargs["bust_cache"]
-
-    key = key_fxn(*args, **kwargs)
-    namespace = App.version
-
-    if persist_across_app_versions:
-        namespace = None
-
-    if not bust_cache:
+    def get_cached_result(key, namespace, expiration, layer):
 
         if layer & Layers.InAppMemory:
             result = cachepy.get(key)
@@ -146,15 +148,7 @@ def layer_cache_check_set_return(
                     memcache.set(key, result, time=expiration, namespace=namespace)
                 return result
 
-    result = target(*args, **kwargs)
-
-    # In case the key's value has been changed by target's execution
-    key = key_fxn(*args, **kwargs)
-
-    if isinstance(result, UncachedResult):
-        # Don't cache this result, just return it
-        result = result.result
-    else:
+    def set_cached_result(key, namespace, expiration, layer, result):
         # Cache the result
         if layer & Layers.InAppMemory:
             cachepy.set(key, result, expiry=expiration)
@@ -165,6 +159,65 @@ def layer_cache_check_set_return(
 
         if layer & Layers.Datastore:
             KeyValueCache.set(key, result, time=expiration, namespace=namespace)
+
+
+    bust_cache = False
+    if "bust_cache" in kwargs:
+        bust_cache = kwargs["bust_cache"]
+        # delete from kwargs so it's not passed to the target
+        del kwargs["bust_cache"]
+
+    key = key_fxn(*args, **kwargs)
+    namespace = App.version
+
+    if persist_across_app_versions:
+        namespace = None
+
+    if not bust_cache:
+
+        result = get_cached_result(key, namespace, expiration, layer)
+        if result is not None:
+            return result
+
+    try:
+        result = target(*args, **kwargs)
+
+    # an error happened trying to recompute the result, see if there is a value for it in the permanent cache
+    except Exception, e:
+        import traceback, StringIO
+        fp = StringIO.StringIO()
+        traceback.print_exc(file=fp)
+        logging.info(fp.getvalue())
+
+        if permanent_key_fxn is not None:
+            permanent_key = permanent_key_fxn(*args, **kwargs)
+
+            result = get_cached_result(permanent_key, namespace, expiration, layer)
+
+            if result is not None:
+                logging.info("resource is not available, restoring from permanent cache")
+
+                # In case the key's value has been changed by target's execution
+                key = key_fxn(*args, **kwargs)
+
+                #retreived item from permanent cache - save it to the more temporary cache and then return it
+                set_cached_result(key, namespace, expiration, layer, result)
+                return result
+
+        # could not retrieve item from a permanent cache, raise the error on up
+        raise e
+
+    if isinstance(result, UncachedResult):
+        # Don't cache this result, just return it
+        result = result.result
+    else:
+        if permanent_key_fxn is not None:
+            permanent_key = permanent_key_fxn(*args, **kwargs)
+            set_cached_result(permanent_key, namespace, 0, layer, result)
+
+        # In case the key's value has been changed by target's execution
+        key = key_fxn(*args, **kwargs)
+        set_cached_result(key, namespace, expiration, layer, result)
 
     return result
 

@@ -1,3 +1,6 @@
+### Loads exercise videos information from production and posts it to the
+### specified test (defaults to localhost) server.
+
 DOMAIN = ARGV.length > 0 ? ARGV[0].gsub(/^\d+$/, "http://127.0.0.1:\\0") : "http://127.0.0.1:8080"
 
 ###
@@ -47,11 +50,20 @@ resp = Net::HTTP.get_response(exercise_endpoint)
     params["cover-#{i}"] = cover
   end
 
+  # Exercise-video associations
+  exercise_video_endpoint = URI.parse("http://www.khanacademy.org/api/v1/exercises/#{name}/videos")
+  resp = Net::HTTP.get_response(exercise_video_endpoint)
+  @exercise_videos = JSON.parse(resp.body)
+
+  @exercise_videos.each_with_index do |exv, exvi|
+    params["video-#{exvi}-readable"] = exv["readable_id"]
+  end
+
   qs = Mechanize::Util.build_query_string(params)
   begin
     # this will toss an exception sometimes
     @page = @agent.get(DOMAIN + "/updateexercise?#{qs}")
-    puts " %3d of #{@exercises.length}: #{name}" % (exi + 1)
+    puts " %3d of #{@exercises.length}: #{name} (#{@exercise_videos.length} videos)" % (exi + 1)
   rescue
     puts "! Problem with posting #{name}"
   end
