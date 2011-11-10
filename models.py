@@ -438,18 +438,21 @@ class UserExercise(db.Model):
         if self.use_streak_model():
             self._update_progress_from_streak_model(correct)
 
+    def get_progress_from_streak(self):
+        if self.summative:
+            return float(self.streak) / self.required_streak
+        else:
+            return self.streak_start + (
+                float(self.streak) / self.required_streak * (1.0 - self.streak_start))
+
     @clamp(0.0, 1.0)
     def _get_progress_from_current_state(self):
 
         if self.use_streak_model():
             if self._progress is not None:
                 return self._progress
-
-            if self.summative:
-                return float(self.streak) / self.required_streak
             else:
-                return self.streak_start + (
-                    float(self.streak) / self.required_streak * (1.0 - self.streak_start))
+                return self.get_progress_from_streak()
 
         if self.total_correct == 0:
             return 0.0
