@@ -438,6 +438,7 @@ class UserExercise(db.Model):
         if self.use_streak_model():
             self._update_progress_from_streak_model(correct)
 
+    @clamp(0.0, 1.0)
     def get_progress_from_streak(self):
         if self.summative:
             return float(self.streak) / self.required_streak
