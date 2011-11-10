@@ -213,7 +213,7 @@
     {#- goal book -#}
     {%- raw -%}
     <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal pulled {{if active}}active{{/if}} {{if progress >= 1}}complete{{/if}}" data-id="${id}">
+        <div class="goal pulled {{if active}}active{{/if}} {{if progress >= 1}}recently-completed{{/if}}" data-id="${id}">
             <p class="goal-description pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progressStr}%</span></p>
             <ul class="inline-list objective-list">
             {{each objectives}}
@@ -241,7 +241,6 @@
             <div id="goalbook-controls">
                 <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
                 <a id="btn-goal-history" class="simple-button action-gradient seethrough" href="/profile?k#/?graph_url=/api/v1/user/goals">Goal History</a>
-                <a class="simple-button action-gradient" href="#" onclick="$('#goals-nav-container .goal').first().addClass('recently-completed');$('.recently-completed').children().each( function () { $(this).css('overflow', 'hidden').css('height', $(this).height()); }).end().animate({width: $('#btn-goal-history').width(), left: $('#btn-goal-history').position().left } ).animate({ top: $('#btn-goal-history').position().top - $('.recently-completed').position().top, height: $('#btn-goal-history').height(), height: '0', opacity: 'toggle' }, 'easeInOutCubic', function () {$(this).remove();}).end().find('#btn-goal-history').animate({backgroundColor: 'orange'}).animate({backgroundColor: '#ddd'});">Shrinky Dink</a>
                 <a class="hide-goals">Close <img class="close-cross" src="/images/circled_cross.png"></a>
             </div>
         </div>
