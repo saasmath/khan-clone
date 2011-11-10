@@ -160,7 +160,7 @@ class Alternatives(RequestHandler):
 
             if experiment.canonical_name not in chosen_alternatives:
                 alternatives = bingo_cache.get_alternatives(experiment_name)
-                alternative = modulo_choose(experiment_name, alternatives, id)
+                alternative = modulo_choose(experiment.hashable_name, alternatives, id)
                 chosen_alternatives[experiment.canonical_name] = str(alternative.content)
 
         context = {
