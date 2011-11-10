@@ -118,17 +118,22 @@ var GaeMiniProfiler = {
             }
         };
 
-        var initLevel = 30;
-        $('#slider .control').slider({
-            value: initLevel,
-            min: 10,
-            max: 50,
-            step: 10,
-            range: 'min',
-            slide: function( event, ui ) {
-                toggleLogRows(ui.value);
-            }
-        });
+        var initLevel = 10;
+
+        if ($('#slider .control').slider) {
+            initLevel = 30;
+            $('#slider .control').slider({
+                value: initLevel,
+                min: 10,
+                max: 50,
+                step: 10,
+                range: 'min',
+                slide: function( event, ui ) {
+                    toggleLogRows(ui.value);
+                }
+            });
+        }
+
         toggleLogRows(initLevel);
     },
 

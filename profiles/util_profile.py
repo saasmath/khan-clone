@@ -1,16 +1,12 @@
 import datetime
-import logging
-import gc
 import urllib
-
-from google.appengine.api import users
 
 from profiles import templatetags
 import request_handler
 import util
-import user_util
 import models
 import consts
+from api.auth.xsrf import ensure_xsrf_cookie
 from badges import util_badges
 from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
@@ -130,24 +126,33 @@ class ViewClassProfile(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
+
+    @ensure_xsrf_cookie
     def get(self):
         student = UserData.current() or UserData.pre_phantom()
 
         user_override = self.request_user_data("student_email")
         if user_override and user_override.key_email != student.key_email:
             if not user_override.is_visible_to(student):
-                # If current user isn't an admin or student's coach, they can't look at anything other than their own profile.
+                # If current user isn't an admin or student's coach, they can't
+                # look at anything other than their own profile.
                 self.redirect("/profile?k")
                 return
             else:
                 # Allow access to this student's profile
                 student = user_override
         user_badges = util_badges.get_user_badges(student)
-        selected_graph_type = self.request_string("selected_graph_type") or ActivityGraph.GRAPH_TYPE
-        initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (selected_graph_type, urllib.quote(student.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+        selected_graph_type = (self.request_string("selected_graph_type") or
+                               ActivityGraph.GRAPH_TYPE)
+        initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (
+                selected_graph_type,
+                urllib.quote(student.email),
+                urllib.unquote(self.request_string("graph_query_params",
+                                                   default="")))
         tz_offset = self.request_int("tz_offset", default=0)
 
         template_values = {
+            'student_email': student.email,
             'student_nickname': student.nickname,
             'selected_graph_type': selected_graph_type,
             'initial_graph_url': initial_graph_url,

@@ -135,22 +135,21 @@ class ControlExperiment(RequestHandler):
         self.response.headers["Content-Type"] = "application/json"
         self.response.out.write(jsonify(True))
 
-class AlternativesForIdentity(RequestHandler):
+class Alternatives(RequestHandler):
 
     def get(self):
 
         if not can_control_experiments():
             return
 
-        user_id = self.request.get("user_id")
-        if user_id:
-            id = retrieve_identity(user_id)
+        query = self.request.get("query")
+        if query:
+            id = retrieve_identity(query)
         else:
             id = identity()
 
         if not id:
-            self.response.out.write("Error getting identity.")
-            return
+            raise Exception("Error getting identity for query: %s" % str(query))
         
         bingo_cache = BingoCache.get()
 
@@ -164,5 +163,10 @@ class AlternativesForIdentity(RequestHandler):
                 alternative = modulo_choose(experiment_name, alternatives, id)
                 chosen_alternatives[experiment.canonical_name] = str(alternative.content)
 
+        context = {
+            "identity": id,
+            "alternatives": chosen_alternatives,
+        }
+
         self.response.headers["Content-Type"] = "application/json"
-        self.response.out.write(jsonify([str(id), chosen_alternatives]))
+        self.response.out.write(jsonify(context))

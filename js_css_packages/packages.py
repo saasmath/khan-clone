@@ -91,6 +91,7 @@ javascript = {
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
             "utils/probability.js",
