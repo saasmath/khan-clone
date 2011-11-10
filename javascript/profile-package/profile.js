@@ -10,6 +10,7 @@ var Profile = {
     email: null,  // Filled in by the template after script load.
     fLoadingGraph: false,
     fLoadedGraph: false,
+    userGoalsHref: '',
 
     init: function() {
 
@@ -315,13 +316,13 @@ var Profile = {
                     Throbber.hide();
 
                     $.each(Goals.all, function(idx, other_goal) {
-                        if (goal.id == other_goal.id) {
+                        if (id == other_goal.id) {
                             Goals.all.splice(idx, 1);
                             return false;
                         }
                     });
                     updateGoals(Goals.all);
-                    Profile.loadGraph(href);
+                    Profile.loadGraph(Profile.userGoalsHref);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     // TomY TODO - report error
@@ -362,6 +363,8 @@ var Profile = {
             $(this).find(".goal-controls").hide();
             $(this).find(".goal-description .summary-light").show();
         });
+
+        Profile.userGoalsHref = href;
     },
 
     renderStudentGoals: function(data, href) {
