@@ -36,8 +36,6 @@ def get_javascript():
                 "goals.js",
                 "handlebars.js" if _debug else "handlebars.vm.js",
                 "templates.js",
-                "knockout-latest.min.js",
-                "knockout-util.js",
             ]
         },
         "video": {
