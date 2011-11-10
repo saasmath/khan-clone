@@ -45,8 +45,7 @@ def get_inline_template(package_name, file_name):
 
 def js_package(package_name):
     if not use_compressed_packages():
-        packages.set_debug(True)
-        package = packages.get_javascript()[package_name]
+        package = packages.javascript[package_name]
         base_url = (package.get("base_url") or
                     ("/javascript/%s-package" % package_name))
     
@@ -66,8 +65,7 @@ def js_package(package_name):
         return "<script type='text/javascript' src='%s/%s'></script>" % (util.static_url(base_url), package["hashed-filename"])
 
 def css_package(package_name):
-    packages.set_debug(not use_compressed_packages())
-    package = packages.get_stylesheets()[package_name]
+    package = packages.stylesheets[package_name]
     base_url = package.get("base_url") or "/stylesheets/%s-package" % package_name
 
     list_css = []
@@ -76,13 +74,13 @@ def css_package(package_name):
         for filename in package["files"]:
             list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
                 % (base_url, filename))
-    elif package_name+'-non-ie' not in packages.get_stylesheets():
+    elif package_name+'-non-ie' not in packages.stylesheets:
         list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
             % (util.static_url(base_url), package["hashed-filename"]))
     else:
         # Thank you Jammit (https://github.com/documentcloud/jammit) for the
         # conditional comments.
-        non_ie_package = packages.get_stylesheets()[package_name+'-non-ie']
+        non_ie_package = packages.stylesheets[package_name+'-non-ie']
 
         list_css.append("<!--[if (!IE)|(gte IE 8)]><!-->")
 
