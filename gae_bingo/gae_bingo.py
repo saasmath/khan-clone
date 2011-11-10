@@ -9,6 +9,7 @@ from google.appengine.api import memcache
 from .cache import BingoCache, bingo_and_identity_cache
 from .models import create_experiment_and_alternatives, ConversionTypes
 from .identity import identity
+from .config import can_control_experiments
 
 def ab_test(canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary, family_name = None):
 
@@ -210,8 +211,8 @@ def resume_experiment(canonical_name):
 
 def find_alternative_for_user(experiment_hashable_name, alternatives):
 
-    if os.environ["SERVER_SOFTWARE"].startswith('Development'):
-        # If dev server, allow possible override of alternative
+    if can_control_experiments():
+        # If gae_bingo administrator, allow possible override of alternative
         qs_dict = cgi.parse_qs(os.environ.get("QUERY_STRING") or "")
 
         alternative_number_override = qs_dict.get("gae_bingo_alternative_number")
