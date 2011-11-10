@@ -37,7 +37,7 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 
     return shared_jinja.get().render_template("column_major_order_videos.html", **template_values)
 
-def exercise_message(exercise, coaches, exercise_states, sees_graph):
+def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
     
     This is called each time a problem is either attempted or a hint is called (via /api/v1.py) and
