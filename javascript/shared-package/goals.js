@@ -220,7 +220,32 @@ var justWorkedOnObjective = function(newGoal, newObj) {
 };
 var justFinishedGoal = function(goal) {
     console.log("Just finished goal", goal);
-    $("#goals-congrats").text('Just finished goal!').show().fadeOut(3000);
+    showGoals();
+    var recentlyCompleted = $('.recently-completed');
+    var btnGoalHistory =$('#btn-goal-history');
+    recentlyCompleted.children().each( 
+        function () { 
+            $(this).css('overflow', 'hidden').css('height', $(this).height()); 
+    }).end()
+    .delay(500)
+    .animate({
+        width: btnGoalHistory.width(), 
+        left: btnGoalHistory.position().left 
+    }).animate({ 
+        top: btnGoalHistory.position().top - recentlyCompleted.position().top, 
+        height: '0', 
+        opacity: 'toggle' 
+    },
+    'easeInOutCubic', 
+    function () {
+        $(this).remove();
+    }).end()
+    .find('#btn-goal-history').animate({
+        backgroundColor: 'orange'
+    }).animate({
+        backgroundColor: '#ddd'
+    });
+    //todo - also remove the goal from the model
 };
 var justFinishedObjective = function(newGoal, newObj) {
     console.log("Just finished objective", newObj);
