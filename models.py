@@ -28,6 +28,8 @@ from topics_list import all_topics_list
 import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id
+import simplejson as json
+from urllib import urlencode, urlopen
 
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
@@ -978,6 +980,10 @@ class Video(Searchable, db.Model):
     download_version = db.IntegerProperty(default = 0)
     CURRENT_DOWNLOAD_VERSION = 2
 
+    # latest version of subtitles, stored in a raw form. Use Video.parsed_subtitles()
+    subtitles = db.TextProperty()
+    subtitles_updated = db.DateTimeProperty()
+
     _serialize_blacklist = ["download_version", "CURRENT_DOWNLOAD_VERSION"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
@@ -1080,6 +1086,29 @@ class Video(Searchable, db.Model):
     @layer_cache.cache(expiration=3600)
     def approx_count():
         return int(Setting.count_videos()) / 100 * 100
+
+    def update_subtitles(self):
+        qs = {
+            'video_url': self.youtube_url,
+            'language' : 'en',
+        }
+        url = 'http://www.universalsubtitles.org/api/1.0/subtitles?' + urlencode(qs)
+
+        try:
+            result = urlopen(url)
+            self.subtitles = unicode(result.read(), encoding='utf8')
+            result.close()
+            return self.subtitles
+        except:
+            # something went wrong. We don't really care what, but return None
+            return None
+
+    def parsed_subtitles(self):
+        subs = json.loads(self.subtitles)
+        # filter out any blank lines (why do they exist?)
+        subs = [s for s in subs if s['text'].strip()]
+        return subs
+
 
 class Playlist(Searchable, db.Model):
 
@@ -1578,11 +1607,19 @@ class VideoPlaylist(db.Model):
     _PLAYLIST_VIDEO_KEY_FORMAT = "VideoPlaylist_Playlists_for_Video_%s"
 
     @staticmethod
-    def get_cached_videos_for_playlist(playlist, limit=500):
+    def get_cached_videos_for_playlist_bust(playlist):
+        key, namespace = VideoPlaylist.get_cached_videos_for_playlist_key(playlist)
+        memcache.delete(key, namespace=namespace)
 
+    @staticmethod
+    def get_cached_videos_for_playlist_key(playlist, limit=500):
         key = VideoPlaylist._VIDEO_PLAYLIST_KEY_FORMAT % playlist.key()
         namespace = str(App.version) + "_" + str(Setting.cached_library_content_date())
+        return key, namespace
 
+    @staticmethod
+    def get_cached_videos_for_playlist(playlist, limit=500):
+        key, namespace = VideoPlaylist.get_cached_videos_for_playlist_key(playlist, limit)
         videos = memcache.get(key, namespace=namespace)
 
         if not videos:
