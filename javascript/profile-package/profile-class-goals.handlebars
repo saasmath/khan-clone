@@ -2,13 +2,13 @@
   <div id="class-goal-filter-desc"></div>
   <div id="class-student-goal">
   {{#each rowData}}
-    <div>
+    <div class="goal-row" data-id="{{rowID}}">
       <div class="student-name"><a href="{{ student.profile_url }}">{{ student.nickname }}</a>
-        {{#if student.goal }}
-        <span data-bind="visible: $parent.show_counts">({{ goal_idx }}/{{ student.goal_count }})</span>
+        {{#if goal }}
+        <span class="goal-count">({{ goal_idx }}/{{ student.goal_count }})</span>
         <div>
-          <div class="goal-start-time" data-bind="visible: !$root.show_updated()">Started {{ goal.created_ago }}</div>
-          <div class="goal-update-time" data-bind="visible: $root.show_updated()">Updated {{ goal.updated_ago }}</div>
+          <div class="goal-start-time">Started {{ goal.created_ago }}</div>
+          <div class="goal-update-time">Updated {{ goal.updated_ago }}</div>
         </div>
         {{/if}}
       </div>
@@ -16,7 +16,7 @@
         <ul class="inline-list objective-list">
         {{#each goal.objectives}}
           <li style="width: {{../goal.objectiveWidth}}%">
-            <a class="objective simple-button action-gradient exercise-color seethrough {{ statusCSS }} {{ typeCSS }}" href="{{ url }}" data-progress="{{ progress }}">{{ description }}</a>
+            <a data-id="{{objectiveID}}" class="objective simple-button action-gradient exercise-color seethrough {{ statusCSS }} {{ typeCSS }}" href="{{ url }}" data-progress="{{ progress }}">{{ description }}</a>
           </li>
         {{/each}}
         </ul>
