@@ -29,6 +29,7 @@ import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
+from decorators import clamp
 
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
@@ -295,12 +296,6 @@ class Exercise(db.Model):
             exercise_dict[fxn_key(exercise)] = exercise
         return exercise_dict
 
-def clamp(min_val, max_val):
-    def decorator(target_fn):
-        def wrapped(*arg, **kwargs):
-            return sorted((min_val, target_fn(*arg, **kwargs), max_val))[1]
-        return wrapped
-    return decorator
 
 class UserExercise(db.Model):
 
