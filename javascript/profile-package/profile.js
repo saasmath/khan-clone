@@ -345,7 +345,7 @@ var Profile = {
 			});
 		}
 		var template = Templates.get( "profile" );
-        $("#graph-content").html( 'template: ' + template({ "exercises": templateContext }) );
+        $("#graph-content").html( template({ "exercises": templateContext }) );
 
 		var infoHover = $("#info-hover-container")
 		var lastHoverTime;
