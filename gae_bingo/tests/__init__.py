@@ -49,6 +49,8 @@ class RunStep(RequestHandler):
             v = self.end_and_choose()
         elif step == "persist":
             v = self.persist()
+        elif step == "flush_hippo_counts_memcache":
+            v = self.flush_hippo_counts_memcache()
         elif step == "flush_bingo_memcache":
             v = self.flush_bingo_memcache()
         elif step == "flush_all_memcache":
@@ -115,6 +117,16 @@ class RunStep(RequestHandler):
     def persist(self):
         BingoCache.get().persist_to_datastore()
         BingoIdentityCache.persist_buckets_to_datastore()
+        return True
+
+    def flush_hippo_counts_memcache(self):
+        experiments, alternative_lists = BingoCache.get().experiments_and_alternatives_from_canonical_name("hippos")
+
+        for alternatives in alternative_lists:
+            for alternative in alternatives:
+                memcache.delete("%s:conversions" % alternative.key_for_self())
+                memcache.delete("%s:participants" % alternative.key_for_self())
+
         return True
 
     def flush_bingo_memcache(self):

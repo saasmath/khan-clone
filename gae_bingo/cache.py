@@ -91,6 +91,7 @@ class BingoCache(object):
                 # When persisting to datastore, we want to store the most recent value we've got
                 alternative_model.load_latest_counts()
                 alternative_model.put()
+                self.update_alternative(alternative_model)
 
         # When periodically persisting to datastore, also make sure memcache
         # has relatively up-to-date participant/conversion counts for each alternative.
