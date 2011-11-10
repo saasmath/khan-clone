@@ -329,6 +329,25 @@ var createSimpleGoalDialog = {
     }
 };
 
+function goalCreateViewModel(goalModel) {
+    var goalViewModel = $.extend({}, goalModel);
+
+    goalViewModel.objectiveWidth = 100/goalModel.objectives.length;
+    
+    $.each(goalViewModel.objectives, function(idx2, objective) {
+        objective.progressPercentage = (objective.progress*100).toFixed(0);
+
+        objective.statusCSS = objective.status ? objective.status : "not-started";
+
+        if (objective.type == 'GoalObjectiveExerciseProficiency' || objective.type == 'GoalObjectiveAnyExerciseProficiency')
+            objective.typeCSS = 'exercise';
+        else if (objective.type == 'GoalObjectiveWatchVideo' || objective.type == 'GoalObjectiveAnyVideo')
+            objective.typeCSS = 'video';
+    });
+
+    return goalViewModel;
+}
+
 $(function() {
     if (typeof(Goals) === "undefined") {
         Goals = {

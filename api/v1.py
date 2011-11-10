@@ -400,7 +400,6 @@ def user_exercises_all():
     user_exercises_dict = dict((user_exercise.exercise, user_exercise)
                                for user_exercise in user_exercises)
 
-
     results = []
     for exercise in exercises:
         name = exercise.name

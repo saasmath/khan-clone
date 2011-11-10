@@ -185,8 +185,8 @@ var GoalCreator = {
 
         $('#goal-exercise-count').html(count);
 
-        $.each(KnowledgeMap.getBadgeElements(), function(index, badge) {
-            var exercise = badge.dataID;
+        $.each(graph_dict_data, function(index, graphDict) {
+            var exercise = graphDict.name;
             var found = false;
 
             $.each(GoalCreator.objectives, function(index2, objective) {
@@ -196,16 +196,7 @@ var GoalCreator = {
                 }
             });
 
-            var goalIcon = $(badge.badgeElement).children('.exercise-goal-icon');
-            if (found)
-            {
-                if (goalIcon.length == 0)
-                    $('<div class="exercise-goal-icon"><img src="/images/flag.png"></div>').appendTo(badge.badgeElement);
-            }
-            else
-            {
-                goalIcon.detach();
-            }
+            graphDict.showBadge(found);
         });
     },
 
@@ -321,12 +312,15 @@ var GoalCreator = {
     },
 };
 
+var graph_dict_data = {{ graph_dict_data }};
+
 $(function() {
-    GoalCreator.init();
     Drawer.init();
+    GoalCreator.init();
     GoalCreator.showExercises();
-    KnowledgeMap.initFilter();
+    KnowledgeMap.init({{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }});
     KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
+    // TomY TODO - Figure out why filtering isn't working here
 });
 
 </script>
@@ -351,12 +345,12 @@ $(function() {
         <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
         <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
     </div>
-  <div id="goal-choose-exercises" style="display: none;">
+  <div id="goal-choose-exercises">
     {{ exercise_macros.exercise_legend() }}
-    {{ exercise_macros.exercise_dashboard(review_graph_dicts, suggested_graph_dicts, null, graph_dicts, 'creategoal') }}
+    {{ exercise_macros.exercise_dashboard() }}
 
     <div id="dashboard-map">
-        {{ exercise_macros.knowledgemap(graph_dicts, map_coords) }}
+        {{ exercise_macros.knowledgemap(map_coords) }}
     </div>
   </div>
 

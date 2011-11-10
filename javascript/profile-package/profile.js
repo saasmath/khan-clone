@@ -319,52 +319,57 @@ var Profile = {
         }
     },
 
+
+    userGoalsAbandonGoal: function(id) {
+        var element = $('goal-abandon-'+id);
+
+        Throbber.show(element, true);
+        if (confirm("This action cannot be undone. Abandon goal?")) {
+            $.ajax({
+                url: "/api/v1/user/goals/abandon/" + id,
+                type: 'POST',
+                dataType: 'json',
+                success: function(json) {
+                    Throbber.hide();
+
+                    $.each(Goals.all, function(idx, other_goal) {
+                        if (goal.id == other_goal.id) {
+                            Goals.all.splice(idx, 1);
+                            return false;
+                        }
+                    });
+                    updateGoals(Goals.all);
+                    Profile.loadGraph(href);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // TomY TODO - report error
+                    Throbber.hide();
+                },
+            });
+        }
+    },
+
     renderUserGoals: function(data, href) {
-        var goals_model = {
-            'current_goals': ko.observableArray([]),
-            'completed_goals': ko.observableArray([]),
-            'abandoned_goals': ko.observableArray([]),
+        var goalsModel = {
+            'current_goals': [],
+            'completed_goals': [],
+            'abandoned_goals': [],
         };
         $.each(data, function(idx, goal) {
-            goal.progress = totalProgress(goal.objectives).toFixed(0);
+            var goalViewModel = goalCreateViewModel(goal);
+
             if (goal.completed != undefined) {
                 if (goal.abandoned)
-                    goals_model.abandoned_goals.push(goal);
+                    goalsModel.abandoned_goals.push(goalViewModel);
                 else
-                    goals_model.completed_goals.push(goal);
+                    goalsModel.completed_goals.push(goalViewModel);
             } else {
-                goals_model.current_goals.push(goal);
+                goalsModel.current_goals.push(goalViewModel);
             }
-
-            goal.abandon_inprogress = ko.observable(false);
-            goal.abandon = function() {
-                if (confirm("This action cannot be undone. Abandon goal?")) {
-                    goal.abandon_inprogress(true);
-                    $.ajax({
-                        url: "/api/v1/user/goals/abandon/" + goal.id,
-                        type: 'POST',
-                        dataType: 'json',
-                        success: function(json) {
-                            goal.abandon_inprogress(false);
-
-                            $.each(Goals.all, function(idx, other_goal) {
-                                if (goal.id == other_goal.id) {
-                                    Goals.all.splice(idx, 1);
-                                    return false;
-                                }
-                            });
-                            updateGoals(Goals.all);
-                            Profile.loadGraph(href);
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            goal.abandon_inprogress(false);
-                        },
-                    });
-                }
-            };
         });
-        $("#graph-content").html($('#profile-goals-tmpl').tmplPlugin({'goals':data}));
-        ko.applyBindings(goals_model, $("#student-goals").get(0));
+
+		var template = Templates.get( "profile-goals" );
+        $("#graph-content").html( template(goalsModel) );
         
         $("#graph-content .goal").hover( 
         function () {
@@ -378,12 +383,11 @@ var Profile = {
     },
 
     renderStudentGoals: function(data, href) {
-        var goals_model = {
-            'sort_desc': ko.observable(''),
-            'filter_desc': ko.observable(''),
-            'show_updated': ko.observable(false),
-            'row_data': ko.observableArray([]),
-        }; 
+        var studentGoalsViewModel = {
+            rowData: [],
+            sortDesc: '',
+            filterDesc: '',
+        };
 
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
@@ -396,10 +400,11 @@ var Profile = {
                     var statuses = ['started','struggling','proficient'];
                     var progress_count = 0;
                     var found_struggling = false;
+                    var goalViewModel = goalCreateViewModel(goal);
 
-                    goal.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
+                    goalViewModel.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
 
-                    $.each(goal.objectives, function(idx3, objective) {
+                    $.each(goalViewModel.objectives, function(idx3, objective) {
                         if (objective.status == 'proficient')
                             progress_count += 1000;
                         else if (objective.status == 'started' || objective.status == 'struggling')
@@ -407,8 +412,7 @@ var Profile = {
                         if (objective.status == 'struggling')
                             found_struggling = true;
 
-                        objective.filter_match = ko.observable(true);
-
+/*
                         if (objective.type == 'GoalObjectiveExerciseProficiency') {
                             objective.click_fn = function() {
                                 Profile.collapseAccordion();
@@ -418,34 +422,49 @@ var Profile = {
                             // TomY TODO Do something here for videos?
                             objective.click_fn = function() { };
                         }
+                        */
                     });
 
-                    if (!student.most_recent_update || goal.updated > student.most_recent_update)
-                        student.most_recent_update = goal;
+                    if (!student.most_recent_update || goalViewModel.updated > student.most_recent_update)
+                        student.most_recent_update = goalViewModel;
 
                     student.goal_count++;
-                    goals_model.row_data.push({
+                    row = {
                         student: student,
-                        goal: goal,
+                        goal: goalViewModel,
                         progress_count: progress_count,
                         goal_idx: student.goal_count,
-                        visible: ko.observable(true),
-                        show_counts: ko.observable(true),
                         struggling: found_struggling,
+                    };
+
+                    $.each(goalViewModel.objectives, function(idx3, objective) {
+                        objective.row = row;
                     });
+                    studentGoalsViewModel.rowData.push(row);
                 });
             } else {
-                goals_model.row_data.push({
+                studentGoalsViewModel.rowData.push({
                     student: student,
-                    goal: { objectives:[] },
+                    goal: null,
                     progress_count: -1,
                     goal_idx: 0,
-                    visible: ko.observable(true),
-                    show_counts: ko.observable(false),
                     struggling: false,
                 });
             }
         });
+
+		var template = Templates.get( "profile-class-goals" );
+        $("#graph-content").html( template(studentGoalsViewModel) );
+    /*
+        var goals_model = {
+            'sort_desc': ko.observable(''),
+            'filter_desc': ko.observable(''),
+            'show_updated': ko.observable(false),
+            'row_data': ko.observableArray([]),
+            'show_counts': ko.observable(false),
+            'fastFilter': new KOFastFilter(),
+            'fastFilterCSS': new KOFastFilter({css:'matches-filter'}),
+        }; 
 
         $("#graph-content").html($('#profile-student-goals-tmpl').html());
 
@@ -458,8 +477,10 @@ var Profile = {
         
         Profile.sortStudentGoals(goals_model);
         Profile.filterStudentGoals(goals_model);
+        */
     },
-    sortStudentGoals: function(goals_model) {
+    /*
+    sortStudentGoals: function(studentGoalsViewModel) {
         var sort = $("#student-goals-sort").val();
         var rows = $("#class-student-goal").children().get();
 
@@ -474,7 +495,7 @@ var Profile = {
                 return a_data.goal_idx-b_data.goal_idx;
             });
 
-            goals_model.sort_desc('student name');
+            studentGoalsViewModel.sortDesc = 'student name';
             goals_model.show_updated(false); // started
             
         } else if (sort == 'progress') {
@@ -484,7 +505,7 @@ var Profile = {
                 return b_data.progress_count - a_data.progress_count;
             });
 
-            goals_model.sort_desc('goal progress');
+            studentGoalsViewModel.sortDesc = 'goal progress';
             goals_model.show_updated(true); // updated
 
         } else if (sort == 'created') {
@@ -504,7 +525,7 @@ var Profile = {
                 return 0;
             });
 
-            goals_model.sort_desc('goal creation time');
+            studentGoalsViewModel.sortDesc = 'goal creation time';
             goals_model.show_updated(false); // started
 
         } else if (sort == 'updated') {
@@ -524,11 +545,17 @@ var Profile = {
                 return 0;
             });
 
-            goals_model.sort_desc('last work logged time');
+            studentGoalsViewModel.sortDesc = 'last work logged time';
             goals_model.show_updated(true); // updated
         }
 
         $.each(rows, function(idx, element) { $("#class-student-goal").append(element); });
+
+        updateStudentGoalsFilterText(studentGoalsViewModel);
+    },
+    updateStudentGoalsFilterText: function(studentGoalsViewModel) {
+        var text = 'Sorted by ' + studentGoalsViewModel.sortDesc + '. ' + studentGoalsViewModel.filterDesc + '.';
+        $('#class-goal-filter-desc').html(text);
     },
     filterStudentGoals: function(goals_model) {
         var filter_text = $.trim($("#student-goals-search").val().toLowerCase());
@@ -540,10 +567,6 @@ var Profile = {
         var filters_desc = '';
         if (filters['most-recent']) {
             filters_desc += 'most recently worked on goals';
-        }
-        if (filters['active']) {
-            if (filters_desc != '') filters_desc += ', ';
-            filters_desc += 'active goals';
         }
         if (filters['in-progress']) {
             if (filters_desc != '') filters_desc += ', ';
@@ -562,54 +585,50 @@ var Profile = {
         else
             goals_model.filter_desc('No filters applied');
 
-        $.each(goals_model.row_data(), function(idx, row) {
+        var rowFilter = function(row, objective, filters) {
             var row_visible = true;
+
             if (filters['most-recent']) {
                 row_visible = row_visible && (!row.goal || (row.goal == row.student.most_recent_update));
             }
             if (filters['in-progress']) {
                 row_visible = row_visible && (row.goal && (row.progress_count > 0));
             } 
-            if (filters['active']) {
-                row_visible = row_visible && (row.goal && row.goal.active);
-            } 
             if (filters['struggling']) {
                 row_visible = row_visible && (row.struggling);
             } 
-
             if (row_visible) {
-                if (filter_text == '') {
-                    if (row.goal) {
-                        $.each(row.goal.objectives, function(idx2, objective) {
-                            objective.filter_match(true);
-                        });
-                    }
-                } else {
-                    if (row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
-                        if (row.goal) {
-                            $.each(row.goal.objectives, function(idx2, objective) {
-                                objective.filter_match(true);
-                            });
-                        }
-                    } else {
-                        row_visible = false;
-                        if (row.goal) {
-                            $.each(row.goal.objectives, function(idx2, objective) {
-                                if (objective.description.toLowerCase().indexOf(filter_text) >= 0) {
-                                    objective.filter_match(true);
-                                    row_visible = true;
-                                } else {
-                                    objective.filter_match(false);
-                                }
-                            });
-                        }
-                    }
+                if (filter_text == '' || row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
+                    return true;
                 }
+                row_visible = false;
+                objective_visible = true;
+                $.each(row.goal.objectives, function(idx, goal_objective) {
+                    if ((goal_objective.description.toLowerCase().indexOf(filter_text) >= 0)) {
+                        row_visible = true;
+                    } else {
+                        if (goal_objective == objective)
+                            objective_visible = false;
+                    }
+                });
+                if (row_visible)
+                    return objective_visible;
+                return false;
+            } else {
+                return false;
             }
-            row.visible(row_visible);
-            row.show_counts(!filters['most-recent'] && !filters['active']);
+        };
+
+        goals_model.fastFilter.doFilter('#class-student-goals', function(row) {
+            return rowFilter(row, null, filters);
         });
+        goals_model.fastFilterCSS.doFilter('#class-student-goals', function(objective) {
+            return rowFilter(objective.row, objective, filters);
+        });
+
+        goals_model.show_counts(!filters['most-recent']);
     },
+    */
 
     finishLoadGraphError: function() {
         this.fLoadingGraph = false;

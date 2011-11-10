@@ -41,8 +41,17 @@
 		}
 	}
 	
-    $(function(){Drawer.init();});
+    $(function(){Drawer.init(); KnowledgeMap.init({{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}, true);});
+
+    var graph_dict_data = {{ graph_dict_data }};
 </script>
+{%- raw -%}
+    <script id="exercise-admin-tmpl" type="text/html">
+      <div class="exercise-edit" data-bind="fastFilter: $parent.fastFilter">
+        <a data-bind="click: clickHandler, attr: {title: display_name}, style: {color: (live?'#069':'red'), 'text-decoration': (live?'':'line-through')}, text: display_name"></a>
+      </div>
+    </script>
+{%- endraw -%}
 {% endblock pagescript %}
 {% block pagecontent %}
 <div id="background">
@@ -74,26 +83,21 @@
         </div>
     <div id="dashboard-drawer" class="drawer-hoverable">
     <div id="dashboard-drawer-inner" class="fancy-scrollbar"><div>
-        
-        {% for graph_dict in graph_dicts %}
-     
-                <div class="exercise-edit" data-id="{{graph_dict.name}}">
-                <a href="/editexercise?name={{ graph_dict.name|escape }}" 
-                    {% if graph_dict.live %}
-                    style="color:#069;"
-                    {% else %}
-                    style="color:red;text-decoration:line-through;"
-                    {% endif %}
-                    title="{{ graph_dict.display_name|escape }}"><nobr>{{ graph_dict.display_name|truncate(25)|escape }}</nobr></a>
-                    </div>
-              
-            <br />
-        {% endfor %}
+
+       <div id="dashboard-filter">
+          <input type="text" id="dashboard-filter-text" class="ui-corner-all simple-input" placeholder="Start typing the name of an exercise to find it" /><input id="dashboard-filter-clear" type="button" value="Clear" class="simple-button action-gradient ui-corner-right strict" style="display: none;"></input>
+       </div>
+       <div id="exercise-list">
+        <span class="exercise-sublist">
+         <div id="all-exercises" data-bind="template: {name: 'exercise-admin-tmpl', foreach: all}"></div>
+        </span>
+        <span id="exercise-no-results" data-bind="visible: all_count == 0">No exercises match your query.</span>
+       </div>
     </div></div>
     </div>
 
     <div id="dashboard-map">
-        {{ exercise_macros.knowledgemap(graph_dicts, map_coords, admin) }}
+        {{ exercise_macros.knowledgemap() }}
     </div>
 </div>
 </div>{% endblock pagecontent %}

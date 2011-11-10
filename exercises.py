@@ -16,6 +16,7 @@ import points
 import layer_cache
 import knowledgemap
 import string
+import simplejson
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from custom_exceptions import MissingExerciseException
@@ -220,39 +221,70 @@ class ViewExercise(request_handler.RequestHandler):
 
         self.render_jinja2_template("exercise_template.html", template_values)
 
-class ViewAllExercises(request_handler.RequestHandler):
-    def get(self):
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
+def exercise_graph_dict_json(user_data, admin=False):
+    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    if user_data.reassess_from_graph(user_exercise_graph):
+        user_data.put()
 
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
-        if user_data.reassess_from_graph(user_exercise_graph):
-            user_data.put()
-
-        graph_dicts = user_exercise_graph.graph_dicts()
+    graph_dicts = user_exercise_graph.graph_dicts()
+    if admin:
+        suggested_graph_dicts = []
+        proficient_graph_dicts = []
+        recent_graph_dicts = []
+        review_graph_dicts = []
+    else:
         suggested_graph_dicts = user_exercise_graph.suggested_graph_dicts()
         proficient_graph_dicts = user_exercise_graph.proficient_graph_dicts()
         recent_graph_dicts = user_exercise_graph.recent_graph_dicts()
         review_graph_dicts = user_exercise_graph.review_graph_dicts()
 
-        for graph_dict in suggested_graph_dicts:
-            graph_dict["status"] = "Suggested"
+    for graph_dict in suggested_graph_dicts:
+        graph_dict["status"] = "Suggested"
 
-        for graph_dict in proficient_graph_dicts:
-            graph_dict["status"] = "Proficient"
+    for graph_dict in proficient_graph_dicts:
+        graph_dict["status"] = "Proficient"
 
-        for graph_dict in review_graph_dicts:
-            graph_dict["status"] = "Review"
+    for graph_dict in recent_graph_dicts:
+        graph_dict["recent"] = True
 
-            try:
-                suggested_graph_dicts.remove(graph_dict)
-            except ValueError:
-                pass
+    for graph_dict in review_graph_dicts:
+        graph_dict["status"] = "Review"
+
+        try:
+            suggested_graph_dicts.remove(graph_dict)
+        except ValueError:
+            pass
+
+    graph_dict_data = []
+    for graph_dict in graph_dicts:
+        row = {
+            'name': graph_dict["name"],
+            'points': graph_dict.get("points", ''),
+            'display_name': graph_dict["display_name"],
+            'status': graph_dict.get("status"),
+            'recent': graph_dict.get("recent", False),
+            'progress': graph_dict["progress"],
+            'progress_display': models.UserExercise.to_progress_display(graph_dict["progress"]),
+            'longest_streak': graph_dict["longest_streak"],
+            'h_position': graph_dict["h_position"],
+            'v_position': graph_dict["v_position"],
+            'summative': graph_dict["summative"],
+            'num_milestones': graph_dict.get("num_milestones",0),
+            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]]
+        };
+        if admin:
+            exercise = models.Exercise.get_by_name(graph_dict["name"])
+            row["live"] = exercise and exercise.live
+        graph_dict_data.append(row);
+
+    return simplejson.dumps(graph_dict_data)
+
+class ViewAllExercises(request_handler.RequestHandler):
+    def get(self):
+        user_data = models.UserData.current() or models.UserData.pre_phantom()
 
         template_values = {
-            'graph_dicts': graph_dicts,
-            'suggested_graph_dicts': suggested_graph_dicts,
-            'recent_graph_dicts': recent_graph_dicts,
-            'review_graph_dicts': review_graph_dicts,
+            'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
@@ -516,8 +548,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
             graph_dict["live"] = exercise and exercise.live
 
         template_values = {
-            'graph_dicts': sorted(graph_dicts, key=lambda graph_dict: graph_dict["name"]),
-            'admin': True,
+            'graph_dict_data': exercise_graph_dict_json(user_data, admin=True),
             'map_coords': (0, 0, 0),
             }
 

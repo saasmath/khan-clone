@@ -23,12 +23,16 @@ def get_javascript():
                 "jquery.watermark.js",
                 "jquery.placeholder.js",
                 "jquery.hoverflow.js",
+                "underscore.js",
                 "pageutil.js",
                 "api.js",
                 "social.js",
                 "../../gae_bingo/static/js/gae_bingo.js",
+                "goals.js",
                 "handlebars.js" if _debug else "handlebars.vm.js",
                 "templates.js",
+                "knockout-latest.min.js",
+                "knockout-util.js",
             ]
         },
         "video": {
@@ -58,12 +62,13 @@ def get_javascript():
         "profile": {
             "templates": [
                 "profile.handlebars",
+                "profile-goals.handlebars",
+                "profile-class-goals.handlebars",
             ],
             "files": [
                 "jquery.address-1.4.min.js",
                 "highcharts.js",
                 "profile.js",
-                "knockout-latest.min.js",
             ]
         },
         "maps": {
@@ -137,6 +142,7 @@ def get_stylesheets():
                 "profile.css",
                 "museo-sans.css",
                 "jquery-ui-1.8.4.custom.css",
+                "goals.css",
             ]
         },
         "mobile": {

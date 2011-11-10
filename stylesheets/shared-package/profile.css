@@ -224,6 +224,11 @@
         text-decoration: none;
         color: #DD6900;
     }
+    #individual_report #vital-statistics #stats-nav ul > li > p a {
+        display: block;
+        margin-top: 10px;
+        text-align: center;
+    }
     #individual_report #vital-statistics #stats-nav ul > li > .accordion-content .graph-options .progress-legend {
         display: inline-block;
         padding: 4px;

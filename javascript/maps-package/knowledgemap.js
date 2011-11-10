@@ -14,7 +14,6 @@ var KnowledgeMap = {
 
     nodeClickHandler: null,
 
-    allExercisesVisibleBeforeFiltering: false,
     colors: {
         blue: "#0080C9",
         green: "#8EBE4F",
@@ -47,6 +46,7 @@ var KnowledgeMap = {
     fFirstDraw: true,
     fCenterChanged: false,
     fZoomChanged: false,
+    graphDictModel: null,
     options: {
                 getTileUrl: function(coord, zoom) {
                     // Sky tiles example from
@@ -64,8 +64,97 @@ var KnowledgeMap = {
     },
 
     init: function(latInit, lngInit, zoomInit, admin) {
+        var self = this;
 
-        this.discoverGraph();
+        this.graphDictModel = {
+            'review': [],
+            'suggested': [],
+            'recent': [],
+            'all': ko.observableArray([]),
+            'userShowAll': ko.observable(false),
+            'forceShowAll': ko.observable(false),
+            'fastFilter': new KOFastFilter(),
+        }
+
+        // Initial setup of exercise list from embedded data
+
+        $.each(graph_dict_data, function(idx, graphDict) {
+            // TomY TODO ?App.version
+            var s_prefix = graphDict.summative ? 'node-challenge' : 'node';
+
+            if (graphDict.status == 'Suggested') {
+                self.graphDictModel.suggested.push(graphDict);
+                graphDict.badgeIcon = '/images/'+s_prefix+'-suggested.png';
+            } else if (graphDict.status == 'Proficient') {
+                graphDict.badgeIcon = '/images/'+s_prefix+'-complete.png';
+            } else if (graphDict.status == 'Review') {
+                self.graphDictModel.review.push(graphDict);
+                graphDict.badgeIcon = '/images/node-review.png';
+            } else {
+                graphDict.badgeIcon = '/images/'+s_prefix+'-not-started.png';
+            }
+            
+            if (graphDict.recent) {
+                self.graphDictModel.recent.push(graphDict);
+            }
+
+            graphDict.inAllList = false;
+            graphDict.visible = ko.observable(true);
+            graphDict.clickHandler = function() {
+                KnowledgeMap.nodeClickHandler(KnowledgeMap.dictNodes[graphDict.name], null);
+            };
+            graphDict.lowercase_name = graphDict.display_name.toLowerCase();
+            graphDict.showBadge = ko.observable(false);
+
+            KnowledgeMap.addNode({
+                "id": graphDict.name,
+                "name": graphDict.display_name,
+                "h_position": graphDict.h_position,
+                "v_position": graphDict.v_position,
+                "status": graphDict.status,
+                "summative": graphDict.summative
+            });
+
+            $.each(graphDict.prereqs, function(idx2, prereq) {
+                KnowledgeMap.addEdge(graphDict.name, prereq, graphDict.summative);
+            });
+        });
+
+        sum_function = function(list) {
+            var count = 0;
+            for (var idx = 0; idx < list.length; idx++) {
+                if (list[idx].visible())
+                    count++;
+            }
+            return count;
+        };
+
+        this.graphDictModel.suggested_count = KOBulkUpdate.dependentObservable(function() { return sum_function(this.review)+sum_function(this.suggested); }, this.graphDictModel);
+        this.graphDictModel.recent_count = KOBulkUpdate.dependentObservable(function() { return sum_function(this.recent); }, this.graphDictModel);
+        this.graphDictModel.all_count = KOBulkUpdate.dependentObservable(function() { return sum_function(this.all()); }, this.graphDictModel);
+        this.graphDictModel.showAll = ko.dependentObservable(function() { return this.userShowAll() || this.forceShowAll(); }, this.graphDictModel);
+        this.graphDictModel.all_total = graph_dict_data.length;
+
+        this.graphDictModel.toggleShowAll = function() {
+            if (KnowledgeMap.graphDictModel.userShowAll()) {
+                KnowledgeMap.graphDictModel.userShowAll(false);
+            } else {
+                $.each(graph_dict_data, function(idx, graphDict) {
+                    if (!graphDict.inAllList) {
+                        KnowledgeMap.graphDictModel.all.push(graphDict);
+                        graphDict.inAllList = true;
+                    }
+                });
+                KnowledgeMap.graphDictModel.userShowAll(true);
+            }
+        };
+
+        if (admin) {
+            this.graphDictModel.toggleShowAll();
+        }
+
+        ko.applyBindings(this.graphDictModel, $('#exercise-list').get(0));
+
         this.admin = admin;
         this.map = new google.maps.Map(document.getElementById("map-canvas"), {
             mapTypeControl: false,
@@ -97,7 +186,15 @@ var KnowledgeMap = {
         google.maps.event.addListener(this.map, "idle", function(){KnowledgeMap.onIdle();});
         google.maps.event.addListener(this.map, "click", function(){KnowledgeMap.onClick();});
 
+        this.nodeClickHandler = function(node) {
+            if (admin)
+                window.location.href = '/editexercise?name='+node.id;
+            else
+                window.location.href = '/exercises?exid='+node.id;
+        };
+
         this.giveNasaCredit();
+        this.initFilter();
     },
 
     setNodeClickHandler: function(click_handler) {
@@ -128,30 +225,6 @@ var KnowledgeMap = {
         var creditNode = $("<div class='creditLabel'>Image Credit: SDSS, DSS Consortium, NASA/ESA/STScI</div>");
         creditNode[0].index = 0;
         this.map.controls[google.maps.ControlPosition.BOTTOM_RIGHT].push(creditNode[0]);
-    },
-
-    discoverGraph: function() {
-        $("table.hidden_knowledge_map tr[data-id]").each(function() {
-            var jel = $(this);
-            KnowledgeMap.addNode({
-                "id": jel.attr("data-id"),
-                "name": jel.attr("data-name"),
-                "h_position": jel.attr("data-h_position"),
-                "v_position": jel.attr("data-v_position"),
-                "status": jel.attr("data-status"),
-                "summative": jel.attr("data-summative") == "True"
-            });
-        });
-
-        $("table.hidden_knowledge_map tr[data-id]").each(function(){
-            var jel = $(this);
-            var source = jel.attr("data-id");
-            var summative = jel.attr("data-summative") == "True";
-            jel.find("li[data-prereq]").each(function(i) {
-                var target = $(this).attr("data-prereq");
-                KnowledgeMap.addEdge(source, target, summative);
-            });
-        });
     },
 
     layoutGraph: function() {
@@ -618,18 +691,6 @@ var KnowledgeMap = {
     // Filtering
 
     initFilter: function() {
-        // Do DOM traversal once at the beginning. Makes filtering reasonably fast
-        KnowledgeMap.badgeElements = [];
-        $('.exercise-badge').each(function(index, element) {
-            KnowledgeMap.badgeElements[index] = {
-                badgeElement: $(element),
-                countElement: $(element).parents('.exercise-sublist').find('.exercise-filter-count'),
-                titleString: $(element).find('.exercise-title').text().toLowerCase(),
-                dataID: $(element).attr('data-id'),
-            };
-        });
-        KnowledgeMap.filterCountElements = $('.exercise-filter-count');
-
         $('#dashboard-filter-text').keyup(function() {
             if (KnowledgeMap.updateFilterTimeout == null) {
                 KnowledgeMap.updateFilterTimeout = setTimeout(function() {
@@ -638,6 +699,7 @@ var KnowledgeMap = {
                 }, 250);
             }
         });
+        
         $('#dashboard-filter-clear').click(function() {
             KnowledgeMap.clearFilter();
         });
@@ -649,80 +711,28 @@ var KnowledgeMap = {
         this.doFilter();
     },
 
-    getBadgeElements: function() {
-        return KnowledgeMap.badgeElements;
-    },
-
     doFilter: function() {
         var filterText = $.trim($('#dashboard-filter-text').val().toLowerCase());
-        var foundExercises = false;
 
-        // Temporarily remove the exercise list container div for better performance
-        var container = $('#exercise-list').detach();
+        this.graphDictModel.forceShowAll(filterText != '');
 
-        // Reset counts
-        KnowledgeMap.filterCountElements.each(function(index, element) {
-            $(element).data('exercises', {'exercise_count': 0, 'exercise_total': 0});
-        });
-
-        $.each(KnowledgeMap.badgeElements, function(index, badge) {
-
-            // Perform substring matching
-            if (badge.titleString.indexOf(filterText) >= 0) {
-                badge.badgeElement.show();
-                KnowledgeMap.filteredNodes[badge.dataID] = false;
-
-                if (badge.countElement.length == 1)
-                    badge.countElement.data('exercises').exercise_count++;
-            } else {
-                badge.badgeElement.hide();
-                KnowledgeMap.filteredNodes[badge.dataID] = true;
+        KOBulkUpdate.pause();
+        $.each(graph_dict_data, function(idx, graphDict) {
+            var visible = (graphDict.lowercase_name.indexOf(filterText) >= 0);
+            if (KnowledgeMap.graphDictModel.showAll() && visible && !graphDict.inAllList) {
+                KnowledgeMap.graphDictModel.all.push(graphDict);
+                graphDict.inAllList = true;
             }
-
-            if (badge.countElement.length == 1)
-                badge.countElement.data('exercises').exercise_total++;
+            graphDict.visible(visible);
+            KnowledgeMap.filteredNodes[graphDict.name] = !visible;
         });
-        
-        // Update count div texts
-        KnowledgeMap.filterCountElements.each(function(index, element) {
-            var counts = $(element).data('exercises');
-            var sublistElement = $(element).parents('.exercise-sublist');
+        KOBulkUpdate.resume();
 
-            if (counts.exercise_count == 0) {
-                sublistElement.hide();
-            } else {
-                sublistElement.show();
-
-                foundExercises = true;
-
-                if (counts.exercise_count < counts.exercise_total)
-                    $(element).html('(Showing ' + counts.exercise_count + ' of ' + counts.exercise_total + ')');
-                else
-                    $(element).html('');
-            }
-        });
-
-        // Re-insert the container div
-        container.insertAfter("#dashboard-filter");
-
-        if (foundExercises) {
-            $('#exercise-no-results').hide();
-        } else {
-            $('#exercise-no-results').show();
-        }
+        this.graphDictModel.fastFilter.doFilter('#exercise-list', function(data) { return (data.lowercase_name.indexOf(filterText) >= 0); });
 
         if (filterText) {
-            this.allExercisesVisibleBeforeFiltering = Drawer.areExercisesVisible();
-            if (!Drawer.areExercisesVisible()) {
-                Drawer.toggleAllExercises(false);
-            }
-            $('#exercise-all-exercises').hide();
             $('#dashboard-filter-clear').show();
         } else {
-            if (Drawer.areExercisesVisible() != this.allExercisesVisibleBeforeFiltering) {
-                Drawer.toggleAllExercises(false);
-            }
-            $('#exercise-all-exercises').show();
             $('#dashboard-filter-clear').hide();
         }
 
