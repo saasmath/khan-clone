@@ -1,0 +1,68 @@
+{{#if current_goals}}
+  <div class="student-goals">
+  {{#each current_goals}}
+    <div class="goal pulls">
+      <p class="goal-description">
+        <strong>{{ title }}</strong> <span class="summary-light">(started {{ created_ago }})</span>
+        <span class="goal-controls">
+          <a class="simple-button action-gradient" href="javascript: abandonGoal({{id}})" id="goal-abandon-{{id}}">Abandon</a>
+        </span>
+      </p>
+      <ul class="inline-list objective-list">
+      {{#each objectives}}
+        <li style="width: {{../objectiveWidth}}%">
+          <a class="objective simple-button action-gradient {{ statusCSS }} {{ typeCSS }}" href="{{ url }}" data-progress="{{ progress }}">
+            {{ description }} ({{ progressPercentage }}%)
+          </a>
+        </li>
+      {{/each}}
+      </ul>
+    </div>
+  {{/each}}
+  </div>
+{{else}}
+  <div class="student-goals">
+    You have no current goals.
+    <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">Create a new goal</a>
+  </div>
+{{/if}}
+
+{{#if completed_goals}}
+  <div>Completed goals:</div>
+  <div class="student-goals">
+  {{#each completed_goals}}
+    <div class="goal pulls">
+     <p class="goal-description"><strong>{{ title }}</strong> <span class="summary-light">(completed {{ completed_ago }} in {{ completed_time }})</span></p>
+     <div class="goal pulls">
+       <ul class="inline-list objective-list">
+       {{#each objectives}}
+         <li style="width: {{../objectiveWidth}}%">
+           <a class="objective simple-button action-gradient {{ statusCSS }} {{ typeCSS }}" href="{{ url }}">{{ description }}</a>
+         </li>
+       {{/each}}
+       </ul>
+     </div>
+   </div>
+ {{/each}}
+ </div>
+{{/if}}
+
+{{#if abandoned_goals}}
+  <div>Abandoned goals:</div>
+  <div class="student-goals">
+  {{#each abandoned_goals}}
+    <div class="goal pulls">
+     <p class="goal-description"><strong>{{ title }}</strong> <span class="summary-light">(abandoned {{ completed_ago }})</span></p>
+     <div class="goal pulls">
+       <ul class="inline-list objective-list">
+       {{#each objectives}}
+         <li style="width: {{../objectiveWidth}}%">
+           <a class="objective simple-button action-gradient {{ statusCSS }} {{ typeCSS }}" href="{{ url }}">{{ description }}</a>
+         </li>
+       {{/each}}
+       </ul>
+     </div>
+   </div>
+ {{/each}}
+ </div>
+{{/if}}
