@@ -24,6 +24,7 @@ def get_javascript():
                 "jquery.placeholder.js",
                 "jquery.hoverflow.js",
                 "underscore.js",
+                "backbone.js",
                 "pageutil.js",
                 "api.js",
                 "social.js",
