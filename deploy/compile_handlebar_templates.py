@@ -57,7 +57,7 @@ def compile_template(root_path, rel_path, file_name):
         pass
 
 def compile_templates():
-    root_path = os.path.join("..", "javascript")
+    root_path = "javascript"
     rel_path_index = len(root_path) + 1
     for dir_path, dir_names, file_names in os.walk(root_path):
         for file_name in file_names:

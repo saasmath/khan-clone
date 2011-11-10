@@ -53,7 +53,14 @@ def compress_all_packages(default_path, dict_packages, suffix):
 
             package_path = os.path.join(os.path.dirname(__file__), package_path)
 
-            compress_package(package_name, package_path, package["files"], suffix)
+            if suffix == ".js" and "templates" in package:
+                # Prepend the JS files with the compiled template files.
+                files = ([name + ".js" for name in package["templates"]] +
+                         package["files"])
+            else:
+                files = package["files"]
+
+            compress_package(package_name, package_path, files, suffix)
 
             hashed_content = "javascript=%s\nstylesheets=%s\n" % \
                 (str(packages_javascript), str(packages_stylesheets))
