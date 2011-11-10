@@ -124,7 +124,7 @@ class Bingo(RequestHandler):
             
             else:
                 # send error, conversion not found
-                status = 404 204 if conversion is not 'hints_free_hint' else 405
+                status = 404 if conversion is not 'hints_free_hint' else 405
         
         else:
             # no luck, compadre
