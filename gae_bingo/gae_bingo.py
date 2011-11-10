@@ -112,8 +112,8 @@ def bingo(param):
     if type(param) == list:
 
         # Bingo for all conversions in list
-        for experiment_name in param:
-            bingo(experiment_name)
+        for conversion_name in param:
+            bingo(conversion_name)
         return
 
     else:
