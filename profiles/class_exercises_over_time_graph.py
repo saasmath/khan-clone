@@ -14,14 +14,12 @@ def class_exercises_over_time_graph_context(user_data, student_list):
 
     if not user_data:
         return {}
-
-    all_students_data = user_data.get_students_data()
-
+ 
     if student_list:
         students_data = student_list.get_students_data()
     else:
-        students_data = all_students_data    
-
+        students_data = user_data.get_students_data()
+  
     dict_student_exercises = {}
     user_exercise_cache_list = models.UserExerciseCache.get(students_data)
     for i, user_data_student in enumerate(students_data):
