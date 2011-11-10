@@ -310,7 +310,8 @@ class ProfilerWSGIMiddleware(object):
         self.recorder = None
         self.temporary_redirect = False
 
-        if config.should_profile(environ):
+        # Never profile calls to the profiler itself to avoid endless recursion.
+        if config.should_profile(environ) and not environ.get("PATH_INFO", "").startswith("/gae_mini_profiler/"):
 
             # Set a random ID for this request so we can look up stats later
             import base64
