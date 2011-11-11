@@ -78,10 +78,10 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     active: function(goal) {
-        var current = this.find(function(g) {return g.get('active'); } );
+        var current = this.find(function(g) {return g.get('active'); } ) || null;
         if (goal && goal !== current) {
             // set active
-            if (current) {
+            if (current !== null) {
                 current.set({active: false});
             }
             goal.set({active: true});
@@ -102,6 +102,15 @@ var GoalCollection = Backbone.Collection.extend({
         Backbone.Collection.prototype.reset.call(this, models, silentOptions);
         this.updateActive();
         if (!options.silent) this.trigger('reset', this, options);
+    },
+
+    // override remove so that updateActive is called before the reset event fires
+    remove: function(models, options) {
+        options = options || {};
+        var silentOptions = _.extend({}, options, {silent: true});
+        Backbone.Collection.prototype.remove.call(this, models, silentOptions);
+        this.updateActive();
+        if (!options.silent) this.trigger('remove', this, options);
     }
 }, { // class properties:
 
