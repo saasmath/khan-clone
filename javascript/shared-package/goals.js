@@ -221,14 +221,21 @@ var GoalSummaryView = Backbone.View.extend({
     },
     render: function() {
         console.log("rendered", this);
-        var goalsEl = $("#goals-tmpl").tmplPlugin(this.model.active().attributes);
-        $(this.el).html(goalsEl);
+        var active = this.model.active();
+        if (active !== null) {
+            var goalsEl = $("#goals-tmpl").tmplPlugin(this.model.active().attributes);
+            $(this.el).html(goalsEl);
+        }
+        else {
+            // todo: put create a goal button here?
+            $(this.el).empty();
+        }
         return this;
     }
 });
 
 $(function() {
-    window.GoalBook = new GoalCollection(GoalsBootstrap);
+    window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
 
     window.myGoalBookView = new GoalBookView({
         el: "#goals-nav-container",
