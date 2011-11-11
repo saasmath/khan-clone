@@ -26,7 +26,13 @@ Templates.cache_ = {};
  * Compile a template from an inline script tag.
  */
 Templates.fromScript_ = function( name ) {
-	return Handlebars.compile( $("#template_" + name).html() );
+	var inline = $("#template_" + name);
+	if (inline.length > 0) {
+		return Handlebars.compile( inline.html() );
+	}
+	else {
+		return null;
+	}
 };
 
 /**
@@ -42,4 +48,3 @@ Templates.get = function( name ) {
 		return Handlebars.templates[name];
 	}
 };
-
