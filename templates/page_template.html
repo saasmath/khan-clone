@@ -301,17 +301,11 @@
     </script>
     {%- endraw -%}
 
-    <script type="text/javascript">
-    if (typeof Goals === "undefined") {
-        var Goals = {
-            all: [],
-            active: null
-        };
-    }
     {%- if global_goals -%}
-    Goals.all = {{ global_goals }};
-    {%- endif -%}
+    <script type="text/javascript">
+    window.GoalsBootstrap = {{ global_goals }};
     </script>
+    {%- endif -%}
 
     </body>
 </html>

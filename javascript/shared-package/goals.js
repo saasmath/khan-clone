@@ -1,41 +1,248 @@
-var totalProgress = function(objectives) {
-    var progress = 0;
-    if (objectives.length) {
-        var count = 0;
-        $.each(objectives, function(i, ob) {
-            progress += ob.progress;
-        });
-        progress = progress/objectives.length;
-    }
-    return progress;
-};
+var Goal = Backbone.Model.extend({
+    defaults: {
+        active: false,
+        complete: false,
+        progress: 0,
+        title: "Unnamed goal",
+        objectives: []
+    },
 
-_.mixin({
-    // like groupBy, but assumes there is a unique key for each element.
-    indexBy: function(seq, key) {
-        return _.reduce(seq, function(m, el){ m[el[key]] = el; return m;}, {});
+    initialize: function() {
+        this.calcDependents();
+        this.bind('change', this.fireCustom, this);
+    },
+
+    calcDependents: function() {
+        var progress = this.calcTotalProgress(this.get('objectives'));
+        this.set({
+            progress: progress,
+            progressStr: (progress * 100).toFixed(0),
+            objectiveProgress: _.filter(this.get('objectives'), function(obj) {
+                return obj.progress >= 1;
+            }).length
+        }, {silent: true});
+    },
+
+    calcTotalProgress: function(objectives) {
+        objectives = objectives || this.get('objectives');
+        var progress = 0;
+        if (objectives.length) {
+            var count = 0;
+            $.each(objectives, function(i, ob) {
+                progress += ob.progress;
+            });
+            progress = progress/objectives.length;
+        }
+        return progress;
+    },
+
+    fireCustom: function() {
+        if (this.hasChanged('progress')) {
+            // inspect old element to see what changed, fire events
+            //this.trigger('progressed');
+            justWorkedOnGoal(this);
+            // check for goal completion
+
+            // check to see if we just finished the goal
+            if (this.get('progress') >= 1) {
+                //this.trigger('completed');
+                justFinishedGoal(this);
+            }
+            else {
+                // now look for updated objectives
+                oldObjectives = this.previous('objectives');
+                var goal = this;
+                _.each(this.get('objectives'), function(newObj, i) {
+                    var oldObj = oldObjectives[i];
+                    if (newObj.progress > oldObj.progress) {
+                        justWorkedOnObjective(goal, newObj);
+                        if (newObj.progress >= 1) {
+                            justFinishedObjective(goal, newObj);
+                        }
+                    }
+                });
+            }
+        }
     }
 });
 
-// anotate goal with progress counts and overall progress
-var annotateGoal = function(goal) {
-    goal.progress = totalProgress(goal.objectives);
-    goal.progressStr = (goal.progress * 100).toFixed(0);
-    goal.objectiveProgress = _.filter(goal.objectives, function(obj) {
-        return obj.progress >= 1;
-    }).length;
-};
+var GoalCollection = Backbone.Collection.extend({
+    model: Goal,
+    _active: null,
 
-var saveGoals = function(newGoals) {
-    if (newGoals) {
-        Goals.all = newGoals;
-    } else {
-        console.log("warning, goals were updated without saveGoals, events lost!");
+    initialize: function() {
+        this.updateActive();
+    },
+
+    comparator: function(goal) {
+        return goal.get("updated");
+    },
+
+    active: function(goal) {
+        if (goal && goal !== this._active) {
+            // set active
+            if (this._active) {
+                this._active.set({active: false});
+            }
+            this._active = goal;
+            this._active.set({active: true});
+        }
+        return this._active;
+    },
+
+    updateActive: function() {
+        var url = window.location.toString();
+        this.active(GoalCollection.findMatchingGoalFor(url, this));
+    },
+
+    // override reset so that updateActive is called before the reset event fires
+    reset: function(models, options) {
+        options = options || {};
+        var silentOptions = _.extend({}, options, {silent: true});
+        Backbone.Collection.prototype.reset.call(this, models, silentOptions);
+        this.updateActive();
+        if (!options.silent) this.trigger('reset', this, options);
     }
-    _.each(Goals.all, annotateGoal);
-};
+}, { // class properties:
 
-// todo: surely this is in a library somewhere?
+    // todo: cleanup window.location stuff in here!
+    findExerciseObjectiveFor: function(url, goals) {
+        var matchingGoal = null;
+
+        var exid = parseQueryString(url).exid;
+        // find a goal with exactly this exercise
+        matchingGoal = goals.find(function(goal) {
+            return _.find(goal.get('objectives'), function(ob) {
+                return ob.type == "GoalObjectiveExerciseProficiency" &&
+                    exid == parseQueryString(ob.url).exid;
+            });
+        }) || null;
+
+        if ( matchingGoal === null ) {
+            // find an exercise process goal
+            matchingGoal = goals.find(function(goal) {
+                return _.find(goal.get('objectives'), function(ob) {
+                    return ob.type == "GoalObjectiveAnyExerciseProficiency";
+                });
+            }) || null;
+        }
+
+        return matchingGoal;
+    },
+
+    findVideoObjectiveFor: function(url, goals) {
+        var matchingGoal = null;
+
+        var getVideoId = function(url) {
+            var regex = /\/video\/([^\/?]+)/;
+            var matches = url.match(regex);
+            return matches[1];
+        };
+
+        var videoId = getVideoId(window.location.toString());
+
+        // find a goal with exactly this exercise
+        matchingGoal = goals.find(function(goal) {
+            return _.find(goal.get('objectives'), function(ob) {
+                return ob.type == "GoalObjectiveWatchVideo" &&
+                    videoId == getVideoId(ob.url);
+            });
+        }) || null;
+
+        if (matchingGoal === null) {
+            // find an exercise process goal
+            matchingGoal = goals.find(function(goal) {
+                return _.find(goal.get('objectives'), function(ob) {
+                    return ob.type == "GoalObjectiveAnyVideo";
+                });
+            }) || null;
+        }
+
+        return matchingGoal;
+    },
+
+    // find the most appriate goal to display for a given URL
+    findMatchingGoalFor: function(url, goals) {
+        var matchingGoal = null;
+
+        if (window.location.pathname == "/exercises") {
+            matchingGoal = this.findExerciseObjectiveFor(url, goals);
+            if (matchingGoal !== null) {
+                console.log('found a matching exercise goal');
+            }
+        }
+        else if (window.location.pathname.indexOf("/video") === 0) {
+            matchingGoal = this.findVideoObjectiveFor(url, goals);
+            if (matchingGoal !== null) {
+                console.log('found a matching video goal');
+            }
+        }
+
+        // if we're not on a matching exercise or video page, just show the
+        // most recently upated one
+        if (matchingGoal === null) {
+            matchingGoal = goals.at(0); // comparator is most recently updated
+        }
+
+        return matchingGoal;
+    }
+});
+
+var GoalBookView = Backbone.View.extend({
+    initialize: function() {
+        $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
+        this.model.bind('change', this.render, this);
+        this.model.bind('reset', this.render, this);
+    },
+    show: function() {
+        if (this.el.children.length === 0) {
+            this.render();
+        }
+        return $(this.el).slideDown("fast");
+    },
+    hide: function() { return $(this.el).slideUp("fast"); },
+    render: function() {
+        console.log("rendered", this);
+        var json = _.pluck(this.model.models, 'attributes');
+        var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: json});
+        $(this.el).html(goalsEl);
+        return this;
+    }
+});
+
+var GoalSummaryView = Backbone.View.extend({
+    initialize: function(args) {
+        $(this.el).delegate('#goals-drawer', 'click',
+            $.proxy(args.goalBook.show, args.goalBook));
+
+        this.model.bind('change', this.render, this);
+        this.model.bind('reset', this.render, this);
+    },
+    render: function() {
+        console.log("rendered", this);
+        var goalsEl = $("#goals-tmpl").tmplPlugin(this.model.active().attributes);
+        $(this.el).html(goalsEl);
+        return this;
+    }
+});
+
+$(function() {
+    window.GoalBook = new GoalCollection(GoalsBootstrap);
+
+    window.myGoalBookView = new GoalBookView({
+        el: "#goals-nav-container",
+        model: GoalBook
+    });
+    window.myGoalSummaryView = new GoalSummaryView({
+        el: "#goals-container",
+        model: GoalBook,
+        goalBook: myGoalBookView
+    });
+
+    myGoalSummaryView.render();
+});
+
+// todo: surely this belongs in a library somewhere?
 var parseQueryString = function(url) {
     var querystring = decodeURIComponent(url.substring(url.indexOf('?')+1));
     var pairs = querystring.split('&');
@@ -47,168 +254,11 @@ var parseQueryString = function(url) {
     return qs;
 };
 
-var findExerciseObjectiveFor = function(url) {
-    var matchingGoal = null;
-
-    var exid = parseQueryString(url).exid;
-    // find a goal with exactly this exercise
-    $.each(Goals.all, function(i, goal) {
-        var objective = $.grep(goal.objectives, function(ob) {
-            return ob.type == "GoalObjectiveExerciseProficiency" &&
-                exid == parseQueryString(ob.url).exid;
-        });
-        if (objective.length > 0) {
-            matchingGoal = goal;
-            return false;
-        }
-    });
-
-    if (matchingGoal === null) {
-        // find an exercise process goal
-        $.each(Goals.all, function(i, goal) {
-            var objective = $.grep(goal.objectives, function(ob) {
-                return ob.type == "GoalObjectiveAnyExerciseProficiency";
-            });
-            if (objective.length > 0) {
-                matchingGoal = goal;
-                return false;
-            }
-        });
-    }
-
-    return matchingGoal;
-};
-
-var findVideoObjectiveFor = function(url) {
-    var matchingGoal = null;
-
-    var getVideoId = function(url) {
-        var regex = /\/video\/([^\/?]+)/;
-        var matches = url.match(regex);
-        return matches[1];
-    };
-
-    var videoId = getVideoId(window.location.toString());
-
-    // find a goal with exactly this exercise
-    $.each(Goals.all, function(i, goal) {
-        var objective = $.grep(goal.objectives, function(ob) {
-            return ob.type == "GoalObjectiveWatchVideo" &&
-                videoId == getVideoId(ob.url);
-        });
-        if (objective.length > 0) {
-            matchingGoal = goal;
-            return false;
-        }
-    });
-
-    if (matchingGoal === null) {
-        // find an exercise process goal
-        $.each(Goals.all, function(i, goal) {
-            var objective = $.grep(goal.objectives, function(ob) {
-                return ob.type == "GoalObjectiveAnyVideo";
-            });
-            if (objective.length > 0) {
-                matchingGoal = goal;
-                return false;
-            }
-        });
-    }
-
-    return matchingGoal;
-};
-
-// find the most appriate goal to display for a given URL
-var findMatchingGoalFor = function(url) {
-    var matchingGoal = null;
-
-    if (window.location.pathname == "/exercises") {
-        matchingGoal = findExerciseObjectiveFor(url);
-        if (matchingGoal !== null) {
-            console.log('found a matching exercise goal');
-        }
-    }
-    else if (window.location.pathname.indexOf("/video") === 0) {
-        matchingGoal = findVideoObjectiveFor(url);
-        if (matchingGoal !== null) {
-            console.log('found a matching video goal');
-        }
-    }
-    // if we're not on a matching exercise or video page, just show the most recent goal
-    if (matchingGoal === null) {
-        matchingGoal = mostRecentlyUpdatedGoal(Goals.all);
-    }
-
-    return matchingGoal;
-};
-
-var mostRecentlyUpdatedGoal = function(goals) {
-    if (goals.length > 0) {
-        var matchingGoal = goals[0];
-        var minDate = new Date(matchingGoal.updated);
-
-        $.each(Goals.all, function(i, goal) {
-            var currentDate = new Date(goal.updated);
-            if (currentDate > minDate) {
-                matchingGoal = goal;
-                minDate = currentDate;
-            }
-        });
-
-        return matchingGoal;
-    }
-    return null;
-};
-
-var displayGoals = function() {
-    if (Goals.all.length) {
-        _.each(Goals.all, function(g) { g.active = false;});
-
-        Goals.active = findMatchingGoalFor(window.location.toString());
-        Goals.active.active = true;
-
-        renderAllGoalsUI();
-    }
-};
-
-var renderAllGoalsUI = function() {
-    renderGoalSummaryArea();
-    renderGoalbook();
-
-    $("#goals-container").delegate("#goals-drawer", "click", showGoals);
-    $("#goals-nav-container").delegate(".hide-goals", "click", hideGoals);
-};
-var renderGoalSummaryArea = function(goal) {
-    goal = goal || Goals.active;
-    if (goal) {
-        var goalsEl = $("#goals-tmpl").tmplPlugin(goal);
-        $("#goals-container").html(goalsEl);
-    } else {
-        $("#goals-container").html('');
-    }
-};
-var renderGoalbook = function() {
-    if (Goals.all.length) {
-        var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: Goals.all});
-        $("#goals-nav-container").html(goalsEl);
-    } else {
-        $("#goals-nav-container").html('');
-    }
-};
-var showGoals = function() {
-    $("#goals-nav-container").slideDown('fast');
-};
-var hideGoals = function() {
-    $("#goals-nav-container").slideUp('fast');
-};
-
-
 var requestGoals = function() {
     $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
 };
 var updateGoals = function(goals) {
-    saveGoals(goals);
-    displayGoals();
+    GoalBook.reset(goals);
 };
 
 // todo: make these real events?
@@ -223,20 +273,20 @@ var justFinishedGoal = function(goal) {
     showGoals();
     var recentlyCompleted = $('.recently-completed');
     var btnGoalHistory =$('#btn-goal-history');
-    recentlyCompleted.children().each( 
-        function () { 
-            $(this).css('overflow', 'hidden').css('height', $(this).height()); 
+    recentlyCompleted.children().each(
+        function () {
+            $(this).css('overflow', 'hidden').css('height', $(this).height());
     }).end()
     .delay(500)
     .animate({
-        width: btnGoalHistory.width(), 
-        left: btnGoalHistory.position().left 
-    }).animate({ 
-        top: btnGoalHistory.position().top - recentlyCompleted.position().top, 
-        height: '0', 
-        opacity: 'toggle' 
+        width: btnGoalHistory.width(),
+        left: btnGoalHistory.position().left
+    }).animate({
+        top: btnGoalHistory.position().top - recentlyCompleted.position().top,
+        height: '0',
+        opacity: 'toggle'
     },
-    'easeInOutCubic', 
+    'easeInOutCubic',
     function () {
         $(this).remove();
     }).end()
@@ -251,47 +301,17 @@ var justFinishedObjective = function(newGoal, newObj) {
     console.log("Just finished objective", newObj);
     $("#goals-congrats").text('Just finished objective!').show().fadeOut(3000);
 };
+
 // assumes we already have Goals.all rendered. Incrementally updates what is
 // already present, and fires some fake events
 var incrementalUpdateGoals = function(updatedGoals) {
     _.each(updatedGoals, function(newGoal) {
-        annotateGoal(newGoal);
-        oldGoal = _.find(Goals.all, function(g) { return g.id === newGoal.id; });
+        oldGoal = GoalBook.get(newGoal.id) || null;
 
-        if (typeof oldGoal !== 'undefined') {
-            // rerender all linked views
-            if ( Goals.active.id === newGoal.id ) {
-                // this goal was the active goal, update the summary area
-                renderGoalSummaryArea(newGoal);
-            }
-            // update goal in goalbook
-            var newRow = $("#goalrow-tmpl").tmplPlugin(newGoal);
-            $(".all-goals .goal[data-id="+newGoal.id+"]").replaceWith(newRow);
-
-            // inspect old element to see what changed, fire events
-            justWorkedOnGoal(newGoal);
-            // check for goal completion
-            if (newGoal.progress !== oldGoal.progress) {
-                // check to see if we just finished the goal
-                if (newGoal.progress >= 1) {
-                    justFinishedGoal(newGoal);
-                }
-                else {
-                    // now look for updated objectives
-                    _.each(newGoal.objectives, function(newObj, i) {
-                        var oldObj = oldGoal.objectives[i];
-                        if (newObj.progress > oldObj.progress) {
-                            justWorkedOnObjective(newGoal, newObj);
-                            if (newObj.progress >= 1) {
-                                justFinishedObjective(newGoal, newObj);
-                            }
-                        }
-                    });
-                }
-            }
-
-            // overwrite old goal with new goal
-            _.extend(oldGoal, newGoal);
+        if (oldGoal !== null) {
+            oldGoal.set(newGoal, {silent: true});
+            oldGoal.calcDependents();
+            oldGoal.change();
         }
         else {
             // todo: remove this, do something better
@@ -358,7 +378,7 @@ function goalCreateViewModel(goalModel) {
     var goalViewModel = $.extend({}, goalModel);
 
     goalViewModel.objectiveWidth = 100/goalModel.objectives.length;
-    
+
     $.each(goalViewModel.objectives, function(idx2, objective) {
         objective.progressPercentage = (objective.progress*100).toFixed(0);
 
@@ -372,14 +392,3 @@ function goalCreateViewModel(goalModel) {
 
     return goalViewModel;
 }
-
-$(function() {
-    if (typeof(Goals) === "undefined") {
-        Goals = {
-            all: [],
-            active: null
-        };
-    }
-    _.each(Goals.all, annotateGoal);
-    displayGoals();
-});
