@@ -193,10 +193,14 @@ def video(video_id):
 @jsonp
 @jsonify
 def video_download_available(video_id):
-    video = models.Video.all().filter("youtube_id =", video_id).get()
-    if video:
+    video = None
+
+    # If for any crazy reason we happen to have multiple entities for a single youtube id,
+    # make sure they all have the same download_version so we don't keep trying to export them.
+    for video in models.Video.all().filter("youtube_id =", video_id):
         video.download_version = models.Video.CURRENT_DOWNLOAD_VERSION if request.request_bool("available", default=False) else 0
         video.put()
+
     return video
 
 @route("/api/v1/videos/<video_id>/exercises", methods=["GET"])
