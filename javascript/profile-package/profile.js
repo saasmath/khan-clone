@@ -238,7 +238,7 @@ var Profile = {
             qs['dt'] = $("#targetDatepicker").val();
             url = this.baseGraphHref(url) + '?' + this.reconstructQueryString(qs);
         }
-        
+
         this.loadGraph(url);
     },
 
@@ -351,12 +351,12 @@ var Profile = {
 
 		var template = Templates.get( "profile-goals" );
         $("#graph-content").html( template(goalsModel) );
-        
-        $("#graph-content .goal").hover( 
+
+        $("#graph-content .goal").hover(
         function () {
             $(this).find(".goal-description .summary-light").hide();
             $(this).find(".goal-controls").show();
-        }, 
+        },
         function () {
             $(this).find(".goal-controls").hide();
             $(this).find(".goal-description .summary-light").show();
@@ -457,7 +457,7 @@ var Profile = {
 
         $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(studentGoalsViewModel) });
         $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(studentGoalsViewModel) });
-        
+
         Profile.sortStudentGoals(studentGoalsViewModel);
         Profile.filterStudentGoals(studentGoalsViewModel);
     },
@@ -476,7 +476,7 @@ var Profile = {
 
             studentGoalsViewModel.sortDesc = 'student name';
             show_updated = false; // started
-            
+
         } else if (sort == 'progress') {
             studentGoalsViewModel.rowData.sort(function(a,b) {
                 return b.progress_count - a.progress_count;
@@ -580,10 +580,10 @@ var Profile = {
             }
             if (filters['in-progress']) {
                 row_visible = row_visible && (row.goal && (row.progress_count > 0));
-            } 
+            }
             if (filters['struggling']) {
                 row_visible = row_visible && (row.struggling);
-            } 
+            }
             if (row_visible) {
                 if (filter_text == '' || row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
                     if (row.goal) {
@@ -678,7 +678,7 @@ var Profile = {
 		var lastHoverTime;
 		var mouseX;
 		var mouseY;
-		$("#module-progress .student-module-status").hover( 
+		$("#module-progress .student-module-status").hover(
 			function(e) {
 				var hoverTime = lastHoverTime = Date.now();
 				mouseX = e.pageX;
@@ -705,7 +705,7 @@ var Profile = {
 					}
 				}, 100);
 			},
-			function(e){ 
+			function(e){
 				lastHoverTime = null;
 				$("#info-hover-container").hide();
 			}
