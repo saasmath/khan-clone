@@ -68,7 +68,6 @@ var Goal = Backbone.Model.extend({
 
 var GoalCollection = Backbone.Collection.extend({
     model: Goal,
-    _active: null,
 
     initialize: function() {
         this.updateActive();
@@ -79,15 +78,16 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     active: function(goal) {
-        if (goal && goal !== this._active) {
+        var current = this.find(function(g) {return g.get('active'); } );
+        if (goal && goal !== current) {
             // set active
-            if (this._active) {
-                this._active.set({active: false});
+            if (current) {
+                current.set({active: false});
             }
-            this._active = goal;
-            this._active.set({active: true});
+            goal.set({active: true});
+            current = goal;
         }
-        return this._active;
+        return current;
     },
 
     updateActive: function() {
@@ -194,6 +194,7 @@ var GoalBookView = Backbone.View.extend({
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
+        this.model.bind('add', this.render, this);
     },
     show: function() {
         if (this.el.children.length === 0) {
@@ -218,12 +219,14 @@ var GoalSummaryView = Backbone.View.extend({
 
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
+        this.model.bind('remove', this.render, this);
+        this.model.bind('add', this.render, this);
     },
     render: function() {
         console.log("rendered", this);
-        var active = this.model.active();
+        var active = this.model.active() || null;
         if (active !== null) {
-            var goalsEl = $("#goals-tmpl").tmplPlugin(this.model.active().attributes);
+            var goalsEl = $("#goals-tmpl").tmplPlugin(active.attributes);
             $(this.el).html(goalsEl);
         }
         else {
@@ -310,8 +313,6 @@ var justFinishedObjective = function(newGoal, newObj) {
     $("#goals-congrats").text('Just finished objective!').show().fadeOut(3000);
 };
 
-// assumes we already have Goals.all rendered. Incrementally updates what is
-// already present, and fires some fake events
 var incrementalUpdateGoals = function(updatedGoals) {
     _.each(updatedGoals, function(newGoal) {
         oldGoal = GoalBook.get(newGoal.id) || null;
@@ -371,8 +372,7 @@ var createSimpleGoalDialog = {
                 Throbber.hide();
                 createSimpleGoalDialog.hideDialog();
 
-                Goals.all.push(json);
-                updateGoals();
+                GoalBook.add(json);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 Throbber.hide();
