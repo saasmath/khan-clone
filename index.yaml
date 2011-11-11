@@ -157,6 +157,12 @@ indexes:
   - name: date
     direction: desc
 
+- kind: Filter
+  properties:
+  - name: bridge
+  - name: __key__
+    direction: desc
+
 - kind: HourlyActivityLog
   properties:
   - name: user
