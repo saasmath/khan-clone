@@ -23,6 +23,7 @@ def get_javascript():
                 "jquery.watermark.js",
                 "jquery.placeholder.js",
                 "jquery.hoverflow.js",
+                "jquery.tmpl.min.js",
                 "underscore.js",
                 "backbone.js",
                 "pageutil.js",
@@ -39,7 +40,6 @@ def get_javascript():
         "video": {
             "files": [
                 "jquery.qtip.js",
-                "jquery.tmpl.min.js",
                 "bootstrap-modal.js",
                 "video.js",
                 "discussion.js",
