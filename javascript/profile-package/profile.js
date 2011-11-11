@@ -35,6 +35,19 @@ var Profile = {
 			return false;
 		});
 
+		// Init Highcharts global options.
+		Highcharts.setOptions({
+			credits: {
+				enabled: false
+			},
+			title: {
+				text: ''
+			},
+			subtitle: {
+				text: '',
+			}
+		});
+
         if ($.address)
             $.address.externalChange(function(){ Profile.historyChange(); });
 
@@ -266,7 +279,7 @@ var Profile = {
 
         var apiCallback = null;
         if (href.indexOf('/api/v1/user/exercises') > -1) {
-			apiCallback = this.renderExercises;
+			apiCallback = this.renderExercisesTable;
         }
 
         $.ajax({
@@ -315,7 +328,7 @@ var Profile = {
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
 	 */
-	renderExercises: function(data) {
+	renderExercisesTable: function(data) {
 		// TODO: use a proper client side templating solution.
 		var html = [];
 		html.push( "<div id=\"module-progress\">" );
