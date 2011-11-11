@@ -193,18 +193,29 @@ var Profile = {
         return href;
     },
 
-    expandAccordionForHref: function(href) {
-        if (!href) return;
+	/**
+	 * Expands the navigation accordion according to the link specified.
+	 * @return {boolean} whether or not a link was found to be a valid link.
+	 */
+	expandAccordionForHref: function(href) {
+		if (!href) {
+			return false;
+		}
 
-        href = this.baseGraphHref(href);
+		href = this.baseGraphHref(href);
 
-        href = href.replace(/[<>']/g, "");
-        var selectorAccordionSection = ".graph-link-header[href*='" + href + "']";
-        if ($(selectorAccordionSection).length)
-            $("#stats-nav #nav-accordion").accordion("activate", selectorAccordionSection);
-        else
-            this.collapseAccordion();
-    },
+		href = href.replace(/[<>']/g, "");
+		var selectorAccordionSection =
+				".graph-link-header[href*='" + href + "']";
+		if ( $(selectorAccordionSection).length ) {
+			$("#stats-nav #nav-accordion").accordion(
+					"activate", selectorAccordionSection);
+			return true;
+		}
+
+		this.collapseAccordion();
+		return false;
+	},
 
     styleSublinkFromHref: function(href) {
 
@@ -411,14 +422,22 @@ var Profile = {
 	},
 
 	// TODO: move history management out to a common utility
-    historyChange: function(e) {
-        var href = ($.address ? $.address.parameter("graph_url") : "") || this.initialGraphUrl;
-        href = decodeURIComponent(href);
-        if (href) {
-            this.expandAccordionForHref(href);
-            this.loadGraph(href, true);
-        }
-    },
+	historyChange: function(e) {
+		var href = ( $.address ? $.address.parameter("graph_url") : "" ) ||
+				this.initialGraphUrl;
+		if ( href ) {
+			href = decodeURIComponent( href );
+			if ( this.expandAccordionForHref(href) ) {
+				this.loadGraph( href, true );
+			} else {
+				// Invalid URL - just try the first link available.
+				var links = $(".graph-link");
+				if ( links.length ) {
+					Profile.loadGraphFromLink( links[0] );
+				}
+			}
+		}
+	},
 
     showGraphThrobber: function(fVisible) {
         if (fVisible)
