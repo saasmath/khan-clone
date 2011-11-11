@@ -56,7 +56,9 @@ def get_graph_url(graph_type, student, coach, list_id):
 def get_api_url(api_function, student, coach, list_id):
     qs = {}
     if student:
-        qs['student_email'] = student.email
+        # Note - the API expects the email as "email", not "student_email"
+        # like in the legacy graph URL's!
+        qs['email'] = student.email
     if coach:
         qs['coach_email'] = coach.email
     if list_id:
