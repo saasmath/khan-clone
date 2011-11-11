@@ -372,10 +372,17 @@ def log_user_video(youtube_id):
         last_second_watched = int(request.request_float("last_second_watched", default = 0))
 
         if video:
-            user_video, video_log, video_points_total = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
+            user_video, video_log, video_points_total, goals_updated = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
+
+            action_results = { }
 
             if video_log:
-                add_action_results(video_log, {"user_video": user_video})
+                action_results['user_video'] = user_video
+
+            if goals_updated:
+                action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+
+            add_action_results(video_log, action_results)
 
     return video_log
 
@@ -615,7 +622,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     action_results["exercise_state"]["followups"] = followups
 
             if goals_updated:
-                api_actions['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+                action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
 
             add_action_results(user_exercise, action_results)
 

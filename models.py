@@ -1568,7 +1568,7 @@ class VideoLog(db.Model):
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
         from goals import update_goals_just_watched_video
-        update_goals_just_watched_video(user_data, user_video)
+        goals_updated = update_goals_just_watched_video(user_data, user_video)
 
         if video_points_received > 0:
             video_log.points_earned = video_points_received
@@ -1590,7 +1590,7 @@ class VideoLog(db.Model):
                 _queue = "log-summary-queue",
                 _url = "/_ah/queue/deferred_log_summary")
 
-        return (user_video, video_log, video_points_total)
+        return (user_video, video_log, video_points_total, goals_updated)
 
     def time_started(self):
         return self.time_watched - datetime.timedelta(seconds = self.seconds_watched)
