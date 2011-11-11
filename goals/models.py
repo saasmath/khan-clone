@@ -116,11 +116,17 @@ class Goal(db.Model):
 
         if user_video.completed:
             any_videos = GoalList.get_from_data(self.objectives, GoalObjectiveAnyVideo)
+            found = False
             for vid_obj in any_videos:
-                if not vid_obj.is_completed:
-                    vid_obj.record_complete(user_video.video)
-                    changed = True
+                if vid_obj.video_key == str(user_video.video.key()):
+                    found = True
                     break
+            if not found:
+                for vid_obj in any_videos:
+                    if not vid_obj.is_completed:
+                        vid_obj.record_complete(user_video.video)
+                        changed = True
+                        break
 
         if changed:
             self.record_complete()
@@ -136,11 +142,17 @@ class Goal(db.Model):
 
         if became_proficient:
             any_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveAnyExerciseProficiency)
+            found = False
             for ex_obj in any_exercises:
-                if not ex_obj.is_completed:
-                    ex_obj.record_complete(user_exercise.exercise_model)
-                    changed = True
+                if ex_obj.exercise_name == user_exercise.exercise_model.name:
+                    found = True
                     break
+            if not found:
+                for ex_obj in any_exercises:
+                    if not ex_obj.is_completed:
+                        ex_obj.record_complete(user_exercise.exercise_model)
+                        changed = True
+                        break
 
         if changed:
             self.record_complete()
