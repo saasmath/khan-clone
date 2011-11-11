@@ -313,19 +313,13 @@ var Profile = {
                 success: function(json) {
                     Throbber.hide();
 
-                    $.each(Goals.all, function(idx, other_goal) {
-                        if (id == other_goal.id) {
-                            Goals.all.splice(idx, 1);
-                            return false;
-                        }
-                    });
-                    updateGoals(Goals.all);
+                    GoalBook.remove(GoalBook.get(id));
                     Profile.loadGraph(Profile.userGoalsHref);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     // TomY TODO - report error
                     Throbber.hide();
-                },
+                }
             });
         }
     },
@@ -334,7 +328,7 @@ var Profile = {
         var goalsModel = {
             'current_goals': [],
             'completed_goals': [],
-            'abandoned_goals': [],
+            'abandoned_goals': []
         };
         $.each(data, function(idx, goal) {
             var goalViewModel = goalCreateViewModel(goal);

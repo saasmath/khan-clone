@@ -193,6 +193,7 @@ var GoalBookView = Backbone.View.extend({
         $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
+        this.model.bind('remove', this.render, this);
     },
     show: function() {
         if (this.el.children.length === 0) {
