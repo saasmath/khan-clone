@@ -74,6 +74,16 @@ def migrate_userdata(key):
         user_data.put()
     db.run_in_transaction(tn, key)
 
+def update_user_exercise_progress(user_exercise):
+    # If a UserExercise object doesn't have the _progress property, it means
+    # the user hasn't done a problem of that exercise since the accuracy model
+    # rollout. This means that what they see on their dashboards and on the
+    # exercise page is unchanged from the streak model. So, we can just
+    # backfill with what their progress would be under the streak model.
+    if user_exercise._progress is None:
+        user_exercise._progress = user_exercise.get_progress_from_streak()
+        yield op.db.Put(user_exercise)
+
 class StartNewBackfillMapReduce(request_handler.RequestHandler):
     def get(self):
         # pass

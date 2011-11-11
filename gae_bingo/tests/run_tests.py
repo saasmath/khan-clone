@@ -163,9 +163,12 @@ def run_tests():
     # Hit Counting conversions multiple times
     for i in range(0, 20):
 
-        if i % 5 == 0:
-            # Stress things out a bit by flushing the core bingo memcache in the middle of Counting conversions
-            # ...we'll make sure the counts aren't lost.
+        if i % 3 == 0:
+            # Stress things out a bit by flushing the memcache .incr() counts of each hippo alternative
+            assert(test_response("persist", use_last_cookies=True) == True)
+            assert(test_response("flush_hippo_counts_memcache", use_last_cookies=True) == True)
+        elif i % 5 == 0:
+            # Stress things out even more flushing the core bingo memcache
             assert(test_response("flush_bingo_memcache", use_last_cookies=True) == True)
 
         assert(test_response("convert_in", {"conversion_name": "hippos_binary"}, use_last_cookies=True) == True)
