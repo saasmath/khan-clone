@@ -403,6 +403,7 @@ var VideoStats = {
         this.fSaving = true;
         var percent = this.getPercentWatched();
         var dtSinceSaveBeforeError = this.dtSinceSave;
+        var id = 0;
 
         var data = {
             last_second_watched: this.getSecondsWatched(),
@@ -412,11 +413,11 @@ var VideoStats = {
         if ( this.sVideoKey !== null ) {
             data.video_key = this.sVideoKey;
         } else if ( this.sYoutubeId !== null ) {
-            data.youtube_id = this.sYoutubeId;
+            id = this.sYoutubeId;
         }
 
         $.ajax({type: "GET",
-                url: "/logvideoprogress",
+                url: "/api/v1/user/videos/"+id+"/log",
                 data: data,
                 success: function (data) { VideoStats.finishSave(data, percent); },
                 error: function () {
@@ -454,27 +455,22 @@ var VideoStats = {
         });
     },
 
-    finishSave: function(data, percent) {
+    finishSave: function(dict_json, percent) {
         VideoStats.fSaving = false;
         VideoStats.dPercentLastSaved = percent;
 
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
-        if (dict_json.video_points && dict_json.user_points_html)
-        {
+        if (dict_json.action_results.user_video) {
+            video = dict_json.action_results.user_video;
             // Update the energy points box with the new data.
             var jelPoints = $(".video-energy-points");
             if (jelPoints.length)
             {
-                jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, dict_json.video_points));
-                $(".video-energy-points-current", jelPoints).text(dict_json.video_points);
+                jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, video.points));
+                $(".video-energy-points-current", jelPoints).text(video.points);
 
                 // Replace the old tooltip with an updated one.
                 VideoStats.tooltip('#points-badge-hover', jelPoints.data('title'));
             }
-
-            $("#user-points-container").html(dict_json.user_points_html);
         }
     },
 
