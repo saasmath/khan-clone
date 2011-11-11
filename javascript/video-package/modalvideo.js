@@ -24,24 +24,40 @@ var ModalVideo = {
 
         // add click handlers to all related video links for lightbox
         jQuery(document).delegate("a.related-video", {
-            'mouseup': function(ev) {
+            mouseup: function(ev) {
                 mouseup_button = ev.button;
                 return true;
             },
-            'click': function(ev) {
+            click: function(ev) {
                 // workaround for IE<9
                 ev.which = ev.which || mouseup_button;
                 mouseup_button = 0;
 
                 if ( ev.which == 1 ) {
                     // left mouse button: show modal video
-                    ModalVideo.show( $(ev.currentTarget).data('video') );
-                    ev.preventDefault();
-                    return false;
-                } else {
-                    // anything else, probably middle mouse: follow the link
-                    return true;
+
+                    var videoModel = $(ev.currentTarget).data('video') || null;
+                    if ( videoModel === null) {
+                        // no video has been associated, this is probably an
+                        // inline link from the exercise itself.
+                        var youtubeId = $(ev.currentTarget).data('youtube-id') || null;
+                        if ( youtubeId !== null ) {
+                            var videos = userExercise.exercise_model.related_videos;
+                            videoModel = _.find(videos, function(video) {
+                                return video.youtube_id == youtubeId;
+                            });
+                        }
+                    }
+
+                    if ( videoModel ) {
+                        ModalVideo.show( videoModel );
+                        ev.preventDefault();
+                        return false;
+                    }
                 }
+
+                // anything else, probably middle mouse: follow the link
+                return true;
             }
         });
     },

@@ -167,7 +167,7 @@ var GoalCreator = {
        if (node.status == 'Proficient')
            return; // Cannot select exercises the user is proficient in
 
-        GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', 'exercise', node.id, node.name);
+        GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', 'exercise', node.name, node.display_name);
 
         GoalCreator.updateExerciseCount();
         GoalCreator.updateViewAndDescription();
@@ -185,8 +185,8 @@ var GoalCreator = {
 
         $('#goal-exercise-count').html(count);
 
-        $.each(graph_dict_data, function(index, graphDict) {
-            var exercise = graphDict.name;
+        $.each(KnowledgeMap.exerciseRowViews, function(index, exerciseRowView) {
+            var exercise = exerciseRowView.exercise.name;
             var found = false;
 
             $.each(GoalCreator.objectives, function(index2, objective) {
@@ -196,7 +196,7 @@ var GoalCreator = {
                 }
             });
 
-            graphDict.showBadge(found);
+            exerciseRowView.showBadge(found);
         });
     },
 

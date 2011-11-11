@@ -68,7 +68,7 @@ class RequestInputHandler(object):
                 # is the email of the currently logged-in user
                 return user_data_current
 
-                return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+            return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
 
         return None
 

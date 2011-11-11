@@ -13,7 +13,8 @@ from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, reset_streak
 from phantom_users.phantom_util import api_create_phantom
 import notifications
-from gae_bingo.gae_bingo import bingo
+from gae_bingo.gae_bingo import bingo, ab_test
+from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
 from goals import GoalList, Goal
 
@@ -22,6 +23,8 @@ from api.decorators import jsonify, jsonp, compress, decompress, etag
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
+
+from google.appengine.ext import db
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -305,7 +308,7 @@ def filter_query_by_request_dates(query, property):
     if request.request_string("dt_end"):
         try:
             dt_end = request.request_date_iso("dt_end")
-            query.filter("%s <=" % property, dt_end)
+            query.filter("%s <" % property, dt_end)
         except ValueError:
             raise ValueError("Invalid date format sent to dt_end, use ISO 8601 Combined.")
 
@@ -348,16 +351,22 @@ def user_videos_specific(youtube_id):
 
     return None
 
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
+# Can specify video using "video_key" parameter instead of youtube_id.
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET","POST"])
 @oauth_required(require_anointed_consumer=True)
 @jsonp
 @jsonify
 def log_user_video(youtube_id):
     user_data = models.UserData.current()
     video_log = None
+    video_key_str = request.request_string("video_key")
 
-    if user_data and youtube_id:
-        video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if user_data and (youtube_id or video_key_str):
+        if video_key_str:
+            key = db.Key(video_key_str)
+            video = db.get(key)
+        else:
+            video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
         seconds_watched = int(request.request_float("seconds_watched", default = 0))
         last_second_watched = int(request.request_float("last_second_watched", default = 0))
@@ -413,7 +422,7 @@ def user_exercises_all():
         user_exercise._user_data = student
         user_exercise._user_exercise_graph = user_exercise_graph
         results.append(user_exercise)
-
+                
     return results
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
@@ -442,11 +451,7 @@ def user_exercises_specific(exercise_name):
 
     return None
 
-@route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
-@oauth_optional()
-@jsonp
-@jsonify
-def user_exercises_specific(exercise_name):
+def user_followup_exercises(exercise_name):
     user_data = models.UserData.current()
 
     if user_data and exercise_name:
@@ -478,6 +483,13 @@ def user_exercises_specific(exercise_name):
         return user_exercises_dict.values()
 
     return None
+
+@route("/api/v1/user/exercises/<exercise_name>/followup_exercises", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def api_user_followups(exercise_name):
+    return user_followup_exercises(exercise_name)
 
 @route("/api/v1/user/playlists", methods=["GET"])
 @oauth_required()
@@ -580,15 +592,32 @@ def attempt_problem_number(exercise_name, problem_number):
                 # and the above pts-original points gives a wrong answer
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
-            api_actions = {
-                "exercise_message_html": templatetags.exercise_message(exercise,
-                    user_data.coaches, user_exercise_graph.states(exercise.name)),
-                "points_earned": {"points": points_earned},
-                "attempt_correct": request.request_bool("complete"),
-            }
+            user_states = user_exercise_graph.states(exercise.name)
+            sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
+            
+            action_results = {
+                "exercise_state": {
+                    "sees_graph" :  sees_graph,
+                    "state" : [state for state in user_states if user_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states, sees_graph) ,
+                },
+                "points_earned" : { "points" : points_earned },
+                "attempt_correct" : request.request_bool("complete")
+            };
+
+            if user_states["proficient"]:
+                followups = user_followup_exercises(exercise_name)
+
+                if followups:
+                    action_results["exercise_state"]["followups"] = followups
+                else :
+                    followups = [models.Exercise.get_by_name(exercise) for exercise in user_data.suggested_exercises[:3]]
+                    action_results["exercise_state"]["followups"] = followups
+
             if goals_updated:
                 api_actions['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
-            add_action_results(user_exercise, api_actions)
+
+            add_action_results(user_exercise, action_results)
 
             return user_exercise
 
@@ -629,8 +658,13 @@ def hint_problem_number(exercise_name, problem_number):
                     request.remote_addr,
                     )
 
+            user_states = user_exercise_graph.states(exercise.name)
             add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_exercise_graph.states(exercise.name)),
+                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                "exercise_state": {
+                    "state" : [state for state in user_states if user_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                }
             })
 
             # A hint will count against the user iff they haven't attempted the question yet and it's their first hint

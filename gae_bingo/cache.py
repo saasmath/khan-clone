@@ -1,6 +1,6 @@
 import logging
 import pickle
-import random
+import hashlib
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred
@@ -91,6 +91,12 @@ class BingoCache(object):
                 # When persisting to datastore, we want to store the most recent value we've got
                 alternative_model.load_latest_counts()
                 alternative_model.put()
+                self.update_alternative(alternative_model)
+
+        # When periodically persisting to datastore, also make sure memcache
+        # has relatively up-to-date participant/conversion counts for each alternative.
+        self.dirty = True
+        self.store_if_dirty()
 
     def log_cache_snapshot(self):
 
@@ -111,8 +117,7 @@ class BingoCache(object):
         alternative_models = self.get_alternatives(experiment_model.name)
         for alternative_model in alternative_models:
             # When logging, we want to store the most recent value we've got
-            alternative_model.load_latest_counts()
-            log_entry = _GAEBingoSnapshotLog(parent=experiment_model, alternative_number=alternative_model.number, conversions=alternative_model.conversions, participants=alternative_model.participants)
+            log_entry = _GAEBingoSnapshotLog(parent=experiment_model, alternative_number=alternative_model.number, conversions=alternative_model.latest_conversions_count(), participants=alternative_model.latest_participants_count())
             log_entries.append(log_entry)
 
         return log_entries
@@ -284,10 +289,12 @@ class BingoIdentityCache(object):
 
     def persist_to_datastore(self, ident):
 
-        # Add the memcache value to a random memcache bucket which
+        # Add the memcache value to a memcache bucket which
         # will be persisted to the datastore when it overflows
         # or when the periodic cron job is run
-        bucket = random.randint(0, 50)
+        sig = hashlib.md5(str(ident)).hexdigest()
+        sig_num = int(sig, base=16)
+        bucket = sig_num % 51
         key = "_gae_bingo_identity_bucket:%s" % bucket
 
         list_identities = memcache.get(key) or []

@@ -16,6 +16,11 @@ def set_debug(debug=False):
 def get_javascript():
     return _javascript or {
         "shared": {
+            "templates": [
+                "streak-bar.handlebars",
+                "knowledgemap-exercise.handlebars",
+                "knowledgemap-admin-exercise.handlebars",
+            ],
             "files": [
                 "jquery.js",
                 "jquery-ui.js",
@@ -24,17 +29,15 @@ def get_javascript():
                 "jquery.placeholder.js",
                 "jquery.hoverflow.js",
                 "jquery.tmpl.min.js",
-                "underscore.js",
+                "../../khan-exercises/utils/underscore.js",
                 "backbone.js",
+                "handlebars.js" if _debug else "handlebars.vm.js",
+                "templates.js",
+                "../../gae_bingo/static/js/gae_bingo.js",
                 "pageutil.js",
                 "api.js",
                 "social.js",
-                "../../gae_bingo/static/js/gae_bingo.js",
                 "goals.js",
-                "handlebars.js" if _debug else "handlebars.vm.js",
-                "templates.js",
-                "knockout-latest.min.js",
-                "knockout-util.js",
             ]
         },
         "video": {
