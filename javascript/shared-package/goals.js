@@ -71,6 +71,11 @@ var GoalCollection = Backbone.Collection.extend({
 
     initialize: function() {
         this.updateActive();
+
+        // ensure updateActive is called whenever the collection changes
+        this.bind('add', this.updateActive, this);
+        this.bind('remove', this.updateActive, this);
+        this.bind('reset', this.updateActive, this);
     },
 
     comparator: function(goal) {
@@ -93,25 +98,8 @@ var GoalCollection = Backbone.Collection.extend({
     updateActive: function() {
         var url = window.location.toString();
         this.active(GoalCollection.findMatchingGoalFor(url, this));
-    },
-
-    // override reset so that updateActive is called before the reset event fires
-    reset: function(models, options) {
-        options = options || {};
-        var silentOptions = _.extend({}, options, {silent: true});
-        Backbone.Collection.prototype.reset.call(this, models, silentOptions);
-        this.updateActive();
-        if (!options.silent) this.trigger('reset', this, options);
-    },
-
-    // override remove so that updateActive is called before the reset event fires
-    remove: function(models, options) {
-        options = options || {};
-        var silentOptions = _.extend({}, options, {silent: true});
-        Backbone.Collection.prototype.remove.call(this, models, silentOptions);
-        this.updateActive();
-        if (!options.silent) this.trigger('remove', this, options);
     }
+
 }, { // class properties:
 
     // todo: cleanup window.location stuff in here!
