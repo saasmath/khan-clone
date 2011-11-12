@@ -164,10 +164,6 @@ class Exercise(db.Model):
     def num_milestones(self):
         return len(self.prerequisites) if self.summative else 1
 
-    @property
-    def required_streak(self):
-        return consts.REQUIRED_STREAK * self.num_milestones
-
     def min_problems_imposed(self):
         return consts.MIN_PROBLEMS_IMPOSED
 
@@ -191,7 +187,8 @@ class Exercise(db.Model):
         # return 3 * self.required_streak
 
         # 85% of users have proficiency before they get to 19 problems
-        return 2 * self.required_streak
+        # TODO(david): This needs to use the new accuracy model
+        return 20
 
     def summative_children(self):
         if not self.summative:
@@ -305,8 +302,6 @@ class UserExercise(db.Model):
     streak = db.IntegerProperty(default = 0)
     _progress = db.FloatProperty(default = None, indexed=False)  # A continuous value >= 0.0, where 1.0 means proficiency. This measure abstracts away the internal proficiency model.
     longest_streak = db.IntegerProperty(default = 0, indexed=False)
-    # TODO(david): This property can be removed once we completely move off the streak display.
-    streak_start = db.FloatProperty(default = 0.0, indexed=False)  # The starting point of the streak bar as it appears to the user, in [0,1)
     first_done = db.DateTimeProperty(auto_now_add=True)
     last_done = db.DateTimeProperty()
     total_done = db.IntegerProperty(default = 0)
@@ -316,7 +311,7 @@ class UserExercise(db.Model):
     proficient_date = db.DateTimeProperty()
     seconds_per_fast_problem = db.FloatProperty(default = consts.MIN_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
     summative = db.BooleanProperty(default=False, indexed=False)
-    _accuracy_model = object_property.ObjectProperty()  # Stateful function object that estimates P(next problem correct). Only exists for new UserExercise objects.
+    _accuracy_model = object_property.ObjectProperty()  # Stateful function object that estimates P(next problem correct). May not exist for old UserExercise objects (but will be created when needed).
 
     _USER_EXERCISE_KEY_FORMAT = "UserExercise.all().filter('user = '%s')"
 
@@ -329,17 +324,6 @@ class UserExercise(db.Model):
         AccuracyModel(),
         consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize
-
-    def proficiency_model(self):
-        user_data = UserData.current()
-        return user_data.proficiency_model if user_data else 'streak'
-
-    @property
-    def required_streak(self):
-        if self.summative:
-            return Exercise.get_by_name(self.exercise).required_streak
-        else:
-            return consts.REQUIRED_STREAK
 
     @property
     def exercise_states(self):
@@ -370,27 +354,10 @@ class UserExercise(db.Model):
     def min_problems_required(self):
         return max(self.min_problems_imposed(), UserExercise._MIN_PROBLEMS_FROM_ACCURACY_MODEL)
 
-    # Do not transition old objects that did not have the _accuracy_model
-    # property - only new UserExercise objects can use the new proficiency
-    # model.
     def accuracy_model(self):
-        # TODO(david): When we fully switch away from the streak model,
-        #     uncomment the lines below and refactor code to remove
-        #     accuracy_model guards.
-        #if self._accuracy_model is None:
-        #    self._accuracy_model = AccuracyModel(self)
+        if self._accuracy_model is None:
+           self._accuracy_model = AccuracyModel(self)
         return self._accuracy_model
-
-    def bingo_proficiency_model(self, test):
-        # We only want to score conversions for newly-created UserExercise
-        # objects that could actually use the new proficiency model behavior
-        # (all existing UserExercise objects use the old streak model to
-        # facilitate transitioning).
-        if self.accuracy_model():
-            bingo(test)
-
-    def use_streak_model(self):
-        return self.proficiency_model() == 'streak' or not self.accuracy_model()
 
     # Faciliate transition for old objects that did not have the _progress property
     @property
@@ -400,22 +367,6 @@ class UserExercise(db.Model):
             self._progress = self._get_progress_from_current_state()
         return self._progress
 
-    def bingo_prof_model_accuracy_threshold_tests(self):
-        if self.total_done < 5 or not self.accuracy_model():
-            return
-
-        accuracy = self.accuracy_model().predict()
-
-        if self.exercise in UserData.conversion_test_easy_exercises:
-            for threshold in UserData.prof_conversion_accuracy_thresholds:
-                if accuracy >= threshold:
-                    self.bingo_proficiency_model('prof_accuracy_above_%s_easy' % threshold)
-
-        elif self.exercise in UserData.conversion_test_hard_exercises:
-            for threshold in UserData.prof_conversion_accuracy_thresholds:
-                if accuracy >= threshold:
-                    self.bingo_proficiency_model('prof_accuracy_above_%s_hard' % threshold)
-
     def update_proficiency_model(self, correct):
         if not correct:
             if self.summative:
@@ -424,31 +375,11 @@ class UserExercise(db.Model):
             else:
                 self.streak = 0
 
-        if self.accuracy_model():
-            self.accuracy_model().update(correct)
-            self.bingo_prof_model_accuracy_threshold_tests()
-
+        self.accuracy_model().update(correct)
         self._progress = self._get_progress_from_current_state()
-
-        if self.use_streak_model():
-            self._update_progress_from_streak_model(correct)
-
-    @clamp(0.0, 1.0)
-    def get_progress_from_streak(self):
-        if self.summative:
-            return float(self.streak) / self.required_streak
-        else:
-            return self.streak_start + (
-                float(self.streak) / self.required_streak * (1.0 - self.streak_start))
 
     @clamp(0.0, 1.0)
     def _get_progress_from_current_state(self):
-
-        if self.use_streak_model():
-            if self._progress is not None:
-                return self._progress
-            else:
-                return self.get_progress_from_streak()
 
         if self.total_correct == 0:
             return 0.0
@@ -464,41 +395,16 @@ class UserExercise(db.Model):
             normalized_prediction = UserExercise._normalize_progress(prediction)
 
         if self.summative:
-            if self._progress is None:
-                milestones_completed = self.streak // consts.CHALLENGE_STREAK_BARRIER
-            else:
-                milestones_completed = math.floor(self._progress * self.num_milestones)
-
             if normalized_prediction >= 1.0:
                 # The user just crossed a challenge barrier. Reset their
                 # accuracy model to start fresh.
                 self._accuracy_model = AccuracyModel()
 
+            milestones_completed = math.floor(self._progress * self.num_milestones)
             return float(milestones_completed + normalized_prediction) / self.num_milestones
 
         else:
             return normalized_prediction
-
-    def _update_progress_from_streak_model(self, correct):
-        assert self._progress is not None
-
-        if correct:
-            if self._progress >= 1.0:
-                self._progress = 1.0
-                return
-
-            if self.summative:
-                progress_increment = 1.0 / self.required_streak
-            else:
-                progress_increment = (1.0 - self._progress) / (self.required_streak - self.streak)
-
-            self._progress += progress_increment
-
-        else:
-            if self.summative:
-                self._progress = float(self.streak) / self.required_streak
-            else:
-                self._progress *= consts.STREAK_RESET_FACTOR
 
     @staticmethod
     def to_progress_display(num):
@@ -602,16 +508,9 @@ class UserExercise(db.Model):
 
                 util_notify.update(user_data, self, False, True)
 
-                # Score conversions for A/B test
-                self.bingo_proficiency_model('prof_gained_proficiency_all')
-
                 if self.exercise in UserData.conversion_test_hard_exercises:
-                    self.bingo_proficiency_model('prof_gained_proficiency_hard')
-                    self.bingo_proficiency_model('prof_gained_proficiency_hard_binary')
                     bingo('hints_gained_proficiency_hard_binary')
                 elif self.exercise in UserData.conversion_test_easy_exercises:
-                    self.bingo_proficiency_model('prof_gained_proficiency_easy')
-                    self.bingo_proficiency_model('prof_gained_proficiency_easy_binary')
                     bingo('hints_gained_proficiency_easy_binary')
 
         else:
@@ -799,34 +698,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
             "user_nickname", "user_email", "seconds_since_joined",
     ]
 
-    prof_conversion_accuracy_thresholds = [0.85, 0.90, 0.92, 0.94, 0.96]
-    _prof_model_conversion_tests = ([
-        ('prof_gained_proficiency_all', ConversionTypes.Counting),
-        ('prof_gained_proficiency_easy', ConversionTypes.Counting),
-        ('prof_gained_proficiency_hard', ConversionTypes.Counting),
-        ('prof_gained_proficiency_easy_binary', ConversionTypes.Binary),
-        ('prof_gained_proficiency_hard_binary', ConversionTypes.Binary),
-        ('prof_problems_done', ConversionTypes.Counting),
-        ('prof_new_exercises_attempted', ConversionTypes.Counting),
-        ('prof_does_problem_just_after_proficiency', ConversionTypes.Counting),
-        ('prof_problem_correct_just_after_proficiency', ConversionTypes.Counting),
-        ('prof_wrong_problems', ConversionTypes.Counting),
-        ('prof_keep_going_after_wrong', ConversionTypes.Counting),
-    ] + [('prof_accuracy_above_%s_easy' % p, ConversionTypes.Binary) for p in prof_conversion_accuracy_thresholds]
-    + [('prof_accuracy_above_%s_hard' % p, ConversionTypes.Binary) for p in prof_conversion_accuracy_thresholds])
-    _prof_model_conversion_names, _prof_model_conversion_types = [list(x) for x in zip(*_prof_model_conversion_tests)]
-
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
         'probability_1', 'domain_of_a_function', 'division_4',
         'ratio_word_problems', 'writing_expressions_1', 'ordering_numbers',
         'geometry_1', 'converting_mixed_numbers_and_improper_fractions'])
     conversion_test_easy_exercises = set(['counting_1', 'significant_figures_1', 'subtraction_1'])
-
-    @property
-    @request_cache.cache()
-    def proficiency_model(self):
-        return ab_test("Proficiency Model", {"accuracy": 1, "streak": 9},
-            UserData._prof_model_conversion_names, UserData._prof_model_conversion_types)
 
     @property
     def nickname(self):
@@ -990,7 +866,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 exercise_model=exercise,
                 streak=0,
                 _progress=0.0,
-                streak_start=0.0,
                 longest_streak=0,
                 first_done=datetime.datetime.now(),
                 last_done=None,
@@ -2100,6 +1975,7 @@ class UserExerciseCache(db.Model):
 
     @staticmethod
     def dict_from_user_exercise(user_exercise):
+        # TODO(david): We can probably remove some of this stuff here.
         return {
                 "streak": user_exercise.streak if user_exercise else 0,
                 "longest_streak": user_exercise.longest_streak if user_exercise else 0,
