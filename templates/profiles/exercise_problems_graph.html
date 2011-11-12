@@ -19,9 +19,6 @@ function exercise_url(point) {
 						renderTo: 'highchart',
 						defaultSeriesType: 'column'
 					},
-                    credits: {
-                        enabled: false
-                    },
                     plotOptions: {
                         scatter: {
                             marker: {
@@ -52,9 +49,6 @@ function exercise_url(point) {
                             }
                         }
                     },
-					title: {
-                        text: '',
-						x: -20 //center
 					},
 					subtitle: {
                         text: "{{ exercise_display_name|escapejs }}",
