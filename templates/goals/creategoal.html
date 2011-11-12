@@ -185,18 +185,25 @@ var GoalCreator = {
 
         $('#goal-exercise-count').html(count);
 
-        $.each(KnowledgeMap.exerciseRowViews, function(index, exerciseRowView) {
-            var exercise = exerciseRowView.exercise.name;
+        $.each(KnowledgeMap.dictNodes, function(index, exercise) {
             var found = false;
 
             $.each(GoalCreator.objectives, function(index2, objective) {
-                if (objective.type == 'GoalObjectiveExerciseProficiency' && objective.id == exercise)
+                if (objective.type == 'GoalObjectiveExerciseProficiency' && objective.id == exercise.name)
                 {
                     found = true;
                 }
             });
 
-            exerciseRowView.showBadge(found);
+            $.each(KnowledgeMap.exerciseRowViews, function(index, exerciseRowView) {
+                if (exercise == exerciseRowView.exercise)
+                    exerciseRowView.showGoalIcon(found);
+            });
+
+            if (found)
+                $('#node-' + exercise.name).find('.exercise-goal-icon').show();
+            else
+                $('#node-' + exercise.name).find('.exercise-goal-icon').hide();
         });
     },
 

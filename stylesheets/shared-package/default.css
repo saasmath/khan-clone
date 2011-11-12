@@ -1438,8 +1438,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
     .exercise-goal-icon {
         position: absolute;
-        left: 30px;
-        top: 30px;
+        right: 2px;
+        top: 2px;
+        width: 12px;
+        height: 12px;
     }
 
     #container #dashboard-drawer {
