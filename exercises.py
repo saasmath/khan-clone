@@ -216,7 +216,8 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
-                'Hints or Show Solution Nov 5')
+                'Hints or Show Solution Nov 5'),
+            'remind_answer_format': 'true' if ab_test('remind_answer_format') else 'false',
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
