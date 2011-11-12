@@ -11,7 +11,7 @@ javascript = {
             "api.js",
             "social.js",
             "../../gae_bingo/static/js/gae_bingo.js",
-            "underscore.js",
+            "../../khan-exercises/utils/underscore.js",
         ]
     },
     "video": {
@@ -90,6 +90,7 @@ javascript = {
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
             "utils/probability.js",

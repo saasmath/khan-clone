@@ -1,28 +1,23 @@
 import re
 import os
-import logging
 import itertools
 import hashlib
 import urllib
 
 from google.appengine.ext import db
-from google.appengine.api import users
 from google.appengine.ext import deferred
 
-from app import App
 import consts
 import datetime
 import models
 import request_handler
-import util
 import user_util
 import points
 import layer_cache
 import knowledgemap
 import string
-from badges import util_badges, last_action_cache, custom_badges
+from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from phantom_users.phantom_util import create_phantom
 from custom_exceptions import MissingExerciseException
 from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
@@ -50,7 +45,7 @@ class MoveMapNodes(request_handler.RequestHandler):
 class ViewExercise(request_handler.RequestHandler):
 
     _hints_ab_test_alternatives = {
-        'old': 17,  # The original, where it was unclear if a hint was costly after an attempt
+        'old': 7,  # The original, where it was unclear if a hint was costly after an attempt
         'more_visible': 1,  # Jace's shaking and pulsating emphasis on free hints after an attempt
         'solution_button': 1,  # David's show solution button in lieu of hint button after an attempt
         'full_solution': 1,  # Jason's just show the complete solution after an incorrect answer
@@ -217,10 +212,11 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)), 
-            'alternate_hints_treatment': ab_test('Hints or Show Solution',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 11',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
-                ViewExercise._hints_conversion_types)
+                ViewExercise._hints_conversion_types,
+                'Hints or Show Solution Nov 5')
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
@@ -329,13 +325,15 @@ def raw_exercise_contents(exercise_file):
         f = open(path)
         contents = f.read()
     except:
-        raise MissingExerciseException("Missing exercise file for exid '%s'" % exercise_file)
+        raise MissingExerciseException(
+                "Missing exercise file for exid '%s'" % exercise_file)
     finally:
         if f:
             f.close()
 
     if not len(contents):
-        raise MissingExerciseException("Missing exercise content for exid '%s'" % exercise.name)
+        raise MissingExerciseException(
+                "Missing exercise content for exid '%s'" % exercise_file)
 
     return contents
 
@@ -400,18 +398,11 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         first_response = (attempt_number == 1 and count_hints == 0) or (count_hints == 1 and attempt_number == 0)
 
-        if user_exercise.total_done == 0 and first_response:
-            user_exercise.bingo_proficiency_model('prof_new_exercises_attempted')
-
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
-            user_exercise.bingo_proficiency_model('prof_keep_going_after_wrong')
             bingo('hints_keep_going_after_wrong')
 
         first_problem_after_proficiency = prev_last_done and user_exercise.proficient_date and (
             abs(prev_last_done - user_exercise.proficient_date) <= datetime.timedelta(seconds=1))
-
-        if first_problem_after_proficiency:
-            user_exercise.bingo_proficiency_model('prof_does_problem_just_after_proficiency')
 
         if completed:
 
@@ -434,18 +425,12 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 user_exercise.update_proficiency_model(correct=True)
 
-                if user_exercise.summative and user_exercise.streak % consts.CHALLENGE_STREAK_BARRIER == 0:
-                    user_exercise.streak_start = 0.0
-
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo("hints_gained_proficiency_all")
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
                     problem_log.earned_proficiency = True
-
-                if first_problem_after_proficiency:
-                    user_exercise.bingo_proficiency_model('prof_problem_correct_just_after_proficiency')
 
             util_badges.update_with_user_exercise(
                 user_data,
@@ -456,7 +441,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Update phantom user notifications
             util_notify.update(user_data, user_exercise)
 
-            user_exercise.bingo_proficiency_model('prof_problems_done')
             bingo('hints_problems_done')
 
         else:
@@ -468,7 +452,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
-                user_exercise.bingo_proficiency_model('prof_wrong_problems')
                 bingo('hints_wrong_problems')
 
         # If this is the first attempt, update review schedule appropriately
@@ -568,16 +551,10 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise.covers = []
             exercise.author = user
             exercise.summative = self.request_bool("summative", default=False)
-            path = os.path.join(os.path.dirname(__file__), exercise_name + '.html')
 
         v_position = self.request.get('v_position')
         h_position = self.request.get('h_position')
         short_display_name = self.request.get('short_display_name')
-
-        add_video = self.request.get('add_video')
-        delete_video = self.request.get('delete_video')
-        add_playlist = self.request.get('add_playlist')
-        delete_playlist = self.request.get('delete_playlist')
 
         exercise.prerequisites = []
         for c_check_prereq in range(0, 1000):
