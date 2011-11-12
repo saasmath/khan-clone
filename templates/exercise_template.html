@@ -5,9 +5,14 @@
 {% block meta_page_title %}{{ exercise.display_name|escape }} | {% endblock meta_page_title %}
 {% block meta_description %}Practice {{ exercise.display_name|escape }} with Khan Academy's free online exercises.{% endblock %}
 
-{% block pagescript %}
-
+{% block pagecss %}
     {{ js_css_packages.css_package("exercises") }}
+    {% if renderable %}
+        {{ js_css_packages.css_package("video") }}
+    {% endif %}
+{% endblock pagecss %}
+
+{% block pagescript %}
 
     {% if renderable %}
 
@@ -16,7 +21,6 @@
     <script>var userExercise = {{ user_exercise_json }};</script>
 
     {{ js_css_packages.js_package("exercises") }}
-    {{ js_css_packages.css_package("video") }}
 
     <script>{{ exercise_inline_script }}</script>
     <style>{{exercise_inline_style}}</style>
