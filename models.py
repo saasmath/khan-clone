@@ -164,9 +164,6 @@ class Exercise(db.Model):
     def num_milestones(self):
         return len(self.prerequisites) if self.summative else 1
 
-    def min_problems_imposed(self):
-        return consts.MIN_PROBLEMS_IMPOSED
-
     @staticmethod
     def to_short_name(name):
         exercise = Exercise.get_by_name(name)
@@ -318,11 +315,18 @@ class UserExercise(db.Model):
     _serialize_blacklist = ["review_interval_secs", "_progress", "_accuracy_model"]
 
     _MIN_PROBLEMS_FROM_ACCURACY_MODEL = AccuracyModel.min_streak_till_threshold(consts.PROFICIENCY_ACCURACY_THRESHOLD)
+    _MIN_PROBLEMS_REQUIRED = max(_MIN_PROBLEMS_FROM_ACCURACY_MODEL, consts.MIN_PROBLEMS_IMPOSED)
 
-    # A bound function object to normalize the progress bar display from a probability
-    _normalize_progress = InvFnExponentialNormalizer(
-        AccuracyModel(),
-        consts.PROFICIENCY_ACCURACY_THRESHOLD
+    # Bound function objects to normalize the progress bar display from a probability
+    # TODO(david): This is a bit of a hack to not have the normalizer move too
+    #     slowly if the user got a lot of wrongs.
+    _all_correct_normalizer = InvFnExponentialNormalizer(
+        accuracy_model = AccuracyModel().update(correct=False),
+        proficiency_threshold = AccuracyModel.simulate([True] * _MIN_PROBLEMS_REQUIRED)
+    ).normalize
+    _had_wrong_normalizer = InvFnExponentialNormalizer(
+        accuracy_model = AccuracyModel().update([False] * 3),
+        proficiency_threshold = consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize
 
     @property
@@ -347,12 +351,6 @@ class UserExercise(db.Model):
     @property
     def num_milestones(self):
         return self.exercise_model.num_milestones
-
-    def min_problems_imposed(self):
-        return self.exercise_model.min_problems_imposed()
-
-    def min_problems_required(self):
-        return max(self.min_problems_imposed(), UserExercise._MIN_PROBLEMS_FROM_ACCURACY_MODEL)
 
     def accuracy_model(self):
         if self._accuracy_model is None:
@@ -384,15 +382,13 @@ class UserExercise(db.Model):
         if self.total_correct == 0:
             return 0.0
 
+        prediction = self.accuracy_model().predict()
+
         if self.accuracy_model().total_done <= self.accuracy_model().total_correct():
             # Impose a minimum number of problems required to be done.
-            # If the user has no wrong answers yet, we can get a progress bar
-            # amount by just dividing correct answers by the # of problems
-            # required.
-            normalized_prediction = min(float(self.accuracy_model().total_correct()) / self.min_problems_required(), 1.0)
+            normalized_prediction = UserExercise._all_correct_normalizer(prediction)
         else:
-            prediction = self.accuracy_model().predict()
-            normalized_prediction = UserExercise._normalize_progress(prediction)
+            normalized_prediction = UserExercise._had_wrong_normalizer(prediction)
 
         if self.summative:
             if normalized_prediction >= 1.0:

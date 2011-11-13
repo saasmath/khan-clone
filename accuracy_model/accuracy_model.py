@@ -65,6 +65,8 @@ class AccuracyModel(object):
             self.total_done = min(self.total_done + 1, MAX_HISTORY_KEPT)
             self.answer_history = ((self.answer_history << 1) | correct) & MAX_HISTORY_BIT_MASK
 
+        return self
+
     def update_to_new_version(self):
         """
         Updates old AccuracyModel objects to new objects. This function should
