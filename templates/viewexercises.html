@@ -36,7 +36,13 @@
 		}
 	}
 	
-    $(function(){Drawer.init(); KnowledgeMap.init({{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}, false);});
+    $(function(){
+        Drawer.init(); 
+        KnowledgeMap.init({
+            'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
+            'admin': false
+        });
+    });
 
     var graph_dict_data = {{ graph_dict_data }};
     
