@@ -409,10 +409,9 @@ input#goal-title:focus {
 
 /* here to remind us this needs to be prettied up */
 .goal.active {
-    font-weight: bold;
     outline: 2px solid orange\9;
 
-    -moz-box-shadow: inset 0 0 0 1px #555, 0 0 4px 2px orange;
-    -webkit-box-shadow: inset 0 0 0 1px #555, 0 0 4px 2px orange;
-    box-shadow: inset 0 0 0 1px #555, 0 0 4px 2px orange;
+    -moz-box-shadow: 0 0 0 3px #fff, 0 0 4px 4px orange;
+    -webkit-box-shadow: 0 0 0 3px #fff, 0 0 4px 4px orange;
+    box-shadow: 0 0 0 3px #fff, 0 0 4px 4px orange;
 }
