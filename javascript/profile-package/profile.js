@@ -291,7 +291,7 @@ var Profile = {
 				Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
 			},
 			error: function() {
-				Profile.finishLoadGraphError
+				Profile.finishLoadGraphError();
 			}
         });
         $("#graph-content").html("");
