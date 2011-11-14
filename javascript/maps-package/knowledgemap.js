@@ -4,8 +4,8 @@ var KnowledgeMapExercise = Backbone.Model.extend({
 
         if (this.get('status') == 'Suggested') {
             this.set({'isSuggested': true, 'badgeIcon': '/images/'+s_prefix+'-suggested.png'});
-        } else if (this.get('status')== 'Review') {
-            this.set({'isSuggested': true, 'badgeIcon': '/images/node-review.png'});
+        } else if (this.get('status') == 'Review') {
+            this.set({'isSuggested': true, 'isReview': true, 'badgeIcon': '/images/node-review.png'});
         } else if (this.get('status') == 'Proficient') {
             this.set({'isSuggested': false, 'badgeIcon': '/images/'+s_prefix+'-complete.png'});
         } else {
@@ -385,8 +385,9 @@ var KnowledgeMap = {
                 isPng: false
     },
 
-    init: function(latInit, lngInit, zoomInit, admin) {
+    init: function(params) {
         var self = this;
+        var admin = !!params.admin;
 
         this.filterSettings.set({'userShowAll': admin});
 
@@ -403,11 +404,13 @@ var KnowledgeMap = {
             // Create views
 
             if (exerciseModel.get('isSuggested')) {
-                var element = $('<div>');
-                element.appendTo('#dashboard-suggested-exercises-content');
-                KnowledgeMap.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element}).setType('suggested', admin));
+                if (!params.hideReview || !exerciseModel.get('isReview')) {
+                    var element = $('<div>');
+                    element.appendTo('#dashboard-suggested-exercises-content');
+                    KnowledgeMap.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element}).setType('suggested', admin));
 
-                KnowledgeMap.numSuggestedExercises++;
+                    KnowledgeMap.numSuggestedExercises++;
+                }
             }
             
             if (exerciseModel.get('recent')) {
@@ -441,10 +444,10 @@ var KnowledgeMap = {
         this.map.mapTypes.set('knowledge', knowledgeMapType);
         this.map.setMapTypeId('knowledge');
 
-        if (latInit && lngInit && zoomInit)
+        if (params.mapCoords)
         {
-            this.map.setCenter(new google.maps.LatLng(latInit, lngInit));
-            this.map.setZoom(zoomInit);
+            this.map.setCenter(new google.maps.LatLng(params.mapCoords[0], params.mapCoords[1]));
+            this.map.setZoom(params.mapCoords[2]);
         }
         else
         {

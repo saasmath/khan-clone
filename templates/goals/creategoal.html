@@ -13,6 +13,7 @@
 
 var GoalCreator = {
     objectives: [],
+    creating: false,
 
     init: function() {
         // Fix links on videos
@@ -34,13 +35,21 @@ var GoalCreator = {
 
         var form = $('#create-goal');
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
-        form.find('input[name="title"]').change(function() { GoalCreator.updateViewAndDescription(); } );
+        form.find('input[name="title"]')
+            .change(function() { GoalCreator.updateViewAndDescription(); } )
+            .keyup(function(event) {
+                if (event.which == 13) {
+                    this.blur();
+                }  
+            });
 
         GoalCreator.updateViewAndDescription();
     },
     toggleObjectiveInternal: function(type, css, id, name) {
         var idx = 1;
         var found_index = -1;
+
+        $('#goal-commit-response').hide();
 
         $.each(GoalCreator.objectives, function(index, objective) {
             if (objective.type == type && objective.id == id) {
@@ -260,22 +269,13 @@ var GoalCreator = {
     validate: function(form) {
         var error = '';
 
-        var titleField = form.find('input[name="title"]');
-        if (titleField.val() == '')
-        {
-            error = 'You must give your goal a name.';
-            titleField.addClass('fieldError');
-        } else {
-            titleField.removeClass('fieldError');
-        }
-
         if (GoalCreator.objectives.length < 2)
         {
             error = "We'd like you to pick at least two (2) objectives";
         }
 
         if (error != '') {
-            $('#goal-commit-response').html(error);
+            $('#goal-commit-response').html(error).show();
             return false;
         }
         return true;
@@ -284,8 +284,14 @@ var GoalCreator = {
         var form = $('#create-goal');
         var html = '';
 
-        if (!GoalCreator.validate(form))
+        if (GoalCreator.creating || !GoalCreator.validate(form))
             return;
+
+        var titleField = form.find('input[name="title"]');
+        if (titleField.val() == '')
+        {
+            titleField.val('Custom goal: ' + new Date().toDateString());
+        }
 
         $.each(GoalCreator.objectives, function(idx, objective) {
             html += '<input type="hidden" name="objective' + objective.idx + '_type" value="' + objective.type + '">';
@@ -297,6 +303,9 @@ var GoalCreator = {
         });
         $('#goal-hidden-values').html(html);
 
+        $('#goal-submit-button').html("<img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Creating...</span>").removeClass('green');
+        GoalCreator.creating = true;
+
         $.ajax({
             url: "/api/v1/user/goals/create",
             type: 'POST',
@@ -304,9 +313,12 @@ var GoalCreator = {
             data: $(form).serialize(),
             success: function(json) {
                 document.location = '/profile?k#/?graph_url=/api/v1/user/goals'; // Take the user to the goals list in their profile
+                GoalCreator.creating = false;
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                $('#goal-commit-response').html('Goal creation failed: ' + jqXHR.responseText);
+                $('#goal-commit-response').html('Goal creation failed: ' + jqXHR.responseText).show();
+                $('#goal-submit-button').html('Create New Goal').addClass('green');
+                GoalCreator.creating = false;
             },
         });
 
@@ -322,7 +334,11 @@ $(function() {
     Drawer.init();
     GoalCreator.init();
     GoalCreator.showExercises();
-    KnowledgeMap.init({{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }});
+    KnowledgeMap.init({
+        'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
+        'admin': false,
+        'hideReview': true
+    });
     KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
     // TomY TODO - Figure out why filtering isn't working here
 });
@@ -334,9 +350,9 @@ $(function() {
 <article class="create-goal-page">
 <form id="create-goal" action="javascript:">
   <div class="section-headline">
-  <a onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
-    <span id="goal-commit-response" style="color:#f00; float: right;"></span>
-    <input type="text" name="title" class="simple-input ui-corner-all" id="goal-title" placeholder="New Goal (click to edit title)"></input>
+  <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
+    <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
+    <input type="text" name="title" class="simple-input ui-corner-all" id="goal-title" placeholder="New Goal (click to set a title)"></input>
   </div>
   <div id="goal-info-section">
     <div id="create-goal-view"></div>
