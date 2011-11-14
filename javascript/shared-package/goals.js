@@ -135,17 +135,15 @@ var GoalCollection = Backbone.Collection.extend({
                 console.log("Error: brand new goal appeared from somewhere", newGoal);
             }
         }, this);
-    }
-
-}, { // class properties:
+    },
 
     // todo: cleanup window.location stuff in here!
-    findExerciseObjectiveFor: function(url, goals) {
+    findExerciseObjectiveFor: function(url) {
         var matchingGoal = null;
 
         var exid = parseQueryString(url).exid;
         // find a goal with exactly this exercise
-        matchingGoal = goals.find(function(goal) {
+        matchingGoal = this.find(function(goal) {
             return _.find(goal.get('objectives'), function(ob) {
                 return ob.type == "GoalObjectiveExerciseProficiency" &&
                     exid == parseQueryString(ob.url).exid;
@@ -154,7 +152,7 @@ var GoalCollection = Backbone.Collection.extend({
 
         if ( matchingGoal === null ) {
             // find an exercise process goal
-            matchingGoal = goals.find(function(goal) {
+            matchingGoal = this.find(function(goal) {
                 return _.find(goal.get('objectives'), function(ob) {
                     return ob.type == "GoalObjectiveAnyExerciseProficiency";
                 });
@@ -164,7 +162,7 @@ var GoalCollection = Backbone.Collection.extend({
         return matchingGoal;
     },
 
-    findVideoObjectiveFor: function(url, goals) {
+    findVideoObjectiveFor: function(url) {
         var matchingGoal = null;
 
         var getVideoId = function(url) {
@@ -176,7 +174,7 @@ var GoalCollection = Backbone.Collection.extend({
         var videoId = getVideoId(window.location.toString());
 
         // find a goal with exactly this exercise
-        matchingGoal = goals.find(function(goal) {
+        matchingGoal = this.find(function(goal) {
             return _.find(goal.get('objectives'), function(ob) {
                 return ob.type == "GoalObjectiveWatchVideo" &&
                     videoId == getVideoId(ob.url);
@@ -185,7 +183,7 @@ var GoalCollection = Backbone.Collection.extend({
 
         if (matchingGoal === null) {
             // find an exercise process goal
-            matchingGoal = goals.find(function(goal) {
+            matchingGoal = this.find(function(goal) {
                 return _.find(goal.get('objectives'), function(ob) {
                     return ob.type == "GoalObjectiveAnyVideo";
                 });
@@ -196,17 +194,17 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     // find the most appriate goal to display for a given URL
-    findMatchingGoalFor: function(url, goals) {
+    findMatchingGoalFor: function(url) {
         var matchingGoal = null;
 
         if (window.location.pathname == "/exercises") {
-            matchingGoal = this.findExerciseObjectiveFor(url, goals);
+            matchingGoal = this.findExerciseObjectiveFor(url);
             if (matchingGoal !== null) {
                 console.log('found a matching exercise goal');
             }
         }
         else if (window.location.pathname.indexOf("/video") === 0) {
-            matchingGoal = this.findVideoObjectiveFor(url, goals);
+            matchingGoal = this.findVideoObjectiveFor(url);
             if (matchingGoal !== null) {
                 console.log('found a matching video goal');
             }
@@ -215,7 +213,7 @@ var GoalCollection = Backbone.Collection.extend({
         // if we're not on a matching exercise or video page, just show the
         // most recently upated one
         if (matchingGoal === null) {
-            matchingGoal = goals.at(0); // comparator is most recently updated
+            matchingGoal = this.at(0); // comparator is most recently updated
         }
 
         return matchingGoal;
