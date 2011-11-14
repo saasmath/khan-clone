@@ -135,6 +135,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is SmartHistoryLoadException:
+            # 404s are very common with Smarthistory as bots have gotten hold of bad urls, silencing these reports and log as info instead
+            silence_report = True
+            logging.info(e)
             title = "This page of the Smarthistory section of Khan Academy does not exist"
             message_html = "Go to <a href='/'>our Smarthistory homepage</a> to find more art history content."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
