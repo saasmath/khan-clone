@@ -234,19 +234,27 @@ var GoalBookView = Backbone.View.extend({
             this.render();
         }
 
-        // listen for escape key
         var that = this;
-        $(document).bind('keyup.goalbook', function ( e ) {
-            if ( e.which == 27 ) {
-                that.hide();
-            }
-        });
-
         // animate on the way down
-        return $(this.el).slideDown("fast");
+        return $(this.el).slideDown("fast", function() {
+            // listen for escape key
+            $(document).bind('keyup.goalbook', function ( e ) {
+                if ( e.which == 27 ) {
+                    that.hide();
+                }
+            });
+
+            // close the goalbook if user clicks elsewhere on page
+            $('body').bind('click.goalbook', function( e ) {
+                if ( $(e.target).closest('#goals-nav-container').length === 0 ) {
+                    that.hide();
+                }
+            });
+        });
     },
     hide: function() {
         $(document).unbind('keyup.goalbook');
+        $('body').unbind('click.goalbook');
         return $(this.el).slideUp("fast");
     },
     render: function() {
