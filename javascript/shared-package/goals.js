@@ -119,7 +119,7 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     updateActive: function() {
-        this.active(GoalCollection.findMatchingGoalFor());
+        this.active(GoalCollection.findActiveGoal());
     },
 
     incrementalUpdate: function(updatedGoals) {
@@ -192,7 +192,7 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     // find the most appriate goal to display for a given URL
-    findMatchingGoalFor: function() {
+    findActiveGoal: function() {
         var matchingGoal = null;
         var url = window.location.toString();
 
