@@ -58,7 +58,7 @@ var Goal = Backbone.Model.extend({
 
             // check for goal completion
             if (this.get('progress') >= 1) {
-                toFire.push({event:'goalcompleted', args: [this]});
+                toFire.push(['goalcompleted', this]);
             }
             else {
                 // now look for updated objectives
@@ -66,15 +66,9 @@ var Goal = Backbone.Model.extend({
                 _.each(this.get('objectives'), function(newObj, i) {
                     var oldObj = oldObjectives[i];
                     if (newObj.progress > oldObj.progress) {
-                        toFire.push({
-                            event:'progressed',
-                            args:[this, newObj]
-                        });
+                        toFire.push(['progressed', this, newObj]);
                         if (newObj.progress >= 1) {
-                            toFire.push({
-                                event:'completed',
-                                args:[this, newObj]
-                            });
+                            toFire.push(['completed', this, newObj]);
                         }
                     }
                 }, this);
@@ -86,8 +80,8 @@ var Goal = Backbone.Model.extend({
                     // this callback should only run once, so immediately unbind
                     this.unbind('change', callback);
                     // trigger all change notifications
-                    _.each(toFire, function(event) {
-                        this.trigger(event.event, event.args);
+                    _.each(toFire, function(triggerArgs) {
+                        this.trigger.apply(this, triggerArgs);
                     }, this);
                 }, this.collection);
             }
