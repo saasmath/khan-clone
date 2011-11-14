@@ -212,11 +212,14 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)), 
-            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 10',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 11',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
-                'Hints or Show Solution Nov 5')
+                'Hints or Show Solution Nov 5'),
+            'remind_answer_format': 'true' if ab_test('remind_answer_format_2',
+                conversion_name=['remind_first_attempt_wrong', 'remind_correct_after_wrong'],
+                conversion_type=[ConversionTypes.Counting] * 2) else 'false',
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
@@ -398,18 +401,11 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         first_response = (attempt_number == 1 and count_hints == 0) or (count_hints == 1 and attempt_number == 0)
 
-        if user_exercise.total_done == 0 and first_response:
-            user_exercise.bingo_proficiency_model('prof_new_exercises_attempted')
-
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
-            user_exercise.bingo_proficiency_model('prof_keep_going_after_wrong')
             bingo('hints_keep_going_after_wrong')
 
         first_problem_after_proficiency = prev_last_done and user_exercise.proficient_date and (
             abs(prev_last_done - user_exercise.proficient_date) <= datetime.timedelta(seconds=1))
-
-        if first_problem_after_proficiency:
-            user_exercise.bingo_proficiency_model('prof_does_problem_just_after_proficiency')
 
         if completed:
 
@@ -432,18 +428,12 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 user_exercise.update_proficiency_model(correct=True)
 
-                if user_exercise.summative and user_exercise.streak % consts.CHALLENGE_STREAK_BARRIER == 0:
-                    user_exercise.streak_start = 0.0
-
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo("hints_gained_proficiency_all")
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
                     problem_log.earned_proficiency = True
-
-                if first_problem_after_proficiency:
-                    user_exercise.bingo_proficiency_model('prof_problem_correct_just_after_proficiency')
 
             util_badges.update_with_user_exercise(
                 user_data,
@@ -454,7 +444,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Update phantom user notifications
             util_notify.update(user_data, user_exercise)
 
-            user_exercise.bingo_proficiency_model('prof_problems_done')
             bingo('hints_problems_done')
 
         else:
@@ -466,7 +455,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
-                user_exercise.bingo_proficiency_model('prof_wrong_problems')
                 bingo('hints_wrong_problems')
 
         # If this is the first attempt, update review schedule appropriately
