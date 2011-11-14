@@ -1,0 +1,10 @@
+<div class="all-goals">
+    {{#goals}}
+    {{>goalbook-row}}
+    {{/goals}}
+    <div id="goalbook-controls">
+        <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
+        <a id="btn-goal-history" class="simple-button action-gradient seethrough" href="/profile?k#/?graph_url=/api/v1/user/goals">Goal History</a>
+        <a class="hide-goals">Close <img class="close-cross" src="/images/circled_cross.png"></a>
+    </div>
+</div>

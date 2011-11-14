@@ -1,3 +1,9 @@
+var calcIconFillHeight = function(o) {
+    var height = o.type.toLowerCase().indexOf("exercise") >= 1 ? 13 : 12;
+    var offset = o.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6;
+    return Math.ceil(o.progress * height) + offset;
+};
+
 var Goal = Backbone.Model.extend({
     defaults: {
         active: false,
@@ -14,12 +20,18 @@ var Goal = Backbone.Model.extend({
 
     calcDependents: function() {
         var progress = this.calcTotalProgress(this.get('objectives'));
+        _.each(this.get('objectives'), function (obj) {
+            obj.complete = obj.progress >= 1;
+            obj.iconFillHeight = calcIconFillHeight(obj);
+        });
         this.set({
             progress: progress,
             progressStr: (progress * 100).toFixed(0),
+            complete: progress >= 1,
             objectiveProgress: _.filter(this.get('objectives'), function(obj) {
                 return obj.progress >= 1;
-            }).length
+            }).length,
+            objectiveWidth: 100/this.get('objectives').length
         }, {silent: true});
     },
 
@@ -37,30 +49,47 @@ var Goal = Backbone.Model.extend({
     },
 
     fireCustom: function() {
-        if (this.hasChanged('progress')) {
-            // inspect old element to see what changed, fire events
-            //this.trigger('progressed');
-            justWorkedOnGoal(this);
-            // check for goal completion
+        this.calcDependents();
 
-            // check to see if we just finished the goal
+        if (this.hasChanged('progress')) {
+            // we want to fire these events after all other listeners to 'change'
+            // have had a chance to run
+            var toFire = [];
+
+            // check for goal completion
             if (this.get('progress') >= 1) {
-                //this.trigger('completed');
-                justFinishedGoal(this);
+                toFire.push({event:'goalcompleted', args: [this]});
             }
             else {
                 // now look for updated objectives
                 oldObjectives = this.previous('objectives');
-                var goal = this;
                 _.each(this.get('objectives'), function(newObj, i) {
                     var oldObj = oldObjectives[i];
                     if (newObj.progress > oldObj.progress) {
-                        justWorkedOnObjective(goal, newObj);
+                        toFire.push({
+                            event:'progressed',
+                            args:[this, newObj]
+                        });
                         if (newObj.progress >= 1) {
-                            justFinishedObjective(goal, newObj);
+                            toFire.push({
+                                event:'completed',
+                                args:[this, newObj]
+                            });
                         }
                     }
-                });
+                }, this);
+            }
+            if ( _.any(toFire) ) {
+                // register a callback to execute at the end of the rest of the
+                // change callbacks
+                this.collection.bind('change', function callback() {
+                    // this callback should only run once, so immediately unbind
+                    this.unbind('change', callback);
+                    // trigger all change notifications
+                    _.each(toFire, function(event) {
+                        this.trigger(event.event, event.args);
+                    }, this);
+                }, this.collection);
             }
         }
     }
@@ -83,7 +112,7 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     active: function(goal) {
-        var current = this.find(function(g) {return g.get('active'); } ) || null;
+        var current = this.find(function(g) {return g.get('active');}) || null;
         if (goal && goal !== current) {
             // set active
             if (current !== null) {
@@ -98,6 +127,20 @@ var GoalCollection = Backbone.Collection.extend({
     updateActive: function() {
         var url = window.location.toString();
         this.active(GoalCollection.findMatchingGoalFor(url, this));
+    },
+
+    incrementalUpdate: function(updatedGoals) {
+        _.each(updatedGoals, function(newGoal) {
+            oldGoal = this.get(newGoal.id) || null;
+
+            if (oldGoal !== null) {
+                oldGoal.set(newGoal);
+            }
+            else {
+                // todo: remove this, do something better
+                console.log("Error: brand new goal appeared from somewhere", newGoal);
+            }
+        }, this);
     }
 
 }, { // class properties:
@@ -186,6 +229,7 @@ var GoalCollection = Backbone.Collection.extend({
 });
 
 var GoalBookView = Backbone.View.extend({
+    template: Templates.get( "goalbook" ),
     initialize: function() {
         $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
         this.model.bind('change', this.render, this);
@@ -201,15 +245,19 @@ var GoalBookView = Backbone.View.extend({
     },
     hide: function() { return $(this.el).slideUp("fast"); },
     render: function() {
-        console.log("rendered", this);
+        console.log("rendering GoalBookView", this);
         var json = _.pluck(this.model.models, 'attributes');
-        var goalsEl = $("#goalbook-tmpl").tmplPlugin({goals: json});
-        $(this.el).html(goalsEl);
+        $(this.el).html(this.template({goals: json}));
         return this;
     }
 });
 
+// should probably do this for all templates
+Handlebars.registerPartial('goalbook-row', Templates.get( 'goalbook-row' ));
+
 var GoalSummaryView = Backbone.View.extend({
+    template: Templates.get( "goal-summary-area" ),
+
     initialize: function(args) {
         $(this.el).delegate('#goals-drawer', 'click',
             $.proxy(args.goalBook.show, args.goalBook));
@@ -220,11 +268,10 @@ var GoalSummaryView = Backbone.View.extend({
         this.model.bind('add', this.render, this);
     },
     render: function() {
-        console.log("rendered", this);
+        console.log("rendering GoalSummaryView", this);
         var active = this.model.active() || null;
         if (active !== null) {
-            var goalsEl = $("#goals-tmpl").tmplPlugin(active.attributes);
-            $(this.el).html(goalsEl);
+            $(this.el).html(this.template(active.attributes));
         }
         else {
             // todo: put create a goal button here?
@@ -234,56 +281,18 @@ var GoalSummaryView = Backbone.View.extend({
     }
 });
 
-$(function() {
-    window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
-
-    window.myGoalBookView = new GoalBookView({
-        el: "#goals-nav-container",
-        model: GoalBook
-    });
-    window.myGoalSummaryView = new GoalSummaryView({
-        el: "#goals-container",
-        model: GoalBook,
-        goalBook: myGoalBookView
-    });
-
-    myGoalSummaryView.render();
-});
-
-// todo: surely this belongs in a library somewhere?
-var parseQueryString = function(url) {
-    var querystring = decodeURIComponent(url.substring(url.indexOf('?')+1));
-    var pairs = querystring.split('&');
-    var qs = {};
-    var qslist = $.each(pairs, function(i, pair) {
-        var kv = pair.split("=");
-        qs[kv[0]] = kv[1];
-    });
-    return qs;
+var justFinishedObjective = function(newGoal, newObj) {
+    console.log("Just finished objective", newObj);
+    $("#goals-congrats").text('Just finished objective!').show().fadeOut(3000);
 };
 
-var requestGoals = function() {
-    $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
-};
-var updateGoals = function(goals) {
-    GoalBook.reset(goals);
-};
-
-// todo: make these real events?
-var justWorkedOnGoal = function(goal) {
-    console.log("Just worked on goal", goal);
-};
-var justWorkedOnObjective = function(newGoal, newObj) {
-    console.log("Just worked on objective", newGoal, newObj);
-};
 var justFinishedGoal = function(goal) {
     console.log("Just finished goal", goal);
-    showGoals();
+    myGoalBookView.show();
     var recentlyCompleted = $('.recently-completed');
-    var btnGoalHistory =$('#btn-goal-history');
-    recentlyCompleted.children().each(
-        function () {
-            $(this).css('overflow', 'hidden').css('height', $(this).height());
+    var btnGoalHistory = $('#btn-goal-history');
+    recentlyCompleted.children().each(function () {
+        $(this).css('overflow', 'hidden').css('height', $(this).height());
     }).end()
     .delay(500)
     .animate({
@@ -305,25 +314,44 @@ var justFinishedGoal = function(goal) {
     });
     //todo - also remove the goal from the model
 };
-var justFinishedObjective = function(newGoal, newObj) {
-    console.log("Just finished objective", newObj);
-    $("#goals-congrats").text('Just finished objective!').show().fadeOut(3000);
+
+$(function() {
+    window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
+    APIActionResults.register( "updateGoals",
+        $.proxy(GoalBook.incrementalUpdate, window.GoalBook) );
+
+    window.myGoalBookView = new GoalBookView({
+        el: "#goals-nav-container",
+        model: GoalBook
+    });
+    window.myGoalSummaryView = new GoalSummaryView({
+        el: "#goals-container",
+        model: GoalBook,
+        goalBook: myGoalBookView
+    });
+
+    myGoalSummaryView.render();
+    GoalBook.bind('completed', justFinishedObjective);
+    GoalBook.bind('goalcompleted', justFinishedGoal);
+});
+
+// todo: surely this belongs in a library somewhere?
+var parseQueryString = function(url) {
+    var querystring = decodeURIComponent(url.substring(url.indexOf('?')+1));
+    var pairs = querystring.split('&');
+    var qs = {};
+    var qslist = $.each(pairs, function(i, pair) {
+        var kv = pair.split("=");
+        qs[kv[0]] = kv[1];
+    });
+    return qs;
 };
 
-var incrementalUpdateGoals = function(updatedGoals) {
-    _.each(updatedGoals, function(newGoal) {
-        oldGoal = GoalBook.get(newGoal.id) || null;
-
-        if (oldGoal !== null) {
-            oldGoal.set(newGoal, {silent: true});
-            oldGoal.calcDependents();
-            oldGoal.change();
-        }
-        else {
-            // todo: remove this, do something better
-            console.log("Error: brand new goal appeared from somewhere");
-        }
-    });
+var requestGoals = function() {
+    $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
+};
+var updateGoals = function(goals) {
+    GoalBook.reset(goals);
 };
 
 var predefinedGoalsList = {
