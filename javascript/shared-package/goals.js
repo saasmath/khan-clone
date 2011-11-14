@@ -221,6 +221,9 @@ var GoalCollection = Backbone.Collection.extend({
 
 var GoalBookView = Backbone.View.extend({
     template: Templates.get( "goalbook" ),
+    isVisible: false,
+    needsRerender: false,
+
     initialize: function() {
         $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
         this.model.bind('change', this.render, this);
@@ -228,18 +231,54 @@ var GoalBookView = Backbone.View.extend({
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
     },
+
     show: function() {
-        if (this.el.children.length === 0) {
+        this.isVisible = true;
+
+        // render if necessary
+        if (this.needsRerender) {
             this.render();
         }
-        return $(this.el).slideDown("fast");
+
+        var that = this;
+        // animate on the way down
+        return $(this.el).slideDown("fast", function() {
+            // listen for escape key
+            $(document).bind('keyup.goalbook', function ( e ) {
+                if ( e.which == 27 ) {
+                    that.hide();
+                }
+            });
+
+            // close the goalbook if user clicks elsewhere on page
+            $('body').bind('click.goalbook', function( e ) {
+                if ( $(e.target).closest('#goals-nav-container').length === 0 ) {
+                    that.hide();
+                }
+            });
+        });
     },
-    hide: function() { return $(this.el).slideUp("fast"); },
+
+    hide: function() {
+        this.isVisible = false;
+        $(document).unbind('keyup.goalbook');
+        $('body').unbind('click.goalbook');
+        return $(this.el).slideUp("fast");
+    },
+
     render: function() {
-        console.log("rendering GoalBookView", this);
-        var json = _.pluck(this.model.models, 'attributes');
-        $(this.el).html(this.template({goals: json}));
-        return this;
+        var jel = $(this.el);
+        // delay rendering until the view is actually visible
+        if ( !this.isVisible ) {
+            this.needsRerender = true;
+        }
+        else {
+            console.log("rendering GoalBookView", this);
+            this.needsRerender = false;
+            var json = _.pluck(this.model.models, 'attributes');
+            jel.html(this.template({goals: json}));
+        }
+        return jel;
     }
 });
 
