@@ -119,8 +119,7 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     updateActive: function() {
-        var url = window.location.toString();
-        this.active(GoalCollection.findMatchingGoalFor(url, this));
+        this.active(GoalCollection.findMatchingGoalFor());
     },
 
     incrementalUpdate: function(updatedGoals) {
@@ -137,7 +136,6 @@ var GoalCollection = Backbone.Collection.extend({
         }, this);
     },
 
-    // todo: cleanup window.location stuff in here!
     findExerciseObjectiveFor: function(url) {
         var matchingGoal = null;
 
@@ -171,7 +169,7 @@ var GoalCollection = Backbone.Collection.extend({
             return matches[1];
         };
 
-        var videoId = getVideoId(window.location.toString());
+        var videoId = getVideoId(url);
 
         // find a goal with exactly this exercise
         matchingGoal = this.find(function(goal) {
@@ -194,8 +192,9 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     // find the most appriate goal to display for a given URL
-    findMatchingGoalFor: function(url) {
+    findMatchingGoalFor: function() {
         var matchingGoal = null;
+        var url = window.location.toString();
 
         if (window.location.pathname == "/exercises") {
             matchingGoal = this.findExerciseObjectiveFor(url);
