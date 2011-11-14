@@ -222,7 +222,7 @@ var GoalCollection = Backbone.Collection.extend({
 var GoalBookView = Backbone.View.extend({
     template: Templates.get( "goalbook" ),
     isVisible: false,
-    needsRerender: false,
+    needsRerender: true,
 
     initialize: function() {
         $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
