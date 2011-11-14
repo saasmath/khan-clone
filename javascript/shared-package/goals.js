@@ -229,12 +229,26 @@ var GoalBookView = Backbone.View.extend({
         this.model.bind('add', this.render, this);
     },
     show: function() {
+        // render if necessary
         if (this.el.children.length === 0) {
             this.render();
         }
+
+        // listen for escape key
+        var that = this;
+        $(document).bind('keyup.goalbook', function ( e ) {
+            if ( e.which == 27 ) {
+                that.hide();
+            }
+        });
+
+        // animate on the way down
         return $(this.el).slideDown("fast");
     },
-    hide: function() { return $(this.el).slideUp("fast"); },
+    hide: function() {
+        $(document).unbind('keyup.goalbook');
+        return $(this.el).slideUp("fast");
+    },
     render: function() {
         console.log("rendering GoalBookView", this);
         var json = _.pluck(this.model.models, 'attributes');
