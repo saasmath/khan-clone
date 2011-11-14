@@ -119,7 +119,7 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     updateActive: function() {
-        this.active(GoalCollection.findActiveGoal());
+        this.active(this.findActiveGoal());
     },
 
     incrementalUpdate: function(updatedGoals) {
