@@ -221,6 +221,9 @@ var GoalCollection = Backbone.Collection.extend({
 
 var GoalBookView = Backbone.View.extend({
     template: Templates.get( "goalbook" ),
+    isVisible: false,
+    needsRerender: false,
+
     initialize: function() {
         $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
         this.model.bind('change', this.render, this);
@@ -228,9 +231,12 @@ var GoalBookView = Backbone.View.extend({
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
     },
+
     show: function() {
+        this.isVisible = true;
+
         // render if necessary
-        if (this.el.children.length === 0) {
+        if (this.needsRerender) {
             this.render();
         }
 
@@ -252,16 +258,27 @@ var GoalBookView = Backbone.View.extend({
             });
         });
     },
+
     hide: function() {
+        this.isVisible = false;
         $(document).unbind('keyup.goalbook');
         $('body').unbind('click.goalbook');
         return $(this.el).slideUp("fast");
     },
+
     render: function() {
-        console.log("rendering GoalBookView", this);
-        var json = _.pluck(this.model.models, 'attributes');
-        $(this.el).html(this.template({goals: json}));
-        return this;
+        var jel = $(this.el);
+        // delay rendering until the view is actually visible
+        if ( !this.isVisible ) {
+            this.needsRerender = true;
+        }
+        else {
+            console.log("rendering GoalBookView", this);
+            this.needsRerender = false;
+            var json = _.pluck(this.model.models, 'attributes');
+            jel.html(this.template({goals: json}));
+        }
+        return jel;
     }
 });
 
