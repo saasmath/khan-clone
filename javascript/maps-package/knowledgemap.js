@@ -33,8 +33,17 @@ var KnowledgeMapExercise = Backbone.Model.extend({
 var ExerciseRowView = Backbone.View.extend({
     initialize: function() {
         this.visible = false;
+        this.nodeName = this.model.get('name');
+
         KnowledgeMap.filterSettings.bind('change', this.doFilter, this);
     },
+
+    events: {
+        "click .exercise-title":    "onBadgeClick",
+        "click .proficient-badge":  "onBadgeClick",
+        "click .exercise-show":     "onShowExerciseClick"
+    },
+
     setType: function(type, admin) {
         this.type = type;
         this.admin = admin;
@@ -49,14 +58,14 @@ var ExerciseRowView = Backbone.View.extend({
         var newContent = $(template(this.model.toJSON()));
         var self = this;
         newContent.hover(
-                function(){KnowledgeMap.onBadgeMouseover(self.model.get('name'), newContent);},
-                function(){KnowledgeMap.onBadgeMouseout(self.model.get('name'), newContent);}
+                function(){self.onBadgeMouseover(self.nodeName, newContent);},
+                function(){self.onBadgeMouseout(self.nodeName, newContent);}
         );
-        newContent.find(".exercise-show").click(function(){KnowledgeMap.onShowExerciseClick(self.model.get('name'))});
 
         this.el.replaceWith(newContent);
         this.el = newContent;
         this.inflated = true;
+        this.delegateEvents();
     },
 
     doFilter: function() {
@@ -74,9 +83,30 @@ var ExerciseRowView = Backbone.View.extend({
             this.el.hide();
         }
 
-        if (this.type == 'all') {
-            KnowledgeMap.dictNodes[this.model.get('name')].visible = filterMatches;
+        if (this.type == 'all' && KnowledgeMap.exerciseMarkerViews[this.nodeName]) {
+            KnowledgeMap.exerciseMarkerViews[this.nodeName].setFiltered(!filterMatches);
         }
+    },
+
+    onBadgeClick: function(evt) {
+        KnowledgeMap.nodeClickHandler(this.model, evt);
+    },
+
+    onBadgeMouseover: function(node_name, element) {
+        KnowledgeMap.highlightNode(node_name, true);
+
+        element.find('.exercise-show').show();
+    },
+
+    onBadgeMouseout: function(node_name, element) {
+        KnowledgeMap.highlightNode(node_name, false);
+
+        element.find('.exercise-show').hide();
+    },
+
+    onShowExerciseClick: function() {
+        KnowledgeMap.panToNode(this.nodeName);
+        KnowledgeMap.highlightNode(this.nodeName, true);
     },
 
     showGoalIcon: function(visible) {
@@ -86,6 +116,207 @@ var ExerciseRowView = Backbone.View.extend({
             this.el.find('.exercise-goal-icon').hide();
     }
 });
+var ExerciseMarkerView = Backbone.View.extend({
+    initialize: function() {
+        var exercise = this.model;
+        this.nodeName = exercise.get('name');
+        this.filtered = false;
+        this.goalIconVisible = false;
+
+        var iconSet = KnowledgeMap.icons[exercise.get('summative') ? "Summative" : "Exercise"];
+        this.iconUrl = iconSet[exercise.get('status')];
+        if (!this.iconUrl) this.iconUrl = iconSet.Normal;
+
+        this.updateElement(this.el);
+    },
+    updateElement: function(el) {
+        this.el = el;
+        this.zoom = KnowledgeMap.map.getZoom();
+        var self = this;
+
+        this.el.click(
+                function(evt){self.onNodeClick(evt);}
+            ).hover(
+                function(){self.onNodeMouseover();},
+                function(){self.onNodeMouseout();}
+            );
+
+        var iconOptions = this.getIconOptions();
+        this.el.find("img.node-icon").attr("src", iconOptions.url);
+        this.el.attr("class", this.getLabelClass());
+        if (this.goalIconVisible)
+            this.el.find('.exercise-goal-icon').show();
+        else
+            this.el.find('.exercise-goal-icon').hide();
+    },
+
+    getIconOptions: function() {
+
+        var iconUrlCacheKey = this.iconUrl + "@" + this.zoom;
+
+        if (!KnowledgeMap.iconCache) KnowledgeMap.iconCache = {};
+        if (!KnowledgeMap.iconCache[iconUrlCacheKey])
+        {
+            var url = this.iconUrl;
+
+            if (!this.model.get('summative') && this.zoom <= KnowledgeMap.options.minZoom)
+            {
+                url = this.iconUrl.replace(".png", "-star.png");
+            }
+
+            KnowledgeMap.iconCache[iconUrlCacheKey] = {url: url};
+        }
+        return KnowledgeMap.iconCache[iconUrlCacheKey];
+    },
+
+    getLabelClass: function() {
+        var classText = "nodeLabel nodeLabel" + this.model.get('status');
+        var visible = !this.model.get('summative') || this.zoom == KnowledgeMap.options.minZoom;
+        if (this.model.get('summative') && visible) this.zoom = KnowledgeMap.options.maxZoom - 1;
+
+        if (this.model.get('summative')) classText += " nodeLabelSummative";
+        classText += (visible ? "" : " nodeLabelHidden");
+        classText += (" nodeLabelZoom" + this.zoom);
+        classText += (this.filtered ? " nodeLabelFiltered" : "");
+
+        return classText;
+    },
+
+    setFiltered: function(filtered) {
+        if (filtered != this.filtered) {
+            this.filtered = filtered;
+            if (this.filtered)
+                this.el.addClass('nodeLabelFiltered');
+            else
+                this.el.removeClass('nodeLabelFiltered');
+        }
+    },
+
+    showGoalIcon: function(visible) {
+        if (visible != this.goalIconVisible) {
+            this.goalIconVisible = visible;
+            if (this.goalIconVisible)
+                this.el.find('.exercise-goal-icon').show();
+            else
+                this.el.find('.exercise-goal-icon').hide();
+        }
+    },
+
+    onNodeClick: function(evt) {
+        if (!this.model.get('summative') && KnowledgeMap.map.getZoom() <= KnowledgeMap.options.minZoom)
+            return;
+
+        if (KnowledgeMap.admin)
+        {
+            if (evt.shiftKey)
+            {
+                if (this.nodeName in KnowledgeMap.selectedNodes)
+                {
+                    delete KnowledgeMap.selectedNodes[this.nodeName];
+                    KnowledgeMap.highlightNode(this.nodeName, false);
+                }
+                else
+                {
+                    KnowledgeMap.selectedNodes[this.nodeName] = true;
+                    KnowledgeMap.highlightNode(this.nodeName, true);
+                }
+            }
+            else
+            {
+                $.each(KnowledgeMap.selectedNodes, function(node_name) {
+                    KnowledgeMap.highlightNode(node_name, false);
+                });
+                KnowledgeMap.selectedNodes = { };
+                KnowledgeMap.selectedNodes[this.nodeName] = true;
+                KnowledgeMap.highlightNode(this.nodeName, true);
+            }
+            
+            //Unbind other keydowns to prevent a spawn of hell
+            $(document).unbind('keydown');
+
+            // If keydown is an arrow key
+            $(document).keydown(function(e){
+                var delta_v = 0, delta_h = 0;
+                    
+                if (e.keyCode == 37) { 
+                    delta_v = -1; // Left
+                }
+                if (e.keyCode == 38) { 
+                    delta_h = -1; // Up
+                }
+                if (e.keyCode == 39) { 
+                    delta_v = 1; // Right
+                }
+                if (e.keyCode == 40) { 
+                    delta_h = 1; // Down
+                }
+
+                if (delta_v != 0 || delta_h != 0) {
+                    var id_array = [];
+
+                    $.each(KnowledgeMap.selectedNodes, function(node_name) {
+                        var actual_node = KnowledgeMap.dictNodes[node_name];
+
+                        actual_node.v_position = parseInt(actual_node.v_position) + delta_v;
+                        actual_node.h_position = parseInt(actual_node.h_position) + delta_h;
+
+                        id_array.push(node_name);
+                    });
+                    $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v } );
+
+                    var zoom =KnowledgeMap.map.getZoom();
+                    KnowledgeMap.markers = [];
+
+                    for (var key in KnowledgeMap.dictEdges) // this loop lets us update the edges wand will remove the old edges
+                    {
+                        var rgTargets = KnowledgeMap.dictEdges[key];
+                        for (var ix = 0; ix < rgTargets.length; ix++)
+                        {
+                            rgTargets[ix].line.setMap(null);
+                        }
+                    }
+                    KnowledgeMap.overlay.setMap(null);
+                    KnowledgeMap.layoutGraph();
+                    KnowledgeMap.drawOverlay();
+
+                    setTimeout(function() {
+                            $.each(KnowledgeMap.selectedNodes, function(node_name) {
+                                KnowledgeMap.highlightNode(node_name, true);
+                            });
+                        }, 100);
+
+                    return false;
+                }
+            });
+            
+            evt.stopPropagation();
+        }
+        else
+        {
+            KnowledgeMap.nodeClickHandler(this.model, evt);
+        }
+    },
+
+    onNodeMouseover: function() {
+        if (!this.model.get('summative') && KnowledgeMap.map.getZoom() <= KnowledgeMap.options.minZoom)
+            return;
+        if (this.nodeName in KnowledgeMap.selectedNodes)
+            return;
+      
+        $(".exercise-badge[data-id=\"" + KnowledgeMap.escapeSelector(this.nodeName) + "\"]").addClass("exercise-badge-hover");
+        KnowledgeMap.highlightNode(this.nodeName, true);
+    },
+
+    onNodeMouseout: function() {
+        if (!this.model.get('summative') && KnowledgeMap.map.getZoom() <= KnowledgeMap.options.minZoom)
+            return;
+        if (this.nodeName in KnowledgeMap.selectedNodes)
+            return;
+    
+        $(".exercise-badge[data-id=\"" + KnowledgeMap.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
+        KnowledgeMap.highlightNode(this.nodeName, false);
+    },
+});
 
 var KnowledgeMap = {
 
@@ -94,21 +325,20 @@ var KnowledgeMap = {
     dictNodes: {},
     dictEdges: [],
     markers: [],
-    widthPoints: 200,
-    heightPoints: 120,
     selectedNodes: {},
     nodeClickHandler: null,
 
     updateFilterTimeout: null,
 
     // Models
-    exerciseList: [],
+    exerciseList: {},
     filterSettings: new Backbone.Model({'filterText': '---', 'userShowAll': false}),
     numSuggestedExercises: 0,
     numRecentExercises: 0,
 
     // Views
     exerciseRowViews: [],
+    exerciseMarkerViews: {},
 
     colors: {
         blue: "#0080C9",
@@ -136,9 +366,6 @@ var KnowledgeMap = {
     lngMax: -180,
     nodeSpacing: {lat: 0.392, lng: 0.35},
     latLngBounds: null,
-    reZoom: /nodeLabelZoom(\d)+/g,
-    reHidden: /nodeLabelHidden/g,
-    reFiltered: /nodeLabelFiltered/g,
     fFirstDraw: true,
     fCenterChanged: false,
     fZoomChanged: false,
@@ -171,7 +398,7 @@ var KnowledgeMap = {
         $.each(graph_dict_data, function(idx, exercise) {
 
             var exerciseModel = new KnowledgeMapExercise(exercise);
-            KnowledgeMap.exerciseList.push(exerciseModel);
+            KnowledgeMap.exerciseList[exercise.name] = exerciseModel;
 
             // Create views
 
@@ -234,11 +461,11 @@ var KnowledgeMap = {
         google.maps.event.addListener(this.map, "idle", function(){KnowledgeMap.onIdle();});
         google.maps.event.addListener(this.map, "click", function(){KnowledgeMap.onClick();});
 
-        this.nodeClickHandler = function(node) {
+        this.nodeClickHandler = function(exercise) {
             if (admin)
-                window.location.href = '/editexercise?name='+node.name;
+                window.location.href = '/editexercise?name='+exercise.get('name');
             else
-                window.location.href = '/exercises?exid='+node.name;
+                window.location.href = '/exercises?exid='+exercise.get('name');
         };
 
         this.giveNasaCredit();
@@ -309,20 +536,19 @@ var KnowledgeMap = {
             }
 
             jrgNodes.each(function(){
-                KnowledgeMap.attachNodeEvents(this, KnowledgeMap.dictNodes[$(this).attr("data-id")]);
+                var exerciseName = $(this).attr("data-id");
+                var exercise = KnowledgeMap.exerciseList[exerciseName];
+                var view = KnowledgeMap.exerciseMarkerViews[exerciseName];
+                if (view) {
+                    view.updateElement($(this));
+                } else {
+                    view = new ExerciseMarkerView({'model': exercise, 'el': $(this)});
+                    KnowledgeMap.exerciseMarkerViews[exerciseName] = view;
+                }
             });
 
             KnowledgeMap.fFirstDraw = false;
         }
-    },
-
-    attachNodeEvents: function(el, node) {
-        $(el).click(
-                function(evt){KnowledgeMap.onNodeClick(node, evt);}
-            ).hover(
-                function(){KnowledgeMap.onNodeMouseover(this, node);},
-                function(){KnowledgeMap.onNodeMouseout(this, node);}
-            );
     },
 
     addNode: function(node) {
@@ -405,20 +631,10 @@ var KnowledgeMap = {
         if (lng < this.lngMin) this.lngMin = lng;
         if (lng > this.lngMax) this.lngMax = lng;
 
-        var iconSet = this.icons[node.summative ? "Summative" : "Exercise"];
-        var iconUrl = iconSet[node.status];
-        if (!iconUrl) iconUrl = iconSet.Normal;
-
-        var labelClass = "nodeLabel nodeLabel" + node.status;
-        if (node.summative) labelClass += " nodeLabelSummative";
-
-        node.iconUrl = iconUrl;
-
-        var iconOptions = this.getIconOptions(node, zoom);
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name, 
                 node.latLng, 
-                ["<div id='node-" + node.name + "' data-id='" + node.name + "' class='" + this.getLabelClass(labelClass, node, zoom, false) + "'><img src='" + iconOptions.url +"'/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"], 
+                ["<div id='node-" + node.name + "' data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"], 
                 "", 
                 node.summative ? 2 : 1,
                 0,0);
@@ -430,40 +646,6 @@ var KnowledgeMap = {
         return ((zoom == this.options.minZoom) == edge.summative) ? this.map : null;
     },
 
-    getIconOptions: function(node, zoom) {
-
-        var iconUrl = node.iconUrl;
-        var iconUrlCacheKey = iconUrl + "@" + zoom;
-
-        if (!this.iconCache) this.iconCache = {};
-        if (!this.iconCache[iconUrlCacheKey])
-        {
-            var url = iconUrl;
-
-            if (!node.summative && zoom <= this.options.minZoom)
-            {
-                url = iconUrl.replace(".png", "-star.png");
-            }
-
-            this.iconCache[iconUrlCacheKey] = {url: url};
-        }
-        return this.iconCache[iconUrlCacheKey];
-    },
-
-    getLabelClass: function(classOrig, node, zoom, filtered) {
-
-        var visible = !node.summative || zoom == this.options.minZoom;
-        classOrig = classOrig.replace(this.reHidden, "") + (visible ? "" : " nodeLabelHidden");
-
-        if (node.summative && visible) zoom = this.options.maxZoom - 1;
-
-        classOrig = classOrig.replace(this.reZoom, "") + (" nodeLabelZoom" + zoom);
-
-        classOrig = classOrig.replace(this.reFiltered, "") + (filtered ? " nodeLabelFiltered" : "");
-
-        return classOrig;
-    },
-
     highlightNode: function(node_name, highlight) {
         var jel = $("#node-" + KnowledgeMap.escapeSelector(node_name));
         if (highlight)
@@ -472,150 +654,8 @@ var KnowledgeMap = {
             jel.removeClass("nodeLabelHighlight");
     },
 
-    onNodeClick: function(node, evt) {
-        if (!node.summative && this.map.getZoom() <= this.options.minZoom)
-            return;
 
-        if (KnowledgeMap.admin)
-        {
-            if (evt.shiftKey)
-            {
-                if (node.name in KnowledgeMap.selectedNodes)
-                {
-                    delete KnowledgeMap.selectedNodes[node.name];
-                    this.highlightNode(node.name, false);
-                }
-                else
-                {
-                    KnowledgeMap.selectedNodes[node.name] = true;
-                    this.highlightNode(node.name, true);
-                }
-            }
-            else
-            {
-                $.each(KnowledgeMap.selectedNodes, function(node_name) {
-                    KnowledgeMap.highlightNode(node_name, false);
-                });
-                KnowledgeMap.selectedNodes = { };
-                KnowledgeMap.selectedNodes[node.name] = true;
-                this.highlightNode(node.name, true);
-            }
-            
-            //Unbind other keydowns to prevent a spawn of hell
-            $(document).unbind('keydown');
-
-            // If keydown is an arrow key
-            $(document).keydown(function(e){
-                var delta_v = 0, delta_h = 0;
-                    
-                if (e.keyCode == 37) { 
-                    delta_v = -1; // Left
-                }
-                if (e.keyCode == 38) { 
-                    delta_h = -1; // Up
-                }
-                if (e.keyCode == 39) { 
-                    delta_v = 1; // Right
-                }
-                if (e.keyCode == 40) { 
-                    delta_h = 1; // Down
-                }
-
-                if (delta_v != 0 || delta_h != 0) {
-                    var id_array = [];
-
-                    $.each(KnowledgeMap.selectedNodes, function(node_name) {
-                        var actual_node = KnowledgeMap.dictNodes[node_name];
-
-                        actual_node.v_position = parseInt(actual_node.v_position) + delta_v;
-                        actual_node.h_position = parseInt(actual_node.h_position) + delta_h;
-
-                        id_array.push(node_name);
-                    });
-                    $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v } );
-
-                    var zoom =KnowledgeMap.map.getZoom();
-                    KnowledgeMap.markers = [];
-
-                    for (var key in KnowledgeMap.dictEdges) // this loop lets us update the edges wand will remove the old edges
-                    {
-                        var rgTargets = KnowledgeMap.dictEdges[key];
-                        for (var ix = 0; ix < rgTargets.length; ix++)
-                        {
-                            rgTargets[ix].line.setMap(null);
-                        }
-                    }
-                    KnowledgeMap.overlay.setMap(null);
-                    KnowledgeMap.layoutGraph();
-                    KnowledgeMap.drawOverlay();
-
-                    setTimeout(function() {
-                            $.each(KnowledgeMap.selectedNodes, function(node_name) {
-                                KnowledgeMap.highlightNode(node_name, true);
-                            });
-                        }, 100);
-
-                    return false;
-                }
-            });
-            
-            evt.stopPropagation();
-        }
-        else if (KnowledgeMap.nodeClickHandler)
-        {
-            KnowledgeMap.nodeClickHandler(node, evt);
-        }
-        else
-        {
-            // Go to exercise via true link click.
-            $(".exercise-badge[data-id=\"" + KnowledgeMap.escapeSelector(node.name) + "\"] .exercise-title a").click();
-        }
-    },
-
-    onNodeMouseover: function(el, node) {
-        if (el.nodeName.toLowerCase() != "div")
-            return;
-        if (!node.summative && this.map.getZoom() <= this.options.minZoom)
-            return;
-        if (node.name in KnowledgeMap.selectedNodes)
-            return;
-      
-        $(".exercise-badge[data-id=\"" + KnowledgeMap.escapeSelector(node.name) + "\"]").addClass("exercise-badge-hover");
-        this.highlightNode(node.name, true);
-        
-    },
-
-    onNodeMouseout: function(el, node) {
-        if (el.nodeName.toLowerCase() != "div")
-            return;
-        if (!node.summative && this.map.getZoom() <= this.options.minZoom)
-            return;
-        if (node.name in KnowledgeMap.selectedNodes)
-            return;
-    
-        $(".exercise-badge[data-id=\"" + KnowledgeMap.escapeSelector(node.name) + "\"]").removeClass("exercise-badge-hover");
-        this.highlightNode(node.name, false);
-    
-    },
-
-    onBadgeMouseover: function(node_name, element) {
-        KnowledgeMap.highlightNode(node_name, true);
-
-        element.find('.exercise-show').show();
-    },
-
-    onBadgeMouseout: function(node_name, element) {
-        KnowledgeMap.highlightNode(node_name, false);
-
-        element.find('.exercise-show').hide();
-    },
-
-    onShowExerciseClick: function(node_name) {
-        KnowledgeMap.panToNode(node_name);
-        KnowledgeMap.highlightNode(node_name, true);
-    },
-
-    onZoomChange: function(jrgNodes) {
+    onZoomChange: function() {
 
         var zoom = this.map.getZoom();
 
@@ -623,16 +663,6 @@ var KnowledgeMap = {
         if (zoom > this.options.maxZoom) return;
 
         this.fZoomChanged = true;
-
-        jrgNodes.each(function() {
-            var jel = $(this);
-            var node = KnowledgeMap.dictNodes[jel.attr("data-id")];
-            var filtered = !node.visible;
-
-            var iconOptions = KnowledgeMap.getIconOptions(node, zoom);
-            $("img", jel).attr("src", iconOptions.url);
-            jel.attr("class", KnowledgeMap.getLabelClass(jel.attr("class"), node, zoom, filtered));
-        });
 
         for (var key in this.dictEdges)
         {
@@ -756,9 +786,6 @@ var KnowledgeMap = {
         container.insertAfter("#dashboard-filter");
 
         this.postUpdateFilter();
-
-        var jrgNodes = $(".nodeLabel");
-        KnowledgeMap.onZoomChange(jrgNodes);
     },
 
     toggleShowAll: function() {

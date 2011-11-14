@@ -163,11 +163,11 @@ var GoalCreator = {
         $('#show-ex-btn').addClass("blue");
         Drawer.resize();
     },
-    onExerciseClicked: function(node, evt) {
-       if (node.status == 'Proficient')
+    onExerciseClicked: function(exercise, evt) {
+       if (exercise.get('status') == 'Proficient')
            return; // Cannot select exercises the user is proficient in
 
-        GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', 'exercise', node.name, node.display_name);
+        GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', 'exercise', exercise.get('name'), exercise.get('display_name'));
 
         GoalCreator.updateExerciseCount();
         GoalCreator.updateViewAndDescription();
@@ -196,14 +196,11 @@ var GoalCreator = {
             });
 
             $.each(KnowledgeMap.exerciseRowViews, function(index, exerciseRowView) {
-                if (exercise == exerciseRowView.exercise)
+                if (exercise.name == exerciseRowView.model.get('name'))
                     exerciseRowView.showGoalIcon(found);
             });
 
-            if (found)
-                $('#node-' + exercise.name).find('.exercise-goal-icon').show();
-            else
-                $('#node-' + exercise.name).find('.exercise-goal-icon').hide();
+            KnowledgeMap.exerciseMarkerViews[exercise.name].showGoalIcon(found);
         });
     },
 

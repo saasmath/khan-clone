@@ -1,10 +1,10 @@
 <div class="exercise-badge" data-id="{{ name }}">
   <div class="proficient-badge">
     <img src="{{ badgeIcon }}" height="80" width="76">
-    <img class="exercise-goal-icon" style="display: none" src="/images/flag.png">
+    <div class="exercise-goal-wrapper"><img class="exercise-goal-icon" style="display: none" src="/images/flag.png"></div>
   </div>
   <div class="energy-points-badge">{{ points }}</div>
-  <div class="exercise-title"><a href="javascript: KnowledgeMap.nodeClickHandler(KnowledgeMap.dictNodes['{{ name }}'], null);">{{ display_name }}</a></div>
+  <div class="exercise-title"><a>{{ display_name }}</a></div>
   <span class="exercise-show simple-button action-gradient" data-id="name" style="display:none;"><img src="/images/map-target.png" title="Show in map" alt="Show in map"></span>
   {{#with streakBar}}{{>streak-bar}}{{/with}}
 </div>
