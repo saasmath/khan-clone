@@ -178,8 +178,9 @@ def update_goals(user_data, activity_fn):
 
     goal_data = user_data.get_goal_data()
     goals = GoalList.get_from_data(goal_data, Goal)
+    open_goals = [g for g in goals if not g.is_completed]
     changes = []
-    for goal in goals:
+    for goal in open_goals:
         if activity_fn(goal):
             changes.append(goal)
     if changes:

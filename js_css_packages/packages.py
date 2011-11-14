@@ -20,6 +20,9 @@ def get_javascript():
                 "streak-bar.handlebars",
                 "knowledgemap-exercise.handlebars",
                 "knowledgemap-admin-exercise.handlebars",
+                "goal-summary-area.handlebars",
+                "goalbook-row.handlebars",
+                "goalbook.handlebars",
             ],
             "files": [
                 "jquery.js",

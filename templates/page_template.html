@@ -203,49 +203,7 @@
 
     {{ gae_mini_profiler.profiler_includes() }}
 
-    {#- templates for goals -#}
-    {# goal summary area #}
-    <script id="goals-tmpl" type="text/x-jquery-tmpl">
-        <a id="goals-drawer">${title} &middot; ${objectiveProgress}/${objectives.length} &middot; ${progressStr}%</a>
-        <span class="separator"></span>
-    </script>
-
-    {#- goal book -#}
     {%- raw -%}
-    <script id="goalrow-tmpl" type="text/x-jquery-tmpl">
-        <div class="goal pulled {{if active}}active{{/if}} {{if progress >= 1}}recently-completed{{/if}}" data-id="${id}">
-            <p class="goal-description pulls"><strong>${title}</strong> <span class="summary-light"><span class="objectives-complete">${objectiveProgress}/${objectives.length}</span> &middot; <span class="percent-complete">${progressStr}%</span></p>
-            <ul class="inline-list objective-list">
-            {{each objectives}}
-                <li class="objective" style="width: ${100/objectives.length}%">
-                    <a class="objective simple-button action-gradient ${$value.type} {{if $value.progress == 1}}complete seethrough exercise-color started{{else}}blue{{/if}}"
-                        href="${$value.url}"
-                        data-progress="${$value.progress}">
-                            ${$value.description}
-                            {{if $value.progress < 1}}
-                            <span class="objective-progress-meter" style="height: ${ Math.ceil($value.progress * ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 13 : 12)) + ($value.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6) }px"></span>
-                            {{/if}}
-                    </a>
-                </li>
-            {{/each}}
-            </ul>
-            <div style="clear: both;"></div>
-        </div>
-    </script>
-
-    <script id="goalbook-tmpl" type="text/x-jquery-tmpl">
-        <div class="all-goals">
-            {{each goals}}
-            {{tmplPlugin($value) "#goalrow-tmpl"}}
-            {{/each}}
-            <div id="goalbook-controls">
-                <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">New goal</a>
-                <a id="btn-goal-history" class="simple-button action-gradient seethrough" href="/profile?k#/?graph_url=/api/v1/user/goals">Goal History</a>
-                <a class="hide-goals">Close <img class="close-cross" src="/images/circled_cross.png"></a>
-            </div>
-        </div>
-    </script>
-
     <script id="goal-create-dialog" type="text/html">
       <div class="dark-window">&nbsp;</div>
       <div class="window-center">
