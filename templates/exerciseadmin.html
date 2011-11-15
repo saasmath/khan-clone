@@ -42,10 +42,10 @@
 	}
 	
     $(function() {
-        Drawer.init();
-        KnowledgeMap.init({
+        new KnowledgeMap({
             'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
-            'admin': true
+            'admin': true,
+            'container': 'container'
         });
     });
 
@@ -84,25 +84,25 @@
                 </form>
      
         </div>
-        <div class="dashboard-title"><img src="/images/dashboard-icon-active.png" id="dashboard-icon" width=22 height=22 /> Exercises <a href="#" id="collapse-drawer" class="toggle-drawer"><img src="/images/expand-left.png" width="25" height="25"/></a></div>
-            <a href="#" id="expand-drawer" class="toggle-drawer"><img src="/images/expand-right.png" width="25" height="25" /></a>
+        <div class="dashboard-title"><img src="/images/dashboard-icon-active.png" class="dashboard-icon" width=22 height=22 /> Exercises <a href="#" class="collapse-drawer toggle-drawer"><img src="/images/expand-left.png" width="25" height="25"/></a></div>
+            <a href="#" class="expand-drawer toggle-drawer"><img src="/images/expand-right.png" width="25" height="25" /></a>
         </div>
-    <div id="dashboard-drawer" class="drawer-hoverable">
-    <div id="dashboard-drawer-inner" class="fancy-scrollbar"><div>
+    <div class="dashboard-drawer drawer-hoverable">
+    <div class="dashboard-drawer-inner fancy-scrollbar"><div>
 
-       <div id="dashboard-filter">
-          <input type="text" id="dashboard-filter-text" class="ui-corner-all simple-input" placeholder="Start typing the name of an exercise to find it" /><input id="dashboard-filter-clear" type="button" value="Clear" class="simple-button action-gradient ui-corner-right strict" style="display: none;"></input>
+       <div class="dashboard-filter">
+          <input type="text" class="dashboard-filter-text ui-corner-all simple-input" placeholder="Start typing the name of an exercise to find it" /><input type="button" value="Clear" class="dashboard-filter-clear simple-button action-gradient ui-corner-right strict" style="display: none;"></input>
        </div>
-       <div id="exercise-list">
-        <span class="exercise-sublist">
-         <div class="exercise-content" id="dashboard-all-exercises-content"></div>
+       <div class="exercise-list">
+        <span class="exercise-sublist dashboard-all-exercises">
+         <div class="exercise-content all-exercises-content"></div>
         </span>
-        <span id="exercise-no-results" style="display: none;">No exercises match your query.</span>
+        <span class="exercise-no-results" style="display: none;">No exercises match your query.</span>
        </div>
     </div></div>
     </div>
 
-    <div id="dashboard-map">
+    <div class="dashboard-map">
         {{ exercise_macros.knowledgemap() }}
     </div>
 </div>

@@ -170,7 +170,7 @@ var GoalCreator = {
         $('#goal-choose-videos').hide();
         $('#show-vid-btn').removeClass("blue");
         $('#show-ex-btn').addClass("blue");
-        Drawer.resize();
+        //Drawer.resize(); // TomY TODO
     },
     onExerciseClicked: function(exercise, evt) {
        if (exercise.get('status') == 'Proficient')
@@ -224,7 +224,7 @@ var GoalCreator = {
         $('#goal-choose-videos').show();
         $('#show-vid-btn').addClass("blue");
         $('#show-ex-btn').removeClass("blue");
-        Drawer.resize();
+        //Drawer.resize(); // TomY TODO
     },
     updateVideoCount: function() {
         var count = 0;
@@ -331,13 +331,13 @@ var GoalCreator = {
 var graph_dict_data = {{ graph_dict_data }};
 
 $(function() {
-    Drawer.init();
     GoalCreator.init();
     GoalCreator.showExercises();
-    KnowledgeMap.init({
+    new KnowledgeMap({
         'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
         'admin': false,
-        'hideReview': true
+        'hideReview': true,
+        'container': 'container'
     });
     KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
     // TomY TODO - Figure out why filtering isn't working here
@@ -369,7 +369,7 @@ $(function() {
     {{ exercise_macros.exercise_legend() }}
     {{ exercise_macros.exercise_dashboard() }}
 
-    <div id="dashboard-map">
+    <div class="dashboard-map">
         {{ exercise_macros.knowledgemap(map_coords) }}
     </div>
   </div>
@@ -379,7 +379,7 @@ $(function() {
       <div class="dashboard-nav">
         {{ templatetags.playlist_browser("browse") }}
       </div>
-      <div class="dashboard-title"><img src="/images/video.png" id="dashboard-icon" width=22 height=22 /> Videos </div>
+      <div class="dashboard-title"><img src="/images/video.png" class="dashboard-icon" width=22 height=22 /> Videos </div>
     </div>
     <div class="dashboard-content">
 {{ library_content }}

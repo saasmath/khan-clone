@@ -1457,7 +1457,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         height: 12px;
     }
 
-    #container #dashboard-drawer {
+    #container .dashboard-drawer {
         position: absolute;
         background: #fff;
         width: 350px;
@@ -1467,18 +1467,18 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         -moz-box-shadow: 2px 0px 3px rgba(0, 0, 0, .1);
         box-shadow: 2px 0px 3px rgba(0, 0, 0, .1);
     }
-    #container #dashboard-filter {
+    #container .dashboard-filter {
         overflow: hidden;
         padding: 0px 0px 10px 0px;
     }
-    #container #dashboard-filter-text {
+    #container .dashboard-filter-text {
         background-image: none;
         border-color: #ccc;
         height: 24px\9;
         padding: 0 55px 0 5px;
         width: 260px;
     }
-    #dashboard-filter-clear {
+    .dashboard-filter-clear {
         height: 26px;
         padding-top: 4px;
 
@@ -1488,13 +1488,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         right: 13px;
         z-index: 100;
     }
-    #container #dashboard-drawer-inner {
+    #container .dashboard-drawer-inner {
         position: relative;
         margin-right: 2px;
         overflow: auto;
         padding: 10px 3px 10px 5px;
     }
-    #container #dashboard-drawer h3 .subheader {
+    #container .dashboard-drawer h3 .subheader {
         font-weight: normal;
     }
 
@@ -1508,13 +1508,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         position: relative;
         z-index: 0;
     }
-    #container .dashboard-header #collapse-drawer {
+    #container .dashboard-header .collapse-drawer {
         position: absolute;
         right: 0;
         top: 5px;
         border: none;
     }
-    #container .dashboard-header #expand-drawer {
+    #container .dashboard-header .expand-drawer {
         position: absolute;
         left: 0;
         top: 5px;
@@ -1537,7 +1537,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         box-shadow: 2px 0px 3px rgba(0, 0, 0, .1);
         z-index: 1;
     }
-        #container .dashboard-header .dashboard-title #dashboard-icon {
+        #container .dashboard-header .dashboard-title .dashboard-icon {
             position: relative;
             top: 1px;
             width: 16px;
@@ -1556,7 +1556,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         cursor: default;
     }
 
-    #container #dashboard-map #map-canvas {
+    #container .dashboard-map .map-canvas {
         height: 100%;
         left: 350px;
         margin-left: 0;
@@ -1577,7 +1577,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         padding-left: 20px;
     }
 
-.exercise-filter-count,#exercise-all-exercises {
+.exercise-filter-count,.exercise-all-exercises {
     font-size: 11px;
     color: #444;
 }

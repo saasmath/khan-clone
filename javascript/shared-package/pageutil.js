@@ -508,77 +508,79 @@ function onYouTubePlayerReady(playerID) {
     $(VideoStats).trigger('playerready');
 }
 
-var Drawer = {
+function Drawer(container, knowledgeMap) {
+    var self = this;
 
-    init: function() {
+    this.container = container;
+    this.knowledgeMap = knowledgeMap;
 
-        $('#show-all-exercises').click(function() {Drawer.toggleAllExercises(true); return false;});
+    this.init = function() {
 
-        $('.toggle-drawer').click(function() {Drawer.toggle(); return false;});
+        $("#" + this.container + " .toggle-drawer").click(function() { self.toggle(); return false;});
 
-        $(window).resize(function(){Drawer.resize();});
+        $(window).resize(function(){self.resize();});
         this.resize();
 
         if (window.iScroll)
         {
             // Mobile device, support single-finger touch scrolling
-            $("#dashboard-drawer").removeClass("drawer-hoverable");
+            $("#" + this.container + " .dashboard-drawer").removeClass("drawer-hoverable");
             var scroller = new iScroll('dashboard-drawer-inner', { hScroll: false, hScrollbar: false, vScrollbar: false });
         }
+    };
 
-        $('#dashboard-filter-text input[type=text]').placeholder();
-    },
-
-    isExpanded: function() {
-        var sCSSLeft = $("#dashboard-drawer").css("left").toLowerCase();
+    this.isExpanded = function() {
+        var sCSSLeft = $("#" + this.container + " .dashboard-drawer").css("left").toLowerCase();
         return sCSSLeft == "0px" || sCSSLeft == "auto" || sCSSLeft == "";
-    },
+    };
 
-    toggle: function() {
+    this.toggle = function() {
 
         if (this.fToggling) return;
 
         var fExpanded = this.isExpanded();
 
-        var jelDrawer = $("#dashboard-drawer");
+        var jelDrawer = $("#" + this.container + " .dashboard-drawer");
         var leftDrawer = fExpanded ? -1 * (jelDrawer.width() + 20) : 0;
 
-        var jelTitle = $(".dashboard-title");
+        var jelTitle = $("#" + this.container + " .dashboard-title");
         var leftTitle = fExpanded ? -1 * (jelTitle.width() +10 ): 5;
 
         jelTitle.animate({left: leftTitle}, 500);
 
         this.fToggling = true;
-        jelDrawer.animate({left: leftDrawer}, 500, function() {Drawer.fToggling = false;});
+        jelDrawer.animate({left: leftDrawer}, 500, function() {self.fToggling = false;});
 
-        if (window.KnowledgeMap)
+        if (self.knowledgeMap)
         {
             var leftMap = (fExpanded ? 0 : 340);
-            $("#map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
+            $("#" + this.container + " .map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
                     500,
                     function() {
-                        google.maps.event.trigger(KnowledgeMap.map, 'resize');
+                        google.maps.event.trigger(self.knowledgeMap, 'resize');
                     }
             );
         }
-    },
+    };
 
-    resize: function() {
-        var jel = $("#dashboard-drawer, #dashboard-drawer-inner, #dashboard-map");
-        var jelDrawerInner = $("#dashboard-drawer-inner");
+    this.resize = function() {
+        var jel = $("#" + this.container + " .dashboard-drawer,.dashboard-drawer-inner,.dashboard-map");
+        var jelDrawerInner = $("#" + this.container + " .dashboard-drawer-inner");
         var yTop = jel.offset().top;
         jel.height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
         // Account for padding in the dashboard drawer
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
-        $(".dashboard-content").each(function(index, element) {
+        $("#" + this.container + " .dashboard-content").each(function(index, element) {
             var yTop = $(element).offset().top;
             $(element).height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
         });
 
-        if (window.KnowledgeMap && KnowledgeMap.map)
-            google.maps.event.trigger(KnowledgeMap.map, 'resize');
-    }
+        if (self.knowledgeMap && self.knowledgeMap.map)
+            google.maps.event.trigger(self.knowledgeMap.map, 'resize');
+    };
+
+    this.init();
 }
 
 var Badges = {
@@ -918,3 +920,24 @@ var SearchResultHighlight = {
         });
     }
 };
+
+// This function detaches the passed in jQuery element and returns a function that re-attaches it
+function temporaryDetachElement(element) {
+    var el, ret;
+    el = element.next();
+    if (el.length > 0) {
+        // This element belongs before some other element
+        ret = function() {
+            element.insertBefore(el);
+        };
+    } else {
+        // This element belongs at the end of the parent's child list
+        el = element.parent();
+        ret = function() {
+            element.appendTo(el);
+        };
+    }
+    element.detach();
+    return ret;
+};
+
