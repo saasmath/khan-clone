@@ -625,7 +625,7 @@ var Profile = {
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
 	 */
-	renderExercises: function(data, href) {
+	renderExercises: function(data) {
 		var templateContext = [];
 		for ( var i = 0, exercise; exercise = data[i]; i++ ) {
 			var stat = "Not started";
@@ -665,8 +665,8 @@ var Profile = {
 				"totalDone": totalDone
 			});
 		}
-		var template = Templates.get( "profile" );
-        $("#graph-content").html( 'template: ' + template({ "exercises": templateContext }) );
+		var template = Templates.get( "profile.exercise_progress" );
+        $("#graph-content").html( template({ "exercises": templateContext }) );
 
 		var infoHover = $("#info-hover-container")
 		var lastHoverTime;
