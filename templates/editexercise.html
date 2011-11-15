@@ -138,7 +138,7 @@
                     <tr>
                         <td style="font-weight:bold;">View</td>
                         <td style="padding-bottom:9px;">
-                            <a href="/exercise/{{ main_exercise.name|escape }}" target="_blank">Open {{ main_exercise.display_name|escape }} in new tab</a>
+                            <a href="{{ main_exercise.relative_url|escape }}" target="_blank">Open {{ main_exercise.display_name|escape }} in new tab</a>
                         </td>
                     </tr>
 
