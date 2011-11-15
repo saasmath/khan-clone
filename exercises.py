@@ -64,11 +64,31 @@ class ViewExercise(request_handler.RequestHandler):
     ]
     _hints_conversion_names, _hints_conversion_types = [list(x) for x in zip(*_hints_conversion_tests)]
 
+    # These match urls like '/exercise/addition_1/3' or '/exercise/addition_1',
+    # parsing out the exid and the problem_number components.
+    _exid_from_url_regex = re.compile('/exercise/([^/]+)')
+    _problem_number_from_url_regex = re.compile('/exercise/[^/]+/([^/]+)')
+
+    def _get_exid_from_url(self, default=None):
+        match_obj = ViewExercise._exid_from_url_regex.search(self.request.path)
+        return (match_obj and match_obj.group(1)) or self.request_string('exid', default)
+
+    def _get_problem_number_from_url(self, default=None):
+        match_obj = ViewExercise._problem_number_from_url_regex.search(self.request.path)
+
+        try:
+            return (match_obj and int(match_obj.group(1))) or self.request_int('problem_number')
+        except ValueError:
+            if default is not None:
+                return default
+            else:
+                raise
+
     @ensure_xsrf_cookie
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
 
-        exid = self.request_string("exid", default="addition_1")
+        exid = self._get_exid_from_url(default='addition_1')
         exercise = models.Exercise.get_by_name(exid)
 
         if not exercise:
@@ -84,7 +104,7 @@ class ViewExercise(request_handler.RequestHandler):
         # Temporarily work around in-app memory caching bug
         exercise.user_exercise = None
 
-        problem_number = self.request_int('problem_number', default=(user_exercise.total_done + 1))
+        problem_number = self._get_problem_number_from_url(default=(user_exercise.total_done + 1))
 
         user_data_student = self.request_user_data("student_email") or user_data
         if user_data_student.key_email != user_data.key_email and not user_data_student.is_visible_to(user_data):

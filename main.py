@@ -779,6 +779,7 @@ application = webapp2.WSGIApplication([
     ('/exercisedashboard', exercises.ViewAllExercises),
     ('/library_content', library.GenerateLibraryContent),
     ('/exercises', exercises.ViewExercise),
+    ('/exercise/.*', exercises.ViewExercise),
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
     ('/editexercise', exercises.EditExercise),
