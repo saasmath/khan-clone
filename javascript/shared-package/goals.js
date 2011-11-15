@@ -222,10 +222,11 @@ var GoalCollection = Backbone.Collection.extend({
 var GoalBookView = Backbone.View.extend({
     template: Templates.get( "goalbook" ),
     isVisible: false,
-    needsRerender: false,
+    needsRerender: true,
 
     initialize: function() {
         $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
+
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
@@ -320,29 +321,35 @@ var justFinishedGoal = function(goal) {
     console.log("Just finished goal", goal);
     myGoalBookView.show();
     var recentlyCompleted = $('.recently-completed');
-    var btnGoalHistory = $('#btn-goal-history');
-    recentlyCompleted.children().each(function () {
-        $(this).css('overflow', 'hidden').css('height', $(this).height());
-    }).end()
-    .delay(500)
-    .animate({
-        width: btnGoalHistory.width(),
-        left: btnGoalHistory.position().left
-    }).animate({
-        top: btnGoalHistory.position().top - recentlyCompleted.position().top,
-        height: '0',
-        opacity: 'toggle'
-    },
-    'easeInOutCubic',
-    function () {
-        $(this).remove();
-    }).end()
-    .find('#btn-goal-history').animate({
-        backgroundColor: 'orange'
-    }).animate({
-        backgroundColor: '#ddd'
-    });
+    animateGoalTpHistory(recentlyCompleted);
     //todo - also remove the goal from the model
+};
+
+var animateGoalToHistory = function(el) {
+    var btnGoalHistory = $('#btn-goal-history');
+    el  .children()
+            .each(function () {
+                $(this).css('overflow', 'hidden').css('height', $(this).height());
+            })
+        .end()
+        .delay(500)
+        .animate({
+            width: btnGoalHistory.width(),
+            left: btnGoalHistory.position().left
+        })
+        .animate({
+                top: btnGoalHistory.position().top - el.position().top,
+                height: '0',
+                opacity: 'toggle'
+            },
+            'easeInOutCubic',
+            function () {
+                $(this).remove();
+                $('#btn-goal-history')
+                    .animate({backgroundColor: 'orange'})
+                    .animate({backgroundColor: '#ddd'});
+            }
+        );
 };
 
 $(function() {
