@@ -327,7 +327,7 @@ var justFinishedGoal = function(goal) {
     console.log("Just finished goal", goal);
     myGoalBookView.show();
     var recentlyCompleted = $('.recently-completed');
-    animateGoalTpHistory(recentlyCompleted);
+    animateGoalToHistory(recentlyCompleted);
     //todo - also remove the goal from the model
 };
 
