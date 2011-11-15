@@ -20,3 +20,4 @@ offline/*
 .*.swp
 .*.un~
 compiled_templates*
+.pydevproject
