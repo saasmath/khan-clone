@@ -428,7 +428,7 @@ var Profile = {
 			// Extract the name from the ID, which has been prefixed.
 			var exerciseName = this.id.substring( "exercise-".length );
 			Profile.loadGraph(
-				"/profile/graph/exerciseproblems? " +
+				"/profile/graph/exerciseproblems?" +
 				"exercise_name=" + exerciseName + "&" +
 				"student_email=" + encodeURIComponent(Profile.email));
 		});
