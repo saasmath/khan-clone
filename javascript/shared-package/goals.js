@@ -220,7 +220,7 @@ var GoalCollection = Backbone.Collection.extend({
 });
 
 var GoalBookView = Backbone.View.extend({
-    template: Templates.get( "goalbook" ),
+    template: Templates.get( "shared.goalbook" ),
     isVisible: false,
     needsRerender: true,
 
@@ -284,10 +284,10 @@ var GoalBookView = Backbone.View.extend({
 });
 
 // should probably do this for all templates
-Handlebars.registerPartial('goalbook-row', Templates.get( 'goalbook-row' ));
+Handlebars.registerPartial('goalbook-row', Templates.get( 'shared.goalbook-row' ));
 
 var GoalSummaryView = Backbone.View.extend({
-    template: Templates.get( "goal-summary-area" ),
+    template: Templates.get( "shared.goal-summary-area" ),
 
     initialize: function(args) {
         $(this.el).delegate('#goals-drawer', 'click',

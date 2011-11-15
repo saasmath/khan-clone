@@ -70,7 +70,6 @@ javascript = {
     },
     "profile": {
         "templates": [
-            "profile.handlebars",
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
         ],
@@ -151,6 +150,7 @@ stylesheets = {
             "profile.css",
             "museo-sans.css",
             "jquery-ui-1.8.4.custom.css",
+            "goals.css",
         ]
     },
     "mobile": {

@@ -343,7 +343,7 @@ var Profile = {
             }
         });
 
-		var template = Templates.get( "profile-goals" );
+		var template = Templates.get( "profile.profile-goals" );
         $("#graph-content").html( template(goalsModel) );
 
         $("#graph-content .goal").hover(
@@ -422,7 +422,7 @@ var Profile = {
             }
         });
 
-		var template = Templates.get( "profile-class-goals" );
+		var template = Templates.get( "profile.profile-class-goals" );
         $("#graph-content").html( template(studentGoalsViewModel) );
 
         $("#class-student-goal .goal-row").each(function() {
