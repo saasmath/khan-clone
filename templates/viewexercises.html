@@ -36,7 +36,7 @@
 		}
 	}
 	
-    $(function(){
+    $(function() {
         new KnowledgeMap({
             'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
             'admin': false,
@@ -56,7 +56,7 @@
     {{ exercise_macros.exercise_dashboard() }}
 
     <div class="dashboard-map">
-        {{ exercise_macros.knowledgemap(map_coords) }}
+        {{ exercise_macros.knowledgemap(null, true) }}
     </div>
 </div>
 </div>

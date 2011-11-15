@@ -345,6 +345,15 @@ input#goal-title:focus {
     box-shadow: 0 2px 4px #444;
     z-index: 1000;
 }
+#goal-popup-dialog.custom-goal {
+    position: fixed;
+    left: 5%;
+    top: 5%;
+    width: 90%;
+    height: 85%;
+    margin: 0px;
+}
+
 #goal-popup-dialog .dialog-title {
     position: absolute;
     left: 0;
