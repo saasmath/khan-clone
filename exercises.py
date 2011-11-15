@@ -344,8 +344,7 @@ def raw_exercise_contents(exercise_file):
 
     return contents
 
-# TODO(david): Rename this function
-def reset_streak(user_data, user_exercise):
+def make_wrong_attempt(user_data, user_exercise):
     if user_exercise and user_exercise.belongs_to(user_data):
         user_exercise.update_proficiency_model(correct=False)
         user_exercise.put()
