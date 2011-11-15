@@ -195,13 +195,24 @@ def video(video_id):
 @jsonp
 @jsonify
 def video_download_available(video_id):
+
     video = None
+    formats = request.request_string("formats", default="")
+    allowed_formats = ["mp4", "png"]
 
     # If for any crazy reason we happen to have multiple entities for a single youtube id,
-    # make sure they all have the same download_version so we don't keep trying to export them.
+    # make sure they all have the same downloadable_formats so we don't keep trying to export them.
     for video in models.Video.all().filter("youtube_id =", video_id):
-        video.download_version = models.Video.CURRENT_DOWNLOAD_VERSION if request.request_bool("available", default=False) else 0
-        video.put()
+
+        modified = False
+
+        for downloadable_format in formats.split(","):
+            if downloadable_format in allowed_formats and downloadable_format not in video.downloadable_formats:
+                video.downloadable_formats.append(downloadable_format)
+                modified = True
+
+        if modified:
+            video.put()
 
     return video
 
