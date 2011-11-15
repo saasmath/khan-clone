@@ -65,10 +65,14 @@ class ViewExercise(request_handler.RequestHandler):
     _hints_conversion_names, _hints_conversion_types = [list(x) for x in zip(*_hints_conversion_tests)]
 
     @ensure_xsrf_cookie
-    def get(self):
+    def get(self, exid=None):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
 
-        exid = self.request_string("exid", default="addition_1")
+        if not exid:
+            # Support old URLs that may pass in exid as a query param
+            self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
+            return
+
         exercise = models.Exercise.get_by_name(exid)
 
         if not exercise:
@@ -190,7 +194,7 @@ class ViewExercise(request_handler.RequestHandler):
         browser_disabled = is_webos or self.is_older_ie()
         renderable = renderable and not browser_disabled
 
-        url_pattern = "/exercises?exid=%s&student_email=%s&problem_number=%d"
+        url_pattern = "/exercise/%s?student_email=%s&problem_number=%d"
         user_exercise.previous_problem_url = url_pattern % \
             (exid, user_data_student.key_email , problem_number-1)
         user_exercise.next_problem_url = url_pattern % \
