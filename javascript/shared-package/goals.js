@@ -139,12 +139,18 @@ var GoalCollection = Backbone.Collection.extend({
     findExerciseObjectiveFor: function(url) {
         var matchingGoal = null;
 
-        var exid = parseQueryString(url).exid;
+        var getExerciseId = function(url) {
+            var regex = /\/exercise\/([^\/?]+)/;
+            var matches = url.match(regex);
+            return matches[1];
+        };
+
+        var exerciseId = getExerciseId(url);
         // find a goal with exactly this exercise
         matchingGoal = this.find(function(goal) {
             return _.find(goal.get('objectives'), function(ob) {
                 return ob.type == "GoalObjectiveExerciseProficiency" &&
-                    exid == parseQueryString(ob.url).exid;
+                    exerciseId == getExerciseId(ob.url);
             });
         }) || null;
 
@@ -196,7 +202,7 @@ var GoalCollection = Backbone.Collection.extend({
         var matchingGoal = null;
         var url = window.location.toString();
 
-        if (window.location.pathname == "/exercises") {
+        if (window.location.pathname.indexOf("/exercise") === 0) {
             matchingGoal = this.findExerciseObjectiveFor(url);
             if (matchingGoal !== null) {
                 console.log('found a matching exercise goal');
@@ -220,7 +226,7 @@ var GoalCollection = Backbone.Collection.extend({
 });
 
 var GoalBookView = Backbone.View.extend({
-    template: Templates.get( "goalbook" ),
+    template: Templates.get( "shared.goalbook" ),
     isVisible: false,
     needsRerender: true,
 
@@ -284,10 +290,10 @@ var GoalBookView = Backbone.View.extend({
 });
 
 // should probably do this for all templates
-Handlebars.registerPartial('goalbook-row', Templates.get( 'goalbook-row' ));
+Handlebars.registerPartial('goalbook-row', Templates.get( 'shared.goalbook-row' ));
 
 var GoalSummaryView = Backbone.View.extend({
-    template: Templates.get( "goal-summary-area" ),
+    template: Templates.get( "shared.goal-summary-area" ),
 
     initialize: function(args) {
         $(this.el).delegate('#goals-drawer', 'click',
@@ -371,18 +377,6 @@ $(function() {
     GoalBook.bind('completed', justFinishedObjective);
     GoalBook.bind('goalcompleted', justFinishedGoal);
 });
-
-// todo: surely this belongs in a library somewhere?
-var parseQueryString = function(url) {
-    var querystring = decodeURIComponent(url.substring(url.indexOf('?')+1));
-    var pairs = querystring.split('&');
-    var qs = {};
-    var qslist = $.each(pairs, function(i, pair) {
-        var kv = pair.split("=");
-        qs[kv[0]] = kv[1];
-    });
-    return qs;
-};
 
 var requestGoals = function() {
     $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });

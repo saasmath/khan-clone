@@ -116,7 +116,7 @@ function KnowledgeMapInitGlobals() {
             if (this.inflated)
                 return;
 
-            var template = Templates.get( this.options.admin ? "knowledgemap-admin-exercise" : "knowledgemap-exercise" );
+            var template = Templates.get( this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise" );
             var newContent = $(template(this.model.toJSON()));
             var self = this;
             newContent.hover(
@@ -519,8 +519,8 @@ function KnowledgeMap(params) {
 
         this.filterSettings.set({'userShowAll': this.admin});
 
-		Handlebars.registerPartial('streak-bar', Templates.get( "streak-bar" )); // TomY TODO do this automatically?
-		Handlebars.registerPartial('knowledgemap-exercise', Templates.get( "knowledgemap-exercise" )); // TomY TODO do this automatically?
+		Handlebars.registerPartial('streak-bar', Templates.get( "shared.streak-bar" )); // TomY TODO do this automatically?
+		Handlebars.registerPartial('knowledgemap-exercise', Templates.get( "shared.knowledgemap-exercise" )); // TomY TODO do this automatically?
 
         // Initial setup of exercise list from embedded data
 

@@ -26,13 +26,11 @@ Templates.cache_ = {};
  * Compile a template from an inline script tag.
  */
 Templates.fromScript_ = function( name ) {
-	var inline = $("#template_" + name);
-	if (inline.length > 0) {
-		return Handlebars.compile( inline.html() );
+	var jel = $("#template_" + name);
+	if ( !jel.length ) {
+		throw Error( "Can't find a template for [" + name  + "]" );
 	}
-	else {
-		return null;
-	}
+	return Handlebars.compile( jel.html() );
 };
 
 /**
@@ -41,6 +39,12 @@ Templates.fromScript_ = function( name ) {
  *     base name of the template file with no extension.
  */
 Templates.get = function( name ) {
+	if ( name.indexOf( "." ) > -1 ) {
+		// Canonical format for the namespaced name uses underscores internally.
+		var parts = name.split( "." );
+		name = parts[0] + "-package_" + parts[1];
+	}
+
 	if (Templates.IS_DEBUG_) {
 		return Templates.cache_[name] ||
 			(Templates.cache_[name] = Templates.fromScript_( name ));

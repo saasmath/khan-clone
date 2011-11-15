@@ -149,11 +149,18 @@ class ViewProfile(request_handler.RequestHandler):
         user_badges = util_badges.get_user_badges(student)
         selected_graph_type = (self.request_string("selected_graph_type") or
                                ActivityGraph.GRAPH_TYPE)
-        initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (
-                selected_graph_type,
-                urllib.quote(student.email),
-                urllib.unquote(self.request_string("graph_query_params",
-                                                   default="")))
+
+        # TODO: deal with this one-off hackery. Some graphs use the API
+        # to fetch data, instead of the /profile/graph methods.
+        if selected_graph_type == "exerciseprogress":
+            initial_graph_url = ("/api/v1/user/exercises?email=%s" %
+                                 urllib.quote(student.email))
+        else:
+            initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (
+                    selected_graph_type,
+                    urllib.quote(student.email),
+                    urllib.unquote(self.request_string("graph_query_params",
+                                                       default="")))
         tz_offset = self.request_int("tz_offset", default=0)
 
         template_values = {

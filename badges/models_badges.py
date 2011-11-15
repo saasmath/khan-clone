@@ -76,7 +76,7 @@ class UserBadge(db.Model):
         query.filter('user =', user_data.user)
         query.order('badge_name')
         query.order('-date')
-        return query.fetch(1000)
+        return query.fetch(2500)
 
     @staticmethod
     def get_for_user_data_between_dts(user_data, dt_a, dt_b):
