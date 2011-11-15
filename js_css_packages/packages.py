@@ -120,7 +120,6 @@ javascript = {
             "utils/graphie-polygon.js",
             "utils/graphie.js",
             "utils/interactive.js",
-            "utils/jquery-color.js",
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",

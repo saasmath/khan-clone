@@ -48,16 +48,16 @@
 
         {% if is_mobile %}
             {{ js_css_packages.css_package("mobile") }}
+            {{ user.user_video_css(user_data) }}
             {{ js_css_packages.js_package("mobile") }}
         {% else %}
             {{ js_css_packages.css_package("shared") }}
             {% block pagecss %}{% endblock pagecss %}
+            {{ user.user_video_css(user_data) }}
             {{ js_css_packages.js_package("shared") }}
         {% endif %}
 
         {{ xsrf.render_xsrf_js() }}
-
-        {{ user.user_video_css(user_data) }}
 
         {% block pagescript %}
         {% endblock pagescript %}
