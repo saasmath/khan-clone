@@ -102,7 +102,7 @@ def get_mangled_playlist_name(playlist_name):
     return playlist_name
 
 class ViewVideo(request_handler.RequestHandler):
-    def get(self):
+    def get(self, readable_id=""):
 
         # This method displays a video in the context of a particular playlist.
         # To do that we first need to find the appropriate playlist.  If we aren't
@@ -113,8 +113,8 @@ class ViewVideo(request_handler.RequestHandler):
         playlist = None
         video_id = self.request.get('v')
         playlist_title = self.request_string('playlist', default="") or self.request_string('p', default="")
-        path = self.request.path
-        readable_id  = urllib.unquote(path.rpartition('/')[2])
+
+        readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
         # If either the readable_id or playlist title is missing,
@@ -778,6 +778,7 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
     ('/library_content', library.GenerateLibraryContent),
+    ('/exercise/(.+)', exercises.ViewExercise),
     ('/exercises', exercises.ViewExercise),
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
@@ -785,8 +786,8 @@ application = webapp2.WSGIApplication([
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/.*', ViewVideo),
-    ('/v/.*', ViewVideo),
+    ('/video/(.*)', ViewVideo),
+    ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
     ('/logvideoprogress', LogVideoProgress),
     ('/sat', ViewSAT),

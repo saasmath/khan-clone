@@ -71,7 +71,7 @@
                     {{ graph_dict.points }}
                 </td>
                 <td class="name">
-                    <a href="/exercises?exid={{graph_dict.name}}">{{ graph_dict.display_name }}</a>
+                    <a href="/exercise/{{graph_dict.name}}">{{ graph_dict.display_name }}</a>
                 </td>
                 <td class="status">
                     {{ graph_dict.status }}
@@ -86,7 +86,7 @@
                     <ul>
                         {% for prereq in graph_dict.prerequisites %}
                         <li data-prereq="{{ prereq.name }}">
-                            <a href="/exercises?exid={{prereq.name }}">{{ prereq.display_name }}</a>
+                            <a href="/exercise/{{prereq.name }}">{{ prereq.display_name }}</a>
                         </li>
                         {% endfor %}
                     </ul>
