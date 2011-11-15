@@ -6,7 +6,7 @@
 var chart;
 
 function exercise_url(point) {
-    return "/exercise/{{ exid|escapejs }}?" +
+    return "/exercises?exid={{ exid|escapejs }}&" +
             "student_email={{ student_email|escapejs }}&" +
             "problem_number=" + point.problem_number + 
             (point.exercise_non_summative ? "&exid_non_summative=" + point.exercise_non_summative : "") +

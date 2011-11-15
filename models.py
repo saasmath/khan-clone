@@ -135,11 +135,11 @@ class Exercise(db.Model):
 
     @property
     def relative_url(self):
-        return "/exercise/%s" % self.name
+        return "/exercises?exid=%s" % self.name
 
     @property
     def ka_url(self):
-        return util.absolute_url("/exercise/%s" % self.name)
+        return util.absolute_url("/exercises?exid=%s" % self.name)
 
     @staticmethod
     def get_by_name(name):
@@ -1653,7 +1653,8 @@ class ProblemLog(db.Model):
 
     @property
     def ka_url(self):
-        return util.absolute_url("/exercise/%s/%s" % (self.exercise, self.problem_number))
+        return util.absolute_url("/exercises?exid=%s&problem_number=%s" % \
+            (self.exercise, self.problem_number))
 
     @staticmethod
     def get_for_user_data_between_dts(user_data, dt_a, dt_b):
