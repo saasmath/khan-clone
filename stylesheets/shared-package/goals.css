@@ -291,8 +291,9 @@ input#goal-title:focus {
 .create-goal-page #goal-choose-videos .dashboard-nav {
     top: 2px;
 }
-.create-goal-page #goal-choose-videos .dashboard-content {
-    width: 1125px;
+.create-goal-page #goal-choose-videos .dashboard-content-stretch {
+    overflow-y: auto;
+    padding-left: 20px;
 }
 .objective-type-picker {
     position: absolute;

@@ -431,8 +431,7 @@ var createSimpleGoalDialog = {
             dataType: 'json',
             data: $.param(goal),
             success: function(json) {
-                createSimpleGoalDialog.hideDialog();
-                GoalBook.add(json);
+                createSimpleGoalDialog.goalCreationComplete(json);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 $('#create-simple-goal-error').html('Goal creation failed');
@@ -453,7 +452,13 @@ var createSimpleGoalDialog = {
                 $("#custom-goal-loading-message").html('Page load failed. Please try again.');
             }
         });
-    }
+    },
+    goalCreationComplete: function(goal) {
+        createSimpleGoalDialog.hideDialog();
+        GoalBook.add(goal);
+        console.log("Created goal");
+        myGoalBookView.show();
+    },
 };
 
 function goalCreateViewModel(goalModel) {

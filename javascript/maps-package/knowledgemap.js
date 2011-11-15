@@ -265,6 +265,13 @@ function KnowledgeMapInitGlobals() {
             }
         },
 
+        setHighlight: function(highlight) {
+            if (highlight)
+                this.el.addClass("nodeLabelHighlight");
+            else
+                this.el.removeClass("nodeLabelHighlight");
+        },
+
         onNodeClick: function(evt) {
             if (!this.model.get('summative') && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
@@ -382,6 +389,82 @@ function KnowledgeMapInitGlobals() {
     });
 }
 
+function KnowledgeMapDrawer(container, knowledgeMap) {
+    var self = this;
+
+    this.container = container;
+    this.knowledgeMap = knowledgeMap;
+
+    this.init = function() {
+
+        $("#" + this.container + " .toggle-drawer").click(function() { self.toggle(); return false;});
+
+        $(window).resize(function(){self.resize();});
+        this.resize();
+
+        if (window.iScroll)
+        {
+            // Mobile device, support single-finger touch scrolling
+            $("#" + this.container + " .dashboard-drawer").removeClass("drawer-hoverable");
+            var scroller = new iScroll('dashboard-drawer-inner', { hScroll: false, hScrollbar: false, vScrollbar: false });
+        }
+    };
+
+    this.isExpanded = function() {
+        var sCSSLeft = $("#" + this.container + " .dashboard-drawer").css("left").toLowerCase();
+        return sCSSLeft == "0px" || sCSSLeft == "auto" || sCSSLeft == "";
+    };
+
+    this.toggle = function() {
+
+        if (this.fToggling) return;
+
+        var fExpanded = this.isExpanded();
+
+        var jelDrawer = $("#" + this.container + " .dashboard-drawer");
+        var leftDrawer = fExpanded ? -1 * (jelDrawer.width() + 20) : 0;
+
+        var jelTitle = $("#" + this.container + " .dashboard-title");
+        var leftTitle = fExpanded ? -1 * (jelTitle.width() +10 ): 5;
+
+        jelTitle.animate({left: leftTitle}, 500);
+
+        this.fToggling = true;
+        jelDrawer.animate({left: leftDrawer}, 500, function() {self.fToggling = false;});
+
+        if (self.knowledgeMap)
+        {
+            var leftMap = (fExpanded ? 0 : 340);
+            $("#" + this.container + " .map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
+                    500,
+                    function() {
+                        google.maps.event.trigger(self.knowledgeMap, 'resize');
+                    }
+            );
+        }
+    };
+
+    this.resize = function() {
+        var jel = $("#" + this.container).find(".dashboard-drawer,.dashboard-drawer-inner,.dashboard-map");
+        var jelDrawerInner = $("#" + this.container + " .dashboard-drawer-inner");
+        var yTop = jel.offset().top;
+        jel.height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
+        // Account for padding in the dashboard drawer
+        jelDrawerInner.height(jelDrawerInner.height() - 20);
+
+        $("#" + this.container).find(".dashboard-content").each(function(index, element) {
+            var yTop = $(element).offset().top;
+            $(element).height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
+        });
+
+        if (self.knowledgeMap && self.knowledgeMap.map)
+            google.maps.event.trigger(self.knowledgeMap.map, 'resize');
+    };
+
+    this.init();
+}
+
+
 function KnowledgeMap(params) {
 
     if (!window.KnowledgeMapGlobals)
@@ -423,7 +506,8 @@ function KnowledgeMap(params) {
         this.containerID = (!!params.container) ? ('#' + params.container) : null;
         this.elementTable = {};
 
-        this.drawer = new Drawer(params.container, this); 
+        if (!params.hideDrawer)
+            this.drawer = new KnowledgeMapDrawer(params.container, this); 
 
         var suggestedExercisesContent = this.admin ? null : this.getElement('suggested-exercises-content');
         var recentExercisesContent = this.admin ? null : this.getElement('recent-exercises-content');
@@ -680,7 +764,7 @@ function KnowledgeMap(params) {
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name, 
                 node.latLng, 
-                ["<div id='node-" + node.name + "' data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"], 
+                ["<div data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"], 
                 "", 
                 node.summative ? 2 : 1,
                 0,0);
@@ -693,11 +777,9 @@ function KnowledgeMap(params) {
     };
 
     this.highlightNode = function(node_name, highlight) {
-        var jel = $("#node-" + this.escapeSelector(node_name));
-        if (highlight)
-            jel.addClass("nodeLabelHighlight");
-        else
-            jel.removeClass("nodeLabelHighlight");
+        var markerView = this.exerciseMarkerViews[node_name];
+        if (markerView)
+            markerView.setHighlight(highlight);
     };
 
     this.onZoomChange = function() {
