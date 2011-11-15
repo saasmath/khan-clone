@@ -380,6 +380,10 @@ input#goal-title:focus {
     float: right;
 }
 
+.goal-description .simple-button.archive {
+    float: right;
+}
+
 #goals-congrats {
     background: #f00;
     color: #fff;

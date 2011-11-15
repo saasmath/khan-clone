@@ -1,6 +1,13 @@
 <div class="goal pulled {{#active}}active{{/active}} {{#complete}}recently-completed{{/complete}}" data-id="{{id}}">
-    <p class="goal-description pulls"><strong>{{title}}</strong> <span class="summary-light"><span class="objectives-complete">{{objectiveProgress}}/{{objectives.length}}</span> &middot; <span class="percent-complete">{{progressStr}}%</span></p>
-
+    <p class="goal-description pulls">
+        <strong>{{title}}</strong>
+        <a class="simple-button action-gradient archive" {{#unless complete}}style="display:none"{{/unless}} href="#">Archive</a>
+        <span class="summary-light" {{#if complete}}style="display:none"{{/if}}>
+            <span class="objectives-complete">{{objectiveProgress}}/{{objectives.length}}</span>
+            &middot;
+            <span class="percent-complete">{{progressStr}}%</span>
+        </span>
+    </p>
     <ul class="inline-list objective-list">
     {{#objectives}}
         <li class="objective" style="width: {{../objectiveWidth}}%">
