@@ -1,4 +1,6 @@
+<div id="current-goal-list" style="display: none">
 {{#if current_goals}}
+  <div class="student-goal-title">Current goals:</div>
   <div class="student-goals">
   {{#each current_goals}}
     <div class="goal pulls">
@@ -26,9 +28,11 @@
     <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">Create a new goal</a>
   </div>
 {{/if}}
+</div>
 
+<div id="completed-goal-list" style="display: none">
 {{#if completed_goals}}
-  <div>Completed goals:</div>
+  <div class="student-goal-title">Completed goals:</div>
   <div class="student-goals">
   {{#each completed_goals}}
     <div class="goal pulls">
@@ -45,10 +49,16 @@
    </div>
  {{/each}}
  </div>
+{{else}}
+  <div class="student-goals">
+    You have not completed any goals yet.
+  </div>
 {{/if}}
+</div>
 
+<div id="abandoned-goal-list" style="display: none">
 {{#if abandoned_goals}}
-  <div>Abandoned goals:</div>
+  <div class="student-goal-title">Abandoned goals:</div>
   <div class="student-goals">
   {{#each abandoned_goals}}
     <div class="goal pulls">
@@ -65,4 +75,9 @@
    </div>
  {{/each}}
  </div>
+{{else}}
+  <div class="student-goals">
+    You have not abandoned any goals.
+  </div>
 {{/if}}
+</div>

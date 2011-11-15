@@ -142,7 +142,7 @@ var GoalCollection = Backbone.Collection.extend({
         var getExerciseId = function(url) {
             var regex = /\/exercise\/([^\/?]+)/;
             var matches = url.match(regex);
-            return matches[1];
+            return matches ? matches[1] : '';
         };
 
         var exerciseId = getExerciseId(url);
@@ -172,7 +172,7 @@ var GoalCollection = Backbone.Collection.extend({
         var getVideoId = function(url) {
             var regex = /\/video\/([^\/?]+)/;
             var matches = url.match(regex);
-            return matches[1];
+            return matches ? matches[1] : '';
         };
 
         var videoId = getVideoId(url);
