@@ -415,30 +415,42 @@ var createSimpleGoalDialog = {
         $("#popup-dialog").html($("#goal-create-dialog").html());
     },
     hideDialog: function() {
-        Throbber.hide();
         $("#popup-dialog").html('');
     },
     createSimpleGoal: function() {
         var selected_type = $("#goal-popup-dialog")
             .find("input[name=\"goal-type\"]:checked").val();
         var goal = predefinedGoalsList[selected_type];
+        var prevButtonHtml = $("#create-simple-goal-button").html();
 
         $('#create-simple-goal-error').html('');
-        Throbber.show($("#create-simple-goal-button"), true);
+        $("#create-simple-goal-button").html("<a class='simple-button action-gradient'><img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Adding goal... </span></a>");
         $.ajax({
             url: "/api/v1/user/goals/create",
             type: 'POST',
             dataType: 'json',
             data: $.param(goal),
             success: function(json) {
-                Throbber.hide();
                 createSimpleGoalDialog.hideDialog();
-
                 GoalBook.add(json);
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                Throbber.hide();
                 $('#create-simple-goal-error').html('Goal creation failed');
+                $("#create-simple-goal-button").html(prevButtonHtml);
+            }
+        });
+    },
+    createCustomGoal: function() {
+        $("#popup-dialog").html($("#custom-goal-loading-dialog").html());
+        $.ajax({
+            url: "/goals/new?need_maps_package=" + (!window.KnowledgeMap ? "true" : "false"),
+            type: 'GET',
+            dataType: 'html',
+            success: function(html) {
+                $("#popup-dialog").html(html);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                $("#custom-goal-loading-message").html('Page load failed. Please try again.');
             }
         });
     }

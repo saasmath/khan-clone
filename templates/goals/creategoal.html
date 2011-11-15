@@ -1,21 +1,15 @@
-{% extends "page_template.html" %}
-
 {% import 'macros/exercises.html' as exercise_macros %}
 
-{% block meta_page_title %}Create New Goal | {% endblock meta_page_title %}
-
-{% block pagescript %}
-<style>
-        #page_sub_nav, #top-header { display: none; }
-        #page-container, #page-container-inner { background-position-y: 0; }
-</style>
 <script>
 
 var GoalCreator = {
     objectives: [],
     creating: false,
+    knowledgeMap: null,
 
-    init: function() {
+    init: function(knowledgeMap) {
+        this.knowledgeMap = knowledgeMap;
+
         // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
             var video_name = $(this).attr('data-id');
@@ -170,7 +164,7 @@ var GoalCreator = {
         $('#goal-choose-videos').hide();
         $('#show-vid-btn').removeClass("blue");
         $('#show-ex-btn').addClass("blue");
-        Drawer.resize();
+        this.knowledgeMap.drawer.resize();
     },
     onExerciseClicked: function(exercise, evt) {
        if (exercise.get('status') == 'Proficient')
@@ -182,10 +176,11 @@ var GoalCreator = {
         GoalCreator.updateViewAndDescription();
     },
     onExerciseBadgeClicked: function(id) {
-        this.onExerciseClicked(KnowledgeMap.dictNodes[id], null);
+        this.onExerciseClicked(this.knowledgeMap.dictNodes[id], null);
     },
     updateExerciseCount: function() {
         var count = 0;
+        var self = this;
 
         $.each(GoalCreator.objectives, function(index, objective) {
             if (objective.type == 'GoalObjectiveExerciseProficiency')
@@ -194,7 +189,7 @@ var GoalCreator = {
 
         $('#goal-exercise-count').html(count);
 
-        $.each(KnowledgeMap.dictNodes, function(index, exercise) {
+        $.each(self.knowledgeMap.dictNodes, function(index, exercise) {
             var found = false;
 
             $.each(GoalCreator.objectives, function(index2, objective) {
@@ -204,12 +199,12 @@ var GoalCreator = {
                 }
             });
 
-            $.each(KnowledgeMap.exerciseRowViews, function(index, exerciseRowView) {
+            $.each(self.knowledgeMap.exerciseRowViews, function(index, exerciseRowView) {
                 if (exercise.name == exerciseRowView.model.get('name'))
                     exerciseRowView.showGoalIcon(found);
             });
 
-            KnowledgeMap.exerciseMarkerViews[exercise.name].showGoalIcon(found);
+            self.knowledgeMap.exerciseMarkerViews[exercise.name].showGoalIcon(found);
         });
     },
 
@@ -224,7 +219,7 @@ var GoalCreator = {
         $('#goal-choose-videos').show();
         $('#show-vid-btn').addClass("blue");
         $('#show-ex-btn').removeClass("blue");
-        Drawer.resize();
+        this.knowledgeMap.drawer.resize();
     },
     updateVideoCount: function() {
         var count = 0;
@@ -330,63 +325,67 @@ var GoalCreator = {
 
 var graph_dict_data = {{ graph_dict_data }};
 
-$(function() {
-    Drawer.init();
-    GoalCreator.init();
-    GoalCreator.showExercises();
-    KnowledgeMap.init({
+function createGoalInitialize() {
+    var knowledgeMap = new KnowledgeMap({
         'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
         'admin': false,
-        'hideReview': true
+        'hideReview': true,
+        'container': 'goal-choose-exercises'
     });
-    KnowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
-    // TomY TODO - Figure out why filtering isn't working here
-});
+    GoalCreator.init(knowledgeMap);
+    knowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
+    GoalCreator.showExercises();
+}
 
 </script>
-{% endblock pagescript %}
 
-{% block pagecontent %}
-<article class="create-goal-page">
-<form id="create-goal" action="javascript:">
-  <div class="section-headline">
-  <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
-    <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
-    <input type="text" name="title" class="simple-input ui-corner-all" id="goal-title" placeholder="New Goal (click to set a title)"></input>
+<div class="dark-window">&nbsp;</div>
+<div class="window-center">
+<div id="goal-popup-dialog" class="custom-goal">
+  <div class="dialog-title"><p>Create a custom goal</p>
+    <div class="dialog-button"><a class="simple-button action-gradient" href="javascript:createSimpleGoalDialog.hideDialog()">Cancel</a></div>
   </div>
-  <div id="goal-info-section">
-    <div id="create-goal-view"></div>
-    <div id="goal-hidden-values"></div>
-  </div>
-</form>
+  <article class="create-goal-page">
+  <form id="create-goal" action="javascript:">
+    <div class="section-headline">
+    <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
+      <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
+      <input type="text" name="title" class="simple-input ui-corner-all" id="goal-title" placeholder="New Goal (click to set a title)"></input>
+    </div>
+    <div id="goal-info-section">
+      <div id="create-goal-view"></div>
+      <div id="goal-hidden-values"></div>
+    </div>
+  </form>
 
-<div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+  <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     <div class="objective-type-picker clearfix">
-        <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
+      <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
         <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
-    </div>
-  <div id="goal-choose-exercises">
-    {{ exercise_macros.exercise_legend() }}
-    {{ exercise_macros.exercise_dashboard() }}
-
-    <div id="dashboard-map">
-        {{ exercise_macros.knowledgemap(map_coords) }}
-    </div>
-  </div>
-
-  <div id="goal-choose-videos" style="display: none;">
-    <div class="dashboard-header">
-      <div class="dashboard-nav">
-        {{ templatetags.playlist_browser("browse") }}
       </div>
-      <div class="dashboard-title"><img src="/images/video.png" id="dashboard-icon" width=22 height=22 /> Videos </div>
+    <div id="goal-choose-exercises">
+      {{ exercise_macros.exercise_legend() }}
+      {{ exercise_macros.exercise_dashboard() }}
+
+      <div class="dashboard-map">
+          {{ exercise_macros.knowledgemap('createGoalInitialize', need_maps_package) }}
+      </div>
     </div>
-    <div class="dashboard-content">
-{{ library_content }}
+
+    <div id="goal-choose-videos" style="display: none;">
+      <div class="dashboard-header">
+        <div class="dashboard-nav">
+          {{ templatetags.playlist_browser("browse") }}
+        </div>
+        <div class="dashboard-title"><img src="/images/video.png" class="dashboard-icon" width=22 height=22 /> Videos </div>
+      </div>
+      <div class="dashboard-content">
+    {{ library_content }}
+      </div>
     </div>
   </div>
+  </article>
 </div>
-</article>
 
 {%- raw -%}
 <script id="goals-create-tmpl" type="text/x-jquery-tmpl">
@@ -401,6 +400,4 @@ $(function() {
     </div>
 </script>
 {%- endraw -%}
-
-{% endblock pagecontent %}
 

@@ -36,11 +36,11 @@
 		}
 	}
 	
-    $(function(){
-        Drawer.init(); 
-        KnowledgeMap.init({
+    $(function() {
+        new KnowledgeMap({
             'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
-            'admin': false
+            'admin': false,
+            'container': 'container'
         });
     });
 
@@ -55,8 +55,8 @@
     {{ exercise_macros.exercise_legend() }}
     {{ exercise_macros.exercise_dashboard() }}
 
-    <div id="dashboard-map">
-        {{ exercise_macros.knowledgemap(map_coords) }}
+    <div class="dashboard-map">
+        {{ exercise_macros.knowledgemap(null, true) }}
     </div>
 </div>
 </div>
