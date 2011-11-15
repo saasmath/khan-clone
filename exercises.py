@@ -210,11 +210,11 @@ class ViewExercise(request_handler.RequestHandler):
         browser_disabled = is_webos or self.is_older_ie()
         renderable = renderable and not browser_disabled
 
-        url_pattern = "/exercises?exid=%s&student_email=%s&problem_number=%d"
+        url_pattern = "/exercise/%s/%d?student_email=%s"
         user_exercise.previous_problem_url = url_pattern % \
-            (exid, user_data_student.key_email , problem_number-1)
+            (exid, problem_number - 1, user_data_student.key_email)
         user_exercise.next_problem_url = url_pattern % \
-            (exid, user_data_student.key_email , problem_number+1)
+            (exid, problem_number + 1, user_data_student.key_email)
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
