@@ -66,7 +66,6 @@ class ViewExercise(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     def get(self, exid=None):
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
 
         if not exid:
             # Support old URLs that may pass in exid as a query param
@@ -77,6 +76,8 @@ class ViewExercise(request_handler.RequestHandler):
 
         if not exercise:
             raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
+
+        user_data = models.UserData.current() or models.UserData.pre_phantom()
 
         user_exercise = user_data.get_or_insert_exercise(exercise)
 
