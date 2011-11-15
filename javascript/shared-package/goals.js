@@ -326,9 +326,13 @@ var justFinishedObjective = function(newGoal, newObj) {
 var justFinishedGoal = function(goal) {
     console.log("Just finished goal", goal);
     myGoalBookView.show();
+};
+
+var archiveAllCompletedGoals = function() {
     var recentlyCompleted = $('.recently-completed');
     animateGoalToHistory(recentlyCompleted);
     //todo - also remove the goal from the model
+    //todo - also update GoalBook.active()
 };
 
 var animateGoalToHistory = function(el) {
