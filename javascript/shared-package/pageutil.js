@@ -38,8 +38,14 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
         delay: 150,
         source: function(req, fxnCallback) {
 
+            var term = $.trim( req.term );
+            if ( !term ) {
+                fxnCallback([]);
+				return;
+            }
+
             // Get autocomplete matches
-            $.getJSON("/api/v1/autocomplete", {"q": req.term}, function(data) {
+            $.getJSON("/api/v1/autocomplete", {"q": term}, function(data) {
 
                 var matches = [];
 
@@ -133,10 +139,16 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
     }
 }
 
-$(function(){
+$(function() {
     // Configure the search form
-    if ($('#page_search input[type=text]').placeholder().length)
-        initAutocomplete("#page_search input", true);
+    if ( $("#page_search input[type=text]").placeholder().length ) {
+        initAutocomplete("#page_search input[type=text]", true);
+    }
+
+    $("#page_search").submit(function(e) {
+        // Only allow submission if there is a non-empty query.
+        return !!$.trim( $("#page_search input[type=text]").val() );
+    });
 });
 
 function createCookie(name,value,days) {

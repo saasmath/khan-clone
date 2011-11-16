@@ -35,6 +35,19 @@ var Profile = {
 			return false;
 		});
 
+		// Init Highcharts global options.
+		Highcharts.setOptions({
+			credits: {
+				enabled: false
+			},
+			title: {
+				text: ''
+			},
+			subtitle: {
+				text: ''
+			}
+		});
+
         if ($.address)
             $.address.externalChange(function(){ Profile.historyChange(); });
 
@@ -193,18 +206,29 @@ var Profile = {
         return href;
     },
 
-    expandAccordionForHref: function(href) {
-        if (!href) return;
+	/**
+	 * Expands the navigation accordion according to the link specified.
+	 * @return {boolean} whether or not a link was found to be a valid link.
+	 */
+	expandAccordionForHref: function(href) {
+		if (!href) {
+			return false;
+		}
 
-        href = this.baseGraphHref(href);
+		href = this.baseGraphHref(href);
 
-        href = href.replace(/[<>']/g, "");
-        var selectorAccordionSection = ".graph-link-header[href*='" + href + "']";
-        if ($(selectorAccordionSection).length)
-            $("#stats-nav #nav-accordion").accordion("activate", selectorAccordionSection);
-        else
-            this.collapseAccordion();
-    },
+		href = href.replace(/[<>']/g, "");
+		var selectorAccordionSection =
+				".graph-link-header[href*='" + href + "']";
+		if ( $(selectorAccordionSection).length ) {
+			$("#stats-nav #nav-accordion").accordion(
+					"activate", selectorAccordionSection);
+			return true;
+		}
+
+		this.collapseAccordion();
+		return false;
+	},
 
     styleSublinkFromHref: function(href) {
 
@@ -255,7 +279,7 @@ var Profile = {
 
         var apiCallback = null;
         if (href.indexOf('/api/v1/user/exercises') > -1) {
-			apiCallback = this.renderExercises;
+			apiCallback = this.renderExercisesTable;
         }
 
         $.ajax({
@@ -267,7 +291,7 @@ var Profile = {
 				Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
 			},
 			error: function() {
-				Profile.finishLoadGraphError
+				Profile.finishLoadGraphError();
 			}
         });
         $("#graph-content").html("");
@@ -304,7 +328,7 @@ var Profile = {
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
 	 */
-	renderExercises: function(data) {
+	renderExercisesTable: function(data) {
 		// TODO: use a proper client side templating solution.
 		var html = [];
 		html.push( "<div id=\"module-progress\">" );
@@ -362,7 +386,7 @@ var Profile = {
 		html.push("<div style=\"clear:both\"></div></div>");
         $("#graph-content").html( html.join("") );
 
-		var infoHover = $("#info-hover-container")
+		var infoHover = $("#info-hover-container");
 		var lastHoverTime;
 		var mouseX;
 		var mouseY;
@@ -404,21 +428,29 @@ var Profile = {
 			// Extract the name from the ID, which has been prefixed.
 			var exerciseName = this.id.substring( "exercise-".length );
 			Profile.loadGraph(
-				"/profile/graph/exerciseproblems? " +
+				"/profile/graph/exerciseproblems?" +
 				"exercise_name=" + exerciseName + "&" +
 				"student_email=" + encodeURIComponent(Profile.email));
 		});
 	},
 
 	// TODO: move history management out to a common utility
-    historyChange: function(e) {
-        var href = ($.address ? $.address.parameter("graph_url") : "") || this.initialGraphUrl;
-        href = decodeURIComponent(href);
-        if (href) {
-            this.expandAccordionForHref(href);
-            this.loadGraph(href, true);
-        }
-    },
+	historyChange: function(e) {
+		var href = ( $.address ? $.address.parameter("graph_url") : "" ) ||
+				this.initialGraphUrl;
+		if ( href ) {
+			href = decodeURIComponent( href );
+			if ( this.expandAccordionForHref(href) ) {
+				this.loadGraph( href, true );
+			} else {
+				// Invalid URL - just try the first link available.
+				var links = $(".graph-link");
+				if ( links.length ) {
+					Profile.loadGraphFromLink( links[0] );
+				}
+			}
+		}
+	},
 
     showGraphThrobber: function(fVisible) {
         if (fVisible)

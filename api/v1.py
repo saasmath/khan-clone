@@ -10,12 +10,14 @@ import templatetags # Must be imported to register template tags
 from badges import badges, util_badges, models_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
-from exercises import attempt_problem, reset_streak
+from exercises import attempt_problem, make_wrong_attempt
+from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
+import profiles.util_profile as util_profile 
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -195,10 +197,25 @@ def video(video_id):
 @jsonp
 @jsonify
 def video_download_available(video_id):
-    video = models.Video.all().filter("youtube_id =", video_id).get()
-    if video:
-        video.download_version = models.Video.CURRENT_DOWNLOAD_VERSION if request.request_bool("available", default=False) else 0
-        video.put()
+
+    video = None
+    formats = request.request_string("formats", default="")
+    allowed_formats = ["mp4", "png"]
+
+    # If for any crazy reason we happen to have multiple entities for a single youtube id,
+    # make sure they all have the same downloadable_formats so we don't keep trying to export them.
+    for video in models.Video.all().filter("youtube_id =", video_id):
+
+        modified = False
+
+        for downloadable_format in formats.split(","):
+            if downloadable_format in allowed_formats and downloadable_format not in video.downloadable_formats:
+                video.downloadable_formats.append(downloadable_format)
+                modified = True
+
+        if modified:
+            video.put()
+
     return video
 
 @route("/api/v1/videos/<video_id>/exercises", methods=["GET"])
@@ -291,7 +308,37 @@ def user_data_student():
     if user_data:
         user_data_student = get_visible_user_data_from_request(disable_coach_visibility = True)
         if user_data_student:
-            return user_data_student.get_students_data()
+            if request.request_string("list_id"):
+                try:
+                    student_list = util_profile.get_list(user_data_student, request)
+                except Exception, e:
+                    logging.error("%s: %s" % (request.url, e))
+                    return None
+                else:
+                    return student_list.get_students_data()
+            else:
+                return user_data_student.get_students_data()
+
+    return None
+
+@route("/api/v1/user/studentlists", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def user_studentlists():
+    user_data = models.UserData.current()
+
+    if user_data:
+        user_data_student = get_visible_user_data_from_request()
+        if user_data_student:
+            student_lists_model = StudentList.get_for_coach(user_data_student.key())
+            student_lists = []
+            for student_list in student_lists_model:
+                student_lists.append({
+                    'key': str(student_list.key()),
+                    'name': student_list.name,
+                })
+            return student_lists
 
     return None
 
@@ -673,16 +720,27 @@ def hint_problem_number(exercise_name, problem_number):
     logging.warning("Problem %d attempted with no user_data present", problem_number)
     return unauthorized_response()
 
+# TODO: Remove this route in v2
 @route("/api/v1/user/exercises/<exercise_name>/reset_streak", methods=["POST"])
 @oauth_optional()
 @jsonp
 @jsonify
 def reset_problem_streak(exercise_name):
+    return _attempt_problem_wrong(exercise_name)
+
+@route("/api/v1/user/exercises/<exercise_name>/wrong_attempt", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def attempt_problem_wrong(exercise_name):
+    return _attempt_problem_wrong(exercise_name)
+
+def _attempt_problem_wrong(exercise_name):
     user_data = models.UserData.current()
 
     if user_data and exercise_name:
         user_exercise = user_data.get_or_insert_exercise(models.Exercise.get_by_name(exercise_name))
-        return reset_streak(user_data, user_exercise)
+        return make_wrong_attempt(user_data, user_exercise)
 
     return unauthorized_response()
 

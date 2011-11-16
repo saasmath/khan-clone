@@ -35,7 +35,6 @@ from app import App
 import util
 import user_util
 import exercise_statistics
-import backfill
 import activity_summary
 import exercises
 import dashboard
@@ -102,7 +101,7 @@ def get_mangled_playlist_name(playlist_name):
     return playlist_name
 
 class ViewVideo(request_handler.RequestHandler):
-    def get(self):
+    def get(self, readable_id=""):
 
         # This method displays a video in the context of a particular playlist.
         # To do that we first need to find the appropriate playlist.  If we aren't
@@ -113,8 +112,8 @@ class ViewVideo(request_handler.RequestHandler):
         playlist = None
         video_id = self.request.get('v')
         playlist_title = self.request_string('playlist', default="") or self.request_string('p', default="")
-        path = self.request.path
-        readable_id  = urllib.unquote(path.rpartition('/')[2])
+
+        readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
         # If either the readable_id or playlist title is missing,
@@ -778,15 +777,18 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
     ('/library_content', library.GenerateLibraryContent),
-    ('/exercises', exercises.ViewExercise),
+
+    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
+    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
+
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/.*', ViewVideo),
-    ('/v/.*', ViewVideo),
+    ('/video/(.*)', ViewVideo),
+    ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
     ('/logvideoprogress', LogVideoProgress),
     ('/sat', ViewSAT),
@@ -806,8 +808,6 @@ application = webapp2.WSGIApplication([
     ('/admin/badgestatistics', util_badges.BadgeStatistics),
     ('/admin/startnewexercisestatisticsmapreduce', exercise_statistics.StartNewExerciseStatisticsMapReduce),
     ('/admin/startnewvotemapreduce', voting.StartNewVoteMapReduce),
-    ('/admin/backfill', backfill.StartNewBackfillMapReduce),
-    ('/admin/backfill_entity', backfill.BackfillEntity),
     ('/admin/feedbackflagupdate', qa.StartNewFlagUpdateMapReduce),
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),

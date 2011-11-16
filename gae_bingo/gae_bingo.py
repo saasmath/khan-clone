@@ -94,7 +94,7 @@ def ab_test(canonical_name, alternative_params = None, conversion_name = None, c
 
         else:
 
-            alternative = find_alternative_for_user(canonical_name, alternatives)
+            alternative = find_alternative_for_user(experiment.hashable_name, alternatives)
 
             if experiment.name not in bingo_identity_cache.participating_tests:
                 bingo_identity_cache.participate_in(experiment.name)

@@ -124,5 +124,6 @@ def exercise_problems_graph_context(user_data_student, exid):
         'x_offset': x_offset,
         'x_axis_label': x_axis_label,
         'user_exercise': user_exercise,
+        'exercise': exercise,
     }
 

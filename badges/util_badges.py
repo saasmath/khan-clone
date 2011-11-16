@@ -20,7 +20,7 @@ import exercise_completion_count_badges
 import playlist_time_badges
 import power_time_badges
 import recovery_problem_badges
-import unfinished_streak_problem_badges
+import unfinished_exercise_badges
 import points_badges
 import tenure_badges
 import video_time_badges
@@ -71,9 +71,9 @@ def all_badges():
         recovery_problem_badges.RecoveryBadge(),
         recovery_problem_badges.ResurrectionBadge(),
 
-        unfinished_streak_problem_badges.SoCloseBadge(),
-        unfinished_streak_problem_badges.KeepFightingBadge(),
-        unfinished_streak_problem_badges.UndeterrableBadge(),
+        unfinished_exercise_badges.SoCloseBadge(),
+        unfinished_exercise_badges.KeepFightingBadge(),
+        unfinished_exercise_badges.UndeterrableBadge(),
 
         power_time_badges.PowerFifteenMinutesBadge(),
         power_time_badges.PowerHourBadge(),
