@@ -142,7 +142,7 @@ var GoalCollection = Backbone.Collection.extend({
         var getExerciseId = function(url) {
             var regex = /\/exercise\/([^\/?]+)/;
             var matches = url.match(regex);
-            return matches[1];
+            return matches ? matches[1] : '';
         };
 
         var exerciseId = getExerciseId(url);
@@ -172,7 +172,7 @@ var GoalCollection = Backbone.Collection.extend({
         var getVideoId = function(url) {
             var regex = /\/video\/([^\/?]+)/;
             var matches = url.match(regex);
-            return matches[1];
+            return matches ? matches[1] : '';
         };
 
         var videoId = getVideoId(url);
@@ -448,8 +448,7 @@ var createSimpleGoalDialog = {
             dataType: 'json',
             data: $.param(goal),
             success: function(json) {
-                createSimpleGoalDialog.hideDialog();
-                GoalBook.add(json);
+                createSimpleGoalDialog.goalCreationComplete(json);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 $('#create-simple-goal-error').html('Goal creation failed');
@@ -470,7 +469,13 @@ var createSimpleGoalDialog = {
                 $("#custom-goal-loading-message").html('Page load failed. Please try again.');
             }
         });
-    }
+    },
+    goalCreationComplete: function(goal) {
+        createSimpleGoalDialog.hideDialog();
+        GoalBook.add(goal);
+        console.log("Created goal");
+        myGoalBookView.show();
+    },
 };
 
 function goalCreateViewModel(goalModel) {

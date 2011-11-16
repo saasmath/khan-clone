@@ -381,6 +381,19 @@ var Profile = {
         });
 
         Profile.userGoalsHref = href;
+        Profile.showGoalType('current');
+    },
+
+    showGoalType: function(type) {
+        $.each(['current','completed','abandoned'], function(idx, atype) {
+            if (type == atype) {
+                $('#' + atype + '-goal-list').show();
+                $('#goal-show-' + atype + '-link').addClass('graph-sub-link-selected');
+            } else {
+                $('#' + atype + '-goal-list').hide();
+                $('#goal-show-' + atype + '-link').removeClass('graph-sub-link-selected');
+            }
+        });
     },
 
     renderStudentGoals: function(data, href) {

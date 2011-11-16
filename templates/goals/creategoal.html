@@ -8,7 +8,11 @@ var GoalCreator = {
     knowledgeMap: null,
 
     init: function(knowledgeMap) {
+        var self = this;
+
         this.knowledgeMap = knowledgeMap;
+
+        $(window).resize(function(){self.resize();});
 
         // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
@@ -157,6 +161,20 @@ var GoalCreator = {
             message += '</ul>';
         }
         $('.create-goal-page .goal-description').html(message);
+
+        this.resize();
+    },
+
+    resize: function() {
+        var jel = $("#goal-choose-exercises .dashboard-drawer,.dashboard-drawer-inner,.dashboard-map,.dashboard-content-stretch");
+        var jelDrawerInner = $("#goal-choose-exercises .dashboard-drawer-inner");
+        var yTop = $('#goal-spacer').offset().top - $('#goal-popup-dialog').offset().top;
+        jel.height($('#goal-popup-dialog').outerHeight(true)-yTop-48);
+        // Account for padding in the dashboard drawer
+        jelDrawerInner.height(jelDrawerInner.height() - 20);
+
+        if (this.knowledgeMap && this.knowledgeMap.map)
+            google.maps.event.trigger(this.knowledgeMap.map, 'resize');
     },
 
     showExercises: function() {
@@ -164,7 +182,8 @@ var GoalCreator = {
         $('#goal-choose-videos').hide();
         $('#show-vid-btn').removeClass("blue");
         $('#show-ex-btn').addClass("blue");
-        this.knowledgeMap.drawer.resize();
+
+        this.resize();
     },
     onExerciseClicked: function(exercise, evt) {
        if (exercise.get('status') == 'Proficient')
@@ -219,7 +238,8 @@ var GoalCreator = {
         $('#goal-choose-videos').show();
         $('#show-vid-btn').addClass("blue");
         $('#show-ex-btn').removeClass("blue");
-        this.knowledgeMap.drawer.resize();
+
+        this.resize();
     },
     updateVideoCount: function() {
         var count = 0;
@@ -304,11 +324,11 @@ var GoalCreator = {
         $.ajax({
             url: "/api/v1/user/goals/create",
             type: 'POST',
-            dataType: 'text',
+            dataType: 'json',
             data: $(form).serialize(),
             success: function(json) {
-                document.location = '/profile?k#/?graph_url=/api/v1/user/goals'; // Take the user to the goals list in their profile
                 GoalCreator.creating = false;
+                createSimpleGoalDialog.goalCreationComplete(json);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 $('#goal-commit-response').html('Goal creation failed: ' + jqXHR.responseText).show();
@@ -330,6 +350,7 @@ function createGoalInitialize() {
         'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
         'admin': false,
         'hideReview': true,
+        'hideDrawer': true,
         'container': 'goal-choose-exercises'
     });
     GoalCreator.init(knowledgeMap);
@@ -363,6 +384,7 @@ function createGoalInitialize() {
       <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
         <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
       </div>
+    <div id="goal-spacer"></div>
     <div id="goal-choose-exercises">
       {{ exercise_macros.exercise_legend() }}
       {{ exercise_macros.exercise_dashboard() }}
@@ -379,7 +401,7 @@ function createGoalInitialize() {
         </div>
         <div class="dashboard-title"><img src="/images/video.png" class="dashboard-icon" width=22 height=22 /> Videos </div>
       </div>
-      <div class="dashboard-content">
+      <div class="dashboard-content-stretch">
     {{ library_content }}
       </div>
     </div>

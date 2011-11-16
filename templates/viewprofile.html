@@ -74,6 +74,11 @@
             {{ profile_macros.api_link(user_data_student, "Goals", "user/goals", selected_graph_type) }}
             <p class="accordion-content">
                 Shows progress on your current goals.
+                <span class="graph-picker">
+                    <a href="javascript:Profile.showGoalType('current')" id="goal-show-current-link" class="graph-sub-link 0">Current</a> | 
+                    <a href="javascript:Profile.showGoalType('completed')" id="goal-show-completed-link" class="graph-sub-link 0">Completed</a> | 
+                    <a href="javascript:Profile.showGoalType('abandoned')" id="goal-show-abandoned-link" class="graph-sub-link 0">Abandoned</a>
+                </span>
                 <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">Create a new goal</a>
             </p>
         </li>

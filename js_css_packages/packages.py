@@ -72,6 +72,7 @@ javascript = {
         "templates": [
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
+            "exercise_progress.handlebars",
         ],
         "files": [
             "jquery.address-1.4.min.js",
