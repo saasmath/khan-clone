@@ -7,7 +7,7 @@ ul.inline-list, ul.inline-list li {
     clear: both;
     position: relative;
 }
-.create-goal-page .goal {
+.create-goal-page .goal.with-border {
     border: 1px solid #ccc;
 
     -moz-border-radius: 30px;
