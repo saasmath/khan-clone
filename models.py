@@ -1043,11 +1043,7 @@ class Video(Searchable, db.Model):
     # List of currently available downloadable formats for this video
     downloadable_formats = object_property.TsvProperty(indexed=False)
 
-    # Temporarily keep this property around for backwards compatibility mapreduce, remove after
-    download_version = db.IntegerProperty(default = 0)
-    CURRENT_DOWNLOAD_VERSION = 2
-
-    _serialize_blacklist = ["downloadable_formats", "download_version", "CURRENT_DOWNLOAD_VERSION"]
+    _serialize_blacklist = ["downloadable_formats"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
     INDEX_TITLE_FROM_PROP = 'title'

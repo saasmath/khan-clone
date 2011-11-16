@@ -41,16 +41,3 @@ mapreduce:
     - name: processing_rate
       default: 350
 
-- name: BackfillVideoDownloadFormats
-  mapper:
-    input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler: backfill.update_video_download_formats
-    params:
-    - name: entity_kind
-      default: models.Video
-    - name: shard_count
-      default: 64
-    - name: queue_name
-      default: backfill-mapreduce-queue
-    - name: processing_rate
-      default: 50

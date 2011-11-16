@@ -10,13 +10,6 @@ from nicknames import get_nickname_for
 
 from google.appengine.ext import db
 
-def update_video_download_formats(video):
-
-    if video and not video.downloadable_formats and video.download_version == models.Video.CURRENT_DOWNLOAD_VERSION:
-        # Any video that used the old download_version property had an mp4 and png format prepped
-        video.downloadable_formats = ["mp4", "png"]
-        yield op.db.Put(video)
-
 def check_user_properties(user_data):
     if not user_data or not user_data.user:
         return
