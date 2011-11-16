@@ -4,6 +4,17 @@ var calcIconFillHeight = function(o) {
     return Math.ceil(o.progress * height) + offset;
 };
 
+var calcObjectiveDependents = function(objective, objectiveWidth) {
+    objective.complete = objective.progress >= 1;
+    objective.progress_str = (objective.progress * 100).toFixed(0);
+    objective.iconFillHeight = calcIconFillHeight(objective);
+    objective.objectiveWidth = objectiveWidth;
+    objective.isVideo = (objective.type == 'GoalObjectiveWatchVideo');
+    objective.isAnyVideo = (objective.type == 'GoalObjectiveAnyVideo');
+    objective.isExercise = (objective.type == 'GoalObjectiveExerciseProficiency');
+    objective.isAnyExercise = (objective.type == 'GoalObjectiveAnyExerciseProficiency');
+};
+
 var Goal = Backbone.Model.extend({
     defaults: {
         active: false,
@@ -22,9 +33,7 @@ var Goal = Backbone.Model.extend({
         var progress = this.calcTotalProgress(this.get('objectives'));
         var objectiveWidth = 100/this.get('objectives').length;
         _.each(this.get('objectives'), function (obj) {
-            obj.complete = obj.progress >= 1;
-            obj.iconFillHeight = calcIconFillHeight(obj);
-            obj.objectiveWidth = objectiveWidth;
+            calcObjectiveDependents(obj, objectiveWidth);
         });
         this.set({
             progress: progress,
@@ -32,7 +41,7 @@ var Goal = Backbone.Model.extend({
             complete: progress >= 1,
             objectiveProgress: _.filter(this.get('objectives'), function(obj) {
                 return obj.progress >= 1;
-            }).length,
+            }).length
         }, {silent: true});
     },
 
@@ -505,24 +514,5 @@ var createSimpleGoalDialog = {
             window.Profile.showGoalType('current');
     },
 };
-
-function goalCreateViewModel(goalModel) {
-    var goalViewModel = $.extend({}, goalModel);
-
-    goalViewModel.objectiveWidth = 100/goalModel.objectives.length;
-
-    $.each(goalViewModel.objectives, function(idx2, objective) {
-        objective.progressPercentage = (objective.progress*100).toFixed(0);
-
-        objective.statusCSS = objective.status ? objective.status : "not-started";
-
-        if (objective.type == 'GoalObjectiveExerciseProficiency' || objective.type == 'GoalObjectiveAnyExerciseProficiency')
-            objective.typeCSS = 'exercise';
-        else if (objective.type == 'GoalObjectiveWatchVideo' || objective.type == 'GoalObjectiveAnyVideo')
-            objective.typeCSS = 'video';
-    });
-
-    return goalViewModel;
-}
 
 Handlebars.registerPartial('goal-objectives', Templates.get( "shared.goal-objectives" )); // TomY TODO do this automatically?

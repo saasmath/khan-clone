@@ -488,3 +488,11 @@ input#goal-title:focus {
     color: #99a;
 }
 
+.goal-tooltip-status {
+    font-style: italic;
+}
+
+.goal-tooltip-struggling {
+    color: #c00;
+    font-weight: bold;
+}

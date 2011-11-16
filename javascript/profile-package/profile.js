@@ -422,38 +422,43 @@ var Profile = {
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
                     // Sort objectives by status
-                    var statuses = ['started','struggling','proficient'];
                     var progress_count = 0;
                     var found_struggling = false;
-                    var goalViewModel = goalCreateViewModel(goal);
 
-                    goalViewModel.objectives.sort(function(a,b) { return statuses.indexOf(b.status)-statuses.indexOf(a.status); });
+                    goal.objectiveWidth = 100/goal.objectives.length;
+                    goal.objectives.sort(function(a,b) { return b.progress-a.progress; });
 
-                    $.each(goalViewModel.objectives, function(idx3, objective) {
+                    $.each(goal.objectives, function(idx3, objective) {
+                        calcObjectiveDependents(objective, goal.objectiveWidth);
+
                         if (objective.status == 'proficient')
                             progress_count += 1000;
                         else if (objective.status == 'started' || objective.status == 'struggling')
                             progress_count += 1;
-                        if (objective.status == 'struggling')
+
+                        if (objective.status == 'struggling') {
                             found_struggling = true;
+                            objective.struggling = true;
+                        }
+                        objective.statusCSS = objective.status ? objective.status : "not-started";
 
                         objective.objectiveID = idx3;
                     });
 
-                    if (!student.most_recent_update || goalViewModel.updated > student.most_recent_update)
-                        student.most_recent_update = goalViewModel;
+                    if (!student.most_recent_update || goal.updated > student.most_recent_update)
+                        student.most_recent_update = goal;
 
                     student.goal_count++;
                     row = {
                         rowID: studentGoalsViewModel.rowData.length,
                         student: student,
-                        goal: goalViewModel,
+                        goal: goal,
                         progress_count: progress_count,
                         goal_idx: student.goal_count,
                         struggling: found_struggling,
                     };
 
-                    $.each(goalViewModel.objectives, function(idx3, objective) {
+                    $.each(goal.objectives, function(idx3, objective) {
                         objective.row = row;
                     });
                     studentGoalsViewModel.rowData.push(row);
@@ -480,7 +485,9 @@ var Profile = {
             goalViewModel.startTimeElement = $(this).find('.goal-start-time');
             goalViewModel.updateTimeElement = $(this).find('.goal-update-time');
 
-            $(this).find(".objective").each(function() {
+            Profile.AddObjectiveHover($(this));
+
+            $(this).find("a.objective").each(function() {
                 var goalObjective = goalViewModel.goal.objectives[$(this).attr('data-id')];
                 goalObjective.blockElement = this;
 
@@ -815,6 +822,45 @@ var Profile = {
                 qs.push(key + kvjoin + hash[key]);
         }
         return qs.join(eljoin);
+    },
+
+    AddObjectiveHover: function(element) {
+        var infoHover = $("#info-hover-container");
+        var lastHoverTime;
+        var mouseX;
+        var mouseY;
+        element.find(".objective").hover(
+            function(e) {
+                var hoverTime = lastHoverTime = Date.now();
+                mouseX = e.pageX;
+                mouseY = e.pageY;
+                var self = this;
+                setTimeout(function() {
+                    if (hoverTime != lastHoverTime) {
+                        return;
+                    }
+
+                    var hoverData = $(self).children(".hover-data");
+                    if ($.trim(hoverData.html())) {
+                        infoHover.html($.trim(hoverData.html()));
+
+                        var left = mouseX + 15;
+                        var jelGraph = $("#graph-content");
+                        var leftMax = jelGraph.offset().left +
+                                jelGraph.width() - 150;
+
+                        infoHover.css('left', Math.min(left, leftMax));
+                        infoHover.css('top', mouseY + 5);
+                        infoHover.css('cursor', 'pointer');
+                        infoHover.show();
+                    }
+                }, 100);
+            },
+            function(e){
+                lastHoverTime = null;
+                $("#info-hover-container").hide();
+            }
+        );
     }
 };
 
@@ -863,6 +909,8 @@ var GoalProfileView = Backbone.View.extend({
             $(this).find(".goal-controls").hide();
             $(this).find(".goal-description .summary-light").show();
         });
+
+        Profile.AddObjectiveHover(jel);
         return jel;
     }
 });

@@ -15,14 +15,7 @@
       <div class="goal">
         <ul class="inline-list objective-list">
         {{#each goal.objectives}}
-          <li style="width: {{../goal.objectiveWidth}}%">
-            <a data-id="{{objectiveID}}" class="objective simple-button action-gradient exercise-color seethrough {{ statusCSS }} {{ typeCSS }}" href="{{ url }}" data-progress="{{ progress }}">
-                <span class="objective-description">{{ description }}</span>
-                {{#unless complete}}
-                <span class="objective-progress-meter" style="height: {{#if iconFillHeight}}{{iconFillHeight}}{{else}}0{{/if}}px"></span>
-                {{/unless}}
-            </a>
-          </li>
+          {{> goal-objectives }}
         {{/each}}
         </ul>
       </div>
