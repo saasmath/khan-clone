@@ -304,7 +304,6 @@ var GoalBookView = Backbone.View.extend({
         var completed = this.model.filter(function(goal) { return goal.get('complete'); });
 
         var completedEls = this.$('.recently-completed');
-        console.log('completed:', completedEls);
         if ( completedEls.length > 0 ) {
             this.animateThenHide(completedEls);
         } else {
@@ -312,9 +311,9 @@ var GoalBookView = Backbone.View.extend({
         }
     },
 
-    added: function(goal) {
-        this.render();
-
+    added: function(goal, options) {
+        this.needsRerender = true;
+        this.show();
         // add a highlight to the new goal
         $(".goal[data-id=" + goal.get('id') + "]").effect('highlight', {}, 2500);
     },
@@ -515,8 +514,6 @@ var createSimpleGoalDialog = {
     goalCreationComplete: function(goal) {
         createSimpleGoalDialog.hideDialog();
         GoalBook.add(goal);
-        console.log("Created goal");
-        myGoalBookView.show();
         if (window.Profile)
             window.Profile.showGoalType('current');
     }
