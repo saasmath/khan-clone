@@ -10,16 +10,7 @@
     </p>
     <ul class="inline-list objective-list">
     {{#objectives}}
-        <li class="objective" style="width: {{../objectiveWidth}}%">
-            <a class="objective simple-button action-gradient {{type}} {{#if complete}}complete seethrough exercise-color started{{else}}blue{{/if}}"
-                href="{{url}}"
-                data-progress="{{progress}}">
-                    {{description}}
-                    {{#unless complete}}
-                    <span class="objective-progress-meter" style="height: {{iconFillHeight}}px"></span>
-                    {{/unless}}
-            </a>
-        </li>
+        {{>goal-objectives}}
     {{/objectives}}
     </ul>
 

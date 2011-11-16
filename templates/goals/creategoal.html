@@ -436,7 +436,7 @@ function createGoalInitialize() {
         <p class="goal-description" class="pulled"></p>
         <ul class="inline-list objective-list">
         {{each objectives}}
-            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.css}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.css}" href="${$value.url}" data-progress="${$value.progress}"><span class="objective-description">${$value.description}</span></a></li>
         {{/each}}
         </ul>
         <div style="clear: both;"></div>
