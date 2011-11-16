@@ -17,6 +17,7 @@ import layer_cache
 import knowledgemap
 import string
 import simplejson
+import logging
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from custom_exceptions import MissingExerciseException
@@ -24,6 +25,7 @@ from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
+from goals import GoalList, Goal
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -264,6 +266,12 @@ def exercise_graph_dict_json(user_data, admin=False):
         except ValueError:
             pass
 
+    goal_data = user_data.get_goal_data()
+    goals = GoalList.get_from_data(goal_data, Goal)
+    goal_exercises = []
+    for goal in goals:
+        goal_exercises.extend([objective.exercise_name for objective in goal.objectives if objective.__class__.__name__ == 'GoalObjectiveExerciseProficiency'])
+
     graph_dict_data = []
     for graph_dict in graph_dicts:
         row = {
@@ -279,7 +287,8 @@ def exercise_graph_dict_json(user_data, admin=False):
             'v_position': graph_dict["v_position"],
             'summative': graph_dict["summative"],
             'num_milestones': graph_dict.get("num_milestones",0),
-            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]]
+            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]],
+            'goal_req': (graph_dict["name"] in goal_exercises)
         };
         if admin:
             exercise = models.Exercise.get_by_name(graph_dict["name"])

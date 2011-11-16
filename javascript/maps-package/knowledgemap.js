@@ -241,6 +241,7 @@ function KnowledgeMapInitGlobals() {
             classText += (visible ? "" : " nodeLabelHidden");
             classText += (" nodeLabelZoom" + this.zoom);
             classText += (this.filtered ? " nodeLabelFiltered" : "");
+            classText += (this.model.get('invalidForGoal') ? " goalNodeInvalid" : "");
 
             return classText;
         },
@@ -501,6 +502,7 @@ function KnowledgeMap(params) {
     this.fZoomChanged = false;
 
     this.admin = !!params.admin;
+    this.newGoal = !!params.newGoal;
 
     this.init = function(params) {
         this.containerID = (!!params.container) ? ('#' + params.container) : null;
@@ -529,29 +531,34 @@ function KnowledgeMap(params) {
             var exerciseModel = new KnowledgeMapExercise(exercise);
             self.exerciseList[exercise.name] = exerciseModel;
 
-            // Create views
+            if (!self.newGoal || (!exercise.goal_req && exercise.status != 'Proficient')) {
 
-            if (exerciseModel.get('isSuggested')) {
-                if (!params.hideReview || !exerciseModel.get('isReview')) {
-                    var element = $('<div>');
-                    element.appendTo(suggestedExercisesContent);
-                    self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'suggested', 'admin': self.admin, 'parent': self}));
+                // Create views
 
-                    self.numSuggestedExercises++;
+                if (exerciseModel.get('isSuggested')) {
+                    if (!params.hideReview || !exerciseModel.get('isReview')) {
+                        var element = $('<div>');
+                        element.appendTo(suggestedExercisesContent);
+                        self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'suggested', 'admin': self.admin, 'parent': self}));
+
+                        self.numSuggestedExercises++;
+                    }
                 }
-            }
-            
-            if (exerciseModel.get('recent')) {
+                
+                if (exerciseModel.get('recent')) {
+                    var element = $('<div>');
+                    element.appendTo(recentExercisesContent);
+                    self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'recent', 'admin': self.admin, 'parent': self}));
+
+                    self.numRecentExercises++;
+                }
+
                 var element = $('<div>');
-                element.appendTo(recentExercisesContent);
-                self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'recent', 'admin': self.admin, 'parent': self}));
-
-                self.numRecentExercises++;
+                element.appendTo(allExercisesContent);
+                self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'all', 'admin': self.admin, 'parent': self}));
+            } else {
+                exerciseModel.set({'invalidForGoal':true});
             }
-
-            var element = $('<div>');
-            element.appendTo(allExercisesContent);
-            self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'all', 'admin': self.admin, 'parent': self}));
 
             // Update map graph
 
@@ -653,12 +660,13 @@ function KnowledgeMap(params) {
     };
 
     this.drawOverlay = function() {
+        var self = this;
         this.overlay = new com.redfin.FastMarkerOverlay(this.map, this.markers);
         this.overlay.drawOriginal = this.overlay.draw;
         this.overlay.draw = function() {
             this.drawOriginal();
 
-            var jrgNodes = $(".nodeLabel");
+            var jrgNodes = $(self.containerID).find(".nodeLabel");
 
             if (!self.fFirstDraw)
             {

@@ -438,3 +438,15 @@ input#goal-title:focus {
     font-weight: bold;
 }
 
+.goalNodeInvalid {
+    text-decoration: line-through;
+}
+.goalNodeInvalid div {
+    color: #777;
+}
+
+.goalVideoInvalid span {
+    text-decoration: line-through;
+    color: #99a;
+}
+
