@@ -185,7 +185,7 @@ class Exercise(db.Model):
 
         # 85% of users have proficiency before they get to 19 problems
         # TODO(david): This needs to use the new accuracy model
-        return 20
+        return self.num_milestones * 20
 
     def summative_children(self):
         if not self.summative:
@@ -367,11 +367,7 @@ class UserExercise(db.Model):
 
     def update_proficiency_model(self, correct):
         if not correct:
-            if self.summative:
-                # Reset to latest milestone
-                self.streak = (self.streak // consts.CHALLENGE_STREAK_BARRIER) * consts.CHALLENGE_STREAK_BARRIER
-            else:
-                self.streak = 0
+            self.streak = 0
 
         self.accuracy_model().update(correct)
         self._progress = self._get_progress_from_current_state()

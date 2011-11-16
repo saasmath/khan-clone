@@ -10,7 +10,7 @@ import templatetags # Must be imported to register template tags
 from badges import badges, util_badges, models_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
-from exercises import attempt_problem, reset_streak
+from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
@@ -712,16 +712,27 @@ def hint_problem_number(exercise_name, problem_number):
     logging.warning("Problem %d attempted with no user_data present", problem_number)
     return unauthorized_response()
 
+# TODO: Remove this route in v2
 @route("/api/v1/user/exercises/<exercise_name>/reset_streak", methods=["POST"])
 @oauth_optional()
 @jsonp
 @jsonify
 def reset_problem_streak(exercise_name):
+    return _attempt_problem_wrong(exercise_name)
+
+@route("/api/v1/user/exercises/<exercise_name>/wrong_attempt", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def attempt_problem_wrong(exercise_name):
+    return _attempt_problem_wrong(exercise_name)
+
+def _attempt_problem_wrong(exercise_name):
     user_data = models.UserData.current()
 
     if user_data and exercise_name:
         user_exercise = user_data.get_or_insert_exercise(models.Exercise.get_by_name(exercise_name))
-        return reset_streak(user_data, user_exercise)
+        return make_wrong_attempt(user_data, user_exercise)
 
     return unauthorized_response()
 
