@@ -32,7 +32,7 @@ var Goal = Backbone.Model.extend({
             complete: progress >= 1,
             objectiveProgress: _.filter(this.get('objectives'), function(obj) {
                 return obj.progress >= 1;
-            }).length,
+            }).length
         }, {silent: true});
     },
 
@@ -503,7 +503,7 @@ var createSimpleGoalDialog = {
         myGoalBookView.show();
         if (window.Profile)
             window.Profile.showGoalType('current');
-    },
+    }
 };
 
 function goalCreateViewModel(goalModel) {
