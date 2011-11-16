@@ -246,11 +246,11 @@ var GoalBookView = Backbone.View.extend({
                 }
             })
 
-            .delegate('.archive', 'click', function( e ) {
+            .delegate('.archive', 'click', $.proxy(function( e ) {
                 var el = $(e.target).closest('.goal');
-                animateGoalToHistory(el);
+                this.animateGoalToHistory(el);
                 // todo: remove model
-            });
+            }, this));
 
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
@@ -289,7 +289,23 @@ var GoalBookView = Backbone.View.extend({
         this.isVisible = false;
         $(document).unbind('keyup.goalbook');
         $('body').unbind('click.goalbook');
-        return $(this.el).slideUp("fast");
+
+        // if there are completed goals, move them to history before closing
+        var completed = this.model.filter(function(goal) { return goal.get('complete'); });
+
+        var completedEls = this.$('.recently-completed');
+        console.log('completed:', completedEls);
+        if ( completedEls.length > 0 ) {
+            this.animateThenHide(completedEls);
+        } else {
+            return $(this.el).slideUp("fast");
+        }
+    },
+
+    animateThenHide: function(els) {
+        this.animateGoalToHistory(els);
+        // wait for the animation to complete and then close the goalbook.
+        setTimeout($.proxy(function() { $(this.el).slideUp("fast"); }, this), 3500);
     },
 
     render: function() {
@@ -305,6 +321,46 @@ var GoalBookView = Backbone.View.extend({
             jel.html(this.template({goals: json}));
         }
         return jel;
+    },
+
+    animateGoalToHistory: function(els) {
+        var btnGoalHistory = this.$('#btn-goal-history');
+
+        var historyGlow = function () {
+            $('#btn-goal-history')
+                .animate({backgroundColor: 'orange'})
+                .animate({backgroundColor: '#ddd'});
+        };
+
+        var promises = $(els).map(function(i, el) {
+            var dfd = $.Deferred();
+            var jel = $(el);
+            jel .children()
+                    .each(function () {
+                        $(this).css('overflow', 'hidden').css('height', $(this).height());
+                    })
+                .end()
+                .delay(500)
+                .animate({
+                    width: btnGoalHistory.width(),
+                    left: btnGoalHistory.position().left
+                })
+                .animate({
+                        top: btnGoalHistory.position().top - jel.position().top,
+                        height: '0',
+                        opacity: 'toggle'
+                    },
+                    'easeInOutCubic',
+                    function() {
+                        $(this).remove();
+                        dfd.resolve();
+                    }
+                );
+            return dfd.promise();
+        }).get();
+
+        // once all the animations are done, make the history button glow
+        $.when.apply(null, promises).then(historyGlow);
     }
 });
 
@@ -345,40 +401,6 @@ var justFinishedObjective = function(newGoal, newObj) {
 var justFinishedGoal = function(goal) {
     console.log("Just finished goal", goal);
     myGoalBookView.show();
-};
-
-var archiveAllCompletedGoals = function() {
-    var recentlyCompleted = $('.recently-completed');
-    animateGoalToHistory(recentlyCompleted);
-    //todo - also remove the goal from the model
-    //todo - also update GoalBook.active()
-};
-
-var animateGoalToHistory = function(el) {
-    var btnGoalHistory = $('#btn-goal-history');
-    el  .children()
-            .each(function () {
-                $(this).css('overflow', 'hidden').css('height', $(this).height());
-            })
-        .end()
-        .delay(500)
-        .animate({
-            width: btnGoalHistory.width(),
-            left: btnGoalHistory.position().left
-        })
-        .animate({
-                top: btnGoalHistory.position().top - el.position().top,
-                height: '0',
-                opacity: 'toggle'
-            },
-            'easeInOutCubic',
-            function () {
-                $(this).remove();
-                $('#btn-goal-history')
-                    .animate({backgroundColor: 'orange'})
-                    .animate({backgroundColor: '#ddd'});
-            }
-        );
 };
 
 $(function() {
