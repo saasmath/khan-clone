@@ -471,11 +471,30 @@ var predefinedGoalsList = {
 
 var createSimpleGoalDialog = {
     showDialog: function() {
+        myGoalBookView.hide();
         $("#popup-dialog").html($("#goal-create-dialog").html());
+
+        // listen for escape key
+        $(document).bind('keyup.goaldialog', function ( e ) {
+            if ( e.which == 27 ) {
+                createSimpleGoalDialog.hideDialog();
+            }
+        });
+
+        // close the goal dialog if user clicks elsewhere on page
+        $('body').bind('click.goaldialog', function( e ) {
+            if ( $(e.target).closest('#goal-popup-dialog').length === 0 ) {
+                createSimpleGoalDialog.hideDialog();
+            }
+        });
     },
     hideDialog: function() {
         $("#popup-dialog").html('');
+
+        $(document).unbind('keyup.goaldialog');
+        $('body').unbind('click.goaldialog');
     },
+
     createSimpleGoal: function() {
         var selected_type = $("#goal-popup-dialog")
             .find("input[name=\"goal-type\"]:checked").val();
