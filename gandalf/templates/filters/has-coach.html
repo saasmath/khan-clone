@@ -1,0 +1,11 @@
+who <select name="coach" class="find-selected">
+    <option value="true">have</option>
+    <option value="false">don't have</option>
+</select> a coach
+
+<script>
+    $(".find-selected")
+        .removeClass("find-selected")
+        .find("[value='{{{coach}}}']")
+            .attr("selected", "selected");
+</script>

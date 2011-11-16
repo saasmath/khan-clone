@@ -4,37 +4,31 @@ from google.appengine.ext import db
 
 #TODO: Pack object_property so that gandalf does not depend on it
 import object_property
-from gandalf.filters import find_subclass
+from gandalf.filters import BridgeFilter
 
-class Bridge(db.Model):
-    name = db.StringProperty(required=True)
-    live = db.BooleanProperty(default=True)
-    date_started = db.DateTimeProperty(auto_now_add=True)
+class _GandalfBridge(db.Model):
+    date_created = db.DateTimeProperty(auto_now_add=True, indexed=False)
     
     @property
     def status(self):
-        if self.live:
-            days_running = (datetime.datetime.now() - self.date_started).days
-            
-            if days_running < 1:
-                return "Active for less than a day"
-            else:
-                return "Active for %s day%s" % (days_running, ("" if days_running == 1 else "s"))
-
+        days_running = (datetime.datetime.now() - self.date_created).days
+        
+        if days_running < 1:
+            return "Running for less than a day"
         else:
-            return "Disabled manually"
+            return "Running for %s day%s" % (days_running, ("" if days_running == 1 else "s"))
 
 
-class Filter(db.Model):
-    bridge = db.ReferenceProperty(Bridge, required=True)
-    filter_type = db.StringProperty(required=True)
-    whitelist = db.BooleanProperty(default=True)
-    percentage = db.IntegerProperty(default=100)
-    context = object_property.UnvalidatedObjectProperty()
+class _GandalfFilter(db.Model):
+    bridge = db.ReferenceProperty(_GandalfBridge, required=True)
+    filter_type = db.StringProperty(required=True, indexed=False)
+    whitelist = db.BooleanProperty(default=True, indexed=False)
+    percentage = db.IntegerProperty(default=100, indexed=False)
+    context = object_property.UnvalidatedObjectProperty(indexed=False)
 
     @property
     def filter_class(self):
-        return find_subclass(self.filter_type)
+        return BridgeFilter.find_subclass(self.filter_type)
 
     @property
     def html(self):

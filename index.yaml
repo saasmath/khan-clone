@@ -324,3 +324,9 @@ indexes:
   properties:
   - name: time_recorded
     direction: desc
+
+- kind: _GandalfFilter
+  properties:
+  - name: bridge
+  - name: __key__
+    direction: desc

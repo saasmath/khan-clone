@@ -2,10 +2,10 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
-        <script src="/gandalf/static/js/mustache.js" type="text/javascript" charset="utf-8"></script>
-        <script src="/gandalf/static/js/jQueryMustache.js" type="text/javascript" charset="utf-8"></script>
-        <script src="/gandalf/static/js/dashboard.js" type="text/javascript" charset="utf-8"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+        <script src="/gandalf/static/js/mustache.js"></script>
+        <script src="/gandalf/static/js/jQueryMustache.js"></script>
+        <script src="/gandalf/static/js/dashboard.js"></script>
 
         <link rel="stylesheet" href="/gandalf/static/css/base.css" type="text/css" media="screen" />
         <link rel="stylesheet" id="current-theme" href="/gandalf/static/css/style.css" type="text/css" media="screen" />
@@ -56,11 +56,11 @@
                 margin-bottom: 40px;
             }
 
-            .bridge-disable-button {
+            .bridge-delete-container {
                 float: right;
             }
 
-            .filter-delete-button {
+            .filter-delete-container {
                 float: right;
             }
 
@@ -97,9 +97,8 @@
         <script id="tmpl-bridges" type="x-tmpl-mustache">
             <div class="bridge-container  block">
                 <form id="bridge-new-form">
-                    <input type="hidden" name="action" value="new">
                     <input type="text" name="bridge_name">
-                    <button type="submit" class="button" data-replace-with="Creating bridge...">New bridge</button>
+                    <button type="submit" class="button" id="bridge-new-button" data-replace-with="Creating bridge...">New bridge</button>
                 </form>
             </div>
 
@@ -112,12 +111,12 @@
 
             {{#bridges}}
 
-            <div class="bridge-container bridge-container-minimized block" data-bridge-name="{{name}}">
+            <div class="bridge-container bridge-container-minimized block" data-bridge-name="{{key_name}}">
                 <div class="bridge-status">
                     <strong>Status: </strong> {{status}}
                 </div>
                 <h2 class="bridge-title">
-                    {{name}}
+                    {{key_name}}
                 </h2>
                 <div class="filters-container"></div>
             </div>
@@ -126,16 +125,13 @@
         </script>
 
         <script id="tmpl-filters" type="x-tmpl-mustache">
-            {{^bridge_live}}
-            <button type="submit" class="button bridge-disable-button" data-bridge-name="{{bridge_name}}" value="disable" data-live="true">Enable bridge</button>
-            {{/bridge_live}}
-            {{#bridge_live}}
-            <button type="submit" class="button bridge-disable-button" data-bridge-name="{{bridge_name}}" value="disable" data-life="false">Disable bridge</button>
-            {{/bridge_live}}
+            <div class="bridge-delete-container">
+                <button type="submit" class="button bridge-delete-button" data-bridge-name="{{#bridge}}{{key_name}}{{/bridge}}" value="delete" data-replace-with="Deleting bridge...">Delete bridge</button>
+            </div>
 
             <div class="filter-new-container">
                 <form class="filter-new-form">
-                    <input type="hidden" name="bridge_name" value="{{bridge_name}}">
+                    <input type="hidden" name="bridge_name" value="{{#bridge}}{{key_name}}{{/bridge}}">
                     <input type="hidden" name="action" value="new">
                     <select name="filter_type">
                         {{#filter_types}}
@@ -147,12 +143,14 @@
             </div>
 
             {{^filters}}
-            <p>No filters, this bridge currently lets everyone through.</p>
+            <p>No filters, this bridge currently lets no one through.</p>
             {{/filters}}
 
+            {{#filters_is_not_empty}}
+            <strong>Users can cross this bridge if they pass any one of the following filters:</strong>
+            {{/filters_is_not_empty}}
+
             {{#filters}}
-
-
             <div class="filter-container">
                 <hr>
 
@@ -163,17 +161,21 @@
                     <input type="hidden" name="filter_key" value="{{key}}">
                     <input type="hidden" name="action" value="save">
 
-                    <p>{{{html}}}</p>
-
-                    <p>Percentage: <input type="text" name="percentage" value="{{percentage}}" size="4">%</p>
-
                     <p>
-                    Whitelist: <input type="radio" name="whitelist" value="true"{{#whitelist}} checked="checked"{{/whitelist}}>
-                    Blacklist: <input type="radio" name="whitelist" value="false"{{^whitelist}} checked="checked"{{/whitelist}}>
+                    <select name="whitelist">
+                        <option value="true"{{#whitelist}} selected="selected"{{/whitelist}}>Allow</option>
+                        <option value="false"{{^whitelist}} selected="selected"{{/whitelist}}>Don't Allow</option>
+                    </select>
+                    <input type="text" name="percentage" value="{{percentage}}" size="4">% of users
+                    {{{html}}}
                     </p>
 
-                    <button type="submit" class="button filter-delete-button" data-filter-key="{{key}}" data-replace-with="Deleting filter..." value="delete">Delete filter</button>
-                    <button type="submit" class="button filter-save-button" data-replace-with="Saving filter...">Save filter</button> 
+                    <div class="filter-delete-container">
+                        <button type="submit" class="button filter-delete-button" data-filter-key="{{key}}" data-bridge-name="{{#bridge}}{{key_name}}{{/bridge}}" data-replace-with="Deleting filter..." value="delete">Delete filter</button>
+                    </div>
+                    <div class="filter-save-container">
+                        <button type="submit" class="button filter-save-button" data-replace-with="Saving filter...">Save filter</button> 
+                    </div>
                 </form>
             </div>
 
@@ -185,10 +187,10 @@
     <body>
 
         <div id="main">
-            <div id="header"><h1><a href="/gandalf/dashboard">Gandalf Dashboard</a></h1></div>
+            <div id="header"><h1><a href="/gandalf">Gandalf Dashboard</a></h1></div>
         </div>
 
-        <div id="progress-bar"><img src="/gae_bingo/static/images/ajax-loader.gif"/></div>
+        <div id="progress-bar"><img src="/gandalf/static/images/ajax-loader.gif"/></div>
 
     </body>
 </html>

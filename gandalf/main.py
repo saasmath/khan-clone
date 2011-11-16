@@ -5,7 +5,7 @@ from gandalf import dashboard
 from gandalf import api
 
 application = webapp.WSGIApplication([
-    ("/gandalf/dashboard", dashboard.Dashboard),
+    ("/gandalf", dashboard.Dashboard),
     ("/gandalf/api/v1/bridges", api.Bridges),
     ("/gandalf/api/v1/bridges/filters", api.Filters),
     ("/gandalf/api/v1/bridges/update", api.UpdateBridge),

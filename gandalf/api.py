@@ -1,10 +1,11 @@
 from google.appengine.ext.webapp import RequestHandler
 from google.appengine.ext import db
+from google.appengine.api.datastore_errors import BadValueError
 
 from gandalf.jsonify import jsonify
 from gandalf.config import can_control_gandalf
-from gandalf.models import Bridge, Filter
-from gandalf.filters import BridgeFilter, find_subclass
+from gandalf.models import _GandalfBridge, _GandalfFilter
+from gandalf.filters import BridgeFilter
 
 
 class Bridges(RequestHandler): 
@@ -13,8 +14,7 @@ class Bridges(RequestHandler):
         if not can_control_gandalf():
             return
 
-        bridges = Bridge.all().fetch(500)
-
+        bridges = _GandalfBridge.all().fetch(900)
 
         context = {
             "bridges": bridges,
@@ -31,27 +31,27 @@ class Filters(RequestHandler):
             return
 
         bridge_name = self.request.get('bridge_name')
-        bridge = Bridge.all().filter('name =', bridge_name)[0]
+
+        if not bridge_name:
+            raise Exception("Must include 'bridge_name' parameter")
 
         try:
-            filters = bridge.filter_set.order('-__key__').fetch(500)
-        except IndexError:
-            filters = None
+            bridge = _GandalfBridge.get_by_key_name(bridge_name)
+        except BadValueError:
+            raise Exception("Bridge '%s' does not exist" % bridge_name)
 
-        filter_types = [{
-            'proper_name': subclass.proper_name(),
-            'name': subclass.name,
-        } for subclass in BridgeFilter.__subclasses__()]
+        filters = bridge._gandalffilter_set.order('-__key__').fetch(500)
 
         context = { 
             'filters': filters,
-            'filter_types': filter_types,
-            'bridge_name': bridge.name,
-            'bridge_live': bridge.live,
+            'filters_is_not_empty': bool(filters),
+            'filter_types': BridgeFilter.get_filter_types(),
+            'bridge': bridge,
         }
 
         self.response.headers["Content-Type"] = "application/json"
         self.response.out.write(jsonify(context))
+
 
 class UpdateBridge(RequestHandler):
     def post(self):
@@ -62,36 +62,13 @@ class UpdateBridge(RequestHandler):
         action = self.request.get('action')
         bridge_name = self.request.get('bridge_name')
 
-        if action == 'new':
+        if not bridge_name:
+            raise Exception("Must include 'bridge_name' parameter")
 
-            # Check that there are no existing bridges with that bridge_name
-            try:
-                Bridge.all().filter('name =', bridge_name)[0]
+        bridge = _GandalfBridge.get_or_insert(bridge_name)
 
-                context = { 
-                    'error': "There is already a bridge with that name",
-                }
-
-                self.response.headers["Content-Type"] = "application/json"
-                self.response.out.write(jsonify(context))
-
-                return 
-
-            except IndexError:
-                pass
-                
-            bridge = Bridge(name=bridge_name)
-            bridge.put()
-
-        elif action == 'disable':
-
-            live = self.request.get('live')
-
-            bridge = Bridge.all().filter('name =', bridge_name)[0]
-
-            bridge.live = live == 'true'
-
-            bridge.put()
+        if action == 'delete':
+            bridge.delete()
 
         context = { 
             "success": True,
@@ -114,19 +91,31 @@ class UpdateFilter(RequestHandler):
             filter_type = self.request.get('filter_type')
             
             bridge_name = self.request.get('bridge_name')
-            bridge = Bridge.all().filter('name =', bridge_name)[0]
 
-            context = find_subclass(filter_type).initial_context()
+            if not filter_type:
+                raise Exception("Must include 'filter_type' parameter")
 
-            filter = Filter(bridge=bridge, filter_type=filter_type, context=context)
+            if not bridge_name:
+                raise Exception("Must include 'bridge_name' parameter")
 
+            try:
+                bridge = _GandalfBridge.get_by_key_name(bridge_name)
+            except BadValueError:
+                raise Exception("Bridge '%s' does not exist" % bridge_name)
 
+            context = BridgeFilter.find_subclass(filter_type).initial_context()
+
+            filter = _GandalfFilter(bridge=bridge, filter_type=filter_type, context=context)
             filter.put()
 
         else:
 
             filter_key = self.request.get('filter_key')
-            filter = Filter.get(filter_key)
+            
+            if not filter_key:
+                raise Exception("Must include 'filter_key' parameter")
+
+            filter = _GandalfFilter.get(filter_key)
 
             if action == "delete":
 
@@ -138,16 +127,14 @@ class UpdateFilter(RequestHandler):
 
                 try:
                     percentage = int(self.request.get('percentage'))
+
+                    if 0 <= percentage <= 100:
+                        filter.percentage = percentage
+
                 except ValueError:
-                    percentage = 100
+                    pass
 
-                if percentage < 0 or percentage > 100:
-                    return
-
-                filter = Filter.get(filter_key)
-               
                 filter.whitelist = whitelist == "true"
-                filter.percentage = percentage
 
                 for key in filter.context:
                     value = self.request.get(key)

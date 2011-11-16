@@ -3,8 +3,6 @@ var GandalfDashboard = {
     loadBridges: function() {
         $.ajax({
             url: "/gandalf/api/v1/bridges",
-            dataType: "json",
-            type: "GET",
             success: function(data) {
 
                 var filterUpdateUrl = "/gandalf/api/v1/bridges/filters/update";
@@ -37,7 +35,8 @@ var GandalfDashboard = {
 
                     e.preventDefault();
 
-                    bridgeName = $(this).find("[name=bridge_name]").val();
+                    var submitButton = $(this).find("#bridge-new-button"); 
+                    var bridgeName = $(this).find("[name=bridge_name]").val();
 
                     if (!bridgeName) {
                         alert("Enter a name for your new bridge.");
@@ -56,34 +55,36 @@ var GandalfDashboard = {
                         window.location.reload();
                     });
 
+                    submitButton.replaceWith(submitButton.data("replace-with"));
                 });
 
+                // Delete bridge
+                $(document).on("click", ".bridge-delete-button", function() {
 
-                // Disable bridge
-                $(document).on("click", ".bridge-disable-button", function() {
-                    var live = $(this).data("live");
+                    if (!confirm("Are you sure you want to delete this bridge? This cannot be undone.")) {
+                        return;
+                    }
 
                     $.post(bridgeUpdateUrl, {
-                        live: live,
                         action: $(this).val(),
                         bridge_name: $(this).data("bridge-name")
                     }, function(data) {
                         if (!data.success) {
-                            alert("Something went wrong. The bridge was not " + ((live === "true") ? "enabled" : "disabled") + ".");
+                            alert("Something went wrong. The bridge was not deleted.");
                             return;
                         }
                         window.location.reload();
                     });
+
+                    $(this).replaceWith($(this).data("replace-with"));
                 });
 
                 // Create a new filter
                 $(document).on("submit", ".filter-new-form", function(e) {
 
                     e.preventDefault();
-
-                    var submitButton = $(this).find(".filter-new-button");
-                    var buttonHTML = submitButton.html();
-
+                    
+                    var submitButton = $(this).find(".filter-new-button"); 
                     var bridgeName = $(this).find("[name=bridge_name]").val();
 
                     $.post(filterUpdateUrl, $(this).serialize(), function(data) {
@@ -97,11 +98,9 @@ var GandalfDashboard = {
                             .animate({height: 250}, 250);
 
                         GandalfDashboard.loadFilters(bridgeName);
-
-                        submitButton.html(buttonHTML);
                     });
 
-                    submitButton.html(submitButton.data("replace-with"));
+                    submitButton.replaceWith(submitButton.data("replace-with"));
                 });
 
 
@@ -111,18 +110,16 @@ var GandalfDashboard = {
                     e.preventDefault();
 
                     var submitButton = $(this).find(".filter-save-button");
-                    var buttonHTML = submitButton.html();
 
                     $.post(filterUpdateUrl, $(this).serialize(), function(data) {
                         if (!data.success) { 
                             alert("Something went wrong. Your changes were not saved.");
                         }
 
-                        submitButton.html(buttonHTML);
-                        alert("Filter saved.");
+                        $(".filter-save-container").html(submitButton);
                     });
 
-                    submitButton.html(submitButton.data("replace-with"));
+                    submitButton.replaceWith(submitButton.data("replace-with"));
                 });
 
 
@@ -136,6 +133,7 @@ var GandalfDashboard = {
                     }
 
                     var filterContainer = $(this).parents(".filter-container");
+                    var bridgeName = $(this).data("bridge-name");
 
                     $.post(filterUpdateUrl, {
                         filter_key: $(this).data("filter-key"),
@@ -151,11 +149,12 @@ var GandalfDashboard = {
                         filterContainer
                             .empty()
                             .height(height)
-                            .animate({height: 0}, 500);
+                            .animate({height: 0}, 300);
+                        
+                        setTimeout("GandalfDashboard.loadFilters(\"" + bridgeName + "\")", 300);
                     });
 
                     $(this).replaceWith($(this).data("replace-with"));
-
                 });
             }
         });
@@ -177,15 +176,12 @@ var GandalfDashboard = {
                 var filtersContainer = $( "div.bridge-container[data-bridge-name=\"" + bridgeName + "\"] .filters-container" );
 
                 filtersContainer
-                    .css("min-height", filtersContainer.height())
                     .stop()
                     .height("")
                     .html( $( "#tmpl-filters" ).mustache( data ) );
-
             }
         });
     },
-
 }
 
 $(GandalfDashboard.loadBridges);

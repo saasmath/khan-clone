@@ -30,6 +30,7 @@ def dumps(obj):
     if isinstance(obj, db.Model):
         properties['kind'] = obj.kind()
         properties['key'] = obj.key()
+        properties['key_name'] = obj.key().name()
 
     serialize_list = dir(obj)
 

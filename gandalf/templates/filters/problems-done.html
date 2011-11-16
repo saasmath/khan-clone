@@ -1,4 +1,4 @@
-Problems done: 
+who have done 
 <select name="comp" class="find-selected">
     <option value=">=">&ge;</option>
     <option value=">">&gt;</option>
@@ -7,10 +7,10 @@ Problems done:
     <option value="=">=</option>
 </select>
 
-<input type="text" name="problems_done" value="{{problems_done}}">
+<input type="text" name="problems_done" value="{{problems_done}}"> problems
 
-<script type="text/javascript">
-    var hey = $(".find-selected")
+<script>
+    $(".find-selected")
         .removeClass("find-selected")
         .find("[value='{{{comp}}}']")
             .attr("selected", "selected");
