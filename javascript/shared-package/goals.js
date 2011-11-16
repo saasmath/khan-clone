@@ -231,7 +231,26 @@ var GoalBookView = Backbone.View.extend({
     needsRerender: true,
 
     initialize: function() {
-        $(this.el).delegate('.hide-goals', 'click', $.proxy(this.hide, this));
+        $(this.el)
+            .delegate('.hide-goals', 'click', $.proxy(this.hide, this))
+
+            // listen to archive button on goals
+            .delegate('.goal.recently-completed', 'mouseenter mouseleave', function( e ) {
+                var el = $(e.currentTarget);
+                if ( e.type == 'mouseenter' ) {
+                    el.find(".goal-description .summary-light").hide();
+                    el.find(".goal-description .archive").show();
+                } else {
+                    el.find(".goal-description .archive").hide();
+                    el.find(".goal-description .summary-light").show();
+                }
+            })
+
+            .delegate('.archive', 'click', function( e ) {
+                var el = $(e.target).closest('.goal');
+                animateGoalToHistory(el);
+                // todo: remove model
+            });
 
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
