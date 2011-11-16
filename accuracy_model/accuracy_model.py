@@ -1,8 +1,6 @@
 import itertools
-import logging
 import math
 import operator
-import types
 
 from parameters import log_reg_past_20_tail1m as params
 

@@ -361,7 +361,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         dt_now = datetime.datetime.now()
         exercise = user_exercise.exercise_model
 
-        prev_last_done = user_exercise.last_done
         user_exercise.last_done = dt_now
         user_exercise.seconds_per_fast_problem = exercise.seconds_per_fast_problem
         user_exercise.summative = exercise.summative
@@ -408,9 +407,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
-
-        first_problem_after_proficiency = prev_last_done and user_exercise.proficient_date and (
-            abs(prev_last_done - user_exercise.proficient_date) <= datetime.timedelta(seconds=1))
 
         if completed:
 
