@@ -1620,10 +1620,6 @@ class LogSummary(db.Model):
             db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
 
     @staticmethod
-    def get_description():
-        return self.summary.description(self.start, self.end)
-
-    @staticmethod
     def get_by_name(name):
         query = LogSummary.all()
         query.filter('name =', name)
