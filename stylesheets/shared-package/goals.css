@@ -9,7 +9,7 @@ ul.inline-list, ul.inline-list li {
 }
 .create-goal-page .goal {
     border: 1px solid #ccc;
-    
+
     -moz-border-radius: 30px;
     -webkit-border-radius: 30px;
     border-radius: 30px;
@@ -28,7 +28,7 @@ ul.inline-list, ul.inline-list li {
     background-image: none;
     box-shadow: none;
     line-height: 23px;
-    
+
     -moz-border-radius: 30px;
     -webkit-border-radius: 30px;
     border-radius: 30px;
@@ -456,7 +456,6 @@ input#goal-title:focus {
 
 .recently-completed {
     position: relative;
-    overflow: hidden;
 }
 
 #btn-goal-history {

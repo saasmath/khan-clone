@@ -304,9 +304,10 @@ var GoalBookView = Backbone.View.extend({
     },
 
     animateThenHide: function(els) {
-        this.animateGoalToHistory(els);
-        // wait for the animation to complete and then close the goalbook.
-        setTimeout($.proxy(function() { $(this.el).slideUp("fast"); }, this), 3500);
+        // wait for the animation to complete and then close the goalbook
+        this.animateGoalToHistory(els).then($.proxy(function() {
+           $(this.el).slideUp("fast");
+       }, this));
     },
 
     render: function() {
@@ -326,12 +327,6 @@ var GoalBookView = Backbone.View.extend({
 
     animateGoalToHistory: function(els) {
         var btnGoalHistory = this.$('#btn-goal-history');
-
-        var historyGlow = function () {
-            $('#btn-goal-history')
-                .animate({backgroundColor: 'orange'})
-                .animate({backgroundColor: '#ddd'});
-        };
 
         var promises = $(els).map(function(i, el) {
             var dfd = $.Deferred();
@@ -361,7 +356,15 @@ var GoalBookView = Backbone.View.extend({
         }).get();
 
         // once all the animations are done, make the history button glow
-        $.when.apply(null, promises).then(historyGlow);
+        var button = $.Deferred();
+        $.when.apply(null, promises).then(function() {
+            btnGoalHistory
+                .animate({backgroundColor: 'orange'})
+                .animate({backgroundColor: '#ddd'}, button.resolve);
+        });
+
+        // return a promise that the history button is done animating
+        return button.promise();
     }
 });
 
