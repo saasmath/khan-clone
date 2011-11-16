@@ -389,16 +389,6 @@ var Profile = {
             title: 'Abandoned goals'
         });
 
-        $("#graph-content .goal").hover(
-        function () {
-            $(this).find(".goal-description .summary-light").hide();
-            $(this).find(".goal-controls").show();
-        },
-        function () {
-            $(this).find(".goal-controls").hide();
-            $(this).find(".goal-description .summary-light").show();
-        });
-
         Profile.userGoalsHref = href;
         Profile.showGoalType('current');
     },
@@ -856,7 +846,23 @@ var GoalProfileView = Backbone.View.extend({
         // delay rendering until the view is actually visible
         this.needsRerender = false;
         var json = _.pluck(this.model.models, 'attributes');
-        jel.html(this.template({goals: json, title: this.options.title, type: this.options.type}));
+        jel.html(this.template({
+            goals: json,
+            title: this.options.title,
+            isCurrent: (this.options.type == 'current'),
+            isCompleted: (this.options.type == 'completed'),
+            isAbandoned: (this.options.type == 'abandoned')
+        }));
+
+        jel.find(".goal").hover(
+        function () {
+            $(this).find(".goal-description .summary-light").hide();
+            $(this).find(".goal-controls").show();
+        },
+        function () {
+            $(this).find(".goal-controls").hide();
+            $(this).find(".goal-description .summary-light").show();
+        });
         return jel;
     }
 });

@@ -4,9 +4,12 @@
   {{#each goals}}
     <div class="goal pulls">
       <p class="goal-description">
-        <strong>{{ title }}</strong> <span class="summary-light">(started {{ created_ago }})</span>
+        <strong>{{ title }}</strong>
+          {{#if ../isCurrent }}<span class="summary-light">(started {{ created_ago }})</span>{{/if}}
+          {{#if ../isCompleted }}<span class="summary-light">(completed {{ completed_ago }} in {{ completed_time }})</span>{{/if}}
+          {{#if ../isAbandoned }}<span class="summary-light">(abandoned {{ completed_ago }})</span>{{/if}}
         <span class="goal-controls">
-          <a class="simple-button action-gradient" href="javascript: Profile.userGoalsAbandonGoal({{id}})" id="goal-abandon-{{id}}">Abandon</a>
+          {{#if ../isCurrent }}<a class="simple-button action-gradient" href="javascript: Profile.userGoalsAbandonGoal({{id}})" id="goal-abandon-{{id}}">Abandon</a>{{/if}}
         </span>
       </p>
       <ul class="inline-list objective-list">
