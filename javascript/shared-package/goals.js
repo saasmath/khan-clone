@@ -256,7 +256,7 @@ var GoalBookView = Backbone.View.extend({
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
-        this.model.bind('add', this.render, this);
+        this.model.bind('add', this.added, this);
     },
 
     show: function() {
@@ -301,6 +301,13 @@ var GoalBookView = Backbone.View.extend({
         } else {
             return $(this.el).slideUp("fast");
         }
+    },
+
+    added: function(goal) {
+        this.render();
+
+        // add a highlight to the new goal
+        $(".goal[data-id=" + goal.get('id') + "]").effect('highlight', {}, 2500);
     },
 
     animateThenHide: function(els) {
