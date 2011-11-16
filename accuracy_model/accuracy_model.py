@@ -1,3 +1,4 @@
+import consts
 import itertools
 import math
 import operator
@@ -133,6 +134,21 @@ class AccuracyModel(object):
         X, weight_vector = zip(*weighted_features)  # unzip the list of pairs
 
         return AccuracyModel.logistic_regression_predict(params.INTERCEPT, weight_vector, X)
+    
+    def is_struggling(self, minimum_accuracy):
+        """ Whether or not this model detects that the student is struggling
+        based on the history of answers thus far.
+        """
+
+        attempts = self.total_done
+        if attempts < consts.MIN_PROBLEMS_IMPOSED:
+            return False
+        accuracy_prediction = self.predict()
+        if accuracy_prediction >= minimum_accuracy:
+            return False
+
+        value = (pow(attempts, 1.5) * (minimum_accuracy - accuracy_prediction))
+        return value > 5.0
 
     # See http://en.wikipedia.org/wiki/Logistic_regression
     @staticmethod

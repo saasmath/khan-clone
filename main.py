@@ -62,6 +62,7 @@ from notifications import UserNotifier
 from nicknames import get_nickname_for
 import redirects
 import robots
+from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -231,6 +232,7 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
+        bingo('struggling_videos_landing')
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class LogVideoProgress(request_handler.RequestHandler):

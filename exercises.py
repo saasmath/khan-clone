@@ -7,7 +7,6 @@ import urllib
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
-import consts
 import datetime
 import models
 import request_handler
@@ -62,7 +61,8 @@ class ViewExercise(request_handler.RequestHandler):
         ('hints_wrong_problems', ConversionTypes.Counting),
         ('hints_keep_going_after_wrong', ConversionTypes.Counting),
     ]
-    _hints_conversion_names, _hints_conversion_types = [list(x) for x in zip(*_hints_conversion_tests)]
+    _hints_conversion_names, _hints_conversion_types = [
+        list(x) for x in zip(*_hints_conversion_tests)]
 
     @ensure_xsrf_cookie
     def get(self, exid=None):
@@ -407,6 +407,9 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
 
+        if user_exercise.is_struggling() and not problem_log.correct:
+            bingo('struggling_problems_done_post_struggling')
+
         if completed:
 
             user_exercise.total_done += 1
@@ -429,7 +432,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 user_exercise.update_proficiency_model(correct=True)
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
-                    bingo("hints_gained_proficiency_all")
+                    bingo(['hints_gained_proficiency_all',
+                           'struggling_gained_proficiency_all'])
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
@@ -444,7 +448,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Update phantom user notifications
             util_notify.update(user_data, user_exercise)
 
-            bingo('hints_problems_done')
+            bingo(['hints_problems_done', 'struggling_problems_done'])
 
         else:
 
@@ -455,7 +459,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
-                bingo('hints_wrong_problems')
+                bingo(['hints_wrong_problems', 'struggling_wrong_problems'])
 
         # If this is the first attempt, update review schedule appropriately
         if attempt_number == 1:

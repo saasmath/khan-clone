@@ -321,6 +321,29 @@ class UserExercise(db.Model):
         proficiency_threshold = consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize
 
+    # "Struggling" model experiment parameters.
+    _struggling_ab_test_alternatives = {
+        'old': 8, # The original '>= 20 problems attempted' heuristic
+        'accuracy_0.75': 1, # Accuracy < 0.75 after a while is a bad sign
+        'accuracy_0.7': 1,  # Accuracy < 0.7 after a while is a bad sign
+    }
+    _struggling_conversion_tests = [
+        ('struggling_problems_done', ConversionTypes.Counting),
+        ('struggling_problems_done_post_struggling', ConversionTypes.Counting),
+        ('struggling_wrong_problems', ConversionTypes.Counting),
+        ('struggling_gained_proficiency_all', ConversionTypes.Counting),
+
+        # the user closed the "Need help?" dialog that pops up
+        ('struggling_message_dismissed', ConversionTypes.Counting),
+
+        # the user clicked on the video in the "Need help?" dialog that pops up
+        ('struggling_videos_clicked_post_struggling', ConversionTypes.Counting),
+        ('struggling_videos_landing', ConversionTypes.Counting),
+        ('struggling_videos_finished', ConversionTypes.Counting),
+    ]
+    _struggling_conversion_names, _struggling_conversion_types = [
+        list(x) for x in zip(*_struggling_conversion_tests)]
+
     @property
     def exercise_states(self):
         user_exercise_graph = self.get_user_exercise_graph()
@@ -434,6 +457,18 @@ class UserExercise(db.Model):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
     def is_struggling(self):
+        bucket = ab_test('Struggling model',
+                self._struggling_ab_test_alternatives,
+                self._struggling_conversion_names,
+                self._struggling_conversion_types)
+        if bucket == 'old':
+            return self._is_struggling_old()
+        elif bucket == 'accuracy_0.75':
+            return self.accuracy_model().is_struggling(minimum_accuracy=0.75)
+        else:
+            return self.accuracy_model().is_struggling(minimum_accuracy=0.70)
+
+    def _is_struggling_old(self):
         # TODO: update to incorporate new accuracy model and A/B test
         return ((not self.has_been_proficient()) and
                 (self.streak == 0) and
@@ -1392,6 +1427,8 @@ class VideoLog(db.Model):
 
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
+
+            bingo('struggling_videos_finished')
 
         if video_points_received > 0:
             video_log.points_earned = video_points_received
