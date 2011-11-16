@@ -399,7 +399,7 @@ def user_videos_specific(youtube_id):
 
 # Can specify video using "video_key" parameter instead of youtube_id.
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET","POST"])
-@oauth_optional()
+@oauth_optional(require_anointed_consumer=True)
 @api_create_phantom
 @jsonp
 @jsonify
