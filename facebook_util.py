@@ -49,7 +49,7 @@ def get_facebook_user_id_from_oauth_map(oauth_map):
 
 def get_user_id_from_profile(profile):
 
-    if profile is not None:
+    if profile is not None and "name" in profile and "id" in profile:
         # Workaround http://code.google.com/p/googleappengine/issues/detail?id=573
         name = unicodedata.normalize('NFKD', profile["name"]).encode('utf-8', 'ignore')
 

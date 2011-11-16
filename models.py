@@ -1036,11 +1036,10 @@ class Video(Searchable, db.Model):
     # this date may be much later than the actual YouTube upload date.
     date_added = db.DateTimeProperty(auto_now_add=True)
 
-    # Last download version in which video download was prepped.
-    download_version = db.IntegerProperty(default = 0)
-    CURRENT_DOWNLOAD_VERSION = 2
+    # List of currently available downloadable formats for this video
+    downloadable_formats = object_property.TsvProperty(indexed=False)
 
-    _serialize_blacklist = ["download_version", "CURRENT_DOWNLOAD_VERSION"]
+    _serialize_blacklist = ["downloadable_formats"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
     INDEX_TITLE_FROM_PROP = 'title'
@@ -1052,13 +1051,11 @@ class Video(Searchable, db.Model):
 
     @property
     def download_urls(self):
-        if self.download_version == Video.CURRENT_DOWNLOAD_VERSION:
-            download_url_base = "http://www.archive.org/download/KA-converted-%s" % self.youtube_id
 
-            return {
-                    "mp4": "%s/%s.mp4" % (download_url_base, self.youtube_id),
-                    "png": "%s/%s.png" % (download_url_base, self.youtube_id),
-                    }
+        if self.downloadable_formats:
+
+            download_url_template = "http://www.archive.org/download/KA-converted-%s/%s.%s"
+            return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
 
         return None
 

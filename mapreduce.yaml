@@ -40,3 +40,4 @@ mapreduce:
       default: backfill-mapreduce-queue
     - name: processing_rate
       default: 350
+

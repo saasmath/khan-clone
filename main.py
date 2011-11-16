@@ -35,7 +35,6 @@ from app import App
 import util
 import user_util
 import exercise_statistics
-import backfill
 import activity_summary
 import exercises
 import dashboard
@@ -778,8 +777,10 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
     ('/library_content', library.GenerateLibraryContent),
-    ('/exercise/(.+)', exercises.ViewExercise),
-    ('/exercises', exercises.ViewExercise),
+
+    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
+    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
+
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
     ('/editexercise', exercises.EditExercise),
@@ -807,8 +808,6 @@ application = webapp2.WSGIApplication([
     ('/admin/badgestatistics', util_badges.BadgeStatistics),
     ('/admin/startnewexercisestatisticsmapreduce', exercise_statistics.StartNewExerciseStatisticsMapReduce),
     ('/admin/startnewvotemapreduce', voting.StartNewVoteMapReduce),
-    ('/admin/backfill', backfill.StartNewBackfillMapReduce),
-    ('/admin/backfill_entity', backfill.BackfillEntity),
     ('/admin/feedbackflagupdate', qa.StartNewFlagUpdateMapReduce),
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),

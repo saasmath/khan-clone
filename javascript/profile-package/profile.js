@@ -44,7 +44,7 @@ var Profile = {
 				text: ''
 			},
 			subtitle: {
-				text: '',
+				text: ''
 			}
 		});
 
@@ -291,7 +291,7 @@ var Profile = {
 				Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
 			},
 			error: function() {
-				Profile.finishLoadGraphError
+				Profile.finishLoadGraphError();
 			}
         });
         $("#graph-content").html("");
@@ -386,7 +386,7 @@ var Profile = {
 		html.push("<div style=\"clear:both\"></div></div>");
         $("#graph-content").html( html.join("") );
 
-		var infoHover = $("#info-hover-container")
+		var infoHover = $("#info-hover-container");
 		var lastHoverTime;
 		var mouseX;
 		var mouseY;
