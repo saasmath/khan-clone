@@ -399,31 +399,37 @@ def user_videos_specific(youtube_id):
 
 # Can specify video using "video_key" parameter instead of youtube_id.
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET","POST"])
-@oauth_required(require_anointed_consumer=True)
+@oauth_optional()
+@api_create_phantom
 @jsonp
 @jsonify
 def log_user_video(youtube_id):
-    user_data = models.UserData.current()
     video_log = None
-    video_key_str = request.request_string("video_key")
+    user_data = models.UserData.current()
 
-    if user_data and (youtube_id or video_key_str):
-        if video_key_str:
-            key = db.Key(video_key_str)
-            video = db.get(key)
-        else:
-            video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if user_data:
+        video_key_str = request.request_string("video_key")
 
-        seconds_watched = int(request.request_float("seconds_watched", default = 0))
-        last_second_watched = int(request.request_float("last_second_watched", default = 0))
+        if user_data and (youtube_id or video_key_str):
+            if video_key_str:
+                key = db.Key(video_key_str)
+                video = db.get(key)
+            else:
+                video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
-        if video:
-            user_video, video_log, video_points_total = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
+            seconds_watched = int(request.request_float("seconds_watched", default = 0))
+            last_second_watched = int(request.request_float("last_second_watched", default = 0))
 
-            if video_log:
-                add_action_results(video_log, {"user_video": user_video})
+            if video:
+                user_video, video_log, video_points_total = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
 
-    return video_log
+                if video_log:
+                    add_action_results(video_log, {"user_video": user_video})
+
+        return video_log
+
+    logging.warning("Video watched with no user_data present")
+    return unauthorized_response()
 
 @route("/api/v1/user/exercises", methods=["GET"])
 @oauth_optional()
