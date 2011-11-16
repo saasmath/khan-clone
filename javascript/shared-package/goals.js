@@ -452,6 +452,8 @@ var createSimpleGoalDialog = {
         GoalBook.add(goal);
         console.log("Created goal");
         myGoalBookView.show();
+        if (window.Profile)
+            window.Profile.showGoalType('current');
     },
 };
 
