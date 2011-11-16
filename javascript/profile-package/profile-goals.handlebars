@@ -1,8 +1,7 @@
-<div id="current-goal-list" style="display: none">
-{{#if current_goals}}
-  <div class="student-goal-title">Current goals:</div>
+{{#if goals}}
+  <div class="student-goal-title">{{ title }}</div>
   <div class="student-goals">
-  {{#each current_goals}}
+  {{#each goals}}
     <div class="goal pulls">
       <p class="goal-description">
         <strong>{{ title }}</strong> <span class="summary-light">(started {{ created_ago }})</span>
@@ -12,72 +11,20 @@
       </p>
       <ul class="inline-list objective-list">
       {{#each objectives}}
-        <li style="width: {{../objectiveWidth}}%">
-          <a class="objective simple-button action-gradient {{ statusCSS }} {{ typeCSS }}" href="{{ url }}" data-progress="{{ progress }}">
-            {{ description }} ({{ progressPercentage }}%)
-          </a>
-        </li>
+        {{>goal-objectives}}
       {{/each}}
       </ul>
     </div>
   {{/each}}
   </div>
 {{else}}
-  <div class="student-goals">
-    You have no current goals.
-    <a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.showDialog()">Create a new goal</a>
-  </div>
-{{/if}}
+<div class="new-goal">
+    <section class="predefined-goals">
+        <a href="#">Any 5 Exercises</a>
+        <a href="#">Any 5 Videos</a>
+    </section>
+    <section class="custom-goals">
+        <a href="#">Create A Custom Goal</a>
+    </section>
 </div>
-
-<div id="completed-goal-list" style="display: none">
-{{#if completed_goals}}
-  <div class="student-goal-title">Completed goals:</div>
-  <div class="student-goals">
-  {{#each completed_goals}}
-    <div class="goal pulls">
-     <p class="goal-description"><strong>{{ title }}</strong> <span class="summary-light">(completed {{ completed_ago }} in {{ completed_time }})</span></p>
-     <div class="goal pulls">
-       <ul class="inline-list objective-list">
-       {{#each objectives}}
-         <li style="width: {{../objectiveWidth}}%">
-           <a class="objective simple-button action-gradient {{ statusCSS }} {{ typeCSS }}" href="{{ url }}">{{ description }}</a>
-         </li>
-       {{/each}}
-       </ul>
-     </div>
-   </div>
- {{/each}}
- </div>
-{{else}}
-  <div class="student-goals">
-    You have not completed any goals yet.
-  </div>
 {{/if}}
-</div>
-
-<div id="abandoned-goal-list" style="display: none">
-{{#if abandoned_goals}}
-  <div class="student-goal-title">Abandoned goals:</div>
-  <div class="student-goals">
-  {{#each abandoned_goals}}
-    <div class="goal pulls">
-     <p class="goal-description"><strong>{{ title }}</strong> <span class="summary-light">(abandoned {{ completed_ago }})</span></p>
-     <div class="goal pulls">
-       <ul class="inline-list objective-list">
-       {{#each objectives}}
-         <li style="width: {{../objectiveWidth}}%">
-           <a class="objective simple-button action-gradient {{ statusCSS }} {{ typeCSS }}" href="{{ url }}">{{ description }}</a>
-         </li>
-       {{/each}}
-       </ul>
-     </div>
-   </div>
- {{/each}}
- </div>
-{{else}}
-  <div class="student-goals">
-    You have not abandoned any goals.
-  </div>
-{{/if}}
-</div>

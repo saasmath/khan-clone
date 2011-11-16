@@ -20,9 +20,11 @@ var Goal = Backbone.Model.extend({
 
     calcDependents: function() {
         var progress = this.calcTotalProgress(this.get('objectives'));
+        var objectiveWidth = 100/this.get('objectives').length;
         _.each(this.get('objectives'), function (obj) {
             obj.complete = obj.progress >= 1;
             obj.iconFillHeight = calcIconFillHeight(obj);
+            obj.objectiveWidth = objectiveWidth;
         });
         this.set({
             progress: progress,
@@ -31,7 +33,6 @@ var Goal = Backbone.Model.extend({
             objectiveProgress: _.filter(this.get('objectives'), function(obj) {
                 return obj.progress >= 1;
             }).length,
-            objectiveWidth: 100/this.get('objectives').length
         }, {silent: true});
     },
 
@@ -497,6 +498,8 @@ var createSimpleGoalDialog = {
         GoalBook.add(goal);
         console.log("Created goal");
         myGoalBookView.show();
+        if (window.Profile)
+            window.Profile.showGoalType('current');
     },
 };
 
@@ -518,3 +521,5 @@ function goalCreateViewModel(goalModel) {
 
     return goalViewModel;
 }
+
+Handlebars.registerPartial('goal-objectives', Templates.get( "shared.goal-objectives" )); // TomY TODO do this automatically?

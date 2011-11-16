@@ -26,6 +26,7 @@ var GoalCreator = {
                 $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
             } else {
                 $(this).attr('href', 'javascript:');
+                $(this).addClass('goalVideoInvalid');
             }
         });
 
@@ -42,6 +43,16 @@ var GoalCreator = {
             });
 
         GoalCreator.updateViewAndDescription();
+    },
+    getCurrentVideoObjectives: function() {
+        var list = {};
+        $.each(GoalBook.models, function(idx, model) {
+            $.each(model.get('objectives'), function(idx2, objective) {
+                if (objective.type == 'GoalObjectiveWatchVideo')
+                    list[objective.internal_id] = true;
+            });
+        });
+        return list;
     },
     toggleObjectiveInternal: function(type, css, id, name) {
         var idx = 1;
@@ -188,6 +199,8 @@ var GoalCreator = {
     onExerciseClicked: function(exercise, evt) {
        if (exercise.get('status') == 'Proficient')
            return; // Cannot select exercises the user is proficient in
+       if (exercise.get('goal_req'))
+           return; // Cannot select exercises that are objectives in current goals
 
         GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', 'exercise', exercise.get('name'), exercise.get('display_name'));
 
@@ -228,6 +241,9 @@ var GoalCreator = {
     },
 
     onVideoClicked: function(id, title) {
+        if (id in GoalCreator.getCurrentVideoObjectives())
+            return;  // Cannot select videos that are objectives in current goals
+
         GoalCreator.toggleObjectiveInternal('GoalObjectiveWatchVideo', 'video', id, title);
 
         GoalCreator.updateVideoCount();
@@ -240,6 +256,10 @@ var GoalCreator = {
         $('#show-ex-btn').removeClass("blue");
 
         this.resize();
+
+        for (readable_id in GoalCreator.getCurrentVideoObjectives()) {
+            $('.vl[data-id="' + readable_id + '"]').addClass('goalVideoInvalid');
+        }
     },
     updateVideoCount: function() {
         var count = 0;
@@ -351,6 +371,7 @@ function createGoalInitialize() {
         'admin': false,
         'hideReview': true,
         'hideDrawer': true,
+        'newGoal': true,
         'container': 'goal-choose-exercises'
     });
     GoalCreator.init(knowledgeMap);
@@ -415,7 +436,7 @@ function createGoalInitialize() {
         <p class="goal-description" class="pulled"></p>
         <ul class="inline-list objective-list">
         {{each objectives}}
-            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.css}" href="${$value.url}" data-progress="${$value.progress}">${$value.description}</a></li>
+            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.css}" href="${$value.url}" data-progress="${$value.progress}"><span class="objective-description">${$value.description}</span></a></li>
         {{/each}}
         </ul>
         <div style="clear: both;"></div>

@@ -349,26 +349,45 @@ var Profile = {
     },
 
     renderUserGoals: function(data, href) {
-        var goalsModel = {
-            'current_goals': [],
-            'completed_goals': [],
-            'abandoned_goals': []
-        };
-        $.each(data, function(idx, goal) {
-            var goalViewModel = goalCreateViewModel(goal);
+        current_goals = [];
+        completed_goals = [];
+        abandoned_goals = [];
 
+        $.each(data, function(idx, goal) {
             if (goal.completed != undefined) {
                 if (goal.abandoned)
-                    goalsModel.abandoned_goals.push(goalViewModel);
+                    abandoned_goals.push(goal);
                 else
-                    goalsModel.completed_goals.push(goalViewModel);
+                    completed_goals.push(goal);
             } else {
-                goalsModel.current_goals.push(goalViewModel);
+                current_goals.push(goal);
             }
         });
+        GoalBook.reset(current_goals);
+        CompletedGoalBook = new GoalCollection(completed_goals);
+        AbandonedGoalBook = new GoalCollection(abandoned_goals);
 
-		var template = Templates.get( "profile.profile-goals" );
-        $("#graph-content").html( template(goalsModel) );
+        $("#graph-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
+
+        Profile.goalsViews = {};
+        Profile.goalsViews['current'] = new GoalProfileView({
+            el: "#current-goals-list",
+            model: GoalBook,
+            type: 'current',
+            title: 'Current goals'
+        });
+        Profile.goalsViews['completed'] = new GoalProfileView({
+            el: "#completed-goals-list",
+            model: CompletedGoalBook,
+            type: 'completed',
+            title: 'Completed goals'
+        });
+        Profile.goalsViews['abandoned'] = new GoalProfileView({
+            el: "#abandoned-goals-list",
+            model: AbandonedGoalBook,
+            type: 'abandoned',
+            title: 'Abandoned goals'
+        });
 
         $("#graph-content .goal").hover(
         function () {
@@ -385,15 +404,17 @@ var Profile = {
     },
 
     showGoalType: function(type) {
-        $.each(['current','completed','abandoned'], function(idx, atype) {
-            if (type == atype) {
-                $('#' + atype + '-goal-list').show();
-                $('#goal-show-' + atype + '-link').addClass('graph-sub-link-selected');
-            } else {
-                $('#' + atype + '-goal-list').hide();
-                $('#goal-show-' + atype + '-link').removeClass('graph-sub-link-selected');
-            }
-        });
+        if (Profile.goalsViews) {
+            $.each(['current','completed','abandoned'], function(idx, atype) {
+                if (type == atype) {
+                    Profile.goalsViews[atype].show();
+                    $('#goal-show-' + atype + '-link').addClass('graph-sub-link-selected');
+                } else {
+                    Profile.goalsViews[atype].hide();
+                    $('#goal-show-' + atype + '-link').removeClass('graph-sub-link-selected');
+                }
+            });
+        }
     },
 
     renderStudentGoals: function(data, href) {
@@ -806,5 +827,38 @@ var Profile = {
         return qs.join(eljoin);
     }
 };
+
+var GoalProfileView = Backbone.View.extend({
+    template: Templates.get( "profile.profile-goals" ),
+    needsRerender: true,
+
+    initialize: function() {
+        this.model.bind('change', this.render, this);
+        this.model.bind('reset', this.render, this);
+        this.model.bind('remove', this.render, this);
+        this.model.bind('add', this.render, this);
+    },
+
+    show: function() {
+        // render if necessary
+        if (this.needsRerender) {
+            this.render();
+        }
+        $(this.el).show();
+    },
+
+    hide: function() {
+        $(this.el).hide();
+    },
+
+    render: function() {
+        var jel = $(this.el);
+        // delay rendering until the view is actually visible
+        this.needsRerender = false;
+        var json = _.pluck(this.model.models, 'attributes');
+        jel.html(this.template({goals: json, title: this.options.title, type: this.options.type}));
+        return jel;
+    }
+});
 
 $(function(){Profile.init();});

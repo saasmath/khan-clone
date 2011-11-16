@@ -25,6 +25,7 @@ javascript = {
             "goal-summary-area.handlebars",
             "goalbook-row.handlebars",
             "goalbook.handlebars",
+            "goal-objectives.handlebars",
         ],
         "files": [
             "jquery.js",

@@ -164,8 +164,8 @@ hr {
 .simple-button {
     color: #333 !important;
     cursor: pointer !important;
-    border: 1px solid #ccc !important;
-    border-bottom: 1px solid #bbb !important;
+    border: 1px solid #ccc;
+    border-bottom: 1px solid #bbb;
     line-height: 22px;
     padding: 5px 10px;
     position: relative;
@@ -190,8 +190,11 @@ input.simple-button {
 
 .simple-button:hover {
     border-color: #aaa;
-    color: #0075b1 !important;
-    text-decoration: none !important;
+    
+    -webkit-box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
+    -moz-box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
+    box-shadow: inset 0 0 3px 2px rgba(255,255,255,.5);
+    outline: 2px solid #fff\9;
 }
 .simple-button:active {
     top: 1px;
@@ -203,10 +206,6 @@ input.simple-button {
 	border-bottom-color: #13181f !important;
 	text-shadow:  0 -1px 0 #13181f;
 }
-.simple-button.blue:hover {
-	color: #0075b1 !important;
-	border-color:  #13181f !important;
-}
 /* A green color scheme for the simple button */
 .simple-button.green {
 	color: #fff !important;
@@ -214,20 +213,12 @@ input.simple-button {
 	border-bottom-color: #557303 !important;
 	text-shadow:  0 -1px 0 #557303;
 }
-.simple-button.green:hover {
-	color: #c8f255 !important;
-	border-color:  #13181f !important;
-}
 /* An orange color scheme for the simple button */
 .simple-button.orange {
 	color: #fff !important;
 	border-color: #bf4f04 !important;
 	border-bottom-color: #803503 !important;
 	text-shadow:  0 -1px 0 #a64403;
-}
-.simple-button.orange:hover {
-	color: #ffbb8d !important;
-	border-color:  #803503 !important;
 }
 .simple-button.seethrough {
     color: #444 !important;

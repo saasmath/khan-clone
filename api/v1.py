@@ -1000,6 +1000,13 @@ def create_user_goal():
     objective_descriptors = []
     valid_count = 0
 
+    goals = GoalList.get_from_data(goal_data, Goal)
+    goal_exercises = []
+    goal_videos = []
+    for goal in goals:
+        goal_exercises.extend([objective.exercise_name for objective in goal.objectives if objective.__class__.__name__ == 'GoalObjectiveExerciseProficiency'])
+        goal_videos.extend([objective.video_readable_id for objective in goal.objectives if objective.__class__.__name__ == 'GoalObjectiveWatchVideo'])
+
     for idx in xrange(1,40):
         base_str = 'objective'+str(idx)
         if request.request_string(base_str+'_type'):
@@ -1013,6 +1020,8 @@ def create_user_goal():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
                 if user_data.is_proficient_at(objective_descriptor['exercise'].name):
                     return api_invalid_param_response("Exercise has already been completed.")
+                if objective_descriptor['exercise'].name in goal_exercises:
+                    return api_invalid_param_response("Exercise is already an objective in a current goal.")
                 valid_count += 1
 
             if objective_descriptor['type'] == 'GoalObjectiveAnyExerciseProficiency':
@@ -1025,6 +1034,8 @@ def create_user_goal():
                 user_video = models.UserVideo.get_for_video_and_user_data(objective_descriptor['video'], user_data)
                 if user_video and user_video.completed:
                     return api_invalid_param_response("Video has already been watched.")
+                if objective_descriptor['video'].readable_id in goal_videos:
+                    return api_invalid_param_response("Video is already an objective in a current goal.")
                 valid_count += 1
 
             if objective_descriptor['type'] == 'GoalObjectiveAnyVideo':

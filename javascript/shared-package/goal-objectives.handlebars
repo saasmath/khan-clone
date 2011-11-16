@@ -1,0 +1,10 @@
+<li class="objective" style="width: {{objectiveWidth}}%">
+    <a class="objective simple-button action-gradient {{type}} {{#if complete}}complete seethrough exercise-color started{{else}}blue{{/if}}"
+        href="{{url}}"
+        data-progress="{{progress}}">
+            <span class="objective-description">{{description}}</span>
+            {{#unless complete}}
+            <span class="objective-progress-meter" style="height: {{iconFillHeight}}px"></span>
+            {{/unless}}
+    </a>
+</li>
