@@ -24,6 +24,8 @@ var Goal = Backbone.Model.extend({
         objectives: []
     },
 
+    urlRoot: '/api/v1/user/goals',
+
     initialize: function() {
         this.calcDependents();
         this.bind('change', this.fireCustom, this);
@@ -111,6 +113,8 @@ var GoalCollection = Backbone.Collection.extend({
         this.bind('remove', this.updateActive, this);
         this.bind('reset', this.updateActive, this);
     },
+
+    url: '/api/v1/user/goals',
 
     comparator: function(goal) {
         // display most recently updated goal at the top of the list.
