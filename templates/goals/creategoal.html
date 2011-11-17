@@ -39,7 +39,7 @@ var GoalCreator = {
             .keyup(function(event) {
                 if (event.which == 13) {
                     this.blur();
-                }  
+                }
             });
 
         GoalCreator.updateViewAndDescription();
@@ -348,7 +348,7 @@ var GoalCreator = {
         GoalCreator.creating = true;
 
         $.ajax({
-            url: "/api/v1/user/goals/create",
+            url: "/api/v1/user/goals",
             type: 'POST',
             dataType: 'json',
             data: $(form).serialize(),

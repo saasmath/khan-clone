@@ -978,7 +978,7 @@ def get_student_goals():
     return return_data
 
 # LOGIN? TomY TODO
-@route("/api/v1/user/goals/create", methods=["POST"])
+@route("/api/v1/user/goals", methods=["POST"])
 @oauth_optional()
 @jsonp
 @jsonify

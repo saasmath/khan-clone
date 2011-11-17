@@ -428,7 +428,7 @@ var createSimpleGoalDialog = {
         $('#create-simple-goal-error').html('');
         $("#create-simple-goal-button").html("<a class='simple-button action-gradient'><img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Adding goal... </span></a>");
         $.ajax({
-            url: "/api/v1/user/goals/create",
+            url: "/api/v1/user/goals",
             type: 'POST',
             dataType: 'json',
             data: $.param(goal),
