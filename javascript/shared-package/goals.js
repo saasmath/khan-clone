@@ -472,31 +472,14 @@ var predefinedGoalsList = {
 var createSimpleGoalDialog = {
     showDialog: function() {
         myGoalBookView.hide();
-        $("#popup-dialog").html($("#goal-create-dialog").html());
-
-        // listen for escape key
-        $(document).bind('keyup.goaldialog', function ( e ) {
-            if ( e.which == 27 ) {
-                createSimpleGoalDialog.hideDialog();
-            }
-        });
-
-        // close the goal dialog if user clicks elsewhere on page
-        $('body').bind('click.goaldialog', function( e ) {
-            if ( $(e.target).closest('#goal-popup-dialog').length === 0 ) {
-                createSimpleGoalDialog.hideDialog();
-            }
-        });
+        globalPopupDialog.show('create-goal', [350,280], 'Set a new learning goal', $("#goal-create-dialog").html(), true);
     },
     hideDialog: function() {
-        $("#popup-dialog").html('');
-
-        $(document).unbind('keyup.goaldialog');
-        $('body').unbind('click.goaldialog');
+        globalPopupDialog.hide();
     },
 
     createSimpleGoal: function() {
-        var selected_type = $("#goal-popup-dialog")
+        var selected_type = $("#popup-dialog")
             .find("input[name=\"goal-type\"]:checked").val();
         var goal = predefinedGoalsList[selected_type];
         var prevButtonHtml = $("#create-simple-goal-button").html();
@@ -518,16 +501,18 @@ var createSimpleGoalDialog = {
         });
     },
     createCustomGoal: function() {
-        $("#popup-dialog").html($("#custom-goal-loading-dialog").html());
+        globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', $("#generic-loading-dialog").html(), false);
         $.ajax({
             url: "/goals/new?need_maps_package=" + (!window.KnowledgeMap ? "true" : "false"),
             type: 'GET',
             dataType: 'html',
             success: function(html) {
-                $("#popup-dialog").html(html);
+                if (globalPopupDialog.visible) {
+                    globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', html, false);
+                }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                $("#custom-goal-loading-message").html('Page load failed. Please try again.');
+                $("#generic-loading-message").html('Page load failed. Please try again.');
             }
         });
     },

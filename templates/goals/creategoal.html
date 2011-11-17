@@ -185,8 +185,8 @@ var GoalCreator = {
     resize: function() {
         var jel = $("#goal-choose-exercises .dashboard-drawer,.dashboard-drawer-inner,.dashboard-map,.dashboard-content-stretch");
         var jelDrawerInner = $("#goal-choose-exercises .dashboard-drawer-inner");
-        var yTop = $('#goal-spacer').offset().top - $('#goal-popup-dialog').offset().top;
-        jel.height($('#goal-popup-dialog').outerHeight(true)-yTop-48);
+        var yTop = $('#goal-spacer').offset().top - $('#popup-dialog').offset().top;
+        jel.height($('#popup-dialog').outerHeight(true)-yTop-48);
         // Account for padding in the dashboard drawer
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
@@ -387,12 +387,6 @@ function createGoalInitialize() {
 
 </script>
 
-<div class="dark-window">&nbsp;</div>
-<div class="window-center">
-<div id="goal-popup-dialog" class="custom-goal">
-  <div class="dialog-title"><p>Create a custom goal</p>
-    <div class="dialog-button"><a class="simple-button action-gradient" href="javascript:createSimpleGoalDialog.hideDialog()">Cancel</a></div>
-  </div>
   <article class="create-goal-page">
   <form id="create-goal" action="javascript:">
     <div class="section-headline">
@@ -434,7 +428,6 @@ function createGoalInitialize() {
     </div>
   </div>
   </article>
-</div>
 
 {%- raw -%}
 <script id="goals-create-tmpl" type="text/x-jquery-tmpl">

@@ -878,3 +878,68 @@ function temporaryDetachElement(element) {
     return ret;
 };
 
+var globalPopupDialog = {
+    visible: false,
+    bindings: false,
+
+    // Size can be an array [width,height] to have an auto-centered dialog or null if the positioning is handled in CSS
+    show: function(className, size, title, html, autoClose) {
+        $("#popup-dialog").hide();
+        $("#popup-dialog .dialog-frame").attr('class', 'dialog-frame ' + className);
+        if (size) {
+            styleText = 'position: relative;';
+            styleText += 'width: ' + size[0] + 'px;';
+            styleText += 'height: ' + size[1] + 'px;';
+            styleText += 'margin-left: ' + (-0.5*size[0]).toFixed(0) + 'px;';
+            styleText += 'margin-top: ' + (-0.5*size[1] - 100).toFixed(0) + 'px;';
+            $("#popup-dialog .dialog-frame").attr('style', styleText);
+        } else {
+            $("#popup-dialog .dialog-frame").attr('style', '');
+        }
+        $("#popup-dialog .dialog-frame .description").html('<h3>' + title + '</h3>');
+        $("#popup-dialog .dialog-contents").html(html);
+        $("#popup-dialog").show();
+
+        $("#popup-dialog .close-button").click(function() { globalPopupDialog.hide(); });
+
+        if (autoClose && !globalPopupDialog.bindings) {
+            // listen for escape key
+            $(document).bind('keyup.popupdialog', function ( e ) {
+                if ( e.which == 27 ) {
+                    globalPopupDialog.hide();
+                }
+            });
+
+            // close the goal dialog if user clicks elsewhere on page
+            $('body').bind('click.popupdialog', function( e ) {
+                if ( $(e.target).closest('.dialog-frame').length === 0 ) {
+                    globalPopupDialog.hide();
+                }
+            });
+            globalPopupDialog.bindings = true;
+        } else if (!autoClose && globalPopupDialog.bindings) {
+            $(document).unbind('keyup.popupdialog');
+            $('body').unbind('click.popupdialog');
+            globalPopupDialog.bindings = false;
+        }
+
+        globalPopupDialog.visible = true;
+        return globalPopupDialog;
+    },
+    hide: function() {
+        if (globalPopupDialog.visible) {
+            $("#popup-dialog").hide();
+            $("#popup-dialog .dialog-contents").html('');
+
+            if (globalPopupDialog.bindings) {
+                $(document).unbind('keyup.popupdialog');
+                $('body').unbind('click.popupdialog');
+                globalPopupDialog.bindings = false;
+            }
+
+            globalPopupDialog.visible = false;
+        }
+        return globalPopupDialog;
+    },
+};
+

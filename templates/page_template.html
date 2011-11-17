@@ -163,7 +163,15 @@
     </div>
     </div>
     </div>
-    <div id="popup-dialog">&nbsp;</div>
+    <div id="popup-dialog" style="display: none">
+      <div class="dark-window">&nbsp;</div>
+      <div class="window-center">
+        <div class="dialog-frame">
+          <div class="dialog-header"><a href="#" class="close-button close">x</a> <div class="description"></div></div>
+          <div class="dialog-contents">&nbsp;</div>
+        </div>
+      </div>
+    </div>
     <div class="push"></div>
     {% block pagefooter %}
     {% include "page_footer_short.html" %}
@@ -204,39 +212,24 @@
     {{ gae_mini_profiler.profiler_includes() }}
 
     {%- raw -%}
-    <script id="goal-create-dialog" type="text/html">
-      <div class="dark-window">&nbsp;</div>
-      <div class="window-center">
-        <div id="goal-popup-dialog">
-          <div class="dialog-title"><p>Set a new learning goal</p>
-            <div class="dialog-button"><a class="simple-button action-gradient" href="javascript:createSimpleGoalDialog.hideDialog()">Cancel</a></div>
-          </div>
-          <div class="goal-popup-block">
-            <div>Choose a predefined goal to complete:</div>
-            <div><input type="radio" name="goal-type" value="five_exercises" checked /> Become proficient in any <b>5 exercises</b></div>
-            <div><input type="radio" name="goal-type" value="five_videos" /> Watch any <b>5 videos</b></div>
-            <div class="dialog-button" id="create-simple-goal-button"><a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.createSimpleGoal()">Add goal</a></div>
-            <div class="dialog-button" id="create-simple-goal-error"></div>
-          </div>
-          <div class="goal-popup-block">
-            <div>Or create a personalized goal:</div>
-            <div class="dialog-button" id="create-custom-goal-button"><a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.createCustomGoal()">Custom goal</a></div>
-          </div>
-       </div>
-     </div>
     </script>
-    <script id="custom-goal-loading-dialog" type="text/html">
-      <div class="dark-window">&nbsp;</div>
-      <div class="window-center">
-        <div id="goal-popup-dialog" class="custom-goal">
-          <div class="dialog-title"><p>Create a custom goal</p>
-            <div class="dialog-button"><a class="simple-button action-gradient" href="javascript:createSimpleGoalDialog.hideDialog()">Cancel</a></div>
-          </div>
-          <div id="custom-goal-loading-message">
-            <img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Loading... </span>
-          </div>
-       </div>
-     </div>
+    <script id="goal-create-dialog" type="text/html">
+      <div class="goal-popup-block">
+        <div>Choose a predefined goal to complete:</div>
+        <div><input type="radio" name="goal-type" value="five_exercises" checked /> Become proficient in any <b>5 exercises</b></div>
+        <div><input type="radio" name="goal-type" value="five_videos" /> Watch any <b>5 videos</b></div>
+        <div class="dialog-button" id="create-simple-goal-button"><a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.createSimpleGoal()">Add goal</a></div>
+        <div class="dialog-button" id="create-simple-goal-error"></div>
+      </div>
+      <div class="goal-popup-block">
+        <div>Or create a personalized goal:</div>
+        <div class="dialog-button" id="create-custom-goal-button"><a class="simple-button action-gradient green" href="javascript:createSimpleGoalDialog.createCustomGoal()">Custom goal</a></div>
+      </div>
+    </script>
+    <script id="generic-loading-dialog" type="text/html">
+      <div id="generic-message">
+        <img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Loading... </span>
+      </div>
     </script>
     {%- endraw -%}
 

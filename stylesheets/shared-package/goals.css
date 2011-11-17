@@ -366,29 +366,9 @@ input#goal-title:focus {
 .create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #playlist-jump > span {
     font-weight: normal;
 }
-#goal-popup-dialog {
-    position: relative;
-
-    width: 350px;
-    margin-left: -175px;
-
-    height: 200px;
-    margin-top: -300px;
-
-    background-color: #e4e4e4;
-    padding: 20px;
-    padding-top: 40px;
-
-    border-radius: 10px;
-    -webkit-border-radius: 10px;
-    -moz-border-radius: 10px;
-
-    -moz-box-shadow: 0 3px 4px #444;
-    -webkit-box-shadow: 0 2px 4px #444;
-    box-shadow: 0 2px 4px #444;
-    z-index: 1000;
+#popup-dialog .dialog-frame.create-goal {
 }
-#goal-popup-dialog.custom-goal {
+#popup-dialog .dialog-frame.create-custom-goal {
     position: fixed;
     left: 5%;
     top: 5%;
@@ -397,7 +377,7 @@ input#goal-title:focus {
     margin: 0px;
 }
 
-#goal-popup-dialog .dialog-title {
+#popup-dialog .dialog-title {
     position: absolute;
     left: 0;
     top: 0;
@@ -406,15 +386,15 @@ input#goal-title:focus {
     padding: 5px;
     padding-left: 10px;
 }
-#goal-popup-dialog .dialog-title p {
+#popup-dialog .dialog-title p {
     font-size: 150%;
    display: inline;
 }
-#goal-popup-dialog .dialog-button {
+#popup-dialog .dialog-button {
     float: right;
     margin: 5px;
 }
-#goal-popup-dialog .goal-popup-block {
+#popup-dialog .goal-popup-block {
     clear: both;
     background-color: #f4f4f4;
     border: 1px solid #888;
