@@ -64,6 +64,7 @@ from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -235,6 +236,7 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
+        bingo('struggling_videos_landing')
         self.render_jinja2_template('viewvideo.html', template_values)
 
 # This function is only here for a transitional period, all new requests should be using the API (-Tom Y 11/17/11)

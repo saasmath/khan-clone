@@ -57,7 +57,6 @@ def add_action_results(obj, dict_results):
                 badge = badges_dict.get(user_badge.badge_name)
 
                 if badge:
-
                     if not hasattr(badge, "user_badges"):
                         badge.user_badges = []
 
@@ -667,7 +666,6 @@ def attempt_problem_number(exercise_name, problem_number):
                     action_results["exercise_state"]["followups"] = followups
 
             add_action_results(user_exercise, action_results)
-
             return user_exercise
 
     logging.warning("Problem %d attempted with no user_data present", problem_number)
@@ -899,11 +897,19 @@ def autocomplete():
 
         max_results_per_type = 10
 
-        video_results = filter(lambda video_dict: query in video_dict["title"].lower(), video_title_dicts())
-        playlist_results = filter(lambda playlist_dict: query in playlist_dict["title"].lower(), playlist_title_dicts())
+        video_results = filter(
+                lambda video_dict: query in video_dict["title"].lower(),
+                video_title_dicts())
+        playlist_results = filter(
+                lambda playlist_dict: query in playlist_dict["title"].lower(),
+                playlist_title_dicts())
 
-        video_results = sorted(video_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
-        playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
+        video_results = sorted(
+                video_results,
+                key=lambda v: v["title"].lower().index(query))[:max_results_per_type]
+        playlist_results = sorted(
+                playlist_results,
+                key=lambda p: p["title"].lower().index(query))[:max_results_per_type]
 
     return {
             "query": query, 
