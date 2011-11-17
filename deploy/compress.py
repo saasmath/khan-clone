@@ -53,16 +53,14 @@ def compress_all_packages(default_path, dict_packages, suffix):
 
             package_path = os.path.join(os.path.dirname(__file__), package_path)
 
-            # if suffix == ".js" and "templates" in package:
-            #     # Prepend the JS files with the compiled template files.
-            #     files = ([name + ".js" for name in package["templates"]] +
-            #              package["files"])
-            # else:
             if suffix == ".js":
+                # for javascript packages, check to see if we need to include
+                # the compiled result of a file. For example, a file called
+                # template.handlebars will be compiled to
+                # template.handlebars.js
                 files = []
                 for f in package["files"]:
-                    ext = f.split('.')[-1]
-                    if ext == 'js':
+                    if f.split('.')[-1] == 'js':
                         files.append(f)
                     else:
                         files.append(f + ".js")
