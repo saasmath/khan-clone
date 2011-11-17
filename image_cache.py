@@ -40,7 +40,8 @@ class ImageCache(webapp2.RequestHandler, blobstore_handlers.BlobstoreDownloadHan
 
     @layer_cache.cache_with_key_fxn(
             lambda self, source_url: "image_cache:%s" % source_url, 
-            layer=layer_cache.Layers.Datastore)
+            layer=layer_cache.Layers.Datastore,
+            persist_across_app_versions=True)
     def image_cache_blob_key(self, source_url):
 
         tries = 0
