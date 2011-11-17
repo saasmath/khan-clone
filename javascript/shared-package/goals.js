@@ -146,34 +146,20 @@ var GoalCollection = Backbone.Collection.extend({
         }, this);
     },
 
-    findExerciseObjectiveFor: function(url) {
-        var matchingGoal = null;
-
-        var getExerciseId = function(url) {
-            var regex = /\/exercise\/([^\/?]+)/;
-            var matches = url.match(regex);
-            return matches ? matches[1] : '';
-        };
-
-        var exerciseId = getExerciseId(url);
-        // find a goal with exactly this exercise
-        matchingGoal = this.find(function(goal) {
+    findExerciseObjectiveFor: function() {
+        var exerciseId = window.userExercise && userExercise.exercise || null;
+        return this.find(function(goal) {
+            // find a goal with an objective for this exact exercise
             return _.find(goal.get('objectives'), function(ob) {
                 return ob.type == "GoalObjectiveExerciseProficiency" &&
-                    exerciseId == getExerciseId(ob.url);
+                    exerciseId == ob.internal_id;
+            });
+        }) || this.find(function(goal) {
+            // otherwise find a goal with any exercise proficiency
+            return _.find(goal.get('objectives'), function(ob) {
+                return ob.type == "GoalObjectiveAnyExerciseProficiency";
             });
         }) || null;
-
-        if ( matchingGoal === null ) {
-            // find an exercise process goal
-            matchingGoal = this.find(function(goal) {
-                return _.find(goal.get('objectives'), function(ob) {
-                    return ob.type == "GoalObjectiveAnyExerciseProficiency";
-                });
-            }) || null;
-        }
-
-        return matchingGoal;
     },
 
     findVideoObjectiveFor: function(url) {
@@ -210,15 +196,15 @@ var GoalCollection = Backbone.Collection.extend({
     // find the most appriate goal to display for a given URL
     findActiveGoal: function() {
         var matchingGoal = null;
-        var url = window.location.toString();
 
         if (window.location.pathname.indexOf("/exercise") === 0) {
-            matchingGoal = this.findExerciseObjectiveFor(url);
+            matchingGoal = this.findExerciseObjectiveFor();
             if (matchingGoal !== null) {
                 console.log('found a matching exercise goal');
             }
         }
         else if (window.location.pathname.indexOf("/video") === 0) {
+            var url = window.location.toString();
             matchingGoal = this.findVideoObjectiveFor(url);
             if (matchingGoal !== null) {
                 console.log('found a matching video goal');
