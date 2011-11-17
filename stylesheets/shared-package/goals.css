@@ -506,7 +506,7 @@ input#goal-title:focus {
 #goalpicker h3, 
 #goalpicker h4 {
   font-size:40px;
-  font-family:MuseoSans-100;
+  font-family:MuseoSans100;
   font-weight:normal;
   line-height:68px;
   color:#777;
@@ -515,7 +515,7 @@ input#goal-title:focus {
 }
 #goalpicker h4 {
   text-transform:uppercase;
-  font-family:MuseoSans-900;
+  font-family:MuseoSans900;
   font-weight:normal;
   font-size:28px;
   letter-spacing:6px;
@@ -538,7 +538,7 @@ input#goal-title:focus {
 }
 
 #goalpicker .info button {
-  font-family:MuseoSans-900;
+  font-family:MuseoSans900;
   font-weight:normal;
   text-transform:uppercase;
   letter-spacing:2px;
