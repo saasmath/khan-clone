@@ -18,15 +18,6 @@ def register_conditional_file(debug_name, prod_name):
 
 javascript = {
     "shared": {
-        "templates": [
-            "streak-bar.handlebars",
-            "knowledgemap-exercise.handlebars",
-            "knowledgemap-admin-exercise.handlebars",
-            "goal-summary-area.handlebars",
-            "goalbook-row.handlebars",
-            "goalbook.handlebars",
-            "goal-objectives.handlebars",
-        ],
         "files": [
             "jquery.js",
             "jquery-ui.js",
@@ -43,6 +34,13 @@ javascript = {
             "pageutil.js",
             "api.js",
             "social.js",
+            "streak-bar.handlebars",
+            "knowledgemap-exercise.handlebars",
+            "knowledgemap-admin-exercise.handlebars",
+            "goal-summary-area.handlebars",
+            "goalbook-row.handlebars",
+            "goalbook.handlebars",
+            "goal-objectives.handlebars",
             "goals.js",
         ]
     },
@@ -70,14 +68,12 @@ javascript = {
         ]
     },
     "profile": {
-        "templates": [
-            "profile-goals.handlebars",
-            "profile-class-goals.handlebars",
-            "exercise_progress.handlebars",
-        ],
         "files": [
             "jquery.address-1.4.min.js",
             "highcharts.js",
+            "profile-goals.handlebars",
+            "profile-class-goals.handlebars",
+            "exercise_progress.handlebars",
             "profile.js",
         ]
     },
