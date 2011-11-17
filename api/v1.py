@@ -25,6 +25,8 @@ from api.auth.decorators import oauth_required, oauth_optional, admin_required, 
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response
 
+from google.appengine.ext import db
+
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
 # response so that we can visibly award badges while the page silently posts log info in the background.
@@ -55,7 +57,6 @@ def add_action_results(obj, dict_results):
                 badge = badges_dict.get(user_badge.badge_name)
 
                 if badge:
-
                     if not hasattr(badge, "user_badges"):
                         badge.user_badges = []
 
@@ -395,27 +396,39 @@ def user_videos_specific(youtube_id):
 
     return None
 
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
-@oauth_required(require_anointed_consumer=True)
+# Can specify video using "video_key" parameter instead of youtube_id.
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET","POST"])
+@oauth_optional(require_anointed_consumer=True)
+@api_create_phantom
 @jsonp
 @jsonify
 def log_user_video(youtube_id):
-    user_data = models.UserData.current()
     video_log = None
+    user_data = models.UserData.current()
 
-    if user_data and youtube_id:
-        video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if user_data:
+        video_key_str = request.request_string("video_key")
 
-        seconds_watched = int(request.request_float("seconds_watched", default = 0))
-        last_second_watched = int(request.request_float("last_second_watched", default = 0))
+        if user_data and (youtube_id or video_key_str):
+            if video_key_str:
+                key = db.Key(video_key_str)
+                video = db.get(key)
+            else:
+                video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
-        if video:
-            user_video, video_log, video_points_total = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
+            seconds_watched = int(request.request_float("seconds_watched", default = 0))
+            last_second_watched = int(request.request_float("last_second_watched", default = 0))
 
-            if video_log:
-                add_action_results(video_log, {"user_video": user_video})
+            if video:
+                user_video, video_log, video_points_total = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
 
-    return video_log
+                if video_log:
+                    add_action_results(video_log, {"user_video": user_video})
+
+        return video_log
+
+    logging.warning("Video watched with no user_data present")
+    return unauthorized_response()
 
 @route("/api/v1/user/exercises", methods=["GET"])
 @oauth_optional()
@@ -653,7 +666,6 @@ def attempt_problem_number(exercise_name, problem_number):
                     action_results["exercise_state"]["followups"] = followups
 
             add_action_results(user_exercise, action_results)
-
             return user_exercise
 
     logging.warning("Problem %d attempted with no user_data present", problem_number)
@@ -885,11 +897,19 @@ def autocomplete():
 
         max_results_per_type = 10
 
-        video_results = filter(lambda video_dict: query in video_dict["title"].lower(), video_title_dicts())
-        playlist_results = filter(lambda playlist_dict: query in playlist_dict["title"].lower(), playlist_title_dicts())
+        video_results = filter(
+                lambda video_dict: query in video_dict["title"].lower(),
+                video_title_dicts())
+        playlist_results = filter(
+                lambda playlist_dict: query in playlist_dict["title"].lower(),
+                playlist_title_dicts())
 
-        video_results = sorted(video_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
-        playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
+        video_results = sorted(
+                video_results,
+                key=lambda v: v["title"].lower().index(query))[:max_results_per_type]
+        playlist_results = sorted(
+                playlist_results,
+                key=lambda p: p["title"].lower().index(query))[:max_results_per_type]
 
     return {
             "query": query, 

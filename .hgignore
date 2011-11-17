@@ -21,3 +21,4 @@ offline/*
 .*.un~
 compiled_templates*
 .pydevproject
+.git
