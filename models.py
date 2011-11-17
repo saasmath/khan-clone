@@ -30,6 +30,7 @@ from counters import user_counter
 from facebook_util import is_facebook_user_id
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
+from image_cache import ImageCache
 
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
@@ -1102,7 +1103,7 @@ class Video(Searchable, db.Model):
         return None
 
     def youtube_thumbnail_url(self):
-        return "http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id
+        return ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id)
 
     @staticmethod
     def get_for_readable_id(readable_id):

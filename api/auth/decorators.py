@@ -71,7 +71,7 @@ def oauth_required(require_anointed_consumer = False):
         return wrapper
     return outer_wrapper
 
-def oauth_optional():
+def oauth_optional(require_anointed_consumer = False):
     """ Decorator for validating an oauth request and storing the OAuthMap for use
     in the rest of the request.
 
@@ -90,6 +90,11 @@ def oauth_optional():
                         # Store the OAuthMap containing all auth info in the request global
                         # for easy access during the rest of this request.
                         flask.g.oauth_map = OAuthMap.get_from_access_token(token.key_)
+
+                        # If this API method requires an anointed consumer,
+                        # restrict any that haven't been manually approved.
+                        if require_anointed_consumer and not consumer.anointed:
+                            flask.g.oauth_map = None
 
                         if not util.get_current_user_id():
                             # If our OAuth provider thinks you're logged in but the
