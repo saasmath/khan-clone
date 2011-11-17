@@ -476,3 +476,126 @@ input#goal-title:focus {
     color: #c00;
     font-weight: bold;
 }
+
+
+
+
+/* The New Goal ui */
+
+#goalpicker {
+  width:100%;
+  height:auto;
+  min-height:90%;
+  padding-left:3%;
+}
+
+#goalpicker .newgoal {
+  width:90%;
+  padding:4em 3% 2em 1%;
+  float:left;
+  clear:none;
+  position:relative;
+  -webkit-border-radius: 5px;
+  
+}
+
+#goalpicker .newgoal.small{
+  width:43%;
+}
+
+#goalpicker h3, 
+#goalpicker h4 {
+  font-size:40px;
+  font-family:MuseoSans-100;
+  font-weight:normal;
+  line-height:68px;
+  color:#777;
+  margin:0;
+  letter-spacing:4px;
+}
+#goalpicker h4 {
+  text-transform:uppercase;
+  font-family:MuseoSans-900;
+  font-weight:normal;
+  font-size:28px;
+  letter-spacing:6px;
+  line-height:28px;
+}
+
+#goalpicker a{
+  color: #777;
+  text-decoration:none;
+}
+#goalpicker .newgoal:hover{
+  cursor:pointer;
+  z-index:10;
+  -webkit-box-shadow:0 0 6px 1px #678D00;
+}
+
+#goalpicker .newgoal:hover a,
+#goalpicker .info button {
+  color:#678D00;
+}
+
+#goalpicker .info button {
+  font-family:MuseoSans-900;
+  font-weight:normal;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  text-align:center;
+  line-height:16px;
+  border:2px solid #678D00;
+  background-color:#678D00;
+  color:white;
+  width:70%;
+  margin:2em auto;
+  margin-left:15%;
+  cursor:pointer;
+}
+
+#goalpicker .info, #goalpicker .info:hover  {
+  display:none;
+  cursor: default;
+  position:absolute;
+  left:-225px;
+  top:20px;
+  width:175px;
+  height:auto;
+  padding:10px 15px 0;
+  background-color:#eee;
+  -webkit-box-shadow:0px 0px 10px 5px #ccc;
+  -webkit-border-radius:3px;
+}
+
+
+#goalpicker .info:after {
+  content:'';
+  display:block;
+  position:absolute;
+  top:30px;
+  left:100%; /*should be set to 100% */
+  width:0;
+  height:0;
+  border-color: transparent transparent transparent #eee;
+  border-style: solid;
+  border-width: 10px;
+}
+
+#goalpicker .info.pos-right {
+  left:auto;
+  right:-225px;
+}
+#goalpicker .info.pos-right:after {
+  left:-20px;
+  border-color:transparent #eee transparent transparent;
+}
+
+#goalpicker .info.pos-top {
+  left:auto;
+  right:25px;
+  top: -40px;
+}
+#goalpicker .info.pos-top:after {
+  left:-20px;
+  border-color:transparent #eee transparent transparent;
+}

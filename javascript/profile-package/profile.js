@@ -909,6 +909,34 @@ var GoalProfileView = Backbone.View.extend({
             $(this).find(".goal-controls").hide();
             $(this).find(".goal-description .summary-light").show();
         });
+                
+        $( "#goalpicker .newgoal" ).hoverIntent(
+          function hfa( evt ){
+            $( "#goalpicker .newgoal" ).not( this ).hoverFlow( evt.type, { opacity : .2}, 750, "easeInOutCubic" );
+            $( ".info.pos-left", this ).hoverFlow( evt.type, { left : "+=30px", opacity : "show" }, 350, "easeInOutCubic" );
+            $( ".info.pos-right, .info.pos-top", this ).hoverFlow( evt.type, { right : "+=30px", opacity : "show" }, 350, "easeInOutCubic" );
+          }, 
+          function hfo( evt ) {
+            $( "#goalpicker .newgoal" ).not( this ).hoverFlow( evt.type, { opacity : 1}, 175, "easeInOutCubic" );
+            $( ".info.pos-left", this).hoverFlow( evt.type, { left : "-=30px", opacity : "hide" }, 150, "easeInOutCubic" );
+            $( ".info.pos-right, .info.pos-top", this).hoverFlow( evt.type, { right : "-=30px", opacity : "hide" }, 150, "easeInOutCubic" );
+          }
+        );
+        $( "#goalpicker .newgoal" ).bind( "mouseup", function( evt ){
+          evt.preventDefault();
+          if( $( this ).hasClass( "custom" ) ){
+            createSimpleGoalDialog.createCustomGoal();
+            return;
+          }
+          if( $( this ).hasClass( "five_exercises" ) ){
+            createSimpleGoalDialog.createSimpleGoal("five_exercises");
+            return;
+          }
+          if( $( this ).hasClass( "five_videos" ) ){
+            createSimpleGoalDialog.createSimpleGoal("five_videos");
+            return;
+          }
+        });
 
         Profile.AddObjectiveHover(jel);
         return jel;
