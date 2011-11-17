@@ -266,6 +266,7 @@ var GoalBookView = Backbone.View.extend({
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.added, this);
+        this.model.bind('goalcompleted', this.show, this);
     },
 
     show: function() {
@@ -397,7 +398,9 @@ var GoalSummaryView = Backbone.View.extend({
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
+        this.model.bind('completed', this.justFinishedObjective, this);
     },
+
     render: function() {
         console.log("rendering GoalSummaryView", this);
         var active = this.model.active() || null;
@@ -409,18 +412,13 @@ var GoalSummaryView = Backbone.View.extend({
             $(this.el).empty();
         }
         return this;
+    },
+
+    justFinishedObjective: function(newGoal, newObj) {
+        this.render();
+        this.$('#goals-drawer').effect('highlight', {}, 2500);
     }
 });
-
-var justFinishedObjective = function(newGoal, newObj) {
-    console.log("Just finished objective", newObj);
-    $("#goals-congrats").text('Just finished objective!').show().fadeOut(3000);
-};
-
-var justFinishedGoal = function(goal) {
-    console.log("Just finished goal", goal);
-    myGoalBookView.show();
-};
 
 $(function() {
     window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
@@ -438,16 +436,7 @@ $(function() {
     });
 
     myGoalSummaryView.render();
-    GoalBook.bind('completed', justFinishedObjective);
-    GoalBook.bind('goalcompleted', justFinishedGoal);
 });
-
-var requestGoals = function() {
-    $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
-};
-var updateGoals = function(goals) {
-    GoalBook.reset(goals);
-};
 
 var predefinedGoalsList = {
     "five_exercises" : {
