@@ -60,6 +60,7 @@ from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
 from nicknames import get_nickname_for
+from image_cache import ImageCache
 import redirects
 import robots
 
@@ -798,6 +799,8 @@ application = webapp2.WSGIApplication([
     ('/savemapcoords', knowledgemap.SaveMapCoords),
     ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
     ('/crash', Crash),
+
+    ('/image_cache/(.+)', ImageCache),
 
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
