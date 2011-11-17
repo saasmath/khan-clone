@@ -1,4 +1,3 @@
-import consts
 import itertools
 import math
 import operator
@@ -135,14 +134,15 @@ class AccuracyModel(object):
 
         return AccuracyModel.logistic_regression_predict(params.INTERCEPT, weight_vector, X)
     
-    def is_struggling(self, minimum_accuracy):
+    def is_struggling(self, minimum_accuracy, minimum_attempts):
         """ Whether or not this model detects that the student is struggling
         based on the history of answers thus far.
         """
 
         attempts = self.total_done
-        if attempts < consts.MIN_PROBLEMS_IMPOSED:
+        if attempts < minimum_attempts:
             return False
+        
         accuracy_prediction = self.predict()
         if accuracy_prediction >= minimum_accuracy:
             return False

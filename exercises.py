@@ -407,10 +407,12 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
 
-        if user_exercise.is_struggling() and not problem_log.correct:
-            bingo('struggling_problems_done_post_struggling')
-
         if completed:
+            
+            if user_exercise.is_struggling():
+                bingo('struggling_problems_done_post_struggling')
+                if problem_log.correct:
+                    bingo('struggling_problems_correct_post_struggling')
 
             user_exercise.total_done += 1
 
@@ -452,6 +454,9 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         else:
 
+            if first_response and user_exercise.is_struggling():
+                bingo('struggling_problems_wrong_post_struggling')
+                    
             if user_exercise.streak == 0:
                 # 2+ in a row wrong -> not proficient
                 user_exercise.set_proficient(False, user_data)
@@ -459,7 +464,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
-                bingo(['hints_wrong_problems', 'struggling_wrong_problems'])
+                bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
 
         # If this is the first attempt, update review schedule appropriately
         if attempt_number == 1:

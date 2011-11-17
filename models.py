@@ -330,7 +330,10 @@ class UserExercise(db.Model):
     _struggling_conversion_tests = [
         ('struggling_problems_done', ConversionTypes.Counting),
         ('struggling_problems_done_post_struggling', ConversionTypes.Counting),
-        ('struggling_wrong_problems', ConversionTypes.Counting),
+        ('struggling_problems_wrong', ConversionTypes.Counting),
+        ('struggling_problems_wrong_post_struggling', ConversionTypes.Counting),
+        ('struggling_problems_correct', ConversionTypes.Counting),
+        ('struggling_problems_correct_post_struggling', ConversionTypes.Counting),
         ('struggling_gained_proficiency_all', ConversionTypes.Counting),
 
         # the user closed the "Need help?" dialog that pops up
@@ -464,9 +467,13 @@ class UserExercise(db.Model):
         if bucket == 'old':
             return self._is_struggling_old()
         elif bucket == 'accuracy_0.75':
-            return self.accuracy_model().is_struggling(minimum_accuracy=0.75)
+            return self.accuracy_model().is_struggling(
+                    minimum_accuracy=0.75,
+                    minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
         else:
-            return self.accuracy_model().is_struggling(minimum_accuracy=0.70)
+            return self.accuracy_model().is_struggling(
+                    minimum_accuracy=0.7,
+                    minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
 
     def _is_struggling_old(self):
         # TODO: update to incorporate new accuracy model and A/B test
