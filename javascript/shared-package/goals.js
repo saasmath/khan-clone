@@ -146,66 +146,36 @@ var GoalCollection = Backbone.Collection.extend({
         }, this);
     },
 
-    findExerciseObjectiveFor: function() {
-        var exerciseId = window.userExercise && userExercise.exercise || null;
+    findGoalWithObjective: function(internalId, specificType, generalType) {
         return this.find(function(goal) {
-            // find a goal with an objective for this exact exercise
+            // find a goal with an objective for this exact entity
             return _.find(goal.get('objectives'), function(ob) {
-                return ob.type == "GoalObjectiveExerciseProficiency" &&
-                    exerciseId == ob.internal_id;
+                return ob.type == specificType && internalId == ob.internal_id;
             });
         }) || this.find(function(goal) {
-            // otherwise find a goal with any exercise proficiency
+            // otherwise find a goal with any entity proficiency
             return _.find(goal.get('objectives'), function(ob) {
-                return ob.type == "GoalObjectiveAnyExerciseProficiency";
+                return ob.type == generalType;
             });
         }) || null;
-    },
-
-    findVideoObjectiveFor: function(url) {
-        var matchingGoal = null;
-
-        var getVideoId = function(url) {
-            var regex = /\/video\/([^\/?]+)/;
-            var matches = url.match(regex);
-            return matches ? matches[1] : '';
-        };
-
-        var videoId = getVideoId(url);
-
-        // find a goal with exactly this exercise
-        matchingGoal = this.find(function(goal) {
-            return _.find(goal.get('objectives'), function(ob) {
-                return ob.type == "GoalObjectiveWatchVideo" &&
-                    videoId == getVideoId(ob.url);
-            });
-        }) || null;
-
-        if (matchingGoal === null) {
-            // find an exercise process goal
-            matchingGoal = this.find(function(goal) {
-                return _.find(goal.get('objectives'), function(ob) {
-                    return ob.type == "GoalObjectiveAnyVideo";
-                });
-            }) || null;
-        }
-
-        return matchingGoal;
     },
 
     // find the most appriate goal to display for a given URL
     findActiveGoal: function() {
         var matchingGoal = null;
 
-        if (window.location.pathname.indexOf("/exercise") === 0) {
-            matchingGoal = this.findExerciseObjectiveFor();
+        if (window.location.pathname.indexOf("/exercise") === 0 &&
+                typeof userExercise !== 'undefined') {
+            matchingGoal = this.findGoalWithObjective(userExercise.exercise,
+                'GoalObjectiveExerciseProficiency',
+                'GoalObjectiveAnyExerciseProficiency');
             if (matchingGoal !== null) {
                 console.log('found a matching exercise goal');
             }
-        }
-        else if (window.location.pathname.indexOf("/video") === 0) {
-            var url = window.location.toString();
-            matchingGoal = this.findVideoObjectiveFor(url);
+        } else if (window.location.pathname.indexOf("/video") === 0 &&
+                 typeof Video.readableId !== 'undefined') {
+            matchingGoal = this.findGoalWithObjective(Video.readableId,
+                "GoalObjectiveWatchVideo", "GoalObjectiveAnyVideo");
             if (matchingGoal !== null) {
                 console.log('found a matching video goal');
             }
