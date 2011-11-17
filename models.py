@@ -210,7 +210,6 @@ class Exercise(db.Model):
             return exercise
 
     def related_videos_query(self):
-        exercise_videos = None
         query = ExerciseVideo.all()
         query.filter('exercise =', self.key()).order('exercise_order')
         return query
@@ -324,8 +323,8 @@ class UserExercise(db.Model):
     # "Struggling" model experiment parameters.
     _struggling_ab_test_alternatives = {
         'old': 8, # The original '>= 20 problems attempted' heuristic
-        'accuracy_0.75': 1, # Accuracy < 0.75 after a while is a bad sign
-        'accuracy_0.7': 1,  # Accuracy < 0.7 after a while is a bad sign
+        'accuracy_1.8': 1, # Using an accuracy model with 1.8 as the parameter
+        'accuracy_2.0': 1, # Using an accuracy model with 2.0 as the parameter
     }
     _struggling_conversion_tests = [
         ('struggling_problems_done', ConversionTypes.Counting),
@@ -460,25 +459,25 @@ class UserExercise(db.Model):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
     def is_struggling(self):
+        if self.has_been_proficient():
+            return False
+
         bucket = ab_test('Struggling model',
                 self._struggling_ab_test_alternatives,
                 self._struggling_conversion_names,
                 self._struggling_conversion_types)
         if bucket == 'old':
             return self._is_struggling_old()
-        elif bucket == 'accuracy_0.75':
-            return self.accuracy_model().is_struggling(
-                    minimum_accuracy=0.75,
-                    minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
         else:
+            # accuracy based model.
+            param = float(bucket.split('_')[1])
             return self.accuracy_model().is_struggling(
-                    minimum_accuracy=0.7,
+                    param=param,
+                    minimum_accuracy=consts.PROFICIENCY_ACCURACY_THRESHOLD,
                     minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
 
     def _is_struggling_old(self):
-        # TODO: update to incorporate new accuracy model and A/B test
-        return ((not self.has_been_proficient()) and
-                (self.streak == 0) and
+        return ((self.streak == 0) and
                 (self.total_done > 20))
 
     @staticmethod

@@ -55,7 +55,6 @@ def add_action_results(obj, dict_results):
                 badge = badges_dict.get(user_badge.badge_name)
 
                 if badge:
-
                     if not hasattr(badge, "user_badges"):
                         badge.user_badges = []
 
