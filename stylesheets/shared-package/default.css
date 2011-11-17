@@ -3546,7 +3546,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     margin-top: 10px
 }
 
-#popup-dialog .close-button {
+.close-button {
     float: right;
     color: black;
     font-size: 20px;
@@ -3557,5 +3557,8 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     -khtml-opacity: 0.2;
     -moz-opacity: 0.2;
     opacity: 0.2;
+}
+
+#popup-dialog .close-button {
     margin-top: 7px;
 }
