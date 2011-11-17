@@ -1919,12 +1919,12 @@ class UserExerciseCache(db.Model):
             if not user_exercise_cache or user_exercise_cache.version != UserExerciseCache.CURRENT_VERSION:
                 # This user's cached graph is missing or out-of-date,
                 # put it in the list of graphs to be regenerated.
-                async_queries.append(UserExercise.get_for_user_data(user_data_list[i]))
+                query = UserExercise.get_for_user_data(user_data_list[i])
+                query.run()
+                async_queries.append(query)
 
         if len(async_queries) > 0:
 
-            # Run the async queries
-            results = util.async_queries(async_queries)
             caches_to_put = []
             exercises = Exercise.get_all_use_cache()
 
@@ -1933,7 +1933,7 @@ class UserExerciseCache(db.Model):
             for i, user_exercise_cache in enumerate(user_exercise_caches):
                 if not user_exercise_cache or user_exercise_cache.version != UserExerciseCache.CURRENT_VERSION:
                     user_data = user_data_list[i]
-                    user_exercises = results[index_result].get_result()
+                    user_exercises = async_queries[index_result]
 
                     user_exercise_cache = UserExerciseCache.generate(user_data, user_exercises)
 
