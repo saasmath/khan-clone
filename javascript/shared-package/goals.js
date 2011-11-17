@@ -41,7 +41,8 @@ var Goal = Backbone.Model.extend({
             complete: progress >= 1,
             objectiveProgress: _.filter(this.get('objectives'), function(obj) {
                 return obj.progress >= 1;
-            }).length
+            }).length,
+            updatedTime: new Date(this.get('updated')).getTime()
         }, {silent: true});
     },
 
@@ -112,7 +113,9 @@ var GoalCollection = Backbone.Collection.extend({
     },
 
     comparator: function(goal) {
-        return goal.get("updated");
+        // display most recently updated goal at the top of the list.
+        // http://stackoverflow.com/questions/5636812/sorting-strings-in-reverse-order-with-backbone-js/5639070#5639070
+        return -goal.get("updatedTime");
     },
 
     active: function(goal) {
@@ -169,16 +172,10 @@ var GoalCollection = Backbone.Collection.extend({
             matchingGoal = this.findGoalWithObjective(userExercise.exercise,
                 'GoalObjectiveExerciseProficiency',
                 'GoalObjectiveAnyExerciseProficiency');
-            if (matchingGoal !== null) {
-                console.log('found a matching exercise goal');
-            }
         } else if (window.location.pathname.indexOf("/video") === 0 &&
                  typeof Video.readableId !== 'undefined') {
             matchingGoal = this.findGoalWithObjective(Video.readableId,
                 "GoalObjectiveWatchVideo", "GoalObjectiveAnyVideo");
-            if (matchingGoal !== null) {
-                console.log('found a matching video goal');
-            }
         }
 
         // if we're not on a matching exercise or video page, just show the
