@@ -1072,13 +1072,17 @@ class Video(Searchable, db.Model):
     INDEX_TITLE_FROM_PROP = 'title'
     INDEX_USES_MULTI_ENTITIES = False
 
+    @staticmethod
+    def get_relative_url(readable_id):
+        return '/video/%s' % readable_id
+
+    @property
+    def relative_url(self):
+        return Video.get_relative_url(self.readable_id)
+
     @property
     def ka_url(self):
-        return self.get_ka_url(self.readable_id)
-
-    @staticmethod
-    def get_ka_url(readable_id):
-        return util.absolute_url('/video/%s' % readable_id)
+        return util.absolute_url(self.relative_url)
 
     @property
     def download_urls(self):
