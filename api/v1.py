@@ -1,3 +1,6 @@
+from templatefilters import escapejs
+from itertools import izip
+
 import copy
 import logging
 
@@ -485,6 +488,53 @@ def user_exercises_all():
         results.append(user_exercise)
 
     return results
+
+@route("/api/v1/coach/progress/summary", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def coach_progress_summary():
+    user_data = models.UserData.current()
+    if not user_data:
+        return None
+
+    user_data_coach = get_visible_user_data_from_request(disable_coach_visibility = True)
+
+    # TODO: incorporate Desmond's changes re API  list ids
+    list_students = user_data_coach.get_students_data()
+    list_students = sorted(list_students, key=lambda student: student.nickname)
+
+    exercises = models.Exercise.get_all_use_cache()
+    user_exercise_graphs = models.UserExerciseGraph.get(list_students)
+
+    exercise_data = {}
+
+    for (student, user_exercise_graph) in izip(list_students, user_exercise_graphs):
+        escapejsed_nickname = escapejs(student.nickname)
+        escapejesed_student_email = escapejs(student.email)
+        student_review_exercise_names = user_exercise_graph.review_exercise_names()
+        for exercise in exercises:
+            exercise_name = exercise.name
+            graph_dict = user_exercise_graph.graph_dict(exercise_name)
+
+            if not exercise_data.has_key(exercise_name):
+                exercise_data[exercise_name] = { 'review': [], 'proficient': [], 'struggling': [], 'started': [], 'not_started': [] }
+
+            if graph_dict['proficient']:
+                if exercise_name in student_review_exercise_names:
+                    status = 'review'
+                else:
+                    status = 'proficient'
+            elif graph_dict['struggling']:
+                status = 'struggling'
+            elif graph_dict['total_done'] > 0:
+                status = 'started'
+            else:
+                status = 'not_started'
+
+            exercise_data[exercise_name][status].append({'nickname': escapejsed_nickname, 'email': escapejesed_student_email})
+
+    return exercise_data
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
 @oauth_optional()

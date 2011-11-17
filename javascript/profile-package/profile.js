@@ -285,6 +285,8 @@ var Profile = {
             apiCallback = this.renderStudentGoals;
         } else if (href.indexOf('/api/v1/user/exercises') > -1) {
 			apiCallback = this.renderExercisesTable;
+        } else if (href.indexOf('/api/v1/coach/progress/summary') > -1) {
+            apiCallback = this.renderProgressSummary;
         }
 
         $.ajax({
@@ -677,6 +679,26 @@ var Profile = {
         $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
     },
 
+    renderProgressSummary: function(data) {
+        // Ship it!
+        if (data === null) {
+            return;
+        }
+        var html = [];
+        html.push("<div id=\"module-progress\">");
+        jQuery.each(data, function(exercise, buckets) {
+            html.push("<p>" + exercise + "</p>");
+            jQuery.each(buckets, function(bucket, students) {
+                html.push("<p>" + bucket + "</p>");
+                jQuery.each(students, function(index, student) {
+                    html.push("<p>nickname: " + student.nickname + " student email: " + student.email + "</p>");
+                })
+                html.push("<p>")
+            });
+        });
+        html.push("</div>");
+        $("#graph-content").html( html.join("") );
+    },
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
 	 */

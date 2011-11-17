@@ -85,6 +85,12 @@
             </p>
         </li>
         <li>
+            {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "coach/progress/summary", selected_graph_type, list_id) }}
+            <p class="accordion-content">
+               Shows you which exercises your class has worked on and completed, grouped by exercise.
+            </p>
+        </li>
+        <li>
             {{ profile_macros.class_graph_link(user_data_coach, "Daily Activity Report", "classtime", selected_graph_type, list_id) }}
             <p class="accordion-content">
                 Shows your total class activity on a specific date.
