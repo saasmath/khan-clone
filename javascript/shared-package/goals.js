@@ -146,80 +146,36 @@ var GoalCollection = Backbone.Collection.extend({
         }, this);
     },
 
-    findExerciseObjectiveFor: function(url) {
-        var matchingGoal = null;
-
-        var getExerciseId = function(url) {
-            var regex = /\/exercise\/([^\/?]+)/;
-            var matches = url.match(regex);
-            return matches ? matches[1] : '';
-        };
-
-        var exerciseId = getExerciseId(url);
-        // find a goal with exactly this exercise
-        matchingGoal = this.find(function(goal) {
+    findGoalWithObjective: function(internalId, specificType, generalType) {
+        return this.find(function(goal) {
+            // find a goal with an objective for this exact entity
             return _.find(goal.get('objectives'), function(ob) {
-                return ob.type == "GoalObjectiveExerciseProficiency" &&
-                    exerciseId == getExerciseId(ob.url);
+                return ob.type == specificType && internalId == ob.internal_id;
+            });
+        }) || this.find(function(goal) {
+            // otherwise find a goal with any entity proficiency
+            return _.find(goal.get('objectives'), function(ob) {
+                return ob.type == generalType;
             });
         }) || null;
-
-        if ( matchingGoal === null ) {
-            // find an exercise process goal
-            matchingGoal = this.find(function(goal) {
-                return _.find(goal.get('objectives'), function(ob) {
-                    return ob.type == "GoalObjectiveAnyExerciseProficiency";
-                });
-            }) || null;
-        }
-
-        return matchingGoal;
-    },
-
-    findVideoObjectiveFor: function(url) {
-        var matchingGoal = null;
-
-        var getVideoId = function(url) {
-            var regex = /\/video\/([^\/?]+)/;
-            var matches = url.match(regex);
-            return matches ? matches[1] : '';
-        };
-
-        var videoId = getVideoId(url);
-
-        // find a goal with exactly this exercise
-        matchingGoal = this.find(function(goal) {
-            return _.find(goal.get('objectives'), function(ob) {
-                return ob.type == "GoalObjectiveWatchVideo" &&
-                    videoId == getVideoId(ob.url);
-            });
-        }) || null;
-
-        if (matchingGoal === null) {
-            // find an exercise process goal
-            matchingGoal = this.find(function(goal) {
-                return _.find(goal.get('objectives'), function(ob) {
-                    return ob.type == "GoalObjectiveAnyVideo";
-                });
-            }) || null;
-        }
-
-        return matchingGoal;
     },
 
     // find the most appriate goal to display for a given URL
     findActiveGoal: function() {
         var matchingGoal = null;
-        var url = window.location.toString();
 
-        if (window.location.pathname.indexOf("/exercise") === 0) {
-            matchingGoal = this.findExerciseObjectiveFor(url);
+        if (window.location.pathname.indexOf("/exercise") === 0 &&
+                typeof userExercise !== 'undefined') {
+            matchingGoal = this.findGoalWithObjective(userExercise.exercise,
+                'GoalObjectiveExerciseProficiency',
+                'GoalObjectiveAnyExerciseProficiency');
             if (matchingGoal !== null) {
                 console.log('found a matching exercise goal');
             }
-        }
-        else if (window.location.pathname.indexOf("/video") === 0) {
-            matchingGoal = this.findVideoObjectiveFor(url);
+        } else if (window.location.pathname.indexOf("/video") === 0 &&
+                 typeof Video.readableId !== 'undefined') {
+            matchingGoal = this.findGoalWithObjective(Video.readableId,
+                "GoalObjectiveWatchVideo", "GoalObjectiveAnyVideo");
             if (matchingGoal !== null) {
                 console.log('found a matching video goal');
             }
@@ -266,6 +222,7 @@ var GoalBookView = Backbone.View.extend({
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.added, this);
+        this.model.bind('goalcompleted', this.show, this);
     },
 
     show: function() {
@@ -304,7 +261,6 @@ var GoalBookView = Backbone.View.extend({
         var completed = this.model.filter(function(goal) { return goal.get('complete'); });
 
         var completedEls = this.$('.recently-completed');
-        console.log('completed:', completedEls);
         if ( completedEls.length > 0 ) {
             this.animateThenHide(completedEls);
         } else {
@@ -312,9 +268,9 @@ var GoalBookView = Backbone.View.extend({
         }
     },
 
-    added: function(goal) {
-        this.render();
-
+    added: function(goal, options) {
+        this.needsRerender = true;
+        this.show();
         // add a highlight to the new goal
         $(".goal[data-id=" + goal.get('id') + "]").effect('highlight', {}, 2500);
     },
@@ -398,7 +354,9 @@ var GoalSummaryView = Backbone.View.extend({
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
+        this.model.bind('completed', this.justFinishedObjective, this);
     },
+
     render: function() {
         console.log("rendering GoalSummaryView", this);
         var active = this.model.active() || null;
@@ -410,18 +368,13 @@ var GoalSummaryView = Backbone.View.extend({
             $(this.el).empty();
         }
         return this;
+    },
+
+    justFinishedObjective: function(newGoal, newObj) {
+        this.render();
+        this.$('#goals-drawer').effect('highlight', {}, 2500);
     }
 });
-
-var justFinishedObjective = function(newGoal, newObj) {
-    console.log("Just finished objective", newObj);
-    $("#goals-congrats").text('Just finished objective!').show().fadeOut(3000);
-};
-
-var justFinishedGoal = function(goal) {
-    console.log("Just finished goal", goal);
-    myGoalBookView.show();
-};
 
 $(function() {
     window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
@@ -439,16 +392,7 @@ $(function() {
     });
 
     myGoalSummaryView.render();
-    GoalBook.bind('completed', justFinishedObjective);
-    GoalBook.bind('goalcompleted', justFinishedGoal);
 });
-
-var requestGoals = function() {
-    $.ajax({ url: "/api/v1/user/goals/current", success: updateGoals });
-};
-var updateGoals = function(goals) {
-    GoalBook.reset(goals);
-};
 
 var predefinedGoalsList = {
     "five_exercises" : {
@@ -519,8 +463,6 @@ var createSimpleGoalDialog = {
     goalCreationComplete: function(goal) {
         createSimpleGoalDialog.hideDialog();
         GoalBook.add(goal);
-        console.log("Created goal");
-        myGoalBookView.show();
         if (window.Profile)
             window.Profile.showGoalType('current');
     }

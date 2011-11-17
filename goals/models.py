@@ -348,7 +348,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
             self.progress = 0.0
 
     def url(self):
-        return Video.get_ka_url(self.video_readable_id)
+        return Video.get_relative_url(self.video_readable_id)
 
     def internal_id(self):
         return self.video_readable_id
@@ -368,7 +368,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
 
     def url(self):
         if self.video_readable_id:
-            return Video.get_ka_url(self.video_readable_id)
+            return Video.get_relative_url(self.video_readable_id)
         else:
             return "/"
 
