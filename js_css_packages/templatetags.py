@@ -50,17 +50,14 @@ def js_package(package_name):
     base_url = (package.get("base_url") or
                 ("/javascript/%s-package" % package_name))
     if not use_compressed_packages():
-        templates = []
-
-        # In debug mode, templates are served as inline <script> tags.
-        if "templates" in package:
-            for file_name in package["templates"]:
-                templates.append(get_inline_template(package_name, file_name))
-
         list_js = []
         for file_name in package["files"]:
-            list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, file_name))
-        return "\n".join(templates + list_js)
+            if file_name.split('.')[-1] == 'handlebars':
+            # In debug mode, templates are served as inline <script> tags.
+                list_js.append(get_inline_template(package_name, file_name))
+            else:
+                list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, file_name))
+        return "\n".join(list_js)
     else:
         # TODO: handle pre-compiled templates
         return "<script type='text/javascript' src='%s/%s'></script>" % (util.static_url(base_url), package["hashed-filename"])
