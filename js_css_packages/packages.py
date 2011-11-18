@@ -79,6 +79,7 @@ javascript = {
             "highcharts.js",
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
+            "profile-class-progress-report.handlebars",
             "exercise_progress.handlebars",
             "profile.js",
         ]

@@ -620,6 +620,10 @@ input.goal-title:focus {
   background-clip: padding-box;
 }
 
+.student-module-status.notmatching,
+.student-module-status.light.notmatching {
+  background-color: #aaa;
+}
 
 .modal .goalpicker h3{
   font-size:24px;

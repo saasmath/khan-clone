@@ -2326,6 +2326,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 #module-progress td.student-email a:hover {
     text-decoration: underline;
 }
+#module-progress td.student-email.hidden-students {
+    font-style: italic;
+}
+#module-progress tr.student-email-row.highlight td,
+#module-progress th.student-exercises-col.highlight {
+    background-color: #DD8;
+}
 
 /* End of teacher Dashboard Styles */
 
