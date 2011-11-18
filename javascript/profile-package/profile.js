@@ -901,42 +901,21 @@ var GoalProfileView = Backbone.View.extend({
         }));
 
         jel.find(".goal").hover(
-        function () {
-            $(this).find(".goal-description .summary-light").hide();
-            $(this).find(".goal-controls").show();
-        },
-        function () {
-            $(this).find(".goal-controls").hide();
-            $(this).find(".goal-description .summary-light").show();
-        });
-                
-        $( "#goalpicker .newgoal" ).hoverIntent(
-          function hfa( evt ){
-            $( "#goalpicker .newgoal" ).not( this ).hoverFlow( evt.type, { opacity : .2}, 750, "easeInOutCubic" );
-            $( ".info.pos-left", this ).hoverFlow( evt.type, { left : "+=30px", opacity : "show" }, 350, "easeInOutCubic" );
-            $( ".info.pos-right, .info.pos-top", this ).hoverFlow( evt.type, { right : "+=30px", opacity : "show" }, 350, "easeInOutCubic" );
-          }, 
-          function hfo( evt ) {
-            $( "#goalpicker .newgoal" ).not( this ).hoverFlow( evt.type, { opacity : 1}, 175, "easeInOutCubic" );
-            $( ".info.pos-left", this).hoverFlow( evt.type, { left : "-=30px", opacity : "hide" }, 150, "easeInOutCubic" );
-            $( ".info.pos-right, .info.pos-top", this).hoverFlow( evt.type, { right : "-=30px", opacity : "hide" }, 150, "easeInOutCubic" );
-          }
+            function () {
+                $(this).find(".goal-description .summary-light").hide();
+                $(this).find(".goal-controls").show();
+            },
+            function () {
+                $(this).find(".goal-controls").hide();
+                $(this).find(".goal-description .summary-light").show();
+            }
         );
-        $( "#goalpicker .newgoal" ).bind( "mouseup", function( evt ){
-          evt.preventDefault();
-          if( $( this ).hasClass( "custom" ) ){
-            createSimpleGoalDialog.createCustomGoal();
-            return;
-          }
-          if( $( this ).hasClass( "five_exercises" ) ){
-            createSimpleGoalDialog.createSimpleGoal("five_exercises");
-            return;
-          }
-          if( $( this ).hasClass( "five_videos" ) ){
-            createSimpleGoalDialog.createSimpleGoal("five_videos");
-            return;
-          }
-        });
+
+        // attach a NewGoalView to the new goals html
+        var newGoalEl = this.$(".goalpicker");
+        if ( newGoalEl.length > 0) {
+            this.newGoalsView = new NewGoalView({el: newGoalEl});
+        }
 
         Profile.AddObjectiveHover(jel);
         return jel;

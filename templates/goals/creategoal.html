@@ -354,7 +354,8 @@ var GoalCreator = {
             data: $(form).serialize(),
             success: function(json) {
                 GoalCreator.creating = false;
-                createSimpleGoalDialog.goalCreationComplete(json);
+                globalPopupDialog.hide();
+                GoalBook.add(json);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 $('#goal-commit-response').html('Goal creation failed: ' + jqXHR.responseText).show();

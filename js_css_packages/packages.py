@@ -19,6 +19,7 @@ def register_conditional_file(debug_name, prod_name):
 javascript = {
     "shared": {
         "files": [
+            # general purpose libs
             "jquery.js",
             "jquery-ui.js",
             "jquery.ui.menu.js",
@@ -30,7 +31,10 @@ javascript = {
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
             "jquery.tmpl.min.js",
+            "bootstrap-modal.js",
             "../../gae_bingo/static/js/gae_bingo.js",
+
+            # application code & templates:
             "pageutil.js",
             "api.js",
             "social.js",
@@ -42,13 +46,13 @@ javascript = {
             "goalbook.handlebars",
             "goal-objectives.handlebars",
             "goal-new.handlebars",
+            "goal-new-dialog.handlebars",
             "goals.js",
         ]
     },
     "video": {
         "files": [
             "jquery.qtip.js",
-            "bootstrap-modal.js",
             "video.js",
             "discussion.js",
             "modalvideo.js",
@@ -148,6 +152,7 @@ stylesheets = {
             "profile.css",
             "museo-sans.css",
             "jquery-ui-1.8.4.custom.css",
+            "bootstrap-modal.css",
             "goals.css",
         ]
     },

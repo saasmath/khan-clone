@@ -224,22 +224,12 @@ ul.inline-list, ul.inline-list li {
     box-shadow: 0 1px 6px rgba(0,0,0,.3);
 }
 
-#goals-nav-container .hide-goals {
+#goals-nav-container .close-button {
     cursor: pointer;
     position: absolute;
     right: 20px;
     bottom: 17px;
     display: block;
-}
-
-#goals-nav-container .close-cross {
-    position: relative;
-    top: 3px;
-    left: 0;
-    width: 14px;
-    height: 14px;
-    opacity: .2;
-    /* whatever we need to do to make this work with IE */
 }
 
 #class-student-goal .student-name {
@@ -482,29 +472,29 @@ input#goal-title:focus {
 
 /* The New Goal ui */
 
-#goalpicker {
+.goalpicker {
   width:100%;
   height:auto;
   min-height:90%;
   padding-left:3%;
 }
 
-#goalpicker .newgoal {
+.goalpicker .newgoal {
   width:90%;
   padding:4em 3% 2em 1%;
   float:left;
   clear:none;
   position:relative;
   -webkit-border-radius: 5px;
-  
+
 }
 
-#goalpicker .newgoal.small{
+.goalpicker .newgoal.small{
   width:43%;
 }
 
-#goalpicker h3, 
-#goalpicker h4 {
+.goalpicker h3,
+.goalpicker h4 {
   font-size:40px;
   font-family:MuseoSans100;
   font-weight:normal;
@@ -513,7 +503,7 @@ input#goal-title:focus {
   margin:0;
   letter-spacing:4px;
 }
-#goalpicker h4 {
+.goalpicker h4 {
   text-transform:uppercase;
   font-family:MuseoSans900;
   font-weight:normal;
@@ -522,22 +512,22 @@ input#goal-title:focus {
   line-height:28px;
 }
 
-#goalpicker a{
+.goalpicker a{
   color: #777;
   text-decoration:none;
 }
-#goalpicker .newgoal:hover{
+.goalpicker .newgoal:hover{
   cursor:pointer;
   z-index:10;
   -webkit-box-shadow:0 0 6px 1px #678D00;
 }
 
-#goalpicker .newgoal:hover a,
-#goalpicker .info button {
+.goalpicker .newgoal:hover a,
+.goalpicker .info button {
   color:#678D00;
 }
 
-#goalpicker .info button {
+.goalpicker .info button {
   font-family:MuseoSans900;
   font-weight:normal;
   text-transform:uppercase;
@@ -553,7 +543,7 @@ input#goal-title:focus {
   cursor:pointer;
 }
 
-#goalpicker .info, #goalpicker .info:hover  {
+.goalpicker .info, .goalpicker .info:hover  {
   display:none;
   cursor: default;
   position:absolute;
@@ -568,7 +558,7 @@ input#goal-title:focus {
 }
 
 
-#goalpicker .info:after {
+.goalpicker .info:after {
   content:'';
   display:block;
   position:absolute;
@@ -581,21 +571,48 @@ input#goal-title:focus {
   border-width: 10px;
 }
 
-#goalpicker .info.pos-right {
+.goalpicker .info.pos-right {
   left:auto;
   right:-225px;
 }
-#goalpicker .info.pos-right:after {
+.goalpicker .info.pos-right:after {
   left:-20px;
   border-color:transparent #eee transparent transparent;
 }
 
-#goalpicker .info.pos-top {
+.goalpicker .info.pos-top {
   left:auto;
   right:25px;
   top: -40px;
 }
-#goalpicker .info.pos-top:after {
+.goalpicker .info.pos-top:after {
   left:-20px;
   border-color:transparent #eee transparent transparent;
+}
+
+/* goals-new-dialog */
+.modal.goal-new {
+  position: fixed;
+  /* set the point on which top and left operate to the middle top edge*/
+  width: 900px; /* this is redundant but here for clarity */
+  margin: 0 0 0 -450px;
+  top: 90px;
+  left: 50%;
+
+  z-index: 11000;
+  background-color: #ffffff;
+  border: 1px solid #999;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  *border: 1px solid #999;
+  /* IE6-7 */
+
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+  -webkit-background-clip: padding-box;
+  -moz-background-clip: padding-box;
+  background-clip: padding-box;
 }

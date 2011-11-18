@@ -199,7 +199,7 @@ var GoalBookView = Backbone.View.extend({
 
     initialize: function() {
         $(this.el)
-            .delegate('.hide-goals', 'click', $.proxy(this.hide, this))
+            .delegate('.close-button', 'click', $.proxy(this.hide, this))
 
             // listen to archive button on goals
             .delegate('.goal.recently-completed', 'mouseenter mouseleave', function( e ) {
@@ -217,6 +217,12 @@ var GoalBookView = Backbone.View.extend({
                 var el = $(e.target).closest('.goal');
                 this.animateGoalToHistory(el);
                 // todo: remove model
+            }, this))
+
+            .delegate( '.new-goal', 'click', $.proxy(function( e ) {
+                e.preventDefault();
+                this.hide();
+                newGoalDialog.show();
             }, this));
 
         this.model.bind('change', this.render, this);
@@ -349,7 +355,7 @@ var GoalSummaryView = Backbone.View.extend({
 
     initialize: function(args) {
         $(this.el).delegate('#goals-drawer', 'click',
-            $.proxy(args.goalBook.show, args.goalBook));
+            $.proxy(args.goalBookView.show, args.goalBookView));
 
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
@@ -389,63 +395,62 @@ $(function() {
     window.myGoalSummaryView = new GoalSummaryView({
         el: "#goals-container",
         model: GoalBook,
-        goalBook: myGoalBookView
+        goalBookView: myGoalBookView
     });
 
     myGoalSummaryView.render();
 });
 
-var predefinedGoalsList = {
-    "five_exercises" : {
-        "title": "Complete Five Exercises",
-        "objective1_type": "GoalObjectiveAnyExerciseProficiency",
-        "objective2_type": "GoalObjectiveAnyExerciseProficiency",
-        "objective3_type": "GoalObjectiveAnyExerciseProficiency",
-        "objective4_type": "GoalObjectiveAnyExerciseProficiency",
-        "objective5_type": "GoalObjectiveAnyExerciseProficiency"
-    },
-    "five_videos" : {
-        "title": "Watch Five Videos",
-        "objective1_type": "GoalObjectiveAnyVideo",
-        "objective2_type": "GoalObjectiveAnyVideo",
-        "objective3_type": "GoalObjectiveAnyVideo",
-        "objective4_type": "GoalObjectiveAnyVideo",
-        "objective5_type": "GoalObjectiveAnyVideo"
-    }
-};
+var NewGoalView = Backbone.View.extend({
+    template: Templates.get( 'shared.goal-new' ),
 
-var createSimpleGoalDialog = {
-    showDialog: function() {
-        myGoalBookView.hide();
-        globalPopupDialog.show('create-goal', [350,280], 'Set a new learning goal', $("#goal-create-dialog").html(), true);
-    },
-    hideDialog: function() {
-        globalPopupDialog.hide();
+    initialize: function() {
+        // this View assumes the element is pre-rendered, so automatically
+        // hookup events
+        this.hookup();
     },
 
-    createSimpleGoal: function( kind ) {
-        var selected_type = kind || $("#popup-dialog")
-            .find("input[name=\"goal-type\"]:checked").val();
-        var goal = predefinedGoalsList[selected_type];
-        var prevButtonHtml = $("#create-simple-goal-button").html();
+    hookup: function() {
+        $(this.el)
+            .delegate( ".newgoal.custom", "click", $.proxy(this.createCustomGoal, this))
+            .delegate( ".newgoal.five_exercises", "click", $.proxy(function(e) {
+                e.preventDefault();
+                this.createSimpleGoal("five_exercises");
+            }, this))
+            .delegate( ".newgoal.five_videos", "click", $.proxy(function(e) {
+                e.preventDefault();
+                this.createSimpleGoal("five_videos");
+            }, this));
 
-        $('#create-simple-goal-error').html('');
-        $("#create-simple-goal-button").html("<a class='simple-button action-gradient'><img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Adding goal... </span></a>");
+        var that = this;
+        this.$('.newgoal').hoverIntent(
+            function hfa( evt ){
+                that.$( ".newgoal" ).not( this ).hoverFlow( evt.type, { opacity : 0.2}, 750, "easeInOutCubic" );
+                $( ".info.pos-left", this ).hoverFlow( evt.type, { left : "+=30px", opacity : "show" }, 350, "easeInOutCubic" );
+                $( ".info.pos-right, .info.pos-top", this ).hoverFlow( evt.type, { right : "+=30px", opacity : "show" }, 350, "easeInOutCubic" );
+            },
+            function hfo( evt ) {
+                that.$( ".newgoal" ).not( this ).hoverFlow( evt.type, { opacity : 1}, 175, "easeInOutCubic" );
+                $( ".info.pos-left", this).hoverFlow( evt.type, { left : "-=30px", opacity : "hide" }, 150, "easeInOutCubic" );
+                $( ".info.pos-right, .info.pos-top", this).hoverFlow( evt.type, { right : "-=30px", opacity : "hide" }, 150, "easeInOutCubic" );
+            }
+        );
+    },
+
+    createSimpleGoal: function( selectedType ) {
+        this.trigger("creating");
         $.ajax({
             url: "/api/v1/user/goals",
             type: 'POST',
             dataType: 'json',
-            data: $.param(goal),
-            success: function(json) {
-                createSimpleGoalDialog.goalCreationComplete(json);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                $('#create-simple-goal-error').html('Goal creation failed');
-                $("#create-simple-goal-button").html(prevButtonHtml);
-            }
+            data: $.param(NewGoalView.predefinedGoalsList[selectedType]),
+            success: $.proxy(GoalBook.add, GoalBook)
         });
     },
-    createCustomGoal: function() {
+
+    createCustomGoal: function( e ) {
+        this.trigger("creating");
+        e.preventDefault();
         globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', $("#generic-loading-dialog").html(), false);
         $.ajax({
             url: "/goals/new?need_maps_package=" + (!window.KnowledgeMap ? "true" : "false"),
@@ -460,15 +465,62 @@ var createSimpleGoalDialog = {
                 $("#generic-loading-message").html('Page load failed. Please try again.');
             }
         });
-    },
-    goalCreationComplete: function(goal) {
-        createSimpleGoalDialog.hideDialog();
-        GoalBook.add(goal);
-        if (window.Profile)
-            window.Profile.showGoalType('current');
     }
-};
+}, {
+    // todo: convert these to real models?
+    predefinedGoalsList: {
+        "five_exercises" : {
+            "title": "Complete Five Exercises",
+            "objective1_type": "GoalObjectiveAnyExerciseProficiency",
+            "objective2_type": "GoalObjectiveAnyExerciseProficiency",
+            "objective3_type": "GoalObjectiveAnyExerciseProficiency",
+            "objective4_type": "GoalObjectiveAnyExerciseProficiency",
+            "objective5_type": "GoalObjectiveAnyExerciseProficiency"
+        },
+        "five_videos" : {
+            "title": "Watch Five Videos",
+            "objective1_type": "GoalObjectiveAnyVideo",
+            "objective2_type": "GoalObjectiveAnyVideo",
+            "objective3_type": "GoalObjectiveAnyVideo",
+            "objective4_type": "GoalObjectiveAnyVideo",
+            "objective5_type": "GoalObjectiveAnyVideo"
+        }
+    }
+});
+
+var NewGoalDialog = Backbone.View.extend({
+    template: Templates.get( "shared.goal-new-dialog" ),
+
+    initialize: function() {
+        this.render();
+        GoalBook.bind('add', this.hide, this);
+    },
+
+    render: function() {
+        this.el = $(this.template()).appendTo(document.body).get(0);
+        this.newGoalView = new NewGoalView({el: this.$('.goalpicker')});
+        this.newGoalView.bind('creating', this.hide, this);
+        return this;
+    },
+
+    show: function() {
+        $(this.el)
+            .modal({
+                keyboard: true,
+                backdrop: true,
+                show: true
+            });
+    },
+
+    hide: function() {
+        $(this.el).modal('hide');
+    }
+});
+
+$(function() {
+    window.newGoalDialog = new NewGoalDialog();
+});
 
 Handlebars.registerPartial('goal-objectives', Templates.get( "shared.goal-objectives" )); // TomY TODO do this automatically?
-Handlebars.registerPartial('goal-new', Templates.get( "shared.goal-new" )); 
+Handlebars.registerPartial('goal-new', Templates.get( "shared.goal-new" ));
 
