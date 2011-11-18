@@ -1113,7 +1113,7 @@ def abandon_user_goal(id):
     return goal.get_visible_data(None)
 
 # LOGIN? TomY TODO
-@route("/api/v1/user/goals/delete/<id>", methods=["POST"])
+@route("/api/v1/user/goals/<id>", methods=["DELETE"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1133,7 +1133,7 @@ def delete_user_goal(id):
     return {}
 
 # Developer only perhaps? TomY TODO
-@route("/api/v1/user/goals/deleteall", methods=["POST"])
+@route("/api/v1/user/goals", methods=["DELETE"])
 @oauth_optional()
 @jsonp
 @jsonify
