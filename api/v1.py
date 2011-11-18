@@ -1066,6 +1066,31 @@ def get_user_goal(id):
     return goal.get_visible_data(None)
 
 
+@route("/api/v1/user/goals/<id>", methods=["PUT"])
+@oauth_optional()
+@jsonp
+@jsonify
+def put_user_goal(id):
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    goal_data = user_data.get_goal_data()
+    goal = GoalList.find_by_id(goal_data, id)
+
+    if not goal:
+        return api_invalid_param_response("Could not find goal with ID " + str(id))
+
+    goal_json = request.json
+
+    # currently all you can modify is the title
+    if goal_json['title'] != goal.title:
+        goal.title = goal_json['title']
+        goal.put()
+
+    return goal.get_visible_data(None)
+
+
 # LOGIN? TomY TODO
 @route("/api/v1/user/goals/abandon/<id>", methods=["POST"])
 @oauth_optional()
