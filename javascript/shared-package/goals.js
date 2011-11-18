@@ -347,9 +347,6 @@ var GoalBookView = Backbone.View.extend({
     }
 });
 
-// should probably do this for all templates
-Handlebars.registerPartial('goalbook-row', Templates.get( 'shared.goalbook-row' ));
-
 var GoalSummaryView = Backbone.View.extend({
     template: Templates.get( "shared.goal-summary-area" ),
 
@@ -383,23 +380,6 @@ var GoalSummaryView = Backbone.View.extend({
     }
 });
 
-$(function() {
-    window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
-    APIActionResults.register( "updateGoals",
-        $.proxy(GoalBook.incrementalUpdate, window.GoalBook) );
-
-    window.myGoalBookView = new GoalBookView({
-        el: "#goals-nav-container",
-        model: GoalBook
-    });
-    window.myGoalSummaryView = new GoalSummaryView({
-        el: "#goals-container",
-        model: GoalBook,
-        goalBookView: myGoalBookView
-    });
-
-    myGoalSummaryView.render();
-});
 
 var NewGoalView = Backbone.View.extend({
     template: Templates.get( 'shared.goal-new' ),
@@ -518,9 +498,25 @@ var NewGoalDialog = Backbone.View.extend({
 });
 
 $(function() {
+    window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
+    APIActionResults.register( "updateGoals",
+        $.proxy(GoalBook.incrementalUpdate, window.GoalBook) );
+
+    window.myGoalBookView = new GoalBookView({
+        el: "#goals-nav-container",
+        model: GoalBook
+    });
+    window.myGoalSummaryView = new GoalSummaryView({
+        el: "#goals-container",
+        model: GoalBook,
+        goalBookView: myGoalBookView
+    });
+
+    myGoalSummaryView.render();
     window.newGoalDialog = new NewGoalDialog();
 });
 
-Handlebars.registerPartial('goal-objectives', Templates.get( "shared.goal-objectives" )); // TomY TODO do this automatically?
+// todo: should we do this globally?
+Handlebars.registerPartial('goal-objectives', Templates.get( "shared.goal-objectives" ));
+Handlebars.registerPartial('goalbook-row', Templates.get( 'shared.goalbook-row' ));
 Handlebars.registerPartial('goal-new', Templates.get( "shared.goal-new" ));
-
