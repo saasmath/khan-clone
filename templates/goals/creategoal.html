@@ -96,7 +96,7 @@ var GoalCreator = {
             objectives: GoalCreator.objectives
         };
 
-        var view = Templates.get("shared.goals-create")(goalObject);
+        var view = Templates.get("shared.goal-create")(goalObject);
         $("#create-goal-view").html(view);
 
         if (GoalCreator.objectives.length < 2) {
