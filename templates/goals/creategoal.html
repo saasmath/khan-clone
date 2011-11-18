@@ -96,7 +96,7 @@ var GoalCreator = {
             objectives: GoalCreator.objectives
         };
 
-        var view = $("#goals-create-tmpl").tmplPlugin(goalObject);
+        var view = Templates.get("shared.goals-create")(goalObject);
         $("#create-goal-view").html(view);
 
         if (GoalCreator.objectives.length < 2) {
@@ -429,18 +429,4 @@ function createGoalInitialize() {
     </div>
   </div>
   </article>
-
-{%- raw -%}
-<script id="goals-create-tmpl" type="text/x-jquery-tmpl">
-    <div class="goal pulls">
-        <p class="goal-description" class="pulled"></p>
-        <ul class="inline-list objective-list">
-        {{each objectives}}
-            <li class="objective"><a class="objective simple-button action-gradient blue ${$value.css}" href="${$value.url}" data-progress="${$value.progress}"><span class="objective-description">${$value.description}</span></a></li>
-        {{/each}}
-        </ul>
-        <div style="clear: both;"></div>
-    </div>
-</script>
-{%- endraw -%}
 

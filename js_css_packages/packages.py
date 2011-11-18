@@ -47,6 +47,7 @@ javascript = {
             "goal-objectives.handlebars",
             "goal-new.handlebars",
             "goal-new-dialog.handlebars",
+            "goal-create.handlebars",
             "goals.js",
         ]
     },
