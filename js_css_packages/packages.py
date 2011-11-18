@@ -41,6 +41,7 @@ javascript = {
             "goalbook-row.handlebars",
             "goalbook.handlebars",
             "goal-objectives.handlebars",
+            "goal-new.handlebars",
             "goals.js",
         ]
     },

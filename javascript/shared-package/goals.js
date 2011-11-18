@@ -423,8 +423,8 @@ var createSimpleGoalDialog = {
         globalPopupDialog.hide();
     },
 
-    createSimpleGoal: function() {
-        var selected_type = $("#popup-dialog")
+    createSimpleGoal: function( kind ) {
+        var selected_type = kind || $("#popup-dialog")
             .find("input[name=\"goal-type\"]:checked").val();
         var goal = predefinedGoalsList[selected_type];
         var prevButtonHtml = $("#create-simple-goal-button").html();
@@ -470,3 +470,5 @@ var createSimpleGoalDialog = {
 };
 
 Handlebars.registerPartial('goal-objectives', Templates.get( "shared.goal-objectives" )); // TomY TODO do this automatically?
+Handlebars.registerPartial('goal-new', Templates.get( "shared.goal-new" )); 
+
