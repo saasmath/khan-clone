@@ -1,4 +1,3 @@
-import logging
 import hashlib
 import os
 import cgi
@@ -11,9 +10,14 @@ from .models import create_experiment_and_alternatives, ConversionTypes
 from .identity import identity
 from .config import can_control_experiments
 
-def ab_test(canonical_name, alternative_params = None, conversion_name = None, conversion_type = ConversionTypes.Binary, family_name = None):
+def ab_test(canonical_name,
+            alternative_params = None,
+            conversion_name = None,
+            conversion_type = ConversionTypes.Binary,
+            family_name = None,
+            user_data = None):
 
-    bingo_cache, bingo_identity_cache = bingo_and_identity_cache()
+    bingo_cache, bingo_identity_cache = bingo_and_identity_cache(user_data)
 
     if canonical_name not in bingo_cache.experiments:
 
@@ -94,7 +98,9 @@ def ab_test(canonical_name, alternative_params = None, conversion_name = None, c
 
         else:
 
-            alternative = find_alternative_for_user(experiment.hashable_name, alternatives)
+            alternative = find_alternative_for_user(experiment.hashable_name,
+                                                    alternatives,
+                                                    user_data=user_data)
 
             if experiment.name not in bingo_identity_cache.participating_tests:
                 bingo_identity_cache.participate_in(experiment.name)
@@ -209,7 +215,9 @@ def resume_experiment(canonical_name):
 
         bingo_cache.update_experiment(experiment)
 
-def find_alternative_for_user(experiment_hashable_name, alternatives):
+def find_alternative_for_user(experiment_hashable_name,
+                              alternatives,
+                              user_data=None):
 
     if can_control_experiments():
         # If gae_bingo administrator, allow possible override of alternative
@@ -222,7 +230,7 @@ def find_alternative_for_user(experiment_hashable_name, alternatives):
             if len(matches) == 1:
                 return matches[0]
 
-    return modulo_choose(experiment_hashable_name, alternatives, identity())
+    return modulo_choose(experiment_hashable_name, alternatives, identity(user_data))
 
 def modulo_choose(experiment_hashable_name, alternatives, identity):
     alternatives_weight = sum(map(lambda alternative: alternative.weight, alternatives))

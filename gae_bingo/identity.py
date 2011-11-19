@@ -24,8 +24,16 @@ def logged_in_bingo_identity():
 
     return LOGGED_IN_IDENTITY_CACHE
 
-def identity():
+def identity(user_data=None):
+    """ Determines the Bingo identity for the specified user. If no user
+    is specified, this will attempt to infer one based on cookies/logged in user
+
+    """
     global IDENTITY_CACHE
+
+    if user_data:
+        # Don't cache for arbitrarily passed in user_data
+        return bingo_identity_for_value(user_data, associate_with_cookie=False)
 
     if IDENTITY_CACHE is None:
 
@@ -49,7 +57,9 @@ def using_logged_in_bingo_identity():
 
 def get_logged_in_bingo_identity_value():
     val = logged_in_bingo_identity()
+    return bingo_identity_for_value(val)
 
+def bingo_identity_for_value(val, associate_with_cookie=True):
     if val is None:
         return None
 
@@ -59,7 +69,8 @@ def get_logged_in_bingo_identity_value():
             # If it's a db.Model that inherited from GAEBingoIdentityModel, return bingo identity
 
             if not val.gae_bingo_identity:
-                if is_random_identity_value(get_identity_cookie_value()):
+                if (is_random_identity_value(get_identity_cookie_value()) and
+                    associate_with_cookie):
                     # If the current model doesn't have a bingo identity associated w/ it
                     # and we have a random cookie value already set, associate it with this identity model.
                     #

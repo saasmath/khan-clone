@@ -77,9 +77,12 @@ class BingoCache(object):
         memcache.set(BingoCache.MEMCACHE_KEY, self)
 
     def persist_to_datastore(self):
+        """ Persist current state of experiment and alternative models to
+        datastore. Their sums might be slightly out-of-date during any
+        given persist, but not by much.
 
-        # Persist current state of experiment and alternative models to datastore.
-        # Their sums might be slightly out-of-date during any given persist, but not by much.
+        """
+
         for experiment_name in self.experiments:
             experiment_model = self.get_experiment(experiment_name)
             if experiment_model:
@@ -265,10 +268,10 @@ class BingoIdentityCache(object):
         return BingoIdentityCache.MEMCACHE_KEY % ident
 
     @staticmethod
-    def get():
+    def get(user_data=None):
         init_request_cache_from_memcache()
 
-        key = BingoIdentityCache.key_for_identity(identity())
+        key = BingoIdentityCache.key_for_identity(identity(user_data))
         if not REQUEST_CACHE.get(key):
             REQUEST_CACHE[key] = BingoIdentityCache.load_from_datastore()
 
@@ -368,8 +371,8 @@ class BingoIdentityCache(object):
             self.converted_tests[experiment_name] += 1
         self.dirty = True
 
-def bingo_and_identity_cache():
-    return BingoCache.get(), BingoIdentityCache.get()
+def bingo_and_identity_cache(user_data=None):
+    return BingoCache.get(), BingoIdentityCache.get(user_data)
 
 def store_if_dirty():
     # Only load from request cache here -- if it hasn't been loaded from memcache previously, it's not dirty.
