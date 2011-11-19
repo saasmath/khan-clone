@@ -29,7 +29,7 @@ function KnowledgeMapInitGlobals() {
                     getTileUrl: function(coord, zoom) {
                         // Sky tiles example from
                         // http://gmaps-samples-v3.googlecode.com/svn/trunk/planetary-maptypes/planetary-maptypes.html
-                        return KnowledgeMapGlobals.getHorizontallyRepeatingTileUrl(coord, zoom, 
+                        return KnowledgeMapGlobals.getHorizontallyRepeatingTileUrl(coord, zoom,
                                 function(coord, zoom) {
                                   return "/images/map-tiles/field_" +
                                      Math.floor(Math.random()*4+1) + '.jpg';
@@ -301,24 +301,24 @@ function KnowledgeMapInitGlobals() {
                     this.parent.selectedNodes[this.nodeName] = true;
                     this.parent.highlightNode(this.nodeName, true);
                 }
-                
+
                 //Unbind other keydowns to prevent a spawn of hell
                 $(document).unbind('keydown');
 
                 // If keydown is an arrow key
                 $(document).keydown(function(e){
                     var delta_v = 0, delta_h = 0;
-                        
-                    if (e.keyCode == 37) { 
+
+                    if (e.keyCode == 37) {
                         delta_v = -1; // Left
                     }
-                    if (e.keyCode == 38) { 
+                    if (e.keyCode == 38) {
                         delta_h = -1; // Up
                     }
-                    if (e.keyCode == 39) { 
+                    if (e.keyCode == 39) {
                         delta_v = 1; // Right
                     }
-                    if (e.keyCode == 40) { 
+                    if (e.keyCode == 40) {
                         delta_h = 1; // Down
                     }
 
@@ -359,7 +359,7 @@ function KnowledgeMapInitGlobals() {
                         return false;
                     }
                 });
-                
+
                 evt.stopPropagation();
             }
             else
@@ -373,7 +373,7 @@ function KnowledgeMapInitGlobals() {
                 return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
-          
+
             $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").addClass("exercise-badge-hover");
             this.parent.highlightNode(this.nodeName, true);
         },
@@ -383,7 +383,7 @@ function KnowledgeMapInitGlobals() {
                 return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
-        
+
             $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
             this.parent.highlightNode(this.nodeName, false);
         },
@@ -509,7 +509,7 @@ function KnowledgeMap(params) {
         this.elementTable = {};
 
         if (!params.hideDrawer)
-            this.drawer = new KnowledgeMapDrawer(params.container, this); 
+            this.drawer = new KnowledgeMapDrawer(params.container, this);
 
         var suggestedExercisesContent = this.admin ? null : this.getElement('suggested-exercises-content');
         var recentExercisesContent = this.admin ? null : this.getElement('recent-exercises-content');
@@ -544,7 +544,7 @@ function KnowledgeMap(params) {
                         self.numSuggestedExercises++;
                     }
                 }
-                
+
                 if (exerciseModel.get('recent')) {
                     var element = $('<div>');
                     element.appendTo(recentExercisesContent);
@@ -568,7 +568,7 @@ function KnowledgeMap(params) {
             });
         });
 
-        var mapElement = self.getElement("map-canvas"); 
+        var mapElement = self.getElement("map-canvas");
         this.map = new google.maps.Map(mapElement.get(0), {
             mapTypeControl: false,
             streetViewControl: false,
@@ -770,10 +770,10 @@ function KnowledgeMap(params) {
         if (lng > KnowledgeMapGlobals.lngMax) KnowledgeMapGlobals.lngMax = lng;
 
         var marker = new com.redfin.FastMarker(
-                "marker-" + node.name, 
-                node.latLng, 
-                ["<div data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"], 
-                "", 
+                "marker-" + node.name,
+                node.latLng,
+                ["<div data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"],
+                "",
                 node.summative ? 2 : 1,
                 0,0);
 
@@ -874,7 +874,7 @@ function KnowledgeMap(params) {
                 }, 250);
             }
         }).placeholder();
-        
+
         self.getElement('dashboard-filter-clear').click(function() {
             self.clearFilter();
         });
@@ -956,7 +956,7 @@ function KnowledgeMap(params) {
         if (this.containerID)
             el = $(this.containerID + ' .' + id);
         else
-            el = $('.' + id);    
+            el = $('.' + id);
         this.elementTable[id] = el;
         if (el.length == 0)
             throw new Error('Missing element: "' + id + '" in container "' + this.containerID + '"');
