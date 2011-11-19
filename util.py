@@ -1,5 +1,4 @@
 import os
-import re
 import datetime
 import urllib
 import request_cache
@@ -125,7 +124,7 @@ def config_iterable(plain_config, batch_size=50, limit=1000):
     return config
 
 def absolute_url(relative_url):
-		return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
+    return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
 
 def static_url(relative_url):
     if App.is_dev_server or not os.environ['HTTP_HOST'].lower().endswith(".khanacademy.org"):
