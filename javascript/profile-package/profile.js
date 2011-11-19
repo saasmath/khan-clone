@@ -370,19 +370,19 @@ var Profile = {
         $("#graph-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
 
         Profile.goalsViews = {};
-        Profile.goalsViews['current'] = new GoalProfileView({
+        Profile.goalsViews.current = new GoalProfileView({
             el: "#current-goals-list",
             model: GoalBook,
             type: 'current',
             title: 'Current goals'
         });
-        Profile.goalsViews['completed'] = new GoalProfileView({
+        Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
             title: 'Completed goals'
         });
-        Profile.goalsViews['abandoned'] = new GoalProfileView({
+        Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
