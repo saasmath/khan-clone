@@ -531,8 +531,9 @@ function KnowledgeMap(params) {
             var exerciseModel = new KnowledgeMapExercise(exercise);
             self.exerciseList[exercise.name] = exerciseModel;
 
-            if (!self.newGoal || (!exercise.goal_req && exercise.status != 'Proficient')) {
-
+            if (self.newGoal && (exercise.goal_req || exercise.status === 'Proficient')) {
+                exerciseModel.set({'invalidForGoal':true});
+            } else {
                 // Create views
 
                 if (exerciseModel.get('isSuggested')) {
@@ -556,8 +557,6 @@ function KnowledgeMap(params) {
                 var element = $('<div>');
                 element.appendTo(allExercisesContent);
                 self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'all', 'admin': self.admin, 'parent': self}));
-            } else {
-                exerciseModel.set({'invalidForGoal':true});
             }
 
             // Update map graph
