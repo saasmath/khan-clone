@@ -3,7 +3,6 @@ import logging
 from itertools import izip
 
 from flask import request, current_app, Response
-from templatefilters import escapejs
 
 import models
 import layer_cache
@@ -520,9 +519,9 @@ def coach_progress_summary():
 
     for (student, user_exercise_graph) in izip(
         list_students, user_exercise_graphs):
-        escapejsed_nickname = escapejs(student.nickname)
-        escapejesed_student_email = escapejs(student.email)
+
         student_review_exercise_names = user_exercise_graph.review_exercise_names()
+
         for exercise in exercises:
             graph_dict = user_exercise_graph.graph_dict(exercise.name)
 
@@ -548,8 +547,8 @@ def coach_progress_summary():
                 status = 'not_started'
 
             exercise_data[exercise.name][status].append({
-                'nickname': escapejsed_nickname,
-                'email': escapejesed_student_email,
+                'nickname': student.nickname,
+                'email': student.email,
             })
 
     return exercise_data
