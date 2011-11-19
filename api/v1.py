@@ -1000,12 +1000,8 @@ def create_user_goal():
     objective_descriptors = []
     valid_count = 0
 
-    goals = GoalList.get_from_data(goal_data, Goal)
-    goal_exercises = []
-    goal_videos = []
-    for goal in goals:
-        goal_exercises.extend([objective.exercise_name for objective in goal.objectives if objective.__class__.__name__ == 'GoalObjectiveExerciseProficiency'])
-        goal_videos.extend([objective.video_readable_id for objective in goal.objectives if objective.__class__.__name__ == 'GoalObjectiveWatchVideo'])
+    goal_exercises = GoalList.exercises_in_current_goals(user_data)
+    goal_videos = GoalList.videos_in_current_goals(user_data)
 
     for idx in xrange(1,40):
         base_str = 'objective'+str(idx)

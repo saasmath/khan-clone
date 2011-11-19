@@ -159,6 +159,8 @@ class Goal(db.Model):
 
         return changed
 
+# todo: think about moving these static methods to UserData. Almost all have
+# user_data as the first argument.
 class GoalList(db.Model):
     user = db.UserProperty()
 
@@ -174,19 +176,19 @@ class GoalList(db.Model):
         return None
 
     @staticmethod
+    def get_current_goals(user_data, show_complete=False):
+        if not user_data:
+            return []
+
+        # Fetch data from datastore
+        goal_data = user_data.get_goal_data()
+        goals = GoalList.get_from_data(goal_data, Goal)
+        return [g for g in goals if show_complete or not g.is_completed]
+
+    @staticmethod
     def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False):
-        if user_data:
-            # Fetch data from datastore
-            goal_data = user_data.get_goal_data()
-            if len(goal_data) == 0:
-                return []
-
-            goals = GoalList.get_from_data(goal_data, Goal)
-
-            return [goal.get_visible_data(user_exercise_graph)
-                for goal in goals if show_complete or not goal.is_completed]
-
-        return []
+        return [goal.get_visible_data(user_exercise_graph) for goal in
+            GoalList.get_current_goals(user_data, show_complete)]
 
     @staticmethod
     def delete_goal(user_data, id):
@@ -209,6 +211,18 @@ class GoalList(db.Model):
 
         for goal in goals:
             goal.delete()
+
+    @staticmethod
+    def exercises_in_current_goals(user_data):
+        goals = GoalList.get_current_goals(user_data)
+        return [obj.exercise_name for g in goals for obj in g.objectives
+            if obj.__class__.__name__ == 'GoalObjectiveExerciseProficiency']
+
+    @staticmethod
+    def videos_in_current_goals(user_data):
+        goals = GoalList.get_current_goals(user_data)
+        return [obj.video for g in goals for obj in g.objectives
+            if obj.__class__.__name__ == 'GoalObjectiveWatchVideo']
 
 def shorten(s, n=12):
     if len(s) <= n:

@@ -266,11 +266,7 @@ def exercise_graph_dict_json(user_data, admin=False):
         except ValueError:
             pass
 
-    goal_data = user_data.get_goal_data()
-    goals = GoalList.get_from_data(goal_data, Goal)
-    goal_exercises = []
-    for goal in goals:
-        goal_exercises.extend([objective.exercise_name for objective in goal.objectives if objective.__class__.__name__ == 'GoalObjectiveExerciseProficiency'])
+    goal_exercises = GoalList.exercises_in_current_goals(user_data)
 
     graph_dict_data = []
     for graph_dict in graph_dicts:
