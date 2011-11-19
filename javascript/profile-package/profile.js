@@ -679,25 +679,79 @@ var Profile = {
         $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
     },
 
-    renderProgressSummary: function(data) {
-        // Ship it!
-        if (data === null) {
-            return;
-        }
-        var html = [];
-        html.push("<div id=\"module-progress\">");
-        jQuery.each(data, function(exercise, buckets) {
-            html.push("<p>" + exercise + "</p>");
-            jQuery.each(buckets, function(bucket, students) {
-                html.push("<p>" + bucket + "</p>");
-                jQuery.each(students, function(index, student) {
-                    html.push("<p>nickname: " + student.nickname + " student email: " + student.email + "</p>");
-                })
-                html.push("<p>")
+    renderProgressSummary: function(context) {
+        var template = Templates.get("profile.class-progress-summary");
+
+        $.map(context.exercises, function(exercise, index) {
+            exercise.progress.sort(function(first, second) {
+                var order = { started: 0,
+                    proficient: 1,
+                    review: 2,
+                    not_started: 3,
+                    struggling: 4};
+                return order[first.status] - order[second.status];
             });
+            return exercise;
         });
-        html.push("</div>");
-        $("#graph-content").html( html.join("") );
+
+        // Where does this go? Might it collide one day?
+        Handlebars.registerHelper("toPixelWidth", function(num, total) {
+            // TODO: Change to reasonable width
+            return Math.round(200 * num / context.num_students);
+        });
+
+        Handlebars.registerHelper("toColor", function(status) {
+            return {
+                    proficient: "exercise-color proficient",
+                    review: "exercise-color review light",
+                    started: "exercise-color started",
+                    struggling: "exercise-color struggling",
+                    not_started: "exercise-color suggested"
+                }[status];
+        });
+
+        Handlebars.registerHelper("progressIter", function(progress, block) {
+            var result = "",
+                fShowStatusOnLeft = { "proficient": true,
+                    "review": true,
+                    "started": true,
+                    "not_started": false,
+                    "struggling": false },
+                fOnLeft = (block.hash.side === "left");
+
+            $.each(progress, function(index, p) {
+                if (fShowStatusOnLeft[p.status] === fOnLeft) {
+                    result += block(p);
+                }
+            });
+            return result;
+        });
+
+        $("#graph-content").html(template(context));
+        $(".exercise-row").click(function(event) {
+            var jRow = $(this),
+                studentLists = jRow.find(".student-list");
+
+            if (studentLists.is(":visible")) {
+                jRow.find("span.status").each(function(index) {
+                    var jel = $(this),
+                        width = jel.data("width");
+                    jel.animate({width: width, height: 5}, 350, "easeInOutCubic")
+                        .html("");
+                });
+
+                studentLists.fadeOut(100, "easeInOutCubic");
+            } else {
+                jRow.find("span.status").animate({width: 100, height: 20}, 450, "easeInOutCubic")
+                    .each(function(index) {
+                        var jel = $(this),
+                            status = jel.data("status");
+                        jel.html("<span>" + status + "</span>");
+                    });
+
+                studentLists.delay(150).fadeIn(650, "easeInOutCubic");
+            }
+        })
     },
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.

@@ -525,8 +525,8 @@ def coach_progress_summary():
         for exercise in exercises:
             graph_dict = user_exercise_graph.graph_dict(exercise.name)
 
-            if not exercise.name in exercise_data:
-                exercise_data[exercise.name] = {
+            if not exercise.display_name in exercise_data:
+                exercise_data[exercise.display_name] = {
                     'review': [],
                     'proficient': [],
                     'struggling': [],
@@ -546,12 +546,20 @@ def coach_progress_summary():
             else:
                 status = 'not_started'
 
-            exercise_data[exercise.name][status].append({
+            exercise_data[exercise.display_name][status].append({
                 'nickname': student.nickname,
                 'email': student.email,
             })
+    formatted_exercise_data = [
+        dict([('name', name),
+                ('progress', [
+                    dict([('status', status),
+                        ('students', exercise_data[name][status])])
+                        for status in exercise_data[name]])
+            ]) for name in exercise_data]
 
-    return exercise_data
+    return {'exercises': formatted_exercise_data,
+            'num_students': len(list_students)}
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
 @oauth_optional()

@@ -1,0 +1,80 @@
+<style>
+  .exercise-row {
+    padding-bottom: 10px;
+  }
+
+  .exercise-row:hover {
+    background-color: #eee;
+  }
+
+  .fake-row span {
+    height: 5px;
+    display: inline-block;
+  }
+
+  .fake-row span.status span {
+    text-transform: capitalize;
+    padding-left: 5px;
+    padding-bottom: 10px;
+    font-weight: bold;
+  }
+
+  .left-column, .right-column {
+    width: 300px;
+    float: left;
+  }
+
+  .student-list {
+    display: none;
+  }
+
+  .student-list td {
+    padding-left: 5px;
+  }
+
+</style>
+<div id="progress-summary-container">
+  {{#each exercises}}
+    <div class="exercise-row">
+    <div class="left-column">
+      <div style="height: 20px; float: right;">
+        <span>{{name}}</span>
+      </div>
+      <div style="clear: both;"></div>
+      <div class="fake-row">
+        {{#progressIter progress side="left"}}<span class="status {{toColor status}}" style="float: right; width: {{toPixelWidth students.length numStudents}}px;" data-width="{{toPixelWidth students.length numStudents}}" data-status="{{status}}"></span>{{/progressIter}}
+      </div>
+      <div style="clear: both;"></div>
+      <div class="student-list">
+        {{#progressIter progress side="left"}}
+          <div style="float: right; width: 100px; min-height:5px">
+            <table>
+              {{#each students}}<tr><td>{{nickname}}</td></tr>{{/each}}
+            </table>
+          </div>
+        {{/progressIter}}
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div style="height: 20px;"></div>
+      <div style="clear: both;"></div>
+      <div class="fake-row">
+        {{#progressIter progress}}<span class="status {{toColor status}}" style="float: left; width: {{toPixelWidth students.length numStudents}}px;" data-width="{{toPixelWidth students.length numStudents}}" data-status="{{status}}"></span>{{/progressIter}}
+      </div>
+      <div style="clear: both;"></div>
+      <div class="student-list">
+        {{#progressIter progress}}
+          <div style="float: left; width: 100px; min-height:5px">
+            <table>
+              {{#each students}}<tr><td>{{nickname}}</td></tr>{{/each}}
+            </table>
+          </div>
+        {{/progressIter}}
+      </div>
+    </div>
+
+    <div style="clear: both;"></div>
+    </div>
+  {{/each}}
+</div>
