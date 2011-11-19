@@ -285,7 +285,7 @@ var Profile = {
             apiCallback = this.renderStudentGoals;
         } else if (href.indexOf('/api/v1/user/exercises') > -1) {
 			apiCallback = this.renderExercisesTable;
-        } else if (href.indexOf('/api/v1/coach/progress/summary') > -1) {
+        } else if (href.indexOf('/api/v1/user/students/progress/summary') > -1) {
             apiCallback = this.renderProgressSummary;
         }
 

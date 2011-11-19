@@ -488,8 +488,8 @@ def user_exercises_all():
 
     return results
 
-@route("/api/v1/coach/progress/summary", methods=["GET"])
-@oauth_optional()
+@route("/api/v1/user/students/progress/summary", methods=["GET"])
+@oauth_required()
 @jsonp
 @jsonify
 def coach_progress_summary():
@@ -500,8 +500,17 @@ def coach_progress_summary():
     user_data_coach = get_visible_user_data_from_request(
                         disable_coach_visibility = True)
 
-    # TODO: incorporate Desmond's changes re API  list ids
-    list_students = user_data_coach.get_students_data()
+    if request.request_string("list_id"):
+        try:
+            student_list = util_profile.get_list(user_data_coach, request)
+        except Exception, e:
+            logging.error("%s: %s" % (request.url, e))
+            list_students = user_data_coach.get_students_data()
+        else:
+            list_students = student_list.get_students_data()
+    else:
+        list_students = user_data_coach.get_students_data()
+
     list_students = sorted(list_students, key=lambda student: student.nickname)
 
     exercises = models.Exercise.get_all_use_cache()
