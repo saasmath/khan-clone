@@ -35,6 +35,7 @@ from image_cache import ImageCache
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
 from gae_bingo.models import GAEBingoIdentityModel, ConversionTypes
+from experiments import StrugglingExperiment
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -321,32 +322,6 @@ class UserExercise(db.Model):
         proficiency_threshold = consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize
 
-    # "Struggling" model experiment parameters.
-    _struggling_ab_test_alternatives = {
-        'old': 8, # The original '>= 20 problems attempted' heuristic
-        'accuracy_1.8': 1, # Using an accuracy model with 1.8 as the parameter
-        'accuracy_2.0': 1, # Using an accuracy model with 2.0 as the parameter
-    }
-    _struggling_conversion_tests = [
-        ('struggling_problems_done', ConversionTypes.Counting),
-        ('struggling_problems_done_post_struggling', ConversionTypes.Counting),
-        ('struggling_problems_wrong', ConversionTypes.Counting),
-        ('struggling_problems_wrong_post_struggling', ConversionTypes.Counting),
-        ('struggling_problems_correct', ConversionTypes.Counting),
-        ('struggling_problems_correct_post_struggling', ConversionTypes.Counting),
-        ('struggling_gained_proficiency_all', ConversionTypes.Counting),
-
-        # the user closed the "Need help?" dialog that pops up
-        ('struggling_message_dismissed', ConversionTypes.Counting),
-
-        # the user clicked on the video in the "Need help?" dialog that pops up
-        ('struggling_videos_clicked_post_struggling', ConversionTypes.Counting),
-        ('struggling_videos_landing', ConversionTypes.Counting),
-        ('struggling_videos_finished', ConversionTypes.Counting),
-    ]
-    _struggling_conversion_names, _struggling_conversion_types = [
-        list(x) for x in zip(*_struggling_conversion_tests)]
-
     @property
     def exercise_states(self):
         user_exercise_graph = self.get_user_exercise_graph()
@@ -447,26 +422,19 @@ class UserExercise(db.Model):
     def belongs_to(self, user_data):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
-    def is_struggling(self):
+    def is_struggling(self, struggling_model=None):
         if self.has_been_proficient():
             return False
 
-        return self._is_struggling_old()
-
-        # TODO: restore this test once it's fixed.
-#        bucket = ab_test('Struggling model',
-#                self._struggling_ab_test_alternatives,
-#                self._struggling_conversion_names,
-#                self._struggling_conversion_types)
-#        if bucket == 'old':
-#            return self._is_struggling_old()
-#        else:
-#            # accuracy based model.
-#            param = float(bucket.split('_')[1])
-#            return self.accuracy_model().is_struggling(
-#                    param=param,
-#                    minimum_accuracy=consts.PROFICIENCY_ACCURACY_THRESHOLD,
-#                    minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
+        if struggling_model is None or struggling_model == 'old':
+            return self._is_struggling_old()
+        else:
+            # accuracy based model.
+            param = float(struggling_model.split('_')[1])
+            return self.accuracy_model().is_struggling(
+                    param=param,
+                    minimum_accuracy=consts.PROFICIENCY_ACCURACY_THRESHOLD,
+                    minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
 
     def _is_struggling_old(self):
         return ((self.streak == 0) and
@@ -2001,13 +1969,13 @@ class UserExerciseCache(db.Model):
         return user_exercise_caches if type(user_data_or_list) == list else user_exercise_caches[0]
 
     @staticmethod
-    def dict_from_user_exercise(user_exercise):
+    def dict_from_user_exercise(user_exercise, struggling_model=None):
         # TODO(david): We can probably remove some of this stuff here.
         return {
                 "streak": user_exercise.streak if user_exercise else 0,
                 "longest_streak": user_exercise.longest_streak if user_exercise else 0,
                 "progress": user_exercise.progress if user_exercise else 0.0,
-                "struggling": user_exercise.is_struggling() if user_exercise else False,
+                "struggling": user_exercise.is_struggling(struggling_model) if user_exercise else False,
                 "total_done": user_exercise.total_done if user_exercise else 0,
                 "last_done": user_exercise.last_done if user_exercise else datetime.datetime.min,
                 "last_review": user_exercise.last_review if user_exercise else datetime.datetime.min,
@@ -2021,12 +1989,17 @@ class UserExerciseCache(db.Model):
         if not user_exercises:
             user_exercises = UserExercise.get_for_user_data(user_data)
 
+        # Experiment to try different struggling models.
+        # It's important to pass in the user_data of the student owning the
+        # exercise, and not of the current viewer (as it may be a coach).
+        struggling_model = StrugglingExperiment.get_alternative_for_user(user_data)
+
         dicts = {}
 
         # Build up cache
         for user_exercise in user_exercises:
-
-            user_exercise_dict = UserExerciseCache.dict_from_user_exercise(user_exercise)
+            user_exercise_dict = UserExerciseCache.dict_from_user_exercise(
+                    user_exercise, struggling_model)
 
             # In case user has multiple UserExercise mappings for a specific exercise,
             # always prefer the one w/ more problems done

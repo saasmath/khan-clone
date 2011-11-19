@@ -430,6 +430,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 user_exercise.update_proficiency_model(correct=True)
 
+                bingo('struggling_problems_correct')
+
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo(['hints_gained_proficiency_all',
                            'struggling_gained_proficiency_all'])
