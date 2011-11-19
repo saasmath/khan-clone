@@ -15,7 +15,7 @@
   .fake-row span.status span {
     text-transform: capitalize;
     padding-left: 5px;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
     font-weight: bold;
   }
 
@@ -47,7 +47,7 @@
       <div style="clear: both;"></div>
       <div class="student-list">
         {{#progressIter progress side="left"}}
-          <div style="float: right; width: 100px; min-height:5px">
+          <div {{#if true}}class="exercise-color {{toColor status}}"{{/if}} style="float: right; width: 100px; min-height:5px;">
             <table>
               {{#each students}}<tr><td>{{nickname}}</td></tr>{{/each}}
             </table>
@@ -56,6 +56,7 @@
       </div>
     </div>
 
+    <!-- TODO: use partial to render each column -->
     <div class="right-column">
       <div style="height: 20px;"></div>
       <div style="clear: both;"></div>
@@ -65,7 +66,7 @@
       <div style="clear: both;"></div>
       <div class="student-list">
         {{#progressIter progress}}
-          <div style="float: left; width: 100px; min-height:5px">
+          <div {{#if true}}class="exercise-color {{toColor status}}"{{/if}} style="float: left; width: 100px; min-height:5px">
             <table>
               {{#each students}}<tr><td>{{nickname}}</td></tr>{{/each}}
             </table>
