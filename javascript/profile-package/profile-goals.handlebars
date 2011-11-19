@@ -2,12 +2,16 @@
   <div class="student-goal-title">{{ title }}</div>
   <div class="student-goals">
   {{#each goals}}
-    <div class="goal pulls">
+    <div class="goal pulls" data-id="{{id}}">
       <p class="goal-description">
-        <strong>{{ title }}</strong>
-          {{#if ../isCurrent }}<span class="summary-light">(started {{ created_ago }})</span>{{/if}}
-          {{#if ../isCompleted }}<span class="summary-light">(completed {{ completed_ago }} in {{ completed_time }})</span>{{/if}}
-          {{#if ../isAbandoned }}<span class="summary-light">(abandoned {{ completed_ago }})</span>{{/if}}
+        {{#if ../isCurrent}}
+        <input type="text" name="title" class="goal-title simple-input ui-corner-all" placeholder="{{title}}" value="{{title}}"></input>
+        {{else}}
+        <strong>{{title}}</strong>
+        {{/if}}
+        {{#if ../isCurrent }}<span class="summary-light">(started {{ created_ago }})</span>{{/if}}
+        {{#if ../isCompleted }}<span class="summary-light">(completed {{ completed_ago }} in {{ completed_time }})</span>{{/if}}
+        {{#if ../isAbandoned }}<span class="summary-light">(abandoned {{ completed_ago }})</span>{{/if}}
         <span class="goal-controls">
           {{#if ../isCurrent }}<a class="simple-button action-gradient" href="javascript: Profile.userGoalsAbandonGoal({{id}})" id="goal-abandon-{{id}}">Abandon</a>{{/if}}
         </span>
@@ -21,7 +25,5 @@
   {{/each}}
   </div>
 {{else}}
-
   {{>goal-new}}
-
 {{/if}}

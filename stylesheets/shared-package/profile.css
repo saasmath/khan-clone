@@ -516,3 +516,6 @@ div.graph-notification {
     height: 800px;
 }
 
+#current-goals-list input.goal-title {
+    min-width: 450px;
+}

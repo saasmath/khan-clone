@@ -873,6 +873,16 @@ var GoalProfileView = Backbone.View.extend({
         this.model.bind('reset', this.render, this);
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
+
+        $(this.el).delegate('input.goal-title', 'blur', $.proxy(function( e ) {
+            var jel = $(e.target);
+            var goalId = jel.closest('.goal').data('id');
+            var goal = this.model.get(goalId);
+            var newTitle = jel.val();
+            if (newTitle !== goal.get('title')) {
+                goal.save({title: newTitle});
+            }
+        }, this));
     },
 
     show: function() {
