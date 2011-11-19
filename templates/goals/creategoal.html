@@ -30,7 +30,9 @@ var GoalCreator = {
             }
         });
 
-        $('#goal-title').focus(function(){ $(this).animate({width: '600px'});}).blur(function(){ $(this).animate({width: '250px'});});
+        $('#create-goal .goal-title')
+            .focus(function(){ $(this).animate({width: '600px'});})
+            .blur(function(){ $(this).animate({width: '250px'});});
 
         var form = $('#create-goal');
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
@@ -393,7 +395,7 @@ function createGoalInitialize() {
     <div class="section-headline">
     <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
       <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
-      <input type="text" name="title" class="simple-input ui-corner-all" id="goal-title" placeholder="New Goal (click to set a title)"></input>
+      <input type="text" name="title" class="goal-title simple-input ui-corner-all" placeholder="New Goal (click to set a title)"></input>
     </div>
     <div id="goal-info-section">
       <div id="create-goal-view"></div>

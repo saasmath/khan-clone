@@ -256,7 +256,7 @@ ul.inline-list, ul.inline-list li {
     margin-top: 3px;
 }
 
-input#goal-title {
+input.goal-title {
     font-size: 16px;
     padding: 5px 5px 5px 0;
     height: auto;
@@ -265,13 +265,13 @@ input#goal-title {
     background-color: transparent;
     border-color: transparent;
 }
-input#goal-title::-webkit-input-placeholder {
+input.goal-title::-webkit-input-placeholder {
     color: #333;
 }
-input#goal-title:-moz-placeholder {
+input.goal-title:-moz-placeholder {
     color: #333;
 }
-input#goal-title:focus {
+input.goal-title:focus {
     background-color: #FAFAFA;
     border-color: #C6D1AD;
     padding-left: 5px;
