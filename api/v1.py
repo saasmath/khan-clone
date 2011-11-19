@@ -1,10 +1,9 @@
-from templatefilters import escapejs
-from itertools import izip
-
 import copy
 import logging
+from itertools import izip
 
 from flask import request, current_app, Response
+from templatefilters import escapejs
 
 import models
 import layer_cache
@@ -498,7 +497,8 @@ def coach_progress_summary():
     if not user_data:
         return None
 
-    user_data_coach = get_visible_user_data_from_request(disable_coach_visibility = True)
+    user_data_coach = get_visible_user_data_from_request(
+                        disable_coach_visibility = True)
 
     # TODO: incorporate Desmond's changes re API  list ids
     list_students = user_data_coach.get_students_data()
@@ -509,19 +509,25 @@ def coach_progress_summary():
 
     exercise_data = {}
 
-    for (student, user_exercise_graph) in izip(list_students, user_exercise_graphs):
+    for (student, user_exercise_graph) in izip(
+        list_students, user_exercise_graphs):
         escapejsed_nickname = escapejs(student.nickname)
         escapejesed_student_email = escapejs(student.email)
         student_review_exercise_names = user_exercise_graph.review_exercise_names()
         for exercise in exercises:
-            exercise_name = exercise.name
-            graph_dict = user_exercise_graph.graph_dict(exercise_name)
+            graph_dict = user_exercise_graph.graph_dict(exercise.name)
 
-            if not exercise_data.has_key(exercise_name):
-                exercise_data[exercise_name] = { 'review': [], 'proficient': [], 'struggling': [], 'started': [], 'not_started': [] }
+            if not exercise.name in exercise_data:
+                exercise_data[exercise.name] = {
+                    'review': [],
+                    'proficient': [],
+                    'struggling': [],
+                    'started': [],
+                    'not_started': [],
+                }
 
             if graph_dict['proficient']:
-                if exercise_name in student_review_exercise_names:
+                if exercise.name in student_review_exercise_names:
                     status = 'review'
                 else:
                     status = 'proficient'
@@ -532,7 +538,10 @@ def coach_progress_summary():
             else:
                 status = 'not_started'
 
-            exercise_data[exercise_name][status].append({'nickname': escapejsed_nickname, 'email': escapejesed_student_email})
+            exercise_data[exercise.name][status].append({
+                'nickname': escapejsed_nickname,
+                'email': escapejesed_student_email,
+            })
 
     return exercise_data
 
