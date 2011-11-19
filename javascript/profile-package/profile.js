@@ -702,11 +702,11 @@ var Profile = {
 
         Handlebars.registerHelper("toColor", function(status) {
             return {
-                    proficient: "exercise-color proficient",
-                    review: "exercise-color review light",
-                    started: "exercise-color started",
-                    struggling: "exercise-color struggling",
-                    not_started: "exercise-color suggested"
+                    proficient: "proficient",
+                    review: "review light",
+                    started: "started",
+                    struggling: "struggling",
+                    not_started: "not-started"
                 }[status];
         });
 
