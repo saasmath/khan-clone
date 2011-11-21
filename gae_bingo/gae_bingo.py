@@ -14,10 +14,9 @@ def ab_test(canonical_name,
             alternative_params = None,
             conversion_name = None,
             conversion_type = ConversionTypes.Binary,
-            family_name = None,
-            user_data = None):
+            family_name = None):
 
-    bingo_cache, bingo_identity_cache = bingo_and_identity_cache(user_data)
+    bingo_cache, bingo_identity_cache = bingo_and_identity_cache()
 
     if canonical_name not in bingo_cache.experiments:
 
@@ -98,9 +97,8 @@ def ab_test(canonical_name,
 
         else:
 
-            alternative = find_alternative_for_user(experiment.hashable_name,
-                                                    alternatives,
-                                                    user_data=user_data)
+            alternative = _find_alternative_for_user(experiment.hashable_name,
+                                                    alternatives)
 
             if experiment.name not in bingo_identity_cache.participating_tests:
                 bingo_identity_cache.participate_in(experiment.name)
@@ -148,7 +146,7 @@ def score_conversion(experiment_name):
         # Only allow multiple conversions for ConversionTypes.Counting experiments
         return
 
-    alternative = find_alternative_for_user(experiment.hashable_name, bingo_cache.get_alternatives(experiment_name))
+    alternative = _find_alternative_for_user(experiment.hashable_name, bingo_cache.get_alternatives(experiment_name))
 
     alternative.increment_conversions()
 
@@ -207,9 +205,42 @@ def resume_experiment(canonical_name):
         experiment.live = True
         bingo_cache.update_experiment(experiment)
 
-def find_alternative_for_user(experiment_hashable_name,
-                              alternatives,
-                              user_data=None):
+def find_alternative_for_user(canonical_name, identity_val):
+    """ Returns the alternative that the specified bingo identity is opted into.
+    If the experiment does not exist, is not live, or if the identity has not
+    been opted in, returns None. This does not affect the experiment in any way.
+    
+    If an experiment has multiple instances (because it was created with
+    different alternative sets), will operate on the last experiment.
+    
+    canonical_name -- the canonical name of the experiment
+    identity_val -- a string or instance of GAEBingoIdentity
+    
+    """
+    
+    bingo_cache, bingo_identity_cache = bingo_and_identity_cache(identity_val)
+    experiment_names = bingo_cache.get_experiment_names_by_canonical_name(canonical_name)
+    
+    if not experiment_names:
+        return None
+    
+    experiment_name = experiment_names[-1]
+
+    if experiment_name not in bingo_identity_cache.participating_tests:
+        return None
+
+    experiment = bingo_cache.get_experiment(experiment_name)
+
+    if not experiment or not experiment.live:
+        return None
+
+    return _find_alternative_for_user(experiment.hashable_name,
+                                      bingo_cache.get_alternatives(experiment_name),
+                                      identity_val).content
+
+def _find_alternative_for_user(experiment_hashable_name,
+                               alternatives,
+                               identity_val=None):
 
     if can_control_experiments():
         # If gae_bingo administrator, allow possible override of alternative
@@ -222,7 +253,7 @@ def find_alternative_for_user(experiment_hashable_name,
             if len(matches) == 1:
                 return matches[0]
 
-    return modulo_choose(experiment_hashable_name, alternatives, identity(user_data))
+    return modulo_choose(experiment_hashable_name, alternatives, identity(identity_val))
 
 def modulo_choose(experiment_hashable_name, alternatives, identity):
     alternatives_weight = sum(map(lambda alternative: alternative.weight, alternatives))
