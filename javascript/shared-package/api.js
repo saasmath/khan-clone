@@ -65,7 +65,7 @@ $(function(){ APIActionResults.register("user_info_html",
     );
 });
 
-// show point animation above streak bar when in exercise pages
+// show point animation above progress bar when in exercise pages
 $(function(){ 
 
   var updatePointDisplay = function( data ) {

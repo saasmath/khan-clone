@@ -73,6 +73,7 @@ var randomElement = function(array, weights) {
 
 $('.exercise_message .close-button').click(function(ev) {
     ev.preventDefault();
+	gae_bingo.bingo('struggling_message_dismissed');
     $('#exercise-message-container').slideUp();
 });
 
@@ -151,11 +152,14 @@ var setupSuggestedVideos = function() {
     jel.removeAttr('id').find('span').html( buildLink(suggestion, exid) ).end().hide();
 
     $('.exercise_message').append(jel);
+	$('#video-suggest-link').click(function(e) {
+		gae_bingo.bingo('struggling_videos_clicked_post_struggling');
+	});
 };
 
 var buildLink = function(video, exid) {
     var exid_param = exid ? "?exid=" + exid : "";
-    return $('<a></a>')
+    return $('<a id="video-suggest-link"></a>')
         .attr('href', video.ka_url + exid_param)
         .addClass("related-video")
         .data('video', video)

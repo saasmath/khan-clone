@@ -104,6 +104,26 @@ def async_queries(queries, limit=100000):
 
     return task_runner
 
+def config_iterable(plain_config, batch_size=50, limit=1000):
+
+    config = plain_config
+
+    try:
+        # This specific use of the QueryOptions private API was suggested to us by the App Engine team.
+        # Wrapping in try/except in case it ever goes away.
+        from google.appengine.datastore import datastore_query
+        config = datastore_query.QueryOptions(
+            config=plain_config,
+            limit=limit,
+            offset=0,
+            prefetch_size=batch_size,
+            batch_size=batch_size)
+
+    except Exception, e:
+        logging.exception("Failed to create QueryOptions config object: %s", e)
+
+    return config
+
 def absolute_url(relative_url):
 		return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
 

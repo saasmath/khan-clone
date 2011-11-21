@@ -1,8 +1,6 @@
 import itertools
-import logging
 import math
 import operator
-import types
 
 from parameters import log_reg_past_20_tail1m as params
 
@@ -135,6 +133,31 @@ class AccuracyModel(object):
         X, weight_vector = zip(*weighted_features)  # unzip the list of pairs
 
         return AccuracyModel.logistic_regression_predict(params.INTERCEPT, weight_vector, X)
+
+    def is_struggling(self, param, minimum_accuracy, minimum_attempts):
+        """ Whether or not this model detects that the student is struggling
+        based on the history of answers thus far.
+
+        param - This is an exponent which measures how fast we expect students
+        to achieve proficiency and get out. The larger the number, the longer
+        we allow them to experiment. This is only injected for experimentation
+        purposes - it will be internalized later.
+
+        minimum_accuracy - minimum accuracy required for proficiency
+
+        minimum_attempts - minimum problems done before making a judgement
+        """
+
+        attempts = self.total_done
+        if attempts < minimum_attempts:
+            return False
+
+        accuracy_prediction = self.predict()
+        if accuracy_prediction >= minimum_accuracy:
+            return False
+
+        value = (attempts ** param) * (minimum_accuracy - accuracy_prediction)
+        return value > 20.0
 
     # See http://en.wikipedia.org/wiki/Logistic_regression
     @staticmethod
