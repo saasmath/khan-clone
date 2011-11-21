@@ -129,9 +129,6 @@ def bingo(param):
 
         # Bingo for all experiments associated with this conversion
         for experiment_name in bingo_cache.get_experiment_names_by_conversion_name(conversion_name):
-
-            experiment = bingo_cache.get_experiment(experiment_name)
-
             score_conversion(experiment_name)
 
 def score_conversion(experiment_name):
@@ -189,9 +186,7 @@ def delete_experiment(canonical_name):
     if not experiments or not alternative_lists:
         return
 
-    for i in range(len(experiments)):
-        experiment, alternatives = experiments[i], alternative_lists[i]
-
+    for experiment in experiments:
         if experiment.live:
             raise Exception("Cannot delete a live experiment")
 
@@ -208,11 +203,8 @@ def resume_experiment(canonical_name):
     if not experiments or not alternative_lists:
         return
 
-    for i in range(len(experiments)):
-        experiment, alternatives = experiments[i], alternative_lists[i]
-
+    for experiment in experiments:
         experiment.live = True
-
         bingo_cache.update_experiment(experiment)
 
 def find_alternative_for_user(experiment_hashable_name,
