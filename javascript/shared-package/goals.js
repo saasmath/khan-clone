@@ -424,7 +424,7 @@ var NewGoalView = Backbone.View.extend({
             type: 'POST',
             dataType: 'json',
             data: $.param(NewGoalView.predefinedGoalsList[selectedType]),
-            success: $.proxy(GoalBook.add, GoalBook)
+            success: $.proxy(this.model.add, this.model)
         });
     },
 
@@ -473,12 +473,15 @@ var NewGoalDialog = Backbone.View.extend({
 
     initialize: function() {
         this.render();
-        GoalBook.bind('add', this.hide, this);
+        this.model.bind('add', this.hide, this);
     },
 
     render: function() {
         this.el = $(this.template()).appendTo(document.body).get(0);
-        this.newGoalView = new NewGoalView({el: this.$('.goalpicker')});
+        this.newGoalView = new NewGoalView({
+            el: this.$('.goalpicker'),
+            model: this.model
+        });
         this.newGoalView.bind('creating', this.hide, this);
         return this;
     },
@@ -513,7 +516,7 @@ $(function() {
     });
 
     myGoalSummaryView.render();
-    window.newGoalDialog = new NewGoalDialog();
+    window.newGoalDialog = new NewGoalDialog({model: GoalBook});
 });
 
 // todo: should we do this globally?

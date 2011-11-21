@@ -924,7 +924,10 @@ var GoalProfileView = Backbone.View.extend({
         // attach a NewGoalView to the new goals html
         var newGoalEl = this.$(".goalpicker");
         if ( newGoalEl.length > 0) {
-            this.newGoalsView = new NewGoalView({el: newGoalEl});
+            this.newGoalsView = new NewGoalView({
+                el: newGoalEl,
+                model: this.model
+            });
         }
 
         Profile.AddObjectiveHover(jel);
