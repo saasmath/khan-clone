@@ -268,12 +268,12 @@ class BingoIdentityCache(object):
         return BingoIdentityCache.MEMCACHE_KEY % ident
 
     @staticmethod
-    def get(identity_val=None):
+    def get():
         init_request_cache_from_memcache()
 
-        key = BingoIdentityCache.key_for_identity(identity(identity_val))
+        key = BingoIdentityCache.key_for_identity(identity())
         if not REQUEST_CACHE.get(key):
-            REQUEST_CACHE[key] = BingoIdentityCache.load_from_datastore(identity_val)
+            REQUEST_CACHE[key] = BingoIdentityCache.load_from_datastore()
 
         return REQUEST_CACHE[key]
 
@@ -331,13 +331,13 @@ class BingoIdentityCache(object):
                 memcache.set(key, [])
 
     @staticmethod
-    def load_from_datastore(identity_val=None):
-        bingo_identity_cache = _GAEBingoIdentityRecord.load(identity(identity_val))
+    def load_from_datastore():
+        bingo_identity_cache = _GAEBingoIdentityRecord.load(identity())
         
         if bingo_identity_cache:
             bingo_identity_cache.purge()
             bingo_identity_cache.dirty = True
-            bingo_identity_cache.store_for_identity_if_dirty(identity(identity_val))
+            bingo_identity_cache.store_for_identity_if_dirty(identity())
         else:
             bingo_identity_cache = BingoIdentityCache()
         
@@ -371,8 +371,8 @@ class BingoIdentityCache(object):
             self.converted_tests[experiment_name] += 1
         self.dirty = True
 
-def bingo_and_identity_cache(identity_val=None):
-    return BingoCache.get(), BingoIdentityCache.get(identity_val)
+def bingo_and_identity_cache():
+    return BingoCache.get(), BingoIdentityCache.get()
 
 def store_if_dirty():
     # Only load from request cache here -- if it hasn't been loaded from memcache previously, it's not dirty.

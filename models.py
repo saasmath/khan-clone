@@ -1989,13 +1989,17 @@ class UserExerciseCache(db.Model):
         if not user_exercises:
             user_exercises = UserExercise.get_for_user_data(user_data)
 
-        current_user = UserData.current().user_id == user_data.user_id
+        current_user = UserData.current()
+        if current_user is None:
+            is_current_user = False
+        else:
+            is_current_user = current_user.user_id == user_data.user_id
 
         # Experiment to try different struggling models.
         # It's important to pass in the user_data of the student owning the
         # exercise, and not of the current viewer (as it may be a coach).
         struggling_model = StrugglingExperiment.get_alternative_for_user(
-                user_data, current_user) or StrugglingExperiment.DEFAULT
+                user_data, is_current_user) or StrugglingExperiment.DEFAULT
 
         dicts = {}
 

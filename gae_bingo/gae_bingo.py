@@ -206,9 +206,11 @@ def resume_experiment(canonical_name):
         bingo_cache.update_experiment(experiment)
 
 def find_alternative_for_user(canonical_name, identity_val):
-    """ Returns the alternative that the specified bingo identity is opted into.
-    If the experiment does not exist, is not live, or if the identity has not
-    been opted in, returns None. This does not affect the experiment in any way.
+    """ Returns the alternative that the specified bingo identity belongs to.
+    If the experiment does not exist or is not live, this will return None.
+    Note that the user may not have been opted into the experiment yet - this
+    is just a way to probe what alternative will be selected, or has been
+    selected for the user without causing side effects.
     
     If an experiment has multiple instances (because it was created with
     different alternative sets), will operate on the last experiment.
@@ -218,17 +220,14 @@ def find_alternative_for_user(canonical_name, identity_val):
     
     """
     
-    bingo_cache, bingo_identity_cache = bingo_and_identity_cache(identity_val)
-    experiment_names = bingo_cache.get_experiment_names_by_canonical_name(canonical_name)
+    bingo_cache = BingoCache.get()
+    experiment_names = bingo_cache.get_experiment_names_by_canonical_name(
+            canonical_name)
     
     if not experiment_names:
         return None
     
     experiment_name = experiment_names[-1]
-
-    if experiment_name not in bingo_identity_cache.participating_tests:
-        return None
-
     experiment = bingo_cache.get_experiment(experiment_name)
 
     if not experiment or not experiment.live:

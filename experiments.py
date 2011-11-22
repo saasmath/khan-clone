@@ -38,8 +38,8 @@ class StrugglingExperiment(object):
     def get_alternative_for_user(user_data, current_user=False):
         """ Returns the experiment alternative for the specified user, or
         the current logged in user. If the user is the logged in user, will
-        opt in for an experiment. Otherwise, this can return None if the
-        specified user is not in the experiment yet.
+        opt in for an experiment, as well. Will not affect experiments if
+        not the current user.
         
         """
         
