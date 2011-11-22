@@ -695,6 +695,8 @@ var Profile = {
         });
 
         // Where does this go? Might it collide one day?
+        Handlebars.registerPartial("class-progress-column", Templates.get( "profile.class-progress-column" ));
+
         Handlebars.registerHelper("toPixelWidth", function(num, total) {
             // TODO: Change to reasonable width
             return Math.round(200 * num / context.num_students);
@@ -710,7 +712,24 @@ var Profile = {
                 }[status];
         });
 
+        // This feels awkward,
+        // but I didn't know how else to pass information to a partial.
+        Handlebars.registerHelper("progressColumn", function(block) {
+            var side = block.hash.side,
+                sideToFloat = {left: "right", right: "left"};
+
+            this.progressSide = side;
+            this.progressFloat = sideToFloat[side];
+            this.showName = (side === "left");
+
+            return block(this)
+        });
+
         Handlebars.registerHelper("progressIter", function(progress, block) {
+            if (!progress) {
+                return;
+            }
+
             var result = "",
                 fShowStatusOnLeft = { "proficient": true,
                     "review": true,
@@ -724,6 +743,7 @@ var Profile = {
                     result += block(p);
                 }
             });
+
             return result;
         });
 

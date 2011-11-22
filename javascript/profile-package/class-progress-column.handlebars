@@ -1,0 +1,23 @@
+<div style="height: 20px; float: {{progressFloat}};">
+  {{#if showName}}<span>{{name}}</span>{{/if}}
+</div>
+
+<div style="clear: both;"></div>
+
+<div class="fake-row">
+  {{#progressIter progress side=progressSide}}
+  <span class="status exercise-color {{toColor status}}" style="float: {{../progressFloat}}; width: {{toPixelWidth students.length numStudents}}px;" data-width="{{toPixelWidth students.length numStudents}}" data-status="{{status}}"></span>
+  {{/progressIter}}
+</div>
+
+<div style="clear: both;"></div>
+
+<div class="student-list">
+  {{#progressIter progress side=progressSide}}
+    <div class="exercise-color {{toColor status}}" style="float: {{../progressFloat}}; width: 100px; min-height:5px;">
+      <table>
+        {{#each students}}<tr><td>{{nickname}}</td></tr>{{/each}}
+      </table>
+    </div>
+  {{/progressIter}}
+</div>
