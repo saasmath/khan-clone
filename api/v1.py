@@ -515,24 +515,23 @@ def coach_progress_summary():
     exercises = models.Exercise.get_all_use_cache()
     user_exercise_graphs = models.UserExerciseGraph.get(list_students)
 
-    exercise_data = {}
+    exercise_data = []
 
-    for (student, user_exercise_graph) in izip(
-        list_students, user_exercise_graphs):
+    for exercise in exercises:
+        progress_buckets = {
+            'review': [],
+            'proficient': [],
+            'struggling': [],
+            'started': [],
+            'not_started': [],
+        }
 
-        student_review_exercise_names = user_exercise_graph.review_exercise_names()
+        for (student, user_exercise_graph) in izip(
+            list_students, user_exercise_graphs):
 
-        for exercise in exercises:
+            student_review_exercise_names = user_exercise_graph.review_exercise_names()
+
             graph_dict = user_exercise_graph.graph_dict(exercise.name)
-
-            if not exercise.display_name in exercise_data:
-                exercise_data[exercise.display_name] = {
-                    'review': [],
-                    'proficient': [],
-                    'struggling': [],
-                    'started': [],
-                    'not_started': [],
-                }
 
             if graph_dict['proficient']:
                 if exercise.name in student_review_exercise_names:
@@ -546,19 +545,21 @@ def coach_progress_summary():
             else:
                 status = 'not_started'
 
-            exercise_data[exercise.display_name][status].append({
+            progress_buckets[status].append({
                 'nickname': student.nickname,
                 'email': student.email,
             })
-    formatted_exercise_data = [
-        dict([('name', name),
-                ('progress', [
-                    dict([('status', status),
-                        ('students', exercise_data[name][status])])
-                        for status in exercise_data[name]])
-            ]) for name in exercise_data]
+        progress = [dict([('status', status),
+                        ('students', progress_buckets[status])])
+                        for status in progress_buckets]
 
-    return {'exercises': formatted_exercise_data,
+        exercise_data.append({
+            'name': exercise.name,
+            'display_name': exercise.display_name,
+            'progress': progress,
+        })
+
+    return {'exercises': exercise_data,
             'num_students': len(list_students)}
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])

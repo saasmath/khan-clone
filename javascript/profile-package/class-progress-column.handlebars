@@ -1,5 +1,5 @@
 <div style="height: 20px; float: {{progressFloat}};">
-  {{#if showName}}<span>{{name}}</span>{{/if}}
+  {{#if showName}}<span>{{display_name}}</span>{{/if}}
 </div>
 
 <div style="clear: both;"></div>
@@ -16,7 +16,11 @@
   {{#progressIter progress side=progressSide}}
     <div class="exercise-color {{toColor status}}" style="float: {{../progressFloat}}; width: 100px; min-height:5px;">
       <table>
-        {{#each students}}<tr><td>{{nickname}}</td></tr>{{/each}}
+        {{#each students}}
+        <tr><td>
+        <a class="student-link" href="#" data-exercise="{{../../name}}" data-email="{{email}}">{{nickname}}</a>
+        </td></tr>
+        {{/each}}
       </table>
     </div>
   {{/progressIter}}

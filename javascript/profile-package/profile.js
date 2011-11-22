@@ -748,7 +748,8 @@ var Profile = {
         });
 
         $("#graph-content").html(template(context));
-        $(".exercise-row").click(function(event) {
+
+        $(".exercise-row").click(function(e) {
             var jRow = $(this),
                 studentLists = jRow.find(".student-list");
 
@@ -771,7 +772,21 @@ var Profile = {
 
                 studentLists.delay(150).fadeIn(650, "easeInOutCubic");
             }
-        })
+        });
+
+        $("#progress-summary-container .student-link").click(function(e) {
+            var jel = $(this),
+                exercise = jel.data("exercise"),
+                email = jel.data("email");
+
+            Profile.collapseAccordion();
+            Profile.loadGraph(
+                "/profile/graph/exerciseproblems?" +
+                "exercise_name=" + exercise + "&" +
+                "student_email=" + encodeURIComponent(email));
+
+            return false;
+        });
     },
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
