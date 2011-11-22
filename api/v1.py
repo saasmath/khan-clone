@@ -917,3 +917,27 @@ def problem_logs():
     problem_log_query.order("time_done")
 
     return problem_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/videos", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def video_logs():
+    video_log_query = models.VideoLog.all()
+    filter_query_by_request_dates(video_log_query, "time_watched")
+    video_log_query.order("time_watched")
+
+    return video_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/users", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def user_data():
+    user_data_query = models.UserData.all()
+    filter_query_by_request_dates(user_data_query, "joined")
+    user_data_query.order("joined")
+
+    return user_data_query.fetch(request.request_int("max", default=500))
