@@ -1,45 +1,53 @@
 import os
 import cgi
-import logging
-
-from google.appengine.ext import webapp
 
 from app import App
 from js_css_packages import packages
-import util
 import request_cache
+import util
+
+# Attempt to load compressed packages (may not exist in dev mode)
+try:
+    from js_css_packages import packages_compressed
+except Exception:
+    pass
 
 @request_cache.cache()
 def use_compressed_packages():
-
-    if App.is_dev_server:
-        return False
-
     qs = os.environ.get("QUERY_STRING")
     dict_qs = cgi.parse_qs(qs)
+
+    if App.is_dev_server and ["1"] != dict_qs.get("compressed_packages"):
+        return False
+
     if ["1"] == dict_qs.get("uncompressed_packages"):
         return False
 
     return True
 
 def js_package(package_name):
-    package = packages.javascript[package_name]
-    base_url = package.get("base_url") or "/javascript/%s-package" % package_name
 
     if not use_compressed_packages():
+        package = packages.javascript[package_name]
+        base_url = package.get("base_url") or "/javascript/%s-package" % package_name
         list_js = []
         for filename in package["files"]:
             list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, filename))
         return "".join(list_js)
     else:
+        package = packages_compressed.compressed_javascript[package_name]
+        base_url = package.get("base_url") or "/javascript/%s-package" % package_name
         return "<script type='text/javascript' src='%s/%s'></script>" % (util.static_url(base_url), package["hashed-filename"])
 
 def css_package(package_name):
-    package = packages.stylesheets[package_name]
+
+    if not use_compressed_packages():
+        package = packages.stylesheets[package_name]
+    else:
+        package = packages_compressed.compressed_stylesheets[package_name]
     base_url = package.get("base_url") or "/stylesheets/%s-package" % package_name
 
     list_css = []
-
     if not use_compressed_packages():
         for filename in package["files"]:
             list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \

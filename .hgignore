@@ -11,6 +11,7 @@ syntax: glob
 hashed-*.css
 hashed-*.js
 js_css_packages/packages_hash.py
+js_css_packages/packages_compressed.py
 *.pem
 secrets.py
 datastore/*
