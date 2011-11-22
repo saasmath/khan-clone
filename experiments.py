@@ -50,7 +50,7 @@ class StrugglingExperiment(object):
         if user_data.coaches:
             exp_name = 'Struggling model (w/coach)'
         else:
-            exp_name = 'Struggling model (no coach)',
+            exp_name = 'Struggling model (no coach)'
 
         # If it's not the current user, then it must be an admin or coach
         # viewing a dashboard. Don't affect the actual experiment as only the
