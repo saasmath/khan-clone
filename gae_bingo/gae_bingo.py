@@ -230,8 +230,12 @@ def find_alternative_for_user(canonical_name, identity_val):
     experiment_name = experiment_names[-1]
     experiment = bingo_cache.get_experiment(experiment_name)
 
-    if not experiment or not experiment.live:
+    if not experiment:
         return None
+
+    if not experiment.live:
+        # Experiment has ended - return result that was selected.
+        return experiment.short_circuit_content
 
     return _find_alternative_for_user(experiment.hashable_name,
                                       bingo_cache.get_alternatives(experiment_name),
