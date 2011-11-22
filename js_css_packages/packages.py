@@ -6,7 +6,6 @@ javascript = {
             "jquery.ui.menu.js",
             "jquery.watermark.js",
             "jquery.placeholder.js",
-            "jquery.hoverflow.js",
             "pageutil.js",
             "api.js",
             "social.js",
