@@ -441,6 +441,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
 
+        just_earned_proficiency = False
+
         if completed:
             
             if user_exercise.is_struggling():
@@ -473,6 +475,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
+                    just_earned_proficiency = True
                     problem_log.earned_proficiency = True
 
             util_badges.update_with_user_exercise(
