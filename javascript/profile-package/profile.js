@@ -324,30 +324,6 @@ var Profile = {
         }
     },
 
-
-    userGoalsAbandonGoal: function(id) {
-        var element = $('goal-abandon-'+id);
-
-        Throbber.show(element, true);
-        if (confirm("This action cannot be undone. Abandon goal?")) {
-            $.ajax({
-                url: "/api/v1/user/goals/abandon/" + id,
-                type: 'POST',
-                dataType: 'json',
-                success: function(json) {
-                    Throbber.hide();
-
-                    GoalBook.remove(GoalBook.get(id));
-                    Profile.loadGraph(Profile.userGoalsHref);
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    // TomY TODO - report error
-                    Throbber.hide();
-                }
-            });
-        }
-    },
-
     renderUserGoals: function(data, href) {
         current_goals = [];
         completed_goals = [];
@@ -429,7 +405,7 @@ var Profile = {
                     goal.objectives.sort(function(a,b) { return b.progress-a.progress; });
 
                     $.each(goal.objectives, function(idx3, objective) {
-                        calcObjectiveDependents(objective, goal.objectiveWidth);
+                        Goal.calcObjectiveDependents(objective, goal.objectiveWidth);
 
                         if (objective.status == 'proficient')
                             progress_count += 1000;
@@ -874,15 +850,17 @@ var GoalProfileView = Backbone.View.extend({
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
 
-        $(this.el).delegate('input.goal-title', 'blur', $.proxy(function( e ) {
-            var jel = $(e.target);
-            var goalId = jel.closest('.goal').data('id');
-            var goal = this.model.get(goalId);
-            var newTitle = jel.val();
-            if (newTitle !== goal.get('title')) {
-                goal.save({title: newTitle});
-            }
-        }, this));
+        $(this.el)
+            .delegate('input.goal-title', 'blur', $.proxy(function( e ) {
+                var jel = $(e.target);
+                var goalId = jel.closest('.goal').data('id');
+                var goal = this.model.get(goalId);
+                var newTitle = jel.val();
+                if (newTitle !== goal.get('title')) {
+                    goal.save({title: newTitle});
+                }
+            }, this))
+            .delegate('.abandon', 'click', $.proxy(this.abandon, this));
     },
 
     show: function() {
@@ -932,6 +910,25 @@ var GoalProfileView = Backbone.View.extend({
 
         Profile.AddObjectiveHover(jel);
         return jel;
+    },
+
+    abandon: function( evt ) {
+        var goalEl = $(evt.target).closest('.goal');
+        var goal = this.model.get(goalEl.data('id'));
+
+        if (confirm("Abandoning a goal is permanent and cannot be undone. Do you really want to abandon this goal?")) {
+            // move the model to the abandoned collection
+            this.model.remove(goal);
+            goal.set({'abandoned': true});
+            AbandonedGoalBook.add(goal);
+
+            // persist to server
+            goal.save().fail(function() {
+                console.log("Warning: failed to abandon goal", goal);
+                AbandonedGoalBook.remove(goal);
+                this.model.add(goal);
+            });
+        }
     }
 });
 

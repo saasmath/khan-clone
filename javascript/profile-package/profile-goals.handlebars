@@ -13,7 +13,7 @@
                 {{#if ../isCompleted }}<span class="summary-light">(completed {{ completed_ago }} in {{ completed_time }})</span>{{/if}}
                 {{#if ../isAbandoned }}<span class="summary-light">(abandoned {{ completed_ago }})</span>{{/if}}
                 <span class="goal-controls">
-                    {{#if ../isCurrent }}<a class="simple-button action-gradient" href="javascript: Profile.userGoalsAbandonGoal({{id}})" id="goal-abandon-{{id}}">Abandon</a>{{/if}}
+                    {{#if ../isCurrent }}<a class="abandon simple-button action-gradient" href="javascript:void(0)" id="goal-abandon-{{id}}">Abandon</a>{{/if}}
                 </span>
             </p>
             <ul class="inline-list objective-list">
