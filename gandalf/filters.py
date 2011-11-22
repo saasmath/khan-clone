@@ -50,9 +50,9 @@ class AllUsersBridgeFilter(BridgeFilter):
         return True
 
 
-class ProblemsDoneBridgeFilter(BridgeFilter):
-    name = "problems-done"
-    filename = "problems-done.html"
+class NumberOfProficientExercisesBridgeFilter(BridgeFilter):
+    name = "number-of-proficient-exercises"
+    filename = "number-of-proficient-exercises.html"
 
     @staticmethod
     def passes(context, user_data):
@@ -62,7 +62,7 @@ class ProblemsDoneBridgeFilter(BridgeFilter):
     def initial_context():
         return {
             'comp': '>=',
-            'problems_done': 0,
+            'exercises': 0,
         }
 
 
@@ -72,12 +72,16 @@ class HasCoachBridgeFilter(BridgeFilter):
 
     @staticmethod
     def passes(context, user_data):
-        return False
+        has_coach = bool(user_data.coaches)
+
+        should_have_coach = context['coach'] == "true"
+
+        return should_have_coach == has_coach
 
     @staticmethod
     def initial_context():
         return {
-            'coach': 'true',
+            'coach': "true",
         }
 
 
@@ -87,7 +91,9 @@ class SpecificCoachesBirdgeFilter(BridgeFilter):
 
     @staticmethod
     def passes(context, user_data):
-        return False
+        coaches_to_have = context['coaches'].split()
+
+        return bool(set(coaches_to_have) & set(user_data.coaches))
 
     @staticmethod
     def initial_context():

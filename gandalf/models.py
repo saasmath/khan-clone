@@ -22,7 +22,7 @@ class _GandalfBridge(db.Model):
 class _GandalfFilter(db.Model):
     bridge = db.ReferenceProperty(_GandalfBridge, required=True)
     filter_type = db.StringProperty(required=True, indexed=False)
-    whitelist = db.BooleanProperty(default=True, indexed=False)
+    whitelist = db.BooleanProperty(default=True)
     percentage = db.IntegerProperty(default=100, indexed=False)
     context = object_property.UnvalidatedObjectProperty(indexed=False)
 

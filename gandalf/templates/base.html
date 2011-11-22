@@ -47,6 +47,14 @@
                 width: 20%;
             }
 
+            .filter-whitelist {
+                background-color: #CFE0A3;
+            }
+
+            .filter-blacklist {
+                background-color: #E5A1A1;
+            }
+
             .bridge-status {
                 float: right;
                 margin-top: 30px;
@@ -138,6 +146,9 @@
                         <option value={{name}}>{{proper_name}}</option>
                         {{/filter_types}}
                     </select>
+                    <input type="radio" name="whitelist" value="true" id="whitelist-true" checked="checked"><label for="whitelist-true">Whitelist</label>
+                    <input type="radio" name="whitelist" value="false" id="whitelist-false"><label for="whitelist-false">Blacklist</label>
+
                     <button type="submit" class="button filter-new-button" data-replace-with="Creating filter...">New filter</button>
                 </form>
             </div>
@@ -146,12 +157,21 @@
             <p>No filters, this bridge currently lets no one through.</p>
             {{/filters}}
 
-            {{#filters_is_not_empty}}
-            <strong>Users can cross this bridge if they pass any one of the following filters:</strong>
-            {{/filters_is_not_empty}}
+            {{#filters_are_not_empty}}
+            <p>Users can cross this bridge if they match <strong>any</strong> of the whitelists, and <strong>none</strong> of the blacklists.</p>
+            {{/filters_are_not_empty}}
 
             {{#filters}}
-            <div class="filter-container">
+
+            {{#whitelist_message}}
+            <p><strong>Whitelists:</strong></p>
+            {{/whitelist_message}}
+
+            {{#blacklist_message}}
+            <p><strong>Blacklists:</strong></p>
+            {{/blacklist_message}}
+
+            <div class="filter-container {{#whitelist}}filter-whitelist{{/whitelist}}{{^whitelist}}filter-blacklist{{/whitelist}}">
                 <hr>
 
                 <strong>{{proper_name}}</strong>
@@ -162,10 +182,8 @@
                     <input type="hidden" name="action" value="save">
 
                     <p>
-                    <select name="whitelist">
-                        <option value="true"{{#whitelist}} selected="selected"{{/whitelist}}>Allow</option>
-                        <option value="false"{{^whitelist}} selected="selected"{{/whitelist}}>Don't Allow</option>
-                    </select>
+                    {{#whitelist}}Allowing {{/whitelist}}
+                    {{^whitelist}}Not allowing {{/whitelist}}
                     <input type="text" name="percentage" value="{{percentage}}" size="4">% of users
                     {{{html}}}
                     </p>

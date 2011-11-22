@@ -1,0 +1,17 @@
+who are proficient in
+<select name="comp" class="find-selected">
+    <option value=">=">&ge;</option>
+    <option value=">">&gt;</option>
+    <option value="<=">&le;</option>
+    <option value="<">&lt;</option>
+    <option value="=">=</option>
+</select>
+
+<input type="text" name="exercises" value="{{exercises}}"> exercises
+
+<script>
+    $(".find-selected")
+        .removeClass("find-selected")
+        .find("[value='{{{comp}}}']")
+            .attr("selected", "selected");
+</script>

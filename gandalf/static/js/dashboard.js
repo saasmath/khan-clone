@@ -117,6 +117,8 @@ var GandalfDashboard = {
                         }
 
                         $(".filter-save-container").html(submitButton);
+
+                        alert("Filter saved!");
                     });
 
                     submitButton.replaceWith(submitButton.data("replace-with"));
