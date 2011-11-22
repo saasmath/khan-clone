@@ -4,11 +4,12 @@ import urllib
 import request_cache
 import logging
 from google.appengine.api import users
-from google.appengine.api import oauth
 from asynctools import AsyncMultiTask, QueryTask
 
 from app import App
-import nicknames
+
+# Needed for side effects of secondary imports
+import nicknames #@UnusedImport
 import facebook_util
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
     is_phantom_id

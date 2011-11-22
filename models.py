@@ -33,8 +33,8 @@ from decorators import clamp
 from image_cache import ImageCache
 
 from templatefilters import slugify
-from gae_bingo.gae_bingo import ab_test, bingo
-from gae_bingo.models import GAEBingoIdentityModel, ConversionTypes
+from gae_bingo.gae_bingo import bingo
+from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
 
 # Setting stores per-application key-value pairs
@@ -1916,7 +1916,7 @@ class UserExerciseCache(db.Model):
             if not user_exercise_cache or user_exercise_cache.version != UserExerciseCache.CURRENT_VERSION:
                 # Null out the reference so the gc can collect, in case it's
                 # a stale version, since we're going to rebuild it below.
-                user_exercise_caches[i] =  None
+                user_exercise_caches[i] = None
 
                 # This user's cached graph is missing or out-of-date,
                 # put it in the list of graphs to be regenerated.
