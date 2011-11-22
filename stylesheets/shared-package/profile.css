@@ -515,6 +515,10 @@ div.graph-notification {
     min-height: 700px;
     height: 800px;
 }
+#individual_report #vital-statistics.coach-view {
+    min-height: 700px;
+    height: 800px;
+}
 
 #current-goals-list input.goal-title {
     min-width: 450px;
