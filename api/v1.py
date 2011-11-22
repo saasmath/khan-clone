@@ -1012,9 +1012,9 @@ def get_student_goals():
 
     return return_data
 
-# LOGIN? TomY TODO
 @route("/api/v1/user/goals", methods=["POST"])
 @oauth_optional()
+@api_create_phantom
 @jsonp
 @jsonify
 def create_user_goal():
@@ -1122,7 +1122,6 @@ def put_user_goal(id):
     return goal.get_visible_data(None)
 
 
-# LOGIN? TomY TODO
 @route("/api/v1/user/goals/abandon/<id>", methods=["POST"])
 @oauth_optional()
 @jsonp
@@ -1143,7 +1142,6 @@ def abandon_user_goal(id):
 
     return goal.get_visible_data(None)
 
-# LOGIN? TomY TODO
 @route("/api/v1/user/goals/<id>", methods=["DELETE"])
 @oauth_optional()
 @jsonp
@@ -1163,7 +1161,6 @@ def delete_user_goal(id):
 
     return {}
 
-# Developer only perhaps? TomY TODO
 @route("/api/v1/user/goals", methods=["DELETE"])
 @oauth_optional()
 @jsonp

@@ -341,8 +341,8 @@ var Profile = {
                     Profile.loadGraph(Profile.userGoalsHref);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    // TomY TODO - report error
-                    Throbber.hide();
+                    // Wait 15 seconds and try again
+                    setTimeout(Profile.userGoalsAbandonGoal, 15000);
                 }
             });
         }
@@ -497,7 +497,7 @@ var Profile = {
                         Profile.loadGraph('/profile/graph/exerciseproblems?student_email='+goalViewModel.student.email+'&exercise_name='+goalObjective.internal_id);
                     });
                 } else {
-                    // TomY TODO Do something here for videos?
+                    // Do something here for videos?
                 }
             });
         });

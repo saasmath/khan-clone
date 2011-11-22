@@ -934,7 +934,6 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
 
-    ('/goals/view', goals.ViewGoals),
     ('/goals/new', goals.CreateNewGoal),
     ('/goals/admincreaterandom', goals.CreateRandomGoalData),
 
