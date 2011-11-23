@@ -35,7 +35,6 @@ from app import App
 import util
 import user_util
 import exercise_statistics
-import backfill
 import activity_summary
 import exercises
 import dashboard
@@ -62,8 +61,11 @@ from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
 from nicknames import get_nickname_for
+from image_cache import ImageCache
+from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -103,6 +105,8 @@ def get_mangled_playlist_name(playlist_name):
     return playlist_name
 
 class ViewVideo(request_handler.RequestHandler):
+
+    @ensure_xsrf_cookie
     def get(self, readable_id=""):
 
         # This method displays a video in the context of a particular playlist.
@@ -233,8 +237,10 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
+        bingo('struggling_videos_landing')
         self.render_jinja2_template('viewvideo.html', template_values)
 
+# This function is only here for a transitional period, all new requests should be using the API (-Tom Y 11/17/11)
 class LogVideoProgress(request_handler.RequestHandler):
 
     # LogVideoProgress uses a GET request to solve the IE-behind-firewall
@@ -790,9 +796,9 @@ application = webapp2.WSGIApplication([
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
     ('/video/(.*)', ViewVideo),
+    ('/logvideoprogress', LogVideoProgress),
     ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
-    ('/logvideoprogress', LogVideoProgress),
     ('/sat', ViewSAT),
     ('/gmat', ViewGMAT),
     ('/reportissue', ReportIssue),
@@ -800,6 +806,8 @@ application = webapp2.WSGIApplication([
     ('/savemapcoords', knowledgemap.SaveMapCoords),
     ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
     ('/crash', Crash),
+
+    ('/image_cache/(.+)', ImageCache),
 
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
@@ -810,8 +818,6 @@ application = webapp2.WSGIApplication([
     ('/admin/badgestatistics', util_badges.BadgeStatistics),
     ('/admin/startnewexercisestatisticsmapreduce', exercise_statistics.StartNewExerciseStatisticsMapReduce),
     ('/admin/startnewvotemapreduce', voting.StartNewVoteMapReduce),
-    ('/admin/backfill', backfill.StartNewBackfillMapReduce),
-    ('/admin/backfill_entity', backfill.BackfillEntity),
     ('/admin/feedbackflagupdate', qa.StartNewFlagUpdateMapReduce),
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
@@ -928,7 +934,6 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
 
-    ('/goals/view', goals.ViewGoals),
     ('/goals/new', goals.CreateNewGoal),
     ('/goals/admincreaterandom', goals.CreateRandomGoalData),
 

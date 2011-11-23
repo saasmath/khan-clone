@@ -30,6 +30,7 @@ from counters import user_counter
 from facebook_util import is_facebook_user_id
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
+from image_cache import ImageCache
 
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
@@ -183,14 +184,6 @@ class Exercise(db.Model):
     def is_visible_to_current_user(self):
         return self.live or user_util.is_current_user_developer()
 
-    def struggling_threshold(self):
-        # 96% of users have proficiency before they get to 30 problems
-        # return 3 * self.required_streak
-
-        # 85% of users have proficiency before they get to 19 problems
-        # TODO(david): This needs to use the new accuracy model
-        return 20
-
     def summative_children(self):
         if not self.summative:
             return []
@@ -222,7 +215,6 @@ class Exercise(db.Model):
             return exercise
 
     def related_videos_query(self):
-        exercise_videos = None
         query = ExerciseVideo.all()
         query.filter('exercise =', self.key()).order('exercise_order')
         return query
@@ -333,6 +325,32 @@ class UserExercise(db.Model):
         proficiency_threshold = consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize
 
+    # "Struggling" model experiment parameters.
+    _struggling_ab_test_alternatives = {
+        'old': 8, # The original '>= 20 problems attempted' heuristic
+        'accuracy_1.8': 1, # Using an accuracy model with 1.8 as the parameter
+        'accuracy_2.0': 1, # Using an accuracy model with 2.0 as the parameter
+    }
+    _struggling_conversion_tests = [
+        ('struggling_problems_done', ConversionTypes.Counting),
+        ('struggling_problems_done_post_struggling', ConversionTypes.Counting),
+        ('struggling_problems_wrong', ConversionTypes.Counting),
+        ('struggling_problems_wrong_post_struggling', ConversionTypes.Counting),
+        ('struggling_problems_correct', ConversionTypes.Counting),
+        ('struggling_problems_correct_post_struggling', ConversionTypes.Counting),
+        ('struggling_gained_proficiency_all', ConversionTypes.Counting),
+
+        # the user closed the "Need help?" dialog that pops up
+        ('struggling_message_dismissed', ConversionTypes.Counting),
+
+        # the user clicked on the video in the "Need help?" dialog that pops up
+        ('struggling_videos_clicked_post_struggling', ConversionTypes.Counting),
+        ('struggling_videos_landing', ConversionTypes.Counting),
+        ('struggling_videos_finished', ConversionTypes.Counting),
+    ]
+    _struggling_conversion_names, _struggling_conversion_types = [
+        list(x) for x in zip(*_struggling_conversion_tests)]
+
     @property
     def exercise_states(self):
         user_exercise_graph = self.get_user_exercise_graph()
@@ -358,7 +376,7 @@ class UserExercise(db.Model):
 
     def accuracy_model(self):
         if self._accuracy_model is None:
-           self._accuracy_model = AccuracyModel(self)
+            self._accuracy_model = AccuracyModel(self)
         return self._accuracy_model
 
     # Faciliate transition for old objects that did not have the _progress property
@@ -371,11 +389,7 @@ class UserExercise(db.Model):
 
     def update_proficiency_model(self, correct):
         if not correct:
-            if self.summative:
-                # Reset to latest milestone
-                self.streak = (self.streak // consts.CHALLENGE_STREAK_BARRIER) * consts.CHALLENGE_STREAK_BARRIER
-            else:
-                self.streak = 0
+            self.streak = 0
 
         self.accuracy_model().update(correct)
         self._progress = self._get_progress_from_current_state()
@@ -449,8 +463,27 @@ class UserExercise(db.Model):
     def belongs_to(self, user_data):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
-    def struggling_threshold(self):
-        return self.exercise_model.struggling_threshold()
+    def is_struggling(self):
+        if self.has_been_proficient():
+            return False
+
+        bucket = ab_test('Struggling model',
+                self._struggling_ab_test_alternatives,
+                self._struggling_conversion_names,
+                self._struggling_conversion_types)
+        if bucket == 'old':
+            return self._is_struggling_old()
+        else:
+            # accuracy based model.
+            param = float(bucket.split('_')[1])
+            return self.accuracy_model().is_struggling(
+                    param=param,
+                    minimum_accuracy=consts.PROFICIENCY_ACCURACY_THRESHOLD,
+                    minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
+
+    def _is_struggling_old(self):
+        return ((self.streak == 0) and
+                (self.total_done > 20))
 
     @staticmethod
     def get_review_interval_from_seconds(seconds):
@@ -1062,11 +1095,10 @@ class Video(Searchable, db.Model):
     # this date may be much later than the actual YouTube upload date.
     date_added = db.DateTimeProperty(auto_now_add=True)
 
-    # Last download version in which video download was prepped.
-    download_version = db.IntegerProperty(default = 0)
-    CURRENT_DOWNLOAD_VERSION = 2
+    # List of currently available downloadable formats for this video
+    downloadable_formats = object_property.TsvProperty(indexed=False)
 
-    _serialize_blacklist = ["download_version", "CURRENT_DOWNLOAD_VERSION"]
+    _serialize_blacklist = ["downloadable_formats"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
     INDEX_TITLE_FROM_PROP = 'title'
@@ -1086,13 +1118,11 @@ class Video(Searchable, db.Model):
 
     @property
     def download_urls(self):
-        if self.download_version == Video.CURRENT_DOWNLOAD_VERSION:
-            download_url_base = "http://www.archive.org/download/KA-converted-%s" % self.youtube_id
 
-            return {
-                    "mp4": "%s/%s.mp4" % (download_url_base, self.youtube_id),
-                    "png": "%s/%s.png" % (download_url_base, self.youtube_id),
-                    }
+        if self.downloadable_formats:
+
+            download_url_template = "http://www.archive.org/download/KA-converted-%s/%s.%s"
+            return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
 
         return None
 
@@ -1103,7 +1133,7 @@ class Video(Searchable, db.Model):
         return None
 
     def youtube_thumbnail_url(self):
-        return "http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id
+        return ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id)
 
     @staticmethod
     def get_for_readable_id(readable_id):
@@ -1442,6 +1472,8 @@ class VideoLog(db.Model):
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
+            bingo('struggling_videos_finished')
+
         from goals import update_goals_just_watched_video
         goals_updated = update_goals_just_watched_video(user_data, user_video)
 
@@ -1633,10 +1665,6 @@ class LogSummary(db.Model):
             LogSummaryShardConfig.increase_shards(name, config.num_shards+1)
             shard_name = str(config.num_shards) + ":" + name
             db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
-
-    @staticmethod
-    def get_description():
-        return self.summary.description(self.start, self.end)
 
     @staticmethod
     def get_by_name(name):
@@ -1921,13 +1949,16 @@ class ExerciseVideo(db.Model):
 
         return exercise_video_key_dict
 
-# UserExerciseCache is an optimized-for-read-and-deserialization cache of user-specific exercise states.
-# It can be reconstituted at any time via UserExercise objects.
-#
 class UserExerciseCache(db.Model):
+    """ UserExerciseCache is an optimized-for-read-and-deserialization cache of
+    user-specific exercise states.
+    It can be reconstituted at any time via UserExercise objects.
+    
+    """
 
-    # Bump this whenever you change the structure of the cached UserExercises and need to invalidate all old caches
-    CURRENT_VERSION = 7
+    # Bump this whenever you change the structure of the cached UserExercises
+    # and need to invalidate all old caches
+    CURRENT_VERSION = 8
 
     version = db.IntegerProperty()
     dicts = object_property.UnvalidatedObjectProperty()
@@ -2016,6 +2047,7 @@ class UserExerciseCache(db.Model):
                 "streak": user_exercise.streak if user_exercise else 0,
                 "longest_streak": user_exercise.longest_streak if user_exercise else 0,
                 "progress": user_exercise.progress if user_exercise else 0.0,
+                "struggling": user_exercise.is_struggling() if user_exercise else False,
                 "total_done": user_exercise.total_done if user_exercise else 0,
                 "last_done": user_exercise.last_done if user_exercise else datetime.datetime.min,
                 "last_review": user_exercise.last_review if user_exercise else datetime.datetime.min,
@@ -2197,12 +2229,10 @@ class UserExerciseGraph(object):
                 "h_position": exercise.h_position,
                 "v_position": exercise.v_position,
                 "summative": exercise.summative,
-                "struggling_threshold": exercise.struggling_threshold(),
                 "num_milestones": exercise.num_milestones,
                 "proficient": None,
                 "explicitly_proficient": None,
                 "suggested": None,
-                "struggling": None,
                 "endangered": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
@@ -2236,12 +2266,7 @@ class UserExerciseGraph(object):
                 "coverer_dicts": [],
                 "prerequisite_dicts": [],
             })
-
-            # TODO(david): Use accuracy to determine when struggling
-            graph_dict["struggling"] = (graph_dict["streak"] == 0 and
-                    not graph_dict["proficient_date"] and
-                    graph_dict["total_done"] > graph_dict["struggling_threshold"])
-
+            
             # In case user has multiple UserExercise mappings for a specific exercise,
             # always prefer the one w/ more problems done
             if graph_dict["name"] not in graph or graph[graph_dict["name"]]["total_done"] < graph_dict["total_done"]:

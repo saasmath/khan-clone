@@ -473,7 +473,7 @@ var Profile = {
                         Profile.loadGraph('/profile/graph/exerciseproblems?student_email='+goalViewModel.student.email+'&exercise_name='+goalObjective.internal_id);
                     });
                 } else {
-                    // TomY TODO Do something here for videos?
+                    // Do something here for videos?
                 }
             });
         });

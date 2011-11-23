@@ -338,14 +338,12 @@ function KnowledgeMapInitGlobals() {
                         var zoom =this.parent.map.getZoom();
                         this.parent.markers = [];
 
-                        for (var key in this.parent.dictEdges) // this loop lets us update the edges wand will remove the old edges
-                        {
-                            var rgTargets = this.parent.dictEdges[key];
+                        $.each(this.parent.dictEdges, function(key, rgTargets) { // this loop lets us update the edges wand will remove the old edges
                             for (var ix = 0; ix < rgTargets.length; ix++)
                             {
                                 rgTargets[ix].line.setMap(null);
                             }
-                        }
+                        });
                         this.parent.overlay.setMap(null);
                         this.parent.layoutGraph();
                         this.parent.drawOverlay();
@@ -494,7 +492,7 @@ function KnowledgeMap(params) {
     this.map = null;
     this.overlay = null;
     this.dictNodes = {};
-    this.dictEdges = [];
+    this.dictEdges = {};
     this.markers = [];
     this.latLngBounds = null;
     this.fFirstDraw = true;
@@ -643,19 +641,17 @@ function KnowledgeMap(params) {
 
         var zoom = this.map.getZoom();
 
-        for (var key in this.dictNodes)
-        {
-            this.drawMarker(this.dictNodes[key], zoom);
-        }
+        var self = this;
+        $.each(this.dictNodes, function(key, node) {
+            self.drawMarker(node, zoom);
+        });
 
-        for (var key in this.dictEdges)
-        {
-            var rgTargets = this.dictEdges[key];
+        $.each(this.dictEdges, function(key, rgTargets) {
             for (var ix = 0; ix < rgTargets.length; ix++)
             {
-                this.drawEdge(this.dictNodes[key], rgTargets[ix], zoom);
+                self.drawEdge(self.dictNodes[key], rgTargets[ix], zoom);
             }
-        }
+        });
     };
 
     this.drawOverlay = function() {
@@ -798,16 +794,15 @@ function KnowledgeMap(params) {
 
         this.fZoomChanged = true;
 
-        for (var key in this.dictEdges)
-        {
-            var rgTargets = this.dictEdges[key];
+        var self = this;
+        $.each(this.dictEdges, function(idx, rgTargets) {
             for (var ix = 0; ix < rgTargets.length; ix++)
             {
                 var line = rgTargets[ix].line;
-                var map = this.getMapForEdge(rgTargets[ix], zoom);
+                var map = self.getMapForEdge(rgTargets[ix], zoom);
                 if (line.getMap() != map) line.setMap(map);
             }
-        }
+        });
     };
 
     this.onIdle = function() {

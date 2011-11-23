@@ -7,7 +7,6 @@ import urllib
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
-import consts
 import datetime
 import models
 import request_handler
@@ -65,7 +64,8 @@ class ViewExercise(request_handler.RequestHandler):
         ('hints_wrong_problems', ConversionTypes.Counting),
         ('hints_keep_going_after_wrong', ConversionTypes.Counting),
     ]
-    _hints_conversion_names, _hints_conversion_types = [list(x) for x in zip(*_hints_conversion_tests)]
+    _hints_conversion_names, _hints_conversion_types = [
+        list(x) for x in zip(*_hints_conversion_tests)]
 
     @ensure_xsrf_cookie
     def get(self, exid=None):
@@ -225,9 +225,6 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
-            'remind_answer_format': 'true' if ab_test('remind_answer_format_2',
-                conversion_name=['remind_first_attempt_wrong', 'remind_correct_after_wrong'],
-                conversion_type=[ConversionTypes.Counting] * 2) else 'false',
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
@@ -382,8 +379,7 @@ def raw_exercise_contents(exercise_file):
 
     return contents
 
-# TODO(david): Rename this function
-def reset_streak(user_data, user_exercise):
+def make_wrong_attempt(user_data, user_exercise):
     if user_exercise and user_exercise.belongs_to(user_data):
         user_exercise.update_proficiency_model(correct=False)
         user_exercise.put()
@@ -398,7 +394,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         dt_now = datetime.datetime.now()
         exercise = user_exercise.exercise_model
 
-        prev_last_done = user_exercise.last_done
         user_exercise.last_done = dt_now
         user_exercise.seconds_per_fast_problem = exercise.seconds_per_fast_problem
         user_exercise.summative = exercise.summative
@@ -446,12 +441,14 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
 
-        first_problem_after_proficiency = prev_last_done and user_exercise.proficient_date and (
-            abs(prev_last_done - user_exercise.proficient_date) <= datetime.timedelta(seconds=1))
-
         just_earned_proficiency = False
 
         if completed:
+            
+            if user_exercise.is_struggling():
+                bingo('struggling_problems_done_post_struggling')
+                if problem_log.correct:
+                    bingo('struggling_problems_correct_post_struggling')
 
             user_exercise.total_done += 1
 
@@ -473,12 +470,12 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 user_exercise.update_proficiency_model(correct=True)
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
-                    just_earned_proficiency = True
-                    bingo("hints_gained_proficiency_all")
-
+                    bingo(['hints_gained_proficiency_all',
+                           'struggling_gained_proficiency_all'])
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
+                    just_earned_proficiency = True
                     problem_log.earned_proficiency = True
 
             util_badges.update_with_user_exercise(
@@ -490,10 +487,13 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Update phantom user notifications
             util_notify.update(user_data, user_exercise)
 
-            bingo('hints_problems_done')
+            bingo(['hints_problems_done', 'struggling_problems_done'])
 
         else:
 
+            if first_response and user_exercise.is_struggling():
+                bingo('struggling_problems_wrong_post_struggling')
+                    
             if user_exercise.streak == 0:
                 # 2+ in a row wrong -> not proficient
                 user_exercise.set_proficient(False, user_data)
@@ -501,7 +501,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
-                bingo('hints_wrong_problems')
+                bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
 
         # If this is the first attempt, update review schedule appropriately
         if attempt_number == 1:

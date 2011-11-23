@@ -17,39 +17,14 @@ from .models import (Goal, GoalList, GoalObjective,
 from google.appengine.api import users
 from google.appengine.ext import db
 from api.auth.xsrf import ensure_xsrf_cookie
-
-# TomY TODO Get rid of this
-class ViewGoals(request_handler.RequestHandler):
-
-    @ensure_xsrf_cookie
-    def get(self):
-
-        user_data = UserData.current()
-
-        context = {}
-
-        if user_data is None:
-            context['status'] = 'notloggedin'
-            self.render_jinja2_template("goals/showgoals.html", context)
-            return
-
-        context['status'] = 'none'
-        context['goals_list'] = GoalList.get_visible_for_user(user_data, show_complete=True)
-        context['goals_count'] = len(context['goals_list'])
-        self.render_jinja2_template("goals/showgoals.html", context)
+from phantom_users.phantom_util import create_phantom
 
 class CreateNewGoal(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
+    @create_phantom
     def get(self):
         user_data = UserData.current()
-
-        # TomY TODO: Replace this with decorator
-        if user_data is None:
-            context = {}
-            context['status'] = 'notloggedin'
-            self.render_jinja2_template("goals/showgoals.html", context)
-            return
 
         # Get pregenerated library content from our in-memory/memcache two-layer cache
         library_content = library.library_content_html()
