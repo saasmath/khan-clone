@@ -18,6 +18,7 @@ import timed_problem_badges
 import exercise_completion_badges
 import exercise_completion_count_badges
 import playlist_time_badges
+import topic_videos_time_badges
 import power_time_badges
 import recovery_problem_badges
 import unfinished_streak_problem_badges
@@ -56,11 +57,18 @@ def all_badges():
         streak_badges.RidiculousStreakBadge(),
         streak_badges.LudicrousStreakBadge(),
 
+        # playlist badges are no longer issued
         playlist_time_badges.NicePlaylistTimeBadge(),
         playlist_time_badges.GreatPlaylistTimeBadge(),
         playlist_time_badges.AwesomePlaylistTimeBadge(),
         playlist_time_badges.RidiculousPlaylistTimeBadge(),
         playlist_time_badges.LudicrousPlaylistTimeBadge(),
+
+        topic_videos_time_badges.NiceTopicVideosTimeBadge(),
+        topic_videos_time_badges.GreatTopicVideosTimeBadge(),
+        topic_videos_time_badges.AwesomeTopicVideosTimeBadge(),
+        topic_videos_time_badges.RidiculousTopicVideosTimeBadge(),
+        topic_videos_time_badges.LudicrousTopicVideosTimeBadge(),
 
         timed_problem_badges.NiceTimedProblemBadge(),
         timed_problem_badges.GreatTimedProblemBadge(),
@@ -341,6 +349,24 @@ def update_with_user_exercise(user_data, user_exercise, include_other_badges = F
         awarded = update_with_no_context(user_data, action_cache=action_cache) or awarded
 
     return awarded
+
+# Award this user any earned Topic Videos-context badges for the provided UserTopicVideos.
+def update_with_user_topic_videos(user_data, user_topic_videos, include_other_badges = False, action_cache = None):
+    possible_badges = badges_with_context_type(badges.BadgeContextType.TOPIC)
+    action_cache = action_cache or last_action_cache.LastActionCache.get_for_user_data(user_data)
+
+    awarded = False
+    for badge in possible_badges:
+        # Pass in pre-retrieved user_topic_videos data so each badge check doesn't have to talk to the datastore
+        if not badge.is_already_owned_by(user_data=user_data, user_topic_videos=user_topic_videos):
+            if badge.is_satisfied_by(user_data=user_data, user_topic_videos=user_topic_videos, action_cache=action_cache):
+                badge.award_to(user_data=user_data, user_topic_videos=user_topic_videos)
+                awarded = True
+
+    if include_other_badges:
+        awarded = update_with_no_context(user_data, action_cache=action_cache) or awarded
+
+    return awarded    
 
 # Award this user any earned Playlist-context badges for the provided UserPlaylist.
 def update_with_user_playlist(user_data, user_playlist, include_other_badges = False, action_cache = None):

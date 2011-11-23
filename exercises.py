@@ -518,9 +518,8 @@ class EditExercise(request_handler.RequestHandler):
                 if exercise.name == exercise_name:
                     main_exercise = exercise
 
-            query = models.ExerciseVideo.all()
-            query.filter('exercise =', main_exercise.key())
-            exercise_videos = query.fetch(50)
+
+            exercise_videos = main_exercise.related_videos_query().fetch(50)
 
             template_values = {
                 'exercises': exercises,
@@ -538,6 +537,7 @@ class UpdateExercise(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
+        import logging
         user = models.UserData.current().user
 
         exercise_name = self.request.get('name')
@@ -613,49 +613,39 @@ class UpdateExercise(request_handler.RequestHandler):
                 exercise_video = models.ExerciseVideo()
                 exercise_video.exercise = exercise
                 exercise_video.video = db.Key(video_key)
-                exercise_video.exercise_order = models.VideoPlaylist.all().filter('video =',exercise_video.video).get().video_position
-                exercise_video.put()
+                exercise_video.exercise_order = 0 #reordering below
+                exercise_video.put() 
 
-        exercise.put()
-
-        #Start ordering
+        # Start ordering
         ExerciseVideos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).fetch(1000)
-        playlists = []
+        
+        # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
+        topics = {}
         for exercise_video in ExerciseVideos:
-            playlists.append(models.VideoPlaylist.get_cached_playlists_for_video(exercise_video.video))
+            for topic in models.Topic.get_cached_topics_for_video(exercise_video.video):
+                if not topics.has_key(topic.key()):
+                    topics[topic.key()] = {}
+                
+                topics[topic.key()][exercise_video] = exercise_video.video.get_order(topic.key())
 
-        if playlists:
+        # sort the list by topics that have the most exercises in them
+        topic_list = sorted(topics.keys(), key = lambda k: len(topics[k]), reverse = True)  
+        
+        orders = {}
+        i=0
+        for topic_key in topic_list:
+            # sort the exercise_videos in topic by their correct order
+            exercise_video_list = sorted(topics[topic_key], key = lambda k: topics[topic_key][k])
+            for exercise_video in exercise_video_list:
+                # as long as the video hasn't already appeared in an earlier topic, it should appear next in the exercise's video list
+                if not orders.has_key(exercise_video):
+                    orders[exercise_video]=i
+                    i += 1
 
-            playlists = list(itertools.chain(*playlists))
-            titles = map(lambda pl: pl.title, playlists)
-            playlist_sorted = []
-            for p in playlists:
-                playlist_sorted.append([p, titles.count(p.title)])
-            playlist_sorted.sort(key = lambda p: p[1])
-            playlist_sorted.reverse()
+        for exercise_video, i in orders.iteritems():
+            exercise_video.exercise_order = i
+            exercise_video.put()
 
-            playlists = []
-            for p in playlist_sorted:
-                playlists.append(p[0])
-            playlist_dict = {}
-            exercise_list = []
-            playlists = list(set(playlists))
-            for p in playlists:
-                playlist_dict[p.title]=[]
-                for exercise_video in ExerciseVideos:
-                    if p.title  in map(lambda pl: pl.title, models.VideoPlaylist.get_cached_playlists_for_video(exercise_video.video)):
-                        playlist_dict[p.title].append(exercise_video)
-                        # ExerciseVideos.remove(exercise_video)
-
-                if playlist_dict[p.title]:
-                    playlist_dict[p.title].sort(key = lambda e: models.VideoPlaylist.all().filter('video =', e.video).filter('playlist =',p).get().video_position)
-                    exercise_list.append(playlist_dict[p.title])
-
-            if exercise_list:
-                exercise_list = list(itertools.chain(*exercise_list))
-                for e in exercise_list:
-                    e.exercise_order = exercise_list.index(e)
-                    e.put()
 
 
         self.redirect('/editexercise?saved=1&name=' + exercise_name)

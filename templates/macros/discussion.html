@@ -1,4 +1,4 @@
-{% macro comments(user_data, video, playlist, page=0) -%}
+{% macro comments(user_data, video, topic, page=0) -%}
     {% set logged_in = user_data and not user_data.is_phantom %}
 
     <div class="video_comments requires_script">
@@ -16,14 +16,14 @@
         {% endif %}
 
         <span class="comments_show_more">
-            <a href="/video/{{video.readable_id}}?playlist={{playlist.title|urlencode}}&comments_page=1" class="comment_show control uses_script"><img class="icon" src="{{ "/images/balloons.png"|static_url }}" />Show more</a>
+            <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&comments_page=1" class="comment_show control uses_script"><img class="icon" src="{{ "/images/balloons.png"|static_url }}" />Show more</a>
         </span>
 
         <div class="comment_form" style="display:none;">
             <form class="comments" name="comments">
                 {{ honeypots() }}
                 <input type="hidden" id="video_key" name="video_key" value="{{ video.key() }}" />
-                <input type="hidden" id="playlist_key" name="playlist_key" value="{{ playlist.key() }}" />
+                <input type="hidden" id="topic_key" name="topic_key" value="{{ topic.key() }}" />
                 <textarea name="comment_text" class="comment_text" rows="3" cols="40"></textarea><br/>
                 {{ feedback_controls_comment("Comment") }}
             </form>
@@ -32,7 +32,7 @@
     </div>
 {%- endmacro %}
 
-{% macro qa(user_data, video, playlist, page=0, qa_expand_key=None, sort_override=-1) -%}
+{% macro qa(user_data, video, topic, page=0, qa_expand_key=None, sort_override=-1) -%}
 
     {% set sort_order = 1 %} {# voting.VotingSortOrder.HighestPointsFirst #}
     {% if user_data %}
@@ -55,8 +55,8 @@
                         Most votes first
                     {% endif %}
                     <ul>
-                        <li><a href="/discussion/updateqasort?sort=1&readable_id={{video.readable_id}}&playlist_title={{playlist.title|urlencode}}#qa">Most votes first</a></li>
-                        <li><a href="/discussion/updateqasort?sort=2&readable_id={{video.readable_id}}&playlist_title={{playlist.title|urlencode}}#qa">Newest questions first</a></li>
+                        <li><a href="/discussion/updateqasort?sort=1&readable_id={{video.readable_id}}&topic_title={{topic.title|urlencode}}#qa">Most votes first</a></li>
+                        <li><a href="/discussion/updateqasort?sort=2&readable_id={{video.readable_id}}&topic_title={{topic.title|urlencode}}#qa">Newest questions first</a></li>
                     </ul>
                 </li>
             </ul>
@@ -82,7 +82,7 @@
                 <form class="question" name="questions">
                     {{ honeypots() }}
                     <input type="hidden" id="video_key" class="video_key_primary" name="video_key" value="{{ video.key() }}" />
-                    <input type="hidden" id="playlist_key" name="playlist_key" value="{{ playlist.key() }}" />
+                    <input type="hidden" id="topic_key" name="topic_key" value="{{ topic.key() }}" />
                     <div class="question_placeholder requires_script">
                         <textarea name="question_text" class="question_text" rows="3" cols="40" 
                                     watermark="Ask a question about this video"></textarea>
@@ -265,14 +265,14 @@
     </nobr>
 {%- endmacro %}
 
-{% macro question_answers(answers, standalone=False, video=None, playlist=None) -%}
+{% macro question_answers(answers, standalone=False, video=None, topic=None) -%}
     {% for answer in answers %}
         <div class="answer_container">
             <input type="hidden" name="entity_key" value="{{ answer.key() }}" />
             <div class="answer">
                 {{ vote_tools(answer) }}
                 {% if standalone %}
-                    <a href="/video/{{video.readable_id}}?playlist={{playlist.title|urlencode}}&qa_expand_key={{answer.question().key()}}#q_{{answer.question().key()}}">
+                    <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_expand_key={{answer.question().key()}}#q_{{answer.question().key()}}">
                         {{ answer.content|truncate(40)|escape|linebreaksbr }}
                     </a>
                 {% else %}

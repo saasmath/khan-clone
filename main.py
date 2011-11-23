@@ -44,9 +44,10 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
+import taxonomy
 
 import models
-from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
+from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog, Topic
 from discussion import comments, notification, qa, voting
 from about import blog, util_about
 from phantom_users import util_notify
@@ -96,28 +97,28 @@ class KillLiveAssociations(request_handler.RequestHandler):
             video_playlist.live_association = False
         db.put(all_video_playlists)
 
-def get_mangled_playlist_name(playlist_name):
+def get_mangled_topic_name(topic_name):
     for char in " :()":
-        playlist_name = playlist_name.replace(char, "")
-    return playlist_name
+        topic_name = topic_name.replace(char, "")
+    return topic_name
 
 class ViewVideo(request_handler.RequestHandler):
     def get(self):
 
-        # This method displays a video in the context of a particular playlist.
-        # To do that we first need to find the appropriate playlist.  If we aren't
-        # given the playlist title in a query param, we need to find a playlist that
+        # This method displays a video in the context of a particular topic.
+        # To do that we first need to find the appropriate topic.  If we aren't
+        # given the topic title in a query param, we need to find a topic that
         # the video is a part of.  That requires finding the video, given it readable_id
         # or, to support old URLs, it's youtube_id.
         video = None
-        playlist = None
+        topic = None
         video_id = self.request.get('v')
-        playlist_title = self.request_string('playlist', default="") or self.request_string('p', default="")
+        topic_title = self.request_string('topic', default="") or self.request_string('t', default="")
         path = self.request.path
         readable_id  = urllib.unquote(path.rpartition('/')[2])
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
-        # If either the readable_id or playlist title is missing,
+        # If either the readable_id or topic title is missing,
         # redirect to the canonical URL that contains them
         redirect_to_canonical_url = False
         if video_id: # Support for old links
@@ -129,39 +130,35 @@ class ViewVideo(request_handler.RequestHandler):
                 raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
 
             readable_id = video.readable_id
-            playlist = video.first_playlist()
+            topic = video.first_topic()
 
-            if not playlist:
-                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
+            if not topic:
+                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
 
             redirect_to_canonical_url = True
 
-        if playlist_title is not None and len(playlist_title) > 0:
-            query = Playlist.all().filter('title =', playlist_title)
-            key_id = 0
-            for p in query:
-                if p.key().id() > key_id and not p.youtube_id.endswith('_player'):
-                    playlist = p
-                    key_id = p.key().id()
+        if topic_title is not None and len(topic_title) > 0:
+            topic = Topic.all().filter('title =', topic_title).get()
+            key_id = 0 if not topic else topic.key().id()
 
-        # If a playlist_title wasn't specified or the specified playlist wasn't found
-        # use the first playlist for the requested video.
-        if playlist is None:
-            # Get video by readable_id just to get the first playlist for the video
+        # If a topic_title wasn't specified or the specified topic wasn't found
+        # use the first topic for the requested video.
+        if topic is None:
+            # Get video by readable_id just to get the first topic for the video
             video = Video.get_for_readable_id(readable_id)
             if video is None:
                 raise MissingVideoException("Missing video '%s'" % readable_id)
 
-            playlist = video.first_playlist()
-            if not playlist:
-                raise MissingVideoException("Missing video '%s'" % readable_id)
+            topic = video.first_topic()
+            if not topic:
+                raise MissingVideoException("No topic has video '%s'" % readable_id)
 
             redirect_to_canonical_url = True
 
         exid = self.request_string('exid', default=None)
 
         if redirect_to_canonical_url:
-            qs = {'playlist': playlist.title}
+            qs = {'topic': topic.title}
             if exid:
                 qs['exid'] = exid
 
@@ -170,13 +167,12 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
-        # If we got here, we have a readable_id and a playlist_title, so we can display
-        # the playlist and the video in it that has the readable_id.  Note that we don't
+        # If we got here, we have a readable_id and a topic_title, so we can display
+        # the topic and the video in it that has the readable_id.  Note that we don't
         # query the Video entities for one with the requested readable_id because in some
         # cases there are multiple Video objects in the datastore with the same readable_id
         # (e.g. there are 2 "Order of Operations" videos).
-
-        videos = VideoPlaylist.get_cached_videos_for_playlist(playlist)
+        videos = Topic.get_cached_videos_for_topic(topic)
         previous_video = None
         next_video = None
         for v in videos:
@@ -187,12 +183,13 @@ class ViewVideo(request_handler.RequestHandler):
                 previous_video = v
             elif next_video is None:
                 next_video = v
+                break
 
         if video is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
         if App.offline_mode:
-            video_path = "/videos/" + get_mangled_playlist_name(playlist_title) + "/" + video.readable_id + ".flv"
+            video_path = "/videos/" + get_mangled_topic_name(topic_title) + "/" + video.readable_id + ".flv"
         else:
             video_path = video.download_video_url()
 
@@ -216,7 +213,7 @@ class ViewVideo(request_handler.RequestHandler):
             awarded_points = user_video.points
 
         template_values = {
-                            'playlist': playlist,
+                            'topic': topic,
                             'video': video,
                             'videos': videos,
                             'video_path': video_path,
@@ -232,7 +229,7 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
-        self.render_jinja2_template('viewvideo.html', template_values)
+        self.render_jinja2_template('viewvideo.html', template_values) 
 
 class LogVideoProgress(request_handler.RequestHandler):
 
@@ -800,6 +797,7 @@ application = webapp2.WSGIApplication([
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
 
+    ('/admin/edittaxonomy', taxonomy.EditTaxonomy),
     ('/admin/reput', bulk_update.handler.UpdateKind),
     ('/admin/retargetfeedback', RetargetFeedback),
     ('/admin/startnewbadgemapreduce', util_badges.StartNewBadgeMapReduce),

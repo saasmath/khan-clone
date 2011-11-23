@@ -166,7 +166,8 @@ class ViewHomePage(request_handler.RequestHandler):
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
         # Get pregenerated library content from our in-memory/memcache two-layer cache
-        library_content = library.library_content_html()
+        # library_content = library.library_content_html()
+        library_content = library.library_content_by_topic()
 
         template_values = {
                             'video_id': video_id,

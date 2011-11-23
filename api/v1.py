@@ -74,6 +74,27 @@ def add_action_results(obj, dict_results):
 
     obj.action_results = dict_results
 
+@route("/api/v1/topics", methods=["GET"])
+@jsonp
+@layer_cache.cache_with_key_fxn(
+    lambda: "api_topics_%s" % models.Setting.cached_library_content_date(),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topics():
+    return models.Topic.get_all_active_topics()
+
+@route("/api/v1/topictree", methods=["GET"])
+@etag(lambda: models.Setting.cached_library_content_date())
+@jsonp
+@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
+@layer_cache.cache_with_key_fxn(
+    lambda: "api_topictree_%s" % models.Setting.cached_library_content_date(),
+    layer=layer_cache.Layers.Memcache)
+@compress
+@jsonify
+def topictree():
+    return models.Topic.get_by_key_name("root").make_tree()
+
 @route("/api/v1/playlists", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(

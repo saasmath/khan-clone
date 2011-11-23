@@ -97,7 +97,7 @@ class PageQuestions(request_handler.RequestHandler):
             pass
 
         video_key = self.request.get("video_key")
-        playlist_key = self.request.get("playlist_key")
+        topic_key = self.request.get("topic_key")
         qa_expand_key = self.request_string("qa_expand_key")
         sort = self.request_int("sort", default=-1)
 
@@ -107,12 +107,12 @@ class PageQuestions(request_handler.RequestHandler):
             # Temporarily ignore errors caused by cached google pages of non-HR app
             return
 
-        playlist = db.get(playlist_key)
+        topic = db.get(topic_key)
 
         user_data = models.UserData.current()
 
         if video:
-            template_values = video_qa_context(user_data, video, playlist, page, qa_expand_key, sort)
+            template_values = video_qa_context(user_data, video, topic, page, qa_expand_key, sort)
             html = self.render_jinja2_template_to_string("discussion/video_qa_content.html", template_values)
             self.render_json({"html": html, "page": page, "qa_expand_key": qa_expand_key})
 
@@ -207,7 +207,7 @@ class AddQuestion(request_handler.RequestHandler):
 
         question_text = self.request.get("question_text")
         video_key = self.request.get("video_key")
-        playlist_key = self.request.get("playlist_key")
+        topic_key = self.request.get("topic_key")
         video = db.get(video_key)
         question_key = ""
 
@@ -223,8 +223,8 @@ class AddQuestion(request_handler.RequestHandler):
             question.put()
             question_key = question.key()
 
-        self.redirect("/discussion/pagequestions?video_key=%s&playlist_key=%s&qa_expand_key=%s" % 
-                (video_key, playlist_key, question_key))
+        self.redirect("/discussion/pagequestions?video_key=%s&topic_key=%s&qa_expand_key=%s" % 
+                (video_key, topic_key, question_key))
 
 class EditEntity(request_handler.RequestHandler):
     @disallow_phantoms
@@ -234,7 +234,7 @@ class EditEntity(request_handler.RequestHandler):
             return
 
         key = self.request.get("entity_key")
-        playlist_key = self.request.get("playlist_key")
+        topic_key = self.request.get("topic_key")
         text = self.request.get("question_text") or self.request.get("answer_text")
 
         if key and text:
@@ -251,8 +251,8 @@ class EditEntity(request_handler.RequestHandler):
 
                         page = self.request.get("page")
                         video = feedback.video()
-                        self.redirect("/discussion/pagequestions?video_key=%s&playlist_key=%s&page=%s&qa_expand_key=%s" % 
-                                        (video.key(), playlist_key, page, feedback.key()))
+                        self.redirect("/discussion/pagequestions?video_key=%s&topic_key=%s&page=%s&qa_expand_key=%s" % 
+                                        (video.key(), topic_key, page, feedback.key()))
 
                     elif feedback.is_type(models_discussion.FeedbackType.Answer):
 
@@ -331,7 +331,7 @@ class DeleteEntity(request_handler.RequestHandler):
 
         self.redirect("/discussion/flaggedfeedback")
 
-def video_qa_context(user_data, video, playlist=None, page=0, qa_expand_key=None, sort_override=-1):
+def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, sort_override=-1):
     limit_per_page = 5
 
     if page <= 0:
@@ -387,7 +387,7 @@ def video_qa_context(user_data, video, playlist=None, page=0, qa_expand_key=None
     return {
             "is_mod": util_discussion.is_current_user_moderator(),
             "video": video,
-            "playlist": playlist,
+            "topic": topic,
             "questions": questions,
             "count_total": count_total,
             "pages": range(1, pages_total + 1),

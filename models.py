@@ -1020,12 +1020,203 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
-class Video(Searchable, db.Model):
+class ConceptTreeNode(db.Model):
+    topic_parent = db.SelfReferenceProperty()
+    order = db.IntegerProperty()  
+    hide = db.BooleanProperty(default = False)
+
+    def get_order(self, topic = None): #needs topic to match Content.get_order()
+        return self.order
+
+    def all_children(self):
+        children = []
+        topics = Topic.all().filter('topic_parent =', self.key()).fetch(10000)
+        for child in topics:
+            children.append(child)
+        videos = Video.all().filter('topic_parents =', self.key()).fetch(10000)
+        for v in videos:
+            v.order = v.topic_orders[self.key()]
+            children.append(v)
+
+        children.sort(key = lambda c: c.order)
+        return children
+
+    @staticmethod
+    def sort_tree(node):
+        if hasattr(node, "children"):
+            for child in node.children:
+                ConceptTreeNode.sort_tree(child)
+            node.children.sort(key = lambda c: c.order)
+
+    def make_tree(self, types=[], include_hidden=False):
+        if include_hidden:
+            topics = Topic.all().ancestor(self).fetch(10000)
+        else:
+            topics = Topic.all().ancestor(self).filter("hide =", False).fetch(10000)
+
+        topic_dict = dict((topic.key(), topic) for topic in topics)
+        topic_dict[self.key()]=self
+        for key, descendant in topic_dict.iteritems():
+            parent_key = descendant.parent_key()
+            if parent_key and topic_dict.has_key(parent_key):
+                parent = topic_dict[parent_key]
+                if not hasattr(parent, "children"):
+                    parent.children = []
+                parent.children.append(descendant)
+        
+        if not types or "Video" in types:
+            videos = Video.all().filter("topic_ancestors", self).fetch(100000)
+            for video in videos:
+                for parent_key in video.topic_parents:
+                     if topic_dict.has_key(parent_key):
+                        parent = topic_dict[parent_key]
+                        if not hasattr(parent, "children"):
+                            parent.children = []
+                        parent.children.append(video)
+
+        
+        for key, descendant in topic_dict.iteritems():
+            if hasattr(descendant, "children"):
+                descendant.children.sort(key = lambda c: c.get_order(key))
+        
+
+        return topic_dict[self.key()]
+
+
+class Topic(ConceptTreeNode):
+    title = db.StringProperty()
+    description = db.TextProperty()
+
+    _serialize_blacklist = ["hide"]
+
+    @property
+    def ka_url(self):
+        return util.absolute_url('#%s' % urllib.quote(self.key().name()))
+
+    @staticmethod
+    def get_all_active_topics():
+        return Topic.all().filter("hide = ", False).fetch(10000)
+        
+
+    @staticmethod
+    def get_new_keyname(title):
+        # Makes sure every video and playlist has a unique "name" that can be used in URLs
+        
+        query = Video.all()
+        all_videos = query.fetch(100000)
+        for video in all_videos:
+            potential_id = re.sub('[^a-z0-9]', '-', video.title.lower());
+            potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
+            potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)                        
+            if video.readable_id == potential_id: # id is unchanged
+                continue
+            number_to_add = 0
+            current_id = potential_id
+            while True:
+                query = Video.all()
+                query.filter('readable_id=', current_id)
+                if (query.get() is None): #id is unique so use it and break out
+                    video.readable_id = current_id
+                    video.put()
+                    break
+                else: # id is not unique so will have to go through loop again
+                    number_to_add+=1
+                    current_id = potential_id+'-'+number_to_add    
+                    
+    @staticmethod
+    def get_cached_videos_for_topic(topic, include_descendants=False, limit=500):
+        
+        key = "%s_videos_for_topics_%s" % ("descendants" if include_descendants else "child", topic.key())
+        namespace = str(App.version) + "_" + str(Setting.cached_library_content_date())
+
+        videos = memcache.get(key, namespace=namespace)
+
+        if not videos:
+            if include_descendants:
+                query = Video.all().filter("topic_ancestors =", topic)
+            else:
+                query = Video.all().filter("topic_parents =", topic)
+            videos = query.fetch(limit)
+            videos.sort(key = lambda v: v.get_order(topic.key()))
+
+            memcache.set(key, videos, namespace=namespace)
+
+        return videos 
+
+    @staticmethod
+    def get_cached_topics_for_video(video, include_ancestors=False, limit=5):
+
+        key = "%s_topics_for_videos_%s" % ("ancestor" if include_ancestors else "parent", video.key())
+        namespace = str(App.version) + "_" + str(Setting.cached_library_content_date())
+
+        topics = memcache.get(key, namespace=namespace)
+
+        if topics is None:
+            topics = []
+            if include_ancestors:
+                topic_list = video.topic_ancestors
+            else:
+                topic_list = video.topic_parents
+
+            for topic_key in topic_list:
+                topic = db.get(topic_key) 
+                if not topic.hide:
+                    topics.append(topic)
+
+            memcache.set(key, topics, namespace=namespace)
+        
+        return topics
+
+
+class UserTopicVideos(db.Model):
+    user = db.UserProperty()
+    topic = db.ReferenceProperty(Topic)
+    seconds_watched = db.IntegerProperty(default = 0)
+    last_watched = db.DateTimeProperty(auto_now_add = True)
+    title = db.StringProperty(indexed=False) # wont be unique unlike with playlists, so this might have to change (or be removed as it can be gotten with a Datastore call to .topic)
+
+    @staticmethod
+    def get_for_user_data(user_data):
+        query = UserTopicVideos.all()
+        query.filter('user =', user_data.user)
+        return query
+
+    @staticmethod
+    def get_key_name(topic, user_data):
+        return user_data.key_email + ":" + topic.key().name()
+
+    @staticmethod
+    def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
+        if not user_data:
+            return None
+
+        key = UserTopicVideos.get_key_name(topic, user_data)
+
+        if insert_if_missing:
+            return UserTopicVideos.get_or_insert(
+                        key_name = key,
+                        user = user_data.user,
+                        topic = topic)
+        else:
+            return UserTopicVideos.get_by_key_name(key)
+
+
+
+class Content(db.Model):
+    topic_ancestors = db.ListProperty(db.Key)
+    topic_parents = db.ListProperty(db.Key)
+    topic_orders = object_property.UnvalidatedObjectProperty() # a dict of parent key, to list order in that parent
+    topic_count = db.IntegerProperty(default = 0)
+
+    def get_order(self, topic_key):
+        return self.topic_orders[topic_key]
+
+class Video(Searchable, Content, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
     title = db.StringProperty()
     description = db.TextProperty()
-    playlists = db.StringListProperty()
+    playlists = db.StringListProperty() # this probably can be removed, should be able to get info from VideoPlaylist
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default = 0)
 
@@ -1102,6 +1293,13 @@ class Video(Searchable, db.Model):
         config = db.create_config(read_policy=db.EVENTUAL_CONSISTENCY)
         return Video.get(keys, config=config)
 
+
+    # returns the first non-hidden topic
+    def first_topic(self):
+        topics = Topic.get_cached_topics_for_video(self)
+        if topics:
+            return topics[0]
+        return None
 
     def first_playlist(self):
         playlists = VideoPlaylist.get_cached_playlists_for_video(self)
@@ -1200,7 +1398,8 @@ class Playlist(Searchable, db.Model):
         video_playlist_query.filter('playlist =', self)
         video_playlist_query.filter('live_association =', True)
         video_playlist_key_dict = VideoPlaylist.get_key_dict(video_playlist_query)
-
+        if not video_playlist_key_dict.has_key(self.key()):
+            return []
         video_playlists = sorted(video_playlist_key_dict[self.key()].values(), key=lambda video_playlist: video_playlist.video_position)
 
         videos = []
@@ -1299,7 +1498,7 @@ class VideoLog(db.Model):
     seconds_watched = db.IntegerProperty(default = 0, indexed=False)
     last_second_watched = db.IntegerProperty(indexed=False)
     points_earned = db.IntegerProperty(default = 0, indexed=False)
-    playlist_titles = db.StringListProperty(indexed=False)
+    topic_titles = db.StringListProperty(indexed=False)
 
     _serialize_blacklist = ["video"]
 
@@ -1362,31 +1561,30 @@ class VideoLog(db.Model):
             user_video.seconds_watched += seconds_watched
             user_data.total_seconds_watched += seconds_watched
 
-            # Update seconds_watched of all associated UserPlaylists
-            query = VideoPlaylist.all()
-            query.filter('video =', video)
-            query.filter('live_association = ', True)
+            # Update seconds_watched of all associated UserTopicVideos
+            topics = Topic.get_cached_topics_for_video(video, include_ancestors=True)
 
-            first_video_playlist = True
-            for video_playlist in query:
-                user_playlist = UserPlaylist.get_for_playlist_and_user_data(video_playlist.playlist, user_data, insert_if_missing=True)
-                user_playlist.title = video_playlist.playlist.title
-                user_playlist.seconds_watched += seconds_watched
-                user_playlist.last_watched = datetime.datetime.now()
-                user_playlist.put()
+            first_video_topic = True
+            for topic in topics:
+                user_topic_vidoes = UserTopicVideos.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
+                user_topic_videos.title = topic.title
+                user_topic_videos.seconds_watched += seconds_watched
+                user_topic_videos.last_watched = datetime.datetime.now()
+                user_topic_videos.put()
+ 
+                # not sure where this was getting used
+                video_log.topic_titles.append(topic.title)
 
-                video_log.playlist_titles.append(user_playlist.title)
-
-                if first_video_playlist:
+                if first_video_topic:
                     action_cache.push_video_log(video_log)
 
-                util_badges.update_with_user_playlist(
+                util_badges.update_with_user_topic_videos(
                         user_data,
-                        user_playlist,
-                        include_other_badges = first_video_playlist,
+                        user_topic_videos,
+                        include_other_badges = first_video_topic,
                         action_cache = action_cache)
 
-                first_video_playlist = False
+                first_video_topic = False
 
         user_video.last_second_watched = last_second_watched
         user_video.last_watched = datetime.datetime.now()
@@ -1777,8 +1975,6 @@ def commit_problem_log(problem_log_source, user_data = None):
 # Represents a matching between a playlist and a video
 # Allows us to keep track of which videos are in a playlist and
 # which playlists a video belongs to (not 1-to-1 mapping)
-
-
 class VideoPlaylist(db.Model):
 
     playlist = db.ReferenceProperty(Playlist)
@@ -1842,7 +2038,7 @@ class VideoPlaylist(db.Model):
         playlist = query.get()
         query = VideoPlaylist.all()
         query.filter('playlist =', playlist)
-        query.filter('live_association = ', True) #need to change this to true once I'm done with all of my hacks
+        query.filter('live_association = ', True) # need to change this to true once I'm done with all of my hacks
         query.order('video_position')
         return query
 
@@ -1859,11 +2055,11 @@ class VideoPlaylist(db.Model):
 
         return video_playlist_key_dict
 
-class ExerciseVideo(db.Model):
+class ExerciseVideo(Content, db.Model):
 
     video = db.ReferenceProperty(Video)
     exercise = db.ReferenceProperty(Exercise)
-    exercise_order = db.IntegerProperty()
+    exercise_order = db.IntegerProperty() # the order videos should appear for this exercise
 
     def key_for_video(self):
         return ExerciseVideo.video.get_value_for_datastore(self)
