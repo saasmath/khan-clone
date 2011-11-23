@@ -343,13 +343,16 @@ var GoalCreator = {
 
         var goal = new Goal({
             title: titleField.val(),
-            objectives: _.map(GoalCreator.objectives, function(o) { return {
-                type: o.type,
-                internal_id: o.id,
-                description: o.description
-            }; })
+            objectives: _.map(GoalCreator.objectives, function(o) {
+                var newObj = {
+                    type: o.type,
+                    internal_id: o.id,
+                    description: o.description,
+                };
+                newObj.url = Goal.objectiveUrl(newObj);
+                return newObj;
+            })
         });
-        console.log($.extend({}, goal.get('objectives')));
         GoalBook.add(goal);
         goal.save()
             .fail(function(jqXHR) {

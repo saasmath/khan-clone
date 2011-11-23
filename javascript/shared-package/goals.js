@@ -125,6 +125,25 @@ var Goal = Backbone.Model.extend({
 
     floatToPercentageStr: function(progress) {
         return (progress * 100).toFixed(0);
+    },
+
+    objectiveUrlForType: {
+        GoalObjectiveWatchVideo: function(objective) {
+            return "/video/" + objective.internal_id;
+        },
+        GoalObjectiveAnyVideo: function(objective) {
+            return "/";
+        },
+        GoalObjectiveExerciseProficiency: function(objective) {
+            return '/exercise/' + objective.internal_id;
+        },
+        GoalObjectiveAnyExerciseProficiency: function(objective) {
+            return '/exercisedashboard';
+        }
+    },
+
+    objectiveUrl: function(objective) {
+        return Goal.objectiveUrlForType[objective.type](objective);
     }
 });
 
