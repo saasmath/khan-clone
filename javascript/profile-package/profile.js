@@ -915,6 +915,12 @@ var GoalProfileView = Backbone.View.extend({
     abandon: function( evt ) {
         var goalEl = $(evt.target).closest('.goal');
         var goal = this.model.get(goalEl.data('id'));
+        if ( !goal ) {
+            // haven't yet received a reponse from the server after creating the
+            // goal. Shouldn't happen too often, so just show a message.
+            alert("Please wait a few seconds and try again. If this is the second time you've seen this message, reload the page");
+            return;
+        }
 
         if (confirm("Abandoning a goal is permanent and cannot be undone. Do you really want to abandon this goal?")) {
             // move the model to the abandoned collection
