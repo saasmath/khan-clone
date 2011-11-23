@@ -2,7 +2,7 @@ var KAConsole = {
     debugEnabled: false,
     log: function() {
         if (window.console && KAConsole.debugEnabled)
-            console.log.apply(this, arguments);
+            console.log.apply(console, arguments);
     }
 };
 
