@@ -323,6 +323,7 @@ var GoalCreator = {
         }
         return true;
     },
+
     submit: function() {
         var form = $('#create-goal');
         var html = '';
@@ -336,37 +337,31 @@ var GoalCreator = {
             titleField.val('Custom goal: ' + new Date().toDateString());
         }
 
-        $.each(GoalCreator.objectives, function(idx, objective) {
-            html += '<input type="hidden" name="objective' + objective.idx + '_type" value="' + objective.type + '">';
-            if (objective.type == 'GoalObjectiveExerciseProficiency') {
-                html += '<input type="hidden" name="objective' + objective.idx + '_exercise" value="' + objective.id + '">';
-            } else if (objective.type == 'GoalObjectiveWatchVideo') {
-            html += '<input type="hidden" name="objective' + objective.idx + '_video" value="' + objective.id + '">';
-            }
-        });
-        $('#goal-hidden-values').html(html);
-
         $('#goal-submit-button').html("<img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Creating...</span>").removeClass('green');
         GoalCreator.creating = true;
+        globalPopupDialog.hide();
 
-        $.ajax({
-            url: "/api/v1/user/goals",
-            type: 'POST',
-            dataType: 'json',
-            data: $(form).serialize(),
-            success: function(json) {
-                GoalCreator.creating = false;
-                globalPopupDialog.hide();
-                GoalBook.add(json);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                $('#goal-commit-response').html('Goal creation failed: ' + jqXHR.responseText).show();
-                $('#goal-submit-button').html('Create New Goal').addClass('green');
-                GoalCreator.creating = false;
-            },
+        var goal = new Goal({
+            title: titleField.val(),
+            objectives: _.map(GoalCreator.objectives, function(o) {
+                var newObj = {
+                    type: o.type,
+                    internal_id: o.id,
+                    description: o.description,
+                };
+                newObj.url = Goal.objectiveUrl(newObj);
+                return newObj;
+            })
         });
-
-        $('#goal-hidden-values').html('');
+        GoalBook.add(goal);
+        goal.save()
+            .fail(function(jqXHR) {
+                console.log('Goal creation failed: ' + jqXHR.responseText, goal);
+                GoalBook.remove(goal);
+            })
+            .done(function() {
+                GoalCreator.creating = false;
+            });
 
         return false;
     },
