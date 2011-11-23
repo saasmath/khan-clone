@@ -527,10 +527,11 @@ var NewGoalDialog = Backbone.View.extend({
 
     initialize: function() {
         this.render();
-        this.model.bind('add', this.hide, this);
     },
 
     render: function() {
+        // As we're assigning to this.el, event handlers need to be rebound
+        // after each render.
         this.el = $(this.template()).appendTo(document.body).get(0);
         this.newGoalView = new NewGoalView({
             el: this.$('.goalpicker'),
@@ -541,16 +542,15 @@ var NewGoalDialog = Backbone.View.extend({
     },
 
     show: function() {
-        $(this.el)
-            .modal({
-                keyboard: true,
-                backdrop: true,
-                show: true
-            });
+        return $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
     },
 
     hide: function() {
-        $(this.el).modal('hide');
+        return $(this.el).modal('hide');
     }
 });
 
