@@ -1,6 +1,5 @@
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import BadgeCategory
 from exercise_badges import ExerciseBadge
-import logging
 
 # All badges awarded for just barely missing proficiency even though most
 # questions are being answered correctly inherit from this class

@@ -1,10 +1,6 @@
 import datetime
 
-import util
-import logging
-
-from badges import Badge, BadgeContextType, BadgeCategory
-from exercise_badges import ExerciseBadge
+from badges import Badge, BadgeCategory
 from templatefilters import seconds_to_time_string
 
 # All badges awarded for watching a specific amount of playlist time *and* 

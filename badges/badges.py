@@ -1,9 +1,5 @@
-from google.appengine.api import memcache
-
 import util
-import models
 import models_badges
-import logging
 import phantom_users.util_notify
 from notifications import UserNotifier
 
@@ -41,7 +37,8 @@ class BadgeCategory(object):
 
     @staticmethod
     def all():
-        return map(lambda category: BadgeCategory(category), BadgeCategory.list_categories())
+        return map(lambda category: BadgeCategory(category),
+                   BadgeCategory.list_categories())
 
     @staticmethod
     def list_categories():
