@@ -124,6 +124,7 @@ def all_badges_dict():
         dict_badges[badge.name] = badge
     return dict_badges
 
+@layer_cache.cache()
 def badges_with_context_type(badge_context_type):
     return filter(lambda badge: badge.badge_context_type == badge_context_type, all_badges())
 
