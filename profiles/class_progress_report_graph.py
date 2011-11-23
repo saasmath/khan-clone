@@ -3,14 +3,9 @@ from templatefilters import escapejs
 
 import models
 import util
+import util_profile
 from itertools import izip
 import datetime
-
-def truncate_to(s, length):
-    if len(s) > length:
-        return s[18:] + '...'
-    else:
-        return s
 
 def class_progress_report_graph_context(user_data, student_list):
 
@@ -25,7 +20,7 @@ def class_progress_report_graph_context(user_data, student_list):
 
     list_students = sorted(list_students, key=lambda student: student.nickname)
 
-    student_email_pairs = [(escape(s.email), truncate_to(s.nickname, 18)) for s in list_students]
+    student_email_pairs = [(escape(s.email), util_profile.truncate_nickname(s.nickname)) for s in list_students]
     emails_escapejsed = [escapejs(s.email) for s in list_students]
 
     exercises_all = models.Exercise.get_all_use_cache()

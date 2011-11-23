@@ -682,23 +682,23 @@ var Profile = {
     renderProgressSummary: function(context) {
         var template = Templates.get("profile.class-progress-summary"),
             statusInfo = {
-                started: {color: "started",
+                not_started: {color: "not-started",
                     toFloat: "right",
                     fShowOnLeft: true,
                     order: 0},
-                proficient: {color: "proficient",
+                struggling: {color: "struggling",
                     toFloat: "right",
                     fShowOnLeft: true,
-                    order:  1},
-                review: {color: "review light",
-                    toFloat: "right",
-                    fShowOnLeft: true,
-                    order: 2},
-                not_started: {color: "not-started",
+                    order: 1},
+                started: {color: "started",
                     toFloat: "left",
                     fShowOnLeft: false,
-                    order: 3},
-                struggling: {color: "struggling",
+                    order: 2},
+                proficient: {color: "proficient",
+                    toFloat: "left",
+                    fShowOnLeft: false,
+                    order:  3},
+                review: {color: "review light",
                     toFloat: "left",
                     fShowOnLeft: false,
                     order: 4}
@@ -716,7 +716,7 @@ var Profile = {
 
         Handlebars.registerHelper("toPixelWidth", function(num) {
             // TODO: Change to reasonable width
-            return Math.round(200 * num / context.num_students);
+            return Math.round(100 * num / context.num_students);
         });
 
         Handlebars.registerHelper("toColor", function(status) {
@@ -728,7 +728,10 @@ var Profile = {
         });
 
         Handlebars.registerHelper("toDisplay", function(status) {
-            return status.replace(/_/g, " ");
+            if (status === "not_started") {
+                return "unstarted";
+            }
+            return status;
         });
 
         // This feels awkward,
@@ -768,12 +771,11 @@ var Profile = {
 
                 studentLists.fadeOut(100, "easeInOutCubic");
             } else {
-                jRow.find("span.status").animate({width: 100}, 450, "easeInOutCubic")
-                    .each(function(index) {
-                        var jel = $(this),
-                            status = jel.data("status");
-                        jel.find("span").html(status);
-                    });
+                jRow.find("span.status").animate({width: 100}, 450, "easeInOutCubic", function() {
+                    var jel = $(this),
+                        status = jel.data("status");
+                    jel.find("span").html(status);
+                });
 
                 studentLists.delay(150).fadeIn(650, "easeInOutCubic");
             }

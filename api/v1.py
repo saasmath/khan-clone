@@ -546,7 +546,7 @@ def coach_progress_summary():
                 status = 'not_started'
 
             progress_buckets[status].append({
-                'nickname': student.nickname,
+                'nickname': util_profile.truncate_nickname(student.nickname),
                 'email': student.email,
             })
         progress = [dict([('status', status),

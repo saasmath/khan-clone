@@ -14,6 +14,9 @@ import simplejson
 
 from api.auth.xsrf import ensure_xsrf_cookie
 
+def truncate_nickname(nickname):
+    return (nickname[:14] + '...') if len(nickname) > 17 else nickname
+
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
 

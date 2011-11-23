@@ -8,7 +8,8 @@
 
 <div class="student-list">
   {{#progressIter progress side=progressSide}}
-    <div class="exercise-color {{toColor status}}" style="float: {{toFloat status}}; width: 100px; min-height:1px">
+    <div class="{{#if students.length}}exercise-color {{toColor status}} border-only{{/if}} student-list-header" style="float: {{toFloat status}};">
+      {{#if students.length}}
       <table>
         {{#each students}}
         <tr><td>
@@ -16,6 +17,7 @@
         </td></tr>
         {{/each}}
       </table>
+      {{/if}}
     </div>
   {{/progressIter}}
 </div>
