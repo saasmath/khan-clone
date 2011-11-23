@@ -495,7 +495,7 @@ var NewGoalView = Backbone.View.extend({
 
         this.model.add(goal);
         goal.save().fail($.proxy(function() {
-            console.log("Error happened when saving new custom goal", goal);
+            KAConsole.log("Error while saving new custom goal", goal);
             this.model.remove(goal);
         }, this));
         this.trigger("creating");

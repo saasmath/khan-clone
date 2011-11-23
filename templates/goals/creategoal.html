@@ -356,7 +356,7 @@ var GoalCreator = {
         GoalBook.add(goal);
         goal.save()
             .fail(function(jqXHR) {
-                console.log('Goal creation failed: ' + jqXHR.responseText, goal);
+                KAConsole.log('Goal creation failed: ' + jqXHR.responseText, goal);
                 GoalBook.remove(goal);
             })
             .done(function() {

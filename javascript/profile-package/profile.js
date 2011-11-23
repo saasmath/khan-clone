@@ -930,7 +930,7 @@ var GoalProfileView = Backbone.View.extend({
 
             // persist to server
             goal.save().fail(function() {
-                console.log("Warning: failed to abandon goal", goal);
+                KAConsole.log("Warning: failed to abandon goal", goal);
                 AbandonedGoalBook.remove(goal);
                 this.model.add(goal);
             });
