@@ -258,9 +258,11 @@ var GoalBookView = Backbone.View.extend({
             })
 
             .delegate('.archive', 'click', $.proxy(function( e ) {
-                var el = $(e.target).closest('.goal');
-                this.animateGoalToHistory(el);
-                // todo: remove model
+                var jel = $(e.target).closest('.goal');
+                var goal = this.model.get(jel.data('id'));
+                this.animateGoalToHistory(jel).then($.proxy(function() {
+                    this.model.remove(goal);
+                }, this));
             }, this))
 
             .delegate( '.new-goal', 'click', $.proxy(function( e ) {
@@ -332,9 +334,14 @@ var GoalBookView = Backbone.View.extend({
     },
 
     animateThenHide: function(els) {
+        var goals = _.map(els, function(el) {
+            return this.model.get($(el).data('id'));
+        }, this);
         // wait for the animation to complete and then close the goalbook
         this.animateGoalToHistory(els).then($.proxy(function() {
-           $(this.el).slideUp("fast");
+           $(this.el).slideUp("fast").promise().then($.proxy(function() {
+                this.model.remove(goals);
+           }, this));
        }, this));
     },
 
