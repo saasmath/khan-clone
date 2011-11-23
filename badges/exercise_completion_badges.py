@@ -1,5 +1,5 @@
 import models
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import Badge, BadgeCategory
 
 # All badges awarded for completing some subset of exercises inherit from ExerciseCompletionBadge
 class ExerciseCompletionBadge(Badge):
@@ -11,8 +11,6 @@ class ExerciseCompletionBadge(Badge):
 
         if len(self.exercise_names_required) <= 0:
             return False
-
-        user = user_data.user
 
         for exercise_name in self.exercise_names_required:
             if not user_data.is_proficient_at(exercise_name):
