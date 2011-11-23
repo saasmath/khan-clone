@@ -735,8 +735,6 @@ var Profile = {
         // but I didn't know how else to pass information to a partial.
         Handlebars.registerHelper("progressColumn", function(block) {
             this.progressSide = block.hash.side;
-            this.showName = (block.hash.side === "left");
-
             return block(this)
         });
 
@@ -762,18 +760,19 @@ var Profile = {
             if (studentLists.is(":visible")) {
                 jRow.find("span.status").each(function(index) {
                     var jel = $(this),
-                        width = jel.data("width");
-                    jel.animate({width: width, height: 5}, 350, "easeInOutCubic")
-                        .html("");
+                        width = jel.data("width"),
+                        span = jel.data("num") ? jel.data("num") : "";
+                    jel.animate({width: width}, 350, "easeInOutCubic")
+                        .find("span").html(span);
                 });
 
                 studentLists.fadeOut(100, "easeInOutCubic");
             } else {
-                jRow.find("span.status").animate({width: 100, height: 20}, 450, "easeInOutCubic")
+                jRow.find("span.status").animate({width: 100}, 450, "easeInOutCubic")
                     .each(function(index) {
                         var jel = $(this),
                             status = jel.data("status");
-                        jel.html("<span>" + status + "</span>");
+                        jel.find("span").html(status);
                     });
 
                 studentLists.delay(150).fadeIn(650, "easeInOutCubic");

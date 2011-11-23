@@ -1,14 +1,26 @@
 <style>
+  .exercise-row .exercise-name {
+    width: 130px;
+    float: left;
+    line-height: 1.2;
+    text-align: right;
+    padding-right: 10px;
+  }
+
   .exercise-row {
+    padding-top: 5px;
     padding-bottom: 10px;
+    min-width: 690px;
   }
 
   .exercise-row:hover {
     background-color: #eee;
+    cursor: ns-resize;
   }
 
   .fake-row span {
-    height: 5px;
+    height: 15px;
+    padding-bottom: 4px;
     display: inline-block;
   }
 
@@ -20,8 +32,13 @@
   }
 
   .left-column, .right-column {
-    width: 300px;
     float: left;
+  }
+  .left-column {
+    width: 300px;
+  }
+  .right-column {
+    width: 200px;
   }
 
   .student-list {
@@ -36,6 +53,9 @@
 <div id="progress-summary-container">
   {{#each exercises}}
     <div class="exercise-row">
+      <div class="exercise-name">
+        <span>{{display_name}}</span>
+      </div>
       <div class="left-column">
         {{#progressColumn side="left"}}
           {{> class-progress-column}}
