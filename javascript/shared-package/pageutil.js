@@ -1,3 +1,11 @@
+var KAConsole = {
+    debugEnabled: false,
+    log: function() {
+        if (window.console && KAConsole.debugEnabled)
+            console.log.apply(this, arguments);
+    }
+};
+
 function addCommas(nStr) // to show clean number format for "people learning right now" -- no built in JS function
 {
     nStr += '';

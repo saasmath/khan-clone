@@ -148,7 +148,7 @@ var GoalCollection = Backbone.Collection.extend({
             }
             else {
                 // todo: remove this, do something better
-                console.log("Error: brand new goal appeared from somewhere", newGoal);
+                KAConsole.log("Error: brand new goal appeared from somewhere", newGoal);
             }
         }, this);
     },
@@ -296,7 +296,7 @@ var GoalBookView = Backbone.View.extend({
             this.needsRerender = true;
         }
         else {
-            console.log("rendering GoalBookView", this);
+            KAConsole.log("rendering GoalBookView", this);
             this.needsRerender = false;
             var json = _.pluck(this.model.models, 'attributes');
             jel.html(this.template({goals: json}));
@@ -362,7 +362,7 @@ var GoalSummaryView = Backbone.View.extend({
     },
 
     render: function() {
-        console.log("rendering GoalSummaryView", this);
+        KAConsole.log("rendering GoalSummaryView", this);
         var active = this.model.active() || null;
         if (active !== null) {
             $(this.el).html(this.template(active.attributes));
