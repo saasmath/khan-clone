@@ -1003,15 +1003,15 @@ def create_user_goal():
     goal_exercises = GoalList.exercises_in_current_goals(user_data)
     goal_videos = GoalList.videos_in_current_goals(user_data)
 
-    for idx in xrange(1,40):
-        base_str = 'objective'+str(idx)
-        if request.request_string(base_str+'_type'):
+    for idx in xrange(1, 40):
+        base_str = 'objective' + str(idx)
+        if request.request_string(base_str + '_type'):
             objective_descriptor = {}
-            objective_descriptor['type'] = request.request_string(base_str+'_type');
+            objective_descriptor['type'] = request.request_string(base_str + '_type')
             objective_descriptors.append(objective_descriptor)
 
             if objective_descriptor['type'] == 'GoalObjectiveExerciseProficiency':
-                objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
+                objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str + '_exercise'))
                 if not objective_descriptor['exercise'] or not objective_descriptor['exercise'].is_visible_to_current_user():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
                 if user_data.is_proficient_at(objective_descriptor['exercise'].name):
@@ -1024,7 +1024,7 @@ def create_user_goal():
                 valid_count += 1
 
             if objective_descriptor['type'] == 'GoalObjectiveWatchVideo':
-                objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
+                objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str + '_video'))
                 if not objective_descriptor['video']:
                     return api_invalid_param_response("Internal error: Could not find video.")
                 user_video = models.UserVideo.get_for_video_and_user_data(objective_descriptor['video'], user_data)
