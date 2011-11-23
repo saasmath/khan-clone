@@ -737,7 +737,8 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
+# TomY Temporary fix: Sundar needs to access the logs using GET, which I accidentally masked with the newer call above
+@route("/api/v1/user/videos/<youtube_id>/sundarlog", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify

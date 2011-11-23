@@ -207,7 +207,8 @@ def resume_experiment(canonical_name):
 
 def find_alternative_for_user(canonical_name, identity_val):
     """ Returns the alternative that the specified bingo identity belongs to.
-    If the experiment does not exist or is not live, this will return None.
+    If the experiment does not exist, this will return None.
+    If the experiment has ended, this will return the chosen alternative.
     Note that the user may not have been opted into the experiment yet - this
     is just a way to probe what alternative will be selected, or has been
     selected for the user without causing side effects.
@@ -230,8 +231,12 @@ def find_alternative_for_user(canonical_name, identity_val):
     experiment_name = experiment_names[-1]
     experiment = bingo_cache.get_experiment(experiment_name)
 
-    if not experiment or not experiment.live:
+    if not experiment:
         return None
+
+    if not experiment.live:
+        # Experiment has ended - return result that was selected.
+        return experiment.short_circuit_content
 
     return _find_alternative_for_user(experiment.hashable_name,
                                       bingo_cache.get_alternatives(experiment_name),
