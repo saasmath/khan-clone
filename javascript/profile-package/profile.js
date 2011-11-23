@@ -680,16 +680,33 @@ var Profile = {
     },
 
     renderProgressSummary: function(context) {
-        var template = Templates.get("profile.class-progress-summary");
+        var template = Templates.get("profile.class-progress-summary"),
+            statusInfo = {
+                started: {color: "started",
+                    toFloat: "right",
+                    fShowOnLeft: true,
+                    order: 0},
+                proficient: {color: "proficient",
+                    toFloat: "right",
+                    fShowOnLeft: true,
+                    order:  1},
+                review: {color: "review light",
+                    toFloat: "right",
+                    fShowOnLeft: true,
+                    order: 2},
+                not_started: {color: "not-started",
+                    toFloat: "left",
+                    fShowOnLeft: false,
+                    order: 3},
+                struggling: {color: "struggling",
+                    toFloat: "left",
+                    fShowOnLeft: false,
+                    order: 4}
+        };
 
         $.map(context.exercises, function(exercise, index) {
             exercise.progress.sort(function(first, second) {
-                var order = { started: 0,
-                    proficient: 1,
-                    review: 2,
-                    not_started: 3,
-                    struggling: 4};
-                return order[first.status] - order[second.status];
+                return statusInfo[first.status].order - statusInfo[second.status].order;
             });
             return exercise;
         });
@@ -697,49 +714,38 @@ var Profile = {
         // Where does this go? Might it collide one day?
         Handlebars.registerPartial("class-progress-column", Templates.get( "profile.class-progress-column" ));
 
-        Handlebars.registerHelper("toPixelWidth", function(num, total) {
+        Handlebars.registerHelper("toPixelWidth", function(num) {
             // TODO: Change to reasonable width
             return Math.round(200 * num / context.num_students);
         });
 
         Handlebars.registerHelper("toColor", function(status) {
-            return {
-                    proficient: "proficient",
-                    review: "review light",
-                    started: "started",
-                    struggling: "struggling",
-                    not_started: "not-started"
-                }[status];
+            return statusInfo[status].color;
+        });
+
+        Handlebars.registerHelper("toFloat", function(status) {
+            return statusInfo[status].toFloat;
+        });
+
+        Handlebars.registerHelper("toDisplay", function(status) {
+            return status.replace(/_/g, " ");
         });
 
         // This feels awkward,
         // but I didn't know how else to pass information to a partial.
         Handlebars.registerHelper("progressColumn", function(block) {
-            var side = block.hash.side,
-                sideToFloat = {left: "right", right: "left"};
-
-            this.progressSide = side;
-            this.progressFloat = sideToFloat[side];
-            this.showName = (side === "left");
+            this.progressSide = block.hash.side;
+            this.showName = (block.hash.side === "left");
 
             return block(this)
         });
 
         Handlebars.registerHelper("progressIter", function(progress, block) {
-            if (!progress) {
-                return;
-            }
-
             var result = "",
-                fShowStatusOnLeft = { "proficient": true,
-                    "review": true,
-                    "started": true,
-                    "not_started": false,
-                    "struggling": false },
                 fOnLeft = (block.hash.side === "left");
 
             $.each(progress, function(index, p) {
-                if (fShowStatusOnLeft[p.status] === fOnLeft) {
+                if (fOnLeft === statusInfo[p.status].fShowOnLeft) {
                     result += block(p);
                 }
             });
