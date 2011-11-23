@@ -48,7 +48,7 @@ var Goal = Backbone.Model.extend({
             }).length,
 
             // used to maintain sorted order in a GoalCollection
-            updatedTime: new Date(this.get('updated')).getTime()
+            updatedTime: parseISO8601(this.get('updated')).getTime()
         }, {silent: true});
     },
 

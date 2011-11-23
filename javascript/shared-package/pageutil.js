@@ -653,7 +653,47 @@ var Timezone = {
             this.tz_offset = -1 * (new Date()).getTimezoneOffset();
         return this.tz_offset;
     }
+};
+
+// not every browser has Date.prototype.toISOString
+// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date#Example.3a_ISO_8601_formatted_dates
+if ( !Date.prototype.toISOString ) {
+    Date.prototype.toISOString = function() {
+        var pad = function(n) { return n < 10 ? '0' + n : n; };
+            return this.getUTCFullYear() + '-' +
+                pad(this.getUTCMonth() + 1) + '-' +
+                pad(this.getUTCDate()) + 'T' +
+                pad(this.getUTCHours()) + ':' +
+                pad(this.getUTCMinutes()) + ':' +
+                pad(this.getUTCSeconds()) + 'Z';
+    };
 }
+
+// some browsers can't parse ISO 8601 with Date.parse
+// http://anentropic.wordpress.com/2009/06/25/javascript-iso8601-parser-and-pretty-dates/
+var parseISO8601 = function(str) {
+    // we assume str is a UTC date ending in 'Z'
+    var parts = str.split('T'),
+        dateParts = parts[0].split('-'),
+        timeParts = parts[1].split('Z'),
+        timeSubParts = timeParts[0].split(':'),
+        timeSecParts = timeSubParts[2].split('.'),
+        timeHours = Number(timeSubParts[0]),
+        _date = new Date();
+
+    _date.setUTCFullYear(Number(dateParts[0]));
+    _date.setUTCMonth(Number(dateParts[1])-1);
+    _date.setUTCDate(Number(dateParts[2]));
+    _date.setUTCHours(Number(timeHours));
+    _date.setUTCMinutes(Number(timeSubParts[1]));
+    _date.setUTCSeconds(Number(timeSecParts[0]));
+    if (timeSecParts[1]) {
+        _date.setUTCMilliseconds(Number(timeSecParts[1]));
+    }
+
+    // by using setUTC methods the date has already been converted to local time(?)
+    return _date;
+};
 
 var MailingList = {
     init: function(sIdList) {
