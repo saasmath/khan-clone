@@ -250,9 +250,9 @@ var GoalBookView = Backbone.View.extend({
                 var el = $(e.currentTarget);
                 if ( e.type == 'mouseenter' ) {
                     el.find(".goal-description .summary-light").hide();
-                    el.find(".goal-description .archive").show();
+                    el.find(".goal-description .goal-controls").show();
                 } else {
-                    el.find(".goal-description .archive").hide();
+                    el.find(".goal-description .goal-controls").hide();
                     el.find(".goal-description .summary-light").show();
                 }
             })
