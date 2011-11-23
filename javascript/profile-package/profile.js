@@ -367,6 +367,17 @@ var Profile = {
 
         Profile.userGoalsHref = href;
         Profile.showGoalType('current');
+
+        if (completed_goals.length > 0) {
+            $('#goal-show-completed-link').parent().show();
+        } else {
+            $('#goal-show-completed-link').parent().hide();
+        }
+        if (abandoned_goals.length > 0) {
+            $('#goal-show-abandoned-link').parent().show();
+        } else {
+            $('#goal-show-abandoned-link').parent().hide();
+        }
     },
 
     showGoalType: function(type) {
