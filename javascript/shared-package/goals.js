@@ -351,7 +351,7 @@ var GoalBookView = Backbone.View.extend({
             var json = _.pluck(this.model.models, 'attributes');
             jel.html(this.template({goals: json}));
         }
-        return jel;
+        return this;
     },
 
     animateGoalToHistory: function(els) {
