@@ -117,8 +117,8 @@ var GoalCreator = {
             $('#create-goal-view .goal .goal-description').remove();
         }
         if (GoalCreator.objectives.length > 1) {
-            $('.goal li.objective').css('width', 100/GoalCreator.objectives.length + "%");
-            $('.goal li.objective').last().children('a').css('border-right', 'none');
+            $('#create-goal-view .goal li.objective').css('width', 100/GoalCreator.objectives.length + "%");
+            $('#create-goal-view .goal li.objective').last().children('a').css('border-right', 'none');
         }
 
         var message = '';
