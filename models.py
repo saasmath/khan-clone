@@ -696,7 +696,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
-        'probability_1', 'domain_f_a_function', 'division_4',
+        'probability_1', 'domain_of_a_function', 'division_4',
         'ratio_word_problems', 'writing_expressions_1', 'ordering_numbers',
         'geometry_1', 'converting_mixed_numbers_and_improper_fractions'])
     conversion_test_easy_exercises = set(['counting_1', 'significant_figures_1', 'subtraction_1'])
@@ -1076,20 +1076,32 @@ class ConceptTreeNode(polymodel.PolyModel):
         if include_hidden:
             nodes = ConceptTreeNode.all().ancestor(self).fetch(100000)
         else:
-            nodes = ConceptTreeNode.all().filter("hide = ", False).fetch(100000)
+            nodes = ConceptTreeNode.all().ancestor(self).filter("hide = ", False).fetch(100000)
 
+        '''
         #prefetch the content of the contentNodes
         content_nodes = [node for node in nodes if node.__class__.__name__=="ContentNode"]
         self.prefetch_refprops(content_nodes, ContentNode.content)
-
+        '''
+        
         
         node_dict = dict((node.key(), node) for node in nodes)
-        node_dict[self.key()]=self
+        node_dict[self.key()] = self # in case the current node is hidden (like root is)
+        
+        contentKeys = []
         # cycle through the nodes adding each to its parent's children list
         for key, descendant in node_dict.iteritems():
-            if hasattr(descendant, "childrenKeys"):
-                descendant.children = [node_dict[child] for child in descendant.childrenKeys if node_dict.has_key(child)]
+            contentKeys.extend([childKey for childKey in descendant.childKeys if not node_dict.has_key(childKey)])
+
+        contentItems = db.get(contentKeys)
+        for content in contentItems:
+             node_dict[content.key()]=content 
         
+        # cycle through the nodes adding each to its parent's children list
+        for key, descendant in node_dict.iteritems():
+            if hasattr(descendant, "childKeys"):
+                descendant.children = [node_dict[child] for child in descendant.childKeys if node_dict.has_key(child)]
+                
         '''
         node_dict = dict((node.key(), node) for node in nodes)
         node_dict[self.key()]=self
@@ -1150,7 +1162,7 @@ class ConceptTreeNode(polymodel.PolyModel):
 class Topic(ConceptTreeNode):
     title = db.StringProperty()
     description = db.TextProperty()
-    childrenKeys = db.ListProperty(db.Key)
+    childKeys = db.ListProperty(db.Key)
 
 
     _serialize_blacklist = ["hide"]
@@ -1163,6 +1175,9 @@ class Topic(ConceptTreeNode):
     def get_all_active_topics():
         return Topic.all().filter("hide = ", False).fetch(10000)
         
+
+    def get_child_order(self, childKey):
+        return self.childKeys.index(childKey)
 
     @staticmethod
     def get_new_keyname(title):
@@ -1281,12 +1296,15 @@ class Content(db.Model):
     # topic_orders = object_property.UnvalidatedObjectProperty() # a dict of parent key, to list order in that parent
     topic_count = db.IntegerProperty(default = 0) # a count of the number of topics Content is in
 
+    def get_order(self, topic_key):
+        return db.get(topic_key).childKeys.index(self.key())
+
     # def get_order(self, topic_key):
     #    return self.topic_orders[topic_key]
 
 
 
-class Video(Searchable, db.Expando):
+class Video(Searchable, Content):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
     title = db.StringProperty()
