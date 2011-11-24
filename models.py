@@ -14,6 +14,7 @@ from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
 
 from google.appengine.ext import db
+from google.appengine.ext.db import polymodel
 import object_property
 import util
 import user_util
@@ -695,7 +696,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
-        'probability_1', 'domain_of_a_function', 'division_4',
+        'probability_1', 'domain_f_a_function', 'division_4',
         'ratio_word_problems', 'writing_expressions_1', 'ordering_numbers',
         'geometry_1', 'converting_mixed_numbers_and_improper_fractions'])
     conversion_test_easy_exercises = set(['counting_1', 'significant_figures_1', 'subtraction_1'])
@@ -1020,7 +1021,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
-class ConceptTreeNode(db.Model):
+class ConceptTreeNode(polymodel.PolyModel):
     topic_parent = db.SelfReferenceProperty()
     order = db.IntegerProperty()  
     hide = db.BooleanProperty(default = False)
@@ -1048,7 +1049,70 @@ class ConceptTreeNode(db.Model):
                 ConceptTreeNode.sort_tree(child)
             node.children.sort(key = lambda c: c.order)
 
+    @staticmethod
+    def prefetch_refprops(entities, *props):
+        """ 
+        Loads referenced models defined by the given model properties 
+        all at once on the given entities.
+
+        Example:
+        posts = Post.all().order("-timestamp").fetch(20)
+        prefetch_refprop(posts, Post.author)
+        """
+        # Get a list of (entity,property of this entity)
+        fields = [(entity, prop) for entity in entities for prop in props]
+        # Pull out an equally sized list of the referenced key for each field (possibly None)
+        ref_keys_with_none = [prop.get_value_for_datastore(x) for x, prop in fields]
+        # Make a dict of keys:fetched entities
+        ref_keys = filter(None, ref_keys_with_none) 
+        ref_entities = dict((x.key(), x) for x in db.get(set(ref_keys)))
+        # Set the fetched entity on the non-None reference properties
+        for (entity, prop), ref_key in zip(fields, ref_keys_with_none):
+            if ref_key is not None:
+                prop.__set__(entity, ref_entities[ref_key])
+        return entities
+
     def make_tree(self, types=[], include_hidden=False):
+        if include_hidden:
+            nodes = ConceptTreeNode.all().ancestor(self).fetch(100000)
+        else:
+            nodes = ConceptTreeNode.all().filter("hide = ", False).fetch(100000)
+
+        #prefetch the content of the contentNodes
+        content_nodes = [node for node in nodes if node.__class__.__name__=="ContentNode"]
+        self.prefetch_refprops(content_nodes, ContentNode.content)
+
+        
+        node_dict = dict((node.key(), node) for node in nodes)
+        node_dict[self.key()]=self
+        # cycle through the nodes adding each to its parent's children list
+        for key, descendant in node_dict.iteritems():
+            if hasattr(descendant, "childrenKeys"):
+                descendant.children = [node_dict[child] for child in descendant.childrenKeys if node_dict.has_key(child)]
+        
+        '''
+        node_dict = dict((node.key(), node) for node in nodes)
+        node_dict[self.key()]=self
+        # cycle through the nodes adding each to its parent's children list
+        for key, descendant in node_dict.iteritems():
+            parent_key = descendant.parent_key()
+            if parent_key and node_dict.has_key(parent_key):
+                parent = node_dict[parent_key]
+                if not hasattr(parent, "children"):
+                    parent.children = []
+                parent.children.append(descendant)
+        
+        # sort the children list of each node
+        for key, descendant in node_dict.iteritems():
+            if hasattr(descendant, "children"):
+                descendant.children.sort(key = lambda n: n.get_order(key))
+        '''
+
+        # return the entity that was passed in, now with its children, and its descendants children all added
+        return node_dict[self.key()]
+
+
+        '''
         if include_hidden:
             topics = Topic.all().ancestor(self).fetch(10000)
         else:
@@ -1081,11 +1145,13 @@ class ConceptTreeNode(db.Model):
         
 
         return topic_dict[self.key()]
-
+        '''
 
 class Topic(ConceptTreeNode):
     title = db.StringProperty()
     description = db.TextProperty()
+    childrenKeys = db.ListProperty(db.Key)
+
 
     _serialize_blacklist = ["hide"]
 
@@ -1167,7 +1233,6 @@ class Topic(ConceptTreeNode):
         
         return topics
 
-
 class UserTopicVideos(db.Model):
     user = db.UserProperty()
     topic = db.ReferenceProperty(Topic)
@@ -1202,16 +1267,26 @@ class UserTopicVideos(db.Model):
 
 
 
+class ContentNode(ConceptTreeNode):
+    content = db.ReferenceProperty(collection_name="parents")
+
+    @staticmethod
+    def get_key_name(parent, content):
+        return parent.key().name() + ":" + content.__class__.__name__ + ":" + content.key().name() if content.key().name() else content.readable_id
+
+
 class Content(db.Model):
-    topic_ancestors = db.ListProperty(db.Key)
-    topic_parents = db.ListProperty(db.Key)
-    topic_orders = object_property.UnvalidatedObjectProperty() # a dict of parent key, to list order in that parent
-    topic_count = db.IntegerProperty(default = 0)
+    # topic_ancestors = db.ListProperty(db.Key)
+    # topic_parents = db.ListProperty(db.Key)
+    # topic_orders = object_property.UnvalidatedObjectProperty() # a dict of parent key, to list order in that parent
+    topic_count = db.IntegerProperty(default = 0) # a count of the number of topics Content is in
 
-    def get_order(self, topic_key):
-        return self.topic_orders[topic_key]
+    # def get_order(self, topic_key):
+    #    return self.topic_orders[topic_key]
 
-class Video(Searchable, Content, db.Model):
+
+
+class Video(Searchable, db.Expando):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
     title = db.StringProperty()
@@ -2055,7 +2130,7 @@ class VideoPlaylist(db.Model):
 
         return video_playlist_key_dict
 
-class ExerciseVideo(Content, db.Model):
+class ExerciseVideo(db.Model):
 
     video = db.ReferenceProperty(Video)
     exercise = db.ReferenceProperty(Exercise)
