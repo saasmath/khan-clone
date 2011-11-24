@@ -1082,8 +1082,7 @@ def get_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal_data = user_data.get_goal_data()
-    goal = GoalList.find_by_id(goal_data, id)
+    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1100,8 +1099,7 @@ def put_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal_data = user_data.get_goal_data()
-    goal = GoalList.find_by_id(goal_data, id)
+    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1130,8 +1128,7 @@ def delete_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal_data = user_data.get_goal_data()
-    goal = GoalList.find_by_id(goal_data, id)
+    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1147,7 +1144,7 @@ def delete_user_goal(id):
 def delete_user_goals():
     user_data = models.UserData.current()
     if not user_data.developer:
-        return api_unauthorized_response("UNAUTHORIZED");
+        return api_unauthorized_response("UNAUTHORIZED")
 
     user_override = request.request_user_data("email")
     if user_override and user_override.key_email != user_data.key_email:

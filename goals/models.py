@@ -169,13 +169,6 @@ class GoalList(db.Model):
         return [entity for entity in data if isinstance(entity, type)]
 
     @staticmethod
-    def find_by_id(data, id):
-        list = [goal for goal in GoalList.get_from_data(data, Goal) if str(goal.key().id()) == str(id)]
-        if list:
-            return list[0]
-        return None
-
-    @staticmethod
     def get_current_goals(user_data, show_complete=False):
         if not user_data:
             return []
