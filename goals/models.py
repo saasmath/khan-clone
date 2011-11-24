@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 from models import Exercise, UserVideo, Video
 import templatefilters
-import logging
 import datetime
 from object_property import ObjectProperty
 
@@ -21,43 +20,40 @@ class Goal(db.Model):
     objectives = ObjectProperty()
 
     @staticmethod
-    def create(user_data, goal_data, title, objective_descriptors):
+    def create(user_data, title, objective_descriptors):
         put_user_data = False
         if not user_data.has_current_goals:
             user_data.has_current_goals = True
             put_user_data = True
 
-        parent_list = GoalList.get_from_data(goal_data, GoalList)
-        if not parent_list:
+        goal_list_key = user_data.goal_list_key
+        if not goal_list_key:
             # Create a parent object for all the goals & objectives
-            key = Key.from_path('GoalList', 1, parent=user_data.key())
-            goal_list = GoalList.get_or_insert(str(key), user=user_data.user)
+            goal_list_key = Key.from_path('GoalList', 1, parent=user_data.key())
+            goal_list = GoalList(key=goal_list_key, user=user_data.user)
+            goal_list.put()
 
             # Update UserData
             user_data.goal_list = goal_list
             put_user_data = True
-        else:
-            goal_list = parent_list[0]
 
         if put_user_data:
             user_data.put()
-
-        # Create the new goal
-        new_goal = Goal(goal_list)
-        new_goal.title = title
 
         objectives = []
         for descriptor in objective_descriptors:
             if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
                 objectives.append(GoalObjectiveExerciseProficiency(descriptor['exercise'], user_data))
-            if descriptor['type'] == 'GoalObjectiveWatchVideo':
+            elif descriptor['type'] == 'GoalObjectiveWatchVideo':
                 objectives.append(GoalObjectiveWatchVideo(descriptor['video'], user_data))
-            if descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
+            elif descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
                 objectives.append(GoalObjectiveAnyExerciseProficiency(description="Any exercise"))
-            if descriptor['type'] == "GoalObjectiveAnyVideo":
+            elif descriptor['type'] == "GoalObjectiveAnyVideo":
                 objectives.append(GoalObjectiveAnyVideo(description="Any video"))
 
-        new_goal.objectives = objectives
+        # Create the new goal
+        new_goal = Goal(parent=goal_list_key, title=title,
+            objectives=objectives)
         new_goal.put()
 
         return new_goal
@@ -75,7 +71,7 @@ class Goal(db.Model):
             goal_ret['completed'] = self.completed_on
             goal_ret['completed_ago'] = templatefilters.timesince_ago(self.completed_on)
 
-            td = self.completed_on-self.created_on
+            td = self.completed_on - self.created_on
             completed_seconds = (td.seconds + td.days * 24 * 3600)
             goal_ret['completed_time'] = templatefilters.seconds_to_time_string(completed_seconds)
 
@@ -162,6 +158,7 @@ class Goal(db.Model):
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
 class GoalList(db.Model):
+    # todo: remove this. can't find anything that uses this user property.
     user = db.UserProperty()
 
     @staticmethod

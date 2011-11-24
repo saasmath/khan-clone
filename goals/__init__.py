@@ -110,7 +110,7 @@ class CreateRandomGoalData(request_handler.RequestHandler):
 
                 title = first_name + "'s Goal #" + str(goal_idx)
                 logging.info("Creating goal " + title)
-                Goal.create(user_data, user_data.get_goal_data(), title, objective_descriptors)
+                Goal.create(user_data, title, objective_descriptors)
 
                 for objective in objective_descriptors:
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':
