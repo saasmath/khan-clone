@@ -510,10 +510,11 @@ var NewGoalView = Backbone.View.extend({
     createCustomGoal: function( e ) {
         this.trigger("creating");
         e.preventDefault();
-        globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal',
-            $("#generic-loading-dialog").html(), false);
+        globalPopupDialog.show('create-custom-goal', null,
+            'Create a custom goal', $("#generic-loading-dialog").html(), false);
+        var needMaps = window.KnowledgeMap ? "0" : "1";
         $.ajax({
-            url: "/goals/new?need_maps_package=" + (!window.KnowledgeMap ? "true" : "false"),
+            url: "/goals/new?need_maps_package=" + needMaps,
             type: 'GET',
             dataType: 'html',
             success: function(html) {

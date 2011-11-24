@@ -34,7 +34,7 @@ class CreateNewGoal(request_handler.RequestHandler):
         context = {
             'graph_dict_data': exercises.exercise_graph_dict_json(user_data),
             'user_data': user_data,
-            'need_maps_package': (self.request_string('need_maps_package', default='true') == 'true'),
+            'need_maps_package': self.request_bool('need_maps_package', default=True),
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
             'library_content': library_content,
