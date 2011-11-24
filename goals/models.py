@@ -1,15 +1,15 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-
-from models import Exercise, UserVideo, Video
-import templatefilters
-import datetime
-from object_property import ObjectProperty
+from datetime import datetime
 
 from google.appengine.ext import db
 from google.appengine.ext.db import Key
+
+from object_property import ObjectProperty
+from templatefilters import timesince_ago, seconds_to_time_string
+from models import Exercise, UserVideo, Video
+
 
 class Goal(db.Model):
     # data
@@ -27,86 +27,44 @@ class Goal(db.Model):
     created_on = db.DateTimeProperty(auto_now_add=True, indexed=False)
     updated_on = db.DateTimeProperty(auto_now=True, indexed=False)
 
-    @staticmethod
-    def create(user_data, title, objective_descriptors):
-        put_user_data = False
-        if not user_data.has_current_goals:
-            user_data.has_current_goals = True
-            put_user_data = True
-
-        goal_list_key = user_data.goal_list_key
-        if not goal_list_key:
-            # Create a parent object for all the goals & objectives
-            goal_list_key = Key.from_path('GoalList', 1, parent=user_data.key())
-            goal_list = GoalList(key=goal_list_key, user=user_data.user)
-            goal_list.put()
-
-            # Update UserData
-            user_data.goal_list = goal_list
-            put_user_data = True
-
-        if put_user_data:
-            user_data.put()
-
-        objectives = []
-        for descriptor in objective_descriptors:
-            if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
-                objectives.append(GoalObjectiveExerciseProficiency(descriptor['exercise'], user_data))
-            elif descriptor['type'] == 'GoalObjectiveWatchVideo':
-                objectives.append(GoalObjectiveWatchVideo(descriptor['video'], user_data))
-            elif descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
-                objectives.append(GoalObjectiveAnyExerciseProficiency(description="Any exercise"))
-            elif descriptor['type'] == "GoalObjectiveAnyVideo":
-                objectives.append(GoalObjectiveAnyVideo(description="Any video"))
-
-        # Create the new goal
-        new_goal = Goal(parent=goal_list_key, title=title,
-            objectives=objectives)
-        new_goal.put()
-
-        return new_goal
-
     def get_visible_data(self, user_exercise_graph=None):
-        goal_ret = {}
-        goal_ret['id'] = self.key().id()
-        goal_ret['title'] = self.title
-        goal_ret['objectives'] = []
-        goal_ret['created'] = self.created_on
-        goal_ret['created_ago'] = templatefilters.timesince_ago(self.created_on)
-        goal_ret['updated'] = self.updated_on
-        goal_ret['updated_ago'] = templatefilters.timesince_ago(self.updated_on)
-        if self.completed_on:
-            goal_ret['completed'] = self.completed_on
-            goal_ret['completed_ago'] = templatefilters.timesince_ago(self.completed_on)
+        data = dict(
+            id=self.key().id(),
+            title=self.title,
+            created=self.created_on,
+            created_ago=timesince_ago(self.created_on),
+            updated=self.updated_on,
+            updated_ago=timesince_ago(self.updated_on),
+            completed=self.completed_on,
+            abandoned=self.abandoned,
+        )
 
+        if self.completed:
+            data['completed_ago'] = timesince_ago(self.completed_on)
             td = self.completed_on - self.created_on
             completed_seconds = (td.seconds + td.days * 24 * 3600)
-            goal_ret['completed_time'] = templatefilters.seconds_to_time_string(completed_seconds)
+            data['completed_time'] = seconds_to_time_string(completed_seconds)
 
-            if self.abandoned:
-                goal_ret['abandoned'] = True
+        data['objectives'] = [dict(
+                type=obj.__class__.__name__,
+                description=obj.description,
+                short_display_name=obj._get_short_display_name(),
+                progress=obj.progress,
+                url=obj.url(),
+                internal_id=obj.internal_id(),
+                status=obj.get_status(user_exercise_graph=user_exercise_graph),
+            ) for obj in self.objectives]
 
-        for objective in self.objectives:
-            objective_ret = {}
-            objective_ret['type'] = objective.__class__.__name__
-            objective_ret['description'] = objective.description
-            objective_ret['short_display_name'] = objective._get_short_display_name()
-            objective_ret['progress'] = objective.progress
-            objective_ret['url'] = objective.url()
-            objective_ret['internal_id'] = objective.internal_id()
-            objective_ret['status'] = objective.get_status(user_exercise_graph=user_exercise_graph)
-            goal_ret['objectives'].append(objective_ret)
-        return goal_ret
+        return data
 
     def record_complete(self):
-        # Is this goal complete?
         if all([o.completed for o in self.objectives]):
             self.completed = True
-            self.completed_on = datetime.datetime.now()
+            self.completed_on = datetime.now()
 
     def abandon(self):
         self.completed = True
-        self.completed_on = datetime.datetime.now()
+        self.completed_on = datetime.now()
         self.abandoned = True
 
     def just_watched_video(self, user_data, user_video):
@@ -216,6 +174,29 @@ class GoalList(db.Model):
         return [obj.video for g in goals for obj in g.objectives
             if obj.__class__.__name__ == 'GoalObjectiveWatchVideo']
 
+    @staticmethod
+    def ensure_goal_list(user_data):
+        put_user_data = False
+        if not user_data.has_current_goals:
+            user_data.has_current_goals = True
+            put_user_data = True
+
+        goal_list_key = user_data.goal_list_key
+        if not goal_list_key:
+            # Create a parent object for all the goals & objectives
+            goal_list_key = Key.from_path('GoalList', 1, parent=user_data.key())
+            goal_list = GoalList(key=goal_list_key, user=user_data.user)
+            goal_list.put()
+
+            # Update UserData
+            user_data.goal_list = goal_list
+            put_user_data = True
+
+        if put_user_data:
+            user_data.put()
+
+        return goal_list_key
+
 def shorten(s, n=12):
     if len(s) <= n:
         return s
@@ -265,6 +246,21 @@ class GoalObjective(object):
         self._short_display_name = value
 
     short_display_name = property(_get_short_display_name, _set_short_display_name)
+
+    @staticmethod
+    def from_descriptors(descriptors, user_data):
+        objs = []
+        for desc in descriptors:
+            if desc['type'] == 'GoalObjectiveExerciseProficiency':
+                objs.append(GoalObjectiveExerciseProficiency(desc['exercise'], user_data))
+            elif desc['type'] == 'GoalObjectiveWatchVideo':
+                objs.append(GoalObjectiveWatchVideo(desc['video'], user_data))
+            elif desc['type'] == "GoalObjectiveAnyExerciseProficiency":
+                objs.append(GoalObjectiveAnyExerciseProficiency(description="Any exercise"))
+            elif desc['type'] == "GoalObjectiveAnyVideo":
+                objs.append(GoalObjectiveAnyVideo(description="Any video"))
+        return objs
+
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)

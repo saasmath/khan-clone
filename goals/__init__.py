@@ -1,23 +1,25 @@
-from __future__ import absolute_import
+# -*- coding: utf-8 -*-
 
-import request_handler
-from models import (UserData, UserExerciseGraph, UserExercise, Exercise,
-    Video, VideoLog)
-import knowledgemap
-import library
-import user_util
+from __future__ import absolute_import
 import datetime
 import random
 import logging
+
+from google.appengine.api import users
+from google.appengine.ext import db
+
+import request_handler
+import knowledgemap
+import library
+import user_util
 import exercises
+from api.auth.xsrf import ensure_xsrf_cookie
+from phantom_users.phantom_util import create_phantom
+from models import UserData, UserExercise, Exercise, Video, VideoLog
 from .models import (Goal, GoalList, GoalObjective,
     GoalObjectiveExerciseProficiency, GoalObjectiveAnyExerciseProficiency,
     GoalObjectiveWatchVideo, GoalObjectiveAnyVideo)
 
-from google.appengine.api import users
-from google.appengine.ext import db
-from api.auth.xsrf import ensure_xsrf_cookie
-from phantom_users.phantom_util import create_phantom
 
 class CreateNewGoal(request_handler.RequestHandler):
 
@@ -110,7 +112,11 @@ class CreateRandomGoalData(request_handler.RequestHandler):
 
                 title = first_name + "'s Goal #" + str(goal_idx)
                 logging.info("Creating goal " + title)
-                Goal.create(user_data, title, objective_descriptors)
+
+                objectives = GoalObjective.from_descriptors(objective_descriptors)
+                goal = Goal(parent=GoalList.ensure_goal_list(user_data),
+                    title=title, objectives=objectives)
+                goal.put()
 
                 for objective in objective_descriptors:
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':

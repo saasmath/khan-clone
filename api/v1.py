@@ -18,7 +18,7 @@ import notifications
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
-from goals import GoalList, Goal
+from goals import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 
 from api import route
@@ -1068,7 +1068,11 @@ def create_user_goal():
                 objective_descriptors.append(obj)
 
     if objective_descriptors:
-        goal = Goal.create(user_data, title, objective_descriptors)
+        objectives = GoalObjective.from_descriptors(objective_descriptors,
+            user_data)
+        goal_list_key = GoalList.ensure_goal_list(user_data)
+        goal = Goal(parent=goal_list_key, title=title, objectives=objectives)
+        goal.put()
         return goal.get_visible_data(None)
     else:
         return api_invalid_param_response("No objectives specified.")
