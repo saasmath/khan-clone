@@ -1,5 +1,6 @@
 import copy
 import logging
+from itertools import izip
 
 from flask import request, current_app, Response
 
@@ -28,7 +29,6 @@ from api.api_util import api_error_response, api_invalid_param_response, api_cre
 
 from google.appengine.ext import db
 
-from google.appengine.ext import db
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -951,7 +951,8 @@ def get_user_goals():
             # Allow access to this student's profile
             student = user_override
 
-    return GoalList.get_visible_for_user(student, show_complete=True)
+    goals = GoalList.get_all_goals(student)
+    return [g.get_visible_data() for g in goals]
 
 @route("/api/v1/user/goals/current", methods=["GET"])
 @oauth_optional()
@@ -968,7 +969,8 @@ def get_user_current_goals():
             # Allow access to this student's profile
             student = user_override
 
-    return GoalList.get_visible_for_user(student)
+    goals = GoalList.get_current_goals(student)
+    return [g.get_visible_data() for g in goals]
 
 @route("/api/v1/user/students/goals", methods=["GET"])
 @oauth_optional()
@@ -1002,12 +1004,12 @@ def get_student_goals():
     user_exercise_graphs = models.UserExerciseGraph.get(students)
 
     return_data = []
-    for idx, student in enumerate(students):
+    for student, uex_graph in izip(students, user_exercise_graphs):
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
-        student_data['goals'] = GoalList.get_visible_for_user(student,
-            user_exercise_graphs[idx])
+        goals = GoalList.get_current_goals(user_data)
+        student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
         return_data.append(student_data)
 
     return return_data

@@ -12,12 +12,20 @@ from google.appengine.ext import db
 from google.appengine.ext.db import Key
 
 class Goal(db.Model):
-    title = db.StringProperty()
-    created_on = db.DateTimeProperty(auto_now_add=True)
-    updated_on = db.DateTimeProperty(auto_now=True)
-    completed_on = db.DateTimeProperty()
-    abandoned = db.BooleanProperty()
+    # data
+    title = db.StringProperty(indexed=False)
     objectives = ObjectProperty()
+
+    # a goal is 'completed' if it's finished or abandoned. This property is
+    # indexed so that we can quickly fetch currently open goals
+    completed = db.BooleanProperty(default=False)
+    completed_on = db.DateTimeProperty(indexed=False)
+
+    # we distinguish finished and abandoned goals with this property
+    abandoned = db.BooleanProperty(indexed=False)
+
+    created_on = db.DateTimeProperty(auto_now_add=True, indexed=False)
+    updated_on = db.DateTimeProperty(auto_now=True, indexed=False)
 
     @staticmethod
     def create(user_data, title, objective_descriptors):
@@ -58,7 +66,7 @@ class Goal(db.Model):
 
         return new_goal
 
-    def get_visible_data(self, user_exercise_graph):
+    def get_visible_data(self, user_exercise_graph=None):
         goal_ret = {}
         goal_ret['id'] = self.key().id()
         goal_ret['title'] = self.title
@@ -92,16 +100,14 @@ class Goal(db.Model):
 
     def record_complete(self):
         # Is this goal complete?
-        if all([o.is_completed for o in self.objectives]):
+        if all([o.completed for o in self.objectives]):
+            self.completed = True
             self.completed_on = datetime.datetime.now()
 
     def abandon(self):
+        self.completed = True
         self.completed_on = datetime.datetime.now()
         self.abandoned = True
-
-    @property
-    def is_completed(self):
-        return (self.completed_on is not None)
 
     def just_watched_video(self, user_data, user_video):
         changed = False
@@ -119,7 +125,7 @@ class Goal(db.Model):
                     break
             if not found:
                 for vid_obj in any_videos:
-                    if not vid_obj.is_completed:
+                    if not vid_obj.completed:
                         vid_obj.record_complete(user_video.video)
                         changed = True
                         break
@@ -145,7 +151,7 @@ class Goal(db.Model):
                     break
             if not found:
                 for ex_obj in any_exercises:
-                    if not ex_obj.is_completed:
+                    if not ex_obj.completed:
                         ex_obj.record_complete(user_exercise.exercise_model)
                         changed = True
                         break
@@ -165,42 +171,38 @@ class GoalList(db.Model):
     def get_from_data(data, type):
         return [entity for entity in data if isinstance(entity, type)]
 
+    # might need to request_cache this
     @staticmethod
-    def get_current_goals(user_data, show_complete=False):
+    def get_current_goals(user_data):
         if not user_data:
             return []
 
-        # Fetch data from datastore
-        goal_data = user_data.get_goal_data()
-        goals = GoalList.get_from_data(goal_data, Goal)
-        return [g for g in goals if show_complete or not g.is_completed]
+        query = GoalList.get_goals_query(user_data)
+        query.filter('completed = ', False)
+        return query.fetch(1000)
 
     @staticmethod
-    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False):
-        return [goal.get_visible_data(user_exercise_graph) for goal in
-            GoalList.get_current_goals(user_data, show_complete)]
+    def get_all_goals(user_data):
+        if user_data:
+            return GoalList.get_goals_query(user_data).fetch(1000)
+        else:
+            return []
 
     @staticmethod
-    def delete_goal(user_data, id):
-        # Fetch data from datastore
-        goal_data = user_data.get_goal_data()
-        goals = GoalList.get_from_data(goal_data, Goal)
-
-        for goal in goals:
-            if str(goal.key().id()) == str(id):
-                goal.delete()
-                return True
-
-        return False
+    def get_goals_query(user_data):
+        query = Goal.all()
+        query.ancestor(user_data.goal_list_key)
+        return query
 
     @staticmethod
     def delete_all_goals(user_data):
-        # Fetch data from datastore
-        goal_data = user_data.get_goal_data()
-        goals = GoalList.get_from_data(goal_data, Goal)
+        if not user_data.goal_list_key:
+            return
 
-        for goal in goals:
-            goal.delete()
+        query = Goal.all(keys_only=True)
+        query.ancestor(user_data.goal_list_key)
+        goal_keys = query.fetch(1000)
+        db.delete(goal_keys)
 
     @staticmethod
     def exercises_in_current_goals(user_data):
@@ -241,11 +243,11 @@ class GoalObjective(object):
         self.progress = 1.0
 
     @property
-    def is_completed(self):
+    def completed(self):
         return self.progress >= 1.0
 
     def get_status(self, **kwargs):
-        if self.is_completed:
+        if self.completed:
             return "proficient"
 
         if self.progress > 0:

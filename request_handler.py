@@ -316,9 +316,10 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         if user_data and user_data.has_current_goals:
             from goals import GoalList
-            current_goals = GoalList.get_visible_for_user(user_data)
-            if current_goals:
-                template_values['global_goals'] = jsonify(current_goals)
+            goals = GoalList.get_current_goals(user_data)
+            goals_data = [g.get_visible_data() for g in goals]
+            if goals_data:
+                template_values['global_goals'] = jsonify(goals_data)
 
         return template_values
 
