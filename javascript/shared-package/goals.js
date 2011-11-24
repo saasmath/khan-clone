@@ -556,6 +556,10 @@ var NewGoalDialog = Backbone.View.extend({
     },
 
     hide: function() {
+        // hide all hover effects so they don't show up next time we show
+        this.$('.info').hide();
+
+        // now hide the dialog
         return $(this.el).modal('hide');
     }
 });
