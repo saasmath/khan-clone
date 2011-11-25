@@ -12,7 +12,6 @@ from request_handler import RequestHandler
 from knowledgemap import deserializeMapCoords
 from library import library_content_html
 from user_util import developer_only
-from exercises import exercise_graph_dict_json, attempt_problem
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
 from models import UserData, UserExercise, Exercise, Video, VideoLog
@@ -28,6 +27,8 @@ class CreateNewGoal(RequestHandler):
     def get(self):
         user_data = UserData.current()
         need_maps = self.request_bool('need_maps_package', default=True)
+
+        from exercises import exercise_graph_dict_json
 
         context = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
@@ -58,6 +59,8 @@ class CreateRandomGoalData(RequestHandler):
 
     @developer_only
     def get(self):
+        from exercises import attempt_problem
+
         login_user = UserData.current()
         exercises_list = [exercise for exercise in Exercise.all()]
         videos_list = [video for video in Video.all()]
