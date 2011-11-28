@@ -698,7 +698,7 @@ var Profile = {
                     toFloat: "left",
                     fShowOnLeft: false,
                     order:  3},
-                review: {color: "review light",
+                review: {color: "review",
                     toFloat: "left",
                     fShowOnLeft: false,
                     order: 4}
@@ -715,8 +715,7 @@ var Profile = {
         Handlebars.registerPartial("class-progress-column", Templates.get( "profile.class-progress-column" ));
 
         Handlebars.registerHelper("toPixelWidth", function(num) {
-            // TODO: Change to reasonable width
-            return Math.round(100 * num / context.num_students);
+            return Math.round(200 * num / context.num_students);
         });
 
         Handlebars.registerHelper("toColor", function(status) {
