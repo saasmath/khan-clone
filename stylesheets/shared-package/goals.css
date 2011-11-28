@@ -538,9 +538,10 @@ input.goal-title:focus {
   background-color:#678D00;
   color:white;
   width:70%;
-  margin:2em auto;
+  margin:1em auto 2em;
   margin-left:15%;
   cursor:pointer;
+  padding:3px 0 1px;
 }
 
 .goalpicker .info, .goalpicker .info:hover  {
@@ -551,25 +552,27 @@ input.goal-title:focus {
   top:20px;
   width:175px;
   height:auto;
-  padding:10px 15px 0;
+  padding:22px 15px 0;
   background-color:#eee;
+  border:1px solid #909090;
   -webkit-box-shadow:0px 0px 10px 5px #ccc;
-  -webkit-border-radius:3px;
+  -webkit-border-radius:5px;
 }
 
 
-.goalpicker .info:after {
+/*.goalpicker .info:after {
   content:'';
   display:block;
   position:absolute;
   top:30px;
-  left:100%; /*should be set to 100% */
+  left:100%;
   width:0;
   height:0;
   border-color: transparent transparent transparent #eee;
   border-style: solid;
   border-width: 10px;
 }
+*/
 
 .goalpicker .info.pos-right {
   left:auto;
@@ -594,7 +597,7 @@ input.goal-title:focus {
 .modal.goal-new {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
-  width: 900px; /* this is redundant but here for clarity */
+  width: 700px; /* this is redundant but here for clarity */
   margin: 0 0 0 -450px;
   top: 90px;
   left: 50%;
@@ -615,4 +618,24 @@ input.goal-title:focus {
   -webkit-background-clip: padding-box;
   -moz-background-clip: padding-box;
   background-clip: padding-box;
+}
+
+
+.modal .goalpicker h3{
+  font-size:24px;
+  padding-left:.5em;
+  line-height:36px;
+  margin-bottom:12px;
+  width:90%;
+  border-bottom:1px solid #666;
+}
+
+.modal .goalpicker h4 {
+  font-size:18px;
+}
+.modal .goalpicker .newgoal{
+  padding:1em 1em 2em;
+}
+.modal .goalpicker .newgoal .info p{
+  margin:0 0 22px;
 }
