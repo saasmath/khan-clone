@@ -101,7 +101,7 @@ class Goal(db.Model):
         if became_proficient:
             any_exercises = [o for o in self.objectives
                 if isinstance(o, GoalObjectiveAnyExerciseProficiency)]
-            found = ex_obj.exercise_name in [o.exercise_name for o in
+            found = user_exercise.exercise in [o.exercise_name for o in
                 any_exercises]
             if not found:
                 for ex_obj in any_exercises:
