@@ -118,9 +118,6 @@ class Goal(db.Model):
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
 class GoalList(db.Model):
-    # todo: remove this. can't find anything that uses this user property.
-    user = db.UserProperty()
-
     # might need to request_cache this
     @staticmethod
     def get_current_goals(user_data):
@@ -177,7 +174,7 @@ class GoalList(db.Model):
         if not goal_list_key:
             # Create a parent object for all the goals & objectives
             goal_list_key = Key.from_path('GoalList', 1, parent=user_data.key())
-            goal_list = GoalList(key=goal_list_key, user=user_data.user)
+            goal_list = GoalList(key=goal_list_key)
             goal_list.put()
 
             # Update UserData
