@@ -523,8 +523,3 @@ div.graph-notification {
 #current-goals-list input.goal-title {
     min-width: 450px;
 }
-
-/* hide goals profile tab from IE <= 8 */
-.lte8 .goals-accordion-content {
-    display: none;
-}

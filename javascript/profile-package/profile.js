@@ -90,7 +90,16 @@ var Profile = {
              }
         });
 
-        $("#stats-nav #nav-accordion").accordion({ header:".header", active:".graph-link-selected", autoHeight: false, clearStyle: true });
+        // remove goals from IE<=8
+        $(".lte8 .goals-accordion-content").remove();
+
+        $("#stats-nav #nav-accordion")
+            .accordion({
+                header:".header",
+                active:".graph-link-selected",
+                autoHeight: false,
+                clearStyle: true
+            });
 
         setTimeout(function(){
             if (!Profile.fLoadingGraph && !Profile.fLoadedGraph)
