@@ -70,20 +70,16 @@ class Goal(db.Model):
 
     def just_watched_video(self, user_data, user_video):
         changed = False
-        specific_videos = GoalList.get_from_data(self.objectives,
-            GoalObjectiveWatchVideo)
-        for objective in specific_videos:
-            if objective.record_progress(user_data, user_video):
-                changed = True
+        for objective in self.objectives:
+            if isinstance(objective, GoalObjectiveWatchVideo):
+                if objective.record_progress(user_data, user_video):
+                    changed = True
 
         if user_video.completed:
-            any_videos = GoalList.get_from_data(self.objectives,
-                GoalObjectiveAnyVideo)
-            found = False
-            for vid_obj in any_videos:
-                if vid_obj.video_key == str(user_video.video.key()):
-                    found = True
-                    break
+            any_videos = [o for o in self.objectives
+                if isinstance(o, GoalObjectiveAnyVideo)]
+
+            found = user_video.video.key() in [o.video_key for o in any_videos]
             if not found:
                 for vid_obj in any_videos:
                     if not vid_obj.completed:
@@ -98,20 +94,16 @@ class Goal(db.Model):
 
     def just_did_exercise(self, user_data, user_exercise, became_proficient):
         changed = False
-        specific_exercises = GoalList.get_from_data(self.objectives,
-            GoalObjectiveExerciseProficiency)
-        for ex_obj in specific_exercises:
-            if ex_obj.record_progress(user_data, user_exercise):
-                changed = True
+        for ex_obj in self.objectives:
+            if isinstance(ex_obj, GoalObjectiveExerciseProficiency):
+                if ex_obj.record_progress(user_data, user_exercise):
+                    changed = True
 
         if became_proficient:
-            any_exercises = GoalList.get_from_data(self.objectives,
-                GoalObjectiveAnyExerciseProficiency)
-            found = False
-            for ex_obj in any_exercises:
-                if ex_obj.exercise_name == user_exercise.exercise_model.name:
-                    found = True
-                    break
+            any_exercises = [o for o in self.objectives
+                if isinstance(o, GoalObjectiveAnyExerciseProficiency)]
+            found = ex_obj.exercise_name in [o.exercise_name for o in
+                any_exercises]
             if not found:
                 for ex_obj in any_exercises:
                     if not ex_obj.completed:
@@ -129,10 +121,6 @@ class Goal(db.Model):
 class GoalList(db.Model):
     # todo: remove this. can't find anything that uses this user property.
     user = db.UserProperty()
-
-    @staticmethod
-    def get_from_data(data, type):
-        return [entity for entity in data if isinstance(entity, type)]
 
     # might need to request_cache this
     @staticmethod
@@ -364,7 +352,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
     video_readable_id = None
 
     def __init__(self, video, user_data):
-        self.video_key = str(video.key())
+        self.video_key = video.key()
         self.video_readable_id = video.readable_id
         self.description = video.title
 
@@ -404,7 +392,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
 
     def record_complete(self, video):
         super(GoalObjectiveAnyVideo, self).record_complete()
-        self.video_key = str(video.key())
+        self.video_key = video.key()
         self.video_readable_id = video.readable_id
         self.description = video.title
         return True
