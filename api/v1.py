@@ -18,7 +18,7 @@ import notifications
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
-from goals import GoalList, Goal, GoalObjective
+from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 
 from api import route
