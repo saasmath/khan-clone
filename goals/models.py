@@ -124,7 +124,7 @@ class GoalList(db.Model):
         if user_data and user_data.has_current_goals:
             query = GoalList.get_goals_query(user_data)
             query.filter('completed = ', False)
-            return query.fetch(1000)
+            return query.fetch(100)
         else:
             return []
 
