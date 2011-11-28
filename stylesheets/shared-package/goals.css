@@ -52,7 +52,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveAnyExerciseProficiency,
 .goal a.objective.GoalObjectiveAnyVideo {
     padding-left: 22px
-    padding-left: 8px\9;
 }
 
 #create-goal-view .goal a.objective.exercise:hover:before,
@@ -67,7 +66,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveExerciseProficiency:before,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
     display: block;
-    display: none\9;
     content: " ";
     width: 30px;
     height: 30px;
@@ -88,6 +86,18 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveWatchVideo:before,
 .goal a.objective.GoalObjectiveAnyVideo:before {
     background: #3A4759 url(/images/video-camera-icon-inset-small.png) no-repeat 50% 50%; /*! data-uri(/images/video-camera-icon-inset-small.png) */
+}
+
+.ie .goal a.objective.video:before,
+.ie .goal a.objective.GoalObjectiveWatchVideo:before,
+.ie .goal a.objective.GoalObjectiveAnyVideo:before,
+.ie .goal a.objective.exercise:before,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency:before,
+.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
+    border: none;
+    left: -2px;
+    top: -4px;
+    background-color: transparent;
 }
 
 .goal a.objective.started:before {
@@ -124,7 +134,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveWatchVideo .objective-progress-meter,
 .goal a.objective.GoalObjectiveAnyVideo .objective-progress-meter {
     display: block;
-    display: none\9;
     content: " ";
     width: 20px;
     height: 20px;
@@ -134,11 +143,16 @@ ul.inline-list, ul.inline-list li {
     top: 0;
 }
 
+.ie .goal a.objective.video .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveWatchVideo .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveAnyVideo .objective-progress-meter {
+    left: 3px;
+}
+
 .goal a.objective.exercise .objective-progress-meter,
 .goal a.objective.GoalObjectiveExerciseProficiency .objective-progress-meter,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency .objective-progress-meter {
     display: block;
-    display: none\9;
     content: " ";
     width: 20px;
     height: 20px;
@@ -146,6 +160,12 @@ ul.inline-list, ul.inline-list li {
     position: absolute;
     left: -6px;
     top: 0;
+}
+
+.ie .goal a.objective.exercise .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency .objective-progress-meter {
+    left: 2px;
 }
 
 .goal a.objective.exercise.complete:before,
@@ -164,6 +184,19 @@ ul.inline-list, ul.inline-list li {
     border-radius: 18px;
     border: 1px solid #CCC;
 }
+
+.ie .goal a.objective.exercise.complete:before,
+.ie .goal a.objective.video.complete:before,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.ie .goal a.objective.GoalObjectiveWatchVideo.complete:before,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
+    border: none;
+    left: -2px;
+    top: -4px;
+    background-color: transparent;
+}
+
 .goal a.objective.exercise.complete,
 .goal a.objective.video.complete,
 .goal a.objective.GoalObjectiveExerciseProficiency.complete,
