@@ -102,6 +102,11 @@ var Profile = {
                 Profile.historyChange();
             }
         }, 1000);
+
+        $('.new-goal').click(function(e) {
+            e.preventDefault();
+            window.newGoalDialog.show();
+        });
     },
 
 
