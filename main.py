@@ -60,8 +60,11 @@ from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
 from nicknames import get_nickname_for
+from image_cache import ImageCache
+from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -101,6 +104,8 @@ def get_mangled_playlist_name(playlist_name):
     return playlist_name
 
 class ViewVideo(request_handler.RequestHandler):
+
+    @ensure_xsrf_cookie
     def get(self, readable_id=""):
 
         # This method displays a video in the context of a particular playlist.
@@ -231,8 +236,10 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
+        bingo('struggling_videos_landing')
         self.render_jinja2_template('viewvideo.html', template_values)
 
+# This function is only here for a transitional period, all new requests should be using the API (-Tom Y 11/17/11)
 class LogVideoProgress(request_handler.RequestHandler):
 
     # LogVideoProgress uses a GET request to solve the IE-behind-firewall
@@ -788,9 +795,9 @@ application = webapp2.WSGIApplication([
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
     ('/video/(.*)', ViewVideo),
+    ('/logvideoprogress', LogVideoProgress),
     ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
-    ('/logvideoprogress', LogVideoProgress),
     ('/sat', ViewSAT),
     ('/gmat', ViewGMAT),
     ('/reportissue', ReportIssue),
@@ -798,6 +805,8 @@ application = webapp2.WSGIApplication([
     ('/savemapcoords', knowledgemap.SaveMapCoords),
     ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
     ('/crash', Crash),
+
+    ('/image_cache/(.+)', ImageCache),
 
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),

@@ -57,7 +57,6 @@ def add_action_results(obj, dict_results):
                 badge = badges_dict.get(user_badge.badge_name)
 
                 if badge:
-
                     if not hasattr(badge, "user_badges"):
                         badge.user_badges = []
 
@@ -399,31 +398,37 @@ def user_videos_specific(youtube_id):
 
 # Can specify video using "video_key" parameter instead of youtube_id.
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET","POST"])
-@oauth_required(require_anointed_consumer=True)
+@oauth_optional(require_anointed_consumer=True)
+@api_create_phantom
 @jsonp
 @jsonify
 def log_user_video(youtube_id):
-    user_data = models.UserData.current()
     video_log = None
-    video_key_str = request.request_string("video_key")
+    user_data = models.UserData.current()
 
-    if user_data and (youtube_id or video_key_str):
-        if video_key_str:
-            key = db.Key(video_key_str)
-            video = db.get(key)
-        else:
-            video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if user_data:
+        video_key_str = request.request_string("video_key")
 
-        seconds_watched = int(request.request_float("seconds_watched", default = 0))
-        last_second_watched = int(request.request_float("last_second_watched", default = 0))
+        if user_data and (youtube_id or video_key_str):
+            if video_key_str:
+                key = db.Key(video_key_str)
+                video = db.get(key)
+            else:
+                video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
-        if video:
-            user_video, video_log, video_points_total = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
+            seconds_watched = int(request.request_float("seconds_watched", default = 0))
+            last_second_watched = int(request.request_float("last_second_watched", default = 0))
 
-            if video_log:
-                add_action_results(video_log, {"user_video": user_video})
+            if video:
+                user_video, video_log, video_points_total = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
 
-    return video_log
+                if video_log:
+                    add_action_results(video_log, {"user_video": user_video})
+
+        return video_log
+
+    logging.warning("Video watched with no user_data present")
+    return unauthorized_response()
 
 @route("/api/v1/user/exercises", methods=["GET"])
 @oauth_optional()
@@ -639,29 +644,17 @@ def attempt_problem_number(exercise_name, problem_number):
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
             user_states = user_exercise_graph.states(exercise.name)
-            sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
-            
+
             action_results = {
                 "exercise_state": {
-                    "sees_graph" :  sees_graph,
                     "state" : [state for state in user_states if user_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states, sees_graph) ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
                 },
                 "points_earned" : { "points" : points_earned },
                 "attempt_correct" : request.request_bool("complete")
             };
 
-            if user_states["proficient"]:
-                followups = user_followup_exercises(exercise_name)
-
-                if followups:
-                    action_results["exercise_state"]["followups"] = followups
-                else :
-                    followups = [models.Exercise.get_by_name(exercise) for exercise in user_data.suggested_exercises[:3]]
-                    action_results["exercise_state"]["followups"] = followups
-
             add_action_results(user_exercise, action_results)
-
             return user_exercise
 
     logging.warning("Problem %d attempted with no user_data present", problem_number)
@@ -744,7 +737,8 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
+# TomY Temporary fix: Sundar needs to access the logs using GET, which I accidentally masked with the newer call above
+@route("/api/v1/user/videos/<youtube_id>/sundarlog", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -893,11 +887,19 @@ def autocomplete():
 
         max_results_per_type = 10
 
-        video_results = filter(lambda video_dict: query in video_dict["title"].lower(), video_title_dicts())
-        playlist_results = filter(lambda playlist_dict: query in playlist_dict["title"].lower(), playlist_title_dicts())
+        video_results = filter(
+                lambda video_dict: query in video_dict["title"].lower(),
+                video_title_dicts())
+        playlist_results = filter(
+                lambda playlist_dict: query in playlist_dict["title"].lower(),
+                playlist_title_dicts())
 
-        video_results = sorted(video_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
-        playlist_results = sorted(playlist_results, key=lambda dict: dict["title"].lower().index(query))[:max_results_per_type]
+        video_results = sorted(
+                video_results,
+                key=lambda v: v["title"].lower().index(query))[:max_results_per_type]
+        playlist_results = sorted(
+                playlist_results,
+                key=lambda p: p["title"].lower().index(query))[:max_results_per_type]
 
     return {
             "query": query, 
@@ -916,3 +918,27 @@ def problem_logs():
     problem_log_query.order("time_done")
 
     return problem_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/videos", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def video_logs():
+    video_log_query = models.VideoLog.all()
+    filter_query_by_request_dates(video_log_query, "time_watched")
+    video_log_query.order("time_watched")
+
+    return video_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/users", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def user_data():
+    user_data_query = models.UserData.all()
+    filter_query_by_request_dates(user_data_query, "joined")
+    user_data_query.order("joined")
+
+    return user_data_query.fetch(request.request_int("max", default=500))

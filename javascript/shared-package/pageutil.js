@@ -417,7 +417,7 @@ var VideoStats = {
         }
 
         $.ajax({type: "GET",
-                url: "/api/v1/user/videos/"+id+"/log",
+                url: "/api/v1/user/videos/" + id + "/log",
                 data: data,
                 success: function (data) { VideoStats.finishSave(data, percent); },
                 error: function () {
