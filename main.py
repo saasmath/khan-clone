@@ -43,7 +43,7 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
-import goals
+import goals.handlers
 
 import models
 from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
@@ -657,7 +657,7 @@ class Search(request_handler.RequestHandler):
             elif entity is not None:
                 logging.error("Unhandled kind in search results: " +
                               str(type(entity)))
-                
+
         playlist_count = len(playlists)
 
         # Get playlists for videos not in matching playlists
@@ -691,7 +691,7 @@ class Search(request_handler.RequestHandler):
         video_exercises = {}
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
-                
+
         # Count number of videos in each playlist and sort descending
         for playlist in playlists:
             if len(filtered_videos) > 0:
@@ -934,8 +934,8 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
 
-    ('/goals/new', goals.CreateNewGoal),
-    ('/goals/admincreaterandom', goals.CreateRandomGoalData),
+    ('/goals/new', goals.handlers.CreateNewGoal),
+    ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
 
     ('/robots.txt', robots.RobotsTxt),
 

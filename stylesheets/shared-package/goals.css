@@ -52,6 +52,7 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveAnyExerciseProficiency,
 .goal a.objective.GoalObjectiveAnyVideo {
     padding-left: 22px
+    padding-left: 8px\9;
 }
 
 #create-goal-view .goal a.objective.exercise:hover:before,
@@ -66,6 +67,7 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveExerciseProficiency:before,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
     display: block;
+    display: none\9;
     content: " ";
     width: 30px;
     height: 30px;
@@ -122,6 +124,7 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveWatchVideo .objective-progress-meter,
 .goal a.objective.GoalObjectiveAnyVideo .objective-progress-meter {
     display: block;
+    display: none\9;
     content: " ";
     width: 20px;
     height: 20px;
@@ -135,6 +138,7 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveExerciseProficiency .objective-progress-meter,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency .objective-progress-meter {
     display: block;
+    display: none\9;
     content: " ";
     width: 20px;
     height: 20px;
@@ -399,10 +403,6 @@ input.goal-title:focus {
 .goal-description .summary-light {
     color: #888;
     display: inline-block;
-    float: right;
-}
-
-.goal-description .simple-button.archive {
     float: right;
 }
 

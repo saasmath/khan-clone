@@ -1065,15 +1065,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def goal_list_key(self):
         return UserData.goal_list.get_value_for_datastore(self)
 
-    @request_cache.cache_with_key_fxn(lambda self: "UserData_goals:%s" % self.user_id)
-    def get_goal_data(self):
-        if not self.goal_list_key:
-            return []
-
-        # Do a single ancestor query on the Goal List
-        query = db.Query()
-        query.ancestor(self.goal_list_key)
-        return [entity for entity in query]
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
@@ -1474,8 +1465,8 @@ class VideoLog(db.Model):
 
             bingo('struggling_videos_finished')
 
-        from goals import update_goals_just_watched_video
-        goals_updated = update_goals_just_watched_video(user_data, user_video)
+        goals_updated = GoalList.update_goals(user_data,
+            lambda goal: goal.just_watched_video(user_data, user_video))
 
         if video_points_received > 0:
             video_log.points_earned = video_points_received
@@ -1953,7 +1944,7 @@ class UserExerciseCache(db.Model):
     """ UserExerciseCache is an optimized-for-read-and-deserialization cache of
     user-specific exercise states.
     It can be reconstituted at any time via UserExercise objects.
-    
+
     """
 
     # Bump this whenever you change the structure of the cached UserExercises
@@ -2266,7 +2257,7 @@ class UserExerciseGraph(object):
                 "coverer_dicts": [],
                 "prerequisite_dicts": [],
             })
-            
+
             # In case user has multiple UserExercise mappings for a specific exercise,
             # always prefer the one w/ more problems done
             if graph_dict["name"] not in graph or graph[graph_dict["name"]]["total_done"] < graph_dict["total_done"]:
@@ -2352,3 +2343,4 @@ class UserExerciseGraph(object):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
+from goals.models import GoalList

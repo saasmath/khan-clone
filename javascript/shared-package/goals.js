@@ -1,20 +1,3 @@
-var calcIconFillHeight = function(o) {
-    var height = o.type.toLowerCase().indexOf("exercise") >= 1 ? 13 : 12;
-    var offset = o.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6;
-    return Math.ceil(o.progress * height) + offset;
-};
-
-var calcObjectiveDependents = function(objective, objectiveWidth) {
-    objective.complete = objective.progress >= 1;
-    objective.progress_str = (objective.progress * 100).toFixed(0);
-    objective.iconFillHeight = calcIconFillHeight(objective);
-    objective.objectiveWidth = objectiveWidth;
-    objective.isVideo = (objective.type == 'GoalObjectiveWatchVideo');
-    objective.isAnyVideo = (objective.type == 'GoalObjectiveAnyVideo');
-    objective.isExercise = (objective.type == 'GoalObjectiveExerciseProficiency');
-    objective.isAnyExercise = (objective.type == 'GoalObjectiveAnyExerciseProficiency');
-};
-
 var Goal = Backbone.Model.extend({
     defaults: {
         active: false,
@@ -27,7 +10,24 @@ var Goal = Backbone.Model.extend({
     urlRoot: '/api/v1/user/goals',
 
     initialize: function() {
+        // defaults for new models (e.g. not from server)
+        // default created and updated values
+        if (!this.has('created')) {
+            var now = new Date().toISOString();
+            this.set({created: now, updated: now});
+        }
+
+        // default progress value for all objectives
+        _.each(this.get('objectives'), function(o) {
+            if ( !o.progress ) {
+                o.progress = 0;
+            }
+        });
+
+        // a bunch of stuff needed to display goals in views. might need to be
+        // refactored.
         this.calcDependents();
+
         this.bind('change', this.fireCustom, this);
     },
 
@@ -35,16 +35,20 @@ var Goal = Backbone.Model.extend({
         var progress = this.calcTotalProgress(this.get('objectives'));
         var objectiveWidth = 100/this.get('objectives').length;
         _.each(this.get('objectives'), function (obj) {
-            calcObjectiveDependents(obj, objectiveWidth);
+            Goal.calcObjectiveDependents(obj, objectiveWidth);
         });
         this.set({
             progress: progress,
-            progressStr: (progress * 100).toFixed(0),
+            progressStr: Goal.floatToPercentageStr(progress),
             complete: progress >= 1,
+
+            // used to display 3/5 in goal summary area
             objectiveProgress: _.filter(this.get('objectives'), function(obj) {
                 return obj.progress >= 1;
             }).length,
-            updatedTime: new Date(this.get('updated')).getTime()
+
+            // used to maintain sorted order in a GoalCollection
+            updatedTime: parseISO8601(this.get('updated')).getTime()
         }, {silent: true});
     },
 
@@ -52,11 +56,12 @@ var Goal = Backbone.Model.extend({
         objectives = objectives || this.get('objectives');
         var progress = 0;
         if (objectives.length) {
-            var count = 0;
-            $.each(objectives, function(i, ob) {
-                progress += ob.progress;
-            });
-            progress = progress/objectives.length;
+            progress = _.reduce(objectives, function(p, ob) { return p + ob.progress; }, 0);
+            if ( objectives.length > 0 ) {
+                progress = progress/objectives.length;
+            } else {
+                progress = 0;
+            }
         }
         return progress;
     },
@@ -99,6 +104,46 @@ var Goal = Backbone.Model.extend({
                 }, this.collection);
             }
         }
+    }
+}, {
+    calcObjectiveDependents: function(objective, objectiveWidth) {
+        objective.complete = objective.progress >= 1;
+        objective.progressStr = Goal.floatToPercentageStr(objective.progress);
+        objective.iconFillHeight = Goal.calcIconFillHeight(objective);
+        objective.objectiveWidth = objectiveWidth;
+        objective.isVideo = (objective.type == 'GoalObjectiveWatchVideo');
+        objective.isAnyVideo = (objective.type == 'GoalObjectiveAnyVideo');
+        objective.isExercise = (objective.type == 'GoalObjectiveExerciseProficiency');
+        objective.isAnyExercise = (objective.type == 'GoalObjectiveAnyExerciseProficiency');
+    },
+
+    calcIconFillHeight: function(objective) {
+        var height = objective.type.toLowerCase().indexOf("exercise") >= 1 ? 13 : 12;
+        var offset = objective.type.toLowerCase().indexOf("exercise") >= 1 ? 4 : 6;
+        return Math.ceil(objective.progress * height) + offset;
+    },
+
+    floatToPercentageStr: function(progress) {
+        return (progress * 100).toFixed(0);
+    },
+
+    objectiveUrlForType: {
+        GoalObjectiveWatchVideo: function(objective) {
+            return "/video/" + objective.internal_id;
+        },
+        GoalObjectiveAnyVideo: function(objective) {
+            return "/";
+        },
+        GoalObjectiveExerciseProficiency: function(objective) {
+            return '/exercise/' + objective.internal_id;
+        },
+        GoalObjectiveAnyExerciseProficiency: function(objective) {
+            return '/exercisedashboard';
+        }
+    },
+
+    objectiveUrl: function(objective) {
+        return Goal.objectiveUrlForType[objective.type](objective);
     }
 });
 
@@ -171,9 +216,8 @@ var GoalCollection = Backbone.Collection.extend({
     findActiveGoal: function() {
         var matchingGoal = null;
 
-        if (window.location.pathname.indexOf("/exercise") === 0 &&
-                typeof userExercise !== 'undefined') {
-            matchingGoal = this.findGoalWithObjective(userExercise.exercise,
+        if (window.location.pathname.indexOf("/exercise") === 0 && window.userExerciseName) {
+            matchingGoal = this.findGoalWithObjective(userExerciseName,
                 'GoalObjectiveExerciseProficiency',
                 'GoalObjectiveAnyExerciseProficiency');
         } else if (window.location.pathname.indexOf("/video") === 0 &&
@@ -206,17 +250,19 @@ var GoalBookView = Backbone.View.extend({
                 var el = $(e.currentTarget);
                 if ( e.type == 'mouseenter' ) {
                     el.find(".goal-description .summary-light").hide();
-                    el.find(".goal-description .archive").show();
+                    el.find(".goal-description .goal-controls").show();
                 } else {
-                    el.find(".goal-description .archive").hide();
+                    el.find(".goal-description .goal-controls").hide();
                     el.find(".goal-description .summary-light").show();
                 }
             })
 
             .delegate('.archive', 'click', $.proxy(function( e ) {
-                var el = $(e.target).closest('.goal');
-                this.animateGoalToHistory(el);
-                // todo: remove model
+                var jel = $(e.target).closest('.goal');
+                var goal = this.model.get(jel.data('id'));
+                this.animateGoalToHistory(jel).then($.proxy(function() {
+                    this.model.remove(goal);
+                }, this));
             }, this))
 
             .delegate( '.new-goal', 'click', $.proxy(function( e ) {
@@ -288,9 +334,14 @@ var GoalBookView = Backbone.View.extend({
     },
 
     animateThenHide: function(els) {
+        var goals = _.map(els, function(el) {
+            return this.model.get($(el).data('id'));
+        }, this);
         // wait for the animation to complete and then close the goalbook
         this.animateGoalToHistory(els).then($.proxy(function() {
-           $(this.el).slideUp("fast");
+           $(this.el).slideUp("fast").promise().then($.proxy(function() {
+                this.model.remove(goals);
+           }, this));
        }, this));
     },
 
@@ -306,7 +357,7 @@ var GoalBookView = Backbone.View.extend({
             var json = _.pluck(this.model.models, 'attributes');
             jel.html(this.template({goals: json}));
         }
-        return jel;
+        return this;
     },
 
     animateGoalToHistory: function(els) {
@@ -423,22 +474,47 @@ var NewGoalView = Backbone.View.extend({
     },
 
     createSimpleGoal: function( selectedType ) {
+        var goal;
+        if ( selectedType == 'five_exercises' ) {
+            goal = new Goal({
+                title: "Complete Five Exercises",
+                objectives: [
+                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+                ]
+            });
+        } else if ( selectedType == "five_videos" ) {
+            goal = new Goal({
+                title: "Complete Five Videos",
+                objectives: [
+                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                    { description: "Any video", type: "GoalObjectiveAnyVideo" }
+                ]
+            });
+        }
+
+        this.model.add(goal);
+        goal.save().fail($.proxy(function() {
+            KAConsole.log("Error while saving new custom goal", goal);
+            this.model.remove(goal);
+        }, this));
         this.trigger("creating");
-        $.ajax({
-            url: "/api/v1/user/goals",
-            type: 'POST',
-            dataType: 'json',
-            data: $.param(NewGoalView.predefinedGoalsList[selectedType]),
-            success: $.proxy(GoalBook.add, GoalBook)
-        });
     },
 
     createCustomGoal: function( e ) {
         this.trigger("creating");
         e.preventDefault();
-        globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', $("#generic-loading-dialog").html(), false);
+        globalPopupDialog.show('create-custom-goal', null,
+            'Create a custom goal', $("#generic-loading-dialog").html(), false);
+        var needMaps = window.KnowledgeMap ? "0" : "1";
         $.ajax({
-            url: "/goals/new?need_maps_package=" + (!window.KnowledgeMap ? "true" : "false"),
+            url: "/goals/new?need_maps_package=" + needMaps,
             type: 'GET',
             dataType: 'html',
             success: function(html) {
@@ -451,26 +527,6 @@ var NewGoalView = Backbone.View.extend({
             }
         });
     }
-}, {
-    // todo: convert these to real models?
-    predefinedGoalsList: {
-        "five_exercises" : {
-            "title": "Complete Five Exercises",
-            "objective1_type": "GoalObjectiveAnyExerciseProficiency",
-            "objective2_type": "GoalObjectiveAnyExerciseProficiency",
-            "objective3_type": "GoalObjectiveAnyExerciseProficiency",
-            "objective4_type": "GoalObjectiveAnyExerciseProficiency",
-            "objective5_type": "GoalObjectiveAnyExerciseProficiency"
-        },
-        "five_videos" : {
-            "title": "Watch Five Videos",
-            "objective1_type": "GoalObjectiveAnyVideo",
-            "objective2_type": "GoalObjectiveAnyVideo",
-            "objective3_type": "GoalObjectiveAnyVideo",
-            "objective4_type": "GoalObjectiveAnyVideo",
-            "objective5_type": "GoalObjectiveAnyVideo"
-        }
-    }
 });
 
 var NewGoalDialog = Backbone.View.extend({
@@ -478,27 +534,34 @@ var NewGoalDialog = Backbone.View.extend({
 
     initialize: function() {
         this.render();
-        GoalBook.bind('add', this.hide, this);
     },
 
     render: function() {
+        // As we're assigning to this.el, event handlers need to be rebound
+        // after each render.
         this.el = $(this.template()).appendTo(document.body).get(0);
-        this.newGoalView = new NewGoalView({el: this.$('.goalpicker')});
+        this.newGoalView = new NewGoalView({
+            el: this.$('.goalpicker'),
+            model: this.model
+        });
         this.newGoalView.bind('creating', this.hide, this);
         return this;
     },
 
     show: function() {
-        $(this.el)
-            .modal({
-                keyboard: true,
-                backdrop: true,
-                show: true
-            });
+        return $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
     },
 
     hide: function() {
-        $(this.el).modal('hide');
+        // hide all hover effects so they don't show up next time we show
+        this.$('.info').hide();
+
+        // now hide the dialog
+        return $(this.el).modal('hide');
     }
 });
 
@@ -518,7 +581,7 @@ $(function() {
     });
 
     myGoalSummaryView.render();
-    window.newGoalDialog = new NewGoalDialog();
+    window.newGoalDialog = new NewGoalDialog({model: GoalBook});
 });
 
 // todo: should we do this globally?

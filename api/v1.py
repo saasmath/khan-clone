@@ -18,7 +18,7 @@ import notifications
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
-from goals import GoalList, Goal
+from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 
 from api import route
@@ -29,7 +29,6 @@ from api.api_util import api_error_response, api_invalid_param_response, api_cre
 
 from google.appengine.ext import db
 
-from google.appengine.ext import db
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -1027,7 +1026,8 @@ def get_user_goals():
             # Allow access to this student's profile
             student = user_override
 
-    return GoalList.get_visible_for_user(student, show_complete=True)
+    goals = GoalList.get_all_goals(student)
+    return [g.get_visible_data() for g in goals]
 
 @route("/api/v1/user/goals/current", methods=["GET"])
 @oauth_optional()
@@ -1044,7 +1044,8 @@ def get_user_current_goals():
             # Allow access to this student's profile
             student = user_override
 
-    return GoalList.get_visible_for_user(student)
+    goals = GoalList.get_current_goals(student)
+    return [g.get_visible_data() for g in goals]
 
 @route("/api/v1/user/students/goals", methods=["GET"])
 @oauth_optional()
@@ -1078,12 +1079,15 @@ def get_student_goals():
     user_exercise_graphs = models.UserExerciseGraph.get(students)
 
     return_data = []
-    for idx, student in enumerate(students):
+    for student, uex_graph in izip(students, user_exercise_graphs):
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
-        student_data['goals'] = GoalList.get_visible_for_user(student,
-            user_exercise_graphs[idx])
+        if student.has_current_goals:
+            goals = GoalList.get_current_goals(student)
+        else:
+            goals = []
+        student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
         return_data.append(student_data)
 
     return return_data
@@ -1102,60 +1106,57 @@ def create_user_goal():
     if user_data.developer and user_override and user_override.key_email != user_data.key_email:
         user_data = user_override
 
-    goal_data = user_data.get_goal_data()
-    title = request.request_string("title")
-
+    json = request.json
+    title = json.get('title')
     if not title:
         return api_invalid_param_response('Title is invalid.')
 
     objective_descriptors = []
-    valid_count = 0
 
     goal_exercises = GoalList.exercises_in_current_goals(user_data)
     goal_videos = GoalList.videos_in_current_goals(user_data)
 
-    for idx in xrange(1,40):
-        base_str = 'objective'+str(idx)
-        if request.request_string(base_str+'_type'):
-            objective_descriptor = {}
-            objective_descriptor['type'] = request.request_string(base_str+'_type');
-            objective_descriptors.append(objective_descriptor)
+    if json:
+        for obj in json['objectives']:
+            if obj['type'] == 'GoalObjectiveAnyExerciseProficiency':
+                objective_descriptors.append(obj)
 
-            if objective_descriptor['type'] == 'GoalObjectiveExerciseProficiency':
-                objective_descriptor['exercise'] = models.Exercise.get_by_name(request.request_string(base_str+'_exercise'))
-                if not objective_descriptor['exercise'] or not objective_descriptor['exercise'].is_visible_to_current_user():
+            if obj['type'] == 'GoalObjectiveAnyVideo':
+                objective_descriptors.append(obj)
+
+            if obj['type'] == 'GoalObjectiveExerciseProficiency':
+                obj['exercise'] = models.Exercise.get_by_name(obj['internal_id'])
+                if not obj['exercise'] or not obj['exercise'].is_visible_to_current_user():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
-                if user_data.is_proficient_at(objective_descriptor['exercise'].name):
+                if user_data.is_proficient_at(obj['exercise'].name):
                     return api_invalid_param_response("Exercise has already been completed.")
-                if objective_descriptor['exercise'].name in goal_exercises:
+                if obj['exercise'].name in goal_exercises:
                     return api_invalid_param_response("Exercise is already an objective in a current goal.")
-                valid_count += 1
+                objective_descriptors.append(obj)
 
-            if objective_descriptor['type'] == 'GoalObjectiveAnyExerciseProficiency':
-                valid_count += 1
-
-            if objective_descriptor['type'] == 'GoalObjectiveWatchVideo':
-                objective_descriptor['video'] = models.Video.get_for_readable_id(request.request_string(base_str+'_video'))
-                if not objective_descriptor['video']:
+            if obj['type'] == 'GoalObjectiveWatchVideo':
+                obj['video'] = models.Video.get_for_readable_id(obj['internal_id'])
+                if not obj['video']:
                     return api_invalid_param_response("Internal error: Could not find video.")
-                user_video = models.UserVideo.get_for_video_and_user_data(objective_descriptor['video'], user_data)
+                user_video = models.UserVideo.get_for_video_and_user_data(obj['video'], user_data)
                 if user_video and user_video.completed:
                     return api_invalid_param_response("Video has already been watched.")
-                if objective_descriptor['video'].readable_id in goal_videos:
+                if obj['video'].readable_id in goal_videos:
                     return api_invalid_param_response("Video is already an objective in a current goal.")
-                valid_count += 1
+                objective_descriptors.append(obj)
 
-            if objective_descriptor['type'] == 'GoalObjectiveAnyVideo':
-                valid_count += 1
-
-    if valid_count == 0:
+    if objective_descriptors:
+        objectives = GoalObjective.from_descriptors(objective_descriptors,
+            user_data)
+        goal_list_key = GoalList.ensure_goal_list(user_data)
+        goal = Goal(parent=goal_list_key, title=title, objectives=objectives)
+        goal.put()
+        return goal.get_visible_data(None)
+    else:
         return api_invalid_param_response("No objectives specified.")
 
-    goal = Goal.create(user_data, goal_data, title, objective_descriptors)
 
-    return goal.get_visible_data(None)
-
-@route("/api/v1/user/goals/<id>", methods=["GET"])
+@route("/api/v1/user/goals/<int:id>", methods=["GET"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1164,8 +1165,7 @@ def get_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal_data = user_data.get_goal_data()
-    goal = GoalList.find_by_id(goal_data, id)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1173,7 +1173,7 @@ def get_user_goal(id):
     return goal.get_visible_data(None)
 
 
-@route("/api/v1/user/goals/<id>", methods=["PUT"])
+@route("/api/v1/user/goals/<int:id>", methods=["PUT"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1182,8 +1182,7 @@ def put_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal_data = user_data.get_goal_data()
-    goal = GoalList.find_by_id(goal_data, id)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1195,30 +1194,15 @@ def put_user_goal(id):
         goal.title = goal_json['title']
         goal.put()
 
-    return goal.get_visible_data(None)
-
-
-@route("/api/v1/user/goals/abandon/<id>", methods=["POST"])
-@oauth_optional()
-@jsonp
-@jsonify
-def abandon_user_goal(id):
-    user_data = models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User not logged in")
-
-    goal_data = user_data.get_goal_data()
-    goal = GoalList.find_by_id(goal_data, id)
-
-    if not goal:
-        return api_invalid_param_response("Could not find goal with ID " + str(id))
-
-    goal.abandon()
-    goal.put()
+    # or abandon something
+    if goal_json.get('abandoned') and not goal.abandoned:
+        goal.abandon()
+        goal.put()
 
     return goal.get_visible_data(None)
 
-@route("/api/v1/user/goals/<id>", methods=["DELETE"])
+
+@route("/api/v1/user/goals/<int:id>", methods=["DELETE"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1227,8 +1211,7 @@ def delete_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal_data = user_data.get_goal_data()
-    goal = GoalList.find_by_id(goal_data, id)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1244,7 +1227,7 @@ def delete_user_goal(id):
 def delete_user_goals():
     user_data = models.UserData.current()
     if not user_data.developer:
-        return api_unauthorized_response("UNAUTHORIZED");
+        return api_unauthorized_response("UNAUTHORIZED")
 
     user_override = request.request_user_data("email")
     if user_override and user_override.key_email != user_data.key_email:

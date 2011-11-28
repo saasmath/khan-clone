@@ -1,129 +1,87 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-
-from models import Exercise, UserVideo, Video
-import templatefilters
-import logging
-import datetime
-from object_property import ObjectProperty
+from datetime import datetime
 
 from google.appengine.ext import db
 from google.appengine.ext.db import Key
 
+from object_property import ObjectProperty
+from templatefilters import timesince_ago, seconds_to_time_string
+
+from models import Exercise, UserVideo, Video
+
+
 class Goal(db.Model):
-    title = db.StringProperty()
-    created_on = db.DateTimeProperty(auto_now_add=True)
-    updated_on = db.DateTimeProperty(auto_now=True)
-    completed_on = db.DateTimeProperty()
-    abandoned = db.BooleanProperty()
+    # data
+    title = db.StringProperty(indexed=False)
     objectives = ObjectProperty()
 
-    @staticmethod
-    def create(user_data, goal_data, title, objective_descriptors):
-        put_user_data = False
-        if not user_data.has_current_goals:
-            user_data.has_current_goals = True
-            put_user_data = True
+    # a goal is 'completed' if it's finished or abandoned. This property is
+    # indexed so that we can quickly fetch currently open goals
+    completed = db.BooleanProperty(default=False)
+    completed_on = db.DateTimeProperty(indexed=False)
 
-        parent_list = GoalList.get_from_data(goal_data, GoalList)
-        if not parent_list:
-            # Create a parent object for all the goals & objectives
-            key = Key.from_path('GoalList', 1, parent=user_data.key())
-            goal_list = GoalList.get_or_insert(str(key), user=user_data.user)
+    # we distinguish finished and abandoned goals with this property
+    abandoned = db.BooleanProperty(indexed=False)
 
-            # Update UserData
-            user_data.goal_list = goal_list
-            put_user_data = True
-        else:
-            goal_list = parent_list[0]
+    created_on = db.DateTimeProperty(auto_now_add=True, indexed=False)
+    updated_on = db.DateTimeProperty(auto_now=True, indexed=False)
 
-        if put_user_data:
-            user_data.put()
+    def get_visible_data(self, user_exercise_graph=None):
+        data = dict(
+            id=self.key().id(),
+            title=self.title,
+            created=self.created_on,
+            created_ago=timesince_ago(self.created_on),
+            updated=self.updated_on,
+            updated_ago=timesince_ago(self.updated_on),
+            completed=self.completed_on,
+            abandoned=self.abandoned,
+        )
 
-        # Create the new goal
-        new_goal = Goal(goal_list)
-        new_goal.title = title
-
-        objectives = []
-        for descriptor in objective_descriptors:
-            if descriptor['type'] == 'GoalObjectiveExerciseProficiency':
-                objectives.append(GoalObjectiveExerciseProficiency(descriptor['exercise'], user_data))
-            if descriptor['type'] == 'GoalObjectiveWatchVideo':
-                objectives.append(GoalObjectiveWatchVideo(descriptor['video'], user_data))
-            if descriptor['type'] == "GoalObjectiveAnyExerciseProficiency":
-                objectives.append(GoalObjectiveAnyExerciseProficiency(description="Any exercise"))
-            if descriptor['type'] == "GoalObjectiveAnyVideo":
-                objectives.append(GoalObjectiveAnyVideo(description="Any video"))
-
-        new_goal.objectives = objectives
-        new_goal.put()
-
-        return new_goal
-
-    def get_visible_data(self, user_exercise_graph):
-        goal_ret = {}
-        goal_ret['id'] = self.key().id()
-        goal_ret['title'] = self.title
-        goal_ret['objectives'] = []
-        goal_ret['created'] = self.created_on
-        goal_ret['created_ago'] = templatefilters.timesince_ago(self.created_on)
-        goal_ret['updated'] = self.updated_on
-        goal_ret['updated_ago'] = templatefilters.timesince_ago(self.updated_on)
-        if self.completed_on:
-            goal_ret['completed'] = self.completed_on
-            goal_ret['completed_ago'] = templatefilters.timesince_ago(self.completed_on)
-
-            td = self.completed_on-self.created_on
+        if self.completed:
+            data['completed_ago'] = timesince_ago(self.completed_on)
+            td = self.completed_on - self.created_on
             completed_seconds = (td.seconds + td.days * 24 * 3600)
-            goal_ret['completed_time'] = templatefilters.seconds_to_time_string(completed_seconds)
+            data['completed_time'] = seconds_to_time_string(completed_seconds)
 
-            if self.abandoned:
-                goal_ret['abandoned'] = True
+        data['objectives'] = [dict(
+                type=obj.__class__.__name__,
+                description=obj.description,
+                progress=obj.progress,
+                url=obj.url(),
+                internal_id=obj.internal_id(),
+                status=obj.get_status(user_exercise_graph=user_exercise_graph),
+            ) for obj in self.objectives]
 
-        for objective in self.objectives:
-            objective_ret = {}
-            objective_ret['type'] = objective.__class__.__name__
-            objective_ret['description'] = objective.description
-            objective_ret['short_display_name'] = objective._get_short_display_name()
-            objective_ret['progress'] = objective.progress
-            objective_ret['url'] = objective.url()
-            objective_ret['internal_id'] = objective.internal_id()
-            objective_ret['status'] = objective.get_status(user_exercise_graph=user_exercise_graph)
-            goal_ret['objectives'].append(objective_ret)
-        return goal_ret
+        return data
 
     def record_complete(self):
-        # Is this goal complete?
-        if all([o.is_completed for o in self.objectives]):
-            self.completed_on = datetime.datetime.now()
+        if all([o.completed for o in self.objectives]):
+            self.completed = True
+            self.completed_on = datetime.now()
 
     def abandon(self):
-        self.completed_on = datetime.datetime.now()
+        self.completed = True
+        self.completed_on = datetime.now()
         self.abandoned = True
-
-    @property
-    def is_completed(self):
-        return (self.completed_on is not None)
 
     def just_watched_video(self, user_data, user_video):
         changed = False
-        specific_videos = GoalList.get_from_data(self.objectives, GoalObjectiveWatchVideo)
-        for objective in specific_videos:
-            if objective.record_progress(user_data, user_video):
-                changed = True
+        for objective in self.objectives:
+            if isinstance(objective, GoalObjectiveWatchVideo):
+                if objective.record_progress(user_data, user_video):
+                    changed = True
 
         if user_video.completed:
-            any_videos = GoalList.get_from_data(self.objectives, GoalObjectiveAnyVideo)
-            found = False
-            for vid_obj in any_videos:
-                if vid_obj.video_key == str(user_video.video.key()):
-                    found = True
-                    break
+            any_videos = [o for o in self.objectives
+                if isinstance(o, GoalObjectiveAnyVideo)]
+
+            found = user_video.video.key() in [o.video_key for o in any_videos]
             if not found:
                 for vid_obj in any_videos:
-                    if not vid_obj.is_completed:
+                    if not vid_obj.completed:
                         vid_obj.record_complete(user_video.video)
                         changed = True
                         break
@@ -135,21 +93,19 @@ class Goal(db.Model):
 
     def just_did_exercise(self, user_data, user_exercise, became_proficient):
         changed = False
-        specific_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveExerciseProficiency)
-        for ex_obj in specific_exercises:
-            if ex_obj.record_progress(user_data, user_exercise):
-                changed = True
+        for ex_obj in self.objectives:
+            if isinstance(ex_obj, GoalObjectiveExerciseProficiency):
+                if ex_obj.record_progress(user_data, user_exercise):
+                    changed = True
 
         if became_proficient:
-            any_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveAnyExerciseProficiency)
-            found = False
-            for ex_obj in any_exercises:
-                if ex_obj.exercise_name == user_exercise.exercise_model.name:
-                    found = True
-                    break
+            any_exercises = [o for o in self.objectives
+                if isinstance(o, GoalObjectiveAnyExerciseProficiency)]
+            found = user_exercise.exercise in [o.exercise_name for o in
+                any_exercises]
             if not found:
                 for ex_obj in any_exercises:
-                    if not ex_obj.is_completed:
+                    if not ex_obj.completed:
                         ex_obj.record_complete(user_exercise.exercise_model)
                         changed = True
                         break
@@ -162,55 +118,38 @@ class Goal(db.Model):
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
 class GoalList(db.Model):
-    user = db.UserProperty()
-
+    # might need to request_cache this
     @staticmethod
-    def get_from_data(data, type):
-        return [entity for entity in data if isinstance(entity, type)]
-
-    @staticmethod
-    def find_by_id(data, id):
-        list = [goal for goal in GoalList.get_from_data(data, Goal) if str(goal.key().id()) == str(id)]
-        if list:
-            return list[0]
-        return None
-
-    @staticmethod
-    def get_current_goals(user_data, show_complete=False):
-        if not user_data:
+    def get_current_goals(user_data):
+        if user_data and user_data.has_current_goals:
+            query = GoalList.get_goals_query(user_data)
+            query.filter('completed = ', False)
+            return query.fetch(100)
+        else:
             return []
 
-        # Fetch data from datastore
-        goal_data = user_data.get_goal_data()
-        goals = GoalList.get_from_data(goal_data, Goal)
-        return [g for g in goals if show_complete or not g.is_completed]
+    @staticmethod
+    def get_all_goals(user_data):
+        if user_data and user_data.goal_list_key is not None:
+            return GoalList.get_goals_query(user_data).fetch(1000)
+        else:
+            return []
 
     @staticmethod
-    def get_visible_for_user(user_data, user_exercise_graph=None, show_complete=False):
-        return [goal.get_visible_data(user_exercise_graph) for goal in
-            GoalList.get_current_goals(user_data, show_complete)]
-
-    @staticmethod
-    def delete_goal(user_data, id):
-        # Fetch data from datastore
-        goal_data = user_data.get_goal_data()
-        goals = GoalList.get_from_data(goal_data, Goal)
-
-        for goal in goals:
-            if str(goal.key().id()) == str(id):
-                goal.delete()
-                return True
-
-        return False
+    def get_goals_query(user_data):
+        query = Goal.all()
+        query.ancestor(user_data.goal_list_key)
+        return query
 
     @staticmethod
     def delete_all_goals(user_data):
-        # Fetch data from datastore
-        goal_data = user_data.get_goal_data()
-        goals = GoalList.get_from_data(goal_data, Goal)
+        if not user_data.goal_list_key:
+            return
 
-        for goal in goals:
-            goal.delete()
+        query = Goal.all(keys_only=True)
+        query.ancestor(user_data.goal_list_key)
+        goal_keys = query.fetch(1000)
+        db.delete(goal_keys)
 
     @staticmethod
     def exercises_in_current_goals(user_data):
@@ -224,18 +163,53 @@ class GoalList(db.Model):
         return [obj.video for g in goals for obj in g.objectives
             if obj.__class__.__name__ == 'GoalObjectiveWatchVideo']
 
-def shorten(s, n=12):
-    if len(s) <= n:
-        return s
-    chunk = (n - 3) / 2
-    even = 1 - (n % 2)
-    return s[:chunk + even] + '...' + s[-chunk:]
+    @staticmethod
+    def ensure_goal_list(user_data):
+        put_user_data = False
+        if not user_data.has_current_goals:
+            user_data.has_current_goals = True
+            put_user_data = True
+
+        goal_list_key = user_data.goal_list_key
+        if not goal_list_key:
+            # Create a parent object for all the goals & objectives
+            goal_list_key = Key.from_path('GoalList', 1, parent=user_data.key())
+            goal_list = GoalList(key=goal_list_key)
+            goal_list.put()
+
+            # Update UserData
+            user_data.goal_list = goal_list
+            put_user_data = True
+
+        if put_user_data:
+            user_data.put()
+
+        return goal_list_key
+
+    @staticmethod
+    def update_goals(user_data, activity_fn):
+        if not user_data.has_current_goals:
+            return False
+
+        goals = GoalList.get_current_goals(user_data)
+        changes = []
+        for goal in goals:
+            if activity_fn(goal):
+                changes.append(goal)
+        if changes:
+            # check to see if all goals are closed
+            user_changes = []
+            if all([g.completed for g in goals]):
+                user_data.has_current_goals = False
+                user_changes = [user_data]
+            db.put(changes + user_changes)
+        return changes
+
 
 class GoalObjective(object):
     # Objective status
     progress = 0.0
     description = None
-    _short_display_name = None
 
     def __init__(self, description):
         self.description = description
@@ -251,11 +225,11 @@ class GoalObjective(object):
         self.progress = 1.0
 
     @property
-    def is_completed(self):
+    def completed(self):
         return self.progress >= 1.0
 
     def get_status(self, **kwargs):
-        if self.is_completed:
+        if self.completed:
             return "proficient"
 
         if self.progress > 0:
@@ -263,16 +237,22 @@ class GoalObjective(object):
 
         return ""
 
-    def _get_short_display_name(self):
-        if self._short_display_name:
-            return self._short_display_name
-        else:
-            return shorten(self.description)
+    @staticmethod
+    def from_descriptors(descriptors, user_data):
+        objs = []
+        for desc in descriptors:
+            if desc['type'] == 'GoalObjectiveExerciseProficiency':
+                objs.append(GoalObjectiveExerciseProficiency(desc['exercise'],
+                    user_data))
+            elif desc['type'] == 'GoalObjectiveWatchVideo':
+                objs.append(GoalObjectiveWatchVideo(desc['video'], user_data))
+            elif desc['type'] == "GoalObjectiveAnyExerciseProficiency":
+                objs.append(GoalObjectiveAnyExerciseProficiency(
+                    description="Any exercise"))
+            elif desc['type'] == "GoalObjectiveAnyVideo":
+                objs.append(GoalObjectiveAnyVideo(description="Any video"))
+        return objs
 
-    def _set_short_display_name(self, value):
-        self._short_display_name = value
-
-    short_display_name = property(_get_short_display_name, _set_short_display_name)
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
@@ -281,7 +261,6 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def __init__(self, exercise, user_data):
         self.exercise_name = exercise.name
         self.description = exercise.display_name
-        self.short_display_name = exercise.short_display_name
         self.progress = user_data.get_or_insert_exercise(exercise).progress
 
     def url(self):
@@ -307,17 +286,15 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
-        student_review_exercise_names = user_exercise_graph.review_exercise_names()
+        review_names = user_exercise_graph.review_exercise_names()
         status = ""
 
         if graph_dict["proficient"]:
 
-            if self.exercise_name in student_review_exercise_names:
+            if self.exercise_name in review_names:
                 status = "review"
             else:
                 status = "proficient"
-#                if not graph_dict["explicitly_proficient"]:
- #                   status = "Proficient (due to proficiency in a more advanced module)"
 
         elif graph_dict["struggling"]:
             status = "struggling"
@@ -342,7 +319,6 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
         super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
         self.exercise_name = exercise.name
         self.description = exercise.display_name
-        self.short_display_name = exercise.short_display_name
         return True
 
 class GoalObjectiveWatchVideo(GoalObjective):
@@ -351,7 +327,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
     video_readable_id = None
 
     def __init__(self, video, user_data):
-        self.video_key = str(video.key())
+        self.video_key = video.key()
         self.video_readable_id = video.readable_id
         self.description = video.title
 
@@ -391,7 +367,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
 
     def record_complete(self, video):
         super(GoalObjectiveAnyVideo, self).record_complete()
-        self.video_key = str(video.key())
+        self.video_key = video.key()
         self.video_readable_id = video.readable_id
         self.description = video.title
         return True
