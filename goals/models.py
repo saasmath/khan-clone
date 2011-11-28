@@ -49,7 +49,6 @@ class Goal(db.Model):
         data['objectives'] = [dict(
                 type=obj.__class__.__name__,
                 description=obj.description,
-                short_display_name=obj._get_short_display_name(),
                 progress=obj.progress,
                 url=obj.url(),
                 internal_id=obj.internal_id(),
@@ -209,18 +208,11 @@ class GoalList(db.Model):
             db.put(changes + user_changes)
         return changes
 
-def shorten(s, n=12):
-    if len(s) <= n:
-        return s
-    chunk = (n - 3) / 2
-    even = 1 - (n % 2)
-    return s[:chunk + even] + '...' + s[-chunk:]
 
 class GoalObjective(object):
     # Objective status
     progress = 0.0
     description = None
-    _short_display_name = None
 
     def __init__(self, description):
         self.description = description
@@ -248,18 +240,6 @@ class GoalObjective(object):
 
         return ""
 
-    def _get_short_display_name(self):
-        if self._short_display_name:
-            return self._short_display_name
-        else:
-            return shorten(self.description)
-
-    def _set_short_display_name(self, value):
-        self._short_display_name = value
-
-    short_display_name = property(_get_short_display_name,
-        _set_short_display_name)
-
     @staticmethod
     def from_descriptors(descriptors, user_data):
         objs = []
@@ -284,7 +264,6 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
     def __init__(self, exercise, user_data):
         self.exercise_name = exercise.name
         self.description = exercise.display_name
-        self.short_display_name = exercise.short_display_name
         self.progress = user_data.get_or_insert_exercise(exercise).progress
 
     def url(self):
@@ -343,7 +322,6 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
         super(GoalObjectiveAnyExerciseProficiency, self).record_complete()
         self.exercise_name = exercise.name
         self.description = exercise.display_name
-        self.short_display_name = exercise.short_display_name
         return True
 
 class GoalObjectiveWatchVideo(GoalObjective):
