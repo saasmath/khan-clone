@@ -70,13 +70,15 @@ class Goal(db.Model):
 
     def just_watched_video(self, user_data, user_video):
         changed = False
-        specific_videos = GoalList.get_from_data(self.objectives, GoalObjectiveWatchVideo)
+        specific_videos = GoalList.get_from_data(self.objectives,
+            GoalObjectiveWatchVideo)
         for objective in specific_videos:
             if objective.record_progress(user_data, user_video):
                 changed = True
 
         if user_video.completed:
-            any_videos = GoalList.get_from_data(self.objectives, GoalObjectiveAnyVideo)
+            any_videos = GoalList.get_from_data(self.objectives,
+                GoalObjectiveAnyVideo)
             found = False
             for vid_obj in any_videos:
                 if vid_obj.video_key == str(user_video.video.key()):
@@ -96,13 +98,15 @@ class Goal(db.Model):
 
     def just_did_exercise(self, user_data, user_exercise, became_proficient):
         changed = False
-        specific_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveExerciseProficiency)
+        specific_exercises = GoalList.get_from_data(self.objectives,
+            GoalObjectiveExerciseProficiency)
         for ex_obj in specific_exercises:
             if ex_obj.record_progress(user_data, user_exercise):
                 changed = True
 
         if became_proficient:
-            any_exercises = GoalList.get_from_data(self.objectives, GoalObjectiveAnyExerciseProficiency)
+            any_exercises = GoalList.get_from_data(self.objectives,
+                GoalObjectiveAnyExerciseProficiency)
             found = False
             for ex_obj in any_exercises:
                 if ex_obj.exercise_name == user_exercise.exercise_model.name:
@@ -265,18 +269,21 @@ class GoalObjective(object):
     def _set_short_display_name(self, value):
         self._short_display_name = value
 
-    short_display_name = property(_get_short_display_name, _set_short_display_name)
+    short_display_name = property(_get_short_display_name,
+        _set_short_display_name)
 
     @staticmethod
     def from_descriptors(descriptors, user_data):
         objs = []
         for desc in descriptors:
             if desc['type'] == 'GoalObjectiveExerciseProficiency':
-                objs.append(GoalObjectiveExerciseProficiency(desc['exercise'], user_data))
+                objs.append(GoalObjectiveExerciseProficiency(desc['exercise'],
+                    user_data))
             elif desc['type'] == 'GoalObjectiveWatchVideo':
                 objs.append(GoalObjectiveWatchVideo(desc['video'], user_data))
             elif desc['type'] == "GoalObjectiveAnyExerciseProficiency":
-                objs.append(GoalObjectiveAnyExerciseProficiency(description="Any exercise"))
+                objs.append(GoalObjectiveAnyExerciseProficiency(
+                    description="Any exercise"))
             elif desc['type'] == "GoalObjectiveAnyVideo":
                 objs.append(GoalObjectiveAnyVideo(description="Any video"))
         return objs
@@ -315,17 +322,15 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
-        student_review_exercise_names = user_exercise_graph.review_exercise_names()
+        review_names = user_exercise_graph.review_exercise_names()
         status = ""
 
         if graph_dict["proficient"]:
 
-            if self.exercise_name in student_review_exercise_names:
+            if self.exercise_name in review_names:
                 status = "review"
             else:
                 status = "proficient"
-#                if not graph_dict["explicitly_proficient"]:
- #                   status = "Proficient (due to proficiency in a more advanced module)"
 
         elif graph_dict["struggling"]:
             status = "struggling"
