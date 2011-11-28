@@ -18,7 +18,7 @@ import notifications
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
-from goals import GoalList, Goal, GoalObjective
+from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 
 from api import route
@@ -1008,7 +1008,10 @@ def get_student_goals():
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
-        goals = GoalList.get_current_goals(user_data)
+        if student.has_current_goals:
+            goals = GoalList.get_current_goals(student)
+        else:
+            goals = []
         student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
         return_data.append(student_data)
 
@@ -1078,7 +1081,7 @@ def create_user_goal():
         return api_invalid_param_response("No objectives specified.")
 
 
-@route("/api/v1/user/goals/<id>", methods=["GET"])
+@route("/api/v1/user/goals/<int:id>", methods=["GET"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1087,7 +1090,7 @@ def get_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1095,7 +1098,7 @@ def get_user_goal(id):
     return goal.get_visible_data(None)
 
 
-@route("/api/v1/user/goals/<id>", methods=["PUT"])
+@route("/api/v1/user/goals/<int:id>", methods=["PUT"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1104,7 +1107,7 @@ def put_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1124,7 +1127,7 @@ def put_user_goal(id):
     return goal.get_visible_data(None)
 
 
-@route("/api/v1/user/goals/<id>", methods=["DELETE"])
+@route("/api/v1/user/goals/<int:id>", methods=["DELETE"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1133,7 +1136,7 @@ def delete_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))

@@ -1465,8 +1465,8 @@ class VideoLog(db.Model):
 
             bingo('struggling_videos_finished')
 
-        from goals import update_goals_just_watched_video
-        goals_updated = update_goals_just_watched_video(user_data, user_video)
+        goals_updated = GoalList.update_goals(user_data,
+            lambda goal: goal.just_watched_video(user_data, user_video))
 
         if video_points_received > 0:
             video_log.points_earned = video_points_received
@@ -2343,3 +2343,4 @@ class UserExerciseGraph(object):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
+from goals.models import GoalList
