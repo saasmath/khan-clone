@@ -722,7 +722,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     question_sort_order = db.IntegerProperty(default = -1, indexed=False)
     user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default = 0, indexed=False)
-    goal_list = db.ReferenceProperty()
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
@@ -731,8 +730,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
             "moderator", "expanded_all_exercises", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
             "expanded_all_exercises", "user_nickname", "user_email",
-            "seconds_since_joined", "goal_list", "goal_list_key",
-            "has_current_goals"
+            "seconds_since_joined", "has_current_goals"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1061,10 +1059,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
-    @property
-    def goal_list_key(self):
-        return UserData.goal_list.get_value_for_datastore(self)
-
+    def ensure_has_current_goals(self):
+        if not self.has_current_goals:
+            self.has_current_goals = True
+            self.put()
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()

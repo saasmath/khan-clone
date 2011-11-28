@@ -122,9 +122,10 @@ class CreateRandomGoalData(RequestHandler):
                 logging.info("Creating goal " + title)
 
                 objectives = GoalObjective.from_descriptors(obj_descriptors)
-                goal = Goal(parent=GoalList.ensure_goal_list(user_data),
-                    title=title, objectives=objectives)
+                goal = Goal(parent=user_data, title=title,
+                    objectives=objectives)
                 goal.put()
+                user_data.ensure_has_current_goals()
 
                 for objective in obj_descriptors:
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':

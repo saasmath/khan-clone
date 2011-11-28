@@ -117,7 +117,7 @@ class Goal(db.Model):
 
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
-class GoalList(db.Model):
+class GoalList(object):
     # might need to request_cache this
     @staticmethod
     def get_current_goals(user_data):
@@ -130,7 +130,7 @@ class GoalList(db.Model):
 
     @staticmethod
     def get_all_goals(user_data):
-        if user_data and user_data.goal_list_key is not None:
+        if user_data:
             return GoalList.get_goals_query(user_data).fetch(1000)
         else:
             return []
@@ -138,16 +138,16 @@ class GoalList(db.Model):
     @staticmethod
     def get_goals_query(user_data):
         query = Goal.all()
-        query.ancestor(user_data.goal_list_key)
+        query.ancestor(user_data)
         return query
 
     @staticmethod
     def delete_all_goals(user_data):
-        if not user_data.goal_list_key:
+        if not user_data:
             return
 
         query = Goal.all(keys_only=True)
-        query.ancestor(user_data.goal_list_key)
+        query.ancestor(user_data)
         goal_keys = query.fetch(1000)
         db.delete(goal_keys)
 
@@ -162,29 +162,6 @@ class GoalList(db.Model):
         goals = GoalList.get_current_goals(user_data)
         return [obj.video for g in goals for obj in g.objectives
             if obj.__class__.__name__ == 'GoalObjectiveWatchVideo']
-
-    @staticmethod
-    def ensure_goal_list(user_data):
-        put_user_data = False
-        if not user_data.has_current_goals:
-            user_data.has_current_goals = True
-            put_user_data = True
-
-        goal_list_key = user_data.goal_list_key
-        if not goal_list_key:
-            # Create a parent object for all the goals & objectives
-            goal_list_key = Key.from_path('GoalList', 1, parent=user_data.key())
-            goal_list = GoalList(key=goal_list_key)
-            goal_list.put()
-
-            # Update UserData
-            user_data.goal_list = goal_list
-            put_user_data = True
-
-        if put_user_data:
-            user_data.put()
-
-        return goal_list_key
 
     @staticmethod
     def update_goals(user_data, activity_fn):
