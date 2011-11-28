@@ -523,3 +523,11 @@ div.graph-notification {
 #current-goals-list input.goal-title {
     min-width: 450px;
 }
+
+.coach-option-block {
+    display: block;
+    margin: 3px;
+}
+.coach-filter-block {
+    display: block;
+}

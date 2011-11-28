@@ -281,6 +281,13 @@ var Profile = {
     },
 
     loadGraph: function(href, fNoHistoryEntry) {
+        var apiCallbacksTable = {
+            '/api/v1/user/goals': this.renderUserGoals,
+            '/api/v1/user/exercises': this.renderExercisesTable,
+            '/api/v1/user/students/goals': this.renderStudentGoals,
+            '/api/v1/user/students/progressreport': ClassProfile.renderStudentProgressReport
+        };
+
         if (!href) return;
 
         if (this.fLoadingGraph) {
@@ -293,12 +300,10 @@ var Profile = {
         this.fLoadedGraph = true;
 
         var apiCallback = null;
-        if (href.indexOf('/api/v1/user/goals') > -1) {
-            apiCallback = this.renderUserGoals;
-        } else if (href.indexOf('/api/v1/user/students/goals') > -1) {
-            apiCallback = this.renderStudentGoals;
-        } else if (href.indexOf('/api/v1/user/exercises') > -1) {
-			apiCallback = this.renderExercisesTable;
+        for (uri in apiCallbacksTable) {
+            if (href.indexOf(uri) > -1) {
+                apiCallback = apiCallbacksTable[uri];
+            }
         }
 
         $.ajax({
@@ -331,11 +336,14 @@ var Profile = {
         this.showGraphThrobber(false);
         this.styleSublinkFromHref(href);
 
+        var start = (new Date).getTime();
         if (apiCallback) {
             apiCallback(data, href);
         } else {
             $("#graph-content").html(data);
         }
+        var diff = (new Date).getTime() - start;
+        if (console) console.log('API call rendered in ' + diff + ' ms.');
     },
 
     renderUserGoals: function(data, href) {
