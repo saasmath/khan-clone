@@ -198,6 +198,25 @@ class GoalList(db.Model):
 
         return goal_list_key
 
+    @staticmethod
+    def update_goals(user_data, activity_fn):
+        if not user_data.has_current_goals:
+            return False
+
+        goals = GoalList.get_current_goals(user_data)
+        changes = []
+        for goal in goals:
+            if activity_fn(goal):
+                changes.append(goal)
+        if changes:
+            # check to see if all goals are closed
+            user_changes = []
+            if all([g.completed for g in goals]):
+                user_data.has_current_goals = False
+                user_changes = [user_data]
+            db.put(changes + user_changes)
+        return changes
+
 def shorten(s, n=12):
     if len(s) <= n:
         return s

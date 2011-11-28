@@ -24,7 +24,6 @@ from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
-from goals import update_goals_just_did_exercise
 from goals.models import GoalList
 
 class MoveMapNodes(request_handler.RequestHandler):
@@ -510,8 +509,9 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
 
-        goals_updated = update_goals_just_did_exercise(user_data,
-            user_exercise, just_earned_proficiency)
+        goals_updated = GoalList.update_goals(user_data,
+            lambda goal: goal.just_did_exercise(user_data, user_exercise,
+                just_earned_proficiency))
 
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])
