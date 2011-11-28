@@ -1078,7 +1078,7 @@ def create_user_goal():
         return api_invalid_param_response("No objectives specified.")
 
 
-@route("/api/v1/user/goals/<id>", methods=["GET"])
+@route("/api/v1/user/goals/<int:id>", methods=["GET"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1087,7 +1087,7 @@ def get_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1095,7 +1095,7 @@ def get_user_goal(id):
     return goal.get_visible_data(None)
 
 
-@route("/api/v1/user/goals/<id>", methods=["PUT"])
+@route("/api/v1/user/goals/<int:id>", methods=["PUT"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1104,7 +1104,7 @@ def put_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1124,7 +1124,7 @@ def put_user_goal(id):
     return goal.get_visible_data(None)
 
 
-@route("/api/v1/user/goals/<id>", methods=["DELETE"])
+@route("/api/v1/user/goals/<int:id>", methods=["DELETE"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1133,7 +1133,7 @@ def delete_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(int(id), parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
