@@ -1,12 +1,31 @@
 from __future__ import with_statement
+
+import hashlib
 import os
+import operator
+
 
 class BridgeFilter(object):
+    name = None
     filename = None
 
     @staticmethod
-    def passes(context, user_data):
-        raise NotImplementedError("Should have implemented this")
+    def _matches(context, identity):
+        raise NotImplementedError("This filter needs to implement a '_matches' method")
+
+    @classmethod
+    def passes_filter(cls, filter, identity):
+        if cls._matches(filter.context, identity):
+            if BridgeFilter._in_percentage(filter, identity):
+                return True
+        return False
+
+    @staticmethod
+    def _in_percentage(filter, identity):
+        sig = hashlib.md5(str(filter.key()) + str(identity)).hexdigest()
+        sig_num = int(sig, base=16)
+        
+        return filter.percentage > (sig_num % 100)
 
     @staticmethod
     def initial_context():
@@ -46,7 +65,7 @@ class AllUsersBridgeFilter(BridgeFilter):
     name = "all-users"
 
     @staticmethod
-    def passes(context, user_data):
+    def _matches(context, identity):
         return True
 
 
@@ -55,14 +74,24 @@ class NumberOfProficientExercisesBridgeFilter(BridgeFilter):
     filename = "number-of-proficient-exercises.html"
 
     @staticmethod
-    def passes(context, user_data):
-        return False
+    def _matches(context, identity):
+        number_of_proficiencies = len(identity.all_proficient_exercises)
+
+        try:
+            exercises = int(context['exercises'])
+        except ValueError:
+            return False
+
+        return {'=': operator.eq, '>=': operator.ge, '<=': operator.le}[context['comp']](
+            number_of_proficiencies,
+            exercises,
+        )
 
     @staticmethod
     def initial_context():
         return {
-            'comp': '>=',
-            'exercises': 0,
+            'comp': "<=",
+            'exercises': "0",
         }
 
 
@@ -71,29 +100,29 @@ class HasCoachBridgeFilter(BridgeFilter):
     filename = "has-coach.html"
 
     @staticmethod
-    def passes(context, user_data):
-        has_coach = bool(user_data.coaches)
+    def _matches(context, identity):
+        has_coach = bool(identity.coaches)
 
-        should_have_coach = context['coach'] == "true"
+        should_have_coach = context['coach'] == "1"
 
         return should_have_coach == has_coach
 
     @staticmethod
     def initial_context():
         return {
-            'coach': "true",
+            'coach': "1",
         }
 
 
-class SpecificCoachesBirdgeFilter(BridgeFilter):
+class SpecificCoachesBridgeFilter(BridgeFilter):
     name = "specific-coaches"
     filename = "specific-coaches.html"
 
     @staticmethod
-    def passes(context, user_data):
+    def _matches(context, identity):
         coaches_to_have = context['coaches'].split()
 
-        return bool(set(coaches_to_have) & set(user_data.coaches))
+        return bool(set(coaches_to_have) & set(identity.coaches))
 
     @staticmethod
     def initial_context():

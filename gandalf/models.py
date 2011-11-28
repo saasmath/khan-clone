@@ -2,12 +2,21 @@ import datetime
 
 from google.appengine.ext import db
 
-#TODO: Pack object_property so that gandalf does not depend on it
-import object_property
+from gandalf.object_property import UnvalidatedObjectProperty
 from gandalf.filters import BridgeFilter
 
-class _GandalfBridge(db.Model):
+class GandalfBridge(db.Model):
     date_created = db.DateTimeProperty(auto_now_add=True, indexed=False)
+
+    def put(self, **kwargs):
+        super(GandalfBridge, self).put(**kwargs)
+        from gandalf.cache import GandalfCache
+        GandalfCache.delete_from_memcache()
+
+    def delete(self, **kwargs):
+        super(GandalfBridge, self).delete(**kwargs)
+        from gandalf.cache import GandalfCache
+        GandalfCache.delete_from_memcache()
     
     @property
     def status(self):
@@ -19,12 +28,23 @@ class _GandalfBridge(db.Model):
             return "Running for %s day%s" % (days_running, ("" if days_running == 1 else "s"))
 
 
-class _GandalfFilter(db.Model):
-    bridge = db.ReferenceProperty(_GandalfBridge, required=True)
+
+class GandalfFilter(db.Model):
+    bridge = db.ReferenceProperty(GandalfBridge, required=True)
     filter_type = db.StringProperty(required=True, indexed=False)
-    whitelist = db.BooleanProperty(default=True)
+    whitelist = db.BooleanProperty(default=True, indexed=False)
     percentage = db.IntegerProperty(default=100, indexed=False)
-    context = object_property.UnvalidatedObjectProperty(indexed=False)
+    context = UnvalidatedObjectProperty(indexed=False)
+
+    def put(self, **kwargs):
+        from gandalf.cache import GandalfCache
+        super(GandalfFilter, self).put(**kwargs)
+        GandalfCache.delete_from_memcache()
+
+    def delete(self, **kwargs):
+        super(GandalfFilter, self).delete(**kwargs)
+        from gandalf.cache import GandalfCache
+        GandalfCache.delete_from_memcache()
 
     @property
     def filter_class(self):

@@ -1,9 +1,7 @@
 who are proficient in
 <select name="comp" class="find-selected">
-    <option value=">=">&ge;</option>
-    <option value=">">&gt;</option>
-    <option value="<=">&le;</option>
-    <option value="<">&lt;</option>
+    <option value="&gt;=">&gt;=</option>
+    <option value="&lt;=">&lt;=</option>
     <option value="=">=</option>
 </select>
 
@@ -11,7 +9,7 @@ who are proficient in
 
 <script>
     $(".find-selected")
+        .first()
         .removeClass("find-selected")
-        .find("[value='{{{comp}}}']")
-            .attr("selected", "selected");
+        .val("{{{comp}}}");
 </script>

@@ -4,9 +4,8 @@ from google.appengine.api.datastore_errors import BadValueError
 
 from gandalf.jsonify import jsonify
 from gandalf.config import can_control_gandalf
-from gandalf.models import _GandalfBridge, _GandalfFilter
+from gandalf.models import GandalfBridge, GandalfFilter
 from gandalf.filters import BridgeFilter
-from gandalf.cache import GandalfCache
 
 class Bridges(RequestHandler): 
     def get(self):
@@ -14,7 +13,7 @@ class Bridges(RequestHandler):
         if not can_control_gandalf():
             return
 
-        bridges = _GandalfBridge.all().fetch(900)
+        bridges = GandalfBridge.all().fetch(900)
 
         context = {
             "bridges": bridges,
@@ -35,26 +34,26 @@ class Filters(RequestHandler):
         if not bridge_name:
             raise Exception("Must include 'bridge_name' parameter")
 
-        bridge = _GandalfBridge.get_by_key_name(bridge_name)
+        bridge = GandalfBridge.get_by_key_name(bridge_name)
 
         if not bridge:
             raise Exception("Bridge '%s' does not exist" % bridge_name)
 
-        filters = bridge._gandalffilter_set.order('-whitelist').order('-__key__').fetch(500)
+        filters = bridge.gandalffilter_set
 
-        first = True
-        for filter in filters:
-            if filter.whitelist:
-                if first:
-                    first = False
-                    filter.whitelist_message = True
-            else:
-                filter.blacklist_message = True
-                break
+        whitelist_filters = filter(lambda f: f.whitelist, filters)
+        blacklist_filters = filter(lambda f: not f.whitelist, filters)
+
+        if whitelist_filters:
+            whitelist_filters[0].whitelist_message = True
+
+        if blacklist_filters:
+            blacklist_filters[0].blacklist_message = True
+
+        filters = whitelist_filters + blacklist_filters
 
         context = { 
             'filters': filters,
-            'filters_are_not_empty': bool(filters),
             'filter_types': BridgeFilter.get_filter_types(),
             'bridge': bridge,
         }
@@ -75,12 +74,10 @@ class UpdateBridge(RequestHandler):
         if not bridge_name:
             raise Exception("Must include 'bridge_name' parameter")
 
-        bridge = _GandalfBridge.get_or_insert(bridge_name)
+        bridge = GandalfBridge.get_or_insert(bridge_name)
 
         if action == 'delete':
             bridge.delete()
-
-        GandalfCache.delete_from_memcache()
 
         context = { 
             "success": True,
@@ -102,7 +99,7 @@ class UpdateFilter(RequestHandler):
 
             filter_type = self.request.get('filter_type')
             bridge_name = self.request.get('bridge_name')
-            whitelist = self.request.get('whitelist')
+            whitelist = self.request.get('whitelist') == "1"
 
             if not filter_type:
                 raise Exception("Must include 'filter_type' parameter")
@@ -110,17 +107,14 @@ class UpdateFilter(RequestHandler):
             if not bridge_name:
                 raise Exception("Must include 'bridge_name' parameter")
 
-            if not whitelist:
-                raise Exception("Must include 'whitelist' parameter")
-
-            bridge = _GandalfBridge.get_by_key_name(bridge_name)
+            bridge = GandalfBridge.get_by_key_name(bridge_name)
 
             if not bridge:
                 raise Exception("Bridge '%s' does not exist" % bridge_name)
 
             context = BridgeFilter.find_subclass(filter_type).initial_context()
 
-            filter = _GandalfFilter(bridge=bridge, filter_type=filter_type, context=context, whitelist=whitelist == "true")
+            filter = GandalfFilter(bridge=bridge, filter_type=filter_type, context=context, whitelist=whitelist)
             filter.put()
 
         else:
@@ -130,7 +124,7 @@ class UpdateFilter(RequestHandler):
             if not filter_key:
                 raise Exception("Must include 'filter_key' parameter")
 
-            filter = _GandalfFilter.get(filter_key)
+            filter = GandalfFilter.get(filter_key)
 
             if action == "delete":
 
@@ -153,8 +147,6 @@ class UpdateFilter(RequestHandler):
                         filter.context[key] = value
 
                 filter.put()
-
-        GandalfCache.delete_from_memcache()
 
         context = { 
             "success": True,

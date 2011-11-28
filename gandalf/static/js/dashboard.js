@@ -5,8 +5,9 @@ var GandalfDashboard = {
             url: "/gandalf/api/v1/bridges",
             success: function(data) {
 
-                var filterUpdateUrl = "/gandalf/api/v1/bridges/filters/update";
-                var bridgeUpdateUrl = "/gandalf/api/v1/bridges/update";
+                var apiPrefix = "/gandalf/api/v1/",
+                filterUpdateUrl = apiPrefix + "bridges/filters/update",
+                bridgeUpdateUrl = apiPrefix + "bridges/update";
 
                 $("#progress-bar").css("visibility", "hidden");
 

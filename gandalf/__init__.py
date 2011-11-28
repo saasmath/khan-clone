@@ -1,10 +1,5 @@
-import hashlib
-
-from google.appengine.ext import db
-
-from gandalf.models import _GandalfBridge, _GandalfFilter
-from gandalf.config import current_logged_in_identity
 from gandalf.cache import GandalfCache
+from gandalf.config import current_logged_in_identity
 
 def gandalf(bridge_name):
 
@@ -13,47 +8,39 @@ def gandalf(bridge_name):
 
     gandalf_cache = GandalfCache.get()
 
-    bridge = gandalf_cache.bridge_models[bridge_name]
+    bridge = gandalf_cache.get_bridge_model(bridge_name)
 
     if not bridge:
         raise Exception("Bridge '%s' does not exist" % bridge_name)
 
-    filters = gandalf_cache.filter_models[bridge_name]
+    filters = gandalf_cache.get_filter_models(bridge_name)
 
-    user_data = current_logged_in_identity()
+    identity = current_logged_in_identity()
 
     # Currently do not support users with no identity
-    if not user_data:
+    if not identity:
         return False
 
     # A user needs to pass a single whitelist, and pass no blacklists, to pass a bridge
-    is_whitelisted = False
+    passes_a_whitelist = False
 
     for filter in filters:
-        if not filter.whitelist:
-            if filter.filter_class.passes(filter.context, user_data):
-                return False
+        if filter.whitelist:
+            if filter.filter_class.passes_filter(filter, identity):
+                passes_a_whitelist = True
         else:
-            if filter.filter_class.passes(filter.context, user_data):
-                if in_percentage(bridge_name, filter.percentage):
-                    return True
+            if filter.filter_class.passes_filter(filter.context, identity):
+                return False
 
-    return False
+    return passes_a_whitelist
 
-def identity():
-    user_data = current_logged_in_identity()
+def _identity():
+    identity = current_logged_in_identity()
 
-    if not user_data:
+    if not identity:
         return None
-
-    if isinstance(user_data, db.Model):
-        return user_data.key()
-    else:
-        return str(user_data)
-
-def in_percentage(bridge_name, percentage):
-
-    sig = hashlib.md5(bridge_name + str(identity())).hexdigest()
-    sig_num = int(sig, base=16)
     
-    return percentage > (sig_num % 100)
+    if isinstance(identity, db.Model):
+        return identity.key()
+    else:
+        return str(identity)

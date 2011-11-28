@@ -157,12 +157,6 @@ indexes:
   - name: date
     direction: desc
 
-- kind: Filter
-  properties:
-  - name: bridge
-  - name: __key__
-    direction: desc
-
 - kind: HourlyActivityLog
   properties:
   - name: user
@@ -323,36 +317,4 @@ indexes:
   ancestor: yes
   properties:
   - name: time_recorded
-    direction: desc
-
-- kind: _GandalfFilter
-  properties:
-  - name: bridge
-  - name: __key__
-    direction: desc
-
-- kind: _GandalfFilter
-  properties:
-  - name: bridge
-  - name: whitelist
-
-- kind: _GandalfFilter
-  properties:
-  - name: bridge
-  - name: whitelist
-  - name: __key__
-    direction: desc
-
-- kind: _GandalfFilter
-  properties:
-  - name: bridge
-  - name: whitelist
-    direction: desc
-
-- kind: _GandalfFilter
-  properties:
-  - name: bridge
-  - name: whitelist
-    direction: desc
-  - name: __key__
     direction: desc

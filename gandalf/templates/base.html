@@ -16,10 +16,6 @@
             body {
                 text-align: center;
             }
-
-            hr {
-                margin: 15px 0px;
-            }
     
             #main {
                 margin-left: auto;
@@ -27,10 +23,6 @@
                 text-align: left;
                 float: none;
                 width: 900px;
-            }
-    
-            #main table.table {
-                width: 100%;
             }
     
             #main div.bridge-container {
@@ -43,10 +35,6 @@
                 background: #B8D1E2;
             }
     
-            #main table.table th {
-                width: 20%;
-            }
-
             .filter-whitelist {
                 background-color: #CFE0A3;
             }
@@ -60,10 +48,6 @@
                 margin-top: 30px;
             }
 
-            .filter-new-container {
-                margin-bottom: 40px;
-            }
-
             .bridge-delete-container {
                 float: right;
             }
@@ -72,33 +56,19 @@
                 float: right;
             }
 
-            .export-csv {
-                text-align: right;
-            }
-
-            .clear {
-                clear: both;
-                height: 1px;
-                overflow: hidden;
-            }
-
             #progress-bar {
                 margin-top: 40px;
                 text-align: center;
             }
-    
-            #main .resume-bridge,
-            #main .delete-bridge {
-                float: none;
-                display: inline;
-                margin-right: 0;
+
+            .filter-container {
+                padding: 5px; 
+                margin-bottom: 10px; 
+                border-radius: 5px 5px 5px 5px; 
             }
 
-            #main .plot-link-container {
-                float: right;
-                text-align: center;
-                position: relative;
-                top: 5px;
+            .whitelist-buttons {
+                margin: 0px 5px;
             }
         </style>
 
@@ -137,42 +107,41 @@
                 <button type="submit" class="button bridge-delete-button" data-bridge-name="{{#bridge}}{{key_name}}{{/bridge}}" value="delete" data-replace-with="Deleting bridge...">Delete bridge</button>
             </div>
 
-            <div class="filter-new-container">
-                <form class="filter-new-form">
-                    <input type="hidden" name="bridge_name" value="{{#bridge}}{{key_name}}{{/bridge}}">
-                    <input type="hidden" name="action" value="new">
-                    <select name="filter_type">
-                        {{#filter_types}}
-                        <option value={{name}}>{{proper_name}}</option>
-                        {{/filter_types}}
-                    </select>
-                    <input type="radio" name="whitelist" value="true" id="whitelist-true" checked="checked"><label for="whitelist-true">Whitelist</label>
-                    <input type="radio" name="whitelist" value="false" id="whitelist-false"><label for="whitelist-false">Blacklist</label>
+            <form class="filter-new-form">
+                <input type="hidden" name="bridge_name" value="{{#bridge}}{{key_name}}{{/bridge}}">
+                <input type="hidden" name="action" value="new">
+                <select name="filter_type">
+                    {{#filter_types}}
+                    <option value={{name}}>{{proper_name}}</option>
+                    {{/filter_types}}
+                </select>
 
-                    <button type="submit" class="button filter-new-button" data-replace-with="Creating filter...">New filter</button>
-                </form>
-            </div>
+                <span class="whitelist-buttons">
+                    <label><input type="radio" name="whitelist" value="1" checked="checked"> Whitelist</label>
+                    <label><input type="radio" name="whitelist" value="0"> Blacklist</label>
+                </span>
+
+                <button type="submit" class="button filter-new-button" data-replace-with="Creating filter...">New filter</button>
+            </form>
+
+
+            <p>Users can cross this bridge if they match <strong>any</strong> of the whitelists, and <strong>none</strong> of the blacklists.</p>
 
             {{^filters}}
-            <p>No filters, this bridge currently lets no one through.</p>
+            <p><strong>No filters, this bridge currently lets no one through.</strong></p>
             {{/filters}}
-
-            {{#filters_are_not_empty}}
-            <p>Users can cross this bridge if they match <strong>any</strong> of the whitelists, and <strong>none</strong> of the blacklists.</p>
-            {{/filters_are_not_empty}}
 
             {{#filters}}
 
             {{#whitelist_message}}
-            <p><strong>Whitelists:</strong></p>
+            <h4>Whitelists:</h4>
             {{/whitelist_message}}
 
             {{#blacklist_message}}
-            <p><strong>Blacklists:</strong></p>
+            <h4>Blacklists:</h4>
             {{/blacklist_message}}
 
             <div class="filter-container {{#whitelist}}filter-whitelist{{/whitelist}}{{^whitelist}}filter-blacklist{{/whitelist}}">
-                <hr>
 
                 <strong>{{proper_name}}</strong>
 
@@ -182,10 +151,10 @@
                     <input type="hidden" name="action" value="save">
 
                     <p>
-                    {{#whitelist}}Allowing {{/whitelist}}
-                    {{^whitelist}}Not allowing {{/whitelist}}
-                    <input type="text" name="percentage" value="{{percentage}}" size="4">% of users
-                    {{{html}}}
+                        {{#whitelist}}Allowing {{/whitelist}}
+                        {{^whitelist}}Not allowing {{/whitelist}}
+                        <input type="text" name="percentage" value="{{percentage}}" size="4">% of users
+                        {{{html}}}
                     </p>
 
                     <div class="filter-delete-container">

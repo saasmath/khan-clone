@@ -19,9 +19,6 @@ def current_logged_in_identity():
         A) a db.Model that identifies the current user, like models.UserData.current()
         B) a unique string that consistently identifies the current user, like users.get_current_user().user_id()
 
-        TODO: Remove this line or support it
-        C) None, if your app has no way of identifying the current user for the current request. In this case gae_bingo will automatically use a random unique identifier.
-
     Ideally, this should be connected to your app's existing identity system.
 
     Examples:
