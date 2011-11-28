@@ -125,16 +125,16 @@ class GoalList(db.Model):
     # might need to request_cache this
     @staticmethod
     def get_current_goals(user_data):
-        if not user_data:
+        if user_data and user_data.has_current_goals:
+            query = GoalList.get_goals_query(user_data)
+            query.filter('completed = ', False)
+            return query.fetch(1000)
+        else:
             return []
-
-        query = GoalList.get_goals_query(user_data)
-        query.filter('completed = ', False)
-        return query.fetch(1000)
 
     @staticmethod
     def get_all_goals(user_data):
-        if user_data:
+        if user_data and user_data.goal_list_key is not None:
             return GoalList.get_goals_query(user_data).fetch(1000)
         else:
             return []

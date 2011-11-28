@@ -1008,7 +1008,10 @@ def get_student_goals():
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
-        goals = GoalList.get_current_goals(user_data)
+        if student.has_current_goals:
+            goals = GoalList.get_current_goals(student)
+        else:
+            goals = []
         student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
         return_data.append(student_data)
 
