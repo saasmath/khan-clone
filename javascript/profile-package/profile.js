@@ -701,8 +701,18 @@ var Profile = {
         // Where does this go? Might it collide one day?
         Handlebars.registerPartial("class-progress-column", Templates.get( "profile.class-progress-column" ));
 
-        Handlebars.registerHelper("toPixelWidth", function(num) {
+        function toPixelWidth(num) {
             return Math.round(200 * num / context.num_students);
+        }
+        Handlebars.registerHelper("toPixelWidth", function(num) {
+            return toPixelWidth(num);
+        });
+
+        Handlebars.registerHelper("toNumberOfStudents", function(num) {
+            if (toPixelWidth(num) < 20) {
+                return "";
+            }
+            return num;
         });
 
         Handlebars.registerHelper("toColor", function(status) {
@@ -750,7 +760,7 @@ var Profile = {
                 jRow.find("span.status").each(function(index) {
                     var jel = $(this),
                         width = jel.data("width"),
-                        span = jel.data("num") ? jel.data("num") : "";
+                        span = width < 20 ? "" : jel.data("num");
                     jel.animate({width: width}, 350, "easeInOutCubic")
                         .find("span").html(span);
                 });

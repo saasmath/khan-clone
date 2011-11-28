@@ -3,11 +3,11 @@ from templatefilters import escapejs
 
 import models
 import util
-import util_profile
 from itertools import izip
 import datetime
 
 def class_progress_report_graph_context(user_data, student_list):
+    import util_profile
 
     if not user_data:
         return {}

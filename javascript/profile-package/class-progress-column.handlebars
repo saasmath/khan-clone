@@ -1,6 +1,6 @@
 <div class="fake-row">
   {{#progressIter progress side=progressSide}}
-    <span class="status exercise-color {{toColor status}}" style="float: {{toFloat status}}; width: {{toPixelWidth students.length}}px;" data-width="{{toPixelWidth students.length}}" data-status="{{toDisplay status}}" data-num="{{students.length}}"><span>{{#if students.length}}{{students.length}}{{/if}}</span></span>
+    <span class="status exercise-color {{toColor status}}" style="float: {{toFloat status}}; width: {{toPixelWidth students.length}}px;" data-width="{{toPixelWidth students.length}}" data-status="{{toDisplay status}}" data-num="{{students.length}}"><span>{{toNumberOfStudents students.length}}</span></span>
    {{/progressIter}}
 </div>
 
