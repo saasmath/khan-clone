@@ -406,6 +406,10 @@ def log_user_video(youtube_id):
     video_log = None
     user_data = models.UserData.current()
 
+    if not request.request_string("seconds_watched") or not request.request_string("last_second_watched"):
+        logging.critical("Video log request with no parameters received.")
+        return unauthorized_response()
+
     if user_data:
         video_key_str = request.request_string("video_key")
 
