@@ -104,7 +104,6 @@ var Homepage = {
             }
 
             var container = $("#" + sluggified + " ol").get(0);
-            container.style.height = colHeight + "px";
             container.innerHTML = html.join("");
 		}
     }

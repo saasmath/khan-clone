@@ -1203,7 +1203,12 @@ class Playlist(Searchable, db.Model):
             videos.append(video)
 
         return videos
-
+    
+    def get_video_count(self):
+        video_playlist_query = VideoPlaylist.all()
+        video_playlist_query.filter('playlist =', self)
+        video_playlist_query.filter('live_association =', True)
+        return video_playlist_query.count()
 
 class UserPlaylist(db.Model):
     user = db.UserProperty()

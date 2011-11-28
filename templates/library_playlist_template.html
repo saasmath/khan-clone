@@ -19,7 +19,7 @@
                         <p class='playlist-desc'>{{playlist_data.playlist.description|escape}}</p>
                     {% endif %}
 
-					<ol style="height:{{list_height}}px;" data-role="listview" data-inset="true"></ol>
+					<ol style="height:{{playlist_data.list_height}}px;" data-role="listview" data-inset="true"></ol>
 
                     {% if playlist_data.title == "Arithmetic" and smart_history %}
                     <div class="clear desktop-only">
@@ -38,7 +38,7 @@
                 </div>
                 <div data-role="content">
                 <p class='playlist-desc'>Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy.  Videos are made <b> by Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b></p>
-                    {{smart_history}}                    
+                    {{smart_history}}
                     {% endif %}
 
                     <div class="clear desktop-only">
@@ -49,7 +49,7 @@
                 </div>
             </div>
 
-           
+
             {% endfor %}
             </div>
         </div>

@@ -11,6 +11,7 @@ import request_handler
 import util
 import urllib2
 import re
+import math
 
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():
@@ -134,11 +135,15 @@ def playlist_content_html():
     for topic in topics_list:
         if topic in dict_playlists_by_title:
             playlist = dict_playlists_by_title[topic]
+            video_count = playlist.get_video_count() 
+            # 3 columns, 18px per row.
+            height = math.ceil(video_count / 3) * 18
 
             playlist_data = {
                              'title': topic,
                              'topic': topic,
                              'playlist': playlist,
+                             'list_height': height,
                              'next': None,
                              }
 
