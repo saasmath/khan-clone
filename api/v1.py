@@ -399,7 +399,11 @@ def user_videos_specific(youtube_id):
     return None
 
 # Can specify video using "video_key" parameter instead of youtube_id.
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET", "POST"])
+# Supports a GET request to solve the IE-behind-firewall issue with occasionally stripped POST data.
+# See http://code.google.com/p/khanacademy/issues/detail?id=3098
+# and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
+@route("/api/v1/user/videos/<youtube_id>/log_compatability", methods=["GET"])
 @oauth_optional(require_anointed_consumer=True)
 @api_create_phantom
 @jsonp
@@ -760,7 +764,7 @@ def _attempt_problem_wrong(exercise_name):
     return unauthorized_response()
 
 # TomY Temporary fix: Sundar needs to access the logs using GET, which I accidentally masked with the newer call above
-@route("/api/v1/user/videos/<youtube_id>/sundarlog", methods=["GET"])
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
