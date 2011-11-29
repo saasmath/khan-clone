@@ -33,8 +33,9 @@ from decorators import clamp
 from image_cache import ImageCache
 
 from templatefilters import slugify
-from gae_bingo.gae_bingo import ab_test, bingo
-from gae_bingo.models import GAEBingoIdentityModel, ConversionTypes
+from gae_bingo.gae_bingo import bingo
+from gae_bingo.models import GAEBingoIdentityModel
+from experiments import StrugglingExperiment
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -325,50 +326,12 @@ class UserExercise(db.Model):
         proficiency_threshold = consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize
 
-    # "Struggling" model experiment parameters.
-    _struggling_ab_test_alternatives = {
-        'old': 8, # The original '>= 20 problems attempted' heuristic
-        'accuracy_1.8': 1, # Using an accuracy model with 1.8 as the parameter
-        'accuracy_2.0': 1, # Using an accuracy model with 2.0 as the parameter
-    }
-    _struggling_conversion_tests = [
-        ('struggling_problems_done', ConversionTypes.Counting),
-        ('struggling_problems_done_post_struggling', ConversionTypes.Counting),
-        ('struggling_problems_wrong', ConversionTypes.Counting),
-        ('struggling_problems_wrong_post_struggling', ConversionTypes.Counting),
-        ('struggling_problems_correct', ConversionTypes.Counting),
-        ('struggling_problems_correct_post_struggling', ConversionTypes.Counting),
-        ('struggling_gained_proficiency_all', ConversionTypes.Counting),
-
-        # the user closed the "Need help?" dialog that pops up
-        ('struggling_message_dismissed', ConversionTypes.Counting),
-
-        # the user clicked on the video in the "Need help?" dialog that pops up
-        ('struggling_videos_clicked_post_struggling', ConversionTypes.Counting),
-        ('struggling_videos_landing', ConversionTypes.Counting),
-        ('struggling_videos_finished', ConversionTypes.Counting),
-    ]
-    _struggling_conversion_names, _struggling_conversion_types = [
-        list(x) for x in zip(*_struggling_conversion_tests)]
-
     @property
     def exercise_states(self):
         user_exercise_graph = self.get_user_exercise_graph()
         if user_exercise_graph:
             return user_exercise_graph.states(self.exercise)
         return None
-
-    @property
-    def next_points(self):
-        user_data = self.get_user_data()
-
-        suggested = proficient = False
-
-        if user_data:
-            suggested = user_data.is_suggested(self.exercise)
-            proficient = user_data.is_proficient_at(self.exercise)
-
-        return points.ExercisePointCalculator(self, suggested, proficient)
 
     @property
     def num_milestones(self):
@@ -463,19 +426,15 @@ class UserExercise(db.Model):
     def belongs_to(self, user_data):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
-    def is_struggling(self):
+    def is_struggling(self, struggling_model=None):
         if self.has_been_proficient():
             return False
 
-        bucket = ab_test('Struggling model',
-                self._struggling_ab_test_alternatives,
-                self._struggling_conversion_names,
-                self._struggling_conversion_types)
-        if bucket == 'old':
+        if struggling_model is None or struggling_model == 'old':
             return self._is_struggling_old()
         else:
             # accuracy based model.
-            param = float(bucket.split('_')[1])
+            param = float(struggling_model.split('_')[1])
             return self.accuracy_model().is_struggling(
                     param=param,
                     minimum_accuracy=consts.PROFICIENCY_ACCURACY_THRESHOLD,
@@ -1947,7 +1906,7 @@ class UserExerciseCache(db.Model):
 
     # Bump this whenever you change the structure of the cached UserExercises
     # and need to invalidate all old caches
-    CURRENT_VERSION = 8
+    CURRENT_VERSION = 9
 
     version = db.IntegerProperty()
     dicts = object_property.UnvalidatedObjectProperty()
@@ -1981,35 +1940,44 @@ class UserExerciseCache(db.Model):
         # For any that are missing or are out of date,
         # build up asynchronous queries to repopulate their data
         async_queries = []
+        missing_cache_indices = []
         for i, user_exercise_cache in enumerate(user_exercise_caches):
             if not user_exercise_cache or user_exercise_cache.version != UserExerciseCache.CURRENT_VERSION:
+                # Null out the reference so the gc can collect, in case it's
+                # a stale version, since we're going to rebuild it below.
+                user_exercise_caches[i] = None
+
                 # This user's cached graph is missing or out-of-date,
                 # put it in the list of graphs to be regenerated.
                 async_queries.append(UserExercise.get_for_user_data(user_data_list[i]))
+                missing_cache_indices.append(i)
 
         if len(async_queries) > 0:
-
-            # Run the async queries
-            results = util.async_queries(async_queries)
             caches_to_put = []
-            exercises = Exercise.get_all_use_cache()
 
-            # Populate the missing graphs w/ results from async queries
-            index_result = 0
-            for i, user_exercise_cache in enumerate(user_exercise_caches):
-                if not user_exercise_cache or user_exercise_cache.version != UserExerciseCache.CURRENT_VERSION:
-                    user_data = user_data_list[i]
-                    user_exercises = results[index_result].get_result()
+            # Run the async queries in batches to avoid exceeding memory limits.
+            # Some coaches can have lots of active students, and their user
+            # exercise information is too much for app engine instances.
+            BATCH_SIZE = 5
+            for i in range(0, len(async_queries), BATCH_SIZE):
+                tasks = util.async_queries(async_queries[i:i+BATCH_SIZE])
+
+                # Populate the missing graphs w/ results from async queries
+                for j, task in enumerate(tasks):
+                    user_index = missing_cache_indices[i + j]
+                    user_data = user_data_list[user_index]
+                    user_exercises = task.get_result()
 
                     user_exercise_cache = UserExerciseCache.generate(user_data, user_exercises)
+                    user_exercise_caches[user_index] = user_exercise_cache
 
                     if len(caches_to_put) < 10:
                         # We only put 10 at a time in case a teacher views a report w/ tons and tons of uncached students
                         caches_to_put.append(user_exercise_cache)
 
-                    user_exercise_caches[i] = user_exercise_cache
-
-                    index_result += 1
+            # Null out references explicitly for GC.
+            tasks = None
+            async_queries = None
 
             if len(caches_to_put) > 0:
                 # Fire off an asynchronous put to cache the missing results. On the production server,
@@ -2030,13 +1998,13 @@ class UserExerciseCache(db.Model):
         return user_exercise_caches if type(user_data_or_list) == list else user_exercise_caches[0]
 
     @staticmethod
-    def dict_from_user_exercise(user_exercise):
+    def dict_from_user_exercise(user_exercise, struggling_model=None):
         # TODO(david): We can probably remove some of this stuff here.
         return {
                 "streak": user_exercise.streak if user_exercise else 0,
                 "longest_streak": user_exercise.longest_streak if user_exercise else 0,
                 "progress": user_exercise.progress if user_exercise else 0.0,
-                "struggling": user_exercise.is_struggling() if user_exercise else False,
+                "struggling": user_exercise.is_struggling(struggling_model) if user_exercise else False,
                 "total_done": user_exercise.total_done if user_exercise else 0,
                 "last_done": user_exercise.last_done if user_exercise else datetime.datetime.min,
                 "last_review": user_exercise.last_review if user_exercise else datetime.datetime.min,
@@ -2050,12 +2018,24 @@ class UserExerciseCache(db.Model):
         if not user_exercises:
             user_exercises = UserExercise.get_for_user_data(user_data)
 
+        current_user = UserData.current()
+        if current_user is None:
+            is_current_user = False
+        else:
+            is_current_user = current_user.user_id == user_data.user_id
+
+        # Experiment to try different struggling models.
+        # It's important to pass in the user_data of the student owning the
+        # exercise, and not of the current viewer (as it may be a coach).
+        struggling_model = StrugglingExperiment.get_alternative_for_user(
+                user_data, is_current_user) or StrugglingExperiment.DEFAULT
+
         dicts = {}
 
         # Build up cache
         for user_exercise in user_exercises:
-
-            user_exercise_dict = UserExerciseCache.dict_from_user_exercise(user_exercise)
+            user_exercise_dict = UserExerciseCache.dict_from_user_exercise(
+                    user_exercise, struggling_model)
 
             # In case user has multiple UserExercise mappings for a specific exercise,
             # always prefer the one w/ more problems done
@@ -2078,7 +2058,9 @@ class UserExerciseGraph(object):
         return self.graph.get(exercise_name)
 
     def graph_dicts(self):
-        return sorted(sorted(self.graph.values(), key=lambda graph_dict: graph_dict["v_position"]), key=lambda graph_dict: graph_dict["h_position"])
+        return sorted(sorted(self.graph.values(),
+                             key=lambda graph_dict: graph_dict["v_position"]),
+                             key=lambda graph_dict: graph_dict["h_position"])
 
     def proficient_exercise_names(self):
         return [graph_dict["name"] for graph_dict in self.proficient_graph_dicts()]
@@ -2194,7 +2176,6 @@ class UserExerciseGraph(object):
 
         # We can grab a single UserExerciseGraph or do an optimized grab of a bunch of 'em
         user_data_list = user_data_or_list if type(user_data_or_list) == list else [user_data_or_list]
-
         user_exercise_cache_list = UserExerciseCache.get(user_data_list)
 
         if not user_exercise_cache_list:

@@ -1,6 +1,4 @@
-import util
-
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import BadgeCategory
 from playlist_badges import PlaylistBadge
 from templatefilters import seconds_to_time_string
 

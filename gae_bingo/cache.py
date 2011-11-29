@@ -77,9 +77,12 @@ class BingoCache(object):
         memcache.set(BingoCache.MEMCACHE_KEY, self)
 
     def persist_to_datastore(self):
+        """ Persist current state of experiment and alternative models to
+        datastore. Their sums might be slightly out-of-date during any
+        given persist, but not by much.
 
-        # Persist current state of experiment and alternative models to datastore.
-        # Their sums might be slightly out-of-date during any given persist, but not by much.
+        """
+
         for experiment_name in self.experiments:
             experiment_model = self.get_experiment(experiment_name)
             if experiment_model:

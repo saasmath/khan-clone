@@ -30,7 +30,6 @@ javascript = {
             "backbone.js",
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
-            "jquery.tmpl.min.js",
             "bootstrap-modal.js",
             "../../gae_bingo/static/js/gae_bingo.js",
 
@@ -54,6 +53,7 @@ javascript = {
     "video": {
         "files": [
             "jquery.qtip.js",
+            "jquery.tmpl.min.js",
             "video.js",
             "discussion.js",
             "modalvideo.js",
