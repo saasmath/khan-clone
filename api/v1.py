@@ -100,7 +100,7 @@ def playlist_videos(playlist_title):
     if not playlist:
         return None
 
-    return playlist.get_videos();
+    return playlist.get_videos()
 
 @route("/api/v1/playlists/<playlist_title>/exercises", methods=["GET"])
 @jsonp
@@ -116,7 +116,7 @@ def playlist_exercises(playlist_title):
     if not playlist:
         return None
 
-    return playlist.get_exercises();
+    return playlist.get_exercises()
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
@@ -251,9 +251,9 @@ def replace_playlist_values(structure, playlist_dict):
         for sub_structure in structure:
             replace_playlist_values(sub_structure, playlist_dict)
     else:
-        if structure.has_key("items"):
+        if "items" in structure:
             replace_playlist_values(structure["items"], playlist_dict)
-        elif structure.has_key("playlist"):
+        elif "playlist" in structure:
             # Replace string playlist title with real playlist object
             structure["playlist"] = playlist_dict[structure["playlist"]]
 
@@ -307,7 +307,7 @@ def user_data_student():
     user_data = models.UserData.current()
 
     if user_data:
-        user_data_student = get_visible_user_data_from_request(disable_coach_visibility = True)
+        user_data_student = get_visible_user_data_from_request(disable_coach_visibility=True)
         if user_data_student:
             if request.request_string("list_id"):
                 try:
@@ -399,7 +399,7 @@ def user_videos_specific(youtube_id):
     return None
 
 # Can specify video using "video_key" parameter instead of youtube_id.
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET","POST"])
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET", "POST"])
 @oauth_optional(require_anointed_consumer=True)
 @api_create_phantom
 @jsonp
@@ -666,12 +666,12 @@ def attempt_problem_number(exercise_name, problem_number):
 
             action_results = {
                 "exercise_state": {
-                    "state" : [state for state in user_states if user_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                    "state": [state for state in user_states if user_states[state]],
+                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
                 },
-                "points_earned" : { "points" : points_earned },
-                "attempt_correct" : request.request_bool("complete")
-            };
+                "points_earned": {"points": points_earned},
+                "attempt_correct": request.request_bool("complete")
+            }
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
@@ -720,8 +720,8 @@ def hint_problem_number(exercise_name, problem_number):
             add_action_results(user_exercise, {
                 "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
                 "exercise_state": {
-                    "state" : [state for state in user_states if user_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                    "state": [state for state in user_states if user_states[state]],
+                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
                 }
             })
 
