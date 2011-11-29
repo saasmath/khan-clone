@@ -511,11 +511,18 @@ def coach_progress_summary():
 
     list_students = sorted(list_students, key=lambda student: student.nickname)
 
-    exercises = models.Exercise.get_all_use_cache()
     user_exercise_graphs = models.UserExerciseGraph.get(list_students)
+    student_review_exercise_names = []
+    list_students_truncated_names = []
+    for student, user_exercise_graph in izip(list_students, user_exercise_graphs):
+        student_review_exercise_names.append(user_exercise_graph.review_exercise_names())
+        list_students_truncated_names.append({
+            'nickname': util_profile.truncate_nickname(student.nickname),
+            'email': student.email,
+        })
 
+    exercises = models.Exercise.get_all_use_cache()
     exercise_data = []
-
     for exercise in exercises:
         progress_buckets = {
             'review': [],
@@ -525,15 +532,12 @@ def coach_progress_summary():
             'not_started': [],
         }
 
-        for (student, user_exercise_graph) in izip(
-            list_students, user_exercise_graphs):
-
-            student_review_exercise_names = user_exercise_graph.review_exercise_names()
-
+        for (student, user_exercise_graph, review_exercise_names) in izip(
+            list_students_truncated_names, user_exercise_graphs, student_review_exercise_names):
             graph_dict = user_exercise_graph.graph_dict(exercise.name)
 
             if graph_dict['proficient']:
-                if exercise.name in student_review_exercise_names:
+                if exercise.name in review_exercise_names:
                     status = 'review'
                 else:
                     status = 'proficient'
@@ -545,8 +549,8 @@ def coach_progress_summary():
                 status = 'not_started'
 
             progress_buckets[status].append({
-                'nickname': util_profile.truncate_nickname(student.nickname),
-                'email': student.email,
+                'nickname': student['nickname'],
+                'email': student['email'],
             })
         progress = [dict([('status', status),
                         ('students', progress_buckets[status])])
@@ -559,7 +563,7 @@ def coach_progress_summary():
         })
 
     return {'exercises': exercise_data,
-            'num_students': len(list_students)}
+            'num_students': len(list_students_truncated_names)}
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
 @oauth_optional()
