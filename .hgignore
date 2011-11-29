@@ -21,5 +21,7 @@ offline/*
 .*.swp
 .*.un~
 compiled_templates*
+.git
+*.handlebars.js
 .pydevproject
 .git

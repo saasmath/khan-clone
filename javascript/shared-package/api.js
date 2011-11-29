@@ -2,7 +2,7 @@
 // APIActionResults is an observer for all XHR responses that go through the page
 // The key being that it will listen for XHR messages with the magic header "X-KA-API-Response"
 // which is added in from api/__init__.py
-// 
+//
 // In api/v1.py, add_action_results takes care of bundling data to be digested by this client-side
 // listener. As a result, if you have something which happens as a result of an API POST, it's worth
 // investigating whether or not you can have it triggered here rather than in khan-exercise.js
@@ -13,8 +13,8 @@ var APIActionResults = {
 
         $(document).ajaxComplete(function (e, xhr, settings) {
 
-            if (xhr && 
-                xhr.getResponseHeader('X-KA-API-Response') && 
+            if (xhr &&
+                xhr.getResponseHeader('X-KA-API-Response') &&
                 xhr.responseText) {
 
                 try { eval("var result = " + xhr.responseText); }
@@ -58,7 +58,7 @@ $(function(){ APIActionResults.register("badges_earned_html", Badges.show); });
 $(function(){ APIActionResults.register("login_notifications_html", Notifications.show); });
 
 // Update user info after appropriate API ajax requests
-$(function(){ APIActionResults.register("user_info_html", 
+$(function(){ APIActionResults.register("user_info_html",
         function(sUserInfoHtml) {
             $("#user-info").html(sUserInfoHtml);
         }

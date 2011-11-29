@@ -43,6 +43,7 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
+import goals.handlers
 
 import models
 from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
@@ -238,57 +239,6 @@ class ViewVideo(request_handler.RequestHandler):
 
         bingo('struggling_videos_landing')
         self.render_jinja2_template('viewvideo.html', template_values)
-
-# This function is only here for a transitional period, all new requests should be using the API (-Tom Y 11/17/11)
-class LogVideoProgress(request_handler.RequestHandler):
-
-    # LogVideoProgress uses a GET request to solve the IE-behind-firewall
-    # issue with occasionally stripped POST data.
-    # See http://code.google.com/p/khanacademy/issues/detail?id=3098
-    # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
-    def post(self):
-        self.get()
-
-    @create_phantom
-    def get(self):
-        user_data = UserData.current()
-        video_points_total = 0
-
-        if user_data:
-
-            video = None
-
-            key_str = self.request_string("video_key")
-            if key_str:
-                key = db.Key(key_str)
-                app_id = os.environ['APPLICATION_ID']
-                if key.app() != app_id:
-                    new_key = db.Key.from_path(
-                        key.kind(),
-                        key.id() or key.name(),
-                        _app=app_id)
-                    logging.warning("Key '%s' had invalid app_id '%s'. Changed to new key '%s'", str(key), key.app(), str(new_key))
-                    key = new_key
-                video = db.get(key)
-            else:
-                youtube_id = self.request_string("youtube_id")
-                if youtube_id:
-                    video = Video.all().filter('youtube_id =', youtube_id).get()
-
-            if video:
-
-                # Seconds watched is restricted by both the scrubber's position
-                # and the amount of time spent on the video page
-                # so we know how *much* of each video each student has watched
-                seconds_watched = int(self.request_float("seconds_watched", default=0))
-                last_second_watched = int(self.request_float("last_second_watched", default=0))
-
-                user_video, video_log, video_points_total = VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
-
-        user_points_html = self.render_jinja2_template_to_string("user_points_only.html", user_points(user_data))
-
-        json = simplejson.dumps({"user_points_html": user_points_html, "video_points": video_points_total}, ensure_ascii=False)
-        self.response.out.write(json)
 
 class ReportIssue(request_handler.RequestHandler):
 
@@ -656,7 +606,7 @@ class Search(request_handler.RequestHandler):
             elif entity is not None:
                 logging.error("Unhandled kind in search results: " +
                               str(type(entity)))
-                
+
         playlist_count = len(playlists)
 
         # Get playlists for videos not in matching playlists
@@ -690,7 +640,7 @@ class Search(request_handler.RequestHandler):
         video_exercises = {}
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
-                
+
         # Count number of videos in each playlist and sort descending
         for playlist in playlists:
             if len(filtered_videos) > 0:
@@ -797,7 +747,6 @@ application = webapp2.WSGIApplication([
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
     ('/video/(.*)', ViewVideo),
-    ('/logvideoprogress', LogVideoProgress),
     ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
     ('/sat', ViewSAT),
@@ -860,7 +809,6 @@ application = webapp2.WSGIApplication([
     ('/profile', util_profile.ViewProfile),
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
-    ('/profile/graph/classprogressreport', util_profile.ClassProgressReportGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
     ('/class_profile', util_profile.ViewClassProfile),
@@ -934,6 +882,9 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/exercisenumbertrivia', exercisestats.report_json.ExerciseNumberTrivia),
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
+
+    ('/goals/new', goals.handlers.CreateNewGoal),
+    ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
 
     ('/robots.txt', robots.RobotsTxt),
 

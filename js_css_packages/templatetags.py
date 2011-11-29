@@ -25,15 +25,44 @@ def use_compressed_packages():
 
     return True
 
-def js_package(package_name):
+def base_name(file_name):
+    return file_name[:file_name.index(".")]
 
+def get_inline_template(package_name, file_name):
+    """ Generate a string for <script> tag that contains the contents
+    of the specified template.
+
+    This is used in debug mode so that templates can be changed without having
+    to precompile them to test.
+    Note - this does not work in production! Static files are
+    served from a different server and are not part of the main
+    package. "clienttemplates" is a symlink to get around this
+    limitation in development only.
+
+    This logic is dependent on javascript/shared-package/templates.js
+
+    """
+    path = "clienttemplates/%s-package/%s" % (package_name, file_name)
+    handle = open(path, 'r')
+    contents = handle.read()
+    handle.close()
+    name = base_name(file_name)
+    return ("<script type='text/x-handlerbars-template' "
+         	"id='template_%s-package_%s'>%s</script>") % (package_name, name, contents)
+
+
+def js_package(package_name):
     if not use_compressed_packages():
         package = packages.javascript[package_name]
         base_url = package.get("base_url") or "/javascript/%s-package" % package_name
         list_js = []
-        for filename in package["files"]:
-            list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, filename))
-        return "".join(list_js)
+        for file_name in package["files"]:
+            if file_name.split('.')[-1] == 'handlebars':
+                # In debug mode, templates are served as inline <script> tags.
+                list_js.append(get_inline_template(package_name, file_name))
+            else:
+                list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, file_name))
+        return "\n".join(list_js)
     else:
         package = packages_compressed.compressed_javascript[package_name]
         base_url = package.get("base_url") or "/javascript/%s-package" % package_name

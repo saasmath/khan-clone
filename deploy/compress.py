@@ -49,7 +49,21 @@ def compress_all_packages(default_path, dict_packages, suffix):
 
             package_path = os.path.join(os.path.dirname(__file__), package_path)
 
-            compress_package(package_name, package_path, package["files"], suffix)
+            if suffix == ".js":
+                # for javascript packages, check to see if we need to include
+                # the compiled result of a file. For example, a file called
+                # template.handlebars will be compiled to
+                # template.handlebars.js
+                files = []
+                for f in package["files"]:
+                    if f.split('.')[-1] == 'js':
+                        files.append(f)
+                    else:
+                        files.append(f + ".js")
+            else:
+                files = package["files"]
+
+            compress_package(package_name, package_path, files, suffix)
 
             hashed_content = "compressed_javascript=%s\ncompressed_stylesheets=%s\n" % \
                 (str(packages_javascript), str(packages_stylesheets))
@@ -243,6 +257,9 @@ def combine_package(path, files, suffix):
 
     content = []
     for static_filename in files:
+        if static_filename in packages.transformations:
+            static_filename = packages.transformations[static_filename]
+
         path_static = os.path.join(path, static_filename)
         print "   ...adding %s" % path_static
         f = open(path_static, 'r')

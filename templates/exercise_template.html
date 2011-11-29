@@ -18,7 +18,10 @@
 
     <style>#page_sub_nav {display: none;}</style>
 
-    <script>var userExercise = {{ user_exercise_json }};</script>
+    <script>
+      var userExercise = {{ user_exercise_json }};
+      var userExerciseName = '{{ exercise.name }}';
+    </script>
 
     {{ js_css_packages.js_package("exercises") }}
 

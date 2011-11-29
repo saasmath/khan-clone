@@ -139,9 +139,13 @@ class Exercise(db.Model):
             "coverers", "prerequisites_ex", "assigned",
             ]
 
+    @staticmethod
+    def get_relative_url(exercise_name):
+        return "/exercise/%s" % exercise_name
+
     @property
     def relative_url(self):
-        return "/exercise/%s" % self.name
+        return Exercise.get_relative_url(self.name)
 
     @property
     def ka_url(self):
@@ -681,13 +685,15 @@ class UserData(GAEBingoIdentityModel, db.Model):
     question_sort_order = db.IntegerProperty(default = -1, indexed=False)
     user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default = 0, indexed=False)
+    has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "expanded_all_exercises", "question_sort_order",
-            "last_login", "user", "current_user", "map_coords", "expanded_all_exercises",
-            "user_nickname", "user_email", "seconds_since_joined",
+            "last_login", "user", "current_user", "map_coords",
+            "expanded_all_exercises", "user_nickname", "user_email",
+            "seconds_since_joined", "has_current_goals"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1016,6 +1022,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
+    def ensure_has_current_goals(self):
+        if not self.has_current_goals:
+            self.has_current_goals = True
+            self.put()
+
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
@@ -1045,9 +1056,17 @@ class Video(Searchable, db.Model):
     INDEX_TITLE_FROM_PROP = 'title'
     INDEX_USES_MULTI_ENTITIES = False
 
+    @staticmethod
+    def get_relative_url(readable_id):
+        return '/video/%s' % readable_id
+
+    @property
+    def relative_url(self):
+        return Video.get_relative_url(self.readable_id)
+
     @property
     def ka_url(self):
-        return util.absolute_url('/video/%s' % self.readable_id)
+        return util.absolute_url(self.relative_url)
 
     @property
     def download_urls(self):
@@ -1289,6 +1308,13 @@ class UserVideo(db.Model):
     def points(self):
         return points.VideoPointCalculator(self)
 
+    @property
+    def progress(self):
+        if self.completed:
+            return 1.0
+        else:
+            return min(1.0, float(self.seconds_watched) / self.duration)
+
 class VideoLog(db.Model):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
@@ -1324,7 +1350,7 @@ class VideoLog(db.Model):
         return query
 
     @staticmethod
-    def add_entry(user_data, video, seconds_watched, last_second_watched):
+    def add_entry(user_data, video, seconds_watched, last_second_watched, detect_cheat=True):
 
         user_video = UserVideo.get_for_video_and_user_data(video, user_data, insert_if_missing=True)
 
@@ -1340,10 +1366,10 @@ class VideoLog(db.Model):
         # If the last video logged is not this video and the times being credited
         # overlap, don't give points for this video. Can only get points for one video
         # at a time.
-        if last_video_log and last_video_log.key_for_video() != video.key():
+        if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
             dt_now = datetime.datetime.now()
             if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
-                return (None, None, 0)
+                return (None, None, 0, False)
 
         video_log = VideoLog()
         video_log.user = user_data.user
@@ -1405,6 +1431,9 @@ class VideoLog(db.Model):
 
             bingo('struggling_videos_finished')
 
+        goals_updated = GoalList.update_goals(user_data,
+            lambda goal: goal.just_watched_video(user_data, user_video))
+
         if video_points_received > 0:
             video_log.points_earned = video_points_received
             user_data.add_points(video_points_received)
@@ -1425,7 +1454,7 @@ class VideoLog(db.Model):
                 _queue = "log-summary-queue",
                 _url = "/_ah/queue/deferred_log_summary")
 
-        return (user_video, video_log, video_points_total)
+        return (user_video, video_log, video_points_total, goals_updated)
 
     def time_started(self):
         return self.time_watched - datetime.timedelta(seconds = self.seconds_watched)
@@ -1755,8 +1784,8 @@ def commit_problem_log(problem_log_source, user_data = None):
             # Add time taken for hint
             insert_in_position(index_hint, problem_log.hint_time_taken_list, problem_log_source.time_taken, filler=-1)
 
-            # Add problem number this hint follows
-            insert_in_position(index_hint, problem_log.hint_after_attempt_list, problem_log.count_attempts, filler=-1)
+            # Add attempt number this hint follows
+            insert_in_position(index_hint, problem_log.hint_after_attempt_list, problem_log_source.count_attempts, filler=-1)
 
         # Points should only be earned once per problem, regardless of attempt count
         problem_log.points_earned = max(problem_log.points_earned, problem_log_source.points_earned)
@@ -1881,7 +1910,7 @@ class UserExerciseCache(db.Model):
     """ UserExerciseCache is an optimized-for-read-and-deserialization cache of
     user-specific exercise states.
     It can be reconstituted at any time via UserExercise objects.
-    
+
     """
 
     # Bump this whenever you change the structure of the cached UserExercises
@@ -2087,7 +2116,7 @@ class UserExerciseGraph(object):
             if graph_dict.get("next_review") is None:
                 graph_dict["next_review"] = datetime.datetime.min
 
-                if graph_dict["total_done"] > 0 and graph_dict["last_review"] > datetime.datetime.min:
+                if graph_dict["total_done"] > 0 and graph_dict["last_review"] and graph_dict["last_review"] > datetime.datetime.min:
                     next_review = graph_dict["last_review"] + UserExercise.get_review_interval_from_seconds(graph_dict["review_interval_secs"])
 
                     if next_review > now and graph_dict["proficient"] and graph_dict["streak"] == 0:
@@ -2216,7 +2245,7 @@ class UserExerciseGraph(object):
                 "coverer_dicts": [],
                 "prerequisite_dicts": [],
             })
-            
+
             # In case user has multiple UserExercise mappings for a specific exercise,
             # always prefer the one w/ more problems done
             if graph_dict["name"] not in graph or graph[graph_dict["name"]]["total_done"] < graph_dict["total_done"]:
@@ -2302,3 +2331,4 @@ class UserExerciseGraph(object):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
+from goals.models import GoalList

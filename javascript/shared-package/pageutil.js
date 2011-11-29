@@ -1,3 +1,11 @@
+var KAConsole = {
+    debugEnabled: false,
+    log: function() {
+        if (window.console && KAConsole.debugEnabled)
+            console.log.apply(console, arguments);
+    }
+};
+
 function addCommas(nStr) // to show clean number format for "people learning right now" -- no built in JS function
 {
     nStr += '';
@@ -14,7 +22,7 @@ function addCommas(nStr) // to show clean number format for "people learning rig
 function validateEmail(sEmail)
 {
      var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-     return sEmail.match(re)
+     return sEmail.match(re);
 }
 
 function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
@@ -24,7 +32,7 @@ function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
                 "value": match.ka_url,
                 "key": match.key,
                 "fPlaylist": fPlaylist
-            }
+            };
 
     if (reMatch)
         o.label = o.label.replace(reMatch, "<b>$1</b>");
@@ -129,14 +137,14 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
             .data("item.autocomplete", item)
             .append(jLink)
             .appendTo(ul);
-        }
+    };
 
-     autocompleteWidget.data("autocomplete").menu.select = function(e) {
+    autocompleteWidget.data("autocomplete").menu.select = function(e) {
         // jquery-ui.js's ui.autocomplete widget relies on an implementation of ui.menu
         // that is overridden by our jquery.ui.menu.js.  We need to trigger "selected"
         // here for this specific autocomplete box, not "select."
         this._trigger("selected", e, { item: this.active });
-    }
+    };
 }
 
 $(function() {
@@ -152,12 +160,13 @@ $(function() {
 });
 
 function createCookie(name,value,days) {
+    var expires;
     if (days) {
         var date = new Date();
         date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
+        expires = "; expires="+date.toGMTString();
     }
-    else var expires = "";
+    else expires = "";
     document.cookie = name+"="+value+expires+"; path=/";
 }
 
@@ -269,7 +278,7 @@ var VideoControls = {
             return false;
         }
     }
-}
+};
 
 var VideoStats = {
 
@@ -416,10 +425,12 @@ var VideoStats = {
             id = this.sYoutubeId;
         }
 
-        $.ajax({type: "POST",
-                url: "/api/v1/user/videos/" + id + "/log",
+        $.ajax({type: "GET",
+                url: "/api/v1/user/videos/" + id + "/log_compatability",
                 data: data,
-                success: function (data) { VideoStats.finishSave(data, percent); },
+                success: function (data) {
+                    VideoStats.finishSave(data, percent);
+                },
                 error: function () {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
@@ -518,120 +529,6 @@ function onYouTubePlayerReady(playerID) {
     $(VideoStats).trigger('playerready');
 }
 
-var Drawer = {
-
-    init: function() {
-
-        $('#show-all-exercises').click(function() {Drawer.toggleAllExercises(true); return false;});
-
-        $('#dashboard-drawer .exercise-badge').click( function() {
-            window.location = $(".exercise-title a", this).attr("href");
-            return false;
-        });
-
-        $('.toggle-drawer').click(function() {Drawer.toggle(); return false;});
-
-        $(window).resize(function(){Drawer.resize();});
-        this.resize();
-
-        if (window.iScroll)
-        {
-            // Mobile device, support single-finger touch scrolling
-            $("#dashboard-drawer").removeClass("drawer-hoverable");
-            var scroller = new iScroll('dashboard-drawer-inner', { hScroll: false, hScrollbar: false, vScrollbar: false });
-        }
-        else
-        {
-            if (window.KnowledgeMap)
-            {
-                $(".exercise-badge").hover(
-                        function(){KnowledgeMap.onBadgeMouseover.apply(this);},
-                        function(){KnowledgeMap.onBadgeMouseout.apply(this);}
-                );
-                $(".exercise-edit").hover(
-                        function(){KnowledgeMap.onBadgeMouseover.apply(this);},
-                        function(){KnowledgeMap.onBadgeMouseout.apply(this);}
-                );
-                $(".exercise-show").click(KnowledgeMap.onShowExerciseClick);
-            }
-        }
-
-        $('#dashboard-filter-text input[type=text]').placeholder();
-    },
-
-    toggleAllExercises: function(saveSetting) {
-
-        var fVisible = $('#all-exercises').is(':visible');
-
-        if (fVisible)
-        {
-            $('#all-exercises').slideUp(500);
-            $('#show-all-exercises').html('Show All');
-        }
-        else
-        {
-            $('#all-exercises').slideDown(500);
-            $('#show-all-exercises').html('Hide All');
-        }
-
-        if (saveSetting) {
-            $.post("/saveexpandedallexercises", {
-                "expanded": fVisible ? "0" : "1"
-            }); // Fire and forget
-        }
-    },
-
-    areExercisesVisible: function() {
-        return $('#all-exercises').is(':visible');
-    },
-
-    isExpanded: function() {
-        var sCSSLeft = $("#dashboard-drawer").css("left").toLowerCase();
-        return sCSSLeft == "0px" || sCSSLeft == "auto" || sCSSLeft == "";
-    },
-
-    toggle: function() {
-
-        if (this.fToggling) return;
-
-        var fExpanded = this.isExpanded();
-
-        var jelDrawer = $("#dashboard-drawer");
-        var leftDrawer = fExpanded ? -1 * (jelDrawer.width() + 20) : 0;
-
-        var jelTitle = $("#dashboard-title");
-        var leftTitle = fExpanded ? -1 * (jelTitle.width() +10 ): 5;
-
-        jelTitle.animate({left: leftTitle}, 500);
-
-        this.fToggling = true;
-        jelDrawer.animate({left: leftDrawer}, 500, function() {Drawer.fToggling = false;});
-
-        if (window.KnowledgeMap)
-        {
-            var leftMap = (fExpanded ? 0 : 340);
-            $("#map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
-                    500,
-                    function() {
-                        google.maps.event.trigger(KnowledgeMap.map, 'resize');
-                    }
-            );
-        }
-    },
-
-    resize: function() {
-        var jel = $("#dashboard-drawer, #dashboard-drawer-inner, #dashboard-map");
-        var jelDrawerInner = $("#dashboard-drawer-inner");
-        var yTop = jel.offset().top;
-        jel.height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
-        // Account for padding in the dashboard drawer
-        jelDrawerInner.height(jelDrawerInner.height() - 20);
-
-        if (window.KnowledgeMap && KnowledgeMap.map)
-            google.maps.event.trigger(KnowledgeMap.map, 'resize');
-    }
-}
-
 var Badges = {
 
     show: function(sBadgeContainerHtml) {
@@ -674,7 +571,7 @@ var Badges = {
 
     showMoreContext: function(el) {
         var jelLink = $(el).parents(".badge-context-hidden-link");
-        var jelBadge = jelLink.parents(".achievement-badge")
+        var jelBadge = jelLink.parents(".achievement-badge");
         var jelContext = $(".badge-context-hidden", jelBadge);
 
         if (jelLink.length && jelBadge.length && jelContext.length)
@@ -686,7 +583,7 @@ var Badges = {
             jelBadge.nextAll(".achievement-badge").first().css("clear", "both");
         }
     }
-}
+};
 
 var Notifications = {
 
@@ -739,7 +636,7 @@ var Notifications = {
 
         $.post("/notifierclose");
     }
-}
+};
 
 var Timezone = {
     tz_offset: null,
@@ -757,7 +654,47 @@ var Timezone = {
             this.tz_offset = -1 * (new Date()).getTimezoneOffset();
         return this.tz_offset;
     }
+};
+
+// not every browser has Date.prototype.toISOString
+// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date#Example.3a_ISO_8601_formatted_dates
+if ( !Date.prototype.toISOString ) {
+    Date.prototype.toISOString = function() {
+        var pad = function(n) { return n < 10 ? '0' + n : n; };
+            return this.getUTCFullYear() + '-' +
+                pad(this.getUTCMonth() + 1) + '-' +
+                pad(this.getUTCDate()) + 'T' +
+                pad(this.getUTCHours()) + ':' +
+                pad(this.getUTCMinutes()) + ':' +
+                pad(this.getUTCSeconds()) + 'Z';
+    };
 }
+
+// some browsers can't parse ISO 8601 with Date.parse
+// http://anentropic.wordpress.com/2009/06/25/javascript-iso8601-parser-and-pretty-dates/
+var parseISO8601 = function(str) {
+    // we assume str is a UTC date ending in 'Z'
+    var parts = str.split('T'),
+        dateParts = parts[0].split('-'),
+        timeParts = parts[1].split('Z'),
+        timeSubParts = timeParts[0].split(':'),
+        timeSecParts = timeSubParts[2].split('.'),
+        timeHours = Number(timeSubParts[0]),
+        _date = new Date();
+
+    _date.setUTCFullYear(Number(dateParts[0]));
+    _date.setUTCMonth(Number(dateParts[1])-1);
+    _date.setUTCDate(Number(dateParts[2]));
+    _date.setUTCHours(Number(timeHours));
+    _date.setUTCMinutes(Number(timeSubParts[1]));
+    _date.setUTCSeconds(Number(timeSecParts[0]));
+    if (timeSecParts[1]) {
+        _date.setUTCMilliseconds(Number(timeSecParts[1]));
+    }
+
+    // by using setUTC methods the date has already been converted to local time(?)
+    return _date;
+};
 
 var MailingList = {
     init: function(sIdList) {
@@ -782,7 +719,7 @@ var MailingList = {
             return false;
         });
     }
-}
+};
 
 var CSSMenus = {
 
@@ -814,7 +751,7 @@ var CSSMenus = {
             $(e.target).removeClass('css-menu-js-hover').closest(".css-menu > ul > li").removeClass('css-menu-js-hover');
         });
     }
-}
+};
 $(CSSMenus.init);
 
 var IEHtml5 = {
@@ -825,7 +762,7 @@ var IEHtml5 = {
             document.createElement(html5elements[i]);
         }
    }
-}
+};
 IEHtml5.init();
 
 var VideoViews = {
@@ -836,15 +773,15 @@ var VideoViews = {
 
         var currentTime = new Date();
         var secondsSince = (currentTime.getTime()-seedTime.getTime())/1000;
-        var viewsPerSecond = seedDailyViews/24/3600
-        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince*viewsPerSecond)
+        var viewsPerSecond = seedDailyViews/24/3600;
+        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince*viewsPerSecond);
 
         var totalViewsString = addCommas(""+estimatedTotalViews);
 
         $('#page_num_visitors').append(totalViewsString);
         $('#page_visitors').css('display', 'inline');
     }
-}
+};
 $(VideoViews.init);
 
 var FacebookHook = {
@@ -919,7 +856,7 @@ var FacebookHook = {
         // Explicitly use a session cookie here for IE's sake.
         createCookie("fbs_" + FB_APP_ID, "\"" + sCookie + "\"");
     }
-}
+};
 FacebookHook.init();
 
 var Throbber = {
@@ -954,7 +891,7 @@ var SearchResultHighlight = {
         textElements.each(function(index, textElement) {
             var pos = textElement.data.toLowerCase().indexOf(word);
             if (pos >= 0) {
-                // Split text element into three elements 
+                // Split text element into three elements
                 var highlightText = textElement.splitText(pos);
                 highlightText.splitText(word.length);
 
@@ -969,3 +906,89 @@ var SearchResultHighlight = {
         });
     }
 };
+
+// This function detaches the passed in jQuery element and returns a function that re-attaches it
+function temporaryDetachElement(element) {
+    var el, ret;
+    el = element.next();
+    if (el.length > 0) {
+        // This element belongs before some other element
+        ret = function() {
+            element.insertBefore(el);
+        };
+    } else {
+        // This element belongs at the end of the parent's child list
+        el = element.parent();
+        ret = function() {
+            element.appendTo(el);
+        };
+    }
+    element.detach();
+    return ret;
+}
+
+var globalPopupDialog = {
+    visible: false,
+    bindings: false,
+
+    // Size can be an array [width,height] to have an auto-centered dialog or null if the positioning is handled in CSS
+    show: function(className, size, title, html, autoClose) {
+        $("#popup-dialog").hide();
+        $("#popup-dialog .dialog-frame").attr('class', 'dialog-frame ' + className);
+        if (size) {
+            styleText = 'position: relative;';
+            styleText += 'width: ' + size[0] + 'px;';
+            styleText += 'height: ' + size[1] + 'px;';
+            styleText += 'margin-left: ' + (-0.5*size[0]).toFixed(0) + 'px;';
+            styleText += 'margin-top: ' + (-0.5*size[1] - 100).toFixed(0) + 'px;';
+            $("#popup-dialog .dialog-frame").attr('style', styleText);
+        } else {
+            $("#popup-dialog .dialog-frame").attr('style', '');
+        }
+        $("#popup-dialog .dialog-frame .description").html('<h3>' + title + '</h3>');
+        $("#popup-dialog .dialog-contents").html(html);
+        $("#popup-dialog").show();
+
+        $("#popup-dialog .close-button").click(function() { globalPopupDialog.hide(); });
+
+        if (autoClose && !globalPopupDialog.bindings) {
+            // listen for escape key
+            $(document).bind('keyup.popupdialog', function ( e ) {
+                if ( e.which == 27 ) {
+                    globalPopupDialog.hide();
+                }
+            });
+
+            // close the goal dialog if user clicks elsewhere on page
+            $('body').bind('click.popupdialog', function( e ) {
+                if ( $(e.target).closest('.dialog-frame').length === 0 ) {
+                    globalPopupDialog.hide();
+                }
+            });
+            globalPopupDialog.bindings = true;
+        } else if (!autoClose && globalPopupDialog.bindings) {
+            $(document).unbind('keyup.popupdialog');
+            $('body').unbind('click.popupdialog');
+            globalPopupDialog.bindings = false;
+        }
+
+        globalPopupDialog.visible = true;
+        return globalPopupDialog;
+    },
+    hide: function() {
+        if (globalPopupDialog.visible) {
+            $("#popup-dialog").hide();
+            $("#popup-dialog .dialog-contents").html('');
+
+            if (globalPopupDialog.bindings) {
+                $(document).unbind('keyup.popupdialog');
+                $('body').unbind('click.popupdialog');
+                globalPopupDialog.bindings = false;
+            }
+
+            globalPopupDialog.visible = false;
+        }
+        return globalPopupDialog;
+    }
+};
+
