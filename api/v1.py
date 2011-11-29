@@ -405,43 +405,49 @@ def user_videos_specific(youtube_id):
 @jsonp
 @jsonify
 def log_user_video(youtube_id):
-    video_log = None
-    user_data = models.UserData.current()
-
-    if not request.request_string("seconds_watched") or not request.request_string("last_second_watched"):
+    if (not request.request_string("seconds_watched") or
+        not request.request_string("last_second_watched")):
         logging.critical("Video log request with no parameters received.")
+        return api_invalid_param_response("Must supply seconds_watched and" +
+            "last_second_watched")
+
+    user_data = models.UserData.current()
+    if not user_data:
+        logging.warning("Video watched with no user_data present")
         return unauthorized_response()
 
-    if user_data:
-        video_key_str = request.request_string("video_key")
+    video_key_str = request.request_string("video_key")
 
-        if user_data and (youtube_id or video_key_str):
-            if video_key_str:
-                key = db.Key(video_key_str)
-                video = db.get(key)
-            else:
-                video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if not youtube_id and not video_key_str:
+        return api_invalid_param_response("Must supply youtube_id or video_key")
 
-            seconds_watched = int(request.request_float("seconds_watched", default = 0))
-            last_second_watched = int(request.request_float("last_second_watched", default = 0))
+    video_log = None
+    if video_key_str:
+        key = db.Key(video_key_str)
+        video = db.get(key)
+    else:
+        video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
-            if video:
-                user_video, video_log, video_points_total, goals_updated = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
+    if not video:
+        return api_error_response("Could not find video")
 
-                action_results = { }
+    seconds_watched = int(request.request_float("seconds_watched", default=0))
+    last_second = int(request.request_float("last_second_watched", default=0))
 
-                if video_log:
-                    action_results['user_video'] = user_video
+    user_video, video_log, _, goals_updated = models.VideoLog.add_entry(
+        user_data, video, seconds_watched, last_second)
 
-                    if goals_updated:
-                        action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+    if video_log:
+        action_results = {}
+        action_results['user_video'] = user_video
+        if goals_updated:
+            action_results['updateGoals'] = [g.get_visible_data(None)
+                for g in goals_updated]
 
-                    add_action_results(video_log, action_results)
+        add_action_results(video_log, action_results)
 
-        return video_log
+    return video_log
 
-    logging.warning("Video watched with no user_data present")
-    return unauthorized_response()
 
 @route("/api/v1/user/exercises", methods=["GET"])
 @oauth_optional()
