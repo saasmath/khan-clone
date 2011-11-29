@@ -681,3 +681,7 @@ input.goal-title:focus {
 .modal .goalpicker .newgoal{
   padding:1em 1em 2em;
 }
+
+.lte8 #goals-container {
+    display: none;
+}
