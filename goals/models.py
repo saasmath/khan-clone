@@ -160,7 +160,7 @@ class GoalList(object):
     @staticmethod
     def videos_in_current_goals(user_data):
         goals = GoalList.get_current_goals(user_data)
-        return [obj.video for g in goals for obj in g.objectives
+        return [obj.video_readable_id for g in goals for obj in g.objectives
             if obj.__class__.__name__ == 'GoalObjectiveWatchVideo']
 
     @staticmethod
@@ -321,7 +321,7 @@ class GoalObjectiveWatchVideo(GoalObjective):
         return self.video_readable_id
 
     def record_progress(self, user_data, user_video):
-        obj_key = db.Key(self.video_key)
+        obj_key = self.video_key
         video_key = UserVideo.video.get_value_for_datastore(user_video)
         if obj_key == video_key:
             self.progress = user_video.progress

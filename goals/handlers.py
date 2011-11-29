@@ -61,7 +61,7 @@ class CreateRandomGoalData(RequestHandler):
         exercises_list = [exercise for exercise in Exercise.all()]
         videos_list = [video for video in Video.all()]
 
-        user_count = 35
+        user_count = self.request_int('users', 5)
         for user_id in xrange(0, user_count):
             # Create a new user
             first_name = random.choice(CreateRandomGoalData.first_names)
@@ -121,7 +121,8 @@ class CreateRandomGoalData(RequestHandler):
                 title = first_name + "'s Goal #" + str(goal_idx)
                 logging.info("Creating goal " + title)
 
-                objectives = GoalObjective.from_descriptors(obj_descriptors)
+                objectives = GoalObjective.from_descriptors(obj_descriptors,
+                    user_data)
                 goal = Goal(parent=user_data, title=title,
                     objectives=objectives)
                 goal.put()
