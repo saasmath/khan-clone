@@ -1360,7 +1360,7 @@ class VideoLog(db.Model):
         if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
             dt_now = datetime.datetime.now()
             if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
-                return (None, None, 0)
+                return (None, None, 0, False)
 
         video_log = VideoLog()
         video_log.user = user_data.user
