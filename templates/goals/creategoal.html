@@ -374,6 +374,10 @@ var GoalCreator = {
 var graph_dict_data = {{ graph_dict_data }};
 
 function createGoalInitialize() {
+    if (!window.KnowledgeMap) {
+        setTimeout(createGoalInitialize, 500);
+        return;
+    }
     var knowledgeMap = new KnowledgeMap({
         'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
         'admin': false,
