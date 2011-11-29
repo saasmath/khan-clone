@@ -433,10 +433,10 @@ def log_user_video(youtube_id):
                 if video_log:
                     action_results['user_video'] = user_video
 
-                if goals_updated:
-                    action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+                    if goals_updated:
+                        action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
 
-                add_action_results(video_log, action_results)
+                    add_action_results(video_log, action_results)
 
         return video_log
 
