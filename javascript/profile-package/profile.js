@@ -285,7 +285,7 @@ var Profile = {
             '/api/v1/user/goals': this.renderUserGoals,
             '/api/v1/user/exercises': this.renderExercisesTable,
             '/api/v1/user/students/goals': this.renderStudentGoals,
-            '/api/v1/user/students/progressreport': ClassProfile.renderStudentProgressReport
+            '/api/v1/user/students/progressreport': window.ClassProfile ? ClassProfile.renderStudentProgressReport : null
         };
 
         if (!href) return;

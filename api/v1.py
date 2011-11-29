@@ -657,7 +657,6 @@ def attempt_problem_number(exercise_name, problem_number):
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
             user_states = user_exercise_graph.states(exercise.name)
-            sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
 
             action_results = {
                 "exercise_state": {
@@ -667,15 +666,6 @@ def attempt_problem_number(exercise_name, problem_number):
                 "points_earned" : { "points" : points_earned },
                 "attempt_correct" : request.request_bool("complete")
             };
-
-            if user_states["proficient"]:
-                followups = user_followup_exercises(exercise_name)
-
-                if followups:
-                    action_results["exercise_state"]["followups"] = followups
-                else :
-                    followups = [models.Exercise.get_by_name(exercise) for exercise in user_data.suggested_exercises[:3]]
-                    action_results["exercise_state"]["followups"] = followups
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
