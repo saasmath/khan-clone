@@ -368,7 +368,7 @@ a:link:hover, a:link:focus, a:visited:hover, a:visited:focus {
  * Hide links with href=# and other script-requiring elements from non-scripting users,
  * since they will only be confusing.  They will be made visible by script.
  */
-a[href="#"], .requires_script {
+.requires_script {
     visibility: hidden;
 }
 
