@@ -107,7 +107,10 @@ class ViewClassProfile(request_handler.RequestHandler):
                     current_list = student_list
 
             selected_graph_type = self.request_string("selected_graph_type") or ClassProgressReportGraph.GRAPH_TYPE
-            initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+            if selected_graph_type == 'progressreport' or selected_graph_type == 'goals': # TomY This is temporary until all the graphs are API calls
+                initial_graph_url = "/api/v1/user/students/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+            else:
+                initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
             initial_graph_url += 'list_id=%s' % list_id
 
             template_values = {
@@ -154,6 +157,9 @@ class ViewProfile(request_handler.RequestHandler):
         # to fetch data, instead of the /profile/graph methods.
         if selected_graph_type == "exerciseprogress":
             initial_graph_url = ("/api/v1/user/exercises?email=%s" %
+                                 urllib.quote(student.email))
+        elif selected_graph_type == "goals":
+            initial_graph_url = ("/api/v1/user/goals?email=%s" %
                                  urllib.quote(student.email))
         else:
             initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (
@@ -394,10 +400,7 @@ class ClassExercisesOverTimeGraph(ClassProfileGraph):
         return templatetags.class_profile_exercises_over_time_graph(coach, student_list)
 
 class ClassProgressReportGraph(ClassProfileGraph):
-    GRAPH_TYPE = "classprogressreport"
-    def graph_html_and_context(self, coach):
-        student_list = self.get_student_list(coach)
-        return templatetags.class_profile_progress_report_graph(coach, student_list)
+    GRAPH_TYPE = "progressreport"
 
 class ClassTimeGraph(ClassProfileDateGraph):
     GRAPH_TYPE = "classtime"

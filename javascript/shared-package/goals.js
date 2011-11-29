@@ -322,7 +322,7 @@ var GoalBookView = Backbone.View.extend({
     },
 
     goToGoalHistory: function() {
-        document.location = '/profile?k#/?graph_url=/api/v1/user/goals';
+        document.location = '/profile?selected_graph_type=goals';
         this.hide();
     },
 
