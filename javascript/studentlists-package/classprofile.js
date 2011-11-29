@@ -114,7 +114,7 @@ var ClassProfile = {
             });
         });
 
-		var template = Templates.get( "profile.profile-class-progress-report" );
+        var template = Templates.get( "profile.profile-class-progress-report" );
         $("#graph-content").html( template(data) );
         ProgressReport.init(data);
     }
@@ -159,11 +159,13 @@ var ProgressReport = {
                 } else {
                     $(this.el).removeClass('highlight');
                 }
+
                 if (matchingCells && !matchingCells[this.options.index]) {
                     $(this.el).addClass('notmatching');
                 } else {
                     $(this.el).removeClass('notmatching');
                 }
+
                 $(this.el).show();
             } else { 
                 $(this.el).hide();
@@ -183,8 +185,7 @@ var ProgressReport = {
             'hiddenCount': 10
         };
 
-        if ($.browser.msie && parseInt($.browser.version) < 8)
-        {
+        if ($.browser.msie && parseInt($.browser.version) < 8) {
             this.showBrowserRequirements();
             return;
         }
@@ -252,7 +253,10 @@ var ProgressReport = {
 
         $("input.progressreport-filter-check").unbind();
         $("input.progressreport-filter-check").change(function() { ProgressReport.filterRows(model); });
-        $("#progressreport-filter-last-time").change(function() { ProgressReport.filterRows(model); });
+        $("#progressreport-filter-last-time").change(function() {
+            $("input.progressreport-filter-check[name=\"recent\"]").attr("checked", true);
+            ProgressReport.filterRows(model);
+        });
 
         ProgressReport.filterRows(model)
     },
@@ -271,10 +275,7 @@ var ProgressReport = {
 
         // Match columns with filter text
         $.each(model.exercise_names, function(idx, exercise) {
-            if (filterText != '' && exercise.display_name_lower.indexOf(filterText) > -1)
-                matchingColumns[idx] = true;
-            else
-                matchingColumns[idx] = false;
+            matchingColumns[idx] = (filterText != '' && exercise.display_name_lower.indexOf(filterText) > -1);
             visibleColumns[idx] = matchingColumns[idx] || (filterText == '');
         });
 

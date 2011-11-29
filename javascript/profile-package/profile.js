@@ -343,7 +343,7 @@ var Profile = {
             $("#graph-content").html(data);
         }
         var diff = (new Date).getTime() - start;
-        if (console) console.log('API call rendered in ' + diff + ' ms.');
+        KAConsole.log('API call rendered in ' + diff + ' ms.');
     },
 
     renderUserGoals: function(data, href) {
