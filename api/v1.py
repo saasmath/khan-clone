@@ -1063,9 +1063,10 @@ def create_user_goal():
     if objective_descriptors:
         objectives = GoalObjective.from_descriptors(objective_descriptors,
             user_data)
-        goal_list_key = GoalList.ensure_goal_list(user_data)
-        goal = Goal(parent=goal_list_key, title=title, objectives=objectives)
+
+        goal = Goal(parent=user_data, title=title, objectives=objectives)
         goal.put()
+        user_data.ensure_has_current_goals()
         return goal.get_visible_data(None)
     else:
         return api_invalid_param_response("No objectives specified.")
@@ -1080,7 +1081,7 @@ def get_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1097,7 +1098,7 @@ def put_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1126,7 +1127,7 @@ def delete_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
