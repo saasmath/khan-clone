@@ -1,13 +1,13 @@
-from jinja2.utils import escape
-from templatefilters import escapejs
-
-import models
 from itertools import izip
-import templatefilters
+
+from jinja2.utils import escape
+
+from templatefilters import escapejs, timesince_ago
+from models import Exercise, UserExerciseGraph
 
 def truncate_to(s, length):
     if len(s) > length:
-        return s[18:] + '...'
+        return s[:length - 3] + '...'
     else:
         return s
 
@@ -25,8 +25,8 @@ def class_progress_report_graph_context(user_data, student_list):
     student_email_pairs = [(escape(s.email), truncate_to(s.nickname, 18)) for s in list_students]
     emails_escapejsed = [escapejs(s.email) for s in list_students]
 
-    exercises_all = models.Exercise.get_all_use_cache()
-    user_exercise_graphs = models.UserExerciseGraph.get(list_students)
+    exercises_all = Exercise.get_all_use_cache()
+    user_exercise_graphs = UserExerciseGraph.get(list_students)
 
     exercises_found = []
 
@@ -69,7 +69,7 @@ def class_progress_report_graph_context(user_data, student_list):
             elif graph_dict["total_done"] > 0:
                 status = "Started"
 
-            if not exercise_data.has_key(student_email):
+            if student_email not in exercise_data:
                 exercise_data[student_email] = {
                     'email': student.email,
                     'nickname': student.nickname,
@@ -82,7 +82,7 @@ def class_progress_report_graph_context(user_data, student_list):
                     "progress": graph_dict["progress"],
                     "total_done": graph_dict["total_done"],
                     "last_done": graph_dict["last_done"] if graph_dict["last_done"] and graph_dict["last_done"].year > 1 else '',
-                    "last_done_ago": templatefilters.timesince_ago(graph_dict["last_done"]) if graph_dict["last_done"] and graph_dict["last_done"].year > 1 else ''
+                    "last_done_ago": timesince_ago(graph_dict["last_done"]) if graph_dict["last_done"] and graph_dict["last_done"].year > 1 else ''
                 })
             else:
                 exercise_data[student_email]['exercises'].append({
@@ -90,7 +90,7 @@ def class_progress_report_graph_context(user_data, student_list):
                     "status": status,
                 })
 
-    student_row_data = [ data for key, data in exercise_data.iteritems() ]
+    student_row_data = [data for key, data in exercise_data.iteritems()]
 
     return {
         'exercise_names': exercise_list,
