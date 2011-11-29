@@ -1,18 +1,10 @@
-import re
-import cgi
 import math
-import os
-import simplejson as json
 
 from jinja2.utils import escape
 
-from app import App
-from templatefilters import seconds_to_time_string, slugify
-import consts
-import util
+from templatefilters import slugify
 import topics_list
 import models
-from api.auth import xsrf
 import shared_jinja
 
 def user_info(username, user_data):

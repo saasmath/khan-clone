@@ -424,7 +424,7 @@ var VideoStats = {
             id = this.sYoutubeId;
         }
 
-        $.ajax({type: "GET",
+        $.ajax({type: "POST",
                 url: "/api/v1/user/videos/" + id + "/log",
                 data: data,
                 success: function (data) {

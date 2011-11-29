@@ -2,10 +2,7 @@ from jinja2.utils import escape
 from templatefilters import escapejs
 
 import models
-import util
 from itertools import izip
-import datetime
-import logging
 import templatefilters
 
 def truncate_to(s, length):
@@ -48,9 +45,6 @@ def class_progress_report_graph_context(user_data, student_list):
     for (student, student_email_pair, escapejsed_student_email, user_exercise_graph) in izip(list_students, student_email_pairs, emails_escapejsed, user_exercise_graphs):
 
         student_email = student.email
-        escaped_nickname = escape(student.nickname)
-        escaped_student_email = student_email_pair[0]
-        truncated_nickname = student_email_pair[1]
 
         student_review_exercise_names = user_exercise_graph.review_exercise_names()
 
@@ -69,7 +63,7 @@ def class_progress_report_graph_context(user_data, student_list):
                     status = "Proficient"
                     if not graph_dict["explicitly_proficient"]:
                         status = "Proficient (due to proficiency in a more advanced module)"
-                        
+
             elif graph_dict["struggling"]:
                 status = "Struggling"
             elif graph_dict["total_done"] > 0:

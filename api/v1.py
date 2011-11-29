@@ -16,7 +16,6 @@ from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo, ab_test
-from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
@@ -27,9 +26,6 @@ from api.decorators import jsonify, jsonp, compress, decompress, etag
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
-
-from google.appengine.ext import db
-
 
 from google.appengine.ext import db
 
@@ -412,6 +408,10 @@ def log_user_video(youtube_id):
     video_log = None
     user_data = models.UserData.current()
 
+    if not request.request_string("seconds_watched") or not request.request_string("last_second_watched"):
+        logging.critical("Video log request with no parameters received.")
+        return unauthorized_response()
+
     if user_data:
         video_key_str = request.request_string("video_key")
 
@@ -763,7 +763,8 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
+# TomY Temporary fix: Sundar needs to access the logs using GET, which I accidentally masked with the newer call above
+@route("/api/v1/user/videos/<youtube_id>/sundarlog", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -934,11 +935,60 @@ def autocomplete():
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
 @developer_required
+@jsonp
+@jsonify
 def problem_logs():
     problem_log_query = models.ProblemLog.all()
     filter_query_by_request_dates(problem_log_query, "time_done")
     problem_log_query.order("time_done")
     return problem_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/videos", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def video_logs():
+    video_log_query = models.VideoLog.all()
+    filter_query_by_request_dates(video_log_query, "time_watched")
+    video_log_query.order("time_watched")
+    return video_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/users", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def user_data():
+    user_data_query = models.UserData.all()
+    filter_query_by_request_dates(user_data_query, "joined")
+    user_data_query.order("joined")
+    return user_data_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/user/students/progressreport", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_student_progress_report():
+    user_data_coach = models.UserData.current()
+    if not user_data_coach:
+        return api_invalid_param_response("User is not logged in.")
+
+    student_list = None
+
+    student_list_key = request.request_string('list_id')
+    if student_list_key and student_list_key != 'allstudents':
+        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
+        for list in student_lists:
+            if str(list.key()) == student_list_key:
+                student_list = list
+                break
+        if not student_list:
+            return api_invalid_param_response("Invalid list ID.")
+
+    report_data = class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list)
+
+    return report_data
 
 @route("/api/v1/user/goals", methods=["GET"])
 @oauth_optional()
@@ -1165,28 +1215,3 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
-
-@route("/api/v1/user/students/progressreport", methods=["GET"])
-@oauth_optional()
-@jsonp
-@jsonify
-def get_student_progress_report():
-    user_data_coach = models.UserData.current()
-    if not user_data_coach:
-        return api_invalid_param_response("User is not logged in.")
-
-    student_list = None
-
-    student_list_key = request.request_string('list_id')
-    if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
-        for list in student_lists:
-            if str(list.key()) == student_list_key:
-                student_list = list
-                break
-        if not student_list:
-            return api_invalid_param_response("Invalid list ID.")
-
-    report_data = class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list);
-
-    return report_data

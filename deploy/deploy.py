@@ -1,5 +1,4 @@
 import sys
-import re
 import subprocess
 import os
 import optparse
@@ -291,7 +290,6 @@ def main():
         compress.hashes = {}
 
     print "Deploying version " + str(version)
-    compress.revert_js_css_hashes()
 
     if not compile_templates():
         print "Failed to compile templates, bailing."
@@ -304,7 +302,6 @@ def main():
     if not options.dryrun:
         (email, password) = get_app_engine_credentials()
         success = deploy(version, email, password)
-        compress.revert_js_css_hashes()
         if success:
             send_hipchat_deploy_message(version, includes_local_changes, email)
             open_browser_to_ka_version(version)

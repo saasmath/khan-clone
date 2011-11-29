@@ -1,11 +1,7 @@
-import logging
-
-from google.appengine.api import users
-
 import request_handler
 import user_util
 import util_badges
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import Badge, BadgeCategory
 from models_badges import CustomBadgeType
 from models import UserData
 
