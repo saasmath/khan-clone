@@ -461,10 +461,8 @@ input.goal-title:focus {
 }
 
 .recently-completed .goal-description strong {
-    background: transparent url(/images/objective-complete-tick.png) no-repeat 4px 50%; /*! data-uri(/images/objective-complete-tick.png) */
     display: inline-block;
     text-decoration: line-through;
-    padding-left: 22px;
     opacity: .7;
     filter: alpha(opacity=75);
 }
