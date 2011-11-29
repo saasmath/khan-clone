@@ -30,9 +30,6 @@ from api.api_util import api_error_response, api_invalid_param_response, api_cre
 
 from google.appengine.ext import db
 
-
-from google.appengine.ext import db
-
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
 # response so that we can visibly award badges while the page silently posts log info in the background.
@@ -657,7 +654,6 @@ def attempt_problem_number(exercise_name, problem_number):
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
             user_states = user_exercise_graph.states(exercise.name)
-            sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
 
             action_results = {
                 "exercise_state": {
@@ -667,15 +663,6 @@ def attempt_problem_number(exercise_name, problem_number):
                 "points_earned" : { "points" : points_earned },
                 "attempt_correct" : request.request_bool("complete")
             };
-
-            if user_states["proficient"]:
-                followups = user_followup_exercises(exercise_name)
-
-                if followups:
-                    action_results["exercise_state"]["followups"] = followups
-                else :
-                    followups = [models.Exercise.get_by_name(exercise) for exercise in user_data.suggested_exercises[:3]]
-                    action_results["exercise_state"]["followups"] = followups
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
