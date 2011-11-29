@@ -528,21 +528,28 @@ input.goal-title:focus {
 
 .goalpicker h3,
 .goalpicker h4 {
-  font-size:40px;
-  font-family:MuseoSans100;
+  font-size:30px;
+  font-family:MuseoSans300;
   font-weight:normal;
   line-height:68px;
   color:#777;
   margin:0;
   letter-spacing:4px;
 }
+.goalpicker h3{
+  padding-left:.4em;
+  margin-bottom:12px;
+  width:90%;
+  border-bottom:1px solid #666;
+  
+}
 .goalpicker h4 {
   text-transform:uppercase;
-  font-family:MuseoSans900;
-  font-weight:normal;
-  font-size:28px;
+  font-family:MuseoSans500;
+  font-weight:bold;
+  font-size:24px;
   letter-spacing:6px;
-  line-height:28px;
+  line-height:38px;
 }
 
 .goalpicker a{
@@ -555,14 +562,18 @@ input.goal-title:focus {
   -webkit-box-shadow:0 0 6px 1px #678D00;
 }
 
+.goalpicker .newgoal .info p{
+  margin:0 0 22px;
+}
+
 .goalpicker .newgoal:hover a,
 .goalpicker .info button {
   color:#678D00;
 }
 
 .goalpicker .info button {
-  font-family:MuseoSans900;
-  font-weight:normal;
+  font-family:MuseoSans500;
+  font-weight:bold;
   text-transform:uppercase;
   letter-spacing:2px;
   text-align:center;
@@ -653,14 +664,15 @@ input.goal-title:focus {
   background-clip: padding-box;
 }
 
+.student-module-status.notmatching,
+.student-module-status.light.notmatching {
+  background-color: #aaa;
+}
 
 .modal .goalpicker h3{
   font-size:24px;
-  padding-left:.5em;
   line-height:36px;
-  margin-bottom:12px;
-  width:90%;
-  border-bottom:1px solid #666;
+  margin-left:.5em;
 }
 
 .modal .goalpicker h4 {
@@ -668,7 +680,4 @@ input.goal-title:focus {
 }
 .modal .goalpicker .newgoal{
   padding:1em 1em 2em;
-}
-.modal .goalpicker .newgoal .info p{
-  margin:0 0 22px;
 }

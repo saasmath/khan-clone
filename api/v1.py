@@ -20,6 +20,7 @@ from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
+from profiles import class_progress_report_graph
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -29,6 +30,8 @@ from api.api_util import api_error_response, api_invalid_param_response, api_cre
 
 from google.appengine.ext import db
 
+
+from google.appengine.ext import db
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -1162,3 +1165,28 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
+
+@route("/api/v1/user/students/progressreport", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_student_progress_report():
+    user_data_coach = models.UserData.current()
+    if not user_data_coach:
+        return api_invalid_param_response("User is not logged in.")
+
+    student_list = None
+
+    student_list_key = request.request_string('list_id')
+    if student_list_key and student_list_key != 'allstudents':
+        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
+        for list in student_lists:
+            if str(list.key()) == student_list_key:
+                student_list = list
+                break
+        if not student_list:
+            return api_invalid_param_response("Invalid list ID.")
+
+    report_data = class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list);
+
+    return report_data

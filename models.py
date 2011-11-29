@@ -2125,7 +2125,7 @@ class UserExerciseGraph(object):
             if graph_dict.get("next_review") is None:
                 graph_dict["next_review"] = datetime.datetime.min
 
-                if graph_dict["total_done"] > 0 and graph_dict["last_review"] > datetime.datetime.min:
+                if graph_dict["total_done"] > 0 and graph_dict["last_review"] and graph_dict["last_review"] > datetime.datetime.min:
                     next_review = graph_dict["last_review"] + UserExercise.get_review_interval_from_seconds(graph_dict["review_interval_secs"])
 
                     if next_review > now and graph_dict["proficient"] and graph_dict["streak"] == 0:
