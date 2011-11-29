@@ -529,7 +529,13 @@ function KnowledgeMap(params) {
             var exerciseModel = new KnowledgeMapExercise(exercise);
             self.exerciseList[exercise.name] = exerciseModel;
 
-            if (self.newGoal && (exercise.goal_req || exercise.status === 'Proficient')) {
+            var invalidForGoal = (
+                exercise.goal_req ||
+                exercise.status === 'Proficient' ||
+                exercise.status === 'Review'
+            );
+
+            if (self.newGoal && invalidForGoal) {
                 exerciseModel.set({'invalidForGoal':true});
             } else {
                 // Create views

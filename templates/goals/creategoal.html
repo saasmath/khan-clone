@@ -205,10 +205,14 @@ var GoalCreator = {
         this.resize();
     },
     onExerciseClicked: function(exercise, evt) {
-       if (exercise.get('status') == 'Proficient')
-           return; // Cannot select exercises the user is proficient in
-       if (exercise.get('goal_req'))
-           return; // Cannot select exercises that are objectives in current goals
+        // Cannot select exercises that:
+        //      user is already proficient in
+        //      are already objectives in current goals
+        if (exercise.get('status') == 'Proficient' ||
+            exercise.get('status') == 'Review' ||
+            exercise.get('goal_req') ) {
+            return;
+        }
 
         GoalCreator.toggleObjectiveInternal('GoalObjectiveExerciseProficiency', 'exercise', exercise.get('name'), exercise.get('display_name'));
 
