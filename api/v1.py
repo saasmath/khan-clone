@@ -992,7 +992,7 @@ def get_student_progress_report():
 @jsonify
 def get_user_goals():
     student = models.UserData.current() or models.UserData.pre_phantom()
-    user_override = request.request_user_data("student_email")
+    user_override = request.request_user_data("email")
     if user_override and user_override.key_email != student.key_email:
         if not user_override.is_visible_to(student):
             return api_unauthorized_response("Cannot view this profile")
@@ -1010,7 +1010,7 @@ def get_user_goals():
 def get_user_current_goals():
     student = models.UserData.current() or models.UserData.pre_phantom()
 
-    user_override = request.request_user_data("student_email")
+    user_override = request.request_user_data("email")
     if user_override and user_override.key_email != student.key_email:
         if not user_override.is_visible_to(student):
             return api_unauthorized_response("Cannot view this profile")
