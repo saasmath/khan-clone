@@ -161,13 +161,13 @@ def playlists_library_list_fresh():
 @route("/api/v1/exercises", methods=["GET"])
 @jsonp
 @jsonify
-def exercises():
+def get_exercises():
     return models.Exercise.get_all_use_cache()
 
 @route("/api/v1/exercises/<exercise_name>", methods=["GET"])
 @jsonp
 @jsonify
-def exercises(exercise_name):
+def get_exercise(exercise_name):
     return models.Exercise.get_by_name(exercise_name)
 
 @route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
