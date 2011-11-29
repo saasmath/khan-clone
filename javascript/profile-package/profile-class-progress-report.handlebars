@@ -43,7 +43,7 @@
                     {{#each exercise_list}}
                     <tr class="student-exercises-row" data-id="{{ idx }}">
                       {{#each exercises}}
-                        <td class="student-module-status exercise-color {{ status_css }} {{#if notTransparent}}action-gradient seethrough{{/if}}" onclick="ProgressReport.onUnhover(); Profile.collapseAccordion(); Profile.loadGraph('{{ link }}');" data-id="{{ idx }}">
+                        <td class="student-module-status exercise-color {{ status_css }} {{#if notTransparent}}action-gradient seethrough{{/if}}" data-id="{{ idx }}">
                           {{#if status}}
                           <div class="hover-content" style="display: none;">
                             <b>{{ ../../nickname }}</b><br/>

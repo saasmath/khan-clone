@@ -238,6 +238,11 @@ var ProgressReport = {
                     model: row,
                     index: col_idx
                 }));
+                $(this).click(function() {
+                    ProgressReport.onUnhover();
+                    Profile.collapseAccordion();
+                    Profile.loadGraph(row.exercises[col_idx].link);
+                });
             });
         });
 
