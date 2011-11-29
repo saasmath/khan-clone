@@ -476,7 +476,7 @@ var Profile = {
                 studentGoalsViewModel.rowData.push({
                     rowID: studentGoalsViewModel.rowData.length,
                     student: student,
-                    goal: null,
+                    goal: {objectives: []},
                     progress_count: -1,
                     goal_idx: 0,
                     struggling: false,
