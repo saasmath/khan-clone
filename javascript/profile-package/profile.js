@@ -112,10 +112,8 @@ var Profile = {
             }
         }, 1000);
 
-        $('.new-goal').click(function(e) {
-            e.preventDefault();
-            window.newGoalDialog.show();
-        });
+        $('.new-goal').removeClass('green');
+        $('.new-goal').addClass('disabled');
     },
 
 
@@ -350,6 +348,7 @@ var Profile = {
         current_goals = [];
         completed_goals = [];
         abandoned_goals = [];
+        currentUser = (href.indexOf("email=") < 0);
 
         $.each(data, function(idx, goal) {
             if (goal.completed != undefined) {
@@ -361,7 +360,10 @@ var Profile = {
                 current_goals.push(goal);
             }
         });
-        GoalBook.reset(current_goals);
+        if (currentUser)
+            GoalBook.reset(current_goals);
+        else
+            CurrentGoalBook = new GoalCollection(current_goals);
         CompletedGoalBook = new GoalCollection(completed_goals);
         AbandonedGoalBook = new GoalCollection(abandoned_goals);
 
@@ -370,7 +372,7 @@ var Profile = {
         Profile.goalsViews = {};
         Profile.goalsViews.current = new GoalProfileView({
             el: "#current-goals-list",
-            model: GoalBook,
+            model: currentUser ? GoalBook : CurrentGoalBook,
             type: 'current',
             title: 'Current goals'
         });
@@ -399,6 +401,13 @@ var Profile = {
             $('#goal-show-abandoned-link').parent().show();
         } else {
             $('#goal-show-abandoned-link').parent().hide();
+        }
+        
+        if (currentUser) {
+            $('.new-goal').addClass('green').removeClass('disabled').click(function(e) {
+                e.preventDefault();
+                window.newGoalDialog.show();
+            });
         }
     },
 

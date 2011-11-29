@@ -859,7 +859,6 @@ application = webapp2.WSGIApplication([
     ('/profile', util_profile.ViewProfile),
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
-    ('/profile/graph/classprogressreport', util_profile.ClassProgressReportGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
     ('/class_profile', util_profile.ViewClassProfile),
