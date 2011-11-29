@@ -6,6 +6,7 @@ import datetime
 import urllib2
 import webbrowser
 import getpass
+import re
 
 sys.path.append(os.path.abspath("."))
 import compress
