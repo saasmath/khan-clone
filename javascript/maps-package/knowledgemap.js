@@ -33,8 +33,8 @@ function KnowledgeMapInitGlobals() {
                                 function(coord, zoom) {
                                   return "/images/map-tiles/field_" +
                                      Math.floor(Math.random()*4+1) + '.jpg';
-                                }
-                    )},
+                                });
+                    },
                     tileSize: new google.maps.Size(256, 256),
                     maxZoom: 10,
                     minZoom: 7,
@@ -83,7 +83,7 @@ function KnowledgeMapInitGlobals() {
             var milestones = [];
             for (var milestone = 0; milestone < this.get('num_milestones')-1; milestone++) {
                 milestones.push({
-                    'left': Math.round((milestone+1)*(228/this.get('num_milestones'))),
+                    'left': Math.round((milestone+1)*(228/this.get('num_milestones')))
                 });
             }
             this.set({'streakBar': {
@@ -92,7 +92,7 @@ function KnowledgeMapInitGlobals() {
                 'progressDisplay': this.get('progress_display'),
                 'maxWidth': 228,
                 'width': Math.min(1.0, this.get('progress'))*228,
-                'milestones': [],
+                'milestones': []
             }});
         }
     });
@@ -384,7 +384,7 @@ function KnowledgeMapInitGlobals() {
 
             $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
             this.parent.highlightNode(this.nodeName, false);
-        },
+        }
     });
 }
 
@@ -486,7 +486,7 @@ function KnowledgeMap(params) {
 
     // Views
     this.exerciseRowViews = [];
-    this.exerciseMarkerViews = {},
+    this.exerciseMarkerViews = {};
 
     // Map
     this.map = null;
@@ -687,7 +687,7 @@ function KnowledgeMap(params) {
             });
 
             self.fFirstDraw = false;
-        }
+        };
     };
 
     this.addNode = function(node) {
@@ -964,4 +964,4 @@ function KnowledgeMap(params) {
     };
 
     this.init(params);
-};
+}

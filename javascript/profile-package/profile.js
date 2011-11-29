@@ -300,7 +300,7 @@ var Profile = {
         this.fLoadedGraph = true;
 
         var apiCallback = null;
-        for (uri in apiCallbacksTable) {
+        for (var uri in apiCallbacksTable) {
             if (href.indexOf(uri) > -1) {
                 apiCallback = apiCallbacksTable[uri];
             }
@@ -420,7 +420,7 @@ var Profile = {
         var studentGoalsViewModel = {
             rowData: [],
             sortDesc: '',
-            filterDesc: '',
+            filterDesc: ''
         };
 
         $.each(data, function(idx1, student) {
@@ -464,7 +464,7 @@ var Profile = {
                         goal: goal,
                         progress_count: progress_count,
                         goal_idx: student.goal_count,
-                        struggling: found_struggling,
+                        struggling: found_struggling
                     };
 
                     $.each(goal.objectives, function(idx3, objective) {
@@ -479,7 +479,7 @@ var Profile = {
                     goal: {objectives: []},
                     progress_count: -1,
                     goal_idx: 0,
-                    struggling: false,
+                    struggling: false
                 });
             }
         });
@@ -511,10 +511,10 @@ var Profile = {
             });
         });
 
-        $("#student-goals-sort").change(function() { Profile.sortStudentGoals(studentGoalsViewModel) });
+        $("#student-goals-sort").change(function() { Profile.sortStudentGoals(studentGoalsViewModel); });
 
-        $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(studentGoalsViewModel) });
-        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(studentGoalsViewModel) });
+        $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
+        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
 
         Profile.sortStudentGoals(studentGoalsViewModel);
         Profile.filterStudentGoals(studentGoalsViewModel);

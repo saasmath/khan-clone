@@ -83,7 +83,7 @@ var ClassProfile = {
             exercise.idx = idx;
         });
 
-        data.exercise_list = []
+        data.exercise_list = [];
         $.each(data.exercise_data, function(idx, student_row) {
             data.exercise_list.push(student_row);
         });
@@ -149,7 +149,7 @@ var ProgressReport = {
             } else {
                 $(this.el).hide();
             }
-        },
+        }
     }),
     studentColumnView: Backbone.View.extend({
         updateFilter: function(visibleColumns, matchingColumns, matchingCells) {
@@ -167,10 +167,10 @@ var ProgressReport = {
                 }
 
                 $(this.el).show();
-            } else { 
+            } else {
                 $(this.el).hide();
             }
-        },
+        }
     }),
 
     init: function(model) {
@@ -250,7 +250,7 @@ var ProgressReport = {
         $("#student-progressreport-search").keyup(function() {
             if (ProgressReport.updateFilterTimeout == null) {
                 ProgressReport.updateFilterTimeout = setTimeout(function() {
-                    ProgressReport.filterRows(model)
+                    ProgressReport.filterRows(model);
                     ProgressReport.updateFilterTimeout = null;
                 }, 250);
             }
@@ -263,7 +263,7 @@ var ProgressReport = {
             ProgressReport.filterRows(model);
         });
 
-        ProgressReport.filterRows(model)
+        ProgressReport.filterRows(model);
     },
 
     filterRows: function(model) {

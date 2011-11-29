@@ -1,7 +1,7 @@
 /*
  Copyright 2010 Redfin Corporation
- Licensed under the Apache License, Version 2.0: 
- http://www.apache.org/licenses/LICENSE-2.0 
+ Licensed under the Apache License, Version 2.0:
+ http://www.apache.org/licenses/LICENSE-2.0
  */
 
 // Added a wrapper function to allow us to load dynamically
@@ -16,7 +16,7 @@ function FastMarkerOverlayInit() {
     com.redfin.FastMarkerOverlay = function(map, markers) {
       this.setMap(map);
       this._markers = markers;
-    }
+    };
 
     com.redfin.FastMarkerOverlay.prototype = new google.maps.OverlayView();
 
@@ -30,7 +30,7 @@ function FastMarkerOverlayInit() {
       // See http://code.google.com/p/gmaps-api-issues/issues/detail?id=3078
       //
       panes.overlayMouseTarget.appendChild(this._div);
-    }
+    };
 
     /* Copy our data to a new FastMarkerOverlay
      * @param {google.maps.Map} map the map to which the copy will add markers
@@ -50,7 +50,7 @@ function FastMarkerOverlayInit() {
     com.redfin.FastMarkerOverlay.prototype.draw = function() {
       // if already removed, never draw
       if (!this._div) return;
-      
+
       // Size and position the overlay. We use a southwest and northeast
       // position of the overlay to peg it to the correct position and size.
       // We need to retrieve the projection from this overlay to do this.
@@ -67,7 +67,7 @@ function FastMarkerOverlayInit() {
         textArray.push(divPixel.x + marker._leftOffset);
         textArray.push("px; top:");
         textArray.push(divPixel.y + marker._topOffset);
-        textArray.push("px;")
+        textArray.push("px;");
         if (marker._zIndex) {
           textArray.push(" z-index:");
           textArray.push(marker._zIndex);
@@ -91,34 +91,34 @@ function FastMarkerOverlayInit() {
         }
         textArray.push("</div>");
       }
-      
+
       //Insert the HTML into the overlay
       this._div.innerHTML = textArray.join('');
-    }
+    };
 
     /** Hide all of the markers */
     com.redfin.FastMarkerOverlay.prototype.hide = function() {
       if (!this._div) return;
       this._div.style.display = "none";
-    }
+    };
 
     /** Show all of the markers after hiding them */
     com.redfin.FastMarkerOverlay.prototype.unhide = function() {
       if (!this._div) return;
       this._div.style.display = "block";
-    }
+    };
 
     /** Remove the overlay from the map; never use the overlay again after calling this function */
     com.redfin.FastMarkerOverlay.prototype.onRemove = function() {
       this._div.parentNode.removeChild(this._div);
       this._div = null;
-    }
+    };
 
 
     /** Create a single marker for use in FastMarkerOverlay
      * @constructor
      * @param {string} id DOM node ID of the div that will contain the marker
-     * @param {google.maps.LatLng} latLng geographical location of the marker 
+     * @param {google.maps.LatLng} latLng geographical location of the marker
      * @param {Array.<string>} htmlTextArray an array of strings which we'll join together to form the HTML of your marker
      * @param {string=} divClassName the CSS class of the div that will contain the marker. (optional)
      * @param {string=} zIndex zIndex of the div that will contain the marker. (optional, 'auto' by default)
@@ -133,7 +133,7 @@ function FastMarkerOverlayInit() {
       this._zIndex = zIndex;
       this._leftOffset = leftOffset || 0;
       this._topOffset = topOffset || 0;
-    }
+    };
 
     /** Copy the FastMarker
      * @return {com.redfin.FastMarker} duplicate of this marker
@@ -146,6 +146,5 @@ function FastMarkerOverlayInit() {
         htmlArrayCopy[i] = htmlArray[i];
       }
       return new com.redfin.FastMarker(this._id, latLng, htmlArrayCopy, this._divClassName, this._zIndex, this._leftOffset, this._topOffset);
-    }
+    };
 }
-
