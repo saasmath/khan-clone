@@ -1031,9 +1031,9 @@ def get_user_current_goals():
 @jsonp
 @jsonify
 def get_student_goals():
-    user_data = models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User is not logged in.")
+    user_data_coach = request.request_user_data("coach_email")
+    if not user_data_coach:
+        return api_invalid_param_response("Coach not specified.")
 
     student_list = None
 
@@ -1041,7 +1041,7 @@ def get_student_goals():
 
     student_list_key = request.request_string('list_id')
     if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data.key())
+        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
         for list in student_lists:
             if str(list.key()) == student_list_key:
                 student_list = list
@@ -1052,7 +1052,7 @@ def get_student_goals():
     if student_list:
         students = student_list.get_students_data()
     else:
-        students = user_data.get_students_data()
+        students = user_data_coach.get_students_data()
 
     students = sorted(students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(students)
