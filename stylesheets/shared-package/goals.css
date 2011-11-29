@@ -572,21 +572,14 @@ input.goal-title:focus {
 }
 
 .goalpicker .info button {
-  font-family:MuseoSans500;
-  font-weight:bold;
-  text-transform:uppercase;
-  letter-spacing:2px;
+  text-transform:capitalize;
   text-align:center;
   line-height:16px;
-  border:2px solid #678D00;
-  background-color:#678D00;
-  color:white;
   width:70%;
   margin:1em auto 2em;
   margin-left:15%;
-  cursor:pointer;
-  padding:3px 0 1px;
 }
+
 
 .goalpicker .info, .goalpicker .info:hover  {
   display:none;
