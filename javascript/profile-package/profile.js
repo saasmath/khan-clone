@@ -348,7 +348,8 @@ var Profile = {
         current_goals = [];
         completed_goals = [];
         abandoned_goals = [];
-        currentUser = (href.indexOf("email=") < 0);
+        var qs = Profile.parseQueryString(href);
+        currentUser = (qs["email"] == USER_EMAIL);
 
         $.each(data, function(idx, goal) {
             if (goal.completed != undefined) {
@@ -374,19 +375,22 @@ var Profile = {
             el: "#current-goals-list",
             model: currentUser ? GoalBook : CurrentGoalBook,
             type: 'current',
-            title: 'Current goals'
+            title: 'Current goals',
+            currentUser: currentUser
         });
         Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
-            title: 'Completed goals'
+            title: 'Completed goals',
+            currentUser: currentUser
         });
         Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
-            title: 'Abandoned goals'
+            title: 'Abandoned goals',
+            currentUser: currentUser
         });
 
         Profile.userGoalsHref = href;
@@ -929,7 +933,8 @@ var GoalProfileView = Backbone.View.extend({
             title: this.options.title,
             isCurrent: (this.options.type == 'current'),
             isCompleted: (this.options.type == 'completed'),
-            isAbandoned: (this.options.type == 'abandoned')
+            isAbandoned: (this.options.type == 'abandoned'),
+            isCurrentUser: this.options.currentUser
         }));
 
         jel.find(".goal").hover(

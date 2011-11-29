@@ -28,5 +28,9 @@
     {{/each}}
     </div>
 {{else}}
-    {{>goal-new}}
+    {{#if isCurrentUser }}
+        {{>goal-new}}
+    {{else}}
+        Student has no current goals.
+    {{/if}}
 {{/if}}
