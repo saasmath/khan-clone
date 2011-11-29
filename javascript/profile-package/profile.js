@@ -760,6 +760,7 @@ var Profile = {
 						infoHover.css('left', Math.min(left, leftMax));
 						infoHover.css('top', mouseY + 5);
 						infoHover.css('cursor', 'pointer');
+						infoHover.css('position', 'fixed');
 						infoHover.show();
 					}
 				}, 100);
@@ -861,6 +862,7 @@ var Profile = {
                         infoHover.css('left', Math.min(left, leftMax));
                         infoHover.css('top', mouseY + 5);
                         infoHover.css('cursor', 'pointer');
+						infoHover.css('position', 'fixed');
                         infoHover.show();
                     }
                 }, 100);
