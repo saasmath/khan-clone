@@ -55,3 +55,6 @@
         </div>
 </div>
 
+{# Pass along the caching information to the JS so that
+	when it makes its request for content, it can use this token #}
+<script>var Homepage_cacheToken = {{ timestamp }};</script>

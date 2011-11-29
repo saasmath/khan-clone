@@ -19,7 +19,7 @@ from autocomplete import video_title_dicts, playlist_title_dicts
 import profiles.util_profile as util_profile 
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag
+from api.decorators import jsonify, jsonp, compress, decompress, etag, cacheable
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response
@@ -138,6 +138,7 @@ def playlists_library():
     return playlist_structure
 
 @route("/api/v1/homepage_library", methods=["GET"])
+@cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda: models.Setting.cached_library_content_date())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.

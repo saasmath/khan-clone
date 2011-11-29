@@ -40,10 +40,12 @@ var Homepage = {
     },
 
     loadData: function() {
+		var cacheToken = window.Homepage_cacheToken || Date.now();
         $.ajax({
 			type: "GET",
 			url: "/api/v1/homepage_library",
 			dataType: "jsonp",
+			data: {"v": cacheToken},
             jsonpCallback: "__dataCb",
 			success: function(data){
 				Homepage.loadLibraryContent(data);

@@ -167,8 +167,7 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        # Get pregenerated library content from our in-memory/memcache two-layer cache
-        #library_content = library.library_content_html()
+        # Get pregenerated playlist structure from our in-memory/memcache two-layer cache
         library_content = library.playlist_content_html()
 
         template_values = {

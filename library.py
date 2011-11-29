@@ -12,6 +12,7 @@ import util
 import urllib2
 import re
 import math
+import time
 
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():
@@ -122,6 +123,12 @@ def library_content_html():
         lambda *args, **kwargs: "playlist_content_html%s" % Setting.cached_playlist_content_date()
         )
 def playlist_content_html():
+    """" Returns the HTML for the structure of the playlists as they will be
+    populated ont he homepage. Does not actually contain the list of video
+    names as those are filled in later asynchronously via the cache.
+    
+    """
+    
     # No cache found -- regenerate HTML
     smart_history = getSmartHistoryContent()
 
@@ -136,7 +143,8 @@ def playlist_content_html():
         if topic in dict_playlists_by_title:
             playlist = dict_playlists_by_title[topic]
             video_count = playlist.get_video_count() 
-            # 3 columns, 18px per row.
+            # 3 columns, 18px per row. This must be updated in conjunction
+            # with code in homepage.js
             height = math.ceil(video_count / 3) * 18
 
             playlist_data = {
@@ -155,16 +163,20 @@ def playlist_content_html():
             playlist_data_prev['next'] = playlist_data
         playlist_data_prev = playlist_data
 
-    # Separating out the columns because the formatting is a little different on each column
+    timestamp = time.time()
     template_values = {
         'App' : App,
         'all_playlists': all_playlists,
         'smart_history': smart_history,
+        
+        # convert timestamp to a nice integer for the JS
+        'timestamp': int(round(timestamp * 1000)),
         }
 
-    html = shared_jinja.get().render_template("library_playlist_template.html", **template_values)
-    Setting.cached_playlist_content_date(str(datetime.datetime.now()))
-
+    html = shared_jinja.get().render_template("library_playlist_template.html",
+                                              **template_values)
+    Setting.cached_playlist_content_date(
+            str(datetime.datetime.fromtimestamp(timestamp)))
     return html
 
 class GenerateLibraryContent(request_handler.RequestHandler):
