@@ -465,7 +465,8 @@ var ProgressReport = {
 
         adjustData.tableDiv = $("#module-progress #table_div");
         adjustData.firstTd = $('#firstTd');
-        adjustData.newFirstTdWidth = $('.tableFirstCol').width();
+        adjustData.newFirstTdWidth = $('.tableFirstCol:visible').width();
+        adjustData.tableHeaderHeight = adjustData.firstTd.height();
 
         $('#table_div td:visible:lt(' + colCount +')').each(function(index, element) {
             var colIdx = $(this).attr('data-id');
@@ -481,6 +482,7 @@ var ProgressReport = {
             if (colIdx) {
                 if (adjustData.tableHeaderWidths[colIdx]) {
                     adjustData.tableHeaderWidths[colIdx].header = $(this).find('div.tableHeader');
+                    adjustData.tableHeaderWidths[colIdx].headerTh = $(this);
                 }
             }
         });
@@ -497,10 +499,12 @@ var ProgressReport = {
         adjustData.firstTd.css("width",adjustData.newFirstTdWidth);//for adjusting first td
         $.each(adjustData.tableHeaderWidths, function(idx, headerWidth) {
             if (headerWidth)
-                if (headerWidth.width >= 0)
+                if (headerWidth.width >= 0) {
                     $(headerWidth.header).width(headerWidth.width);
-                else
+                    $(headerWidth.headerTh).height(adjustData.tableHeaderHeight);
+                } else {
                     $(headerWidth.header).attr('style','');
+                }
         });
     }
 };
