@@ -969,7 +969,7 @@ def get_student_progress_report():
     user_data_coach = models.UserData.current()
 
     user_data_override = request.request_user_data("coach_email")
-    if user_data_coach.developer and user_data_override:
+    if user_data_coach and user_data_coach.developer and user_data_override:
         user_data_coach = user_data_override
 
     if not user_data_coach:
