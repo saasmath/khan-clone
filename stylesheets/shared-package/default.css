@@ -169,7 +169,6 @@ hr {
     line-height: 22px;
     padding: 5px 10px;
     position: relative;
-    *position: static;
     margin: 0;
     text-decoration: none !important;
 
@@ -184,6 +183,9 @@ hr {
     box-shadow: inset 0 1px 0 rgba(255,255,255, .3);;
 
 }
+.lte7 .simple-button {
+    position: static;
+}
 input.simple-button {
     line-height: 15px;
 }
@@ -194,8 +196,12 @@ input.simple-button {
     -webkit-box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
     -moz-box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
     box-shadow: inset 0 0 3px 2px rgba(255,255,255,.5);
-    outline: 2px solid #fff\9;
 }
+
+.lte8 .simple-button:hover {
+    outline: 2px solid #333;
+}
+
 .simple-button:active {
     top: 1px;
 }
@@ -368,7 +374,7 @@ a:link:hover, a:link:focus, a:visited:hover, a:visited:focus {
  * Hide links with href=# and other script-requiring elements from non-scripting users,
  * since they will only be confusing.  They will be made visible by script.
  */
-a[href="#"], .requires_script {
+.requires_script {
     visibility: hidden;
 }
 
@@ -488,9 +494,11 @@ footer {
         height: 24px;
         width: 24px;
         position: relative;
-        *position: static;
         top: 7px;
         padding-right: 0;
+    }
+    .lte7 footer.short .small-social-links a {
+        position: static;
     }
     footer.short .small-social-links .youtube {
         background-image: url(/images/non-repeating-sprites.3.png);
@@ -804,9 +812,9 @@ footer {
         margin: 0 8px;
         display: inline-block;
         height: 20px;
-
-        /* For IE */
-        *top: 0;
+    }
+    .lte7 #top-header #top-header-links span.separator, #sitewide-navigation span.separator {
+        top: 0;
     }
     .dark #top-header #top-header-links span.separator {
         border-left: 1px solid #1B242F;
@@ -897,7 +905,9 @@ footer {
         display:-moz-inline-stack;
         display:inline-block;
         zoom:1;
-        *display:inline;
+    }
+    .lte7 #top-header a.notification_link span.notification_bubble {
+        display:inline;
     }
 
     #login-menu .fb_button, #login-menu .fb_button_rtl {
@@ -952,10 +962,10 @@ footer {
         /* For jquery-ui autocomplete */
         z-index: 100;
         position: relative;
-
-        /* For IE */
-        height: 22px\9;
-        padding-top: 5px\9;
+    }
+    .ie .simple-input {
+        height: 22px;
+        padding-top: 5px;
     }
     .simple-input.placeholder {
         font-style: italic;
@@ -1022,7 +1032,9 @@ nav {
 #page_main_nav {
     clear: none;
     float: left;
-    *min-width: 45ex;
+}
+.lte7 #page_main_nav {
+    min-width: 45ex;
 }
 #page_main_nav li#do-exercises {
     border-right: 1px solid rgba(255,255,255, .6);
@@ -1464,9 +1476,11 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     #container .dashboard-filter-text {
         background-image: none;
         border-color: #ccc;
-        height: 24px\9;
         padding: 0 55px 0 5px;
         width: 260px;
+    }
+    .ie #container .dashboard-filter-text {
+        height: 24px;
     }
     .dashboard-filter-clear {
         height: 26px;
@@ -1474,9 +1488,11 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
         position: absolute;
         top: 10px;
-        top: 12px\9;
         right: 13px;
         z-index: 100;
+    }
+    .ie .dashboard-filter-clear {
+        top: 12px;
     }
     #container .dashboard-drawer-inner {
         position: relative;
@@ -2279,8 +2295,17 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 .progress-legend.started {
     cursor: pointer;
     border-color: #fff;
+}
+.lte9 #module-progress .proficient,
+.lte9 #module-progress .review,
+.lte9 #module-progress .struggling,
+.lte9 #module-progress .started,
+.lte9 .progress-legend.proficient,
+.lte9 .progress-legend.review,
+.lte9 .progress-legend.struggling,
+.lte9 .progress-legend.started {
     filter: progid:DXImageTransform.Microsoft.gradient(enabled="0");
-    outline: 1px solid #fff\9;
+    outline: 1px solid #fff;
 }
 .exercise-info-hover, #info-hover-container {
     background: #fff;
@@ -2382,7 +2407,9 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 /* Contribute styles */
 #contribute {
     text-align: justify;
-    *position: static;
+}
+.lte7 #contribute {
+    position: static;
 }
 #contribute .simple-button .with-icon {
     float: left;
@@ -2647,9 +2674,12 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 }
 #thumbnails td.video-thumb div.thumb {
     background-position: 0px -25px;
+}
+
+.lte8 #thumbnails td.video-thumb div.thumb {
     /* IE doesn't support background-size, so we'll just reposition the larger background */
-    background-position-y: -80px\9;
-    background-position-x: -100px\9;
+    background-position-y: -80px;
+    background-position-x: -100px;
 }
 
 #thumbnails td.selected div.thumb {
@@ -3073,7 +3103,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 .nodeLabelZoom9 img {
     width: 40px;
     height: 40px;
-    *margin-left: 20px;
+}
+.lte7 .nodeLabelZoom9 img {
+    margin-left: 20px;
 }
 
 .nodeLabelZoom8 {
@@ -3088,7 +3120,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 .nodeLabelZoom8 img {
     width: 26px;
     height: 26px;
-    *margin-left: 18px;
+}
+.lte7 .nodeLabelZoom8 img {
+    margin-left: 18px;
 }
 
 .nodeLabelZoom7 {
@@ -3103,7 +3137,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 .nodeLabelZoom7 img {
     width: 10px;
     height: 10px;
-    *margin-left: 35px;
+}
+.lte7 .nodeLabelZoom7 img {
+    margin-left: 35px;
 }
 
 .nodeLabelHighlight div {
@@ -3525,8 +3561,6 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background-color: #ffffff;
     border: 1px solid #999;
     border: 1px solid rgba(0, 0, 0, 0.3);
-    *border: 1px solid #999;
-    /* IE6-7 */
 
     -webkit-border-radius: 6px;
     -moz-border-radius: 6px;
@@ -3537,6 +3571,9 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     -webkit-background-clip: padding-box;
     -moz-background-clip: padding-box;
     background-clip: padding-box;
+}
+.lte7 #popup-dialog .dialog-frame {
+    border: 1px solid #999;
 }
 
 #popup-dialog .dialog-header {

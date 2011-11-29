@@ -22,7 +22,7 @@ function addCommas(nStr) // to show clean number format for "people learning rig
 function validateEmail(sEmail)
 {
      var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-     return sEmail.match(re)
+     return sEmail.match(re);
 }
 
 function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
@@ -32,7 +32,7 @@ function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
                 "value": match.ka_url,
                 "key": match.key,
                 "fPlaylist": fPlaylist
-            }
+            };
 
     if (reMatch)
         o.label = o.label.replace(reMatch, "<b>$1</b>");
@@ -137,14 +137,14 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
             .data("item.autocomplete", item)
             .append(jLink)
             .appendTo(ul);
-        }
+    };
 
-     autocompleteWidget.data("autocomplete").menu.select = function(e) {
+    autocompleteWidget.data("autocomplete").menu.select = function(e) {
         // jquery-ui.js's ui.autocomplete widget relies on an implementation of ui.menu
         // that is overridden by our jquery.ui.menu.js.  We need to trigger "selected"
         // here for this specific autocomplete box, not "select."
         this._trigger("selected", e, { item: this.active });
-    }
+    };
 }
 
 $(function() {
@@ -160,12 +160,13 @@ $(function() {
 });
 
 function createCookie(name,value,days) {
+    var expires;
     if (days) {
         var date = new Date();
         date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
+        expires = "; expires="+date.toGMTString();
     }
-    else var expires = "";
+    else expires = "";
     document.cookie = name+"="+value+expires+"; path=/";
 }
 
@@ -277,7 +278,7 @@ var VideoControls = {
             return false;
         }
     }
-}
+};
 
 var VideoStats = {
 
@@ -570,7 +571,7 @@ var Badges = {
 
     showMoreContext: function(el) {
         var jelLink = $(el).parents(".badge-context-hidden-link");
-        var jelBadge = jelLink.parents(".achievement-badge")
+        var jelBadge = jelLink.parents(".achievement-badge");
         var jelContext = $(".badge-context-hidden", jelBadge);
 
         if (jelLink.length && jelBadge.length && jelContext.length)
@@ -582,7 +583,7 @@ var Badges = {
             jelBadge.nextAll(".achievement-badge").first().css("clear", "both");
         }
     }
-}
+};
 
 var Notifications = {
 
@@ -635,7 +636,7 @@ var Notifications = {
 
         $.post("/notifierclose");
     }
-}
+};
 
 var Timezone = {
     tz_offset: null,
@@ -718,7 +719,7 @@ var MailingList = {
             return false;
         });
     }
-}
+};
 
 var CSSMenus = {
 
@@ -750,7 +751,7 @@ var CSSMenus = {
             $(e.target).removeClass('css-menu-js-hover').closest(".css-menu > ul > li").removeClass('css-menu-js-hover');
         });
     }
-}
+};
 $(CSSMenus.init);
 
 var IEHtml5 = {
@@ -761,7 +762,7 @@ var IEHtml5 = {
             document.createElement(html5elements[i]);
         }
    }
-}
+};
 IEHtml5.init();
 
 var VideoViews = {
@@ -772,15 +773,15 @@ var VideoViews = {
 
         var currentTime = new Date();
         var secondsSince = (currentTime.getTime()-seedTime.getTime())/1000;
-        var viewsPerSecond = seedDailyViews/24/3600
-        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince*viewsPerSecond)
+        var viewsPerSecond = seedDailyViews/24/3600;
+        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince*viewsPerSecond);
 
         var totalViewsString = addCommas(""+estimatedTotalViews);
 
         $('#page_num_visitors').append(totalViewsString);
         $('#page_visitors').css('display', 'inline');
     }
-}
+};
 $(VideoViews.init);
 
 var FacebookHook = {
@@ -855,7 +856,7 @@ var FacebookHook = {
         // Explicitly use a session cookie here for IE's sake.
         createCookie("fbs_" + FB_APP_ID, "\"" + sCookie + "\"");
     }
-}
+};
 FacebookHook.init();
 
 var Throbber = {
@@ -924,7 +925,7 @@ function temporaryDetachElement(element) {
     }
     element.detach();
     return ret;
-};
+}
 
 var globalPopupDialog = {
     visible: false,
@@ -988,6 +989,6 @@ var globalPopupDialog = {
             globalPopupDialog.visible = false;
         }
         return globalPopupDialog;
-    },
+    }
 };
 
