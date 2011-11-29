@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from datetime import datetime
 
 from google.appengine.ext import db
-from google.appengine.ext.db import Key
 
 from object_property import ObjectProperty
 from templatefilters import timesince_ago, seconds_to_time_string
