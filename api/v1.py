@@ -1166,7 +1166,7 @@ def get_student_progress_report():
 
     student_list_key = request.request_string('list_id')
     if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
+        student_lists = models.StudentList.get_for_coach(user_data_coach)
         for list in student_lists:
             if str(list.key()) == student_list_key:
                 student_list = list

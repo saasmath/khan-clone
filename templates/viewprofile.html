@@ -55,7 +55,7 @@
             </p>
         </li>
         <li>
-			{{ profile_macros.api_link(user_data_student, "Exercise Progress", "user/exercises", selected_graph_type) }}
+			{{ profile_macros.api_link(user_data_student, "Exercise Progress", "exercises", selected_graph_type) }}
             <p class="accordion-content">
                 Shows you which exercises you've worked on and completed.
                 <span class="graph-options">
@@ -71,7 +71,7 @@
             <p class="accordion-content">Shows how many exercises you've completed over time. </p>
         </li>
         <li class='goals-accordion-content'>
-            {{ profile_macros.api_link(user_data_student, "Goals", "user/goals", selected_graph_type) }}
+            {{ profile_macros.api_link(user_data_student, "Goals", "goals", selected_graph_type) }}
             <p class="accordion-content">
                 Shows progress on your current goals.
                 <span class="graph-picker">

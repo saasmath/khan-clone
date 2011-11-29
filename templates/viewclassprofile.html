@@ -48,7 +48,7 @@
 
     <ul id="nav-accordion">
         <li>
-            {{ profile_macros.class_api_link(user_data_coach, "Progress Report", "user/students/progressreport", selected_graph_type, list_id) }}
+            {{ profile_macros.class_api_link(user_data_coach, "Progress Report", "progressreport", selected_graph_type, list_id) }}
             <div class="accordion-content">
                 Shows you which exercises your class has worked on and completed.
                 <div class="graph-options">
@@ -112,7 +112,7 @@
             </p>
         </li>
         <li>
-            {{ profile_macros.class_api_link(user_data_coach, "Goals", "user/students/goals", selected_graph_type, list_id) }}
+            {{ profile_macros.class_api_link(user_data_coach, "Goals", "goals", selected_graph_type, list_id) }}
             <div class="accordion-content">
                 Shows active student goals and progress toward completion of those goals.
                 <div class="graph-options">
