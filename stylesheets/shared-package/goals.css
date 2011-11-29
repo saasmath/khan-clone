@@ -393,8 +393,7 @@ input.goal-title:focus {
 .create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #playlist-jump > span {
     font-weight: normal;
 }
-#popup-dialog .dialog-frame.create-goal {
-}
+
 #popup-dialog .dialog-frame.create-custom-goal {
     position: fixed;
     left: 5%;
@@ -459,6 +458,20 @@ input.goal-title:focus {
 
 .recently-completed {
     position: relative;
+}
+
+.recently-completed .goal-description strong {
+    background: transparent url(/images/objective-complete-tick.png) no-repeat 4px 50%; /*! data-uri(/images/objective-complete-tick.png) */
+    display: inline-block;
+    text-decoration: line-through;
+    padding-left: 22px;
+    opacity: .7;
+    filter: alpha(opacity=75);
+}
+
+.recently-completed .goal-description .summary-light {
+    color: #111;
+    font-weight: bold;
 }
 
 #btn-goal-history {
