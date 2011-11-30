@@ -9,7 +9,7 @@
 #page_sub_nav #profile-header {
     position: relative;
     display: block;
-}    
+}
     #page_sub_nav #profile-header img {
         width: 50px;
         height: 50px;
@@ -42,12 +42,12 @@
 }
 #page_sub_nav #profile-header #user-info #simple-student-info {
     color: #666;
-    font-size: 11px; 
+    font-size: 11px;
     width: 480px;
-    
-    position: absolute; 
-    top: 30px; 
-    left: 4px; 
+
+    position: absolute;
+    top: 30px;
+    left: 4px;
 }
 
 #page_sub_nav #profile-header #high-level-stats {
@@ -104,14 +104,13 @@
 }
 #individual_report h2 {
     color: #444;
-    font-style: italic;
     font-weight: normal;
     margin: 0;
     padding: 5px 5px 7px 1px;
     width: 280px;
-    
+
     background: transparent url(/images/profile-header-bg.png) no-repeat 0px 100%;
-    
+
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
@@ -119,11 +118,11 @@
 #individual_report .inset-container {
     border: 1px solid #bbb;
     background: #f7f7f7;
-    
+
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
-    
+
     -webkit-box-shadow: inset 0 0 2px #ccc;
     -moz-box-shadow: inset 0 0 2px #ccc;
     box-shadow: inset 0 0 2px #ccc;
@@ -216,7 +215,8 @@
         background: #f7f7f7;
     }
     #individual_report #vital-statistics #stats-nav ul > li > p .graph-date-picker,
-    #individual_report #vital-statistics #stats-nav ul > li > p .graph-options {
+    #individual_report #vital-statistics #stats-nav ul > li > p .graph-picker,
+    #individual_report #vital-statistics #stats-nav ul > li > .accordion-content .graph-options {
         font-size: 10px;
         display: block;
         margin-top: 10px;
@@ -225,7 +225,18 @@
         text-decoration: none;
         color: #DD6900;
     }
-    #individual_report #vital-statistics #stats-nav ul > li > p .graph-options .progress-legend {
+    #individual_report #vital-statistics #stats-nav ul > li > p .graph-picker a.graph-sub-link-selected {
+        text-decoration: none;
+        color: #DD6900;
+    }
+    #individual_report #vital-statistics #stats-nav ul > li > p a {
+        margin-top: 10px;
+        text-align: center;
+    }
+    #individual_report #vital-statistics #stats-nav ul > li > p a.simple-button {
+        display: block;
+    }
+    #individual_report #vital-statistics #stats-nav ul > li > .accordion-content .graph-options .progress-legend {
         display: inline-block;
         padding: 4px;
         color: #333;
@@ -264,7 +275,7 @@
     #individual_report #vital-statistics #stats-charts #module-progress .exercise-progress-block.transparent .exercise-display-name {
         color: #aaa;
     }
-    
+
 #individual_report #achievements {
     margin-top: 30px;
     min-width: 970px;
@@ -289,7 +300,7 @@
                 text-align: center;
                 font-size: 16px;
             }
-        
+
     #individual_report #achievements #achievement-list {
         margin: 0 0 30px;
     }
@@ -340,7 +351,7 @@
         padding: 3px 0;
         text-shadow: 0 1px 0 #fff;
         width: 95%;
-        
+
         -webkit-border-radius: 5px;
         -moz-border-radius: 5px;
         border-radius: 5px;
@@ -354,7 +365,7 @@
             background-image: -webkit-gradient(linear, left top, left bottom,  from(#eee), to(#ccc));
             background-image: -moz-linear-gradient( top, #eee, #ccc );
             filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeee', endColorstr='#cccccc');
-            
+
             -moz-box-shadow: 0 1px 1px #ccc;
             -webkit-box-shadow: 0 1px 1px #ccc;
             box-shadow: 0 1px 1px #ccc;
@@ -365,7 +376,7 @@
             top:25px;
             z-index: 5;
         }
-        
+
 #individual_report #recent-activity {
 
 }
@@ -482,8 +493,8 @@ div.graph-notification {
 	top:-50px;
 	left:70px;
 	height:1px;
-}	
-	
+}
+
 #recent-activity .sharepop {
     z-index: 3;
     position: absolute;
@@ -499,3 +510,24 @@ div.graph-notification {
 
 
 .sharebar {z-index:0; position:absolute;padding-left:100px;}
+
+#individual_report #vital-statistics #stats-charts.coach-view {
+    min-height: 700px;
+    height: 800px;
+}
+#individual_report #vital-statistics.coach-view {
+    min-height: 700px;
+    height: 800px;
+}
+
+#current-goals-list input.goal-title {
+    min-width: 450px;
+}
+
+.coach-option-block {
+    display: block;
+    margin: 3px;
+}
+.coach-filter-block {
+    display: block;
+}

@@ -1,12 +1,9 @@
 import datetime
 import sys
 
-from google.appengine.api import users
 from google.appengine.api import taskqueue
 from mapreduce import control
-from mapreduce import operation as op
 
-import util
 import models
 import badges
 import models_badges
@@ -20,7 +17,7 @@ import exercise_completion_count_badges
 import playlist_time_badges
 import power_time_badges
 import recovery_problem_badges
-import unfinished_streak_problem_badges
+import unfinished_exercise_badges
 import points_badges
 import tenure_badges
 import video_time_badges
@@ -42,6 +39,7 @@ def all_badges():
         exercise_completion_count_badges.HardAtWorkBadge(),
         exercise_completion_count_badges.WorkHorseBadge(),
         exercise_completion_count_badges.MagellanBadge(),
+        exercise_completion_count_badges.CopernicusBadge(),
         exercise_completion_count_badges.AtlasBadge(),
 
         points_badges.TenThousandaireBadge(),
@@ -71,9 +69,9 @@ def all_badges():
         recovery_problem_badges.RecoveryBadge(),
         recovery_problem_badges.ResurrectionBadge(),
 
-        unfinished_streak_problem_badges.SoCloseBadge(),
-        unfinished_streak_problem_badges.KeepFightingBadge(),
-        unfinished_streak_problem_badges.UndeterrableBadge(),
+        unfinished_exercise_badges.SoCloseBadge(),
+        unfinished_exercise_badges.KeepFightingBadge(),
+        unfinished_exercise_badges.UndeterrableBadge(),
 
         power_time_badges.PowerFifteenMinutesBadge(),
         power_time_badges.PowerHourBadge(),
@@ -124,6 +122,7 @@ def all_badges_dict():
         dict_badges[badge.name] = badge
     return dict_badges
 
+@layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def badges_with_context_type(badge_context_type):
     return filter(lambda badge: badge.badge_context_type == badge_context_type, all_badges())
 

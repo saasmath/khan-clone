@@ -1,6 +1,5 @@
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import BadgeCategory
 from exercise_badges import ExerciseBadge
-import logging
 
 # All badges awarded for getting exercise problems correct after having some trouble inherit from RecoveryProblemBadge
 class RecoveryProblemBadge(ExerciseBadge):

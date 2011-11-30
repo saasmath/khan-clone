@@ -17,6 +17,8 @@ from custom_exceptions import MissingVideoException, MissingExerciseException, S
 from app import App
 import cookie_util
 
+from api.jsonify import jsonify
+
 class RequestInputHandler(object):
 
     def request_string(self, key, default = ''):
@@ -135,6 +137,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is SmartHistoryLoadException:
+            # 404s are very common with Smarthistory as bots have gotten hold of bad urls, silencing these reports and log as info instead
+            silence_report = True
+            logging.info(e)
             title = "This page of the Smarthistory section of Khan Academy does not exist"
             message_html = "Go to <a href='/'>our Smarthistory homepage</a> to find more art history content."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
@@ -306,9 +311,14 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         # overridable hide_analytics querystring that defaults to true in dev
         # mode but false for prod.
-        hide_analytics = os.environ.get('SERVER_SOFTWARE').startswith('Devel')
-        hide_analytics = self.request_bool("hide_analytics", hide_analytics)
+        hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
+
+        if user_data and user_data.has_current_goals:
+            goals = GoalList.get_current_goals(user_data)
+            goals_data = [g.get_visible_data() for g in goals]
+            if goals_data:
+                template_values['global_goals'] = jsonify(goals_data)
 
         return template_values
 
@@ -333,3 +343,4 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
 from models import UserData
 import util
+from goals.models import GoalList
