@@ -138,6 +138,9 @@ handlers:
   static_dir: gandalf/static
   expiration: "300s"
 
+- url: /gandalf/tests/.*
+  script: gandalf/tests/main.py
+
 - url: /gandalf?.*
   script: gandalf/main.py
 

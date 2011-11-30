@@ -1,3 +1,7 @@
+import logging
+
+from google.appengine.ext import db
+
 from gandalf.cache import GandalfCache
 from gandalf.config import current_logged_in_identity
 
@@ -11,7 +15,8 @@ def gandalf(bridge_name):
     bridge = gandalf_cache.get_bridge_model(bridge_name)
 
     if not bridge:
-        raise Exception("Bridge '%s' does not exist" % bridge_name)
+        logging.error("User tried to cross bridge '%s', which does not exist" % bridge_name)
+        return False
 
     filters = gandalf_cache.get_filter_models(bridge_name)
 
@@ -29,7 +34,7 @@ def gandalf(bridge_name):
             if filter.filter_class.passes_filter(filter, identity):
                 passes_a_whitelist = True
         else:
-            if filter.filter_class.passes_filter(filter.context, identity):
+            if filter.filter_class.passes_filter(filter, identity):
                 return False
 
     return passes_a_whitelist

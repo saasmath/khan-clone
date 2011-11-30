@@ -28,7 +28,6 @@ class GandalfBridge(db.Model):
             return "Running for %s day%s" % (days_running, ("" if days_running == 1 else "s"))
 
 
-
 class GandalfFilter(db.Model):
     bridge = db.ReferenceProperty(GandalfBridge, required=True)
     filter_type = db.StringProperty(required=True, indexed=False)

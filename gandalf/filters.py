@@ -15,17 +15,12 @@ class BridgeFilter(object):
 
     @classmethod
     def passes_filter(cls, filter, identity):
-        if cls._matches(filter.context, identity):
-            if BridgeFilter._in_percentage(filter, identity):
-                return True
-        return False
+        return cls._matches(filter.context, identity) and filter.percentage > BridgeFilter._identity_percentage(filter.key(), identity)
 
     @staticmethod
-    def _in_percentage(filter, identity):
-        sig = hashlib.md5(str(filter.key()) + str(identity)).hexdigest()
-        sig_num = int(sig, base=16)
-        
-        return filter.percentage > (sig_num % 100)
+    def _identity_percentage(key, identity):
+        sig = hashlib.md5(str(key) + str(identity)).hexdigest()
+        return int(sig, base=16) % 100
 
     @staticmethod
     def initial_context():
