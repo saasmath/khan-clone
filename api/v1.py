@@ -748,6 +748,37 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
+# TODO(david): Allow passing in no exercise name like below (figure out why we
+#     can't have multiple @route decorators, when this should be possible with
+#     Flask)
+#@route("/api/v1/user/exercises/review_problems", defaults={"exercise_name": None}, methods=["GET"])
+@route("/api/v1/user/exercises/<exercise_name>/review_problems", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_ordered_review_problems(exercise_name):
+    """Retrieves a list of the upcoming review problems.
+
+    exercise_name - The exercise that the user is currently doing.
+    """
+
+    # TODO(david): This should probably be in exercises.py or models.py
+    #     (if/when there's more logic here).
+
+    user_data = get_visible_user_data_from_request()
+
+    # TODO(david): Use exercise cycler interface to choose review problems.
+    if user_data:
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        review_exercises = user_exercise_graph.review_exercise_names()
+
+        if exercise_name and exercise_name in review_exercises:
+            review_exercises.remove(exercise_name)
+
+        return review_exercises
+
+    return []
+
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @oauth_required()
 @jsonp
