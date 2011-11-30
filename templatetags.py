@@ -11,7 +11,7 @@ def user_info(username, user_data):
     context = {"username": username, "user_data": user_data}
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
-def column_major_sorted_videos_by_topic(topic, num_cols=3, column_width=300, gutter=20, font_size=12):
+def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, font_size=12):
     videos = topic.children
     items_in_column = len(videos) / num_cols
     remainder = len(videos) % num_cols
@@ -22,27 +22,6 @@ def column_major_sorted_videos_by_topic(topic, num_cols=3, column_width=300, gut
 
     template_values = {
         "topic": topic,
-        "videos": videos,
-        "column_width": column_width,
-        "column_indices": column_indices,
-        "link_height": link_height,
-        "list_height": column_indices[0] * link_height,
-    }
-
-    return shared_jinja.get().render_template("column_major_order_videos_by_topic.html", **template_values)
-
-
-def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, font_size=12):
-    import logging
-    logging.info(videos)
-    items_in_column = len(videos) / num_cols
-    remainder = len(videos) % num_cols
-    link_height = font_size * 1.5
-    # Calculate the column indexes (tops of columns). Since video lists won't divide evenly, distribute
-    # the remainder to the left-most columns first, and correctly increment the indices for remaining columns
-    column_indices = [(items_in_column * multiplier + (multiplier if multiplier <= remainder else remainder)) for multiplier in range(1, num_cols + 1)]
-
-    template_values = {
         "videos": videos,
         "column_width": column_width,
         "column_indices": column_indices,

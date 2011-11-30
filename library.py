@@ -47,7 +47,7 @@ def library_content_html():
         'smart_history': smart_history,
         }
 
-    html = shared_jinja.get().render_template("library_content_by_topic.html", **template_values)
+    html = shared_jinja.get().render_template("library_content_template.html", **template_values)
 
     # Set shared date of last generated content
     Setting.cached_library_content_date(str(datetime.datetime.now())) 

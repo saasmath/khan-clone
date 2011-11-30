@@ -135,7 +135,6 @@
 {% block bottompagescript %}
     {{ js_css_packages.js_package("video") }}
     <script>
-      Video.readableId = "{{ video.readable_id|escapejs }}";
       $(function() {
         Video.init();
         VideoStats.startLoggingProgress("{{ video.key()|escapejs }}");
@@ -160,5 +159,4 @@
     </script>
     {{ analytics.crazyegg_tracker(False) }}
 {% endblock bottompagescript %}
-
 
