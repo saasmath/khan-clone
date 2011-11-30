@@ -102,6 +102,8 @@ var Profile = {
                 Profile.historyChange();
             }
         }, 1000);
+
+        Profile.ProgressSummaryView = new ProgressSummaryView();
     },
 
 
@@ -286,7 +288,7 @@ var Profile = {
         } else if (href.indexOf('/api/v1/user/exercises') > -1) {
 			apiCallback = this.renderExercisesTable;
         } else if (href.indexOf('/api/v1/user/students/progress/summary') > -1) {
-            apiCallback = this.renderProgressSummary;
+            apiCallback = this.ProgressSummaryView.render;
         }
 
         $.ajax({
@@ -666,131 +668,6 @@ var Profile = {
         $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
     },
 
-    renderProgressSummary: function(context) {
-        var template = Templates.get("profile.class-progress-summary"),
-            statusInfo = {
-                not_started: {color: "not-started",
-                    toFloat: "right",
-                    fShowOnLeft: true,
-                    order: 0},
-                struggling: {color: "struggling",
-                    toFloat: "right",
-                    fShowOnLeft: true,
-                    order: 1},
-                started: {color: "started",
-                    toFloat: "left",
-                    fShowOnLeft: false,
-                    order: 2},
-                proficient: {color: "proficient",
-                    toFloat: "left",
-                    fShowOnLeft: false,
-                    order:  3},
-                review: {color: "review",
-                    toFloat: "left",
-                    fShowOnLeft: false,
-                    order: 4}
-        };
-
-        $.map(context.exercises, function(exercise, index) {
-            exercise.progress.sort(function(first, second) {
-                return statusInfo[first.status].order - statusInfo[second.status].order;
-            });
-            return exercise;
-        });
-
-        // Where does this go? Might it collide one day?
-        Handlebars.registerPartial("class-progress-column", Templates.get( "profile.class-progress-column" ));
-
-        function toPixelWidth(num) {
-            return Math.round(200 * num / context.num_students);
-        }
-        Handlebars.registerHelper("toPixelWidth", function(num) {
-            return toPixelWidth(num);
-        });
-
-        Handlebars.registerHelper("toNumberOfStudents", function(num) {
-            if (toPixelWidth(num) < 20) {
-                return "";
-            }
-            return num;
-        });
-
-        Handlebars.registerHelper("toColor", function(status) {
-            return statusInfo[status].color;
-        });
-
-        Handlebars.registerHelper("toFloat", function(status) {
-            return statusInfo[status].toFloat;
-        });
-
-        Handlebars.registerHelper("toDisplay", function(status) {
-            if (status === "not_started") {
-                return "unstarted";
-            }
-            return status;
-        });
-
-        // This feels awkward,
-        // but I didn't know how else to pass information to a partial.
-        Handlebars.registerHelper("progressColumn", function(block) {
-            this.progressSide = block.hash.side;
-            return block(this)
-        });
-
-        Handlebars.registerHelper("progressIter", function(progress, block) {
-            var result = "",
-                fOnLeft = (block.hash.side === "left");
-
-            $.each(progress, function(index, p) {
-                if (fOnLeft === statusInfo[p.status].fShowOnLeft) {
-                    result += block(p);
-                }
-            });
-
-            return result;
-        });
-
-        $("#graph-content").html(template(context));
-
-        $(".exercise-row").click(function(e) {
-            var jRow = $(this),
-                studentLists = jRow.find(".student-list");
-
-            if (studentLists.is(":visible")) {
-                jRow.find("span.status").each(function(index) {
-                    var jel = $(this),
-                        width = jel.data("width"),
-                        span = width < 20 ? "" : jel.data("num");
-                    jel.animate({width: width}, 350, "easeInOutCubic")
-                        .find("span").html(span);
-                });
-
-                studentLists.fadeOut(100, "easeInOutCubic");
-            } else {
-                jRow.find("span.status").animate({width: 100}, 450, "easeInOutCubic", function() {
-                    var jel = $(this),
-                        status = jel.data("status");
-                    jel.find("span").html(status);
-                });
-
-                studentLists.delay(150).fadeIn(650, "easeInOutCubic");
-            }
-        });
-
-        $("#progress-summary-container .student-link").click(function(e) {
-            var jel = $(this),
-                exercise = jel.data("exercise"),
-                email = jel.data("email");
-
-            Profile.collapseAccordion();
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exercise + "&" +
-                "student_email=" + encodeURIComponent(email));
-
-            return false;
-        });
-    },
 	/**
 	 * Renders the exercise blocks given the JSON blob about the exercises.
 	 */
@@ -976,6 +853,132 @@ var Profile = {
             }
         );
     }
+};
+var ProgressSummaryView = function() {
+    var fInitialized = false,
+        template = Templates.get("profile.class-progress-summary"),
+        statusInfo = {
+                'not-started': {
+                    fShowOnLeft: true,
+                    order: 0},
+                struggling: {
+                    fShowOnLeft: true,
+                    order: 1},
+                started: {
+                    fShowOnLeft: false,
+                    order: 2},
+                proficient: {
+                    fShowOnLeft: false,
+                    order:  3},
+                review: {
+                    fShowOnLeft: false,
+                    order: 4}
+            };
+
+    function toPixelWidth(num) {
+        return Math.round(200 * num / Profile.numStudents);
+    }
+
+    function init() {
+        fInitialized = true;
+
+        // Register partials and helpers
+        Handlebars.registerPartial("class-progress-column", Templates.get("profile.class-progress-column"));
+
+        Handlebars.registerHelper("toPixelWidth", function(num) {
+            return toPixelWidth(num);
+        });
+
+        Handlebars.registerHelper("toNumberOfStudents", function(num) {
+            if (toPixelWidth(num) < 20) {
+                return "";
+            }
+            return num;
+        });
+
+        Handlebars.registerHelper("toDisplay", function(status) {
+            if (status === "not-started") {
+                return "unstarted";
+            }
+            return status;
+        });
+
+        Handlebars.registerHelper("progressColumn", function(block) {
+            this.progressSide = block.hash.side;
+            return block(this)
+        });
+
+        Handlebars.registerHelper("progressIter", function(progress, block) {
+            var result = "",
+                fOnLeft = (block.hash.side === "left");
+
+            $.each(progress, function(index, p) {
+                if (fOnLeft === statusInfo[p.status].fShowOnLeft) {
+                    result += block(p);
+                }
+            });
+
+            return result;
+        });
+
+        // Delegate clicks to expand rows and load student graphs
+        $("#graph-content").delegate(".exercise-row", "click", function(e) {
+            var jRow = $(this),
+                studentLists = jRow.find(".student-lists");
+
+            if (studentLists.is(":visible")) {
+                jRow.find(".segment").each(function(index) {
+                    var jel = $(this),
+                        width = jel.data("width"),
+                        span = width < 20 ? "" : jel.data("num");
+                    jel.animate({width: width}, 350, "easeInOutCubic")
+                        .find("span").html(span);
+                });
+
+                studentLists.fadeOut(100, "easeInOutCubic");
+            } else {
+                jRow.find(".segment").animate({width: 100}, 450, "easeInOutCubic", function() {
+                    var jel = $(this),
+                        status = jel.data("status");
+                    jel.find("span").html(status);
+                });
+
+                studentLists.delay(150).fadeIn(650, "easeInOutCubic");
+            }
+        });
+
+        $("#graph-content").delegate(".student-link", "click", function(e) {
+            e.preventDefault();
+
+            var jel = $(this),
+                exercise = jel.data("exercise"),
+                email = jel.data("email");
+
+            Profile.collapseAccordion();
+            Profile.loadGraph(
+                "/profile/graph/exerciseproblems?" +
+                "exercise_name=" + exercise + "&" +
+                "student_email=" + encodeURIComponent(email));
+        });
+    }
+
+    return {
+        render: function(context) {
+            if (!fInitialized) {
+                init();
+            }
+
+            Profile.numStudents = context.num_students;
+
+            $.each(context.exercises, function(index, exercise) {
+                exercise.progress.sort(function(first, second) {
+                    return statusInfo[first.status].order - statusInfo[second.status].order;
+                });
+            });
+
+            $("#graph-content").html(template(context));
+        }
+    };
 };
 
 var GoalProfileView = Backbone.View.extend({

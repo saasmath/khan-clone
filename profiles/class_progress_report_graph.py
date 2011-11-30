@@ -7,8 +7,6 @@ from itertools import izip
 import datetime
 
 def class_progress_report_graph_context(user_data, student_list):
-    import util_profile
-
     if not user_data:
         return {}
 
@@ -20,7 +18,7 @@ def class_progress_report_graph_context(user_data, student_list):
 
     list_students = sorted(list_students, key=lambda student: student.nickname)
 
-    student_email_pairs = [(escape(s.email), util_profile.truncate_nickname(s.nickname)) for s in list_students]
+    student_email_pairs = [(escape(s.email), (s.nickname[:14] + '...') if len(s.nickname) > 17 else s.nickname) for s in list_students]
     emails_escapejsed = [escapejs(s.email) for s in list_students]
 
     exercises_all = models.Exercise.get_all_use_cache()

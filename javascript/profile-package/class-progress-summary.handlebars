@@ -1,105 +1,26 @@
-<style>
-  .exercise-color.border-only {
-    background-color: transparent;
-  }
-  .exercise-color.proficient.border-only {
-    border-left: 5px solid #0080C9;
-  }
-  .exercise-color.review.border-only {
-    border-left: 5px solid #E35D04;
-  }
-  .exercise-color.not-started.border-only {
-    border-left: 5px solid #CCC;
-  }
-  .exercise-color.struggling.border-only {
-    border-left: 5px solid #C30202;
-  }
-  .exercise-color.started.border-only {
-    border-left: 5px solid #C7E5f7;
-  }
-
-  .exercise-row .exercise-name {
-    width: 130px;
-    float: left;
-    line-height: 1.2;
-    text-align: right;
-    padding-right: 15px;
-  }
-
-  .exercise-row {
-    padding-top: 5px;
-    padding-bottom: 10px;
-    min-width: 670px;
-  }
-
-  .exercise-row:hover {
-    background-color: #EEE;
-    cursor: ns-resize;
-  }
-
-  .fake-row span {
-    height: 15px;
-    padding-bottom: 4px;
-    display: inline-block;
-  }
-
-  .fake-row span.status span {
-    text-transform: capitalize;
-    padding-left: 9px;
-    padding-bottom: 10px;
-    font-weight: bold;
-  }
-
-  .left-column, .right-column {
-    float: left;
-  }
-  .left-column {
-    width: 200px;
-  }
-  .right-column {
-    width: 300px;
-  }
-
-  .student-list {
-    display: none;
-  }
-  .student-list-header {
-    min-height: 1px;
-    width: 100px;
-  }
-  .border-only.student-list-header {
-    width: 95px;
-  }
-  .student-list td {
-    padding-left: 4px;
-  }
-
-  .legend {
-    padding-left: 145px;
-    padding-bottom: 20px;
-  }
-</style>
 <div id="progress-summary-container">
-  <div class="fake-row legend">
-      <span class="status exercise-color {{toColor "struggling"}}" style="float: left; width: 100px;"><span>struggling</span></span>
-      <span class="status exercise-color {{toColor "not_started"}}" style="float: left; width: 100px;"><span>unstarted</span></span>
-      <span class="status exercise-color {{toColor "started"}}" style="float: left; width: 100px;"><span>started</span></span>
-      <span class="status exercise-color {{toColor "proficient"}}" style="float: left; width: 100px;"><span>proficient</span></span>
-      <span class="status exercise-color {{toColor "review"}}" style="float: left; width: 100px;"><span>review</span></span>
+  <div id="legend" class="fake-row">
+      <span class="segment exercise-color struggling"><span>struggling</span></span>
+      <span class="segment exercise-color not-started"><span>unstarted</span></span>
+      <span class="segment exercise-color started"><span>started</span></span>
+      <span class="segment exercise-color proficient"><span>proficient</span></span>
+      <span class="segment exercise-color review"><span>review</span></span>
       <div style="clear: both"></div>
   </div>
+
   {{#each exercises}}
     <div class="exercise-row">
       <div class="exercise-name">
         <span>{{display_name}}</span>
       </div>
-      <div class="left-column">
+
+      <div id="left-column">
         {{#progressColumn side="left"}}
           {{> class-progress-column}}
         {{/progressColumn}}
       </div>
 
-      <div class="right-column">
+      <div id="right-column">
         {{#progressColumn side="right"}}
           {{> class-progress-column}}
         {{/progressColumn}}
