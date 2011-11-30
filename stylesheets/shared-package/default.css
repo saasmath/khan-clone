@@ -1426,6 +1426,24 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         .exercise-color.started {
             background-color: #c7e5f7;
         }
+        .exercise-color.border-only {
+          background-color: transparent;
+        }
+        .exercise-color.proficient.border-only {
+          border-left: 5px solid #0080C9;
+        }
+        .exercise-color.review.border-only {
+          border-left: 5px solid #E35D04;
+        }
+        .exercise-color.not-started.border-only {
+          border-left: 5px solid #CCC;
+        }
+        .exercise-color.struggling.border-only {
+          border-left: 5px solid #C30202;
+        }
+        .exercise-color.started.border-only {
+          border-left: 5px solid #C7E5f7;
+        }
 
     .exercise-show {
         position: absolute;

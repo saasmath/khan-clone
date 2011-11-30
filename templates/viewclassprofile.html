@@ -52,7 +52,7 @@
             <div class="accordion-content">
                 Shows you which exercises your class has worked on and completed.
                 <div class="graph-options">
-                    <span class="progress-legend exercise-color started">Started</span>                
+                    <span class="progress-legend exercise-color started">Started</span>
                     <span class="progress-legend exercise-color proficient">Proficient</span>
                     <span class="progress-legend exercise-color review light">Review</span>
                     <span class="progress-legend exercise-color struggling">Struggling</span>
@@ -73,6 +73,12 @@
                     </div>
                 </div>
             </div>
+        </li>
+        <li>
+            {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "progress/summary", selected_graph_type, list_id) }}
+            <p class="accordion-content">
+                Shows you which exercises your class has worked on and completed.
+            </p>
         </li>
         <li>
             {{ profile_macros.class_graph_link(user_data_coach, "Daily Activity Report", "classtime", selected_graph_type, list_id) }}
