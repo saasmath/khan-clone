@@ -1,8 +1,12 @@
 var KAConsole = {
     debugEnabled: false,
     log: function() {
-        if (window.console && KAConsole.debugEnabled)
-            console.log.apply(console, arguments);
+        if (window.console && KAConsole.debugEnabled) {
+            if (console.log.apply)
+                console.log.apply(console, arguments);
+            else
+                Function.prototype.apply.call(console.log, null, arguments);
+        }
     }
 };
 
@@ -989,6 +993,104 @@ var globalPopupDialog = {
             globalPopupDialog.visible = false;
         }
         return globalPopupDialog;
+    }
+};
+
+function dynamicPackage(packageName, callback, manifest) {
+    var self = this;
+    this.files = [];
+    this.progress = 0;
+    this.last_progress = 0;
+
+    dynamicPackageLoader.loadingPackages[packageName] = this;
+    _.each(manifest, function(filename) {
+        var file = {
+            'filename': filename,
+            'content': null,
+            'evaled': false
+        };
+        self.files.push(file);
+        $.ajax({
+            type:       "GET",
+            url:        filename,
+            data:       null,
+            success:    function(content) {
+                            KAConsole.log('Received contents of ' + filename);
+                            file.content = content;
+
+                            self.progress++;
+                            callback('progress', self.progress/(2*self.files.length));
+                            self.last_progress = self.progress;
+                        },
+            error:      function(xml, status, e) {
+                            callback('failed');
+                        },
+            dataType:   "html"
+        });
+    });
+
+    this.checkComplete = function() {
+        var waiting = false;
+        _.each(this.files, function(file) {
+            if (file.content) {
+                if (!file.evaled) {
+                    var script = document.createElement("script");
+                    if (file.filename.indexOf('.handlebars') > 0)
+                        script.type = 'text/x-handlebars-template'; // This hasn't been tested
+                    else
+                        script.type = "text/javascript";
+                    script.appendChild( document.createTextNode( file.content ) );
+
+                    var head = document.getElementsByTagName("head")[0] || document.documentElement;
+                    head.appendChild( script );
+
+                    file.evaled = true;
+                    KAConsole.log('Evaled contents of ' + file.filename);
+
+                    self.progress++;
+                }
+            } else {
+                waiting = true;
+                return _.breaker;
+            }
+        });
+
+        if (waiting) {
+            if (self.progress != self.last_progress) {
+                callback('progress', self.progress/(2*self.files.length));
+                self.last_progress = self.progress;
+            }
+            setTimeout(function() { self.checkComplete(); }, 500);
+        } else {
+            dynamicPackageLoader.loadedPackages[packageName] = true;
+            delete dynamicPackageLoader.loadingPackages[packageName];
+            callback('complete');
+        }
+    }
+
+    this.checkComplete();
+}
+
+var dynamicPackageLoader = {
+    loadedPackages: {},
+    loadingPackages: {},
+    currentFiles: [],
+
+    load: function(packageName, callback, manifest) {
+        if (this.loadedPackages[packageName]) {
+            if (callback)
+                callback(packageName);
+        } else {
+            new dynamicPackage(packageName, callback, manifest);
+        }
+    },
+    
+    packageLoaded: function(packageName) {
+        return this.loadedPackages[packageName];
+    },
+
+    setPackageLoaded: function(packageName) {
+        this.loadedPackages[packageName] = true;
     }
 };
 
