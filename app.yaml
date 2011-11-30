@@ -134,6 +134,16 @@ handlers:
 - url: /gae_bingo/.*
   script: gae_bingo/main.py
 
+- url: /gandalf/static
+  static_dir: gandalf/static
+  expiration: "300s"
+
+- url: /gandalf/tests/.*
+  script: gandalf/tests/main.py
+
+- url: /gandalf?.*
+  script: gandalf/main.py
+
 - url: /backends/.*
   script: backends/videoprogress.py
   login: admin
