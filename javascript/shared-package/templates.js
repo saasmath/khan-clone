@@ -12,12 +12,6 @@
 var Templates = {};
 
 /**
- * Whether or not templates have need to be read from the DOM and compiled
- * at runtime.
- */
-Templates.IS_DEBUG_ = !!Handlebars.compile;
-
-/**
  * A cache of compiled templates, if runtime compilation is needed.
  */
 Templates.cache_ = {};
@@ -45,10 +39,11 @@ Templates.get = function( name ) {
 		name = parts[0] + "-package_" + parts[1];
 	}
 
-	if (Templates.IS_DEBUG_) {
-		return Templates.cache_[name] ||
-			(Templates.cache_[name] = Templates.fromScript_( name ));
-	} else {
-		return Handlebars.templates[name];
+	if ( Handlebars.templates ) {
+		var compiled = Handlebars.templates[name];
+		if (compiled) return compiled;
 	}
+
+	return Templates.cache_[name] ||
+		(Templates.cache_[name] = Templates.fromScript_( name ));
 };

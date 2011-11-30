@@ -15,11 +15,11 @@ from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
-from gae_bingo.gae_bingo import bingo, ab_test
-from gae_bingo.models import ConversionTypes
+from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, playlist_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
+from profiles import class_progress_report_graph
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -28,7 +28,6 @@ from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
 
 from google.appengine.ext import db
-
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -101,7 +100,7 @@ def playlist_videos(playlist_title):
     if not playlist:
         return None
 
-    return playlist.get_videos();
+    return playlist.get_videos()
 
 @route("/api/v1/playlists/<playlist_title>/exercises", methods=["GET"])
 @jsonp
@@ -117,7 +116,7 @@ def playlist_exercises(playlist_title):
     if not playlist:
         return None
 
-    return playlist.get_exercises();
+    return playlist.get_exercises()
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
@@ -162,13 +161,13 @@ def playlists_library_list_fresh():
 @route("/api/v1/exercises", methods=["GET"])
 @jsonp
 @jsonify
-def exercises():
+def get_exercises():
     return models.Exercise.get_all_use_cache()
 
 @route("/api/v1/exercises/<exercise_name>", methods=["GET"])
 @jsonp
 @jsonify
-def exercises(exercise_name):
+def get_exercise(exercise_name):
     return models.Exercise.get_by_name(exercise_name)
 
 @route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
@@ -252,9 +251,9 @@ def replace_playlist_values(structure, playlist_dict):
         for sub_structure in structure:
             replace_playlist_values(sub_structure, playlist_dict)
     else:
-        if structure.has_key("items"):
+        if "items" in structure:
             replace_playlist_values(structure["items"], playlist_dict)
-        elif structure.has_key("playlist"):
+        elif "playlist" in structure:
             # Replace string playlist title with real playlist object
             structure["playlist"] = playlist_dict[structure["playlist"]]
 
@@ -308,7 +307,7 @@ def user_data_student():
     user_data = models.UserData.current()
 
     if user_data:
-        user_data_student = get_visible_user_data_from_request(disable_coach_visibility = True)
+        user_data_student = get_visible_user_data_from_request(disable_coach_visibility=True)
         if user_data_student:
             if request.request_string("list_id"):
                 try:
@@ -400,45 +399,55 @@ def user_videos_specific(youtube_id):
     return None
 
 # Can specify video using "video_key" parameter instead of youtube_id.
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET","POST"])
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET", "POST"])
 @oauth_optional(require_anointed_consumer=True)
 @api_create_phantom
 @jsonp
 @jsonify
 def log_user_video(youtube_id):
-    video_log = None
+    if (not request.request_string("seconds_watched") or
+        not request.request_string("last_second_watched")):
+        logging.critical("Video log request with no parameters received.")
+        return api_invalid_param_response("Must supply seconds_watched and" +
+            "last_second_watched")
+
     user_data = models.UserData.current()
+    if not user_data:
+        logging.warning("Video watched with no user_data present")
+        return unauthorized_response()
 
-    if user_data:
-        video_key_str = request.request_string("video_key")
+    video_key_str = request.request_string("video_key")
 
-        if user_data and (youtube_id or video_key_str):
-            if video_key_str:
-                key = db.Key(video_key_str)
-                video = db.get(key)
-            else:
-                video = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if not youtube_id and not video_key_str:
+        return api_invalid_param_response("Must supply youtube_id or video_key")
 
-            seconds_watched = int(request.request_float("seconds_watched", default = 0))
-            last_second_watched = int(request.request_float("last_second_watched", default = 0))
+    video_log = None
+    if video_key_str:
+        key = db.Key(video_key_str)
+        video = db.get(key)
+    else:
+        video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
-            if video:
-                user_video, video_log, video_points_total, goals_updated = models.VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
+    if not video:
+        return api_error_response("Could not find video")
 
-                action_results = { }
+    seconds_watched = int(request.request_float("seconds_watched", default=0))
+    last_second = int(request.request_float("last_second_watched", default=0))
 
-                if video_log:
-                    action_results['user_video'] = user_video
+    user_video, video_log, _, goals_updated = models.VideoLog.add_entry(
+        user_data, video, seconds_watched, last_second)
 
-                if goals_updated:
-                    action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+    if video_log:
+        action_results = {}
+        action_results['user_video'] = user_video
+        if goals_updated:
+            action_results['updateGoals'] = [g.get_visible_data(None)
+                for g in goals_updated]
 
-                add_action_results(video_log, action_results)
+        add_action_results(video_log, action_results)
 
-        return video_log
+    return video_log
 
-    logging.warning("Video watched with no user_data present")
-    return unauthorized_response()
 
 @route("/api/v1/user/exercises", methods=["GET"])
 @oauth_optional()
@@ -727,25 +736,15 @@ def attempt_problem_number(exercise_name, problem_number):
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
             user_states = user_exercise_graph.states(exercise.name)
-            sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
 
             action_results = {
                 "exercise_state": {
-                    "state" : [state for state in user_states if user_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                    "state": [state for state in user_states if user_states[state]],
+                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
                 },
-                "points_earned" : { "points" : points_earned },
-                "attempt_correct" : request.request_bool("complete")
-            };
-
-            if user_states["proficient"]:
-                followups = user_followup_exercises(exercise_name)
-
-                if followups:
-                    action_results["exercise_state"]["followups"] = followups
-                else :
-                    followups = [models.Exercise.get_by_name(exercise) for exercise in user_data.suggested_exercises[:3]]
-                    action_results["exercise_state"]["followups"] = followups
+                "points_earned": {"points": points_earned},
+                "attempt_correct": request.request_bool("complete")
+            }
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
@@ -794,8 +793,8 @@ def hint_problem_number(exercise_name, problem_number):
             add_action_results(user_exercise, {
                 "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
                 "exercise_state": {
-                    "state" : [state for state in user_states if user_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                    "state": [state for state in user_states if user_states[state]],
+                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
                 }
             })
 
@@ -833,7 +832,8 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
+# TomY Temporary fix: Sundar needs to access the logs using GET, which I accidentally masked with the newer call above
+@route("/api/v1/user/videos/<youtube_id>/sundarlog", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -1004,11 +1004,65 @@ def autocomplete():
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
 @developer_required
+@jsonp
+@jsonify
 def problem_logs():
     problem_log_query = models.ProblemLog.all()
     filter_query_by_request_dates(problem_log_query, "time_done")
     problem_log_query.order("time_done")
     return problem_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/videos", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def video_logs():
+    video_log_query = models.VideoLog.all()
+    filter_query_by_request_dates(video_log_query, "time_watched")
+    video_log_query.order("time_watched")
+    return video_log_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/dev/users", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonp
+@jsonify
+def user_data():
+    user_data_query = models.UserData.all()
+    filter_query_by_request_dates(user_data_query, "joined")
+    user_data_query.order("joined")
+    return user_data_query.fetch(request.request_int("max", default=500))
+
+@route("/api/v1/user/students/progressreport", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_student_progress_report():
+    user_data_coach = models.UserData.current()
+
+    user_data_override = request.request_user_data("coach_email")
+    if user_data_coach.developer and user_data_override:
+        user_data_coach = user_data_override
+
+    if not user_data_coach:
+        return api_invalid_param_response("User is not logged in.")
+
+    student_list = None
+
+    student_list_key = request.request_string('list_id')
+    if student_list_key and student_list_key != 'allstudents':
+        student_lists = models.StudentList.get_for_coach(user_data_coach)
+        for list in student_lists:
+            if str(list.key()) == student_list_key:
+                student_list = list
+                break
+        if not student_list:
+            return api_invalid_param_response("Invalid list ID.")
+
+    report_data = class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list)
+
+    return report_data
 
 @route("/api/v1/user/goals", methods=["GET"])
 @oauth_optional()
@@ -1016,7 +1070,7 @@ def problem_logs():
 @jsonify
 def get_user_goals():
     student = models.UserData.current() or models.UserData.pre_phantom()
-    user_override = request.request_user_data("student_email")
+    user_override = request.request_user_data("email")
     if user_override and user_override.key_email != student.key_email:
         if not user_override.is_visible_to(student):
             return api_unauthorized_response("Cannot view this profile")
@@ -1034,7 +1088,7 @@ def get_user_goals():
 def get_user_current_goals():
     student = models.UserData.current() or models.UserData.pre_phantom()
 
-    user_override = request.request_user_data("student_email")
+    user_override = request.request_user_data("email")
     if user_override and user_override.key_email != student.key_email:
         if not user_override.is_visible_to(student):
             return api_unauthorized_response("Cannot view this profile")
@@ -1146,9 +1200,10 @@ def create_user_goal():
     if objective_descriptors:
         objectives = GoalObjective.from_descriptors(objective_descriptors,
             user_data)
-        goal_list_key = GoalList.ensure_goal_list(user_data)
-        goal = Goal(parent=goal_list_key, title=title, objectives=objectives)
+
+        goal = Goal(parent=user_data, title=title, objectives=objectives)
         goal.put()
+        user_data.ensure_has_current_goals()
         return goal.get_visible_data(None)
     else:
         return api_invalid_param_response("No objectives specified.")
@@ -1163,7 +1218,7 @@ def get_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1180,7 +1235,7 @@ def put_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))
@@ -1209,7 +1264,7 @@ def delete_user_goal(id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    goal = Goal.get_by_id(id, parent=user_data.goal_list_key)
+    goal = Goal.get_by_id(id, parent=user_data)
 
     if not goal:
         return api_invalid_param_response("Could not find goal with ID " + str(id))

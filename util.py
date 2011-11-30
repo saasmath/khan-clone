@@ -1,15 +1,15 @@
 import os
-import re
 import datetime
 import urllib
 import request_cache
 import logging
 from google.appengine.api import users
-from google.appengine.api import oauth
 from asynctools import AsyncMultiTask, QueryTask
 
 from app import App
-import nicknames
+
+# Needed for side effects of secondary imports
+import nicknames #@UnusedImport
 import facebook_util
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
     is_phantom_id
@@ -125,7 +125,7 @@ def config_iterable(plain_config, batch_size=50, limit=1000):
     return config
 
 def absolute_url(relative_url):
-		return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
+    return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
 
 def static_url(relative_url):
     if App.is_dev_server or not os.environ['HTTP_HOST'].lower().endswith(".khanacademy.org"):

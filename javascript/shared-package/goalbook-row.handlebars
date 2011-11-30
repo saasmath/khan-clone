@@ -5,12 +5,14 @@ maintain consistency. }}
     <p class="goal-description">
         <strong>{{title}}</strong>
         <span class="summary-light">
+            {{#if complete}}Complete!{{else}}
             <span class="objectives-complete">{{objectiveProgress}}/{{objectives.length}}</span>
             &middot;
             <span class="percent-complete">{{progressStr}}%</span>
+            {{/if}}
         </span>
         <span class="goal-controls">
-            <a class="simple-button action-gradient archive" href="javascript:void(0)">Archive</a>
+            <a class="simple-button action-gradient archive" href="javascript:void(0)">Archive Completed Goal</a>
         </span>
     </p>
     <ul class="inline-list objective-list">
@@ -18,4 +20,5 @@ maintain consistency. }}
         {{>goal-objectives}}
     {{/each}}
     </ul>
+    <div class="clear"></div>
 </div>

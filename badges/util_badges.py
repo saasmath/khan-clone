@@ -1,12 +1,9 @@
 import datetime
 import sys
 
-from google.appengine.api import users
 from google.appengine.api import taskqueue
 from mapreduce import control
-from mapreduce import operation as op
 
-import util
 import models
 import badges
 import models_badges
@@ -42,6 +39,7 @@ def all_badges():
         exercise_completion_count_badges.HardAtWorkBadge(),
         exercise_completion_count_badges.WorkHorseBadge(),
         exercise_completion_count_badges.MagellanBadge(),
+        exercise_completion_count_badges.CopernicusBadge(),
         exercise_completion_count_badges.AtlasBadge(),
 
         points_badges.TenThousandaireBadge(),
@@ -124,6 +122,7 @@ def all_badges_dict():
         dict_badges[badge.name] = badge
     return dict_badges
 
+@layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def badges_with_context_type(badge_context_type):
     return filter(lambda badge: badge.badge_context_type == badge_context_type, all_badges())
 

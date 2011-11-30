@@ -55,7 +55,7 @@
             </p>
         </li>
         <li>
-            {{ profile_macros.api_link(user_data_student, "Exercise Progress", "user/exercises", selected_graph_type) }}
+			{{ profile_macros.api_link(user_data_student, "Exercise Progress", "exercises", selected_graph_type) }}
             <p class="accordion-content">
                 Shows you which exercises you've worked on and completed.
                 <span class="graph-options">
@@ -70,8 +70,8 @@
             {{ profile_macros.graph_link(user_data_student, "Exercise Progress Over Time", "exercisesovertime", selected_graph_type) }}
             <p class="accordion-content">Shows how many exercises you've completed over time. </p>
         </li>
-        <li>
-            {{ profile_macros.api_link(user_data_student, "Goals", "user/goals", selected_graph_type) }}
+        <li class='goals-accordion-content'>
+            {{ profile_macros.api_link(user_data_student, "Goals", "goals", selected_graph_type) }}
             <p class="accordion-content">
                 Shows progress on your current goals.
                 <span class="graph-picker">
@@ -79,7 +79,7 @@
                     <span style="display: none">| <a href="javascript:Profile.showGoalType('completed')" id="goal-show-completed-link" class="graph-sub-link 0">Completed</a></span>
                     <span style="display: none">| <a href="javascript:Profile.showGoalType('abandoned')" id="goal-show-abandoned-link" class="graph-sub-link 0">Abandoned</a></span>
                 </span>
-                <a class="simple-button action-gradient green" href="javascript:newGoalDialog.show()">Create a new goal</a>
+                <a class="new-goal simple-button action-gradient green" href="javascript:void(0);">Create a new goal</a>
             </p>
         </li>
     </ul>
@@ -155,4 +155,7 @@
 {% endblock profile_extended_sections %}
 
 {% block pagescript %}
+<script>
+var USER_EMAIL = '{{ user_data.email }}';
+</script>
 {% endblock pagescript %}

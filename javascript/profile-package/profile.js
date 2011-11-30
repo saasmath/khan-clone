@@ -90,7 +90,16 @@ var Profile = {
              }
         });
 
-        $("#stats-nav #nav-accordion").accordion({ header:".header", active:".graph-link-selected", autoHeight: false, clearStyle: true });
+        // remove goals from IE<=8
+        $(".lte8 .goals-accordion-content").remove();
+
+        $("#stats-nav #nav-accordion")
+            .accordion({
+                header:".header",
+                active:".graph-link-selected",
+                autoHeight: false,
+                clearStyle: true
+            });
 
         setTimeout(function(){
             if (!Profile.fLoadingGraph && !Profile.fLoadedGraph)
@@ -103,10 +112,11 @@ var Profile = {
             }
         }, 1000);
 
+        $('.new-goal').removeClass('green');
+        $('.new-goal').addClass('disabled');
+
         Profile.ProgressSummaryView = new ProgressSummaryView();
     },
-
-
     highlightPoints: function(chart, fxnHighlight) {
 
         if (!chart) return;
@@ -269,6 +279,14 @@ var Profile = {
     },
 
     loadGraph: function(href, fNoHistoryEntry) {
+        var apiCallbacksTable = {
+            '/api/v1/user/goals': this.renderUserGoals,
+            '/api/v1/user/exercises': this.renderExercisesTable,
+            '/api/v1/user/students/goals': this.renderStudentGoals,
+            '/api/v1/user/students/progressreport': window.ClassProfile ? ClassProfile.renderStudentProgressReport : null,
+            '/api/v1/user/students/progress/summary': this.ProgressSummaryView.render
+        };
+
         if (!href) return;
 
         if (this.fLoadingGraph) {
@@ -281,14 +299,10 @@ var Profile = {
         this.fLoadedGraph = true;
 
         var apiCallback = null;
-        if (href.indexOf('/api/v1/user/goals') > -1) {
-            apiCallback = this.renderUserGoals;
-        } else if (href.indexOf('/api/v1/user/students/goals') > -1) {
-            apiCallback = this.renderStudentGoals;
-        } else if (href.indexOf('/api/v1/user/exercises') > -1) {
-			apiCallback = this.renderExercisesTable;
-        } else if (href.indexOf('/api/v1/user/students/progress/summary') > -1) {
-            apiCallback = this.ProgressSummaryView.render;
+        for (var uri in apiCallbacksTable) {
+            if (href.indexOf(uri) > -1) {
+                apiCallback = apiCallbacksTable[uri];
+            }
         }
 
         $.ajax({
@@ -321,17 +335,22 @@ var Profile = {
         this.showGraphThrobber(false);
         this.styleSublinkFromHref(href);
 
+        var start = (new Date).getTime();
         if (apiCallback) {
             apiCallback(data, href);
         } else {
             $("#graph-content").html(data);
         }
+        var diff = (new Date).getTime() - start;
+        KAConsole.log('API call rendered in ' + diff + ' ms.');
     },
 
     renderUserGoals: function(data, href) {
         current_goals = [];
         completed_goals = [];
         abandoned_goals = [];
+        var qs = Profile.parseQueryString(href);
+        currentUser = (qs["email"] == USER_EMAIL);
 
         $.each(data, function(idx, goal) {
             if (goal.completed != undefined) {
@@ -343,7 +362,10 @@ var Profile = {
                 current_goals.push(goal);
             }
         });
-        GoalBook.reset(current_goals);
+        if (currentUser)
+            GoalBook.reset(current_goals);
+        else
+            CurrentGoalBook = new GoalCollection(current_goals);
         CompletedGoalBook = new GoalCollection(completed_goals);
         AbandonedGoalBook = new GoalCollection(abandoned_goals);
 
@@ -352,21 +374,24 @@ var Profile = {
         Profile.goalsViews = {};
         Profile.goalsViews.current = new GoalProfileView({
             el: "#current-goals-list",
-            model: GoalBook,
+            model: currentUser ? GoalBook : CurrentGoalBook,
             type: 'current',
-            title: 'Current goals'
+            title: 'Current goals',
+            currentUser: currentUser
         });
         Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
-            title: 'Completed goals'
+            title: 'Completed goals',
+            currentUser: currentUser
         });
         Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
-            title: 'Abandoned goals'
+            title: 'Abandoned goals',
+            currentUser: currentUser
         });
 
         Profile.userGoalsHref = href;
@@ -381,6 +406,13 @@ var Profile = {
             $('#goal-show-abandoned-link').parent().show();
         } else {
             $('#goal-show-abandoned-link').parent().hide();
+        }
+
+        if (currentUser) {
+            $('.new-goal').addClass('green').removeClass('disabled').click(function(e) {
+                e.preventDefault();
+                window.newGoalDialog.show();
+            });
         }
     },
 
@@ -402,13 +434,13 @@ var Profile = {
         var studentGoalsViewModel = {
             rowData: [],
             sortDesc: '',
-            filterDesc: '',
+            filterDesc: ''
         };
 
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
-            student.profile_url = "/profile?k&student_email="+student.email+"#/?graph_url=/api/v1/user/goals%3Fstudent_email="+student.email;
+            student.profile_url = "/profile?selected_graph_type=goals&student_email="+student.email;
 
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
@@ -446,7 +478,7 @@ var Profile = {
                         goal: goal,
                         progress_count: progress_count,
                         goal_idx: student.goal_count,
-                        struggling: found_struggling,
+                        struggling: found_struggling
                     };
 
                     $.each(goal.objectives, function(idx3, objective) {
@@ -458,10 +490,10 @@ var Profile = {
                 studentGoalsViewModel.rowData.push({
                     rowID: studentGoalsViewModel.rowData.length,
                     student: student,
-                    goal: null,
+                    goal: {objectives: []},
                     progress_count: -1,
                     goal_idx: 0,
-                    struggling: false,
+                    struggling: false
                 });
             }
         });
@@ -493,10 +525,10 @@ var Profile = {
             });
         });
 
-        $("#student-goals-sort").change(function() { Profile.sortStudentGoals(studentGoalsViewModel) });
+        $("#student-goals-sort").change(function() { Profile.sortStudentGoals(studentGoalsViewModel); });
 
-        $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(studentGoalsViewModel) });
-        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(studentGoalsViewModel) });
+        $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
+        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
 
         Profile.sortStudentGoals(studentGoalsViewModel);
         Profile.filterStudentGoals(studentGoalsViewModel);
@@ -742,6 +774,7 @@ var Profile = {
 						infoHover.css('left', Math.min(left, leftMax));
 						infoHover.css('top', mouseY + 5);
 						infoHover.css('cursor', 'pointer');
+						infoHover.css('position', 'fixed');
 						infoHover.show();
 					}
 				}, 100);
@@ -843,6 +876,7 @@ var Profile = {
                         infoHover.css('left', Math.min(left, leftMax));
                         infoHover.css('top', mouseY + 5);
                         infoHover.css('cursor', 'pointer');
+						infoHover.css('position', 'fixed');
                         infoHover.show();
                     }
                 }, 100);
@@ -854,6 +888,106 @@ var Profile = {
         );
     }
 };
+
+var GoalProfileView = Backbone.View.extend({
+    template: Templates.get( "profile.profile-goals" ),
+    needsRerender: true,
+
+    initialize: function() {
+        this.model.bind('change', this.render, this);
+        this.model.bind('reset', this.render, this);
+        this.model.bind('remove', this.render, this);
+        this.model.bind('add', this.render, this);
+
+        $(this.el)
+            .delegate('input.goal-title', 'blur', $.proxy(function( e ) {
+                var jel = $(e.target);
+                var goalId = jel.closest('.goal').data('id');
+                var goal = this.model.get(goalId);
+                var newTitle = jel.val();
+                if (newTitle !== goal.get('title')) {
+                    goal.save({title: newTitle});
+                }
+            }, this))
+            .delegate('.abandon', 'click', $.proxy(this.abandon, this));
+    },
+
+    show: function() {
+        // render if necessary
+        if (this.needsRerender) {
+            this.render();
+        }
+        $(this.el).show();
+    },
+
+    hide: function() {
+        $(this.el).hide();
+    },
+
+    render: function() {
+        var jel = $(this.el);
+        // delay rendering until the view is actually visible
+        this.needsRerender = false;
+        var json = _.pluck(this.model.models, 'attributes');
+        jel.html(this.template({
+            goals: json,
+            title: this.options.title,
+            isCurrent: (this.options.type == 'current'),
+            isCompleted: (this.options.type == 'completed'),
+            isAbandoned: (this.options.type == 'abandoned'),
+            isCurrentUser: this.options.currentUser
+        }));
+
+        jel.find(".goal").hover(
+            function () {
+                $(this).find(".goal-description .summary-light").hide();
+                $(this).find(".goal-controls").show();
+            },
+            function () {
+                $(this).find(".goal-controls").hide();
+                $(this).find(".goal-description .summary-light").show();
+            }
+        );
+
+        // attach a NewGoalView to the new goals html
+        var newGoalEl = this.$(".goalpicker");
+        if ( newGoalEl.length > 0) {
+            this.newGoalsView = new NewGoalView({
+                el: newGoalEl,
+                model: this.model
+            });
+        }
+
+        Profile.AddObjectiveHover(jel);
+        return jel;
+    },
+
+    abandon: function( evt ) {
+        var goalEl = $(evt.target).closest('.goal');
+        var goal = this.model.get(goalEl.data('id'));
+        if ( !goal ) {
+            // haven't yet received a reponse from the server after creating the
+            // goal. Shouldn't happen too often, so just show a message.
+            alert("Please wait a few seconds and try again. If this is the second time you've seen this message, reload the page");
+            return;
+        }
+
+        if (confirm("Abandoning a goal is permanent and cannot be undone. Do you really want to abandon this goal?")) {
+            // move the model to the abandoned collection
+            this.model.remove(goal);
+            goal.set({'abandoned': true});
+            AbandonedGoalBook.add(goal);
+
+            // persist to server
+            goal.save().fail(function() {
+                KAConsole.log("Warning: failed to abandon goal", goal);
+                AbandonedGoalBook.remove(goal);
+                this.model.add(goal);
+            });
+        }
+    }
+});
+
 var ProgressSummaryView = function() {
     var fInitialized = false,
         template = Templates.get("profile.class-progress-summary"),
@@ -980,103 +1114,5 @@ var ProgressSummaryView = function() {
         }
     };
 };
-
-var GoalProfileView = Backbone.View.extend({
-    template: Templates.get( "profile.profile-goals" ),
-    needsRerender: true,
-
-    initialize: function() {
-        this.model.bind('change', this.render, this);
-        this.model.bind('reset', this.render, this);
-        this.model.bind('remove', this.render, this);
-        this.model.bind('add', this.render, this);
-
-        $(this.el)
-            .delegate('input.goal-title', 'blur', $.proxy(function( e ) {
-                var jel = $(e.target);
-                var goalId = jel.closest('.goal').data('id');
-                var goal = this.model.get(goalId);
-                var newTitle = jel.val();
-                if (newTitle !== goal.get('title')) {
-                    goal.save({title: newTitle});
-                }
-            }, this))
-            .delegate('.abandon', 'click', $.proxy(this.abandon, this));
-    },
-
-    show: function() {
-        // render if necessary
-        if (this.needsRerender) {
-            this.render();
-        }
-        $(this.el).show();
-    },
-
-    hide: function() {
-        $(this.el).hide();
-    },
-
-    render: function() {
-        var jel = $(this.el);
-        // delay rendering until the view is actually visible
-        this.needsRerender = false;
-        var json = _.pluck(this.model.models, 'attributes');
-        jel.html(this.template({
-            goals: json,
-            title: this.options.title,
-            isCurrent: (this.options.type == 'current'),
-            isCompleted: (this.options.type == 'completed'),
-            isAbandoned: (this.options.type == 'abandoned')
-        }));
-
-        jel.find(".goal").hover(
-            function () {
-                $(this).find(".goal-description .summary-light").hide();
-                $(this).find(".goal-controls").show();
-            },
-            function () {
-                $(this).find(".goal-controls").hide();
-                $(this).find(".goal-description .summary-light").show();
-            }
-        );
-
-        // attach a NewGoalView to the new goals html
-        var newGoalEl = this.$(".goalpicker");
-        if ( newGoalEl.length > 0) {
-            this.newGoalsView = new NewGoalView({
-                el: newGoalEl,
-                model: this.model
-            });
-        }
-
-        Profile.AddObjectiveHover(jel);
-        return jel;
-    },
-
-    abandon: function( evt ) {
-        var goalEl = $(evt.target).closest('.goal');
-        var goal = this.model.get(goalEl.data('id'));
-        if ( !goal ) {
-            // haven't yet received a reponse from the server after creating the
-            // goal. Shouldn't happen too often, so just show a message.
-            alert("Please wait a few seconds and try again. If this is the second time you've seen this message, reload the page");
-            return;
-        }
-
-        if (confirm("Abandoning a goal is permanent and cannot be undone. Do you really want to abandon this goal?")) {
-            // move the model to the abandoned collection
-            this.model.remove(goal);
-            goal.set({'abandoned': true});
-            AbandonedGoalBook.add(goal);
-
-            // persist to server
-            goal.save().fail(function() {
-                KAConsole.log("Warning: failed to abandon goal", goal);
-                AbandonedGoalBook.remove(goal);
-                this.model.add(goal);
-            });
-        }
-    }
-});
 
 $(function(){Profile.init();});

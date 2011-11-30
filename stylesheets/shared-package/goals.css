@@ -52,7 +52,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveAnyExerciseProficiency,
 .goal a.objective.GoalObjectiveAnyVideo {
     padding-left: 22px
-    padding-left: 8px\9;
 }
 
 #create-goal-view .goal a.objective.exercise:hover:before,
@@ -67,7 +66,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveExerciseProficiency:before,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
     display: block;
-    display: none\9;
     content: " ";
     width: 30px;
     height: 30px;
@@ -88,6 +86,18 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveWatchVideo:before,
 .goal a.objective.GoalObjectiveAnyVideo:before {
     background: #3A4759 url(/images/video-camera-icon-inset-small.png) no-repeat 50% 50%; /*! data-uri(/images/video-camera-icon-inset-small.png) */
+}
+
+.ie .goal a.objective.video:before,
+.ie .goal a.objective.GoalObjectiveWatchVideo:before,
+.ie .goal a.objective.GoalObjectiveAnyVideo:before,
+.ie .goal a.objective.exercise:before,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency:before,
+.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
+    border: none;
+    left: -2px;
+    top: -4px;
+    background-color: transparent;
 }
 
 .goal a.objective.started:before {
@@ -124,7 +134,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.GoalObjectiveWatchVideo .objective-progress-meter,
 .goal a.objective.GoalObjectiveAnyVideo .objective-progress-meter {
     display: block;
-    display: none\9;
     content: " ";
     width: 20px;
     height: 20px;
@@ -134,11 +143,16 @@ ul.inline-list, ul.inline-list li {
     top: 0;
 }
 
+.ie .goal a.objective.video .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveWatchVideo .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveAnyVideo .objective-progress-meter {
+    left: 3px;
+}
+
 .goal a.objective.exercise .objective-progress-meter,
 .goal a.objective.GoalObjectiveExerciseProficiency .objective-progress-meter,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency .objective-progress-meter {
     display: block;
-    display: none\9;
     content: " ";
     width: 20px;
     height: 20px;
@@ -146,6 +160,12 @@ ul.inline-list, ul.inline-list li {
     position: absolute;
     left: -6px;
     top: 0;
+}
+
+.ie .goal a.objective.exercise .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency .objective-progress-meter,
+.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency .objective-progress-meter {
+    left: 2px;
 }
 
 .goal a.objective.exercise.complete:before,
@@ -164,6 +184,19 @@ ul.inline-list, ul.inline-list li {
     border-radius: 18px;
     border: 1px solid #CCC;
 }
+
+.ie .goal a.objective.exercise.complete:before,
+.ie .goal a.objective.video.complete:before,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.ie .goal a.objective.GoalObjectiveWatchVideo.complete:before,
+.ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
+    border: none;
+    left: -2px;
+    top: -4px;
+    background-color: transparent;
+}
+
 .goal a.objective.exercise.complete,
 .goal a.objective.video.complete,
 .goal a.objective.GoalObjectiveExerciseProficiency.complete,
@@ -360,8 +393,7 @@ input.goal-title:focus {
 .create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #playlist-jump > span {
     font-weight: normal;
 }
-#popup-dialog .dialog-frame.create-goal {
-}
+
 #popup-dialog .dialog-frame.create-custom-goal {
     position: fixed;
     left: 5%;
@@ -426,6 +458,18 @@ input.goal-title:focus {
 
 .recently-completed {
     position: relative;
+}
+
+.recently-completed .goal-description strong {
+    display: inline-block;
+    text-decoration: line-through;
+    opacity: .7;
+    filter: alpha(opacity=75);
+}
+
+.recently-completed .goal-description .summary-light {
+    color: #111;
+    font-weight: bold;
 }
 
 #btn-goal-history {
@@ -495,21 +539,28 @@ input.goal-title:focus {
 
 .goalpicker h3,
 .goalpicker h4 {
-  font-size:40px;
-  font-family:MuseoSans100;
+  font-size:30px;
+  font-family:MuseoSans300;
   font-weight:normal;
   line-height:68px;
   color:#777;
   margin:0;
   letter-spacing:4px;
 }
+.goalpicker h3{
+  padding-left:.4em;
+  margin-bottom:12px;
+  width:90%;
+  border-bottom:1px solid #666;
+  
+}
 .goalpicker h4 {
   text-transform:uppercase;
-  font-family:MuseoSans900;
-  font-weight:normal;
-  font-size:28px;
+  font-family:MuseoSans500;
+  font-weight:bold;
+  font-size:24px;
   letter-spacing:6px;
-  line-height:28px;
+  line-height:38px;
 }
 
 .goalpicker a{
@@ -522,26 +573,24 @@ input.goal-title:focus {
   -webkit-box-shadow:0 0 6px 1px #678D00;
 }
 
+.goalpicker .newgoal .info p{
+  margin:0 0 22px;
+}
+
 .goalpicker .newgoal:hover a,
 .goalpicker .info button {
   color:#678D00;
 }
 
 .goalpicker .info button {
-  font-family:MuseoSans900;
-  font-weight:normal;
-  text-transform:uppercase;
-  letter-spacing:2px;
+  text-transform:capitalize;
   text-align:center;
   line-height:16px;
-  border:2px solid #678D00;
-  background-color:#678D00;
-  color:white;
   width:70%;
-  margin:2em auto;
+  margin:1em auto 2em;
   margin-left:15%;
-  cursor:pointer;
 }
+
 
 .goalpicker .info, .goalpicker .info:hover  {
   display:none;
@@ -551,25 +600,27 @@ input.goal-title:focus {
   top:20px;
   width:175px;
   height:auto;
-  padding:10px 15px 0;
+  padding:22px 15px 0;
   background-color:#eee;
+  border:1px solid #909090;
   -webkit-box-shadow:0px 0px 10px 5px #ccc;
-  -webkit-border-radius:3px;
+  -webkit-border-radius:5px;
 }
 
 
-.goalpicker .info:after {
+/*.goalpicker .info:after {
   content:'';
   display:block;
   position:absolute;
   top:30px;
-  left:100%; /*should be set to 100% */
+  left:100%;
   width:0;
   height:0;
   border-color: transparent transparent transparent #eee;
   border-style: solid;
   border-width: 10px;
 }
+*/
 
 .goalpicker .info.pos-right {
   left:auto;
@@ -594,7 +645,7 @@ input.goal-title:focus {
 .modal.goal-new {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
-  width: 900px; /* this is redundant but here for clarity */
+  width: 700px; /* this is redundant but here for clarity */
   margin: 0 0 0 -450px;
   top: 90px;
   left: 50%;
@@ -615,4 +666,26 @@ input.goal-title:focus {
   -webkit-background-clip: padding-box;
   -moz-background-clip: padding-box;
   background-clip: padding-box;
+}
+
+.student-module-status.notmatching,
+.student-module-status.light.notmatching {
+  background-color: #aaa;
+}
+
+.modal .goalpicker h3{
+  font-size:24px;
+  line-height:36px;
+  margin-left:.5em;
+}
+
+.modal .goalpicker h4 {
+  font-size:18px;
+}
+.modal .goalpicker .newgoal{
+  padding:1em 1em 2em;
+}
+
+.lte8 #goals-container {
+    display: none;
 }

@@ -1,6 +1,5 @@
-import models
 import util
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import Badge, BadgeCategory
 
 # All badges awarded for getting a certain number of points inherit from PointBadge
 class PointBadge(Badge):
@@ -55,4 +54,3 @@ class TenMillionaireBadge(PointBadge):
         self.badge_category = BadgeCategory.DIAMOND
         self.points = 0
         self.is_teaser_if_unknown = True
-

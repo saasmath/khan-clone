@@ -15,8 +15,7 @@ import points
 import layer_cache
 import knowledgemap
 import string
-import simplejson
-import logging
+import simplejson as json
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from custom_exceptions import MissingExerciseException
@@ -176,7 +175,8 @@ class ViewExercise(request_handler.RequestHandler):
                     previous_time = 0
 
                     # Here i is 0-indexed but problems are numbered starting at 1
-                    while len(problem_log.hint_after_attempt_list) and problem_log.hint_after_attempt_list[0] == i+1:
+                    while (len(problem_log.hint_after_attempt_list) and
+                            problem_log.hint_after_attempt_list[0] == i + 1):
                         user_activity.append([
                             "hint-activity",
                             "0",
@@ -200,9 +200,9 @@ class ViewExercise(request_handler.RequestHandler):
 
         url_pattern = "/exercise/%s?student_email=%s&problem_number=%d"
         user_exercise.previous_problem_url = url_pattern % \
-            (exid, user_data_student.key_email , problem_number-1)
+            (exid, user_data_student.key_email, problem_number - 1)
         user_exercise.next_problem_url = url_pattern % \
-            (exid, user_data_student.key_email , problem_number+1)
+            (exid, user_data_student.key_email, problem_number + 1)
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
@@ -279,16 +279,16 @@ def exercise_graph_dict_json(user_data, admin=False):
             'h_position': graph_dict["h_position"],
             'v_position': graph_dict["v_position"],
             'summative': graph_dict["summative"],
-            'num_milestones': graph_dict.get("num_milestones",0),
+            'num_milestones': graph_dict.get("num_milestones", 0),
             'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]],
             'goal_req': (graph_dict["name"] in goal_exercises)
-        };
+        }
         if admin:
             exercise = models.Exercise.get_by_name(graph_dict["name"])
             row["live"] = exercise and exercise.live
-        graph_dict_data.append(row);
+        graph_dict_data.append(row)
 
-    return simplejson.dumps(graph_dict_data)
+    return json.dumps(graph_dict_data)
 
 class ViewAllExercises(request_handler.RequestHandler):
     def get(self):
@@ -308,7 +308,7 @@ class RawExercise(request_handler.RequestHandler):
     def get(self):
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
-        self.response.headers["Content-Type"] = "text/html";
+        self.response.headers["Content-Type"] = "text/html"
         self.response.out.write(raw_exercise_contents(exercise_file))
 
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
@@ -416,21 +416,21 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         # Build up problem log for deferred put
         problem_log = models.ProblemLog(
-                key_name = "problemlog_%s_%s_%s" % (user_data.key_email, user_exercise.exercise, problem_number),
-                user = user_data.user,
-                exercise = user_exercise.exercise,
-                problem_number = problem_number,
-                time_taken = time_taken,
-                time_done = dt_now,
-                count_hints = count_hints,
-                hint_used = count_hints > 0,
-                correct = completed and not count_hints and (attempt_number == 1),
-                sha1 = sha1,
-                seed = seed,
-                problem_type = problem_type,
-                count_attempts = attempt_number,
-                attempts = [attempt_content],
-                ip_address = ip_address,
+                key_name="problemlog_%s_%s_%s" % (user_data.key_email, user_exercise.exercise, problem_number),
+                user=user_data.user,
+                exercise=user_exercise.exercise,
+                problem_number=problem_number,
+                time_taken=time_taken,
+                time_done=dt_now,
+                count_hints=count_hints,
+                hint_used=count_hints > 0,
+                correct=completed and not count_hints and (attempt_number == 1),
+                sha1=sha1,
+                seed=seed,
+                problem_type=problem_type,
+                count_attempts=attempt_number,
+                attempts=[attempt_content],
+                ip_address=ip_address,
         )
 
         if exercise.summative:
@@ -469,6 +469,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 user_exercise.update_proficiency_model(correct=True)
 
+                bingo('struggling_problems_correct')
+
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo(['hints_gained_proficiency_all',
                            'struggling_gained_proficiency_all'])
@@ -481,7 +483,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             util_badges.update_with_user_exercise(
                 user_data,
                 user_exercise,
-                include_other_badges = True,
+                include_other_badges=True,
                 action_cache=last_action_cache.LastActionCache.get_cache_and_push_problem_log(user_data, problem_log))
 
             # Update phantom user notifications
@@ -526,8 +528,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if user_data is not None and user_data.coaches:
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used
             deferred.defer(models.commit_log_summary_coaches, problem_log, user_data.coaches,
-                       _queue = "log-summary-queue",
-                       _url = "/_ah/queue/deferred_log_summary")
+                       _queue="log-summary-queue",
+                       _url="/_ah/queue/deferred_log_summary")
 
         return user_exercise, user_exercise_graph, goals_updated
 
@@ -662,7 +664,7 @@ class UpdateExercise(request_handler.RequestHandler):
                 exercise_video = models.ExerciseVideo()
                 exercise_video.exercise = exercise
                 exercise_video.video = db.Key(video_key)
-                exercise_video.exercise_order = models.VideoPlaylist.all().filter('video =',exercise_video.video).get().video_position
+                exercise_video.exercise_order = models.VideoPlaylist.all().filter('video =', exercise_video.video).get().video_position
                 exercise_video.put()
 
         exercise.put()
@@ -680,7 +682,7 @@ class UpdateExercise(request_handler.RequestHandler):
             playlist_sorted = []
             for p in playlists:
                 playlist_sorted.append([p, titles.count(p.title)])
-            playlist_sorted.sort(key = lambda p: p[1])
+            playlist_sorted.sort(key=lambda p: p[1])
             playlist_sorted.reverse()
 
             playlists = []
@@ -690,14 +692,14 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise_list = []
             playlists = list(set(playlists))
             for p in playlists:
-                playlist_dict[p.title]=[]
+                playlist_dict[p.title] = []
                 for exercise_video in ExerciseVideos:
                     if p.title  in map(lambda pl: pl.title, models.VideoPlaylist.get_cached_playlists_for_video(exercise_video.video)):
                         playlist_dict[p.title].append(exercise_video)
                         # ExerciseVideos.remove(exercise_video)
 
                 if playlist_dict[p.title]:
-                    playlist_dict[p.title].sort(key = lambda e: models.VideoPlaylist.all().filter('video =', e.video).filter('playlist =',p).get().video_position)
+                    playlist_dict[p.title].sort(key=lambda e: models.VideoPlaylist.all().filter('video =', e.video).filter('playlist =', p).get().video_position)
                     exercise_list.append(playlist_dict[p.title])
 
             if exercise_list:
@@ -706,6 +708,4 @@ class UpdateExercise(request_handler.RequestHandler):
                     e.exercise_order = exercise_list.index(e)
                     e.put()
 
-
         self.redirect('/editexercise?saved=1&name=' + exercise_name)
-

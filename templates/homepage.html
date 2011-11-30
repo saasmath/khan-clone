@@ -4,14 +4,14 @@
 {% import 'macros/analytics.html' as analytics %}
 {% import 'macros/mailing_lists.html' as mailing_lists %}
 
-{% block pagescript %}
+{% block pagecss %}
 <style>
 	#page_sub_nav { display: none; }
 	td { vertical-align: top; }
 	.ui-tooltip, .qtip { max-width: 200px; }
 </style>
+{% endblock pagecss %}
 
-{% endblock pagescript %}
 {% block pagetitle %}{% endblock pagetitle %}
 {% block pagecontent %}
 <article id="homepage">

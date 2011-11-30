@@ -1,5 +1,4 @@
-import models
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import Badge, BadgeCategory
 
 # All badges awarded for consecutively performing activity on the site inherit from ConsecutiveActivityBadge
 class ConsecutiveActivityBadge(Badge):

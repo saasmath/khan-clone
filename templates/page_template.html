@@ -22,7 +22,6 @@
         <!--[if lte IE 6]><script src="/javascript/ie-warning.js"></script><script>window.onload=function(){e("/images/ie-warning/")}</script><![endif]-->
 
         <script type="text/javascript">
-            var _sf_startpt=(new Date()).getTime(); {# for Chartbeat Analytics #}
             var KA_VERSION = '{{ App.version }}';
             var FB_APP_ID = '{{ App.facebook_app_id }}';
             var URL_CONTINUE = '{{ continue|escapejs }}';
@@ -195,24 +194,6 @@
 
     {%- if not hide_analytics -%}
     <script type="text/javascript">
-        {# Chartbeat #}
-        var _sf_async_config={uid:10894,domain:"khanacademy.org"};
-        (function(){
-            function loadChartbeat() {
-                window._sf_endpt=(new Date()).getTime();
-                var e = document.createElement('script');
-                e.setAttribute('language', 'javascript');
-                e.setAttribute('type', 'text/javascript');
-                e.setAttribute('src',
-                   (("https:" == document.location.protocol) ? "https://s3.amazonaws.com/" : "http://") +
-                   "static.chartbeat.com/js/chartbeat.js");
-                document.body.appendChild(e);
-            }
-            var oldonload = window.onload;
-            window.onload = (typeof window.onload != 'function') ?
-                loadChartbeat : function() { oldonload(); loadChartbeat(); };
-        })();
-
         {# GA #}
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;

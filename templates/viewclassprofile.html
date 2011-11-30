@@ -7,31 +7,6 @@
 
 {% block pagescript %}
 {{ js_css_packages.css_package("studentlists") }}
-{% raw %}
-
-<script id="profile-student-goals-tmpl" type="text/html">
-<div id="class-student-goals">
-  <div>Sorted by <span data-bind="text: sort_desc" />. <span data-bind="text: filter_desc" />.</div>
-  <div id="class-student-goal" data-bind="foreach: row_data">
-    <div data-bind="fastFilter: $parent.fastFilter">
-      <div class="student-name"><a data-bind="text: student.nickname, attr: {href: student.profile_url}"></a>
-        <span data-bind="visible: student.goal_count > 1 && $parent.show_counts">(<span data-bind="text: goal_idx" />/<span data-bind="text: student.goal_count" />)</span>
-        <div data-bind="visible: goal.objectives.length > 0">
-          <div class="goal-start-time" data-bind="visible: !$root.show_updated()">Started <span data-bind="text: goal.created_ago"/></div>
-          <div class="goal-update-time" data-bind="visible: $root.show_updated()">Updated <span data-bind="text: goal.updated_ago"/></div>
-        </div>
-      </div>
-      <div class="goal">
-        <ul class="inline-list objective-list" data-bind="foreach: goal.objectives">
-          <li data-bind="style: {width: (100/$parent.goal.objectives.length)+'%'}"><a class="objective simple-button action-gradient exercise-color seethrough" data-bind="goalObjectiveCSS: $data, fastFilter: $root.fastFilterCSS, click: click_fn, text: description"></a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-</script>
-
-{% endraw %}
 {% endblock pagescript %}
 
 {% block pagesubmenu %}
@@ -73,19 +48,34 @@
 
     <ul id="nav-accordion">
         <li>
-            {{ profile_macros.class_graph_link(user_data_coach, "Progress Report", "classprogressreport", selected_graph_type, list_id) }}
-            <p class="accordion-content">
+            {{ profile_macros.class_api_link(user_data_coach, "Progress Report", "progressreport", selected_graph_type, list_id) }}
+            <div class="accordion-content">
                 Shows you which exercises your class has worked on and completed.
-                <span class="graph-options">
+                <div class="graph-options">
                     <span class="progress-legend exercise-color started">Started</span>
                     <span class="progress-legend exercise-color proficient">Proficient</span>
                     <span class="progress-legend exercise-color review light">Review</span>
                     <span class="progress-legend exercise-color struggling">Struggling</span>
-                </span>
-            </p>
+
+                    <div class="coach-option-block">
+                      <div>Filter by:</div>
+                      <div>
+                        <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" name="struggling" />Struggling only</span>
+                        <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" name="recent" />Worked on in last: 
+                            <select id="progressreport-filter-last-time"><option value="1">day</option><option value="2">2 days</option><option value="3">3 days</option><option selected value="7">week</option><option value="30">month</option></select></span>
+                      </div>
+                    </div>
+                    <div class="coach-option-block">
+                      <div>Filter by student or exercise:</div>
+                      <div>
+                        <input type="text" id="student-progressreport-search"></input>
+                      </div>
+                    </div>
+                </div>
+            </div>
         </li>
         <li>
-            {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "user/students/progress/summary", selected_graph_type, list_id) }}
+            {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "progress/summary", selected_graph_type, list_id) }}
             <p class="accordion-content">
                 Shows you which exercises your class has worked on and completed.
             </p>
@@ -128,7 +118,7 @@
             </p>
         </li>
         <li>
-            {{ profile_macros.class_api_link(user_data_coach, "Goals", "user/students/goals", selected_graph_type, list_id) }}
+            {{ profile_macros.class_api_link(user_data_coach, "Goals", "goals", selected_graph_type, list_id) }}
             <div class="accordion-content">
                 Shows active student goals and progress toward completion of those goals.
                 <div class="graph-options">
@@ -143,13 +133,13 @@
                     <div id="student-goals-filter-block">
                       <div>Filter by:</div>
                       <div>
-                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="most-recent" />Recently updated only</span>
-                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="in-progress" />In progress only</span>
-                        <span class="student-goals-filter"><input type="checkbox" class="student-goals-filter-check" name="struggling" />Struggling only</span>
+                        <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" name="most-recent" />Recently updated only</span>
+                        <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" name="in-progress" />In progress only</span>
+                        <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" name="struggling" />Struggling only</span>
                       </div>
                     </div>
                     <div id="student-goals-search-block">
-                      <div>Find by name:</div>
+                      <div>Filter by student or objective:</div>
                       <div>
                         <input type="text" id="student-goals-search"></input>
                       </div>
