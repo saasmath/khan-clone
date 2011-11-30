@@ -112,9 +112,6 @@ var Profile = {
             }
         }, 1000);
 
-        $('.new-goal').removeClass('green');
-        $('.new-goal').addClass('disabled');
-
         Profile.ProgressSummaryView = new ProgressSummaryView();
     },
     highlightPoints: function(chart, fxnHighlight) {
@@ -829,8 +826,11 @@ var Profile = {
             var querystring = parts[1].split('&');
             for(var i = 0; i<querystring.length; i++) {
                 var kv = querystring[i].split('=');
-                if(kv[0].length > 0) //fix trailing &
-                    qs[kv[0]] = kv[1];
+                if(kv[0].length > 0) { //fix trailing &
+                    key = decodeURIComponent(kv[0]);
+                    value = decodeURIComponent(kv[1]);
+                    qs[key] = value;
+                }
             }
         }
         return qs;

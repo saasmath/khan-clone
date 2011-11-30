@@ -399,7 +399,11 @@ def user_videos_specific(youtube_id):
     return None
 
 # Can specify video using "video_key" parameter instead of youtube_id.
-@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET", "POST"])
+# Supports a GET request to solve the IE-behind-firewall issue with occasionally stripped POST data.
+# See http://code.google.com/p/khanacademy/issues/detail?id=3098
+# and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["POST"])
+@route("/api/v1/user/videos/<youtube_id>/log_compatability", methods=["GET"])
 @oauth_optional(require_anointed_consumer=True)
 @api_create_phantom
 @jsonp
@@ -835,7 +839,7 @@ def _attempt_problem_wrong(exercise_name):
     return unauthorized_response()
 
 # TomY Temporary fix: Sundar needs to access the logs using GET, which I accidentally masked with the newer call above
-@route("/api/v1/user/videos/<youtube_id>/sundarlog", methods=["GET"])
+@route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -1044,7 +1048,7 @@ def get_student_progress_report():
     user_data_coach = models.UserData.current()
 
     user_data_override = request.request_user_data("coach_email")
-    if user_data_coach.developer and user_data_override:
+    if user_data_coach and user_data_coach.developer and user_data_override:
         user_data_coach = user_data_override
 
     if not user_data_coach:
@@ -1106,9 +1110,9 @@ def get_user_current_goals():
 @jsonp
 @jsonify
 def get_student_goals():
-    user_data = models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User is not logged in.")
+    user_data_coach = request.request_user_data("coach_email")
+    if not user_data_coach:
+        return api_invalid_param_response("Coach not specified.")
 
     student_list = None
 
@@ -1116,7 +1120,7 @@ def get_student_goals():
 
     student_list_key = request.request_string('list_id')
     if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data.key())
+        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
         for list in student_lists:
             if str(list.key()) == student_list_key:
                 student_list = list
@@ -1127,7 +1131,7 @@ def get_student_goals():
     if student_list:
         students = student_list.get_students_data()
     else:
-        students = user_data.get_students_data()
+        students = user_data_coach.get_students_data()
 
     students = sorted(students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(students)

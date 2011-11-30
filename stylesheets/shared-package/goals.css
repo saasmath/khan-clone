@@ -449,11 +449,14 @@ input.goal-title:focus {
 #class-student-goals .objective.matches-filter:before {
     font-weight: bold;
     z-index: 10;
-    outline: 2px solid orange\9;
 
     -moz-box-shadow: inset 0 0 0 1px #555, 0 0 4px 2px orange;
     -webkit-box-shadow: inset 0 0 0 1px #555, 0 0 4px 2px orange;
     box-shadow: inset 0 0 0 1px #555, 0 0 4px 2px orange;
+}
+.lte8 #class-student-goals .objective.matches-filter,
+.lte8 #class-student-goals .objective.matches-filter:before {
+    outline: 2px solid orange;
 }
 
 .recently-completed {
