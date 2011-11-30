@@ -1082,8 +1082,11 @@ class Topic(db.Model):
 
     _serialize_blacklist = ["child_keys"]
 
-    def get_order(self, topic = None): # needs topic to match Content.get_order()
+    def get_order(self): 
         return self.parent.child_keys.index(self.key())
+
+    def get_child_order(self, child_key):
+        return self.child_keys.index(child_key)
 
     @staticmethod
     def get_by_readable_id(readable_id, version = None):
@@ -1222,11 +1225,7 @@ class Topic(db.Model):
             query.filter("hide =", False)
 
         return query.fetch(10000)
-        
-
-    def get_child_order(self, child_key):
-        return self.child_keys.index(child_key)
-                    
+                            
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_videos_for_topic_%s_at_%s" % ("descendant" if len(args) > 1 and args[1] else "child", args[0].key().name(), str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
     def get_cached_videos_for_topic(topic, include_descendants=False, limit=500):
@@ -1296,12 +1295,7 @@ class UserTopicVideos(db.Model):
         else:
             return UserTopicVideos.get_by_key_name(key)
 
-
-class Content(db.Model):
-    def get_order(self, topic_key):
-        return db.get(topic_key).child_keys.index(self.key())
-
-class Video(Searchable, Content):
+class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
     title = db.StringProperty()

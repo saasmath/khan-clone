@@ -626,7 +626,7 @@ class UpdateExercise(request_handler.RequestHandler):
                 if not topics.has_key(topic.key()):
                     topics[topic.key()] = {}
                 
-                topics[topic.key()][exercise_video] = exercise_video.video.get_order(topic.key())
+                topics[topic.key()][exercise_video] = topic.get_child_order(exercise_video.video.key())
 
         # sort the list by topics that have the most exercises in them
         topic_list = sorted(topics.keys(), key = lambda k: len(topics[k]), reverse = True)  
