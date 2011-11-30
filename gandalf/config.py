@@ -8,8 +8,7 @@ from models import UserData
 def can_control_gandalf():
     """CUSTOMIZE can_control_gandalf however you want to specify
     whether or not the currently-logged-in user has access
-    to the experiment dashboard.
-
+    to Gandalf dashboard."
     """
     user_data = UserData.current(bust_cache=True)
     return users.is_current_user_admin() or (user_data and user_data.developer)
