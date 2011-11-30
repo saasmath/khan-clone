@@ -1,4 +1,4 @@
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import BadgeCategory
 from exercise_badges import ExerciseBadge
 
 # All badges awarded for completing a streak of certain length inherit from StreakBadge

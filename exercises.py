@@ -7,7 +7,6 @@ import urllib
 from google.appengine.ext import db
 from google.appengine.ext import deferred
 
-import consts
 import datetime
 import models
 import request_handler
@@ -16,6 +15,7 @@ import points
 import layer_cache
 import knowledgemap
 import string
+import simplejson as json
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from custom_exceptions import MissingExerciseException
@@ -23,6 +23,7 @@ from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
+from goals.models import GoalList
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -62,17 +63,23 @@ class ViewExercise(request_handler.RequestHandler):
         ('hints_wrong_problems', ConversionTypes.Counting),
         ('hints_keep_going_after_wrong', ConversionTypes.Counting),
     ]
-    _hints_conversion_names, _hints_conversion_types = [list(x) for x in zip(*_hints_conversion_tests)]
+    _hints_conversion_names, _hints_conversion_types = [
+        list(x) for x in zip(*_hints_conversion_tests)]
 
     @ensure_xsrf_cookie
-    def get(self):
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
+    def get(self, exid=None):
 
-        exid = self.request_string("exid", default="addition_1")
+        if not exid:
+            # Support old URLs that may pass in exid as a query param
+            self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
+            return
+
         exercise = models.Exercise.get_by_name(exid)
 
         if not exercise:
             raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
+
+        user_data = models.UserData.current() or models.UserData.pre_phantom()
 
         user_exercise = user_data.get_or_insert_exercise(exercise)
 
@@ -168,7 +175,8 @@ class ViewExercise(request_handler.RequestHandler):
                     previous_time = 0
 
                     # Here i is 0-indexed but problems are numbered starting at 1
-                    while len(problem_log.hint_after_attempt_list) and problem_log.hint_after_attempt_list[0] == i+1:
+                    while (len(problem_log.hint_after_attempt_list) and
+                            problem_log.hint_after_attempt_list[0] == i + 1):
                         user_activity.append([
                             "hint-activity",
                             "0",
@@ -190,11 +198,11 @@ class ViewExercise(request_handler.RequestHandler):
         browser_disabled = is_webos or self.is_older_ie()
         renderable = renderable and not browser_disabled
 
-        url_pattern = "/exercises?exid=%s&student_email=%s&problem_number=%d"
+        url_pattern = "/exercise/%s?student_email=%s&problem_number=%d"
         user_exercise.previous_problem_url = url_pattern % \
-            (exid, user_data_student.key_email , problem_number-1)
+            (exid, user_data_student.key_email, problem_number - 1)
         user_exercise.next_problem_url = url_pattern % \
-            (exid, user_data_student.key_email , problem_number+1)
+            (exid, user_data_student.key_email, problem_number + 1)
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
@@ -211,52 +219,83 @@ class ViewExercise(request_handler.RequestHandler):
             'browser_disabled': browser_disabled,
             'is_webos': is_webos,
             'renderable': renderable,
-            'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)), 
+            'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)),
             'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 11',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
-            'remind_answer_format': 'true' if ab_test('remind_answer_format_2',
-                conversion_name=['remind_first_attempt_wrong', 'remind_correct_after_wrong'],
-                conversion_type=[ConversionTypes.Counting] * 2) else 'false',
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
 
-class ViewAllExercises(request_handler.RequestHandler):
-    def get(self):
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
+def exercise_graph_dict_json(user_data, admin=False):
+    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    if user_data.reassess_from_graph(user_exercise_graph):
+        user_data.put()
 
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
-        if user_data.reassess_from_graph(user_exercise_graph):
-            user_data.put()
-
-        graph_dicts = user_exercise_graph.graph_dicts()
+    graph_dicts = user_exercise_graph.graph_dicts()
+    if admin:
+        suggested_graph_dicts = []
+        proficient_graph_dicts = []
+        recent_graph_dicts = []
+        review_graph_dicts = []
+    else:
         suggested_graph_dicts = user_exercise_graph.suggested_graph_dicts()
         proficient_graph_dicts = user_exercise_graph.proficient_graph_dicts()
         recent_graph_dicts = user_exercise_graph.recent_graph_dicts()
         review_graph_dicts = user_exercise_graph.review_graph_dicts()
 
-        for graph_dict in suggested_graph_dicts:
-            graph_dict["status"] = "Suggested"
+    for graph_dict in suggested_graph_dicts:
+        graph_dict["status"] = "Suggested"
 
-        for graph_dict in proficient_graph_dicts:
-            graph_dict["status"] = "Proficient"
+    for graph_dict in proficient_graph_dicts:
+        graph_dict["status"] = "Proficient"
 
-        for graph_dict in review_graph_dicts:
-            graph_dict["status"] = "Review"
+    for graph_dict in recent_graph_dicts:
+        graph_dict["recent"] = True
 
-            try:
-                suggested_graph_dicts.remove(graph_dict)
-            except ValueError:
-                pass
+    for graph_dict in review_graph_dicts:
+        graph_dict["status"] = "Review"
+
+        try:
+            suggested_graph_dicts.remove(graph_dict)
+        except ValueError:
+            pass
+
+    goal_exercises = GoalList.exercises_in_current_goals(user_data)
+
+    graph_dict_data = []
+    for graph_dict in graph_dicts:
+        row = {
+            'name': graph_dict["name"],
+            'points': graph_dict.get("points", ''),
+            'display_name': graph_dict["display_name"],
+            'status': graph_dict.get("status"),
+            'recent': graph_dict.get("recent", False),
+            'progress': graph_dict["progress"],
+            'progress_display': models.UserExercise.to_progress_display(graph_dict["progress"]),
+            'longest_streak': graph_dict["longest_streak"],
+            'h_position': graph_dict["h_position"],
+            'v_position': graph_dict["v_position"],
+            'summative': graph_dict["summative"],
+            'num_milestones': graph_dict.get("num_milestones", 0),
+            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]],
+            'goal_req': (graph_dict["name"] in goal_exercises)
+        }
+        if admin:
+            exercise = models.Exercise.get_by_name(graph_dict["name"])
+            row["live"] = exercise and exercise.live
+        graph_dict_data.append(row)
+
+    return json.dumps(graph_dict_data)
+
+class ViewAllExercises(request_handler.RequestHandler):
+    def get(self):
+        user_data = models.UserData.current() or models.UserData.pre_phantom()
 
         template_values = {
-            'graph_dicts': graph_dicts,
-            'suggested_graph_dicts': suggested_graph_dicts,
-            'recent_graph_dicts': recent_graph_dicts,
-            'review_graph_dicts': review_graph_dicts,
+            'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
@@ -269,7 +308,7 @@ class RawExercise(request_handler.RequestHandler):
     def get(self):
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
-        self.response.headers["Content-Type"] = "text/html";
+        self.response.headers["Content-Type"] = "text/html"
         self.response.out.write(raw_exercise_contents(exercise_file))
 
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
@@ -340,8 +379,7 @@ def raw_exercise_contents(exercise_file):
 
     return contents
 
-# TODO(david): Rename this function
-def reset_streak(user_data, user_exercise):
+def make_wrong_attempt(user_data, user_exercise):
     if user_exercise and user_exercise.belongs_to(user_data):
         user_exercise.update_proficiency_model(correct=False)
         user_exercise.put()
@@ -356,7 +394,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         dt_now = datetime.datetime.now()
         exercise = user_exercise.exercise_model
 
-        prev_last_done = user_exercise.last_done
         user_exercise.last_done = dt_now
         user_exercise.seconds_per_fast_problem = exercise.seconds_per_fast_problem
         user_exercise.summative = exercise.summative
@@ -379,21 +416,21 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         # Build up problem log for deferred put
         problem_log = models.ProblemLog(
-                key_name = "problemlog_%s_%s_%s" % (user_data.key_email, user_exercise.exercise, problem_number),
-                user = user_data.user,
-                exercise = user_exercise.exercise,
-                problem_number = problem_number,
-                time_taken = time_taken,
-                time_done = dt_now,
-                count_hints = count_hints,
-                hint_used = count_hints > 0,
-                correct = completed and not count_hints and (attempt_number == 1),
-                sha1 = sha1,
-                seed = seed,
-                problem_type = problem_type,
-                count_attempts = attempt_number,
-                attempts = [attempt_content],
-                ip_address = ip_address,
+                key_name="problemlog_%s_%s_%s" % (user_data.key_email, user_exercise.exercise, problem_number),
+                user=user_data.user,
+                exercise=user_exercise.exercise,
+                problem_number=problem_number,
+                time_taken=time_taken,
+                time_done=dt_now,
+                count_hints=count_hints,
+                hint_used=count_hints > 0,
+                correct=completed and not count_hints and (attempt_number == 1),
+                sha1=sha1,
+                seed=seed,
+                problem_type=problem_type,
+                count_attempts=attempt_number,
+                attempts=[attempt_content],
+                ip_address=ip_address,
         )
 
         if exercise.summative:
@@ -404,10 +441,14 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
 
-        first_problem_after_proficiency = prev_last_done and user_exercise.proficient_date and (
-            abs(prev_last_done - user_exercise.proficient_date) <= datetime.timedelta(seconds=1))
+        just_earned_proficiency = False
 
         if completed:
+
+            if user_exercise.is_struggling():
+                bingo('struggling_problems_done_post_struggling')
+                if problem_log.correct:
+                    bingo('struggling_problems_correct_post_struggling')
 
             user_exercise.total_done += 1
 
@@ -428,25 +469,32 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 user_exercise.update_proficiency_model(correct=True)
 
+                bingo('struggling_problems_correct')
+
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
-                    bingo("hints_gained_proficiency_all")
+                    bingo(['hints_gained_proficiency_all',
+                           'struggling_gained_proficiency_all'])
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
+                    just_earned_proficiency = True
                     problem_log.earned_proficiency = True
 
             util_badges.update_with_user_exercise(
                 user_data,
                 user_exercise,
-                include_other_badges = True,
+                include_other_badges=True,
                 action_cache=last_action_cache.LastActionCache.get_cache_and_push_problem_log(user_data, problem_log))
 
             # Update phantom user notifications
             util_notify.update(user_data, user_exercise)
 
-            bingo('hints_problems_done')
+            bingo(['hints_problems_done', 'struggling_problems_done'])
 
         else:
+
+            if first_response and user_exercise.is_struggling():
+                bingo('struggling_problems_wrong_post_struggling')
 
             if user_exercise.streak == 0:
                 # 2+ in a row wrong -> not proficient
@@ -455,13 +503,17 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
-                bingo('hints_wrong_problems')
+                bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
 
         # If this is the first attempt, update review schedule appropriately
         if attempt_number == 1:
             user_exercise.schedule_review(completed)
 
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
+
+        goals_updated = GoalList.update_goals(user_data,
+            lambda goal: goal.just_did_exercise(user_data, user_exercise,
+                just_earned_proficiency))
 
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])
@@ -476,10 +528,10 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         if user_data is not None and user_data.coaches:
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used
             deferred.defer(models.commit_log_summary_coaches, problem_log, user_data.coaches,
-                       _queue = "log-summary-queue",
-                       _url = "/_ah/queue/deferred_log_summary") 
+                       _queue="log-summary-queue",
+                       _url="/_ah/queue/deferred_log_summary")
 
-        return user_exercise, user_exercise_graph
+        return user_exercise, user_exercise_graph, goals_updated
 
 class ExerciseAdmin(request_handler.RequestHandler):
 
@@ -497,8 +549,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
             graph_dict["live"] = exercise and exercise.live
 
         template_values = {
-            'graph_dicts': sorted(graph_dicts, key=lambda graph_dict: graph_dict["name"]),
-            'admin': True,
+            'graph_dict_data': exercise_graph_dict_json(user_data, admin=True),
             'map_coords': (0, 0, 0),
             }
 
@@ -646,7 +697,4 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise_video.exercise_order = i
             exercise_video.put()
 
-
-
         self.redirect('/editexercise?saved=1&name=' + exercise_name)
-

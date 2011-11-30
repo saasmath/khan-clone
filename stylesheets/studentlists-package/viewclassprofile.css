@@ -98,3 +98,75 @@
         position: relative;
         top: -1px;
     }
+
+/* For the progress summary report */
+#legend {
+  padding-left: 145px;
+  padding-bottom: 20px;
+}
+    #legend .segment {
+         float: left;
+         width: 100px;
+    }
+
+.exercise-row {
+  padding-top: 5px;
+  padding-bottom: 10px;
+  min-width: 670px;
+}
+.exercise-row:hover {
+  background-color: #EEE;
+  cursor: ns-resize;
+}
+    .exercise-row .exercise-name {
+      width: 130px;
+      float: left;
+      line-height: 1.2;
+      text-align: right;
+      padding-right: 15px;
+    }
+
+.fake-row .segment {
+  height: 15px;
+  padding-bottom: 4px;
+  display: inline-block;
+}
+    .fake-row .segment span {
+      text-transform: capitalize;
+      padding-left: 9px;
+      padding-bottom: 10px;
+      font-weight: bold;
+    }
+
+#left-column, #right-column {
+  float: left;
+}
+#left-column {
+  width: 200px;
+}
+    #left-column .float-off-spine {
+      float: right;
+    }
+#right-column {
+  width: 300px;
+}
+    #right-column .float-off-spine {
+      float: left;
+    }
+
+.student-lists {
+  display: none;
+}
+.student-list-container {
+  min-height: 1px;
+  width: 100px;
+}
+    .student-list-container td {
+      padding-left: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+.student-list-container.border-only {
+  width: 95px;
+}

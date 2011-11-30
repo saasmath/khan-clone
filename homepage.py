@@ -10,6 +10,7 @@ import models
 import layer_cache
 import templatetags
 from topics_list import DVD_list
+from api.auth.xsrf import ensure_xsrf_cookie
 
 ITEMS_PER_SET = 4
 
@@ -131,6 +132,7 @@ class ViewHomePage(request_handler.RequestHandler):
 
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
+    @ensure_xsrf_cookie
     def get(self):
 
         thumbnail_link_sets = new_and_noteworthy_link_sets()

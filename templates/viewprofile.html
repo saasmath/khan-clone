@@ -3,27 +3,27 @@
 {% import 'macros/user.html' as user_macros %}
 {% import 'macros/profiles.html' as profile_macros %}
 
-{% block meta_page_title %}User Profile | {% endblock meta_page_title %}
-{% block profile_name %}
-<span id="user-info" class="has-details">
-    <img src="/images/darth.png" />
+    {% block meta_page_title %}User Profile | {% endblock meta_page_title %}
+    {% block profile_name %}
+    <span id="user-info" class="has-details">
+        <img src="/images/darth.png" />
 
-    {% if logged_in %}
-        <span id="name">{{ student_nickname|escape }}{{ user_macros.simple_student_info(user_data_student) }}</span>
-    {% else %}
-        <span id="phantom-login"><a href="{{ login_url|escape }}">Log in to save your progress</a></span>
-    {% endif %}
+        {% if logged_in %}
+            <span id="name">{{ student_nickname|escape }}{{ user_macros.simple_student_info(user_data_student) }}</span>
+        {% else %}
+            <span id="phantom-login"><a href="{{ login_url|escape }}">Log in to save your progress</a></span>
+        {% endif %}
 
-</span>
-{% endblock profile_name %}
+    </span>
+    {% endblock profile_name %}
 
-{% block high_level_stats %}
-    <span id="videos-watched">
-        <span class="profile-header-icon"><img src="/images/video-camera-icon-shadow.png" /></span>
-        <span class="count">
-            {{ count_videos_completed }} / {{ count_videos }}<br />
-            <span class="label">Videos Completed</span>
-        </span>
+    {% block high_level_stats %}
+        <span id="videos-watched">
+            <span class="profile-header-icon"><img src="/images/video-camera-icon-shadow.png" /></span>
+            <span class="count">
+                {{ count_videos_completed }} / {{ count_videos }}<br />
+                <span class="label">Videos Completed</span>
+            </span>
     </span>
     <span id="exercises-completed" >
         <span class="profile-header-icon"><img src="/images/generic-exercise-icon-shadow.png" /></span>
@@ -35,7 +35,7 @@
     <span id="energy-points">
         <span title="{{student_points}} energy points" class="energy-points-badge">{{ student_points|thousands_separated }}</span><br />
         <span class="label">Total Energy Points</span>
-    </span>                    
+    </span>
 {% endblock high_level_stats %}
 
 {% block graph_accordion %}
@@ -55,7 +55,7 @@
             </p>
         </li>
         <li>
-			{{ profile_macros.api_link(user_data_student, "Exercise Progress", "user/exercises", selected_graph_type) }}
+			{{ profile_macros.api_link(user_data_student, "Exercise Progress", "exercises", selected_graph_type) }}
             <p class="accordion-content">
                 Shows you which exercises you've worked on and completed.
                 <span class="graph-options">
@@ -69,6 +69,18 @@
         <li>
             {{ profile_macros.graph_link(user_data_student, "Exercise Progress Over Time", "exercisesovertime", selected_graph_type) }}
             <p class="accordion-content">Shows how many exercises you've completed over time. </p>
+        </li>
+        <li class='goals-accordion-content'>
+            {{ profile_macros.api_link(user_data_student, "Goals", "goals", selected_graph_type) }}
+            <p class="accordion-content">
+                Shows progress on your current goals.
+                <span class="graph-picker">
+                    <a href="javascript:Profile.showGoalType('current')" id="goal-show-current-link" class="graph-sub-link 0">Current</a>
+                    <span style="display: none">| <a href="javascript:Profile.showGoalType('completed')" id="goal-show-completed-link" class="graph-sub-link 0">Completed</a></span>
+                    <span style="display: none">| <a href="javascript:Profile.showGoalType('abandoned')" id="goal-show-abandoned-link" class="graph-sub-link 0">Abandoned</a></span>
+                </span>
+                <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);">Create a new goal</a>
+            </p>
         </li>
     </ul>
 {% endblock graph_accordion %}
@@ -142,3 +154,8 @@
     {{ profiles.profile_recent_activity(user_data_student, view) }}
 {% endblock profile_extended_sections %}
 
+{% block pagescript %}
+<script>
+var USER_EMAIL = '{{ user_data.email|escapejs }}';
+</script>
+{% endblock pagescript %}

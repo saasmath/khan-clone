@@ -2,9 +2,6 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 from google.appengine.datastore import entity_pb
 
-import copy
-import logging
-
 # LastActionCache stores a highly compressed cache of the most recent actions
 # each individual user has taken. The data is stored in memcache only at the moment
 # for performance reasons. If reliability becomes an issue we can consider persisting this data

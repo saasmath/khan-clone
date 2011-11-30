@@ -1,18 +1,10 @@
-import re
-import cgi
 import math
-import os
-import simplejson as json
 
 from jinja2.utils import escape
 
-from app import App
-from templatefilters import seconds_to_time_string, slugify
-import consts
-import util
+from templatefilters import slugify
 import topics_list
 import models
-from api.auth import xsrf
 import shared_jinja
 
 def user_info(username, user_data):
@@ -63,8 +55,8 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
     
-    This is called each time a problem is either attempted or a hint is called (via /api/v1.py) and
-    renders a template only if a user is in any of these states, otherwise, it returns nothing
+    This is called **each time** a problem is either attempted or a hint is called (via /api/v1.py)
+    returns nothing unless a user is struggling, proficient, etc. then it returns the appropriat template
     
     See Also: APIActionResults
     
@@ -72,8 +64,10 @@ def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
     """
     if exercise_states['endangered']:
         filename = 'exercise_message_endangered.html'
+
     elif exercise_states['reviewing']:
         filename = 'exercise_message_reviewing.html'
+
     elif exercise_states['proficient']:
         if sees_graph:
             filename = 'exercise_message_proficient_withgraph.html'

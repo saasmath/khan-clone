@@ -49,7 +49,27 @@ table {
 
 /* End Reset */
 
-
+.clearfix:after {
+   content: ".";
+   display: block;
+   clear: both;
+   visibility: hidden;
+   line-height: 0;
+   height: 0;
+}
+ 
+.clearfix {
+   display: inline-block;
+}
+ 
+html[xmlns] .clearfix {
+   display: block;
+}
+ 
+* html .clearfix {
+   height: 1%;
+   overflow: visible;
+}
 
 html, body {
     height: 100%;
@@ -64,11 +84,11 @@ body {
     margin: 0;
     color: #444;
     line-height: 22px;
-    background: url(/images/light-page-bg.png) repeat-x;
 }
 
 
 #outer-wrapper {
+    background: url(/images/light-page-bg.png) repeat-x;
     min-height: 100%;
     height: auto !important;
     height: 100%;
@@ -144,12 +164,11 @@ hr {
 .simple-button {
     color: #333 !important;
     cursor: pointer !important;
-    border: 1px solid #ccc !important;
-    border-bottom: 1px solid #bbb !important;
+    border: 1px solid #ccc;
+    border-bottom: 1px solid #bbb;
     line-height: 22px;
     padding: 5px 10px;
     position: relative;
-    *position: static;
     margin: 0;
     text-decoration: none !important;
 
@@ -164,15 +183,27 @@ hr {
     box-shadow: inset 0 1px 0 rgba(255,255,255, .3);;
 
 }
+.lte7 .simple-button {
+    position: static;
+}
 input.simple-button {
     line-height: 15px;
 }
 
 .simple-button:hover {
     border-color: #aaa;
-    color: #0075b1 !important;
+    
+    -webkit-box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
+    -moz-box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
+    box-shadow: inset 0 0 3px 2px rgba(255,255,255,.5);
+}
+
+.lte8 .simple-button:hover {
+    outline: 2px solid #333;
+}
+
+.simple-button:active {
     top: 1px;
-    text-decoration: none !important;
 }
 /* A blue color scheme for the simple button */
 .simple-button.blue {
@@ -181,20 +212,12 @@ input.simple-button {
 	border-bottom-color: #13181f !important;
 	text-shadow:  0 -1px 0 #13181f;
 }
-.simple-button.blue:hover {
-	color: #0075b1 !important;
-	border-color:  #13181f !important;
-}
 /* A green color scheme for the simple button */
 .simple-button.green {
 	color: #fff !important;
 	border-color: #76a005 !important;
 	border-bottom-color: #557303 !important;
 	text-shadow:  0 -1px 0 #557303;
-}
-.simple-button.green:hover {
-	color: #c8f255 !important;
-	border-color:  #13181f !important;
 }
 /* An orange color scheme for the simple button */
 .simple-button.orange {
@@ -203,9 +226,12 @@ input.simple-button {
 	border-bottom-color: #803503 !important;
 	text-shadow:  0 -1px 0 #a64403;
 }
-.simple-button.orange:hover {
-	color: #ffbb8d !important;
-	border-color:  #803503 !important;
+.simple-button.disabled {
+    color: #ddd !important;
+}
+.simple-button.seethrough {
+    color: #444 !important;
+    text-shadow: none;
 }
 .simple-button.with-icon {
     padding-left: 30px;
@@ -246,7 +272,7 @@ input.simple-button {
     -webkit-border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-top-left-radius: 0;
-    
+
     -moz-border-radius-bottomright: 5px;
     -moz-border-radius-topright: 5px;
     -webkit-border-bottom-right-radius: 5px;
@@ -285,8 +311,8 @@ input.simple-button {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e35d04', endColorstr='#bf4f04');
 }
 .action-gradient.seethrough {
-    background-image: -webkit-gradient(linear, left top, left bottom,  from(rgba(255,255,255, .35)), to(rgba(255,255,255, .0)));
-    background-image: -moz-linear-gradient( top, rgba(255,255,255, .35), rgba(255,255,255, 0) );
+    background-image: -webkit-gradient(linear, left top, left bottom,  from(rgba(255,255,255, .5)), to(rgba(255,255,255, .0)));
+    background-image: -moz-linear-gradient( top, rgba(255,255,255, .5), rgba(255,255,255, 0) );
 }
 
 .mobile-only { display: none; }
@@ -348,7 +374,7 @@ a:link:hover, a:link:focus, a:visited:hover, a:visited:focus {
  * Hide links with href=# and other script-requiring elements from non-scripting users,
  * since they will only be confusing.  They will be made visible by script.
  */
-a[href="#"], .requires_script {
+.requires_script {
     visibility: hidden;
 }
 
@@ -356,16 +382,12 @@ a[href="#"], .requires_script {
  * Give script-using links a dotted underline when they are visible.
  */
 
-a[href="#"]:link,
 a.uses_script:link,
-a[href="#"]:visited,
 a.uses_script:visited {
     text-decoration: none;
     border-bottom: dotted 1px #0075b1;
 }
 
-a[href="#"]:link:hover, a[href="#"]:link:focus,
-a[href="#"]:visited:hover, a[href="#"]:visited:focus,
 a.uses_script:link:hover, a.uses_script:link:focus,
 a.uses_script:visited:hover, a.uses_script:visited:focus
 {
@@ -376,7 +398,14 @@ img {
     -ms-interpolation-mode: bicubic;
     /* Fix IE image scaling so that it isn't crappy */
 }
-
+input[type=text], input[type=email] {
+    outline: none;
+}
+input[type=text]:focus, input[type=email]:focus {
+    -webkit-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+    -moz-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+    box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+}
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
 }
@@ -465,9 +494,11 @@ footer {
         height: 24px;
         width: 24px;
         position: relative;
-        *position: static;
         top: 7px;
         padding-right: 0;
+    }
+    .lte7 footer.short .small-social-links a {
+        position: static;
     }
     footer.short .small-social-links .youtube {
         background-image: url(/images/non-repeating-sprites.3.png);
@@ -781,9 +812,9 @@ footer {
         margin: 0 8px;
         display: inline-block;
         height: 20px;
-
-        /* For IE */
-        *top: 0;
+    }
+    .lte7 #top-header #top-header-links span.separator, #sitewide-navigation span.separator {
+        top: 0;
     }
     .dark #top-header #top-header-links span.separator {
         border-left: 1px solid #1B242F;
@@ -874,7 +905,9 @@ footer {
         display:-moz-inline-stack;
         display:inline-block;
         zoom:1;
-        *display:inline;
+    }
+    .lte7 #top-header a.notification_link span.notification_bubble {
+        display:inline;
     }
 
     #login-menu .fb_button, #login-menu .fb_button_rtl {
@@ -918,51 +951,29 @@ footer {
     display: block;
     padding: 0;
 }
-    .light #top-header #page_search #search-input,
-    #container #dashboard-filter-text {
-        background-image: url(/images/non-repeating-sprites.3.png);
-        background-position: -5px -867px;
+    .simple-input {
         background-color: #fafafa;
         border:1px solid #C6D1AD;
         font-size:10px;
-        font-style: italic;
         padding: 0;
-        padding-left: 25px;
         height: 24px;
         width: 160px;
 
         /* For jquery-ui autocomplete */
         z-index: 100;
         position: relative;
-
-        /* For IE */
-        height: 22px\9;
-        padding-top: 5px\9;
     }
-    .dark #top-header #page_search #search-input {
-        background-image: url(/images/non-repeating-sprites.3.png);
-        background-position: -215px -867px;
-        background-color: #36485C;
-        border:1px solid #1A222C;
-        color: #ddd;
-        font-size:10px;
+    .ie .simple-input {
+        height: 22px;
+        padding-top: 5px;
+    }
+    .simple-input.placeholder {
         font-style: italic;
-        padding: 0;
+    }
+    .light #top-header #page_search #search-input {
+        background-image: url(/images/non-repeating-sprites.3.png);
+        background-position: -5px -867px;
         padding-left: 25px;
-        height: 24px;
-        width: 160px;
-
-        /* For jquery-ui autocomplete */
-        z-index: 100;
-        position: relative;
-
-        /* For IE */
-        height: 22px\9;
-        padding-top: 5px\9;
-
-        -webkit-box-shadow: inset 0 1px 3px #1A222C, 0 1px 0 #37495D;
-        -moz-box-shadow: inset 0 1px 3px #1A222C, 0 1px 0 #37495D;
-        box-shadow: inset 0 1px 3px #1A222C, 0 1px 0 #37495D;
     }
     #page_search #search-submit {
         display: none;
@@ -1021,7 +1032,9 @@ nav {
 #page_main_nav {
     clear: none;
     float: left;
-    *min-width: 45ex;
+}
+.lte7 #page_main_nav {
+    min-width: 45ex;
 }
 #page_main_nav li#do-exercises {
     border-right: 1px solid rgba(255,255,255, .6);
@@ -1413,6 +1426,24 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         .exercise-color.started {
             background-color: #c7e5f7;
         }
+        .exercise-color.border-only {
+          background-color: transparent;
+        }
+        .exercise-color.proficient.border-only {
+          border-left: 5px solid #0080C9;
+        }
+        .exercise-color.review.border-only {
+          border-left: 5px solid #E35D04;
+        }
+        .exercise-color.not-started.border-only {
+          border-left: 5px solid #CCC;
+        }
+        .exercise-color.struggling.border-only {
+          border-left: 5px solid #C30202;
+        }
+        .exercise-color.started.border-only {
+          border-left: 5px solid #C7E5f7;
+        }
 
     .exercise-show {
         position: absolute;
@@ -1425,7 +1456,28 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         top: 6px;
     }
 
-    #container #dashboard-drawer {
+    .exercise-goal-wrapper {
+        position: absolute;
+        left: 0px;
+        top: 0px;
+        width: 80px;
+    }
+    .exercise-goal-icon {
+        position: absolute;
+        right: 2px;
+        top: 2px;
+        width: 12px;
+        height: 12px;
+    }
+    .nodeLabelZoom7 .exercise-goal-icon,
+    .nodeLabelZoom8 .exercise-goal-icon,
+    .nodeLabelZoom9 .exercise-goal-icon,
+    .nodeLabelZoom10 .exercise-goal-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    #container .dashboard-drawer {
         position: absolute;
         background: #fff;
         width: 350px;
@@ -1435,43 +1487,42 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         -moz-box-shadow: 2px 0px 3px rgba(0, 0, 0, .1);
         box-shadow: 2px 0px 3px rgba(0, 0, 0, .1);
     }
-    #container #dashboard-filter {
+    #container .dashboard-filter {
         overflow: hidden;
         padding: 0px 0px 10px 0px;
     }
-    #container #dashboard-filter-text {
+    #container .dashboard-filter-text {
         background-image: none;
         border-color: #ccc;
-        height: 24px\9;
-        outline: none;
         padding: 0 55px 0 5px;
         width: 260px;
     }
-    #container #dashboard-filter-text:focus {
-        -webkit-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
-        -moz-box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
-        box-shadow: inset 0 0 5px rgba(115, 152, 44, .5);
+    .ie #container .dashboard-filter-text {
+        height: 24px;
     }
-    #dashboard-filter-clear {
+    .dashboard-filter-clear {
         height: 26px;
         padding-top: 4px;
-        
+
         position: absolute;
         top: 10px;
-        top: 12px\9;
-        right: 23px;
+        right: 13px;
         z-index: 100;
     }
-    #container #dashboard-drawer-inner {
+    .ie .dashboard-filter-clear {
+        top: 12px;
+    }
+    #container .dashboard-drawer-inner {
+        position: relative;
         margin-right: 2px;
         overflow: auto;
         padding: 10px 3px 10px 5px;
     }
-    #container #dashboard-drawer h3 .subheader {
+    #container .dashboard-drawer h3 .subheader {
         font-weight: normal;
     }
 
-    #container #dashboard-header {
+    #container .dashboard-header {
         background: #fafafa;
         border-width: 0 0 1px 0;
         border-color: #ddd;
@@ -1481,20 +1532,20 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         position: relative;
         z-index: 0;
     }
-    #container #dashboard-header #collapse-drawer {
+    #container .dashboard-header .collapse-drawer {
         position: absolute;
         right: 0;
         top: 5px;
         border: none;
     }
-    #container #dashboard-header #expand-drawer {
+    #container .dashboard-header .expand-drawer {
         position: absolute;
         left: 0;
         top: 5px;
         border: none;
     }
 
-    #container #dashboard-header #dashboard-title {
+    #container .dashboard-header .dashboard-title {
         background: #fafafa;
         border-right: 1px solid #bbb;
         color: #444;
@@ -1510,35 +1561,47 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         box-shadow: 2px 0px 3px rgba(0, 0, 0, .1);
         z-index: 1;
     }
-        #container #dashboard-header #dashboard-title #dashboard-icon {
+        #container .dashboard-header .dashboard-title .dashboard-icon {
             position: relative;
             top: 1px;
             width: 16px;
             height: 16px;
         }
 
-    #container #dashboard-header #dashboard-nav {
+    #container .dashboard-header .dashboard-nav {
         float: right;
         font-weight: bold;
         position: relative;
         top: 3px;
     }
-    #container #dashboard-header #dashboard-nav span.selected a {
+    #container .dashboard-header .dashboard-nav span.selected a {
         border: none;
         color: #333;
         cursor: default;
     }
-    #container #dashboard-map {
-    }
 
-    #container #dashboard-map #map-canvas {
+    #container .dashboard-map .map-canvas {
         height: 100%;
         left: 350px;
         margin-left: 0;
         margin-right: 350px;
     }
 
-.exercise-filter-count,#exercise-all-exercises {
+    /* Specifically for videos (i.e. in New Goal view) */
+    #container .dashboard-header .dashboard-nav .playlist_browser {
+        margin: 0px;
+    }
+    #container .dashboard-header .dashboard-nav .playlist_browser_title {
+        margin-top: 2px;
+    }
+    #container .dashboard-content {
+        width: 1179px;
+        height: 800px;
+        overflow-y: auto;
+        padding-left: 20px;
+    }
+
+.exercise-filter-count,.exercise-all-exercises {
     font-size: 11px;
     color: #444;
 }
@@ -1806,7 +1869,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     overflow: visible;
     min-width: 950px;
 }
-#container #dashboard-header.single-exercise {
+#container .dashboard-header.single-exercise {
     border: 1px solid #ccc;
     border-top: none;
 }
@@ -2250,8 +2313,17 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 .progress-legend.started {
     cursor: pointer;
     border-color: #fff;
+}
+.lte9 #module-progress .proficient,
+.lte9 #module-progress .review,
+.lte9 #module-progress .struggling,
+.lte9 #module-progress .started,
+.lte9 .progress-legend.proficient,
+.lte9 .progress-legend.review,
+.lte9 .progress-legend.struggling,
+.lte9 .progress-legend.started {
     filter: progid:DXImageTransform.Microsoft.gradient(enabled="0");
-    outline: 1px solid #fff\9;
+    outline: 1px solid #fff;
 }
 .exercise-info-hover, #info-hover-container {
     background: #fff;
@@ -2295,6 +2367,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 }
 #module-progress td.student-email a:hover {
     text-decoration: underline;
+}
+#module-progress td.student-email.hidden-students {
+    font-style: italic;
+}
+#module-progress tr.student-email-row.highlight td,
+#module-progress th.student-exercises-col.highlight {
+    background-color: #DD8;
 }
 
 /* End of teacher Dashboard Styles */
@@ -2346,7 +2425,9 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 /* Contribute styles */
 #contribute {
     text-align: justify;
-    *position: static;
+}
+.lte7 #contribute {
+    position: static;
 }
 #contribute .simple-button .with-icon {
     float: left;
@@ -2611,9 +2692,12 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 }
 #thumbnails td.video-thumb div.thumb {
     background-position: 0px -25px;
+}
+
+.lte8 #thumbnails td.video-thumb div.thumb {
     /* IE doesn't support background-size, so we'll just reposition the larger background */
-    background-position-y: -80px\9;
-    background-position-x: -100px\9;
+    background-position-y: -80px;
+    background-position-x: -100px;
 }
 
 #thumbnails td.selected div.thumb {
@@ -3037,7 +3121,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 .nodeLabelZoom9 img {
     width: 40px;
     height: 40px;
-    *margin-left: 20px;
+}
+.lte7 .nodeLabelZoom9 img {
+    margin-left: 20px;
 }
 
 .nodeLabelZoom8 {
@@ -3052,7 +3138,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 .nodeLabelZoom8 img {
     width: 26px;
     height: 26px;
-    *margin-left: 18px;
+}
+.lte7 .nodeLabelZoom8 img {
+    margin-left: 18px;
 }
 
 .nodeLabelZoom7 {
@@ -3067,7 +3155,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 .nodeLabelZoom7 img {
     width: 10px;
     height: 10px;
-    *margin-left: 35px;
+}
+.lte7 .nodeLabelZoom7 img {
+    margin-left: 35px;
 }
 
 .nodeLabelHighlight div {
@@ -3458,4 +3548,78 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
   position:relative;
   left:10px;
   top:-10px;
+}
+
+.fieldError {
+    border: 1px solid #c00;
+    background: #fee;
+}
+
+.dark-window {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    opacity: 0.45;
+    filter:alpha(opacity=45);
+    z-index: 999;
+}
+.window-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    padding: 30px;
+}
+
+#popup-dialog .dialog-frame {
+    z-index: 11000;
+    background-color: #ffffff;
+    border: 1px solid #999;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding-box;
+    background-clip: padding-box;
+}
+.lte7 #popup-dialog .dialog-frame {
+    border: 1px solid #999;
+}
+
+#popup-dialog .dialog-header {
+    padding: 5px 15px;
+    cursor: move;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+#popup-dialog .dialog-header h3 {
+    margin-top: 10px
+}
+
+.close-button {
+    float: right;
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 13.5px;
+    text-shadow: 0 1px 0 white;
+    filter: alpha(opacity=20);
+    -khtml-opacity: 0.2;
+    -moz-opacity: 0.2;
+    opacity: 0.2;
+}
+
+#popup-dialog .close-button {
+    margin-top: 7px;
 }
