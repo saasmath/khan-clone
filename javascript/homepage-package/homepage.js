@@ -3,7 +3,7 @@ var Homepage = {
     init: function() {
         VideoControls.initThumbnails();
         Homepage.initWaypoints();
-		Homepage.loadData();
+        Homepage.loadData();
     },
 
     initWaypoints: function() {
@@ -40,19 +40,19 @@ var Homepage = {
     },
 
     loadData: function() {
-		var cacheToken = window.Homepage_cacheToken || Date.now();
+        var cacheToken = window.Homepage_cacheToken || Date.now();
         $.ajax({
-			type: "GET",
-			url: "/api/v1/homepage_library",
-			dataType: "jsonp",
-			data: {"v": cacheToken},
+            type: "GET",
+            url: "/api/v1/homepage_library",
+            dataType: "jsonp",
+            data: {"v": cacheToken},
             jsonpCallback: "__dataCb",
-			success: function(data){
-				Homepage.loadLibraryContent(data);
-			},
-			error: function() {
-				console.log("error loading");
-			},
+            success: function(data){
+                Homepage.loadLibraryContent(data);
+            },
+            error: function() {
+                console.log("error loading");
+            },
             cache: true
         });
     },
@@ -77,37 +77,25 @@ var Homepage = {
             visitTopicOrPlaylist(item);
         }
 
+        var template = Templates.get("homepage.videolist");
         for (var i = 0, playlist; playlist = playlists[i]; i++) {
-            var title = playlist["title"];
-			var sluggified = playlist["slugged_title"];
             var videos = playlist["videos"]
             var videosPerCol = Math.ceil(videos.length / 3)
             var colHeight = videosPerCol * 18;
-            var html = [];
+            playlist["colHeight"] = colHeight;
+            playlist["titleEncoded"] = encodeURIComponent(playlist["title"]);
             for (var j = 0, video; video = videos[j]; j++) {
                 var col = (j / videosPerCol) | 0;
-                var readableId = video["readable_id"];
-                var videoKeyId = video["key_id"];
-                var videoTitleEscaped = video["title"]; // TODO: escape
-
-                html.push("<li class=\"m", col, "\"");
+                video["col"] = col;
                 if ((j % videosPerCol == 0) && col > 0) {
-                    // First in the column
-                    html.push(" style=\"margin-top:-", colHeight, "px;\"");
+                    video["firstInCol"] = true;
                 }
-                html.push(">");
-                html.push("<a href=\"/video/", readableId,
-                        "?playlist=", encodeURIComponent(title), "\" ",
-                        "class=\"vl\">",
-                        "<span class=\"vid-progress v", videoKeyId, "\">",
-                        videoTitleEscaped,
-                        "</span",
-                        "</a></li>");
             }
 
+            var sluggified = playlist["slugged_title"];
             var container = $("#" + sluggified + " ol").get(0);
-            container.innerHTML = html.join("");
-		}
+            container.innerHTML = template(playlist);
+        }
     }
 }
 
