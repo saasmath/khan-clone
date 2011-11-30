@@ -500,8 +500,10 @@ def user_exercises_all():
 @jsonp
 @jsonify
 def coach_progress_summary():
-    user_data_coach = get_visible_user_data_from_request(
-                        disable_coach_visibility = True)
+    user_data_coach = models.UserData.current()
+    user_data_override = request.request_user_data("coach_email")
+    if user_data_coach.developer and user_data_override:
+        user_data_coach = user_data_override
 
     if request.request_string("list_id"):
         try:
