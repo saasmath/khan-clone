@@ -157,7 +157,7 @@ def playlists_library_compact():
         trimmed_video_dict = {}
         trimmed_video_dict['readable_id'] = video.readable_id
         trimmed_video_dict['title'] = video.title
-        trimmed_video_dict['key_id'] = video.key()
+        trimmed_video_dict['key_id'] = video.key().id()
         return trimmed_video_dict
         
     playlist_dict = {}

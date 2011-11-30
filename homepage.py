@@ -3,7 +3,6 @@ import random
 
 from jinja2.utils import escape
 
-import consts
 import library
 import request_handler
 import models
