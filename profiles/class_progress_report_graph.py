@@ -5,14 +5,7 @@ from jinja2.utils import escape
 from templatefilters import escapejs, timesince_ago
 from models import Exercise, UserExerciseGraph
 
-def truncate_to(s, length):
-    if len(s) > length:
-        return s[:length - 3] + '...'
-    else:
-        return s
-
 def class_progress_report_graph_context(user_data, student_list):
-
     if not user_data:
         return {}
 
@@ -22,7 +15,9 @@ def class_progress_report_graph_context(user_data, student_list):
     else:
         list_students = user_data.get_students_data()
 
-    student_email_pairs = [(escape(s.email), truncate_to(s.nickname, 18)) for s in list_students]
+    list_students = sorted(list_students, key=lambda student: student.nickname)
+
+    student_email_pairs = [(escape(s.email), (s.nickname[:14] + '...') if len(s.nickname) > 17 else s.nickname) for s in list_students]
     emails_escapejsed = [escapejs(s.email) for s in list_students]
 
     exercises_all = Exercise.get_all_use_cache()

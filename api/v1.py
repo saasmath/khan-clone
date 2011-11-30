@@ -499,6 +499,81 @@ def user_exercises_all():
 
     return results
 
+@route("/api/v1/user/students/progress/summary", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def coach_progress_summary():
+    user_data_coach = models.UserData.current()
+    user_data_override = request.request_user_data("coach_email")
+    if user_data_coach.developer and user_data_override:
+        user_data_coach = user_data_override
+
+    if request.request_string("list_id"):
+        try:
+            student_list = util_profile.get_list(user_data_coach, request)
+        except Exception, e:
+            logging.error("%s: %s" % (request.url, e))
+            list_students = user_data_coach.get_students_data()
+        else:
+            list_students = student_list.get_students_data()
+    else:
+        list_students = user_data_coach.get_students_data()
+
+    list_students = sorted(list_students, key=lambda student: student.nickname)
+    user_exercise_graphs = models.UserExerciseGraph.get(list_students)
+
+    student_review_exercise_names = []
+    for user_exercise_graph in user_exercise_graphs:
+        student_review_exercise_names.append(user_exercise_graph.review_exercise_names())
+
+    exercises = models.Exercise.get_all_use_cache()
+    exercise_data = []
+
+    for exercise in exercises:
+        progress_buckets = {
+            'review': [],
+            'proficient': [],
+            'struggling': [],
+            'started': [],
+            'not-started': [],
+        }
+
+        for (student, user_exercise_graph, review_exercise_names) in izip(
+                list_students, user_exercise_graphs,
+                student_review_exercise_names):
+            graph_dict = user_exercise_graph.graph_dict(exercise.name)
+
+            if graph_dict['proficient']:
+                if exercise.name in review_exercise_names:
+                    status = 'review'
+                else:
+                    status = 'proficient'
+            elif graph_dict['struggling']:
+                status = 'struggling'
+            elif graph_dict['total_done'] > 0:
+                status = 'started'
+            else:
+                status = 'not-started'
+
+            progress_buckets[status].append({
+                    'nickname': student.nickname,
+                    'email': student.email,
+            })
+
+        progress = [dict([('status', status),
+                        ('students', progress_buckets[status])])
+                        for status in progress_buckets]
+
+        exercise_data.append({
+            'name': exercise.name,
+            'display_name': exercise.display_name,
+            'progress': progress,
+        })
+
+    return {'exercises': exercise_data,
+            'num_students': len(list_students)}
+
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
 @oauth_optional()
 @jsonp
