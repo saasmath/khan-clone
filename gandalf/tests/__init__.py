@@ -5,7 +5,7 @@ import urllib2
 
 from google.appengine.ext.webapp import RequestHandler
 
-from gandalf import gandalf, _identity
+from gandalf import gandalf
 from gandalf.models import GandalfBridge, GandalfFilter
 from gandalf.filters import BridgeFilter
 
@@ -113,10 +113,10 @@ class RunStep(RequestHandler):
 
         filter = GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=True)
         filter.put()
+        
+        identity_percentage = BridgeFilter._identity_percentage(filter.key())
 
-        identity_percentage = BridgeFilter._identity_percentage(filter.key(), _identity())
-
-        filter.percentage = identity_percentage
+        filter.percentage = identity_percentage + 1
         filter.put()
 
         return gandalf(bridge_name)
@@ -130,9 +130,9 @@ class RunStep(RequestHandler):
         filter = GandalfFilter(bridge=bridge, filter_type=filter_type, whitelist=True)
         filter.put()
 
-        identity_percentage = BridgeFilter._identity_percentage(filter.key(), _identity())
+        identity_percentage = BridgeFilter._identity_percentage(filter.key())
 
-        filter.percentage = identity_percentage - 1
+        filter.percentage = identity_percentage
         filter.put()
 
         return gandalf(bridge_name)

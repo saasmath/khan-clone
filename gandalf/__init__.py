@@ -1,7 +1,5 @@
 import logging
 
-from google.appengine.ext import db
-
 from gandalf.cache import GandalfCache
 from gandalf.config import current_logged_in_identity
 
@@ -39,13 +37,3 @@ def gandalf(bridge_name):
 
     return passes_a_whitelist
 
-def _identity():
-    identity = current_logged_in_identity()
-
-    if not identity:
-        return None
-    
-    if isinstance(identity, db.Model):
-        return identity.key()
-    else:
-        return str(identity)
