@@ -31,7 +31,7 @@ def getSmartHistoryContent():
 @layer_cache.cache_with_key_fxn(
         lambda *args, **kwargs: "library_content_by_topic_%s" % Setting.cached_library_content_date()
         )
-def library_content_by_topic():
+def library_content_html():
     smart_history = getSmartHistoryContent()
     root = Topic.get_by_readable_id("root").make_tree()
 
@@ -60,7 +60,7 @@ class GenerateLibraryContent(request_handler.RequestHandler):
         self.get(from_task_queue = True)
 
     def get(self, from_task_queue = False):
-        library_content_by_topic(bust_cache=True)
+        library_content_html(bust_cache=True)
 
         if not from_task_queue:
             self.redirect("/")
