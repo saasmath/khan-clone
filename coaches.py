@@ -309,3 +309,4 @@ class ViewCharts(RequestHandler):
     def get(self):
         self.redirect("/profile?k&selected_graph_type=%s&student_email=%s&exid=%s" %
                 (ExerciseProblemsGraph.GRAPH_TYPE, self.request_string("student_email"), self.request_string("exercise_name")))
+

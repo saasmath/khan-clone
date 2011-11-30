@@ -2619,3 +2619,4 @@ class UserExerciseGraph(object):
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from goals.models import GoalList
+
