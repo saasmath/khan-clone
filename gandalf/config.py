@@ -11,7 +11,7 @@ def can_control_gandalf():
     to the experiment dashboard.
 
     """
-    user_data = UserData.current()
+    user_data = UserData.current(bust_cache=True)
     return users.is_current_user_admin() or (user_data and user_data.developer)
 
 def current_logged_in_identity():
@@ -27,14 +27,14 @@ def current_logged_in_identity():
              ...or...
         from google.appengine.api import users
         return users.get_current_user().user_id() if users.get_current_user() else None"""
-    return UserData.current()
+    return UserData.current(bust_cache=True)
 
 def current_logged_in_identity_string():
     identity = current_logged_in_identity()
 
     if not identity:
         return None
-    
+
     if isinstance(identity, db.Model):
         return str(identity.key())
     else:
