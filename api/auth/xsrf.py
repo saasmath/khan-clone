@@ -1,6 +1,7 @@
 import cookie_util
 import base64
 import os
+import logging
 from functools import wraps
 
 XSRF_COOKIE_KEY = "fkey"
@@ -35,7 +36,11 @@ def get_xsrf_cookie_value():
 
 def validate_xsrf_value():
     header_value = os.environ.get(XSRF_HEADER_KEY)
-    return header_value and header_value == get_xsrf_cookie_value()
+    cookie_value = get_xsrf_cookie_value()
+    if not header_value or not cookie_value or header_value != cookie_value:
+        logging.critical("Mismatch between XSRF header (%s) and cookie (%s)" % (header_value, cookie_value))
+        return False
+    return True
 
 def render_xsrf_js():
     return "<script>var fkey = '%s';</script>" % get_xsrf_cookie_value();
