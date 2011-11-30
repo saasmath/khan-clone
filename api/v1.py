@@ -81,7 +81,7 @@ def add_action_results(obj, dict_results):
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topics():
-    return models.Topic.get_all_active_topics()
+    return models.Topic.get_all_topics()
 
 @route("/api/v1/topictree", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())

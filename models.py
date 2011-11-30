@@ -31,6 +31,8 @@ from counters import user_counter
 from facebook_util import is_facebook_user_id
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
+import re
+
 
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
@@ -101,7 +103,6 @@ class Setting(db.Model):
     @staticmethod
     def classtime_report_startdate(val = None):
         return Setting._get_or_set_with_key("classtime_report_startdate", val)
-
 
 class Exercise(db.Model):
 
@@ -1021,13 +1022,153 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
-class ConceptTreeNode(polymodel.PolyModel):
-    topic_parent = db.SelfReferenceProperty()
-    order = db.IntegerProperty()  
+class TopicVersion(db.Model):
+    date_created = db.DateTimeProperty(auto_now_add=True)
+    date_updated = db.DateTimeProperty(auto_now=True)
+    last_editted_by = db.UserProperty()
+    number = db.IntegerProperty(required=True)
+    title = db.StringProperty() 
+    description = db.StringProperty()
+    default = db.BooleanProperty(default=False)
+
+    @staticmethod
+    def get_latest_version():
+        return TopicVersion.all().order("-number").get()
+
+    @staticmethod
+    def get_latest_version_number():
+        latest_version = TopicVersion.all().order("-number").get()
+        if latest_version is not None:
+            return latest_version.number
+        else: 
+            return 0
+
+    @staticmethod
+    def create_new_version():
+        new_version_number = TopicVersion.get_latest_version_number()+1 
+        user = UserData.current().user
+        new_version = TopicVersion(last_editted_by = user,
+                                   number = new_version_number)
+        new_version.put()
+
+    @staticmethod
+    def get_default_version():
+        return TopicVersion.all().filter("default = ", True).get()
+
+    def update(self):
+        user = models.UserData.current().user
+        self.last_editted_by = user
+        self.put()
+
+    def set_default_version(self):
+        def update_txn():
+            default_version = TopicVersion.get_default_version()
+            default_version.default = False
+            self.version = True
+            default_version.put()
+            self.put()
+
+        xg_on = db.create_transaction_options(xg=True)
+        db.run_in_transaction_options(xg_on, update_txn)
+                                    
+
+class Topic(db.Model):
+    title = db.StringProperty(required = True)
+    readable_id = db.StringProperty(required = True)
+    description = db.TextProperty()
+    childKeys = db.ListProperty(db.Key)
+    version = db.ReferenceProperty(TopicVersion, required = True)  
     hide = db.BooleanProperty(default = False)
 
-    def get_order(self, topic = None): #needs topic to match Content.get_order()
-        return self.order
+    _serialize_blacklist = ["childKeys"]
+
+    def get_order(self, topic = None): # needs topic to match Content.get_order()
+        return self.parent.childKeys.index(self.key())
+
+    @staticmethod
+    def get_by_readable_id(readable_id, version = None):
+        if version is None:
+            version = TopicVersion.get_default_version()
+            if version is None:
+                logging.info("No default version has been set, getting latest version instead")
+                version = TopicVersion.get_latest_version()
+
+        return Topic.all().filter("readable_id =", readable_id).filter("version =", version).get()
+
+    @staticmethod
+    def get_root(version):
+        return Topic.all().filter('readable_id =', 'root').filter('version =', version).get()
+
+    @staticmethod
+    def get_new_readable_id(parent, title, version):
+        potential_id = title.lower()
+        potential_id = re.sub('[^a-z0-9]', '-', potential_id);
+        potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
+        potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)    
+
+        number_to_add = 0
+        current_id = potential_id
+        while True:
+            # need to make this an ancestor query to make sure that it can be used within transactions
+            matching_topic = Topic.all().filter('readable_id =', current_id).filter('version =', version).get()
+            
+            if matching_topic is None: #id is unique so use it and break out
+                return current_id
+            elif parent.key() == matching_topic.parent_key() and matching_topic.title == title:
+                raise Exception("You can't have the same title '%s' to two different topics under the same parent '%s'" % (title, "None" if parent is None else parent.title))
+            else: # id is not unique so will have to go through loop again
+                number_to_add+=1
+                current_id = potential_id+'-'+str(number_to_add)    
+
+    @staticmethod
+    def get_new_key_name(readable_id, version):
+        return "%s-v%s" % (readable_id, version.number)
+
+    @staticmethod
+    def insert(title, parent=None, **kwargs):
+        if kwargs.has_key("version"):
+            version = kwargs["version"]
+            del kwargs["version"]
+        else:
+            if parent is not None:
+                version = parent.version
+            else:
+                version = TopicVersion.get_latest_version()
+                if version is None:
+                    version = TopicVersion.create_new_version()
+
+        if kwargs.has_key("readable_id"):
+            readable_id = kwargs["readable_id"]
+            del kwargs["readable_id"]
+        else:
+            readable_id = Topic.get_new_readable_id(parent, title, version)
+
+        key_name = Topic.get_new_key_name(readable_id, version)
+
+        topic = Topic.get_by_key_name(key_name)
+        if topic is not None:
+            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % key_name)
+
+        def insert_txn():
+            topic = Topic(parent,
+                          key_name,
+                          version = version,
+                          readable_id = readable_id,
+                          title = title)
+
+            
+            for key in kwargs:
+                setattr(topic, key, kwargs[key])
+            
+            topic.put()
+            if parent is not None:
+                parent.childKeys.append(topic.key())
+                parent.put()
+            
+            return topic
+               
+        return db.run_in_transaction(insert_txn)
+
 
     def all_children(self):
         children = []
@@ -1042,167 +1183,49 @@ class ConceptTreeNode(polymodel.PolyModel):
         children.sort(key = lambda c: c.order)
         return children
 
-    @staticmethod
-    def sort_tree(node):
-        if hasattr(node, "children"):
-            for child in node.children:
-                ConceptTreeNode.sort_tree(child)
-            node.children.sort(key = lambda c: c.order)
-
-    @staticmethod
-    def prefetch_refprops(entities, *props):
-        """ 
-        Loads referenced models defined by the given model properties 
-        all at once on the given entities.
-
-        Example:
-        posts = Post.all().order("-timestamp").fetch(20)
-        prefetch_refprop(posts, Post.author)
-        """
-        # Get a list of (entity,property of this entity)
-        fields = [(entity, prop) for entity in entities for prop in props]
-        # Pull out an equally sized list of the referenced key for each field (possibly None)
-        ref_keys_with_none = [prop.get_value_for_datastore(x) for x, prop in fields]
-        # Make a dict of keys:fetched entities
-        ref_keys = filter(None, ref_keys_with_none) 
-        ref_entities = dict((x.key(), x) for x in db.get(set(ref_keys)))
-        # Set the fetched entity on the non-None reference properties
-        for (entity, prop), ref_key in zip(fields, ref_keys_with_none):
-            if ref_key is not None:
-                prop.__set__(entity, ref_entities[ref_key])
-        return entities
-
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
-            nodes = ConceptTreeNode.all().ancestor(self).fetch(100000)
+            nodes = Topic.all().ancestor(self).fetch(100000)
         else:
-            nodes = ConceptTreeNode.all().ancestor(self).filter("hide = ", False).fetch(100000)
-
-        '''
-        #prefetch the content of the contentNodes
-        content_nodes = [node for node in nodes if node.__class__.__name__=="ContentNode"]
-        self.prefetch_refprops(content_nodes, ContentNode.content)
-        '''
-        
+            nodes = Topic.all().ancestor(self).filter("hide = ", False).fetch(100000)
         
         node_dict = dict((node.key(), node) for node in nodes)
         node_dict[self.key()] = self # in case the current node is hidden (like root is)
         
         contentKeys = []
-        # cycle through the nodes adding each to its parent's children list
+        # cycle through the nodes adding its children to the contentKeys that need to be gotten
         for key, descendant in node_dict.iteritems():
-            contentKeys.extend([childKey for childKey in descendant.childKeys if not node_dict.has_key(childKey)])
+            contentKeys.extend([childKey for childKey in descendant.childKeys if not node_dict.has_key(childKey) and childKey.kind() != "Topic"])
 
+        # get all content that belongs in this tree
         contentItems = db.get(contentKeys)
+        # add the content to the node dict
         for content in contentItems:
-             node_dict[content.key()]=content 
+            node_dict[content.key()]=content 
         
         # cycle through the nodes adding each to its parent's children list
         for key, descendant in node_dict.iteritems():
             if hasattr(descendant, "childKeys"):
                 descendant.children = [node_dict[child] for child in descendant.childKeys if node_dict.has_key(child)]
                 
-        '''
-        node_dict = dict((node.key(), node) for node in nodes)
-        node_dict[self.key()]=self
-        # cycle through the nodes adding each to its parent's children list
-        for key, descendant in node_dict.iteritems():
-            parent_key = descendant.parent_key()
-            if parent_key and node_dict.has_key(parent_key):
-                parent = node_dict[parent_key]
-                if not hasattr(parent, "children"):
-                    parent.children = []
-                parent.children.append(descendant)
-        
-        # sort the children list of each node
-        for key, descendant in node_dict.iteritems():
-            if hasattr(descendant, "children"):
-                descendant.children.sort(key = lambda n: n.get_order(key))
-        '''
-
         # return the entity that was passed in, now with its children, and its descendants children all added
         return node_dict[self.key()]
-
-
-        '''
-        if include_hidden:
-            topics = Topic.all().ancestor(self).fetch(10000)
-        else:
-            topics = Topic.all().ancestor(self).filter("hide =", False).fetch(10000)
-
-        topic_dict = dict((topic.key(), topic) for topic in topics)
-        topic_dict[self.key()]=self
-        for key, descendant in topic_dict.iteritems():
-            parent_key = descendant.parent_key()
-            if parent_key and topic_dict.has_key(parent_key):
-                parent = topic_dict[parent_key]
-                if not hasattr(parent, "children"):
-                    parent.children = []
-                parent.children.append(descendant)
-        
-        if not types or "Video" in types:
-            videos = Video.all().filter("topic_ancestors", self).fetch(100000)
-            for video in videos:
-                for parent_key in video.topic_parents:
-                     if topic_dict.has_key(parent_key):
-                        parent = topic_dict[parent_key]
-                        if not hasattr(parent, "children"):
-                            parent.children = []
-                        parent.children.append(video)
-
-        
-        for key, descendant in topic_dict.iteritems():
-            if hasattr(descendant, "children"):
-                descendant.children.sort(key = lambda c: c.get_order(key))
-        
-
-        return topic_dict[self.key()]
-        '''
-
-class Topic(ConceptTreeNode):
-    title = db.StringProperty()
-    description = db.TextProperty()
-    childKeys = db.ListProperty(db.Key)
-
-
-    _serialize_blacklist = ["hide"]
 
     @property
     def ka_url(self):
         return util.absolute_url('#%s' % urllib.quote(self.key().name()))
 
     @staticmethod
-    def get_all_active_topics():
-        return Topic.all().filter("hide = ", False).fetch(10000)
+    def get_all_topics(include_hidden = False):
+        query = Topic.all()
+        if not include_hidden:
+            query.filter("hide =", False)
+
+        return query.fetch(10000)
         
 
     def get_child_order(self, childKey):
         return self.childKeys.index(childKey)
-
-    @staticmethod
-    def get_new_keyname(title):
-        # Makes sure every video and playlist has a unique "name" that can be used in URLs
-        
-        query = Video.all()
-        all_videos = query.fetch(100000)
-        for video in all_videos:
-            potential_id = re.sub('[^a-z0-9]', '-', video.title.lower());
-            potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
-            potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)                        
-            if video.readable_id == potential_id: # id is unchanged
-                continue
-            number_to_add = 0
-            current_id = potential_id
-            while True:
-                query = Video.all()
-                query.filter('readable_id=', current_id)
-                if (query.get() is None): #id is unique so use it and break out
-                    video.readable_id = current_id
-                    video.put()
-                    break
-                else: # id is not unique so will have to go through loop again
-                    number_to_add+=1
-                    current_id = potential_id+'-'+number_to_add    
                     
     @staticmethod
     def get_cached_videos_for_topic(topic, include_descendants=False, limit=500):
@@ -1281,28 +1304,9 @@ class UserTopicVideos(db.Model):
             return UserTopicVideos.get_by_key_name(key)
 
 
-
-class ContentNode(ConceptTreeNode):
-    content = db.ReferenceProperty(collection_name="parents")
-
-    @staticmethod
-    def get_key_name(parent, content):
-        return parent.key().name() + ":" + content.__class__.__name__ + ":" + content.key().name() if content.key().name() else content.readable_id
-
-
 class Content(db.Model):
-    # topic_ancestors = db.ListProperty(db.Key)
-    # topic_parents = db.ListProperty(db.Key)
-    # topic_orders = object_property.UnvalidatedObjectProperty() # a dict of parent key, to list order in that parent
-    topic_count = db.IntegerProperty(default = 0) # a count of the number of topics Content is in
-
     def get_order(self, topic_key):
         return db.get(topic_key).childKeys.index(self.key())
-
-    # def get_order(self, topic_key):
-    #    return self.topic_orders[topic_key]
-
-
 
 class Video(Searchable, Content):
     youtube_id = db.StringProperty()
@@ -1358,6 +1362,22 @@ class Video(Searchable, Content):
 
     def youtube_thumbnail_url(self):
         return "http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id
+
+
+    @staticmethod
+    def get_videos_with_no_topic():
+        from sets import Set
+        topics = ConceptTreeNode.all().fetch(100000)
+        topic_key_dict = dict((t.key(), True) for t in topics)
+        content_keys = Set()
+        for t in topics:
+            content_keys.update([childKey for childKey in t.childKeys if not topic_key_dict.has_key(childKey)])
+
+        video_keys = Video.all(keys_only = True).fetch(100000)
+        video_keys_set = Set(video_keys)
+        
+        return video_keys_set.difference(content_keys)
+
 
     @staticmethod
     def get_for_readable_id(readable_id):

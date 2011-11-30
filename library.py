@@ -33,7 +33,7 @@ def getSmartHistoryContent():
         )
 def library_content_by_topic():
     smart_history = getSmartHistoryContent()
-    root = Topic.get_by_key_name("root").make_tree()
+    root = Topic.get_by_readable_id("root").make_tree()
 
     topic_prev = None
     for topic in root.children:
