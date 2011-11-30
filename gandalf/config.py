@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from google.appengine.api import users
+from google.appengine.ext import db
 
 from models import UserData
 
@@ -27,3 +28,14 @@ def current_logged_in_identity():
         from google.appengine.api import users
         return users.get_current_user().user_id() if users.get_current_user() else None"""
     return UserData.current()
+
+def current_logged_in_identity_string():
+    identity = current_logged_in_identity()
+
+    if not identity:
+        return None
+    
+    if isinstance(identity, db.Model):
+        return str(identity.key())
+    else:
+        return str(identity)
