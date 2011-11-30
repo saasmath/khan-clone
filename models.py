@@ -1076,14 +1076,14 @@ class Topic(db.Model):
     title = db.StringProperty(required = True)
     readable_id = db.StringProperty(required = True)
     description = db.TextProperty()
-    childKeys = db.ListProperty(db.Key)
+    child_keys = db.ListProperty(db.Key)
     version = db.ReferenceProperty(TopicVersion, required = True)  
     hide = db.BooleanProperty(default = False)
 
-    _serialize_blacklist = ["childKeys"]
+    _serialize_blacklist = ["child_keys"]
 
     def get_order(self, topic = None): # needs topic to match Content.get_order()
-        return self.parent.childKeys.index(self.key())
+        return self.parent.child_keys.index(self.key())
 
     @staticmethod
     def get_by_readable_id(readable_id, version = None):
@@ -1162,7 +1162,7 @@ class Topic(db.Model):
             
             topic.put()
             if parent is not None:
-                parent.childKeys.append(topic.key())
+                parent.child_keys.append(topic.key())
                 parent.put()
             
             return topic
@@ -1195,7 +1195,7 @@ class Topic(db.Model):
         contentKeys = []
         # cycle through the nodes adding its children to the contentKeys that need to be gotten
         for key, descendant in node_dict.iteritems():
-            contentKeys.extend([childKey for childKey in descendant.childKeys if not node_dict.has_key(childKey) and childKey.kind() != "Topic"])
+            contentKeys.extend([child_key for child_key in descendant.child_keys if not node_dict.has_key(child_key) and child_key.kind() != "Topic"])
 
         # get all content that belongs in this tree
         contentItems = db.get(contentKeys)
@@ -1205,8 +1205,8 @@ class Topic(db.Model):
         
         # cycle through the nodes adding each to its parent's children list
         for key, descendant in node_dict.iteritems():
-            if hasattr(descendant, "childKeys"):
-                descendant.children = [node_dict[child] for child in descendant.childKeys if node_dict.has_key(child)]
+            if hasattr(descendant, "child_keys"):
+                descendant.children = [node_dict[child] for child in descendant.child_keys if node_dict.has_key(child)]
                 
         # return the entity that was passed in, now with its children, and its descendants children all added
         return node_dict[self.key()]
@@ -1224,51 +1224,44 @@ class Topic(db.Model):
         return query.fetch(10000)
         
 
-    def get_child_order(self, childKey):
-        return self.childKeys.index(childKey)
+    def get_child_order(self, child_key):
+        return self.child_keys.index(child_key)
                     
     @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_videos_for_topic_%s_at_%s" % ("descendant" if len(args) > 1 and args[1] else "child", args[0].key().name(), str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
     def get_cached_videos_for_topic(topic, include_descendants=False, limit=500):
-        
-        key = "%s_videos_for_topics_%s" % ("descendants" if include_descendants else "child", topic.key())
-        namespace = str(App.version) + "_" + str(Setting.cached_library_content_date())
-
-        videos = memcache.get(key, namespace=namespace)
-
-        if not videos:
-            if include_descendants:
-                query = Video.all().filter("topic_ancestors =", topic)
-            else:
-                query = Video.all().filter("topic_parents =", topic)
-            videos = query.fetch(limit)
-            videos.sort(key = lambda v: v.get_order(topic.key()))
-
-            memcache.set(key, videos, namespace=namespace)
+        if include_descendants:
+            video_keys = []
+            topics = Topic.all().ancestor(topic)
+            for topic in topics():
+                video_keys.extend([child_key for child_key in descendant.child_keys if child_key.kind() == "Video"])
+        else:
+            video_keys = [child_key for child_key in topic.child_keys if child_key.kind() == "Video"]    
+            
+        videos = db.get(video_keys)
 
         return videos 
 
     @staticmethod
-    def get_cached_topics_for_video(video, include_ancestors=False, limit=5):
+    @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_topics_for_video_%s_at_%s" % ("ancestor" if len(args) > 1 and args[1] else "parent", args[0].title, str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
+    def get_cached_topics_for_video(video, include_ancestors=False, limit=5, version = None):
+        if version is None:
+            version = TopicVersion.get_default_version()
+            if version is None:
+                version = TopicVersion.get_latest_version()
 
-        key = "%s_topics_for_videos_%s" % ("ancestor" if include_ancestors else "parent", video.key())
-        namespace = str(App.version) + "_" + str(Setting.cached_library_content_date())
-
-        topics = memcache.get(key, namespace=namespace)
-
-        if topics is None:
-            topics = []
-            if include_ancestors:
-                topic_list = video.topic_ancestors
-            else:
-                topic_list = video.topic_parents
-
-            for topic_key in topic_list:
-                topic = db.get(topic_key) 
-                if not topic.hide:
-                    topics.append(topic)
-
-            memcache.set(key, topics, namespace=namespace)
-        
+        topics = Topic.all().filter("child_keys =", video.key()).filter("version =", version).filter("hide =", False).fetch(10000)
+        if include_ancestors:
+            ancestor_topics = []
+            for topic in topics:
+                parent = topic
+                while True:
+                    parent = parent.parent() 
+                    if parent is None or parent.hide:
+                        break
+                    ancestor_topics.append(parent)
+            topics.extend(ancestor_topics)
+                    
         return topics
 
 class UserTopicVideos(db.Model):
@@ -1286,7 +1279,7 @@ class UserTopicVideos(db.Model):
 
     @staticmethod
     def get_key_name(topic, user_data):
-        return user_data.key_email + ":" + topic.key().name()
+        return user_data.key_email + ":" + topic.readable_id
 
     @staticmethod
     def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
@@ -1306,7 +1299,7 @@ class UserTopicVideos(db.Model):
 
 class Content(db.Model):
     def get_order(self, topic_key):
-        return db.get(topic_key).childKeys.index(self.key())
+        return db.get(topic_key).child_keys.index(self.key())
 
 class Video(Searchable, Content):
     youtube_id = db.StringProperty()
@@ -1371,7 +1364,7 @@ class Video(Searchable, Content):
         topic_key_dict = dict((t.key(), True) for t in topics)
         content_keys = Set()
         for t in topics:
-            content_keys.update([childKey for childKey in t.childKeys if not topic_key_dict.has_key(childKey)])
+            content_keys.update([child_key for child_key in t.child_keys if not topic_key_dict.has_key(child_key)])
 
         video_keys = Video.all(keys_only = True).fetch(100000)
         video_keys_set = Set(video_keys)
@@ -1679,7 +1672,7 @@ class VideoLog(db.Model):
 
             first_video_topic = True
             for topic in topics:
-                user_topic_vidoes = UserTopicVideos.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
+                user_topic_videos = UserTopicVideos.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
                 user_topic_videos.title = topic.title
                 user_topic_videos.seconds_watched += seconds_watched
                 user_topic_videos.last_watched = datetime.datetime.now()

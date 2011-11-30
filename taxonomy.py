@@ -45,8 +45,8 @@ class EditTaxonomy(request_handler.RequestHandler):
         # return
         # self.load_videos()
         # return
-        # self.hide_topics()
-        # return
+        self.hide_topics()
+        return
         
         
         root = Topic.get_by_readable_id("root").make_tree()
@@ -109,7 +109,7 @@ class EditTaxonomy(request_handler.RequestHandler):
             topic = Topic.insert(title = p.title,
                          parent = root,
                          description = p.description,
-                         childKeys =  [video.key() for video in videos])            
+                         child_keys =  [video.key() for video in videos])            
                                     
             context = {
                 'current_item': title,
