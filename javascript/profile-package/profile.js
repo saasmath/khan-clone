@@ -325,7 +325,7 @@ var Profile = {
         if (!fNoHistoryEntry) {
             // Add history entry for browser
             if ($.address) {
-                $.address.parameter("graph_url", encodeURIComponent(href), false);
+                $.address.parameter("graph_url", href, false);
 			}
         }
 
@@ -789,7 +789,7 @@ var Profile = {
 			Profile.loadGraph(
 				"/profile/graph/exerciseproblems?" +
 				"exercise_name=" + exerciseName + "&" +
-				"student_email=" + encodeURIComponent(Profile.email));
+				"student_email=" + Profile.email);
 		});
 	},
 
@@ -798,7 +798,7 @@ var Profile = {
 		var href = ( $.address ? $.address.parameter("graph_url") : "" ) ||
 				this.initialGraphUrl;
 		if ( href ) {
-			href = decodeURIComponent( href );
+			href = href;
 			if ( this.expandAccordionForHref(href) ) {
 				this.loadGraph( href, true );
 			} else {
@@ -1092,7 +1092,7 @@ var ProgressSummaryView = function() {
             Profile.loadGraph(
                 "/profile/graph/exerciseproblems?" +
                 "exercise_name=" + exercise + "&" +
-                "student_email=" + encodeURIComponent(email));
+                "student_email=" + email);
         });
     }
 
