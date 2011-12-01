@@ -14,18 +14,22 @@ var GoalCreator = {
 
         $(window).resize(function(){self.resize();});
 
+        $('#goal-choose-videos').find('#smarthistory').detach();
+
         // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
-            var video_name = $(this).attr('data-id');
             var span = $(this).children('span');
-
             var image = $(span).css('background-image');
+
+            $(this).attr('href', 'javascript:');
             if (image.indexOf('indicator-complete') == -1)
             {
+                var video_name = $(this).attr('data-id');
                 var video_title = span.text();
-                $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
+                $(this).click(function() {
+                    GoalCreator.onVideoClicked(video_name, video_title);
+                });
             } else {
-                $(this).attr('href', 'javascript:');
                 $(this).addClass('goalVideoInvalid');
             }
         });
