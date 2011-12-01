@@ -123,6 +123,7 @@
                                 events: {
                                     click: function() {
                                         Profile.collapseAccordion();
+                                        console.log(this)
                                         Profile.loadGraph('/profile/graph/exerciseproblems?student_email=' + this.series.options.email + '&exercise_name=' + this.name);
                                     }
                                 }
@@ -189,7 +190,7 @@
                                 {% for exercise_data in dict_student_exercises[key]["exercises"] %}
                                 { 
                                     dt: '{{ exercise_data.proficient_date|escapejs }}', 
-                                    name: '{{ exercise_data.name|escapejs }}', 
+                                    name: '{{ exercise_data.exid|escapejs }}', 
                                     display_name: '{{ exercise_data.display_name()|escapejs }}', 
                                     nickname: '{{ exercise_data.nickname|escapejs }}',
                                     x: {{ exercise_data.days_until_proficient }}, 
