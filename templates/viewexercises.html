@@ -35,8 +35,17 @@
             $(".proficientTrue").css('display', 'table-row');
 		}
 	}
-	
-    $(function(){Drawer.init();});
+
+    $(function() {
+        new KnowledgeMap({
+            'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
+            'admin': false,
+            'container': 'container'
+        });
+    });
+
+    var graph_dict_data = {{ graph_dict_data }};
+
 </script>
 {% endblock pagescript %}
 {% block pagetitle %}Exercise Dashboard{% endblock pagetitle %}
@@ -44,69 +53,10 @@
 <div id="background">
   <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     {{ exercise_macros.exercise_legend() }}
-    <div id="dashboard-header">
-        <div id="dashboard-nav">
-            <span class="selected"><a href="#">Knowledge Map{% if App.offline_mode %} (<em>not supported in offline mode</em>){% endif %}</a></span> |
-            <span class="menu"><a href="/profile?k">Vital Statistics</a></span>
-        </div>
-        <div id="dashboard-title"><img src="/images/dashboard-icon-active.png" id="dashboard-icon" width=22 height=22 /> Exercises <a href="#" id="collapse-drawer" class="toggle-drawer"><img src="/images/expand-left.png" width="25" height="25"/></a></div>
-            <a href="#" id="expand-drawer" class="toggle-drawer"><img src="/images/expand-right.png" width="25" height="25" /></a>
-        </div>
-    <div id="dashboard-drawer" class="drawer-hoverable">
-    <div id="dashboard-drawer-inner" class="fancy-scrollbar"><div>
-       <h3>Suggested Exercises</h3>
-        {% if review_graph_dicts %}
-        {% for graph_dict in review_graph_dicts %}
-            <div class="exercise-badge" data-id="{{graph_dict.name}}">
-                {{ exercise_macros.exercise_icon(graph_dict) }}
-        		<div class="energy-points-badge">{{graph_dict.points}}</div>
-        		<div class="exercise-title"><a href="/exercises?exid={{graph_dict.name}}">{{graph_dict.display_name}}</a></div>
+    {{ exercise_macros.exercise_dashboard() }}
 
-                {{ templatetags.streak_bar(graph_dict) }}
-            </div>
-        {% endfor %}
-        {% endif %}
-        {% for graph_dict in suggested_graph_dicts %}
-            <div class="exercise-badge" data-id="{{graph_dict.name}}">
-                {{ exercise_macros.exercise_icon(graph_dict) }}
-        		<div class="energy-points-badge">{{graph_dict.points}}</div>
-        		<div class="exercise-title"><a href="/exercises?exid={{graph_dict.name}}">{{graph_dict.display_name}}</a></div>
-        		
-                {{ templatetags.streak_bar(graph_dict) }}
-            </div>
-        {% endfor %}
-        <br>
-        {% if recent_graph_dicts %}
-            <h3>Recent Exercises</h3>
-            {% for graph_dict in recent_graph_dicts %}
-                <div class="exercise-badge" data-id="{{graph_dict.name}}">
-                    {{ exercise_macros.exercise_icon(graph_dict) }}
-                    <div class="energy-points-badge">{{graph_dict.points}}</div>
-                    <div class="exercise-title"><a href="/exercises?exid={{graph_dict.name}}">{{graph_dict.display_name}}</a></div>
-
-                    {{ templatetags.streak_bar(graph_dict) }}
-                </div>
-            {% endfor %}
-            <br/>
-        {% endif %}
-        <h3>All Exercises
-            <span class="subheader">(<a href="#" id="show-all-exercises">{% if expanded_all_exercises %}Hide All{% else %}Show All{% endif %}</a>)</span>
-        </h3>
-        <div id="all-exercises" style="{% if not expanded_all_exercises %}display: none;{% endif %}">
-        {% for graph_dict in graph_dicts %}
-            <div class="exercise-badge" data-id="{{graph_dict.name}}" id="{{graph_dict.name}}">
-                {{ exercise_macros.exercise_icon(graph_dict) }}
-        		<div class="energy-points-badge">{{graph_dict.points}}</div>
-        		<div class="exercise-title"><a href="/exercises?exid={{graph_dict.name}}">{{graph_dict.display_name}}</a></div>
-                {{ templatetags.streak_bar(graph_dict) }}
-            </div>
-        {% endfor %}
-        </div>
-    </div></div>
-    </div>
-
-    <div id="dashboard-map">
-        {{ exercise_macros.knowledgemap(graph_dicts, map_coords) }}
+    <div class="dashboard-map">
+        {{ exercise_macros.knowledgemap(null, true) }}
     </div>
 </div>
 </div>

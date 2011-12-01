@@ -19,7 +19,6 @@ import bulk_update.handler
 import request_cache
 from gae_mini_profiler import profiler
 from gae_bingo.middleware import GAEBingoWSGIMiddleware
-from gae_bingo.gae_bingo import bingo
 import autocomplete
 import coaches
 import knowledgemap
@@ -33,12 +32,9 @@ import search
 
 import request_handler
 from app import App
-import app
 import util
 import user_util
-import points
 import exercise_statistics
-import backfill
 import activity_summary
 import exercises
 import dashboard
@@ -47,28 +43,29 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
+import goals.handlers
 
 import models
-from models import UserExercise, Exercise, UserData, Video, Playlist, ProblemLog, VideoPlaylist, ExerciseVideo, Setting, UserVideo, UserPlaylist, VideoLog
+from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
 from discussion import comments, notification, qa, voting
 from about import blog, util_about
 from phantom_users import util_notify
 from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
-from topics_list import all_topics_list
 from custom_exceptions import MissingVideoException
 from templatetags import user_points
-from badges.templatetags import badge_notifications, badge_counts
 from oauth_provider import apps as oauth_apps
 from phantom_users.phantom_util import create_phantom, get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
 from nicknames import get_nickname_for
+from image_cache import ImageCache
+from api.auth.xsrf import ensure_xsrf_cookie
+import redirects
 import robots
-
-import config_jinja
+from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -108,7 +105,9 @@ def get_mangled_playlist_name(playlist_name):
     return playlist_name
 
 class ViewVideo(request_handler.RequestHandler):
-    def get(self):
+
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
 
         # This method displays a video in the context of a particular playlist.
         # To do that we first need to find the appropriate playlist.  If we aren't
@@ -119,8 +118,8 @@ class ViewVideo(request_handler.RequestHandler):
         playlist = None
         video_id = self.request.get('v')
         playlist_title = self.request_string('playlist', default="") or self.request_string('p', default="")
-        path = self.request.path
-        readable_id  = urllib.unquote(path.rpartition('/')[2])
+
+        readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
         # If either the readable_id or playlist title is missing,
@@ -238,58 +237,8 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
+        bingo('struggling_videos_landing')
         self.render_jinja2_template('viewvideo.html', template_values)
-
-class LogVideoProgress(request_handler.RequestHandler):
-
-    # LogVideoProgress uses a GET request to solve the IE-behind-firewall
-    # issue with occasionally stripped POST data.
-    # See http://code.google.com/p/khanacademy/issues/detail?id=3098
-    # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
-    def post(self):
-        self.get()
-
-    @create_phantom
-    def get(self):
-        user_data = UserData.current()
-        video_points_total = 0
-        points_total = 0
-
-        if user_data:
-
-            video = None
-
-            key_str = self.request_string("video_key")
-            if key_str:
-                key = db.Key(key_str)
-                app_id = os.environ['APPLICATION_ID']
-                if key.app() != app_id:
-                    new_key = db.Key.from_path(
-                        key.kind(),
-                        key.id() or key.name(),
-                        _app=app_id)
-                    logging.warning("Key '%s' had invalid app_id '%s'. Changed to new key '%s'", str(key), key.app(), str(new_key))
-                    key = new_key
-                video = db.get(key)
-            else:
-                youtube_id = self.request_string("youtube_id")
-                if youtube_id:
-                    video = Video.all().filter('youtube_id =', youtube_id).get()
-
-            if video:
-
-                # Seconds watched is restricted by both the scrubber's position
-                # and the amount of time spent on the video page
-                # so we know how *much* of each video each student has watched
-                seconds_watched = int(self.request_float("seconds_watched", default=0))
-                last_second_watched = int(self.request_float("last_second_watched", default=0))
-
-                user_video, video_log, video_points_total = VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
-
-        user_points_html = self.render_jinja2_template_to_string("user_points_only.html", user_points(user_data))
-
-        json = simplejson.dumps({"user_points_html": user_points_html, "video_points": video_points_total}, ensure_ascii=False)
-        self.response.out.write(json)
 
 class ReportIssue(request_handler.RequestHandler):
 
@@ -608,12 +557,13 @@ class Search(request_handler.RequestHandler):
 
     def get(self):
         query = self.request.get('page_search_query')
-        template_values = { 'page_search_query': query }
+        template_values = {'page_search_query': query}
         query = query.strip()
-        query_too_short = None
         if len(query) < search.SEARCH_PHRASE_MIN_LENGTH:
             if len(query) > 0:
-                template_values.update({'query_too_short': search.SEARCH_PHRASE_MIN_LENGTH})
+                template_values.update({
+                    'query_too_short': search.SEARCH_PHRASE_MIN_LENGTH
+                })
             self.render_jinja2_template("searchresults.html", template_values)
             return
         searched_phrases = []
@@ -624,15 +574,19 @@ class Search(request_handler.RequestHandler):
 
         # One full (non-partial) search, then sort by kind
         all_text_keys = Playlist.full_text_search(
-                            query, limit=50, kind=None,
-                            stemming=Playlist.INDEX_STEMMING,
-                            multi_word_literal=Playlist.INDEX_MULTI_WORD,
-                            searched_phrases_out=searched_phrases)
+                query, limit=50, kind=None,
+                stemming=Playlist.INDEX_STEMMING,
+                multi_word_literal=Playlist.INDEX_MULTI_WORD,
+                searched_phrases_out=searched_phrases)
 
 
         # Quick title-only partial search
-        playlist_partial_results = filter(lambda playlist_dict: query in playlist_dict["title"].lower(), autocomplete.playlist_title_dicts())
-        video_partial_results = filter(lambda video_dict: query in video_dict["title"].lower(), autocomplete.video_title_dicts())
+        playlist_partial_results = filter(
+                lambda playlist_dict: query in playlist_dict["title"].lower(),
+                autocomplete.playlist_title_dicts())
+        video_partial_results = filter(
+                lambda video_dict: query in video_dict["title"].lower(),
+                autocomplete.video_title_dicts())
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
@@ -649,9 +603,10 @@ class Search(request_handler.RequestHandler):
                 playlists.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
-            else:
-                logging.error("Unhandled kind in search results: " + str(type(entity)))
-                
+            elif entity is not None:
+                logging.error("Unhandled kind in search results: " +
+                              str(type(entity)))
+
         playlist_count = len(playlists)
 
         # Get playlists for videos not in matching playlists
@@ -685,7 +640,7 @@ class Search(request_handler.RequestHandler):
         video_exercises = {}
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
-                
+
         # Count number of videos in each playlist and sort descending
         for playlist in playlists:
             if len(filtered_videos) > 0:
@@ -779,25 +734,28 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
     ('/library_content', library.GenerateLibraryContent),
-    ('/exercises', exercises.ViewExercise),
+
+    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
+    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
+
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/.*', ViewVideo),
-    ('/v/.*', ViewVideo),
+    ('/video/(.*)', ViewVideo),
+    ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
-    ('/logvideoprogress', LogVideoProgress),
     ('/sat', ViewSAT),
     ('/gmat', ViewGMAT),
     ('/reportissue', ReportIssue),
     ('/search', Search),
-    ('/autocomplete', autocomplete.Autocomplete),
     ('/savemapcoords', knowledgemap.SaveMapCoords),
     ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
     ('/crash', Crash),
+
+    ('/image_cache/(.+)', ImageCache),
 
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
@@ -808,8 +766,6 @@ application = webapp2.WSGIApplication([
     ('/admin/badgestatistics', util_badges.BadgeStatistics),
     ('/admin/startnewexercisestatisticsmapreduce', exercise_statistics.StartNewExerciseStatisticsMapReduce),
     ('/admin/startnewvotemapreduce', voting.StartNewVoteMapReduce),
-    ('/admin/backfill', backfill.StartNewBackfillMapReduce),
-    ('/admin/backfill_entity', backfill.BackfillEntity),
     ('/admin/feedbackflagupdate', qa.StartNewFlagUpdateMapReduce),
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
@@ -851,7 +807,6 @@ application = webapp2.WSGIApplication([
     ('/profile', util_profile.ViewProfile),
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
-    ('/profile/graph/classprogressreport', util_profile.ClassProgressReportGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
     ('/class_profile', util_profile.ViewClassProfile),
@@ -908,7 +863,7 @@ application = webapp2.WSGIApplication([
     ('/jobs/.*', RedirectToJobvite),
 
     ('/dashboard', dashboard.Dashboard),
-    ('/entityboard', dashboard.Entityboard),
+    ('/contentdash', dashboard.ContentDashboard),
     ('/admin/dashboard/record_statistics', dashboard.RecordStatistics),
     ('/admin/entitycounts', dashboard.EntityCounts),
 
@@ -926,7 +881,15 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
 
+    ('/goals/new', goals.handlers.CreateNewGoal),
+    ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
+
     ('/robots.txt', robots.RobotsTxt),
+
+    ('/r/.*', redirects.Redirect),
+    ('/redirects', redirects.List),
+    ('/redirects/add', redirects.Add),
+    ('/redirects/remove', redirects.Remove),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),

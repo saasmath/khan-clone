@@ -338,7 +338,9 @@ span.flag_tools_show:hover img.feedback_flag_gray { display:none; }
 a.vote_for {
     margin-left:auto;
     margin-right:auto;
-    *margin: 0;
+}
+.lte7 a.vote_for {
+    margin: 0;
 }
 
 a.vote_for img { width: 18px; height: 13px; }

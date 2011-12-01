@@ -10,11 +10,11 @@ import itertools
 from google.appengine.api import users
 from google.appengine.api import memcache
 from google.appengine.ext import deferred
+from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
 
 from google.appengine.ext import db
 import object_property
-import app
 import util
 import user_util
 import consts
@@ -28,10 +28,14 @@ from topics_list import all_topics_list
 import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id
+from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
+from decorators import clamp
+from image_cache import ImageCache
 
 from templatefilters import slugify
-from gae_bingo.gae_bingo import ab_test, bingo
+from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
+from experiments import StrugglingExperiment
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -65,7 +69,7 @@ class Setting(db.Model):
     @staticmethod
     @request_cache.cache()
     @layer_cache.cache(layer=layer_cache.Layers.Memcache)
-    def _get_settings_dict(bust_cache = False):
+    def _get_settings_dict():
         # ancestor query to ensure consistent results
         query = Setting.all().ancestor(Setting.entity_group_key())
         results = dict((setting.key().name(), setting) for setting in query.fetch(20))
@@ -90,6 +94,14 @@ class Setting(db.Model):
     @staticmethod
     def smarthistory_version(val = None):
         return Setting._get_or_set_with_key("smarthistory_version", val) or 0
+
+    @staticmethod
+    def classtime_report_method(val = None):
+        return Setting._get_or_set_with_key("classtime_report_method", val)
+
+    @staticmethod
+    def classtime_report_startdate(val = None):
+        return Setting._get_or_set_with_key("classtime_report_startdate", val)
 
 
 class Exercise(db.Model):
@@ -123,13 +135,17 @@ class Exercise(db.Model):
             "coverers", "prerequisites_ex", "assigned",
             ]
 
+    @staticmethod
+    def get_relative_url(exercise_name):
+        return "/exercise/%s" % exercise_name
+
     @property
     def relative_url(self):
-        return "/exercises?exid=%s" % self.name
+        return Exercise.get_relative_url(self.name)
 
     @property
     def ka_url(self):
-        return util.absolute_url("/exercises?exid=%s" % self.name)
+        return util.absolute_url(self.relative_url)
 
     @staticmethod
     def get_by_name(name):
@@ -149,12 +165,10 @@ class Exercise(db.Model):
     def display_name(self):
         return Exercise.to_display_name(self.name)
 
+    # The number of "sub-bars" in a summative (equivalently, # of save points + 1)
     @property
-    def required_streak(self):
-        if self.summative:
-            return consts.REQUIRED_STREAK * len(self.prerequisites)
-        else:
-            return consts.REQUIRED_STREAK
+    def num_milestones(self):
+        return len(self.prerequisites) if self.summative else 1
 
     @staticmethod
     def to_short_name(name):
@@ -170,13 +184,6 @@ class Exercise(db.Model):
 
     def is_visible_to_current_user(self):
         return self.live or user_util.is_current_user_developer()
-
-    def struggling_threshold(self):
-        # 96% of users have proficiency before they get to 30 problems
-        # return 3 * self.required_streak
-
-        # 85% of users have proficiency before they get to 19 problems
-        return 2 * self.required_streak
 
     def summative_children(self):
         if not self.summative:
@@ -209,7 +216,6 @@ class Exercise(db.Model):
             return exercise
 
     def related_videos_query(self):
-        exercise_videos = None
         query = ExerciseVideo.all()
         query.filter('exercise =', self.key()).order('exercise_order')
         return query
@@ -224,13 +230,8 @@ class Exercise(db.Model):
     # followup_exercises reverse walks the prerequisites to give you
     # the exercises that list the current exercise as its prerequisite.
     # i.e. follow this exercise up with these other exercises
-    @property
-    @layer_cache.cache_with_key_fxn(lambda self: "followup_exercises_%s" % self.key(), layer=layer_cache.Layers.Memcache)
     def followup_exercises(self):
-        query = Exercise.all()
-        query.filter("prerequisites = ", self.name)
-        # ~==> return [ex for ex in Exercises.all() if self.name in ex.prerequisites]
-        return [e.name for e in query.fetch(200)]
+        return [exercise for exercise in Exercise.get_all_use_cache() if self.name in exercise.prerequisites]
 
     @classmethod
     def all(cls, live_only = False):
@@ -272,7 +273,7 @@ class Exercise(db.Model):
     @staticmethod
     @layer_cache.cache(expiration=3600)
     def get_count():
-        return Exercise.all().count()
+        return Exercise.all(live_only=True).count()
 
     def put(self):
         Setting.cached_exercises_date(str(datetime.datetime.now()))
@@ -286,8 +287,6 @@ class Exercise(db.Model):
             exercise_dict[fxn_key(exercise)] = exercise
         return exercise_dict
 
-def get_conversion_tests_dict(exid, checkpoints):
-    return dict([(c, 'mario_%s_%d_problems' % (exid, c)) for c in checkpoints])
 
 class UserExercise(db.Model):
 
@@ -295,8 +294,8 @@ class UserExercise(db.Model):
     exercise = db.StringProperty()
     exercise_model = db.ReferenceProperty(Exercise)
     streak = db.IntegerProperty(default = 0)
+    _progress = db.FloatProperty(default = None, indexed=False)  # A continuous value >= 0.0, where 1.0 means proficiency. This measure abstracts away the internal proficiency model.
     longest_streak = db.IntegerProperty(default = 0, indexed=False)
-    streak_start = db.FloatProperty(default = 0.0)  # The starting point of the streak bar as it appears to the user, in [0,1)
     first_done = db.DateTimeProperty(auto_now_add=True)
     last_done = db.DateTimeProperty()
     total_done = db.IntegerProperty(default = 0)
@@ -306,22 +305,26 @@ class UserExercise(db.Model):
     proficient_date = db.DateTimeProperty()
     seconds_per_fast_problem = db.FloatProperty(default = consts.MIN_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
     summative = db.BooleanProperty(default=False, indexed=False)
+    _accuracy_model = object_property.ObjectProperty()  # Stateful function object that estimates P(next problem correct). May not exist for old UserExercise objects (but will be created when needed).
 
     _USER_EXERCISE_KEY_FORMAT = "UserExercise.all().filter('user = '%s')"
 
-    _serialize_blacklist = ["review_interval_secs"]
+    _serialize_blacklist = ["review_interval_secs", "_progress", "_accuracy_model"]
 
-    @property
-    def point_display(self):
-      user_data = UserData.current()
-      return user_data.point_display if user_data else 'off'
+    _MIN_PROBLEMS_FROM_ACCURACY_MODEL = AccuracyModel.min_streak_till_threshold(consts.PROFICIENCY_ACCURACY_THRESHOLD)
+    _MIN_PROBLEMS_REQUIRED = max(_MIN_PROBLEMS_FROM_ACCURACY_MODEL, consts.MIN_PROBLEMS_IMPOSED)
 
-    @property
-    def required_streak(self):
-        if self.summative:
-            return Exercise.get_by_name(self.exercise).required_streak
-        else:
-            return consts.REQUIRED_STREAK
+    # Bound function objects to normalize the progress bar display from a probability
+    # TODO(david): This is a bit of a hack to not have the normalizer move too
+    #     slowly if the user got a lot of wrongs.
+    _all_correct_normalizer = InvFnExponentialNormalizer(
+        accuracy_model = AccuracyModel().update(correct=False),
+        proficiency_threshold = AccuracyModel.simulate([True] * _MIN_PROBLEMS_REQUIRED)
+    ).normalize
+    _had_wrong_normalizer = InvFnExponentialNormalizer(
+        accuracy_model = AccuracyModel().update([False] * 3),
+        proficiency_threshold = consts.PROFICIENCY_ACCURACY_THRESHOLD
+    ).normalize
 
     @property
     def exercise_states(self):
@@ -331,36 +334,61 @@ class UserExercise(db.Model):
         return None
 
     @property
-    def next_points(self):
-        user_data = self.get_user_data()
+    def num_milestones(self):
+        return self.exercise_model.num_milestones
 
-        suggested = proficient = False
+    def accuracy_model(self):
+        if self._accuracy_model is None:
+            self._accuracy_model = AccuracyModel(self)
+        return self._accuracy_model
 
-        if user_data:
-            suggested = user_data.is_suggested(self.exercise)
-            proficient = user_data.is_proficient_at(self.exercise)
-
-        return points.ExercisePointCalculator(self, suggested, proficient)
-
-    # A float for the progress bar indicating how close the user is to
-    # attaining proficiency, in range [0,1]. This is so we can abstract away
-    # the internal algorithm so the front-end does not need to change.
-    # TODO: Refactor code to use this measure instead of streak
+    # Faciliate transition for old objects that did not have the _progress property
     @property
+    @clamp(0.0, 1.0)
     def progress(self):
-        # Currently this is just the "more forgiving" streak bar
+        if self._progress is None:
+            self._progress = self._get_progress_from_current_state()
+        return self._progress
 
-        def progress_with_start(streak, start, required_streak):
-            return start + float(streak) / required_streak * (1 - start)
+    def update_proficiency_model(self, correct):
+        if not correct:
+            self.streak = 0
+
+        self.accuracy_model().update(correct)
+        self._progress = self._get_progress_from_current_state()
+
+    @clamp(0.0, 1.0)
+    def _get_progress_from_current_state(self):
+
+        if self.total_correct == 0:
+            return 0.0
+
+        prediction = self.accuracy_model().predict()
+
+        if self.accuracy_model().total_done <= self.accuracy_model().total_correct():
+            # Impose a minimum number of problems required to be done.
+            normalized_prediction = UserExercise._all_correct_normalizer(prediction)
+        else:
+            normalized_prediction = UserExercise._had_wrong_normalizer(prediction)
 
         if self.summative:
-            saved_streak = (self.streak // consts.CHALLENGE_STREAK_BARRIER) * consts.CHALLENGE_STREAK_BARRIER
-            saved_progress = float(saved_streak) / self.required_streak
-            current_progress = progress_with_start(self.streak - saved_streak,
-                self.streak_start, consts.CHALLENGE_STREAK_BARRIER)
-            return saved_progress + current_progress * float(consts.CHALLENGE_STREAK_BARRIER) / self.required_streak
+            if normalized_prediction >= 1.0:
+                # The user just crossed a challenge barrier. Reset their
+                # accuracy model to start fresh.
+                self._accuracy_model = AccuracyModel()
+
+            milestones_completed = math.floor(self._progress * self.num_milestones)
+            return float(milestones_completed + normalized_prediction) / self.num_milestones
+
         else:
-            return progress_with_start(self.streak, self.streak_start, self.required_streak)
+            return normalized_prediction
+
+    @staticmethod
+    def to_progress_display(num):
+        return '%.0f%%' % math.floor(num * 100.0) if num <= consts.MAX_PROGRESS_SHOWN else 'Max'
+
+    def progress_display(self):
+        return UserExercise.to_progress_display(self.progress)
 
     @staticmethod
     def get_key_for_email(email):
@@ -398,24 +426,23 @@ class UserExercise(db.Model):
     def belongs_to(self, user_data):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
-    def reset_streak(self, shrink_start=True):
-        if self.exercise_model.summative:
-            # Reset streak to latest 10 milestone
-            old_progress = self.progress
-            old_streak = self.streak
+    def is_struggling(self, struggling_model=None):
+        if self.has_been_proficient():
+            return False
 
-            self.streak = (self.streak // consts.CHALLENGE_STREAK_BARRIER) * consts.CHALLENGE_STREAK_BARRIER
-
-            if shrink_start:
-                self.streak_start = float((old_progress - self.progress) * consts.STREAK_RESET_FACTOR * (self.required_streak / consts.CHALLENGE_STREAK_BARRIER))
-
+        if struggling_model is None or struggling_model == 'old':
+            return self._is_struggling_old()
         else:
-            if shrink_start:
-                self.streak_start = float(self.progress * consts.STREAK_RESET_FACTOR)
-            self.streak = 0
+            # accuracy based model.
+            param = float(struggling_model.split('_')[1])
+            return self.accuracy_model().is_struggling(
+                    param=param,
+                    minimum_accuracy=consts.PROFICIENCY_ACCURACY_THRESHOLD,
+                    minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
 
-    def struggling_threshold(self):
-        return self.exercise_model.struggling_threshold()
+    def _is_struggling_old(self):
+        return ((self.streak == 0) and
+                (self.total_done > 20))
 
     @staticmethod
     def get_review_interval_from_seconds(seconds):
@@ -428,17 +455,20 @@ class UserExercise(db.Model):
 
         return review_interval
 
+    def has_been_proficient(self):
+        return self.proficient_date is not None
+
     def get_review_interval(self):
         return UserExercise.get_review_interval_from_seconds(self.review_interval_secs)
 
     def schedule_review(self, correct, now=datetime.datetime.now()):
         # If the user is not now and never has been proficient, don't schedule a review
-        if (self.streak + correct) < self.required_streak and self.longest_streak < self.required_streak:
+        if self.progress < 1.0 and not self.has_been_proficient():
             return
 
         # If the user is hitting a new streak either for the first time or after having lost
         # proficiency, reset their review interval counter.
-        if (self.streak + correct) >= self.required_streak:
+        if self.progress >= 1.0:
             self.review_interval_secs = 60 * 60 * 24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS
 
         review_interval = self.get_review_interval()
@@ -456,7 +486,7 @@ class UserExercise(db.Model):
         self.review_interval_secs = review_interval.days * 86400 + review_interval.seconds
 
     def set_proficient(self, proficient, user_data):
-        if not proficient and self.longest_streak < self.required_streak:
+        if not proficient and not self.has_been_proficient():
             # Not proficient and never has been so nothing to do
             return
 
@@ -470,16 +500,10 @@ class UserExercise(db.Model):
 
                 util_notify.update(user_data, self, False, True)
 
-                # Score conversions for A/B test
-                bingo('mario_gained_proficiency')
-
-                if len(user_data.proficient_exercises) == 5:
-                    bingo('mario_gained_5th_proficiency')
-                elif len(user_data.proficient_exercises) == 10:
-                    bingo('mario_gained_10th_proficiency')
-
-                if self.exercise == 'addition_1':
-                    bingo('mario_addition_1_proficiency')
+                if self.exercise in UserData.conversion_test_hard_exercises:
+                    bingo('hints_gained_proficiency_hard_binary')
+                elif self.exercise in UserData.conversion_test_easy_exercises:
+                    bingo('hints_gained_proficiency_easy_binary')
 
         else:
             if self.exercise in user_data.proficient_exercises:
@@ -625,6 +649,8 @@ def set_css_deferred(user_data_key, video_key, status, version):
     uvc.version = version
     db.put(uvc)
 
+PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
+
 class UserData(GAEBingoIdentityModel, db.Model):
     user = db.UserProperty()
     user_id = db.StringProperty()
@@ -650,30 +676,27 @@ class UserData(GAEBingoIdentityModel, db.Model):
     last_daily_summary = db.DateTimeProperty(indexed=False)
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
+    start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
     count_feedback_notification = db.IntegerProperty(default = -1, indexed=False)
     question_sort_order = db.IntegerProperty(default = -1, indexed=False)
     user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default = 0, indexed=False)
+    has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "expanded_all_exercises", "question_sort_order",
-            "last_login", "user", "current_user", "map_coords", "expanded_all_exercises",
-            "user_nickname", "user_email", "seconds_since_joined",
+            "last_login", "user", "current_user", "map_coords",
+            "expanded_all_exercises", "user_nickname", "user_email",
+            "seconds_since_joined", "has_current_goals"
     ]
 
-    _conversion_checkpoints = [5, 10, 20, 30]
-    any_exercise_conversions = get_conversion_tests_dict('did', _conversion_checkpoints)
-    addition_1_conversions = get_conversion_tests_dict('addition_1', _conversion_checkpoints)
-    _mario_points_conversion_tests = (['mario_gained_proficiency', 'mario_gained_5th_proficiency',
-        'mario_gained_10th_proficiency', 'mario_addition_1_proficiency'] +
-        any_exercise_conversions.values() + addition_1_conversions.values())
-
-    @property
-    @request_cache.cache()
-    def point_display(self):
-        return ab_test("mario points", ["on", "off"], UserData._mario_points_conversion_tests)
+    conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
+        'probability_1', 'domain_of_a_function', 'division_4',
+        'ratio_word_problems', 'writing_expressions_1', 'ordering_numbers',
+        'geometry_1', 'converting_mixed_numbers_and_improper_fractions'])
+    conversion_test_easy_exercises = set(['counting_1', 'significant_figures_1', 'subtraction_1'])
 
     @property
     def nickname(self):
@@ -697,11 +720,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     @staticmethod
     @request_cache.cache()
-    def current(bust_cache=True):
-        if bust_cache:
-            util.get_current_user_id(bust_cache=True)
-
-        user_id = util.get_current_user_id()
+    def current():
+        user_id = util.get_current_user_id(bust_cache=True)
         email = user_id
 
         google_user = users.get_current_user()
@@ -718,12 +738,15 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     @staticmethod
     def pre_phantom():
-        pre_phantom_email = "http://nouserid.khanacademy.org/pre-phantom-user-2"
-        return UserData.insert_for(pre_phantom_email, pre_phantom_email)
+        return UserData.insert_for(PRE_PHANTOM_EMAIL, PRE_PHANTOM_EMAIL)
 
     @property
     def is_phantom(self):
         return util.is_phantom_user(self.user_id)
+
+    @property
+    def is_pre_phantom(self):
+        return PRE_PHANTOM_EMAIL == self.user_email
 
     @property
     def seconds_since_joined(self):
@@ -836,12 +859,13 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 exercise=exid,
                 exercise_model=exercise,
                 streak=0,
-                streak_start=0.0,
+                _progress=0.0,
                 longest_streak=0,
                 first_done=datetime.datetime.now(),
                 last_done=None,
                 total_done=0,
                 summative=exercise.summative,
+                _accuracy_model=AccuracyModel(),
                 )
 
         return userExercise
@@ -937,6 +961,35 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def are_students_visible_to(self, user_data):
         return self.is_coworker_of(user_data) or user_data.developer or user_data.is_administrator()
 
+    def record_activity(self, dt_activity):
+
+        # Make sure last_activity and start_consecutive_activity_date have values
+        self.last_activity = self.last_activity or dt_activity
+        self.start_consecutive_activity_date = self.start_consecutive_activity_date or dt_activity
+
+        if dt_activity > self.last_activity:
+
+            # If it has been over 36 hours since we last saw this user, restart the consecutive activity streak.
+            #
+            # We allow for a lenient 36 hours in order to offer kinder timezone interpretation.
+            # See http://meta.stackoverflow.com/questions/55483/proposed-consecutive-days-badge-tracking-change
+            if util.hours_between(self.last_activity, dt_activity) >= 36:
+                self.start_consecutive_activity_date = dt_activity
+
+            self.last_activity = dt_activity
+
+    def current_consecutive_activity_days(self):
+        if not self.last_activity or not self.start_consecutive_activity_date:
+            return 0
+
+        dt_now = datetime.datetime.now()
+
+        # If it has been over 36 hours since last activity, bail.
+        if util.hours_between(self.last_activity, dt_now) >= 36:
+            return 0
+
+        return (self.last_activity - self.start_consecutive_activity_date).days
+
     def add_points(self, points):
         if self.points == None:
             self.points = 0
@@ -965,6 +1018,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
+    def ensure_has_current_goals(self):
+        if not self.has_current_goals:
+            self.has_current_goals = True
+            self.put()
+
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
@@ -985,29 +1043,34 @@ class Video(Searchable, db.Model):
     # this date may be much later than the actual YouTube upload date.
     date_added = db.DateTimeProperty(auto_now_add=True)
 
-    # Last download version in which video download was prepped.
-    download_version = db.IntegerProperty(default = 0)
-    CURRENT_DOWNLOAD_VERSION = 2
+    # List of currently available downloadable formats for this video
+    downloadable_formats = object_property.TsvProperty(indexed=False)
 
-    _serialize_blacklist = ["download_version", "CURRENT_DOWNLOAD_VERSION"]
+    _serialize_blacklist = ["downloadable_formats"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
     INDEX_TITLE_FROM_PROP = 'title'
     INDEX_USES_MULTI_ENTITIES = False
 
+    @staticmethod
+    def get_relative_url(readable_id):
+        return '/video/%s' % readable_id
+
+    @property
+    def relative_url(self):
+        return Video.get_relative_url(self.readable_id)
+
     @property
     def ka_url(self):
-        return util.absolute_url('/video/%s' % self.readable_id)
+        return util.absolute_url(self.relative_url)
 
     @property
     def download_urls(self):
-        if self.download_version == Video.CURRENT_DOWNLOAD_VERSION:
-            download_url_base = "http://www.archive.org/download/KA-converted-%s" % self.youtube_id
 
-            return {
-                    "mp4": "%s/%s.mp4" % (download_url_base, self.youtube_id),
-                    "png": "%s/%s.png" % (download_url_base, self.youtube_id),
-                    }
+        if self.downloadable_formats:
+
+            download_url_template = "http://www.archive.org/download/KA-converted-%s/%s.%s"
+            return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
 
         return None
 
@@ -1018,7 +1081,7 @@ class Video(Searchable, db.Model):
         return None
 
     def youtube_thumbnail_url(self):
-        return "http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id
+        return ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id)
 
     @staticmethod
     def get_for_readable_id(readable_id):
@@ -1236,6 +1299,13 @@ class UserVideo(db.Model):
     def points(self):
         return points.VideoPointCalculator(self)
 
+    @property
+    def progress(self):
+        if self.completed:
+            return 1.0
+        else:
+            return min(1.0, float(self.seconds_watched) / self.duration)
+
 class VideoLog(db.Model):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
@@ -1271,7 +1341,7 @@ class VideoLog(db.Model):
         return query
 
     @staticmethod
-    def add_entry(user_data, video, seconds_watched, last_second_watched):
+    def add_entry(user_data, video, seconds_watched, last_second_watched, detect_cheat=True):
 
         user_video = UserVideo.get_for_video_and_user_data(video, user_data, insert_if_missing=True)
 
@@ -1287,10 +1357,10 @@ class VideoLog(db.Model):
         # If the last video logged is not this video and the times being credited
         # overlap, don't give points for this video. Can only get points for one video
         # at a time.
-        if last_video_log and last_video_log.key_for_video() != video.key():
+        if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
             dt_now = datetime.datetime.now()
             if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
-                return (None, None, 0)
+                return (None, None, 0, False)
 
         video_log = VideoLog()
         video_log.user = user_data.user
@@ -1337,7 +1407,7 @@ class VideoLog(db.Model):
         user_video.last_watched = datetime.datetime.now()
         user_video.duration = video.duration
 
-        user_data.last_activity = user_video.last_watched
+        user_data.record_activity(user_video.last_watched)
 
         video_points_total = points.VideoPointCalculator(user_video)
         video_points_received = video_points_total - video_points_previous
@@ -1350,6 +1420,11 @@ class VideoLog(db.Model):
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
+            bingo('struggling_videos_finished')
+
+        goals_updated = GoalList.update_goals(user_data,
+            lambda goal: goal.just_watched_video(user_data, user_video))
+
         if video_points_received > 0:
             video_log.points_earned = video_points_received
             user_data.add_points(video_points_received)
@@ -1360,10 +1435,17 @@ class VideoLog(db.Model):
         # and want to shift it off to an automatically-retrying task queue.
         # http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
         deferred.defer(commit_video_log, video_log,
-                       _queue="video-log-queue",
-                       _url="/_ah/queue/deferred_videolog")
+                       _queue = "video-log-queue",
+                       _url = "/_ah/queue/deferred_videolog")
 
-        return (user_video, video_log, video_points_total)
+
+        if user_data is not None and user_data.coaches:
+            # Making a separate queue for the log summaries so we can clearly see how much they are getting used
+            deferred.defer(commit_log_summary_coaches, video_log, user_data.coaches,
+                _queue = "log-summary-queue",
+                _url = "/_ah/queue/deferred_log_summary")
+
+        return (user_video, video_log, video_points_total, goals_updated)
 
     def time_started(self):
         return self.time_watched - datetime.timedelta(seconds = self.seconds_watched)
@@ -1378,10 +1460,17 @@ class VideoLog(db.Model):
         return VideoLog.video.get_value_for_datastore(self)
 
 # commit_video_log is used by our deferred video log insertion process
-def commit_video_log(video_log):
+def commit_video_log(video_log, user_data = None):
     video_log.put()
 
 class DailyActivityLog(db.Model):
+    """ A log entry for a dashboard presented to users and coaches.
+
+    This is used in the end-user-visible dashboards that display
+    student activity and breaks down where the user is spending her time.
+
+    """
+
     user = db.UserProperty()
     date = db.DateTimeProperty()
     activity_summary = object_property.ObjectProperty()
@@ -1408,6 +1497,141 @@ class DailyActivityLog(db.Model):
         query.order('date')
 
         return query
+
+class LogSummaryTypes:
+    USER_ADJACENT_ACTIVITY = "UserAdjacentActivity"
+    CLASS_DAILY_ACTIVITY = "ClassDailyActivity"
+
+# Tracks the number of shards for each named log summary
+class LogSummaryShardConfig(db.Model):
+    name = db.StringProperty(required=True)
+    num_shards = db.IntegerProperty(required=True, default=1)
+
+    @staticmethod
+    def increase_shards(name, num):
+        """Increase the number of shards for a given sharded counter.
+        Will never decrease the number of shards.
+
+        Parameters:
+        name - The name of the counter
+        num - How many shards to use
+
+        """
+        config = LogSummaryShardConfig.get_or_insert(name, name=name)
+        def txn():
+            if config.num_shards < num:
+                config.num_shards = num
+                config.put()
+
+        db.run_in_transaction(txn)
+
+# can keep a variety of different types of summaries pulled from the logs
+class LogSummary(db.Model):
+    user = db.UserProperty()
+    start = db.DateTimeProperty()
+    end = db.DateTimeProperty()
+    summary_type = db.StringProperty()
+    summary = object_property.UnvalidatedObjectProperty()
+    name = db.StringProperty(required=True)
+
+    @staticmethod
+    def get_start_of_period(activity, delta):
+        date = activity.time_started()
+
+        if delta == 1440:
+            return datetime.datetime(date.year, date.month, date.day)
+
+        if delta == 60:
+            return datetime.datetime(date.year, date.month, date.day, date.hour)
+
+        raise Exception("unhandled delta to get_key_name")
+
+    @staticmethod
+    def get_end_of_period(activity, delta):
+        return LogSummary.get_start_of_period(activity, delta) + datetime.timedelta(minutes=delta)
+
+    @staticmethod
+    def get_name(user_data, summary_type, activity, delta):
+        return LogSummary.get_name_by_dates(user_data, summary_type, LogSummary.get_start_of_period(activity, delta), LogSummary.get_end_of_period(activity, delta))
+
+    @staticmethod
+    def get_name_by_dates(user_data, summary_type, start, end):
+        return "%s:%s:%s:%s" % (user_data.key_email, summary_type, start.strftime("%Y-%m-%d-%H-%M"), end.strftime("%Y-%m-%d-%H-%M"))
+
+    # activity needs to have activity.time_started() and activity.time_done() functions
+    # summary_class needs to have a method .add(activity)
+    # delta is a time period in minutes
+    @staticmethod
+    def add_or_update_entry(user_data, activity, summary_class, summary_type, delta=30):
+
+        if user_data is None:
+            return
+
+        def txn(name, shard_name, user_data, activities, summary_class, summary_type, delta):
+                log_summary = LogSummary.get_by_key_name(shard_name)
+
+                if log_summary is None:
+                    activity = activities[0]
+
+                    log_summary = LogSummary(key_name = shard_name, \
+                                             name = name, \
+                                             user = user_data.user, \
+                                             start = LogSummary.get_start_of_period(activity, delta), \
+                                             end = LogSummary.get_end_of_period(activity, delta), \
+                                             summary_type = summary_type)
+
+                    log_summary.summary = summary_class()
+
+                for activity in activities:
+                    log_summary.summary.add(user_data, activity)
+
+                log_summary.put()
+
+
+        # if activities is a list, we assume all activities belong to the same period - this is used in classtime.fill_class_summaries_from_logs()
+        if type(activity) == list:
+            activities = activity
+            activity = activities[0]
+        else:
+            activities = [activity]
+
+        name = LogSummary.get_name(user_data, summary_type, activity, delta)
+        config = LogSummaryShardConfig.get_or_insert(name, name=name)
+
+        index = random.randint(0, config.num_shards - 1)
+        shard_name = str(index) + ":" + name
+
+
+        # running function within a transaction because time might elapse between the get and the put
+        # and two processes could get before either puts. Transactions will ensure that its mutually exclusive
+        # since they are operating on the same entity
+        try:
+            db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
+        except TransactionFailedError:
+            # if it is a transaction lock
+            logging.info("increasing the number of shards to %i log summary: %s" %(config.num_shards+1, name))
+            LogSummaryShardConfig.increase_shards(name, config.num_shards+1)
+            shard_name = str(config.num_shards) + ":" + name
+            db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
+
+    @staticmethod
+    def get_by_name(name):
+        query = LogSummary.all()
+        query.filter('name =', name)
+        return query
+
+# commit_log_summary is used by our deferred log summary insertion process
+def commit_log_summary(activity_log, user_data):
+    if user_data is not None:
+        from classtime import  ClassDailyActivitySummary # putting this at the top would get a circular reference
+        for coach in user_data.coaches:
+            LogSummary.add_or_update_entry(UserData.get_from_db_key_email(coach), activity_log, ClassDailyActivitySummary, LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
+
+# commit_log_summary is used by our deferred log summary insertion process
+def commit_log_summary_coaches(activity_log, coaches):
+    from classtime import  ClassDailyActivitySummary # putting this at the top would get a circular reference
+    for coach in coaches:
+        LogSummary.add_or_update_entry(UserData.get_from_db_key_email(coach), activity_log, ClassDailyActivitySummary, LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
 
 class ProblemLog(db.Model):
 
@@ -1441,7 +1665,7 @@ class ProblemLog(db.Model):
 
     @property
     def ka_url(self):
-        return util.absolute_url("/exercises?exid=%s&problem_number=%s" % \
+        return util.absolute_url("/exercise/%s?problem_number=%s" % \
             (self.exercise, self.problem_number))
 
     @staticmethod
@@ -1451,6 +1675,7 @@ class ProblemLog(db.Model):
 
         query.filter('time_done >=', dt_a)
         query.filter('time_done <', dt_b)
+
         query.order('time_done')
 
         return query
@@ -1471,7 +1696,7 @@ class ProblemLog(db.Model):
         return util.minutes_between(self.time_started(), self.time_ended())
 
 # commit_problem_log is used by our deferred problem log insertion process
-def commit_problem_log(problem_log_source):
+def commit_problem_log(problem_log_source, user_data = None):
     try:
         if not problem_log_source or not problem_log_source.key().name:
             logging.critical("Skipping problem log commit due to missing problem_log_source or key().name")
@@ -1550,8 +1775,8 @@ def commit_problem_log(problem_log_source):
             # Add time taken for hint
             insert_in_position(index_hint, problem_log.hint_time_taken_list, problem_log_source.time_taken, filler=-1)
 
-            # Add problem number this hint follows
-            insert_in_position(index_hint, problem_log.hint_after_attempt_list, problem_log.count_attempts, filler=-1)
+            # Add attempt number this hint follows
+            insert_in_position(index_hint, problem_log.hint_after_attempt_list, problem_log_source.count_attempts, filler=-1)
 
         # Points should only be earned once per problem, regardless of attempt count
         problem_log.points_earned = max(problem_log.points_earned, problem_log_source.points_earned)
@@ -1559,7 +1784,9 @@ def commit_problem_log(problem_log_source):
         # Correct cannot be changed from False to True after first attempt
         problem_log.correct = (problem_log_source.count_attempts == 1 or problem_log.correct) and problem_log_source.correct and not problem_log.count_hints
 
+        logging.info(problem_log.time_ended())
         problem_log.put()
+
 
     db.run_in_transaction(txn)
 
@@ -1670,13 +1897,16 @@ class ExerciseVideo(db.Model):
 
         return exercise_video_key_dict
 
-# UserExerciseCache is an optimized-for-read-and-deserialization cache of user-specific exercise states.
-# It can be reconstituted at any time via UserExercise objects.
-#
 class UserExerciseCache(db.Model):
+    """ UserExerciseCache is an optimized-for-read-and-deserialization cache of
+    user-specific exercise states.
+    It can be reconstituted at any time via UserExercise objects.
 
-    # Bump this whenever you change the structure of the cached UserExercises and need to invalidate all old caches
-    CURRENT_VERSION = 6
+    """
+
+    # Bump this whenever you change the structure of the cached UserExercises
+    # and need to invalidate all old caches
+    CURRENT_VERSION = 9
 
     version = db.IntegerProperty()
     dicts = object_property.UnvalidatedObjectProperty()
@@ -1710,35 +1940,44 @@ class UserExerciseCache(db.Model):
         # For any that are missing or are out of date,
         # build up asynchronous queries to repopulate their data
         async_queries = []
+        missing_cache_indices = []
         for i, user_exercise_cache in enumerate(user_exercise_caches):
             if not user_exercise_cache or user_exercise_cache.version != UserExerciseCache.CURRENT_VERSION:
+                # Null out the reference so the gc can collect, in case it's
+                # a stale version, since we're going to rebuild it below.
+                user_exercise_caches[i] = None
+
                 # This user's cached graph is missing or out-of-date,
                 # put it in the list of graphs to be regenerated.
                 async_queries.append(UserExercise.get_for_user_data(user_data_list[i]))
+                missing_cache_indices.append(i)
 
         if len(async_queries) > 0:
-
-            # Run the async queries
-            results = util.async_queries(async_queries)
             caches_to_put = []
-            exercises = Exercise.get_all_use_cache()
 
-            # Populate the missing graphs w/ results from async queries
-            index_result = 0
-            for i, user_exercise_cache in enumerate(user_exercise_caches):
-                if not user_exercise_cache or user_exercise_cache.version != UserExerciseCache.CURRENT_VERSION:
-                    user_data = user_data_list[i]
-                    user_exercises = results[index_result].get_result()
+            # Run the async queries in batches to avoid exceeding memory limits.
+            # Some coaches can have lots of active students, and their user
+            # exercise information is too much for app engine instances.
+            BATCH_SIZE = 5
+            for i in range(0, len(async_queries), BATCH_SIZE):
+                tasks = util.async_queries(async_queries[i:i+BATCH_SIZE])
+
+                # Populate the missing graphs w/ results from async queries
+                for j, task in enumerate(tasks):
+                    user_index = missing_cache_indices[i + j]
+                    user_data = user_data_list[user_index]
+                    user_exercises = task.get_result()
 
                     user_exercise_cache = UserExerciseCache.generate(user_data, user_exercises)
+                    user_exercise_caches[user_index] = user_exercise_cache
 
                     if len(caches_to_put) < 10:
                         # We only put 10 at a time in case a teacher views a report w/ tons and tons of uncached students
                         caches_to_put.append(user_exercise_cache)
 
-                    user_exercise_caches[i] = user_exercise_cache
-
-                    index_result += 1
+            # Null out references explicitly for GC.
+            tasks = None
+            async_queries = None
 
             if len(caches_to_put) > 0:
                 # Fire off an asynchronous put to cache the missing results. On the production server,
@@ -1759,11 +1998,13 @@ class UserExerciseCache(db.Model):
         return user_exercise_caches if type(user_data_or_list) == list else user_exercise_caches[0]
 
     @staticmethod
-    def dict_from_user_exercise(user_exercise):
+    def dict_from_user_exercise(user_exercise, struggling_model=None):
+        # TODO(david): We can probably remove some of this stuff here.
         return {
                 "streak": user_exercise.streak if user_exercise else 0,
                 "longest_streak": user_exercise.longest_streak if user_exercise else 0,
                 "progress": user_exercise.progress if user_exercise else 0.0,
+                "struggling": user_exercise.is_struggling(struggling_model) if user_exercise else False,
                 "total_done": user_exercise.total_done if user_exercise else 0,
                 "last_done": user_exercise.last_done if user_exercise else datetime.datetime.min,
                 "last_review": user_exercise.last_review if user_exercise else datetime.datetime.min,
@@ -1777,12 +2018,24 @@ class UserExerciseCache(db.Model):
         if not user_exercises:
             user_exercises = UserExercise.get_for_user_data(user_data)
 
+        current_user = UserData.current()
+        if current_user is None:
+            is_current_user = False
+        else:
+            is_current_user = current_user.user_id == user_data.user_id
+
+        # Experiment to try different struggling models.
+        # It's important to pass in the user_data of the student owning the
+        # exercise, and not of the current viewer (as it may be a coach).
+        struggling_model = StrugglingExperiment.get_alternative_for_user(
+                user_data, is_current_user) or StrugglingExperiment.DEFAULT
+
         dicts = {}
 
         # Build up cache
         for user_exercise in user_exercises:
-
-            user_exercise_dict = UserExerciseCache.dict_from_user_exercise(user_exercise)
+            user_exercise_dict = UserExerciseCache.dict_from_user_exercise(
+                    user_exercise, struggling_model)
 
             # In case user has multiple UserExercise mappings for a specific exercise,
             # always prefer the one w/ more problems done
@@ -1805,7 +2058,9 @@ class UserExerciseGraph(object):
         return self.graph.get(exercise_name)
 
     def graph_dicts(self):
-        return sorted(sorted(self.graph.values(), key=lambda graph_dict: graph_dict["v_position"]), key=lambda graph_dict: graph_dict["h_position"])
+        return sorted(sorted(self.graph.values(),
+                             key=lambda graph_dict: graph_dict["v_position"]),
+                             key=lambda graph_dict: graph_dict["h_position"])
 
     def proficient_exercise_names(self):
         return [graph_dict["name"] for graph_dict in self.proficient_graph_dicts()]
@@ -1852,7 +2107,7 @@ class UserExerciseGraph(object):
             if graph_dict.get("next_review") is None:
                 graph_dict["next_review"] = datetime.datetime.min
 
-                if graph_dict["total_done"] > 0 and graph_dict["last_review"] > datetime.datetime.min:
+                if graph_dict["total_done"] > 0 and graph_dict["last_review"] and graph_dict["last_review"] > datetime.datetime.min:
                     next_review = graph_dict["last_review"] + UserExercise.get_review_interval_from_seconds(graph_dict["review_interval_secs"])
 
                     if next_review > now and graph_dict["proficient"] and graph_dict["streak"] == 0:
@@ -1921,7 +2176,6 @@ class UserExerciseGraph(object):
 
         # We can grab a single UserExerciseGraph or do an optimized grab of a bunch of 'em
         user_data_list = user_data_or_list if type(user_data_or_list) == list else [user_data_or_list]
-
         user_exercise_cache_list = UserExerciseCache.get(user_data_list)
 
         if not user_exercise_cache_list:
@@ -1945,12 +2199,10 @@ class UserExerciseGraph(object):
                 "h_position": exercise.h_position,
                 "v_position": exercise.v_position,
                 "summative": exercise.summative,
-                "struggling_threshold": exercise.struggling_threshold(),
-                "required_streak": exercise.required_streak,
+                "num_milestones": exercise.num_milestones,
                 "proficient": None,
                 "explicitly_proficient": None,
                 "suggested": None,
-                "struggling": None,
                 "endangered": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
@@ -1984,10 +2236,6 @@ class UserExerciseGraph(object):
                 "coverer_dicts": [],
                 "prerequisite_dicts": [],
             })
-
-            graph_dict["struggling"] = (graph_dict["streak"] == 0 and
-                    graph_dict["longest_streak"] < graph_dict["required_streak"] and
-                    graph_dict["total_done"] > graph_dict["struggling_threshold"])
 
             # In case user has multiple UserExercise mappings for a specific exercise,
             # always prefer the one w/ more problems done
@@ -2064,7 +2312,7 @@ class UserExerciseGraph(object):
         def set_endangered(graph_dict):
             graph_dict["endangered"] = (graph_dict["proficient"] and
                     graph_dict["streak"] == 0 and
-                    graph_dict["longest_streak"] >= graph_dict["required_streak"])
+                    graph_dict["proficient_date"] is not None)
 
         for exercise_name in graph:
             set_suggested(graph[exercise_name])
@@ -2074,3 +2322,4 @@ class UserExerciseGraph(object):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
+from goals.models import GoalList

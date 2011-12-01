@@ -1,12 +1,17 @@
 import sys
-import re
 import subprocess
 import os
 import optparse
 import datetime
+import urllib2
+import webbrowser
+import getpass
+import re
 
 sys.path.append(os.path.abspath("."))
 import compress
+import glob
+import tempfile
 
 try:
     import secrets
@@ -15,6 +20,11 @@ except Exception, e:
     print "Exception raised while trying to import secrets. Attempting to continue..."
     print repr(e)
     hipchat_deploy_token = None
+
+try:
+    from secrets import app_engine_username, app_engine_password
+except Exception, e:
+    (app_engine_username, app_engine_password) = (None, None)
 
 if hipchat_deploy_token:
     import hipchat.room
@@ -25,12 +35,21 @@ def popen_results(args):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)
     return proc.communicate()[0]
 
-def popen_return_code(args):
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-    proc.communicate()
+def popen_return_code(args, input=None):
+    proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc.communicate(input)
     return proc.returncode
 
-def send_hipchat_deploy_message(version, includes_local_changes):
+def get_app_engine_credentials():
+    if app_engine_username and app_engine_password:
+        print "Using password for %s from secrets.py" % app_engine_username
+        return (app_engine_username, app_engine_password)
+    else:
+        email = raw_input("App Engine Email: ")
+        password = getpass.getpass("Password for %s: " % email)
+        return (email, password)
+
+def send_hipchat_deploy_message(version, includes_local_changes, email):
     if hipchat_deploy_token is None:
         return
 
@@ -51,9 +70,8 @@ def send_hipchat_deploy_message(version, includes_local_changes):
     github_url = "https://github.com/Khan/khan-exercises/commit/%s" % git_id
 
     local_changes_warning = " (including uncommitted local changes)" if includes_local_changes else ""
-
-    hipchat_message("""
-            Just deployed %(hg_id)s%(local_changes_warning)s to <a href='%(url)s'>a non-default url</a>. Includes
+    message_tmpl = """
+            %(hg_id)s%(local_changes_warning)s to <a href='%(url)s'>a non-default url</a>. Includes
             website changeset "<a href='%(kiln_url)s'>%(hg_msg)s</a>" and khan-exercises
             revision "<a href='%(github_url)s'>%(git_msg)s</a>."
             """ % {
@@ -64,15 +82,20 @@ def send_hipchat_deploy_message(version, includes_local_changes):
                 "github_url": github_url,
                 "git_msg": git_msg,
                 "local_changes_warning": local_changes_warning,
-            })
+            }
+    public_message = "Just deployed %s" % message_tmpl
+    private_message = "%s just deployed %s" % (email, message_tmpl)
 
-def hipchat_message(msg):
+    hipchat_message(public_message, ["Exercises"])
+    hipchat_message(private_message, ["1s and 0s"])
+
+def hipchat_message(msg, rooms):
     if hipchat_deploy_token is None:
         return
 
     for room in hipchat.room.Room.list():
 
-        if room.name in ['1s and 0s', 'Exercises']:
+        if room.name in rooms:
 
             result = ""
             msg_dict = {"room_id": room.room_id, "from": "Mr Monkey", "message": msg, "color": "purple"}
@@ -116,25 +139,13 @@ def hg_pull_up():
 
 def hg_version():
     # grab the tip changeset hash
-    output = popen_results(['hg', 'tip'])
-    changeset = parse_hg_info(output, "changeset")
-
-    if changeset:
-        return changeset.split(":")[1]
-
-    return -1
+    current_version = popen_results(['hg', 'identify','-i']).strip()
+    return current_version or -1
 
 def hg_changeset_msg(changeset_id):
     # grab the summary and date
-    output = popen_results(['hg', 'log', '-r', changeset_id])
-    return parse_hg_info(output, "summary")
-
-def parse_hg_info(output, label):
-    pattern = re.compile("^%s:\\s+(.+)$" % label, re.MULTILINE)
-    matches = pattern.search(output)
-    if matches:
-        return matches.groups()[0].strip()
-    return None
+    output = popen_results(['hg', 'log', '--template','{desc}', '-r', changeset_id])
+    return output
 
 def git_version():
     # grab the tip changeset hash
@@ -158,6 +169,38 @@ def check_secrets():
     regex = re.compile("^facebook_app_secret = '050c.+'$", re.MULTILINE)
     return regex.search(content)
 
+def tidy_up():
+    """moves all pycs and compressed js/css to a rubbish folder alongside the project"""
+    trashdir = tempfile.mkdtemp(dir="../", prefix="rubbish-")
+
+    print "Moving old files to %s." % trashdir
+
+    junkfiles = open(".hgignore","r")
+    please_tidy = [filename.strip() for filename in junkfiles
+                      if not filename.strip().startswith("#")]
+    but_ignore = ["secrets.py", "", "syntax: glob"]
+    [please_tidy.remove(path) for path in but_ignore]
+
+    for root, dirs, files in os.walk("."):
+        if ".git" in dirs:
+            dirs.remove(".git")
+        if ".hg" in dirs:
+            dirs.remove(".hg")
+
+        for dirname in dirs:
+            removables = [glob.glob( os.path.join(root, dirname, rubbish) ) for rubbish in please_tidy
+                          if len( glob.glob( os.path.join(root, dirname, rubbish) ) ) > 0]
+            # flatten sublists of removable filse
+            please_remove = [filename for sublist in removables for filename in sublist]
+            if please_remove:
+                [ os.renames(stuff, os.path.join(trashdir,stuff)) for stuff in please_remove ]
+
+
+def compile_handlebar_templates():
+    print "Compiling handlebar templates"
+    return 0 == popen_return_code(['python',
+                                   'deploy/compile_handlebar_templates.py'])
+
 def compress_js():
     print "Compressing javascript"
     compress.compress_all_javascript()
@@ -170,9 +213,20 @@ def compile_templates():
     print "Compiling all templates"
     return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
 
-def deploy(version):
+def prime_autocomplete_cache(version):
+    try:
+        resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/autocomplete?q=calc" % (version, get_app_id()))
+        resp.read()
+        print "Primed autocomplete cache"
+    except:
+        print "Error when priming autocomplete cache"
+
+def open_browser_to_ka_version(version):
+    webbrowser.open("http://%s.%s.appspot.com" % (version, get_app_id()))
+
+def deploy(version, email, password):
     print "Deploying version " + str(version)
-    return 0 == popen_return_code(['appcfg.py', '-V', str(version), "update", "."])
+    return 0 == popen_return_code(['appcfg.py', '-V', str(version), "-e", email, "--passin", "update", "."], "%s\n" % password)
 
 def main():
 
@@ -202,9 +256,15 @@ def main():
 
     parser.add_option('-c', '--clean',
         action="store_true", dest="clean",
-        help="Clean the old packages and generate them again", default=False)
+        help="Clean the old packages and generate them again. If used with -d,the app is not compiled at all and is only cleaned.", default=False)
 
     options, args = parser.parse_args()
+
+    if(options.clean):
+        print "Cleaning previously generated files"
+        tidy_up()
+        if options.dryrun:
+            return
 
     includes_local_changes = hg_st()
     if not options.force and includes_local_changes:
@@ -231,20 +291,22 @@ def main():
         compress.hashes = {}
 
     print "Deploying version " + str(version)
-    compress.revert_js_css_hashes()
 
     if not compile_templates():
         print "Failed to compile templates, bailing."
         return
 
+    compile_handlebar_templates()
     compress_js()
     compress_css()
 
     if not options.dryrun:
-        success = deploy(version)
-        compress.revert_js_css_hashes()
+        (email, password) = get_app_engine_credentials()
+        success = deploy(version, email, password)
         if success:
-            send_hipchat_deploy_message(version, includes_local_changes)
+            send_hipchat_deploy_message(version, includes_local_changes, email)
+            open_browser_to_ka_version(version)
+            prime_autocomplete_cache(version)
 
     end = datetime.datetime.now()
     print "Done. Duration: %s" % (end - start)

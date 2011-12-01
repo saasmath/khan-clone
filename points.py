@@ -1,5 +1,8 @@
 import math
 import consts
+from accuracy_model.accuracy_model import AccuracyModel
+
+MIN_STREAK_TILL_PROFICIENCY = AccuracyModel.min_streak_till_threshold(consts.PROFICIENCY_ACCURACY_THRESHOLD)
 
 # user_exercise is a user_exercise object
 # suggested and proficient are both bools
@@ -10,8 +13,8 @@ def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
 
     points = 0
     
-    required_streak = user_exercise.required_streak
-    degrade_threshold = required_streak + consts.DEGRADING_EXERCISES_AFTER_STREAK
+    required_streak = MIN_STREAK_TILL_PROFICIENCY
+    degrade_threshold = required_streak + consts.DEGRADING_EXERCISES_AFTER_PROFICIENCY
 
     if user_exercise.longest_streak + offset <= required_streak:
         # Have never hit a streak, higher base than normal

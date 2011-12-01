@@ -1,15 +1,15 @@
 import os
-import re
 import datetime
 import urllib
 import request_cache
 import logging
 from google.appengine.api import users
-from google.appengine.api import oauth
 from asynctools import AsyncMultiTask, QueryTask
 
 from app import App
-import nicknames
+
+# Needed for side effects of secondary imports
+import nicknames #@UnusedImport
 import facebook_util
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
     is_phantom_id
@@ -18,7 +18,7 @@ from api.auth.google_util import get_google_user_id_and_email_from_oauth_map
 from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
 
 @request_cache.cache()
-def get_current_user_id(bust_cache=False):
+def get_current_user_id():
     user_id = None
 
     oauth_map = current_oauth_map()
@@ -37,19 +37,19 @@ def get_current_user_id_from_oauth_map(oauth_map):
         user_id = get_google_user_id_and_email_from_oauth_map(oauth_map)[0]
     elif oauth_map.uses_facebook():
         user_id = facebook_util.get_facebook_user_id_from_oauth_map(oauth_map)
-    
+
     return user_id
 
 # _get_current_user_from_cookies_unsafe is labeled unsafe because it should
 # never be used in our JSONP-enabled API. All calling code should just use _get_current_user.
 def get_current_user_id_from_cookies_unsafe():
     user = users.get_current_user()
-    
+
     if user: #if we have a google account
         user_id = "http://googleid.khanacademy.org/" + user.user_id()
     else: #if not a google account, try facebook
         user_id = facebook_util.get_current_facebook_user_id_from_cookies()
-   
+
     if not user_id: #if we don't have a user_id, then it's not facebook or google
         user_id = get_phantom_user_id_from_cookies()
     return user_id
@@ -82,6 +82,9 @@ def seconds_between(dt1, dt2):
 def minutes_between(dt1, dt2):
     return seconds_between(dt1, dt2) / 60.0
 
+def hours_between(dt1, dt2):
+    return seconds_between(dt1, dt2) / (60.0 * 60.0)
+
 def thousands_separated_number(x):
     # See http://stackoverflow.com/questions/1823058/how-to-print-number-with-commas-as-thousands-separators-in-python-2-x
     if x < 0:
@@ -101,8 +104,28 @@ def async_queries(queries, limit=100000):
 
     return task_runner
 
+def config_iterable(plain_config, batch_size=50, limit=1000):
+
+    config = plain_config
+
+    try:
+        # This specific use of the QueryOptions private API was suggested to us by the App Engine team.
+        # Wrapping in try/except in case it ever goes away.
+        from google.appengine.datastore import datastore_query
+        config = datastore_query.QueryOptions(
+            config=plain_config,
+            limit=limit,
+            offset=0,
+            prefetch_size=batch_size,
+            batch_size=batch_size)
+
+    except Exception, e:
+        logging.exception("Failed to create QueryOptions config object: %s", e)
+
+    return config
+
 def absolute_url(relative_url):
-		return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
+    return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
 
 def static_url(relative_url):
     if App.is_dev_server or not os.environ['HTTP_HOST'].lower().endswith(".khanacademy.org"):

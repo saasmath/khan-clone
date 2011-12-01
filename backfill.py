@@ -10,15 +10,6 @@ from nicknames import get_nickname_for
 
 from google.appengine.ext import db
 
-def cache_user_nickname(user_data):
-    if not user_data or not user_data.user:
-        return
-
-    current_nickname = get_nickname_for(user_data)
-    if user_data.user_nickname != current_nickname:
-        user_data.user_nickname = current_nickname
-        yield op.db.Put(user_data)
-
 def check_user_properties(user_data):
     if not user_data or not user_data.user:
         return
@@ -74,26 +65,15 @@ def migrate_userdata(key):
         user_data.put()
     db.run_in_transaction(tn, key)
 
-class StartNewBackfillMapReduce(request_handler.RequestHandler):
-    def get(self):
-        # pass
-
-        # Admin-only restriction is handled by /admin/* URL pattern
-        # so this can be called by a cron job.
-
-        # Start a new Mapper task.
-        mapreduce_id = control.start_map(
-            name="migrate_userdata",
-            handler_spec="backfill.migrate_userdata",
-            reader_spec="mapreduce.input_readers.DatastoreKeyInputReader",
-            reader_parameters={
-                "entity_kind": "models.UserData",
-                "processing_rate": 200,
-            },
-            shard_count=64,
-            queue_name="backfill-mapreduce-queue",
-          )
-        self.response.out.write("OK: " + str(mapreduce_id))
+def update_user_exercise_progress(user_exercise):
+    # If a UserExercise object doesn't have the _progress property, it means
+    # the user hasn't done a problem of that exercise since the accuracy model
+    # rollout. This means that what they see on their dashboards and on the
+    # exercise page is unchanged from the streak model. So, we can just
+    # backfill with what their progress would be under the streak model.
+    if user_exercise._progress is None:
+        user_exercise._progress = user_exercise.get_progress_from_streak()
+        yield op.db.Put(user_exercise)
 
 def transactional_entity_put(entity_key):
     def entity_put(entity_key):
@@ -101,22 +81,3 @@ def transactional_entity_put(entity_key):
         entity.put()
     db.run_in_transaction(entity_put, entity_key)
 
-class BackfillEntity(request_handler.RequestHandler):
-    def get(self):
-        entity = self.request_string("kind")
-        if not entity:
-            self.response.out.write("Must provide kind")
-            return
-
-        mapreduce_id = control.start_map(
-            name="Put all UserData entities",
-            handler_spec="backfill.transactional_entity_put",
-            reader_spec="mapreduce.input_readers.DatastoreKeyInputReader",
-            reader_parameters={
-                "entity_kind": entity,
-                "processing_rate": 200
-            },
-            shard_count=64,
-            queue_name="backfill-mapreduce-queue",
-          )
-        self.response.out.write("OK: " + str(mapreduce_id))

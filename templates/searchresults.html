@@ -11,9 +11,6 @@
         font-weight: bolder;
         background-color: #fcc;
     }
-    .search_results {
-        margin: 0 23px;
-    }
     .search_results form {
         display: block;
         margin: 1em 0;
@@ -58,7 +55,7 @@
 {% endblock pagemessage %}
 {% block pagecontent %}
 <article class="search_results" id="search_results">
-    <form action="/search">
+    <form id="page_requery" action="/search">
         <input id="search-page-box" type="text" name="page_search_query" value='{{page_search_query|escape}}'>
         <button type="submit">New Search</button>
     </form>
@@ -143,6 +140,11 @@ $(function() {
     }
 
     initAutocomplete("#search_results #search-page-box", true);
+
+    $("#page_requery").submit(function(e) {
+        // Only allow submission if there is a non-empty query.
+        return !!$.trim( $("#page_requery #search-page-box").val() );
+    });
 })
 </script>
 {% endblock bottompagescript %}

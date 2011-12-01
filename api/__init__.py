@@ -33,7 +33,8 @@ def route(rule, **options):
             rule_desc += "[%s=%s]" % (key, options[key])
 
         # Fix endpoint names for decorated functions by using the rule for names
-        return api_app.add_url_rule(rule, rule_desc, func, **options)
+        api_app.add_url_rule(rule, rule_desc, func, **options)
+        return func
 
     return api_route_wrap
 

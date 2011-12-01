@@ -1,20 +1,18 @@
 import datetime
-import logging
-import gc
 import urllib
-
-from google.appengine.api import users
 
 from profiles import templatetags
 import request_handler
 import util
-import user_util
 import models
 import consts
+from api.auth.xsrf import ensure_xsrf_cookie
 from badges import util_badges
 from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
+
+from api.auth.xsrf import ensure_xsrf_cookie
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -78,6 +76,7 @@ def get_coach_student_and_student_list(request_handler):
 
 class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
+    @ensure_xsrf_cookie
     def get(self):
         coach = UserData.current()
 
@@ -108,7 +107,10 @@ class ViewClassProfile(request_handler.RequestHandler):
                     current_list = student_list
 
             selected_graph_type = self.request_string("selected_graph_type") or ClassProgressReportGraph.GRAPH_TYPE
-            initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+            if selected_graph_type == 'progressreport' or selected_graph_type == 'goals': # TomY This is temporary until all the graphs are API calls
+                initial_graph_url = "/api/v1/user/students/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+            else:
+                initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
             initial_graph_url += 'list_id=%s' % list_id
 
             template_values = {
@@ -125,30 +127,50 @@ class ViewClassProfile(request_handler.RequestHandler):
                     'is_profile_empty': not coach.has_students(),
                     'selected_nav_link': 'coach',
                     "view": self.request_string("view", default=""),
+                    'stats_charts_class': 'coach-view',
                     }
             self.render_jinja2_template('viewclassprofile.html', template_values)
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
+
+    @ensure_xsrf_cookie
     def get(self):
         student = UserData.current() or UserData.pre_phantom()
 
         user_override = self.request_user_data("student_email")
         if user_override and user_override.key_email != student.key_email:
             if not user_override.is_visible_to(student):
-                # If current user isn't an admin or student's coach, they can't look at anything other than their own profile.
+                # If current user isn't an admin or student's coach, they can't
+                # look at anything other than their own profile.
                 self.redirect("/profile?k")
                 return
             else:
                 # Allow access to this student's profile
                 student = user_override
         user_badges = util_badges.get_user_badges(student)
-        selected_graph_type = self.request_string("selected_graph_type") or ActivityGraph.GRAPH_TYPE
-        initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (selected_graph_type, urllib.quote(student.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+        selected_graph_type = (self.request_string("selected_graph_type") or
+                               ActivityGraph.GRAPH_TYPE)
+
+        # TODO: deal with this one-off hackery. Some graphs use the API
+        # to fetch data, instead of the /profile/graph methods.
+        if selected_graph_type == "exerciseprogress":
+            initial_graph_url = ("/api/v1/user/exercises?email=%s" %
+                                 urllib.quote(student.email))
+        elif selected_graph_type == "goals":
+            initial_graph_url = ("/api/v1/user/goals?email=%s" %
+                                 urllib.quote(student.email))
+        else:
+            initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (
+                    selected_graph_type,
+                    urllib.quote(student.email),
+                    urllib.unquote(self.request_string("graph_query_params",
+                                                       default="")))
         tz_offset = self.request_int("tz_offset", default=0)
 
         template_values = {
+            'student_email': student.email,
             'student_nickname': student.nickname,
             'selected_graph_type': selected_graph_type,
             'initial_graph_url': initial_graph_url,
@@ -378,10 +400,7 @@ class ClassExercisesOverTimeGraph(ClassProfileGraph):
         return templatetags.class_profile_exercises_over_time_graph(coach, student_list)
 
 class ClassProgressReportGraph(ClassProfileGraph):
-    GRAPH_TYPE = "classprogressreport"
-    def graph_html_and_context(self, coach):
-        student_list = self.get_student_list(coach)
-        return templatetags.class_profile_progress_report_graph(coach, student_list)
+    GRAPH_TYPE = "progressreport"
 
 class ClassTimeGraph(ClassProfileDateGraph):
     GRAPH_TYPE = "classtime"

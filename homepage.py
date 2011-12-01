@@ -10,6 +10,7 @@ import models
 import layer_cache
 import templatetags
 from topics_list import DVD_list
+from api.auth.xsrf import ensure_xsrf_cookie
 
 ITEMS_PER_SET = 4
 
@@ -123,14 +124,21 @@ def new_and_noteworthy_link_sets():
 
 class ViewHomePage(request_handler.RequestHandler):
 
+    def head(self):
+        # Respond to HEAD requests for our homepage so twitter's tweet
+        # counter will update:
+        # https://dev.twitter.com/docs/tweet-button/faq#count-api-increment
+        pass
+
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
+    @ensure_xsrf_cookie
     def get(self):
 
         thumbnail_link_sets = new_and_noteworthy_link_sets()
 
         # If all else fails, just show the TED talk on the homepage
-        video_id, video_key, found_marquee_video = "gM95HHI4gLk", "", False
+        video_id, video_key = "gM95HHI4gLk", ""
 
         if len(thumbnail_link_sets) > 1:
 
@@ -142,7 +150,8 @@ class ViewHomePage(request_handler.RequestHandler):
             # Switch up the marquee video on a daily basis
             marquee_videos = []
             for thumbnail_link_set in thumbnail_link_sets:
-                marquee_videos += filter(lambda item: item["marquee"], thumbnail_link_set)
+                marquee_videos += filter(lambda item: item["marquee"],
+                                         thumbnail_link_set)
 
             if marquee_videos:
                 marquee_video = marquee_videos[day % len(marquee_videos)]
@@ -161,10 +170,6 @@ class ViewHomePage(request_handler.RequestHandler):
         # Get pregenerated library content from our in-memory/memcache two-layer cache
         library_content = library.library_content_html()
 
-        # temporary steve jobs tribute
-        video_id = "D1R-jKKp3NA"
-        video_key = ""
-
         template_values = {
                             'video_id': video_id,
                             'video_key': video_key,
@@ -173,7 +178,8 @@ class ViewHomePage(request_handler.RequestHandler):
                             'DVD_list': DVD_list,
                             'is_mobile_allowed': True,
                             'approx_vid_count': models.Video.approx_count(),
-                            'exercise_count': models.Exercise.get_count()
+                            'exercise_count': models.Exercise.get_count(),
+                            'link_heat': self.request_bool("heat", default=False),
                         }
 
         self.render_jinja2_template('homepage.html', template_values)
