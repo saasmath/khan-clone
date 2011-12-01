@@ -33,11 +33,13 @@ var APIActionResults = {
         jQuery.ajaxSetup({
             beforeSend: function(xhr, settings) {
                 if (settings && settings.url && settings.url.indexOf("/api/") > -1) {
-                    if (fkey) {
-                        // Send xsrf token along via header so it can be matched up
-                        // w/ cookie value.
-                        xhr.setRequestHeader("X_KA_FKEY", fkey);
-                    }
+                    if (!fkey)
+                        fkey = 'NO_FKEY_SET';
+                    // Send xsrf token along via header so it can be matched up
+                    // w/ cookie value.
+                    xhr.setRequestHeader("X_KA_FKEY", fkey);
+                } else {
+                    xhr.setRequestHeader("X_KA_FKEY", 'NO_AJAX_SETTINGS');
                 }
             }
         });

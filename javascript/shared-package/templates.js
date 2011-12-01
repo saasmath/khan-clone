@@ -28,16 +28,26 @@ Templates.fromScript_ = function( name ) {
 };
 
 /**
+ * Converts from a namespaced name like "profile.badge" to the internal
+ * canonical name used to reference the scripts.
+ */
+Templates.getCanonicalName = function( name ) {
+	if ( name.indexOf( "." ) > -1 ) {
+		// Canonical format for the namespaced name uses
+		// underscores internally.
+		var parts = name.split( "." );
+		name = parts[0] + "-package_" + parts[1];
+	}
+	return name;
+};
+
+/**
  * Retrieves a template function.
  * @param {string} name The name of the template to retrieve. This will be the
  *     base name of the template file with no extension.
  */
 Templates.get = function( name ) {
-	if ( name.indexOf( "." ) > -1 ) {
-		// Canonical format for the namespaced name uses underscores internally.
-		var parts = name.split( "." );
-		name = parts[0] + "-package_" + parts[1];
-	}
+	name = Templates.getCanonicalName( name );
 
 	if ( Handlebars.templates ) {
 		var compiled = Handlebars.templates[name];

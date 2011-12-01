@@ -1,21 +1,8 @@
 {%- import 'macros/user.html' as user -%}
 <!DOCTYPE html>
-<!--[if lt IE 7]>  <html class="ie ie6 lte9 lte8 lte7" itemscope itemtype="http://schema.org/Organization"
+<html itemscope itemtype="http://schema.org/Organization"
     xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if IE 7]>     <html class="ie ie7 lte9 lte8 lte7" itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if IE 8]>     <html class="ie ie8 lte9 lte8" itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if IE 9]>     <html class="ie ie9 lte9" itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if gt IE 9]>  <html> <![endif]-->
-<!--[if !IE]><!--><html itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}>             <!--<![endif]-->
+    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}>
       <head>
         <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8"/>
 
@@ -90,8 +77,12 @@
     </script>
     {%- endif -%}
     </head>
-
-    <body class="light">
+<!--[if lt IE 7]>  <body class="ie ie6 lte9 lte8 lte7"> <![endif]-->
+<!--[if IE 7]>     <body class="ie ie7 lte9 lte8 lte7"> <![endif]-->
+<!--[if IE 8]>     <body class="ie ie8 lte9 lte8"> <![endif]-->
+<!--[if IE 9]>     <body class="ie ie9 lte9"> <![endif]-->
+<!--[if gt IE 9]>  <body> <![endif]-->
+<!--[if !IE]><!--> <body> <!--<![endif]-->
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
     <div id="page-container">
