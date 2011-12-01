@@ -37,7 +37,7 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 
     return shared_jinja.get().render_template("column_major_order_videos.html", **template_values)
 
-def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
+def exercise_message(exercise, coaches, current_states, prev_states, sees_graph=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
     
     This is called each time a problem is either attempted or a hint is called (via /api/v1.py) and
@@ -47,22 +47,22 @@ def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
     
     sees_graph is part of an ab_test to see if a small graph will help
     """
-    if exercise_states['endangered']:
+    if current_states['endangered']:
         filename = 'exercise_message_endangered.html'
-    elif exercise_states['reviewing']:
+    elif current_states['reviewing']:
         filename = 'exercise_message_reviewing.html'
-    elif exercise_states['proficient']:
+    elif current_states['proficient'] and not prev_states['reviewing']:
         if sees_graph:
             filename = 'exercise_message_proficient_withgraph.html'
         else:
             filename = 'exercise_message_proficient.html'
-    elif exercise_states['struggling']:
+    elif current_states['struggling']:
         filename = 'exercise_message_struggling.html'
-        exercise_states['exercise_videos'] = exercise.related_videos_fetch()
+        current_states['exercise_videos'] = exercise.related_videos_fetch()
     else:
         return None
 
-    return shared_jinja.get().render_template(filename, **exercise_states)
+    return shared_jinja.get().render_template(filename, **current_states)
 
 def user_points(user_data):
     if user_data:

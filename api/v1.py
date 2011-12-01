@@ -617,6 +617,8 @@ def attempt_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            prev_user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
             user_exercise, user_exercise_graph = attempt_problem(
                     user_data,
                     user_exercise,
@@ -643,20 +645,21 @@ def attempt_problem_number(exercise_name, problem_number):
                 # and the above pts-original points gives a wrong answer
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
-            user_states = user_exercise_graph.states(exercise.name)
+            current_states = user_exercise_graph.states(exercise.name)
+            prev_states = prev_user_exercise_graph.states(exercise.name)
             sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
             
             action_results = {
                 "exercise_state": {
                     "sees_graph" :  sees_graph,
-                    "state" : [state for state in user_states if user_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states, sees_graph) ,
+                    "state" : [state for state in current_states if current_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, current_states, prev_states, sees_graph),
                 },
                 "points_earned" : { "points" : points_earned },
                 "attempt_correct" : request.request_bool("complete")
             };
 
-            if user_states["proficient"]:
+            if current_states["proficient"]:
                 followups = user_followup_exercises(exercise_name)
 
                 if followups:
@@ -686,6 +689,8 @@ def hint_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            prev_user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
             attempt_number = request.request_int("attempt_number")
             count_hints = request.request_int("count_hints")
 
@@ -705,12 +710,15 @@ def hint_problem_number(exercise_name, problem_number):
                     request.remote_addr,
                     )
 
-            user_states = user_exercise_graph.states(exercise.name)
+            current_states = user_exercise_graph.states(exercise.name)
+            prev_states = prev_user_exercise_graph.states(exercise.name)
+            exercise_message_html = templatetags.exercise_message(exercise, user_data.coaches, current_states, prev_states)
+
             add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                "exercise_message_html": exercise_message_html,
                 "exercise_state": {
-                    "state" : [state for state in user_states if user_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, user_states) ,
+                    "state" : [state for state in current_states if current_states[state]] ,
+                    "template" : templatetags.exercise_message(exercise, user_data.coaches, current_states) ,
                 }
             })
 
