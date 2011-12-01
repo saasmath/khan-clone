@@ -992,3 +992,12 @@ var globalPopupDialog = {
     }
 };
 
+$(function() {
+    $(document).delegate('input.blur-on-esc', 'keyup', function( e, options ) {
+        if ( options && options.silent ) return;
+        if ( e.which == '27' ) {
+            $(e.target).blur();
+        }
+    });
+});
+
