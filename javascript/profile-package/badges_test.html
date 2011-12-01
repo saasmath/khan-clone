@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<!-- Unit tests and demos for badge related components -->
+<html>
+<head>
+<script src="../testbase.js"></script>
+<script src="badges.js"></script>
+<script>
+var badgeList = new Badges.BadgeList();
+var imageBase = "http://khan-academy.appspot.com";
+
+// Matches what would be sent from the server
+var SAMPLE_BADGE_JSON = {
+	"badge_description": "Quickly & correctly answer 5 exercise problems in a row (time limit depends on exercise difficulty)",
+	"badge_name": "nicetimedproblembadge",
+	"category": 0,
+	"count": 1,
+	"date": "2011-12-01T03:09:48Z",
+	"icon_src": imageBase + "/images/badges/meteorite-small.png",
+	"points_earned": 100
+};
+
+function addBadge( name, type ) {
+	var name = name || $("#name").val();
+	var type = ( type || $("#type").val() ).toLowerCase();
+	var json = SAMPLE_BADGE_JSON;
+	switch ( type ) {
+		case "earth":
+			json[ "category" ] = Badges.Category.GOLD;
+			break;
+		case "moon":
+			json[ "category" ] = Badges.Category.SILVER;
+			break;
+		case "meteorite":
+		default:
+			type = "meteorite";
+			json[ "category" ] = Badges.Category.BRONZE;
+			break;
+	}
+	json[ "badge_name" ] = name;
+	json[ "icon_src" ] = json[ "icon_src" ].replace(
+		/[a-z]*-small.png/,
+		type + "-small.png"
+	);
+	json[ "count" ] = Math.random() * 10 | 0;
+	badgeList.add(Badges.Badge.fromServerJson( json ));
+}
+
+KA_TEST.loadTemplates( ["profile.badge-display-case"], function() {
+	var displayCase = new Badges.DisplayCase({ model: badgeList });
+	$("#container").append( displayCase.render().el );
+
+	addBadge( "Foo badge", "moon" );
+	addBadge( "Bar badge", "earth" );
+});
+
+</script>
+</head>
+<body>
+<div id="container">
+</div>
+
+<div>
+Name: <input id="name"><br>
+Type(meteorite|moon|earth): <input id="type" value="moon"><br>
+<button onclick="addBadge()">Add Badge</button>
+</div>
+</body>
+</html>

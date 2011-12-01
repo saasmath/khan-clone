@@ -1,0 +1,64 @@
+<style>
+.badge {
+  font-size: 12px;
+  color: #444;
+  width: 90px;
+  height: 90px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-bottom: #aaa;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#eee), to(#ddd));
+  background: -moz-linear-gradient(top, #eee, #ddd);
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  padding: 0.5em;
+  display: inline-block;
+  opacity: 0.7;
+}
+.badge.owned {
+  opacity: 1.0;
+}
+
+.badge-name {
+  font-size: 13px;
+}
+
+.owned .badge-name {
+  font-weight: bold;
+}
+
+.badge-icon {
+  margin: 0.1em;
+}
+
+.badge .energy-points {
+  width: 48px;
+  height: 21px;
+  line-height: 19px;
+  background: #005987;
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  font-family: "Helvetica Neue", Helvetica;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.badge .count {
+  font-weight: bold;
+  display: inline-block;
+}
+
+</style>
+{{#each badges}}
+<div class="badge{{#if isOwned}} owned{{/if}}">
+<div class="badge-name">{{badgeName}}</div>
+<img class="badge-icon" src="{{iconSrc}}">
+<div class="energy-points">{{pointsEarned}}</div>
+{{#if count}}<div class="count">x{{count}}</div>{{/if}}
+</div>
+{{/each}}
+
