@@ -349,10 +349,10 @@ var Profile = {
         completed_goals = [];
         abandoned_goals = [];
         var qs = Profile.parseQueryString(href);
-        currentUser = (qs["email"] == USER_EMAIL);
+        var viewingOwnGoals = qs.email == USER_EMAIL;
 
         $.each(data, function(idx, goal) {
-            if (goal.completed != undefined) {
+            if (goal.completed) {
                 if (goal.abandoned)
                     abandoned_goals.push(goal);
                 else
@@ -361,7 +361,7 @@ var Profile = {
                 current_goals.push(goal);
             }
         });
-        if (currentUser)
+        if (viewingOwnGoals)
             GoalBook.reset(current_goals);
         else
             CurrentGoalBook = new GoalCollection(current_goals);
@@ -373,24 +373,21 @@ var Profile = {
         Profile.goalsViews = {};
         Profile.goalsViews.current = new GoalProfileView({
             el: "#current-goals-list",
-            model: currentUser ? GoalBook : CurrentGoalBook,
+            model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: 'current',
-            title: 'Current goals',
-            currentUser: currentUser
+            readonly: !viewingOwnGoals
         });
         Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
-            title: 'Completed goals',
-            currentUser: currentUser
+            readonly: true
         });
         Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
-            title: 'Abandoned goals',
-            currentUser: currentUser
+            readonly: true
         });
 
         Profile.userGoalsHref = href;
@@ -407,7 +404,7 @@ var Profile = {
             $('#goal-show-abandoned-link').parent().hide();
         }
 
-        if (currentUser) {
+        if (viewingOwnGoals) {
             $('.new-goal').addClass('green').removeClass('disabled').click(function(e) {
                 e.preventDefault();
                 window.newGoalDialog.show();
@@ -898,7 +895,11 @@ var GoalProfileView = Backbone.View.extend({
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
 
+        // only hookup event handlers if the view allows edits
+        if (this.options.readonly) return;
+
         $(this.el)
+            // edit titles
             .delegate('input.goal-title', 'focusout', $.proxy(this.changeTitle, this))
             .delegate('input.goal-title', 'keypress', $.proxy(function( e ) {
                 if (e.which == '13') { // enter
@@ -919,6 +920,19 @@ var GoalProfileView = Backbone.View.extend({
                     jel.blur();
                 }
             }, this))
+
+            // show abandon button on hover
+            .delegate('.goal', 'mouseenter mouseleave', function( e ) {
+                var el = $(e.currentTarget);
+                if ( e.type == 'mouseenter' ) {
+                    el.find(".goal-description .summary-light").hide();
+                    el.find(".goal-description .goal-controls").show();
+                } else {
+                    el.find(".goal-description .goal-controls").hide();
+                    el.find(".goal-description .summary-light").show();
+                }
+            })
+            // respond to abandon button
             .delegate('.abandon', 'click', $.proxy(this.abandon, this));
     },
 
@@ -950,23 +964,11 @@ var GoalProfileView = Backbone.View.extend({
         var json = _.pluck(this.model.models, 'attributes');
         jel.html(this.template({
             goals: json,
-            title: this.options.title,
             isCurrent: (this.options.type == 'current'),
             isCompleted: (this.options.type == 'completed'),
             isAbandoned: (this.options.type == 'abandoned'),
-            isCurrentUser: this.options.currentUser
+            readonly: this.options.readonly
         }));
-
-        jel.find(".goal").hover(
-            function () {
-                $(this).find(".goal-description .summary-light").hide();
-                $(this).find(".goal-controls").show();
-            },
-            function () {
-                $(this).find(".goal-controls").hide();
-                $(this).find(".goal-description .summary-light").show();
-            }
-        );
 
         // attach a NewGoalView to the new goals html
         var newGoalEl = this.$(".goalpicker");
