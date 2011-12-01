@@ -55,8 +55,6 @@
             {{ user.user_video_css(user_data) }}
             {{ js_css_packages.js_package("shared") }}
         {% endif %}
-
-        {{ xsrf.render_xsrf_js() }}
         
         {# Functions that load packages at run-time -#}
         <script type="text/javascript">

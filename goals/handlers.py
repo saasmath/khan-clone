@@ -18,7 +18,6 @@ from .models import Goal, GoalList, GoalObjective
 
 class CreateNewGoal(RequestHandler):
 
-    @ensure_xsrf_cookie
     @create_phantom
     def get(self):
         user_data = UserData.current()

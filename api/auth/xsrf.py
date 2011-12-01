@@ -4,10 +4,7 @@ import os
 import logging
 import time
 from functools import wraps
-import models
-
-XSRF_COOKIE_KEY = "fkey"
-XSRF_HEADER_KEY = "HTTP_X_KA_FKEY"
+from api import XSRF_API_VERSION, XSRF_COOKIE_KEY, XSRF_HEADER_KEY, is_current_api_version
 
 def ensure_xsrf_cookie(func):
     """ This is a decorator for a method that ensures when the response to
@@ -20,18 +17,14 @@ def ensure_xsrf_cookie(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
 
-        if not get_xsrf_cookie_value():
-
-            userdata = models.UserData.current()
-            user_id = 'None'
-            if userdata:
-                user_id = userdata.user_id
+        xsrf_token = get_xsrf_cookie_value()
+        if not xsrf_token or not is_current_api_version(xsrf_token):
             timestamp = int(time.time())
-            xsrf_value = "%s_$%s_$%d" % (user_id, base64.urlsafe_b64encode(os.urandom(10)), timestamp)
+            xsrf_value = "%s_%s_%d" % (XSRF_API_VERSION, base64.urlsafe_b64encode(os.urandom(10)), timestamp)
 
             # Set an http-only cookie containing the XSRF value.
             # A matching header value will be required by validate_xsrf_cookie.
-            self.set_cookie(XSRF_COOKIE_KEY, xsrf_value, httponly=True)
+            self.set_cookie(XSRF_COOKIE_KEY, xsrf_value, httponly=False)
             cookie_util.set_request_cookie(XSRF_COOKIE_KEY, xsrf_value)
 
         return func(self, *args, **kwargs)
@@ -45,10 +38,7 @@ def validate_xsrf_value():
     header_value = os.environ.get(XSRF_HEADER_KEY)
     cookie_value = get_xsrf_cookie_value()
     if not header_value or not cookie_value or header_value != cookie_value:
-        logging.critical("Mismatch between XSRF header (%s) and cookie (%s)" % (header_value, cookie_value))
+        logging.warning("Mismatch between XSRF header (%s) and cookie (%s)" % (header_value, cookie_value))
         return False
+        
     return True
-
-def render_xsrf_js():
-    return "<script>var fkey = '%s';</script>" % get_xsrf_cookie_value();
-

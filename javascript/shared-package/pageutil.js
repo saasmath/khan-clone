@@ -189,6 +189,14 @@ function eraseCookie(name) {
     createCookie(name,"",-1);
 }
 
+function areCookiesEnabled() {
+    createCookie('detectCookiesEnabled', 'KhanAcademy', 1);
+    if (readCookie('detectCookiesEnabled') == null)
+        return false;
+    eraseCookie('detectCookiesEnabled');
+    return true;
+}
+
 function onYouTubePlayerStateChange(state) {
     VideoStats.playerStateChange(state);
 }
@@ -413,6 +421,12 @@ var VideoStats = {
     save: function() {
         if (this.fSaving) return;
 
+        // Make sure cookies are enabled, otherwise this totally won't work
+        if (!areCookiesEnabled()) {
+            KAConsole.log('Cookies appear to be disabled. Not logging video progress.');
+            return;
+        }
+
         this.fSaving = true;
         var percent = this.getPercentWatched();
         var dtSinceSaveBeforeError = this.dtSinceSave;
@@ -622,6 +636,10 @@ var Notifications = {
 
             }, 100);
         }
+    },
+    showTemplate: function(templateName) {
+		var template = Templates.get(templateName);
+        this.show( template() );
     },
 
     hide: function() {
