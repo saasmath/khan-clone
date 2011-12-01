@@ -406,7 +406,7 @@ var Profile = {
         } else {
             $('#goal-show-abandoned-link').parent().hide();
         }
-        
+
         if (currentUser) {
             $('.new-goal').addClass('green').removeClass('disabled').click(function(e) {
                 e.preventDefault();
@@ -899,16 +899,36 @@ var GoalProfileView = Backbone.View.extend({
         this.model.bind('add', this.render, this);
 
         $(this.el)
-            .delegate('input.goal-title', 'blur', $.proxy(function( e ) {
-                var jel = $(e.target);
-                var goalId = jel.closest('.goal').data('id');
-                var goal = this.model.get(goalId);
-                var newTitle = jel.val();
-                if (newTitle !== goal.get('title')) {
-                    goal.save({title: newTitle});
+            .delegate('input.goal-title', 'focusout', $.proxy(this.changeTitle, this))
+            .delegate('input.goal-title', 'keypress', $.proxy(function( e ) {
+                if (e.which == '13') { // enter
+                    e.preventDefault();
+                    this.changeTitle(e);
+                    $(e.target).blur();
+                }
+            }, this))
+            .delegate('input.goal-title', 'keyup', $.proxy(function( e ) {
+                if ( e.which == '27' ) { // escape
+                    e.preventDefault();
+
+                    // restore old title
+                    var jel = $(e.target);
+                    var goal = this.model.get(jel.closest('.goal').data('id'));
+                    jel.val(goal.get('title'));
+
+                    jel.blur();
                 }
             }, this))
             .delegate('.abandon', 'click', $.proxy(this.abandon, this));
+    },
+
+    changeTitle: function( e, options ) {
+        var jel = $(e.target);
+        var goal = this.model.get(jel.closest('.goal').data('id'));
+        var newTitle = jel.val();
+        if (newTitle !== goal.get('title')) {
+            goal.save({title: newTitle});
+        }
     },
 
     show: function() {
