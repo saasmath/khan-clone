@@ -118,8 +118,8 @@ class CommonCore(request_handler.RequestHandler):
                             updated_entry = yt_service.UpdateVideoEntry(entry, video_url)
                             logging.info("***PROCESSED*** Title: " + entry.media.title.text + " | Keywords: " + entry.media.keywords.text)
                             cc_videos.append(record)
-                        except Exception:
-                            logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"])                            
+                        except Exception, e:
+                            logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"], "\n" + e)                            
                         
             f.close() 
             
