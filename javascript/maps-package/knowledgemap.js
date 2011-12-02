@@ -218,15 +218,21 @@ function KnowledgeMapInitGlobals() {
             var self = this;
 
             this.el.click(
-                    function(evt){self.onNodeClick(evt);}
+                    function(evt){return self.onNodeClick(evt);}
                 ).hover(
-                    function(){self.onNodeMouseover();},
-                    function(){self.onNodeMouseout();}
+                    function(){return self.onNodeMouseover();},
+                    function(){return self.onNodeMouseout();}
                 );
 
             var iconOptions = this.getIconOptions();
             this.el.find("img.node-icon").attr("src", iconOptions.url);
             this.el.attr("class", this.getLabelClass());
+
+            if (this.parent.admin)
+                this.el.attr('href', this.model.adminUrl());
+            else
+                this.el.attr('href', this.model.url());
+
             if (this.goalIconVisible)
                 this.el.find('.exercise-goal-icon').show();
             else
@@ -380,11 +386,11 @@ function KnowledgeMapInitGlobals() {
                     }
                 });
 
-                evt.stopPropagation();
+                evt.preventDefault();
             }
             else
             {
-                this.parent.nodeClickHandler(this.model, evt);
+                return this.parent.nodeClickHandler(this.model, evt);
             }
         },
 
@@ -727,7 +733,11 @@ function KnowledgeMap(params) {
                 if (view) {
                     view.updateElement($(this));
                 } else {
-                    view = new ExerciseMarkerView({'model': exercise, 'el': $(this), 'parent': self});
+                    view = new ExerciseMarkerView({
+                        model: exercise,
+                        el: $(this),
+                        parent: self
+                    });
                     self.exerciseMarkerViews[exerciseName] = view;
                 }
             });
@@ -819,7 +829,7 @@ function KnowledgeMap(params) {
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name,
                 node.latLng,
-                ["<div data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"],
+                ["<a data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></a>"],
                 "",
                 node.summative ? 2 : 1,
                 0,0);

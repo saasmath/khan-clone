@@ -3070,9 +3070,14 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 
 .nodeLabel {
+    display: block;
     text-align: center;
     cursor: pointer;
     line-height: normal;
+}
+
+a.nodeLabel:hover {
+    text-decoration: none;
 }
 
 .nodeLabel div {
