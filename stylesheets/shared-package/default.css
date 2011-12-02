@@ -1336,6 +1336,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     margin: 0 10px;
 }
 
+    .exercise_message.review {
+        background-color: #F9ECE5;
+    }
+
 /* Exercise Dashboard styles */
 
 #container {

@@ -47,18 +47,26 @@ def exercise_message(exercise, coaches, current_states, prev_states, sees_graph=
     
     sees_graph is part of an ab_test to see if a small graph will help
     """
+
     if current_states['endangered']:
         filename = 'exercise_message_endangered.html'
+
     elif current_states['reviewing']:
         filename = 'exercise_message_reviewing.html'
-    elif current_states['proficient'] and not prev_states['reviewing']:
-        if sees_graph:
-            filename = 'exercise_message_proficient_withgraph.html'
+
+    elif current_states['proficient']:
+        if prev_states['reviewing']:
+            filename = 'exercise_message_review_finished.html'
         else:
-            filename = 'exercise_message_proficient.html'
+            if sees_graph:
+                filename = 'exercise_message_proficient_withgraph.html'
+            else:
+                filename = 'exercise_message_proficient.html'
+
     elif current_states['struggling']:
         filename = 'exercise_message_struggling.html'
         current_states['exercise_videos'] = exercise.related_videos_fetch()
+
     else:
         return None
 
