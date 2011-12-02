@@ -22,8 +22,9 @@ def ensure_xsrf_cookie(func):
             timestamp = int(time.time())
             xsrf_value = "%s_%s_%d" % (XSRF_API_VERSION, base64.urlsafe_b64encode(os.urandom(10)), timestamp)
 
-            # Set an http-only cookie containing the XSRF value.
-            # A matching header value will be required by validate_xsrf_cookie.
+            # Set a cookie containing the XSRF value.
+            # The JavaScript is responsible for returning the cookie in a matching header
+            # that is validated by validate_xsrf_cookie.
             self.set_cookie(XSRF_COOKIE_KEY, xsrf_value, httponly=False)
             cookie_util.set_request_cookie(XSRF_COOKIE_KEY, xsrf_value)
 
@@ -38,7 +39,7 @@ def validate_xsrf_value():
     header_value = os.environ.get(XSRF_HEADER_KEY)
     cookie_value = get_xsrf_cookie_value()
     if not header_value or not cookie_value or header_value != cookie_value:
-        logging.warning("Mismatch between XSRF header (%s) and cookie (%s)" % (header_value, cookie_value))
+        logging.info("Mismatch between XSRF header (%s) and cookie (%s)" % (header_value, cookie_value))
         return False
         
     return True

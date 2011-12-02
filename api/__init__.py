@@ -4,8 +4,9 @@ from functools import wraps
 
 from app import App
 
-# Increment the version if the API changes in a non-backwards compatible way.
-# The user will get a message that they need to refresh their HTML.
+# *PRIVATE* API version number
+# Increment the version if any non-public API calls change in a non-backwards compatible way.
+# The user will get a message that they need to refresh their HTML. Public API users will not be effected.
 XSRF_API_VERSION = "1.0"
 XSRF_COOKIE_KEY = "fkey"
 XSRF_HEADER_KEY = "HTTP_X_KA_FKEY"
