@@ -104,7 +104,7 @@ function KnowledgeMapInitGlobals() {
         },
 
         adminUrl: function() {
-            return '/editexercise?name='+exercise.get('name');
+            return '/editexercise?name=' + this.get('name');
         }
     });
 
@@ -118,6 +118,8 @@ function KnowledgeMapInitGlobals() {
         },
 
         events: {
+            "click .exercise-title":    "onBadgeClick",
+            "click .proficient-badge":  "onBadgeClick",
             "click .exercise-show":     "onShowExerciseClick"
         },
 
@@ -164,6 +166,12 @@ function KnowledgeMapInitGlobals() {
             if (this.options.type == 'all' && this.parent.exerciseMarkerViews[this.nodeName]) {
                 this.parent.exerciseMarkerViews[this.nodeName].setFiltered(!filterMatches);
             }
+        },
+
+        onBadgeClick: function(evt) {
+            // give the parent a chance to handle this exercise click. If it
+            // doesn't, we'll just follow the anchor href
+            return this.parent.nodeClickHandler(this.model, evt);
         },
 
         onBadgeMouseover: function(node_name, element) {
@@ -641,20 +649,18 @@ function KnowledgeMap(params) {
         google.maps.event.addListener(this.map, "idle", function(){self.onIdle();});
         google.maps.event.addListener(this.map, "click", function(){self.onClick();});
 
+        // This handler exists as a hook to override what happens when an
+        // exercise node is clicked. By default, it does nothing.
         this.nodeClickHandler = function(exercise, evt) {
-            if (self.admin)
-                window.location.href = exercise.adminUrl();
-            else
-                window.location.href = exercise.url();
-            return false;
+            return true;
         };
 
         this.giveNasaCredit();
         this.initFilter();
     };
 
-    this.setNodeClickHandler = function(click_handler) {
-        this.nodeClickHandler = click_handler;
+    this.setNodeClickHandler = function(handler) {
+        this.nodeClickHandler = handler;
     };
 
     this.panToNode = function(dataID) {
