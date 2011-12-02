@@ -14,45 +14,59 @@ var Profile = {
 
     init: function() {
 
-		$('.share-link').hide();
-		$('.sharepop').hide();
+        $('.share-link').hide();
+        $('.sharepop').hide();
 
-		$(".achievement,.exercise,.video").hover(
-			function () {
-			    $(this).find(".share-link").show();
-				},
-			function () {
-			    $(this).find(".share-link").hide();
-				$(this).find(".sharepop").hide();
-			  });
+        $(".achievement,.exercise,.video").hover(
+            function () {
+                $(this).find(".share-link").show();
+                },
+            function () {
+                $(this).find(".share-link").hide();
+                $(this).find(".sharepop").hide();
+              });
 
-		$('.share-link').click(function() {
-			if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
-				$(this).next(".sharepop").toggle();
-			} else {
-				$(this).next(".sharepop").toggle(
-						"drop", { direction:'up' }, "fast" );
-			}
-			return false;
-		});
+        $('.share-link').click(function() {
+            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
+                $(this).next(".sharepop").toggle();
+            } else {
+                $(this).next(".sharepop").toggle(
+                        "drop", { direction:'up' }, "fast" );
+            }
+            return false;
+        });
 
-		// Init Highcharts global options.
-		Highcharts.setOptions({
-			credits: {
-				enabled: false
-			},
-			title: {
-				text: ''
-			},
-			subtitle: {
-				text: ''
-			}
-		});
+        // Init Highcharts global options.
+        Highcharts.setOptions({
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            }
+        });
 
-        if ($.address)
-            $.address.externalChange(function(){ Profile.historyChange(); });
 
-        $(".graph-link").click(function(){Profile.loadGraphFromLink(this); return false;});
+
+        if ($.address){
+
+            $.address.change(function(){
+                Profile.historyChange();
+            });
+
+        }
+
+        $(".graph-link").click(
+            function(evt){
+                evt.preventDefault();
+                if($.address){
+                    $.address.value( $( this ).attr( "href" ) )
+                }
+            }
+        );
 
         $("#individual_report #achievements #achievement-list > ul li").click(function() {
              var category = $(this).attr('id');
@@ -275,6 +289,15 @@ var Profile = {
         this.loadGraph(url);
     },
 
+    loadFilters : function( href ){
+        // fix the hrefs for each filter
+        // console.log(href)
+
+        var a = $("#stats-filters a[href^=\"" + href + "\"]").parent();
+        $("#stats-filters .filter:visible").slideUp("slow");
+        a.slideDown();
+    },
+
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
             '/api/v1/user/goals': this.renderUserGoals,
@@ -324,9 +347,9 @@ var Profile = {
 
         if (!fNoHistoryEntry) {
             // Add history entry for browser
-            if ($.address) {
-                $.address.parameter("graph_url", href, false);
-			}
+            //             if ($.address) {
+            //                 $.address(href);
+            // }
         }
 
         this.showGraphThrobber(false);
@@ -795,12 +818,15 @@ var Profile = {
 
 	// TODO: move history management out to a common utility
 	historyChange: function(e) {
-		var href = ( $.address ? $.address.parameter("graph_url") : "" ) ||
-				this.initialGraphUrl;
+	    var av = $.address ? $.address.value() : "/" ;
+        // if(av === "/"){
+        //     $.address.value(this.initialGraphUrl)
+        // }
+		var href = (av !== "/") ? av : this.initialGraphUrl;
 		if ( href ) {
-			href = href;
 			if ( this.expandAccordionForHref(href) ) {
 				this.loadGraph( href, true );
+				this.loadFilters( href );
 			} else {
 				// Invalid URL - just try the first link available.
 				var links = $(".graph-link");
