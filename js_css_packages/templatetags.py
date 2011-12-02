@@ -47,11 +47,12 @@ def get_inline_template(package_name, file_name):
     contents = handle.read()
     handle.close()
     name = base_name(file_name)
-    return ("<script type='text/x-handlerbars-template' "
+    return ("<script type='text/x-handlebars-template' "
          	"id='template_%s-package_%s'>%s</script>") % (package_name, name, contents)
 
 
 def js_package(package_name):
+    loaded_script = "<script type='text/javascript'>dynamicPackageLoader.setPackageLoaded('%s');</script>" % package_name
     if not use_compressed_packages():
         package = packages.javascript[package_name]
         base_url = package.get("base_url") or "/javascript/%s-package" % package_name
@@ -62,11 +63,29 @@ def js_package(package_name):
                 list_js.append(get_inline_template(package_name, file_name))
             else:
                 list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, file_name))
+        list_js.append(loaded_script)
         return "\n".join(list_js)
     else:
         package = packages_compressed.compressed_javascript[package_name]
         base_url = package.get("base_url") or "/javascript/%s-package" % package_name
-        return "<script type='text/javascript' src='%s/%s'></script>" % (util.static_url(base_url), package["hashed-filename"])
+        return "<script type='text/javascript' src='%s/%s'></script>%s" % (util.static_url(base_url), package["hashed-filename"], loaded_script)
+
+def js_dynamic_package(package_name):
+    list_js = [ "function dynamicLoadPackage_%s(callback) {" % package_name, "dynamicPackageLoader.load('%s', callback, [" % package_name ]
+    if not use_compressed_packages():
+        package = packages.javascript[package_name]
+        base_url = package.get("base_url") or "/javascript/%s-package" % package_name
+        files_js = []
+        for file_name in package["files"]:
+            files_js.append("'%s/%s'" % (base_url, file_name))
+        list_js.append(",\n".join(files_js))
+    else:
+        package = packages_compressed.compressed_javascript[package_name]
+        base_url = package.get("base_url") or "/javascript/%s-package" % package_name
+        list_js.append("'%s/%s'" % (util.static_url(base_url), package["hashed-filename"]))
+
+    list_js.extend(["]);","}"])
+    return "\n".join(list_js)
 
 def css_package(package_name):
 

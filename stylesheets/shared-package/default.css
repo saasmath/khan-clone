@@ -3606,3 +3606,22 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 #popup-dialog .close-button {
     margin-top: 7px;
 }
+
+#popup-dialog .generic-message-wrapper {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+}
+
+#popup-dialog .dialog-progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+#popup-dialog .dialog-progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
+}
