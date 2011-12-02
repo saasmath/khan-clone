@@ -654,35 +654,44 @@ def set_css_deferred(user_data_key, video_key, status, version):
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
 class UserData(GAEBingoIdentityModel, db.Model):
+    # Canonical reference to the user entity. This should never be changed.
     user = db.UserProperty()
+
+    # The current, active user. Can be changed if user changes emails.
+    current_user = db.UserProperty()
+
     user_id = db.StringProperty()
     user_nickname = db.StringProperty(indexed=False)
-    current_user = db.UserProperty()
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
     joined = db.DateTimeProperty(auto_now_add=True)
     last_login = db.DateTimeProperty(indexed=False)
-    proficient_exercises = object_property.StringListCompatTsvProperty() # Names of exercises in which the user is *explicitly* proficient
-    all_proficient_exercises = object_property.StringListCompatTsvProperty() # Names of all exercises in which the user is proficient
+
+    # Names of exercises in which the user is *explicitly* proficient
+    proficient_exercises = object_property.StringListCompatTsvProperty()
+
+    # Names of all exercises in which the user is proficient
+    all_proficient_exercises = object_property.StringListCompatTsvProperty()
+
     suggested_exercises = object_property.StringListCompatTsvProperty()
     badges = object_property.StringListCompatTsvProperty() # All awarded badges
     need_to_reassess = db.BooleanProperty(indexed=False)
-    points = db.IntegerProperty(default = 0)
-    total_seconds_watched = db.IntegerProperty(default = 0)
+    points = db.IntegerProperty(default=0)
+    total_seconds_watched = db.IntegerProperty(default=0)
     coaches = db.StringListProperty()
     coworkers = db.StringListProperty()
     student_lists = db.ListProperty(db.Key)
     map_coords = db.StringProperty(indexed=False)
     expanded_all_exercises = db.BooleanProperty(default=True, indexed=False)
-    videos_completed = db.IntegerProperty(default = -1)
+    videos_completed = db.IntegerProperty(default=-1)
     last_daily_summary = db.DateTimeProperty(indexed=False)
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-    count_feedback_notification = db.IntegerProperty(default = -1, indexed=False)
-    question_sort_order = db.IntegerProperty(default = -1, indexed=False)
+    count_feedback_notification = db.IntegerProperty(default=-1, indexed=False)
+    question_sort_order = db.IntegerProperty(default=-1, indexed=False)
     user_email = db.StringProperty()
-    uservideocss_version = db.IntegerProperty(default = 0, indexed=False)
+    uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     _serialize_blacklist = [

@@ -3,7 +3,7 @@ profile-goals.handlebars. If you edit this, please also edit the other file to
 maintain consistency. }}
 <div class="goal pulls {{#active}}active{{/active}} {{#complete}}recently-completed{{/complete}}" data-id="{{id}}">
     <p class="goal-description">
-        <strong>{{title}}</strong>
+        <span class="goal-title">{{title}}</span>
         <span class="summary-light">
             {{#if complete}}Complete!{{else}}
             <span class="objectives-complete">{{objectiveProgress}}/{{objectives.length}}</span>

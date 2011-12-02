@@ -520,6 +520,7 @@ var NewGoalView = Backbone.View.extend({
             success: function(html) {
                 if (globalPopupDialog.visible) {
                     globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', html, false);
+                    GoalCreator.resize();
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {

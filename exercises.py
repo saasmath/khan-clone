@@ -220,7 +220,7 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)),
-            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 11',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 30',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,

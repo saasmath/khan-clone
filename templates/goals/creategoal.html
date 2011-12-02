@@ -8,11 +8,9 @@ var GoalCreator = {
     knowledgeMap: null,
 
     init: function(knowledgeMap) {
-        var self = this;
-
         this.knowledgeMap = knowledgeMap;
 
-        $(window).resize(function(){self.resize();});
+        $(window).resize( $.proxy(this.resize, this) );
 
         // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
@@ -38,11 +36,6 @@ var GoalCreator = {
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
         form.find('input[name="title"]')
             .change(function() { GoalCreator.updateViewAndDescription(); } )
-            .keyup(function(event) {
-                if (event.which == 13) {
-                    this.blur();
-                }
-            });
 
         GoalCreator.updateViewAndDescription();
     },
@@ -185,11 +178,25 @@ var GoalCreator = {
     },
 
     resize: function() {
-        var jel = $("#goal-choose-exercises .dashboard-drawer,.dashboard-drawer-inner,.dashboard-map,.dashboard-content-stretch");
-        var jelDrawerInner = $("#goal-choose-exercises .dashboard-drawer-inner");
-        var yTop = $('#goal-spacer').offset().top - $('#popup-dialog .dialog-frame').offset().top;
-        jel.height($('#popup-dialog .dialog-frame').outerHeight(true)-yTop-48);
+        var context = $("#goal-choose-exercises");
+
+        // Resize map contents
+        var jelMapContent = $(".dashboard-drawer", context)
+            .add(".dashboard-drawer-inner", context)
+            .add(".dashboard-map", context)
+            .add("#goal-choose-videos .dashboard-content-stretch");
+
+        var containerHeight = $('#popup-dialog .dialog-frame').outerHeight(true);
+        var yTopPadding = $('#goal-spacer').offset().top -
+            $('#popup-dialog .dialog-frame').offset().top;
+        var yBottomPadding = 48; // magic numbers ahoy
+        var newHeight = containerHeight - (yTopPadding + yBottomPadding);
+
+        jelMapContent.height(newHeight);
+
+
         // Account for padding in the dashboard drawer
+        var jelDrawerInner = $(".dashboard-drawer-inner", context);
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
         if (this.knowledgeMap && this.knowledgeMap.map)
@@ -398,7 +405,7 @@ function createGoalInitialize() {
     <div class="section-headline">
     <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
       <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
-      <input type="text" name="title" class="goal-title simple-input ui-corner-all" placeholder="New Goal (click to set a title)"></input>
+      <input type="text" name="title" class="goal-title simple-input ui-corner-all blur-on-esc" placeholder="New Goal (click to set a title)"></input>
     </div>
     <div id="goal-info-section">
       <div id="create-goal-view"></div>

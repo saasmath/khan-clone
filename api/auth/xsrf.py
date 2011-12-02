@@ -2,7 +2,9 @@ import cookie_util
 import base64
 import os
 import logging
+import time
 from functools import wraps
+import models
 
 XSRF_COOKIE_KEY = "fkey"
 XSRF_HEADER_KEY = "HTTP_X_KA_FKEY"
@@ -20,7 +22,12 @@ def ensure_xsrf_cookie(func):
 
         if not get_xsrf_cookie_value():
 
-            xsrf_value = base64.urlsafe_b64encode(os.urandom(30))
+            userdata = models.UserData.current()
+            user_id = 'None'
+            if userdata:
+                user_id = userdata.user_id
+            timestamp = int(time.time())
+            xsrf_value = "%s_$%s_$%d" % (user_id, base64.urlsafe_b64encode(os.urandom(10)), timestamp)
 
             # Set an http-only cookie containing the XSRF value.
             # A matching header value will be required by validate_xsrf_cookie.
