@@ -1921,6 +1921,44 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
             display: none;
         }
 
+#review-mode-title {
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    right: 10px;
+    width: 325px;
+    text-align: right;
+    background-image: -ms-linear-gradient(left, #FFF, #AAA);
+    background-image: -moz-linear-gradient(left, #FFF, #AAA);
+    background-image: -o-linear-gradient(left, #FFF, #AAA);
+    background-image: -webkit-gradient(linear, left top, right top, from(#FFF), to(#AAA));
+    background-image: -webkit-linear-gradient(left, #FFF, #AAA);
+    background-image: linear-gradient(left, #FFF, #AAA);
+}
+
+/* "Stretched-to-margin" pattern: http://stackoverflow.com/questions/485827 */
+#review-mode-title > div {
+    background: #FFF;
+    height: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    padding-top: 14px;
+}
+
+#review-mode-title h1 {
+    font-size: 2.5em;
+    letter-spacing: 6px;
+    word-spacing: 10px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #777;
+}
+
 #description .related-content {
     margin-top: -22px;
     line-height: 13px;
