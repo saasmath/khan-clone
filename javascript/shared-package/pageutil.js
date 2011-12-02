@@ -638,7 +638,7 @@ var Notifications = {
         }
     },
     showTemplate: function(templateName) {
-		var template = Templates.get(templateName);
+        var template = Templates.get(templateName);
         this.show( template() );
     },
 

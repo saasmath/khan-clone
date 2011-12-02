@@ -38,11 +38,11 @@ var APIActionResults = {
         jQuery.ajaxSetup({
             beforeSend: function(xhr, settings) {
                 if (settings && settings.url && settings.url.indexOf("/api/") > -1) {
-                    var xsrf_token = readCookie('fkey');
-                    if (xsrf_token) {
+                    var xsrfToken = readCookie('fkey');
+                    if (xsrfToken) {
                         // Send xsrf token along via header so it can be matched up
                         // w/ cookie value.
-                        xhr.setRequestHeader("X_KA_FKEY", readCookie('fkey'));
+                        xhr.setRequestHeader("X_KA_FKEY", xsrfToken);
                     } else {
                         apiVersionMismatch();
                         settings.error();
