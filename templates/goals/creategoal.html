@@ -8,11 +8,9 @@ var GoalCreator = {
     knowledgeMap: null,
 
     init: function(knowledgeMap) {
-        var self = this;
-
         this.knowledgeMap = knowledgeMap;
 
-        $(window).resize(function(){self.resize();});
+        $(window).resize( $.proxy(this.resize, this) );
 
         // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
