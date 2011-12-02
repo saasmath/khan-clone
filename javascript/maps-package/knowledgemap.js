@@ -546,28 +546,46 @@ function KnowledgeMap(params) {
                 exerciseModel.set({'invalidForGoal':true});
             } else {
                 // Create views
+                var element;
 
                 if (exerciseModel.get('isSuggested')) {
                     if (!params.hideReview || !exerciseModel.get('isReview')) {
-                        var element = $('<div>');
+                        element = $('<div>');
                         element.appendTo(suggestedExercisesContent);
-                        self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'suggested', 'admin': self.admin, 'parent': self}));
-
+                        self.exerciseRowViews.push(new ExerciseRowView({
+                            model: exerciseModel,
+                            el: element,
+                            type: 'suggested',
+                            admin: self.admin,
+                            parent: self
+                        }));
                         self.numSuggestedExercises++;
                     }
                 }
 
                 if (exerciseModel.get('recent')) {
-                    var element = $('<div>');
+                    element = $('<div>');
                     element.appendTo(recentExercisesContent);
-                    self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'recent', 'admin': self.admin, 'parent': self}));
+                    self.exerciseRowViews.push(new ExerciseRowView({
+                        model: exerciseModel,
+                        el: element,
+                        type: 'recent',
+                        admin: self.admin,
+                        parent: self
+                    }));
 
                     self.numRecentExercises++;
                 }
 
-                var element = $('<div>');
+                element = $('<div>');
                 element.appendTo(allExercisesContent);
-                self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'all', 'admin': self.admin, 'parent': self}));
+                self.exerciseRowViews.push(new ExerciseRowView({
+                    model: exerciseModel,
+                    el: element,
+                    type: 'all',
+                    admin: self.admin,
+                    parent: self
+                }));
             }
 
             // Update map graph
