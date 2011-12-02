@@ -286,6 +286,8 @@ function KnowledgeMapInitGlobals() {
         },
 
         onNodeClick: function(evt) {
+            var self = this;
+
             if (!this.model.get('summative') && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
 
@@ -307,7 +309,7 @@ function KnowledgeMapInitGlobals() {
                 else
                 {
                     $.each(this.parent.selectedNodes, function(node_name) {
-                        this.parent.highlightNode(node_name, false);
+                        self.parent.highlightNode(node_name, false);
                     });
                     this.parent.selectedNodes = { };
                     this.parent.selectedNodes[this.nodeName] = true;
@@ -337,8 +339,8 @@ function KnowledgeMapInitGlobals() {
                     if (delta_v != 0 || delta_h != 0) {
                         var id_array = [];
 
-                        $.each(this.parent.selectedNodes, function(node_name) {
-                            var actual_node = this.parent.dictNodes[node_name];
+                        $.each(self.parent.selectedNodes, function(node_name) {
+                            var actual_node = self.parent.dictNodes[node_name];
 
                             actual_node.v_position = parseInt(actual_node.v_position) + delta_v;
                             actual_node.h_position = parseInt(actual_node.h_position) + delta_h;
@@ -347,22 +349,22 @@ function KnowledgeMapInitGlobals() {
                         });
                         $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v } );
 
-                        var zoom =this.parent.map.getZoom();
-                        this.parent.markers = [];
+                        var zoom = self.parent.map.getZoom();
+                        self.parent.markers = [];
 
-                        $.each(this.parent.dictEdges, function(key, rgTargets) { // this loop lets us update the edges wand will remove the old edges
+                        $.each(self.parent.dictEdges, function(key, rgTargets) { // this loop lets us update the edges wand will remove the old edges
                             for (var ix = 0; ix < rgTargets.length; ix++)
                             {
                                 rgTargets[ix].line.setMap(null);
                             }
                         });
-                        this.parent.overlay.setMap(null);
-                        this.parent.layoutGraph();
-                        this.parent.drawOverlay();
+                        self.parent.overlay.setMap(null);
+                        self.parent.layoutGraph();
+                        self.parent.drawOverlay();
 
                         setTimeout(function() {
-                                $.each(this.parent.selectedNodes, function(node_name) {
-                                    this.parent.highlightNode(node_name, true);
+                                $.each(self.parent.selectedNodes, function(node_name) {
+                                    self.parent.highlightNode(node_name, true);
                                 });
                             }, 100);
 

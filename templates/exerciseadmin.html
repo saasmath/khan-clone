@@ -40,9 +40,11 @@
             $(".proficientTrue").css('display', 'table-row');
 		}
 	}
+
+    var adminKnowledgeMap = null;
 	
     $(function() {
-        new KnowledgeMap({
+        adminKnowledgeMap = new KnowledgeMap({
             'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
             'admin': true,
             'container': 'container'
@@ -103,7 +105,7 @@
     </div>
 
     <div class="dashboard-map">
-        {{ exercise_macros.knowledgemap(null, true) }}
+        {{ exercise_macros.knowledgemap(true) }}
     </div>
 </div>
 </div>{% endblock pagecontent %}

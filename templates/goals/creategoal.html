@@ -12,18 +12,22 @@ var GoalCreator = {
 
         $(window).resize( $.proxy(this.resize, this) );
 
+        $('#goal-choose-videos').find('#smarthistory').detach();
+
         // Fix links on videos
         $('#goal-choose-videos').find('.vl').each(function(index, element) {
-            var video_name = $(this).attr('data-id');
             var span = $(this).children('span');
-
             var image = $(span).css('background-image');
+
+            $(this).attr('href', 'javascript:');
             if (image.indexOf('indicator-complete') == -1)
             {
+                var video_name = $(this).attr('data-id');
                 var video_title = span.text();
-                $(this).attr('href', 'javascript:GoalCreator.onVideoClicked(\'' + video_name + '\', \'' + video_title + '\')');
+                $(this).click(function() {
+                    GoalCreator.onVideoClicked(video_name, video_title);
+                });
             } else {
-                $(this).attr('href', 'javascript:');
                 $(this).addClass('goalVideoInvalid');
             }
         });
@@ -381,10 +385,6 @@ var GoalCreator = {
 var graph_dict_data = {{ graph_dict_data }};
 
 function createGoalInitialize() {
-    if (!window.KnowledgeMap) {
-        setTimeout(createGoalInitialize, 500);
-        return;
-    }
     var knowledgeMap = new KnowledgeMap({
         'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
         'admin': false,
@@ -396,6 +396,7 @@ function createGoalInitialize() {
     GoalCreator.init(knowledgeMap);
     knowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
     GoalCreator.showExercises();
+    GoalCreator.resize();
 }
 
 </script>
@@ -424,7 +425,7 @@ function createGoalInitialize() {
       {{ exercise_macros.exercise_dashboard() }}
 
       <div class="dashboard-map">
-          {{ exercise_macros.knowledgemap('createGoalInitialize', need_maps_package) }}
+          {{ exercise_macros.knowledgemap(false) }}
       </div>
     </div>
 
