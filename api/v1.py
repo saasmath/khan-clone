@@ -77,6 +77,59 @@ def add_action_results(obj, dict_results):
 
     obj.action_results = dict_results
 
+@route("/api/v1/content_topics", methods=["GET"])
+@route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
+@jsonp
+@layer_cache.cache_with_key_fxn(
+    lambda: "api_content_topics_%s" % models.Setting.cached_library_content_date(),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def content_topics():
+    topics = models.Topic.get_all_topics()
+    content_topics = []
+    for topic in topics:
+        for child_key in topic.child_keys:
+            if child_key.kind() != "Topic":
+                content_topics.append(topic)
+                break
+    return content_topics
+
+@route("/api/v1/topic/<topic_readable_id>/videos", methods=["GET"])
+@route("/api/v1/playlists/<topic_readable_id>/videos", methods=["GET"])
+@jsonp
+@layer_cache.cache_with_key_fxn(
+    lambda topic_readable_id: "api_topic_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topic_videos(topic_readable_id):
+    topic = models.Topic.get_by_readable_id(topic_readable_id)
+    if topic is None: 
+        topic = models.Topic.get_by_title(topic_readable_id) # needed for people who were using the playlists api
+        if topic is None:
+            raise ValueError("Invalid topic readable_id.")
+    
+    videos = models.Topic.get_cached_videos_for_topic(topic)
+    for i, video in enumerate(videos):
+        video.position = i + 1
+    return videos
+
+@route("/api/v1/topic/<topic_readable_id>/exercises", methods=["GET"])
+@route("/api/v1/playlists/<topic_readable_id>/exercises", methods=["GET"])
+@jsonp
+@layer_cache.cache_with_key_fxn(
+    lambda topic_readable_id: "api_topic_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topic_exercises(topic_readable_id):
+    topic = models.Topic.get_by_readable_id(topic_readable_id)
+    if topic is None: 
+        topic = models.Topic.get_by_title(topic_readable_id) # needed for people who were using the playlists api
+        if topic is None:
+            raise ValueError("Invalid topic readable_id.")
+    
+    exercises = topic.get_exercises()
+    return exercises
+
 @route("/api/v1/topics", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
@@ -96,52 +149,27 @@ def topics():
 @compress
 @jsonify
 def topictree():
-    return models.Topic.get_by_key_name("root").make_tree()
+    return models.Topic.get_by_readable_id("root").make_tree()
 
-
-
-
-
-@route("/api/v1/playlists", methods=["GET"])
+@route("/api/v1/topic/<topic_readable_id>", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
-    lambda: "api_playlists_%s" % models.Setting.cached_library_content_date(),
+    lambda topic_readable_id: "api_topic_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
-def playlists():
-    return models.Playlist.get_for_all_topics()
+def topic(topic_readable_id):
+    return models.Topic.get_by_readable_id(topic_readable_id)
 
-@route("/api/v1/playlists/<playlist_title>/videos", methods=["GET"])
+@route("/api/v1/topic/<topic_readable_id>/children", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
-    lambda playlist_title: "api_playlistvideos_%s_%s" % (playlist_title, models.Setting.cached_library_content_date()),
+    lambda topic_readable_id: "api_topic_chidren_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
-def playlist_videos(playlist_title):
-    query = models.Playlist.all()
-    query.filter('title =', playlist_title)
-    playlist = query.get()
-
-    if not playlist:
-        return None
-
-    return playlist.get_videos()
-
-@route("/api/v1/playlists/<playlist_title>/exercises", methods=["GET"])
-@jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda playlist_title: "api_playlistexercises_%s" % (playlist_title),
-    layer=layer_cache.Layers.Memcache)
-@jsonify
-def playlist_exercises(playlist_title):
-    query = models.Playlist.all()
-    query.filter('title =', playlist_title)
-    playlist = query.get()
-
-    if not playlist:
-        return None
-
-    return playlist.get_exercises()
+def topic_children(topic_readable_id):
+    topic = models.Topic.get_by_readable_id(topic_readable_id)
+    if topic is not None:
+        return db.get(topic.child_keys)
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())

@@ -1081,9 +1081,10 @@ class Topic(db.Model):
     description = db.TextProperty()
     child_keys = db.ListProperty(db.Key)
     version = db.ReferenceProperty(TopicVersion, required = True)  
+    tags = db.StringListProperty() # not used now, putting in so that playl1st api users don't barf if they are using it 
     hide = db.BooleanProperty(default = False)
 
-    _serialize_blacklist = ["child_keys"]
+    _serialize_blacklist = ["child_keys", "version"]
 
     def get_order(self): 
         return self.parent.child_keys.index(self.key())
@@ -1100,6 +1101,16 @@ class Topic(db.Model):
                 version = TopicVersion.get_latest_version()
 
         return Topic.all().filter("readable_id =", readable_id).filter("version =", version).get()
+
+    @staticmethod
+    def get_by_title(title, version = None):
+        if version is None:
+            version = TopicVersion.get_default_version()
+            if version is None:
+                logging.info("No default version has been set, getting latest version instead")
+                version = TopicVersion.get_latest_version()
+
+        return Topic.all().filter("title =", title).filter("version =", version).get()
 
     @staticmethod
     def get_root(version):
@@ -1129,6 +1140,35 @@ class Topic(db.Model):
     @staticmethod
     def get_new_key_name(readable_id, version):
         return "%s-v%s" % (readable_id, version.number)
+
+    def copy(title, parent=None, **kwargs):
+        
+        if not kwargs.has_key("version") and parent is not None:
+            kwargs["version"] = parent.version
+            
+        if not kwargs.has_key("readable_id"):
+            kwargs["readable_id"] = Topic.get_new_readable_id(parent, title, kwargs["version"])
+
+        kwargs["key_name"] = Topic.get_new_key_name(readable_id, version)
+
+        topic = Topic.get_by_key_name(key_name)
+        if topic is not None:
+            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % key_name)
+
+        kwargs["title"] = title
+        kwargs["parent"] = parent
+
+        new_topic = util.clone_entity(self, **kwargs)
+
+        def insert_txn():
+            new_topic.put()
+            if kwargs["parent"] is not None:
+                parent.child_keys.append(topic.key())
+                parent.put()
+
+        db.run_in_transaction(insert_txn)                   
+        return new_topic
+            
 
     @staticmethod
     def insert(title, parent=None, **kwargs):
@@ -1175,20 +1215,6 @@ class Topic(db.Model):
                
         return db.run_in_transaction(insert_txn)
 
-
-    def all_children(self):
-        children = []
-        topics = Topic.all().filter('topic_parent =', self.key()).fetch(10000)
-        for child in topics:
-            children.append(child)
-        videos = Video.all().filter('topic_parents =', self.key()).fetch(10000)
-        for v in videos:
-            v.order = v.topic_orders[self.key()]
-            children.append(v)
-
-        children.sort(key = lambda c: c.order)
-        return children
-
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
             nodes = Topic.all().ancestor(self).fetch(100000)
@@ -1201,7 +1227,7 @@ class Topic(db.Model):
         contentKeys = []
         # cycle through the nodes adding its children to the contentKeys that need to be gotten
         for key, descendant in node_dict.iteritems():
-            contentKeys.extend([child_key for child_key in descendant.child_keys if not node_dict.has_key(child_key) and child_key.kind() != "Topic"])
+            contentKeys.extend([child_key for child_key in descendant.child_keys if not node_dict.has_key(child_key) and (child_key.kind() in types or (len(types) == 0 and child_key.kind() != "Topic"))])
 
         # get all content that belongs in this tree
         contentItems = db.get(contentKeys)
@@ -1228,21 +1254,26 @@ class Topic(db.Model):
             query.filter("hide =", False)
 
         return query.fetch(10000)
+             
+    @staticmethod
+    def _get_children_of_kind(topic, kind, include_descendants=False):
+        if include_descendants:
+            keys = []
+            topics = Topic.all().ancestor(topic)
+            for topic in topics():
+                keys.extend([child_key for child_key in descendant.child_keys if child_key.kind() == kind])
+        else:
+            keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]    
+            
+        return db.get(keys) 
+
+    def get_exercises(self):
+        return Topic._get_children_of_kind(self, "Exercise")
                             
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_videos_for_topic_%s_at_%s" % ("descendant" if len(args) > 1 and args[1] else "child", args[0].key().name(), str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
     def get_cached_videos_for_topic(topic, include_descendants=False, limit=500):
-        if include_descendants:
-            video_keys = []
-            topics = Topic.all().ancestor(topic)
-            for topic in topics():
-                video_keys.extend([child_key for child_key in descendant.child_keys if child_key.kind() == "Video"])
-        else:
-            video_keys = [child_key for child_key in topic.child_keys if child_key.kind() == "Video"]    
-            
-        videos = db.get(video_keys)
-
-        return videos 
+        return Topic._get_children_of_kind(self, "Video")
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_topics_for_video_%s_at_%s" % ("ancestor" if len(args) > 1 and args[1] else "parent", args[0].title, str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
@@ -1303,7 +1334,6 @@ class Video(Searchable, db.Model):
     url = db.StringProperty()
     title = db.StringProperty()
     description = db.TextProperty()
-    playlists = db.StringListProperty() # this probably can be removed, should be able to get info from VideoPlaylist
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default = 0)
 
@@ -1407,12 +1437,6 @@ class Video(Searchable, db.Model):
         topics = Topic.get_cached_topics_for_video(self)
         if topics:
             return topics[0]
-        return None
-
-    def first_playlist(self):
-        playlists = VideoPlaylist.get_cached_playlists_for_video(self)
-        if playlists:
-            return playlists[0]
         return None
 
     def current_user_points(self):

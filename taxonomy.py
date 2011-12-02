@@ -4,6 +4,7 @@ import cgi
 import re
 import urllib
 import logging
+
 from google.appengine.ext import db
 
 
@@ -20,8 +21,8 @@ class EditTaxonomy(request_handler.RequestHandler):
 
     def get_tree_node_html(self, t, parent = None):
         html = "<li>"
-        if hasattr(t, "content"):
-            title = t.content.title
+        if t.__class__.__name__ == "Exercise":
+            title = "Exercise: " + t.display_name
         else:
             title = t.title
         # html += '<a href="%s">%i: %s</a>' % (t.key().name(), 0 if not parent else parent.get_child_order(t.key()), title)      
@@ -44,9 +45,9 @@ class EditTaxonomy(request_handler.RequestHandler):
         # self.load_demo()
         # return
         # self.load_videos()
+        # self.hide_topics()
+        # self.recreate_topic_list_structure()
         # return
-        self.hide_topics()
-        return
         
         
         root = Topic.get_by_readable_id("root").make_tree()
@@ -67,6 +68,31 @@ class EditTaxonomy(request_handler.RequestHandler):
         
         self.render_jinja2_template('edittaxonomy.html', template_values)
         return
+
+    def recursive_copy_topic_list_structure(self, parent, topic_list_part):
+        for topic_dict in topic_list_part:
+            logging.info(topic_dict["name"])
+            if topic_dict.has_key("playlist"):
+                topic = Topic.get_by_title(topic_dict["playlist"])
+                topic.title = topic_dict["name"]
+                topic.parent = parent
+                topic.put()
+            else:
+                topic = Topic.insert(title = topic_dict["name"],
+                                     parent = parent
+                                     )
+            parent.child_keys.append(topic.key())
+            parent.put()
+
+            if topic_dict.has_key("items"):
+                self.recursive_copy_topic_list_structure(topic, topic_dict["items"])
+        
+
+    def recreate_topic_list_structure(self):
+        import topics_list
+
+        root = Topic.get_by_readable_id("root")
+        self.recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
 
     def hide_topics(self):
         from topics_list import topics_list
@@ -106,6 +132,8 @@ class EditTaxonomy(request_handler.RequestHandler):
         # playlists = Playlist.all().order('title').fetch(100000)
         for i, p in enumerate(playlists):
             videos = p.get_videos()
+            exercises = p.get_exercises()
+            videos.extend(p.get_exercises())
             topic = Topic.insert(title = p.title,
                          parent = root,
                          description = p.description,
@@ -117,8 +145,7 @@ class EditTaxonomy(request_handler.RequestHandler):
                 'next_url': next_url,
             } 
 
-            self.render_jinja2_template('update_datastore.html', context)
-            
+            self.render_jinja2_template('update_datastore.html', context)   
             
 
     def load_demo(self):
