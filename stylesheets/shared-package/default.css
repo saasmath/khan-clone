@@ -970,7 +970,7 @@ footer {
     .simple-input.placeholder {
         font-style: italic;
     }
-    #top-header #page_search #search-input {
+    .simple-input.search-input {
         background-image: url(/images/non-repeating-sprites.3.png);
         background-position: -5px -867px;
         padding-left: 25px;
