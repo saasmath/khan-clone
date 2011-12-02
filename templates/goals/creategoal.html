@@ -178,11 +178,25 @@ var GoalCreator = {
     },
 
     resize: function() {
-        var jel = $("#goal-choose-exercises .dashboard-drawer,.dashboard-drawer-inner,.dashboard-map,.dashboard-content-stretch");
-        var jelDrawerInner = $("#goal-choose-exercises .dashboard-drawer-inner");
-        var yTop = $('#goal-spacer').offset().top - $('#popup-dialog .dialog-frame').offset().top;
-        jel.height($('#popup-dialog .dialog-frame').outerHeight(true)-yTop-48);
+        var context = $("#goal-choose-exercises");
+
+        // Resize map contents
+        var jelMapContent = $(".dashboard-drawer", context)
+            .add(".dashboard-drawer-inner", context)
+            .add(".dashboard-map", context)
+            .add(".dashboard-content-stretch", context)
+
+        var containerHeight = $('#popup-dialog .dialog-frame').outerHeight(true);
+        var yTopPadding = $('#goal-spacer').offset().top -
+            $('#popup-dialog .dialog-frame').offset().top;
+        var yBottomPadding = 48; // magic numbers ahoy
+        var newHeight = containerHeight - (yTopPadding + yBottomPadding);
+
+        jelMapContent.height(newHeight);
+
+
         // Account for padding in the dashboard drawer
+        var jelDrawerInner = $(".dashboard-drawer-inner", context);
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
         if (this.knowledgeMap && this.knowledgeMap.map)

@@ -444,11 +444,23 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
     };
 
     this.resize = function() {
-        var jel = $("#" + this.container).find(".dashboard-drawer,.dashboard-drawer-inner,.dashboard-map");
-        var jelDrawerInner = $("#" + this.container + " .dashboard-drawer-inner");
-        var yTop = jel.offset().top;
-        jel.height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
+        var context = $("#" + this.container);
+
+        // Resize map contents
+        var jelMapContent = $(".dashboard-drawer", context)
+            .add(".dashboard-drawer-inner", context)
+            .add(".dashboard-map", context);
+
+        var containerHeight = $(window).height();
+        var yTopPadding = jelMapContent.offset().top;
+        var yBottomPadding = $("#end-of-page-spacer").outerHeight(true);
+        var newHeight = containerHeight - (yTopPadding + yBottomPadding);
+
+        jelMapContent.height(newHeight);
+
+
         // Account for padding in the dashboard drawer
+        var jelDrawerInner = $(".dashboard-drawer-inner", context);
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
         if (self.knowledgeMap && self.knowledgeMap.map)
