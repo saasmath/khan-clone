@@ -57,15 +57,15 @@ table {
    line-height: 0;
    height: 0;
 }
- 
+
 .clearfix {
    display: inline-block;
 }
- 
+
 html[xmlns] .clearfix {
    display: block;
 }
- 
+
 * html .clearfix {
    height: 1%;
    overflow: visible;
@@ -192,7 +192,7 @@ input.simple-button {
 
 .simple-button:hover {
     border-color: #aaa;
-    
+
     -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255, .4), inset 0 0 50px 5px rgba(255,255,255,.2);
     -moz-box-shadow: inset 0 1px 0 rgba(255,255,255, .4), inset 0 0 50px 5px rgba(255,255,255,.2);
     box-shadow: inset 0 1px 0 rgba(255,255,255, .4), inset 0 0 50px 5px rgba(255,255,255,.2);
@@ -1593,12 +1593,6 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     }
     #container .dashboard-header .dashboard-nav .playlist_browser_title {
         margin-top: 2px;
-    }
-    #container .dashboard-content {
-        width: 1179px;
-        height: 800px;
-        overflow-y: auto;
-        padding-left: 20px;
     }
 
 .exercise-filter-count,.exercise-all-exercises {

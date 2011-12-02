@@ -451,11 +451,6 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
         // Account for padding in the dashboard drawer
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
-        $("#" + this.container).find(".dashboard-content").each(function(index, element) {
-            var yTop = $(element).offset().top;
-            $(element).height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
-        });
-
         if (self.knowledgeMap && self.knowledgeMap.map)
             google.maps.event.trigger(self.knowledgeMap.map, 'resize');
     };
