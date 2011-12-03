@@ -14,3 +14,6 @@ class JsonifyTest(unittest.TestCase):
         self.assertEqual("fooBarJoeRalph", camel_casify("foo_bar_joe_ralph"))
         self.assertEqual("hypens-confuse-me", camel_casify("hypens-confuse-me"))
         self.assertEqual("trailingDoesntMatter_", camel_casify("trailing_doesnt_matter_"))
+
+if __name__ == '__main__':
+    unittest.main()
