@@ -1902,6 +1902,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         height: 62px;
     }
 
+.proficient-badge {
+    display: block;
+}
+
 .exercise-badge.single-exercise .energy-points-badge {
     left: auto;
     right: 5px;
@@ -3066,9 +3070,14 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 
 .nodeLabel {
+    display: block;
     text-align: center;
     cursor: pointer;
     line-height: normal;
+}
+
+a.nodeLabel:hover {
+    text-decoration: none;
 }
 
 .nodeLabel div {
