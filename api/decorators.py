@@ -10,6 +10,8 @@ from flask import current_app
 import api.jsonify as apijsonify
 
 from app import App
+from layer_cache import layer_cache_check_set_return, Layers,\
+    DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS
 
 def etag(func_tag_content):
     def etag_wrapper(func):
@@ -93,3 +95,28 @@ def base64_decode(func):
     def base64_decoded(*args, **kwargs):
         return b64decode(func(*args, **kwargs))
     return base64_decoded
+
+def cache_with_key_fxn_and_param(
+        param_name,
+        key_fxn,
+        expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
+        layer = Layers.Memcache | Layers.InAppMemory,
+        persist_across_app_versions = False,
+        permanent_key_fxn = None):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            def wrapped_key_fxn(*args, **kwargs):
+                underlying = key_fxn(*args, **kwargs)
+                return "%s:%s=%s" % (underlying,
+                                     param_name,
+                                     request.values.get(param_name))
+            return layer_cache_check_set_return(func,
+                                                wrapped_key_fxn,
+                                                expiration,
+                                                layer,
+                                                persist_across_app_versions,
+                                                permanent_key_fxn,
+                                                *args, **kwargs)
+        return wrapper
+    return decorator
+
