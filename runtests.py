@@ -3,6 +3,7 @@
 
 
 import optparse
+import os
 import sys
 # Install the Python unittest2 package before you run this script.
 import unittest2
@@ -22,6 +23,9 @@ def main(sdk_path, test_path):
     sys.path.insert(0, sdk_path)
     import dev_appserver
     dev_appserver.fix_sys_path()
+    top_project_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+    sys.path.insert(0, os.path.join(top_project_dir, "api/packages"))
+    sys.path.insert(0, os.path.join(top_project_dir, "api/packages/flask.zip"))
     suite = unittest2.loader.TestLoader().discover(test_path)
     unittest2.TextTestRunner(verbosity=2).run(suite)
 
