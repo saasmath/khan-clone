@@ -65,6 +65,7 @@ javascript = {
             "jquery.easing.1.3.js",
             "jquery.cycle.all.min.js",
             "waypoints.min.js",
+            "videolist.handlebars",
             "homepage.js",
             "ga_social_tracking.js",
         ]

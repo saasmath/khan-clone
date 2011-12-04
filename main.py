@@ -733,6 +733,8 @@ application = webapp2.WSGIApplication([
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
+    
+    # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
     ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1

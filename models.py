@@ -80,6 +80,10 @@ class Setting(db.Model):
         return Setting._get_or_set_with_key("cached_library_content_date", val)
 
     @staticmethod
+    def cached_playlist_content_date(val = None):
+        return Setting._get_or_set_with_key("cached_playlist_content_date", val)
+
+    @staticmethod
     def cached_exercises_date(val = None):
         return Setting._get_or_set_with_key("cached_exercises_date", val)
 
@@ -1227,7 +1231,12 @@ class Playlist(Searchable, db.Model):
             videos.append(video)
 
         return videos
-
+    
+    def get_video_count(self):
+        video_playlist_query = VideoPlaylist.all()
+        video_playlist_query.filter('playlist =', self)
+        video_playlist_query.filter('live_association =', True)
+        return video_playlist_query.count()
 
 class UserPlaylist(db.Model):
     user = db.UserProperty()

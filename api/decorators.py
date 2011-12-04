@@ -10,6 +10,8 @@ from flask import current_app
 import api.jsonify as apijsonify
 
 from app import App
+import datetime
+import time
 
 def etag(func_tag_content):
     def etag_wrapper(func):
@@ -32,6 +34,30 @@ def etag(func_tag_content):
                 return current_app.response_class(result, headers={"Etag": etag_server})
         return etag_enabled
     return etag_wrapper
+
+_TWO_MONTHS = 60 * 60 * 24 * 60
+def cacheable(caching_age=_TWO_MONTHS, cache_token="v"):
+    def cacheable_wrapper(func):
+        @wraps(func)
+        def caching_enabled(*args, **kwargs):
+            
+            timestamp = request.values.get(cache_token)
+            if timestamp is None:
+                return func(*args, **kwargs)
+            
+            result = func(*args, **kwargs)
+            if isinstance(result, current_app.response_class):
+                result.cache_control.max_age = caching_age
+                result.cache_control.public = True
+                result.headers['Expires'] = (datetime.datetime.utcnow() +
+                                             datetime.timedelta(seconds=caching_age))
+                return result
+            else:
+                return current_app.response_class(result, headers={
+                        "Cache-control": ("public, max-age=%s" % caching_age),
+                        })
+        return caching_enabled
+    return cacheable_wrapper
 
 def jsonify(func):
     @wraps(func)
