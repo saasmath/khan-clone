@@ -45,13 +45,20 @@ var Homepage = {
             type: "GET",
             url: "/api/v1/homepage_library",
             dataType: "jsonp",
+
+			// The cacheToken is supplied by the host page to indicate when the library
+			// was updated. Since it's fully cacheable, the browser can pull from the
+			// local client cache if it has the data already.
             data: {"v": cacheToken},
+
+			// Explicitly specify the callback, since jQuery will otherwise put in
+			// a randomly named callback and break caching.
             jsonpCallback: "__dataCb",
             success: function(data){
                 Homepage.loadLibraryContent(data);
             },
             error: function() {
-                console.log("error loading");
+                KAConsole.log("Error loading initial library data.");
             },
             cache: true
         });
@@ -77,6 +84,7 @@ var Homepage = {
             visitTopicOrPlaylist(item);
         }
 
+		// Playlists collected - go ahead and render them.
         var template = Templates.get("homepage.videolist");
         for (var i = 0, playlist; playlist = playlists[i]; i++) {
             var videos = playlist["videos"]
@@ -96,6 +104,8 @@ var Homepage = {
             var container = $("#" + sluggified + " ol").get(0);
             container.innerHTML = template(playlist);
         }
+
+		content = null;
     }
 }
 
