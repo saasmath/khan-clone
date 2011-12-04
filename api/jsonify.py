@@ -89,9 +89,14 @@ class JSONModelEncoderCamelCased(simplejson.JSONEncoder):
 def jsonify(data, **kwargs):
     """jsonify data in a standard (human friendly) way. If a db.Model
     entity is passed in it will be encoded as a dict.
+
+    If the current request being served is being served via Flask, and
+    has a parameter "casing" with the value "camel", properties in the resulting
+    output will be converted to use camelCase instead of the regular Pythonic
+    underscore convention.
     """
 
-    if request.values.get("casing") == "camel":
+    if request and request.values.get("casing") == "camel":
         encoder = JSONModelEncoderCamelCased
     else:
         encoder = JSONModelEncoder

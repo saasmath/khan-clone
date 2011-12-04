@@ -1,4 +1,3 @@
-import logging
 import hashlib
 import zlib
 from base64 import b64encode, b64decode
