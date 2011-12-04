@@ -1597,6 +1597,32 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
             color: #006699;
         }
 
+        .exercise-badge .exercise-title #current-exercise {
+          position: relative;
+        }
+
+        .exercise-badge .exercise-title #next-exercises {
+            height: 42px;
+            overflow: hidden;
+            position: absolute;
+            top: 21px;
+        }
+
+        .exercise-badge .exercise-title #next-exercises p {
+            margin: 0 0;
+            line-height: 1.2em;
+            color: #777;
+        }
+
+        .exercise-badge .exercise-title .gradient-overlay {
+          position: absolute;
+          height: 42px;
+          z-index: 1;
+          background: url(/images/x-repeating-sprites.1.png) repeat-x;
+          background-position: 0px -282px;
+          width: 100%;
+        }
+
     .exercise-badge #streak-bar-container{
       /* the streak bar container on the dashboard */
       position:absolute;
@@ -3138,7 +3164,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 
 input.button, a.button {
     display: inline-block;
-	background-image: url(/images/x-repeating-sprites.png);
+	background-image: url(/images/x-repeating-sprites.1.png);
     background-position: 0px -72px;
 	padding:5px 10px 6px 10px;
 	font-weight:bold;
