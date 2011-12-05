@@ -979,7 +979,9 @@ footer {
         display: none;
     }
     #page_search input.ui-autocomplete-loading {
-        background-image: url("/images/throbber.gif")
+        background-image: url("/images/throbber.gif");
+        background-repeat:no-repeat;
+        background-position:4px 5px;
     }
 
 img.rounded-background,
