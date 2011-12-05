@@ -216,6 +216,9 @@ var GoalCreator = {
         this.resize();
     },
     onExerciseClicked: function(exercise, evt) {
+        // prevent the anchor href from being followed
+        evt.preventDefault();
+
         // Cannot select exercises that:
         //      user is already proficient in
         //      are already objectives in current goals

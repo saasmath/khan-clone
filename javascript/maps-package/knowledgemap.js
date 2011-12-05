@@ -78,7 +78,10 @@ function KnowledgeMapInitGlobals() {
                 this.set({'isSuggested': false, 'badgeIcon': '/images/'+s_prefix+'-not-started.png?' + KA_VERSION});
             }
 
-            this.set({'inAllList': false, 'lowercaseName': this.get('display_name').toLowerCase()});
+            this.set({
+                inAllList: false,
+                lowercaseName: this.get('display_name').toLowerCase()
+            });
 
             var milestones = [];
             for (var milestone = 0; milestone < this.get('num_milestones')-1; milestone++) {
@@ -94,6 +97,14 @@ function KnowledgeMapInitGlobals() {
                 'width': Math.min(1.0, this.get('progress'))*228,
                 'milestones': []
             }});
+        },
+
+        url: function() {
+            return '/exercise/' + this.get('name');
+        },
+
+        adminUrl: function() {
+            return '/editexercise?name=' + this.get('name');
         }
     });
 
@@ -117,11 +128,18 @@ function KnowledgeMapInitGlobals() {
                 return;
 
             var template = Templates.get( this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise" );
-            var newContent = $(template(this.model.toJSON()));
+            var context = this.model.toJSON();
+            if (this.options.admin) {
+                context.url = this.model.adminUrl();
+            } else {
+                context.url = this.model.url();
+            }
+
+            var newContent = $(template(context));
             var self = this;
             newContent.hover(
-                    function(){self.onBadgeMouseover(self.nodeName, newContent);},
-                    function(){self.onBadgeMouseout(self.nodeName, newContent);}
+                function(){self.onBadgeMouseover(self.nodeName, newContent);},
+                function(){self.onBadgeMouseout(self.nodeName, newContent);}
             );
 
             this.el.replaceWith(newContent);
@@ -151,7 +169,9 @@ function KnowledgeMapInitGlobals() {
         },
 
         onBadgeClick: function(evt) {
-            this.parent.nodeClickHandler(this.model, evt);
+            // give the parent a chance to handle this exercise click. If it
+            // doesn't, we'll just follow the anchor href
+            return this.parent.nodeClickHandler(this.model, evt);
         },
 
         onBadgeMouseover: function(node_name, element) {
@@ -198,15 +218,21 @@ function KnowledgeMapInitGlobals() {
             var self = this;
 
             this.el.click(
-                    function(evt){self.onNodeClick(evt);}
+                    function(evt){return self.onNodeClick(evt);}
                 ).hover(
-                    function(){self.onNodeMouseover();},
-                    function(){self.onNodeMouseout();}
+                    function(){return self.onNodeMouseover();},
+                    function(){return self.onNodeMouseout();}
                 );
 
             var iconOptions = this.getIconOptions();
             this.el.find("img.node-icon").attr("src", iconOptions.url);
             this.el.attr("class", this.getLabelClass());
+
+            if (this.parent.admin)
+                this.el.attr('href', this.model.adminUrl());
+            else
+                this.el.attr('href', this.model.url());
+
             if (this.goalIconVisible)
                 this.el.find('.exercise-goal-icon').show();
             else
@@ -360,11 +386,11 @@ function KnowledgeMapInitGlobals() {
                     }
                 });
 
-                evt.stopPropagation();
+                evt.preventDefault();
             }
             else
             {
-                this.parent.nodeClickHandler(this.model, evt);
+                return this.parent.nodeClickHandler(this.model, evt);
             }
         },
 
@@ -548,28 +574,46 @@ function KnowledgeMap(params) {
                 exerciseModel.set({'invalidForGoal':true});
             } else {
                 // Create views
+                var element;
 
                 if (exerciseModel.get('isSuggested')) {
                     if (!params.hideReview || !exerciseModel.get('isReview')) {
-                        var element = $('<div>');
+                        element = $('<div>');
                         element.appendTo(suggestedExercisesContent);
-                        self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'suggested', 'admin': self.admin, 'parent': self}));
-
+                        self.exerciseRowViews.push(new ExerciseRowView({
+                            model: exerciseModel,
+                            el: element,
+                            type: 'suggested',
+                            admin: self.admin,
+                            parent: self
+                        }));
                         self.numSuggestedExercises++;
                     }
                 }
 
                 if (exerciseModel.get('recent')) {
-                    var element = $('<div>');
+                    element = $('<div>');
                     element.appendTo(recentExercisesContent);
-                    self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'recent', 'admin': self.admin, 'parent': self}));
+                    self.exerciseRowViews.push(new ExerciseRowView({
+                        model: exerciseModel,
+                        el: element,
+                        type: 'recent',
+                        admin: self.admin,
+                        parent: self
+                    }));
 
                     self.numRecentExercises++;
                 }
 
-                var element = $('<div>');
+                element = $('<div>');
                 element.appendTo(allExercisesContent);
-                self.exerciseRowViews.push(new ExerciseRowView({'model': exerciseModel, 'el': element, 'type': 'all', 'admin': self.admin, 'parent': self}));
+                self.exerciseRowViews.push(new ExerciseRowView({
+                    model: exerciseModel,
+                    el: element,
+                    type: 'all',
+                    admin: self.admin,
+                    parent: self
+                }));
             }
 
             // Update map graph
@@ -611,19 +655,18 @@ function KnowledgeMap(params) {
         google.maps.event.addListener(this.map, "idle", function(){self.onIdle();});
         google.maps.event.addListener(this.map, "click", function(){self.onClick();});
 
-        this.nodeClickHandler = function(exercise) {
-            if (self.admin)
-                window.location.href = '/editexercise?name='+exercise.get('name');
-            else
-                window.location.href = '/exercises?exid='+exercise.get('name');
+        // This handler exists as a hook to override what happens when an
+        // exercise node is clicked. By default, it does nothing.
+        this.nodeClickHandler = function(exercise, evt) {
+            return true;
         };
 
         this.giveNasaCredit();
         this.initFilter();
     };
 
-    this.setNodeClickHandler = function(click_handler) {
-        this.nodeClickHandler = click_handler;
+    this.setNodeClickHandler = function(handler) {
+        this.nodeClickHandler = handler;
     };
 
     this.panToNode = function(dataID) {
@@ -690,7 +733,11 @@ function KnowledgeMap(params) {
                 if (view) {
                     view.updateElement($(this));
                 } else {
-                    view = new ExerciseMarkerView({'model': exercise, 'el': $(this), 'parent': self});
+                    view = new ExerciseMarkerView({
+                        model: exercise,
+                        el: $(this),
+                        parent: self
+                    });
                     self.exerciseMarkerViews[exerciseName] = view;
                 }
             });
@@ -782,7 +829,7 @@ function KnowledgeMap(params) {
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name,
                 node.latLng,
-                ["<div data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></div>"],
+                ["<a data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></a>"],
                 "",
                 node.summative ? 2 : 1,
                 0,0);
