@@ -48,6 +48,7 @@ javascript = {
             "goal-new-dialog.handlebars",
             "goal-create.handlebars",
             "goals.js",
+			"topics.js"
         ]
     },
     "video": {
@@ -144,6 +145,11 @@ javascript = {
             "utils/unit-circle.js",
         ]
     },
+	"topicsadmin": {
+        "files": [
+			"jquery.dynatree.js",
+        ]
+	},
 }
 
 stylesheets = {
@@ -187,4 +193,9 @@ stylesheets = {
             "khan-exercise.css",
         ]
     },
+	"topicsadmin": {
+        "files": [
+			"ui_dynatree.css"
+		]
+	},
 }
