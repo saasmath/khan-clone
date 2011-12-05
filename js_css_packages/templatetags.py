@@ -82,7 +82,7 @@ def js_dynamic_package(package_name):
     else:
         package = packages_compressed.compressed_javascript[package_name]
         base_url = package.get("base_url") or "/javascript/%s-package" % package_name
-        list_js.append("'%s/%s'" % (util.static_url(base_url), package["hashed-filename"]))
+        list_js.append("'%s/%s'" % (base_url, package["hashed-filename"]))
 
     list_js.extend(["]);","}"])
     return "\n".join(list_js)
