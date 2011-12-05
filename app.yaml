@@ -15,6 +15,7 @@ skip_files:
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
 - ^(.*/)?.*_test.py
+- ^(.*/)?.*\.handlebars
 - ^(.*/)?sample_data/.*
 - ^(.*/)?khan-exercises/test/.*
 - ^(.*/)?presskit/.*
