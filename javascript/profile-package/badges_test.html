@@ -5,23 +5,29 @@
 <head>
 <script src="../testbase.js"></script>
 <script src="badges.js"></script>
+<link rel="stylesheet" type="text/css" href="../../stylesheets/shared-package/default.css"></link>
+<link rel="stylesheet" type="text/css" href="../../stylesheets/profile-package/badges.css"></link>
 <script>
 var badgeList = new Badges.BadgeList();
+var fullBadgeList = new Badges.BadgeList();
+var displayCase;
 var imageBase = "http://khan-academy.appspot.com";
 
 // Matches what would be sent from the server
 var SAMPLE_BADGE_JSON = {
-	"badge_description": "Quickly & correctly answer 5 exercise problems in a row (time limit depends on exercise difficulty)",
-	"badge_name": "nicetimedproblembadge",
+	"badgeExtendedDescription": "Quickly & correctly answer 5 exercise problems in a row (time limit depends on exercise difficulty)",
+	"badgeDescription": "Picking Up Steam",
+	"badgeName": "nicetimedproblembadge",
 	"category": 0,
 	"count": 1,
 	"date": "2011-12-01T03:09:48Z",
-	"icon_src": imageBase + "/images/badges/meteorite-small.png",
-	"points_earned": 100
+	"iconSrc": imageBase + "/images/badges/meteorite-small.png",
+	"pointsEarned": 100
 };
 
-function addBadge( name, type ) {
+function addBadge( name, desc, type, list ) {
 	var name = name || $("#name").val();
+	var desc = desc || $("#desc").val();
 	var type = ( type || $("#type").val() ).toLowerCase();
 	var json = SAMPLE_BADGE_JSON;
 	switch ( type ) {
@@ -37,21 +43,45 @@ function addBadge( name, type ) {
 			json[ "category" ] = Badges.Category.BRONZE;
 			break;
 	}
-	json[ "badge_name" ] = name;
-	json[ "icon_src" ] = json[ "icon_src" ].replace(
+	json[ "badgeName" ] = name;
+	json[ "badgeDescription" ] = desc;
+	json[ "iconSrc" ] = json[ "iconSrc" ].replace(
 		/[a-z]*-small.png/,
 		type + "-small.png"
 	);
 	json[ "count" ] = Math.random() * 10 | 0;
-	badgeList.add(Badges.Badge.fromServerJson( json ));
+
+	list = list || badgeList;
+	list.add( new Badges.Badge( json ) );
 }
 
-KA_TEST.loadTemplates( ["profile.badge-display-case"], function() {
-	var displayCase = new Badges.DisplayCase({ model: badgeList });
+function toggleEdit( button ) {
+	if ( button.innerHTML.indexOf( "Edit badges" ) >= 0 ) {
+		button.innerHTML = "Stop editing";
+		displayCase.edit();
+	} else {
+		button.innerHTML = "Edit badges";
+		displayCase.stopEdit();
+	}
+}
+
+KA_TEST.loadTemplates([
+		"profile.badge-display-case",
+		"profile.badge-compact"
+		], function() {
+	displayCase = new Badges.DisplayCase({ model: badgeList });
 	$("#container").append( displayCase.render().el );
 
-	addBadge( "Foo badge", "moon" );
-	addBadge( "Bar badge", "earth" );
+	addBadge( "foobadge", "Foo badge", "moon" );
+	addBadge( "barbadge", "Bar badge", "earth" );
+
+	// Populate the full, master badge list.
+	addBadge( "foobadge", "Foo badge", "moon", fullBadgeList );
+	addBadge( "barbadge", "Bar badge", "earth", fullBadgeList );
+	addBadge( "bazbadge", "Baz badge", "meteorite", fullBadgeList );
+	addBadge( "kablowbadge", "Kablow badge", "moon", fullBadgeList );
+	addBadge( "powbadge", "Pow! badge", "earth", fullBadgeList );
+	displayCase.setFullBadgelist( fullBadgeList );
 });
 
 </script>
@@ -62,8 +92,10 @@ KA_TEST.loadTemplates( ["profile.badge-display-case"], function() {
 
 <div>
 Name: <input id="name"><br>
+Desc: <input id="desc"><br>
 Type(meteorite|moon|earth): <input id="type" value="moon"><br>
 <button onclick="addBadge()">Add Badge</button>
+<button onclick="toggleEdit(this)">Edit badges</button>
 </div>
 </body>
 </html>
