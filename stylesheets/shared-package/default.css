@@ -1071,7 +1071,7 @@ nav#page_sub_nav {
     padding: 7px 10px 11px;
     min-height: 16px;
     position: relative;
-    z-index: 3;
+    z-index: 20;
     background: #fff;
     color: #444;
     border: 1px solid #C6D1AD;
