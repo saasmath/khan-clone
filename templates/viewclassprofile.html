@@ -69,10 +69,9 @@
         <li>
             {{ profile_macros.class_graph_link(user_data_coach, "Daily Activity Report", "classtime", selected_graph_type, list_id) }}
             <p class="accordion-content">
-                Shows your total class activity on a specific date.
-                {{ profile_macros.graph_calendar_picker(user_data_coach, "classtime") }}
-                <span class="instructions">Light blue activity shows normal school hours, and dark blue is outside normal hours.</span>
-            </p>
+                Shows your total class activity on a specific date. <br /><br />
+
+              <span class="instructions">Light blue activity shows normal school hours, and dark blue is outside normal hours.</span>
         </li>
         <li>
             {{ profile_macros.class_graph_link(user_data_coach, "Exercise Progress Over Time", "classexercisesovertime", selected_graph_type, list_id) }}
@@ -136,6 +135,30 @@
     </div>
     
     
+  </div>
+
+  <div class="filter">
+    {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "progress/summary", selected_graph_type, list_id) }}
+    
+    <div class="filter-block">
+      <h3>Progress Summary</h3>
+    </div>
+    <div class="filter-block fake-row">
+      <span class="segment exercise-color struggling ui-corner-all"><span>struggling</span></span>
+      <span class="segment exercise-color not-started ui-corner-all"><span>unstarted</span></span>
+      <span class="segment exercise-color started ui-corner-all"><span>started</span></span>
+      <span class="segment exercise-color proficient ui-corner-all"><span>proficient</span></span>
+      <span class="segment exercise-color review ui-corner-all"><span>review</span></span>
+      <div style="clear: both"></div>
+    </div>
+  </div>
+
+  <div class="filter">
+    {{ profile_macros.class_graph_link(user_data_coach, "Daily Activity Report", "classtime", selected_graph_type, list_id) }}
+    <div class="filter-block">
+        <h3>Daily Activity Report <small> for </small></h3>
+        {{ profile_macros.graph_calendar_picker(user_data_coach, "classtime") }}
+    </div>
   </div>
 
   <div class="filter">

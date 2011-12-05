@@ -532,7 +532,7 @@ div.graph-notification {
 
 
 
-#stats-filters { position:relative; min-width:680px;}
+#stats-filters { position:relative; min-width:680px; z-index:10; top:-3px;}
 #stats-filters .filter{ display:none; }
 
 #stats-filters a.graph-link{ display:none; }
@@ -545,5 +545,9 @@ div.graph-notification {
 #stats-filters h3 {
   font-family: "MuseoSans300"; font-size:18px; 
   margin-right:.5em;
+  display:inline-block;
+}
+#stats-filters h3 small{ font-size:14px; }
+#stats-filters #targetDatepicker{
   display:inline-block;
 }
