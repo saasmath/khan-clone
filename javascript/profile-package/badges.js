@@ -63,6 +63,13 @@ Badges.DisplayCase = Backbone.View.extend({
 	 */
 	maxVisible: 5,
 
+	/**
+	 * The slot number being edited. Any selection from the badge picker
+	 * will replace the badge in this slot number.
+	 * -1 if not currently editing.
+	 */
+	selectedIndex: -1,
+
 	mainCaseEl: null,
 	badgePickerEl: null,
 
@@ -101,9 +108,10 @@ Badges.DisplayCase = Backbone.View.extend({
 
 	/**
 	 * Enters "edit mode" where badges can be added/removed, if possible.
+	 * @param {number=} opt_index The slot index to edit.
 	 * @return {Badges.DisplayCase} This same instance so calls can be chained.
 	 */
-	edit: function() {
+	edit: function( opt_index ) {
 		if ( !this.isEditable() || this.editing ) {
 			return this;
 		}
@@ -111,19 +119,40 @@ Badges.DisplayCase = Backbone.View.extend({
 		this.editing = true;
 
 		// Visual indicator for the badge edits.
-		var jelRoot = $(this.el);
-		var jelPicker = $(this.badgePickerEl);
+		var self = this;
 		$(".achievement-badge", this.mainCaseEl).animate({
 			"margin": "5px"
 		}, "fast", function() {
-			jelRoot.addClass( "editing" );
+			$(self.el).addClass( "editing" );
+			self.updateEditSelection_( opt_index );
 		});
 
 		this.showBadgePicker_();
-		jelPicker.delegate(
+		$(this.badgePickerEl).delegate(
 				".achievement-badge",
 				"click",
 				_.bind( this.onBadgeInPickerClicked_, this ));
+		$(this.mainCaseEl).delegate(
+				".achievement-badge",
+				"click",
+				_.bind( this.onBadgeClicked_, this ));
+	},
+
+	/**
+	 * Updates the editor so that the badge at the specified index is
+	 * being edited. If no index is specified, the last possible spot
+	 * is selected by default.
+	 * @param {number=} opt_index The index of the slot in the display-case
+	 *		to be edited. -1 to indicate that none should be selected (i.e.
+	 *		we're exiting edit mode).
+	 */
+	updateEditSelection_: function( opt_index ) {
+		// By default, select the first empty slot, or the last non-empty
+		// slot if completely full.
+		var index = ( opt_index === undefined ) ? this.model.length : opt_index;
+		var max = Math.min( this.model.length, this.maxVisible - 1);
+		this.selectedIndex = Math.min( index, max );
+		this.updateSelectionHighlight();
 	},
 
 	/**
@@ -145,6 +174,18 @@ Badges.DisplayCase = Backbone.View.extend({
 	},
 
 	/**
+	 * Handles a click to a badge in the main display case.
+	 */
+	onBadgeClicked_: function( e ) {
+		if ( !this.editing ) {
+			// Noop when not editing.
+			return;
+		}
+		var index = $(".achievement-badge", this.mainCaseEl).index( e.currentTarget );
+		this.updateEditSelection_( index );
+	},
+
+	/**
 	 * Handles a click to a badge in the badge picker in edit mode.
 	 */
 	onBadgeInPickerClicked_: function( e ) {
@@ -159,10 +200,13 @@ Badges.DisplayCase = Backbone.View.extend({
 			return;
 		}
 
-		// TODO: actually have a selection in the main model so it can replace
-		// that selection instead of just adding it.
+		// Backbone.Collection doesn't have a .replce method - do it ourselves
 		// TODO: should we be cloning?
-		this.model.add( matchedBadge.clone() );
+		var existing = this.model.at( this.selectedIndex );
+		if ( existing ) {
+			this.model.remove( existing );
+		}
+		this.model.add( matchedBadge.clone(), { at: this.selectedIndex });
 	},
 
 	/**
@@ -171,6 +215,7 @@ Badges.DisplayCase = Backbone.View.extend({
 	stopEdit: function() {
 		if ( this.editing ) {
 			this.editing = false;
+			this.updateEditSelection_( -1 );
 			var jelMainCase = $(this.mainCaseEl);
 			var jelPicker = $(this.badgePickerEl);
 			jelPicker.slideUp("fast", function() {
@@ -208,6 +253,18 @@ Badges.DisplayCase = Backbone.View.extend({
 	},
 
 	/**
+	 * Updates the appropriate badge being highlighted for edit mode.
+	 * See {@link #selectedIndex} for more details.
+	 */
+	updateSelectionHighlight: function() {
+		var badgeSlots = $(".achievement-badge", this.mainCaseEl);
+		badgeSlots.removeClass( "selected" );
+		if ( this.selectedIndex > -1 ) {
+			$(badgeSlots[ this.selectedIndex ]).addClass( "selected" );
+		}
+	},
+
+	/**
 	 * Renders the contents of the badge picker.
 	 * Idempotent - simply blows away and repopulates the contents if called
 	 * multiple times.
@@ -229,6 +286,7 @@ Badges.DisplayCase = Backbone.View.extend({
 			$(this.el).append(this.mainCaseEl).append(this.badgePickerEl);
 		}
 		$(this.mainCaseEl).html( this.template( this.getTemplateContext_() ) );
+		this.updateSelectionHighlight();
 		return this;
 	}
 });

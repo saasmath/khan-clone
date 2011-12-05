@@ -15,6 +15,10 @@
   border: 2px dashed #999;
 }
 
+.editing .main-case .achievement-badge.selected {
+  border-color: blue;
+}
+
 .badge-display-case .achievement-title {
   width: auto;
   position: relative;
