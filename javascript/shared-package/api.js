@@ -14,6 +14,11 @@ var APIActionResults = {
         $(document).ajaxComplete(function (e, xhr, settings) {
 
             if (xhr &&
+                xhr.getResponseHeader('X-KA-API-Version-Mismatch')) {
+                apiVersionMismatch();
+            }
+
+            if (xhr &&
                 xhr.getResponseHeader('X-KA-API-Response') &&
                 xhr.responseText) {
 
@@ -33,10 +38,15 @@ var APIActionResults = {
         jQuery.ajaxSetup({
             beforeSend: function(xhr, settings) {
                 if (settings && settings.url && settings.url.indexOf("/api/") > -1) {
-                    if (fkey) {
+                    var xsrfToken = readCookie('fkey');
+                    if (xsrfToken) {
                         // Send xsrf token along via header so it can be matched up
                         // w/ cookie value.
-                        xhr.setRequestHeader("X_KA_FKEY", fkey);
+                        xhr.setRequestHeader("X_KA_FKEY", xsrfToken);
+                    } else {
+                        apiVersionMismatch();
+                        settings.error();
+                        return false;
                     }
                 }
             }
@@ -48,6 +58,10 @@ var APIActionResults = {
         this.hooks[this.hooks.length] = {prop: prop, fxn: fxn};
     }
 };
+
+function apiVersionMismatch() {
+    Notifications.showTemplate('shared.api-version-mismatch');
+}
 
 APIActionResults.init();
 

@@ -57,15 +57,15 @@ table {
    line-height: 0;
    height: 0;
 }
- 
+
 .clearfix {
    display: inline-block;
 }
- 
+
 html[xmlns] .clearfix {
    display: block;
 }
- 
+
 * html .clearfix {
    height: 1%;
    overflow: visible;
@@ -192,7 +192,7 @@ input.simple-button {
 
 .simple-button:hover {
     border-color: #aaa;
-    
+
     -webkit-box-shadow: inset 0 1px 0 rgba(255,255,255, .4), inset 0 0 50px 5px rgba(255,255,255,.2);
     -moz-box-shadow: inset 0 1px 0 rgba(255,255,255, .4), inset 0 0 50px 5px rgba(255,255,255,.2);
     box-shadow: inset 0 1px 0 rgba(255,255,255, .4), inset 0 0 50px 5px rgba(255,255,255,.2);
@@ -970,7 +970,7 @@ footer {
     .simple-input.placeholder {
         font-style: italic;
     }
-    #top-header #page_search #search-input, .search-input{
+    .simple-input.search-input {
         background-image: url(/images/non-repeating-sprites.3.png);
         background-position: -5px -867px;
         padding-left: 25px;
@@ -1594,12 +1594,6 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     #container .dashboard-header .dashboard-nav .playlist_browser_title {
         margin-top: 2px;
     }
-    #container .dashboard-content {
-        width: 1179px;
-        height: 800px;
-        overflow-y: auto;
-        padding-left: 20px;
-    }
 
 .exercise-filter-count,.exercise-all-exercises {
     font-size: 11px;
@@ -1907,6 +1901,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         width: 60px;
         height: 62px;
     }
+
+.proficient-badge {
+    display: block;
+}
 
 .exercise-badge.single-exercise .energy-points-badge {
     left: auto;
@@ -3072,9 +3070,14 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 
 .nodeLabel {
+    display: block;
     text-align: center;
     cursor: pointer;
     line-height: normal;
+}
+
+a.nodeLabel:hover {
+    text-decoration: none;
 }
 
 .nodeLabel div {
@@ -3555,17 +3558,6 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: #fee;
 }
 
-.dark-window {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #000;
-    opacity: 0.45;
-    filter:alpha(opacity=45);
-    z-index: 999;
-}
 .window-center {
     position: absolute;
     top: 50%;
@@ -3622,4 +3614,23 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 
 #popup-dialog .close-button {
     margin-top: 7px;
+}
+
+#popup-dialog .generic-message-wrapper {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+}
+
+#popup-dialog .dialog-progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+#popup-dialog .dialog-progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
 }

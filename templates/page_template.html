@@ -55,8 +55,11 @@
             {{ user.user_video_css(user_data) }}
             {{ js_css_packages.js_package("shared") }}
         {% endif %}
-
-        {{ xsrf.render_xsrf_js() }}
+        
+        {# Functions that load packages at run-time -#}
+        <script type="text/javascript">
+          {{ js_css_packages.js_dynamic_package("maps") }}
+        </script>
 
         {% block pagescript %}
         {% endblock pagescript %}
@@ -128,7 +131,7 @@
                             </div>
                             <div id="search-box">
                                 <form id="page_search" action="/search">
-                                    <input id="search-input" type="text" placeholder="Search for a video or playlist" name="page_search_query" value='{{page_search_query|escape}}' class="search-input ui-corner-all placeholder simple-input" /><input type="submit" value=" " id="search-submit" />
+                                    <input id="search-input" type="text" placeholder="Search for a video or playlist" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " id="search-submit" />
                                 </form>
                             </div>
                             <div class="clear"></div>
@@ -167,7 +170,7 @@
     </div>
     </div>
     <div id="popup-dialog" style="display: none">
-      <div class="dark-window">&nbsp;</div>
+      <div class="modal-backdrop"></div>
       <div class="window-center">
         <div class="dialog-frame">
           <div class="dialog-header"><a href="#" class="close-button close">x</a> <div class="description"></div></div>
@@ -200,8 +203,10 @@
     </script>
 
     <script id="generic-loading-dialog" type="text/html">
-      <div id="generic-message">
-        <img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Loading... </span>
+      <div class="generic-message-wrapper">
+        <div class="generic-message">
+          <div class="dialog-progress-bar"></div>
+        </div>
       </div>
     </script>
     {%- endraw -%}
