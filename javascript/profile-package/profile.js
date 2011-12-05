@@ -852,7 +852,8 @@ var Profile = {
         var mouseY;
         element.find(".objective").hover(
             function(e) {
-                var hoverTime = lastHoverTime = Date.now();
+                var hoverTime = +(new Date);
+                lastHoverTime = hoverTime;
                 mouseX = e.pageX;
                 mouseY = e.pageY;
                 var self = this;
