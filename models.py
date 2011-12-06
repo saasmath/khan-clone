@@ -1095,8 +1095,22 @@ class Topic(db.Model):
     version = db.ReferenceProperty(TopicVersion, required = True)  
     tags = db.StringListProperty() # not used now, putting in so that playl1st api users don't barf if they are using it 
     hide = db.BooleanProperty(default = False)
+    date_created = db.DateTimeProperty(auto_now_add=True)
+    date_updated = db.DateTimeProperty(auto_now=True)
+    last_editted_by = db.UserProperty()
 
-    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys"]
+    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_editted_by"]
+
+    def get_visible_data(self):
+        children = db.get(self.child_keys)
+        self.children = []
+        for child in children:
+            item = {}
+            item["kind"] = child.__class__.__name__
+            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name
+            item["title"] = child.title if hasattr(child, "title") else child.name
+            self.children.append(item)
+        return self
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
@@ -1186,8 +1200,7 @@ class Topic(db.Model):
         new_topic = util.clone_entity(self, **kwargs)
 
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
-        
-            
+                    
     def delete_tree(self):
         topics = Topic.all().filter("ancestor_keys =", self.key()).fetch(10000)
         topics.append(self)
