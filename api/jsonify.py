@@ -1,11 +1,17 @@
 # Based on http://appengine-cookbook.appspot.com/recipe/extended-jsonify-function-for-dbmodel,
 # with modifications for flask and performance.
 
-from flask import request
+import flask
 import simplejson
 from google.appengine.ext import db
 from datetime import datetime
 import re
+
+def has_flask_request_context():
+    # HACK - peek into private variables since the current version of Flask
+    # being used does not expose a helper for this (later versions do, and
+    # the implementation is the same).
+    return flask._request_ctx_stack.top is not None
 
 SIMPLE_TYPES = (int, long, float, bool, basestring)
 def dumps(obj, camel_cased=False):
@@ -96,7 +102,8 @@ def jsonify(data, **kwargs):
     underscore convention.
     """
 
-    if request and request.values.get("casing") == "camel":
+    if (has_flask_request_context() and
+            flask.request.values.get("casing") == "camel"):
         encoder = JSONModelEncoderCamelCased
     else:
         encoder = JSONModelEncoder
