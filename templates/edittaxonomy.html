@@ -9,72 +9,6 @@
 
 <script>
 
-var TopicTreeEditor = {
-    tree: null,
-
-    init: function() {
-        var root = TopicTree.getRoot();
-        root.bind("change", this.refreshTreeNode, root);
-
-        // Attach the dynatree widget to an existing <div id="tree"> element
-        // and pass the tree options as an argument to the dynatree() function:
-        $("#topic_tree").dynatree({
-            imagePath: '/images/',
-
-            onActivate: function(node) {
-                KAConsole.log('Activated: ', node);
-            },
-
-            onLazyRead: function(node) {
-                children = node.data.model.getChildren();
-                children.bind("reset", TopicTreeEditor.refreshTreeChildren, node);
-            },
-
-            children: [ {
-                    title: "Loading...",
-                    key:  'root',
-                    isFolder: true,
-                    isLazy: true,
-                    model: root
-            } ]
-        });
-        TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
-    },
-
-    // Called with model as "this"
-    refreshTreeNode: function() {
-        KAConsole.log('refreshing ' + this.get("readable_id"));
-        node = TopicTreeEditor.tree.getNodeByKey(this.get("readable_id"));
-        node.setTitle(this.get("title"));
-    },
-
-    // Called with node as "this"
-    refreshTreeChildren: function() {
-        var node = this;
-        KAConsole.log('refreshing children ' + node.data.model.get("readable_id"));
-        node.removeChildren();
-        if (node.data.model.children) {
-            node.data.model.children.each(function(child) {
-                var data = {
-                    title: child.get("title"),
-                    key:  child.get("readable_id"),
-                    model: child
-                };
-                if (child.get('kind') == 'Topic') {
-                    data.isFolder = true;
-                    data.isLazy = true;
-                } else if (child.get('kind') == 'Video') {
-                    data.icon = 'video-camera-icon-full-small.png';
-                } else if (child.get('kind') == 'Exercise') {
-                    data.icon = 'exercise-icon-small.png';
-                }
-                node.addChild(data);
-                child.bind("change", TopicTreeEditor.refreshTreeNode, child);
-            });
-        }
-    }
-};
-
 $(function(){
     KAConsole.debugEnabled = true;
     TopicTreeEditor.init();
@@ -92,7 +26,8 @@ $(function(){
 
 {% block pagecontent %}
 
-<div id="topic_tree" style="width: 500px; height: 400px; overflow: scroll;"></div>
+<div id="topic_tree" style="width: 500px; height: 500px; overflow-y: scroll; float: left;"></div>
+<div id="details_view" style="width: 400px; height: 500px; float: left"></div>
 
 {% endblock pagecontent %}
 

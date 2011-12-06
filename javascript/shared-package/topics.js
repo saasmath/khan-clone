@@ -22,7 +22,7 @@ function TestTopics() {
 			title: 'New Topic',
 			description: '',
 			kind: 'Topic',
-			readable_id: '',
+			id: '',
 			hide: false,
 			ka_url: '',
 			tags: [],
@@ -35,7 +35,10 @@ function TestTopics() {
 			var id = '';
 			var title = '';
 			var kind = this.get('kind');
-			if (kind == 'Topic' || kind == 'Video') {
+			if (kind == 'Topic') {
+				id = this.get('id');
+				title = this.get('title');
+            } else if (kind == 'Video') {
 				id = this.get('readable_id');
 				title = this.get('title');
 			}
@@ -67,7 +70,7 @@ function TestTopics() {
 		getRoot: function() {
 			if (!rootTopic) {
 				rootTopic = new Topic({
-					readable_id: 'root',
+					id: 'root',
 					title: 'Loading...'
 				});
 				rootTopic.fetch();
