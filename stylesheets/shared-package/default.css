@@ -1686,11 +1686,15 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .achievement-badge-counts {
     text-decoration: none;
-}
-
-.achievement-badge-counts {
     position: relative;
     top: 2px;
+}
+.achievement-badge-counts .badge {
+  margin-right:4px;
+}
+
+.achievement-badge-counts .badge img {
+  margin-right:-2px;
 }
 
 .achievement-badge {

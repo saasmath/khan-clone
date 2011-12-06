@@ -3,22 +3,34 @@
 {% if sum %}
 <a title="{{ sum }} badges" class="achievement-badge-counts" href="/profile#achievements">
     {% if bronze %}
+      <span class="badge">
         <img src="{{ "/images/badges/meteorite-tiny.png"|static_url }}" width="10" height="10"/> {{bronze}}
+      </span>
     {% endif %}
     {% if silver %}
+      <span class="badge">
         <img src="{{ "/images/badges/moon-tiny.png"|static_url }}" width="10" height="10"/> {{ silver }}
+      </span>
     {% endif %}
     {% if gold %}
+      <span class="badge">
         <img src="{{ "/images/badges/earth-tiny.png"|static_url }}" width="10" height="10"/> {{ gold }}
+      </span>
     {% endif %}
     {% if platinum %}
+      <span class="badge">
         <img src="{{ "/images/badges/sun-tiny.png"|static_url }}" width="10" height="10"/> {{ platinum }}
+      </span>
     {% endif %}
     {% if diamond %}
+      <span class="badge">
         <img src="{{ "/images/badges/eclipse-tiny.png"|static_url }}" width="10" height="10"/> {{ diamond }}
+      <span>
     {% endif %}
     {% if master %}
+      <span class="badge">
         <img src="{{ "/images/badges/master-challenge-blue-tiny.png"|static_url }}" width="12" height="12" /> {{ master }}
+      </span>
     {% endif %}
 </a>
 {% endif %}
