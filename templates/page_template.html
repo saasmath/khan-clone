@@ -55,7 +55,7 @@
             {{ user.user_video_css(user_data) }}
             {{ js_css_packages.js_package("shared") }}
         {% endif %}
-        
+
         {# Functions that load packages at run-time -#}
         <script type="text/javascript">
           {{ js_css_packages.js_dynamic_package("maps") }}
@@ -199,9 +199,6 @@
 
     {{ gae_mini_profiler.profiler_includes() }}
 
-    {%- raw -%}
-    </script>
-
     <script id="generic-loading-dialog" type="text/html">
       <div class="generic-message-wrapper">
         <div class="generic-message">
@@ -209,7 +206,6 @@
         </div>
       </div>
     </script>
-    {%- endraw -%}
 
     {%- if global_goals -%}
     <script type="text/javascript">
