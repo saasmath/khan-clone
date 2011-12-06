@@ -551,3 +551,47 @@ div.graph-notification {
 #stats-filters #targetDatepicker{
   display:inline-block;
 }
+.user-info-container {
+  border: 1px solid green;
+  width: 425px;
+  height: 200px;
+  float: left;
+}
+.user-info-container img {
+  float: left;
+  height: 200px;
+}
+.user-info-container .user-info {
+  padding-left: 20px;
+  padding-top: 10px;
+  float: left;
+}
+.user-info-container .user-info img {
+  width: 50px;
+  height: 50px;
+}
+.sticker-book {
+  border: 1px solid green;
+  float: left;
+  width: 500px;
+  height: 200px;
+  margin-left: 30px;
+}
+#tabs {
+    margin-top: 22px;
+}
+#tabs .ui-tabs {
+    border: none;
+}
+#tabs.ui-tabs.ui-corner-all, #tabs .ui-tabs-nav.ui-corner-all {
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+}
+#tabs.ui-tabs {
+    border: none;
+}
+#tabs .ui-tabs-nav {
+    background: none;
+    border-width: 0 0 1px 0;
+}
