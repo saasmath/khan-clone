@@ -102,7 +102,7 @@ def content_topics():
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_videos(topic_readable_id):
-    topic = models.Topic.get_by_readable_id(topic_readable_id)
+    topic = models.Topic.get_by_id(topic_readable_id)
     if topic is None: 
         topic = models.Topic.get_by_title(topic_readable_id) # needed for people who were using the playlists api
         if topic is None:
@@ -121,7 +121,7 @@ def topic_videos(topic_readable_id):
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_exercises(topic_readable_id):
-    topic = models.Topic.get_by_readable_id(topic_readable_id)
+    topic = models.Topic.get_by_id(topic_readable_id)
     if topic is None: 
         topic = models.Topic.get_by_title(topic_readable_id) # needed for people who were using the playlists api
         if topic is None:
@@ -149,7 +149,7 @@ def topics():
 @compress
 @jsonify
 def topictree():
-    return models.Topic.get_by_readable_id("root").make_tree()
+    return models.Topic.get_by_id("root").make_tree()
 
 @route("/api/v1/topic/<topic_readable_id>", methods=["GET"])
 @jsonp
@@ -158,7 +158,7 @@ def topictree():
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic(topic_readable_id):
-    return models.Topic.get_by_readable_id(topic_readable_id)
+    return models.Topic.get_by_id(topic_readable_id)
 
 @route("/api/v1/topic/<topic_readable_id>/children", methods=["GET"])
 @jsonp
@@ -167,7 +167,7 @@ def topic(topic_readable_id):
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_children(topic_readable_id):
-    topic = models.Topic.get_by_readable_id(topic_readable_id)
+    topic = models.Topic.get_by_id(topic_readable_id)
     if topic is not None:
         return db.get(topic.child_keys)
 

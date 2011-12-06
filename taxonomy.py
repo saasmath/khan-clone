@@ -50,7 +50,7 @@ class EditTaxonomy(request_handler.RequestHandler):
         # return
         
         
-        # root = Topic.get_by_readable_id("root").make_tree()
+        # root = Topic.get_by_id("root").make_tree()
         # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()
         
         '''
@@ -70,34 +70,45 @@ class EditTaxonomy(request_handler.RequestHandler):
         return
 
     def recursive_copy_topic_list_structure(self, parent, topic_list_part):
+        delete_topics = {}
         for topic_dict in topic_list_part:
             logging.info(topic_dict["name"])
             if topic_dict.has_key("playlist"):
-                topic = Topic.get_by_title(topic_dict["playlist"])
-                topic.title = topic_dict["name"]
-                topic.parent = parent
-                topic.put()
+                topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
+                if topic:
+                    logging.info(topic_dict["name"] + " is already created")
+                else:
+                    topic = Topic.get_by_title(topic_dict["playlist"])
+                    delete_topics[topic.key()] = topic
+                    logging.info("copying %s to parent %s" % (topic_dict["name"], parent.title))
+                    topic.copy(title = topic_dict["name"], parent = parent, standalone_title = topic.title)
             else:
-                topic = Topic.insert(title = topic_dict["name"],
-                                     parent = parent
-                                     )
-            parent.child_keys.append(topic.key())
-            parent.put()
+                topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
+                if topic:
+                    logging.info(topic_dict["name"] + " is already created")
+                else:
+                    logging.info("adding %s to parent %s" % (topic_dict["name"], parent.title))
+                    topic = Topic.insert(title = topic_dict["name"],
+                                         parent = parent
+                                         )
 
             if topic_dict.has_key("items"):
-                self.recursive_copy_topic_list_structure(topic, topic_dict["items"])
-        
+                delete_topics.update(self.recursive_copy_topic_list_structure(topic, topic_dict["items"]))
+
+        return delete_topics       
 
     def recreate_topic_list_structure(self):
         import topics_list
 
-        root = Topic.get_by_readable_id("root")
-        self.recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
+        root = Topic.get_by_id("root")
+        delete_topics = self.recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
+        for topic in delete_topics.values():
+            topic.delete_tree()
 
     def hide_topics(self):
         from topics_list import topics_list
 
-        root = Topic.get_by_readable_id("root")
+        root = Topic.get_by_id("root")
         topics = Topic.all().ancestor(root).fetch(10000)
         for topic in topics:
             if topic.title not in topics_list:
@@ -109,7 +120,7 @@ class EditTaxonomy(request_handler.RequestHandler):
 
 
     def load_videos(self):
-        root = Topic.get_by_readable_id("root")
+        root = Topic.get_by_id("root")
                         
         title = self.request.get('title', None)
         if title is None:
@@ -151,7 +162,7 @@ class EditTaxonomy(request_handler.RequestHandler):
     def load_demo(self):
         root = Topic.insert(title = "The Root of All Knowledge",
                             description = "All concepts fit into the root of all knowledge",
-                            readable_id = "root")
+                            id = "root")
         '''
         math = Topic.insert(title = "Mathematics",
                             parent = root,
