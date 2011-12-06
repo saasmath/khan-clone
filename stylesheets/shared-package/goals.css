@@ -293,14 +293,19 @@ ul.inline-list, ul.inline-list li {
     margin-top: 3px;
 }
 
+.goal-title {
+    font-size: 14px;
+    font-weight: bold;
+}
+
 input.goal-title {
-    font-size: 16px;
     padding: 5px 5px 5px 0;
     height: auto;
     min-width: 250px;
     color: #333;
     background-color: transparent;
     border-color: transparent;
+    margin-bottom: 5px; /* to match span.goal-title element */
 }
 input.goal-title::-webkit-input-placeholder {
     color: #333;
@@ -555,7 +560,7 @@ input.goal-title:focus {
   margin-bottom:12px;
   width:90%;
   border-bottom:1px solid #666;
-  
+
 }
 .goalpicker h4 {
   text-transform:uppercase;

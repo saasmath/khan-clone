@@ -14,45 +14,95 @@ var Profile = {
 
     init: function() {
         Profile.render();
-		$('.share-link').hide();
-		$('.sharepop').hide();
+        $('.share-link').hide();
+        $('.sharepop').hide();
 
-		$(".achievement,.exercise,.video").hover(
-			function () {
-			    $(this).find(".share-link").show();
-				},
-			function () {
-			    $(this).find(".share-link").hide();
-				$(this).find(".sharepop").hide();
-			  });
+        $(".achievement,.exercise,.video").hover(
+            function () {
+                $(this).find(".share-link").show();
+                },
+            function () {
+                $(this).find(".share-link").hide();
+                $(this).find(".sharepop").hide();
+              });
 
-		$('.share-link').click(function() {
-			if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
-				$(this).next(".sharepop").toggle();
-			} else {
-				$(this).next(".sharepop").toggle(
-						"drop", { direction:'up' }, "fast" );
-			}
-			return false;
-		});
+        $('.share-link').click(function() {
+            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
+                $(this).next(".sharepop").toggle();
+            } else {
+                $(this).next(".sharepop").toggle(
+                        "drop", { direction:'up' }, "fast" );
+            }
+            return false;
+        });
 
-		// Init Highcharts global options.
-		Highcharts.setOptions({
-			credits: {
-				enabled: false
-			},
-			title: {
-				text: ''
-			},
-			subtitle: {
-				text: ''
-			}
-		});
+        // Init Highcharts global options.
+        Highcharts.setOptions({
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            }
+        });
 
-        if ($.address)
-            $.address.externalChange(function(){ Profile.historyChange(); });
 
-        $(".graph-link").click(function(){ Profile.loadGraphFromLink(this); return false;});
+
+        if ($.address){
+
+            $.address.change(function(){
+                Profile.historyChange();
+            });
+
+        }
+
+        $(".graph-link").click(
+            function(evt){
+                evt.preventDefault();
+                if($.address){
+                    $.address.value( $( this ).attr( "href" ) )
+                }
+            }
+        );
+
+        $("#individual_report #achievements #achievement-list > ul li").click(function() {
+             var category = $(this).attr('id');
+             var clickedBadge = $(this);
+
+             $("#badge-container").css("display", "");
+             clickedBadge.siblings().removeClass("selected");
+
+             if ($("#badge-container > #" + category ).is(":visible")) {
+                if (clickedBadge.parents().hasClass("standard-view")) {
+                    $("#badge-container > #" + category ).slideUp(300, function(){
+                            $("#badge-container").css("display", "none");
+                            clickedBadge.removeClass("selected");
+                        });
+                }
+                else {
+                    $("#badge-container > #" + category ).hide();
+                    $("#badge-container").css("display", "none");
+                    clickedBadge.removeClass("selected");
+                }
+             }
+             else {
+                var jelContainer = $("#badge-container");
+                var oldHeight = jelContainer.height();
+                $(jelContainer).children().hide();
+                if (clickedBadge.parents().hasClass("standard-view")) {
+                    $(jelContainer).css("min-height", oldHeight);
+                    $("#" + category, jelContainer).slideDown(300, function() {
+                        $(jelContainer).animate({"min-height": 0}, 200);
+                    });
+                } else {
+                    $("#" + category, jelContainer).show();
+                }
+                clickedBadge.addClass("selected");
+             }
+        });
 
         // remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
@@ -238,6 +288,15 @@ var Profile = {
         this.loadGraph(url);
     },
 
+    loadFilters : function( href ){
+        // fix the hrefs for each filter
+        // console.log(href)
+
+        var a = $("#stats-filters a[href^=\"" + href + "\"]").parent();
+        $("#stats-filters .filter:visible").slideUp("slow");
+        a.slideDown();
+    },
+
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
             '/api/v1/user/goals': this.renderUserGoals,
@@ -285,9 +344,9 @@ var Profile = {
 
         if (!fNoHistoryEntry) {
             // Add history entry for browser
-            if ($.address) {
-                $.address.parameter("graph_url", encodeURIComponent(href), false);
-			}
+            //             if ($.address) {
+            //                 $.address(href);
+            // }
         }
 
         this.showGraphThrobber(false);
@@ -308,10 +367,10 @@ var Profile = {
         completed_goals = [];
         abandoned_goals = [];
         var qs = Profile.parseQueryString(href);
-        currentUser = (qs["email"] == USER_EMAIL);
+        var viewingOwnGoals = qs.email == USER_EMAIL;
 
         $.each(data, function(idx, goal) {
-            if (goal.completed != undefined) {
+            if (goal.completed) {
                 if (goal.abandoned)
                     abandoned_goals.push(goal);
                 else
@@ -320,7 +379,7 @@ var Profile = {
                 current_goals.push(goal);
             }
         });
-        if (currentUser)
+        if (viewingOwnGoals)
             GoalBook.reset(current_goals);
         else
             CurrentGoalBook = new GoalCollection(current_goals);
@@ -332,24 +391,21 @@ var Profile = {
         Profile.goalsViews = {};
         Profile.goalsViews.current = new GoalProfileView({
             el: "#current-goals-list",
-            model: currentUser ? GoalBook : CurrentGoalBook,
+            model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: 'current',
-            title: 'Current goals',
-            currentUser: currentUser
+            readonly: !viewingOwnGoals
         });
         Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
-            title: 'Completed goals',
-            currentUser: currentUser
+            readonly: true
         });
         Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
-            title: 'Abandoned goals',
-            currentUser: currentUser
+            readonly: true
         });
 
         Profile.userGoalsHref = href;
@@ -366,7 +422,7 @@ var Profile = {
             $('#goal-show-abandoned-link').parent().hide();
         }
 
-        if (currentUser) {
+        if (viewingOwnGoals) {
             $('.new-goal').addClass('green').removeClass('disabled').click(function(e) {
                 e.preventDefault();
                 window.newGoalDialog.show();
@@ -750,18 +806,21 @@ var Profile = {
 			Profile.loadGraph(
 				"/profile/graph/exerciseproblems?" +
 				"exercise_name=" + exerciseName + "&" +
-				"student_email=" + encodeURIComponent(Profile.email));
+				"student_email=" + Profile.email);
 		});
 	},
 
 	// TODO: move history management out to a common utility
 	historyChange: function(e) {
-		var href = ( $.address ? $.address.parameter("graph_url") : "" ) ||
-				this.initialGraphUrl;
+	    var av = $.address ? $.address.value() : "/" ;
+        // if(av === "/"){
+        //     $.address.value(this.initialGraphUrl)
+        // }
+		var href = (av !== "/") ? av : this.initialGraphUrl;
 		if ( href ) {
-			href = decodeURIComponent( href );
 			if ( this.expandAccordionForHref(href) ) {
 				this.loadGraph( href, true );
+				this.loadFilters( href );
 			} else {
 				// Invalid URL - just try the first link available.
 				var links = $(".graph-link");
@@ -1070,17 +1129,54 @@ var GoalProfileView = Backbone.View.extend({
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
 
+        // only hookup event handlers if the view allows edits
+        if (this.options.readonly) return;
+
         $(this.el)
-            .delegate('input.goal-title', 'blur', $.proxy(function( e ) {
-                var jel = $(e.target);
-                var goalId = jel.closest('.goal').data('id');
-                var goal = this.model.get(goalId);
-                var newTitle = jel.val();
-                if (newTitle !== goal.get('title')) {
-                    goal.save({title: newTitle});
+            // edit titles
+            .delegate('input.goal-title', 'focusout', $.proxy(this.changeTitle, this))
+            .delegate('input.goal-title', 'keypress', $.proxy(function( e ) {
+                if (e.which == '13') { // enter
+                    e.preventDefault();
+                    this.changeTitle(e);
+                    $(e.target).blur();
                 }
             }, this))
+            .delegate('input.goal-title', 'keyup', $.proxy(function( e ) {
+                if ( e.which == '27' ) { // escape
+                    e.preventDefault();
+
+                    // restore old title
+                    var jel = $(e.target);
+                    var goal = this.model.get(jel.closest('.goal').data('id'));
+                    jel.val(goal.get('title'));
+
+                    jel.blur();
+                }
+            }, this))
+
+            // show abandon button on hover
+            .delegate('.goal', 'mouseenter mouseleave', function( e ) {
+                var el = $(e.currentTarget);
+                if ( e.type == 'mouseenter' ) {
+                    el.find(".goal-description .summary-light").hide();
+                    el.find(".goal-description .goal-controls").show();
+                } else {
+                    el.find(".goal-description .goal-controls").hide();
+                    el.find(".goal-description .summary-light").show();
+                }
+            })
+            // respond to abandon button
             .delegate('.abandon', 'click', $.proxy(this.abandon, this));
+    },
+
+    changeTitle: function( e, options ) {
+        var jel = $(e.target);
+        var goal = this.model.get(jel.closest('.goal').data('id'));
+        var newTitle = jel.val();
+        if (newTitle !== goal.get('title')) {
+            goal.save({title: newTitle});
+        }
     },
 
     show: function() {
@@ -1102,23 +1198,11 @@ var GoalProfileView = Backbone.View.extend({
         var json = _.pluck(this.model.models, 'attributes');
         jel.html(this.template({
             goals: json,
-            title: this.options.title,
             isCurrent: (this.options.type == 'current'),
             isCompleted: (this.options.type == 'completed'),
             isAbandoned: (this.options.type == 'abandoned'),
-            isCurrentUser: this.options.currentUser
+            readonly: this.options.readonly
         }));
-
-        jel.find(".goal").hover(
-            function () {
-                $(this).find(".goal-description .summary-light").hide();
-                $(this).find(".goal-controls").show();
-            },
-            function () {
-                $(this).find(".goal-controls").hide();
-                $(this).find(".goal-description .summary-light").show();
-            }
-        );
 
         // attach a NewGoalView to the new goals html
         var newGoalEl = this.$(".goalpicker");
@@ -1263,7 +1347,7 @@ var ProgressSummaryView = function() {
             Profile.loadGraph(
                 "/profile/graph/exerciseproblems?" +
                 "exercise_name=" + exercise + "&" +
-                "student_email=" + encodeURIComponent(email));
+                "student_email=" + email);
         });
     }
 
