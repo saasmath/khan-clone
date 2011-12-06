@@ -148,7 +148,8 @@ javascript = {
 	"topicsadmin": {
         "files": [
 			"jquery.dynatree.js",
-            "jquery.editable-1.3.3.js"
+            "jquery.editable-1.3.3.js",
+            "topics-admin.js"
         ]
 	},
 }
