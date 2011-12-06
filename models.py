@@ -1177,6 +1177,42 @@ class Topic(db.Model):
         import base64, os
         return base64.urlsafe_b64encode(os.urandom(30))
 
+    # updates the ancestor_keys by using the parents' ancestor_keys
+    def update_ancestors(self):
+        ancestor_keys_dict = {}
+        parents = db.get(self.parent_keys)
+        for parent in parents:
+            ancestor_keys_dict.update(dict((key, True) for key in parent.ancestor_keys))
+            ancestor_keys_dict.update({parent.key(): True})
+
+        self.ancestor_keys = ancestor_keys_dict.keys()
+
+    def move_child(self, child, new_parent, new_parent_pos):
+        old_index = self.child_keys.index(child.key())
+        del self.child_keys[old_index]
+
+        new_parent.child_keys.insert(int(new_parent_pos), child.key())
+
+        if new_parent.key() != self.key():
+            old_index = child.parent_keys.index(self.key())
+            del child.parent_keys[old_index]
+            child.parent_keys.append(new_parent.key())
+            child.update_ancestors()
+            
+            descendants = Topic.all().filter("ancestor_key =", child).fetch(10000)
+            for descendant in descendants:
+                descendant.update_ancestors()
+
+        def move_txn():
+            self.put()
+            new_parent.put()
+            if new_parent.key() != self.key():
+                child.put()
+                for descendant in descendants:
+                    descendant.put()
+
+        return db.run_in_transaction(move_txn)    
+
     def copy(self, title, parent=None, **kwargs):
         if not kwargs.has_key("version") and parent is not None:
             kwargs["version"] = parent.version
