@@ -50,7 +50,7 @@ class EditTaxonomy(request_handler.RequestHandler):
         # return
         
         
-        root = Topic.get_by_id("root").make_tree()
+        # root = Topic.get_by_id("root").make_tree()
         # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()
         
         '''
