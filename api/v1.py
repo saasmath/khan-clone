@@ -169,15 +169,15 @@ def topic(topic_id):
 @oauth_optional()
 @jsonp
 @jsonify
-def put_topic(id):
+def put_topic(topic_id):
     user_data = models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    topic = models.Topic.get_by_id(id)
+    topic = models.Topic.get_by_id(topic_id)
 
     if not topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(id))
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
 
     topic_json = request.json
 

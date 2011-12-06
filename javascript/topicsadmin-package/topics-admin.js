@@ -133,21 +133,22 @@ var TopicDetailEditor = {
             className = '';
             if (field == 'id')
                 continue;
+            html += '<tr><td><b>' + field + '</b></td><td>';
             if (field == 'title'|| field == 'description' || field == 'display_name' || field == 'name' || field == 'readable_id' || field == 'keywords')
-                className = 'editable';
-            html += '<tr><td><b>' + field + '</b></td><td><span data-id="' + field + '" class="' + className + '">' + js[field] + '</span></td></tr>';
+                html += '<input data-id="' + field + '" type="text" class="simple-input ui-corner-all blur-on-esc" value="' + js[field] + '"></input>';
+            else
+                html += '<span>' + js[field] + '</span>';
+            html += '</td></tr>';
         }
         html += '</table>';
         $('#details_view').html(html);
-        $('#details_view').find('span.editable').editable({
-            editBy: 'click',
-            onEdit: function(content) {
-                var field = this.attr('data-id');
-                var setter = {};
-                setter[field] = content.current;
-                model.set(setter);
-                model.save();
-            }
+        $('#details_view').find('input').change(function() {
+            var field = $(this).attr('data-id');
+            var value = $(this).val();
+            var setter = {};
+            setter[field] = value;
+            model.set(setter);
+            model.save();
         });
     }
 };
