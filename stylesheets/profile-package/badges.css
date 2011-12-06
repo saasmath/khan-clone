@@ -35,8 +35,11 @@
   float: none;
 }
 
-.badge-display-case .achiement-count {
+.badge-display-case .achievement-count {
   display: inline-block;
+  font-size: 12px;
+  width: auto;
+  margin: 0 2px;
 }
 
 .badge-display-case .full-badge-list {

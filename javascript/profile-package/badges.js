@@ -108,10 +108,12 @@ Badges.DisplayCase = Backbone.View.extend({
 
 	/**
 	 * Enters "edit mode" where badges can be added/removed, if possible.
-	 * @param {number=} opt_index The slot index to edit.
+	 * @param {number=} index Optional index of the slot in the display-case
+	 *		to be edited. Defaults to the first available slot, or if none
+	 *		are available, the last used slot.
 	 * @return {Badges.DisplayCase} This same instance so calls can be chained.
 	 */
-	edit: function( opt_index ) {
+	edit: function( index ) {
 		if ( !this.isEditable() || this.editing ) {
 			return this;
 		}
@@ -124,7 +126,7 @@ Badges.DisplayCase = Backbone.View.extend({
 			"margin": "5px"
 		}, "fast", function() {
 			$(self.el).addClass( "editing" );
-			self.updateEditSelection_( opt_index );
+			self.updateEditSelection_( index );
 		});
 
 		this.showBadgePicker_();
@@ -142,14 +144,14 @@ Badges.DisplayCase = Backbone.View.extend({
 	 * Updates the editor so that the badge at the specified index is
 	 * being edited. If no index is specified, the last possible spot
 	 * is selected by default.
-	 * @param {number=} opt_index The index of the slot in the display-case
+	 * @param {number=} index Optional index of the slot in the display-case
 	 *		to be edited. -1 to indicate that none should be selected (i.e.
-	 *		we're exiting edit mode).
+	 *		we're exiting edit mode.
 	 */
-	updateEditSelection_: function( opt_index ) {
+	updateEditSelection_: function( index ) {
 		// By default, select the first empty slot, or the last non-empty
 		// slot if completely full.
-		var index = ( opt_index === undefined ) ? this.model.length : opt_index;
+		index = ( index === undefined ) ? this.model.length : index;
 		var max = Math.min( this.model.length, this.maxVisible - 1);
 		this.selectedIndex = Math.min( index, max );
 		this.updateSelectionHighlight();
