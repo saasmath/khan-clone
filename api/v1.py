@@ -154,11 +154,21 @@ def topictree():
 @route("/api/v1/topic/<topic_readable_id>", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
-    lambda topic_readable_id: "api_topic_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
+    lambda topic_readable_id: "2api_topic_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic(topic_readable_id):
-    return models.Topic.get_by_id(topic_readable_id)
+    topic = models.Topic.get_by_id(topic_readable_id)
+    if topic:
+        children = db.get(topic.child_keys)
+        topic.children = []
+        for child in children:
+            item = {}
+            item["kind"] = child.__class__.__name__
+            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name
+            item["title"] = child.title if hasattr(child, "title") else child.name
+            topic.children.append(item)
+        return topic
 
 @route("/api/v1/topic/<topic_readable_id>/children", methods=["GET"])
 @jsonp

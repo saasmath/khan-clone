@@ -1169,7 +1169,7 @@ class Topic(db.Model):
          
         kwargs["parent"] = Topic.get_root(kwargs["version"]) 
             
-        if not kwargs.has_key("readable_id"):
+        if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
 
         kwargs["key_name"] = Topic.get_new_key_name()
