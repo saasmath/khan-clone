@@ -661,7 +661,9 @@ def attempt_problem_number(exercise_name, problem_number):
                         sees_graph, review_mode),
                 },
                 "points_earned" : { "points" : points_earned },
-                "attempt_correct" : request.request_bool("complete")
+                "attempt_correct" : request.request_bool("complete"),
+                "review_done": (review_mode and
+                    user_exercise_graph.has_completed_review()),
             };
 
             if current_states["proficient"]:

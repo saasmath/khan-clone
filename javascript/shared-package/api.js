@@ -82,3 +82,14 @@ $(function(){
 
   APIActionResults.register( "points_earned", updatePointDisplay );
 });
+
+// TODO(david): Style clean-up. Make all the JS files follow jQuery core
+//     guidelines.
+// Change review mode heading to "review done!" if appropriate
+$(function() {
+	APIActionResults.register( "review_done", function( done ) {
+		console.log( "got into api results! " + done);
+		if ( !done ) return;
+		$( "#review-mode-title" ).addClass( "review-done" ).find( "h1" ).text( "Review Done!" );
+	});
+});

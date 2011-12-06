@@ -1962,6 +1962,12 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     background-image: linear-gradient(left, #FFF, #AAA);
 }
 
+#review-mode-title.review-done {
+    -moz-box-shadow:    0 6px 6px -6px rgba(227, 93, 4, 0.2), 0 -6px 6px -6px rgba(227, 93, 4, 0.2);
+    -webkit-box-shadow: 0 6px 6px -6px rgba(227, 93, 4, 0.2), 0 -6px 6px -6px rgba(227, 93, 4, 0.2);
+    box-shadow:         0 6px 6px -6px rgba(227, 93, 4, 0.2), 0 -6px 6px -6px rgba(227, 93, 4, 0.2);
+}
+
 /* "Stretched-to-margin" pattern: http://stackoverflow.com/questions/485827 */
 #review-mode-title > div {
     background: #FFF;
@@ -1976,6 +1982,17 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     padding-top: 14px;
 }
 
+/* A gentle elliptical gradient with the review hue */
+#review-mode-title.review-done > div {
+    background: -moz-radial-gradient(center, ellipse cover, #fff2e9 0%, #ffffff 60%, #ffffff 100%);
+    background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#fff2e9), color-stop(60%,#ffffff), color-stop(100%,#ffffff));
+    background: -webkit-radial-gradient(center, ellipse cover, #fff2e9 0%,#ffffff 60%,#ffffff 100%);
+    background: -o-radial-gradient(center, ellipse cover, #fff2e9 0%,#ffffff 60%,#ffffff 100%);
+    background: -ms-radial-gradient(center, ellipse cover, #fff2e9 0%,#ffffff 60%,#ffffff 100%);
+    background: radial-gradient(center, ellipse cover, #fff2e9 0%,#ffffff 60%,#ffffff 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fff2e9', endColorstr='#ffffff',GradientType=1 );
+}
+
 #review-mode-title h1 {
     font-size: 2.5em;
     letter-spacing: 6px;
@@ -1983,6 +2000,11 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     text-transform: uppercase;
     font-weight: bold;
     color: #777;
+}
+
+#review-mode-title.review-done h1 {
+    text-shadow: -1px -1px 0 white, -1px 1px 0 white, -1px 1px 0 white, 1px 1px white;  /* A white outline */
+    -webkit-text-stroke: 1.5px white;
 }
 
 #description .related-content {
