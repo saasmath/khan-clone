@@ -22,7 +22,8 @@ import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag
+from api.decorators import jsonify, jsonp, compress, decompress, etag,\
+    cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
@@ -79,7 +80,8 @@ def add_action_results(obj, dict_results):
 
 @route("/api/v1/playlists", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda: "api_playlists_%s" % models.Setting.cached_library_content_date(),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -88,7 +90,8 @@ def playlists():
 
 @route("/api/v1/playlists/<playlist_title>/videos", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda playlist_title: "api_playlistvideos_%s_%s" % (playlist_title, models.Setting.cached_library_content_date()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -104,7 +107,8 @@ def playlist_videos(playlist_title):
 
 @route("/api/v1/playlists/<playlist_title>/exercises", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda playlist_title: "api_playlistexercises_%s" % (playlist_title),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -122,7 +126,8 @@ def playlist_exercises(playlist_title):
 @etag(lambda: models.Setting.cached_library_content_date())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda: "api_library_%s" % models.Setting.cached_library_content_date(),
     layer=layer_cache.Layers.Memcache)
 @compress
@@ -142,7 +147,8 @@ def playlists_library():
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda: "api_library_list_%s" % models.Setting.cached_library_content_date(),
     layer=layer_cache.Layers.Memcache)
 @compress
