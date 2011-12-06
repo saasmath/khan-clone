@@ -62,7 +62,7 @@ class EditTaxonomy(request_handler.RequestHandler):
 
         
         template_values = {
-            'tree': self.get_tree_html(root) 
+            #'tree': self.get_tree_html(root) 
             }
 
         
