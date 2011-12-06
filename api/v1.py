@@ -94,17 +94,17 @@ def content_topics():
                 break
     return content_topics
 
-@route("/api/v1/topic/<topic_readable_id>/videos", methods=["GET"])
-@route("/api/v1/playlists/<topic_readable_id>/videos", methods=["GET"])
+@route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
+@route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda topic_readable_id: "api_topic_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
-    layer=layer_cache.Layers.Memcache)
+#@layer_cache.cache_with_key_fxn(
+#    lambda topic_id: "api_topic_%s_%s" % (topic_id, models.Setting.cached_library_content_date()),
+#    layer=layer_cache.Layers.Memcache)
 @jsonify
-def topic_videos(topic_readable_id):
-    topic = models.Topic.get_by_id(topic_readable_id)
+def topic_videos(topic_id):
+    topic = models.Topic.get_by_id(topic_id)
     if topic is None: 
-        topic = models.Topic.get_by_title(topic_readable_id) # needed for people who were using the playlists api
+        topic = models.Topic.get_by_title(topic_id) # needed for people who were using the playlists api
         if topic is None:
             raise ValueError("Invalid topic readable_id.")
     
@@ -113,17 +113,17 @@ def topic_videos(topic_readable_id):
         video.position = i + 1
     return videos
 
-@route("/api/v1/topic/<topic_readable_id>/exercises", methods=["GET"])
-@route("/api/v1/playlists/<topic_readable_id>/exercises", methods=["GET"])
+@route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
+@route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda topic_readable_id: "api_topic_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
-    layer=layer_cache.Layers.Memcache)
+#@layer_cache.cache_with_key_fxn(
+#    lambda topic_id: "api_topic_%s_%s" % (topic_id, models.Setting.cached_library_content_date()),
+#    layer=layer_cache.Layers.Memcache)
 @jsonify
-def topic_exercises(topic_readable_id):
-    topic = models.Topic.get_by_id(topic_readable_id)
+def topic_exercises(topic_id):
+    topic = models.Topic.get_by_id(topic_id)
     if topic is None: 
-        topic = models.Topic.get_by_title(topic_readable_id) # needed for people who were using the playlists api
+        topic = models.Topic.get_by_title(topic_id) # needed for people who were using the playlists api
         if topic is None:
             raise ValueError("Invalid topic readable_id.")
     
@@ -132,9 +132,9 @@ def topic_exercises(topic_readable_id):
 
 @route("/api/v1/topics", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda: "api_topics_%s" % models.Setting.cached_library_content_date(),
-    layer=layer_cache.Layers.Memcache)
+#@layer_cache.cache_with_key_fxn(
+#    lambda: "api_topics_%s" % models.Setting.cached_library_content_date(),
+#    layer=layer_cache.Layers.Memcache)
 @jsonify
 def topics():
     return models.Topic.get_all_topics()
@@ -143,9 +143,9 @@ def topics():
 @etag(lambda: models.Setting.cached_library_content_date())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
-@layer_cache.cache_with_key_fxn(
-    lambda: "api_topictree_%s" % models.Setting.cached_library_content_date(),
-    layer=layer_cache.Layers.Memcache)
+#@layer_cache.cache_with_key_fxn(
+#    lambda: "api_topictree_%s" % models.Setting.cached_library_content_date(),
+#    layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
 def topictree():
@@ -153,9 +153,9 @@ def topictree():
 
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda topic_id: "api_topic_%s_%s" % (topic_id, models.Setting.cached_library_content_date()),
-    layer=layer_cache.Layers.Memcache)
+#@layer_cache.cache_with_key_fxn(
+#    lambda topic_id: "api_topic_%s_%s" % (topic_id, models.Setting.cached_library_content_date()),
+#    layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic(topic_id):
     topic = models.Topic.get_by_id(topic_id)
@@ -188,14 +188,49 @@ def put_topic(id):
 
     return topic.get_visible_data()
 
-@route("/api/v1/topic/<topic_readable_id>/children", methods=["GET"])
+@route("/api/v1/topic/<old_parent_id>/movechild", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda topic_readable_id: "api_topic_chidren_%s_%s" % (topic_readable_id, models.Setting.cached_library_content_date()),
-    layer=layer_cache.Layers.Memcache)
 @jsonify
-def topic_children(topic_readable_id):
-    topic = models.Topic.get_by_id(topic_readable_id)
+def topic_move_child(old_parent_id):
+    old_parent_topic = models.Topic.get_by_id(old_parent_id)
+    if not old_parent_topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(old_parent_id))
+    
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+
+    if kind == "Topic":
+        child =  models.Topic.get_by_id(id)
+    elif kind == "Exercise":
+        child = models.Exercise.get_by_name(id)
+    elif kind == "Video":
+        child = models.Video.get_by_readable_id(id)
+    else:
+        return api_invalid_param_response("Invalid kind to move:" + kind)
+
+    if not child:
+        return api_invalid_param_response("Could not find a %s with ID %s " % (kind, id))
+
+    new_parent_id = request.request_string("new_parent_id")
+    new_parent =  models.Topic.get_by_id(new_parent_id)
+    if not old_parent_topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(old_parent_id))
+           
+    new_parent_pos = request.request_string("id")
+
+    old_parent_topic.move_child(child, new_parent, new_parent_pos)
+
+    return True    
+
+
+@route("/api/v1/topic/<topic_id>/children", methods=["GET"])
+@jsonp
+#@layer_cache.cache_with_key_fxn(
+#    lambda topic_id: "api_topic_chidren_%s_%s" % (topic_id, models.Setting.cached_library_content_date()),
+#    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topic_children(topic_id):
+    topic = models.Topic.get_by_id(topic_id)
     if topic is not None:
         return db.get(topic.child_keys)
 
