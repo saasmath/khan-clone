@@ -436,6 +436,20 @@ var GoalSummaryView = Backbone.View.extend({
     }
 });
 
+function finishLoadingMapsPackage() {
+    KAConsole.log('Loaded Google Maps.');
+    dynamicLoadPackage_maps(function(status, progress) {
+        if (status == 'complete') {
+            KAConsole.log('Loaded maps package.');
+        } else if (status == 'failed') {
+            KAConsole.log('Failed to load maps package.');
+            setTimeout(finishLoadingMapsPackage, 5000); // Try again in 5 seconds
+        } else if (status == 'progress') {
+            KAConsole.log('Maps package ' + (progress*100).toFixed(0) + '% loaded.');
+            $("#popup-dialog .dialog-progress-bar").progressbar('value', progress*100);
+        }
+    });
+}
 
 var NewGoalView = Backbone.View.extend({
     template: Templates.get( 'shared.goal-new' ),
@@ -512,21 +526,40 @@ var NewGoalView = Backbone.View.extend({
         e.preventDefault();
         globalPopupDialog.show('create-custom-goal', null,
             'Create a custom goal', $("#generic-loading-dialog").html(), false);
-        var needMaps = window.KnowledgeMap ? "0" : "1";
+        $("#popup-dialog .dialog-progress-bar").progressbar({value: 0}).slideDown("fast");
+
+        if (!dynamicPackageLoader.packageLoaded('maps')) {
+            $('<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
+        }
+
+        var self = this;
         $.ajax({
-            url: "/goals/new?need_maps_package=" + needMaps,
+            url: "/goals/new",
             type: 'GET',
             dataType: 'html',
             success: function(html) {
-                if (globalPopupDialog.visible) {
-                    globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', html, false);
-                    GoalCreator.resize();
-                }
+                KAConsole.log('Loaded /goals/new.');
+                self.waitForMapsPackage(html);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 $("#generic-loading-message").html('Page load failed. Please try again.');
             }
         });
+    },
+
+    waitForMapsPackage: function(html) {
+        if (!globalPopupDialog.visible)
+            return;
+
+        if (!dynamicPackageLoader.packageLoaded('maps')) {
+            var self = this;
+            setTimeout(function() { self.waitForMapsPackage(html) }, 500);
+            return;
+        }
+            
+        KAConsole.log('Done loading.');
+        globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', html, false);
+        createGoalInitialize();
     }
 });
 

@@ -979,7 +979,9 @@ footer {
         display: none;
     }
     #page_search input.ui-autocomplete-loading {
-        background-image: url("/images/throbber.gif")
+        background-image: url("/images/throbber.gif");
+        background-repeat:no-repeat;
+        background-position:4px 5px;
     }
 
 img.rounded-background,
@@ -1069,7 +1071,7 @@ nav#page_sub_nav {
     padding: 7px 10px 11px;
     min-height: 16px;
     position: relative;
-    z-index: 3;
+    z-index: 20;
     background: #fff;
     color: #444;
     border: 1px solid #C6D1AD;
@@ -1684,11 +1686,15 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .achievement-badge-counts {
     text-decoration: none;
-}
-
-.achievement-badge-counts {
     position: relative;
     top: 2px;
+}
+.achievement-badge-counts .badge {
+  margin-right:4px;
+}
+
+.achievement-badge-counts .badge img {
+  margin-right:-2px;
 }
 
 .achievement-badge {
@@ -1901,6 +1907,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         width: 60px;
         height: 62px;
     }
+
+.proficient-badge {
+    display: block;
+}
 
 .exercise-badge.single-exercise .energy-points-badge {
     left: auto;
@@ -3066,9 +3076,14 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 
 .nodeLabel {
+    display: block;
     text-align: center;
     cursor: pointer;
     line-height: normal;
+}
+
+a.nodeLabel:hover {
+    text-decoration: none;
 }
 
 .nodeLabel div {
@@ -3605,4 +3620,23 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 
 #popup-dialog .close-button {
     margin-top: 7px;
+}
+
+#popup-dialog .generic-message-wrapper {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+}
+
+#popup-dialog .dialog-progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+#popup-dialog .dialog-progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
 }
