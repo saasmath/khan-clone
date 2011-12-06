@@ -190,9 +190,9 @@ var GoalCreator = {
             .add(".dashboard-map", context)
             .add("#goal-choose-videos .dashboard-content-stretch");
 
-        var containerHeight = $('#popup-dialog .dialog-frame').outerHeight(true);
-        var yTopPadding = $('#goal-spacer').offset().top -
-            $('#popup-dialog .dialog-frame').offset().top;
+        var container = $('.goal-new-custom.modal');
+        var containerHeight = container.outerHeight(true);
+        var yTopPadding = $('#goal-spacer').offset().top - container.offset().top;
         var yBottomPadding = 48; // magic numbers ahoy
         var newHeight = containerHeight - (yTopPadding + yBottomPadding);
 
@@ -404,45 +404,49 @@ function createGoalInitialize() {
 
 </script>
 
-  <article class="create-goal-page">
-  <form id="create-goal" action="javascript:">
+<div class="create-goal-page">
+<form id="create-goal" action="javascript:">
     <div class="section-headline">
-    <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
-      <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
-      <input type="text" name="title" class="goal-title simple-input ui-corner-all blur-on-esc" placeholder="New Goal (click to set a title)"></input>
+        <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
+        <a class="simple-button action-gradient close goals-close-button">Cancel</a>
+        <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
+        <input type="text" name="title" class="goal-title simple-input ui-corner-all blur-on-esc" placeholder="New Goal (click to set a title)"></input>
     </div>
     <div id="goal-info-section">
-      <div id="create-goal-view"></div>
-      <div id="goal-hidden-values"></div>
+        <div id="create-goal-view"></div>
+        <div id="goal-hidden-values"></div>
     </div>
-  </form>
+</form>
 
-  <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+<div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     <div class="objective-type-picker clearfix">
-      <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
+        <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
         <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
-      </div>
+    </div>
     <div id="goal-spacer"></div>
     <div id="goal-choose-exercises">
-      {{ exercise_macros.exercise_legend() }}
-      {{ exercise_macros.exercise_dashboard() }}
+        {{ exercise_macros.exercise_legend() }}
+        {{ exercise_macros.exercise_dashboard() }}
 
-      <div class="dashboard-map">
-          {{ exercise_macros.knowledgemap(false) }}
-      </div>
+        <div class="dashboard-map">
+            {{ exercise_macros.knowledgemap(false) }}
+        </div>
     </div>
 
     <div id="goal-choose-videos" style="display: none;">
-      <div class="dashboard-header">
-        <div class="dashboard-nav">
-          {{ templatetags.playlist_browser("browse") }}
+        <div class="dashboard-header">
+            <div class="dashboard-nav">
+                {{ templatetags.playlist_browser("browse") }}
+            </div>
+            <div class="dashboard-title">
+                <img src="/images/video.png" class="dashboard-icon" width=22 height=22 />
+                Videos
+            </div>
         </div>
-        <div class="dashboard-title"><img src="/images/video.png" class="dashboard-icon" width=22 height=22 /> Videos </div>
-      </div>
-      <div class="dashboard-content-stretch">
-    {{ library_content }}
-      </div>
+        <div class="dashboard-content-stretch">
+            {{ library_content }}
+        </div>
     </div>
-  </div>
-  </article>
+</div>
 
+</div>

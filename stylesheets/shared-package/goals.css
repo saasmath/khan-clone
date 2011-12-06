@@ -399,40 +399,6 @@ input.goal-title:focus {
     font-weight: normal;
 }
 
-#popup-dialog .dialog-frame.create-custom-goal {
-    position: fixed;
-    left: 5%;
-    top: 5%;
-    width: 90%;
-    height: 85%;
-    margin: 0px;
-}
-
-#popup-dialog .dialog-title {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 5px;
-
-    padding: 5px;
-    padding-left: 10px;
-}
-#popup-dialog .dialog-title p {
-    font-size: 150%;
-   display: inline;
-}
-#popup-dialog .dialog-button {
-    float: right;
-    margin: 5px;
-}
-#popup-dialog .goal-popup-block {
-    clear: both;
-    background-color: #f4f4f4;
-    border: 1px solid #888;
-    margin: 10px;
-    padding: 5px 5px 36px 10px;
-}
-
 #goalbook-controls {
     margin-top: 20px;
 }
@@ -649,31 +615,13 @@ input.goal-title:focus {
   border-color:transparent #eee transparent transparent;
 }
 
-/* goals-new-dialog */
 .modal.goal-new {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
   width: 700px; /* this is redundant but here for clarity */
-  margin: 0 0 0 -450px;
+  margin: 0 0 0 -350px;
   top: 90px;
   left: 50%;
-
-  z-index: 11000;
-  background-color: #ffffff;
-  border: 1px solid #999;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  *border: 1px solid #999;
-  /* IE6-7 */
-
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
-  border-radius: 6px;
-  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -webkit-background-clip: padding-box;
-  -moz-background-clip: padding-box;
-  background-clip: padding-box;
 }
 
 .student-module-status.notmatching,
@@ -696,4 +644,42 @@ input.goal-title:focus {
 
 .lte8 #goals-container {
     display: none;
+}
+
+
+.modal.goal-new-custom {
+    position: fixed;
+    top: 90px;
+    right: 90px;
+    bottom: 90px;
+    left: 90px;
+}
+.modal.goal-new-custom .progress-bar-wrapper {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+}
+.modal.goal-new-custom .progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+.modal.goal-new-custom .progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
+}
+
+#create-goal .section-headline {
+    padding-top: 0;
+}
+
+.modal.goal-new-custom #goal-submit-button,
+.modal.goal-new-custom .goals-close-button {
+    font-size: 16px;
+    float: right;
+    padding: 4px 10px;
+    margin-left: 10px;
 }

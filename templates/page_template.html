@@ -136,7 +136,7 @@
                             </div>
                             <div class="clear"></div>
                         </div>
-                </div>
+                    </div>
                     <div id="logo">
                         <a id="logo-image" href="/" title="Take me home!"></a>
                     </div>
@@ -169,15 +169,6 @@
     </div>
     </div>
     </div>
-    <div id="popup-dialog" style="display: none">
-      <div class="modal-backdrop"></div>
-      <div class="window-center">
-        <div class="dialog-frame">
-          <div class="dialog-header"><a href="#" class="close-button close">x</a> <div class="description"></div></div>
-          <div class="dialog-contents">&nbsp;</div>
-        </div>
-      </div>
-    </div>
     <div class="push"></div>
     {% block pagefooter %}
     {% include "page_footer_short.html" %}
@@ -198,14 +189,6 @@
     {%- endif -%}
 
     {{ gae_mini_profiler.profiler_includes() }}
-
-    <script id="generic-loading-dialog" type="text/html">
-      <div class="generic-message-wrapper">
-        <div class="generic-message">
-          <div class="dialog-progress-bar"></div>
-        </div>
-      </div>
-    </script>
 
     {%- if global_goals -%}
     <script type="text/javascript">
