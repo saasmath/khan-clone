@@ -63,7 +63,7 @@
         {% block profile_is_empty %}{% endblock profile_is_empty %}
 
     {% else %}
-
+        {% if stats_charts_class=="coach-view" %}
         <div id="vital-statistics" class="{{ stats_charts_class }}">
             <div id="stats-nav">
                 <h2>{% block statistics_title %}Vital Statistics{% endblock statistics_title %}</h2>
@@ -73,9 +73,8 @@
                 {{ profile_macros.graph_control() }}
             </div>
         </div>
-
+        {% endif %}
         {% block profile_extended_sections %}{% endblock profile_extended_sections %}
-
     {% endif %}
 
     </article>

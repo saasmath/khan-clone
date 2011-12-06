@@ -13,7 +13,7 @@ var Profile = {
     userGoalsHref: '',
 
     init: function() {
-
+        Profile.render();
 		$('.share-link').hide();
 		$('.sharepop').hide();
 
@@ -52,43 +52,7 @@ var Profile = {
         if ($.address)
             $.address.externalChange(function(){ Profile.historyChange(); });
 
-        $(".graph-link").click(function(){Profile.loadGraphFromLink(this); return false;});
-
-        $("#individual_report #achievements #achievement-list > ul li").click(function() {
-             var category = $(this).attr('id');
-             var clickedBadge = $(this);
-
-             $("#badge-container").css("display", "");
-             clickedBadge.siblings().removeClass("selected");
-
-             if ($("#badge-container > #" + category ).is(":visible")) {
-                if (clickedBadge.parents().hasClass("standard-view")) {
-                    $("#badge-container > #" + category ).slideUp(300, function(){
-                            $("#badge-container").css("display", "none");
-                            clickedBadge.removeClass("selected");
-                        });
-                }
-                else {
-                    $("#badge-container > #" + category ).hide();
-                    $("#badge-container").css("display", "none");
-                    clickedBadge.removeClass("selected");
-                }
-             }
-             else {
-                var jelContainer = $("#badge-container");
-                var oldHeight = jelContainer.height();
-                $(jelContainer).children().hide();
-                if (clickedBadge.parents().hasClass("standard-view")) {
-                    $(jelContainer).css("min-height", oldHeight);
-                    $("#" + category, jelContainer).slideDown(300, function() {
-                        $(jelContainer).animate({"min-height": 0}, 200);
-                    });
-                } else {
-                    $("#" + category, jelContainer).show();
-                }
-                clickedBadge.addClass("selected");
-             }
-        });
+        $(".graph-link").click(function(){ Profile.loadGraphFromLink(this); return false;});
 
         // remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
@@ -235,7 +199,6 @@ var Profile = {
 					"activate", selectorAccordionSection);
 			return true;
 		}
-
 		this.collapseAccordion();
 		return false;
 	},
@@ -283,7 +246,6 @@ var Profile = {
             '/api/v1/user/students/progressreport': window.ClassProfile ? ClassProfile.renderStudentProgressReport : null,
             '/api/v1/user/students/progress/summary': this.ProgressSummaryView.render
         };
-
         if (!href) return;
 
         if (this.fLoadingGraph) {
@@ -301,7 +263,6 @@ var Profile = {
                 apiCallback = apiCallbacksTable[uri];
             }
         }
-
         $.ajax({
 			type: "GET",
 			url: Timezone.append_tz_offset_query_param(href),
@@ -812,10 +773,13 @@ var Profile = {
 	},
 
     showGraphThrobber: function(fVisible) {
-        if (fVisible)
+        if (fVisible) {
             $("#graph-progress-bar").progressbar({value: 100}).slideDown("fast");
-        else
-            $("#graph-progress-bar").slideUp("fast");
+        } else {
+            $("#graph-progress-bar").slideUp("fast", function() {
+                $(this).hide();
+            });
+        }
     },
 
 	// TODO: move this out to a more generic utility file.
@@ -886,6 +850,213 @@ var Profile = {
                 $("#info-hover-container").hide();
             }
         );
+    },
+    render: function() {
+        // TODO: This file is getting pretty long,
+        // and I'd like to move each tab's JS out into a separate file
+
+        // TODO: I haven't looked into a better way to detect student vs class profile
+        if (/class_profile/.test(window.location.href)) {
+            return;
+        }
+
+        var profileTemplate = Templates.get("profile.profile");
+
+        Handlebars.registerHelper("toLegacyGraphURL", function(type, student, coach, listId) {
+            var url = "/profile/graph/" + type + "?",
+                params = [];
+            if (student) {
+                params.push("student_email=" + student);
+            }
+
+            if (coach) {
+                params.push("coach_email=" + coach);
+            }
+
+            if (listId) {
+                params.push("list_id=" + listId);
+            }
+
+            url += params.join("&");
+            return encodeURI(url);
+        });
+
+        Handlebars.registerHelper("toAPIGraphURL", function(prefix, apiFunction, student, coach, listId) {
+            var url = "/api/v1/" + prefix + "/" + apiFunction + "?",
+                params = [];
+            if (student) {
+                params.push("email=" + student);
+            }
+
+            if (coach) {
+                params.push("coach_email=" + coach);
+            }
+
+            if (listId) {
+                params.push("listId=" + listId);
+            }
+
+            url += params.join("&");
+            return encodeURI(url);
+        });
+
+        // So that the date-picker can update the history param properly
+        Handlebars.registerHelper("accordion-graph-date-picker-wrapper", function(block) {
+            this.type = block.hash.type;
+            return block(this);
+        });
+
+        Handlebars.registerPartial("accordion-graph-date-picker", Templates.get("profile.accordion-graph-date-picker"));
+        Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
+
+        $("#profile-content").html(profileTemplate(profileContext));
+        $("abbr.timeago").timeago();
+        $("#tabs").tabs();
+
+        Profile.populateAchievements();
+
+        // TODO: Might there be a better way
+        // for server-side + client-side to co-exist in harmony?
+        $("#tab-content-recent-activity").html($("#server-side-recent-activity").html());
+
+        // Temp handlers to preserve behavior
+        if (window.location.hash === "#achievements") {
+            $("#tab-achievements").click();
+        }
+
+        $("#badge-count-container").click( function(e) {
+            $("#tab-achievements").click();
+        });
+    },
+
+    populateAchievements: function() {
+        $.ajax({
+            type: "GET",
+            url: "/api/v1/user/badges",
+            data: {},
+            dataType: "json",
+            success: function(data) {
+                var badgeInfo = [
+                        {
+                            icon: "/images/badges/meteorite-medium.png",
+                            className: "bronze",
+                            label: "Meteorite"
+                        },
+                        {
+                            icon: "/images/badges/moon-medium.png",
+                            className: "silver",
+                            label: "Moon"
+                        },
+                        {
+                            icon: "/images/badges/earth-medium.png",
+                            className: "gold",
+                            label: "Earth"
+                        },
+                        {
+                            icon: "/images/badges/sun-medium.png",
+                            className: "diamond",
+                            label: "Sun"
+                        },
+                        {
+                            icon: "/images/badges/eclipse-medium.png",
+                            className: "platinum",
+                            label: "Black Hole"
+                        },
+                        {
+                            icon: "/images/badges/master-challenge-blue.png",
+                            className: "master",
+                            label: "Challenge"
+                        }
+                    ];
+
+                // Because we show the badges in reverse order,
+                // from challenge/master/category-5 to meteorite/bronze/category-0
+                Handlebars.registerHelper("reverseEach", function(context, block) {
+                    var result = "";
+                    for (var i = context.length - 1; i >= 0; i--) {
+                        result += block(context[i]);
+                    }
+                    return result;
+                });
+
+                Handlebars.registerHelper("toMediumIconSrc", function(category) {
+                    return badgeInfo[category].icon;
+                });
+
+                Handlebars.registerHelper("toBadgeClassName", function(category) {
+                    return badgeInfo[category].className;
+                });
+
+                Handlebars.registerHelper("toBadgeLabel", function(category, fStandardView) {
+                    var label = badgeInfo[category].label;
+
+                    if (fStandardView) {
+                        if (label === "Challenge") {
+                            label += " Patches";
+                        } else {
+                            label += " Badges";
+                        }
+                    }
+                    return label;
+                });
+
+                Handlebars.registerPartial("badge-container", Templates.get("profile.badge-container"));
+                Handlebars.registerPartial("badge", Templates.get("profile.badge"));
+
+                $.each(data.badge_collections, function(collectionIndex, collection) {
+                    $.each(collection.user_badges, function(badgeIndex, badge) {
+                        badge.list_context_names_hidden = $.map(badge.list_context_names_hidden, function(name, nameIndex) {
+                            return {name: name, isLast: (nameIndex === badge.list_context_names_hidden.length - 1)};
+                        });
+                        badge.hasMultiple = (badge.count > 1);
+                    });
+                });
+
+                // TODO: what about mobile-view?
+                data.fStandardView = true;
+
+                var achievementsTemplate = Templates.get("profile.achievements");
+                $("#tab-content-achievements").html(achievementsTemplate(data));
+
+                $("#achievements #achievement-list > ul li").click(function() {
+                     var category = $(this).attr('id');
+                     var clickedBadge = $(this);
+
+                     $("#badge-container").css("display", "");
+
+                     clickedBadge.siblings().removeClass("selected");
+
+                     if ($("#badge-container > #" + category ).is(":visible")) {
+                        if (clickedBadge.parents().hasClass("standard-view")) {
+                            $("#badge-container > #" + category ).slideUp(300, function(){
+                                    $("#badge-container").css("display", "none");
+                                    clickedBadge.removeClass("selected");
+                                });
+                        }
+                        else {
+                            $("#badge-container > #" + category ).hide();
+                            $("#badge-container").css("display", "none");
+                            clickedBadge.removeClass("selected");
+                        }
+                     }
+                     else {
+                        var jelContainer = $("#badge-container");
+                        var oldHeight = jelContainer.height();
+                        $(jelContainer).children().hide();
+                        if (clickedBadge.parents().hasClass("standard-view")) {
+                            $(jelContainer).css("min-height", oldHeight);
+                            $("#" + category, jelContainer).slideDown(300, function() {
+                                $(jelContainer).animate({"min-height": 0}, 200);
+                            });
+                        } else {
+                            $("#" + category, jelContainer).show();
+                        }
+                        clickedBadge.addClass("selected");
+                     }
+                });
+                $("abbr.timeago").timeago();
+            }
+        });
     }
 };
 
@@ -1039,7 +1210,7 @@ var ProgressSummaryView = function() {
 
         Handlebars.registerHelper("progressColumn", function(block) {
             this.progressSide = block.hash.side;
-            return block(this)
+            return block(this);
         });
 
         Handlebars.registerHelper("progressIter", function(progress, block) {

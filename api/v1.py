@@ -906,6 +906,74 @@ def badge_categories():
 def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
 
+def get_badge_dict(badge):
+    return {
+        "badge_category": badge.badge_category,
+        "badge_context_type": badge.badge_context_type,
+        "is_owned": badge.is_owned,
+        "points": badge.points,
+        "description": badge.description,
+        "safe_extended_description": badge.safe_extended_description,
+        "type_label": badge.type_label(),
+        "icon_src": badge.icon_src(),
+    }
+
+def get_user_badge_dict(user_badge):
+    return dict(
+        {
+            "is_user_badge": True,
+            "count": user_badge.count,
+            "date": user_badge.date,
+            "list_context_names": user_badge.list_context_names,
+            "list_context_names_hidden": user_badge.list_context_names_hidden,
+            "target_context_name": user_badge.target_context_name,
+        }, **get_badge_dict(user_badge.badge))
+
+@route("/api/v1/user/badges", methods=["GET"])
+@jsonp
+@jsonify
+def get_user_badges():
+    # TODO: below line may be suspect
+    # Furthermore, the ability to override and peer at another's badges is missing
+    user_data = models.UserData.current() or models.UserData.pre_phantom()
+    user_badges = util_badges.get_user_badges(user_data)
+
+    user_badges_by_category = {
+        badges.BadgeCategory.BRONZE: user_badges["bronze_badges"],
+        badges.BadgeCategory.SILVER: user_badges["silver_badges"],
+        badges.BadgeCategory.GOLD: user_badges["gold_badges"],
+        badges.BadgeCategory.PLATINUM: user_badges["platinum_badges"],
+        badges.BadgeCategory.DIAMOND: user_badges["diamond_badges"],
+        badges.BadgeCategory.MASTER: user_badges["user_badges_master"],
+    }
+
+    user_badge_dicts_by_category = {}
+
+    for category, user_badge_bucket in user_badges_by_category.iteritems():
+        user_badge_dicts = []
+        for user_badge in user_badge_bucket:
+            user_badge_dicts.append(get_user_badge_dict(user_badge))
+        user_badge_dicts_by_category[category] = user_badge_dicts
+
+    badge_collections = []
+
+    for collection in user_badges["badge_collections"]:
+        badge_dicts = []
+        for badge in collection:
+            badge_dicts.append(get_badge_dict(badge))
+
+        first_badge = collection[0]
+        badge_collections.append({
+            "category": first_badge.badge_category,
+            "category_description": first_badge.category_description(),
+            "badges": badge_dicts,
+            "user_badges": user_badge_dicts_by_category[first_badge.badge_category],
+        })
+
+    return {
+            "badge_collections": badge_collections,
+        }
+
 @route("/api/v1/developers/add", methods=["POST"])
 @admin_required
 @jsonp
