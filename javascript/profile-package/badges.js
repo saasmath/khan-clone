@@ -80,7 +80,7 @@ Badges.DisplayCase = Backbone.View.extend({
 		this.template = Templates.get( "profile.badge-display-case" );
 
 		// TODO: register in some central intializing point?
-        Handlebars.registerPartial(
+		Handlebars.registerPartial(
 			"badge-compact",
 			Templates.get( "profile.badge-compact" )
 		);
@@ -162,13 +162,9 @@ Badges.DisplayCase = Backbone.View.extend({
 	showBadgePicker_: function() {
 		var jelPicker = $(this.badgePickerEl);
 		this.renderBadgePicker();
-		jelPicker.slideDown( "fast", function() {
-			jelPicker.show();
-		});
-		jelPicker.css( "margin-left", "300px" );
-		jelPicker.animate({
-			"margin-left": "0"
-		}, "fast", $.easing.easeInOutCubic);
+		jelPicker.slideDown( "fast", function() { jelPicker.show(); })
+			.css( "margin-left", "300px" )
+			.animate({ "margin-left": "0" }, "fast", $.easing.easeInOutCubic);
 
 		return this;
 	},

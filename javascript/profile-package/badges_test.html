@@ -8,10 +8,10 @@
 <link rel="stylesheet" type="text/css" href="../../stylesheets/shared-package/default.css"></link>
 <link rel="stylesheet" type="text/css" href="../../stylesheets/profile-package/badges.css"></link>
 <script>
-var badgeList = new Badges.BadgeList();
-var fullBadgeList = new Badges.BadgeList();
-var displayCase;
-var imageBase = "http://khan-academy.appspot.com";
+var badgeList = new Badges.BadgeList(),
+	fullBadgeList = new Badges.BadgeList(),
+	displayCase,
+	imageBase = "http://khan-academy.appspot.com";
 
 // Matches what would be sent from the server
 var SAMPLE_BADGE_JSON = {
@@ -26,10 +26,10 @@ var SAMPLE_BADGE_JSON = {
 };
 
 function addBadge( name, desc, type, list ) {
-	var name = name || $("#name").val();
-	var desc = desc || $("#desc").val();
-	var type = ( type || $("#type").val() ).toLowerCase();
-	var json = SAMPLE_BADGE_JSON;
+	var name = name || $("#name").val(),
+		desc = desc || $("#desc").val(),
+		type = ( type || $("#type").val() ).toLowerCase(),
+		json = SAMPLE_BADGE_JSON;
 	switch ( type ) {
 		case "earth":
 			json[ "category" ] = Badges.Category.GOLD;
