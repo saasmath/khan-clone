@@ -140,7 +140,7 @@ def playlists_library():
 
     return playlist_structure
 
-@route("/api/v1/homepage_library", methods=["GET"])
+@route("/api/v1/playlists/library/compact", methods=["GET"])
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda: models.Setting.cached_library_content_date())
 @jsonp

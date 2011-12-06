@@ -43,7 +43,7 @@ var Homepage = {
         var cacheToken = window.Homepage_cacheToken || Date.now();
         $.ajax({
             type: "GET",
-            url: "/api/v1/homepage_library",
+            url: "/api/v1/playlists/library/compact",
             dataType: "jsonp",
 
 			// The cacheToken is supplied by the host page to indicate when the library

@@ -1,4 +1,3 @@
-import logging
 import hashlib
 import zlib
 from base64 import b64encode, b64decode
@@ -11,7 +10,6 @@ import api.jsonify as apijsonify
 
 from app import App
 import datetime
-import time
 
 def etag(func_tag_content):
     def etag_wrapper(func):
@@ -36,26 +34,33 @@ def etag(func_tag_content):
     return etag_wrapper
 
 _TWO_MONTHS = 60 * 60 * 24 * 60
-def cacheable(caching_age=_TWO_MONTHS, cache_token="v"):
+def cacheable(caching_age=_TWO_MONTHS, cache_token_key="v"):
+    """ Makes a method fully cacheable in the browser if the request has
+    specified a cache_token argument in the URL.
+
+    This allows clients who care about caching specify a token and create
+    unique URL's for resources that should not change. Clients interested
+    in getting updated data will find out through other means and know to
+    change the value of that cache token. Cache tokens are opaque strings
+    and does not affect the internal logic of this method.
+    """
     def cacheable_wrapper(func):
         @wraps(func)
         def caching_enabled(*args, **kwargs):
             
-            timestamp = request.values.get(cache_token)
-            if timestamp is None:
+            cache_token = request.args.get(cache_token_key)
+            if cache_token is None:
+                # If no cache_token is specified, don't treat it as cacheable
                 return func(*args, **kwargs)
             
             result = func(*args, **kwargs)
-            if isinstance(result, current_app.response_class):
-                result.cache_control.max_age = caching_age
-                result.cache_control.public = True
-                result.headers['Expires'] = (datetime.datetime.utcnow() +
-                                             datetime.timedelta(seconds=caching_age))
-                return result
-            else:
-                return current_app.response_class(result, headers={
-                        "Cache-control": ("public, max-age=%s" % caching_age),
-                        })
+            if not isinstance(result, current_app.response_class):
+                result = current_app.response_class(result)
+            result.cache_control.max_age = caching_age
+            result.cache_control.public = True
+            result.headers['Expires'] = (datetime.datetime.utcnow() +
+                                         datetime.timedelta(seconds=caching_age))
+            return result
         return caching_enabled
     return cacheable_wrapper
 
