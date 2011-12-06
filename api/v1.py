@@ -159,17 +159,12 @@ def topictree():
 @jsonify
 def topic(topic_id):
     topic = models.Topic.get_by_id(topic_id)
-    if topic:
-        children = db.get(topic.child_keys)
-        topic.children = []
-        for child in children:
-            item = {}
-            item["kind"] = child.__class__.__name__
-            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name
-            item["title"] = child.title if hasattr(child, "title") else child.name
-            topic.children.append(item)
-        return topic
 
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(id))
+
+    return topic.get_visible_data()
+    
 @route("/api/v1/topic/<topic_id>", methods=["PUT"])
 @oauth_optional()
 @jsonp
@@ -191,7 +186,7 @@ def put_topic(id):
         topic.title = topic_json['title']
         topic.put()
 
-    return True
+    return topic.get_visible_data()
 
 @route("/api/v1/topic/<topic_readable_id>/children", methods=["GET"])
 @jsonp

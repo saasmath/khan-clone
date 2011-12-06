@@ -1101,6 +1101,17 @@ class Topic(db.Model):
 
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_editted_by"]
 
+    def get_visible_data(self):
+        children = db.get(self.child_keys)
+        self.children = []
+        for child in children:
+            item = {}
+            item["kind"] = child.__class__.__name__
+            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name
+            item["title"] = child.title if hasattr(child, "title") else child.name
+            self.children.append(item)
+        return self
+
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
