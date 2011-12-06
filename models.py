@@ -2060,6 +2060,11 @@ class UserExerciseGraph(object):
     def review_exercise_names(self):
         return [graph_dict["name"] for graph_dict in self.review_graph_dicts()]
 
+    def has_completed_review(self):
+        # TODO(david): This should return whether the user has completed today's
+        #     review session.
+        return not self.review_exercise_names()
+
     def suggested_graph_dicts(self):
         return [graph_dict for graph_dict in self.graph_dicts() if graph_dict["suggested"]]
 

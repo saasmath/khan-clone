@@ -603,6 +603,8 @@ def user_problem_logs(exercise_name):
 
     return None
 
+# TODO(david): Factor out duplicated code between attempt_problem_number and
+#     hint_problem_number.
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/attempt", methods=["POST"])
 @oauth_optional()
 @api_create_phantom
@@ -648,12 +650,15 @@ def attempt_problem_number(exercise_name, problem_number):
             current_states = user_exercise_graph.states(exercise.name)
             prev_states = prev_user_exercise_graph.states(exercise.name)
             sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
-            
+            review_mode = request.request_bool("review_mode", default=False)
+
             action_results = {
                 "exercise_state": {
                     "sees_graph" :  sees_graph,
                     "state" : [state for state in current_states if current_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, current_states, prev_states, sees_graph),
+                    "template" : templatetags.exercise_message(exercise,
+                        user_exercise_graph, current_states, prev_states,
+                        sees_graph, review_mode),
                 },
                 "points_earned" : { "points" : points_earned },
                 "attempt_correct" : request.request_bool("complete")
@@ -712,13 +717,15 @@ def hint_problem_number(exercise_name, problem_number):
 
             current_states = user_exercise_graph.states(exercise.name)
             prev_states = prev_user_exercise_graph.states(exercise.name)
-            exercise_message_html = templatetags.exercise_message(exercise, user_data.coaches, current_states, prev_states)
+            exercise_message_html = templatetags.exercise_message(exercise,
+                user_exercise_graph, current_states, prev_states,
+                review_mode=request.request_bool("review_mode", default=False))
 
             add_action_results(user_exercise, {
                 "exercise_message_html": exercise_message_html,
                 "exercise_state": {
-                    "state" : [state for state in current_states if current_states[state]] ,
-                    "template" : templatetags.exercise_message(exercise, user_data.coaches, current_states) ,
+                    "state" : [state for state in current_states if current_states[state]],
+                    "template" : exercise_message_html,
                 }
             })
 
