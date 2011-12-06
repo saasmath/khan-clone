@@ -1085,32 +1085,34 @@ class TopicVersion(db.Model):
                                     
 
 class Topic(db.Model):
-    title = db.StringProperty(required = True)
-    readable_id = db.StringProperty(required = True)
+    title = db.StringProperty(required = True) # title used when viewing topic in a tree structure
+    standalone_title = db.StringProperty() # title used when on its own
+    id = db.StringProperty(required = True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
     description = db.TextProperty()
-    child_keys = db.ListProperty(db.Key)
+    parent_keys = db.ListProperty(db.Key) # to be able to access the parent without having to resort to a query - parent_keys is used to be able to hold more than one parent if we ever want that
+    ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants 
+    child_keys = db.ListProperty(db.Key) # having this avoids having to modify Content entities
     version = db.ReferenceProperty(TopicVersion, required = True)  
     tags = db.StringListProperty() # not used now, putting in so that playl1st api users don't barf if they are using it 
     hide = db.BooleanProperty(default = False)
 
-    _serialize_blacklist = ["child_keys", "version"]
-
-    def get_order(self): 
-        return self.parent.child_keys.index(self.key())
+    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys"]
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
+    # get the topic by the url slug/readable_id
     @staticmethod
-    def get_by_readable_id(readable_id, version = None):
+    def get_by_id(id, version = None):
         if version is None:
             version = TopicVersion.get_default_version()
             if version is None:
                 logging.info("No default version has been set, getting latest version instead")
                 version = TopicVersion.get_latest_version()
 
-        return Topic.all().filter("readable_id =", readable_id).filter("version =", version).get()
+        return Topic.all().filter("id =", id).filter("version =", version).get()
 
+    # title is not necessarily unique - this function is needed for the old playl1st api to return a best guess
     @staticmethod
     def get_by_title(title, version = None):
         if version is None:
@@ -1122,11 +1124,21 @@ class Topic(db.Model):
         return Topic.all().filter("title =", title).filter("version =", version).get()
 
     @staticmethod
-    def get_root(version):
-        return Topic.all().filter('readable_id =', 'root').filter('version =', version).get()
+    def get_by_title_and_parent(title, parent, version = None):
+        if version is None:
+            version = TopicVersion.get_default_version()
+            if version is None:
+                logging.info("No default version has been set, getting latest version instead")
+                version = TopicVersion.get_latest_version()
+
+        return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).filter("version =", version).get()
 
     @staticmethod
-    def get_new_readable_id(parent, title, version):
+    def get_root(version):
+        return Topic.all().filter('id =', 'root').filter('version =', version).get()
+
+    @staticmethod
+    def get_new_id(parent, title, version):
         potential_id = title.lower()
         potential_id = re.sub('[^a-z0-9]', '-', potential_id);
         potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
@@ -1136,48 +1148,90 @@ class Topic(db.Model):
         current_id = potential_id
         while True:
             # need to make this an ancestor query to make sure that it can be used within transactions
-            matching_topic = Topic.all().filter('readable_id =', current_id).filter('version =', version).get()
+            matching_topic = Topic.all().filter('id =', current_id).filter('version =', version).get()
             
             if matching_topic is None: #id is unique so use it and break out
                 return current_id
-            elif parent.key() == matching_topic.parent_key() and matching_topic.title == title:
+            elif parent.key() in matching_topic.parent_keys and matching_topic.title == title:
                 raise Exception("You can't have the same title '%s' to two different topics under the same parent '%s'" % (title, "None" if parent is None else parent.title))
             else: # id is not unique so will have to go through loop again
                 number_to_add+=1
                 current_id = potential_id+'-'+str(number_to_add)    
 
     @staticmethod
-    def get_new_key_name(readable_id, version):
-        return "%s-v%s" % (readable_id, version.number)
+    def get_new_key_name():
+        import base64, os
+        return base64.urlsafe_b64encode(os.urandom(30))
 
-    def copy(title, parent=None, **kwargs):
-        
+    def copy(self, title, parent=None, **kwargs):
         if not kwargs.has_key("version") and parent is not None:
             kwargs["version"] = parent.version
+         
+        kwargs["parent"] = Topic.get_root(kwargs["version"]) 
             
         if not kwargs.has_key("readable_id"):
-            kwargs["readable_id"] = Topic.get_new_readable_id(parent, title, kwargs["version"])
+            kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
 
-        kwargs["key_name"] = Topic.get_new_key_name(readable_id, version)
+        kwargs["key_name"] = Topic.get_new_key_name()
 
-        topic = Topic.get_by_key_name(key_name)
+        topic = Topic.get_by_key_name(kwargs["key_name"])
         if topic is not None:
-            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % key_name)
+            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % kwargs["key_name"] )
 
         kwargs["title"] = title
-        kwargs["parent"] = parent
+        kwargs["parent_keys"] = [parent.key()]
+        kwargs["ancestor_keys"] =  kwargs["parent_keys"][:]
+        kwargs["ancestor_keys"].extend(parent.ancestor_keys)
 
         new_topic = util.clone_entity(self, **kwargs)
 
-        def insert_txn():
-            new_topic.put()
-            if kwargs["parent"] is not None:
-                parent.child_keys.append(topic.key())
-                parent.put()
-
-        db.run_in_transaction(insert_txn)                   
-        return new_topic
+        return db.run_in_transaction(Topic._insert_txn, new_topic)                   
+        
             
+    def delete_tree(self):
+        topics = Topic.all().filter("ancestor_keys =", self.key()).fetch(10000)
+        topics.append(self)
+        parents = db.get(self.parent_keys)
+        def delete_txn():
+            for parent in parents:
+                parent.child_keys = [child_key for child_key in parent.child_keys if child_key !=self.key()]
+                parent.put()
+            db.delete(topics)
+
+        db.run_in_transaction(delete_txn)  
+
+    @staticmethod
+    def _insert_txn(new_topic):
+        new_topic.put()
+        parents = db.get(new_topic.parent_keys)
+        for parent in parents:
+            parent.child_keys.append(new_topic.key())
+            parent.put()
+        
+        if new_topic.child_keys:
+            child_topic_keys = [child_key for child_key in new_topic.child_keys if child_key.kind() == "Topic"]
+            child_topics = db.get(child_topic_keys)
+            for child in child_topics:
+                child.parent_keys.append(topic.key())
+                child.ancestor_keys.append(topic.key())
+            
+            all_decendant_keys = {} # used to make sure we don't loop
+            descendant_keys = {}
+            descendants = child_topics
+            while True: # should loop n times making n db.gets() where n is the tree depth under topic
+                for descendant in descendants:
+                    descendant_keys.update(dict((key, True) for key in descendant.child_keys if key.kind() == "Topic" and not all_descendant_keys.has_key(key)))
+                if not descendant_keys: # no more topic descendants that we haven't already seen before
+                    break
+
+                all_descendant_keys.update(descendant_keys)
+                descendants = db.get(descendant_keys.keys())
+                for descendant in descendants:
+                    descendant.ancestor_keys = topic.key()
+                descendant_keys = {}
+
+        return new_topic
+    
 
     @staticmethod
     def insert(title, parent=None, **kwargs):
@@ -1192,43 +1246,55 @@ class Topic(db.Model):
                 if version is None:
                     version = TopicVersion.create_new_version()
 
-        if kwargs.has_key("readable_id"):
-            readable_id = kwargs["readable_id"]
-            del kwargs["readable_id"]
+        if kwargs.has_key("id"):
+            id = kwargs["id"]
+            del kwargs["id"]
         else:
-            readable_id = Topic.get_new_readable_id(parent, title, version)
+            id = Topic.get_new_id(parent, title, version)
 
-        key_name = Topic.get_new_key_name(readable_id, version)
+        if not kwargs.has_key("standalone_title"):
+            kwargs["standalone_title"] = title
+
+        key_name = Topic.get_new_key_name()
 
         topic = Topic.get_by_key_name(key_name)
         if topic is not None:
             raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % key_name)
 
-        def insert_txn():
-            topic = Topic(parent,
-                          key_name,
-                          version = version,
-                          readable_id = readable_id,
-                          title = title)
+        if parent:
+            root = Topic.get_root(version)
+            parent_keys = [parent.key()]
+            ancestor_keys = parent_keys[:]
+            ancestor_keys.extend(parent.ancestor_keys)
 
-            
-            for key in kwargs:
-                setattr(topic, key, kwargs[key])
-            
-            topic.put()
-            if parent is not None:
-                parent.child_keys.append(topic.key())
-                parent.put()
-            
-            return topic
-               
-        return db.run_in_transaction(insert_txn)
+            new_topic = Topic(root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
+                              key_name,
+                              version = version,
+                              id = id,
+                              title = title,
+                              parent_keys = parent_keys,
+                              ancestor_keys = ancestor_keys)
+
+        else:
+            if id != "root":
+                raise Exception("The root must be called 'root'")
+
+            new_topic = Topic(None,
+                              key_name,
+                              version = version,
+                              id = id,
+                              title = title)
+       
+        for key in kwargs:
+            setattr(new_topic, key, kwargs[key])
+                          
+        return db.run_in_transaction(Topic._insert_txn, new_topic)
 
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
-            nodes = Topic.all().ancestor(self).fetch(100000)
+            nodes = Topic.all().filter("ancestor_keys =", self.key()).fetch(100000)
         else:
-            nodes = Topic.all().ancestor(self).filter("hide = ", False).fetch(100000)
+            nodes = Topic.all().filter("ancestor_keys =", self.key()).filter("hide = ", False).fetch(100000)
         
         node_dict = dict((node.key(), node) for node in nodes)
         node_dict[self.key()] = self # in case the current node is hidden (like root is)
@@ -1254,7 +1320,7 @@ class Topic(db.Model):
 
     @property
     def ka_url(self):
-        return util.absolute_url('#%s' % urllib.quote(self.key().name()))
+        return util.absolute_url('#%s' % self.id)
 
     @staticmethod
     def get_all_topics(include_hidden = False):
@@ -1268,7 +1334,7 @@ class Topic(db.Model):
     def _get_children_of_kind(topic, kind, include_descendants=False):
         if include_descendants:
             keys = []
-            topics = Topic.all().ancestor(topic)
+            topics = Topic.all().filter("ancestor_keys =", topic.key())
             for topic in topics():
                 keys.extend([child_key for child_key in descendant.child_keys if child_key.kind() == kind])
         else:
@@ -1282,7 +1348,7 @@ class Topic(db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_videos_for_topic_%s_at_%s" % ("descendant" if len(args) > 1 and args[1] else "child", args[0].key().name(), str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
     def get_cached_videos_for_topic(topic, include_descendants=False, limit=500):
-        return Topic._get_children_of_kind(self, "Video")
+        return Topic._get_children_of_kind(self, "Video", include_descendants)
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_topics_for_video_%s_at_%s" % ("ancestor" if len(args) > 1 and args[1] else "parent", args[0].title, str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
@@ -1294,21 +1360,16 @@ class Topic(db.Model):
 
         topics = Topic.all().filter("child_keys =", video.key()).filter("version =", version).filter("hide =", False).fetch(10000)
         if include_ancestors:
-            ancestor_topics = []
+            ancestor_dict = {}
             for topic in topics:
-                parent = topic
-                while True:
-                    parent = parent.parent() 
-                    if parent is None or parent.hide:
-                        break
-                    ancestor_topics.append(parent)
-            topics.extend(ancestor_topics)
-                    
+                ancestor_dict.update(dict((key, True) for key in topic.ancestor_keys))
+            topics.extend(db.get(ancestor_dict.keys()))
+                                   
         return topics
 
 class UserTopicVideos(db.Model):
     user = db.UserProperty()
-    topic = db.ReferenceProperty(Topic)
+    topic_key_name = db.StringProperty() # used because key() will change if topic gets moved in the topic tree, or between versions
     seconds_watched = db.IntegerProperty(default = 0)
     last_watched = db.DateTimeProperty(auto_now_add = True)
     title = db.StringProperty(indexed=False) # wont be unique unlike with playlists, so this might have to change (or be removed as it can be gotten with a Datastore call to .topic)
@@ -1321,7 +1382,7 @@ class UserTopicVideos(db.Model):
 
     @staticmethod
     def get_key_name(topic, user_data):
-        return user_data.key_email + ":" + topic.readable_id
+        return user_data.key_email + ":" + topic.key().name()
 
     @staticmethod
     def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
