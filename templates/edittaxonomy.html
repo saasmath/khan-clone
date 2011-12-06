@@ -23,11 +23,55 @@ var TopicTreeEditor = {
 
             onActivate: function(node) {
                 KAConsole.log('Activated: ', node);
+
+                js = node.data.model.toJSON();
+                html = '<table>';
+                for (field in js) {
+                    className = '';
+                    if (field == 'id')
+                        continue;
+                    if (field == 'title'|| field == 'description' || field == 'display_name' || field == 'name' || field == 'readable_id' || field == 'keywords')
+                        className = 'editable';
+                    html += '<tr><td><b>' + field + '</b></td><td><span data-id="' + field + '" class="' + className + '">' + js[field] + '</span></td></tr>';
+                }
+                html += '</table>';
+                $('#details_view').html(html);
+                $('#details_view').find('span.editable').editable({
+                    editBy: 'click',
+                    onEdit: function(content) {
+                        var field = this.attr('data-id');
+                        var setter = {};
+                        setter[field] = content.current;
+                        node.data.model.set(setter);
+                        node.data.model.save();
+                    }
+                });
             },
 
             onLazyRead: function(node) {
                 children = node.data.model.getChildren();
                 children.bind("reset", TopicTreeEditor.refreshTreeChildren, node);
+            },
+
+            dnd: {
+                onDragStart: function(node) {
+                    return true;
+                },
+
+                onDragEnter: function(node, sourceNode) {
+                    if (node.data.model.get('kind') != 'Topic')
+                        return ["before", "after"];
+
+                    return ["over", "before", "after"];
+                },
+                onDragLeave: function(node, sourceNode) {
+                },
+                onDragOver: function(node, sourceNode, hitMode) {
+                },
+
+                onDrop: function(node, sourceNode, hitMode, ui, draggable) {
+                    sourceNode.move(node, hitMode);
+                }
             },
 
             children: [ {
@@ -39,6 +83,7 @@ var TopicTreeEditor = {
             } ]
         });
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
+        $('#topic_tree').bind("mousedown", function(e) { e.preventDefault(); })
     },
 
     // Called with model as "this"
@@ -92,7 +137,8 @@ $(function(){
 
 {% block pagecontent %}
 
-<div id="topic_tree" style="width: 500px; height: 400px; overflow: scroll;"></div>
+<div id="topic_tree" style="width: 500px; height: 500px; overflow-y: scroll; float: left;"></div>
+<div id="details_view" style="width: 400px; height: 500px; float: left"></div>
 
 {% endblock pagecontent %}
 
