@@ -104,9 +104,12 @@
   padding-left: 145px;
   padding-bottom: 20px;
 }
-    #legend .segment {
+    #legend .segment, .filter-block .segment {
          float: left;
          width: 100px;
+    }
+    .filter-block .segment{
+      margin-right:2px;
     }
 
 .exercise-row {

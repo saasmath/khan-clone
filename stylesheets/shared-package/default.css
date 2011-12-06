@@ -979,7 +979,9 @@ footer {
         display: none;
     }
     #page_search input.ui-autocomplete-loading {
-        background-image: url("/images/throbber.gif")
+        background-image: url("/images/throbber.gif");
+        background-repeat:no-repeat;
+        background-position:4px 5px;
     }
 
 img.rounded-background,
@@ -1069,7 +1071,7 @@ nav#page_sub_nav {
     padding: 7px 10px 11px;
     min-height: 16px;
     position: relative;
-    z-index: 3;
+    z-index: 20;
     background: #fff;
     color: #444;
     border: 1px solid #C6D1AD;
@@ -1684,11 +1686,15 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .achievement-badge-counts {
     text-decoration: none;
-}
-
-.achievement-badge-counts {
     position: relative;
     top: 2px;
+}
+.achievement-badge-counts .badge {
+  margin-right:4px;
+}
+
+.achievement-badge-counts .badge img {
+  margin-right:-2px;
 }
 
 .achievement-badge {
