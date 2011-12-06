@@ -1,0 +1,17 @@
+<div id="achievements" class="{{#if fStandardView}}standard-view{{else}}mobile-view{{/if}}">
+  <h2><a name="achievements">Achievements</a></h2>
+  <div id="achievement-list">
+    <ul>
+      {{#reverseEach badge_collections}}
+      <li id="category-{{category}}" class="{{toBadgeClassName category}} {{#if user_badges.length}}owned{{/if}}">
+        <img src="{{toMediumIconSrc category}}" />
+        <div class="label">{{toBadgeLabel category ../fStandardView}}{{#if user_badges.length}} x {{user_badges.length}}{{/if}}</div>
+      </li>
+      {{/reverseEach}}
+    </ul>
+    <div class="clear"></div>
+    <div id="badge-container" class="inset-container" style="display: none;">
+      {{> badge-container}}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,35 @@
+<div class="achievement-badge category-{{badge_category}} {{#if is_owned}}achievement-badge-owned{{/if}}" title="{{type_label}}: {{safe_extended_description}}">
+  <div id="outline-box">
+  <img src="{{icon_src}}" id="badge-icon"/>
+  <div class="achievement-title">{{description}}</div>
+  {{#if is_user_badge}}
+    {{#if badge_context_type}}
+      <div class="achievement-count">x{{count}}</div>
+    {{/if}}
+  {{/if}}
+  <div class="achievement-desc {{#unless is_user_badge}}achievement-desc-no-count{{/unless}}">
+    {{#if is_user_badge}}
+      Last achieved <abbr class="timeago" title="{{date}}">{{date}}</abbr>
+      {{#if hasMultiple}}
+        in 
+        {{#each list_context_names}}
+          <strong>{{this}}</strong>
+        {{/each}}
+        <span class="badge-context-hidden-link"><a href="#" onclick="Badges.showMoreContext(this);return false;">and also in<span class="ellipsis">...</span></a></span>
+        <span class="badge-context-hidden" style="display:none;">
+        {{#each list_context_names_hidden}}
+           <strong>{{name}}{{#unless isLast}}, {{/unless}}</strong>
+        {{/each}}
+        </span>
+      {{else}}
+        {{#if target_context_name}}
+          in <strong>{{target_context_name}}</strong>
+        {{/if}}
+      {{/if}}
+    {{else}}
+      {{safe_extended_description}}
+    {{/if}}
+  </div>
+  {{#if points}}<div class="energy-points-badge">{{points}}</div>{{/if}}
+  </div>
+</div>

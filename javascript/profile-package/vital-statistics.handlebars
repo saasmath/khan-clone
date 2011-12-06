@@ -1,0 +1,60 @@
+<div id="vital-statistics">
+  <div id="stats-nav">
+      <ul id="nav-accordion">
+          <li>
+            <a href="{{toLegacyGraphURL "activity" email "" ""}}" class="graph-link graph-link-header header graph-link-selected ui-accordion-header ui-helper-reset ui-state-default ui-state-active ui-corner-top" role="tab" aria-expanded="true" tabindex="0"><span class="ui-icon ui-icon-triangle-1-s"></span>Activity</a>
+            <p class="accordion-content">
+                Shows how much work you're doing each day.
+                {{#accordion-graph-date-picker-wrapper type="activity"}}
+                  {{> accordion-graph-date-picker}}
+                {{/accordion-graph-date-picker-wrapper}}
+            </p>
+          </li>
+          <li>
+            <a href="{{toLegacyGraphURL "focus" email "" ""}}" class="graph-link graph-link-header header  ui-accordion-header ui-helper-reset ui-state-default ui-corner-all" role="tab" aria-expanded="false" tabindex="-1"><span class="ui-icon ui-icon-triangle-1-e"></span>Focus</a>
+            <p class="accordion-content">
+                Shows how well you've focused on exercises and video playlists.
+                {{#accordion-graph-date-picker-wrapper type="focus"}}
+                  {{> accordion-graph-date-picker}}
+                {{/accordion-graph-date-picker-wrapper}}
+            </p>
+          </li>
+          <li>
+            <a href="{{toAPIGraphURL "user" "exercises" email "" ""}}" class="graph-link graph-link-header header">Exercise Progress</a>
+            <p class="accordion-content">
+                Shows you which exercises you've worked on and completed.
+                <span class="graph-options">
+                    <span class="progress-legend exercise-color started">Started</span>
+                    <span class="progress-legend exercise-color proficient">Proficient</span>
+                    <span class="progress-legend exercise-color review light">Review</span>
+                    <span class="progress-legend exercise-color struggling">Struggling</span>
+                </span>
+            </p>
+          </li>
+          <li>
+            <a href="{{toLegacyGraphURL "exercisesovertime" email "" ""}}" class="graph-link graph-link-header header  ui-accordion-header ui-helper-reset ui-state-default ui-corner-all" role="tab" aria-expanded="false" tabindex="-1"><span class="ui-icon ui-icon-triangle-1-e"></span>Exercise Progress Over Time</a>
+            <p class="accordion-content">Shows how many exercises you've completed over time.</p>
+          </li>
+          <li class='goals-accordion-content'>
+            <a href="{{toAPIGraphURL "user" "goals" email "" ""}}" class="graph-link graph-link-header header">Goals</a>
+            <p class="accordion-content">
+              Shows progress on your current goals.
+              <span class="graph-picker">
+                <a href="javascript:Profile.showGoalType('current')" id="goal-show-current-link" class="graph-sub-link 0">Current</a>
+                <span style="display: none">| <a href="javascript:Profile.showGoalType('completed')" id="goal-show-completed-link" class="graph-sub-link 0">Completed</a></span>
+                  <span style="display: none">| <a href="javascript:Profile.showGoalType('abandoned')" id="goal-show-abandoned-link" class="graph-sub-link 0">Abandoned</a></span>
+                </span>
+                <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);">Create a new goal</a>
+              </p>
+          </li>
+      </ul>
+  </div>
+  <div id="stats-charts" class="fancy-scrollbar -ce-capture">
+    <div id="graph-control-container">
+        <div id="graph-container">
+            <div id="graph-progress-bar"></div>
+            <div id="graph-content"></div>
+        </div>
+    </div>
+  </div>
+</div>
