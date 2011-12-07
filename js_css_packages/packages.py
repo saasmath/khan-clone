@@ -67,6 +67,7 @@ javascript = {
             "waypoints.min.js",
             "homepage.js",
             "ga_social_tracking.js",
+            "youtube-embed.handlebars",
         ]
     },
     "exercisestats": {

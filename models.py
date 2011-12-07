@@ -1089,8 +1089,12 @@ class Video(Searchable, db.Model):
             return download_urls.get("mp4")
         return None
 
-    def youtube_thumbnail_url(self):
-        return ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id)
+    @staticmethod
+    def youtube_thumbnail_urls(youtube_id):
+        return {
+                "hq": ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % youtube_id),
+                "sd": ImageCache.url_for("http://img.youtube.com/vi/%s/sddefault.jpg" % youtube_id),
+        }
 
     @staticmethod
     def get_for_readable_id(readable_id):
