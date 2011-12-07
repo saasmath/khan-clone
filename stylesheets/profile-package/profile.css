@@ -99,9 +99,9 @@
         top: -1px;
     }
 
-#individual_report > div {
+/* #individual_report > div {
     margin: 10px 0 20px;
-}
+}*/
 #individual_report h2 {
     color: #444;
     font-weight: normal;
@@ -275,7 +275,6 @@
     }
 
 #individual_report #achievements {
-    margin-top: 30px;
     min-width: 970px;
 }
     #individual_report #achievements h2 {
@@ -578,7 +577,6 @@ div.graph-notification {
   margin-left: 10px;
 }
 #tabs {
-    margin-top: 22px;
 }
 #tabs .ui-tabs {
     border: none;
@@ -593,8 +591,14 @@ div.graph-notification {
 }
 #tabs .ui-tabs-nav {
     background: none;
-    border-width: 0 0 1px 0;
+    border-width: 0 1px 0 0;
 }
+.ui-tabs-vertical { }
+.ui-tabs-vertical .ui-tabs-nav { padding: 18px .1em .2em .2em; width: 12em; position: absolute; left: 0; top: 0; bottom: 0; }
+.ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border-bottom: 1px solid lightGray !important; border-right-width: 0 !important; margin: 0 -1px .2em 0; }
+.ui-tabs-vertical .ui-tabs-nav li a { display:block; }
+.ui-tabs-vertical .ui-tabs-nav li.ui-tabs-selected { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; border-right-width: 1px; margin-bottom: .2em; border-bottom-color: #aaa !important; }
+.ui-tabs-vertical .ui-tabs-panel { padding: 18px 0 0; margin-left: 14em; min-height: 500px; }
 
 #student-profile-nav #top-nav a{
   display: block;

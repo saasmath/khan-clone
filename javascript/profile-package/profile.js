@@ -1005,7 +1005,8 @@ var Profile = {
 
         $("#profile-content").html(profileTemplate(profileContext));
         $("abbr.timeago").timeago();
-        $("#tabs").tabs();
+        $("#tabs").tabs().addClass('ui-tabs-vertical ui-helper-clearfix');
+        $("#tabs li").removeClass('ui-corner-top').addClass('ui-corner-left');
 
         Profile.populateAchievements();
 
