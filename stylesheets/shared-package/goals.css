@@ -484,155 +484,153 @@ input.goal-title:focus {
 /* The New Goal ui */
 
 .goalpicker {
-  width:100%;
-  height:auto;
-  min-height:90%;
-  padding-left:3%;
+    width:100%;
+    height:auto;
+    min-height:90%;
+    padding-left:3%;
 }
 
 .goalpicker .newgoal {
-  width:90%;
-  padding:4em 3% 2em 1%;
-  float:left;
-  clear:none;
-  position:relative;
-  -webkit-border-radius: 5px;
-
+    width:90%;
+    padding:4em 3% 2em 1%;
+    float:left;
+    clear:none;
+    position:relative;
+    -webkit-border-radius: 5px;
 }
 
 .goalpicker .newgoal.small{
-  width:43%;
+    width:43%;
 }
 
 .goalpicker h3,
 .goalpicker h4 {
-  font-size:30px;
-  font-family:MuseoSans300;
-  font-weight:normal;
-  line-height:68px;
-  color:#777;
-  margin:0;
-  letter-spacing:4px;
+    font-size:30px;
+    font-family:MuseoSans300;
+    font-weight:normal;
+    line-height:68px;
+    color:#777;
+    margin:0;
+    letter-spacing:4px;
 }
 .goalpicker h3{
-  padding-left:.4em;
-  margin-bottom:12px;
-  width:90%;
-  border-bottom:1px solid #666;
-
+    padding-left:.4em;
+    margin-bottom:12px;
+    width:90%;
+    border-bottom:1px solid #666;
 }
 .goalpicker h4 {
-  text-transform:uppercase;
-  font-family:MuseoSans500;
-  font-weight:bold;
-  font-size:24px;
-  letter-spacing:6px;
-  line-height:38px;
+    text-transform:uppercase;
+    font-family:MuseoSans500;
+    font-weight:bold;
+    font-size:24px;
+    letter-spacing:6px;
+    line-height:38px;
 }
 
 .goalpicker a{
-  color: #777;
-  text-decoration:none;
+    color: #777;
+    text-decoration:none;
 }
 .goalpicker .newgoal:hover{
-  cursor:pointer;
-  z-index:10;
-  -webkit-box-shadow:0 0 6px 1px #678D00;
+    cursor:pointer;
+    z-index:10;
+    -webkit-box-shadow:0 0 6px 1px #678D00;
 }
 
 .goalpicker .newgoal .info p{
-  margin:0 0 22px;
+    margin:0 0 22px;
 }
 
 .goalpicker .newgoal:hover a,
 .goalpicker .info button {
-  color:#678D00;
+    color:#678D00;
 }
 
 .goalpicker .info button {
-  text-transform:capitalize;
-  text-align:center;
-  line-height:16px;
-  width:70%;
-  margin:1em auto 2em;
-  margin-left:15%;
+    text-transform:capitalize;
+    text-align:center;
+    line-height:16px;
+    width:70%;
+    margin:1em auto 2em;
+    margin-left:15%;
 }
 
 
 .goalpicker .info, .goalpicker .info:hover  {
-  display:none;
-  cursor: default;
-  position:absolute;
-  left:-225px;
-  top:20px;
-  width:175px;
-  height:auto;
-  padding:22px 15px 0;
-  background-color:#eee;
-  border:1px solid #909090;
-  -webkit-box-shadow:0px 0px 10px 5px #ccc;
-  -webkit-border-radius:5px;
+    display:none;
+    cursor: default;
+    position:absolute;
+    left:-225px;
+    top:20px;
+    width:175px;
+    height:auto;
+    padding:22px 15px 0;
+    background-color:#eee;
+    border:1px solid #909090;
+    -webkit-box-shadow:0px 0px 10px 5px #ccc;
+    -webkit-border-radius:5px;
 }
 
 
 /*.goalpicker .info:after {
-  content:'';
-  display:block;
-  position:absolute;
-  top:30px;
-  left:100%;
-  width:0;
-  height:0;
-  border-color: transparent transparent transparent #eee;
-  border-style: solid;
-  border-width: 10px;
+    content:'';
+    display:block;
+    position:absolute;
+    top:30px;
+    left:100%;
+    width:0;
+    height:0;
+    border-color: transparent transparent transparent #eee;
+    border-style: solid;
+    border-width: 10px;
 }
 */
 
 .goalpicker .info.pos-right {
-  left:auto;
-  right:-225px;
+    left:auto;
+    right:-225px;
 }
 .goalpicker .info.pos-right:after {
-  left:-20px;
-  border-color:transparent #eee transparent transparent;
+    left:-20px;
+    border-color:transparent #eee transparent transparent;
 }
 
 .goalpicker .info.pos-top {
-  left:auto;
-  right:25px;
-  top: -40px;
+    left:auto;
+    right:25px;
+    top: -40px;
 }
 .goalpicker .info.pos-top:after {
-  left:-20px;
-  border-color:transparent #eee transparent transparent;
+    left:-20px;
+    border-color:transparent #eee transparent transparent;
 }
 
 .modal.goal-new {
-  position: fixed;
-  /* set the point on which top and left operate to the middle top edge*/
-  width: 700px; /* this is redundant but here for clarity */
-  margin: 0 0 0 -350px;
-  top: 90px;
-  left: 50%;
+    position: fixed;
+    /* set the point on which top and left operate to the middle top edge*/
+    width: 700px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -350px;
+    top: 90px;
+    left: 50%;
 }
 
 .student-module-status.notmatching,
 .student-module-status.light.notmatching {
-  background-color: #aaa;
+    background-color: #aaa;
 }
 
 .modal .goalpicker h3{
-  font-size:24px;
-  line-height:36px;
-  margin-left:.5em;
+    font-size:24px;
+    line-height:36px;
+    margin-left:.5em;
 }
 
 .modal .goalpicker h4 {
-  font-size:18px;
+    font-size:18px;
 }
 .modal .goalpicker .newgoal{
-  padding:1em 1em 2em;
+    padding:1em 1em 2em;
 }
 
 .lte8 #goals-container {
