@@ -219,8 +219,11 @@ var VideoControls = {
     },
 
     play: function() {
-        if (VideoControls.player && VideoControls.player.playVideo)
+        $(VideoControls).trigger("beforeplay");
+
+        if (VideoControls.player && VideoControls.player.playVideo) {
             VideoControls.player.playVideo();
+        }
     },
 
     pause: function() {
@@ -233,6 +236,13 @@ var VideoControls = {
         // when a play link is clicked.
         var yTop = $(VideoControls.player).offset().top - 2;
         if ($(window).scrollTop() > yTop) $(window).scrollTop(yTop);
+    },
+
+    onYouTubeBlocked: function(callback) {
+        $('<img width=0 height=0>')
+            .error(callback)
+            .attr('src', 'http://www.youtube.com/favicon.ico?' + Math.random())
+            .appendTo('#page-container');
     },
 
     initThumbnails: function() {
@@ -280,12 +290,16 @@ var VideoControls = {
         var youtubeId = jelParent.attr("data-youtube-id");
         if (VideoControls.player && youtubeId)
         {
+            $(VideoControls).trigger("beforeplay");
+
             VideoControls.player.loadVideoById(youtubeId, 0, "default");
             VideoControls.scrollToPlayer();
+
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
 
             VideoStats.startLoggingProgress(jelParent.attr("data-key"));
+            gae_bingo.bingo("homepage_video_thumbnails_clicked")
 
             return false;
         }
@@ -414,6 +428,13 @@ var VideoStats = {
         } else if (state == 1) { // play
             this.playing = true;
             this.dtSinceSave = new Date();
+
+            if (typeof Homepage !== "undefined") {
+                if (!Homepage.mainVideoBingoSent) {
+                    gae_bingo.bingo("homepage_video_main_video_played")
+                    Homepage.mainVideoBingoSent = true;
+                }
+            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
@@ -539,6 +560,7 @@ function onYouTubePlayerReady(playerID) {
 
     VideoControls.player = player;
     VideoStats.player = player;
+
     // The UniSub (aka mirosubs) widget replaces the YouTube player with a copy
     // and that will cause onYouTubePlayerReady() to be called again.  So, we trigger
     // 'playerready' events on any objects that are using the player so that they can
