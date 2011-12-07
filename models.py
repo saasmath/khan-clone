@@ -1238,7 +1238,7 @@ class Topic(db.Model):
         new_topic = util.clone_entity(self, **kwargs)
 
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
-                    
+                        
     def delete_tree(self):
         topics = Topic.all().filter("ancestor_keys =", self.key()).fetch(10000)
         topics.append(self)

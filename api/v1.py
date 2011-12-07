@@ -307,6 +307,9 @@ def exercise_videos(exercise_name):
 @jsonp
 @jsonify
 def video(video_id):
+    video = models.Video.get_for_readable_id(video_id)
+    if video:
+        return video
     return models.Video.all().filter("youtube_id =", video_id).get()
 
 @route("/api/v1/videos/<video_id>/download_available", methods=["POST"])
