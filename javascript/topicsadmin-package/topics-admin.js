@@ -59,7 +59,21 @@ var TopicTreeEditor = {
                 },
 
                 onDrop: function(node, sourceNode, hitMode, ui, draggable) {
+                    var oldParent = sourceNode.parent;
+
                     sourceNode.move(node, hitMode);
+
+                    var data = {
+                        kind: sourceNode.data.kind,
+                        id: sourceNode.data.key,
+                        new_parent_id: sourceNode.parent.data.key,
+                        new_parent_pos: sourceNode.parent.childList.indexOf(sourceNode)
+                    }
+                    $.ajax({
+                        url: '/api/v1/topic/' + oldParent.data.key + '/movechild',
+                        type: 'GET',
+                        data: data
+                    });
                 }
             },
 
