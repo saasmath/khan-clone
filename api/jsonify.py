@@ -20,16 +20,20 @@ def dumps(obj, camel_cased=False):
     elif obj == None:
         return None
     elif isinstance(obj, list):
-        items = [];
+        items = []
         for item in obj:
-            items.append(dumps(item))
+            items.append(dumps(item, camel_cased))
         return items
     elif isinstance(obj, datetime):
         return obj.strftime("%Y-%m-%dT%H:%M:%SZ")
     elif isinstance(obj, dict):
         properties = {}
         for key in obj:
-            properties[key] = dumps(obj[key])
+            value = dumps(obj[key], camel_cased)
+            if camel_cased:
+                properties[camel_casify(key)] = value
+            else:
+                properties[key] = value
         return properties
 
     properties = dict();
@@ -50,7 +54,7 @@ def dumps(obj, camel_cased=False):
                 value = obj.__getattribute__(property)
                 valueClass = str(value.__class__)
                 if is_visible_class_name(valueClass):
-                    value = dumps(value)
+                    value = dumps(value, camel_cased)
                     if camel_cased:
                         properties[camel_casify(property)] = value
                     else:
@@ -84,13 +88,17 @@ def is_visible_class_name(class_name):
 
 class JSONModelEncoder(simplejson.JSONEncoder):
     def default(self, o):
-        """jsonify default encoder"""
+        """ Turns objects into serializable dicts for the default encoder """
         return dumps(o)
 
 class JSONModelEncoderCamelCased(simplejson.JSONEncoder):
-    def default(self, o):
-        """jsonify default encoder"""
-        return dumps(o, camel_cased=True)
+    def encode(self, obj):
+        # We override encode() instead of the usual default(), since we need
+        # to handle built in types like lists and dicts ourselves as well.
+        # Specifically, we need to re-construct the object with camelCasing
+        # anyways, so do that before encoding.
+        obj = dumps(obj, camel_cased=True)
+        return super(self.__class__, self).encode(obj)
 
 def jsonify(data, **kwargs):
     """jsonify data in a standard (human friendly) way. If a db.Model
