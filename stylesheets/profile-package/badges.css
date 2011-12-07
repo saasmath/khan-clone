@@ -1,45 +1,45 @@
 .badge-display-case .achievement-badge {
-  display: inline-block;
-  vertical-align: top;
-  text-align: center;
-  width: 100px;
-  height: 100px;
-  padding: 0;
-  margin: 0;
-  font-size: 10px;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    width: 100px;
+    height: 100px;
+    padding: 0;
+    margin: 0;
+    font-size: 10px;
 }
 
 .editing .main-case .achievement-badge {
-  /* Must be consistent with jQuery animation */
-  margin: 5px;
-  border: 2px dashed #999;
+    /* Must be consistent with jQuery animation */
+    margin: 5px;
+    border: 2px dashed #999;
 }
 
 .editing .main-case .achievement-badge.selected {
-  border-color: blue;
+    border-color: blue;
 }
 
 .badge-display-case .achievement-title {
-  width: auto;
-  position: relative;
-  left: auto;
-  top: auto;
+    width: auto;
+    position: relative;
+    left: auto;
+    top: auto;
 }
 
 .badge-display-case .energy-points-badge {
-  position: relative;
-  display: inline-block;
-  left: auto;
-  top: auto;
-  right: auto;
-  float: none;
+    position: relative;
+    display: inline-block;
+    left: auto;
+    top: auto;
+    right: auto;
+    float: none;
 }
 
 .badge-display-case .achievement-count {
-  display: inline-block;
-  font-size: 12px;
-  width: auto;
-  margin: 0 2px;
+    display: inline-block;
+    font-size: 12px;
+    width: auto;
+    margin: 0 2px;
 }
 
 .badge-display-case .full-badge-list {
