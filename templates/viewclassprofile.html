@@ -6,7 +6,7 @@
 {% block meta_page_title %}Class Profile | {% endblock meta_page_title %}
 
 {% block pagecss %}
-    {{ js_css_packages.css_package("profile") }}
+    {{ super() }}
     {{ js_css_packages.css_package("studentlists") }}
 {% endblock pagecss %}
 

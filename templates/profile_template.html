@@ -3,6 +3,10 @@
 {% import 'macros/profiles.html' as profile_macros %}
 {% import 'macros/analytics.html' as analytics %}
 
+{% block pagecss %}
+    {{ js_css_packages.css_package("profile") }}
+{% endblock pagecss %}
+
 {% block pagescript %}
 {% if view == "mobile" %}
 	<style>
