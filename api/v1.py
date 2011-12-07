@@ -787,13 +787,9 @@ def get_ordered_review_problems():
         review_exercises = user_exercise_graph.review_exercise_names()
 
         queued_exercises = request.request_string('queued', '').split(',')
-        logging.warn('review_exercise = %s' % review_exercises)
-        logging.warn('queued_exercises = %s' % queued_exercises)
 
         # Only return those exercises that aren't already queued up
-        ret = filter(lambda ex: ex not in queued_exercises, review_exercises)
-        logging.warn('ret = %s' % ret)
-        return ret
+        return filter(lambda ex: ex not in queued_exercises, review_exercises)
 
     return []
 
