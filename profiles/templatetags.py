@@ -3,7 +3,7 @@ import os
 import shared_jinja
 
 from profiles import focus_graph, activity_graph, exercises_over_time_graph, exercise_problems_graph, exercise_progress_graph, recent_activity
-from profiles import class_exercises_over_time_graph, class_progress_report_graph, class_energy_points_per_minute_graph, class_time_graph
+from profiles import class_exercises_over_time_graph, class_energy_points_per_minute_graph, class_time_graph
 
 from urlparse import urlunparse
 from urllib import urlencode
@@ -31,8 +31,6 @@ def profile_exercise_progress_graph(user_data_student):
 # Class profile graph types
 def class_profile_exercises_over_time_graph(user_data_coach, student_list):
     return render_graph_html_and_context("class_exercises_over_time_graph.html", class_exercises_over_time_graph.class_exercises_over_time_graph_context(user_data_coach, student_list))
-def class_profile_progress_report_graph(user_data_coach, student_list):
-    return render_graph_html_and_context("class_progress_report_graph.html", class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list))
 def class_profile_energy_points_per_minute_graph(user_data_coach, student_list):
     return render_graph_html_and_context("class_energy_points_per_minute_graph.html", class_energy_points_per_minute_graph.class_energy_points_per_minute_graph_context(user_data_coach, student_list))
 def class_profile_energy_points_per_minute_update(user_data_coach, student_list):

@@ -1,4 +1,5 @@
 var ModalVideo = {
+    template: Templates.get("video.modal-video"),
     modal: null,
 
     linkifyTooltip: function() {
@@ -73,8 +74,8 @@ var ModalVideo = {
             video_url: Khan.relatedVideoHref(video)
         };
 
-        this.modal = $('#modal-video-tmpl')
-            .tmplPlugin(context).appendTo('body')
+        this.modal = $(this.template(context))
+            .appendTo('body')
             .modal({
                 keyboard: true,
                 backdrop: true,
@@ -129,3 +130,5 @@ var ModalVideo = {
         this.modal = null;
     }
 };
+
+Handlebars.registerPartial('youtube-player', Templates.get( "video.youtube-player" ));

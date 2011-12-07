@@ -1177,7 +1177,11 @@ class Playlist(Searchable, db.Model):
 
     @property
     def ka_url(self):
-        return util.absolute_url('#%s' % urllib.quote(slugify(self.title)))
+        return util.absolute_url(self.relative_url)
+
+    @property
+    def relative_url(self):
+        return '#%s' % urllib.quote(slugify(self.title.lower()))
 
     @staticmethod
     def get_for_all_topics():

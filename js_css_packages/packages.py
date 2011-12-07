@@ -55,9 +55,12 @@ javascript = {
     "video": {
         "files": [
             "jquery.qtip.js",
-            "jquery.tmpl.min.js",
             "video.js",
             "discussion.js",
+            "thumbnail.handlebars",
+            "related-video-link.handlebars",
+            "youtube-player.handlebars",
+            "modal-video.handlebars",
             "modalvideo.js",
         ]
     },
