@@ -1421,8 +1421,9 @@ class VideoLog(db.Model):
         video_points_total = points.VideoPointCalculator(user_video)
         video_points_received = video_points_total - video_points_previous
 
+        just_finished_video = False
         if not user_video.completed and video_points_total >= consts.VIDEO_POINTS_BASE:
-            # Just finished this video for the first time
+            just_finished_video = True
             user_video.completed = True
             user_data.videos_completed = -1
 
@@ -1432,7 +1433,7 @@ class VideoLog(db.Model):
             bingo('struggling_videos_finished')
 
         goals_updated = GoalList.update_goals(user_data,
-            lambda goal: goal.just_watched_video(user_data, user_video))
+            lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
 
         if video_points_received > 0:
             video_log.points_earned = video_points_received
