@@ -72,7 +72,10 @@ var ClassProfile = {
 
     updateStudentInfo: function(students, energyPoints) {
         $('#count_students').text(students + '');
-        $('#energy-points .energy-points-badge').text(energyPoints + '');
+        if ( typeof energyPoints !== "string" ) {
+            energyPoints = addCommas(energyPoints);
+        }
+        $('#energy-points .energy-points-badge').text(energyPoints);
     },
 
     renderStudentProgressReport: function(data, href) {
