@@ -1981,6 +1981,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     margin-top: 1px;
     margin-bottom: 1px;
     padding-top: 14px;
+    text-overflow: visible;
 }
 
 /* A gentle elliptical gradient with the review hue */

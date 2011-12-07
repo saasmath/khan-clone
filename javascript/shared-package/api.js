@@ -94,6 +94,7 @@ jQuery.fx.step.reviewExplode = function(fx) {
 //     guidelines.
 // TODO(david): I don't think we need to wait for DOM ready to register some of
 //     these handlers.
+// TODO(david): move to pageutil.js
 // Change review mode heading to "review done!" if appropriate
 $(function() {
 	APIActionResults.register( "review_done", function( done ) {
@@ -114,9 +115,14 @@ $(function() {
 				$( this ).removeAttr( "style" ).addClass( "review-done" );
 			});
 
-		$( "#review-mode-title h1" ).text( "Review Done!" ).stop().animate({
+		$( "#review-mode-title h1" ).html( "Review&nbsp;Done!" ).css({
+			fontSize: "100px",
+			right: 0,
+			position: "absolute"
+		}).stop().animate({
 			reviewGlow: 1,
-			opacity: 1
+			opacity: 1,
+			fontSize: 30
 		}, duration ).queue(function() {
 			$( this ).removeAttr( "style" );
 		});
