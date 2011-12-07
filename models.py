@@ -1191,9 +1191,9 @@ class Topic(db.Model):
         old_index = self.child_keys.index(child.key())
         del self.child_keys[old_index]
 
-        new_parent.child_keys.insert(int(new_parent_pos), child.key())
-
         if new_parent.key() != self.key():
+            new_parent.child_keys.insert(int(new_parent_pos), child.key())
+
             old_index = child.parent_keys.index(self.key())
             del child.parent_keys[old_index]
             child.parent_keys.append(new_parent.key())
@@ -1202,11 +1202,13 @@ class Topic(db.Model):
             descendants = Topic.all().filter("ancestor_key =", child).fetch(10000)
             for descendant in descendants:
                 descendant.update_ancestors()
+        else:
+            self.child_keys.insert(int(new_parent_pos), child.key())
 
         def move_txn():
             self.put()
-            new_parent.put()
             if new_parent.key() != self.key():
+                new_parent.put()
                 child.put()
                 for descendant in descendants:
                     descendant.put()
@@ -1315,7 +1317,7 @@ class Topic(db.Model):
             parent_keys = [parent.key()]
             ancestor_keys = parent_keys[:]
             ancestor_keys.extend(parent.ancestor_keys)
-
+            
             new_topic = Topic(root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
                               key_name,
                               version = version,

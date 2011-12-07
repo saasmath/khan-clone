@@ -204,7 +204,7 @@ def topic_move_child(old_parent_id):
     elif kind == "Exercise":
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
-        child = models.Video.get_by_readable_id(id)
+        child = models.Video.get_for_readable_id(id)
     else:
         return api_invalid_param_response("Invalid kind to move:" + kind)
 
