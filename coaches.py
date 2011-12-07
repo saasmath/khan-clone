@@ -257,7 +257,7 @@ class DeleteStudentList(RequestHandler):
         if not coach_data:
             return
 
-        student_list = util_profile.get_list(coach_data,
+        student_list = util_profile.get_student_list(coach_data,
             self.request_string('list_id'))
         student_list.delete()
         if not self.is_ajax_request():

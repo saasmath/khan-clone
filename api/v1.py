@@ -510,7 +510,7 @@ def coach_progress_summary():
         user_data_coach = user_data_override
 
     try:
-        list_students = get_students_from_request(user_data_coach)
+        list_students = get_students_data_from_request(user_data_coach)
     except Exception, e:
         return api_invalid_param_response(e.message)
 
