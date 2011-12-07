@@ -29,7 +29,7 @@ var TopicTreeEditor = {
                     model = new Exercise({ name: node.data.key, display_name: 'Loading...' });
                 }
 
-                TopicDetailEditor.init(node.data.kind, model);
+                TopicNodeEditor.init(node.data.kind, model);
 
                 if (!model.inited)
                     model.fetch();
@@ -113,6 +113,7 @@ var TopicTreeEditor = {
                 if (child.kind == 'Topic') {
                     data.isFolder = true;
                     data.isLazy = true;
+                    data.icon = 'leaf.png';
                 } else if (child.kind == 'Video') {
                     data.icon = 'video-camera-icon-full-small.png';
                 } else if (child.kind == 'Exercise') {
@@ -140,43 +141,147 @@ var TopicTreeEditor = {
     }
 };
 
-var TopicDetailEditor = {
+var TopicNodeEditor = {
 
     model: null,
     modelKind: null,
+    template: null,
 
     init: function(kind, model) {
-        TopicDetailEditor.modelKind = kind;
-        TopicDetailEditor.model = model;
+        TopicNodeEditor.modelKind = kind;
+        TopicNodeEditor.model = model;
+        TopicNodeEditor.template = Templates.get("topicsadmin.edit-" + kind.toLowerCase());
 
-        TopicDetailEditor.render();
+        TopicNodeEditor.render();
 
-        model.bind("change", TopicDetailEditor.render);
+        model.bind("change", TopicNodeEditor.render);
     }, 
 
     render: function() {
-        js = TopicDetailEditor.model.toJSON();
-        html = '<table>';
-        for (field in js) {
-            className = '';
-            if (field == 'id')
-                continue;
-            html += '<tr><td><b>' + field + '</b></td><td>';
-            if (field == 'title'|| field == 'description' || field == 'display_name' || field == 'name' || field == 'readable_id' || field == 'keywords')
-                html += '<input data-id="' + field + '" type="text" class="simple-input ui-corner-all blur-on-esc" value="' + js[field] + '"></input>';
-            else
-                html += '<span>' + js[field] + '</span>';
-            html += '</td></tr>';
-        }
-        html += '</table>';
+        js = TopicNodeEditor.model.toJSON();
+        html = TopicNodeEditor.template({model: js});
+
         $('#details_view').html(html);
+
+        if (TopicNodeEditor.modelKind == 'Topic') {
+            TopicTopicNodeEditor.init();
+        } else if (TopicNodeEditor.modelKind == 'Exercise') {
+            TopicExerciseNodeEditor.init();
+        } else if (TopicNodeEditor.modelKind == 'Video') {
+            TopicVideoNodeEditor.init();
+        }
+    }
+};
+
+var TopicTopicNodeEditor = {
+    addTag: function() {
+        var tag = $("#add-tag").val();
+
+        if (tag) {
+            var tags = TopicNodeEditor.model.get('tags').slice(0);
+
+            tags.push(tag);
+            TopicNodeEditor.model.set({tags: tags}); // This triggers a TopicNodeEditor.render()
+            TopicNodeEditor.model.save();
+        }
+    },
+    deleteTag: function(tag) {
+        var tags = TopicNodeEditor.model.get('tags').slice(0);
+
+        var idx = tags.indexOf(tag);
+        if (idx >= 0) {
+            tags.splice(idx, 1);
+            TopicNodeEditor.model.set({tags: tags}); // This triggers a TopicNodeEditor.render()
+            TopicNodeEditor.model.save();
+        }
+    },
+
+    init: function() {
         $('#details_view').find('input').change(function() {
-            var field = $(this).attr('data-id');
-            var value = $(this).val();
-            var setter = {};
-            setter[field] = value;
-            TopicDetailEditor.model.set(setter);
-            TopicDetailEditor.model.save();
+            var field = $(this).attr('name');
+            if (field) {
+                var value = $(this).val();
+                var setter = {};
+                setter[field] = value;
+                TopicNodeEditor.model.set(setter);
+                TopicNodeEditor.model.save();
+            }
+        });
+    }
+};
+
+var TopicExerciseNodeEditor = {
+    addCover: function() {
+        var cover = $("#add-cover").val();
+
+        if (cover) {
+            var covers = TopicNodeEditor.model.get('covers').slice(0);
+
+            covers.push(cover);
+            TopicNodeEditor.model.set({covers: covers}); // This triggers a TopicNodeEditor.render()
+        }
+    },
+    deleteCover: function(cover) {
+        var covers = TopicNodeEditor.model.get('covers').slice(0);
+
+        var idx = covers.indexOf(cover);
+        if (idx >= 0) {
+            covers.splice(idx, 1);
+            TopicNodeEditor.model.set({covers: covers}); // This triggers a TopicNodeEditor.render()
+        }
+    },
+
+    addPrereq: function() {
+        var prereq = $("#add-prereq").val();
+
+        if (prereq) {
+            var prereqs = TopicNodeEditor.model.get('prerequisites').slice(0);
+
+            prereqs.push(prereq);
+            TopicNodeEditor.model.set({prerequisites: prereqs}); // This triggers a TopicNodeEditor.render()
+        }
+    },
+    deletePrereq: function(prereq) {
+        var prereqs = TopicNodeEditor.model.get('prerequisites').slice(0);
+
+        var idx = prereqs.indexOf(prereq);
+        if (idx >= 0) {
+            prereqs.splice(idx, 1);
+            TopicNodeEditor.model.set({prerequisites: prereqs}); // This triggers a TopicNodeEditor.render()
+        }
+    },
+
+    init: function() {
+        // TomY TODO - related videos
+
+        $('#details_view').find('input').change(function() {
+            var field = $(this).attr('name');
+            if (field) {
+                var value = $(this).val();
+                var setter = {};
+                setter[field] = value;
+                TopicNodeEditor.model.set(setter);
+            }
+        });
+
+        // Configure the search form
+        $('#related-videos-input').placeholder();
+        initAutocomplete("#related-videos-input", false, TopicExerciseNodeEditor.addVideo, true);
+    }
+};
+
+var TopicVideoNodeEditor = {
+    init: function() {
+        // TomY TODO - related videos
+
+        $('#details_view').find('input').change(function() {
+            var field = $(this).attr('name');
+            if (field) {
+                var value = $(this).val();
+                var setter = {};
+                setter[field] = value;
+                TopicNodeEditor.model.set(setter);
+            }
         });
     }
 };

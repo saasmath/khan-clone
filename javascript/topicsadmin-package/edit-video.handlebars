@@ -1,0 +1,51 @@
+<div>
+  <img src="/images/video-camera-icon-shadow.png" width="48" height="48" style="vertical-align: middle">
+  <input type="text" name="title" class="node-title simple-input ui-corner-all blur-on-esc" value="{{ model.title }}" style="width: 250px; display: inline; vertical-align: middle;">
+</div>
+
+<div style="padding: 9px 23px;">
+  <div>
+    <table class="node-properties">
+
+      <tr>
+        <td style="font-weight:bold;">View</td>
+        <td style="padding-bottom:9px;">
+          <a href="{{ model.ka_url }}" target="_blank">Open {{ model.title }} in new tab</a>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">Slug</td>
+        <td style="padding-bottom:9px;">
+          <input type="text" name="readable_id" value="{{ model.readable_id }}" maxlength="11"/><br/>
+          <em>Short identifier used as a key for the API and in URLs linking to this video</em>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">YouTube ID</td>
+        <td style="padding-bottom:9px;">
+          <input type="text" name="youtube_id" value="{{ model.youtube_id }}" maxlength="11"/><br/>
+          <em>ID of this video on YouTube</em>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">Description</td>
+        <td style="padding-bottom:9px;">
+          <input type="text" name="description" value="{{ model.description }}" maxlength="256"/><br/>
+          <em>Description text visible in topic listings</em>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">Keywords</td>
+        <td style="padding-bottom:9px;">
+          <input type="text" name="keywords" value="{{ model.keywords }}" maxlength="256"/><br/>
+          <em>Terms to include when indexing this video for searching</em>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</div>

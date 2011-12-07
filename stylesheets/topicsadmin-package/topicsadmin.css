@@ -1,0 +1,8 @@
+.node-title {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.node-properties td {
+    padding-right: 9px;
+}

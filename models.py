@@ -1108,7 +1108,7 @@ class Topic(db.Model):
             item = {}
             item["kind"] = child.__class__.__name__
             item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name
-            item["title"] = child.title if hasattr(child, "title") else child.name
+            item["title"] = child.title if hasattr(child, "title") else child.display_name
             self.children.append(item)
         return self
 

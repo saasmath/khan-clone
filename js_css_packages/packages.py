@@ -149,7 +149,10 @@ javascript = {
 	"topicsadmin": {
         "files": [
 			"jquery.dynatree.js",
-            "topics-admin.js"
+            "topics-admin.js",
+            "edit-topic.handlebars",
+            "edit-video.handlebars",
+            "edit-exercise.handlebars"
         ]
 	},
 }
@@ -197,7 +200,8 @@ stylesheets = {
     },
 	"topicsadmin": {
         "files": [
-			"ui_dynatree.css"
+			"ui_dynatree.css",
+            "topicsadmin.css"
 		]
 	},
 }

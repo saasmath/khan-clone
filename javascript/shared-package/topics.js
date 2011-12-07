@@ -29,6 +29,7 @@ function TestTopics() {
             // Short version
 			id: 'new_topic', // API ID / slug
 			title: 'New Topic',
+            standalone_title: 'New Topic',
 			kind: 'Topic',
 
             // Long version
