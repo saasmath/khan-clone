@@ -1,8 +1,12 @@
 var KAConsole = {
     debugEnabled: false,
     log: function() {
-        if (window.console && KAConsole.debugEnabled)
-            console.log.apply(console, arguments);
+        if (window.console && KAConsole.debugEnabled) {
+            if (console.log.apply)
+                console.log.apply(console, arguments);
+            else
+                Function.prototype.apply.call(console.log, null, arguments);
+        }
     }
 };
 
@@ -183,6 +187,14 @@ function readCookie(name) {
 
 function eraseCookie(name) {
     createCookie(name,"",-1);
+}
+
+function areCookiesEnabled() {
+    createCookie('detectCookiesEnabled', 'KhanAcademy', 1);
+    if (readCookie('detectCookiesEnabled') == null)
+        return false;
+    eraseCookie('detectCookiesEnabled');
+    return true;
 }
 
 function onYouTubePlayerStateChange(state) {
@@ -409,6 +421,12 @@ var VideoStats = {
     save: function() {
         if (this.fSaving) return;
 
+        // Make sure cookies are enabled, otherwise this totally won't work
+        if (!areCookiesEnabled()) {
+            KAConsole.log('Cookies appear to be disabled. Not logging video progress.');
+            return;
+        }
+
         this.fSaving = true;
         var percent = this.getPercentWatched();
         var dtSinceSaveBeforeError = this.dtSinceSave;
@@ -619,6 +637,10 @@ var Notifications = {
             }, 100);
         }
     },
+    showTemplate: function(templateName) {
+        var template = Templates.get(templateName);
+        this.show( template() );
+    },
 
     hide: function() {
         var jel = $(".notification-bar");
@@ -728,8 +750,9 @@ var CSSMenus = {
     init: function() {
         // Make the CSS-only menus click-activated
         $('.noscript').removeClass('noscript');
-        $('.css-menu > ul > li').click(function() {
-            if (CSSMenus.active_menu) CSSMenus.active_menu.removeClass('css-menu-js-hover');
+        $(document).delegate('.css-menu > ul > li', 'click', function() {
+            if (CSSMenus.active_menu)
+                CSSMenus.active_menu.removeClass('css-menu-js-hover');
 
             if (CSSMenus.active_menu && this == CSSMenus.active_menu[0])
                 CSSMenus.active_menu = null;
@@ -737,18 +760,28 @@ var CSSMenus = {
                 CSSMenus.active_menu = $(this).addClass('css-menu-js-hover');
         });
 
-        $(document).bind("click focusin", function(e){
-            if (CSSMenus.active_menu && $(e.target).closest(".css-menu").length == 0) {
+        $(document).bind("click focusin", function(e) {
+            if (CSSMenus.active_menu &&
+                $(e.target).closest(".css-menu").length === 0) {
                 CSSMenus.active_menu.removeClass('css-menu-js-hover');
                 CSSMenus.active_menu = null;
             }
         });
 
         // Make the CSS-only menus keyboard-accessible
-        $('.css-menu a').focus(function(e){
-            $(e.target).addClass('css-menu-js-hover').closest(".css-menu > ul > li").addClass('css-menu-js-hover');
-        }).blur(function(e){
-            $(e.target).removeClass('css-menu-js-hover').closest(".css-menu > ul > li").removeClass('css-menu-js-hover');
+        $(document).delegate('.css-menu a', {
+            focus: function(e) {
+                $(e.target)
+                    .addClass('css-menu-js-hover')
+                    .closest(".css-menu > ul > li")
+                        .addClass('css-menu-js-hover');
+            },
+            blur: function(e) {
+                $(e.target)
+                    .removeClass('css-menu-js-hover')
+                    .closest(".css-menu > ul > li")
+                        .removeClass('css-menu-js-hover');
+            }
         });
     }
 };
@@ -991,4 +1024,111 @@ var globalPopupDialog = {
         return globalPopupDialog;
     }
 };
+
+function dynamicPackage(packageName, callback, manifest) {
+    var self = this;
+    this.files = [];
+    this.progress = 0;
+    this.last_progress = 0;
+
+    dynamicPackageLoader.loadingPackages[packageName] = this;
+    _.each(manifest, function(filename) {
+        var file = {
+            'filename': filename,
+            'content': null,
+            'evaled': false
+        };
+        self.files.push(file);
+        $.ajax({
+            type:       "GET",
+            url:        filename,
+            data:       null,
+            success:    function(content) {
+                            KAConsole.log('Received contents of ' + filename);
+                            file.content = content;
+
+                            self.progress++;
+                            callback('progress', self.progress/(2*self.files.length));
+                            self.last_progress = self.progress;
+                        },
+            error:      function(xml, status, e) {
+                            callback('failed');
+                        },
+            dataType:   "html"
+        });
+    });
+
+    this.checkComplete = function() {
+        var waiting = false;
+        _.each(this.files, function(file) {
+            if (file.content) {
+                if (!file.evaled) {
+                    var script = document.createElement("script");
+                    if (file.filename.indexOf('.handlebars') > 0)
+                        script.type = 'text/x-handlebars-template'; // This hasn't been tested
+                    else
+                        script.type = "text/javascript";
+                    script.appendChild( document.createTextNode( file.content ) );
+
+                    var head = document.getElementsByTagName("head")[0] || document.documentElement;
+                    head.appendChild( script );
+
+                    file.evaled = true;
+                    KAConsole.log('Evaled contents of ' + file.filename);
+
+                    self.progress++;
+                }
+            } else {
+                waiting = true;
+                return _.breaker;
+            }
+        });
+
+        if (waiting) {
+            if (self.progress != self.last_progress) {
+                callback('progress', self.progress/(2*self.files.length));
+                self.last_progress = self.progress;
+            }
+            setTimeout(function() { self.checkComplete(); }, 500);
+        } else {
+            dynamicPackageLoader.loadedPackages[packageName] = true;
+            delete dynamicPackageLoader.loadingPackages[packageName];
+            callback('complete');
+        }
+    }
+
+    this.checkComplete();
+}
+
+var dynamicPackageLoader = {
+    loadedPackages: {},
+    loadingPackages: {},
+    currentFiles: [],
+
+    load: function(packageName, callback, manifest) {
+        if (this.loadedPackages[packageName]) {
+            if (callback)
+                callback(packageName);
+        } else {
+            new dynamicPackage(packageName, callback, manifest);
+        }
+    },
+    
+    packageLoaded: function(packageName) {
+        return this.loadedPackages[packageName];
+    },
+
+    setPackageLoaded: function(packageName) {
+        this.loadedPackages[packageName] = true;
+    }
+};
+
+$(function() {
+    $(document).delegate('input.blur-on-esc', 'keyup', function( e, options ) {
+        if ( options && options.silent ) return;
+        if ( e.which == '27' ) {
+            $(e.target).blur();
+        }
+    });
+});
 

@@ -13,8 +13,6 @@ from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
 
-from api.auth.xsrf import ensure_xsrf_cookie
-
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
 

@@ -69,6 +69,9 @@
                 <h2>{% block statistics_title %}Vital Statistics{% endblock statistics_title %}</h2>
                 {% block graph_accordion %}{% endblock graph_accordion %}
             </div>
+            <div id="stats-filters">
+              {% block stats_filters %}{% endblock stats_filters %}
+            </div>
             <div id="stats-charts" class="fancy-scrollbar -ce-capture {{ stats_charts_class }}">
                 {{ profile_macros.graph_control() }}
             </div>

@@ -38,6 +38,7 @@ javascript = {
             "pageutil.js",
             "api.js",
             "social.js",
+            "api-version-mismatch.handlebars",
             "streak-bar.handlebars",
             "knowledgemap-exercise.handlebars",
             "knowledgemap-admin-exercise.handlebars",
