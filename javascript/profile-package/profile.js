@@ -68,40 +68,40 @@ var Profile = {
             }
         );
 
-        $("#individual_report #achievements #achievement-list > ul li").click(function() {
-             var category = $(this).attr('id');
-             var clickedBadge = $(this);
+        $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
+            var category = $(this).attr('id');
+            var clickedBadge = $(this);
 
-             $("#badge-container").css("display", "");
-             clickedBadge.siblings().removeClass("selected");
+            $("#badge-container").css("display", "");
+            clickedBadge.siblings().removeClass("selected");
 
-             if ($("#badge-container > #" + category ).is(":visible")) {
-                if (clickedBadge.parents().hasClass("standard-view")) {
-                    $("#badge-container > #" + category ).slideUp(300, function(){
-                            $("#badge-container").css("display", "none");
-                            clickedBadge.removeClass("selected");
-                        });
-                }
-                else {
-                    $("#badge-container > #" + category ).hide();
-                    $("#badge-container").css("display", "none");
-                    clickedBadge.removeClass("selected");
-                }
-             }
-             else {
-                var jelContainer = $("#badge-container");
-                var oldHeight = jelContainer.height();
-                $(jelContainer).children().hide();
-                if (clickedBadge.parents().hasClass("standard-view")) {
-                    $(jelContainer).css("min-height", oldHeight);
-                    $("#" + category, jelContainer).slideDown(300, function() {
-                        $(jelContainer).animate({"min-height": 0}, 200);
-                    });
-                } else {
-                    $("#" + category, jelContainer).show();
-                }
-                clickedBadge.addClass("selected");
-             }
+            if ($("#badge-container > #" + category ).is(":visible")) {
+               if (clickedBadge.parents().hasClass("standard-view")) {
+                   $("#badge-container > #" + category ).slideUp(300, function(){
+                           $("#badge-container").css("display", "none");
+                           clickedBadge.removeClass("selected");
+                       });
+               }
+               else {
+                   $("#badge-container > #" + category ).hide();
+                   $("#badge-container").css("display", "none");
+                   clickedBadge.removeClass("selected");
+               }
+            }
+            else {
+               var jelContainer = $("#badge-container");
+               var oldHeight = jelContainer.height();
+               $(jelContainer).children().hide();
+               if (clickedBadge.parents().hasClass("standard-view")) {
+                   $(jelContainer).css("min-height", oldHeight);
+                   $("#" + category, jelContainer).slideDown(300, function() {
+                       $(jelContainer).animate({"min-height": 0}, 200);
+                   });
+               } else {
+                   $("#" + category, jelContainer).show();
+               }
+               clickedBadge.addClass("selected");
+            }
         });
 
         // remove goals from IE<=8
@@ -810,26 +810,30 @@ var Profile = {
 		});
 	},
 
-	// TODO: move history management out to a common utility
-	historyChange: function(e) {
-	    var av = $.address ? $.address.value() : "/" ;
+    // TODO: move history management out to a common utility
+    historyChange: function(e) {
+        var av = $.address ? $.address.value() : "/" ;
         // if(av === "/"){
         //     $.address.value(this.initialGraphUrl)
         // }
-		var href = (av !== "/") ? av : this.initialGraphUrl;
-		if ( href ) {
-			if ( this.expandAccordionForHref(href) ) {
-				this.loadGraph( href, true );
-				this.loadFilters( href );
-			} else {
-				// Invalid URL - just try the first link available.
-				var links = $(".graph-link");
-				if ( links.length ) {
-					Profile.loadGraphFromLink( links[0] );
-				}
-			}
-		}
-	},
+        var href = (av !== "/") ? av : this.initialGraphUrl;
+
+        if ( href ) {
+            if (href === "/achievements") {
+                $("#tab-achievements").click();
+            }
+            if ( this.expandAccordionForHref(href) ) {
+                this.loadGraph( href, true );
+                this.loadFilters( href );
+            } else {
+                // Invalid URL - just try the first link available.
+                var links = $(".graph-link");
+                if ( links.length ) {
+                    Profile.loadGraphFromLink( links[0] );
+                }
+            }
+        }
+    },
 
     showGraphThrobber: function(fVisible) {
         if (fVisible) {
@@ -920,43 +924,46 @@ var Profile = {
         }
 
         var profileTemplate = Templates.get("profile.profile");
+        function createEncodedURLParameter(key, value) {
+            return key + "=" + encodeURIComponent(value);
+        }
 
         Handlebars.registerHelper("toLegacyGraphURL", function(type, student, coach, listId) {
             var url = "/profile/graph/" + type + "?",
                 params = [];
             if (student) {
-                params.push("student_email=" + student);
+                params.push(createEncodedURLParameter("student_email", student));
             }
 
             if (coach) {
-                params.push("coach_email=" + coach);
+                params.push(createEncodedURLParameter("coach_email", coach));
             }
 
             if (listId) {
-                params.push("list_id=" + listId);
+                params.push(createEncodedURLParameter("list_id", listId));
             }
 
             url += params.join("&");
-            return encodeURI(url);
+            return url;
         });
 
         Handlebars.registerHelper("toAPIGraphURL", function(prefix, apiFunction, student, coach, listId) {
             var url = "/api/v1/" + prefix + "/" + apiFunction + "?",
                 params = [];
             if (student) {
-                params.push("email=" + student);
+                params.push(createEncodedURLParameter("email", student));
             }
 
             if (coach) {
-                params.push("coach_email=" + coach);
+                params.push(createEncodedURLParameter("coach_email", coach));
             }
 
             if (listId) {
-                params.push("listId=" + listId);
+                params.push(createEncodedURLParameter("listId", listId));
             }
 
             url += params.join("&");
-            return encodeURI(url);
+            return url;
         });
 
         // So that the date-picker can update the history param properly
@@ -965,7 +972,8 @@ var Profile = {
             return block(this);
         });
 
-        Handlebars.registerPartial("accordion-graph-date-picker", Templates.get("profile.accordion-graph-date-picker"));
+        Handlebars.registerPartial("accordion-graph-date-picker",
+                Templates.get("profile.accordion-graph-date-picker"));
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
         $("#profile-content").html(profileTemplate(profileContext));
@@ -977,15 +985,6 @@ var Profile = {
         // TODO: Might there be a better way
         // for server-side + client-side to co-exist in harmony?
         $("#tab-content-recent-activity").html($("#server-side-recent-activity").html());
-
-        // Temp handlers to preserve behavior
-        if (window.location.hash === "#achievements") {
-            $("#tab-achievements").click();
-        }
-
-        $("#badge-count-container").click( function(e) {
-            $("#tab-achievements").click();
-        });
     },
 
     populateAchievements: function() {
