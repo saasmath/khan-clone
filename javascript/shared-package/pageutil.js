@@ -969,3 +969,44 @@ var SearchResultHighlight = {
         });
     }
 };
+
+// An animation that grows a box shadow of the review hue
+$.fx.step.reviewExplode = function(fx) {
+	var val = fx.now + fx.unit;
+	jQuery( fx.elem ).css( 'boxShadow',
+			'0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
+};
+
+// TODO(david): Style clean-up: 4 spaces and what not. Clean up rest of the file
+//     as well.
+var Review = {
+	highlightDone: function( done ) {
+		if ( !done || $( "#review-mode-title" ).hasClass( "review-done" ) ) return;
+
+		var duration = 800;
+
+		$( "#review-mode-title" ).stop().animate({
+			reviewExplode: 300,
+		}, duration ).queue(function() {
+			$( this ).removeAttr( "style" ).addClass( "review-done" );
+		});
+
+		$( "#review-mode-title > div" )
+			.css( "backgroundColor", "#F9DFCD" )
+			.delay( duration ).queue(function() {
+				$( this ).removeAttr( "style" ).addClass( "review-done" );
+			});
+
+		$( "#review-mode-title h1" ).html( "Review&nbsp;Done!" ).css({
+			fontSize: "100px",
+			right: 0,
+			position: "absolute"
+		}).stop().animate({
+			reviewGlow: 1,
+			opacity: 1,
+			fontSize: 30
+		}, duration ).queue(function() {
+			$( this ).removeAttr( "style" );
+		});
+	}
+};

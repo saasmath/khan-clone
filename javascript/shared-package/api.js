@@ -83,49 +83,10 @@ $(function(){
   APIActionResults.register( "points_earned", updatePointDisplay );
 });
 
-// An animation that grows a box shadow of the review hue
-jQuery.fx.step.reviewExplode = function(fx) {
-	var val = fx.now + fx.unit;
-	jQuery( fx.elem ).css( 'boxShadow',
-			'0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
-};
-
-// TODO(david): Style clean-up. Make all the JS files follow jQuery core
-//     guidelines.
 // TODO(david): I don't think we need to wait for DOM ready to register some of
 //     these handlers.
 // TODO(david): move to pageutil.js
 // Change review mode heading to "review done!" if appropriate
 $(function() {
-	APIActionResults.register( "review_done", function( done ) {
-
-		if ( !done ) return;
-
-		var duration = 800;
-
-		$( "#review-mode-title" ).stop().animate({
-			reviewExplode: 300,
-		}, duration ).queue(function() {
-			$( this ).removeAttr( "style" ).addClass( "review-done" );
-		});
-
-		$( "#review-mode-title > div" )
-			.css( "backgroundColor", "#F9DFCD" )
-			.delay( duration ).queue(function() {
-				$( this ).removeAttr( "style" ).addClass( "review-done" );
-			});
-
-		$( "#review-mode-title h1" ).html( "Review&nbsp;Done!" ).css({
-			fontSize: "100px",
-			right: 0,
-			position: "absolute"
-		}).stop().animate({
-			reviewGlow: 1,
-			opacity: 1,
-			fontSize: 30
-		}, duration ).queue(function() {
-			$( this ).removeAttr( "style" );
-		});
-
-	});
+	APIActionResults.register( "review_done", Review.highlightDone );
 });
