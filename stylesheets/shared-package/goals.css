@@ -409,13 +409,6 @@ input.goal-title:focus {
     float: right;
 }
 
-#goals-congrats {
-    background: #f00;
-    color: #fff;
-    font-weight: bold;
-}
-
-
 #class-student-goals .objective.matches-filter,
 #class-student-goals .objective.matches-filter:before {
     font-weight: bold;
