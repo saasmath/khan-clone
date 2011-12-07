@@ -92,23 +92,34 @@ jQuery.fx.step.reviewExplode = function(fx) {
 
 // TODO(david): Style clean-up. Make all the JS files follow jQuery core
 //     guidelines.
+// TODO(david): I don't think we need to wait for DOM ready to register some of
+//     these handlers.
 // Change review mode heading to "review done!" if appropriate
 $(function() {
 	APIActionResults.register( "review_done", function( done ) {
+
 		if ( !done ) return;
 
-		$( "#review-mode-title h1" ).text( "Review Done!" );
+		var duration = 800;
 
-		var animationOptions = { speed: 1000 };
-
-		$( "#review-mode-title" ).animate({
+		$( "#review-mode-title" ).stop().animate({
 			reviewExplode: 300,
-		}, animationOptions ).queue(function() {
+		}, duration ).queue(function() {
 			$( this ).removeAttr( "style" ).addClass( "review-done" );
 		});
 
-		$( "#review-mode-title h1" ).animate({
-			reviewGlow: 1
-		}, animationOptions );
+		$( "#review-mode-title > div" )
+			.css( "backgroundColor", "#F9DFCD" )
+			.delay( duration ).queue(function() {
+				$( this ).removeAttr( "style" ).addClass( "review-done" );
+			});
+
+		$( "#review-mode-title h1" ).text( "Review Done!" ).stop().animate({
+			reviewGlow: 1,
+			opacity: 1
+		}, duration ).queue(function() {
+			$( this ).removeAttr( "style" );
+		});
+
 	});
 });
