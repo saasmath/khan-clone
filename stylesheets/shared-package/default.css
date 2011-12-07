@@ -1686,11 +1686,15 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .achievement-badge-counts {
     text-decoration: none;
-}
-
-.achievement-badge-counts {
     position: relative;
     top: 2px;
+}
+.achievement-badge-counts .badge {
+  margin-right:4px;
+}
+
+.achievement-badge-counts .badge img {
+  margin-right:-2px;
 }
 
 .achievement-badge {
@@ -2332,7 +2336,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     position: absolute;
     padding: 5px;
     min-width: 150px;
-    z-index: 10;
+    z-index: 1000;
 
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
@@ -3618,39 +3622,6 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     padding: 30px;
 }
 
-#popup-dialog .dialog-frame {
-    z-index: 11000;
-    background-color: #ffffff;
-    border: 1px solid #999;
-    border: 1px solid rgba(0, 0, 0, 0.3);
-
-    -webkit-border-radius: 6px;
-    -moz-border-radius: 6px;
-    border-radius: 6px;
-    -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-    -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-    -webkit-background-clip: padding-box;
-    -moz-background-clip: padding-box;
-    background-clip: padding-box;
-}
-.lte7 #popup-dialog .dialog-frame {
-    border: 1px solid #999;
-}
-
-#popup-dialog .dialog-header {
-    padding: 5px 15px;
-    cursor: move;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-}
-#popup-dialog .dialog-header h3 {
-    margin-top: 10px
-}
-
 .close-button {
     float: right;
     color: black;
@@ -3662,27 +3633,4 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     -khtml-opacity: 0.2;
     -moz-opacity: 0.2;
     opacity: 0.2;
-}
-
-#popup-dialog .close-button {
-    margin-top: 7px;
-}
-
-#popup-dialog .generic-message-wrapper {
-    position: absolute;
-    top: 10%;
-    left: 50%;
-}
-
-#popup-dialog .dialog-progress-bar {
-    width: 400px;
-    height: 22px;
-    text-align: center;
-    position: relative;
-    top: 20px;
-    margin-left: -200px;
-    z-index: 1;
-}
-#popup-dialog .dialog-progress-bar .ui-progressbar-value {
-    background-image: url('/images/progress-animated.gif');
 }

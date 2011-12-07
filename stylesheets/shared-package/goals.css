@@ -170,7 +170,7 @@ ul.inline-list, ul.inline-list li {
 
 .goal a.objective.exercise.complete:before,
 .goal a.objective.video.complete:before,
-.goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.goal a.objective.GoalObjectiveAnyVideo.complete:before,
 .goal a.objective.GoalObjectiveWatchVideo.complete:before,
 .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
@@ -187,7 +187,7 @@ ul.inline-list, ul.inline-list li {
 
 .ie .goal a.objective.exercise.complete:before,
 .ie .goal a.objective.video.complete:before,
-.ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.ie .goal a.objective.GoalObjectiveAnyVideo.complete:before,
 .ie .goal a.objective.GoalObjectiveWatchVideo.complete:before,
 .ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
 .ie .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
@@ -199,7 +199,7 @@ ul.inline-list, ul.inline-list li {
 
 .goal a.objective.exercise.complete,
 .goal a.objective.video.complete,
-.goal a.objective.GoalObjectiveExerciseProficiency.complete,
+.goal a.objective.GoalObjectiveAnyVideo.complete,
 .goal a.objective.GoalObjectiveWatchVideo.complete,
 .goal a.objective.GoalObjectiveExerciseProficiency.complete,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete {
@@ -399,40 +399,6 @@ input.goal-title:focus {
     font-weight: normal;
 }
 
-#popup-dialog .dialog-frame.create-custom-goal {
-    position: fixed;
-    left: 5%;
-    top: 5%;
-    width: 90%;
-    height: 85%;
-    margin: 0px;
-}
-
-#popup-dialog .dialog-title {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 5px;
-
-    padding: 5px;
-    padding-left: 10px;
-}
-#popup-dialog .dialog-title p {
-    font-size: 150%;
-   display: inline;
-}
-#popup-dialog .dialog-button {
-    float: right;
-    margin: 5px;
-}
-#popup-dialog .goal-popup-block {
-    clear: both;
-    background-color: #f4f4f4;
-    border: 1px solid #888;
-    margin: 10px;
-    padding: 5px 5px 36px 10px;
-}
-
 #goalbook-controls {
     margin-top: 20px;
 }
@@ -442,13 +408,6 @@ input.goal-title:focus {
     display: inline-block;
     float: right;
 }
-
-#goals-congrats {
-    background: #f00;
-    color: #fff;
-    font-weight: bold;
-}
-
 
 #class-student-goals .objective.matches-filter,
 #class-student-goals .objective.matches-filter:before {
@@ -525,175 +484,193 @@ input.goal-title:focus {
 /* The New Goal ui */
 
 .goalpicker {
-  width:100%;
-  height:auto;
-  min-height:90%;
-  padding-left:3%;
+    width:100%;
+    height:auto;
+    min-height:90%;
+    padding-left:3%;
 }
 
 .goalpicker .newgoal {
-  width:90%;
-  padding:4em 3% 2em 1%;
-  float:left;
-  clear:none;
-  position:relative;
-  -webkit-border-radius: 5px;
-
+    width:90%;
+    padding:4em 3% 2em 1%;
+    float:left;
+    clear:none;
+    position:relative;
+    -webkit-border-radius: 5px;
 }
 
 .goalpicker .newgoal.small{
-  width:43%;
+    width:43%;
 }
 
 .goalpicker h3,
 .goalpicker h4 {
-  font-size:30px;
-  font-family:MuseoSans300;
-  font-weight:normal;
-  line-height:68px;
-  color:#777;
-  margin:0;
-  letter-spacing:4px;
+    font-size:30px;
+    font-family:MuseoSans300;
+    font-weight:normal;
+    line-height:68px;
+    color:#777;
+    margin:0;
+    letter-spacing:4px;
 }
 .goalpicker h3{
-  padding-left:.4em;
-  margin-bottom:12px;
-  width:90%;
-  border-bottom:1px solid #666;
-
+    padding-left:.4em;
+    margin-bottom:12px;
+    width:90%;
+    border-bottom:1px solid #666;
 }
 .goalpicker h4 {
-  text-transform:uppercase;
-  font-family:MuseoSans500;
-  font-weight:bold;
-  font-size:24px;
-  letter-spacing:6px;
-  line-height:38px;
+    text-transform:uppercase;
+    font-family:MuseoSans500;
+    font-weight:bold;
+    font-size:24px;
+    letter-spacing:6px;
+    line-height:38px;
 }
 
 .goalpicker a{
-  color: #777;
-  text-decoration:none;
+    color: #777;
+    text-decoration:none;
 }
 .goalpicker .newgoal:hover{
-  cursor:pointer;
-  z-index:10;
-  -webkit-box-shadow:0 0 6px 1px #678D00;
+    cursor:pointer;
+    z-index:10;
+    -webkit-box-shadow:0 0 6px 1px #678D00;
 }
 
 .goalpicker .newgoal .info p{
-  margin:0 0 22px;
+    margin:0 0 22px;
 }
 
 .goalpicker .newgoal:hover a,
 .goalpicker .info button {
-  color:#678D00;
+    color:#678D00;
 }
 
 .goalpicker .info button {
-  text-transform:capitalize;
-  text-align:center;
-  line-height:16px;
-  width:70%;
-  margin:1em auto 2em;
-  margin-left:15%;
+    text-transform:capitalize;
+    text-align:center;
+    line-height:16px;
+    width:70%;
+    margin:1em auto 2em;
+    margin-left:15%;
 }
 
 
 .goalpicker .info, .goalpicker .info:hover  {
-  display:none;
-  cursor: default;
-  position:absolute;
-  left:-225px;
-  top:20px;
-  width:175px;
-  height:auto;
-  padding:22px 15px 0;
-  background-color:#eee;
-  border:1px solid #909090;
-  -webkit-box-shadow:0px 0px 10px 5px #ccc;
-  -webkit-border-radius:5px;
+    display:none;
+    cursor: default;
+    position:absolute;
+    left:-225px;
+    top:20px;
+    width:175px;
+    height:auto;
+    padding:22px 15px 0;
+    background-color:#eee;
+    border:1px solid #909090;
+    -webkit-box-shadow:0px 0px 10px 5px #ccc;
+    -webkit-border-radius:5px;
 }
 
 
 /*.goalpicker .info:after {
-  content:'';
-  display:block;
-  position:absolute;
-  top:30px;
-  left:100%;
-  width:0;
-  height:0;
-  border-color: transparent transparent transparent #eee;
-  border-style: solid;
-  border-width: 10px;
+    content:'';
+    display:block;
+    position:absolute;
+    top:30px;
+    left:100%;
+    width:0;
+    height:0;
+    border-color: transparent transparent transparent #eee;
+    border-style: solid;
+    border-width: 10px;
 }
 */
 
 .goalpicker .info.pos-right {
-  left:auto;
-  right:-225px;
+    left:auto;
+    right:-225px;
 }
 .goalpicker .info.pos-right:after {
-  left:-20px;
-  border-color:transparent #eee transparent transparent;
+    left:-20px;
+    border-color:transparent #eee transparent transparent;
 }
 
 .goalpicker .info.pos-top {
-  left:auto;
-  right:25px;
-  top: -40px;
+    left:auto;
+    right:25px;
+    top: -40px;
 }
 .goalpicker .info.pos-top:after {
-  left:-20px;
-  border-color:transparent #eee transparent transparent;
+    left:-20px;
+    border-color:transparent #eee transparent transparent;
 }
 
-/* goals-new-dialog */
 .modal.goal-new {
-  position: fixed;
-  /* set the point on which top and left operate to the middle top edge*/
-  width: 700px; /* this is redundant but here for clarity */
-  margin: 0 0 0 -450px;
-  top: 90px;
-  left: 50%;
-
-  z-index: 11000;
-  background-color: #ffffff;
-  border: 1px solid #999;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  *border: 1px solid #999;
-  /* IE6-7 */
-
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
-  border-radius: 6px;
-  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -webkit-background-clip: padding-box;
-  -moz-background-clip: padding-box;
-  background-clip: padding-box;
+    position: fixed;
+    /* set the point on which top and left operate to the middle top edge*/
+    width: 700px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -350px;
+    top: 90px;
+    left: 50%;
 }
 
 .student-module-status.notmatching,
 .student-module-status.light.notmatching {
-  background-color: #aaa;
+    background-color: #aaa;
 }
 
 .modal .goalpicker h3{
-  font-size:24px;
-  line-height:36px;
-  margin-left:.5em;
+    font-size:24px;
+    line-height:36px;
+    margin-left:.5em;
 }
 
 .modal .goalpicker h4 {
-  font-size:18px;
+    font-size:18px;
 }
 .modal .goalpicker .newgoal{
-  padding:1em 1em 2em;
+    padding:1em 1em 2em;
 }
 
 .lte8 #goals-container {
     display: none;
+}
+
+
+.modal.goal-new-custom {
+    position: fixed;
+    top: 90px;
+    right: 90px;
+    bottom: 90px;
+    left: 90px;
+}
+.modal.goal-new-custom .progress-bar-wrapper {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+}
+.modal.goal-new-custom .progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+.modal.goal-new-custom .progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
+}
+
+#create-goal .section-headline {
+    padding-top: 0;
+}
+
+.modal.goal-new-custom #goal-submit-button,
+.modal.goal-new-custom .goals-close-button {
+    font-size: 16px;
+    float: right;
+    padding: 4px 10px;
+    margin-left: 10px;
 }
