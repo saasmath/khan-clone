@@ -216,7 +216,7 @@ def topic_move_child(old_parent_id):
     if not old_parent_topic:
         return api_invalid_param_response("Could not find topic with ID " + str(old_parent_id))
            
-    new_parent_pos = request.request_string("id")
+    new_parent_pos = request.request_string("new_parent_pos")
 
     old_parent_topic.move_child(child, new_parent, new_parent_pos)
 
