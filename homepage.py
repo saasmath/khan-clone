@@ -176,8 +176,11 @@ class ViewHomePage(request_handler.RequestHandler):
         # Get pregenerated library content from our in-memory/memcache two-layer cache
         library_content = library.library_content_html()
 
-        use_placeholder = HomepageVideoPlaceholderExperiment.get_video_type() == "placeholder",
-        bingo('homepage_video_visits')
+        # Only running placeholder A/B test for non-mobile clients
+        use_placeholder = False
+        if not self.is_mobile_capable():
+            use_placeholder = HomepageVideoPlaceholderExperiment.get_video_type() == "placeholder"
+            bingo('homepage_video_visits')
 
         template_values = {
                             'use_placeholder': use_placeholder,

@@ -221,12 +221,9 @@ var VideoControls = {
     play: function() {
         $(VideoControls).trigger("beforeplay");
 
-        setTimeout(function() {
-
         if (VideoControls.player && VideoControls.player.playVideo) {
             VideoControls.player.playVideo();
         }
-        }, 1);
     },
 
     pause: function() {

@@ -17,7 +17,7 @@
 <article id="homepage">
     <div id="main-video">
 
-        {% if is_mobile_capable %}
+        {% if is_mobile_capable or not use_placeholder %}
             {{ youtube.player_embed(marquee_video["youtube_id"], 480, 395) }}
         {% else %}
             <a id="main-video-link" href="{{ marquee_video["href"] }}">
