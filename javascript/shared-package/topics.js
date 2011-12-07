@@ -27,7 +27,7 @@ function TestTopics() {
 	Topic = Backbone.Model.extend({
 		defaults: {
             // Short version
-			id: '',
+			id: 'new_topic', // API ID / slug
 			title: 'New Topic',
 			kind: 'Topic',
 
@@ -107,5 +107,51 @@ function TestTopics() {
         }
         return defaultTree;
     }
+
+    Video = Backbone.Model.extend({
+        defaults: {
+            readable_id: 'new_video', // API ID / slug
+			kind: 'Video',
+            title: 'New Video',
+            youtube_id: '',
+            description: '',
+            keywords: '',
+            duration: 0,
+            views: 0,
+            date_added: '',
+            url: '',
+            ka_url: '',
+            relative_url: '',
+            download_urls: null,
+        },
+
+        idAttribute: 'readable_id',
+
+        urlRoot: '/api/v1/videos'
+    });
+
+    Exercise = Backbone.Model.extend({
+        defaults: {
+            name: 'new_exercise', // API ID / slug
+			kind: 'Exercise',
+            display_name: 'New Exercise', 
+            short_display_name: 'New Ex', 
+            creation_date: '', 
+            h_position: 0, 
+            v_position: 0,
+            live: false, 
+            summative: false, 
+            num_milestones: 0, 
+            seconds_per_fast_problem: 0, 
+            covers: [], 
+            prerequisites: [], 
+            ka_url: '', 
+            relative_url: ''
+        },
+
+        idAttribute: 'name',
+
+        urlRoot: '/api/v1/exercises'
+    });
 
 })();

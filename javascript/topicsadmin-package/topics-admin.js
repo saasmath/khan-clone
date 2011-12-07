@@ -19,19 +19,20 @@ var TopicTreeEditor = {
 
             onActivate: function(node) {
                 KAConsole.log('Activated: ', node);
+
+                var model = null;
                 if (node.data.kind == 'Topic') {
-                    var model = topicTree.get(node.data.key);
-                    if (!model.inited) {
-                        $('#details_view').html('Loading...');
-                        model.fetch({
-                            success: function() {
-                                TopicDetailEditor.init(model);
-                            }
-                        });
-                    } else {
-                        TopicDetailEditor.init(model);
-                    }
+                    model = topicTree.get(node.data.key);
+                } else if (node.data.kind == 'Video') {
+                    model = new Video({ readable_id: node.data.key, title: 'Loading...' });
+                } else if (node.data.kind == 'Exercise') {
+                    model = new Exercise({ name: node.data.key, display_name: 'Loading...' });
                 }
+
+                TopicDetailEditor.init(node.data.kind, model);
+
+                if (!model.inited)
+                    model.fetch();
             },
 
             onLazyRead: function(node) {
@@ -140,8 +141,21 @@ var TopicTreeEditor = {
 };
 
 var TopicDetailEditor = {
-    init: function(model) {
-        js = model.toJSON();
+
+    model: null,
+    modelKind: null,
+
+    init: function(kind, model) {
+        TopicDetailEditor.modelKind = kind;
+        TopicDetailEditor.model = model;
+
+        TopicDetailEditor.render();
+
+        model.bind("change", TopicDetailEditor.render);
+    }, 
+
+    render: function() {
+        js = TopicDetailEditor.model.toJSON();
         html = '<table>';
         for (field in js) {
             className = '';
@@ -161,8 +175,8 @@ var TopicDetailEditor = {
             var value = $(this).val();
             var setter = {};
             setter[field] = value;
-            model.set(setter);
-            model.save();
+            TopicDetailEditor.model.set(setter);
+            TopicDetailEditor.model.save();
         });
     }
 };
