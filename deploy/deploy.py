@@ -178,7 +178,7 @@ def tidy_up():
     junkfiles = open(".hgignore","r")
     please_tidy = [filename.strip() for filename in junkfiles
                       if not filename.strip().startswith("#")]
-    but_ignore = ["secrets.py", "", "syntax: glob"]
+    but_ignore = ["secrets.py", "", "syntax: glob", ".git", ".pydevproject"]
     [please_tidy.remove(path) for path in but_ignore]
 
     for root, dirs, files in os.walk("."):
