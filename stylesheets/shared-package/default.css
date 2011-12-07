@@ -2336,7 +2336,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     position: absolute;
     padding: 5px;
     min-width: 150px;
-    z-index: 10;
+    z-index: 1000;
 
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
