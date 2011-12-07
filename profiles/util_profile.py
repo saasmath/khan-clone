@@ -57,18 +57,29 @@ def get_student(coach, request_handler):
         raise Exception("Not your student!")
     return student
 
-def get_list(coach, request_handler):
-    list_id = request_handler.request_string('list_id')
-    student_list = StudentList.get(list_id)
+def get_list(coach, list_key):
+    student_list = StudentList.get(list_key)
     if student_list is None:
-        raise Exception("No list found with list_id='%s'." % list_id)
+        raise Exception("No list found with list_key='%s'." % list_key)
     if coach.key() not in student_list.coaches:
         raise Exception("Not your list!")
     return student_list
 
+# Return a list of students, either from the list or from the user data,
+# dependent on the contents of a querystring parameter.
+def get_students_data(user_data, list_key=None):
+    student_list = None
+    if list_key and list_key != 'allstudents':
+        student_list = get_list(user_data, list_key)
+
+    if student_list:
+        return student_list.get_students_data()
+    else:
+        return user_data.get_students_data()
+
 def get_coach_student_and_student_list(request_handler):
     coach = UserData.current()
-    student_list = get_list(coach, request_handler)
+    student_list = get_list(coach, request_handler.request_string("list_id"))
     student = get_student(coach, request_handler)
     return (coach, student, student_list)
 
