@@ -88,7 +88,6 @@ $(function(){
 // Change review mode heading to "review done!" if appropriate
 $(function() {
 	APIActionResults.register( "review_done", function( done ) {
-		console.log( "got into api results! " + done);
 		if ( !done ) return;
 		$( "#review-mode-title" ).addClass( "review-done" ).find( "h1" ).text( "Review Done!" );
 	});

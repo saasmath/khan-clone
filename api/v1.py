@@ -769,15 +769,12 @@ def _attempt_problem_wrong(exercise_name):
 #     can't have multiple @route decorators, when this should be possible with
 #     Flask)
 #@route("/api/v1/user/exercises/review_problems", defaults={"exercise_name": None}, methods=["GET"])
-@route("/api/v1/user/exercises/<exercise_name>/review_problems", methods=["GET"])
+@route("/api/v1/user/exercises/review_problems", methods=["GET"])
 @oauth_optional()
 @jsonp
 @jsonify
-def get_ordered_review_problems(exercise_name):
-    """Retrieves a list of the upcoming review problems.
-
-    exercise_name - The exercise that the user is currently doing.
-    """
+def get_ordered_review_problems():
+    """Retrieves an ordered list of the upcoming review problems."""
 
     # TODO(david): This should probably be in exercises.py or models.py
     #     (if/when there's more logic here).
@@ -789,10 +786,14 @@ def get_ordered_review_problems(exercise_name):
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
         review_exercises = user_exercise_graph.review_exercise_names()
 
-        if exercise_name and exercise_name in review_exercises:
-            review_exercises.remove(exercise_name)
+        queued_exercises = request.request_string('queued', '').split(',')
+        logging.warn('review_exercise = %s' % review_exercises)
+        logging.warn('queued_exercises = %s' % queued_exercises)
 
-        return review_exercises
+        # Only return those exercises that aren't already queued up
+        ret = filter(lambda ex: ex not in queued_exercises, review_exercises)
+        logging.warn('ret = %s' % ret)
+        return ret
 
     return []
 
