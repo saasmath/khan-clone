@@ -70,9 +70,9 @@ var ClassProfile = {
         $('#energy-points .energy-points-badge').html('&hellip;');
     },
 
-    updateStudentInfo: function(students, energy_points) {
+    updateStudentInfo: function(students, energyPoints) {
         $('#count_students').text(students + '');
-        $('#energy-points .energy-points-badge').text(energy_points + '');
+        $('#energy-points .energy-points-badge').text(energyPoints + '');
     },
 
     renderStudentProgressReport: function(data, href) {
