@@ -138,7 +138,7 @@
     #individual_report #vital-statistics #stats-nav {
         width: 280px;
         float: left;
-        margin: -10px 20px 10px 0;        
+        margin: -10px 20px 10px 0;
     }
     #individual_report #vital-statistics #stats-nav ul#nav-accordion {
         padding: 10px 0 0 3px;
@@ -543,7 +543,7 @@ div.graph-notification {
 
 #stats-filters p {font-size:10px; margin: 0; display:inline-block; }
 #stats-filters h3 {
-  font-family: "MuseoSans300"; font-size:18px; 
+  font-family: "MuseoSans300"; font-size:18px;
   margin-right:.5em;
   display:inline-block;
 }
@@ -573,9 +573,9 @@ div.graph-notification {
 .sticker-book {
   border: 1px solid green;
   float: left;
-  width: 500px;
+  width: 550px;
   height: 200px;
-  margin-left: 30px;
+  margin-left: 10px;
 }
 #tabs {
     margin-top: 22px;
