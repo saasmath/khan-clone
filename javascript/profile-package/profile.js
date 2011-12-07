@@ -1011,7 +1011,7 @@ var Profile = {
 
         // TODO: Might there be a better way
         // for server-side + client-side to co-exist in harmony?
-        $("#tab-content-recent-activity").html($("#server-side-recent-activity").html());
+        $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
     },
 
     populateAchievements: function() {

@@ -5,49 +5,50 @@
 </style>
 
 <div>
-  <div class="user-info-container">
-    <img src="/images/darth.png" />
-    <div class="user-info">
-        {{#if logged_in}}
-          <p>{{nickname}}</p>
-          <p>Joined <abbr class="timeago" title="{{secondsSinceJoined}}">{{secondsSinceJoined}}</abbr></p>
-        {{else}}
-          <p>Log in, Darth!</p>
-        {{/if}}
-        <div>
-            <div style="float: left">
-                <p title="{{points}} energy points" class="energy-points-badge">{{points}}</p>
-            </div>
-            <div style="float: left">
-                <img src="/images/video-camera-icon-shadow.png" />
-                <p>{{countVideosCompleted}}/{{countVideos}}</p>
-            </div>
-            <div style="float: left">
-                <img src="/images/generic-exercise-icon-shadow.png" />
-                <p>{{countExercisesProficient}}/{{countExercises}}</p>
-            </div>
-            <div style="clear: both;"></div>
-        </div>
-     </div>
-  </div>
-  <div class="sticker-book">
-  </div>
-  <div style="clear: both;">
+  
 </div>
 
 <div id="tabs">
     <ul>
+        <li><a href="#tab-content-user-profile">Profile</a></li>
         <li><a href="#tab-content-vital-statistics">Vital Statistics</a></li>
         <li><a id="tab-achievements" href="#tab-content-achievements">Achievements</a></li>
-        <li><a href="#tab-content-recent-activity">Recent Activity</a></li>
         <li><a href="#tab-content-goals">Goals</a></li>
     </ul>
+    <div id="tab-content-user-profile">
+        <div class="user-info-container">
+            <img src="/images/darth.png" />
+            <div class="user-info">
+                {{#if logged_in}}
+                  <p>{{nickname}}</p>
+                  <p>Joined <abbr class="timeago" title="{{secondsSinceJoined}}">{{secondsSinceJoined}}</abbr></p>
+                {{else}}
+                  <p>Log in, Darth!</p>
+                {{/if}}
+                <div>
+                    <div style="float: left">
+                        <p title="{{points}} energy points" class="energy-points-badge">{{points}}</p>
+                    </div>
+                    <div style="float: left">
+                        <img src="/images/video-camera-icon-shadow.png" />
+                        <p>{{countVideosCompleted}}/{{countVideos}}</p>
+                    </div>
+                    <div style="float: left">
+                        <img src="/images/generic-exercise-icon-shadow.png" />
+                        <p>{{countExercisesProficient}}/{{countExercises}}</p>
+                    </div>
+                    <div style="clear: both;"></div>
+                </div>
+             </div>
+          </div>
+          <div class="sticker-book">
+      </div>
+      <div style="clear: both;"></div>
+    </div>
     <div id="tab-content-vital-statistics">
       {{> vital-statistics}}
     </div>
     <div id="tab-content-achievements">
-    </div>
-    <div id="tab-content-recent-activity">
     </div>
     <div id="tab-content-goals">
       <p>Goals should go here... but right now they want to add to #vital-statistics #graph-content
