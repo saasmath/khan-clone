@@ -164,7 +164,6 @@ stylesheets = {
             "rating.css",
             "stylesheet.css",
             "menu.css",
-            "profile.css",
             "museo-sans.css",
             "jquery-ui-1.8.4.custom.css",
             "bootstrap-modal.css",
@@ -193,6 +192,7 @@ stylesheets = {
     },
     "profile": {
         "files": [
+            "profile.css",
             "badges.css",
         ]
     },
