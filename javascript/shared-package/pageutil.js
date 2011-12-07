@@ -33,7 +33,7 @@ function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
     var o = {
                 "label": match.title,
                 "title": match.title,
-                "value": match.ka_url,
+                "value": match.url,
                 "key": match.key,
                 "fPlaylist": fPlaylist
             };
@@ -1048,7 +1048,7 @@ var dynamicPackageLoader = {
             new dynamicPackage(packageName, callback, manifest);
         }
     },
-    
+
     packageLoaded: function(packageName) {
         return this.loadedPackages[packageName];
     },
