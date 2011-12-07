@@ -83,12 +83,32 @@ $(function(){
   APIActionResults.register( "points_earned", updatePointDisplay );
 });
 
+// An animation that grows a box shadow of the review hue
+jQuery.fx.step.reviewExplode = function(fx) {
+	var val = fx.now + fx.unit;
+	jQuery( fx.elem ).css( 'boxShadow',
+			'0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
+};
+
 // TODO(david): Style clean-up. Make all the JS files follow jQuery core
 //     guidelines.
 // Change review mode heading to "review done!" if appropriate
 $(function() {
 	APIActionResults.register( "review_done", function( done ) {
 		if ( !done ) return;
-		$( "#review-mode-title" ).addClass( "review-done" ).find( "h1" ).text( "Review Done!" );
+
+		$( "#review-mode-title h1" ).text( "Review Done!" );
+
+		var animationOptions = { speed: 1000 };
+
+		$( "#review-mode-title" ).animate({
+			reviewExplode: 300,
+		}, animationOptions ).queue(function() {
+			$( this ).removeAttr( "style" ).addClass( "review-done" );
+		});
+
+		$( "#review-mode-title h1" ).animate({
+			reviewGlow: 1
+		}, animationOptions );
 	});
 });
