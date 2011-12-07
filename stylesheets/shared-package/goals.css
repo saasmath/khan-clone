@@ -170,7 +170,7 @@ ul.inline-list, ul.inline-list li {
 
 .goal a.objective.exercise.complete:before,
 .goal a.objective.video.complete:before,
-.goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.goal a.objective.GoalObjectiveAnyVideo.complete:before,
 .goal a.objective.GoalObjectiveWatchVideo.complete:before,
 .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
@@ -187,7 +187,7 @@ ul.inline-list, ul.inline-list li {
 
 .ie .goal a.objective.exercise.complete:before,
 .ie .goal a.objective.video.complete:before,
-.ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
+.ie .goal a.objective.GoalObjectiveAnyVideo.complete:before,
 .ie .goal a.objective.GoalObjectiveWatchVideo.complete:before,
 .ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
 .ie .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
@@ -199,7 +199,7 @@ ul.inline-list, ul.inline-list li {
 
 .goal a.objective.exercise.complete,
 .goal a.objective.video.complete,
-.goal a.objective.GoalObjectiveExerciseProficiency.complete,
+.goal a.objective.GoalObjectiveAnyVideo.complete,
 .goal a.objective.GoalObjectiveWatchVideo.complete,
 .goal a.objective.GoalObjectiveExerciseProficiency.complete,
 .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete {
