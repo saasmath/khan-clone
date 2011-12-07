@@ -24,6 +24,7 @@
     position: relative;
     left: auto;
     top: auto;
+    font-size: 10px;
 }
 
 .badge-display-case .energy-points-badge {
@@ -40,6 +41,7 @@
     font-size: 12px;
     width: auto;
     margin: 0 2px;
+    position: static;
 }
 
 .badge-display-case .full-badge-list {
