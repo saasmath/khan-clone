@@ -15,14 +15,26 @@ var badgeList = new Badges.BadgeList(),
 
 // Matches what would be sent from the server
 var SAMPLE_BADGE_JSON = {
-	"badgeExtendedDescription": "Quickly & correctly answer 5 exercise problems in a row (time limit depends on exercise difficulty)",
-	"badgeDescription": "Picking Up Steam",
-	"badgeName": "nicetimedproblembadge",
-	"category": 0,
-	"count": 1,
-	"date": "2011-12-01T03:09:48Z",
-	"iconSrc": imageBase + "/images/badges/meteorite-small.png",
-	"pointsEarned": 100
+	"badgeCategory": 0,
+	"badgeContextType": 1,
+	"count": 4,
+	"date": "2011-11-22T02:59:43Z",
+	"description": "Picking Up Steam",
+	"iconSrc": "/images/badges/meteorite-small.png",
+	"isOwned": true,
+	"isUserBadge": true,
+	"listContextNames": [
+		"Greatest common divisor"
+	],
+	"listContextNamesHidden": [
+		"Division 1",
+		"Division 0.5",
+		"Addition 1"
+	],
+	"points": 100,
+	"safeExtendedDescription": "Quickly & correctly answer 5 exercise problems in a row (time limit depends on exercise difficulty)",
+	"targetContextName": "Greatest common divisor",
+	"typeLabel": "Meteorite"
 };
 
 function addBadge( name, desc, type, list ) {
@@ -32,19 +44,19 @@ function addBadge( name, desc, type, list ) {
 		json = SAMPLE_BADGE_JSON;
 	switch ( type ) {
 		case "earth":
-			json[ "category" ] = Badges.Category.GOLD;
+			json[ "badgeCategory" ] = Badges.Category.GOLD;
 			break;
 		case "moon":
-			json[ "category" ] = Badges.Category.SILVER;
+			json[ "badgeCategory" ] = Badges.Category.SILVER;
 			break;
 		case "meteorite":
 		default:
 			type = "meteorite";
-			json[ "category" ] = Badges.Category.BRONZE;
+			json[ "badgeCategory" ] = Badges.Category.BRONZE;
 			break;
 	}
 	json[ "badgeName" ] = name;
-	json[ "badgeDescription" ] = desc;
+	json[ "description" ] = desc;
 	json[ "iconSrc" ] = json[ "iconSrc" ].replace(
 		/[a-z]*-small.png/,
 		type + "-small.png"

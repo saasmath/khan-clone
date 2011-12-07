@@ -908,6 +908,7 @@ def badge_category(category):
 
 def get_badge_dict(badge):
     return {
+        "name": badge.name,
         "badge_category": badge.badge_category,
         "badge_context_type": badge.badge_context_type,
         "is_owned": badge.is_owned,

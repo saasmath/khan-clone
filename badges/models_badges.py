@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import models
 
 from google.appengine.ext import db
 

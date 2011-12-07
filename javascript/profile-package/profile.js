@@ -936,6 +936,28 @@ var Profile = {
             data: {},
             dataType: "json",
             success: function(data) {
+
+				// TODO: save and cache these objects
+				var fullBadgeList = new Badges.BadgeList(),
+					userBadgeList = new Badges.BadgeList();
+
+				var collection = data[ "badge_collections" ];
+				$.each( collection, function( i, categoryJson ) {
+					$.each( categoryJson[ "badges" ], function( j, json ) {
+						fullBadgeList.add( new Badges.Badge( json ) );
+					});
+					$.each( categoryJson[ "user_badges" ], function( j, json ) {
+						userBadgeList.add( new Badges.Badge( json ) );
+					});
+				});
+
+				var displayCase = new Badges.DisplayCase({ model: userBadgeList });
+				$(".sticker-book").append( displayCase.render().el );
+
+				// TODO: make the rendering of the full badge page use the models above
+				// and consolidate the information
+				// TODO: figure out why user badges don't have an icon src. Perhaps just
+				// send down one master mapping for default icons per category?
                 var badgeInfo = [
                         {
                             icon: "/images/badges/meteorite-medium.png",

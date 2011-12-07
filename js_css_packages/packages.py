@@ -84,6 +84,9 @@ javascript = {
             "achievements.handlebars",
             "badge-container.handlebars",
             "badge.handlebars",
+            "badge-compact.handlebars",
+            "badge-display-case.handlebars",
+            "badges.js",
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
             "profile-class-progress-report.handlebars",
@@ -185,6 +188,11 @@ stylesheets = {
         "files": [
             "viewstudentlists.css",
             "viewclassprofile.css",
+        ]
+    },
+    "profile": {
+        "files": [
+            "badges.css",
         ]
     },
     "exercises": {

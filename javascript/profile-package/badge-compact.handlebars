@@ -1,9 +1,9 @@
-<div class="achievement-badge{{#if isOwned}} achievement-badge-owned{{/if}}" id="{{badgeName}}">
+<div class="achievement-badge{{#if isOwned}} achievement-badge-owned{{/if}}" id="{{name}}">
   <div id="outline-box">
-    <div class="achievement-title">{{badgeDescription}}</div>
+    <div class="achievement-title">{{description}}</div>
     <img class="badge-icon" src="{{iconSrc}}">
     <div>
-      <div class="energy-points-badge">{{pointsEarned}}</div>
+      <div class="energy-points-badge">{{points}}</div>
       {{#if count}}<div class="achievement-count">x{{count}}</div>{{/if}}
     </div>
   </div>

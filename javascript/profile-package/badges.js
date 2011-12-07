@@ -8,6 +8,7 @@ var Badges = {};
  * @enum {number}
  */
 Badges.ContextType = {
+	NONE: 0,
 	EXERCISE: 1,
 	PLAYLIST: 2
 };
@@ -28,9 +29,36 @@ Badges.Category = {
  * A single badge that a user can earn.
  */
 Badges.Badge = Backbone.Model.extend({
+	defaults: {
+		"badgeCategory": Badges.Category.BRONZE,
+		"badgeContextType": Badges.ContextType.NONE,
+		"name": "",
+		"description": "",
+		"iconSrc": "",
+		"isOwned": false,
+		"points": 0,
+		"safeExtendedDescription": "",
+		"typeLabel": ""
+	},
+
 	isOwned: function() {
 		return this.has( "count" ) && this.get( "count" ) > 0;
 	}
+});
+
+/**
+ * Badge information about a badge that a user has earned.
+ * This is a superset of Badges.Badge.
+ */
+Badges.UserBadge = Badges.Badge.extend({
+	defaults: _.extend({
+		"count": 4,
+		"date": "2011-11-22T02:59:43Z",
+		"isUserBadge": true,
+		"listContextNames": [],
+		"listContextNamesHidden": [],
+		"targetContextName": ""
+	}, Badges.Badge.defaults)
 });
 
 /**
@@ -162,8 +190,8 @@ Badges.DisplayCase = Backbone.View.extend({
 	 * This view must have already have been rendered once.
 	 */
 	showBadgePicker_: function() {
-		var jelPicker = $(this.badgePickerEl);
 		this.renderBadgePicker();
+		var jelPicker = $(this.badgePickerEl);
 		jelPicker.slideDown( "fast", function() { jelPicker.show(); })
 			.css( "margin-left", "300px" )
 			.animate({ "margin-left": "0" }, "fast", $.easing.easeInOutCubic);
@@ -191,7 +219,7 @@ Badges.DisplayCase = Backbone.View.extend({
 		var matchedBadge = _.find(
 				this.fullBadgeList.models,
 				function( badge ) {
-					return badge.get( "badgeName" ) == name;
+					return badge.get( "name" ) == name;
 				});
 		if ( !matchedBadge ) {
 			// Shouldn't happen!

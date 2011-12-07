@@ -12,6 +12,10 @@
     </div>
 {% endblock profile_extended_sections %}
 
+{% block pagecss %}
+    {{ js_css_packages.css_package("profile") }}
+{% endblock pagecss %}
+
 {% block pagescript %}
 <script>
 var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
