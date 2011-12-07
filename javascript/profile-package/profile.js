@@ -12,6 +12,11 @@ var Profile = {
     fLoadedGraph: false,
     userGoalsHref: '',
 
+    // TODO: It seems to this humble developer
+    // that the class + student profiles should go their separate ways.
+    // Sometimes, it is time to let go.
+    isStudentProfile: !(/class_profile/.test(window.location.href)),
+
     init: function() {
         Profile.render();
         $('.share-link').hide();
@@ -230,28 +235,48 @@ var Profile = {
         return href;
     },
 
-	/**
-	 * Expands the navigation accordion according to the link specified.
-	 * @return {boolean} whether or not a link was found to be a valid link.
-	 */
-	expandAccordionForHref: function(href) {
-		if (!href) {
-			return false;
-		}
+    /**
+    * Expands the navigation accordion according to the link specified.
+    * @return {boolean} whether or not a link was found to be a valid link.
+    */
+    expandAccordionForHref: function(href) {
+        if (!href) {
+            return false;
+        }
 
-		href = this.baseGraphHref(href);
+        href = this.baseGraphHref(href).replace(/[<>']/g, "");
 
-		href = href.replace(/[<>']/g, "");
-		var selectorAccordionSection =
-				".graph-link-header[href*='" + href + "']";
-		if ( $(selectorAccordionSection).length ) {
-			$("#stats-nav #nav-accordion").accordion(
-					"activate", selectorAccordionSection);
-			return true;
-		}
-		this.collapseAccordion();
-		return false;
-	},
+        var selectorAccordionSection =
+                ".graph-link-header[href*='" + href + "']";
+
+        if (Profile.isStudentProfile) {
+            // TODO: Use reasonable styles
+            var jel = $(selectorAccordionSection);
+            if (!jel.length) {
+                return false;
+            }
+
+            var index = jel.index(),
+                isSubLink = jel.hasClass("graph-sub-link");
+
+            if (!isSubLink) {
+                $(".graph-link").css("background-color", "")
+                    .eq(index).css("background-color", "#eee");
+
+                $(".vital-statistics-description").hide()
+                    .eq(index).show();
+            }
+            return true;
+        }
+
+        if ( $(selectorAccordionSection).length ) {
+            $("#stats-nav #nav-accordion").accordion(
+                "activate", selectorAccordionSection);
+            return true;
+        }
+        this.collapseAccordion();
+        return false;
+    },
 
     styleSublinkFromHref: function(href) {
 
@@ -265,7 +290,8 @@ var Profile = {
         href = href.replace(/[<>']/g, "");
 
         $(".graph-sub-link").removeClass("graph-sub-link-selected");
-        $(".graph-sub-link[href*='" + this.baseGraphHref(href) + "'][href*='" + sDtStart + "']").addClass("graph-sub-link-selected");
+        $(".graph-sub-link[href*='" + this.baseGraphHref(href) + "'][href*='" + sDtStart + "']")
+            .addClass("graph-sub-link-selected");
     },
 
     // called whenever user clicks graph type accordion
@@ -919,7 +945,7 @@ var Profile = {
         // and I'd like to move each tab's JS out into a separate file
 
         // TODO: I haven't looked into a better way to detect student vs class profile
-        if (/class_profile/.test(window.location.href)) {
+        if (!Profile.isStudentProfile) {
             return;
         }
 

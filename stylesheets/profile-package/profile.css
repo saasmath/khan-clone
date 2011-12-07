@@ -595,3 +595,18 @@ div.graph-notification {
     background: none;
     border-width: 0 0 1px 0;
 }
+
+#student-profile-nav #top-nav a{
+  display: block;
+  float: left;
+  margin-left: 20px;
+}
+
+#student-profile-nav .vital-statistics-description {
+    display: none;
+}
+
+#student-profile-nav .vital-statistics-description a.graph-sub-link-selected {
+    text-decoration: none;
+    color: #DD6900;
+}
