@@ -18,10 +18,13 @@ var Homepage = {
 
                 $(".player-loading-wrapper").removeClass("player-loading-wrapper");
 
-                // This strange method of hiding the placeholder skips use of
-                // display:none or position:absolute so Mozilla doesn't
-                // re-layout and load its already-initialized <embed> video,
-                // which causes a slight hiccup on click.
+                // We can get rid of the .player-loading-wrapper selectors and the following complication 
+                // if we decide to load the main video on placeholder click instead of trying to preload 
+                // and keep it hidden.
+                //
+                // This strange method of hiding the placeholder skips use of display:none or 
+                // position:absolute so Mozilla doesn't re-layout and load its already-initialized 
+                // <embed> video, which causes a visual hiccup on click.
                 jelPlaceholder.css("visibility", "hidden").height(0);
 
             });
@@ -35,8 +38,8 @@ var Homepage = {
 
         });
 
-        // Start loading the youtube player, and insert it wrapped
-        // in a hidden container
+        // Start loading the youtube player immediately, 
+        // and insert it wrapped in a hidden container
         var template = Templates.get("homepage.youtube-embed");
 
         jelPlaceholder

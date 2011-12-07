@@ -2868,14 +2868,15 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 #homepage .player-loading-wrapper {
     /* 
+     * We can get rid of the .player-loading-wrapper selectors and the following complication 
+     * if we decide to load the main video on placeholder click instead of trying to preload 
+     * and keep it hidden.
+     *
      * Different browsers treat hidden <objects> and <embeds> differently.
      * Non-IE browsers will fire 'playerloaded' events for visibility:hidden
      * embeds, but IE won't (see following body.ie selector).
      * Non-IE browsers will also reload and re-fire these events when changing
      * the objects position, so visibility:hidden is the way to go for them.
-     *
-     * Note that we can get rid of this complication if we decide to load the video on
-     * placeholder click instead of trying to preload and keep it hidden.
      * */
     visibility: hidden;
 }
