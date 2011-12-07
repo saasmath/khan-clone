@@ -5,9 +5,10 @@
 
 {% block meta_page_title %}Class Profile | {% endblock meta_page_title %}
 
-{% block pagescript %}
-{{ js_css_packages.css_package("studentlists") }}
-{% endblock pagescript %}
+{% block pagecss %}
+    {{ js_css_packages.css_package("profile") }}
+    {{ js_css_packages.css_package("studentlists") }}
+{% endblock pagecss %}
 
 {% block pagesubmenu %}
 <span class="breadcrumbs_nav">
