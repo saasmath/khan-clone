@@ -10,6 +10,8 @@ import layer_cache
 import templatetags
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
+from gae_bingo.gae_bingo import bingo
+from experiments import HomepagePlaylistRenderExperiment
 
 ITEMS_PER_SET = 4
 
@@ -166,8 +168,12 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        # Get pregenerated playlist structure from our in-memory/memcache two-layer cache
-        library_content = library.playlist_content_html()
+        render_type = HomepagePlaylistRenderExperiment.get_render_type()
+        if render_type == "old":
+            library_content = library.library_content_html()
+        else:
+            library_content = library.playlist_content_html()
+        bingo('homepage_render_visits')
 
         template_values = {
                             'video_id': video_id,

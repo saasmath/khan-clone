@@ -39,8 +39,18 @@ var Homepage = {
         if (CSSMenus.active_menu) CSSMenus.active_menu.removeClass('css-menu-js-hover');
     },
 
+    /**
+     * Loads the contents of the playlist data.
+     */
     loadData: function() {
-        var cacheToken = window.Homepage_cacheToken || Date.now();
+        var cacheToken = window.Homepage_cacheToken;
+        // Currently, this is being A/B tested with the conventional rendering
+        // method (where everything is rendered on the server). If there is
+        // no cache token, then we know we're using the old method, so don't
+        // fetch the data.
+        if (!cacheToken) {
+            return;
+        }
         $.ajax({
             type: "GET",
             url: "/api/v1/playlists/library/compact",
@@ -55,7 +65,7 @@ var Homepage = {
 			// a randomly named callback and break caching.
             jsonpCallback: "__dataCb",
             success: function(data){
-                Homepage.loadLibraryContent(data);
+                Homepage.renderLibraryContent(data);
             },
             error: function() {
                 KAConsole.log("Error loading initial library data.");
@@ -64,7 +74,7 @@ var Homepage = {
         });
     },
 
-    loadLibraryContent: function(content) {
+    renderLibraryContent: function(content) {
         var playlists = [];
         function visitTopicOrPlaylist(item) {
             if (item["playlist"]) {

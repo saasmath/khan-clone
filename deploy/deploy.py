@@ -213,13 +213,15 @@ def compile_templates():
     print "Compiling all templates"
     return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
 
-def prime_autocomplete_cache(version):
+def prime_cache(version):
     try:
         resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/autocomplete?q=calc" % (version, get_app_id()))
         resp.read()
-        print "Primed autocomplete cache"
+        resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/playlists/library/compact" % (version, get_app_id()))
+        resp.read()
+        print "Primed cache"
     except:
-        print "Error when priming autocomplete cache"
+        print "Error when priming cache"
 
 def open_browser_to_ka_version(version):
     webbrowser.open("http://%s.%s.appspot.com" % (version, get_app_id()))
@@ -306,7 +308,7 @@ def main():
         if success:
             send_hipchat_deploy_message(version, includes_local_changes, email)
             open_browser_to_ka_version(version)
-            prime_autocomplete_cache(version)
+            prime_cache(version)
 
     end = datetime.datetime.now()
     print "Done. Duration: %s" % (end - start)

@@ -286,6 +286,7 @@ var VideoControls = {
             jelParent.addClass("selected");
 
             VideoStats.startLoggingProgress(jelParent.attr("data-key"));
+            gae_bingo.bingo("homepage_render_thumbnails_clicked");
 
             return false;
         }
@@ -414,6 +415,10 @@ var VideoStats = {
         } else if (state == 1) { // play
             this.playing = true;
             this.dtSinceSave = new Date();
+
+            if (typeof Homepage !== "undefined") {
+                gae_bingo.bingo("homepage_render_main_video_played");
+            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
