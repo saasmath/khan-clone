@@ -45,7 +45,7 @@ var Homepage = {
         jelPlaceholder
             .parents("#main-video-link")
                 .after(
-                    $(template({"width": 480, "height": 395, "youtube_id": youtube_id}))
+                    $(template({"youtube_id": youtube_id}))
                         .wrap("<div class='player-loading-wrapper'/>")
                         .parent()
             );

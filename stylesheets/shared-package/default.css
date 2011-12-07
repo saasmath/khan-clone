@@ -2834,6 +2834,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 #homepage #main-video object, #homepage #main-video embed {
     width: 100%;
+    height: 395px;
 }
 #homepage #main-video-placeholder {
     background: #000;
@@ -2858,7 +2859,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     top: 162px;
     width: 107px;
     height: 73px;
-    margin-left: -60px;
+    margin-left: -53px;
     opacity: 0.82;
     filter:alpha(opacity=82);
 }
@@ -2876,7 +2877,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
      * Non-IE browsers will fire 'playerloaded' events for visibility:hidden
      * embeds, but IE won't (see following body.ie selector).
      * Non-IE browsers will also reload and re-fire these events when changing
-     * the objects position, so visibility:hidden is the way to go for them.
+     * the object's position, so visibility:hidden is the way to go for them.
      * */
     visibility: hidden;
 }
