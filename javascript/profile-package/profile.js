@@ -1018,31 +1018,31 @@ var Profile = {
         $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
-            data: {},
+            data: {"casing": "camel"},
             dataType: "json",
             success: function(data) {
 
-				// TODO: save and cache these objects
-				var fullBadgeList = new Badges.BadgeList(),
-					userBadgeList = new Badges.BadgeList();
+                // TODO: save and cache these objects
+                var fullBadgeList = new Badges.BadgeList(),
+                    userBadgeList = new Badges.BadgeList();
 
-				var collection = data[ "badge_collections" ];
-				$.each( collection, function( i, categoryJson ) {
-					$.each( categoryJson[ "badges" ], function( j, json ) {
-						fullBadgeList.add( new Badges.Badge( json ) );
-					});
-					$.each( categoryJson[ "user_badges" ], function( j, json ) {
-						userBadgeList.add( new Badges.Badge( json ) );
-					});
-				});
+                var collection = data["badgeCollections"];
+                $.each(collection, function(i, categoryJson) {
+                    $.each(categoryJson["badges"], function(j, json) {
+                        fullBadgeList.add(new Badges.Badge(json));
+                    });
+                    $.each(categoryJson["userBadges"], function(j, json) {
+                        userBadgeList.add(new Badges.Badge(json));
+                    });
+                });
 
-				var displayCase = new Badges.DisplayCase({ model: userBadgeList });
-				$(".sticker-book").append( displayCase.render().el );
+                var displayCase = new Badges.DisplayCase({ model: userBadgeList });
+                $(".sticker-book").append( displayCase.render().el );
 
-				// TODO: make the rendering of the full badge page use the models above
-				// and consolidate the information
-				// TODO: figure out why user badges don't have an icon src. Perhaps just
-				// send down one master mapping for default icons per category?
+                // TODO: make the rendering of the full badge page use the models above
+                // and consolidate the information
+                // TODO: figure out why user badges don't have an icon src. Perhaps just
+                // send down one master mapping for default icons per category?
                 var badgeInfo = [
                         {
                             icon: "/images/badges/meteorite-medium.png",
@@ -1107,15 +1107,26 @@ var Profile = {
                     return label;
                 });
 
-                Handlebars.registerPartial("badge-container", Templates.get("profile.badge-container"));
-                Handlebars.registerPartial("badge", Templates.get("profile.badge"));
+                Handlebars.registerPartial(
+                        "badge-container",
+                        Templates.get("profile.badge-container"));
+                Handlebars.registerPartial(
+                        "badge",
+                        Templates.get("profile.badge"));
 
-                $.each(data.badge_collections, function(collectionIndex, collection) {
-                    $.each(collection.user_badges, function(badgeIndex, badge) {
-                        badge.list_context_names_hidden = $.map(badge.list_context_names_hidden, function(name, nameIndex) {
-                            return {name: name, isLast: (nameIndex === badge.list_context_names_hidden.length - 1)};
-                        });
-                        badge.hasMultiple = (badge.count > 1);
+                $.each(data["badgeCollections"], function(collectionIndex, collection) {
+                    $.each(collection["userBadges"], function(badgeIndex, badge) {
+                        var listContextNamesHidden = badge["listContextNamesHidden"];
+                        var numHidden = listContextNamesHidden.length;
+                        badge["listContextNamesHidden"] = $.map(
+                            listContextNamesHidden,
+                            function(name, nameIndex) {
+                                return {
+                                    name: name,
+                                    isLast: (nameIndex === numHidden - 1)
+                                };
+                            });
+                        badge["hasMultiple"] = (badge["count"] > 1);
                     });
                 });
 

@@ -1,14 +1,14 @@
-{{#each badge_collections}}
+{{#each badgeCollections}}
     <div id="category-{{category}}" style="display: none;">
       <div class="badge-description-container">
         <div class="badge-description-content">
-            {{category_description}}
+            {{categoryDescription}}
         </div>
       </div>
-      {{#if user_badges.length}}
+      {{#if userBadges.length}}
       <div id="user-owned">
       <h2 style="display: block; margin-left: 10px;">Badges Earned</h2>
-        {{#each user_badges}}
+        {{#each userBadges}}
           {{> badge}}
         {{/each}}
         <div class="clear"></div>

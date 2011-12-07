@@ -1,10 +1,10 @@
 <div id="achievements" class="{{#if fStandardView}}standard-view{{else}}mobile-view{{/if}}">
   <div id="achievement-list">
     <ul>
-      {{#reverseEach badge_collections}}
-      <li id="category-{{category}}" class="{{toBadgeClassName category}} {{#if user_badges.length}}owned{{/if}}">
+      {{#reverseEach badgeCollections}}
+      <li id="category-{{category}}" class="{{toBadgeClassName category}} {{#if userBadges.length}}owned{{/if}}">
         <img src="{{toMediumIconSrc category}}" />
-        <div class="label">{{toBadgeLabel category ../fStandardView}}{{#if user_badges.length}} x {{user_badges.length}}{{/if}}</div>
+        <div class="label">{{toBadgeLabel category ../fStandardView}}{{#if userBadges.length}} x {{userBadges.length}}{{/if}}</div>
       </li>
       {{/reverseEach}}
     </ul>
