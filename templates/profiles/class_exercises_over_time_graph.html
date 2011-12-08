@@ -15,14 +15,14 @@
         init: function() {
             if (window.fBoundClassExerciseProgressChart) return;
 
-            $("a.show-students-highlight").click(function() {
+            $("a.show-students-highlight").click(function( e ) {
+                e.preventDefault();
                 ClassExerciseProgressChart.showStudents();
-                return false;
             });
 
-            $("a.show-exercises-highlight").click(function() {
+            $("a.show-exercises-highlight").click(function( e ) {
+                e.preventDefault();
                 ClassExerciseProgressChart.showExercises();
-                return false;
             });
 
             $("a.highlight-student-series").live("click", function(e) {

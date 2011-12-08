@@ -46,8 +46,10 @@
             });
 
             $("#lang-status").submit(function(e) {
+                $.each($("#lang-status").children(), function() {
+                    $("#language").remove()
+                });
                 var lang = $("#language-id").val()
-                $(this).append($("<input>").attr({id:"language", name:"language", value:lang, type:"hidden"}))
                 $(this).append($("<input>").attr({id:"language", name:"language", value:lang, type:"hidden"}))
             });
         </script>
