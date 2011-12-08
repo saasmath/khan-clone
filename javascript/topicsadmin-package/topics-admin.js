@@ -40,7 +40,7 @@ var TopicTreeEditor = {
                     $(span).contextMenu({menu: "topic_context_menu"}, function(action, el, pos) {
                         node.expand();
                         node.activate();
-                        TopicTopicNodeEditor.handleAction(action, topicTree.get(node.data.key));
+                        TopicTopicNodeEditor.handleAction(action, topicTree.get(node.data.key), topicTree.get(node.parent.data.key));
                     });
                 }
             },
@@ -337,7 +337,7 @@ var TopicTopicNodeEditor = {
         }
     },
 
-    handleAction: function(action, model) {
+    handleAction: function(action, model, parent_model) {
         if (!model)
             model = TopicNodeEditor.model;
 
@@ -347,12 +347,29 @@ var TopicTopicNodeEditor = {
 
             TopicTopicNodeEditor.contextModel = model;
             TopicTopicNodeEditor.existingItemView.show('video');
+
         } else if (action == 'add_existing_exercise') {
             if (!TopicTopicNodeEditor.existingItemView)
                 TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
 
             TopicTopicNodeEditor.contextModel = model;
             TopicTopicNodeEditor.existingItemView.show('exercise');
+
+        } else if (action == 'delete_topic') {
+            data = {
+                kind: 'Topic',
+                id: model.id
+            };
+            $.ajax({
+                url: '/api/v1/topic/' + parent_model.id + '/deletechild',
+                type: 'POST',
+                data: data,
+                success: function(json) {
+                    child_list = parent_model.get('children').slice(0);
+                    child_list.splice(child_list.indexOf(model.id), 1);    
+                    parent_model.set('children', child_list);
+                }
+            });
         }
     },
 
