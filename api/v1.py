@@ -312,6 +312,12 @@ def video(video_id):
         return video
     return models.Video.all().filter("youtube_id =", video_id).get()
 
+@route("/api/v1/videos_recent", methods=["GET"])
+@jsonp
+@jsonify
+def video_recent_list():
+    return models.Video.all().order('-date_added').fetch(20)
+
 @route("/api/v1/videos/<video_id>/download_available", methods=["POST"])
 @oauth_required(require_anointed_consumer=True)
 @jsonp

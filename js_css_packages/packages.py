@@ -149,10 +149,12 @@ javascript = {
 	"topicsadmin": {
         "files": [
 			"jquery.dynatree.js",
-            "topics-admin.js",
+            "jquery.contextMenu.js",
             "edit-topic.handlebars",
             "edit-video.handlebars",
-            "edit-exercise.handlebars"
+            "edit-exercise.handlebars",
+            "add-existing-video.handlebars",
+            "topics-admin.js",
         ]
 	},
 }
@@ -201,6 +203,7 @@ stylesheets = {
 	"topicsadmin": {
         "files": [
 			"ui_dynatree.css",
+            "jquery.contextMenu.css",
             "topicsadmin.css"
 		]
 	},

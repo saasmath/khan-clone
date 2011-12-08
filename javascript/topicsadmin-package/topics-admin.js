@@ -35,6 +35,14 @@ var TopicTreeEditor = {
                     model.fetch();
             },
 
+            onCreate: function(node, span) {
+                if (node.data.kind == 'Topic') {
+                    $(span).contextMenu({menu: "topic_context_menu"}, function(action, el, pos) {
+                        TopicTopicNodeEditor.handleAction(action, topicTree.get(node.data.key));
+                    });
+                }
+            },
+
             onLazyRead: function(node) {
                 var model = topicTree.get(node.data.key);
                 if (model.inited)
@@ -173,7 +181,102 @@ var TopicNodeEditor = {
     }
 };
 
+var TopicAddExistingVideoView = Backbone.View.extend({
+    template: Templates.get( "topicsadmin.add-existing-video" ),
+    loaded: false,
+
+    initialize: function() {
+        this.render();
+    },
+
+    events: {
+        'click .do_search': 'doSearch',
+        'click .show_recent': 'showRecent',
+        'click .ok_button': 'selectVideo'
+    },
+
+    render: function() {
+        this.el = $(this.template()).appendTo(document.body).get(0);
+        this.delegateEvents();
+        return this;
+    },
+
+    show: function() {
+        $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
+
+        if (!this.loaded) {
+            this.showRecent();
+        }
+    },
+
+    showResults: function(json) {
+        var html = '';
+        _.each(json, function(video) {
+            html += '<option value="' + video.readable_id + '">' + video.title + '</option>';
+        });
+        $(this.el).find('select.search_results').html(html);
+    },
+
+    showRecent: function() {
+        var self = this;
+
+        $(this.el).find('.search_description').html('Most recent videos:');
+        self.showResults([{
+            readable_id: '',
+            title: 'Loading...'
+        }]);
+
+        $.ajax({
+            url: '/api/v1/videos_recent',
+
+            success: function(json) {
+                self.loaded = true;
+                self.showResults(json);
+            }
+        });
+    },
+
+    doSearch: function() {
+        var searchText = $(this.el).find('input[name="video_search"]').val();
+        var self = this;
+
+        $(this.el).find('.search_description').html('Videos matching "' + searchText + '":');
+        self.showResults([{
+            readable_id: '',
+            title: 'Loading...'
+        }]);
+
+        $.ajax({
+            url: '/api/v1/autocomplete?q=' + encodeURIComponent(searchText),
+
+            success: function(json) {
+                self.loaded = true;
+                self.showResults(json.videos);
+            }
+        });
+    },
+
+    selectVideo: function() {
+        var videoID = $(this.el).find('select.search_results option:selected').val();
+        if (!videoID)
+            return;
+
+        TopicTopicNodeEditor.finishAddExistingVideo(videoID);
+    },
+
+    hide: function() {
+        return $(this.el).modal('hide');
+    }
+});
+
 var TopicTopicNodeEditor = {
+    existingVideoView: null,
+    contextModel: null,
+
     addTag: function() {
         var tag = $("#add-tag").val();
 
@@ -194,6 +297,24 @@ var TopicTopicNodeEditor = {
             TopicNodeEditor.model.set({tags: tags}); // This triggers a TopicNodeEditor.render()
             TopicNodeEditor.model.save();
         }
+    },
+
+    handleAction: function(action, model) {
+        if (!model)
+            model = TopicNodeEditor.model;
+
+        if (action == 'add_existing_video') {
+            if (!TopicTopicNodeEditor.existingVideoView)
+                TopicTopicNodeEditor.existingVideoView = new TopicAddExistingVideoView();
+
+            TopicTopicNodeEditor.contextModel = model;
+            TopicTopicNodeEditor.existingVideoView.show();
+        }
+    },
+
+    finishAddExistingVideo: function(videoID) {
+        KAConsole.log('Adding video ' + videoID + ' to Topic ' + TopicTopicNodeEditor.contextModel.get('title'));
+        TopicTopicNodeEditor.existingVideoView.hide();
     },
 
     init: function() {
