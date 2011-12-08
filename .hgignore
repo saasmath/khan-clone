@@ -25,4 +25,3 @@ compiled_templates*
 *.handlebars.js
 .project
 .pydevproject
-.git

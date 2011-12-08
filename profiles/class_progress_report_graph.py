@@ -5,15 +5,9 @@ from jinja2.utils import escape
 from templatefilters import escapejs, timesince_ago
 from models import Exercise, UserExerciseGraph
 
-def class_progress_report_graph_context(user_data, student_list):
+def class_progress_report_graph_context(user_data, list_students):
     if not user_data:
         return {}
-
-    list_students = None
-    if student_list:
-        list_students = student_list.get_students_data()
-    else:
-        list_students = user_data.get_students_data()
 
     list_students = sorted(list_students, key=lambda student: student.nickname)
 

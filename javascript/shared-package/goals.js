@@ -446,7 +446,10 @@ function finishLoadingMapsPackage() {
             setTimeout(finishLoadingMapsPackage, 5000); // Try again in 5 seconds
         } else if (status == 'progress') {
             KAConsole.log('Maps package ' + (progress*100).toFixed(0) + '% loaded.');
-            $("#popup-dialog .dialog-progress-bar").progressbar('value', progress*100);
+            if (newCustomGoalDialog) {
+                newCustomGoalDialog.$(".progress-bar")
+                    .progressbar('value', progress*100);
+            }
         }
     });
 }
@@ -524,42 +527,7 @@ var NewGoalView = Backbone.View.extend({
     createCustomGoal: function( e ) {
         this.trigger("creating");
         e.preventDefault();
-        globalPopupDialog.show('create-custom-goal', null,
-            'Create a custom goal', $("#generic-loading-dialog").html(), false);
-        $("#popup-dialog .dialog-progress-bar").progressbar({value: 0}).slideDown("fast");
-
-        if (!dynamicPackageLoader.packageLoaded('maps')) {
-            $('<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
-        }
-
-        var self = this;
-        $.ajax({
-            url: "/goals/new",
-            type: 'GET',
-            dataType: 'html',
-            success: function(html) {
-                KAConsole.log('Loaded /goals/new.');
-                self.waitForMapsPackage(html);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                $("#generic-loading-message").html('Page load failed. Please try again.');
-            }
-        });
-    },
-
-    waitForMapsPackage: function(html) {
-        if (!globalPopupDialog.visible)
-            return;
-
-        if (!dynamicPackageLoader.packageLoaded('maps')) {
-            var self = this;
-            setTimeout(function() { self.waitForMapsPackage(html) }, 500);
-            return;
-        }
-            
-        KAConsole.log('Done loading.');
-        globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', html, false);
-        createGoalInitialize();
+        newCustomGoalDialog.show();
     }
 });
 
@@ -599,6 +567,78 @@ var NewGoalDialog = Backbone.View.extend({
     }
 });
 
+var NewCustomGoalDialog = Backbone.View.extend({
+    template: Templates.get( "shared.goal-new-custom-dialog" ),
+    loaded: false,
+
+    render: function() {
+        // As we're assigning to this.el, event handlers need to be rebound
+        // after each render.
+        this.el = $(this.template()).appendTo(document.body).get(0);
+        this.innerEl = this.$('.modal-body').get(0);
+
+        // turn on fading just before we animate so that dragging is fast
+        var $el = $(this.el);
+        $el.bind('shown', function() { $el.removeClass('fade'); });
+        $el.bind('hide', function() { $el.addClass('fade'); });
+
+        return this;
+    },
+
+    _show: function() {
+        return $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
+    },
+
+    show: function() {
+        if ( !this.innerEl ) {
+            this.render();
+        }
+        // if we haven't yet loaded the contents of this dialog, do it
+        if ( !this.loaded ) {
+            this.loaded = true;
+            this.load().error($.proxy(function() {
+                this.loaded = false;
+            }));
+            this.$(".progress-bar").progressbar({value: 10}).slideDown("fast");
+        }
+        this._show();
+    },
+
+    load: function() {
+        if (!dynamicPackageLoader.packageLoaded('maps')) {
+            $('<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
+        }
+        return $.ajax({url: "/goals/new", type: 'GET',  dataType: 'html'})
+            .done($.proxy(function(html) {
+                KAConsole.log('Loaded /goals/new.');
+                this.waitForMapsPackage(html);
+            }, this))
+            .error($.proxy(function() {
+                KAConsole.log(Array.prototype.slice.call(arguments));
+                $(this.innerEl).text('Page load failed. Please try again.');
+            }, this));
+    },
+
+    hide: function() {
+        $(this.el).modal('hide');
+    },
+
+    waitForMapsPackage: function(html) {
+        if (!dynamicPackageLoader.packageLoaded('maps')) {
+            var that = this;
+            setTimeout(function() { that.waitForMapsPackage(html); }, 100);
+            return;
+        }
+        KAConsole.log('Done loading.');
+        $(this.innerEl).html(html);
+        createGoalInitialize();
+    }
+});
+
 $(function() {
     window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
     APIActionResults.register( "updateGoals",
@@ -616,6 +656,7 @@ $(function() {
 
     myGoalSummaryView.render();
     window.newGoalDialog = new NewGoalDialog({model: GoalBook});
+    window.newCustomGoalDialog = new NewCustomGoalDialog();
 });
 
 // todo: should we do this globally?

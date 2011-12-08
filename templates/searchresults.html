@@ -91,32 +91,32 @@
                         {% if video.description %}
                         <p class="description searchresulthighlight">{{ video.description|escape }}</p>
                         {% endif %}
-                      </div>  
+                      </div>
                       <div class="column">
                         <p class="column-heading">Watch</p>
                         <ul>
                           <li><a href="/video/{{video.readable_id|urlencode}}" class="vl"><span class="vid-progress v{{ video.key().id() }}">Watch the video lesson</a></li>
                         </ul>
-                      </div>  
+                      </div>
                       {% if video_exercises[video.key().__str__()] %}
                       <div class="column">
                         <p class="column-heading">Practice Exercises</p>
                           <ul>
                             {% for exercise in video_exercises[video.key().__str__()] %}
-                              <li><a href="{{ exercise.ka_url }}" class="exercise-link">{{ exercise.display_name|escape }}</a></li>
+                              <li><a href="{{ exercise.relative_url }}" class="exercise-link">{{ exercise.display_name|escape }}</a></li>
                             {% endfor %}
                           </ul>
-                      </div>  
+                      </div>
                       {% endif %}
                       <br>
                     </li>
                 {% endif %}
-            {% endfor %}        
+            {% endfor %}
             <li>
                 <a href="/#{{playlist.title|slugify|escape}}">See all videos from playlist {{ playlist.title|escape }}</a>
             </li>
             </ol>
-        {% endfor %}        
+        {% endfor %}
         </dl>
     </section>
     {% endif %}

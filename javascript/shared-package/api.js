@@ -42,7 +42,7 @@ var APIActionResults = {
                     if (xsrfToken) {
                         // Send xsrf token along via header so it can be matched up
                         // w/ cookie value.
-                        xhr.setRequestHeader("X_KA_FKEY", xsrfToken);
+                        xhr.setRequestHeader("X-KA-FKey", xsrfToken);
                     } else {
                         apiVersionMismatch();
                         settings.error();
@@ -80,7 +80,7 @@ $(function(){ APIActionResults.register("user_info_html",
 });
 
 // show point animation above progress bar when in exercise pages
-$(function(){ 
+$(function(){
 
   var updatePointDisplay = function( data ) {
     if( jQuery(".single-exercise").length > 0 && data.points > 0) {
