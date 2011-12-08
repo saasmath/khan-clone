@@ -21,7 +21,7 @@ class HomepageVideoPlaceholderExperiment(object):
 
     @staticmethod
     def get_video_type():
-        return ab_test("Homepage Video Placeholder",
+        return ab_test("Homepage Video Placeholder 2",
             HomepageVideoPlaceholderExperiment._ab_test_alternatives,
             HomepageVideoPlaceholderExperiment._conversion_names,
             HomepageVideoPlaceholderExperiment._conversion_types)
