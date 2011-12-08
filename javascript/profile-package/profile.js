@@ -393,8 +393,15 @@ var Profile = {
         current_goals = [];
         completed_goals = [];
         abandoned_goals = [];
+
         var qs = Profile.parseQueryString(href);
-        var viewingOwnGoals = qs.email == USER_EMAIL;
+        // We don't handle the difference between API calls requiring email and
+        // legacy calls requiring student_email very well, so this page gets
+        // called with both. Need to fix the root cause (and hopefully redo all
+        // the URLs for this page), but for now just be liberal in what we
+        // accept.
+        var qsEmail = qs.email || qs.student_email || null;
+        var viewingOwnGoals = qsEmail === null || qsEmail === USER_EMAIL;
 
         $.each(data, function(idx, goal) {
             if (goal.completed) {
