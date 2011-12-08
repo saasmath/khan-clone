@@ -313,8 +313,23 @@ var TopicTopicNodeEditor = {
     },
 
     finishAddExistingVideo: function(videoID) {
-        KAConsole.log('Adding video ' + videoID + ' to Topic ' + TopicTopicNodeEditor.contextModel.get('title'));
         TopicTopicNodeEditor.existingVideoView.hide();
+
+        KAConsole.log('Adding video ' + videoID + ' to Topic ' + TopicTopicNodeEditor.contextModel.get('title'));
+        var data = {
+            kind: 'Video',
+            id: videoID,
+            pos: TopicTopicNodeEditor.contextModel.get('children').length
+        };
+        $.ajax({
+            url: '/api/v1/topic/' + TopicTopicNodeEditor.contextModel.get('id') + '/addchild',
+            type: 'POST',
+            data: data,
+            success: function(json) {
+                KAConsole.log('Added video successfully.');
+                TopicTopicNodeEditor.contextModel.set(json);
+            }
+        });
     },
 
     init: function() {
