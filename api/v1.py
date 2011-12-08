@@ -181,9 +181,13 @@ def put_topic(topic_id):
 
     topic_json = request.json
 
-    # currently all you can modify is the title
-    if topic_json['title'] != topic.title:
-        topic.title = topic_json['title']
+    changed = False
+    for attr in ['title', 'standalone_title', 'id', 'description', 'tags']:
+        if getattr(topic, attr) != topic_json[attr]:
+            setattr(topic, attr, topic_json[attr])
+            changed = True
+    
+    if changed:
         topic.put()
 
     return topic.get_visible_data()
