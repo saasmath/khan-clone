@@ -1282,11 +1282,11 @@ class Topic(db.Model):
     def delete_child(self, child):
         # remove the child key from self
         self.child_keys =  [child_key for child_key in self.child_keys if child_key != child.key()]
-        
+         
         # remove self from the child's parents
         child.parent_keys = [parent_key for parent_key in child.parent_keys if parent_key != self.key()]
         num_parents = len(child.parent_keys)
-        descendants = Topic.all().filter("ancestor_keys =", self.key()).fetch(10000)
+        descendants = Topic.all().filter("ancestor_keys =", child.key()).fetch(10000)
         descendant_dict = dict((descendant.key(), descendant) for descendant in descendants)
         
         # if there are still other parents
