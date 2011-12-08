@@ -1,4 +1,3 @@
-import logging
 import datetime
 import urllib
 
@@ -8,7 +7,6 @@ import util
 import models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
-from badges import util_badges
 from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
@@ -161,7 +159,8 @@ class ViewProfile(request_handler.RequestHandler):
             else:
                 # Allow access to this student's profile
                 student = user_override
-        user_badges = util_badges.get_user_badges(student)
+
+        # TODO: ensure we do something nice with legacy URL's
         selected_graph_type = (self.request_string("selected_graph_type") or
                                ActivityGraph.GRAPH_TYPE)
 
@@ -179,6 +178,8 @@ class ViewProfile(request_handler.RequestHandler):
                     urllib.quote(student.email),
                     urllib.unquote(self.request_string("graph_query_params",
                                                        default="")))
+
+        # TODO: incorporate the tz offset into the timeago stuff on the client
         tz_offset = self.request_int("tz_offset", default=0)
 
         template_values = {
@@ -192,16 +193,7 @@ class ViewProfile(request_handler.RequestHandler):
             'count_videos_completed': student.get_videos_completed(),
             'count_exercises': models.Exercise.get_count(),
             'count_exercises_proficient': len(student.all_proficient_exercises),
-            'badge_collections': user_badges['badge_collections'],
-            'user_badges_bronze': user_badges['bronze_badges'],
-            'user_badges_silver': user_badges['silver_badges'],
-            'user_badges_gold': user_badges['gold_badges'],
-            'user_badges_platinum': user_badges['platinum_badges'],
-            'user_badges_diamond': user_badges['diamond_badges'],
-            'user_badges_master': user_badges['user_badges_master'],
-            'user_badges': [user_badges['bronze_badges'], user_badges['silver_badges'], user_badges['gold_badges'], user_badges['platinum_badges'], user_badges['diamond_badges'],user_badges['user_badges_master']],
             'user_data_student': student,
-            "show_badge_frequencies": self.request_bool("show_badge_frequencies", default=False),
             "view": self.request_string("view", default=""),
         }
 
