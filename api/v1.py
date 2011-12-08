@@ -291,6 +291,9 @@ def get_visible_user_data_from_request(disable_coach_visibility=False,
     else:
         return user_data
 
+def get_students_data_from_request(user_data):
+    return util_profile.get_students_data(user_data, request.request_string("list_id"))
+
 @route("/api/v1/user", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -315,16 +318,7 @@ def user_data_student():
     if user_data:
         user_data_student = get_visible_user_data_from_request(disable_coach_visibility=True)
         if user_data_student:
-            if request.request_string("list_id"):
-                try:
-                    student_list = util_profile.get_list(user_data_student, request)
-                except Exception, e:
-                    logging.error("%s: %s" % (request.url, e))
-                    return None
-                else:
-                    return student_list.get_students_data()
-            else:
-                return user_data_student.get_students_data()
+            return get_students_data_from_request(user_data_student)
 
     return None
 
@@ -515,16 +509,10 @@ def coach_progress_summary():
     if user_data_coach.developer and user_data_override:
         user_data_coach = user_data_override
 
-    if request.request_string("list_id"):
-        try:
-            student_list = util_profile.get_list(user_data_coach, request)
-        except Exception, e:
-            logging.error("%s: %s" % (request.url, e))
-            list_students = user_data_coach.get_students_data()
-        else:
-            list_students = student_list.get_students_data()
-    else:
-        list_students = user_data_coach.get_students_data()
+    try:
+        list_students = get_students_data_from_request(user_data_coach)
+    except Exception, e:
+        return api_invalid_param_response(e.message)
 
     list_students = sorted(list_students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(list_students)
@@ -1128,21 +1116,13 @@ def get_student_progress_report():
     if not user_data_coach:
         return api_invalid_param_response("User is not logged in.")
 
-    student_list = None
+    try:
+        students = get_students_data_from_request(user_data_coach)
+    except Exception, e:
+        return api_invalid_param_response(e.message)
 
-    student_list_key = request.request_string('list_id')
-    if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data_coach)
-        for list in student_lists:
-            if str(list.key()) == student_list_key:
-                student_list = list
-                break
-        if not student_list:
-            return api_invalid_param_response("Invalid list ID.")
-
-    report_data = class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list)
-
-    return report_data
+    return class_progress_report_graph.class_progress_report_graph_context(
+        user_data_coach, students)
 
 @route("/api/v1/user/goals", methods=["GET"])
 @oauth_optional()
@@ -1188,24 +1168,10 @@ def get_student_goals():
     if not user_data_coach:
         return api_invalid_param_response("Coach not specified.")
 
-    student_list = None
-
-    # TomY TODO test/improve the performance of this
-
-    student_list_key = request.request_string('list_id')
-    if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
-        for list in student_lists:
-            if str(list.key()) == student_list_key:
-                student_list = list
-                break
-        if not student_list:
-            return api_invalid_param_response("Invalid list ID.")
-
-    if student_list:
-        students = student_list.get_students_data()
-    else:
-        students = user_data_coach.get_students_data()
+    try:
+        students = get_students_from_request(user_data_coach)
+    except Exception, e:
+        return api_invalid_param_response(e.message)
 
     students = sorted(students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(students)
