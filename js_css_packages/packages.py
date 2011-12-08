@@ -153,7 +153,7 @@ javascript = {
             "edit-topic.handlebars",
             "edit-video.handlebars",
             "edit-exercise.handlebars",
-            "add-existing-video.handlebars",
+            "add-existing-item.handlebars",
             "topics-admin.js",
         ]
 	},

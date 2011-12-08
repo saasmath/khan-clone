@@ -38,8 +38,16 @@ var TopicTreeEditor = {
             onCreate: function(node, span) {
                 if (node.data.kind == 'Topic') {
                     $(span).contextMenu({menu: "topic_context_menu"}, function(action, el, pos) {
-                        TopicTopicNodeEditor.handleAction(action, topicTree.get(node.data.key));
+                        node.expand();
+                        node.activate();
+                        TopicTopicNodeEditor.handleAction(action, topicTree.get(node.data.key), topicTree.get(node.parent.data.key));
                     });
+                }
+            },
+
+            onExpand: function(flag, node) {
+                if (flag) {
+                    node.activate();
                 }
             },
 
@@ -181,9 +189,10 @@ var TopicNodeEditor = {
     }
 };
 
-var TopicAddExistingVideoView = Backbone.View.extend({
-    template: Templates.get( "topicsadmin.add-existing-video" ),
+var TopicAddExistingItemView = Backbone.View.extend({
+    template: Templates.get( "topicsadmin.add-existing-item" ),
     loaded: false,
+    type: '',
 
     initialize: function() {
         this.render();
@@ -192,21 +201,27 @@ var TopicAddExistingVideoView = Backbone.View.extend({
     events: {
         'click .do_search': 'doSearch',
         'click .show_recent': 'showRecent',
-        'click .ok_button': 'selectVideo'
+        'click .ok_button': 'selectItem'
     },
 
     render: function() {
-        this.el = $(this.template()).appendTo(document.body).get(0);
+        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
         this.delegateEvents();
         return this;
     },
 
-    show: function() {
+    show: function(type) {
         $(this.el).modal({
             keyboard: true,
             backdrop: true,
             show: true
         });
+
+        if (type != this.type)
+            this.loaded = false;
+        this.type = type;
+
+        $(this.el).find('.title').html('Choose ' + type + ':');
 
         if (!this.loaded) {
             this.showRecent();
@@ -215,8 +230,13 @@ var TopicAddExistingVideoView = Backbone.View.extend({
 
     showResults: function(json) {
         var html = '';
-        _.each(json, function(video) {
-            html += '<option value="' + video.readable_id + '">' + video.title + '</option>';
+        var self = this;
+        _.each(json, function(item) {
+            if (self.type == 'video') {
+                html += '<option value="' + item.readable_id + '">' + item.title + '</option>';
+            } else {
+                html += '<option value="' + item.name + '">' + item.display_name + '</option>';
+            }
         });
         $(this.el).find('select.search_results').html(html);
     },
@@ -224,14 +244,24 @@ var TopicAddExistingVideoView = Backbone.View.extend({
     showRecent: function() {
         var self = this;
 
-        $(this.el).find('.search_description').html('Most recent videos:');
+        if (this.type == 'video')
+            $(this.el).find('.search_description').html('Most recent videos:');
+        else
+            $(this.el).find('.search_description').html('Most recent exercises:');
         self.showResults([{
             readable_id: '',
-            title: 'Loading...'
+            name: '',
+            title: 'Loading...',
+            display_name: 'Loading...'
         }]);
 
+        var url;
+        if (this.type == 'video')
+            url = '/api/v1/videos_recent';
+        else
+            url = '/api/v1/exercises_recent';
         $.ajax({
-            url: '/api/v1/videos_recent',
+            url: url,
 
             success: function(json) {
                 self.loaded = true;
@@ -241,13 +271,18 @@ var TopicAddExistingVideoView = Backbone.View.extend({
     },
 
     doSearch: function() {
-        var searchText = $(this.el).find('input[name="video_search"]').val();
+        var searchText = $(this.el).find('input[name="item_search"]').val();
         var self = this;
 
-        $(this.el).find('.search_description').html('Videos matching "' + searchText + '":');
+        if (this.type == 'video')
+            $(this.el).find('.search_description').html('Videos matching "' + searchText + '":');
+        else
+            $(this.el).find('.search_description').html('Exercises matching "' + searchText + '":');
         self.showResults([{
             readable_id: '',
-            title: 'Loading...'
+            name: '',
+            title: 'Loading...',
+            display_name: 'Loading...'
         }]);
 
         $.ajax({
@@ -255,17 +290,20 @@ var TopicAddExistingVideoView = Backbone.View.extend({
 
             success: function(json) {
                 self.loaded = true;
-                self.showResults(json.videos);
+                if (self.type == 'video')
+                    self.showResults(json.videos);
+                else
+                    self.showResults(json.exercises);
             }
         });
     },
 
-    selectVideo: function() {
-        var videoID = $(this.el).find('select.search_results option:selected').val();
-        if (!videoID)
+    selectItem: function() {
+        var itemID = $(this.el).find('select.search_results option:selected').val();
+        if (!itemID)
             return;
 
-        TopicTopicNodeEditor.finishAddExistingVideo(videoID);
+        TopicTopicNodeEditor.finishAddExistingItem(this.type, itemID);
     },
 
     hide: function() {
@@ -274,7 +312,7 @@ var TopicAddExistingVideoView = Backbone.View.extend({
 });
 
 var TopicTopicNodeEditor = {
-    existingVideoView: null,
+    existingItemView: null,
     contextModel: null,
 
     addTag: function() {
@@ -299,22 +337,66 @@ var TopicTopicNodeEditor = {
         }
     },
 
-    handleAction: function(action, model) {
+    handleAction: function(action, model, parent_model) {
         if (!model)
             model = TopicNodeEditor.model;
 
         if (action == 'add_existing_video') {
-            if (!TopicTopicNodeEditor.existingVideoView)
-                TopicTopicNodeEditor.existingVideoView = new TopicAddExistingVideoView();
+            if (!TopicTopicNodeEditor.existingItemView)
+                TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
 
             TopicTopicNodeEditor.contextModel = model;
-            TopicTopicNodeEditor.existingVideoView.show();
+            TopicTopicNodeEditor.existingItemView.show('video');
+
+        } else if (action == 'add_existing_exercise') {
+            if (!TopicTopicNodeEditor.existingItemView)
+                TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
+
+            TopicTopicNodeEditor.contextModel = model;
+            TopicTopicNodeEditor.existingItemView.show('exercise');
+
+        } else if (action == 'delete_topic') {
+            data = {
+                kind: 'Topic',
+                id: model.id
+            };
+            $.ajax({
+                url: '/api/v1/topic/' + parent_model.id + '/deletechild',
+                type: 'POST',
+                data: data,
+                success: function(json) {
+                    child_list = parent_model.get('children').slice(0);
+                    child_list.splice(child_list.indexOf(model.id), 1);    
+                    parent_model.set('children', child_list);
+                }
+            });
         }
     },
 
-    finishAddExistingVideo: function(videoID) {
-        KAConsole.log('Adding video ' + videoID + ' to Topic ' + TopicTopicNodeEditor.contextModel.get('title'));
-        TopicTopicNodeEditor.existingVideoView.hide();
+    finishAddExistingItem: function(type, id) {
+        TopicTopicNodeEditor.existingItemView.hide();
+
+        var kind;
+        if (type == 'video')
+            kind = 'Video';
+        else
+            kind = 'Exercise';
+
+        KAConsole.log('Adding ' + kind + ' ' + id + ' to Topic ' + TopicTopicNodeEditor.contextModel.get('title'));
+        var data = {
+            kind: kind,
+            id: id,
+            pos: TopicTopicNodeEditor.contextModel.get('children').length
+        };
+        $.ajax({
+            url: '/api/v1/topic/' + TopicTopicNodeEditor.contextModel.get('id') + '/addchild',
+            type: 'POST',
+            data: data,
+            success: function(json) {
+                KAConsole.log('Added item successfully.');
+                TopicTopicNodeEditor.contextModel.set(json);
+            }
+        });
     },
 
     init: function() {

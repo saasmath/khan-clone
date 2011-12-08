@@ -29,13 +29,13 @@ function validateEmail(sEmail)
      return sEmail.match(re);
 }
 
-function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
+function addAutocompleteMatchToList(list, match, kind, reMatch) {
     var o = {
-                "label": match.title,
-                "title": match.title,
+                "label": (kind == 'exercise') ? match.display_name : match.title,
+                "title": (kind == 'exercise') ? match.display_name : match.title,
                 "value": match.ka_url,
                 "key": match.key,
-                "fPlaylist": fPlaylist
+                "kind": kind
             };
 
     if (reMatch)
@@ -80,12 +80,16 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
                     {
                         for (var ix = 0; ix < data.playlists.length; ix++)
                         {
-                            addAutocompleteMatchToList(matches, data.playlists[ix], true, reMatch);
+                            addAutocompleteMatchToList(matches, data.playlists[ix], 'playlist', reMatch);
                         }
                     }
                     for (var ix = 0; ix < data.videos.length; ix++)
                     {
-                        addAutocompleteMatchToList(matches, data.videos[ix], false, reMatch);
+                        addAutocompleteMatchToList(matches, data.videos[ix], 'video', reMatch);
+                    }
+                    for (var ix = 0; ix < data.exercises.length; ix++)
+                    {
+                        addAutocompleteMatchToList(matches, data.exercises[ix], 'exercise', reMatch);
                     }
                 }
 
@@ -134,8 +138,12 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
     autocompleteWidget.data("autocomplete")._renderItem = function(ul, item) {
         // Customize the display of autocomplete suggestions
         var jLink = $("<a></a>").html(item.label);
-        if (item.fPlaylist)
+        if (item.kind == 'playlist')
             jLink.prepend("<span class='playlist'>Playlist </span>");
+        else if (item.kind == 'video')
+            jLink.prepend("<span class='video'>Video </span>");
+        else if (item.kind == 'exercise')
+            jLink.prepend("<span class='exercise'>Exercise </span>");
 
         return $("<li></li>")
             .data("item.autocomplete", item)
