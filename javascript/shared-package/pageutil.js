@@ -431,7 +431,7 @@ var VideoStats = {
 
             if (typeof Homepage !== "undefined") {
                 if (!Homepage.mainVideoBingoSent) {
-                    gae_bingo.bingo("homepage_video_main_video_played")
+                    gae_bingo.bingo(["homepage_video_main_video_played", "homepage_video_main_video_played_binary"])
                     Homepage.mainVideoBingoSent = true;
                 }
             }
