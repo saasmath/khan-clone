@@ -1260,6 +1260,23 @@ class Topic(db.Model):
 
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
     
+    def add_child(self, child, pos):
+        if child.key() in self.child_keys:
+            raise Exception("The child %s already appears in %s" % (child.title, self.title))
+
+        self.child_keys.insert(int(pos), child.key())
+        entities_updated = set([self])
+
+        if child.__class__.__name__ == "Topic":
+            child.parent_keys.append(self.key())
+            entities_updated.add(child)
+            entities_updated.update(child.update_ancestors())
+
+        def add_txn():
+            db.put(entities_updated)
+    
+        return db.run_in_transaction(add_txn) 
+
     def delete_child(self, child):
         # remove the child key from self
         self.child_keys =  [child_key for child_key in self.child_keys if child_key != child.key()]
