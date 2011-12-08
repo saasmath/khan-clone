@@ -18,12 +18,19 @@ class ImageCache(webapp2.RequestHandler, blobstore_handlers.BlobstoreDownloadHan
     """
 
     @staticmethod
-    def url_for(source_url):
-        return "/image_cache/%s" % urllib.quote(source_url)
+    def url_for(source_url, fallback_url = None):
+        if fallback_url:
+            return "/image_cache/%s?fallback=%s" % (urllib.quote(source_url), urllib.quote(fallback_url))
+        else:
+            return "/image_cache/%s" % urllib.quote(source_url)
 
     def get(self, source_url):
 
         blob_key = self.image_cache_blob_key(source_url)
+
+        fallback_url = self.request.get("fallback")
+        if fallback_url and not blob_key:
+            blob_key = self.image_cache_blob_key(fallback_url)
 
         if not blob_key:
             # If we failed to grab something outta the blob store, just try a redirect.

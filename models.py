@@ -1091,9 +1091,13 @@ class Video(Searchable, db.Model):
 
     @staticmethod
     def youtube_thumbnail_urls(youtube_id):
+
+        hq_youtube_url = "http://img.youtube.com/vi/%s/hqdefault.jpg" % youtube_id
+        sd_youtube_url = "http://img.youtube.com/vi/%s/sddefault.jpg" % youtube_id
+
         return {
-                "hq": ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % youtube_id),
-                "sd": ImageCache.url_for("http://img.youtube.com/vi/%s/sddefault.jpg" % youtube_id),
+                "hq": ImageCache.url_for(hq_youtube_url),
+                "sd": ImageCache.url_for(sd_youtube_url, fallback_url=hq_youtube_url),
         }
 
     @staticmethod
