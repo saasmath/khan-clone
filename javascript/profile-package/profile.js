@@ -1084,10 +1084,28 @@ var ProgressSummaryView = function() {
                 review: {
                     fShowOnLeft: false,
                     order: 4}
-            };
+            },
+        updateFilterTimeout = null;
 
     function toPixelWidth(num) {
         return Math.round(200 * num / Profile.numStudents);
+    }
+
+    function filterSummaryRows() {
+        updateFilterTimeout = null;
+        var filterText = $("#student-progresssummary-search").val()
+                            .toLowerCase();
+
+        $(".exercise-row").each(function(index) {
+            var jel = $(this),
+                exerciseName = jel.find(".exercise-name span")
+                                .html().toLowerCase();
+            if (filterText == "" || exerciseName.indexOf(filterText) > -1) {
+                jel.show();
+            } else {
+                jel.hide();
+            }
+        });
     }
 
     function init() {
@@ -1171,6 +1189,13 @@ var ProgressSummaryView = function() {
                 "exercise_name=" + exercise + "&" +
                 "student_email=" + email);
         });
+
+        $("#stats-filters").delegate("#student-progresssummary-search", "keyup", function() {
+            if (updateFilterTimeout == null) {
+                updateFilterTimeout = setTimeout(filterSummaryRows, 250);
+            }
+        });
+
     }
 
     return {
