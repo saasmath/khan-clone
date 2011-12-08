@@ -1073,11 +1073,13 @@ class TopicVersion(db.Model):
         self.put()
 
     def set_default_version(self):
+        default_version = TopicVersion.get_default_version()
+
         def update_txn():
-            default_version = TopicVersion.get_default_version()
-            default_version.default = False
+            if default_version:
+                default_version.default = False
+                default_version.put()
             self.version = True
-            default_version.put()
             self.put()
 
         xg_on = db.create_transaction_options(xg=True)
@@ -1349,11 +1351,12 @@ class Topic(db.Model):
                 if version is None:
                     version = TopicVersion.create_new_version()
 
-        if kwargs.has_key("id"):
+        if kwargs.has_key("id") and kwargs["id"]:
             id = kwargs["id"]
             del kwargs["id"]
         else:
             id = Topic.get_new_id(parent, title, version)
+            logging.info("created a new id %s for %s" % (id, title))
 
         if not kwargs.has_key("standalone_title"):
             kwargs["standalone_title"] = title
