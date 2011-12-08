@@ -1094,13 +1094,13 @@ var ProgressSummaryView = function() {
     function filterSummaryRows() {
         updateFilterTimeout = null;
         var filterText = $("#student-progresssummary-search").val()
-                            .toLowerCase();
+                            .trim().toLowerCase();
 
         $(".exercise-row").each(function(index) {
             var jel = $(this),
                 exerciseName = jel.find(".exercise-name span")
-                                .html().toLowerCase();
-            if (filterText == "" || exerciseName.indexOf(filterText) > -1) {
+                                .text().toLowerCase();
+            if (filterText === "" || exerciseName.indexOf(filterText) > -1) {
                 jel.show();
             } else {
                 jel.hide();
