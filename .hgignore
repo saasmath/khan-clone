@@ -25,3 +25,4 @@ compiled_templates*
 *.handlebars.js
 .project
 .pydevproject
+.settings/org.eclipse.core.resources.prefs
