@@ -273,6 +273,12 @@
     #individual_report #vital-statistics #stats-charts #module-progress .exercise-progress-block.transparent .exercise-display-name {
         color: #aaa;
     }
+    .coach-view #module-progress #table_div, .coach-view #module-progress #firstcol {
+        max-height: 725px;
+    }
+    .lte8 .coach-view #module-progress #table_div, .lte8 .coach-view #module-progress #firstcol {
+        max-height: 725px;
+    }
 
 #individual_report #achievements {
     margin-top: 30px;
