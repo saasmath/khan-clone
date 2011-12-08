@@ -1340,6 +1340,16 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     font-style: italic;
 }
 
+ul.ui-autocomplete .ui-menu-item a span.video {
+    color: #598959;
+    font-style: italic;
+}
+
+ul.ui-autocomplete .ui-menu-item a span.exercise {
+    color: #595989;
+    font-style: italic;
+}
+
 
 /**************end of elements for all-videos page*********************/
 

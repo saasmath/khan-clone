@@ -16,7 +16,7 @@
     width: 220px;
 }
 
-.modal.add-existing-video {
+.modal.add-existing-item {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
   width: 700px; /* this is redundant but here for clarity */
@@ -42,7 +42,7 @@
   background-clip: padding-box;
 }
 
-.modal.add-existing-video .search_results {
+.modal.add-existing-item .search_results {
     width: 90%;
     height: 400px;
 }

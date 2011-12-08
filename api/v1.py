@@ -348,6 +348,12 @@ def get_exercises():
 def get_exercise(exercise_name):
     return models.Exercise.get_by_name(exercise_name)
 
+@route("/api/v1/exercises_recent", methods=["GET"])
+@jsonp
+@jsonify
+def exercise_recent_list():
+    return models.Exercise.all().order('-creation_date').fetch(20)
+
 @route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
 @jsonp
 @jsonify
@@ -1173,6 +1179,9 @@ def autocomplete():
 
         max_results_per_type = 10
 
+        exercise_results = filter(
+                lambda exercise: query in exercise.display_name.lower(),
+                models.Exercise.get_all_use_cache())
         video_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 video_title_dicts())
@@ -1180,6 +1189,9 @@ def autocomplete():
                 lambda playlist_dict: query in playlist_dict["title"].lower(),
                 playlist_title_dicts())
 
+        exercise_results = sorted(
+                exercise_results,
+                key=lambda v: v.display_name.lower().index(query))[:max_results_per_type]
         video_results = sorted(
                 video_results,
                 key=lambda v: v["title"].lower().index(query))[:max_results_per_type]
@@ -1190,8 +1202,10 @@ def autocomplete():
     return {
             "query": query,
             "videos": video_results,
-            "playlists": playlist_results
+            "playlists": playlist_results,
+            "exercises": exercise_results
     }
+
 
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
