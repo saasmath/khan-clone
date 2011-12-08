@@ -98,7 +98,9 @@ javascript = {
             "profile-class-progress-report.handlebars",
             "class-progress-column.handlebars",
             "class-progress-summary.handlebars",
+            "class-progress-summary.js",
             "exercise_progress.handlebars",
+            "profile-goals.js",
             "profile.js",
         ]
     },

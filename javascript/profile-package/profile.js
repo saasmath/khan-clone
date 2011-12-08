@@ -12,15 +12,10 @@ var Profile = {
     fLoadedGraph: false,
     userGoalsHref: '',
 
-    // TODO: It seems to this humble developer
-    // that the class + student profiles should go their separate ways.
-    // Sometimes, it is time to let go.
-    isStudentProfile: !(/class_profile/.test(window.location.href)),
-
     init: function() {
         Profile.render();
-        $('.share-link').hide();
-        $('.sharepop').hide();
+        $(".share-link").hide();
+        $(".sharepop").hide();
 
         $(".achievement,.exercise,.video").hover(
             function () {
@@ -31,12 +26,12 @@ var Profile = {
                 $(this).find(".sharepop").hide();
               });
 
-        $('.share-link').click(function() {
+        $(".share-link").click(function() {
             if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
                 $(this).next(".sharepop").toggle();
             } else {
                 $(this).next(".sharepop").toggle(
-                        "drop", { direction:'up' }, "fast" );
+                        "drop", { direction:"up" }, "fast" );
             }
             return false;
         });
@@ -47,10 +42,10 @@ var Profile = {
                 enabled: false
             },
             title: {
-                text: ''
+                text: ""
             },
             subtitle: {
-                text: ''
+                text: ""
             }
         });
 
@@ -74,7 +69,7 @@ var Profile = {
         );
 
         $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
-            var category = $(this).attr('id');
+            var category = $(this).attr("id");
             var clickedBadge = $(this);
 
             $("#badge-container").css("display", "");
@@ -249,7 +244,7 @@ var Profile = {
         var selectorAccordionSection =
                 ".graph-link-header[href*='" + href + "']";
 
-        if (Profile.isStudentProfile) {
+        if (!window.ClassProfile) {
             // TODO: Use reasonable styles
             var jel = $(selectorAccordionSection);
             if (!jel.length) {
@@ -325,7 +320,6 @@ var Profile = {
 
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
-            '/api/v1/user/goals': this.renderUserGoals,
             '/api/v1/user/exercises': this.renderExercisesTable,
             '/api/v1/user/students/goals': this.renderStudentGoals,
             '/api/v1/user/students/progressreport': window.ClassProfile ? ClassProfile.renderStudentProgressReport : null,
@@ -349,16 +343,16 @@ var Profile = {
             }
         }
         $.ajax({
-			type: "GET",
-			url: Timezone.append_tz_offset_query_param(href),
-			data: {},
-			dataType: apiCallback ? 'json' : 'html',
-			success: function(data){
-				Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
-			},
-			error: function() {
-				Profile.finishLoadGraphError();
-			}
+            type: "GET",
+            url: Timezone.append_tz_offset_query_param(href),
+            data: {},
+            dataType: apiCallback ? 'json' : 'html',
+            success: function(data){
+                Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
+            },
+            error: function() {
+                Profile.finishLoadGraphError();
+            }
         });
         $("#graph-content").html("");
         this.showGraphThrobber(true);
@@ -386,88 +380,6 @@ var Profile = {
         }
         var diff = (new Date).getTime() - start;
         KAConsole.log('API call rendered in ' + diff + ' ms.');
-    },
-
-    renderUserGoals: function(data, href) {
-        current_goals = [];
-        completed_goals = [];
-        abandoned_goals = [];
-        var qs = Profile.parseQueryString(href);
-        var viewingOwnGoals = qs.email == USER_EMAIL;
-
-        $.each(data, function(idx, goal) {
-            if (goal.completed) {
-                if (goal.abandoned)
-                    abandoned_goals.push(goal);
-                else
-                    completed_goals.push(goal);
-            } else {
-                current_goals.push(goal);
-            }
-        });
-        if (viewingOwnGoals)
-            GoalBook.reset(current_goals);
-        else
-            CurrentGoalBook = new GoalCollection(current_goals);
-        CompletedGoalBook = new GoalCollection(completed_goals);
-        AbandonedGoalBook = new GoalCollection(abandoned_goals);
-
-        $("#graph-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
-
-        Profile.goalsViews = {};
-        Profile.goalsViews.current = new GoalProfileView({
-            el: "#current-goals-list",
-            model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
-            type: 'current',
-            readonly: !viewingOwnGoals
-        });
-        Profile.goalsViews.completed = new GoalProfileView({
-            el: "#completed-goals-list",
-            model: CompletedGoalBook,
-            type: 'completed',
-            readonly: true
-        });
-        Profile.goalsViews.abandoned = new GoalProfileView({
-            el: "#abandoned-goals-list",
-            model: AbandonedGoalBook,
-            type: 'abandoned',
-            readonly: true
-        });
-
-        Profile.userGoalsHref = href;
-        Profile.showGoalType('current');
-
-        if (completed_goals.length > 0) {
-            $('#goal-show-completed-link').parent().show();
-        } else {
-            $('#goal-show-completed-link').parent().hide();
-        }
-        if (abandoned_goals.length > 0) {
-            $('#goal-show-abandoned-link').parent().show();
-        } else {
-            $('#goal-show-abandoned-link').parent().hide();
-        }
-
-        if (viewingOwnGoals) {
-            $('.new-goal').addClass('green').removeClass('disabled').click(function(e) {
-                e.preventDefault();
-                window.newGoalDialog.show();
-            });
-        }
-    },
-
-    showGoalType: function(type) {
-        if (Profile.goalsViews) {
-            $.each(['current','completed','abandoned'], function(idx, atype) {
-                if (type == atype) {
-                    Profile.goalsViews[atype].show();
-                    $('#goal-show-' + atype + '-link').addClass('graph-sub-link-selected');
-                } else {
-                    Profile.goalsViews[atype].hide();
-                    $('#goal-show-' + atype + '-link').removeClass('graph-sub-link-selected');
-                }
-            });
-        }
     },
 
     renderStudentGoals: function(data, href) {
@@ -845,10 +757,10 @@ var Profile = {
         var href = (av !== "/") ? av : this.initialGraphUrl;
 
         if ( href ) {
+            // TODO: Fix this tab history action once and for ALL
             if (href === "/achievements") {
                 $("#tab-achievements").click();
-            }
-            if ( this.expandAccordionForHref(href) ) {
+            } else if ( this.expandAccordionForHref(href) ) {
                 this.loadGraph( href, true );
                 this.loadFilters( href );
             } else {
@@ -945,8 +857,7 @@ var Profile = {
         // TODO: This file is getting pretty long,
         // and I'd like to move each tab's JS out into a separate file
 
-        // TODO: I haven't looked into a better way to detect student vs class profile
-        if (!Profile.isStudentProfile) {
+        if (window.ClassProfile) {
             return;
         }
 
@@ -1009,6 +920,7 @@ var Profile = {
         $("#tabs li").removeClass('ui-corner-top').addClass('ui-corner-left');
 
         Profile.populateAchievements();
+        Profile.populateGoals();
 
         // TODO: Might there be a better way
         // for server-side + client-side to co-exist in harmony?
@@ -1176,258 +1088,21 @@ var Profile = {
                 $("abbr.timeago").timeago();
             }
         });
-    }
-};
-
-var GoalProfileView = Backbone.View.extend({
-    template: Templates.get( "profile.profile-goals" ),
-    needsRerender: true,
-
-    initialize: function() {
-        this.model.bind('change', this.render, this);
-        this.model.bind('reset', this.render, this);
-        this.model.bind('remove', this.render, this);
-        this.model.bind('add', this.render, this);
-
-        // only hookup event handlers if the view allows edits
-        if (this.options.readonly) return;
-
-        $(this.el)
-            // edit titles
-            .delegate('input.goal-title', 'focusout', $.proxy(this.changeTitle, this))
-            .delegate('input.goal-title', 'keypress', $.proxy(function( e ) {
-                if (e.which == '13') { // enter
-                    e.preventDefault();
-                    this.changeTitle(e);
-                    $(e.target).blur();
-                }
-            }, this))
-            .delegate('input.goal-title', 'keyup', $.proxy(function( e ) {
-                if ( e.which == '27' ) { // escape
-                    e.preventDefault();
-
-                    // restore old title
-                    var jel = $(e.target);
-                    var goal = this.model.get(jel.closest('.goal').data('id'));
-                    jel.val(goal.get('title'));
-
-                    jel.blur();
-                }
-            }, this))
-
-            // show abandon button on hover
-            .delegate('.goal', 'mouseenter mouseleave', function( e ) {
-                var el = $(e.currentTarget);
-                if ( e.type == 'mouseenter' ) {
-                    el.find(".goal-description .summary-light").hide();
-                    el.find(".goal-description .goal-controls").show();
-                } else {
-                    el.find(".goal-description .goal-controls").hide();
-                    el.find(".goal-description .summary-light").show();
-                }
-            })
-            // respond to abandon button
-            .delegate('.abandon', 'click', $.proxy(this.abandon, this));
     },
 
-    changeTitle: function( e, options ) {
-        var jel = $(e.target);
-        var goal = this.model.get(jel.closest('.goal').data('id'));
-        var newTitle = jel.val();
-        if (newTitle !== goal.get('title')) {
-            goal.save({title: newTitle});
-        }
-    },
-
-    show: function() {
-        // render if necessary
-        if (this.needsRerender) {
-            this.render();
-        }
-        $(this.el).show();
-    },
-
-    hide: function() {
-        $(this.el).hide();
-    },
-
-    render: function() {
-        var jel = $(this.el);
-        // delay rendering until the view is actually visible
-        this.needsRerender = false;
-        var json = _.pluck(this.model.models, 'attributes');
-        jel.html(this.template({
-            goals: json,
-            isCurrent: (this.options.type == 'current'),
-            isCompleted: (this.options.type == 'completed'),
-            isAbandoned: (this.options.type == 'abandoned'),
-            readonly: this.options.readonly
-        }));
-
-        // attach a NewGoalView to the new goals html
-        var newGoalEl = this.$(".goalpicker");
-        if ( newGoalEl.length > 0) {
-            this.newGoalsView = new NewGoalView({
-                el: newGoalEl,
-                model: this.model
-            });
-        }
-
-        Profile.AddObjectiveHover(jel);
-        return jel;
-    },
-
-    abandon: function( evt ) {
-        var goalEl = $(evt.target).closest('.goal');
-        var goal = this.model.get(goalEl.data('id'));
-        if ( !goal ) {
-            // haven't yet received a reponse from the server after creating the
-            // goal. Shouldn't happen too often, so just show a message.
-            alert("Please wait a few seconds and try again. If this is the second time you've seen this message, reload the page");
-            return;
-        }
-
-        if (confirm("Abandoning a goal is permanent and cannot be undone. Do you really want to abandon this goal?")) {
-            // move the model to the abandoned collection
-            this.model.remove(goal);
-            goal.set({'abandoned': true});
-            AbandonedGoalBook.add(goal);
-
-            // persist to server
-            goal.save().fail(function() {
-                KAConsole.log("Warning: failed to abandon goal", goal);
-                AbandonedGoalBook.remove(goal);
-                this.model.add(goal);
-            });
-        }
-    }
-});
-
-var ProgressSummaryView = function() {
-    var fInitialized = false,
-        template = Templates.get("profile.class-progress-summary"),
-        statusInfo = {
-                'not-started': {
-                    fShowOnLeft: true,
-                    order: 0},
-                struggling: {
-                    fShowOnLeft: true,
-                    order: 1},
-                started: {
-                    fShowOnLeft: false,
-                    order: 2},
-                proficient: {
-                    fShowOnLeft: false,
-                    order:  3},
-                review: {
-                    fShowOnLeft: false,
-                    order: 4}
-            };
-
-    function toPixelWidth(num) {
-        return Math.round(200 * num / Profile.numStudents);
-    }
-
-    function init() {
-        fInitialized = true;
-
-        // Register partials and helpers
-        Handlebars.registerPartial("class-progress-column", Templates.get("profile.class-progress-column"));
-
-        Handlebars.registerHelper("toPixelWidth", function(num) {
-            return toPixelWidth(num);
-        });
-
-        Handlebars.registerHelper("toNumberOfStudents", function(num) {
-            if (toPixelWidth(num) < 20) {
-                return "";
-            }
-            return num;
-        });
-
-        Handlebars.registerHelper("toDisplay", function(status) {
-            if (status === "not-started") {
-                return "unstarted";
-            }
-            return status;
-        });
-
-        Handlebars.registerHelper("progressColumn", function(block) {
-            this.progressSide = block.hash.side;
-            return block(this);
-        });
-
-        Handlebars.registerHelper("progressIter", function(progress, block) {
-            var result = "",
-                fOnLeft = (block.hash.side === "left");
-
-            $.each(progress, function(index, p) {
-                if (fOnLeft === statusInfo[p.status].fShowOnLeft) {
-                    result += block(p);
-                }
-            });
-
-            return result;
-        });
-
-        // Delegate clicks to expand rows and load student graphs
-        $("#graph-content").delegate(".exercise-row", "click", function(e) {
-            var jRow = $(this),
-                studentLists = jRow.find(".student-lists");
-
-            if (studentLists.is(":visible")) {
-                jRow.find(".segment").each(function(index) {
-                    var jel = $(this),
-                        width = jel.data("width"),
-                        span = width < 20 ? "" : jel.data("num");
-                    jel.animate({width: width}, 350, "easeInOutCubic")
-                        .find("span").html(span);
-                });
-
-                studentLists.fadeOut(100, "easeInOutCubic");
-            } else {
-                jRow.find(".segment").animate({width: 100}, 450, "easeInOutCubic", function() {
-                    var jel = $(this),
-                        status = jel.data("status");
-                    jel.find("span").html(status);
-                });
-
-                studentLists.delay(150).fadeIn(650, "easeInOutCubic");
+    populateGoals: function() {
+        // TODO: Need to support sending a different user's email,
+        // as when a coach looks at a student's profile/goals.
+        // Probably involves refactoring the Handlebars toAPIGraphURL helper
+        $.ajax({
+            type: "GET",
+            url: "/api/v1/user/goals",
+            dataType: "json",
+            success: function(data) {
+                GoalProfileViewsCollection.render(data, "/api/v1/user/goals?email=" + USER_EMAIL);
             }
         });
-
-        $("#graph-content").delegate(".student-link", "click", function(e) {
-            e.preventDefault();
-
-            var jel = $(this),
-                exercise = jel.data("exercise"),
-                email = jel.data("email");
-
-            Profile.collapseAccordion();
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exercise + "&" +
-                "student_email=" + email);
-        });
     }
-
-    return {
-        render: function(context) {
-            if (!fInitialized) {
-                init();
-            }
-
-            Profile.numStudents = context.num_students;
-
-            $.each(context.exercises, function(index, exercise) {
-                exercise.progress.sort(function(first, second) {
-                    return statusInfo[first.status].order - statusInfo[second.status].order;
-                });
-            });
-
-            $("#graph-content").html(template(context));
-        }
-    };
 };
 
 $(function(){Profile.init();});
