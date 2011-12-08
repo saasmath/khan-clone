@@ -196,8 +196,8 @@ def topic_delete_child(parent_id):
     if not parent_topic:
         return api_invalid_param_response("Could not find topic with ID " + str(parent_id))
     
-    kind = request.request_string("kind", default = "Topic")        
-    id = request.request_string("id", default = "finance")
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
 
     if kind == "Topic":
         child =  models.Topic.get_by_id(id)
