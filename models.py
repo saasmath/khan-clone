@@ -1178,14 +1178,41 @@ class Topic(db.Model):
         return base64.urlsafe_b64encode(os.urandom(30))
 
     # updates the ancestor_keys by using the parents' ancestor_keys
-    def update_ancestors(self):
-        ancestor_keys_dict = {}
-        parents = db.get(self.parent_keys)
-        for parent in parents:
-            ancestor_keys_dict.update(dict((key, True) for key in parent.ancestor_keys))
-            ancestor_keys_dict.update({parent.key(): True})
+    # furthermore updates the ancestors of all the descendants
+    # returns the list of entities updated (they still need to be put into the db)
+    def update_ancestor_keys(self, topic_dict =  {}):
+        # topic_dict keeps a dict of all descendants and all parent's of those descendants so we don't have to get them from the datastore again
+        if not topic_dict:
+            descendants = Topic.all().filter("ancestor_key =", child)
+            topic_dict = dict((descendant.key(), descendant) for descendant in descendants)
+            topic_dict[self.key()] = self
+            # as topics in the tree may have more than one parent we need to add their other parents to the dict
+            unknown_parent_dict = {} 
+            for topic_key, topic in topic_dict.iteritems():
+                # add each parent_key that is not already in the topic_dict to the unknown_parents that we still need to get
+                unknown_parent_dict.update(dict((parent_key, True) for parent_key in topic.parent_keys if parent.key() not in topic_dict))
+            if unknown_parent_dict:
+                # get the unknown parents from the database and then update the topic_dict to include them
+                unknown_parent_dict.update(dict((parent.key(), parent) for parent in db.get(unknown_parent_key_dict.keys())))
+                topic_dict.update(unknown_parent_dict)                
+            
+        # calculate the new ancestor keys for self
+        ancestor_keys = set()
+        for parent_key in self.parent_keys:
+            ancestor_keys.update(topic_dict[parent_key].ancestor_keys)
+            ancestor_keys.update(parent_key)
 
-        self.ancestor_keys = ancestor_keys_dict.keys()
+        # update the ancestor_keys and keep track of the entity if we have changed it
+        changed_entities = set()
+        if set(self.ancestor_keys) != ancestor_keys:
+            self.ancestor_keys = list(ancestor_keys)
+            changed_entities.update(ancestor_keys)
+
+            # recursively look at the child entries and update their ancestors, keeping track of which entities ancestors changed
+            for child in self.child_keys:
+                changed_entities.update(child.update_ancestors(topic_dict))
+
+        return changed_entities
 
     def move_child(self, child, new_parent, new_parent_pos):
         old_index = self.child_keys.index(child.key())
@@ -1197,21 +1224,15 @@ class Topic(db.Model):
             old_index = child.parent_keys.index(self.key())
             del child.parent_keys[old_index]
             child.parent_keys.append(new_parent.key())
-            child.update_ancestors()
-            
-            descendants = Topic.all().filter("ancestor_key =", child).fetch(10000)
-            for descendant in descendants:
-                descendant.update_ancestors()
+            changed_descendants = child.update_ancestor_keys()
+            changed_descendants.update(child)             
         else:
             self.child_keys.insert(int(new_parent_pos), child.key())
 
         def move_txn():
             self.put()
             if new_parent.key() != self.key():
-                new_parent.put()
-                child.put()
-                for descendant in descendants:
-                    descendant.put()
+                db.put(changed_descendants.update(new_parent.key()))
 
         return db.run_in_transaction(move_txn)    
 
@@ -1238,17 +1259,31 @@ class Topic(db.Model):
         new_topic = util.clone_entity(self, **kwargs)
 
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
-                        
-    def delete_tree(self):
-        topics = Topic.all().filter("ancestor_keys =", self.key()).fetch(10000)
-        topics.append(self)
-        parents = db.get(self.parent_keys)
-        def delete_txn():
-            for parent in parents:
-                parent.child_keys = [child_key for child_key in parent.child_keys if child_key !=self.key()]
-                parent.put()
-            db.delete(topics)
+    
+    def delete_child(self, child):
+        # remove the child key from self
+        self.child_keys =  [child_key for child_key in self.child_keys if child_key != child.key()]
+        
+        # remove self from the child's parents
+        child.parent_keys = [parent_key for parent_key in child.parent_keys if parent_key != self.key()]
+        num_parents = len(child.parent_keys)
+        descendants = Topic.all().filter("ancestor_keys =", self.key()).fetch(10000)
+        descendant_dict = dict((descendant.key(), descendant) for descendant in descendants)
+        
+        # if there are still other parents
+        if num_parents:
+            changed_descendants = child.update_ancestors()
+        else:
+            #TODO: If the descendants still have other parents we shouldn't be deleting them - if we are sure we want multiple parents will need to implement this
+            descendants.append(child)
 
+        def delete_txn():
+            self.put()
+            if num_parents:
+                db.put(changed_descendants)
+            else:
+                db.delete(descendants)
+    
         db.run_in_transaction(delete_txn)  
 
     @staticmethod

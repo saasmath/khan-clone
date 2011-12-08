@@ -188,7 +188,33 @@ def put_topic(topic_id):
 
     return topic.get_visible_data()
 
-@route("/api/v1/topic/<old_parent_id>/movechild", methods=["GET"])
+@route("/api/v1/topic/<parent_id>/deletechild", methods=["GET"])
+@jsonp
+@jsonify
+def topic_delete_child(parent_id):
+    parent_topic = models.Topic.get_by_id(parent_id)
+    if not parent_topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(parent_id))
+    
+    kind = request.request_string("kind", default = "Topic")        
+    id = request.request_string("id", default = "finance")
+
+    if kind == "Topic":
+        child =  models.Topic.get_by_id(id)
+    elif kind == "Exercise":
+        child = models.Exercise.get_by_name(id)
+    elif kind == "Video":
+        child = models.Video.get_for_readable_id(id)
+    else:
+        return api_invalid_param_response("Invalid kind to delete:" + kind)
+
+    if not child:
+        return api_invalid_param_response("Could not find a %s with ID %s " % (kind, id))
+
+    parent_topic.delete_child(child)
+    
+
+@route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
 @jsonp
 @jsonify
 def topic_move_child(old_parent_id):
