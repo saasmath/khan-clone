@@ -210,17 +210,7 @@ def get_user_badges(user_data = None):
 class ViewBadges(request_handler.RequestHandler):
 
     def get(self):
-
-        user_badges = get_user_badges()
-
-        template_values = {
-                "user_badges_normal": user_badges['user_badges_normal'],
-                "user_badges_master": user_badges['user_badges_master'],
-                "badge_collections": user_badges['badge_collections'],
-                "show_badge_frequencies": self.request_bool("show_badge_frequencies", default=False)
-                }
-
-        self.render_jinja2_template('viewbadges.html', template_values)
+        self.redirect("/profile#achievements")
 
 # /admin/badgestatistics is called periodically by a cron job
 class BadgeStatistics(request_handler.RequestHandler):
