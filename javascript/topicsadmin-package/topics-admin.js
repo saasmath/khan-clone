@@ -21,7 +21,7 @@ var TopicTreeEditor = {
                 KAConsole.log('Activated: ', node);
 
                 var model = null;
-                if (node.data.kind == 'Topic') {
+                if (node.data.kind == 'Topic' && node.data.key != 'root') {
                     model = topicTree.get(node.data.key);
                 } else if (node.data.kind == 'Video') {
                     model = new Video({ readable_id: node.data.key, title: 'Loading...' });
@@ -29,10 +29,14 @@ var TopicTreeEditor = {
                     model = new Exercise({ name: node.data.key, display_name: 'Loading...' });
                 }
 
-                TopicNodeEditor.init(node.data.kind, model);
+                if (model) {
+                    TopicNodeEditor.init(node.data.kind, model, topicTree.get(node.parent.data.key));
 
-                if (!model.inited)
-                    model.fetch();
+                    if (!model.inited)
+                        model.fetch();
+                } else {
+                    $('#details_view').html('');
+                }
             },
 
             onCreate: function(node, span) {
@@ -41,6 +45,12 @@ var TopicTreeEditor = {
                         node.expand();
                         node.activate();
                         TopicTopicNodeEditor.handleAction(action, topicTree.get(node.data.key), topicTree.get(node.parent.data.key));
+                    });
+                }
+                if (node.data.kind == 'Video' || node.data.kind == 'Exercise') {
+                    $(span).contextMenu({menu: "item_context_menu"}, function(action, el, pos) {
+                        node.activate();
+                        TopicItemNodeEditor.handleAction(action, node.data.kind, node.data.key, topicTree.get(node.parent.data.key));
                     });
                 }
             },
@@ -160,12 +170,14 @@ var TopicTreeEditor = {
 var TopicNodeEditor = {
 
     model: null,
+    parentModel: null,
     modelKind: null,
     template: null,
 
-    init: function(kind, model) {
+    init: function(kind, model, parentModel) {
         TopicNodeEditor.modelKind = kind;
         TopicNodeEditor.model = model;
+        TopicNodeEditor.parentModel = parentModel;
         TopicNodeEditor.template = Templates.get("topicsadmin.edit-" + kind.toLowerCase());
 
         TopicNodeEditor.render();
@@ -337,11 +349,36 @@ var TopicTopicNodeEditor = {
         }
     },
 
-    handleAction: function(action, model, parent_model) {
+    handleAction: function(action, model, parentModel) {
         if (!model)
             model = TopicNodeEditor.model;
+        if (parentModel)
+            parentModel = TopicNodeEditor.parentModel;
 
-        if (action == 'add_existing_video') {
+        if (action == 'add_new_topic') {
+            var topic = new Topic();
+            KAConsole.log('Creating new topic...');
+            topic.save({}, {
+                success: function() {
+                    KAConsole.log('Created new topic:', topic.id);
+                    var data = {
+                        kind: 'Topic',
+                        id: topic.id,
+                        pos: model.get('children').length
+                    };
+                    $.ajax({
+                        url: '/api/v1/topic/' + model.id + '/addchild',
+                        type: 'POST',
+                        data: data,
+                        success: function(json) {
+                            KAConsole.log('Added topic successfully.');
+                            model.set(json);
+                        }
+                    });
+                }
+            });
+
+        } else if (action == 'add_existing_video') {
             if (!TopicTopicNodeEditor.existingItemView)
                 TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
 
@@ -361,13 +398,13 @@ var TopicTopicNodeEditor = {
                 id: model.id
             };
             $.ajax({
-                url: '/api/v1/topic/' + parent_model.id + '/deletechild',
+                url: '/api/v1/topic/' + parentModel.id + '/deletechild',
                 type: 'POST',
                 data: data,
                 success: function(json) {
-                    child_list = parent_model.get('children').slice(0);
+                    child_list = parentModel.get('children').slice(0);
                     child_list.splice(child_list.indexOf(model.id), 1);    
-                    parent_model.set('children', child_list);
+                    parentModel.set('children', child_list);
                 }
             });
         }
@@ -389,7 +426,7 @@ var TopicTopicNodeEditor = {
             pos: TopicTopicNodeEditor.contextModel.get('children').length
         };
         $.ajax({
-            url: '/api/v1/topic/' + TopicTopicNodeEditor.contextModel.get('id') + '/addchild',
+            url: '/api/v1/topic/' + TopicTopicNodeEditor.contextModel.id + '/addchild',
             type: 'POST',
             data: data,
             success: function(json) {
@@ -410,6 +447,61 @@ var TopicTopicNodeEditor = {
                 TopicNodeEditor.model.save();
             }
         });
+    }
+};
+
+var TopicItemNodeEditor = {
+    init: function() {
+        $('#details_view').find('input').change(function() {
+            var field = $(this).attr('name');
+            if (field) {
+                var value = $(this).val();
+                var setter = {};
+                setter[field] = value;
+                TopicNodeEditor.model.set(setter);
+            }
+        });
+    },
+
+    handleAction: function(action, kind, id, parentModel) {
+        if (!kind)
+            kind = TopicNodeEditor.modelKind;
+        if (!id)
+            id = TopicNodeEditor.model.id;
+        if (!parentModel)
+            parentModel = TopicNodeEditor.parentModel;
+
+        if (action == 'remove_item') {
+            data = {
+                kind: kind,
+                id: id
+            };
+            $.ajax({
+                url: '/api/v1/topic/' + parentModel.id + '/deletechild',
+                type: 'POST',
+                data: data,
+                success: function(json) {
+                    child_list = parentModel.get('children').slice(0);
+                    child_list.splice(child_list.indexOf(id), 1);    
+                    parentModel.set('children', child_list);
+                }
+            });
+        }/* else if (action == 'duplicate_item') {
+            var data = {
+                kind: kind,
+                id: id,
+                pos: parentModel.get('children').indexOf(id)+1
+            };
+            $.ajax({
+                url: '/api/v1/topic/' + parentModel.id + '/addchild',
+                type: 'POST',
+                data: data,
+                success: function(json) {
+                    KAConsole.log('Added topic successfully.');
+                    parentModel.set(json);
+                }
+            });
+        }*/ // Doesn't work
     }
 };
 
@@ -457,15 +549,7 @@ var TopicExerciseNodeEditor = {
     init: function() {
         // TomY TODO - related videos
 
-        $('#details_view').find('input').change(function() {
-            var field = $(this).attr('name');
-            if (field) {
-                var value = $(this).val();
-                var setter = {};
-                setter[field] = value;
-                TopicNodeEditor.model.set(setter);
-            }
-        });
+        TopicItemNodeEditor.init();
 
         // Configure the search form
         $('#related-videos-input').placeholder();
@@ -475,16 +559,6 @@ var TopicExerciseNodeEditor = {
 
 var TopicVideoNodeEditor = {
     init: function() {
-        // TomY TODO - related videos
-
-        $('#details_view').find('input').change(function() {
-            var field = $(this).attr('name');
-            if (field) {
-                var value = $(this).val();
-                var setter = {};
-                setter[field] = value;
-                TopicNodeEditor.model.set(setter);
-            }
-        });
+        TopicItemNodeEditor.init();
     }
 };

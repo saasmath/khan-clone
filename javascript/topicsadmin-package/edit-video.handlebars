@@ -3,6 +3,11 @@
   <input type="text" name="title" class="node-title simple-input ui-corner-all blur-on-esc" value="{{ model.title }}" style="width: 250px; display: inline; vertical-align: middle;">
 </div>
 
+<div>
+  <a href="javascript: TopicItemNodeEditor.handleAction('remove_item');" class="item-action simple-button blue action-gradient">Remove from topic</a>
+</div>
+<div style="clear: both" />
+
 <div style="padding: 9px 23px;">
   <div>
     <table class="node-properties">
@@ -25,7 +30,7 @@
       <tr>
         <td style="font-weight:bold;">YouTube ID</td>
         <td style="padding-bottom:9px;">
-          <input type="text" name="youtube_id" value="{{ model.youtube_id }}" maxlength="11"/><br/>
+          <input type="text" name="youtube_id" value="{{ model.youtube_id }}" maxlength="11" class="short" /><br/>
           <em>ID of this video on YouTube</em>
         </td>
       </tr>
