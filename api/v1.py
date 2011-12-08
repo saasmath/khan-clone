@@ -78,6 +78,43 @@ def add_action_results(obj, dict_results):
 
     obj.action_results = dict_results
 
+# Return specific user data requests from request
+# IFF currently logged in user has permission to view
+def get_visible_user_data_from_request(disable_coach_visibility=False,
+                                       user_data=None):
+
+    user_data = user_data or models.UserData.current()
+    if not user_data:
+        return None
+
+    if request.request_string("email"):
+        user_data_student = request.request_user_data("email")
+
+        if user_data_student and user_data_student.user_email == user_data.user_email:
+            # if email in request is that of the current user, simply return the
+            # current user_data, no need to check permission to view
+            return user_data
+
+        if (user_data_student and
+                (user_data.developer or
+                        (not disable_coach_visibility and
+                         user_data_student.is_coached_by(user_data)))):
+            return user_data_student
+        else:
+            return None
+
+    else:
+        return user_data
+
+def get_user_data_coach_from_request():
+    user_data_coach = models.UserData.current()
+    user_data_override = request.request_user_data("coach_email")
+
+    if user_data_coach.developer and user_data_override:
+        user_data_coach = user_data_override
+
+    return user_data_coach
+
 @route("/api/v1/playlists", methods=["GET"])
 @jsonp
 @cache_with_key_fxn_and_param(
@@ -262,34 +299,6 @@ def replace_playlist_values(structure, playlist_dict):
         elif "playlist" in structure:
             # Replace string playlist title with real playlist object
             structure["playlist"] = playlist_dict[structure["playlist"]]
-
-# Return specific user data requests from request
-# IFF currently logged in user has permission to view
-def get_visible_user_data_from_request(disable_coach_visibility=False,
-                                       user_data=None):
-
-    user_data = user_data or models.UserData.current()
-    if not user_data:
-        return None
-
-    if request.request_string("email"):
-        user_data_student = request.request_user_data("email")
-
-        if user_data_student and user_data_student.user_email == user_data.user_email:
-            # if email in request is that of the current user, simply return the
-            # current user_data, no need to check permission to view
-            return user_data
-
-        if (user_data_student and
-                (user_data.developer or
-                        (not disable_coach_visibility and
-                         user_data_student.is_coached_by(user_data)))):
-            return user_data_student
-        else:
-            return None
-
-    else:
-        return user_data
 
 def get_students_data_from_request(user_data):
     return util_profile.get_students_data(user_data, request.request_string("list_id"))
@@ -503,11 +512,8 @@ def user_exercises_all():
 @oauth_required()
 @jsonp
 @jsonify
-def coach_progress_summary():
-    user_data_coach = models.UserData.current()
-    user_data_override = request.request_user_data("coach_email")
-    if user_data_coach.developer and user_data_override:
-        user_data_coach = user_data_override
+def get_students_progress_summary():
+    user_data_coach = get_user_data_coach_from_request()
 
     try:
         list_students = get_students_data_from_request(user_data_coach)
@@ -1038,11 +1044,7 @@ def user_data():
 @jsonp
 @jsonify
 def get_student_progress_report():
-    user_data_coach = models.UserData.current()
-
-    user_data_override = request.request_user_data("coach_email")
-    if user_data_coach and user_data_coach.developer and user_data_override:
-        user_data_coach = user_data_override
+    user_data_coach = get_user_data_coach_from_request()
 
     if not user_data_coach:
         return api_invalid_param_response("User is not logged in.")
