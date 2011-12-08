@@ -72,7 +72,7 @@ var TopicTreeEditor = {
                     }
                     $.ajax({
                         url: '/api/v1/topic/' + oldParent.data.key + '/movechild',
-                        type: 'GET',
+                        type: 'POST',
                         data: data
                     });
                 }

@@ -188,7 +188,7 @@ def put_topic(topic_id):
 
     return topic.get_visible_data()
 
-@route("/api/v1/topic/<parent_id>/deletechild", methods=["GET"])
+@route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
 @jsonp
 @jsonify
 def topic_delete_child(parent_id):
