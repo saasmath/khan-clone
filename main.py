@@ -238,7 +238,8 @@ class ViewVideo(request_handler.RequestHandler):
         template_values = qa.add_template_values(template_values, self.request)
 
         bingo(['struggling_videos_landing',
-               'homepage_video_videos_landing'])
+               'homepage_video_videos_landing',
+               'homepage_video_videos_landing_binary'])
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
