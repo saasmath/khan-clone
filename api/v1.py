@@ -1100,7 +1100,7 @@ def get_student_goals():
         return api_invalid_param_response("Coach not specified.")
 
     try:
-        students = get_students_from_request(user_data_coach)
+        students = get_students_data_from_request(user_data_coach)
     except Exception, e:
         return api_invalid_param_response(e.message)
 
