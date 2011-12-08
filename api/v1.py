@@ -181,14 +181,76 @@ def put_topic(topic_id):
 
     topic_json = request.json
 
-    # currently all you can modify is the title
-    if topic_json['title'] != topic.title:
-        topic.title = topic_json['title']
+    changed = False
+    for attr in ['title', 'standalone_title', 'id', 'description', 'tags']:
+        if getattr(topic, attr) != topic_json[attr]:
+            setattr(topic, attr, topic_json[attr])
+            changed = True
+    
+    if changed:
         topic.put()
 
     return topic.get_visible_data()
 
-@route("/api/v1/topic/<old_parent_id>/movechild", methods=["GET"])
+@route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
+@jsonp
+@jsonify
+def topic_add_child(parent_id):
+    parent_topic = models.Topic.get_by_id(parent_id)
+    if not parent_topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(parent_id))
+    
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+
+    if kind == "Topic":
+        child =  models.Topic.get_by_id(id)
+    elif kind == "Exercise":
+        child = models.Exercise.get_by_name(id)
+    elif kind == "Video":
+        child = models.Video.get_for_readable_id(id)
+    else:
+        return api_invalid_param_response("Invalid kind to delete:" + kind)
+
+    if not child:
+        return api_invalid_param_response("Could not find a %s with ID %s " % (kind, id))
+
+    pos = request.request_int("pos", default=0)
+
+    parent_topic.add_child(child, pos)
+
+    return parent_topic.get_visible_data()
+
+
+@route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
+@jsonp
+@jsonify
+def topic_delete_child(parent_id):
+    parent_topic = models.Topic.get_by_id(parent_id)
+    if not parent_topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(parent_id))
+    
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+
+    if kind == "Topic":
+        child =  models.Topic.get_by_id(id)
+    elif kind == "Exercise":
+        child = models.Exercise.get_by_name(id)
+    elif kind == "Video":
+        child = models.Video.get_for_readable_id(id)
+    else:
+        return api_invalid_param_response("Invalid kind to delete:" + kind)
+
+    if not child:
+        return api_invalid_param_response("Could not find a %s with ID %s " % (kind, id))
+
+    parent_topic.delete_child(child)
+
+    return parent_topic.get_visible_data()
+  
+
+@route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
 @jsonp
 @jsonify
 def topic_move_child(old_parent_id):
