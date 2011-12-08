@@ -4,7 +4,6 @@
   <a href="{{toLegacyGraphURL "focus" email "" ""}}" class="graph-link graph-link-header">Focus</a>
   <a href="{{toAPIGraphURL "user" "exercises" email "" ""}}" class="graph-link graph-link-header">Exercise Progress</a>
   <a href="{{toLegacyGraphURL "exercisesovertime" email "" ""}}" class="graph-link graph-link-header">Exercise Progress Over Time</a>
-  <a href="{{toAPIGraphURL "user" "goals" email "" ""}}" class="graph-link graph-link-header">Goals <span class="feature-beta-tag">(beta)</span></a>
   </div>
   <div style="clear: both;"></div>
 
@@ -30,16 +29,6 @@
       </span>
   </p>
   <p class="vital-statistics-description">Shows how many exercises you've completed over time.</p>
-  <p class="vital-statistics-description">
-    Shows progress on your current goals.
-    <span class="graph-picker">
-      <a href="javascript:Profile.showGoalType('current')" id="goal-show-current-link" class="graph-sub-link 0">Current</a>
-      <span style="display: none">| <a href="javascript:Profile.showGoalType('completed')" id="goal-show-completed-link" class="graph-sub-link 0">Completed</a></span>
-        <span style="display: none">| <a href="javascript:Profile.showGoalType('abandoned')" id="goal-show-abandoned-link" class="graph-sub-link 0">Abandoned</a></span>
-      </span>
-      <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);">Create a new goal</a>
-  </p>
-
 </div>
 
 
