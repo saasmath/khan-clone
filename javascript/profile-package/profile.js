@@ -256,29 +256,29 @@ var Profile = {
         return href;
     },
 
-	/**
-	 * Expands the navigation accordion according to the link specified.
-	 * @return {boolean} whether or not a link was found to be a valid link.
-	 */
-	expandAccordionForHref: function(href) {
-		if (!href) {
-			return false;
-		}
+    /**
+     * Expands the navigation accordion according to the link specified.
+     * @return {boolean} whether or not a link was found to be a valid link.
+     */
+    expandAccordionForHref: function(href) {
+        if (!href) {
+            return false;
+        }
 
-		href = this.baseGraphHref(href);
+        href = this.baseGraphHref(href);
 
-		href = href.replace(/[<>']/g, "");
-		var selectorAccordionSection =
-				".graph-link-header[href*='" + href + "']";
-		if ( $(selectorAccordionSection).length ) {
-			$("#stats-nav #nav-accordion").accordion(
-					"activate", selectorAccordionSection);
-			return true;
-		}
+        href = href.replace(/[<>']/g, "");
+        var selectorAccordionSection =
+                ".graph-link-header[href*='" + href + "']";
+        if ( $(selectorAccordionSection).length ) {
+            $("#stats-nav #nav-accordion").accordion(
+                    "activate", selectorAccordionSection);
+            return true;
+        }
 
-		this.collapseAccordion();
-		return false;
-	},
+        this.collapseAccordion();
+        return false;
+    },
 
     styleSublinkFromHref: function(href) {
 
@@ -350,16 +350,16 @@ var Profile = {
         }
 
         $.ajax({
-			type: "GET",
-			url: Timezone.append_tz_offset_query_param(href),
-			data: {},
-			dataType: apiCallback ? 'json' : 'html',
-			success: function(data){
-				Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
-			},
-			error: function() {
-				Profile.finishLoadGraphError();
-			}
+            type: "GET",
+            url: Timezone.append_tz_offset_query_param(href),
+            data: {},
+            dataType: apiCallback ? 'json' : 'html',
+            success: function(data){
+                Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
+            },
+            error: function() {
+                Profile.finishLoadGraphError();
+            }
         });
         $("#graph-content").html("");
         this.showGraphThrobber(true);
@@ -539,7 +539,7 @@ var Profile = {
             }
         });
 
-		var template = Templates.get( "profile.profile-class-goals" );
+        var template = Templates.get( "profile.profile-class-goals" );
         $("#graph-content").html( template(studentGoalsViewModel) );
 
         $("#class-student-goal .goal-row").each(function() {
@@ -741,119 +741,119 @@ var Profile = {
         $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
     },
 
-	/**
-	 * Renders the exercise blocks given the JSON blob about the exercises.
-	 */
-	renderExercisesTable: function(data) {
-		var templateContext = [];
+    /**
+     * Renders the exercise blocks given the JSON blob about the exercises.
+     */
+    renderExercisesTable: function(data) {
+        var templateContext = [];
 
-		for ( var i = 0, exercise; exercise = data[i]; i++ ) {
-			var stat = "Not started";
-			var color = "";
-			var states = exercise["exercise_states"];
-			var totalDone = exercise["total_done"];
+        for ( var i = 0, exercise; exercise = data[i]; i++ ) {
+            var stat = "Not started";
+            var color = "";
+            var states = exercise["exercise_states"];
+            var totalDone = exercise["total_done"];
 
-			if ( states["reviewing"] ) {
-				stat = "Review";
-				color = "review light";
-			} else if ( states["proficient"] ) {
-				// TODO: handle implicit proficiency - is that data in the API?
-				// (due to proficiency in a more advanced module)
-				stat = "Proficient";
-				color = "proficient";
-			} else if ( states["struggling"] ) {
-				stat = "Struggling";
-				color = "struggling";
-			} else if ( totalDone > 0 ) {
-				stat = "Started";
-				color = "started";
-			}
+            if ( states["reviewing"] ) {
+                stat = "Review";
+                color = "review light";
+            } else if ( states["proficient"] ) {
+                // TODO: handle implicit proficiency - is that data in the API?
+                // (due to proficiency in a more advanced module)
+                stat = "Proficient";
+                color = "proficient";
+            } else if ( states["struggling"] ) {
+                stat = "Struggling";
+                color = "struggling";
+            } else if ( totalDone > 0 ) {
+                stat = "Started";
+                color = "started";
+            }
 
-			if ( color ) {
-				color = color + " action-gradient seethrough";
-			} else {
-				color = "transparent";
-			}
-			var model = exercise["exercise_model"];
-			templateContext.push({
-				"name": model["name"],
-				"color": color,
-				"status": stat,
-				"shortName": model["short_display_name"] || model["display_name"],
-				"displayName": model["display_name"],
-				"progress": Math.floor( exercise["progress"] * 100 ) + "%",
-				"totalDone": totalDone
-			});
-		}
-		var template = Templates.get( "profile.exercise_progress" );
+            if ( color ) {
+                color = color + " action-gradient seethrough";
+            } else {
+                color = "transparent";
+            }
+            var model = exercise["exercise_model"];
+            templateContext.push({
+                "name": model["name"],
+                "color": color,
+                "status": stat,
+                "shortName": model["short_display_name"] || model["display_name"],
+                "displayName": model["display_name"],
+                "progress": Math.floor( exercise["progress"] * 100 ) + "%",
+                "totalDone": totalDone
+            });
+        }
+        var template = Templates.get( "profile.exercise_progress" );
         $("#graph-content").html( template({ "exercises": templateContext }) );
 
-		var infoHover = $("#info-hover-container");
-		var lastHoverTime;
-		var mouseX;
-		var mouseY;
-		$("#module-progress .student-module-status").hover(
-			function(e) {
-				var hoverTime = lastHoverTime = Date.now();
-				mouseX = e.pageX;
-				mouseY = e.pageY;
-				var self = this;
-				setTimeout(function() {
-					if (hoverTime != lastHoverTime) {
-						return;
-					}
+        var infoHover = $("#info-hover-container");
+        var lastHoverTime;
+        var mouseX;
+        var mouseY;
+        $("#module-progress .student-module-status").hover(
+            function(e) {
+                var hoverTime = lastHoverTime = Date.now();
+                mouseX = e.pageX;
+                mouseY = e.pageY;
+                var self = this;
+                setTimeout(function() {
+                    if (hoverTime != lastHoverTime) {
+                        return;
+                    }
 
-					var hoverData = $(self).children(".hover-data");
-					if ($.trim(hoverData.html())) {
-						infoHover.html($.trim(hoverData.html()));
+                    var hoverData = $(self).children(".hover-data");
+                    if ($.trim(hoverData.html())) {
+                        infoHover.html($.trim(hoverData.html()));
 
-						var left = mouseX + 15;
-						var jelGraph = $("#graph-content");
-						var leftMax = jelGraph.offset().left +
-								jelGraph.width() - 150;
+                        var left = mouseX + 15;
+                        var jelGraph = $("#graph-content");
+                        var leftMax = jelGraph.offset().left +
+                                jelGraph.width() - 150;
 
-						infoHover.css('left', Math.min(left, leftMax));
-						infoHover.css('top', mouseY + 5);
-						infoHover.css('cursor', 'pointer');
-						infoHover.css('position', 'fixed');
-						infoHover.show();
-					}
-				}, 100);
-			},
-			function(e){
-				lastHoverTime = null;
-				$("#info-hover-container").hide();
-			}
-		);
-		$("#module-progress .student-module-status").click(function(e) {
-			$("#info-hover-container").hide();
-			Profile.collapseAccordion();
-			// Extract the name from the ID, which has been prefixed.
-			var exerciseName = this.id.substring( "exercise-".length );
-			Profile.loadGraph(
-				"/profile/graph/exerciseproblems?" +
-				"exercise_name=" + exerciseName + "&" +
-				"student_email=" + Profile.email);
-		});
-	},
+                        infoHover.css('left', Math.min(left, leftMax));
+                        infoHover.css('top', mouseY + 5);
+                        infoHover.css('cursor', 'pointer');
+                        infoHover.css('position', 'fixed');
+                        infoHover.show();
+                    }
+                }, 100);
+            },
+            function(e){
+                lastHoverTime = null;
+                $("#info-hover-container").hide();
+            }
+        );
+        $("#module-progress .student-module-status").click(function(e) {
+            $("#info-hover-container").hide();
+            Profile.collapseAccordion();
+            // Extract the name from the ID, which has been prefixed.
+            var exerciseName = this.id.substring( "exercise-".length );
+            Profile.loadGraph(
+                "/profile/graph/exerciseproblems?" +
+                "exercise_name=" + exerciseName + "&" +
+                "student_email=" + Profile.email);
+        });
+    },
 
-	// TODO: move history management out to a common utility
-	historyChange: function(e) {
-		var href = ( $.address.value() === "/" ) ? this.initialGraphUrl : $.address.value();
+    // TODO: move history management out to a common utility
+    historyChange: function(e) {
+        var href = ( $.address.value() === "/" ) ? this.initialGraphUrl : $.address.value();
         var url = ( $.address.path() === "/" ) ? this.initialGraphUrl : $.address.path();
-		if ( href ) {
-			if ( this.expandAccordionForHref(href) ) {
-				this.loadGraph( href , true );
-				this.loadFilters( url );
-			} else {
-				// Invalid URL - just try the first link available.
-				var links = $(".graph-link");
-				if ( links.length ) {
-					Profile.loadGraphFromLink( links[0] );
-				}
-			}
-		}
-	},
+        if ( href ) {
+            if ( this.expandAccordionForHref(href) ) {
+                this.loadGraph( href , true );
+                this.loadFilters( url );
+            } else {
+                // Invalid URL - just try the first link available.
+                var links = $(".graph-link");
+                if ( links.length ) {
+                    Profile.loadGraphFromLink( links[0] );
+                }
+            }
+        }
+    },
 
     showGraphThrobber: function(fVisible) {
         if (fVisible)
@@ -862,7 +862,7 @@ var Profile = {
             $("#graph-progress-bar").slideUp("fast");
     },
 
-	// TODO: move this out to a more generic utility file.
+    // TODO: move this out to a more generic utility file.
     parseQueryString: function(url) {
         var qs = {};
         var parts = url.split('?');
@@ -880,7 +880,7 @@ var Profile = {
         return qs;
     },
 
-	// TODO: move this out to a more generic utility file.
+    // TODO: move this out to a more generic utility file.
     reconstructQueryString: function(hash, kvjoin, eljoin) {
         kvjoin = kvjoin || '=';
         eljoin = eljoin || '&';
@@ -921,7 +921,7 @@ var Profile = {
                         infoHover.css('left', Math.min(left, leftMax));
                         infoHover.css('top', mouseY + 5);
                         infoHover.css('cursor', 'pointer');
-						infoHover.css('position', 'fixed');
+                        infoHover.css('position', 'fixed');
                         infoHover.show();
                     }
                 }, 100);

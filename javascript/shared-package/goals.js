@@ -528,21 +528,6 @@ var NewGoalView = Backbone.View.extend({
         this.trigger("creating");
         e.preventDefault();
         newCustomGoalDialog.show();
-    },
-
-    waitForMapsPackage: function(html) {
-        if (!globalPopupDialog.visible)
-            return;
-
-        if (!dynamicPackageLoader.packageLoaded('maps')) {
-            var self = this;
-            setTimeout(function() { self.waitForMapsPackage(html) }, 500);
-            return;
-        }
-
-        KAConsole.log('Done loading.');
-        globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', html, false);
-        createGoalInitialize();
     }
 });
 
