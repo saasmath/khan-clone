@@ -1,26 +1,79 @@
 // These models can automatically fetch the tree incrementally
-// using API calls during traversal. Note that the getChildren()
-// call is asynchronous.
+// using API calls during traversal. Note that the fetchById()
+// call may be either synchronous or asynchronous, depending on
+// whether the model is already in the cache.
 
 function TestTopics() {
 	KAConsole.debugEnabled = true;
 
     var tree = getDefaultTopicTree();
-    var root = tree.getRoot();
     KAConsole.log('Fetching root...');
-    root.fetch({
-        success: function() {
-            KAConsole.log('Got root. Fetching child...');
-            var child = root.getChild('math');
-            child.fetch({
-                success: function() {
-                    KAConsole.log('Got child topic', child);
+    tree.fetchByID('root',
+        function() {
+            KAConsole.log('Got root. Fetching first child...');
+            tree.fetchByID(this.get('children')[0].id,
+                function() {
+                    KAConsole.log('Got child topic:', this);
                 }
-            });
+            );
         }
-    });
+    );
 }
 
+// TomY TODO - Move this to some shared Backbone utils file?
+IncrementalCollection = Backbone.Collection.extend({
+    fetchByID: function(id, callback, args) {
+        var ret = this.get(id);
+        if (!ret) {
+            if (!this.idAttribute) {
+                this.idAttribute = new this.model({}).idAttribute;
+                if (!this.idAttribute)
+                    this.idAttribute = 'id';
+            }
+
+            var attrs = {};
+            attrs[this.idAttribute] = id;
+            ret = this._add(attrs);
+        }
+        if (!ret.__inited) {
+            if (!ret.__callbacks)
+                ret.__callbacks = [];
+            if (callback)
+                ret.__callbacks.push({ callback: callback, args: args });
+
+            if (!ret.__requesting) {
+                KAConsole.log('IC (' + id + '): Sending request...');
+                ret.fetch({
+                    success: function() {
+                        KAConsole.log('IC (' + id + '): Request succeeded.');
+                        ret.__inited = true;
+                        ret.__requesting = false;
+                        _.each(ret.__callbacks, function(cb) {
+                            cb.callback.apply(ret, cb.args);
+                        });
+                        ret.__callbacks = [];
+                    },
+
+                    error: function() {
+                        KAConsole.log('IC (' + id + '): Request failed!');
+                        ret.__requesting = false;
+                    }
+                });
+                ret.__requesting = true;
+            } else {
+                KAConsole.log('IC (' + id + '): Already requested.');
+            }
+        } else {
+            KAConsole.log('IC (' + id + '): Already loaded.');
+            if (callback)
+                callback.apply(ret, args);
+        }
+
+        return ret;
+    }
+});
+
+// Model/collection for Topics
 (function() {
 	var defaultTree = null;
 
@@ -65,19 +118,14 @@ function TestTopics() {
         }
 	});
 
-	TopicTree = Backbone.Collection.extend({
+	TopicTree = IncrementalCollection.extend({
 		model: Topic,
 
         getRoot: function() {
-            if (!this.get('root')) {
-                var rootNode = new Topic({
-					id: 'root',
-					title: 'Loading...'
-                });
-                this.addNode(rootNode);
-            }
-
-            return this.get('root');
+            ret = this.fetchByID('root');
+            if (!ret.__inited)
+                ret.set({title: 'Loading...'});
+            return ret;
         },
 
         addNode: function(node) {
@@ -91,8 +139,6 @@ function TestTopics() {
             var node = this;
             var tree = node.tree;
 
-            node.inited = true;
-
             // Insert "placeholder" nodes into tree so we can track changes
             _.each(node.get('children'), function(child) {
                 if (child.kind == 'Topic' && !tree.get(child.id)) {
@@ -105,7 +151,7 @@ function TestTopics() {
             // Update child lists
             tree.each(function(other_node) {
                 var children = _.map(other_node.get('children'), function(child) {
-                    if (child.__ptr && child.__ptr.inited) {
+                    if (child.__ptr && child.__ptr.__inited) {
                         return {
                             kind: child.kind,
                             __ptr: child.__ptr,
@@ -127,7 +173,14 @@ function TestTopics() {
             defaultTree = new TopicTree();
         }
         return defaultTree;
-    }
+    };
+
+})();
+
+// Model/collection for Videos
+(function() {
+
+	var videoList = null;
 
     Video = Backbone.Model.extend({
         defaults: {
@@ -150,6 +203,25 @@ function TestTopics() {
 
         urlRoot: '/api/v1/videos'
     });
+
+	VideoList = IncrementalCollection.extend({
+		model: Video
+    });
+
+    getVideoList = function() {
+        if (!videoList) {
+            videoList = new VideoList();
+        }
+        return videoList;
+    };
+
+})();
+
+// Model/collection for Exercises
+
+(function() {
+
+	var exerciseList = null;
 
     Exercise = Backbone.Model.extend({
         defaults: {
@@ -174,5 +246,16 @@ function TestTopics() {
 
         urlRoot: '/api/v1/exercises'
     });
+
+	ExerciseList = IncrementalCollection.extend({
+		model: Exercise
+    });
+
+    getExerciseList = function() {
+        if (!exerciseList) {
+            exerciseList = new ExerciseList();
+        }
+        return exerciseList;
+    };
 
 })();
