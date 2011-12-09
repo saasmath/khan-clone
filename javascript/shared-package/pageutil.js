@@ -985,18 +985,28 @@ var Review = {
 
 		var duration = 800;
 
+		// Make the explosion flare overlap all other elements
+		var overflowBefore = $( "#container" ).css( "overflow" );
+		$( "#container" ).css( "overflow", "visible" )
+			.delay( duration ).queue(function() {
+				$( this ).css( "overflow", overflowBefore );
+			});
+
+		// Review hue explosion
 		$( "#review-mode-title" ).stop().animate({
-			reviewExplode: 300,
+			reviewExplode: 200,
 		}, duration ).queue(function() {
 			$( this ).removeAttr( "style" ).addClass( "review-done" );
 		});
 
+		// Temporarily change the color of the review done box to match the explosion
 		$( "#review-mode-title > div" )
 			.css( "backgroundColor", "#F9DFCD" )
 			.delay( duration ).queue(function() {
 				$( this ).removeAttr( "style" ).addClass( "review-done" );
 			});
 
+		// Huge "REVIEW DONE!" text shrinks to fit in its box
 		$( "#review-mode-title h1" ).html( "Review&nbsp;Done!" ).css({
 			fontSize: "100px",
 			right: 0,

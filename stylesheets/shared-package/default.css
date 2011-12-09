@@ -1954,7 +1954,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     right: 10px;
     width: 325px;
     text-align: right;
-    z-index: 2;
+    z-index: 12;
     background-image: -ms-linear-gradient(left, #FFF, #AAA);
     background-image: -moz-linear-gradient(left, #FFF, #AAA);
     background-image: -o-linear-gradient(left, #FFF, #AAA);
