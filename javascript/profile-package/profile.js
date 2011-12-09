@@ -52,6 +52,11 @@ var Profile = {
 
         if ($.address){
 
+            // this is hackish, but it prevents the change event from being fired twice on load
+            if ( $.address.value() === "/" ){
+                window.location = window.location + "#" + $(".graph-link:eq(0)").attr("href");
+            }
+
             $.address.change(function( evt ){
 
                 if ( $.address.path() !== "/"){
