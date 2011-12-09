@@ -3,15 +3,6 @@ var TopicTreeEditor = {
     boundList: [],
 
     init: function() {
-        var topicTree = getDefaultTopicTree();
-        topicTree.bind("add", this.treeUpdate, topicTree);
-        topicTree.bind("remove", this.treeUpdate, topicTree);
-        topicTree.bind("clear", this.treeUpdate, topicTree);
-
-        var root = topicTree.getRoot();
-        root.bind("change", this.refreshTreeNode, root);
-        root.fetch();
-
         // Attach the dynatree widget to an existing <div id="tree"> element
         // and pass the tree options as an argument to the dynatree() function:
         $("#topic_tree").dynatree({
@@ -20,22 +11,18 @@ var TopicTreeEditor = {
             onActivate: function(node) {
                 KAConsole.log('Activated: ', node);
 
-                var model = null;
+                TopicNodeEditor.init();
+
+                var initModelParams = [node.data.kind, topicTree.get(node.parent.data.key)];
+
                 if (node.data.kind == 'Topic' && node.data.key != 'root') {
-                    model = topicTree.get(node.data.key);
+                    topicTree.fetchByID(node.data.key, TopicNodeEditor.initModel, initModelParams);
                 } else if (node.data.kind == 'Video') {
-                    model = new Video({ readable_id: node.data.key, title: 'Loading...' });
+                    getVideoList().fetchByID(node.data.key, TopicNodeEditor.initModel, initModelParams);
                 } else if (node.data.kind == 'Exercise') {
-                    model = new Exercise({ name: node.data.key, display_name: 'Loading...' });
-                }
-
-                if (model) {
-                    TopicNodeEditor.init(node.data.kind, model, topicTree.get(node.parent.data.key));
-
-                    if (!model.inited)
-                        model.fetch();
+                    getExerciseList().fetchByID(node.data.key, TopicNodeEditor.initModel, initModelParams);
                 } else {
-                    $('#details_view').html('');
+                    $('#details-view').html('');
                 }
             },
 
@@ -62,11 +49,7 @@ var TopicTreeEditor = {
             },
 
             onLazyRead: function(node) {
-                var model = topicTree.get(node.data.key);
-                if (model.inited)
-                    this.refreshTreeNode.call(model);
-                else
-                    model.fetch();
+                topicTree.fetchByID(node.data.key);
             },
 
             dnd: {
@@ -114,6 +97,16 @@ var TopicTreeEditor = {
         });
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
         $('#topic_tree').bind("mousedown", function(e) { e.preventDefault(); })
+
+        // Get the data for the topic tree (may fire callbacks immediately)
+
+        var topicTree = getDefaultTopicTree();
+        topicTree.bind("add", this.treeUpdate, topicTree);
+        topicTree.bind("remove", this.treeUpdate, topicTree);
+        topicTree.bind("clear", this.treeUpdate, topicTree);
+
+        var root = topicTree.getRoot();
+        root.bind("change", this.refreshTreeNode, root);
     },
 
     // Called with model as "this"
@@ -179,21 +172,31 @@ var TopicNodeEditor = {
     template: null,
 
     init: function(kind, model, parentModel) {
+        if (TopicNodeEditor.model) {
+            TopicNodeEditor.model.unbind("change", TopicNodeEditor.render);
+        }
+
+        $('#details-view').html('<div style="left: 350px; position: relative; width: 10px;"><div class="dialog-progress-bar"></div></div>');
+        $("#details-view .dialog-progress-bar").progressbar();
+        $("#details-view .dialog-progress-bar").progressbar('value', 100);
+    }, 
+
+    initModel: function(kind, parentModel) {
         TopicNodeEditor.modelKind = kind;
-        TopicNodeEditor.model = model;
+        TopicNodeEditor.model = this;
         TopicNodeEditor.parentModel = parentModel;
         TopicNodeEditor.template = Templates.get("topicsadmin.edit-" + kind.toLowerCase());
 
         TopicNodeEditor.render();
 
-        model.bind("change", TopicNodeEditor.render);
-    }, 
+        this.bind("change", TopicNodeEditor.render);
+    },
 
     render: function() {
         js = TopicNodeEditor.model.toJSON();
         html = TopicNodeEditor.template({model: js});
 
-        $('#details_view').html(html);
+        $('#details-view').html(html);
 
         if (TopicNodeEditor.modelKind == 'Topic') {
             TopicTopicNodeEditor.init();
@@ -440,7 +443,7 @@ var TopicTopicNodeEditor = {
     },
 
     init: function() {
-        $('#details_view').find('input').change(function() {
+        $('#details-view').find('input').change(function() {
             var field = $(this).attr('name');
             if (field) {
                 var value = null;
@@ -461,7 +464,7 @@ var TopicTopicNodeEditor = {
 
 var TopicItemNodeEditor = {
     init: function() {
-        $('#details_view').find('input').change(function() {
+        $('#details-view').find('input').change(function() {
             var field = $(this).attr('name');
             if (field) {
                 var value = $(this).val();

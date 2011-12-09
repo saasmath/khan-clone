@@ -53,15 +53,28 @@
     height: 400px;
 }
 
-#details_view .item-action {
+#details-view .item-action {
     float: left;
     margin-left: 10px;
 }
 
-#details_view input[type="text"] {
+#details-view input[type="text"] {
     width: 300px;
 }
 
-#details_view input.short {
+#details-view input.short {
     width: 150px;
+}
+
+#details-view .dialog-progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+#details-view .dialog-progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
 }
