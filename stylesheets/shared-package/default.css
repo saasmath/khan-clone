@@ -2880,6 +2880,12 @@ div.arrow-right-shadow, div.arrow-left-shadow {
      * the object's position, so visibility:hidden is the way to go for them.
      * */
     visibility: hidden;
+
+    /*
+     * position:relative makes safari honor visibility:hidden for the <embed>
+     * content
+     * */
+    position: relative;
 }
 body.ie #homepage .player-loading-wrapper {
     /* See above selector's comment */

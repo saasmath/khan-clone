@@ -429,11 +429,14 @@ var VideoStats = {
             this.playing = true;
             this.dtSinceSave = new Date();
 
-            if (typeof Homepage !== "undefined") {
-                if (!Homepage.mainVideoBingoSent) {
-                    gae_bingo.bingo(["homepage_video_main_video_played", "homepage_video_main_video_played_binary"])
-                    Homepage.mainVideoBingoSent = true;
-                }
+            if (!VideoControls.videoBingoSent) {
+                gae_bingo.bingo([
+                        "homepage_video_main_video_played", 
+                        "homepage_video_main_video_played_binary",
+                        "homepage_video_any_video_played",
+                        "homepage_video_any_video_played_binary",
+                        ])
+                VideoControls.videoBingoSent = true;
             }
         }
         // If state is buffering, unstarted, or cued, don't do anything
