@@ -1285,24 +1285,26 @@ class Topic(db.Model):
         self.child_keys =  [child_key for child_key in self.child_keys if child_key != child.key()]
          
         # remove self from the child's parents
-        child.parent_keys = [parent_key for parent_key in child.parent_keys if parent_key != self.key()]
-        num_parents = len(child.parent_keys)
-        descendants = Topic.all().filter("ancestor_keys =", child.key()).fetch(10000)
-        descendant_dict = dict((descendant.key(), descendant) for descendant in descendants)
+        if child.__class__.__name__ == "Topic":
+            child.parent_keys = [parent_key for parent_key in child.parent_keys if parent_key != self.key()]
+            num_parents = len(child.parent_keys)
+            descendants = Topic.all().filter("ancestor_keys =", child.key()).fetch(10000)
+            descendant_dict = dict((descendant.key(), descendant) for descendant in descendants)
         
-        # if there are still other parents
-        if num_parents:
-            changed_descendants = child.update_ancestors()
-        else:
-            #TODO: If the descendants still have other parents we shouldn't be deleting them - if we are sure we want multiple parents will need to implement this
-            descendants.append(child)
+            # if there are still other parents
+            if num_parents:
+                changed_descendants = child.update_ancestors()
+            else:
+                #TODO: If the descendants still have other parents we shouldn't be deleting them - if we are sure we want multiple parents will need to implement this
+                descendants.append(child)
 
         def delete_txn():
             self.put()
-            if num_parents:
-                db.put(changed_descendants)
-            else:
-                db.delete(descendants)
+            if child.__class__.__name__ == "Topic":
+                if num_parents:
+                    db.put(changed_descendants)
+                else:
+                    db.delete(descendants)
     
         db.run_in_transaction(delete_txn)  
 
