@@ -142,42 +142,44 @@ def get_badge_counts(user_data):
 
     return count_dict
 
-def get_user_badges(user_data = None):
+def get_grouped_user_badges(user_data=None):
+    """ Retrieves the list of user-earned badges grouped into GroupedUserBadge
+    objects. Also returns the list of possible badges.
+
+    Note that since even though these are db.Model objects, they've been
+    extended with properties that are not in the original schema. Those
+    properties will not be serialized by helpers like api.jsonify
+    """
 
     if not user_data:
         user_data = models.UserData.current()
 
     user_badges = []
-    user_badges_dict = {}
+    grouped_badges_dict = {}
 
     if user_data:
         user_badges = models_badges.UserBadge.get_for(user_data)
         badges_dict = all_badges_dict()
-        user_badge_last = None
+        grouped_user_badge = None
         for user_badge in user_badges:
-            if user_badge_last and user_badge_last.badge_name == user_badge.badge_name:
-                user_badge_last.count += 1
-                if user_badge_last.count > 1:
-                    user_badge_last.list_context_names_hidden.append(user_badge.target_context_name)
-                else:
-                    user_badge_last.list_context_names.append(user_badge.target_context_name)
+            if (grouped_user_badge and
+                    grouped_user_badge.badge.name == user_badge.badge_name):
+                grouped_user_badge.target_context_names.append(
+                    user_badge.target_context_name)
             else:
-                user_badge.badge = badges_dict.get(user_badge.badge_name)
+                badge = badges_dict.get(user_badge.badge_name)
+                badge.is_owned = True
 
-                if user_badge.badge:
-                    user_badge.badge.is_owned = True
-
-                user_badge.count = 1
-                user_badge.list_context_names = [user_badge.target_context_name]
-                user_badge.list_context_names_hidden = []
-                user_badge_last = user_badge
-                user_badges_dict[user_badge.badge_name] = True
+                grouped_user_badge = badges.GroupedUserBadge.build(user_data,
+                                                                   badge,
+                                                                   user_badge)
+                grouped_badges_dict[user_badge.badge_name] = grouped_user_badge
 
     possible_badges = all_badges()
     for badge in possible_badges:
-        badge.is_owned = user_badges_dict.has_key(badge.name)
+        badge.is_owned = grouped_badges_dict.has_key(badge.name)
 
-    user_badges = sorted(filter(lambda user_badge: hasattr(user_badge, "badge") and user_badge.badge is not None, user_badges), reverse=True, key=lambda user_badge:user_badge.date)
+    user_badges = sorted(filter(lambda user_badge: hasattr(user_badge, "badge") and user_badge.badge is not None, grouped_badges_dict.values()), reverse=True, key=lambda user_badge:user_badge.last_earned_date)
     possible_badges = sorted(possible_badges, key=lambda badge:badge.badge_category)
 
     user_badges_normal = filter(lambda user_badge: user_badge.badge.badge_category != badges.BadgeCategory.MASTER, user_badges)

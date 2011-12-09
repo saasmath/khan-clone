@@ -74,6 +74,7 @@ class TopLevelArithmeticianBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Arithmetic.png"
 
@@ -109,6 +110,7 @@ class TopLevelTrigonometricianBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Geometry-Trig.png"
 
@@ -144,6 +146,7 @@ class TopLevelPrealgebraistBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Pre-Algebra.png"
 
@@ -195,5 +198,6 @@ class TopLevelAlgebraistBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Algebra.png"

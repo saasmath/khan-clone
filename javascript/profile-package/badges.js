@@ -2,7 +2,8 @@
  * Code to handle badge-related UI components.
  */
 
-var Badges = {};
+// TODO: stop clobering the stuff in pageutil.js
+var Badges = window.Badges || {};
 
 /**
  * @enum {number}

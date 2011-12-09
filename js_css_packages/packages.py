@@ -89,6 +89,7 @@ javascript = {
             "accordion-graph-date-picker.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
+            "user-badge.handlebars",
             "badge.handlebars",
             "badge-compact.handlebars",
             "badge-display-case.handlebars",

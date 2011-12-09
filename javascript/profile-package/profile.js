@@ -954,8 +954,6 @@ var Profile = {
 
                 // TODO: make the rendering of the full badge page use the models above
                 // and consolidate the information
-                // TODO: figure out why user badges don't have an icon src. Perhaps just
-                // send down one master mapping for default icons per category?
                 var badgeInfo = [
                         {
                             icon: "/images/badges/meteorite-medium.png",
@@ -1026,13 +1024,17 @@ var Profile = {
                 Handlebars.registerPartial(
                         "badge",
                         Templates.get("profile.badge"));
+                Handlebars.registerPartial(
+                        "user-badge",
+                        Templates.get("profile.user-badge"));
 
                 $.each(data["badgeCollections"], function(collectionIndex, collection) {
                     $.each(collection["userBadges"], function(badgeIndex, badge) {
-                        var listContextNamesHidden = badge["listContextNamesHidden"];
-                        var numHidden = listContextNamesHidden.length;
-                        badge["listContextNamesHidden"] = $.map(
-                            listContextNamesHidden,
+                        var targetContextNames = badge["targetContextNames"];
+                        var numHidden = targetContextNames.length - 1
+                        badge["visibleContextName"] = targetContextNames[0] || [];
+                        badge["listHiddenContextNames"] = $.map(
+                            targetContextNames.slice(1),
                             function(name, nameIndex) {
                                 return {
                                     name: name,
