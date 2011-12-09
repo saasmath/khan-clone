@@ -4,7 +4,7 @@
   {{#each rowData}}
     <div class="goal-row" data-id="{{rowID}}">
       <div class="student-name"><a href="{{ student.profile_url }}">{{ student.nickname }}</a>
-        {{#if goal }}
+        {{#if goal.objectives }}
         <span class="goal-count">({{ goal_idx }}/{{ student.goal_count }})</span>
         <div>
           <div class="goal-start-time">Started {{ goal.created_ago }}</div>
