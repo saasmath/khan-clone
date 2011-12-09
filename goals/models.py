@@ -335,7 +335,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
         if self.video_readable_id:
             return Video.get_relative_url(self.video_readable_id)
         else:
-            return "/"
+            return "/#browse"
 
     def internal_id(self):
         return ''
