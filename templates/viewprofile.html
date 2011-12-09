@@ -14,9 +14,10 @@
 
 {% block pagescript %}
 <script>
+// TODO: What might be a better alternative to this?
 var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
-    profileContext = {
-        logged_in: "{{logged_in}}" === "True",
+    userCardData = {
+        loggedIn: "{{logged_in}}" === "True",
         email: "{{user_data_student.email}}",
         nickname: "{{student_nickname}}",
         countVideosCompleted: {{count_videos_completed}},
@@ -24,7 +25,7 @@ var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
         countExercisesProficient: {{count_exercises_proficient}},
         countExercises: {{count_exercises}},
         points: {{student_points}},
-        secondsSinceJoined: "{{user_data_student.joined}}"
+        dateJoined: "{{user_data_student.joined}}"
     };
 </script>
 {% endblock pagescript %}

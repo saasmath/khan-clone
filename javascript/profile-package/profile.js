@@ -934,17 +934,25 @@ var Profile = {
                 Templates.get("profile.accordion-graph-date-picker"));
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
-        $("#profile-content").html(profileTemplate(profileContext));
-        $("abbr.timeago").timeago();
+        $("#profile-content").html(profileTemplate({email: USER_EMAIL}));
+
         $("#tabs").tabs().addClass('ui-tabs-vertical ui-helper-clearfix');
         $("#tabs li").removeClass('ui-corner-top').addClass('ui-corner-left');
 
+        Profile.populateUserCard();
         Profile.populateAchievements();
         Profile.populateGoals();
 
         // TODO: Might there be a better way
         // for server-side + client-side to co-exist in harmony?
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
+    },
+
+    populateUserCard: function() {
+        var model = new UserCardModel(userCardData),
+            view = new UserCardView({model: model});
+
+        $(".user-info-container").html(view.render().el);
     },
 
     populateAchievements: function() {

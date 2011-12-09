@@ -1,0 +1,20 @@
+{{#if loggedIn}}
+  <p>{{nickname}}</p>
+  <p>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
+{{else}}
+  <p>Log in, Darth!</p>
+{{/if}}
+<div>
+    <div style="float: left">
+        <p title="{{points}} energy points" class="energy-points-badge">{{points}}</p>
+    </div>
+    <div style="float: left">
+        <img src="/images/video-camera-icon-shadow.png" />
+        <p>{{countVideosCompleted}}/{{countVideos}}</p>
+    </div>
+    <div style="float: left">
+        <img src="/images/generic-exercise-icon-shadow.png" />
+        <p>{{countExercisesProficient}}/{{countExercises}}</p>
+    </div>
+    <div style="clear: both;"></div>
+</div>

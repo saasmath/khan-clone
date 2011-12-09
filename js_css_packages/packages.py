@@ -84,6 +84,8 @@ javascript = {
         "files": [
             "jquery.address-1.4.min.js",
             "highcharts.js",
+            "user-card.handlebars",
+            "user-card.js",
             "profile.handlebars",
             "vital-statistics.handlebars",
             "accordion-graph-date-picker.handlebars",
