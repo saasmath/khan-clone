@@ -10,7 +10,6 @@ from google.appengine.ext import db
 
 import models
 from models import Topic, Playlist, Video
-
 class EditTaxonomy(request_handler.RequestHandler):
 
     def get_tree_html(self, t):
@@ -48,7 +47,9 @@ class EditTaxonomy(request_handler.RequestHandler):
         # self.hide_topics()
         # self.recreate_topic_list_structure()
         # return
-        
+        # version = models.TopicVersion.get_latest_version()
+        # version.set_default_version()
+        # return
         
         # root = Topic.get_by_id("root").make_tree()
         # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()

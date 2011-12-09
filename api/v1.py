@@ -174,21 +174,26 @@ def put_topic(topic_id):
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
+    topic_json = request.json
+    logging.info(topic_json)
+
     topic = models.Topic.get_by_id(topic_id)
 
     if not topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
-
-    topic_json = request.json
-
-    changed = False
-    for attr in ['title', 'standalone_title', 'id', 'description', 'tags', 'hide']:
-        if getattr(topic, attr) != topic_json[attr]:
-            setattr(topic, attr, topic_json[attr])
-            changed = True
-    
-    if changed:
-        topic.put()
+        version = models.TopicVersion.get_latest_version()
+        root = models.Topic.get_root(version)
+        kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['standalone_title', 'description', 'tags'])
+        topic = models.Topic.insert(title = topic_json['title']+"inserted", parent = root, **kwargs)
+        # return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+    else:
+        changed = False
+        for attr in ['title', 'standalone_title', 'id', 'description', 'tags', 'hide']:
+            if getattr(topic, attr) != topic_json[attr]:
+                setattr(topic, attr, topic_json[attr])
+                changed = True
+        
+        if changed:
+            topic.put()
 
     return topic.get_visible_data()
 
