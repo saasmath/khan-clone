@@ -20,6 +20,7 @@
 .contextMenu {
     display: none;
     width: 220px;
+    position: fixed;
 }
 
 .modal.add-existing-item {

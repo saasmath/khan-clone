@@ -29,14 +29,11 @@ var TopicTreeEditor = {
             onCreate: function(node, span) {
                 if (node.data.kind == 'Topic') {
                     $(span).contextMenu({menu: "topic_context_menu"}, function(action, el, pos) {
-                        node.expand();
-                        node.activate();
                         TopicTopicNodeEditor.handleAction(action, topicTree.get(node.data.key), topicTree.get(node.parent.data.key));
                     });
                 }
                 if (node.data.kind == 'Video' || node.data.kind == 'Exercise') {
                     $(span).contextMenu({menu: "item_context_menu"}, function(action, el, pos) {
-                        node.activate();
                         TopicItemNodeEditor.handleAction(action, node.data.kind, node.data.key, topicTree.get(node.parent.data.key));
                     });
                 }
@@ -73,16 +70,24 @@ var TopicTreeEditor = {
 
                     sourceNode.move(node, hitMode);
 
+                    var newParent = sourceNode.parent;
                     var data = {
                         kind: sourceNode.data.kind,
                         id: sourceNode.data.key,
-                        new_parent_id: sourceNode.parent.data.key,
-                        new_parent_pos: sourceNode.parent.childList.indexOf(sourceNode)
+                        new_parent_id: newParent.data.key,
+                        new_parent_pos: newParent.childList.indexOf(sourceNode)
                     }
                     $.ajax({
                         url: '/api/v1/topic/' + oldParent.data.key + '/movechild',
                         type: 'POST',
-                        data: data
+                        data: data,
+                        success: function() {
+                            child = topicTree.get(oldParent.data.key).removeChild(data.kind, data.id);
+                            topicTree.get(data.new_parent_id).addChild(child, data.new_parent_pos);
+                        },
+                        error: function() {
+                            // ?
+                        }
                     });
                 }
             },
@@ -422,8 +427,7 @@ var TopicTopicNodeEditor = {
                 type: 'POST',
                 data: data,
                 success: function(json) {
-                    child_list = _.filter(parentModel.get('children'), function(child) { return child.id != model.id; });
-                    parentModel.set({'children': child_list});
+                    parentModel.removeChild('Topic', model.id);
                 }
             });
         }
@@ -506,8 +510,7 @@ var TopicItemNodeEditor = {
                 type: 'POST',
                 data: data,
                 success: function(json) {
-                    child_list = _.filter(parentModel.get('children'), function(child) { return child.id != id; });
-                    parentModel.set({'children': child_list});
+                    parentModel.removeChild(kind, id);
                 }
             });
         }

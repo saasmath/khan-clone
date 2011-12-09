@@ -115,7 +115,24 @@ IncrementalCollection = Backbone.Collection.extend({
                 childModels.push(self.tree.get(child.id));
             });
             return childModels;
-        }
+        },
+
+        addChild: function(child, idx) {
+            child_list = this.get('children').slice(0);
+            child_list.splice(idx, 0, child);
+            this.set({'children': child_list});
+        },
+        removeChild: function(kind, id) {
+            var ret = null;
+            var child_list = _.filter(this.get('children'), function(child) {
+                if (child.kind != kind || child.id != id)
+                    return true;
+                ret = child;
+                return false;
+            });
+            this.set({'children': child_list});
+            return ret;
+        },
 	});
 
 	TopicTree = IncrementalCollection.extend({
