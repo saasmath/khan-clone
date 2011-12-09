@@ -1033,7 +1033,7 @@ var Profile = {
                         var targetContextNames = badge["targetContextNames"];
                         var numHidden = targetContextNames.length - 1
                         badge["visibleContextName"] = targetContextNames[0] || [];
-                        badge["listHiddenContextNames"] = $.map(
+                        badge["listContextNamesHidden"] = $.map(
                             targetContextNames.slice(1),
                             function(name, nameIndex) {
                                 return {
