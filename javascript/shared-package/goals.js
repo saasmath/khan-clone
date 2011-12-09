@@ -269,7 +269,10 @@ var GoalBookView = Backbone.View.extend({
                 e.preventDefault();
                 this.hide();
                 newGoalDialog.show();
-            }, this));
+            }, this))
+
+            .delegate( '.goal-history', 'click',
+                $.proxy(this.goalHistoryButtonClicked, this));
 
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
@@ -321,9 +324,15 @@ var GoalBookView = Backbone.View.extend({
         }
     },
 
-    goToGoalHistory: function() {
-        document.location = '/profile?selected_graph_type=goals';
-        this.hide();
+    goalHistoryButtonClicked: function( e ) {
+        if ( document.location.pathname === "/profile" ) {
+            var jelGoalLink = $(".goals-accordion-content .graph-link");
+            if ( jelGoalLink.length ) {
+                e.preventDefault();
+                jelGoalLink.click();
+                this.hide();
+            }
+        }
     },
 
     added: function(goal, options) {
