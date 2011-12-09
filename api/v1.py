@@ -180,10 +180,8 @@ def put_topic(topic_id):
     topic = models.Topic.get_by_id(topic_id)
 
     if not topic:
-        version = models.TopicVersion.get_latest_version()
-        root = models.Topic.get_root(version)
         kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['standalone_title', 'description', 'tags'])
-        topic = models.Topic.insert(title = topic_json['title'], parent = root, **kwargs)
+        topic = models.Topic.insert(title = topic_json['title'], parent = None, **kwargs)
         # return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
     else:
         changed = False
