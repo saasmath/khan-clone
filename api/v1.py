@@ -180,14 +180,19 @@ def put_topic(topic_id):
     topic = models.Topic.get_by_id(topic_id)
 
     if not topic:
-        version = models.TopicVersion.get_latest_version()
-        root = models.Topic.get_root(version)
         kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['standalone_title', 'description', 'tags'])
-        topic = models.Topic.insert(title = topic_json['title'], parent = root, **kwargs)
+        topic = models.Topic.insert(title = topic_json['title'], parent = None, **kwargs)
         # return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
     else:
         changed = False
-        for attr in ['title', 'standalone_title', 'id', 'description', 'tags', 'hide']:
+        if topic_json["id"]!= topic_id:
+            existing_topic = models.Topic.get_by_id(topic_json["id"])
+            if not existing_topic:
+                topic.id = topic_json["id"]
+            else:
+                pass # don't allow people to change the slug to a different nodes slug
+
+        for attr in ['title', 'standalone_title', 'description', 'tags', 'hide']:
             if getattr(topic, attr) != topic_json[attr]:
                 setattr(topic, attr, topic_json[attr])
                 changed = True
