@@ -693,7 +693,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     # A list of badge names that the user has chosen to display publicly
-    public_badges = db.StringListProperty()
+    public_badges = object_property.TsvProperty()
 
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
