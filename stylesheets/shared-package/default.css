@@ -2058,7 +2058,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     width: 63%;
     margin-left: 1%;
 }
-#answer_area {
+#answer_area_wrap {
     float: right;
     width: 27%;
     margin-right: 10px;
@@ -2868,9 +2868,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     filter:alpha(opacity=100);
 }
 #homepage .player-loading-wrapper {
-    /* 
-     * We can get rid of the .player-loading-wrapper selectors and the following complication 
-     * if we decide to load the main video on placeholder click instead of trying to preload 
+    /*
+     * We can get rid of the .player-loading-wrapper selectors and the following complication
+     * if we decide to load the main video on placeholder click instead of trying to preload
      * and keep it hidden.
      *
      * Different browsers treat hidden <objects> and <embeds> differently.
