@@ -98,6 +98,10 @@ var TopicTreeEditor = {
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
         $('#topic_tree').bind("mousedown", function(e) { e.preventDefault(); })
 
+        var self = this;
+        $(window).resize(function(){self.resize();});
+        this.resize();
+
         // Get the data for the topic tree (may fire callbacks immediately)
 
         var topicTree = getDefaultTopicTree();
@@ -107,6 +111,15 @@ var TopicTreeEditor = {
 
         var root = topicTree.getRoot();
         root.bind("change", this.refreshTreeNode, root);
+    },
+
+    resize: function() {
+        var containerHeight = $(window).height();
+        var yTopPadding = $('#topic_tree').offset().top;
+        var newHeight = containerHeight - (yTopPadding + 42);
+
+        $('#topic_tree').height(newHeight);
+        $('#details-view').height(newHeight);
     },
 
     // Called with model as "this"
