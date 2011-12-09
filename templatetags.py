@@ -37,8 +37,6 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 
     return shared_jinja.get().render_template("column_major_order_videos.html", **template_values)
 
-# TODO(david): Get rid of current_states and prev_states params, and just
-#     compute them (since we're now passing in the user_exercise_graph).
 def exercise_message(exercise, user_exercise_graph, sees_graph=False,
         review_mode=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
