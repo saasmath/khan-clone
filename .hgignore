@@ -23,4 +23,5 @@ offline/*
 compiled_templates*
 .git
 *.handlebars.js
+.project
 .pydevproject

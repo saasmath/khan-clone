@@ -273,6 +273,14 @@
     #individual_report #vital-statistics #stats-charts #module-progress .exercise-progress-block.transparent .exercise-display-name {
         color: #aaa;
     }
+    .coach-view #module-progress #table_div, .coach-view #module-progress #firstcol {
+      /*
+      ~~hv svnt dracones~~ breaks ie8 completely (why?)
+      max-height: 725px;
+      */
+    }
+    .lte8 .coach-view #module-progress #table_div, .lte8 .coach-view #module-progress #firstcol {
+    }
 
 #individual_report #achievements {
     margin-top: 30px;
@@ -510,12 +518,10 @@ div.graph-notification {
 .sharebar {z-index:0; position:absolute;padding-left:100px;}
 
 #individual_report #vital-statistics #stats-charts.coach-view {
-    min-height: 700px;
-    height: 800px;
+  height:auto !important;
 }
 #individual_report #vital-statistics.coach-view {
-    min-height: 700px;
-    height: 850px;
+  /*used to have a min-height here, now clear the floating accordion*/
 }
 
 #current-goals-list input.goal-title {

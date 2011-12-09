@@ -4,7 +4,6 @@
 
 var GoalCreator = {
     objectives: [],
-    creating: false,
     knowledgeMap: null,
 
     init: function(knowledgeMap) {
@@ -53,6 +52,18 @@ var GoalCreator = {
         });
         return list;
     },
+
+    // reset window state
+    reset: function() {
+        GoalCreator.objectives = [];
+        $('#create-goal input[name="title"]').val('');
+
+        GoalCreator.updateExerciseCount();
+        GoalCreator.updateVideoCount();
+        GoalCreator.updateViewAndDescription();
+        GoalCreator.showExercises();
+    },
+
     toggleObjectiveInternal: function(type, css, id, name) {
         var idx = 1;
         var found_index = -1;
@@ -346,7 +357,7 @@ var GoalCreator = {
         var form = $('#create-goal');
         var html = '';
 
-        if (GoalCreator.creating || !GoalCreator.validate(form))
+        if ( !GoalCreator.validate(form) )
             return;
 
         var titleField = form.find('input[name="title"]');
@@ -354,10 +365,6 @@ var GoalCreator = {
         {
             titleField.val('Custom goal: ' + new Date().toDateString());
         }
-
-        $('#goal-submit-button').html("<img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Creating...</span>").removeClass('green');
-        GoalCreator.creating = true;
-        globalPopupDialog.hide();
 
         var goal = new Goal({
             title: titleField.val(),
@@ -376,10 +383,10 @@ var GoalCreator = {
             .fail(function(jqXHR) {
                 KAConsole.log('Goal creation failed: ' + jqXHR.responseText, goal);
                 GoalBook.remove(goal);
-            })
-            .done(function() {
-                GoalCreator.creating = false;
             });
+
+        newCustomGoalDialog.hide();
+        GoalCreator.reset();
 
         return false;
     },
