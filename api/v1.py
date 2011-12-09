@@ -901,6 +901,7 @@ def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
 
 @route("/api/v1/user/badges", methods=["GET"])
+@oauth_optional()
 @jsonp
 @jsonify
 def get_user_badges():
@@ -927,13 +928,14 @@ def get_user_badges():
 
     # Iterate over the set of all possible badges.
     for collection in grouped_badges["badge_collections"]:
-        first_badge = collection[0]
-        badge_collections.append({
-            "category": first_badge.badge_category,
-            "category_description": first_badge.category_description(),
-            "badges": collection,
-            "user_badges": user_badge_dicts_by_category[first_badge.badge_category],
-        })
+        if len(collection):
+            first_badge = collection[0]
+            badge_collections.append({
+                "category": first_badge.badge_category,
+                "category_description": first_badge.category_description(),
+                "badges": collection,
+                "user_badges": user_badge_dicts_by_category[first_badge.badge_category],
+            })
 
     return {
             "badge_collections": badge_collections,
