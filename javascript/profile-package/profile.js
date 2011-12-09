@@ -1031,8 +1031,8 @@ var Profile = {
                 $.each(data["badgeCollections"], function(collectionIndex, collection) {
                     $.each(collection["userBadges"], function(badgeIndex, badge) {
                         var targetContextNames = badge["targetContextNames"];
-                        var numHidden = targetContextNames.length - 1
-                        badge["visibleContextName"] = targetContextNames[0] || [];
+                        var numHidden = targetContextNames.length - 1;
+                        badge["visibleContextName"] = targetContextNames[0] || "";
                         badge["listContextNamesHidden"] = $.map(
                             targetContextNames.slice(1),
                             function(name, nameIndex) {
