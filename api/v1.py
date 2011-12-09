@@ -130,15 +130,6 @@ def topic_exercises(topic_id):
     exercises = topic.get_exercises()
     return exercises
 
-@route("/api/v1/topics", methods=["GET"])
-@jsonp
-#@layer_cache.cache_with_key_fxn(
-#    lambda: "api_topics_%s" % models.Setting.cached_library_content_date(),
-#    layer=layer_cache.Layers.Memcache)
-@jsonify
-def topics():
-    return models.Topic.get_all_topics()
-
 @route("/api/v1/topictree", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
 @jsonp
