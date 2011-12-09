@@ -1384,10 +1384,9 @@ class Topic(db.Model):
                               ancestor_keys = ancestor_keys)
 
         else:
-            if id != "root":
-                raise Exception("The root must be called 'root'")
+            root = Topic.get_root(version)
 
-            new_topic = Topic(None,
+            new_topic = Topic(root,
                               key_name,
                               version = version,
                               id = id,
