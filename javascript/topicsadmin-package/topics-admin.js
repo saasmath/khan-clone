@@ -356,7 +356,7 @@ var TopicTopicNodeEditor = {
     handleAction: function(action, model, parentModel) {
         if (!model)
             model = TopicNodeEditor.model;
-        if (parentModel)
+        if (!parentModel)
             parentModel = TopicNodeEditor.parentModel;
 
         if (action == 'add_new_topic') {
