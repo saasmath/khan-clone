@@ -407,8 +407,8 @@ var TopicTopicNodeEditor = {
                 data: data,
                 success: function(json) {
                     child_list = parentModel.get('children').slice(0);
-                    child_list.splice(child_list.indexOf(model.id), 1);    
-                    parentModel.set('children', child_list);
+                    child_list = _.filter(child_list, function(child) { return child.id != model.id; });
+                    parentModel.set({'children': child_list});
                 }
             });
         }
