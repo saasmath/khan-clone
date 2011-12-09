@@ -716,9 +716,9 @@ def hint_problem_number(exercise_name, problem_number):
                     )
 
             user_states = user_exercise_graph.states(exercise.name)
+            review_mode = request.request_bool("review_mode", default=False))
             exercise_message_html = templatetags.exercise_message(exercise,
-                user_exercise_graph,
-                review_mode=request.request_bool("review_mode", default=False))
+                    user_exercise_graph, review_mode=review_mode)
 
             add_action_results(user_exercise, {
                 "exercise_message_html": exercise_message_html,
@@ -767,23 +767,23 @@ def _attempt_problem_wrong(exercise_name):
 @jsonp
 @jsonify
 def get_ordered_review_problems():
-    """Retrieves an ordered list of the upcoming review problems."""
+    """Retrieves an ordered list of a subset of the upcoming review problems."""
 
     # TODO(david): This should probably be abstracted away in exercises.py or
     # models.py (if/when there's more logic here) with a nice interface.
 
     user_data = get_visible_user_data_from_request()
 
-    if user_data:
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
-        review_exercises = user_exercise_graph.review_exercise_names()
+    if not user_data:
+        return []
 
-        queued_exercises = request.request_string('queued', '').split(',')
+    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    review_exercises = user_exercise_graph.review_exercise_names()
 
-        # Only return those exercises that aren't already queued up
-        return filter(lambda ex: ex not in queued_exercises, review_exercises)
+    queued_exercises = request.request_string('queued', '').split(',')
 
-    return []
+    # Only return those exercises that aren't already queued up
+    return filter(lambda ex: ex not in queued_exercises, review_exercises)
 
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @oauth_required()

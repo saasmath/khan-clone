@@ -49,31 +49,29 @@ def exercise_message(exercise, user_exercise_graph, sees_graph=False,
     sees_graph is part of an ab_test to see if a small graph will help
     """
 
-    current_states = user_exercise_graph.states(exercise.name)
+    exercise_states = user_exercise_graph.states(exercise.name)
 
-    if review_mode:
-        if user_exercise_graph.has_completed_review():
-            filename = 'exercise_message_review_finished.html'
-        else:
-            return None
+    if review_mode and user_exercise_graph.has_completed_review():
+        filename = 'exercise_message_review_finished.html'
 
-    elif current_states['endangered']:
+    # FIXME(david): Napalming this in the morning!
+    elif exercise_states['endangered']:
         filename = 'exercise_message_endangered.html'
 
-    elif current_states['proficient']:
+    elif exercise_states['proficient'] and not review_mode:
         if sees_graph:
             filename = 'exercise_message_proficient_withgraph.html'
         else:
             filename = 'exercise_message_proficient.html'
 
-    elif current_states['struggling']:
+    elif exercise_states['struggling']:
         filename = 'exercise_message_struggling.html'
-        current_states['exercise_videos'] = exercise.related_videos_fetch()
+        exercise_states['exercise_videos'] = exercise.related_videos_fetch()
 
     else:
         return None
 
-    return shared_jinja.get().render_template(filename, **current_states)
+    return shared_jinja.get().render_template(filename, **exercise_states)
 
 def user_points(user_data):
     if user_data:

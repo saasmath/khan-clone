@@ -973,7 +973,7 @@ var SearchResultHighlight = {
 // An animation that grows a box shadow of the review hue
 $.fx.step.reviewExplode = function(fx) {
     var val = fx.now + fx.unit;
-    jQuery( fx.elem ).css( 'boxShadow',
+    $( fx.elem ).css( 'boxShadow',
             '0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
 };
 
@@ -981,7 +981,7 @@ var Review = {
     highlightDone: function( done ) {
         if ( !done || $( "#review-mode-title" ).hasClass( "review-done" ) ) {
             return;
-				}
+        }
 
         var duration = 800;
 
