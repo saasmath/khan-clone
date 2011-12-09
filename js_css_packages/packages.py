@@ -23,6 +23,7 @@ javascript = {
             "jquery.js",
             "jquery-ui.js",
             "jquery.ui.menu.js",
+            "jquery.timeago.js",
             "jquery.watermark.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
@@ -83,12 +84,24 @@ javascript = {
         "files": [
             "jquery.address-1.4.min.js",
             "highcharts.js",
+            "profile.handlebars",
+            "vital-statistics.handlebars",
+            "accordion-graph-date-picker.handlebars",
+            "achievements.handlebars",
+            "badge-container.handlebars",
+            "user-badge.handlebars",
+            "badge.handlebars",
+            "badge-compact.handlebars",
+            "badge-display-case.handlebars",
+            "badges.js",
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
             "profile-class-progress-report.handlebars",
             "class-progress-column.handlebars",
             "class-progress-summary.handlebars",
+            "class-progress-summary.js",
             "exercise_progress.handlebars",
+            "profile-goals.js",
             "profile.js",
         ]
     },
@@ -159,7 +172,6 @@ stylesheets = {
             "rating.css",
             "stylesheet.css",
             "menu.css",
-            "profile.css",
             "museo-sans.css",
             "jquery-ui-1.8.4.custom.css",
             "bootstrap-modal.css",
@@ -184,6 +196,12 @@ stylesheets = {
         "files": [
             "viewstudentlists.css",
             "viewclassprofile.css",
+        ]
+    },
+    "profile": {
+        "files": [
+            "profile.css",
+            "badges.css",
         ]
     },
     "exercises": {

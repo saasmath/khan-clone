@@ -31,12 +31,12 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 
 def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
-    
+
     This is called **each time** a problem is either attempted or a hint is called (via /api/v1.py)
     returns nothing unless a user is struggling, proficient, etc. then it returns the appropriat template
-    
+
     See Also: APIActionResults
-    
+
     sees_graph is part of an ab_test to see if a small graph will help
     """
     if exercise_states['endangered']:

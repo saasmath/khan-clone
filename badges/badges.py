@@ -174,7 +174,8 @@ class Badge(object):
 
     _serialize_whitelist = [
             "points", "badge_category", "description",
-            "safe_extended_description", "name", "user_badges"
+            "safe_extended_description", "name", "user_badges", "icon_src",
+            "is_owned"
             ]
 
     def __init__(self):
@@ -212,6 +213,7 @@ class Badge(object):
     def category_description(self):
         return BadgeCategory.get_description(self.badge_category)
 
+    @property
     def icon_src(self):
         return BadgeCategory.get_icon_src(self.badge_category)
 
@@ -291,3 +293,39 @@ class Badge(object):
 
     def frequency(self):
         return models_badges.BadgeStat.count_by_badge_name(self.name)
+    
+class GroupedUserBadge(object):
+    """ Represents a set of user badges for any particular type. For example,
+    it can represent a streak badge that a user earned in multiple exercises.
+    
+    This is a transient object that is programmatically computed; it is not
+    persisted to the datastore.
+    """
+    def __init__(self,
+                 user=None,
+                 badge=None,
+                 last_earned_date=None):
+        self.user = user
+        # The template for the badge type.
+        self.badge = badge
+        self.last_earned_date = last_earned_date
+        # A list of name keys for contexts in which this badge was earned
+        # (e.g. the name of the exercise the badge was earned in)
+        self.target_context_names = []
+        
+    _serialize_blacklist = ["user"]
+        
+    @staticmethod
+    def build(user, badge, user_badge):
+        """ Builds an initial GroupedUserBadge from a single instance.
+        Useful to seed building of the group. """
+        result = GroupedUserBadge(user=user,
+                                  badge=badge,
+                                  last_earned_date=user_badge.date)
+        result.target_context_names.append(user_badge.target_context_name)
+        return result
+
+    @property
+    def count(self):
+        return len(self.target_context_names)
+    

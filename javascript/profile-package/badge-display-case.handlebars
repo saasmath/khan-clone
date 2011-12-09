@@ -1,0 +1,11 @@
+{{#each badges}}
+  {{#if emptyBadge}}
+    <div class="achievement-badge empty">
+      <div id="outline-box">
+      </div>
+    </div>
+  {{else}}
+    {{> badge-compact}}
+  {{/if}}
+{{/each}}
+

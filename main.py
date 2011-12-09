@@ -5,7 +5,6 @@ import urllib
 import urlparse
 import logging
 import re
-import simplejson
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
@@ -54,9 +53,8 @@ from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
 from custom_exceptions import MissingVideoException
-from templatetags import user_points
 from oauth_provider import apps as oauth_apps
-from phantom_users.phantom_util import create_phantom, get_phantom_user_id_from_cookies
+from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
