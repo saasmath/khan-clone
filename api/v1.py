@@ -17,7 +17,7 @@ import notifications
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from autocomplete import video_title_dicts, playlist_title_dicts
-import profiles.util_profile as util_profile 
+import profiles.util_profile as util_profile
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -438,10 +438,10 @@ def user_exercises_all():
     """ Retrieves the list of exercise models wrapped inside of an object that
     gives information about what sorts of progress and interaction the current
     user has had with it.
-    
+
     Defaults to a pre-phantom users, in which case the encasing object is
     skeletal and contains little information.
-    
+
     """
     user_data = models.UserData.current()
 
@@ -473,7 +473,7 @@ def user_exercises_all():
         user_exercise._user_data = student
         user_exercise._user_exercise_graph = user_exercise_graph
         results.append(user_exercise)
-                
+
     return results
 
 @route("/api/v1/user/exercises/<exercise_name>", methods=["GET"])
@@ -685,7 +685,7 @@ def attempt_problem_number(exercise_name, problem_number):
 @jsonp
 @jsonify
 def hint_problem_number(exercise_name, problem_number):
-    
+
     user_data = models.UserData.current()
 
     if user_data:
@@ -716,7 +716,7 @@ def hint_problem_number(exercise_name, problem_number):
                     )
 
             user_states = user_exercise_graph.states(exercise.name)
-            review_mode = request.request_bool("review_mode", default=False))
+            review_mode = request.request_bool("review_mode", default=False)
             exercise_message_html = templatetags.exercise_message(exercise,
                     user_exercise_graph, review_mode=review_mode)
 
@@ -949,8 +949,8 @@ def autocomplete():
                 key=lambda p: p["title"].lower().index(query))[:max_results_per_type]
 
     return {
-            "query": query, 
-            "videos": video_results, 
+            "query": query,
+            "videos": video_results,
             "playlists": playlist_results
     }
 
