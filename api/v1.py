@@ -182,7 +182,7 @@ def put_topic(topic_id):
     topic_json = request.json
 
     changed = False
-    for attr in ['title', 'standalone_title', 'id', 'description', 'tags']:
+    for attr in ['title', 'standalone_title', 'id', 'description', 'tags', 'hide']:
         if getattr(topic, attr) != topic_json[attr]:
             setattr(topic, attr, topic_json[attr])
             changed = True

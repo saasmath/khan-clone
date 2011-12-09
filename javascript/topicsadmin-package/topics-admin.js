@@ -140,6 +140,10 @@ var TopicTreeEditor = {
                     data.isFolder = true;
                     data.isLazy = true;
                     data.icon = 'leaf.png';
+                    if (child.hide) {
+                        data.addClass = 'hidden-topic';
+                        data.title = child.title + ' [Hidden]';
+                    }
                 } else if (child.kind == 'Video') {
                     data.icon = 'video-camera-icon-full-small.png';
                 } else if (child.kind == 'Exercise') {
@@ -440,10 +444,16 @@ var TopicTopicNodeEditor = {
         $('#details_view').find('input').change(function() {
             var field = $(this).attr('name');
             if (field) {
-                var value = $(this).val();
+                var value = null;
+                if (this.type == 'checkbox')
+                    value = $(this).is(':checked');
+                else
+                    value = $(this).val();
+
                 var setter = {};
                 setter[field] = value;
                 TopicNodeEditor.model.set(setter);
+
                 TopicNodeEditor.model.save();
             }
         });
