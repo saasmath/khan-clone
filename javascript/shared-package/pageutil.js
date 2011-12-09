@@ -41,7 +41,7 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
             var term = $.trim( req.term );
             if ( !term ) {
                 fxnCallback([]);
-				return;
+                return;
             }
 
             // Get autocomplete matches
@@ -972,51 +972,51 @@ var SearchResultHighlight = {
 
 // An animation that grows a box shadow of the review hue
 $.fx.step.reviewExplode = function(fx) {
-	var val = fx.now + fx.unit;
-	jQuery( fx.elem ).css( 'boxShadow',
-			'0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
+    var val = fx.now + fx.unit;
+    jQuery( fx.elem ).css( 'boxShadow',
+            '0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
 };
 
-// TODO(david): Style clean-up: 4 spaces and what not. Clean up rest of the file
-//     as well.
 var Review = {
-	highlightDone: function( done ) {
-		if ( !done || $( "#review-mode-title" ).hasClass( "review-done" ) ) return;
+    highlightDone: function( done ) {
+        if ( !done || $( "#review-mode-title" ).hasClass( "review-done" ) ) {
+            return;
+				}
 
-		var duration = 800;
+        var duration = 800;
 
-		// Make the explosion flare overlap all other elements
-		var overflowBefore = $( "#container" ).css( "overflow" );
-		$( "#container" ).css( "overflow", "visible" )
-			.delay( duration ).queue(function() {
-				$( this ).css( "overflow", overflowBefore );
-			});
+        // Make the explosion flare overlap all other elements
+        var overflowBefore = $( "#container" ).css( "overflow" );
+        $( "#container" ).css( "overflow", "visible" )
+            .delay( duration ).queue(function() {
+                $( this ).css( "overflow", overflowBefore );
+            });
 
-		// Review hue explosion
-		$( "#review-mode-title" ).stop().animate({
-			reviewExplode: 200,
-		}, duration ).queue(function() {
-			$( this ).removeAttr( "style" ).addClass( "review-done" );
-		});
+        // Review hue explosion
+        $( "#review-mode-title" ).stop().animate({
+            reviewExplode: 200,
+        }, duration ).queue(function() {
+            $( this ).removeAttr( "style" ).addClass( "review-done" );
+        });
 
-		// Temporarily change the color of the review done box to match the explosion
-		$( "#review-mode-title > div" )
-			.css( "backgroundColor", "#F9DFCD" )
-			.delay( duration ).queue(function() {
-				$( this ).removeAttr( "style" ).addClass( "review-done" );
-			});
+        // Temporarily change the color of the review done box to match the explosion
+        $( "#review-mode-title > div" )
+            .css( "backgroundColor", "#F9DFCD" )
+            .delay( duration ).queue(function() {
+                $( this ).removeAttr( "style" ).addClass( "review-done" );
+            });
 
-		// Huge "REVIEW DONE!" text shrinks to fit in its box
-		$( "#review-mode-title h1" ).html( "Review&nbsp;Done!" ).css({
-			fontSize: "100px",
-			right: 0,
-			position: "absolute"
-		}).stop().animate({
-			reviewGlow: 1,
-			opacity: 1,
-			fontSize: 30
-		}, duration ).queue(function() {
-			$( this ).removeAttr( "style" );
-		});
-	}
+        // Huge "REVIEW DONE!" text shrinks to fit in its box
+        $( "#review-mode-title h1" ).html( "Review&nbsp;Done!" ).css({
+            fontSize: "100px",
+            right: 0,
+            position: "absolute"
+        }).stop().animate({
+            reviewGlow: 1,
+            opacity: 1,
+            fontSize: 30
+        }, duration ).queue(function() {
+            $( this ).removeAttr( "style" );
+        });
+    }
 };
