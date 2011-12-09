@@ -4,6 +4,7 @@ from base64 import b64encode, b64decode
 from pickle import dumps, loads
 from functools import wraps
 
+import flask
 from flask import request
 from flask import current_app
 import api.jsonify as apijsonify
@@ -11,6 +12,13 @@ import api.jsonify as apijsonify
 from app import App
 from layer_cache import layer_cache_check_set_return, Layers,\
     DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS
+    
+
+def has_flask_request_context():
+    # HACK - peek into private variables since the current version of Flask
+    # being used does not expose a helper for this (later versions do, and
+    # the implementation is the same).
+    return flask._request_ctx_stack.top is not None
 
 def etag(func_tag_content):
     def etag_wrapper(func):
@@ -42,7 +50,9 @@ def jsonify(func):
         if isinstance(obj, current_app.response_class):
             return obj
 
-        return obj if type(obj) == str else apijsonify.jsonify(obj)
+        camel_cased= (has_flask_request_context() and
+                      flask.request.values.get("casing") == "camel")
+        return obj if type(obj) == str else apijsonify.jsonify(obj, camel_cased=camel_cased)
     return jsonified
 
 def jsonp(func):
