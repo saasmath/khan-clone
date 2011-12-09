@@ -39,8 +39,8 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 
 # TODO(david): Get rid of current_states and prev_states params, and just
 #     compute them (since we're now passing in the user_exercise_graph).
-def exercise_message(exercise, user_exercise_graph, current_states, prev_states,
-        sees_graph=False, review_mode=False):
+def exercise_message(exercise, user_exercise_graph, sees_graph=False,
+        review_mode=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
 
     This is called each time a problem is either attempted or a hint is called (via /api/v1.py) and
@@ -50,6 +50,8 @@ def exercise_message(exercise, user_exercise_graph, current_states, prev_states,
 
     sees_graph is part of an ab_test to see if a small graph will help
     """
+
+    current_states = user_exercise_graph.states(exercise.name)
 
     if review_mode:
         if user_exercise_graph.has_completed_review():

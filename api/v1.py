@@ -647,18 +647,16 @@ def attempt_problem_number(exercise_name, problem_number):
                 # and the above pts-original points gives a wrong answer
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
-            current_states = user_exercise_graph.states(exercise.name)
-            prev_states = prev_user_exercise_graph.states(exercise.name)
+            user_states = user_exercise_graph.states(exercise.name)
             sees_graph = ab_test("sees_graph", conversion_name=["clicked_followup", "clicked_dashboard"])
             review_mode = request.request_bool("review_mode", default=False)
 
             action_results = {
                 "exercise_state": {
                     "sees_graph" :  sees_graph,
-                    "state" : [state for state in current_states if current_states[state]] ,
+                    "state" : [state for state in user_states if user_states[state]] ,
                     "template" : templatetags.exercise_message(exercise,
-                        user_exercise_graph, current_states, prev_states,
-                        sees_graph, review_mode),
+                        user_exercise_graph, sees_graph, review_mode),
                 },
                 "points_earned" : { "points" : points_earned },
                 "attempt_correct" : request.request_bool("complete"),
@@ -666,7 +664,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     user_exercise_graph.has_completed_review()),
             };
 
-            if current_states["proficient"]:
+            if user_states["proficient"]:
                 followups = user_followup_exercises(exercise_name)
 
                 if followups:
@@ -717,16 +715,15 @@ def hint_problem_number(exercise_name, problem_number):
                     request.remote_addr,
                     )
 
-            current_states = user_exercise_graph.states(exercise.name)
-            prev_states = prev_user_exercise_graph.states(exercise.name)
+            user_states = user_exercise_graph.states(exercise.name)
             exercise_message_html = templatetags.exercise_message(exercise,
-                user_exercise_graph, current_states, prev_states,
+                user_exercise_graph,
                 review_mode=request.request_bool("review_mode", default=False))
 
             add_action_results(user_exercise, {
                 "exercise_message_html": exercise_message_html,
                 "exercise_state": {
-                    "state" : [state for state in current_states if current_states[state]],
+                    "state" : [state for state in user_states if user_states[state]],
                     "template" : exercise_message_html,
                 }
             })
@@ -765,10 +762,6 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
-# TODO(david): Allow passing in no exercise name like below (figure out why we
-#     can't have multiple @route decorators, when this should be possible with
-#     Flask)
-#@route("/api/v1/user/exercises/review_problems", defaults={"exercise_name": None}, methods=["GET"])
 @route("/api/v1/user/exercises/review_problems", methods=["GET"])
 @oauth_optional()
 @jsonp
@@ -776,12 +769,11 @@ def _attempt_problem_wrong(exercise_name):
 def get_ordered_review_problems():
     """Retrieves an ordered list of the upcoming review problems."""
 
-    # TODO(david): This should probably be in exercises.py or models.py
-    #     (if/when there's more logic here).
+    # TODO(david): This should probably be abstracted away in exercises.py or
+    # models.py (if/when there's more logic here) with a nice interface.
 
     user_data = get_visible_user_data_from_request()
 
-    # TODO(david): Use exercise cycler interface to choose review problems.
     if user_data:
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
         review_exercises = user_exercise_graph.review_exercise_names()
