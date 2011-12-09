@@ -1035,12 +1035,12 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
 
 class TopicVersion(db.Model):
-    date_created = db.DateTimeProperty(auto_now_add=True)
-    date_updated = db.DateTimeProperty(auto_now=True)
-    last_editted_by = db.UserProperty()
+    date_created = db.DateTimeProperty(indexed=False, auto_now_add=True)
+    date_updated = db.DateTimeProperty(indexed=False, auto_now=True)
+    last_editted_by = db.UserProperty(indexed=False)
     number = db.IntegerProperty(required=True)
-    title = db.StringProperty() 
-    description = db.StringProperty()
+    title = db.StringProperty(indexed=False) 
+    description = db.StringProperty(indexed=False)
     default = db.BooleanProperty(default=False)
 
     @staticmethod
@@ -1210,8 +1210,10 @@ class Topic(db.Model):
             changed_entities.add(self)
 
             # recursively look at the child entries and update their ancestors, keeping track of which entities ancestors changed
-            for child in self.child_keys:
-                changed_entities.update(child.update_ancestors(topic_dict))
+            for child_key in self.child_keys:
+                if child_key.kind == "Topic":
+                    child = topic_dict[child_key]
+                    changed_entities.update(child.update_ancestors(topic_dict))
 
         return changed_entities
 
@@ -1226,14 +1228,16 @@ class Topic(db.Model):
             del child.parent_keys[old_index]
             child.parent_keys.append(new_parent.key())
             changed_descendants = child.update_ancestor_keys()
-            changed_descendants.update(child)             
+            changed_descendants.add(child)  
+            changed_descendants.add(new_parent)
+           
         else:
             self.child_keys.insert(int(new_parent_pos), child.key())
 
         def move_txn():
             self.put()
             if new_parent.key() != self.key():
-                db.put(changed_descendants.update(new_parent.key()))
+                db.put(changed_descendants)
 
         return db.run_in_transaction(move_txn)    
 
@@ -1399,9 +1403,9 @@ class Topic(db.Model):
 
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
-            nodes = Topic.all().filter("ancestor_keys =", self.key()).fetch(100000)
+            nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
         else:
-            nodes = Topic.all().filter("ancestor_keys =", self.key()).filter("hide = ", False).fetch(100000)
+            nodes = Topic.all().filter("ancestor_keys =", self.key()).filter("hide = ", False).run()
         
         node_dict = dict((node.key(), node) for node in nodes)
         node_dict[self.key()] = self # in case the current node is hidden (like root is)
@@ -1435,7 +1439,7 @@ class Topic(db.Model):
         if not include_hidden:
             query.filter("hide =", False)
 
-        return query.fetch(10000)
+        return query.run()
              
     @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False):
@@ -1465,7 +1469,7 @@ class Topic(db.Model):
             if version is None:
                 version = TopicVersion.get_latest_version()
 
-        topics = Topic.all().filter("child_keys =", video.key()).filter("version =", version).filter("hide =", False).fetch(10000)
+        topics = Topic.all().filter("child_keys =", video.key()).filter("version =", version).filter("hide =", False).run()
         if include_ancestors:
             ancestor_dict = {}
             for topic in topics:
@@ -1568,15 +1572,14 @@ class Video(Searchable, db.Model):
 
     @staticmethod
     def get_videos_with_no_topic():
-        from sets import Set
-        topics = ConceptTreeNode.all().fetch(100000)
+        topics = ConceptTreeNode.all().run()
         topic_key_dict = dict((t.key(), True) for t in topics)
-        content_keys = Set()
+        content_keys = set()
         for t in topics:
             content_keys.update([child_key for child_key in t.child_keys if not topic_key_dict.has_key(child_key)])
 
-        video_keys = Video.all(keys_only = True).fetch(100000)
-        video_keys_set = Set(video_keys)
+        video_keys = Video.all(keys_only = True).run()
+        video_keys_set = set(video_keys)
         
         return video_keys_set.difference(content_keys)
 

@@ -588,7 +588,6 @@ class UpdateExercise(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
-        import logging
         user = models.UserData.current().user
 
         exercise_name = self.request.get('name')
@@ -668,7 +667,7 @@ class UpdateExercise(request_handler.RequestHandler):
                 exercise_video.put() 
 
         # Start ordering
-        ExerciseVideos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).fetch(1000)
+        ExerciseVideos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
         
         # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
         topics = {}
@@ -690,11 +689,12 @@ class UpdateExercise(request_handler.RequestHandler):
             for exercise_video in exercise_video_list:
                 # as long as the video hasn't already appeared in an earlier topic, it should appear next in the exercise's video list
                 if not orders.has_key(exercise_video):
-                    orders[exercise_video]=i
+                    orders[exercise_video] = i
                     i += 1
 
         for exercise_video, i in orders.iteritems():
             exercise_video.exercise_order = i
-            exercise_video.put()
+        
+        db.put(ExerciseVideos)
 
         self.redirect('/editexercise?saved=1&name=' + exercise_name)
