@@ -1169,8 +1169,6 @@ class Topic(db.Model):
             
             if matching_topic is None: #id is unique so use it and break out
                 return current_id
-            elif parent.key() in matching_topic.parent_keys and matching_topic.title == title:
-                raise Exception("You can't have the same title '%s' to two different topics under the same parent '%s'" % (title, "None" if parent is None else parent.title))
             else: # id is not unique so will have to go through loop again
                 number_to_add+=1
                 current_id = potential_id+'-'+str(number_to_add)    
@@ -1186,30 +1184,30 @@ class Topic(db.Model):
     def update_ancestor_keys(self, topic_dict =  {}):
         # topic_dict keeps a dict of all descendants and all parent's of those descendants so we don't have to get them from the datastore again
         if not topic_dict:
-            descendants = Topic.all().filter("ancestor_key =", child)
+            descendants = Topic.all().filter("ancestor_key =", self)
             topic_dict = dict((descendant.key(), descendant) for descendant in descendants)
             topic_dict[self.key()] = self
             # as topics in the tree may have more than one parent we need to add their other parents to the dict
             unknown_parent_dict = {} 
             for topic_key, topic in topic_dict.iteritems():
                 # add each parent_key that is not already in the topic_dict to the unknown_parents that we still need to get
-                unknown_parent_dict.update(dict((parent_key, True) for parent_key in topic.parent_keys if parent.key() not in topic_dict))
+                unknown_parent_dict.update(dict((parent_key, True) for parent_key in topic.parent_keys if parent_key not in topic_dict))
             if unknown_parent_dict:
                 # get the unknown parents from the database and then update the topic_dict to include them
-                unknown_parent_dict.update(dict((parent.key(), parent) for parent in db.get(unknown_parent_key_dict.keys())))
+                unknown_parent_dict.update(dict((parent.key(), parent) for parent in db.get(unknown_parent_dict.keys())))
                 topic_dict.update(unknown_parent_dict)                
             
         # calculate the new ancestor keys for self
         ancestor_keys = set()
         for parent_key in self.parent_keys:
             ancestor_keys.update(topic_dict[parent_key].ancestor_keys)
-            ancestor_keys.update(parent_key)
+            ancestor_keys.add(parent_key)
 
         # update the ancestor_keys and keep track of the entity if we have changed it
         changed_entities = set()
         if set(self.ancestor_keys) != ancestor_keys:
             self.ancestor_keys = list(ancestor_keys)
-            changed_entities.update(ancestor_keys)
+            changed_entities.add(self)
 
             # recursively look at the child entries and update their ancestors, keeping track of which entities ancestors changed
             for child in self.child_keys:
@@ -1273,9 +1271,10 @@ class Topic(db.Model):
         if child.__class__.__name__ == "Topic":
             child.parent_keys.append(self.key())
             entities_updated.add(child)
-            entities_updated.update(child.update_ancestors())
+            entities_updated.update(child.update_ancestor_keys())
 
         def add_txn():
+            logging.info(entities_updated)
             db.put(entities_updated)
     
         return db.run_in_transaction(add_txn) 
@@ -1293,7 +1292,7 @@ class Topic(db.Model):
         
             # if there are still other parents
             if num_parents:
-                changed_descendants = child.update_ancestors()
+                changed_descendants = child.update_ancestor_keys()
             else:
                 #TODO: If the descendants still have other parents we shouldn't be deleting them - if we are sure we want multiple parents will need to implement this
                 descendants.append(child)
