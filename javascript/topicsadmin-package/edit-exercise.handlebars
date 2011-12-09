@@ -3,6 +3,11 @@
   <input type="text" name="title" class="node-title simple-input ui-corner-all blur-on-esc" value="{{ model.display_name }}" style="width: 250px; display: inline; vertical-align: middle;">
 </div>
 
+<div>
+  <a href="javascript: TopicItemNodeEditor.handleAction('remove_item');" class="item-action simple-button blue action-gradient">Remove from topic</a>
+</div>
+<div style="clear: both" />
+
 <div style="padding: 9px 23px;">
     <div>
         <table class="node-properties">
@@ -36,7 +41,7 @@
             <tr>
                 <td style="font-weight:bold;">Horizontal position</td>
                 <td style="padding-bottom:9px;">
-                    <input type="text" name="v_position" value="{{ model.v_position }}"/></br>
+                    <input type="text" name="v_position" value="{{ model.v_position }}" class="short" /></br>
                     <em>Bigger numbers move this exercise to the right on the knowledge map.</em>
                 </td>
             </tr>
@@ -44,7 +49,7 @@
             <tr>
                 <td style="font-weight:bold;">Vertical position</td>
                 <td style="padding-bottom:9px;">
-                    <input type="text" name="h_position" value="{{ model.h_position }}"/></br>
+                    <input type="text" name="h_position" value="{{ model.h_position }}" class="short" /></br>
                     <em>Bigger numbers move this exercise down the knowledge map.</em>
                 </td>
             </tr>

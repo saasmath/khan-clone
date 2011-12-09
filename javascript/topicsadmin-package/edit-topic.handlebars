@@ -3,6 +3,14 @@
   <input type="text" name="title" class="node-title simple-input ui-corner-all blur-on-esc" value="{{ model.title }}" style="width: 250px; display: inline; vertical-align: middle;">
 </div>
 
+<div>
+  <a href="javascript: TopicTopicNodeEditor.handleAction('add_new_topic');" class="item-action simple-button blue action-gradient">Add subtopic</a>
+  <a href="javascript: TopicTopicNodeEditor.handleAction('add_existing_video');" class="item-action simple-button blue action-gradient">Add existing video</a>
+  <a href="javascript: TopicTopicNodeEditor.handleAction('add_existing_exercise');" class="item-action simple-button blue action-gradient">Add existing exercise</a>
+  <a href="javascript: TopicTopicNodeEditor.handleAction('delete_topic');" class="item-action simple-button blue action-gradient">Delete topic</a>
+</div>
+<div style="clear: both" />
+
 <div style="padding: 9px 23px;">
   <div>
     <table class="node-properties">
@@ -25,8 +33,16 @@
       <tr>
         <td style="font-weight:bold;">Slug</td>
         <td style="padding-bottom:9px;">
-          <input type="text" name="id" value="{{ model.id }}" maxlength="11"/><br/>
+          <input type="text" name="id" value="{{ model.id }}" class="short" maxlength="32"/><br/>
           <em>Short identifier used as a key for the API and in URLs linking to this topic</em>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">Hidden</td>
+        <td style="padding-bottom:9px;">
+          <input type="checkbox" name="hide" {{#if model.hide }}checked{{/if}} /><br/>
+          <em>If checked, this topic will not be visible on the site.</em>
         </td>
       </tr>
 
@@ -47,7 +63,7 @@
             {{/each}}
           </div>
 
-          <input id="add-tag" type="text" value="" maxlength="32" placeholder="- Add tag" class="placeholder" /> <input type="submit" onclick="javascript: TopicTopicNodeEditor.addTag();" value="Add"><br/>
+          <input id="add-tag" type="text" value="" maxlength="32" placeholder="- Add tag" class="placeholder short" /> <input type="submit" onclick="javascript: TopicTopicNodeEditor.addTag();" value="Add"><br/>
         </td>
       </tr>
 

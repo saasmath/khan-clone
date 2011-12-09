@@ -93,11 +93,31 @@ function TestTopics() {
 
             node.inited = true;
 
+            // Insert "placeholder" nodes into tree so we can track changes
             _.each(node.get('children'), function(child) {
                 if (child.kind == 'Topic' && !tree.get(child.id)) {
                     var newNode = new Topic(child);
                     tree.addNode(newNode);
+                    child.__ptr = newNode;
                 }
+            });
+
+            // Update child lists
+            tree.each(function(other_node) {
+                var children = _.map(other_node.get('children'), function(child) {
+                    if (child.__ptr && child.__ptr.inited) {
+                        return {
+                            kind: child.kind,
+                            __ptr: child.__ptr,
+                            id: child.__ptr.id,
+                            title: child.__ptr.get('title'),
+                            hide: child.__ptr.get('hide')
+                        };
+                    } else {
+                        return child;
+                    }
+                });
+                other_node.set({'children':children});
             });
         },
 	});

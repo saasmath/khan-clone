@@ -187,7 +187,7 @@ def put_topic(topic_id):
         # return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
     else:
         changed = False
-        for attr in ['title', 'standalone_title', 'id', 'description', 'tags']:
+        for attr in ['title', 'standalone_title', 'id', 'description', 'tags', 'hide']:
             if getattr(topic, attr) != topic_json[attr]:
                 setattr(topic, attr, topic_json[attr])
                 changed = True

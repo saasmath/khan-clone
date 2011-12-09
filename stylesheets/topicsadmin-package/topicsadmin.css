@@ -11,6 +11,12 @@
     line-height: 16px; /* For Firefox */
 }
 
+.dynatree-node.hidden-topic a {
+    color: #777;
+    font-style: italic;
+    font-weight: normal;
+}
+
 .contextMenu {
     display: none;
     width: 220px;
@@ -45,4 +51,17 @@
 .modal.add-existing-item .search_results {
     width: 90%;
     height: 400px;
+}
+
+#details_view .item-action {
+    float: left;
+    margin-left: 10px;
+}
+
+#details_view input[type="text"] {
+    width: 300px;
+}
+
+#details_view input.short {
+    width: 150px;
 }
