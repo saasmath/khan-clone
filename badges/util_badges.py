@@ -175,31 +175,44 @@ def get_grouped_user_badges(user_data=None):
                                                                    user_badge)
                 grouped_badges_dict[user_badge.badge_name] = grouped_user_badge
 
-    possible_badges = all_badges()
+    possible_badges = sorted(all_badges(),
+                             key=lambda badge:badge.badge_category)
     for badge in possible_badges:
         badge.is_owned = grouped_badges_dict.has_key(badge.name)
 
-    user_badges = sorted(filter(lambda user_badge: hasattr(user_badge, "badge") and user_badge.badge is not None, grouped_badges_dict.values()), reverse=True, key=lambda user_badge:user_badge.last_earned_date)
-    possible_badges = sorted(possible_badges, key=lambda badge:badge.badge_category)
+    grouped_user_badges = sorted(
+            filter(lambda group: (hasattr(group, "badge") and
+                                  group.badge is not None),
+                   grouped_badges_dict.values()),
+            reverse=True,
+            key=lambda group: group.last_earned_date)
 
-    user_badges_normal = filter(lambda user_badge: user_badge.badge.badge_category != badges.BadgeCategory.MASTER, user_badges)
-    user_badges_master = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.MASTER, user_badges)
-    user_badges_diamond = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.DIAMOND, user_badges)
-    user_badges_platinum = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.PLATINUM, user_badges)
-    user_badges_gold = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.GOLD, user_badges)
-    user_badges_silver = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.SILVER, user_badges)
-    user_badges_bronze = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.BRONZE, user_badges)
+    def filter_by_category(category):
+        return filter(lambda group: group.badge.badge_category == category,
+                      grouped_user_badges)
 
-    bronze_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.BRONZE, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    silver_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.SILVER, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    gold_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.GOLD, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    platinum_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.PLATINUM, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    diamond_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.DIAMOND, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    master_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.MASTER, possible_badges), key=lambda badge:badge.points or sys.maxint)
+    user_badges_normal = filter(lambda group: group.badge.badge_category != badges.BadgeCategory.MASTER,
+                                grouped_user_badges)
+    user_badges_master = filter_by_category(badges.BadgeCategory.MASTER)
+    user_badges_diamond = filter_by_category(badges.BadgeCategory.DIAMOND)
+    user_badges_platinum = filter_by_category(badges.BadgeCategory.PLATINUM)
+    user_badges_gold = filter_by_category(badges.BadgeCategory.GOLD)
+    user_badges_silver = filter_by_category(badges.BadgeCategory.SILVER)
+    user_badges_bronze = filter_by_category(badges.BadgeCategory.BRONZE)
 
+    def filter_and_sort(category):
+        return sorted(filter(lambda badge: badge.badge_category == category,
+                             possible_badges),
+                      key=lambda badge: badge.points or sys.maxint)
+
+    bronze_badges = filter_and_sort(badges.BadgeCategory.BRONZE)
+    silver_badges = filter_and_sort(badges.BadgeCategory.SILVER)
+    gold_badges = filter_and_sort(badges.BadgeCategory.GOLD)
+    platinum_badges = filter_and_sort(badges.BadgeCategory.PLATINUM)
+    diamond_badges = filter_and_sort(badges.BadgeCategory.DIAMOND)
+    master_badges = filter_and_sort(badges.BadgeCategory.MASTER)
 
     return { 'possible_badges': possible_badges,
-             'user_badges': user_badges,
              'user_badges_normal': user_badges_normal,
              'user_badges_master': user_badges_master,
              "badge_collections": [bronze_badges, silver_badges, gold_badges, platinum_badges, diamond_badges, master_badges],
