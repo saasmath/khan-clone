@@ -83,10 +83,7 @@ $(function(){
   APIActionResults.register( "points_earned", updatePointDisplay );
 });
 
-// TODO(david): I don't think we need to wait for DOM ready to register some of
-//     these handlers.
-// TODO(david): move to pageutil.js
-// Change review mode heading to "review done!" if appropriate
+// Change review mode heading to "review done!" when appropriate
 $(function() {
 	APIActionResults.register( "review_done", Review.highlightDone );
 });
