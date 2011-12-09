@@ -1097,9 +1097,7 @@ def get_user_current_goals():
 @jsonp
 @jsonify
 def get_student_goals():
-    user_data_coach = request.request_user_data("coach_email")
-    if not user_data_coach:
-        return api_invalid_param_response("Coach not specified.")
+    user_data_coach = get_user_data_coach_from_request()
 
     try:
         students = get_students_data_from_request(user_data_coach)
