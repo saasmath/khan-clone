@@ -32,12 +32,12 @@ if(jQuery)( function() {
 				// Simulate a true right click
 				$(this).mousedown( function(e) {
 					var evt = e;
-					evt.stopPropagation();
-					$(this).mouseup( function(e) {
-						e.stopPropagation();
-						var srcElement = $(this);
-						$(this).unbind('mouseup');
-						if( evt.button == 2 ) {
+                    if( evt.button == 2 ) {
+                        evt.stopPropagation();
+                        $(this).mouseup( function(e) {
+                            e.stopPropagation();
+                            var srcElement = $(this);
+                            $(this).unbind('mouseup');
 							// Hide context menus that may be showing
 							$(".contextMenu").hide();
 							// Get this context menu
@@ -124,8 +124,8 @@ if(jQuery)( function() {
 									return false;
 								});
 							}, 0);
-						}
-					});
+                        });
+                    }
 				});
 				
 				// Disable text selection

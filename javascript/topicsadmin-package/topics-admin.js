@@ -494,22 +494,7 @@ var TopicItemNodeEditor = {
                     parentModel.set({'children': child_list});
                 }
             });
-        }/* else if (action == 'duplicate_item') {
-            var data = {
-                kind: kind,
-                id: id,
-                pos: parentModel.get('children').indexOf(id)+1
-            };
-            $.ajax({
-                url: '/api/v1/topic/' + parentModel.id + '/addchild',
-                type: 'POST',
-                data: data,
-                success: function(json) {
-                    KAConsole.log('Added topic successfully.');
-                    parentModel.set(json);
-                }
-            });
-        }*/ // Doesn't work
+        }
     }
 };
 
