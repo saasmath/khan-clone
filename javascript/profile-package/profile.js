@@ -53,8 +53,17 @@ var Profile = {
 
         if ($.address){
 
-            $.address.change(function(){
-                Profile.historyChange();
+            // this is hackish, but it prevents the change event from being fired twice on load
+            if ( $.address.value() === "/" ){
+                window.location = window.location + "#" + $(".graph-link:eq(0)").attr("href");
+            }
+
+            $.address.change(function( evt ){
+
+                if ( $.address.path() !== "/"){
+                    Profile.historyChange( evt );
+                }
+
             });
 
         }
@@ -63,7 +72,25 @@ var Profile = {
             function(evt){
                 evt.preventDefault();
                 if($.address){
-                    $.address.value( $( this ).attr( "href" ) )
+                    // only visit the resource described by the url, leave the params unchanged
+                    var href = $( this ).attr( "href" )
+                    var path = href.split("?")[0];
+
+                    // visiting a different resource
+                    if ( path !== $.address.path() ){
+                        $.address.path( path );
+                    }
+
+                    // applying filters for same resource via querystring
+                    else{
+                        // make a dict of current qs params and merge with the link's
+                        var currentParams = {};
+                        _.map( $.address.parameterNames(), function(e){ currentParams[e] = $.address.parameter( e ); } );
+                        var linkParams = Profile.parseQueryString( href );
+                        $.extend( currentParams, linkParams );
+
+                        $.address.queryString( Profile.reconstructQueryString( currentParams ) );
+                    }
                 }
             }
         );
@@ -241,6 +268,7 @@ var Profile = {
 
         href = this.baseGraphHref(href).replace(/[<>']/g, "");
 
+        href = href.replace(/[<>']/g, "");
         var selectorAccordionSection =
                 ".graph-link-header[href*='" + href + "']";
 
@@ -311,10 +339,8 @@ var Profile = {
 
     loadFilters : function( href ){
         // fix the hrefs for each filter
-        // console.log(href)
-
         var a = $("#stats-filters a[href^=\"" + href + "\"]").parent();
-        $("#stats-filters .filter:visible").slideUp("slow");
+        $("#stats-filters .filter:visible").not(a).slideUp("slow");
         a.slideDown();
     },
 
@@ -450,7 +476,7 @@ var Profile = {
             }
         });
 
-		var template = Templates.get( "profile.profile-class-goals" );
+        var template = Templates.get( "profile.profile-class-goals" );
         $("#graph-content").html( template(studentGoalsViewModel) );
 
         $("#class-student-goal .goal-row").each(function() {
@@ -750,19 +776,16 @@ var Profile = {
 
     // TODO: move history management out to a common utility
     historyChange: function(e) {
-        var av = $.address ? $.address.value() : "/" ;
-        // if(av === "/"){
-        //     $.address.value(this.initialGraphUrl)
-        // }
-        var href = (av !== "/") ? av : this.initialGraphUrl;
+        var href = ( $.address.value() === "/" ) ? this.initialGraphUrl : $.address.value();
+        var url = ( $.address.path() === "/" ) ? this.initialGraphUrl : $.address.path();
 
         if ( href ) {
             // TODO: Fix this tab history action once and for ALL
             if (href === "/achievements") {
                 $("#tab-achievements").click();
             } else if ( this.expandAccordionForHref(href) ) {
-                this.loadGraph( href, true );
-                this.loadFilters( href );
+                this.loadGraph( href , true );
+                this.loadFilters( url );
             } else {
                 // Invalid URL - just try the first link available.
                 var links = $(".graph-link");
@@ -783,7 +806,7 @@ var Profile = {
         }
     },
 
-	// TODO: move this out to a more generic utility file.
+    // TODO: move this out to a more generic utility file.
     parseQueryString: function(url) {
         var qs = {};
         var parts = url.split('?');
@@ -801,7 +824,7 @@ var Profile = {
         return qs;
     },
 
-	// TODO: move this out to a more generic utility file.
+    // TODO: move this out to a more generic utility file.
     reconstructQueryString: function(hash, kvjoin, eljoin) {
         kvjoin = kvjoin || '=';
         eljoin = eljoin || '&';
@@ -842,7 +865,7 @@ var Profile = {
                         infoHover.css('left', Math.min(left, leftMax));
                         infoHover.css('top', mouseY + 5);
                         infoHover.css('cursor', 'pointer');
-						infoHover.css('position', 'fixed');
+                        infoHover.css('position', 'fixed');
                         infoHover.show();
                     }
                 }, 100);
@@ -854,9 +877,6 @@ var Profile = {
         );
     },
     render: function() {
-        // TODO: This file is getting pretty long,
-        // and I'd like to move each tab's JS out into a separate file
-
         if (window.ClassProfile) {
             return;
         }

@@ -12,16 +12,18 @@ class HomepageVideoPlaceholderExperiment(object):
     _conversion_tests = [
         ('homepage_video_visits', ConversionTypes.Counting),
         ('homepage_video_videos_landing', ConversionTypes.Counting),
+        ('homepage_video_videos_landing_binary', ConversionTypes.Binary),
         ('homepage_video_videos_finished', ConversionTypes.Counting),
         ('homepage_video_thumbnails_clicked', ConversionTypes.Counting),
         ('homepage_video_main_video_played', ConversionTypes.Counting),
+        ('homepage_video_main_video_played_binary', ConversionTypes.Binary),
     ]
     _conversion_names, _conversion_types = [
         list(x) for x in zip(*_conversion_tests)]
 
     @staticmethod
     def get_video_type():
-        return ab_test("Homepage Video Placeholder",
+        return ab_test("Homepage Video Placeholder 3",
             HomepageVideoPlaceholderExperiment._ab_test_alternatives,
             HomepageVideoPlaceholderExperiment._conversion_names,
             HomepageVideoPlaceholderExperiment._conversion_types)
