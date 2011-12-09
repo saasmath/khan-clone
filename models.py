@@ -692,13 +692,16 @@ class UserData(GAEBingoIdentityModel, db.Model):
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
+    # A list of badge names that the user has chosen to display publicly
+    public_badges = db.StringListProperty()
+
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "expanded_all_exercises", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
             "expanded_all_exercises", "user_nickname", "user_email",
-            "seconds_since_joined", "has_current_goals"
+            "seconds_since_joined", "has_current_goals", "public_badges"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',

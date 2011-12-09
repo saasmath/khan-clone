@@ -144,11 +144,8 @@ def get_badge_counts(user_data):
 
 def get_grouped_user_badges(user_data=None):
     """ Retrieves the list of user-earned badges grouped into GroupedUserBadge
-    objects. Also returns the list of possible badges.
+    objects. Also returns the list of possible badges along with them.
 
-    Note that since even though these are db.Model objects, they've been
-    extended with properties that are not in the original schema. Those
-    properties will not be serialized by helpers like api.jsonify
     """
 
     if not user_data:
@@ -221,6 +218,22 @@ def get_grouped_user_badges(user_data=None):
              'gold_badges': user_badges_gold,
              'platinum_badges': user_badges_platinum,
              'diamond_badges': user_badges_diamond, }
+
+def get_public_user_badges(user_data=None):
+    """ Retrieves the list of user-earned badges that the user has selected
+    to publicly display on his/her profile display-case.
+    This is returned as a list of Badge objects, and not UserBadge objects
+    and therefore does not contain further information about the user's
+    activities.
+
+    """
+    if not user_data:
+        user_data = models.UserData.current()
+        if not user_data:
+            return []
+
+    public_badges = user_data.public_badges or []
+    return [badge for badge in all_badges() if badge.name in public_badges]
 
 class ViewBadges(request_handler.RequestHandler):
 
