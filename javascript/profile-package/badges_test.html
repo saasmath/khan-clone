@@ -68,16 +68,6 @@ function addBadge( name, desc, type, isUserBadge ) {
     }
 }
 
-function toggleEdit( button ) {
-    if ( button.innerHTML.indexOf( "Edit badges" ) >= 0 ) {
-        button.innerHTML = "Stop editing";
-        displayCase.edit();
-    } else {
-        button.innerHTML = "Edit badges";
-        displayCase.stopEdit();
-    }
-}
-
 KA_TEST.loadTemplates([
         "profile.badge-display-case",
         "profile.badge-compact"
@@ -108,7 +98,6 @@ Name: <input id="name"><br>
 Desc: <input id="desc"><br>
 Type(meteorite|moon|earth): <input id="type" value="moon"><br>
 <button onclick="addBadge()">Add Badge</button>
-<button onclick="toggleEdit(this)">Edit badges</button>
 </div>
 </body>
 </html>

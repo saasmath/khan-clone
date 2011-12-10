@@ -153,6 +153,7 @@ Badges.DisplayCase = Backbone.View.extend({
     setFullBadgeList: function( fullBadgeList ) {
         // TODO: do we want to listen to events on the full badge list?
         this.fullBadgeList = fullBadgeList;
+        this.updateEditControls();
     },
 
     /**
@@ -167,7 +168,7 @@ Badges.DisplayCase = Backbone.View.extend({
             return this;
         }
 
-        this.editing = true;
+        this.setEditing_( true );
 
         // Visual indicator for the badge edits.
         var self = this;
@@ -261,16 +262,21 @@ Badges.DisplayCase = Backbone.View.extend({
      */
     stopEdit: function() {
         if ( this.editing ) {
-            this.editing = false;
+            this.setEditing_( false );
             this.updateEditSelection_( -1 );
-            var jelMainCase = $(this.mainCaseEl);
+            var jelRootEl = $(this.el);
             var jelPicker = $(this.badgePickerEl);
             jelPicker.slideUp("fast", function() {
-                jelMainCase.removeClass( "editing" );
+                jelRootEl.removeClass( "editing" );
             });
             jelPicker.undelegate();
         }
         return this;
+    },
+
+    setEditing_: function( editing ) {
+        this.editing = editing;
+        this.updateEditControls();
     },
 
     /**
@@ -311,6 +317,23 @@ Badges.DisplayCase = Backbone.View.extend({
         }
     },
 
+    updateEditControls: function() {
+        if ( !this.isEditable() ) {
+            $(this.editButtonEl).hide();
+            return;
+        }
+        $(this.editButtonEl).html( this.editing ? "Stop edit" : "Edit" );
+        $(this.editButtonEl).show();
+    },
+
+    toggleEdit_: function() {
+        if ( !this.editing ) {
+            this.edit();
+        } else {
+            this.stopEdit();
+        }
+    },
+
     /**
      * Renders the contents of the badge picker.
      * Idempotent - simply blows away and repopulates the contents if called
@@ -330,9 +353,16 @@ Badges.DisplayCase = Backbone.View.extend({
             // First render - build the chrome.
             this.mainCaseEl = $("<div class=\"main-case\"></div>");
             this.badgePickerEl = $("<div class=\"badge-picker\"></div>");
-            $(this.el).append(this.mainCaseEl).append(this.badgePickerEl);
+            // TODO: replace this temporary Edit button
+            this.editButtonEl = $("<button id=\"edit\">Edit</button>");
+            $(this.el)
+                .append( this.mainCaseEl )
+                .append( this.badgePickerEl )
+                .append( this.editButtonEl );
+            $(this.editButtonEl).click( _.bind( this.toggleEdit_, this ) );
         }
         $(this.mainCaseEl).html( this.template( this.getTemplateContext_() ) );
+        this.updateEditControls();
         this.updateSelectionHighlight();
         return this;
     }
