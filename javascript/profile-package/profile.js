@@ -956,6 +956,12 @@ var Profile = {
     },
 
     populateAchievements: function() {
+        // Render the public badge list, as that's ready immediately.
+        var publicBadgeList = new Badges.BadgeList(publicBadgeData);
+        var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
+        $(".sticker-book").append( displayCase.render().el );
+
+        // Asynchronously load the full badge information in the background.
         $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
@@ -964,24 +970,19 @@ var Profile = {
             success: function(data) {
 
                 // TODO: save and cache these objects
-                var fullBadgeList = new Badges.BadgeList(),
-                    userBadgeList = new Badges.BadgeList();
+                var fullBadgeList = new Badges.UserBadgeList();
 
                 var collection = data["badgeCollections"];
                 $.each(collection, function(i, categoryJson) {
-                    $.each(categoryJson["badges"], function(j, json) {
-                        fullBadgeList.add(new Badges.Badge(json));
-                    });
                     $.each(categoryJson["userBadges"], function(j, json) {
-                        userBadgeList.add(new Badges.Badge(json));
+                        fullBadgeList.add(new Badges.UserBadge(json));
                     });
                 });
-
-                var displayCase = new Badges.DisplayCase({ model: userBadgeList });
-                $(".sticker-book").append( displayCase.render().el );
+                displayCase.setFullBadgeList(fullBadgeList);
 
                 // TODO: make the rendering of the full badge page use the models above
                 // and consolidate the information
+
                 var badgeInfo = [
                         {
                             icon: "/images/badges/meteorite-medium.png",

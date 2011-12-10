@@ -26,6 +26,7 @@ var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
         countExercises: {{count_exercises}},
         points: {{student_points}},
         dateJoined: "{{user_data_student.joined}}"
-    };
+    },
+    publicBadgeData = {{ templatetags.jsonify(public_badges, true) }};
 </script>
 {% endblock pagescript %}

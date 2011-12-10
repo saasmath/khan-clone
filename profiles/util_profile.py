@@ -10,6 +10,7 @@ from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
+from badges import util_badges
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -188,6 +189,7 @@ class ViewProfile(request_handler.RequestHandler):
             'selected_graph_type': selected_graph_type,
             'initial_graph_url': initial_graph_url,
             'tz_offset': tz_offset,
+            'public_badges': util_badges.get_public_user_badges(student),
             'student_points': student.points,
             'count_videos': models.Setting.count_videos(),
             'count_videos_completed': student.get_videos_completed(),

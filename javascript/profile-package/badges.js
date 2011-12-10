@@ -28,38 +28,48 @@ Badges.Category = {
 
 /**
  * A single badge that a user can earn.
+ * Parallel to the JSON serialized formats of badges.Badge
  */
 Badges.Badge = Backbone.Model.extend({
     defaults: {
         "badgeCategory": Badges.Category.BRONZE,
-        "badgeContextType": Badges.ContextType.NONE,
         "name": "",
         "description": "",
         "iconSrc": "",
         "isOwned": false,
         "points": 0,
         "safeExtendedDescription": "",
-        "typeLabel": ""
     },
-
-    isOwned: function() {
-        return this.has( "count" ) && this.get( "count" ) > 0;
-    }
 });
 
 /**
- * Badge information about a badge that a user has earned.
- * This is a superset of Badges.Badge.
+ * Badge information about a badge, or a set of badges that a user has earned
+ * grouped by their badge type.
+ * Parallel to the JSON serialized formats of badges.GroupedUserBadge
  */
-Badges.UserBadge = Badges.Badge.extend({
-    defaults: _.extend({
-        "count": 4,
-        "date": "2011-11-22T02:59:43Z",
-        "isUserBadge": true,
-        "listContextNames": [],
-        "listContextNamesHidden": [],
-        "targetContextName": ""
-    }, Badges.Badge.defaults)
+Badges.UserBadge = Backbone.Model.extend({
+    defaults: {
+        "badge": null,
+        "count": 1,
+        "lastEarnedDate": "2011-11-22T00:00:00Z",
+        "targetContextNames": [],
+        "isOwned": true
+    },
+
+    initialize: function(attributes, options) {
+        if ( !this.get( "badge" ) ) {
+            throw "A UserBadge object needs a reference badge object";
+        }
+
+        // Wrap the underlying badge info in a Model object and forward
+        // change events.
+        var badgeModel = new Badges.Badge( this.get( "badge" ) );
+        this.set({ "badge": badgeModel }, { "silent": true });
+        badgeModel.bind(
+            "change",
+            function(ev) { this.trigger("change:badge"); },
+            this);
+    }
 });
 
 /**
@@ -70,9 +80,18 @@ Badges.BadgeList = Backbone.Collection.extend({
 });
 
 /**
+ * A list of user badges that can be listened to.
+ */
+Badges.UserBadgeList = Backbone.Collection.extend({
+    model: this.Badge
+});
+
+/**
  * A UI component that displays a list of badges to show off.
  * Typically used in a public profile page, but can be re-used
  * in the context of a hovercard, or any other context.
+ *
+ * Expects a Badges.BadgeList model to back it.
  */
 Badges.DisplayCase = Backbone.View.extend({
     className: "badge-display-case",
@@ -83,7 +102,8 @@ Badges.DisplayCase = Backbone.View.extend({
     editing: false,
 
     /**
-     * The full badge list available to pick from when in edit mode.
+     * The full user badge list available to pick from when in edit mode.
+     * @type {Badges.UserBadgeList}
      */
     fullBadgeList: null,
 
@@ -126,11 +146,11 @@ Badges.DisplayCase = Backbone.View.extend({
     /**
      * Sets the full badge list for the display case so it can go into edit
      * mode and pick badges from this badge list.
-     * @param {Badges.BadgeList} The full list of badges that can be added
+     * @param {Badges.UserBadgeList} The full list of badges that can be added
      *        to this display case.
      * @return {Badges.DisplayCase} This same instance so calls can be chained.
      */
-    setFullBadgelist: function( fullBadgeList ) {
+    setFullBadgeList: function( fullBadgeList ) {
         // TODO: do we want to listen to events on the full badge list?
         this.fullBadgeList = fullBadgeList;
     },
@@ -219,8 +239,8 @@ Badges.DisplayCase = Backbone.View.extend({
         var name = e.currentTarget.id;
         var matchedBadge = _.find(
                 this.fullBadgeList.models,
-                function( badge ) {
-                    return badge.get( "name" ) == name;
+                function( userBadge ) {
+                    return userBadge.get( "badge" ).get( "name" ) == name;
                 });
         if ( !matchedBadge ) {
             // Shouldn't happen!
@@ -233,7 +253,7 @@ Badges.DisplayCase = Backbone.View.extend({
         if ( existing ) {
             this.model.remove( existing );
         }
-        this.model.add( matchedBadge.clone(), { at: this.selectedIndex });
+        this.model.add( matchedBadge.get( "badge" ).clone(), { at: this.selectedIndex });
     },
 
     /**
@@ -256,9 +276,9 @@ Badges.DisplayCase = Backbone.View.extend({
     /**
      * Builds a context object to render a single badge.
      */
-    getBadgeJsonContext_: function( badge ) {
-        var json = badge.toJSON();
-        json[ "isOwned" ] = badge.isOwned();
+    getUserBadgeJsonContext_: function( badge ) {
+        var json = badge.get( "badge" ).toJSON();
+        json[ "count" ] = badge.get( "count" );
         return json;
     },
 
@@ -271,7 +291,7 @@ Badges.DisplayCase = Backbone.View.extend({
             numRendered = Math.min( this.maxVisible, this.model.length );
         for ( i = 0; i < numRendered; i++ ) {
             var badge = this.model.at( i );
-            badges.push( this.getBadgeJsonContext_( badge ));
+            badges.push( badge.toJSON() );
         }
         for ( ; i < this.maxVisible; i++ ) {
             badges.push({ emptyBadge: true });
@@ -300,7 +320,7 @@ Badges.DisplayCase = Backbone.View.extend({
         var html = [],
             badgeTemplate = Templates.get( "profile.badge-compact" );
         this.fullBadgeList.each(function( badge ) {
-            html.push( badgeTemplate( this.getBadgeJsonContext_( badge )));
+            html.push( badgeTemplate( this.getUserBadgeJsonContext_( badge )));
         }, this);
         $(this.badgePickerEl).html( html.join( "" ) );
     },
