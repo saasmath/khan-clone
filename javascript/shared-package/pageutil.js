@@ -594,7 +594,7 @@ var Badges = {
         });
 
         var jelTarget = $(".badge-target");
-        var jelContainer = $("#container");
+        var jelContainer = $("#page-container-inner");
 
         var top = jelTarget.offset().top + jelTarget.height() + 5;
 
