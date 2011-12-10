@@ -10,6 +10,9 @@ import models
 import layer_cache
 import templatetags
 from topics_list import DVD_list
+from api.auth.xsrf import ensure_xsrf_cookie
+from gae_bingo.gae_bingo import bingo
+from experiments import HomepageVideoPlaceholderExperiment
 
 ITEMS_PER_SET = 4
 
@@ -20,7 +23,8 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
     if video:
         link_dict = {
             "href": "/video/%s" % video.readable_id,
-            "thumb_url": video.youtube_thumbnail_url(),
+            "thumb_urls": models.Video.youtube_thumbnail_urls(video.youtube_id),
+            "title": video.title,
             "desc_html": templatetags.video_name_and_progress(video),
             "teaser_html": video.description,
             "youtube_id": video.youtube_id,
@@ -33,7 +37,7 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
     if exercise:
         link_dict = {
             "href": exercise.relative_url,
-            "thumb_url": thumb_url,
+            "thumb_urls": {"hq": thumb_url, "sd": thumb_url},
             "desc_html": escape(exercise.display_name),
             "teaser_html": "Exercise your <em>%s</em> skills" % escape(exercise.display_name),
             "youtube_id": "",
@@ -131,12 +135,19 @@ class ViewHomePage(request_handler.RequestHandler):
 
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
+    @ensure_xsrf_cookie
     def get(self):
 
         thumbnail_link_sets = new_and_noteworthy_link_sets()
 
         # If all else fails, just show the TED talk on the homepage
-        video_id, video_key = "gM95HHI4gLk", ""
+        marquee_video = {
+            "youtube_id": "gM95HHI4gLk",
+            "href": "/video?v=%s" % "gM95HHI4gLk",
+            "thumb_urls": models.Video.youtube_thumbnail_urls("gM95HHI4gLk"),
+            "title": "Salman Khan talk at TED 2011",
+            "key": "",
+        }
 
         if len(thumbnail_link_sets) > 1:
 
@@ -153,10 +164,7 @@ class ViewHomePage(request_handler.RequestHandler):
 
             if marquee_videos:
                 marquee_video = marquee_videos[day % len(marquee_videos)]
-
                 marquee_video["selected"] = True
-                video_id = marquee_video["youtube_id"]
-                video_key = marquee_video["key"]
 
             if len(thumbnail_link_sets[current_link_set_offset]) < ITEMS_PER_SET:
                 # If the current offset lands on a set of videos that isn't a full set, just start
@@ -168,9 +176,15 @@ class ViewHomePage(request_handler.RequestHandler):
         # Get pregenerated library content from our in-memory/memcache two-layer cache
         library_content = library.library_content_html()
 
+        # Only running placeholder A/B test for non-mobile clients
+        use_placeholder = False
+        if not self.is_mobile_capable():
+            use_placeholder = HomepageVideoPlaceholderExperiment.get_video_type() == "placeholder"
+            bingo('homepage_video_visits')
+
         template_values = {
-                            'video_id': video_id,
-                            'video_key': video_key,
+                            'use_placeholder': use_placeholder,
+                            'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,
                             'library_content': library_content,
                             'DVD_list': DVD_list,

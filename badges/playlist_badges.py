@@ -1,6 +1,4 @@
-from models import UserPlaylist
-from badges import Badge, BadgeContextType, BadgeCategory
-import logging
+from badges import Badge, BadgeContextType
 
 # All badges that may be awarded once-per-Playlist inherit from PlaylistBadge
 class PlaylistBadge(Badge):

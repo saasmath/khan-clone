@@ -7,7 +7,6 @@ import re
 import StringIO
 import base64
 import copy
-from string import lower
 
 from js_css_packages import packages
 
@@ -16,7 +15,7 @@ URI_FILENAME = "uri"
 COMPRESSED_FILENAME = "compressed"
 HASHED_FILENAME_PREFIX = "hashed-"
 PATH_PACKAGES = "js_css_packages/packages.py"
-PATH_PACKAGES_TEMP = "js_css_packages/packages.compresstemp.py"
+PATH_PACKAGES_COMPRESSED = "js_css_packages/packages_compressed.py"
 PATH_PACKAGES_HASH = "js_css_packages/packages_hash.py"
 
 packages_stylesheets = copy.deepcopy(packages.stylesheets)
@@ -26,10 +25,6 @@ if os.path.isfile(PATH_PACKAGES_HASH):
     hashes = copy.deepcopy(js_css_packages.packages_hash.hashes)
 else:
     hashes = {}
-
-def revert_js_css_hashes():
-    print "Reverting %s" % PATH_PACKAGES
-    popen_results(['hg', 'revert', '--no-backup', PATH_PACKAGES])
 
 def compress_all_javascript():
     dict_packages = packages.javascript
@@ -54,14 +49,31 @@ def compress_all_packages(default_path, dict_packages, suffix):
 
             package_path = os.path.join(os.path.dirname(__file__), package_path)
 
-            compress_package(package_name, package_path, package["files"], suffix)
+            if suffix == ".js":
+                # for javascript packages, check to see if we need to include
+                # the compiled result of a file. For example, a file called
+                # template.handlebars will be compiled to
+                # template.handlebars.js
+                files = []
+                for f in package["files"]:
+                    if f.split('.')[-1] == 'js':
+                        files.append(f)
+                    else:
+                        files.append(f + ".js")
+            else:
+                files = package["files"]
 
-            hashed_content = "javascript=%s\nstylesheets=%s\n" % \
+            compress_package(package_name, package_path, files, suffix)
+
+            hashed_content = "compressed_javascript=%s\ncompressed_stylesheets=%s\n" % \
                 (str(packages_javascript), str(packages_stylesheets))
-            with open(PATH_PACKAGES_TEMP, "w") as f:
-                f.write(hashed_content)
 
-            shutil.move(PATH_PACKAGES_TEMP, PATH_PACKAGES)
+            # Remove the old one.
+            if os.path.exists(PATH_PACKAGES_COMPRESSED):
+                os.remove(PATH_PACKAGES_COMPRESSED)
+
+            with open(PATH_PACKAGES_COMPRESSED, "w") as f:
+                f.write(hashed_content)
 
     with open(PATH_PACKAGES_HASH, 'w') as hash_file:
         hash_file.write('hashes = %s\n' % str(hashes))
@@ -99,9 +111,9 @@ def compress_package(name, path, files, suffix):
 
     path_compressed = ''
     fullname = name+suffix
-    if fullname not in hashes \
-            or hashes[fullname][0] != new_hash \
-            or not os.path.exists(hashes[fullname][2]):
+    if (fullname not in hashes
+            or hashes[fullname][0] != new_hash
+            or not os.path.exists(hashes[fullname][2])):
 
         path_compressed = minify_package(path, path_combined, suffix)
         path_hashed, hash_sig = hash_package(name, path, path_compressed, suffix)
@@ -211,7 +223,7 @@ def remove_images(path, path_combined, suffix):
     new_file.close()
 
     if not os.path.exists(path_without_urls):
-          raise Exception("Unable to remove images: %s" % path_combined)
+        raise Exception("Unable to remove images: %s" % path_combined)
 
     return path_without_urls
 
@@ -232,8 +244,6 @@ def hash_package(name, path, path_compressed, suffix):
     return path_hashed, hash_sig
 
 def insert_hash_sig(name, hash_sig, suffix):
-    print "Inserting %s sig (%s) into %s\n" % (name, hash_sig, PATH_PACKAGES)
-
     current_dict = packages_stylesheets if suffix.endswith('.css') else packages_javascript
     if name not in current_dict:
         current_dict[name] = {}
@@ -247,6 +257,9 @@ def combine_package(path, files, suffix):
 
     content = []
     for static_filename in files:
+        if static_filename in packages.transformations:
+            static_filename = packages.transformations[static_filename]
+
         path_static = os.path.join(path, static_filename)
         print "   ...adding %s" % path_static
         f = open(path_static, 'r')

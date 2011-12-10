@@ -1,3 +1,15 @@
+var KAConsole = {
+    debugEnabled: false,
+    log: function() {
+        if (window.console && KAConsole.debugEnabled) {
+            if (console.log.apply)
+                console.log.apply(console, arguments);
+            else
+                Function.prototype.apply.call(console.log, null, arguments);
+        }
+    }
+};
+
 function addCommas(nStr) // to show clean number format for "people learning right now" -- no built in JS function
 {
     nStr += '';
@@ -14,17 +26,17 @@ function addCommas(nStr) // to show clean number format for "people learning rig
 function validateEmail(sEmail)
 {
      var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-     return sEmail.match(re)
+     return sEmail.match(re);
 }
 
 function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
     var o = {
                 "label": match.title,
                 "title": match.title,
-                "value": match.ka_url,
+                "value": match.url,
                 "key": match.key,
                 "fPlaylist": fPlaylist
-            }
+            };
 
     if (reMatch)
         o.label = o.label.replace(reMatch, "<b>$1</b>");
@@ -129,14 +141,14 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
             .data("item.autocomplete", item)
             .append(jLink)
             .appendTo(ul);
-        }
+    };
 
-     autocompleteWidget.data("autocomplete").menu.select = function(e) {
+    autocompleteWidget.data("autocomplete").menu.select = function(e) {
         // jquery-ui.js's ui.autocomplete widget relies on an implementation of ui.menu
         // that is overridden by our jquery.ui.menu.js.  We need to trigger "selected"
         // here for this specific autocomplete box, not "select."
         this._trigger("selected", e, { item: this.active });
-    }
+    };
 }
 
 $(function() {
@@ -152,12 +164,13 @@ $(function() {
 });
 
 function createCookie(name,value,days) {
+    var expires;
     if (days) {
         var date = new Date();
         date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
+        expires = "; expires="+date.toGMTString();
     }
-    else var expires = "";
+    else expires = "";
     document.cookie = name+"="+value+expires+"; path=/";
 }
 
@@ -174,6 +187,14 @@ function readCookie(name) {
 
 function eraseCookie(name) {
     createCookie(name,"",-1);
+}
+
+function areCookiesEnabled() {
+    createCookie('detectCookiesEnabled', 'KhanAcademy', 1);
+    if (readCookie('detectCookiesEnabled') == null)
+        return false;
+    eraseCookie('detectCookiesEnabled');
+    return true;
 }
 
 function onYouTubePlayerStateChange(state) {
@@ -198,8 +219,11 @@ var VideoControls = {
     },
 
     play: function() {
-        if (VideoControls.player && VideoControls.player.playVideo)
+        $(VideoControls).trigger("beforeplay");
+
+        if (VideoControls.player && VideoControls.player.playVideo) {
             VideoControls.player.playVideo();
+        }
     },
 
     pause: function() {
@@ -212,6 +236,13 @@ var VideoControls = {
         // when a play link is clicked.
         var yTop = $(VideoControls.player).offset().top - 2;
         if ($(window).scrollTop() > yTop) $(window).scrollTop(yTop);
+    },
+
+    onYouTubeBlocked: function(callback) {
+        $('<img width=0 height=0>')
+            .error(callback)
+            .attr('src', 'http://www.youtube.com/favicon.ico?' + Math.random())
+            .appendTo('#page-container');
     },
 
     initThumbnails: function() {
@@ -259,17 +290,21 @@ var VideoControls = {
         var youtubeId = jelParent.attr("data-youtube-id");
         if (VideoControls.player && youtubeId)
         {
+            $(VideoControls).trigger("beforeplay");
+
             VideoControls.player.loadVideoById(youtubeId, 0, "default");
             VideoControls.scrollToPlayer();
+
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
 
             VideoStats.startLoggingProgress(jelParent.attr("data-key"));
+            gae_bingo.bingo("homepage_video_thumbnails_clicked")
 
             return false;
         }
     }
-}
+};
 
 var VideoStats = {
 
@@ -393,12 +428,28 @@ var VideoStats = {
         } else if (state == 1) { // play
             this.playing = true;
             this.dtSinceSave = new Date();
+
+            if (!VideoControls.videoBingoSent) {
+                gae_bingo.bingo([
+                        "homepage_video_main_video_played", 
+                        "homepage_video_main_video_played_binary",
+                        "homepage_video_any_video_played",
+                        "homepage_video_any_video_played_binary",
+                        ])
+                VideoControls.videoBingoSent = true;
+            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
 
     save: function() {
         if (this.fSaving) return;
+
+        // Make sure cookies are enabled, otherwise this totally won't work
+        if (!areCookiesEnabled()) {
+            KAConsole.log('Cookies appear to be disabled. Not logging video progress.');
+            return;
+        }
 
         this.fSaving = true;
         var percent = this.getPercentWatched();
@@ -417,9 +468,11 @@ var VideoStats = {
         }
 
         $.ajax({type: "GET",
-                url: "/api/v1/user/videos/" + id + "/log",
+                url: "/api/v1/user/videos/" + id + "/log_compatability",
                 data: data,
-                success: function (data) { VideoStats.finishSave(data, percent); },
+                success: function (data) {
+                    VideoStats.finishSave(data, percent);
+                },
                 error: function () {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
@@ -510,126 +563,13 @@ function onYouTubePlayerReady(playerID) {
 
     VideoControls.player = player;
     VideoStats.player = player;
+
     // The UniSub (aka mirosubs) widget replaces the YouTube player with a copy
     // and that will cause onYouTubePlayerReady() to be called again.  So, we trigger
     // 'playerready' events on any objects that are using the player so that they can
     // take appropriate action to use the new player.
     $(VideoControls).trigger('playerready');
     $(VideoStats).trigger('playerready');
-}
-
-var Drawer = {
-
-    init: function() {
-
-        $('#show-all-exercises').click(function() {Drawer.toggleAllExercises(true); return false;});
-
-        $('#dashboard-drawer .exercise-badge').click( function() {
-            window.location = $(".exercise-title a", this).attr("href");
-            return false;
-        });
-
-        $('.toggle-drawer').click(function() {Drawer.toggle(); return false;});
-
-        $(window).resize(function(){Drawer.resize();});
-        this.resize();
-
-        if (window.iScroll)
-        {
-            // Mobile device, support single-finger touch scrolling
-            $("#dashboard-drawer").removeClass("drawer-hoverable");
-            var scroller = new iScroll('dashboard-drawer-inner', { hScroll: false, hScrollbar: false, vScrollbar: false });
-        }
-        else
-        {
-            if (window.KnowledgeMap)
-            {
-                $(".exercise-badge").hover(
-                        function(){KnowledgeMap.onBadgeMouseover.apply(this);},
-                        function(){KnowledgeMap.onBadgeMouseout.apply(this);}
-                );
-                $(".exercise-edit").hover(
-                        function(){KnowledgeMap.onBadgeMouseover.apply(this);},
-                        function(){KnowledgeMap.onBadgeMouseout.apply(this);}
-                );
-                $(".exercise-show").click(KnowledgeMap.onShowExerciseClick);
-            }
-        }
-
-        $('#dashboard-filter-text input[type=text]').placeholder();
-    },
-
-    toggleAllExercises: function(saveSetting) {
-
-        var fVisible = $('#all-exercises').is(':visible');
-
-        if (fVisible)
-        {
-            $('#all-exercises').slideUp(500);
-            $('#show-all-exercises').html('Show All');
-        }
-        else
-        {
-            $('#all-exercises').slideDown(500);
-            $('#show-all-exercises').html('Hide All');
-        }
-
-        if (saveSetting) {
-            $.post("/saveexpandedallexercises", {
-                "expanded": fVisible ? "0" : "1"
-            }); // Fire and forget
-        }
-    },
-
-    areExercisesVisible: function() {
-        return $('#all-exercises').is(':visible');
-    },
-
-    isExpanded: function() {
-        var sCSSLeft = $("#dashboard-drawer").css("left").toLowerCase();
-        return sCSSLeft == "0px" || sCSSLeft == "auto" || sCSSLeft == "";
-    },
-
-    toggle: function() {
-
-        if (this.fToggling) return;
-
-        var fExpanded = this.isExpanded();
-
-        var jelDrawer = $("#dashboard-drawer");
-        var leftDrawer = fExpanded ? -1 * (jelDrawer.width() + 20) : 0;
-
-        var jelTitle = $("#dashboard-title");
-        var leftTitle = fExpanded ? -1 * (jelTitle.width() +10 ): 5;
-
-        jelTitle.animate({left: leftTitle}, 500);
-
-        this.fToggling = true;
-        jelDrawer.animate({left: leftDrawer}, 500, function() {Drawer.fToggling = false;});
-
-        if (window.KnowledgeMap)
-        {
-            var leftMap = (fExpanded ? 0 : 340);
-            $("#map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
-                    500,
-                    function() {
-                        google.maps.event.trigger(KnowledgeMap.map, 'resize');
-                    }
-            );
-        }
-    },
-
-    resize: function() {
-        var jel = $("#dashboard-drawer, #dashboard-drawer-inner, #dashboard-map");
-        var jelDrawerInner = $("#dashboard-drawer-inner");
-        var yTop = jel.offset().top;
-        jel.height($(window).height() - yTop - $("#end-of-page-spacer").outerHeight(true));
-        // Account for padding in the dashboard drawer
-        jelDrawerInner.height(jelDrawerInner.height() - 20);
-
-        if (window.KnowledgeMap && KnowledgeMap.map)
-            google.maps.event.trigger(KnowledgeMap.map, 'resize');
-    }
 }
 
 var Badges = {
@@ -654,7 +594,7 @@ var Badges = {
         });
 
         var jelTarget = $(".badge-target");
-        var jelContainer = $("#container");
+        var jelContainer = $("#page-container-inner");
 
         var top = jelTarget.offset().top + jelTarget.height() + 5;
 
@@ -674,7 +614,7 @@ var Badges = {
 
     showMoreContext: function(el) {
         var jelLink = $(el).parents(".badge-context-hidden-link");
-        var jelBadge = jelLink.parents(".achievement-badge")
+        var jelBadge = jelLink.parents(".achievement-badge");
         var jelContext = $(".badge-context-hidden", jelBadge);
 
         if (jelLink.length && jelBadge.length && jelContext.length)
@@ -686,7 +626,7 @@ var Badges = {
             jelBadge.nextAll(".achievement-badge").first().css("clear", "both");
         }
     }
-}
+};
 
 var Notifications = {
 
@@ -722,6 +662,10 @@ var Notifications = {
             }, 100);
         }
     },
+    showTemplate: function(templateName) {
+        var template = Templates.get(templateName);
+        this.show( template() );
+    },
 
     hide: function() {
         var jel = $(".notification-bar");
@@ -739,7 +683,7 @@ var Notifications = {
 
         $.post("/notifierclose");
     }
-}
+};
 
 var Timezone = {
     tz_offset: null,
@@ -757,7 +701,47 @@ var Timezone = {
             this.tz_offset = -1 * (new Date()).getTimezoneOffset();
         return this.tz_offset;
     }
+};
+
+// not every browser has Date.prototype.toISOString
+// https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date#Example.3a_ISO_8601_formatted_dates
+if ( !Date.prototype.toISOString ) {
+    Date.prototype.toISOString = function() {
+        var pad = function(n) { return n < 10 ? '0' + n : n; };
+            return this.getUTCFullYear() + '-' +
+                pad(this.getUTCMonth() + 1) + '-' +
+                pad(this.getUTCDate()) + 'T' +
+                pad(this.getUTCHours()) + ':' +
+                pad(this.getUTCMinutes()) + ':' +
+                pad(this.getUTCSeconds()) + 'Z';
+    };
 }
+
+// some browsers can't parse ISO 8601 with Date.parse
+// http://anentropic.wordpress.com/2009/06/25/javascript-iso8601-parser-and-pretty-dates/
+var parseISO8601 = function(str) {
+    // we assume str is a UTC date ending in 'Z'
+    var parts = str.split('T'),
+        dateParts = parts[0].split('-'),
+        timeParts = parts[1].split('Z'),
+        timeSubParts = timeParts[0].split(':'),
+        timeSecParts = timeSubParts[2].split('.'),
+        timeHours = Number(timeSubParts[0]),
+        _date = new Date();
+
+    _date.setUTCFullYear(Number(dateParts[0]));
+    _date.setUTCMonth(Number(dateParts[1])-1);
+    _date.setUTCDate(Number(dateParts[2]));
+    _date.setUTCHours(Number(timeHours));
+    _date.setUTCMinutes(Number(timeSubParts[1]));
+    _date.setUTCSeconds(Number(timeSecParts[0]));
+    if (timeSecParts[1]) {
+        _date.setUTCMilliseconds(Number(timeSecParts[1]));
+    }
+
+    // by using setUTC methods the date has already been converted to local time(?)
+    return _date;
+};
 
 var MailingList = {
     init: function(sIdList) {
@@ -782,7 +766,7 @@ var MailingList = {
             return false;
         });
     }
-}
+};
 
 var CSSMenus = {
 
@@ -791,8 +775,9 @@ var CSSMenus = {
     init: function() {
         // Make the CSS-only menus click-activated
         $('.noscript').removeClass('noscript');
-        $('.css-menu > ul > li').click(function() {
-            if (CSSMenus.active_menu) CSSMenus.active_menu.removeClass('css-menu-js-hover');
+        $(document).delegate('.css-menu > ul > li', 'click', function() {
+            if (CSSMenus.active_menu)
+                CSSMenus.active_menu.removeClass('css-menu-js-hover');
 
             if (CSSMenus.active_menu && this == CSSMenus.active_menu[0])
                 CSSMenus.active_menu = null;
@@ -800,21 +785,31 @@ var CSSMenus = {
                 CSSMenus.active_menu = $(this).addClass('css-menu-js-hover');
         });
 
-        $(document).bind("click focusin", function(e){
-            if (CSSMenus.active_menu && $(e.target).closest(".css-menu").length == 0) {
+        $(document).bind("click focusin", function(e) {
+            if (CSSMenus.active_menu &&
+                $(e.target).closest(".css-menu").length === 0) {
                 CSSMenus.active_menu.removeClass('css-menu-js-hover');
                 CSSMenus.active_menu = null;
             }
         });
 
         // Make the CSS-only menus keyboard-accessible
-        $('.css-menu a').focus(function(e){
-            $(e.target).addClass('css-menu-js-hover').closest(".css-menu > ul > li").addClass('css-menu-js-hover');
-        }).blur(function(e){
-            $(e.target).removeClass('css-menu-js-hover').closest(".css-menu > ul > li").removeClass('css-menu-js-hover');
+        $(document).delegate('.css-menu a', {
+            focus: function(e) {
+                $(e.target)
+                    .addClass('css-menu-js-hover')
+                    .closest(".css-menu > ul > li")
+                        .addClass('css-menu-js-hover');
+            },
+            blur: function(e) {
+                $(e.target)
+                    .removeClass('css-menu-js-hover')
+                    .closest(".css-menu > ul > li")
+                        .removeClass('css-menu-js-hover');
+            }
         });
     }
-}
+};
 $(CSSMenus.init);
 
 var IEHtml5 = {
@@ -825,7 +820,7 @@ var IEHtml5 = {
             document.createElement(html5elements[i]);
         }
    }
-}
+};
 IEHtml5.init();
 
 var VideoViews = {
@@ -836,15 +831,15 @@ var VideoViews = {
 
         var currentTime = new Date();
         var secondsSince = (currentTime.getTime()-seedTime.getTime())/1000;
-        var viewsPerSecond = seedDailyViews/24/3600
-        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince*viewsPerSecond)
+        var viewsPerSecond = seedDailyViews/24/3600;
+        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince*viewsPerSecond);
 
         var totalViewsString = addCommas(""+estimatedTotalViews);
 
         $('#page_num_visitors').append(totalViewsString);
         $('#page_visitors').css('display', 'inline');
     }
-}
+};
 $(VideoViews.init);
 
 var FacebookHook = {
@@ -919,7 +914,7 @@ var FacebookHook = {
         // Explicitly use a session cookie here for IE's sake.
         createCookie("fbs_" + FB_APP_ID, "\"" + sCookie + "\"");
     }
-}
+};
 FacebookHook.init();
 
 var Throbber = {
@@ -954,7 +949,7 @@ var SearchResultHighlight = {
         textElements.each(function(index, textElement) {
             var pos = textElement.data.toLowerCase().indexOf(word);
             if (pos >= 0) {
-                // Split text element into three elements 
+                // Split text element into three elements
                 var highlightText = textElement.splitText(pos);
                 highlightText.splitText(word.length);
 
@@ -970,11 +965,138 @@ var SearchResultHighlight = {
     }
 };
 
+// This function detaches the passed in jQuery element and returns a function that re-attaches it
+function temporaryDetachElement(element) {
+    var el, ret;
+    el = element.next();
+    if (el.length > 0) {
+        // This element belongs before some other element
+        ret = function() {
+            element.insertBefore(el);
+        };
+    } else {
+        // This element belongs at the end of the parent's child list
+        el = element.parent();
+        ret = function() {
+            element.appendTo(el);
+        };
+    }
+    element.detach();
+    return ret;
+}
+
+function dynamicPackage(packageName, callback, manifest) {
+    var self = this;
+    this.files = [];
+    this.progress = 0;
+    this.last_progress = 0;
+
+    dynamicPackageLoader.loadingPackages[packageName] = this;
+    _.each(manifest, function(filename) {
+        var file = {
+            'filename': filename,
+            'content': null,
+            'evaled': false
+        };
+        self.files.push(file);
+        $.ajax({
+            type:       "GET",
+            url:        filename,
+            data:       null,
+            success:    function(content) {
+                            KAConsole.log('Received contents of ' + filename);
+                            file.content = content;
+
+                            self.progress++;
+                            callback('progress', self.progress/(2*self.files.length));
+                            self.last_progress = self.progress;
+                        },
+            error:      function(xml, status, e) {
+                            callback('failed');
+                        },
+            dataType:   "html"
+        });
+    });
+
+    this.checkComplete = function() {
+        var waiting = false;
+        _.each(this.files, function(file) {
+            if (file.content) {
+                if (!file.evaled) {
+                    var script = document.createElement("script");
+                    if (file.filename.indexOf('.handlebars') > 0)
+                        script.type = 'text/x-handlebars-template'; // This hasn't been tested
+                    else
+                        script.type = "text/javascript";
+                    script.appendChild( document.createTextNode( file.content ) );
+
+                    var head = document.getElementsByTagName("head")[0] || document.documentElement;
+                    head.appendChild( script );
+
+                    file.evaled = true;
+                    KAConsole.log('Evaled contents of ' + file.filename);
+
+                    self.progress++;
+                }
+            } else {
+                waiting = true;
+                return _.breaker;
+            }
+        });
+
+        if (waiting) {
+            if (self.progress != self.last_progress) {
+                callback('progress', self.progress/(2*self.files.length));
+                self.last_progress = self.progress;
+            }
+            setTimeout(function() { self.checkComplete(); }, 500);
+        } else {
+            dynamicPackageLoader.loadedPackages[packageName] = true;
+            delete dynamicPackageLoader.loadingPackages[packageName];
+            callback('complete');
+        }
+    }
+
+    this.checkComplete();
+}
+
+var dynamicPackageLoader = {
+    loadedPackages: {},
+    loadingPackages: {},
+    currentFiles: [],
+
+    load: function(packageName, callback, manifest) {
+        if (this.loadedPackages[packageName]) {
+            if (callback)
+                callback(packageName);
+        } else {
+            new dynamicPackage(packageName, callback, manifest);
+        }
+    },
+
+    packageLoaded: function(packageName) {
+        return this.loadedPackages[packageName];
+    },
+
+    setPackageLoaded: function(packageName) {
+        this.loadedPackages[packageName] = true;
+    }
+};
+
+$(function() {
+		$(document).delegate('input.blur-on-esc', 'keyup', function( e, options ) {
+				if ( options && options.silent ) return;
+				if ( e.which == '27' ) {
+						$(e.target).blur();
+				}
+		});
+});
+
 // An animation that grows a box shadow of the review hue
 $.fx.step.reviewExplode = function(fx) {
-    var val = fx.now + fx.unit;
-    $( fx.elem ).css( 'boxShadow',
-            '0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
+		var val = fx.now + fx.unit;
+		$( fx.elem ).css( 'boxShadow',
+						'0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
 };
 
 var Review = {

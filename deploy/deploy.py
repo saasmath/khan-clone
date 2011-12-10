@@ -1,13 +1,12 @@
 import sys
-import re
 import subprocess
 import os
 import optparse
 import datetime
 import urllib2
 import webbrowser
-import re
 import getpass
+import re
 
 sys.path.append(os.path.abspath("."))
 import compress
@@ -86,7 +85,7 @@ def send_hipchat_deploy_message(version, includes_local_changes, email):
             }
     public_message = "Just deployed %s" % message_tmpl
     private_message = "%s just deployed %s" % (email, message_tmpl)
-    
+
     hipchat_message(public_message, ["Exercises"])
     hipchat_message(private_message, ["1s and 0s"])
 
@@ -173,21 +172,21 @@ def check_secrets():
 def tidy_up():
     """moves all pycs and compressed js/css to a rubbish folder alongside the project"""
     trashdir = tempfile.mkdtemp(dir="../", prefix="rubbish-")
-    
+
     print "Moving old files to %s." % trashdir
-    
+
     junkfiles = open(".hgignore","r")
-    please_tidy = [filename.strip() for filename in junkfiles 
+    please_tidy = [filename.strip() for filename in junkfiles
                       if not filename.strip().startswith("#")]
-    but_ignore = ["secrets.py", "", "syntax: glob"]
+    but_ignore = ["secrets.py", "", "syntax: glob", ".git", ".pydevproject"]
     [please_tidy.remove(path) for path in but_ignore]
-    
+
     for root, dirs, files in os.walk("."):
         if ".git" in dirs:
             dirs.remove(".git")
         if ".hg" in dirs:
             dirs.remove(".hg")
-        
+
         for dirname in dirs:
             removables = [glob.glob( os.path.join(root, dirname, rubbish) ) for rubbish in please_tidy
                           if len( glob.glob( os.path.join(root, dirname, rubbish) ) ) > 0]
@@ -195,7 +194,12 @@ def tidy_up():
             please_remove = [filename for sublist in removables for filename in sublist]
             if please_remove:
                 [ os.renames(stuff, os.path.join(trashdir,stuff)) for stuff in please_remove ]
-    
+
+
+def compile_handlebar_templates():
+    print "Compiling handlebar templates"
+    return 0 == popen_return_code(['python',
+                                   'deploy/compile_handlebar_templates.py'])
 
 def compress_js():
     print "Compressing javascript"
@@ -261,7 +265,7 @@ def main():
         tidy_up()
         if options.dryrun:
             return
-        
+
     includes_local_changes = hg_st()
     if not options.force and includes_local_changes:
         print "Local changes found in this directory, canceling deploy."
@@ -287,19 +291,18 @@ def main():
         compress.hashes = {}
 
     print "Deploying version " + str(version)
-    compress.revert_js_css_hashes()
 
     if not compile_templates():
         print "Failed to compile templates, bailing."
         return
 
+    compile_handlebar_templates()
     compress_js()
     compress_css()
 
     if not options.dryrun:
         (email, password) = get_app_engine_credentials()
         success = deploy(version, email, password)
-        compress.revert_js_css_hashes()
         if success:
             send_hipchat_deploy_message(version, includes_local_changes, email)
             open_browser_to_ka_version(version)

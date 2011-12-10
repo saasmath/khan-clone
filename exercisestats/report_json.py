@@ -71,7 +71,7 @@ def get_bucket_cursor(refresh_secs, bucket_size):
 
 class ExerciseOverTimeGraph(request_handler.RequestHandler):
     def get(self):
-        self.response.out.write(self.get_json_response())
+        self.render_jsonp(self.get_json_response())
 
     def get_json_response(self):
         # Currently accepts: { "buckets", "all", "newest" }

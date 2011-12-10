@@ -155,11 +155,14 @@
     height:auto;      /* the drop-down height will be determiend by line count */
     width:auto;
     min-width: 150px;
-    *top: 3.5ex;  /* For IE7: line-height + padding-top + padding-bottom */
-    *width: 30ex; /* For IE7: approx maximum chars in a menu item */
     z-index: 4;
 }
-
+.lte7 .css-menu.noscript > ul > li:hover > ul,
+.lte7 .css-menu.noscript > ul > li > a:hover > ul,
+.lte7 .css-menu > ul > li.css-menu-js-hover > ul {
+    top: 3.5ex;  /* For IE7: line-height + padding-top + padding-bottom */
+    width: 30ex; /* For IE7: approx maximum chars in a menu item */
+}
 .css-menu > ul > li > ul {
     overflow: hidden;
     border: solid 1px #ddd;
@@ -226,7 +229,9 @@
     padding: 0;
     height:auto;      /* the drop-down height will be determiend by line count */
     width: 100%;
-    *width: 30ex; /* For IE7: ~ maximum chars in a menu item */
+}
+.lte7 .css-menu > ul > li > ul > li  {
+    width: 30ex; /* For IE7: ~ maximum chars in a menu item */
 }
 
 .css-menu > ul > li > ul > li > ul {

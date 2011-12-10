@@ -1,4 +1,5 @@
 var ModalVideo = {
+    template: Templates.get("video.modal-video"),
     modal: null,
 
     linkifyTooltip: function() {
@@ -20,18 +21,18 @@ var ModalVideo = {
     hookup: function() {
         // ev.which doesn't work in IE<9 on click events, so get it from
         // ev.button on a mouseup event (which comes first)
-        var mouseup_button = 0;
+        var mouseupButton = 0;
 
         // add click handlers to all related video links for lightbox
         jQuery(document).delegate("a.related-video", {
             mouseup: function(ev) {
-                mouseup_button = ev.button;
+                mouseupButton = ev.button;
                 return true;
             },
             click: function(ev) {
-                // workaround for IE<9
-                ev.which = ev.which || mouseup_button;
-                mouseup_button = 0;
+                // workaround for IE<=8
+                ev.which = ev.which || mouseupButton;
+                mouseupButton = 0;
 
                 if ( ev.which == 1 ) {
                     // left mouse button: show modal video
@@ -73,8 +74,8 @@ var ModalVideo = {
             video_url: Khan.relatedVideoHref(video)
         };
 
-        this.modal = $('#modal-video-tmpl')
-            .tmplPlugin(context).appendTo('body')
+        this.modal = $(this.template(context))
+            .appendTo('body')
             .modal({
                 keyboard: true,
                 backdrop: true,
@@ -129,3 +130,5 @@ var ModalVideo = {
         this.modal = null;
     }
 };
+
+Handlebars.registerPartial('youtube-player', Templates.get( "video.youtube-player" ));

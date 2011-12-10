@@ -1,4 +1,4 @@
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import Badge, BadgeCategory
 from templatefilters import seconds_to_time_string
 
 # All badges awarded for spending a certain amount of time watching videos, total
