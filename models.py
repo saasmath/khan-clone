@@ -652,6 +652,14 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     uvc.pickled_dict = pickle.dumps(css)
     uvc.load_pickled()
+
+    # if set_css_deferred runs out of order then we bump the version number 
+    # to break the cache
+    if version < uvc.version:
+        version = uvc.version + 1
+        user_data.uservideocss_version += 1
+        db.put(user_data)
+        
     uvc.version = version
     db.put(uvc)
 
