@@ -1218,26 +1218,32 @@ class Topic(db.Model):
         return changed_entities
 
     def move_child(self, child, new_parent, new_parent_pos):
+        # remove the child
         old_index = self.child_keys.index(child.key())
         del self.child_keys[old_index]
+        updated_entities = set([self])
 
+        # check to make sure the new parent is different than the old one
         if new_parent.key() != self.key():
+            # add the child to the new parent's children list
             new_parent.child_keys.insert(int(new_parent_pos), child.key())
+            updated_entities.add(new_parent)
 
-            old_index = child.parent_keys.index(self.key())
-            del child.parent_keys[old_index]
-            child.parent_keys.append(new_parent.key())
-            changed_descendants = child.update_ancestor_keys()
-            changed_descendants.add(child)  
-            changed_descendants.add(new_parent)
-           
+            if child.__class__.__name__ == "Topic":
+                # if the child is a topic make sure to update its parent list
+                old_index = child.parent_keys.index(self.key())
+                del child.parent_keys[old_index]
+                child.parent_keys.append(new_parent.key())
+                updated_entities.add(child)     
+                # now that the child's parent has changed, go to the child all of the child's descendants and update their ancestors
+                updated_entities.update(child.update_ancestor_keys())
+        
         else:
+            # they are moving the item within the same node, so just update self with the new position
             self.child_keys.insert(int(new_parent_pos), child.key())
 
         def move_txn():
-            self.put()
-            if new_parent.key() != self.key():
-                db.put(changed_descendants)
+            db.put(updated_entities)
 
         return db.run_in_transaction(move_txn)    
 
