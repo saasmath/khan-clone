@@ -83,7 +83,7 @@ Badges.BadgeList = Backbone.Collection.extend({
  * A list of user badges that can be listened to.
  */
 Badges.UserBadgeList = Backbone.Collection.extend({
-    model: this.Badge
+    model: this.UserBadge
 });
 
 /**
@@ -135,6 +135,11 @@ Badges.DisplayCase = Backbone.View.extend({
         );
     },
 
+    events: {
+        "click .main-case .achievement-badge": "onBadgeClicked_",
+        "click .badge-picker .achievement-badge": "onBadgeInPickerClicked_"
+    },
+
     /**
      * @return {boolean} Whether or not this display case can go into "edit" mode
      *        to allow a user to select which badges go inside.
@@ -180,14 +185,6 @@ Badges.DisplayCase = Backbone.View.extend({
         });
 
         this.showBadgePicker_();
-        $(this.badgePickerEl).delegate(
-                ".achievement-badge",
-                "click",
-                _.bind( this.onBadgeInPickerClicked_, this ));
-        $(this.mainCaseEl).delegate(
-                ".achievement-badge",
-                "click",
-                _.bind( this.onBadgeClicked_, this ));
     },
 
     /**
