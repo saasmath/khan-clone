@@ -1,6 +1,9 @@
 .node-title {
     font-size: 14px;
     font-weight: bold;
+    width: 250px;
+    vertical-align: middle;
+    display: inline;
 }
 
 .node-properties td {
@@ -23,7 +26,8 @@
     position: fixed;
 }
 
-.modal.add-existing-item {
+.modal.add-existing-item,
+.modal.create-exercise {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
   width: 700px; /* this is redundant but here for clarity */
@@ -56,7 +60,20 @@
 
 #details-view .item-action {
     float: left;
+    margin-left: 2px;
+}
+#details-view .item-action.separated {
     margin-left: 10px;
+}
+
+#details-view .save-button {
+    float: right;
+    width: 100px;
+    margin-right: 10px;
+    margin-top: 5px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 #details-view input[type="text"] {

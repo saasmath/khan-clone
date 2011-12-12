@@ -152,6 +152,7 @@ javascript = {
             "jquery.contextMenu.js",
             "edit-topic.handlebars",
             "edit-video.handlebars",
+            "create-exercise.handlebars",
             "edit-exercise.handlebars",
             "add-existing-item.handlebars",
             "topics-admin.js",

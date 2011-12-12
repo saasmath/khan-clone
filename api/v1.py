@@ -11,7 +11,7 @@ import templatetags # Must be imported to register template tags
 from badges import badges, util_badges, models_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
-from exercises import attempt_problem, make_wrong_attempt
+from exercises import attempt_problem, make_wrong_attempt, UpdateExercise
 from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
@@ -371,6 +371,14 @@ def exercise_videos(exercise_name):
         exercise_videos = exercise.related_videos_query()
         return map(lambda exercise_video: exercise_video.video, exercise_videos)
     return []
+
+@route("/api/v1/exercises/<exercise_name>", methods=["PUT","POST"])
+@developer_required
+@jsonp
+@jsonify
+def exercise_save(exercise_name):
+    request.json["name"] = exercise_name
+    return UpdateExercise.do_update(request.json);
 
 @route("/api/v1/videos/<video_id>", methods=["GET"])
 @jsonp
