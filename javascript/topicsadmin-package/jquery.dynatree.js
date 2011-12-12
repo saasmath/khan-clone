@@ -3155,7 +3155,9 @@ function _initDragAndDrop(tree) {
 			// Let source tree create the helper element
 			helper: function(event) {
 				var sourceNode = getDtNodeFromElement(event.target);
-				return sourceNode.tree._onDragEvent("helper", sourceNode, null, event, null, null);
+                if (sourceNode)
+                    return sourceNode.tree._onDragEvent("helper", sourceNode, null, event, null, null);
+                return null;
 			},
 			_last: null
 		});

@@ -71,24 +71,14 @@ var TopicTreeEditor = {
                     sourceNode.move(node, hitMode);
 
                     var newParent = sourceNode.parent;
+
                     var data = {
                         kind: sourceNode.data.kind,
                         id: sourceNode.data.key,
                         new_parent_id: newParent.data.key,
                         new_parent_pos: newParent.childList.indexOf(sourceNode)
                     }
-                    $.ajax({
-                        url: '/api/v1/topic/' + oldParent.data.key + '/movechild',
-                        type: 'POST',
-                        data: data,
-                        success: function() {
-                            child = topicTree.get(oldParent.data.key).removeChild(data.kind, data.id);
-                            topicTree.get(data.new_parent_id).addChild(child, data.new_parent_pos);
-                        },
-                        error: function() {
-                            // ?
-                        }
-                    });
+                    TopicTopicNodeEditor.moveItem(oldParent.data.key, data); 
                 }
             },
 
@@ -340,7 +330,15 @@ var TopicAddExistingItemView = Backbone.View.extend({
         if (!itemID)
             return;
 
-        TopicTopicNodeEditor.finishAddExistingItem(this.type, itemID);
+        this.hide();
+
+        var kind;
+        if (this.type == 'video')
+            kind = 'Video';
+        else
+            kind = 'Exercise';
+
+        TopicTopicNodeEditor.finishAddExistingItem(kind, itemID);
     },
 
     hide: function() {
@@ -351,6 +349,7 @@ var TopicAddExistingItemView = Backbone.View.extend({
 var TopicTopicNodeEditor = {
     existingItemView: null,
     contextModel: null,
+    itemCopyBuffer: null,
 
     addTag: function() {
         var tag = $("#add-tag").val();
@@ -417,6 +416,25 @@ var TopicTopicNodeEditor = {
             TopicTopicNodeEditor.contextModel = model;
             TopicTopicNodeEditor.existingItemView.show('exercise');
 
+        } else if (action == 'paste_item') {
+
+            if (!TopicTopicNodeEditor.itemCopyBuffer)
+                return;
+
+            if (TopicTopicNodeEditor.itemCopyBuffer.type == 'copy') {
+                TopicTopicNodeEditor.contextModel = model;
+                TopicTopicNodeEditor.finishAddExistingItem(TopicTopicNodeEditor.itemCopyBuffer.kind, TopicTopicNodeEditor.itemCopyBuffer.id);
+
+            } else if (TopicTopicNodeEditor.itemCopyBuffer.type == 'cut') {
+                var data = {
+                    kind: TopicTopicNodeEditor.itemCopyBuffer.kind,
+                    id: TopicTopicNodeEditor.itemCopyBuffer.id,
+                    new_parent_id: model.id,
+                    new_parent_pos: model.get('children').length
+                }
+                TopicTopicNodeEditor.moveItem(TopicTopicNodeEditor.itemCopyBuffer.originalParent, data);
+            }
+
         } else if (action == 'delete_topic') {
             data = {
                 kind: 'Topic',
@@ -433,14 +451,7 @@ var TopicTopicNodeEditor = {
         }
     },
 
-    finishAddExistingItem: function(type, id) {
-        TopicTopicNodeEditor.existingItemView.hide();
-
-        var kind;
-        if (type == 'video')
-            kind = 'Video';
-        else
-            kind = 'Exercise';
+    finishAddExistingItem: function(kind, id) {
 
         KAConsole.log('Adding ' + kind + ' ' + id + ' to Topic ' + TopicTopicNodeEditor.contextModel.get('title'));
         var data = {
@@ -455,6 +466,22 @@ var TopicTopicNodeEditor = {
             success: function(json) {
                 KAConsole.log('Added item successfully.');
                 TopicTopicNodeEditor.contextModel.set(json);
+            }
+        });
+    },
+
+
+    moveItem: function(oldParentID, moveData) {
+        $.ajax({
+            url: '/api/v1/topic/' + oldParentID + '/movechild',
+            type: 'POST',
+            data: moveData,
+            success: function() {
+                child = topicTree.get(oldParentID).removeChild(moveData.kind, moveData.id);
+                topicTree.get(moveData.new_parent_id).addChild(child, moveData.new_parent_pos);
+            },
+            error: function() {
+                // ?
             }
         });
     },
@@ -500,7 +527,20 @@ var TopicItemNodeEditor = {
         if (!parentModel)
             parentModel = TopicNodeEditor.parentModel;
 
-        if (action == 'remove_item') {
+        if (action == 'copy_item') {
+            TopicTopicNodeEditor.itemCopyBuffer = {
+                type: 'copy',
+                kind: kind,
+                id: id
+            };
+        } else if (action == 'cut_item') {
+            TopicTopicNodeEditor.itemCopyBuffer = {
+                type: 'cut',
+                kind: kind,
+                id: id,
+                originalParent: parentModel.id
+            };
+        } else if (action == 'remove_item') {
             data = {
                 kind: kind,
                 id: id
