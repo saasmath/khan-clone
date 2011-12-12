@@ -83,6 +83,7 @@ javascript = {
     "profile": {
         "files": [
             "jquery.address-1.4.min.js",
+            "jquery.Jcrop.js",
             "highcharts.js",
             "user-card.handlebars",
             "user-card.js",
@@ -202,6 +203,7 @@ stylesheets = {
     },
     "profile": {
         "files": [
+            "jquery.Jcrop.css",
             "profile.css",
             "badges.css",
         ]

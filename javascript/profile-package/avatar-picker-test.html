@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<!-- Unit tests and demos for avatar picker -->
+<html>
+<head>
+<script src="../testbase.js"></script>
+<script src="jquery.Jcrop.js"></script>
+<link rel="stylesheet" type="text/css" href="../../stylesheets/profile-package/jquery.Jcrop.css"></link>
+<script>
+$(function() {
+    function showCoords(coord) {
+        var x = coord.x,
+            y = coord.y,
+            x2 = coord.x2,
+            y2 = coord.y2,
+            w = coord.w;
+            h = coord.h,
+            output = "<p>(" + x + ", " + y + ") to (" + x2 + ", " + y2 + ")</p>"
+                        + "<p>width: " + w + " height: " + h + "</p>";
+        $("#crop-output").html(output);
+    }
+
+    $("#crop-target").Jcrop({
+        onChange: showCoords,
+        onSelect: showCoords,
+        aspectRatio: 1,
+        minSize: [100, 100],
+        maxSize: [200, 200],
+        setSelect: [0, 0, 100, 100]
+        //  boxWidth: 500,
+    });
+});
+</script>
+</head>
+<body>
+    <p id="crop-output"></p>
+    <img id="crop-target" src="/images/team-photo.jpg" />
+</body>
+</html>
