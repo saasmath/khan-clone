@@ -41,16 +41,16 @@ def exercise_message(exercise, user_exercise_graph, sees_graph=False,
     sees_graph is part of an ab_test to see if a small graph will help
     """
 
+    # TODO(david): Should we show a message if the user gets a problem wrong
+    #     after proficiency, to explain that this exercise needs to be reviewed?
+
     exercise_states = user_exercise_graph.states(exercise.name)
 
     if review_mode and user_exercise_graph.has_completed_review():
         filename = 'exercise_message_review_finished.html'
 
-    # FIXME(david): Napalming this in the morning!
-    elif exercise_states['endangered']:
-        filename = 'exercise_message_endangered.html'
-
-    elif exercise_states['proficient'] and not review_mode:
+    elif (exercise_states['proficient'] and not exercise_states['reviewing'] and
+            not review_mode):
         if sees_graph:
             filename = 'exercise_message_proficient_withgraph.html'
         else:

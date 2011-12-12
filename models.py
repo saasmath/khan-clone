@@ -491,31 +491,22 @@ class UserExercise(db.Model):
 
         self.review_interval_secs = review_interval.days * 86400 + review_interval.seconds
 
-    def set_proficient(self, proficient, user_data):
-        if not proficient and not self.has_been_proficient():
-            # Not proficient and never has been so nothing to do
+    def set_proficient(self, user_data):
+        if self.exercise in user_data.proficient_exercises:
             return
 
-        if proficient:
-            if self.exercise not in user_data.proficient_exercises:
-                self.proficient_date = datetime.datetime.now()
+        self.proficient_date = datetime.datetime.now()
 
-                user_data.proficient_exercises.append(self.exercise)
-                user_data.need_to_reassess = True
-                user_data.put()
+        user_data.proficient_exercises.append(self.exercise)
+        user_data.need_to_reassess = True
+        user_data.put()
 
-                util_notify.update(user_data, self, False, True)
+        util_notify.update(user_data, self, False, True)
 
-                if self.exercise in UserData.conversion_test_hard_exercises:
-                    bingo('hints_gained_proficiency_hard_binary')
-                elif self.exercise in UserData.conversion_test_easy_exercises:
-                    bingo('hints_gained_proficiency_easy_binary')
-
-        else:
-            if self.exercise in user_data.proficient_exercises:
-                user_data.proficient_exercises.remove(self.exercise)
-                user_data.need_to_reassess = True
-                user_data.put()
+        if self.exercise in UserData.conversion_test_hard_exercises:
+            bingo('hints_gained_proficiency_hard_binary')
+        elif self.exercise in UserData.conversion_test_easy_exercises:
+            bingo('hints_gained_proficiency_easy_binary')
 
 class CoachRequest(db.Model):
     coach_requesting = db.UserProperty()
@@ -2124,7 +2115,8 @@ class UserExerciseGraph(object):
         #   * ex and all of ex's covering ancestors either
         #      * are scheduled to have their next review in the past, or
         #      * were answered incorrectly on last review (i.e. streak == 0 with proficient == true)
-        #   * none of ex's covering ancestors should be reviewed
+        #   * none of ex's covering ancestors should be reviewed or ex was
+        #     previously incorrectly answered (ex.streak == 0)
         #   * the user is proficient at ex
         # the algorithm:
         #   for each exercise:
@@ -2133,7 +2125,10 @@ class UserExerciseGraph(object):
         #   select and mark the exercises in which the user is proficient but with next review times in the past as review candidates
         #   for each of those candidates:
         #     traverse it's ancestors, computing and storing whether an ancestor is also a candidate
-        #   all exercises that are candidates but do not have ancestors as candidates should be listed for review
+        #   all exercises that are candidates but do not have ancestors as
+        #   candidates should be listed for review. Covering ancestors are not
+        #   considered for incorrectly answered review questions
+        #   (streak == 0 and proficient).
 
         now = datetime.datetime.now()
 
@@ -2152,7 +2147,8 @@ class UserExerciseGraph(object):
 
                 for covering_graph_dict in graph_dict["coverer_dicts"]:
                     covering_next_review = compute_next_review(covering_graph_dict)
-                    if covering_next_review > graph_dict["next_review"]:
+                    if (covering_next_review > graph_dict["next_review"] and
+                            graph_dict["streak"] != 0):
                         graph_dict["next_review"] = covering_next_review
 
             return graph_dict["next_review"]
@@ -2182,7 +2178,8 @@ class UserExerciseGraph(object):
 
         review_dicts = []
         for graph_dict in candidate_dicts:
-            if not compute_is_ancestor_review_candidate(graph_dict):
+            if (not compute_is_ancestor_review_candidate(graph_dict) or
+                    graph_dict["streak"] == 0):
                 review_dicts.append(graph_dict)
 
         return review_dicts
@@ -2194,7 +2191,6 @@ class UserExerciseGraph(object):
             "proficient": graph_dict["proficient"],
             "suggested": graph_dict["suggested"],
             "struggling": graph_dict["struggling"],
-            "endangered": graph_dict["endangered"],
             "summative": graph_dict["summative"],
             "reviewing": graph_dict in self.review_graph_dicts(),
         }
@@ -2237,7 +2233,6 @@ class UserExerciseGraph(object):
                 "proficient": None,
                 "explicitly_proficient": None,
                 "suggested": None,
-                "endangered": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
             }
@@ -2343,14 +2338,8 @@ class UserExerciseGraph(object):
 
             return graph_dict["suggested"]
 
-        def set_endangered(graph_dict):
-            graph_dict["endangered"] = (graph_dict["proficient"] and
-                    graph_dict["streak"] == 0 and
-                    graph_dict["proficient_date"] is not None)
-
         for exercise_name in graph:
             set_suggested(graph[exercise_name])
-            set_endangered(graph[exercise_name])
 
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 

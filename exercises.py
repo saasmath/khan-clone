@@ -479,7 +479,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
                         
-                    user_exercise.set_proficient(True, user_data)
+                    user_exercise.set_proficient(user_data)
                     user_data.reassess_if_necessary()
 
                     just_earned_proficiency = True
@@ -503,10 +503,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 if user_exercise.is_struggling():
                     bingo('struggling_problems_wrong_post_struggling')
-    
-                if user_exercise.streak == 0:
-                    # 2+ in a row wrong -> not proficient
-                    user_exercise.set_proficient(False, user_data)
 
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
