@@ -2179,7 +2179,7 @@ class UserExerciseGraph(object):
         review_dicts = []
         for graph_dict in candidate_dicts:
             if (not compute_is_ancestor_review_candidate(graph_dict) or
-                    graph_dict["streak"] == 0):
+                    (graph_dict["streak"] == 0 and graph_dict["total_done"] > 0)):
                 review_dicts.append(graph_dict)
 
         return review_dicts
