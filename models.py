@@ -603,11 +603,17 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.STARTED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+                       UserVideoCss.STARTED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def set_completed(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.COMPLETED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+                       UserVideoCss.COMPLETED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def _chunker(seq, size):
