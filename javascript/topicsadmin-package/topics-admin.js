@@ -286,6 +286,9 @@ var TopicTopicNodeEditor = {
                         success: function(json) {
                             KAConsole.log('Added topic successfully.');
                             model.set(json);
+
+                            node.expand();
+                            node.getChildren()[data.pos].activate();
                         }
                     });
                 }
@@ -358,6 +361,7 @@ var TopicTopicNodeEditor = {
             success: function(json) {
                 KAConsole.log('Added item successfully.');
                 TopicTopicNodeEditor.contextModel.set(json);
+
                 TopicTopicNodeEditor.contextNode.expand();
                 TopicTopicNodeEditor.contextNode.getChildren()[data.pos].activate();
             }
@@ -371,8 +375,8 @@ var TopicTopicNodeEditor = {
             type: 'POST',
             data: moveData,
             success: function() {
-                child = topicTree.get(oldParentID).removeChild(moveData.kind, moveData.id);
-                topicTree.get(moveData.new_parent_id).addChild(child, moveData.new_parent_pos);
+                child = getDefaultTopicTree().get(oldParentID).removeChild(moveData.kind, moveData.id);
+                getDefaultTopicTree().get(moveData.new_parent_id).addChild(child, moveData.new_parent_pos);
 
                 parent_node = TopicTreeEditor.tree.getNodeByKey(moveData.new_parent_id);
                 parent_node.expand();
