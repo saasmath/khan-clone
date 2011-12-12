@@ -538,7 +538,7 @@ class PostLogin(request_handler.RequestHandler):
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            self.delete_cookie("fbs_" + App.facebook_app_id)
+            self.delete_cookie("fbsr_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()

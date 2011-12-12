@@ -847,36 +847,32 @@ var FacebookHook = {
         if (!window.FB_APP_ID) return;
 
         window.fbAsyncInit = function() {
-            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true});
+            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
 
             if (!USERNAME) {
                 FB.Event.subscribe('auth.login', function(response) {
-                    if (response.session) {
-                        FacebookHook.fixMissingCookie(response.session);
-                    }
-
                     var url = URL_CONTINUE || "/";
                     if (url.indexOf("?") > -1)
                         url += "&fb=1";
                     else
                         url += "?fb=1";
 
-                    var hasCookie = !!readCookie("fbs_" + FB_APP_ID);
+                    var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
                     url += "&hc=" + (hasCookie ? "1" : "0");
 
-                    url += "&hs=" + (response.session ? "1": "0");
+                    url += "&hs=" + (response.authResponse ? "1": "0");
 
                     window.location = url;
                });
             }
 
             FB.getLoginStatus(function(response) {
-
+                
                 $('#page_logout').click(function(e) {
 
-                    eraseCookie("fbs_" + FB_APP_ID);
+                    eraseCookie("fbsr_" + FB_APP_ID);
 
-                    if (response.session) {
+                    if (response.authResponse) {
 
                         FB.logout(function() {
                             window.location = $("#page_logout").attr("href");
@@ -896,23 +892,6 @@ var FacebookHook = {
             e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
             document.getElementById('fb-root').appendChild(e);
         });
-    },
-
-    fixMissingCookie: function(session) {
-        // In certain circumstances, Facebook's JS SDK fails to set their cookie
-        // but still thinks users are logged in. To avoid continuous reloads, we
-        // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
-
-        if (readCookie("fbs_" + FB_APP_ID))
-            return;
-
-        var sCookie = "";
-        $.each(session, function( key ) {
-            sCookie += key + "=" + encodeURIComponent(session[key]) + "&";
-        });
-
-        // Explicitly use a session cookie here for IE's sake.
-        createCookie("fbs_" + FB_APP_ID, "\"" + sCookie + "\"");
     }
 };
 FacebookHook.init();
