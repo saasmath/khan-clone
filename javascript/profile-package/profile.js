@@ -155,6 +155,44 @@ var Profile = {
 
         Profile.ProgressSummaryView = new ProgressSummaryView();
     },
+    
+    tabRouter: Backbone.Router.extend({
+        
+        /* This router is really simple and based off of the documentation here:
+         * http://documentcloud.github.com/backbone/#Router
+         * It's probably really naive to try to implement it like this, but hey maybe it will fix all of our problems?
+         * Also, this part is not done:
+         *      During page load, after your application has finished creating all of its routers, 
+         *      be sure to call Backbone.history.start() 
+         */
+         
+        routes: {
+            "profile": "renderProfile",
+            
+            "profile/vital-stats/:graph":               "renderVitalStats",
+            
+            "profile/achievements":                     "renderAchievements",
+            
+            "profile/goals":                            "renderGoals"
+        },
+        
+        renderProfile: function(){
+            return false;
+        },
+        
+        renderVitalStats: function( graph ){
+            return false;
+        },
+        
+        renderAchievements: function(){
+            return false;
+        },
+        
+        renderGoals: function(){
+            return false;
+        }
+    }),
+    
     highlightPoints: function(chart, fxnHighlight) {
 
         if (!chart) return;
