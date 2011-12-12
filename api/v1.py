@@ -906,6 +906,22 @@ def badge_categories():
 def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
 
+@route("/api/v1/user/badges/public", methods=["POST", "PUT"])
+@jsonp
+@jsonify
+def handle_public_user_badges():
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    public_badges_json = request.json
+    if not public_badges_json:
+        return api_invalid_param_response(
+                "List of names of public badges expected")
+
+    user_data.public_badges = public_badges_json
+    user_data.save()
+
 @route("/api/v1/user/badges", methods=["GET"])
 @oauth_optional()
 @jsonp

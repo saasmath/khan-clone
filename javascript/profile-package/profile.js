@@ -996,6 +996,7 @@ var Profile = {
     populateAchievements: function() {
         // Render the public badge list, as that's ready immediately.
         var publicBadgeList = new Badges.BadgeList(publicBadgeData);
+        publicBadgeList.setSaveUrl("/api/v1/user/badges/public");
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
         $(".sticker-book").append( displayCase.render().el );
 

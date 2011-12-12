@@ -74,9 +74,39 @@ Badges.UserBadge = Backbone.Model.extend({
 
 /**
  * A list of badges that can be listened to.
+ * This list can be edited by adding or removing from the collection,
+ * and saved up to a server.
  */
 Badges.BadgeList = Backbone.Collection.extend({
-    model: this.Badge
+    model: this.Badge,
+
+    saveUrl: null,
+
+    setSaveUrl: function( url ) {
+        this.saveUrl = url;
+    },
+
+    toJSON: function() {
+        return this.map(function( badge ) {
+            return badge.get( "name" );
+        });
+    },
+
+    /**
+     * Saves the collection to the server via Backbone.sync.
+     * This does *not* save any individual edits to Badges within this list;
+     * it simply posts the information about what belongs in the set.
+     * @param {Object} options Options similar to what Backbone.sync accepts.
+     */
+    save: function( options ) {
+        options = options || {};
+        options["url"] = this.saveUrl;
+        options["contentType"] = "application/json";
+        options["data"] = JSON.stringify(this.map(function( badge ) {
+            return badge.get( "name" );
+        }));
+        Backbone.sync.call(this, 'update', this, options);
+    }
 });
 
 /**
@@ -267,8 +297,14 @@ Badges.DisplayCase = Backbone.View.extend({
                 jelRootEl.removeClass( "editing" );
             });
             jelPicker.undelegate();
+
+            this.save();
         }
         return this;
+    },
+
+    save: function() {
+        this.model.save();
     },
 
     setEditing_: function( editing ) {
