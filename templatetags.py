@@ -93,12 +93,52 @@ def streak_bar(user_exercise_dict):
 
     return shared_jinja.get().render_template("streak_bar.html", **template_values)
 
+def topic_browser(browser_id):
+    tree = models.Topic.get_root().make_tree(types = ["Topics"])
+    template_values = {
+       'browser_id': browser_id, 'topic_tree': tree 
+    }
+
+    return shared_jinja.get().render_template("topic_browser.html", **template_values)
+
+
 def playlist_browser(browser_id):
     template_values = {
         'browser_id': browser_id, 'playlist_structure': topics_list.PLAYLIST_STRUCTURE
     }
 
     return shared_jinja.get().render_template("playlist_browser.html", **template_values)
+
+def topic_browser_tree(tree, level=0):
+    s = ""
+    class_name = "topline"
+    for child in tree.children:
+        if not child.children:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            if child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            if child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
+
+            # show leaf node as a link
+            href = "#%s" % escape(slugify(child.id))
+
+            if level == 0:
+                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(child.title))
+            else:
+                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(child.title))
+
+        else:
+            if level > 0:
+                class_name += " sub"
+
+            s += "<li class='%s'>%s <ul>%s</ul></li>" % (class_name, escape(child.title), topic_browser_tree(child, level=level + 1))
+
+        class_name = ""
+
+    return s
 
 def playlist_browser_structure(structure, class_name="", level=0):
     if type(structure) == list:

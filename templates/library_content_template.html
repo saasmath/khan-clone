@@ -1,17 +1,16 @@
 {% import 'macros/library.html' as library %}
-
 <div id="library">
         <div id="library-content" >
             {{ library.column_major_order_styles() }}
             <div id="library-content-main">
-            {% for topic in topic_root.children %}
+            {% for topic in topics %}
             {% if loop.first %}
-                <div class="clear desktop-only"><a name="{{ topic.title|slugify|escape }}" id="{{ topic.title|slugify|escape }}">&nbsp;</a></div>
+                <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
-            <div data-role="page" id="{{ topic.title|slugify|escape }}" data-theme="b">
+            <div data-role="page" id="{{ topic.standalone_title|slugify|escape }}" data-theme="b">
                 <div data-role="header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
-                    <h2 class='playlist-heading {% if loop.first %}playlist-heading-first{% endif %}'>{{topic.title|escape}}</h2>
+                    <h2 class='playlist-heading {% if loop.first %}playlist-heading-first{% endif %}'>{{topic.standalone_title|escape}}</h2>
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
                 <div data-role="content">
@@ -21,7 +20,7 @@
                     {{ templatetags.column_major_sorted_videos(topic) }}
 
 
-                    {% if topic.title == "Arithmetic" and smart_history %}
+                    {% if topic.standalone_title == "Arithmetic" and smart_history %}
                     <div class="clear desktop-only">
                         <a name="smarthistory" id="smarthistory">&nbsp;</a>
                     </div>
@@ -41,7 +40,7 @@
 
                     <div class="clear desktop-only">
                     {% if topic.next %}
-                        <a name="{{ topic.next.title|slugify|escape }}" id="{{ topic.next.title|slugify|escape }}">&nbsp;</a>
+                        <a name="{{ topic.next.id|slugify|escape }}" id="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
                     {% endif %}
                     </div>
                 </div>
