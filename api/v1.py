@@ -907,6 +907,7 @@ def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
 
 @route("/api/v1/user/badges/public", methods=["POST", "PUT"])
+@oauth_required()
 @jsonp
 @jsonify
 def handle_public_user_badges():
