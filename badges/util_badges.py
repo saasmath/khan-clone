@@ -233,7 +233,8 @@ def get_public_user_badges(user_data=None):
             return []
 
     public_badges = user_data.public_badges or []
-    return [badge for badge in all_badges() if badge.name in public_badges]
+    full_dict = all_badges_dict()
+    return [full_dict[name] for name in public_badges if name in full_dict]
 
 class ViewBadges(request_handler.RequestHandler):
 
