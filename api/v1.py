@@ -80,19 +80,13 @@ def add_action_results(obj, dict_results):
 @route("/api/v1/content_topics", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
 @jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda: "api_content_topics_%s" % models.Setting.cached_library_content_date(),
-    layer=layer_cache.Layers.Memcache)
+# @layer_cache.cache_with_key_fxn(
+#    lambda: "api_content_topics_%s" % models.Setting.cached_library_content_date(),
+#    layer=layer_cache.Layers.Memcache)
 @jsonify
 def content_topics():
-    topics = models.Topic.get_all_topics()
-    content_topics = []
-    for topic in topics:
-        for child_key in topic.child_keys:
-            if child_key.kind() != "Topic":
-                content_topics.append(topic)
-                break
-    return content_topics
+    return models.Topic.get_content_topics()
+
 
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
@@ -113,7 +107,7 @@ def topic_videos(topic_id):
         video.position = i + 1
     return videos
 
-@route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
+@route("/api/v1/<topic_version>/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
 @jsonp
 #@layer_cache.cache_with_key_fxn(

@@ -1079,11 +1079,15 @@ class TopicVersion(db.Model):
             if default_version:
                 default_version.default = False
                 default_version.put()
-            self.version = True
+            self.default = True
             self.put()
 
-        xg_on = db.create_transaction_options(xg=True)
-        db.run_in_transaction_options(xg_on, update_txn)
+        # using --high-replication is slow on dev, so instead not using cross-group transactions on dev 
+        if App.is_dev_server:
+            update_txn()
+        else:
+            xg_on = db.create_transaction_options(xg=True)
+            db.run_in_transaction_options(xg_on, update_txn)
                                     
 
 class Topic(db.Model):
@@ -1102,6 +1106,10 @@ class Topic(db.Model):
     last_editted_by = db.UserProperty()
 
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_editted_by"]
+
+    @property
+    def ka_url(self):
+        return util.absolute_url('#%s' % self.id)
 
     def get_visible_data(self):
         children = db.get(self.child_keys)
@@ -1151,7 +1159,9 @@ class Topic(db.Model):
         return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).filter("version =", version).get()
 
     @staticmethod
-    def get_root(version):
+    def get_root(version = None):
+        if not version:
+            version = TopicVersion.get_default_version()
         return Topic.all().filter('id =', 'root').filter('version =', version).get()
 
     @staticmethod
@@ -1435,18 +1445,44 @@ class Topic(db.Model):
         # return the entity that was passed in, now with its children, and its descendants children all added
         return node_dict[self.key()]
 
-    @property
-    def ka_url(self):
-        return util.absolute_url('#%s' % self.id)
-
     @staticmethod
-    def get_all_topics(include_hidden = False):
-        query = Topic.all()
+    def get_all_topics(version = None, include_hidden = False):
+        if not version:
+            version = TopicVersion.get_default_version()
+
+        query = Topic.all().filter("version =", version)
         if not include_hidden:
             query.filter("hide =", False)
 
         return query.run()
-             
+
+    @staticmethod
+    def get_content_topics(version = None, include_hidden = False):
+        topics = Topic.get_all_topics(version, include_hidden)
+        
+        content_topics = []
+        for topic in topics:
+            for child_key in topic.child_keys:
+                if child_key.kind() != "Topic":
+                    content_topics.append(topic)
+                    break
+
+        content_topics.sort(key = lambda topic: topic.standalone_title)
+        return content_topics
+
+    @staticmethod
+    def get_filled_content_topics(types = [], version = None, include_hidden = False):
+        topics = Topic.get_content_topics()
+        child_dict = {}
+        for topic in topics:
+            child_dict.update(dict((key, True) for key in topic.child_keys if key.kind() in types or (len(types) == 0 and key.kind() != "Topic")))
+        child_dict.update(dict((entity.key(), entity) for entity in db.get(child_dict.keys())))
+        
+        for topic in topics:
+            topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]     
+
+        return topics
+
     @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False):
         if include_descendants:

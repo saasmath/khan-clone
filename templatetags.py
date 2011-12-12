@@ -109,49 +109,36 @@ def playlist_browser(browser_id):
 
     return shared_jinja.get().render_template("playlist_browser.html", **template_values)
 
-def topic_broswer_tree(tree, class_name="", level=0):
-    
+def topic_browser_tree(tree, level=0):
+    s = ""
+    class_name = "topline"
+    for child in tree.children:
+        if not child.children:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            if child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            if child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
 
-    if type(structure) == list:
-
-        s = ""
-        class_next = "topline"
-        for sub_structure in structure:
-            s += playlist_browser_structure(sub_structure, class_name=class_next, level=level)
-            class_next = ""
-        return s
-
-    else:
-
-        s = ""
-        name = structure["name"]
-
-        if structure.has_key("playlist"):
-
-            playlist_title = structure["playlist"]
-            href = "#%s" % escape(slugify(playlist_title))
-
-            # We have two special case playlist URLs to worry about for now. Should remove later.
-            if playlist_title.startswith("SAT"):
-                href = "/sat"
+            # show leaf node as a link
+            href = "#%s" % escape(slugify(child.id))
 
             if level == 0:
-                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(name))
+                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(child.title))
             else:
-                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(name))
-
-            if playlist_title=="History":
-                s += "<li class=''><a href='#smarthistory'>Art History</a></li>"
+                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(child.title))
 
         else:
-            items = structure["items"]
-
             if level > 0:
                 class_name += " sub"
 
-            s += "<li class='%s'>%s <ul>%s</ul></li>" % (class_name, escape(name), playlist_browser_structure(items, level=level + 1))
+            s += "<li class='%s'>%s <ul>%s</ul></li>" % (class_name, escape(child.title), topic_browser_tree(child, level=level + 1))
 
-        return s
+        class_name = ""
+
+    return s
 
 def playlist_browser_structure(structure, class_name="", level=0):
     if type(structure) == list:
