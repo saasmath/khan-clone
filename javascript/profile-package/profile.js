@@ -975,7 +975,7 @@ var Profile = {
         $("#profile-content").html(profileTemplate({email: USER_EMAIL}));
 
         $("#tabs").tabs().addClass('ui-tabs-vertical ui-helper-clearfix');
-        $("#tabs li").removeClass('ui-corner-top').addClass('ui-corner-left');
+        $("#tabs li").removeClass('ui-corner-top ui-state-default').addClass('ui-corner-left');
 
         Profile.populateUserCard();
         Profile.populateAchievements();

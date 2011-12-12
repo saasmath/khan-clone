@@ -596,12 +596,22 @@ div.graph-notification {
 #tabs .ui-tabs-nav {
     background: none;
     border-width: 0 1px 0 0;
+    border-color: #C6D1AD;
+}
+#tabs .ui-state-hover {
+    background: none;
+    border-width: 1px 0px 1px 1px;
+    text-decoration: underline;
+}
+#tabs .ui-state-hover.ui-tabs-selected {
+    background: #ecefe3;
+    text-decoration: none;
 }
 .ui-tabs-vertical { }
 .ui-tabs-vertical .ui-tabs-nav { padding: 18px .1em .2em .2em; width: 12em; position: absolute; left: 0; top: 0; bottom: 0; }
-.ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border-bottom: 1px solid lightGray !important; border-right-width: 0 !important; margin: 0 -1px .2em 0; }
+.ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border: none !important; margin: 0 -1px .2em 0; font-weight: normal;}
 .ui-tabs-vertical .ui-tabs-nav li a { display:block; }
-.ui-tabs-vertical .ui-tabs-nav li.ui-tabs-selected { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; border-right-width: 1px; margin-bottom: .2em; border-bottom-color: #aaa !important; }
+.ui-tabs-vertical .ui-tabs-nav li.ui-tabs-selected { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; border-right-width: 1px; margin-bottom: .2em; background: #ecefe3; }
 .ui-tabs-vertical .ui-tabs-panel { padding: 18px 0 0; margin-left: 14em; min-height: 500px; }
 
 #student-profile-nav #top-nav a{
