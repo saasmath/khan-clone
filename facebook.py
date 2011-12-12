@@ -31,8 +31,11 @@ usage of this module might look like this:
         profile = graph.get_object("me")
         friends = graph.get_connections("me", "friends")
 
-* Modified by Ben Kamens to fix urllib bug on GAE.
-* https://github.com/spoon16/python-sdk/commit/1785d233b8cfd8309ddd1ae99918266c61d96327
+* Modified by Ben Kamens...
+* ...to fix urllib bug on GAE:
+*   https://github.com/spoon16/python-sdk/commit/1785d233b8cfd8309ddd1ae99918266c61d96327
+* ...and to support the Facebook JS SDK's OAuth scheme:
+*   http://stackoverflow.com/questions/7585488/python-oauth-2-0-new-fbsr-facebook-cookie-error-validating-verification-code 
 
 """
 
@@ -183,7 +186,10 @@ class GraphAPIError(Exception):
 
 
 def get_user_from_cookie(cookies, app_id, app_secret):
-    """Parses the cookie set by the official Facebook JavaScript SDK.
+    """
+    NOTE: get_user_from_cookie is deprecated, see get_user_from_cookie_patched below.
+
+    Parses the cookie set by the official Facebook JavaScript SDK.
 
     cookies should be a dictionary-like object mapping cookie names to
     cookie values.
