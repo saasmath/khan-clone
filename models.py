@@ -1130,7 +1130,7 @@ class TopicVersion(db.Model):
             new_root = new_tree
         old_key_new_key_dict = {}
         for child in old_tree.children:
-            old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_tree).key()
+            old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_root, new_tree).key()
         new_tree.child_keys = [child_key if child_key not in old_key_new_key_dict else old_key_new_key_dict[child_key] for child_key in old_tree.child_keys]
         new_tree.put()
         return new_tree
@@ -1232,14 +1232,9 @@ class Topic(db.Model):
         return Topic.all().filter("title =", title).filter("version =", version).get()
 
     @staticmethod
-    def get_by_title_and_parent(title, parent, version = None):
-        if version is None:
-            version = TopicVersion.get_default_version()
-            if version is None:
-                logging.info("No default version has been set, getting latest version instead")
-                version = TopicVersion.get_latest_version()
-
-        return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).filter("version =", version).get()
+    # parent specifies version
+    def get_by_title_and_parent(title, parent):
+        return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).get()
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda version = None: "Topic.get_root_%s_%s" % (version, TopicVersion.get_date_updated(version)))
@@ -1369,7 +1364,6 @@ class Topic(db.Model):
         kwargs["ancestor_keys"] =  kwargs["parent_keys"][:]
         kwargs["ancestor_keys"].extend(parent.ancestor_keys if parent else []) 
 
-        logging.info(kwargs)
         new_topic = util.clone_entity(self, **kwargs)
 
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
@@ -1427,6 +1421,10 @@ class Topic(db.Model):
         
         self.version.update()
         db.run_in_transaction(delete_txn)  
+
+    def delete_tree(self):
+        for parent in self.parent_keys:
+            parent.delete_child(self)
 
     @staticmethod
     def _insert_txn(new_topic):

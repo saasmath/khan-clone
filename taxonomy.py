@@ -11,7 +11,7 @@ from google.appengine.ext import db
 
 
 import models
-from models import Topic, Playlist, Video
+from models import Topic, TopicVersion, Playlist, Video
 class EditTaxonomy(request_handler.RequestHandler):
 
     def get_tree_html(self, t):
@@ -54,7 +54,9 @@ class EditTaxonomy(request_handler.RequestHandler):
         # return
        
         # version = models.TopicVersion.get_edit_version()
-        
+        # version.set_default_version()
+        # return
+
         # root = Topic.get_by_id("root").make_tree()
         # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()
         
@@ -67,7 +69,8 @@ class EditTaxonomy(request_handler.RequestHandler):
 
         tree_nodes = []
 
-        root = Topic.get_root()
+        version = models.TopicVersion.get_edit_version()
+        root = Topic.get_root(version)
         data = root.get_visible_data()
 
         tree_nodes.append(data)
@@ -89,7 +92,9 @@ class EditTaxonomy(request_handler.RequestHandler):
                 if topic:
                     logging.info(topic_dict["name"] + " is already created")
                 else:
-                    topic = Topic.get_by_title(topic_dict["playlist"])
+                    version = TopicVersion.get_edit_version()
+                    root = Topic.get_root(version)
+                    topic = Topic.get_by_title_and_parent(topic_dict["playlist"], root)
                     delete_topics[topic.key()] = topic
                     logging.info("copying %s to parent %s" % (topic_dict["name"], parent.title))
                     topic.copy(title = topic_dict["name"], parent = parent, standalone_title = topic.title)
@@ -110,11 +115,12 @@ class EditTaxonomy(request_handler.RequestHandler):
 
     def recreate_topic_list_structure(self):
         import topics_list
-
-        root = Topic.get_by_id("root")
+        version = TopicVersion.get_edit_version()
+        root = Topic.get_by_id("root", version)
         delete_topics = self.recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
         for topic in delete_topics.values():
             topic.delete_tree()
+        version.set_default_version()
 
     def hide_topics(self):
         from topics_list import topics_list
