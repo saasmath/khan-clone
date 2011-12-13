@@ -1517,7 +1517,7 @@ class Topic(db.Model):
         for key in kwargs:
             setattr(new_topic, key, kwargs[key])
        
-        self.version.update()                   
+        version.update()                   
         return db.run_in_transaction(Topic._insert_txn, new_topic)
 
     def update(self, **kwargs):
