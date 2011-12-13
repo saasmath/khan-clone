@@ -1511,6 +1511,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         right: 13px;
         z-index: 100;
     }
+    .dashboard-filter-clear:active {
+        top: 10px;
+        padding-top: 5px;
+    }
     .ie .dashboard-filter-clear {
         top: 12px;
     }
