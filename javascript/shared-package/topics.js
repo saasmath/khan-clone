@@ -201,9 +201,9 @@ IncrementalCollection = Backbone.Collection.extend({
 
     Video = Backbone.Model.extend({
         defaults: {
-            readable_id: 'new_video', // API ID / slug
+            readable_id: '', // API ID / slug
 			kind: 'Video',
-            title: 'New Video',
+            title: '',
             youtube_id: '',
             description: '',
             keywords: '',
