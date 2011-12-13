@@ -77,15 +77,15 @@ def add_action_results(obj, dict_results):
 
     obj.action_results = dict_results
 
+@route("/api/v1/topicversion/<version>/content_topics", methods=["GET"])
+@route("/api/v1/topicversion/<version>/playlists", methods=["GET"]) 
 @route("/api/v1/content_topics", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
 @jsonp
-# @layer_cache.cache_with_key_fxn(
-#    lambda: "api_content_topics_%s" % models.Setting.cached_library_content_date(),
-#    layer=layer_cache.Layers.Memcache)
 @jsonify
-def content_topics():
-    return models.Topic.get_content_topics()
+def content_topics(version = None):
+    version = models.TopicVersion.get_by_id(version)
+    return models.Topic.get_content_topics(version)
 
 
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
@@ -149,12 +149,15 @@ def topic(topic_id):
         return api_invalid_param_response("Could not find topic with ID " + str(id))
 
     return topic.get_visible_data()
-    
+
+@route("/api/v1/topicversion/<version>/topic/<topic_id>", methods=["PUT"])    
 @route("/api/v1/topic/<topic_id>", methods=["PUT"])
 @oauth_optional()
 @jsonp
 @jsonify
-def put_topic(topic_id):
+def put_topic(topic_id, version = "default"):
+    version = models.TopicVersion.get_by_id(version)
+
     user_data = models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
@@ -162,28 +165,18 @@ def put_topic(topic_id):
     topic_json = request.json
     logging.info(topic_json)
 
-    topic = models.Topic.get_by_id(topic_id)
+    topic = models.Topic.get_by_id(topic_id, version)
 
     if not topic:
         kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['standalone_title', 'description', 'tags'])
+        kwargs["version"]=version
         topic = models.Topic.insert(title = topic_json['title'], parent = None, **kwargs)
         # return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
     else:
         changed = False
-        if topic_json["id"]!= topic_id:
-            existing_topic = models.Topic.get_by_id(topic_json["id"])
-            if not existing_topic:
-                topic.id = topic_json["id"]
-            else:
-                pass # don't allow people to change the slug to a different nodes slug
-
-        for attr in ['title', 'standalone_title', 'description', 'tags', 'hide']:
-            if getattr(topic, attr) != topic_json[attr]:
-                setattr(topic, attr, topic_json[attr])
-                changed = True
-        
-        if changed:
-            topic.put()
+        kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['title', 'standalone_title', 'description', 'tags', 'hide'])
+        kwargs["version"]=version
+        topic.update(**kwargs)
 
     return topic.get_visible_data()
 
