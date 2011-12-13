@@ -444,14 +444,34 @@ def get_youtube_info(youtube_id):
     video_data = models.Video(youtube_id=youtube_id)
     return youtube_get_video_data(video_data)
 
+@route("/api/v1/videos/", methods=["POST","PUT"])
 @route("/api/v1/videos/<video_id>", methods=["POST","PUT"])
 @developer_required
 @jsonp
 @jsonify
-def create_video(video_id):
-    video_data = models.Video(youtube_id=request.json["youtube_id"])
-    video_data = youtube_get_video_data(video_data)
+def save_video(video_id=""):
+    video_data = models.Video.get_for_readable_id(video_id)
+
+    if not video_data:
+        video_data = models.Video(youtube_id=request.json["youtube_id"])
+        video_data = youtube_get_video_data(video_data)
+
     if video_data:
+        if "readable_id" in request.json and request.json["readable_id"]:
+            video_data.readable_id = request.json["readable_id"]
+
+        if "title" in request.json and request.json["title"]:
+            video_data.title = request.json["title"]
+
+        if "youtube_id" in request.json and request.json["youtube_id"]:
+            video_data.youtube_id = request.json["youtube_id"]
+
+        if "description" in request.json and request.json["description"]:
+            video_data.description = request.json["description"]
+
+        if "keywords" in request.json and request.json["keywords"]:
+            video_data.keywords = request.json["keywords"]
+
         video_data.put()
         return video_data
 

@@ -772,6 +772,7 @@ var TopicCreateVideoView = Backbone.View.extend({
         });
 
         this.youtubeID = null;
+        $(this.el).find('input[name="youtube_id"]').val('');
         $(this.el).find('.create-video-preview').html("Enter a YouTube ID to look up a video.");
         $(self.el).find('.ok_button').addClass('disabled').removeClass('green');
     },
