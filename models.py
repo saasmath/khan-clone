@@ -1051,8 +1051,22 @@ class TopicVersion(db.Model):
         if version == "edit":
             return TopicVersion.get_edit_version()
         version = int(version)
-        return TopicVersion.all().filter("id =", version) 
+        return TopicVersion.all().filter("number =", version) 
     
+    @staticmethod
+    # might want to change this function especially with default version so that we do not have to do a RPC
+    def get_date_updated_by_id(version):
+        version = TopicVersion.get_by_id(version)
+        return version.date_updated
+
+    # function used by Topic.method calls to @layer_cache to figure out when a topic tree is stale
+    @staticmethod
+    def get_date_updated(version = None):
+        if version is None:
+            version = TopicVersion.get_default_version()
+        if version:
+            return version.date_updated
+
     @staticmethod
     def get_latest_version():
         return TopicVersion.all().order("-number").get()
@@ -1072,27 +1086,62 @@ class TopicVersion(db.Model):
         new_version = TopicVersion(last_editted_by = user,
                                    number = new_version_number)
         new_version.put()
+        return new_version
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda : "TopicVersion.get_default_version_%s" % Setting.cached_library_content_date())
     def get_default_version():
         return TopicVersion.all().filter("default = ", True).get()
 
     @staticmethod
     def get_edit_version():
-        return TopicVersion.all().filter("edit = ", True).get()
+        version = TopicVersion.all().filter("edit = ", True).get()
+        if version is None:
+            version = TopicVersion.create_new_version()
+            default = TopicVersion.get_default_version()
+            old_root = Topic.get_root(default)
+            old_tree = old_root.make_tree(types = ["Topics"], include_hidden = True)
+            TopicVersion.copy_tree(old_tree, version)
+            version.edit = True
+            version.put()
+        return version
+
+    @staticmethod
+    def copy_tree(old_tree, new_version, new_root = None, parent = None):
+        parent_keys = []
+        ancestor_keys = []
+        if parent:
+            parent_keys = [parent.key()]
+            ancestor_keys = parent_keys[:]
+            ancestor_keys.extend(parent.ancestor_keys)
+        new_tree = util.clone_entity(old_tree, **{'version': new_version, 'parent': new_root, 'parent_keys': parent_keys, 'ancestor_keys': ancestor_keys})
+        new_tree.put()
+        if not new_root:
+            new_root = new_tree
+        old_key_new_key_dict = {}
+        for child in old_tree.children:
+            old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_tree).key()
+        new_tree.child_keys = [child_key if child_key not in old_key_new_key_dict else old_key_new_key_dict[child_key] for child_key in old_tree.child_keys]
+        new_tree.put()
+        return new_tree
+
+    # copys a topic tree from an old version to a new version
+    @staticmethod
+    def copy_version(old_version, new_version):
+        old_root = Topic.get_root(old_version)
+        old_tree = old_root.make_tree(types = ["Topics"])
+        new_root = old_root.copy(title = old_root.title, 
+                                 parent = None, 
+                                 version = new_version)
 
     def update(self):
         user = UserData.current().user
         self.last_editted_by = user
         self.put()
-
-    # function used by Topic.method calls to @layer_cache to figure out when a topic tree is stale
-    @staticmethod
-    def get_date_updated(version = None):
-        if version is None:
-            version = TopicVersion.get_default_version()
-        if version:
-            return version.date_updated
+        logging.info("updating")
+        if self.default:
+            logging.info("setting new library content date")
+            Setting.cached_library_content_date(datetime.datetime.now())
 
     def set_default_version(self):
         default_version = TopicVersion.get_default_version()
@@ -1102,6 +1151,8 @@ class TopicVersion(db.Model):
                 default_version.default = False
                 default_version.put()
             self.default = True
+            self.edit = False
+            Setting.cached_library_content_date(datetime.datetime.now())
             self.put()
 
         # using --high-replication is slow on dev, so instead not using cross-group transactions on dev 
@@ -1181,6 +1232,7 @@ class Topic(db.Model):
         return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).filter("version =", version).get()
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda version = None: "Topic.get_root_%s_%s" % (version, TopicVersion.get_date_updated(version)))
     def get_root(version = None):
         if not version:
             version = TopicVersion.get_default_version()
@@ -1281,10 +1333,13 @@ class Topic(db.Model):
         return db.run_in_transaction(move_txn)    
 
     def copy(self, title, parent=None, **kwargs):
+        logging.info(kwargs)
+
         if not kwargs.has_key("version") and parent is not None:
             kwargs["version"] = parent.version
          
-        kwargs["parent"] = Topic.get_root(kwargs["version"]) 
+        if self.parent(): 
+             kwargs["parent"] = Topic.get_root(kwargs["version"]) 
             
         if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
@@ -1296,10 +1351,11 @@ class Topic(db.Model):
             raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % kwargs["key_name"] )
 
         kwargs["title"] = title
-        kwargs["parent_keys"] = [parent.key()]
+        kwargs["parent_keys"] = [parent.key()] if parent else []
         kwargs["ancestor_keys"] =  kwargs["parent_keys"][:]
-        kwargs["ancestor_keys"].extend(parent.ancestor_keys)
+        kwargs["ancestor_keys"].extend(parent.ancestor_keys if parent else []) 
 
+        logging.info(kwargs)
         new_topic = util.clone_entity(self, **kwargs)
 
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
@@ -1464,11 +1520,10 @@ class Topic(db.Model):
             self.put()
             self.version.update()   
 
-
-    
-    @layer_cache.cache_with_key_fxn(
-    lambda self, types=[], include_hidden = False: "Topic.make_tree_%s_%s_%s" % (self.version.number, include_hidden, TopicVersion.get_date_updated(self.version)),
-    layer=layer_cache.Layers.Memcache)
+    # too big for memcache ... either add a layer_cache.Layers.Datastore ... or compress it
+    # @layer_cache.cache_with_key_fxn(
+    #    lambda self, types=[], include_hidden = False: "Topic.make_tree_%s_%s_%s" % (self.version.number, include_hidden, TopicVersion.get_date_updated(self.version)),
+    #    layer=layer_cache.Layers.Memcache)
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
@@ -1539,7 +1594,7 @@ class Topic(db.Model):
         return topics
 
     @staticmethod
-    def _get_children_of_kind(topic, kind, include_descendants=False):
+    def _get_children_of_kind(topic, kind, include_descendants=False, version = None):
         if include_descendants:
             keys = []
             topics = Topic.all().filter("ancestor_keys =", topic.key())
@@ -1554,19 +1609,19 @@ class Topic(db.Model):
         return Topic._get_children_of_kind(self, "Exercise")
                             
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_videos_for_topic_%s_at_%s" % ("descendant" if len(args) > 1 and args[1] else "child", args[0].key().name(), str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
-    def get_cached_videos_for_topic(topic, include_descendants=False, limit=500):
-        return Topic._get_children_of_kind(topic, "Video", include_descendants)
+    @layer_cache.cache_with_key_fxn(lambda topic, include_descendants=False, version=None: "%s_videos_for_topic_%s_at_%s" % ("descendant" if include_descendants else "child", topic.key().name(), TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
+    def get_cached_videos_for_topic(topic, include_descendants=False, version = None):
+        return Topic._get_children_of_kind(topic, "Video", include_descendants, version)
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "%s_topics_for_video_%s_at_%s" % ("ancestor" if len(args) > 1 and args[1] else "parent", args[0].title, str(Setting.cached_library_content_date())), layer=layer_cache.Layers.Memcache)
-    def get_cached_topics_for_video(video, include_ancestors=False, limit=5, version = None):
+    @layer_cache.cache_with_key_fxn(lambda video, include_ancestors=False, version=None: "%s_topics_for_video_%s_at_%s" % ("ancestor" if include_ancestors else "parent", video.title, TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
+    def get_cached_topics_for_video(video, include_ancestors=False, version=None):
         if version is None:
             version = TopicVersion.get_default_version()
             if version is None:
                 version = TopicVersion.get_latest_version()
 
-        topics = Topic.all().filter("child_keys =", video.key()).filter("version =", version).filter("hide =", False).fetch(limit)
+        topics = Topic.all().filter("child_keys =", video.key()).filter("version =", version).filter("hide =", False).fetch(10000)
         if include_ancestors:
             ancestor_dict = {}
             for topic in topics:

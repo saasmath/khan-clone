@@ -6,6 +6,8 @@ from templatefilters import slugify
 import topics_list
 import models
 import shared_jinja
+import layer_cache
+
 
 def user_info(username, user_data):
     context = {"username": username, "user_data": user_data}
@@ -93,6 +95,7 @@ def streak_bar(user_exercise_dict):
 
     return shared_jinja.get().render_template("streak_bar.html", **template_values)
 
+@layer_cache.cache_with_key_fxn(lambda browser_id: "Templatetags.topic_browser_%s_%s" % (browser_id, models.Setting.cached_library_content_date()))
 def topic_browser(browser_id):
     tree = models.Topic.get_root().make_tree(types = ["Topics"])
     template_values = {
