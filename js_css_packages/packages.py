@@ -23,7 +23,6 @@ javascript = {
             "jquery.js",
             "jquery-ui-1.8.16.custom.js",
             "jquery.ui.menu.js",
-            "jquery.watermark.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "../../khan-exercises/utils/underscore.js",
