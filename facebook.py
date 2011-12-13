@@ -262,10 +262,12 @@ def get_user_from_cookie_patched(cookies, app_id, app_secret):
     file = urllib.urlopen("https://graph.facebook.com/oauth/access_token?" + urllib.urlencode(args))
     try:
         token_response = file.read()
+        access_token = cgi.parse_qs(token_response)["access_token"][-1]
+    except Exception, e:
+        logging.warning("Failed to get facebook access token: %s" % e)
+        return None
     finally:
         file.close()
-
-    access_token = cgi.parse_qs(token_response)["access_token"][-1]
 
     return dict(
         uid = response["user_id"],

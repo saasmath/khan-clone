@@ -84,8 +84,9 @@ def get_profile_from_cookies():
     return None
 
 @layer_cache.cache_with_key_fxn(
-        key_fxn = lambda cookie_key, cookie_value: "facebook:profile:%s" % cookie_value,
-        layer = layer_cache.Layers.Memcache)
+        key_fxn = lambda cookie_key, cookie_value: "facebook:profile_from_cookie:%s" % cookie_value,
+        layer = layer_cache.Layers.Memcache,
+        persist_across_app_versions=True)
 def get_profile_from_cookie_key_value(cookie_key, cookie_value):
 
     fb_auth_dict = facebook.get_user_from_cookie_patched(
@@ -96,11 +97,11 @@ def get_profile_from_cookie_key_value(cookie_key, cookie_value):
     if fb_auth_dict:
         profile = get_profile_from_fb_token(fb_auth_dict["access_token"])
 
-        if not profile:
-            # Don't cache any missing results
-            return layer_cache.UncachedResult(None)
-        else:
+        if profile:
             return profile
+
+    # Don't cache any missing results
+    return layer_cache.UncachedResult(None)
 
 def get_profile_from_fb_token(access_token):
 
