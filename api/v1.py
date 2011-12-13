@@ -172,7 +172,7 @@ def topic(topic_id, version = None):
 @oauth_optional()
 @jsonp
 @jsonify
-def put_topic(topic_id, version = None):
+def put_topic(topic_id, version = "edit"):
     version = models.TopicVersion.get_by_id(version)
 
     user_data = models.UserData.current()
@@ -201,7 +201,7 @@ def put_topic(topic_id, version = None):
 @route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
 @jsonp
 @jsonify
-def topic_add_child(parent_id, version = None):
+def topic_add_child(parent_id, version = "edit"):
     version = models.TopicVersion.get_by_id(version)
 
     parent_topic = models.Topic.get_by_id(parent_id, version)
@@ -233,7 +233,7 @@ def topic_add_child(parent_id, version = None):
 @route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
 @jsonp
 @jsonify
-def topic_delete_child(parent_id, version = None):
+def topic_delete_child(parent_id, version = "edit"):
     version = models.TopicVersion.get_by_id(version)
 
     parent_topic = models.Topic.get_by_id(parent_id, version)
@@ -263,7 +263,7 @@ def topic_delete_child(parent_id, version = None):
 @route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
 @jsonp
 @jsonify
-def topic_move_child(old_parent_id, version = None):
+def topic_move_child(old_parent_id, version = "edit"):
     version = models.TopicVersion.get_by_id(version)
 
     old_parent_topic = models.Topic.get_by_id(old_parent_id, version)
