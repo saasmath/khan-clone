@@ -5,6 +5,8 @@ import re
 import urllib
 import logging
 
+from api.jsonify import jsonify
+
 from google.appengine.ext import db
 
 
@@ -61,9 +63,15 @@ class EditTaxonomy(request_handler.RequestHandler):
             }
         '''
 
+        tree_nodes = []
+
+        root = Topic.get_root()
+        data = root.get_visible_data()
+
+        tree_nodes.append(data)
         
         template_values = {
-            #'tree': self.get_tree_html(root) 
+            'tree_nodes': jsonify(tree_nodes)
             }
 
         

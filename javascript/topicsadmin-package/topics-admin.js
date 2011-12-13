@@ -108,6 +108,8 @@ var TopicTreeEditor = {
 
         var root = topicTree.getRoot();
         root.bind("change", this.refreshTreeNode, root);
+        if (root.__inited)
+            this.refreshTreeNode.apply(root);
     },
 
     resize: function() {

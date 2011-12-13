@@ -70,7 +70,13 @@ IncrementalCollection = Backbone.Collection.extend({
         }
 
         return ret;
-    }
+    },
+    resetInited: function(models, options) {
+        this.reset(models, options);
+        _.each(this.models, function(model) {
+            model.__inited = true;
+        });
+    },
 });
 
 // Model/collection for Topics

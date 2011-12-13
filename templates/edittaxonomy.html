@@ -9,7 +9,11 @@
 
 <script>
 
+var initialTreeNodes = {{ tree_nodes }};
+
 $(function(){
+    getDefaultTopicTree().resetInited(initialTreeNodes);
+
     KAConsole.debugEnabled = true;
     TopicTreeEditor.init();
 });
