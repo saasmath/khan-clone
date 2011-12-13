@@ -851,6 +851,11 @@ var FacebookHook = {
 
             if (!USERNAME) {
                 FB.Event.subscribe('auth.login', function(response) {
+
+                    if (response.authResponse) {
+                        FacebookHook.fixMissingCookie(response.authResponse);
+                    }
+
                     var url = URL_CONTINUE || "/";
                     if (url.indexOf("?") > -1)
                         url += "&fb=1";
@@ -867,6 +872,10 @@ var FacebookHook = {
             }
 
             FB.getLoginStatus(function(response) {
+
+                if (response.authResponse) {
+                    FacebookHook.fixMissingCookie(response.authResponse);
+                }
                 
                 $('#page_logout').click(function(e) {
 
@@ -892,7 +901,22 @@ var FacebookHook = {
             e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
             document.getElementById('fb-root').appendChild(e);
         });
+    },
+
+    fixMissingCookie: function(authResponse) {
+        // In certain circumstances, Facebook's JS SDK fails to set their cookie
+        // but still thinks users are logged in. To avoid continuous reloads, we
+        // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
+
+        if (readCookie("fbsr_" + FB_APP_ID))
+            return;
+
+        if (authResponse && authResponse.signedRequest) {
+            // Explicitly use a session cookie here for IE's sake.
+            createCookie("fbsr_" + FB_APP_ID, authResponse.signedRequest);
+        }
     }
+
 };
 FacebookHook.init();
 
