@@ -5,11 +5,13 @@ var Video = {
 
     init: function() {
 
-        $('<img width=0 height=0>').error(function() {
+        VideoControls.onYouTubeBlocked(function() {
+
            $("#youtube_blocked").css("visibility", "visible").css("left", "0px").css("position", "relative");
            $("#idOVideo").hide();
            VideoStats.prepareAlternativePlayer(); // If YouTube is hidden, use the flv player for statistics
-        }).attr('src', 'http://www.youtube.com/favicon.ico?' + Math.random()).appendTo('#page-container');
+
+        });
 
         var jVideoDropdown = $('#video_dropdown');
         if ( jVideoDropdown.length ) {

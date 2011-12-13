@@ -237,7 +237,9 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
-        bingo('struggling_videos_landing')
+        bingo(['struggling_videos_landing',
+               'homepage_video_videos_landing',
+               'homepage_video_videos_landing_binary'])
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
@@ -536,6 +538,7 @@ class PostLogin(request_handler.RequestHandler):
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
+            self.delete_cookie("fbsr_" + App.facebook_app_id)
             self.delete_cookie("fbs_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (

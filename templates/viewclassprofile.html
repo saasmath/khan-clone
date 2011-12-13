@@ -57,20 +57,6 @@
                     <span class="progress-legend exercise-color review light">Review</span>
                     <span class="progress-legend exercise-color struggling">Struggling</span>
 
-                    <div class="coach-option-block">
-                      <div>Filter by:</div>
-                      <div>
-                        <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" name="struggling" />Struggling only</span>
-                        <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" name="recent" />Worked on in last:
-                            <select id="progressreport-filter-last-time"><option value="1">day</option><option value="2">2 days</option><option value="3">3 days</option><option selected value="7">week</option><option value="30">month</option></select></span>
-                      </div>
-                    </div>
-                    <div class="coach-option-block">
-                      <div>Filter by student or exercise:</div>
-                      <div>
-                        <input type="text" id="student-progressreport-search" class="blur-on-esc"></input>
-                      </div>
-                    </div>
                 </div>
             </div>
         </li>
@@ -83,10 +69,9 @@
         <li>
             {{ profile_macros.class_graph_link(user_data_coach, "Daily Activity Report", "classtime", selected_graph_type, list_id) }}
             <p class="accordion-content">
-                Shows your total class activity on a specific date.
-                {{ profile_macros.graph_calendar_picker(user_data_coach, "classtime") }}
-                <span class="instructions">Light blue activity shows normal school hours, and dark blue is outside normal hours.</span>
-            </p>
+                Shows your total class activity on a specific date. <br /><br />
+
+              <span class="instructions">Light blue activity shows normal school hours, and dark blue is outside normal hours.</span>
         </li>
         <li>
             {{ profile_macros.class_graph_link(user_data_coach, "Exercise Progress Over Time", "classexercisesovertime", selected_graph_type, list_id) }}
@@ -126,29 +111,77 @@
                     <span class="progress-legend exercise-color proficient">Proficient</span>
                     <span class="progress-legend exercise-color review light">Review</span>
                     <span class="progress-legend exercise-color struggling">Struggling</span>
-                    <div id="student-goals-sort-block">
-                      <div>Sort by:</div>
-                      <div><select id="student-goals-sort"><option value="name">Name</option><option value="progress">Progress</option><option value="created">Start date</option><option value="updated">Updated date</option></select></div>
-                    </div>
-                    <div id="student-goals-filter-block">
-                      <div>Filter by:</div>
-                      <div>
-                        <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" name="most-recent" />Recently updated only</span>
-                        <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" name="in-progress" />In progress only</span>
-                        <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" name="struggling" />Struggling only</span>
-                      </div>
-                    </div>
-                    <div id="student-goals-search-block">
-                      <div>Filter by student or objective:</div>
-                      <div>
-                        <input type="text" id="student-goals-search" class="blur-on-esc"></input>
-                      </div>
-                    </div>
                 </div>
             </div>
         </li>
     </ul>
 {% endblock graph_accordion %}
+
+{% block stats_filters %}
+  <!-- the goals filter -->
+  <div class="filter">
+    {{ profile_macros.class_api_link(user_data_coach, "Progress Report", "progressreport", selected_graph_type, list_id) }}
+
+    <div class="filter-block">
+      <h3>Progress Report</h3>
+    </div>
+    <div class="filter-block">
+      <p>Showing Only
+        <input type="text" id="student-progressreport-search" placeholder="student or objective" class="search-input simple-input ui-corner-all blur-on-esc"></input>
+        <span class="coach-filter-block">
+            <input type="checkbox" class="progressreport-filter-check" id="progressreport-struggling" name="struggling" /><label for="progressreport-struggling">Struggling</label></span>
+      <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" id="progressreport-recent" name="recent" /><label for="progressreport-recent">Worked on in last:</label> 
+            <select id="progressreport-filter-last-time"><option value="1">day</option><option value="2">2 days</option><option value="3">3 days</option><option selected value="7">week</option><option value="30">month</option></select></span>
+    </div>
+  </div>
+
+  <div class="filter">
+    {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "progress/summary", selected_graph_type, list_id) }}
+    
+    <div class="filter-block">
+      <h3>Progress Summary</h3>
+    </div>
+    <div class="filter-block">
+      <p>Showing Only
+        <input type="text" id="student-progresssummary-search" placeholder="exercise name" class="search-input simple-input ui-corner-all blur-on-esc"></input>
+    </div>
+  </div>
+
+  <div class="filter">
+    {{ profile_macros.class_graph_link(user_data_coach, "Daily Activity Report", "classtime", selected_graph_type, list_id) }}
+    <div class="filter-block">
+        <h3>Daily Activity Report <small> for </small></h3>
+        {{ profile_macros.graph_calendar_picker(user_data_coach, "classtime") }}
+    </div>
+  </div>
+
+  <div class="filter">
+    {{ profile_macros.class_api_link(user_data_coach, "Goals", "goals", selected_graph_type, list_id) }}
+
+    <div class="filter-block">
+      <h3>Goals</h3>
+      <p>Sorted by:
+        <select id="student-goals-sort">
+          <option value="name"> First Name </option>
+          <option value="progress"> Recent Progress </option>
+          <option value="created"> Started Recently </option>
+          <option value="updated"> Updated Recently </option>
+        </select>
+      </p>
+    </div>
+    <div class="filter-block">
+      <p>Showing Only
+        <input type="text" id="student-goals-search" placeholder="student or objective" class="search-input simple-input ui-corner-all blur-on-esc"></input>
+      <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" id="goal-most-recent-filter" name="most-recent" />
+        <label for="goal-most-recent-filter">Recently updated</label></span>
+      <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" id="goal-in-progress-filter" name="in-progress" />
+        <label for="goal-in-progress-filter">In progress</label></span>
+      <span class="coach-filter-block"><input type="checkbox" class="student-goals-filter-check" id="goal-struggling-filter" name="struggling" />
+        <label for="goal-struggling-filter">Struggling</label>
+      </span>
+    </div>
+  </div>
+{% endblock %}
 
 {% block profile_is_empty %}
 {{ coach.empty_class_instructions(True) }}

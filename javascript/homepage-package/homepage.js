@@ -5,6 +5,52 @@ var Homepage = {
         Homepage.initWaypoints();
     },
 
+    initPlaceholder: function(youtube_id) {
+
+        var jelPlaceholder = $("#main-video-placeholder");
+
+        // Once the youtube player is all loaded and ready, clicking the play
+        // button will play inline.
+        $(VideoControls).one("playerready", function() {
+
+            // Before any playing, unveil and play the real youtube player
+            $(VideoControls).one("beforeplay", function() {
+
+                $(".player-loading-wrapper").removeClass("player-loading-wrapper");
+
+                // We can get rid of the .player-loading-wrapper selectors and the following complication 
+                // if we decide to load the main video on placeholder click instead of trying to preload 
+                // and keep it hidden.
+                //
+                // This strange method of hiding the placeholder skips use of display:none or 
+                // position:absolute so Mozilla doesn't re-layout and load its already-initialized 
+                // <embed> video, which causes a visual hiccup on click.
+                jelPlaceholder.css("visibility", "hidden").height(0);
+
+            });
+
+            jelPlaceholder.click(function(e) {
+
+                VideoControls.play();
+                e.preventDefault();
+
+            });
+
+        });
+
+        // Start loading the youtube player immediately, 
+        // and insert it wrapped in a hidden container
+        var template = Templates.get("homepage.youtube-embed");
+
+        jelPlaceholder
+            .parents("#main-video-link")
+                .after(
+                    $(template({"youtube_id": youtube_id}))
+                        .wrap("<div class='player-loading-wrapper'/>")
+                        .parent()
+            );
+    },
+
     initWaypoints: function() {
 
         // Waypoint behavior not supported in IE7-
