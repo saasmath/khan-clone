@@ -67,12 +67,14 @@ class EditTaxonomy(request_handler.RequestHandler):
 
         tree_nodes = []
 
-        root = Topic.get_root(models.TopicVersion.get_by_id('edit'))
+        version = models.TopicVersion.get_by_id('edit')
+        root = Topic.get_root(version)
         data = root.get_visible_data()
 
         tree_nodes.append(data)
         
         template_values = {
+            'created_date': version.date_created.strftime("%A, %d. %B %Y %I:%M%p"),
             'tree_nodes': jsonify(tree_nodes)
             }
 
