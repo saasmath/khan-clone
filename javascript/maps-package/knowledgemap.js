@@ -120,6 +120,7 @@ function KnowledgeMapInitGlobals() {
         events: {
             "click .exercise-title":    "onBadgeClick",
             "click .proficient-badge":  "onBadgeClick",
+            "click .streak-bar":        "onBadgeClick",
             "click .exercise-show":     "onShowExerciseClick"
         },
 
@@ -171,7 +172,7 @@ function KnowledgeMapInitGlobals() {
         onBadgeClick: function(evt) {
             // give the parent a chance to handle this exercise click. If it
             // doesn't, we'll just follow the anchor href
-            return this.parent.nodeClickHandler(this.model, evt);
+            window.location.href = $("a:eq(0)", this.el).attr("href");
         },
 
         onBadgeMouseover: function(node_name, element) {
@@ -435,6 +436,7 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
             $("#" + this.container + " .dashboard-drawer").removeClass("drawer-hoverable");
             var scroller = new iScroll('dashboard-drawer-inner', { hScroll: false, hScrollbar: false, vScrollbar: false });
         }
+
     };
 
     this.isExpanded = function() {
