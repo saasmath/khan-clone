@@ -63,7 +63,7 @@ class ViewStudents(RequestHandler):
 
             invalid_student = self.request_bool("invalid_student", default = False)
 
-            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data)]
+            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data) if x.student_requested_data]
 
             student_lists_models = StudentList.get_for_coach(user_data.key())
             student_lists_list = [];
