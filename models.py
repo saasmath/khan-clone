@@ -1097,6 +1097,13 @@ class TopicVersion(db.Model):
     def get_edit_version():
         version = TopicVersion.all().filter("edit = ", True).get()
         if version is None:
+            version = TopicVersion.create_edit_version()    
+        return version
+
+    @staticmethod
+    def create_edit_version():
+        version = TopicVersion.all().filter("edit = ", True).get()
+        if version is None:
             version = TopicVersion.create_new_version()
             default = TopicVersion.get_default_version()
             old_root = Topic.get_root(default)
@@ -1104,7 +1111,10 @@ class TopicVersion(db.Model):
             TopicVersion.copy_tree(old_tree, version)
             version.edit = True
             version.put()
-        return version
+            return version
+        else:
+            logging.warning("Edit version already exists")
+            return False
 
     @staticmethod
     def copy_tree(old_tree, new_version, new_root = None, parent = None):

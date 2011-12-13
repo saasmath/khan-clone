@@ -316,6 +316,22 @@ def topic_children(topic_id, version = None):
 def topic_children(version = None):
     version = models.TopicVersion.get_by_id(version)
     version.set_default_version()
+    models.TopicVersion.create_edit_version()
+    return version
+    
+@route("/api/v1/topicversion/<version>", methods=["GET"])   
+@jsonp
+@jsonify
+def topic_children(version = None):
+    version = models.TopicVersion.get_by_id(version)
+    return version
+
+
+@route("/api/v1/topicversions/", methods=["GET"])   
+@jsonp
+@jsonify
+def topic_children(version = None):
+    version = models.TopicVersion.all().order("-number").fetch(10000)
     return version
     
 
