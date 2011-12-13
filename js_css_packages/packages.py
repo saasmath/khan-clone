@@ -39,6 +39,7 @@ javascript = {
             "social.js",
             "api-version-mismatch.handlebars",
             "streak-bar.handlebars",
+            "generic-dialog.handlebars",
             "knowledgemap-exercise.handlebars",
             "knowledgemap-admin-exercise.handlebars",
             "goal-summary-area.handlebars",

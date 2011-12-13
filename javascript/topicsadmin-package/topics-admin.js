@@ -177,7 +177,41 @@ var TopicTreeEditor = {
                 TopicTreeEditor.boundList.push(childModel.id);
             }
         });
-    }
+    },
+
+    setTreeDefault: function() {
+        popupGenericMessageBox({
+            title: "Confirm publish topic tree",
+            message: "Marking this version of the topic tree default will publish all changes to the live version of the website. Are you sure?",
+            buttons: [
+                { title: "Yes", action: TopicTreeEditor.doSetTreeDefault },
+                { title: "No", action: hideGenericMessageBox }
+            ]
+        });
+    },
+
+    doSetTreeDefault: function() {
+        hideGenericMessageBox();
+        popupGenericMessageBox({
+            title: "Publishing topic tree",
+            message: "Publishing topic tree. Please wait...",
+            buttons: []
+        });
+        $.ajax({
+            url: '/api/v1/topicversion/edit/setdefault',
+            success: function() {
+                hideGenericMessageBox();
+                popupGenericMessageBox({
+                    title: "Topic tree published",
+                    message: "Topic tree has been published to the live site.",
+                    buttons: null
+                });
+            },
+            error: function() {
+                // TomY TODO handle error
+            }
+        });
+    },
 };
 
 // Details view common code

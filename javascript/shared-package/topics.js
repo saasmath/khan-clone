@@ -100,7 +100,7 @@ IncrementalCollection = Backbone.Collection.extend({
 		},
 
 		initialize: function() {
-			this.url = '/api/v1/topic/' + this.get('id');
+			this.url = '/api/v1/topicversion/edit/topic/' + this.get('id');
 		},
 
         getChild: function(id) {

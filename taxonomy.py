@@ -67,7 +67,7 @@ class EditTaxonomy(request_handler.RequestHandler):
 
         tree_nodes = []
 
-        root = Topic.get_root()
+        root = Topic.get_root(models.TopicVersion.get_by_id('edit'))
         data = root.get_visible_data()
 
         tree_nodes.append(data)
