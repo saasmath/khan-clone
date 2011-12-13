@@ -151,6 +151,8 @@ javascript = {
 			"jquery.dynatree.js",
             "jquery.contextMenu.js",
             "edit-topic.handlebars",
+            "create-video.handlebars",
+            "create-video-preview.handlebars",
             "edit-video.handlebars",
             "create-exercise.handlebars",
             "edit-exercise.handlebars",

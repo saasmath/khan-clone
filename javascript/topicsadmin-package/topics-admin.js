@@ -231,6 +231,7 @@ var TopicNodeEditor = {
 var TopicTopicNodeEditor = {
     existingItemView: null,
     newExerciseView: null,
+    newVideoView: null,
     contextNode: null,
     contextModel: null,
     itemCopyBuffer: null,
@@ -293,6 +294,12 @@ var TopicTopicNodeEditor = {
                     });
                 }
             });
+
+        } else if (action == 'add_new_video') {
+            if (!TopicTopicNodeEditor.newVideoView)
+                TopicTopicNodeEditor.newVideoView = new TopicCreateVideoView();
+
+            TopicTopicNodeEditor.newVideoView.show();
 
         } else if (action == 'add_existing_video') {
             if (!TopicTopicNodeEditor.existingItemView)
@@ -688,7 +695,7 @@ var TopicAddExistingItemView = Backbone.View.extend({
     }
 });
 
-// Add existing video/exercise dialog box
+// Add a new exercise dialog box
 
 var TopicCreateExerciseView = Backbone.View.extend({
     template: Templates.get( "topicsadmin.create-exercise" ),
@@ -727,6 +734,78 @@ var TopicCreateExerciseView = Backbone.View.extend({
             }
         });
         this.hide();
+    },
+
+    hide: function() {
+        return $(this.el).modal('hide');
+    }
+});
+
+// Add a new video dialog box
+
+var TopicCreateVideoView = Backbone.View.extend({
+    template: Templates.get( "topicsadmin.create-video" ),
+    previewTemplate: Templates.get( "topicsadmin.create-video-preview" ),
+
+    youtubeID: null,
+
+    initialize: function() {
+        this.render();
+    },
+
+    events: {
+        'click .ok_button': 'createVideo',
+        'change input[name="youtube_id"]': 'doVideoSearch'
+    },
+
+    render: function() {
+        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.delegateEvents();
+        return this;
+    },
+
+    show: function(type) {
+        $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
+
+        this.youtubeID = null;
+        $(this.el).find('.create-video-preview').html("Enter a YouTube ID to look up a video.");
+        $(self.el).find('.ok_button').addClass('disabled').removeClass('green');
+    },
+
+    createVideo: function() {
+        if (!this.youtubeID)
+            return;
+
+        var video = new Video({ youtube_id: this.youtubeID });
+
+        video.save({}, {
+            success: function(model) {
+                TopicTopicNodeEditor.finishAddExistingItem('Video', model.get('readable_id'));
+            }
+        });
+        this.hide();
+    },
+
+    doVideoSearch: function() {
+        var youtubeID = $(this.el).find('input[name="youtube_id"]').val();
+        var self = this;
+        $.ajax({
+            url: '/api/v1/videos/youtubeinfo/' + youtubeID,
+            success: function(json) {
+                self.youtubeID = youtubeID;
+                $(self.el).find('.create-video-preview').html(self.previewTemplate(json));
+                $(self.el).find('.ok_button').removeClass('disabled').addClass('green');
+            },
+            error: function(json) {
+                self.youtubeID = null;
+                $(self.el).find('.create-video-preview').html("Video not found.");
+                $(self.el).find('.ok_button').addClass('disabled').removeClass('green');
+            },
+        });
     },
 
     hide: function() {

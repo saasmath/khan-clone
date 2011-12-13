@@ -20,6 +20,7 @@ from autocomplete import video_title_dicts, playlist_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
+from youtube_sync import youtube_get_video_data
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -441,6 +442,27 @@ def fully_populated_playlists():
             playlist.videos.append(video)
 
     return playlists
+
+@route("/api/v1/videos/youtubeinfo/<youtube_id>", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def get_youtube_info(youtube_id):
+    video_data = models.Video(youtube_id=youtube_id)
+    return youtube_get_video_data(video_data)
+
+@route("/api/v1/videos/<video_id>", methods=["POST","PUT"])
+@developer_required
+@jsonp
+@jsonify
+def create_video(video_id):
+    video_data = models.Video(youtube_id=request.json["youtube_id"])
+    video_data = youtube_get_video_data(video_data)
+    if video_data:
+        video_data.put()
+        return video_data
+
+    return None
 
 def replace_playlist_values(structure, playlist_dict):
     if type(structure) == list:

@@ -27,7 +27,8 @@
 }
 
 .modal.add-existing-item,
-.modal.create-exercise {
+.modal.create-exercise,
+.modal.create-video {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
   width: 700px; /* this is redundant but here for clarity */
@@ -58,9 +59,15 @@
     height: 400px;
 }
 
+.modal.create-video .create-video-preview {
+    margin: 50px;
+
+  border: 1px solid #ccc;
+}
+
 #details-view .item-action {
     float: left;
-    margin-left: 2px;
+    margin-left: 1px;
 }
 #details-view .item-action.separated {
     margin-left: 10px;
