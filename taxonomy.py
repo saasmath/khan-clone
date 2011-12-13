@@ -53,7 +53,7 @@ class EditTaxonomy(request_handler.RequestHandler):
         # version.set_default_version()
         # return
        
-        version = models.TopicVersion.get_edit_version()
+        # version = models.TopicVersion.get_edit_version()
         
         # root = Topic.get_by_id("root").make_tree()
         # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()

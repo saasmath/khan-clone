@@ -1472,7 +1472,7 @@ class Topic(db.Model):
             else:
                 version = TopicVersion.get_edit_version()
         
-        if self.version.default:
+        if version.default:
             raise Exception("You can't edit the default version")
 
         if kwargs.has_key("id") and kwargs["id"]:
