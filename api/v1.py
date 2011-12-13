@@ -11,7 +11,7 @@ import templatetags # Must be imported to register template tags
 from badges import badges, util_badges, models_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
-from exercises import attempt_problem, make_wrong_attempt
+from exercises import attempt_problem, make_wrong_attempt, UpdateExercise
 from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
@@ -20,6 +20,7 @@ from autocomplete import video_title_dicts, playlist_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
+from youtube_sync import youtube_get_video_data
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag
@@ -393,6 +394,14 @@ def exercise_videos(exercise_name):
         return map(lambda exercise_video: exercise_video.video, exercise_videos)
     return []
 
+@route("/api/v1/exercises/<exercise_name>", methods=["PUT","POST"])
+@developer_required
+@jsonp
+@jsonify
+def exercise_save(exercise_name):
+    request.json["name"] = exercise_name
+    return UpdateExercise.do_update(request.json);
+
 @route("/api/v1/videos/<video_id>", methods=["GET"])
 @jsonp
 @jsonify
@@ -460,6 +469,47 @@ def fully_populated_playlists():
             playlist.videos.append(video)
 
     return playlists
+
+@route("/api/v1/videos/youtubeinfo/<youtube_id>", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def get_youtube_info(youtube_id):
+    video_data = models.Video(youtube_id=youtube_id)
+    return youtube_get_video_data(video_data)
+
+@route("/api/v1/videos/", methods=["POST","PUT"])
+@route("/api/v1/videos/<video_id>", methods=["POST","PUT"])
+@developer_required
+@jsonp
+@jsonify
+def save_video(video_id=""):
+    video_data = models.Video.get_for_readable_id(video_id)
+
+    if not video_data:
+        video_data = models.Video(youtube_id=request.json["youtube_id"])
+        video_data = youtube_get_video_data(video_data)
+
+    if video_data:
+        if "readable_id" in request.json and request.json["readable_id"]:
+            video_data.readable_id = request.json["readable_id"]
+
+        if "title" in request.json and request.json["title"]:
+            video_data.title = request.json["title"]
+
+        if "youtube_id" in request.json and request.json["youtube_id"]:
+            video_data.youtube_id = request.json["youtube_id"]
+
+        if "description" in request.json and request.json["description"]:
+            video_data.description = request.json["description"]
+
+        if "keywords" in request.json and request.json["keywords"]:
+            video_data.keywords = request.json["keywords"]
+
+        video_data.put()
+        return video_data
+
+    return None
 
 def replace_playlist_values(structure, playlist_dict):
     if type(structure) == list:

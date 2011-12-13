@@ -1,6 +1,7 @@
 <div>
   <img src="/images/generic-exercise-icon-shadow.png" width="48" height="48" style="vertical-align: middle">
-  <input type="text" name="title" class="node-title simple-input ui-corner-all blur-on-esc" value="{{ model.display_name }}" style="width: 250px; display: inline; vertical-align: middle;">
+  <span class="node-title">{{ model.display_name }}</span>
+  <a href="javascript: TopicItemNodeEditor.handleAction('save');" class="save-button simple-button disabled action-gradient">Save</a>
 </div>
 
 <div>
@@ -22,9 +23,9 @@
             <tr>
                 <td style="font-weight:bold;">Status</td>
                 <td style="padding-bottom:9px;">
-                    <label for="live_yes">Live&nbsp;</label><input type="radio" id="live_yes" name="live" value="1" {{#if model.live }}checked="checked"{{/if}}/>
+                    <label for="live_yes">Live&nbsp;</label><input type="radio" id="live_yes" name="live" value="true" {{#if model.live }}checked="checked"{{/if}}/>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <label for="live_no">Developers only&nbsp;</label><input type="radio" id="live_no" name="live" value="0" {{#unless model.live }}checked="checked"{{/unless}}/>
+                    <label for="live_no">Developers only&nbsp;</label><input type="radio" id="live_no" name="live" value="false" {{#unless model.live }}checked="checked"{{/unless}}/>
                     <br/>
                     <em>Non-live exercises are completely hidden from normal users.</em>
                 </td>

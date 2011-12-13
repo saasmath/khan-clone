@@ -70,7 +70,13 @@ IncrementalCollection = Backbone.Collection.extend({
         }
 
         return ret;
-    }
+    },
+    resetInited: function(models, options) {
+        this.reset(models, options);
+        _.each(this.models, function(model) {
+            model.__inited = true;
+        });
+    },
 });
 
 // Model/collection for Topics
@@ -201,9 +207,9 @@ IncrementalCollection = Backbone.Collection.extend({
 
     Video = Backbone.Model.extend({
         defaults: {
-            readable_id: 'new_video', // API ID / slug
+            readable_id: '', // API ID / slug
 			kind: 'Video',
-            title: 'New Video',
+            title: '',
             youtube_id: '',
             description: '',
             keywords: '',

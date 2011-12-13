@@ -3,6 +3,7 @@ import os
 import itertools
 import hashlib
 import urllib
+import logging
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred
@@ -583,17 +584,11 @@ class EditExercise(request_handler.RequestHandler):
 
 class UpdateExercise(request_handler.RequestHandler):
 
-    def post(self):
-        self.get()
-
-    @user_util.developer_only
-    def get(self):
+    @staticmethod
+    def do_update(dict):
         user = models.UserData.current().user
 
-        exercise_name = self.request.get('name')
-        if not exercise_name:
-            self.response.out.write("No exercise submitted, please resubmit if you just logged in.")
-            return
+        exercise_name = dict["name"]
 
         query = models.Exercise.all()
         query.filter('name =', exercise_name)
@@ -603,50 +598,34 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise.prerequisites = []
             exercise.covers = []
             exercise.author = user
-            exercise.summative = self.request_bool("summative", default=False)
+            exercise.summative = dict["summative"]
 
-        v_position = self.request.get('v_position')
-        h_position = self.request.get('h_position')
-        short_display_name = self.request.get('short_display_name')
+        exercise.prerequisites = dict["prerequisites"] 
+        exercise.covers = dict["covers"]
 
-        exercise.prerequisites = []
-        for c_check_prereq in range(0, 1000):
-            prereq_append = self.request_string("prereq-%s" % c_check_prereq, default="")
-            if prereq_append and not prereq_append in exercise.prerequisites:
-                exercise.prerequisites.append(prereq_append)
+        if "v_position" in dict:
+            exercise.v_position = int(dict["v_position"])
 
-        exercise.covers = []
-        for c_check_cover in range(0, 1000):
-            cover_append = self.request_string("cover-%s" % c_check_cover, default="")
-            if cover_append and not cover_append in exercise.covers:
-                exercise.covers.append(cover_append)
+        if "h_position" in dict:
+            exercise.h_position = int(dict["h_position"])
 
-        if v_position:
-            exercise.v_position = int(v_position)
+        if "short_display_name" in dict:
+            exercise.short_display_name = dict["short_display_name"]
 
-        if h_position:
-            exercise.h_position = int(h_position)
+        exercise.live = dict["live"]
 
-        if short_display_name:
-            exercise.short_display_name = short_display_name
+        exercise.put()
 
-        exercise.live = self.request_bool("live", default=False)
+        if "video_keys" in dict:
+            video_keys = dict["video_keys"]
+        else:
+            video_keys = []
 
-        if not exercise.is_saved():
-            # Exercise needs to be saved before checking related videos.
-            exercise.put()
-
-        video_keys = []
-        for c_check_video in range(0, 1000):
-            video_name_append = self.request_string("video-%s-readable" % c_check_video, default="")
-            if video_name_append:
-                video = models.Video.get_for_readable_id(video_name_append)
+        if "video_ids" in dict:
+            for video_name in dict["video_ids"]:
+                video = models.Video.get_for_readable_id(video_name)
                 if not video.key() in video_keys:
                     video_keys.append(str(video.key()))
-
-            video_append = self.request_string("video-%s" % c_check_video, default="")
-            if video_append and not video_append in video_keys:
-                video_keys.append(video_append)
 
         query = models.ExerciseVideo.all()
         query.filter('exercise =', exercise.key())
@@ -696,5 +675,49 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise_video.exercise_order = i
         
         db.put(ExerciseVideos)
+
+        return exercise
+
+    def post(self):
+        self.get()
+
+    @user_util.developer_only
+    def get(self):
+        dict = {}
+        dict["name"] = self.request.get('name')
+        if not dict["name"]:
+            self.response.out.write("No exercise submitted, please resubmit if you just logged in.")
+            return
+
+        dict["summative"] = self.request_bool('summative', default=False)
+        dict["v_position"] = self.request.get('v_position')
+        dict["h_position"] = self.request.get('h_position')
+        dict["short_display_name"] = self.request.get('short_display_name')
+        dict["live"] = self.request_bool("live", default=False)
+
+        dict["prerequisites"] = []
+        for c_check_prereq in range(0, 1000):
+            prereq_append = self.request_string("prereq-%s" % c_check_prereq, default="")
+            if prereq_append and not prereq_append in exercise.prerequisites:
+                dict["prerequisites"].append(prereq_append)
+
+        dict["covers"] = []
+        for c_check_cover in range(0, 1000):
+            cover_append = self.request_string("cover-%s" % c_check_cover, default="")
+            if cover_append and not cover_append in exercise.covers:
+                dict["covers"].append(cover_append)
+
+        dict["video_keys"] = []
+        dict["video_ids"] = []
+        for c_check_video in range(0, 1000):
+            video_name_append = self.request_string("video-%s-readable" % c_check_video, default="")
+            if video_name_append:
+                dict["video_ids"].append(video_name_append)
+
+            video_append = self.request_string("video-%s" % c_check_video, default="")
+            if video_append and not video_append in video_keys:
+                video_keys.append(video_append)
+
+        self.do_update(dict)
 
         self.redirect('/editexercise?saved=1&name=' + exercise_name)
