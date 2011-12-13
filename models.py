@@ -1312,6 +1312,9 @@ class Topic(db.Model):
         return changed_entities
 
     def move_child(self, child, new_parent, new_parent_pos):
+        if new_parent.version.default:
+            raise Exception("You can't edit the default version")
+
         # remove the child
         old_index = self.child_keys.index(child.key())
         del self.child_keys[old_index]
@@ -1343,10 +1346,11 @@ class Topic(db.Model):
         return db.run_in_transaction(move_txn)    
 
     def copy(self, title, parent=None, **kwargs):
-        logging.info(kwargs)
-
         if not kwargs.has_key("version") and parent is not None:
             kwargs["version"] = parent.version
+
+        if kwargs["version"].default:
+            raise Exception("You can't edit the default version")
          
         if self.parent(): 
              kwargs["parent"] = Topic.get_root(kwargs["version"]) 
@@ -1371,6 +1375,9 @@ class Topic(db.Model):
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
     
     def add_child(self, child, pos):
+        if self.version.default:
+            raise Exception("You can't edit the default version")
+
         if child.key() in self.child_keys:
             raise Exception("The child %s already appears in %s" % (child.title, self.title))
 
@@ -1390,6 +1397,9 @@ class Topic(db.Model):
         return db.run_in_transaction(add_txn) 
 
     def delete_child(self, child):
+        if self.version.default:
+            raise Exception("You can't edit the default version")
+
         # remove the child key from self
         self.child_keys =  [child_key for child_key in self.child_keys if child_key != child.key()]
          
@@ -1460,9 +1470,10 @@ class Topic(db.Model):
             if parent is not None:
                 version = parent.version
             else:
-                version = TopicVersion.get_latest_version()
-                if version is None:
-                    version = TopicVersion.create_new_version()
+                version = TopicVersion.get_edit_version()
+        
+        if version.default:
+            raise Exception("You can't edit the default version")
 
         if kwargs.has_key("id") and kwargs["id"]:
             id = kwargs["id"]
@@ -1506,10 +1517,13 @@ class Topic(db.Model):
         for key in kwargs:
             setattr(new_topic, key, kwargs[key])
        
-        self.version.update()                   
+        version.update()                   
         return db.run_in_transaction(Topic._insert_txn, new_topic)
 
     def update(self, **kwargs):
+        if self.version.default:
+            raise Exception("You can't edit the default version")
+        
         changed = False
         if "id" in kwargs and kwargs["id"] != self.id:
 
