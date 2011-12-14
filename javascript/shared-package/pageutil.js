@@ -1171,8 +1171,10 @@ var Review = {
             top: tens * -lineHeight
         }, animationOptions );
 
-        $( "#review-mode-title h1" ).text(
-            reviewsLeftCount === 1 ? "Review!" : "Reviews" );
+        if ( reviewsLeftCount !== 0 ) {
+            $( "#review-mode-title h1" ).text(
+                reviewsLeftCount === 1 ? "Review!" : "Reviews" );
+        }
 
         reviewCounterElem.data( "counter", reviewsLeftCount );
     }
