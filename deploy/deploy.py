@@ -260,6 +260,11 @@ def main():
         action="store_true", dest="clean",
         help="Clean the old packages and generate them again. If used with -d,the app is not compiled at all and is only cleaned.", default=False)
 
+    parser.add_option('-r', '--report',
+        action="store_true", dest="report",
+        help="Generate a report that displays minified, gzipped file size for each package element",
+            default=False)
+
     options, args = parser.parse_args()
 
     if(options.clean):
@@ -267,6 +272,12 @@ def main():
         tidy_up()
         if options.dryrun:
             return
+
+    if options.report:
+        print "Generating file size report"
+        compile_handlebar_templates()
+        compress.file_size_report()
+        return
 
     includes_local_changes = hg_st()
     if not options.force and includes_local_changes:
