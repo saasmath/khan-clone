@@ -135,6 +135,7 @@ var TopicTreeEditor = {
 
         node.removeChildren();
         if (model.get('children')) {
+            childNodes = []
             _.each(model.get('children'), function(child) {
                 var data = {
                     title: child.title,
@@ -154,8 +155,9 @@ var TopicTreeEditor = {
                 } else if (child.kind == 'Exercise') {
                     data.icon = 'exercise-icon-small.png';
                 }
-                node.addChild(data);
+                childNodes.push(data);
             });
+            node.addChild(childNodes);
         }
 
         if (model.id == 'root') {
@@ -177,7 +179,41 @@ var TopicTreeEditor = {
                 TopicTreeEditor.boundList.push(childModel.id);
             }
         });
-    }
+    },
+
+    setTreeDefault: function() {
+        popupGenericMessageBox({
+            title: "Confirm publish topic tree",
+            message: "Marking this version of the topic tree default will publish all changes to the live version of the website. Are you sure?",
+            buttons: [
+                { title: "Yes", action: TopicTreeEditor.doSetTreeDefault },
+                { title: "No", action: hideGenericMessageBox }
+            ]
+        });
+    },
+
+    doSetTreeDefault: function() {
+        hideGenericMessageBox();
+        popupGenericMessageBox({
+            title: "Publishing topic tree",
+            message: "Publishing topic tree. Please wait...",
+            buttons: []
+        });
+        $.ajax({
+            url: '/api/v1/topicversion/edit/setdefault',
+            success: function() {
+                hideGenericMessageBox();
+                popupGenericMessageBox({
+                    title: "Topic tree published",
+                    message: "Topic tree has been published to the live site.",
+                    buttons: null
+                });
+            },
+            error: function() {
+                // TomY TODO handle error
+            }
+        });
+    },
 };
 
 // Details view common code

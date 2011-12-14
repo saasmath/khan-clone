@@ -1033,6 +1033,45 @@ var globalPopupDialog = {
     }
 };
 
+(function() {
+    var messageBox = null;
+
+    popupGenericMessageBox = function(options) {
+        if (messageBox) {
+            $(messageBox).modal('hide');
+            $(messageBox).remove();
+        }
+
+        if (!options)
+            options = {};
+
+        if (!options.buttons) {
+            options.buttons = [
+                { title: 'OK', action: hideGenericMessageBox }
+            ];
+        }
+
+        var template = Templates.get( "shared.generic-dialog" );
+        messageBox = $(template(options)).appendTo(document.body).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        }).get(0);
+
+        _.each(options.buttons, function(button) {
+            $('.generic-button[data-id="' + button.title + '"]', $(messageBox)).click(button.action);
+        });
+    }
+
+    hideGenericMessageBox = function() {
+        if (messageBox) {
+            $(messageBox).modal('hide');
+            $(messageBox).remove();
+        }
+        messageBox = null;
+    }
+})();
+
 function dynamicPackage(packageName, callback, manifest) {
     var self = this;
     this.files = [];
