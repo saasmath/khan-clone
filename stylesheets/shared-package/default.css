@@ -1453,6 +1453,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         left: 282px;
         top: 5px;
         line-height: 1px;
+        z-index:20;
     }
     .exercise-show:hover {
         top: 6px;
@@ -1914,6 +1915,8 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .proficient-badge {
     display: block;
+    position:relative;
+    z-index:10;
 }
 
 .exercise-badge.single-exercise .energy-points-badge {
