@@ -96,6 +96,7 @@ var Profile = {
         routes: {
             "": "showDefault",
             "vital-statistics": "showVitalStatistics",
+            "vital-statistics/exercise-problems/:exercise": "showExerciseProblems", // TODO: awkward turtle
             "vital-statistics/:graph": "showVitalStatistics",
             "achievements": "showAchievements",
             "goals": "showGoals"
@@ -106,37 +107,44 @@ var Profile = {
                 .siblings().hide();
         },
 
-        showVitalStatistics: function(graph){
-            var translation = {
-                "activity": "/profile/graph/activity",
-                "focus": "/profile/graph/focus",
-                "exercise-progress-over-time": "/profile/graph/exercisesovertime",
-                "exercise-progress": "/api/v1/user/exercises"
+        showVitalStatistics: function(graph, exercise){
+            var graph = graph || "activity",
+                exercise = exercise || "addition_1",
+                translation = {
+                    "activity": "/profile/graph/activity",
+                    "focus": "/profile/graph/focus",
+                    "exercise-progress-over-time": "/profile/graph/exercisesovertime",
+                    "exercise-progress": "/api/v1/user/exercises",
+                    "exercise-problems": "/profile/graph/exerciseproblems?"
+                                            + "exercise_name=" + exercise
+                                            + "&" + "student_email=" + Profile.email
+                                            // TODO: need to pass correct student email somehow
+                
                 },
-                graph = graph || "activity",
                 href = translation[graph],
                 jelGraphLinkHeader = $(".graph-link-header[href$='" + graph + "']");
 
             $("#tab-content-vital-statistics").show()
                 .siblings().hide();
 
+            if (jelGraphLinkHeader.length) {
+                var index = jelGraphLinkHeader.index(),
+                    isSubLink = jelGraphLinkHeader.hasClass("graph-sub-link");
 
-            if (!jelGraphLinkHeader.length) {
-                return false;
-            }
+                if (!isSubLink) {
+                    $(".graph-link").css("background-color", "")
+                        .eq(index).css("background-color", "#eee");
 
-            var index = jelGraphLinkHeader.index(),
-                isSubLink = jelGraphLinkHeader.hasClass("graph-sub-link");
-
-            if (!isSubLink) {
-                $(".graph-link").css("background-color", "")
-                    .eq(index).css("background-color", "#eee");
-
-                $(".vital-statistics-description").hide()
-                    .eq(index).show();
+                    $(".vital-statistics-description").hide()
+                        .eq(index).show();
+                }
             }
 
             Profile.loadGraph(href);
+        },
+
+        showExerciseProblems: function(exercise) {
+            this.showVitalStatistics("exercise-problems", exercise);
         },
 
         showAchievements: function(){
@@ -296,10 +304,9 @@ var Profile = {
             $("#info-hover-container").hide();
             // Extract the name from the ID, which has been prefixed.
             var exerciseName = this.id.substring( "exercise-".length );
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exerciseName + "&" +
-                "student_email=" + Profile.email);
+            // TODO: awkward turtle
+            window.location = "/profile?student_email=" + USER_EMAIL
+                                  + "#vital-statistics/exercise-problems/" + exerciseName;
         });
     },
 

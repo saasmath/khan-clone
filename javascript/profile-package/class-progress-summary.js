@@ -91,19 +91,6 @@ var ProgressSummaryView = function() {
             }
         });
 
-        $("#graph-content").delegate(".student-link", "click", function(e) {
-            e.preventDefault();
-
-            var jel = $(this),
-                exercise = jel.data("exercise"),
-                email = jel.data("email");
-
-            Profile.collapseAccordion();
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exercise + "&" +
-                "student_email=" + email);
-        });
     }
 
     return {

@@ -25,8 +25,9 @@ var chart;
                             point: {
                                 events: {
                                     click: function() {
-                                        Profile.collapseAccordion();
-                                        Profile.loadGraph('/profile/graph/exerciseproblems?student_email={{ student_email|escapejs }}&exercise_name=' + this.name);
+                                        // TODO: awkward turtle
+                                        window.location = "/profile?student_email=" + USER_EMAIL
+                                                              + "#vital-statistics/exercise-problems/" + this.name;
                                     }
                                 }
                             }

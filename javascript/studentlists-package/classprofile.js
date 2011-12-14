@@ -404,7 +404,7 @@ var ClassProfile = {
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
-            student.profile_url = "/profile?selected_graph_type=goals&student_email="+student.email;
+            student.profile_url = "/profile?student_email=" + student.email + "#goals";
 
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
@@ -480,8 +480,9 @@ var ClassProfile = {
 
                 if (goalObjective.type == 'GoalObjectiveExerciseProficiency') {
                     $(this).click(function() {
-                        ClassProfile.collapseAccordion();
-                        ClassProfile.loadGraph('/profile/graph/exerciseproblems?student_email='+goalViewModel.student.email+'&exercise_name='+goalObjective.internal_id);
+                        // TODO: awkward turtle
+                        window.location = "/profile?student_email=" + goalViewModel.student.email 
+                                            + "#vital-statistics/exercise-problems/" + goalObjective.internal_id;
                     });
                 } else {
                     // Do something here for videos?
@@ -1015,7 +1016,9 @@ var ClassProfile = {
             $.each(student_row.exercises, function(idx2, exercise) {
                 exercise.exercise_display = data.exercise_names[idx2].display_name;
                 exercise.progress = (exercise.progress*100).toFixed(0);
-                exercise.link = '/profile/graph/exerciseproblems?student_email=' + student_row.email + '&exercise_name=' + data.exercise_names[idx2].name;
+                // TODO: awkward turtle
+                exercise.link = "/profile?student_email=" + student_row.email
+                                    + "#vital-statistics/exercise-problems/" + data.exercise_names[idx2].name;
                 if (exercise.last_done) {
                     exercise.seconds_since_done = ((new Date()).getTime() - Date.parse(exercise.last_done)) / 1000;
                 } else {
@@ -1158,9 +1161,9 @@ var ProgressReport = {
                     index: col_idx
                 }));
                 $(this).click(function() {
-                    ProgressReport.onUnhover();
-                    ClassProfile.collapseAccordion();
-                    ClassProfile.loadGraph(row.exercises[col_idx].link);
+                    // TODO: awkward turtle this should really just be a link,
+                    // but I don't feel like combing through right now.
+                    window.location = row.exercises[col_idx].link;
                 });
             });
         });

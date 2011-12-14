@@ -394,11 +394,6 @@ class ExerciseProblemsGraph(ProfileGraph):
     def graph_html_and_context(self, student):
         return templatetags.profile_exercise_problems_graph(student, self.request_string("exercise_name"))
 
-class ExerciseProgressGraph(ProfileGraph):
-    GRAPH_TYPE = "exerciseprogress"
-    def graph_html_and_context(self, student):
-        return templatetags.profile_exercise_progress_graph(student)
-
 class ClassExercisesOverTimeGraph(ClassProfileGraph):
     GRAPH_TYPE = "classexercisesovertime"
     def graph_html_and_context(self, coach):

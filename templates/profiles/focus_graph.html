@@ -116,8 +116,9 @@
                     point: {
                         events: {
                             click: function() {
-                                Profile.collapseAccordion();
-                                Profile.loadGraph('/profile/graph/exerciseproblems?student_email={{ student_email|escapejs }}&exercise_name=' + this.exid);
+                                // TODO: awkward turtle
+                                window.location = "/profile?student_email=" + "{{ student_email|escapejs }}"
+                                                      + "#vital-statistics/exercise-problems/" + this.exid;
                             }
                         }
                     },
