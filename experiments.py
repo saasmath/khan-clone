@@ -62,28 +62,3 @@ class StrugglingExperiment(object):
                            StrugglingExperiment._conversion_types)
 
         return find_alternative_for_user(exp_name, user_data)
-    
-class HomepagePlaylistRenderExperiment(object):
-
-    _ab_test_alternatives = {
-        'original': 7, # send down everything in one HTML block, non-cacheable
-        'new': 3, # send down playlist outline in HTML, and content in cacheable
-                  # json afterwards in the background
-    }
-    _conversion_tests = [
-        ('homepage_render_visits', ConversionTypes.Counting),
-        ('homepage_render_videos_landing', ConversionTypes.Counting),
-        ('homepage_render_videos_finished', ConversionTypes.Counting),
-        ('homepage_render_thumbnails_clicked', ConversionTypes.Counting),
-        ('homepage_render_main_video_played', ConversionTypes.Counting),
-    ]
-    _conversion_names, _conversion_types = [
-        list(x) for x in zip(*_conversion_tests)]
-
-    @staticmethod
-    def get_render_type():
-        return ab_test("Homepage Render Type",
-                       HomepagePlaylistRenderExperiment._ab_test_alternatives,
-                       HomepagePlaylistRenderExperiment._conversion_names,
-                       HomepagePlaylistRenderExperiment._conversion_types)
-        
