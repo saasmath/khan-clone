@@ -317,6 +317,28 @@ def user_data_other():
 
     return None
 
+# TODO: the "GET" version of this.
+@route("/api/v1/user/profile", methods=["POST", "PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def update_user_profile():
+    """ Updates public information about a user.
+    
+    The posted data should be JSON, with fields representing the values that
+    needs to be changed. Supports "user_nickname" only right now.
+    """
+    user_data = models.UserData.current()
+
+    profile_json = request.json
+    if not profile_json:
+        return api_invalid_param_response("Profile data expected")
+    
+    if profile_json["nickname"] is not None:
+        user_data.user_nickname = profile_json["nickname"]
+
+    user_data.save()
+
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -906,11 +928,12 @@ def badge_categories():
 def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
 
+# TODO: the "GET" version of this.
 @route("/api/v1/user/badges/public", methods=["POST", "PUT"])
 @oauth_required()
 @jsonp
 @jsonify
-def handle_public_user_badges():
+def update_public_user_badges():
     user_data = models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")

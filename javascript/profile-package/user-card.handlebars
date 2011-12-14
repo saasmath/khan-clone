@@ -1,5 +1,6 @@
 {{#if loggedIn}}
-  <p>{{nickname}}</p>
+  <input type="text" value="{{nickname}}" id="nickname"
+      placeholder="Enter nickname here" class="inline-editable nickname">
   <p>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
 {{else}}
   <p>Log in, Darth!</p>

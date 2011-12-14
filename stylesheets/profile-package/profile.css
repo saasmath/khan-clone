@@ -607,6 +607,9 @@ div.graph-notification {
     background: #ecefe3;
     text-decoration: none;
 }
+
+/* TODO: remove these descendent selectors with broadly
+ * scoped tags on the rightmost side */
 .ui-tabs-vertical { }
 .ui-tabs-vertical .ui-tabs-nav { padding: 18px .1em .2em .2em; width: 12em; position: absolute; left: 0; top: 0; bottom: 0; }
 .ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border: none !important; margin: 0 -1px .2em 0; font-weight: normal;}
@@ -627,4 +630,21 @@ div.graph-notification {
 #student-profile-nav .vital-statistics-description a.graph-sub-link-selected {
     text-decoration: none;
     color: #DD6900;
+}
+
+.inline-editable {
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    padding: 0.3em 0.1em;
+}
+
+.inline-editable:hover {
+    border: 1px solid green;
+}
+
+input.nickname {
+    font-size: 150%;
 }

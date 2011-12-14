@@ -298,6 +298,7 @@ Badges.DisplayCase = Backbone.View.extend({
             });
             jelPicker.undelegate();
 
+            // TODO: avoid saving if not dirty.
             this.save();
         }
         return this;
