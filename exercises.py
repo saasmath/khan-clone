@@ -84,9 +84,11 @@ class ViewExercise(request_handler.RequestHandler):
 
         user_exercise = user_data.get_or_insert_exercise(exercise)
 
-        # Cache this so we don't have to worry about future lookups
+        # Cache these so we don't have to worry about future lookups
         user_exercise.exercise_model = exercise
         user_exercise._user_data = user_data
+        user_exercise._user_exercise_graph = (
+                user_exercise.get_user_exercise_graph())
         user_exercise.summative = exercise.summative
 
         # Temporarily work around in-app memory caching bug
@@ -207,6 +209,9 @@ class ViewExercise(request_handler.RequestHandler):
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
+        reviews_left_count = (
+                user_exercise.get_user_exercise_graph().reviews_left_count())
+
         template_values = {
             'exercise': exercise,
             'user_exercise_json': user_exercise_json,
@@ -226,6 +231,7 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
+            'reviews_left_count': reviews_left_count,
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)

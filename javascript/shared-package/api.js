@@ -97,7 +97,10 @@ $(function(){
     APIActionResults.register( "points_earned", updatePointDisplay );
 });
 
-// Change review mode heading to "review done!" when appropriate
 $(function() {
+    // Change review mode heading to "review done!" when appropriate
     APIActionResults.register( "review_done", Review.highlightDone );
+
+    // Update the "reviewing X exercises" heading counter
+    APIActionResults.register( "reviews_left", Review.updateCounter );
 });

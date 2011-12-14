@@ -1084,19 +1084,19 @@ var dynamicPackageLoader = {
 };
 
 $(function() {
-		$(document).delegate('input.blur-on-esc', 'keyup', function( e, options ) {
-				if ( options && options.silent ) return;
-				if ( e.which == '27' ) {
-						$(e.target).blur();
-				}
-		});
+    $(document).delegate('input.blur-on-esc', 'keyup', function( e, options ) {
+        if ( options && options.silent ) return;
+        if ( e.which == '27' ) {
+            $(e.target).blur();
+        }
+    });
 });
 
 // An animation that grows a box shadow of the review hue
 $.fx.step.reviewExplode = function(fx) {
-		var val = fx.now + fx.unit;
-		$( fx.elem ).css( 'boxShadow',
-						'0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
+    var val = fx.now + fx.unit;
+    $( fx.elem ).css( 'boxShadow',
+        '0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
 };
 
 var Review = {
@@ -1115,10 +1115,10 @@ var Review = {
             });
 
         // Review hue explosion
-        $( "#review-mode-title" ).stop().animate({
+        $( "#review-mode-title" ).stop().addClass( "review-done" ).animate({
             reviewExplode: 200,
         }, duration ).queue(function() {
-            $( this ).removeAttr( "style" ).addClass( "review-done" );
+            $( this ).removeAttr( "style" ).addClass( "post-animation" );
         });
 
         // Temporarily change the color of the review done box to match the explosion
@@ -1140,5 +1140,40 @@ var Review = {
         }, duration ).queue(function() {
             $( this ).removeAttr( "style" );
         });
+    },
+
+    initCounter: function() {
+        var digits = "0 1 2 3 4 5 6 7 8 9 ";
+        $( "#review-counter-container" )
+            .find( ".ones" ).text( new Array(10 + 1).join(digits) ).end()
+            .find( ".tens" ).text( digits );
+    },
+
+    updateCounter: function( reviewsLeftCount ) {
+
+        // Spin the remaining reviews counter like slot machines
+        var reviewCounterElem = $( "#review-counter-container" ),
+            oldCount = reviewCounterElem.data( "counter" ) || 0,
+            tens = Math.floor( ( reviewsLeftCount % 100 ) / 10 ),
+            animationOptions = {
+              duration: Math.log( 1 + Math.abs(reviewsLeftCount - oldCount) )
+                  * 1000 * 0.8,
+              easing: 'easeInOutCubic'
+            },
+            lineHeight = parseInt(
+                reviewCounterElem.children().css('lineHeight'), 10 );
+
+        reviewCounterElem.find( ".ones" ).animate({
+            top: ( reviewsLeftCount % 100 ) * -lineHeight
+        }, animationOptions );
+
+        reviewCounterElem.find( ".tens" ).animate({
+            top: tens * -lineHeight
+        }, animationOptions );
+
+        $( "#review-mode-title h1" ).text(
+            reviewsLeftCount === 1 ? "Review!" : "Reviews" );
+
+        reviewCounterElem.data( "counter", reviewsLeftCount );
     }
 };

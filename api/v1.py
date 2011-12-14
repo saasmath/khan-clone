@@ -745,6 +745,9 @@ def attempt_problem_number(exercise_name, problem_number):
 
             user_states = user_exercise_graph.states(exercise.name)
             review_mode = request.request_bool("review_mode", default=False)
+            correct = request.request_bool("complete")
+            reviews_left = user_exercise_graph.reviews_left_count() + (
+                    1 - correct)
 
             action_results = {
                 "exercise_state": {
@@ -753,9 +756,10 @@ def attempt_problem_number(exercise_name, problem_number):
                         user_exercise_graph, review_mode=review_mode),
                 },
                 "points_earned": {"points": points_earned},
-                "attempt_correct": request.request_bool("complete"),
+                "attempt_correct": correct,
                 "review_done": (review_mode and
                     user_exercise_graph.has_completed_review()),
+                "reviews_left": reviews_left,
             }
 
             if goals_updated:

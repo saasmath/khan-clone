@@ -2096,6 +2096,12 @@ class UserExerciseGraph(object):
         #     review session.
         return not self.review_exercise_names()
 
+    def reviews_left_count(self):
+        # TODO(david): For future algorithms this should return # reviews left
+        #     for today's review session.
+        # TODO(david): Make it impossible to have >= 100 reviews.
+        return len(self.review_exercise_names())
+
     def suggested_graph_dicts(self):
         return [graph_dict for graph_dict in self.graph_dicts() if graph_dict["suggested"]]
 
