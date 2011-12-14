@@ -23,7 +23,7 @@ class HomepageRestructuringExperiment(object):
 
     @staticmethod
     def get_render_type():
-        return ab_test("Homepage Restructuring",
+        return ab_test("Homepage Restructuring 2",
             HomepageRestructuringExperiment._ab_test_alternatives,
             HomepageRestructuringExperiment._conversion_names,
             HomepageRestructuringExperiment._conversion_types)
