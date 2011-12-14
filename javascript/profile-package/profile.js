@@ -49,52 +49,6 @@ var Profile = {
             }
         });
 
-
-
-        if ($.address){
-
-            // this is hackish, but it prevents the change event from being fired twice on load
-            if ( $.address.value() === "/" ){
-                window.location = window.location + "#" + $(".graph-link:eq(0)").attr("href");
-            }
-
-            $.address.change(function( evt ){
-
-                if ( $.address.path() !== "/"){
-                    Profile.historyChange( evt );
-                }
-
-            });
-
-        }
-
-        $(".graph-link").click(
-            function(evt){
-                evt.preventDefault();
-                if($.address){
-                    // only visit the resource described by the url, leave the params unchanged
-                    var href = $( this ).attr( "href" )
-                    var path = href.split("?")[0];
-
-                    // visiting a different resource
-                    if ( path !== $.address.path() ){
-                        $.address.path( path );
-                    }
-
-                    // applying filters for same resource via querystring
-                    else{
-                        // make a dict of current qs params and merge with the link's
-                        var currentParams = {};
-                        _.map( $.address.parameterNames(), function(e){ currentParams[e] = $.address.parameter( e ); } );
-                        var linkParams = Profile.parseQueryString( href );
-                        $.extend( currentParams, linkParams );
-
-                        $.address.queryString( Profile.reconstructQueryString( currentParams ) );
-                    }
-                }
-            }
-        );
-
         $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
             var category = $(this).attr("id");
             var clickedBadge = $(this);
@@ -142,54 +96,66 @@ var Profile = {
                 clearStyle: true
             });
 
-        setTimeout(function(){
-            if (!Profile.fLoadingGraph && !Profile.fLoadedGraph)
-            {
-                // If 1000 millis after document.ready fires we still haven't
-                // started loading a graph, load manually.
-                // The externalChange trigger may have fired before we hooked
-                // up a listener.
-                Profile.historyChange();
-            }
-        }, 1000);
-
         Profile.ProgressSummaryView = new ProgressSummaryView();
+        Profile.router = new Profile.TabRouter;
+        Backbone.history.start();
     },
-    
-    tabRouter: Backbone.Router.extend({
-        
-        /* This router is really simple and based off of the documentation here:
-         * http://documentcloud.github.com/backbone/#Router
-         * It's probably really naive to try to implement it like this, but hey maybe it will fix all of our problems?
-         * Also, this part is not done:
-         *      During page load, after your application has finished creating all of its routers, 
-         *      be sure to call Backbone.history.start() 
-         */
-         
+
+    TabRouter: Backbone.Router.extend({
         routes: {
-            "profile": "renderProfile",
-            
-            "profile/vital-stats/:graph":               "renderVitalStats",
-            
-            "profile/achievements":                     "renderAchievements",
-            
-            "profile/goals":                            "renderGoals"
+            "": "showDefault",
+            "vital-statistics": "showVitalStatistics",
+            "vital-statistics/:graph": "showVitalStatistics",
+            "achievements": "showAchievements",
+            "goals": "showGoals"
         },
-        
-        renderProfile: function(){
-            return false;
+
+        showDefault: function(){
+            $("#tab-content-user-profile").show()
+                .siblings().hide();
         },
-        
-        renderVitalStats: function( graph ){
-            return false;
+
+        showVitalStatistics: function(graph){
+            var translation = {
+                "activity": "/profile/graph/activity",
+                "focus": "/profile/graph/focus",
+                "exercise-progress-over-time": "/profile/graph/exercisesovertime",
+                "exercise-progress": "/api/v1/user/exercises"
+                },
+                graph = graph || "activity",
+                href = translation[graph],
+                jelGraphLinkHeader = $(".graph-link-header[href$='" + graph + "']");
+
+            $("#tab-content-vital-statistics").show()
+                .siblings().hide();
+
+
+            if (!jelGraphLinkHeader.length) {
+                return false;
+            }
+
+            var index = jelGraphLinkHeader.index(),
+                isSubLink = jelGraphLinkHeader.hasClass("graph-sub-link");
+
+            if (!isSubLink) {
+                $(".graph-link").css("background-color", "")
+                    .eq(index).css("background-color", "#eee");
+
+                $(".vital-statistics-description").hide()
+                    .eq(index).show();
+            }
+
+            Profile.loadGraph(href);
         },
-        
-        renderAchievements: function(){
-            return false;
+
+        showAchievements: function(){
+            $("#tab-content-achievements").show()
+                .siblings().hide();
         },
-        
-        renderGoals: function(){
-            return false;
+
+        showGoals: function(){
+            $("#tab-content-goals").show()
+                .siblings().hide();
         }
     }),
     
@@ -306,29 +272,8 @@ var Profile = {
 
         href = this.baseGraphHref(href).replace(/[<>']/g, "");
 
-        href = href.replace(/[<>']/g, "");
         var selectorAccordionSection =
                 ".graph-link-header[href*='" + href + "']";
-
-        if (!window.ClassProfile) {
-            // TODO: Use reasonable styles
-            var jel = $(selectorAccordionSection);
-            if (!jel.length) {
-                return false;
-            }
-
-            var index = jel.index(),
-                isSubLink = jel.hasClass("graph-sub-link");
-
-            if (!isSubLink) {
-                $(".graph-link").css("background-color", "")
-                    .eq(index).css("background-color", "#eee");
-
-                $(".vital-statistics-description").hide()
-                    .eq(index).show();
-            }
-            return true;
-        }
 
         if ( $(selectorAccordionSection).length ) {
             $("#stats-nav #nav-accordion").accordion(
@@ -375,7 +320,7 @@ var Profile = {
         this.loadGraph(url);
     },
 
-    loadFilters : function( href ){
+    loadFilters: function( href ){
         // fix the hrefs for each filter
         var a = $("#stats-filters a[href^=\"" + href + "\"]").parent();
         $("#stats-filters .filter:visible").not(a).slideUp("slow");
@@ -425,13 +370,6 @@ var Profile = {
     finishLoadGraph: function(data, href, fNoHistoryEntry, apiCallback) {
 
         this.fLoadingGraph = false;
-
-        if (!fNoHistoryEntry) {
-            // Add history entry for browser
-            //             if ($.address) {
-            //                 $.address(href);
-            // }
-        }
 
         this.showGraphThrobber(false);
         this.styleSublinkFromHref(href);
@@ -812,28 +750,6 @@ var Profile = {
 		});
 	},
 
-    // TODO: move history management out to a common utility
-    historyChange: function(e) {
-        var href = ( $.address.value() === "/" ) ? this.initialGraphUrl : $.address.value();
-        var url = ( $.address.path() === "/" ) ? this.initialGraphUrl : $.address.path();
-
-        if ( href ) {
-            // TODO: Fix this tab history action once and for ALL
-            if (href === "/achievements") {
-                $("#tab-achievements").click();
-            } else if ( this.expandAccordionForHref(href) ) {
-                this.loadGraph( href , true );
-                this.loadFilters( url );
-            } else {
-                // Invalid URL - just try the first link available.
-                var links = $(".graph-link");
-                if ( links.length ) {
-                    Profile.loadGraphFromLink( links[0] );
-                }
-            }
-        }
-    },
-
     showGraphThrobber: function(fVisible) {
         if (fVisible) {
             $("#graph-progress-bar").progressbar({value: 100}).slideDown("fast");
@@ -973,9 +889,6 @@ var Profile = {
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
         $("#profile-content").html(profileTemplate({email: USER_EMAIL}));
-
-        $("#tabs").tabs().addClass('ui-tabs-vertical ui-helper-clearfix');
-        $("#tabs li").removeClass('ui-corner-top ui-state-default').addClass('ui-corner-left');
 
         Profile.populateUserCard();
         Profile.populateAchievements();

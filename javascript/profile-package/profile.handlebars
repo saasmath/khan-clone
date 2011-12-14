@@ -4,20 +4,25 @@
   }
 </style>
 
-<div id="tabs">
+<div>
     <ul>
-        <li><a href="#tab-content-user-profile"><img src="/images/darth.png" /></a></li>
-        <li><a href="#tab-content-vital-statistics">Vital Statistics</a></li>
-        <li><a id="tab-achievements" href="#tab-content-achievements">Achievements</a></li>
-        <li><a href="#tab-content-goals">Goals (beta)</a></li>
+        <li><a href="#">Darth</a></li>
+        <li><a href="#vital-statistics">Vital statistics</a></li>
+        <li><a href="#achievements">Achievements</a></li>
+        <li><a href="#goals">Goals</a></li>
     </ul>
+</div>
+
+<div id="tabs">
     <div id="tab-content-user-profile">
         <div class="user-info-container vertical-shadow"></div>
         <div style="clear: both;"></div>
     </div>
+
     <div id="tab-content-vital-statistics">
         {{> vital-statistics}}
     </div>
+
     <div id="tab-content-achievements"></div>
 
     <div id="tab-content-goals">
