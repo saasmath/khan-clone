@@ -99,9 +99,9 @@
         top: -1px;
     }
 
-#individual_report > div {
+/* #individual_report > div {
     margin: 10px 0 20px;
-}
+}*/
 #individual_report h2 {
     color: #444;
     font-weight: normal;
@@ -138,7 +138,7 @@
     #individual_report #vital-statistics #stats-nav {
         width: 280px;
         float: left;
-        margin: -10px 20px 10px 0;        
+        margin: -10px 20px 10px 0;
     }
     #individual_report #vital-statistics #stats-nav ul#nav-accordion {
         padding: 10px 0 0 3px;
@@ -283,7 +283,6 @@
     }
 
 #individual_report #achievements {
-    margin-top: 30px;
     min-width: 970px;
 }
     #individual_report #achievements h2 {
@@ -549,11 +548,93 @@ div.graph-notification {
 
 #stats-filters p {font-size:10px; margin: 0; display:inline-block; }
 #stats-filters h3 {
-  font-family: "MuseoSans300"; font-size:18px; 
+  font-family: "MuseoSans300"; font-size:18px;
   margin-right:.5em;
   display:inline-block;
 }
 #stats-filters h3 small{ font-size:14px; }
 #stats-filters #targetDatepicker{
   display:inline-block;
+}
+.user-info-container {
+  background: #eee;
+  border-radius: 5px;
+}
+.user-info-container .user-info {
+  padding-left: 20px;
+}
+.user-info-container .user-info img {
+  width: 50px;
+  height: 50px;
+}
+.sticker-book {
+  width: 600px;
+}
+#tabs {
+}
+#tabs .ui-tabs {
+    border: none;
+}
+#tabs.ui-tabs.ui-corner-all, #tabs .ui-tabs-nav.ui-corner-all {
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+}
+#tabs.ui-tabs {
+    border: none;
+}
+#tabs .ui-tabs-nav {
+    background: none;
+    border-width: 0 1px 0 0;
+    border-color: #C6D1AD;
+}
+#tabs .ui-state-hover {
+    background: none;
+    border-width: 1px 0px 1px 1px;
+    text-decoration: underline;
+}
+#tabs .ui-state-hover.ui-tabs-selected {
+    background: #ecefe3;
+    text-decoration: none;
+}
+
+/* TODO: remove these descendent selectors with broadly
+ * scoped tags on the rightmost side */
+.ui-tabs-vertical { }
+.ui-tabs-vertical .ui-tabs-nav { padding: 18px .1em .2em .2em; width: 12em; position: absolute; left: 0; top: 0; bottom: 0; }
+.ui-tabs-vertical .ui-tabs-nav li { clear: left; width: 100%; border: none !important; margin: 0 -1px .2em 0; font-weight: normal;}
+.ui-tabs-vertical .ui-tabs-nav li a { display:block; }
+.ui-tabs-vertical .ui-tabs-nav li.ui-tabs-selected { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; border-right-width: 1px; margin-bottom: .2em; background: #ecefe3; }
+.ui-tabs-vertical .ui-tabs-panel { padding: 18px 0 0; margin-left: 14em; min-height: 500px; }
+
+#student-profile-nav #top-nav a{
+  display: block;
+  float: left;
+  margin-left: 20px;
+}
+
+#student-profile-nav .vital-statistics-description {
+    display: none;
+}
+
+#student-profile-nav .vital-statistics-description a.graph-sub-link-selected {
+    text-decoration: none;
+    color: #DD6900;
+}
+
+.inline-editable {
+    background: transparent;
+    border: 1px solid transparent;
+    box-shadow: none;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    padding: 0.3em 0.1em;
+}
+
+.inline-editable:hover {
+    border: 1px solid green;
+}
+
+input.nickname {
+    font-size: 150%;
 }

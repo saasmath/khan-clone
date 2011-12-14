@@ -247,6 +247,10 @@ ul.inline-list, ul.inline-list li {
     width: 95%;
     margin: 0 auto;
 }
+#profile-goals-content .student-goals {
+    width: auto;
+    margin: auto;
+}
 #goals-nav-container {
     position: absolute;
     width: 800px;

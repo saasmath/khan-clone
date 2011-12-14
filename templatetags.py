@@ -2,6 +2,7 @@ import math
 
 from jinja2.utils import escape
 
+from api import jsonify as apijsonify
 from templatefilters import slugify
 import topics_list
 import models
@@ -31,12 +32,12 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 
 def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
-    
+
     This is called **each time** a problem is either attempted or a hint is called (via /api/v1.py)
     returns nothing unless a user is struggling, proficient, etc. then it returns the appropriat template
-    
+
     See Also: APIActionResults
-    
+
     sees_graph is part of an ab_test to see if a small graph will help
     """
     if exercise_states['endangered']:
@@ -143,3 +144,5 @@ def playlist_browser_structure(structure, class_name="", level=0):
 def video_name_and_progress(video):
     return "<span class='vid-progress v%d'>%s</span>" % (video.key().id(), escape(video.title.encode('utf-8', 'ignore')))
 
+def jsonify(obj, camel_cased):
+    return apijsonify.jsonify(obj, camel_cased=camel_cased)

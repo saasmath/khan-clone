@@ -26,7 +26,7 @@ from api.decorators import jsonify, jsonp, compress, decompress, etag,\
     cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
-from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
+from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
 from google.appengine.ext import db
 
@@ -316,6 +316,28 @@ def user_data_other():
             return user_data_student
 
     return None
+
+# TODO: the "GET" version of this.
+@route("/api/v1/user/profile", methods=["POST", "PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def update_user_profile():
+    """ Updates public information about a user.
+    
+    The posted data should be JSON, with fields representing the values that
+    needs to be changed. Supports "user_nickname" only right now.
+    """
+    user_data = models.UserData.current()
+
+    profile_json = request.json
+    if not profile_json:
+        return api_invalid_param_response("Profile data expected")
+    
+    if profile_json["nickname"] is not None:
+        user_data.user_nickname = profile_json["nickname"]
+
+    user_data.save()
 
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()
@@ -866,6 +888,7 @@ def user_video_logs(youtube_id):
 
     return None
 
+# TODO: this should probably not return user data in it.
 @route("/api/v1/badges", methods=["GET"])
 @oauth_optional()
 @jsonp
@@ -904,6 +927,65 @@ def badge_categories():
 @jsonify
 def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
+
+# TODO: the "GET" version of this.
+@route("/api/v1/user/badges/public", methods=["POST", "PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def update_public_user_badges():
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    public_badges_json = request.json
+    if not public_badges_json:
+        return api_invalid_param_response(
+                "List of names of public badges expected")
+
+    user_data.public_badges = public_badges_json
+    user_data.save()
+
+@route("/api/v1/user/badges", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_badges():
+    # TODO: below line may be suspect
+    # Furthermore, the ability to override and peer at another's badges is missing
+    user_data = models.UserData.current() or models.UserData.pre_phantom()
+    grouped_badges = util_badges.get_grouped_user_badges(user_data)
+
+    user_badges_by_category = {
+        badges.BadgeCategory.BRONZE: grouped_badges["bronze_badges"],
+        badges.BadgeCategory.SILVER: grouped_badges["silver_badges"],
+        badges.BadgeCategory.GOLD: grouped_badges["gold_badges"],
+        badges.BadgeCategory.PLATINUM: grouped_badges["platinum_badges"],
+        badges.BadgeCategory.DIAMOND: grouped_badges["diamond_badges"],
+        badges.BadgeCategory.MASTER: grouped_badges["user_badges_master"],
+    }
+
+    user_badge_dicts_by_category = {}
+
+    for category, user_badge_bucket in user_badges_by_category.iteritems():
+        user_badge_dicts_by_category[category] = user_badge_bucket
+
+    badge_collections = []
+
+    # Iterate over the set of all possible badges.
+    for collection in grouped_badges["badge_collections"]:
+        if len(collection):
+            first_badge = collection[0]
+            badge_collections.append({
+                "category": first_badge.badge_category,
+                "category_description": first_badge.category_description(),
+                "badges": collection,
+                "user_badges": user_badge_dicts_by_category[first_badge.badge_category],
+            })
+
+    return {
+            "badge_collections": badge_collections,
+        }
 
 @route("/api/v1/developers/add", methods=["POST"])
 @admin_required
