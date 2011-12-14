@@ -169,7 +169,7 @@ class ViewHomePage(request_handler.RequestHandler):
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
         render_type = HomepagePlaylistRenderExperiment.get_render_type()
-        if render_type == "original":
+        if render_type == "old":
             library_content = library.library_content_html()
         else:
             library_content = library.playlist_content_html()
