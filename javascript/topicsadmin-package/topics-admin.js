@@ -135,6 +135,7 @@ var TopicTreeEditor = {
 
         node.removeChildren();
         if (model.get('children')) {
+            childNodes = []
             _.each(model.get('children'), function(child) {
                 var data = {
                     title: child.title,
@@ -154,8 +155,9 @@ var TopicTreeEditor = {
                 } else if (child.kind == 'Exercise') {
                     data.icon = 'exercise-icon-small.png';
                 }
-                node.addChild(data);
+                childNodes.push(data);
             });
+            node.addChild(childNodes);
         }
 
         if (model.id == 'root') {
