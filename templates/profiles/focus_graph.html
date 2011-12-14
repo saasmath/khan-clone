@@ -40,7 +40,7 @@
                     innerSize: '13%',
                     center: ['11%', '14%'],
                     dataLabels: {
-                        connectorColor: 'silver', 
+                        connectorColor: 'silver',
                         connectorWidth: 2,
                         color: '#898989'
                     },
@@ -63,7 +63,7 @@
                     innerSize: '3%',
                     center: ['11%', '14%'],
                     dataLabels: {
-                        connectorColor: 'silver', 
+                        connectorColor: 'silver',
                         connectorWidth: 2,
                         color: '#898989'
                     },
@@ -117,8 +117,9 @@
                         events: {
                             click: function() {
                                 // TODO: awkward turtle
-                                window.location = "/profile?student_email=" + "{{ student_email|escapejs }}"
-                                                      + "#vital-statistics/exercise-problems/" + this.exid;
+                                Profile.router.navigate(
+                                        "vital-statistics/exercise-problems/" + this.exid,
+                                        true);
                             }
                         }
                     },
