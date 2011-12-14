@@ -10,7 +10,8 @@ def append_paths():
     os.environ["CURRENT_VERSION_ID"] = ""
 
     # Can only deploy on unix-based systems for now
-    dev_appserver_path = commands.getoutput("which dev_appserver.py")
+    dev_appserver_path = os.path.realpath( commands.getoutput("which dev_appserver.py") )
+
     gae_path = None
     if dev_appserver_path:
         gae_path = os.path.dirname(dev_appserver_path)
