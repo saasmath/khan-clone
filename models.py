@@ -666,15 +666,17 @@ def set_css_deferred(user_data_key, video_key, status, version):
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
 class UserData(GAEBingoIdentityModel, db.Model):
-    # Canonical reference to the user entity. This should never be changed.
+    # Canonical reference to the user entity. Avoid referencing this directly
+    # as the fields of this property can change; only the ID is stable and
+    # user_id can be used as a unique identifier instead.
     user = db.UserProperty()
 
     # Deprecated - this was used to represent the current e-mail address of the
     # user but is no longer relevant. Do not use - see user_id instead.
     current_user = db.UserProperty()
 
-    # A uniquely identifying string for a user - this is not stable and can
-    # change if a user changes her e-mail.
+    # An opaque and uniquely identifying string for a user - this is stable
+    # even if the user changes her e-mail.
     user_id = db.StringProperty()
 
     # A uniquely identifying string for a user. This is not stable and can
@@ -703,13 +705,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
     points = db.IntegerProperty(default=0)
     total_seconds_watched = db.IntegerProperty(default=0)
     
-    # A list of "user_email" values corresponding to coaches for the user.
+    # A list of email values corresponding to the "user" property of the coaches
+    # for the user. Note: that it may not be the current, active email
     coaches = db.StringListProperty()
     
-    # A list of "user_email" values corresponding to coworkers for the user.
     coworkers = db.StringListProperty()
-
-    # A list of "user_email" values corresponding to students this user coaches.
     student_lists = db.ListProperty(db.Key)
     map_coords = db.StringProperty(indexed=False)
     expanded_all_exercises = db.BooleanProperty(default=True, indexed=False)
