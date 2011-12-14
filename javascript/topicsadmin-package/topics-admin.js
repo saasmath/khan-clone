@@ -49,7 +49,7 @@ var TopicTreeEditor = {
             },
 
             onLazyRead: function(node) {
-                topicTree.fetchByID(node.data.key);
+                topicTree.fetchByID(node.data.key, this.refreshTreeNode);
             },
 
             dnd: {
@@ -58,7 +58,7 @@ var TopicTreeEditor = {
                 },
 
                 onDragEnter: function(node, sourceNode) {
-                    if (node.kind != 'Topic')
+                    if (node.data.kind != 'Topic')
                         return ["before", "after"];
 
                     return ["over", "before", "after"];
@@ -451,21 +451,23 @@ var TopicTopicNodeEditor = {
     moveItem: function(oldParentID, moveData) {
         // Apply the change to the model data first
         child = getDefaultTopicTree().get(oldParentID).removeChild(moveData.kind, moveData.id);
-        getDefaultTopicTree().get(moveData.new_parent_id).addChild(child, moveData.new_parent_pos);
+        new_parent = getDefaultTopicTree().fetchByID(moveData.new_parent_id, function() {
+            this.addChild(child, moveData.new_parent_pos);
 
-        parent_node = TopicTreeEditor.tree.getNodeByKey(moveData.new_parent_id);
-        parent_node.expand();
-        parent_node.getChildren()[moveData.new_parent_pos].activate();
+            parent_node = TopicTreeEditor.tree.getNodeByKey(moveData.new_parent_id);
+            parent_node.expand();
+            parent_node.getChildren()[moveData.new_parent_pos].activate();
 
-        $.ajaxq('topics-admin', {
-            url: '/api/v1/topic/' + oldParentID + '/movechild',
-            type: 'POST',
-            data: moveData,
-            success: function() {
-            },
-            error: function() {
-                // ?
-            }
+            $.ajaxq('topics-admin', {
+                url: '/api/v1/topic/' + oldParentID + '/movechild',
+                type: 'POST',
+                data: moveData,
+                success: function() {
+                },
+                error: function() {
+                    // ?
+                }
+            });
         });
     },
 
