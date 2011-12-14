@@ -38,8 +38,26 @@ def compress_all_stylesheets():
 # into a single combined.js\.css file for each package, then
 # minify into a single compressed.js\.css file.
 def compress_all_packages(default_path, dict_packages, suffix):
-    for package_name in dict_packages:
-        package = dict_packages[package_name]
+    for package, path, files in resolve_files(default_path, dict_packages, suffix):
+        compress_package(package, path, files, suffix)
+
+        hashed_content = "compressed_javascript=%s\ncompressed_stylesheets=%s\n" % \
+            (str(packages_javascript), str(packages_stylesheets))
+
+        # Remove the old one.
+        if os.path.exists(PATH_PACKAGES_COMPRESSED):
+            os.remove(PATH_PACKAGES_COMPRESSED)
+
+        with open(PATH_PACKAGES_COMPRESSED, "w") as f:
+            f.write(hashed_content)
+
+    with open(PATH_PACKAGES_HASH, 'w') as hash_file:
+        hash_file.write('hashes = %s\n' % str(hashes))
+
+# iterate through the packages file and yield the full path for every file
+def resolve_files(default_path, packages, suffix):
+    for package_name in packages:
+        package = packages[package_name]
 
         if 'files' in package:
             package_path = package.get("base_path")
@@ -48,6 +66,7 @@ def compress_all_packages(default_path, dict_packages, suffix):
                 package_path = os.path.join(default_path, dir_name)
 
             package_path = os.path.join(os.path.dirname(__file__), package_path)
+            package_path = os.path.normpath(package_path)
 
             # Assume any files that do not have the correct suffix are already
             # compiled by some earlier process.
@@ -60,20 +79,37 @@ def compress_all_packages(default_path, dict_packages, suffix):
                 else:
                     files.append(f + suffix)
 
-            compress_package(package_name, package_path, files, suffix)
+            yield (package_name, package_path, files)
 
-            hashed_content = "compressed_javascript=%s\ncompressed_stylesheets=%s\n" % \
-                (str(packages_javascript), str(packages_stylesheets))
+def file_size_report():
+    # only works on js for now
+    package = packages.javascript
+    path = os.path.join("..", "javascript")
+    suffix = '.js'
 
-            # Remove the old one.
-            if os.path.exists(PATH_PACKAGES_COMPRESSED):
-                os.remove(PATH_PACKAGES_COMPRESSED)
+    print "Uglifying and gzipping all packages..."
+    file_sizes = []
+    for package_name, path, files in resolve_files(path, package, suffix):
+        for file in files:
+            if file in packages.transformations:
+                file = packages.transformations[file]
+            file_path = os.path.normpath(os.path.join(path, file))
+            file_path_min = file_path[:-len(suffix)] + '.min' + suffix
+            popen_results(['uglifyjs', '-o', file_path_min, file_path])
+            subprocess.Popen(['gzip', '-f', file_path_min]).wait()
+            file_path_gz = file_path_min + '.gz'
 
-            with open(PATH_PACKAGES_COMPRESSED, "w") as f:
-                f.write(hashed_content)
+            file_size = os.stat(file_path_gz).st_size
+            file_sizes.append((package_name, file, file_size))
 
-    with open(PATH_PACKAGES_HASH, 'w') as hash_file:
-        hash_file.write('hashes = %s\n' % str(hashes))
+            # Clean up. The minified file is already deleted by gzip.
+            os.remove(file_path_gz)
+
+    file_sizes.sort(key=lambda f: f[2], reverse=True) # size
+    file_sizes.sort(key=lambda f: f[0]) # package
+
+    for package_name, file, size in file_sizes:
+        print '\t'.join(map(str, [size, package_name, file]))
 
 # Overview:
 # Take a set of js or css files then:
