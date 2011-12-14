@@ -607,14 +607,14 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+        deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.STARTED, version,
                        _queue="video-log-queue",
                        _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def set_completed(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+        deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.COMPLETED, version,
                        _queue="video-log-queue",
                        _url="/_ah/queue/deferred_videolog")
@@ -657,13 +657,13 @@ def set_css_deferred(user_data_key, video_key, status, version):
     uvc.pickled_dict = pickle.dumps(css)
     uvc.load_pickled()
 
-    # if set_css_deferred runs out of order then we bump the version number 
+    # if set_css_deferred runs out of order then we bump the version number
     # to break the cache
     if version < uvc.version:
         version = uvc.version + 1
         user_data.uservideocss_version += 1
         db.put(user_data)
-        
+
     uvc.version = version
     db.put(uvc)
 
@@ -1257,7 +1257,7 @@ class Playlist(Searchable, db.Model):
             videos.append(video)
 
         return videos
-    
+
     def get_video_count(self):
         video_playlist_query = VideoPlaylist.all()
         video_playlist_query.filter('playlist =', self)

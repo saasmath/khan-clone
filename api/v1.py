@@ -201,7 +201,7 @@ def playlists_library_compact():
         trimmed_video_dict['title'] = video.title
         trimmed_video_dict['key_id'] = video.key().id()
         return trimmed_video_dict
-        
+
     playlist_dict = {}
     for playlist in playlists:
         trimmed_info = {}
@@ -212,7 +212,7 @@ def playlists_library_compact():
 
     playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
     replace_playlist_values(playlist_structure, playlist_dict)
-    
+
     return playlist_structure
 
 @route("/api/v1/playlists/library/list", methods=["GET"])
