@@ -1,21 +1,16 @@
+<section class="basic-user-info" style="float: left;">
 {{#if loggedIn}}
   <input type="text" value="{{nickname}}" id="nickname"
       placeholder="Enter nickname here" class="inline-editable nickname">
-  <p>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
+  <p class="pulled">Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
 {{else}}
   <p>Log in, Darth!</p>
 {{/if}}
-<div>
-    <div style="float: left">
-        <p title="{{points}} energy points" class="energy-points-badge">{{points}}</p>
-    </div>
-    <div style="float: left">
-        <img src="/images/video-camera-icon-shadow.png" />
-        <p>{{countVideosCompleted}}/{{countVideos}}</p>
-    </div>
-    <div style="float: left">
-        <img src="/images/generic-exercise-icon-shadow.png" />
-        <p>{{countExercisesProficient}}/{{countExercises}}</p>
-    </div>
-    <div style="clear: both;"></div>
-</div>
+<div class="sticker-book"></div>
+</section>
+<section class="summary-and-controls" style="float:right; padding-right: 20px;">
+    <p class="pulls"><img src="/images/generic-exercise-icon-shadow.png" style="vertical-align: middle"/>{{countExercisesProficient}}/{{countExercises}}</p>
+    <p class="pulled pulls"><img src="/images/video-camera-icon-shadow.png" style="vertical-align: middle;" /> {{countVideosCompleted}}/{{countVideos}}</p>
+    <p class="pulled pulls"><span title="{{points}} energy points" class="energy-points-badge" style="float: none;">{{points}}</span> Energy Points</p>
+</section>
+<div style="clear: both;"></div>
