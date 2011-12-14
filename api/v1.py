@@ -1217,8 +1217,8 @@ def create_user_goal():
             user_data)
 
         goal = Goal(parent=user_data, title=title, objectives=objectives)
-        goal.put()
-        user_data.ensure_has_current_goals()
+        user_data.save_goal(goal)
+
         return goal.get_visible_data(None)
     else:
         return api_invalid_param_response("No objectives specified.")

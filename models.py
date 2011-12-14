@@ -1045,10 +1045,20 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
-    def ensure_has_current_goals(self):
-        if not self.has_current_goals:
+    def save_goal(self, goal):
+        '''save a goal, atomically updating the user_data.has_current_goal when
+        necessary'''
+
+        if self.has_current_goals: # no transaction necessary
+            goal.put()
+            return
+
+        # otherwise this is the first goal the user has created, so be sure we
+        # update user_data.has_current_goals too
+        def save_goal():
             self.has_current_goals = True
-            self.put()
+            db.put([self, goal])
+        db.run_in_transaction(save_goal)
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
