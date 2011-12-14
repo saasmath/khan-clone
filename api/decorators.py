@@ -45,6 +45,11 @@ def cacheable(caching_age=_TWO_MONTHS, cache_token_key="v"):
     in getting updated data will find out through other means and know to
     change the value of that cache token. Cache tokens are opaque strings
     and does not affect the internal logic of this method.
+    
+    NOTE: If a URL end point has user specific data, it may be dangerous to
+    cache it, since fully cached responses can be cached by shared caches
+    according to the RFC:
+    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.1
     """
     def cacheable_wrapper(func):
         @wraps(func)
