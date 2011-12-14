@@ -439,7 +439,7 @@ input.goal-title:focus {
     font-weight: bold;
 }
 
-#btn-goal-history {
+a.goal-history {
     background-color: #ddd;
     text-shadow: 0 1px 0 rgba(255,255,255,.6);
 }
