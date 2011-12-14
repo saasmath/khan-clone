@@ -12,7 +12,9 @@
     </div>
 {% endblock profile_extended_sections %}
 
-{% block pagescript %}
+{% block bottompagescript %}
+{{ super() }}
+
 <script>
 // TODO: What might be a better alternative to this?
 var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
@@ -28,5 +30,9 @@ var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
         dateJoined: "{{user_data_student.joined}}"
     },
     publicBadgeData = {{ templatetags.jsonify(public_badges, true) }};
+
+    $(function() {
+        Profile.init();
+    })
 </script>
-{% endblock pagescript %}
+{% endblock bottompagescript %}

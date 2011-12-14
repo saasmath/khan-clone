@@ -194,6 +194,8 @@
 <script type="text/javascript">
 $(function() {
     ClassProfile.student_lists = {{student_lists_json}};
+    ClassProfile.initialGraphUrl = '{{ initial_graph_url|escapejs }}';
+    ClassProfile.email = '{{ student_email|escapejs }}';
     ClassProfile.init();
 })
 </script>
