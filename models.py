@@ -2170,7 +2170,10 @@ class UserExerciseGraph(object):
 
         candidate_dicts = []
         for graph_dict in self.graph_dicts():
-            if not graph_dict["summative"] and graph_dict["proficient"] and graph_dict["next_review"] <= now:
+            if (not graph_dict["summative"] and
+                    graph_dict["proficient"] and
+                    graph_dict["next_review"] <= now and
+                    graph_dict["total_done"] > 0):
                 graph_dict["is_review_candidate"] = True
                 candidate_dicts.append(graph_dict)
             else:
@@ -2179,7 +2182,7 @@ class UserExerciseGraph(object):
         review_dicts = []
         for graph_dict in candidate_dicts:
             if (not compute_is_ancestor_review_candidate(graph_dict) or
-                    (graph_dict["streak"] == 0 and graph_dict["total_done"] > 0)):
+                    graph_dict["streak"] == 0):
                 review_dicts.append(graph_dict)
 
         return review_dicts
