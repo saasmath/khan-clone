@@ -12,7 +12,6 @@ import templatetags
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
 from gae_bingo.gae_bingo import bingo
-from experiments import HomepageVideoPlaceholderExperiment
 
 ITEMS_PER_SET = 4
 
@@ -176,14 +175,7 @@ class ViewHomePage(request_handler.RequestHandler):
         # Get pregenerated library content from our in-memory/memcache two-layer cache
         library_content = library.library_content_html()
 
-        # Only running placeholder A/B test for non-mobile clients
-        use_placeholder = False
-        if not self.is_mobile_capable():
-            use_placeholder = HomepageVideoPlaceholderExperiment.get_video_type() == "placeholder"
-            bingo('homepage_video_visits')
-
         template_values = {
-                            'use_placeholder': use_placeholder,
                             'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,
                             'library_content': library_content,

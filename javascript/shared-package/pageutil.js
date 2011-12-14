@@ -299,7 +299,6 @@ var VideoControls = {
             jelParent.addClass("selected");
 
             VideoStats.startLoggingProgress(jelParent.attr("data-key"));
-            gae_bingo.bingo("homepage_video_thumbnails_clicked")
 
             return false;
         }
@@ -428,16 +427,6 @@ var VideoStats = {
         } else if (state == 1) { // play
             this.playing = true;
             this.dtSinceSave = new Date();
-
-            if (!VideoControls.videoBingoSent) {
-                gae_bingo.bingo([
-                        "homepage_video_main_video_played", 
-                        "homepage_video_main_video_played_binary",
-                        "homepage_video_any_video_played",
-                        "homepage_video_any_video_played_binary",
-                        ])
-                VideoControls.videoBingoSent = true;
-            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },

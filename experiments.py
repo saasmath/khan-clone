@@ -3,33 +3,6 @@
 from gae_bingo.gae_bingo import ab_test, find_alternative_for_user
 from gae_bingo.models import ConversionTypes
 
-class HomepageVideoPlaceholderExperiment(object):
-
-    _ab_test_alternatives = {
-        'original': 7,
-        'placeholder': 3,
-    }
-    _conversion_tests = [
-        ('homepage_video_visits', ConversionTypes.Counting),
-        ('homepage_video_videos_landing', ConversionTypes.Counting),
-        ('homepage_video_videos_landing_binary', ConversionTypes.Binary),
-        ('homepage_video_videos_finished', ConversionTypes.Counting),
-        ('homepage_video_thumbnails_clicked', ConversionTypes.Counting),
-        ('homepage_video_main_video_played', ConversionTypes.Counting),
-        ('homepage_video_main_video_played_binary', ConversionTypes.Binary),
-        ('homepage_video_any_video_played', ConversionTypes.Counting),
-        ('homepage_video_any_video_played_binary', ConversionTypes.Binary),
-    ]
-    _conversion_names, _conversion_types = [
-        list(x) for x in zip(*_conversion_tests)]
-
-    @staticmethod
-    def get_video_type():
-        return ab_test("Homepage Video Placeholder 4",
-            HomepageVideoPlaceholderExperiment._ab_test_alternatives,
-            HomepageVideoPlaceholderExperiment._conversion_names,
-            HomepageVideoPlaceholderExperiment._conversion_types)
-
 class StrugglingExperiment(object):
 
     DEFAULT = 'old'
