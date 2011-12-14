@@ -603,11 +603,17 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.STARTED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+                       UserVideoCss.STARTED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def set_completed(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.COMPLETED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+                       UserVideoCss.COMPLETED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def _chunker(seq, size):
@@ -646,6 +652,14 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     uvc.pickled_dict = pickle.dumps(css)
     uvc.load_pickled()
+
+    # if set_css_deferred runs out of order then we bump the version number 
+    # to break the cache
+    if version < uvc.version:
+        version = uvc.version + 1
+        user_data.uservideocss_version += 1
+        db.put(user_data)
+        
     uvc.version = version
     db.put(uvc)
 
@@ -1445,8 +1459,7 @@ class VideoLog(db.Model):
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
-            bingo(['struggling_videos_finished',
-                   'homepage_video_videos_finished'])
+            bingo(['struggling_videos_finished'])
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))

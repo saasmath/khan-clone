@@ -21,10 +21,9 @@ javascript = {
         "files": [
             # general purpose libs
             "jquery.js",
-            "jquery-ui.js",
+            "jquery-ui-1.8.16.custom.js",
             "jquery.ui.menu.js",
             "jquery.timeago.js",
-            "jquery.watermark.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "../../khan-exercises/utils/underscore.js",
@@ -149,6 +148,7 @@ javascript = {
             "utils/graphie-polygon.js",
             "utils/graphie.js",
             "utils/interactive.js",
+            "utils/jquery.adhesion.js",
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
@@ -176,7 +176,7 @@ stylesheets = {
             "stylesheet.css",
             "menu.css",
             "museo-sans.css",
-            "jquery-ui-1.8.4.custom.css",
+            "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
             "goals.css",
         ]

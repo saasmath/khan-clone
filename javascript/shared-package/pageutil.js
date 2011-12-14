@@ -299,7 +299,6 @@ var VideoControls = {
             jelParent.addClass("selected");
 
             VideoStats.startLoggingProgress(jelParent.attr("data-key"));
-            gae_bingo.bingo("homepage_video_thumbnails_clicked")
 
             return false;
         }
@@ -428,13 +427,6 @@ var VideoStats = {
         } else if (state == 1) { // play
             this.playing = true;
             this.dtSinceSave = new Date();
-
-            if (typeof Homepage !== "undefined") {
-                if (!Homepage.mainVideoBingoSent) {
-                    gae_bingo.bingo(["homepage_video_main_video_played", "homepage_video_main_video_played_binary"])
-                    Homepage.mainVideoBingoSent = true;
-                }
-            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
@@ -591,7 +583,7 @@ var Badges = {
         });
 
         var jelTarget = $(".badge-target");
-        var jelContainer = $("#container");
+        var jelContainer = $("#page-container-inner");
 
         var top = jelTarget.offset().top + jelTarget.height() + 5;
 
@@ -844,12 +836,13 @@ var FacebookHook = {
         if (!window.FB_APP_ID) return;
 
         window.fbAsyncInit = function() {
-            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true});
+            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
 
             if (!USERNAME) {
                 FB.Event.subscribe('auth.login', function(response) {
-                    if (response.session) {
-                        FacebookHook.fixMissingCookie(response.session);
+
+                    if (response.authResponse) {
+                        FacebookHook.fixMissingCookie(response.authResponse);
                     }
 
                     var url = URL_CONTINUE || "/";
@@ -858,10 +851,10 @@ var FacebookHook = {
                     else
                         url += "?fb=1";
 
-                    var hasCookie = !!readCookie("fbs_" + FB_APP_ID);
+                    var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
                     url += "&hc=" + (hasCookie ? "1" : "0");
 
-                    url += "&hs=" + (response.session ? "1": "0");
+                    url += "&hs=" + (response.authResponse ? "1": "0");
 
                     window.location = url;
                });
@@ -869,11 +862,15 @@ var FacebookHook = {
 
             FB.getLoginStatus(function(response) {
 
+                if (response.authResponse) {
+                    FacebookHook.fixMissingCookie(response.authResponse);
+                }
+                
                 $('#page_logout').click(function(e) {
 
-                    eraseCookie("fbs_" + FB_APP_ID);
+                    eraseCookie("fbsr_" + FB_APP_ID);
 
-                    if (response.session) {
+                    if (response.authResponse) {
 
                         FB.logout(function() {
                             window.location = $("#page_logout").attr("href");
@@ -895,22 +892,20 @@ var FacebookHook = {
         });
     },
 
-    fixMissingCookie: function(session) {
+    fixMissingCookie: function(authResponse) {
         // In certain circumstances, Facebook's JS SDK fails to set their cookie
         // but still thinks users are logged in. To avoid continuous reloads, we
         // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
 
-        if (readCookie("fbs_" + FB_APP_ID))
+        if (readCookie("fbsr_" + FB_APP_ID))
             return;
 
-        var sCookie = "";
-        $.each(session, function( key ) {
-            sCookie += key + "=" + encodeURIComponent(session[key]) + "&";
-        });
-
-        // Explicitly use a session cookie here for IE's sake.
-        createCookie("fbs_" + FB_APP_ID, "\"" + sCookie + "\"");
+        if (authResponse && authResponse.signedRequest) {
+            // Explicitly use a session cookie here for IE's sake.
+            createCookie("fbsr_" + FB_APP_ID, authResponse.signedRequest);
+        }
     }
+
 };
 FacebookHook.init();
 
