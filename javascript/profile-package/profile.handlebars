@@ -4,16 +4,24 @@
   }
 </style>
 
-<div>
-    <ul>
+<menu class="profile-navigation">
+    <ul class="vertical-tab-list">
         <li><a href="#">Darth</a></li>
-        <li><a href="#vital-statistics">Vital statistics</a></li>
+        <li class="inactive link-section-header">
+            Vital statistics
+            <ul class="vertical-tab-list second-tier">
+                <li><a href="#vital-statistics/activity">Activity</a></li>
+                <li><a href="#vital-statistics/focus">Focus</a></li>
+                <li><a href="#vital-statistics/exercise-progress">Exercise Progress</a></li>
+                <li><a href="#vital-statistics/exercise-progress-over-time">Progress Over Time</li>
+            </ul>
+        </li>
         <li><a href="#achievements">Achievements</a></li>
         <li><a href="#goals">Goals (beta)</a></li>
     </ul>
-</div>
+</menu>
 
-<div id="tabs">
+<section class="tab-content">
     <div id="tab-content-user-profile">
         <div class="user-info-container vertical-shadow"></div>
         <div style="clear: both;"></div>
@@ -28,4 +36,4 @@
     <div id="tab-content-goals">
         <div id="profile-goals-content"></div>
     </div>
-</div>
+</section>
