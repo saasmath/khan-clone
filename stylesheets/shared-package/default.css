@@ -979,7 +979,9 @@ footer {
         display: none;
     }
     #page_search input.ui-autocomplete-loading {
-        background-image: url("/images/throbber.gif")
+        background-image: url("/images/throbber.gif");
+        background-repeat:no-repeat;
+        background-position:4px 5px;
     }
 
 img.rounded-background,
@@ -1069,7 +1071,7 @@ nav#page_sub_nav {
     padding: 7px 10px 11px;
     min-height: 16px;
     position: relative;
-    z-index: 3;
+    z-index: 20;
     background: #fff;
     color: #444;
     border: 1px solid #C6D1AD;
@@ -1451,6 +1453,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         left: 282px;
         top: 5px;
         line-height: 1px;
+        z-index:20;
     }
     .exercise-show:hover {
         top: 6px;
@@ -1508,6 +1511,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         top: 10px;
         right: 13px;
         z-index: 100;
+    }
+    .dashboard-filter-clear:active {
+        top: 10px;
+        padding-top: 5px;
     }
     .ie .dashboard-filter-clear {
         top: 12px;
@@ -1684,11 +1691,15 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .achievement-badge-counts {
     text-decoration: none;
-}
-
-.achievement-badge-counts {
     position: relative;
     top: 2px;
+}
+.achievement-badge-counts .badge {
+  margin-right:4px;
+}
+
+.achievement-badge-counts .badge img {
+  margin-right:-2px;
 }
 
 .achievement-badge {
@@ -1904,6 +1915,8 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .proficient-badge {
     display: block;
+    position:relative;
+    z-index:10;
 }
 
 .exercise-badge.single-exercise .energy-points-badge {
@@ -2052,7 +2065,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     width: 63%;
     margin-left: 1%;
 }
-#answer_area {
+#answer_area_wrap {
     float: right;
     width: 27%;
     margin-right: 10px;
@@ -2330,7 +2343,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     position: absolute;
     padding: 5px;
     min-width: 150px;
-    z-index: 10;
+    z-index: 1000;
 
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
@@ -2828,6 +2841,64 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 #homepage #main-video object, #homepage #main-video embed {
     width: 100%;
+    height: 395px;
+}
+#homepage #main-video-placeholder {
+    background: #000;
+    background-repeat: no-repeat;
+    background-position: center center;
+    width: 100%;
+    height: 395px;
+    cursor: pointer;
+}
+#homepage #main-video-placeholder .youtube-placeholder-title {
+    padding: 7px 12px;
+    font-size: 18px;
+    color: #FFF;
+    /* Fallback for web browsers that doesn't support RGBa */
+    background: rgb(0, 0, 0) transparent;
+    /* RGBa with 0.5 opacity */
+    background: rgba(0, 0, 0, 0.5);
+}
+#homepage #main-video-placeholder .youtube-play {
+    position: absolute;
+    left: 50%;
+    top: 162px;
+    width: 107px;
+    height: 73px;
+    margin-left: -53px;
+    opacity: 0.82;
+    filter:alpha(opacity=82);
+}
+#homepage #main-video-placeholder:hover .youtube-play {
+    opacity: 1.0;
+    filter:alpha(opacity=100);
+}
+#homepage .player-loading-wrapper {
+    /*
+     * We can get rid of the .player-loading-wrapper selectors and the following complication
+     * if we decide to load the main video on placeholder click instead of trying to preload
+     * and keep it hidden.
+     *
+     * Different browsers treat hidden <objects> and <embeds> differently.
+     * Non-IE browsers will fire 'playerloaded' events for visibility:hidden
+     * embeds, but IE won't (see following body.ie selector).
+     * Non-IE browsers will also reload and re-fire these events when changing
+     * the object's position, so visibility:hidden is the way to go for them.
+     * */
+    visibility: hidden;
+
+    /*
+     * position:relative makes safari honor visibility:hidden for the <embed>
+     * content
+     * */
+    position: relative;
+}
+body.ie #homepage .player-loading-wrapper {
+    /* See above selector's comment */
+    visibility: visible;
+    position: absolute;
+    left: -9999px;
 }
 /* End homepage styles */
 
@@ -3566,39 +3637,6 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     padding: 30px;
 }
 
-#popup-dialog .dialog-frame {
-    z-index: 11000;
-    background-color: #ffffff;
-    border: 1px solid #999;
-    border: 1px solid rgba(0, 0, 0, 0.3);
-
-    -webkit-border-radius: 6px;
-    -moz-border-radius: 6px;
-    border-radius: 6px;
-    -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-    -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-    -webkit-background-clip: padding-box;
-    -moz-background-clip: padding-box;
-    background-clip: padding-box;
-}
-.lte7 #popup-dialog .dialog-frame {
-    border: 1px solid #999;
-}
-
-#popup-dialog .dialog-header {
-    padding: 5px 15px;
-    cursor: move;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-}
-#popup-dialog .dialog-header h3 {
-    margin-top: 10px
-}
-
 .close-button {
     float: right;
     color: black;
@@ -3610,27 +3648,4 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     -khtml-opacity: 0.2;
     -moz-opacity: 0.2;
     opacity: 0.2;
-}
-
-#popup-dialog .close-button {
-    margin-top: 7px;
-}
-
-#popup-dialog .generic-message-wrapper {
-    position: absolute;
-    top: 10%;
-    left: 50%;
-}
-
-#popup-dialog .dialog-progress-bar {
-    width: 400px;
-    height: 22px;
-    text-align: center;
-    position: relative;
-    top: 20px;
-    margin-left: -200px;
-    z-index: 1;
-}
-#popup-dialog .dialog-progress-bar .ui-progressbar-value {
-    background-image: url('/images/progress-animated.gif');
 }

@@ -607,11 +607,17 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.STARTED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+                       UserVideoCss.STARTED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def set_completed(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.COMPLETED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+                       UserVideoCss.COMPLETED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def _chunker(seq, size):
@@ -650,6 +656,14 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     uvc.pickled_dict = pickle.dumps(css)
     uvc.load_pickled()
+
+    # if set_css_deferred runs out of order then we bump the version number 
+    # to break the cache
+    if version < uvc.version:
+        version = uvc.version + 1
+        user_data.uservideocss_version += 1
+        db.put(user_data)
+        
     uvc.version = version
     db.put(uvc)
 
@@ -1093,8 +1107,16 @@ class Video(Searchable, db.Model):
             return download_urls.get("mp4")
         return None
 
-    def youtube_thumbnail_url(self):
-        return ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id)
+    @staticmethod
+    def youtube_thumbnail_urls(youtube_id):
+
+        hq_youtube_url = "http://img.youtube.com/vi/%s/hqdefault.jpg" % youtube_id
+        sd_youtube_url = "http://img.youtube.com/vi/%s/sddefault.jpg" % youtube_id
+
+        return {
+                "hq": ImageCache.url_for(hq_youtube_url),
+                "sd": ImageCache.url_for(sd_youtube_url, fallback_url=hq_youtube_url),
+        }
 
     @staticmethod
     def get_for_readable_id(readable_id):
@@ -1177,7 +1199,11 @@ class Playlist(Searchable, db.Model):
 
     @property
     def ka_url(self):
-        return util.absolute_url('#%s' % urllib.quote(slugify(self.title)))
+        return util.absolute_url(self.relative_url)
+
+    @property
+    def relative_url(self):
+        return '#%s' % urllib.quote(slugify(self.title.lower()))
 
     @staticmethod
     def get_for_all_topics():
@@ -1430,18 +1456,19 @@ class VideoLog(db.Model):
         video_points_total = points.VideoPointCalculator(user_video)
         video_points_received = video_points_total - video_points_previous
 
+        just_finished_video = False
         if not user_video.completed and video_points_total >= consts.VIDEO_POINTS_BASE:
-            # Just finished this video for the first time
+            just_finished_video = True
             user_video.completed = True
             user_data.videos_completed = -1
 
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
-            bingo('struggling_videos_finished')
+            bingo(['struggling_videos_finished'])
 
         goals_updated = GoalList.update_goals(user_data,
-            lambda goal: goal.just_watched_video(user_data, user_video))
+            lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
 
         if video_points_received > 0:
             video_log.points_earned = video_points_received

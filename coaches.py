@@ -63,7 +63,7 @@ class ViewStudents(RequestHandler):
 
             invalid_student = self.request_bool("invalid_student", default = False)
 
-            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data)]
+            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data) if x.student_requested_data]
 
             student_lists_models = StudentList.get_for_coach(user_data.key())
             student_lists_list = [];
@@ -257,7 +257,8 @@ class DeleteStudentList(RequestHandler):
         if not coach_data:
             return
 
-        student_list = util_profile.get_list(coach_data, self)
+        student_list = util_profile.get_student_list(coach_data,
+            self.request_string('list_id'))
         student_list.delete()
         if not self.is_ajax_request():
             self.redirect_to('/students')

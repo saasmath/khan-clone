@@ -64,7 +64,7 @@
                         <input type="hidden" id="playlist_key" name="playlist_key" value="{{ playlist.key() }}" />
                         <input type="hidden" name="question_key" value="{{ question.key() }}" />
                         <div class="answer_placeholder">
-                            <textarea name="answer_text" class="answer_text" rows="2" cols="40" watermark="Answer this question"></textarea>
+                            <textarea name="answer_text" class="answer_text" rows="2" cols="40" placeholder="Answer this question"></textarea>
                         </div>
                         {{ discussion.feedback_controls_answer("Answer this question") }}
                     </form>

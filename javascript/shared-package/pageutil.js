@@ -33,7 +33,7 @@ function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
     var o = {
                 "label": match.title,
                 "title": match.title,
-                "value": match.ka_url,
+                "value": match.url,
                 "key": match.key,
                 "fPlaylist": fPlaylist
             };
@@ -219,8 +219,11 @@ var VideoControls = {
     },
 
     play: function() {
-        if (VideoControls.player && VideoControls.player.playVideo)
+        $(VideoControls).trigger("beforeplay");
+
+        if (VideoControls.player && VideoControls.player.playVideo) {
             VideoControls.player.playVideo();
+        }
     },
 
     pause: function() {
@@ -233,6 +236,13 @@ var VideoControls = {
         // when a play link is clicked.
         var yTop = $(VideoControls.player).offset().top - 2;
         if ($(window).scrollTop() > yTop) $(window).scrollTop(yTop);
+    },
+
+    onYouTubeBlocked: function(callback) {
+        $('<img width=0 height=0>')
+            .error(callback)
+            .attr('src', 'http://www.youtube.com/favicon.ico?' + Math.random())
+            .appendTo('#page-container');
     },
 
     initThumbnails: function() {
@@ -280,8 +290,11 @@ var VideoControls = {
         var youtubeId = jelParent.attr("data-youtube-id");
         if (VideoControls.player && youtubeId)
         {
+            $(VideoControls).trigger("beforeplay");
+
             VideoControls.player.loadVideoById(youtubeId, 0, "default");
             VideoControls.scrollToPlayer();
+
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
 
@@ -539,6 +552,7 @@ function onYouTubePlayerReady(playerID) {
 
     VideoControls.player = player;
     VideoStats.player = player;
+
     // The UniSub (aka mirosubs) widget replaces the YouTube player with a copy
     // and that will cause onYouTubePlayerReady() to be called again.  So, we trigger
     // 'playerready' events on any objects that are using the player so that they can
@@ -569,7 +583,7 @@ var Badges = {
         });
 
         var jelTarget = $(".badge-target");
-        var jelContainer = $("#container");
+        var jelContainer = $("#page-container-inner");
 
         var top = jelTarget.offset().top + jelTarget.height() + 5;
 
@@ -822,12 +836,13 @@ var FacebookHook = {
         if (!window.FB_APP_ID) return;
 
         window.fbAsyncInit = function() {
-            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true});
+            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
 
             if (!USERNAME) {
                 FB.Event.subscribe('auth.login', function(response) {
-                    if (response.session) {
-                        FacebookHook.fixMissingCookie(response.session);
+
+                    if (response.authResponse) {
+                        FacebookHook.fixMissingCookie(response.authResponse);
                     }
 
                     var url = URL_CONTINUE || "/";
@@ -836,10 +851,10 @@ var FacebookHook = {
                     else
                         url += "?fb=1";
 
-                    var hasCookie = !!readCookie("fbs_" + FB_APP_ID);
+                    var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
                     url += "&hc=" + (hasCookie ? "1" : "0");
 
-                    url += "&hs=" + (response.session ? "1": "0");
+                    url += "&hs=" + (response.authResponse ? "1": "0");
 
                     window.location = url;
                });
@@ -847,11 +862,15 @@ var FacebookHook = {
 
             FB.getLoginStatus(function(response) {
 
+                if (response.authResponse) {
+                    FacebookHook.fixMissingCookie(response.authResponse);
+                }
+                
                 $('#page_logout').click(function(e) {
 
-                    eraseCookie("fbs_" + FB_APP_ID);
+                    eraseCookie("fbsr_" + FB_APP_ID);
 
-                    if (response.session) {
+                    if (response.authResponse) {
 
                         FB.logout(function() {
                             window.location = $("#page_logout").attr("href");
@@ -873,22 +892,20 @@ var FacebookHook = {
         });
     },
 
-    fixMissingCookie: function(session) {
+    fixMissingCookie: function(authResponse) {
         // In certain circumstances, Facebook's JS SDK fails to set their cookie
         // but still thinks users are logged in. To avoid continuous reloads, we
         // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
 
-        if (readCookie("fbs_" + FB_APP_ID))
+        if (readCookie("fbsr_" + FB_APP_ID))
             return;
 
-        var sCookie = "";
-        $.each(session, function( key ) {
-            sCookie += key + "=" + encodeURIComponent(session[key]) + "&";
-        });
-
-        // Explicitly use a session cookie here for IE's sake.
-        createCookie("fbs_" + FB_APP_ID, "\"" + sCookie + "\"");
+        if (authResponse && authResponse.signedRequest) {
+            // Explicitly use a session cookie here for IE's sake.
+            createCookie("fbsr_" + FB_APP_ID, authResponse.signedRequest);
+        }
     }
+
 };
 FacebookHook.init();
 
@@ -959,71 +976,6 @@ function temporaryDetachElement(element) {
     element.detach();
     return ret;
 }
-
-var globalPopupDialog = {
-    visible: false,
-    bindings: false,
-
-    // Size can be an array [width,height] to have an auto-centered dialog or null if the positioning is handled in CSS
-    show: function(className, size, title, html, autoClose) {
-        $("#popup-dialog").hide();
-        $("#popup-dialog .dialog-frame").attr('class', 'dialog-frame ' + className);
-        if (size) {
-            styleText = 'position: relative;';
-            styleText += 'width: ' + size[0] + 'px;';
-            styleText += 'height: ' + size[1] + 'px;';
-            styleText += 'margin-left: ' + (-0.5*size[0]).toFixed(0) + 'px;';
-            styleText += 'margin-top: ' + (-0.5*size[1] - 100).toFixed(0) + 'px;';
-            $("#popup-dialog .dialog-frame").attr('style', styleText);
-        } else {
-            $("#popup-dialog .dialog-frame").attr('style', '');
-        }
-        $("#popup-dialog .dialog-frame .description").html('<h3>' + title + '</h3>');
-        $("#popup-dialog .dialog-contents").html(html);
-        $("#popup-dialog").show();
-
-        $("#popup-dialog .close-button").click(function() { globalPopupDialog.hide(); });
-
-        if (autoClose && !globalPopupDialog.bindings) {
-            // listen for escape key
-            $(document).bind('keyup.popupdialog', function ( e ) {
-                if ( e.which == 27 ) {
-                    globalPopupDialog.hide();
-                }
-            });
-
-            // close the goal dialog if user clicks elsewhere on page
-            $('body').bind('click.popupdialog', function( e ) {
-                if ( $(e.target).closest('.dialog-frame').length === 0 ) {
-                    globalPopupDialog.hide();
-                }
-            });
-            globalPopupDialog.bindings = true;
-        } else if (!autoClose && globalPopupDialog.bindings) {
-            $(document).unbind('keyup.popupdialog');
-            $('body').unbind('click.popupdialog');
-            globalPopupDialog.bindings = false;
-        }
-
-        globalPopupDialog.visible = true;
-        return globalPopupDialog;
-    },
-    hide: function() {
-        if (globalPopupDialog.visible) {
-            $("#popup-dialog").hide();
-            $("#popup-dialog .dialog-contents").html('');
-
-            if (globalPopupDialog.bindings) {
-                $(document).unbind('keyup.popupdialog');
-                $('body').unbind('click.popupdialog');
-                globalPopupDialog.bindings = false;
-            }
-
-            globalPopupDialog.visible = false;
-        }
-        return globalPopupDialog;
-    }
-};
 
 function dynamicPackage(packageName, callback, manifest) {
     var self = this;
@@ -1113,7 +1065,7 @@ var dynamicPackageLoader = {
             new dynamicPackage(packageName, callback, manifest);
         }
     },
-    
+
     packageLoaded: function(packageName) {
         return this.loadedPackages[packageName];
     },

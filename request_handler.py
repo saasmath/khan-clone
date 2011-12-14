@@ -334,7 +334,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         self.response.out.write(json)
 
     def render_jsonp(self, obj):
-        json = obj if type(obj) == str else simplejson.dumps(obj, ensure_ascii=False, indent=4)
+        json = obj if isinstance(obj, basestring) else simplejson.dumps(obj, ensure_ascii=False, indent=4)
         callback = self.request_string("callback")
         if callback:
             self.response.out.write("%s(%s)" % (callback, json))
