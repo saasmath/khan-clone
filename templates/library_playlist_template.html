@@ -19,7 +19,9 @@
                         <p class='playlist-desc'>{{playlist_data.playlist.description|escape}}</p>
                     {% endif %}
 
-					<ol style="height:{{playlist_data.list_height}}px;" data-role="listview" data-inset="true"></ol>
+					<ol style="height:{{playlist_data.list_height}}px;" data-role="listview" data-inset="true">
+                    <span style="padding-left: 16px;">Loading videos...</span>
+                    </ol>
 
                     {% if playlist_data.title == "Arithmetic" and smart_history %}
                     <div class="clear desktop-only">
