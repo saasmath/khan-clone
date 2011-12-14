@@ -11,6 +11,7 @@ import templatetags
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
 from gae_bingo.gae_bingo import bingo
+from experiments import HomepageRestructuringExperiment
 
 ITEMS_PER_SET = 4
 
@@ -171,8 +172,16 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        # Get pregenerated playlist structure from our in-memory/memcache two-layer cache
-        library_content = library.playlist_content_html()
+        # Only running restructure A/B test for non-mobile clients
+        render_type = 'original'
+        if not self.is_mobile_capable():
+            render_type = HomepageRestructuringExperiment.get_render_type()
+            bingo('homepage_restructure_visits')
+
+        if render_type == 'original':
+            library_content = library.library_content_html()
+        else:
+            library_content = library.playlist_content_html()
 
         template_values = {
                             'marquee_video': marquee_video,
