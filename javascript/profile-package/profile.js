@@ -801,7 +801,8 @@ var Profile = {
         var mouseY;
         $("#module-progress .student-module-status").hover(
             function(e) {
-                var hoverTime = lastHoverTime = Date.now();
+                var hoverTime = +(new Date);
+                lastHoverTime = hoverTime;
                 mouseX = e.pageX;
                 mouseY = e.pageY;
                 var self = this;
