@@ -8,16 +8,8 @@
 </div>
 {%- endmacro %}
 
-{% macro graph_link(user_data, graph_name, graph_type, selected_type) -%}
-<a href="{{ profiles.get_graph_url(graph_type, user_data, None, None) }}" class="graph-link graph-link-header header {% if graph_type == selected_type %}graph-link-selected{% endif %}">{{ graph_name|escape }}</a>
-{%- endmacro %}
-
 {% macro class_graph_link(user_data_coach, graph_name, graph_type, selected_type, list_id) -%}
 <a href="{{ profiles.get_graph_url(graph_type, None, user_data_coach, list_id) }}" class="graph-link graph-link-header header {% if graph_type == selected_type %}graph-link-selected{% endif %}">{{ graph_name|escape }}</a>
-{%- endmacro %}
-
-{% macro api_link(user_data, page_name, api_function, selected_function, beta=false) -%}
-<a href="{{ profiles.get_api_url('user', api_function, user_data, None, None) }}" class="graph-link graph-link-header header {% if api_function == selected_function %}graph-link-selected{% endif %}" {% if beta %}title="Beta Feature: this feauture is new and likely to change as we work to make it awesome."{% endif %}>{{ page_name|escape }}{% if beta %} <span class="feature-beta-tag">(beta)</span>{% endif %}</a>
 {%- endmacro %}
 
 {% macro class_api_link(user_data_coach, page_name, api_function, selected_type, list_id) -%}
@@ -44,7 +36,7 @@
 {% macro recent_activity_entry_badge(user_data_student, recent_activity, view="standard") -%}
 <li class="achievement" >
     <span class="activity-image" style=""><img src="/images/generic-badge-icon-inset.png" /></span>
-    <div class="ach-text">Earned <a href="#achievements" onclick="$('#tab-achievements').click();$('#achievement-list ul li#category-{{ recent_activity.badge.badge_category }}').click();" class="badge-link category-{{ recent_activity.badge.badge_category }}">{{ recent_activity.badge.description|escape }}</a>
+    <div class="ach-text">Earned <a href="#achievements" onclick="$('#achievement-list ul li#category-{{ recent_activity.badge.badge_category }}').click();" class="badge-link category-{{ recent_activity.badge.badge_category }}">{{ recent_activity.badge.description|escape }}</a>
     {% if recent_activity.user_badge.target_context_name %}
         for {{ recent_activity.user_badge.target_context_name|escape }}
     {% endif %}

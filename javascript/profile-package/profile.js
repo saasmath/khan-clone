@@ -10,7 +10,6 @@ var Profile = {
     email: null,  // Filled in by the template after script load.
     fLoadingGraph: false,
     fLoadedGraph: false,
-    userGoalsHref: '',
 
     init: function() {
         Profile.render();
@@ -392,47 +391,6 @@ var Profile = {
     },
     render: function() {
         var profileTemplate = Templates.get("profile.profile");
-        function createEncodedURLParameter(key, value) {
-            return key + "=" + encodeURIComponent(value);
-        }
-
-        Handlebars.registerHelper("toLegacyGraphURL", function(type, student, coach, listId) {
-            var url = "/profile/graph/" + type + "?",
-                params = [];
-            if (student) {
-                params.push(createEncodedURLParameter("student_email", student));
-            }
-
-            if (coach) {
-                params.push(createEncodedURLParameter("coach_email", coach));
-            }
-
-            if (listId) {
-                params.push(createEncodedURLParameter("list_id", listId));
-            }
-
-            url += params.join("&");
-            return url;
-        });
-
-        Handlebars.registerHelper("toAPIGraphURL", function(prefix, apiFunction, student, coach, listId) {
-            var url = "/api/v1/" + prefix + "/" + apiFunction + "?",
-                params = [];
-            if (student) {
-                params.push(createEncodedURLParameter("email", student));
-            }
-
-            if (coach) {
-                params.push(createEncodedURLParameter("coach_email", coach));
-            }
-
-            if (listId) {
-                params.push(createEncodedURLParameter("listId", listId));
-            }
-
-            url += params.join("&");
-            return url;
-        });
 
         // So that the date-picker can update the history param properly
         Handlebars.registerHelper("accordion-graph-date-picker-wrapper", function(block) {

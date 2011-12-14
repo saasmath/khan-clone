@@ -1,5 +1,5 @@
 /**
- * Code to handle the logic for the profile page.
+ * Code to handle the logic for the class profile page.
  */
 // TODO: clean up all event listeners. This page does not remove any
 // event listeners when tearing down the graphs.
@@ -7,10 +7,8 @@
 var ClassProfile = {
     version: 0,
     initialGraphUrl: null, // Filled in by the template after script load.
-    email: null,  // Filled in by the template after script load.
     fLoadingGraph: false,
     fLoadedGraph: false,
-    userGoalsHref: '',
 
     init: function() {
         $(".share-link").hide();
@@ -874,10 +872,7 @@ var ClassProfile = {
         var url = ( $.address.path() === "/" ) ? this.initialGraphUrl : $.address.path();
 
         if ( href ) {
-            // TODO: Fix this tab history action once and for ALL
-            if (href === "/achievements") {
-                $("#tab-achievements").click();
-            } else if ( this.expandAccordionForHref(href) ) {
+            if ( this.expandAccordionForHref(href) ) {
                 this.loadGraph( href , true );
                 this.loadFilters( url );
             } else {
