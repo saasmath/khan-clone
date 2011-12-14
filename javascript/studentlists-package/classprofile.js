@@ -428,8 +428,27 @@ var ClassProfile = {
                             objective.struggling = true;
                         }
                         objective.statusCSS = objective.status ? objective.status : "not-started";
-
                         objective.objectiveID = idx3;
+
+                        // TODO: awkward turtle with the student.email's
+                        // "/exercise/addition_1" ==> ["exercise/addition_1", "addition_1"]
+                        var matchExerciseURL = objective.url.match(/\/exercise\/(.+)/);
+
+                        if (objective.url === "/exercisedashboard") {
+                            // Objective is any exercise
+                            objective.url = "/profile?student_email=" + student.email
+                                                + "#vital-statistics/exercise-progress";
+                        } else if (matchExerciseURL) {
+                            // Objective is a particular exercise
+                            if (matchExerciseURL.length === 2) {
+                                 objective.url = "/profile?student_email=" + student.email
+                                                  + "#vital-statistics/exercise-problems/" + matchExerciseURL[1];
+                            }
+                        } else {
+                            // Objective is a(ny) video
+                            objective.url = "/profile?student_email=" + student.email
+                                                + "#vital-statistics";
+                        }
                     });
 
                     if (!student.most_recent_update || goal.updated > student.most_recent_update)
