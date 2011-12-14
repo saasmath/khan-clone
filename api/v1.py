@@ -316,7 +316,7 @@ def topic_children(topic_id, version = None):
 def topic_children(version = None):
     version = models.TopicVersion.get_by_id(version)
     version.set_default_version()
-    models.TopicVersion.create_edit_version()
+    models.TopicVersion.get_edit_version() # creates a new edit version if one does not already exists
     return version
     
 @route("/api/v1/topicversion/<version>", methods=["GET"])   

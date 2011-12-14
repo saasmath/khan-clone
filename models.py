@@ -1148,7 +1148,6 @@ class TopicVersion(db.Model):
         user = UserData.current().user
         self.last_editted_by = user
         self.put()
-        logging.info("updating")
         if self.default:
             logging.info("setting new library content date")
             Setting.cached_library_content_date(datetime.datetime.now())
@@ -1423,7 +1422,8 @@ class Topic(db.Model):
         db.run_in_transaction(delete_txn)  
 
     def delete_tree(self):
-        for parent in self.parent_keys:
+        parents = db.get(self.parent_keys)
+        for parent in parents:
             parent.delete_child(self)
 
     @staticmethod
