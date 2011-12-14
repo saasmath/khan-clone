@@ -151,6 +151,7 @@ javascript = {
         "files": [
 			"jquery.dynatree.js",
             "jquery.contextMenu.js",
+            "jquery.ajaxq-0.0.1.js",
             "edit-topic.handlebars",
             "create-video.handlebars",
             "create-video-preview.handlebars",

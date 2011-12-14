@@ -3,6 +3,7 @@
 var TopicTreeEditor = {
     tree: null,
     boundList: [],
+    maxProgressLength: 0,
 
     init: function() {
         // Attach the dynatree widget to an existing <div id="tree"> element
@@ -95,6 +96,11 @@ var TopicTreeEditor = {
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
         $('#topic_tree').bind("mousedown", function(e) { e.preventDefault(); })
 
+        $('#topictree-queue-progress-bar').progressbar();
+        $('#topictree-queue-progress-bar').progressbar("value", 0);
+        $('#topictree-queue-progress-bar').progressbar("disable");
+        $('#topictree-queue-progress-text').html('');
+
         var self = this;
         $(window).resize(function(){self.resize();});
         this.resize();
@@ -110,6 +116,34 @@ var TopicTreeEditor = {
         root.bind("change", this.refreshTreeNode, root);
         if (root.__inited)
             this.refreshTreeNode.apply(root);
+
+        this.updateProgressBar();
+    },
+
+    updateProgressBar: function() {
+        if (document.ajaxq && document.ajaxq.q['topics-admin'] &&
+            document.ajaxq.q['topics-admin'].length > 0) {
+            $('#topictree-queue-progress-bar').progressbar("enable");
+
+            var remaining = document.ajaxq.q['topics-admin'].length;
+            if (TopicTreeEditor.maxProgressLength < remaining)
+                TopicTreeEditor.maxProgressLength = remaining;
+
+            $('#topictree-queue-progress-bar').progressbar("value", (1 - (remaining / TopicTreeEditor.maxProgressLength)) * 100);
+            $('#topictree-queue-progress-text').html('Updating (' + (TopicTreeEditor.maxProgressLength - remaining + 1) + ' / ' + TopicTreeEditor.maxProgressLength + ')');
+
+        } else {
+            if (TopicTreeEditor.maxProgressLength > 0) {
+                $('#topictree-queue-progress-text').html('Done updating.');
+                $('#topictree-queue-progress-bar').progressbar("value", 100);
+                TopicTreeEditor.maxProgressLength = 0; // 1 second delay before we wipe the progress
+            } else {
+                $('#topictree-queue-progress-bar').progressbar("value", 0);
+                $('#topictree-queue-progress-bar').progressbar("disable");
+            }
+        }
+
+        setTimeout(TopicTreeEditor.updateProgressBar, 1000);
     },
 
     resize: function() {
@@ -199,7 +233,7 @@ var TopicTreeEditor = {
             message: "Publishing topic tree. Please wait...",
             buttons: []
         });
-        $.ajax({
+        $.ajaxq('topics-admin', {
             url: '/api/v1/topicversion/edit/setdefault',
             success: function() {
                 hideGenericMessageBox();
@@ -318,7 +352,7 @@ var TopicTopicNodeEditor = {
                         id: topic.id,
                         pos: model.get('children').length
                     };
-                    $.ajax({
+                    $.ajaxq('topics-admin', {
                         url: '/api/v1/topic/' + model.id + '/addchild',
                         type: 'POST',
                         data: data,
@@ -380,7 +414,7 @@ var TopicTopicNodeEditor = {
                 kind: 'Topic',
                 id: model.id
             };
-            $.ajax({
+            $.ajaxq('topics-admin', {
                 url: '/api/v1/topic/' + parentModel.id + '/deletechild',
                 type: 'POST',
                 data: data,
@@ -399,7 +433,7 @@ var TopicTopicNodeEditor = {
             id: id,
             pos: TopicTopicNodeEditor.contextModel.get('children').length
         };
-        $.ajax({
+        $.ajaxq('topics-admin', {
             url: '/api/v1/topic/' + TopicTopicNodeEditor.contextModel.id + '/addchild',
             type: 'POST',
             data: data,
@@ -415,17 +449,19 @@ var TopicTopicNodeEditor = {
 
 
     moveItem: function(oldParentID, moveData) {
-        $.ajax({
+        // Apply the change to the model data first
+        child = getDefaultTopicTree().get(oldParentID).removeChild(moveData.kind, moveData.id);
+        getDefaultTopicTree().get(moveData.new_parent_id).addChild(child, moveData.new_parent_pos);
+
+        parent_node = TopicTreeEditor.tree.getNodeByKey(moveData.new_parent_id);
+        parent_node.expand();
+        parent_node.getChildren()[moveData.new_parent_pos].activate();
+
+        $.ajaxq('topics-admin', {
             url: '/api/v1/topic/' + oldParentID + '/movechild',
             type: 'POST',
             data: moveData,
             success: function() {
-                child = getDefaultTopicTree().get(oldParentID).removeChild(moveData.kind, moveData.id);
-                getDefaultTopicTree().get(moveData.new_parent_id).addChild(child, moveData.new_parent_pos);
-
-                parent_node = TopicTreeEditor.tree.getNodeByKey(moveData.new_parent_id);
-                parent_node.expand();
-                parent_node.getChildren()[moveData.new_parent_pos].activate();
             },
             error: function() {
                 // ?
@@ -526,7 +562,7 @@ var TopicItemNodeEditor = {
                 kind: kind,
                 id: id
             };
-            $.ajax({
+            $.ajaxq('topics-admin', {
                 url: '/api/v1/topic/' + parentModel.id + '/deletechild',
                 type: 'POST',
                 data: data,

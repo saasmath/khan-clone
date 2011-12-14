@@ -103,3 +103,30 @@
 #details-view .dialog-progress-bar .ui-progressbar-value {
     background-image: url('/images/progress-animated.gif');
 }
+
+#topictree-queue-progress-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 220px;
+    height: 28px;
+    vertical-align: middle;
+}
+
+#topictree-queue-progress-text {
+    position: absolute;
+    width: 220px;
+    left: 0;
+    top: 0;
+    text-align: center;
+    line-height: 26px;
+}
+
+#topictree-queue-progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 220px;
+}
+#topictree-queue-progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
+}
