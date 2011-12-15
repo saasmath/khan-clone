@@ -570,9 +570,8 @@ var Profile = {
                     $(this).click(function( e ) {
                         e.preventDefault();
                         Profile.collapseAccordion();
-                        var url = '/profile/graph/exerciseproblems' +
-                            '?student_email=' + encodeURIComponent(goalViewModel.student.email) +
-                            '&exercise_name=' + obj.internal_id;
+                        var url = Profile.exerciseProgressUrl(obj.internal_id,
+                            goalViewModel.student.email);
                         Profile.loadGraph(url);
                     });
                 }
@@ -844,10 +843,8 @@ var Profile = {
             Profile.collapseAccordion();
             // Extract the name from the ID, which has been prefixed.
             var exerciseName = this.id.substring( "exercise-".length );
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exerciseName + "&" +
-                "student_email=" + Profile.email);
+            var url = Profile.exerciseProgressUrl(exerciseName, Profile.email);
+            Profile.loadGraph(url);
         });
     },
 
@@ -904,6 +901,12 @@ var Profile = {
                 qs.push(key + kvjoin + hash[key]);
         }
         return qs.join(eljoin);
+    },
+
+    exerciseProgressUrl: function(exercise, email) {
+        return "/profile/graph/exerciseproblems" +
+            "?exercise_name=" + exercise +
+            "&student_email=" + encodeURIComponent(email);
     },
 
     AddObjectiveHover: function(element) {
@@ -1191,10 +1194,8 @@ var ProgressSummaryView = function() {
                 email = jel.data("email");
 
             Profile.collapseAccordion();
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exercise + "&" +
-                "student_email=" + email);
+            var url = Profile.exerciseProgressUrl(exercise, email);
+            Profile.loadGraph(url);
         });
 
         $("#stats-filters").delegate("#student-progresssummary-search", "keyup", function() {
