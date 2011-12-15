@@ -550,25 +550,31 @@ var Profile = {
         $("#graph-content").html( template(studentGoalsViewModel) );
 
         $("#class-student-goal .goal-row").each(function() {
-            var goalViewModel = studentGoalsViewModel.rowData[$(this).attr('data-id')];
+            var jRowEl = $(this);
+            var goalViewModel = studentGoalsViewModel.rowData[jRowEl.attr('data-id')];
             goalViewModel.rowElement = this;
-            goalViewModel.countElement = $(this).find('.goal-count');
-            goalViewModel.startTimeElement = $(this).find('.goal-start-time');
-            goalViewModel.updateTimeElement = $(this).find('.goal-update-time');
+            goalViewModel.countElement = jRowEl.find('.goal-count');
+            goalViewModel.startTimeElement = jRowEl.find('.goal-start-time');
+            goalViewModel.updateTimeElement = jRowEl.find('.goal-update-time');
 
-            Profile.AddObjectiveHover($(this));
+            Profile.AddObjectiveHover(jRowEl);
 
-            $(this).find("a.objective").each(function() {
-                var goalObjective = goalViewModel.goal.objectives[$(this).attr('data-id')];
-                goalObjective.blockElement = this;
+            jRowEl.find("a.objective").each(function() {
+                var obj = goalViewModel.goal.objectives[$(this).attr('data-id')];
+                obj.blockElement = this;
 
-                if (goalObjective.type == 'GoalObjectiveExerciseProficiency') {
-                    $(this).click(function() {
+                if ( obj.internal_id !== "" &&
+                    (obj.type === "GoalObjectiveExerciseProficiency" ||
+                     obj.type === "GoalObjectiveAnyExerciseProficiency")
+                ) {
+                    $(this).click(function( e ) {
+                        e.preventDefault();
                         Profile.collapseAccordion();
-                        Profile.loadGraph('/profile/graph/exerciseproblems?student_email='+goalViewModel.student.email+'&exercise_name='+goalObjective.internal_id);
+                        var url = '/profile/graph/exerciseproblems' +
+                            '?student_email=' + encodeURIComponent(goalViewModel.student.email) +
+                            '&exercise_name=' + obj.internal_id;
+                        Profile.loadGraph(url);
                     });
-                } else {
-                    // Do something here for videos?
                 }
             });
         });
