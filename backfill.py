@@ -1,13 +1,6 @@
-import logging, itertools
-
-from mapreduce import control
+import logging
 from mapreduce import operation as op
-
-import request_handler
-import models
 import facebook_util
-from nicknames import get_nickname_for
-
 from google.appengine.ext import db
 
 def check_user_properties(user_data):
@@ -81,3 +74,16 @@ def transactional_entity_put(entity_key):
         entity.put()
     db.run_in_transaction(entity_put, entity_key)
 
+def fix_has_current_goal(goal):
+    '''Some user_data entities have inaccurate has_current_goal values due to
+    non-atomic puts. Fix them up!'''
+
+    if not goal.completed:
+        user_data = goal.parent()
+        if user_data and not user_data.has_current_goals:
+            user_data.has_current_goals = True
+            yield op.db.Put(user_data)
+
+def remove_user_exercises_of_deleted_exercise(user_exercise):
+    if user_exercise.exercise == "reading_scatter_plots_1":
+        yield op.db.Delete(user_exercise)

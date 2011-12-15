@@ -21,9 +21,8 @@ javascript = {
         "files": [
             # general purpose libs
             "jquery.js",
-            "jquery-ui.js",
+            "jquery-ui-1.8.16.custom.js",
             "jquery.ui.menu.js",
-            "jquery.watermark.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "../../khan-exercises/utils/underscore.js",
@@ -69,6 +68,7 @@ javascript = {
             "jquery.easing.1.3.js",
             "jquery.cycle.all.min.js",
             "waypoints.min.js",
+            "videolist.handlebars",
             "homepage.js",
             "ga_social_tracking.js",
             "youtube-embed.handlebars",
@@ -162,7 +162,7 @@ stylesheets = {
             "menu.css",
             "profile.css",
             "museo-sans.css",
-            "jquery-ui-1.8.4.custom.css",
+            "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
             "goals.css",
         ]

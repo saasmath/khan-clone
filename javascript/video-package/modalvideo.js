@@ -86,12 +86,7 @@ var ModalVideo = {
             .bind('shown', $.proxy(function() {
                 // remove fade so that draggable is fast.
                 this.modal.removeClass('fade');
-            }, this))
-            .draggable({
-                containment: 'body',
-                handle: '.modal-header',
-                cancel: '.modal-header .close-button'
-            });
+            }, this));
 
         Video.init();
         ModalVideo.linkifyTooltip();
