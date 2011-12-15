@@ -422,6 +422,12 @@ var Profile = {
 
         $("#profile-content").html(profileTemplate({email: USER_EMAIL}));
 
+        // Show only the user card tab,
+        // since the Backbone default route isn't triggered
+        // when visiting khanacademy.org/profile
+        $("#tab-content-user-profile").show()
+            .siblings().hide();
+
         Profile.populateUserCard();
         Profile.populateAchievements();
         Profile.populateGoals();
