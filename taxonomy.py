@@ -33,7 +33,7 @@ def getSmartHistoryContent():
 def importSmartHistory(version):
     topic = Topic.get_by_id("art-history", version)
     if not topic:
-        parent = Topic.get_by_id("humanities---other")
+        parent = Topic.get_by_id("humanities---other", version)
         if not parent:
             raise Exception("Could not find the Humanities & Other topic to put art history into")
         topic = Topic.insert(title = "Art History",
@@ -52,11 +52,8 @@ def importSmartHistory(version):
         href = link.group(1)
         title = link.group(2)
         if href not in hrefs:
-            key_name = Url.get_new_key_name()
             logging.info("adding %i %s %s to art-history" % (i, href, title))
-            url = Url(None,
-                      key_name = key_name,
-                      url = href,
+            url = Url(url = href,
                       title = title,
                       id = id) 
             url.put()

@@ -1201,9 +1201,10 @@ class Topic(db.Model):
         for child in children:
             item = {}
             item["kind"] = child.__class__.__name__
-            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().name()
+            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().id()
             item["title"] = child.title if hasattr(child, "title") else child.display_name
             item["hide"] = child.hide if hasattr(child, "hide") else False
+            item["url"] = child.ka_url if hasattr(child, "ka_url") else child.url
             self.children.append(item)
         return self
 
@@ -1697,12 +1698,7 @@ class Url(db.Model):
     title = db.StringProperty()
     tags = db.StringListProperty()
     date_created = db.DateTimeProperty(auto_now_add=True)
-    date_updated = db.DateTimeProperty(indexed=False, auto_now=True)
-
-    @staticmethod
-    def get_new_key_name():
-        return base64.urlsafe_b64encode(os.urandom(30))
-        
+    date_updated = db.DateTimeProperty(indexed=False, auto_now=True)        
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()

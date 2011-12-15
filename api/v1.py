@@ -337,6 +337,30 @@ def topic_children(version = None):
     version = models.TopicVersion.all().order("-number").fetch(10000)
     return version
     
+@route("/api/v1/url/<int:url_id>", methods=["GET"])   
+@jsonp
+@jsonify
+def get_url(url_id):
+    return models.Url.get_by_id(url_id)
+
+@route("/api/v1/url/<int:url_id>", methods=["PUT"])   
+@jsonp
+@jsonify
+def get_url(url_id):
+    url = models.Url.get_by_id(url_id)
+    if url is None:
+        return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
+
+    url_json = request.json
+    changed = False
+    for key, value in topic_json.iteritems():
+        if key in ["tags", "title", "url"]:
+            if getattr(url, key) != value:
+                setattr(url, key, value)
+                changed = True
+
+    if changed:
+        url.put()
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
