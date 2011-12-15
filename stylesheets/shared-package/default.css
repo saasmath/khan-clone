@@ -1684,13 +1684,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         z-index: 11;
 
         background: white;
-        background: rgba(255, 255, 255, 0.6);
-        background: -moz-linear-gradient(left, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.4) 100%);
-        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,255,255,0.8)), color-stop(50%,rgba(255,255,255,0.5)), color-stop(100%,rgba(255,255,255,0.4)));
-        background: -webkit-linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
-        background: -o-linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
-        background: -ms-linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
-        background: linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
+        background: rgba(255, 255, 255, 0.7);
+        background: -moz-linear-gradient(left, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.2) 100%);
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,255,255,0.9)), color-stop(50%,rgba(255,255,255,0.5)), color-stop(100%,rgba(255,255,255,0.2)));
+        background: -webkit-linear-gradient(left, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.2) 100%);
+        background: -o-linear-gradient(left, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.2) 100%);
+        background: -ms-linear-gradient(left, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.2) 100%);
+        background: linear-gradient(left, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.2) 100%);
         filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ccffffff', endColorstr='#66ffffff',GradientType=1 );
 
         -webkit-transition: all 0.3s ease-out;
@@ -1700,16 +1700,16 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         transition: all 0.3s ease-out;
     }
     .exercise-badge:hover #dashboard-review-title a {
-        color: #222;
+        color: #111;
     }
-    .exercise-badge #dashboard-review-content {
+    .exercise-badge #dashboard-review-content a {
         position: absolute;
         top: 50px;
         left: 90px;
         z-index: 11;
         font-size: 20px;
         font-weight: bold;
-        color: #555;
+        color: #595959;
 
         -webkit-transition: all 0.3s ease-out;
         -moz-transition: all 0.3s ease-out;
@@ -1717,8 +1717,9 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         -o-transition: all 0.3s ease-out;
         transition: all 0.3s ease-out;
     }
-    .exercise-badge:hover #dashboard-review-content {
-        color: #333;
+    .exercise-badge:hover #dashboard-review-content a {
+        color: #222;
+        text-decoration: none;
     }
     .dashboard-review-exercises .exercise-badge .fade-out-mask {
         position: absolute;
