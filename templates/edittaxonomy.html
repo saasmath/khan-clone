@@ -25,6 +25,7 @@ $(function(){
 {% block pagesubmenu %}
     This is an editing copy of the live topic tree (Created on {{ created_date }}).
     <a href="javascript: TopicTreeEditor.setTreeDefault()" class="simple-button green action-gradient">Publish to website</a>
+    <a href="/api/v1/topicversion/edit/topictree" class="simple-button green action-gradient">Export</a>
     <div id="topictree-queue-progress-wrapper"><div id="topictree-queue-progress-bar"></div><div id="topictree-queue-progress-text"></div></div>
 
     <span class="breadcrumbs_nav">
