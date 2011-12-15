@@ -191,7 +191,7 @@ def put_topic(topic_id, version = "edit"):
         # return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
     else:
         changed = False
-        kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['title', 'standalone_title', 'description', 'tags', 'hide'])
+        kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['title', 'standalone_title', 'description', 'tags', 'hide', 'id'])
         kwargs["version"]=version
         topic.update(**kwargs)
 
