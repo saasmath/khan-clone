@@ -27,7 +27,7 @@
        </div>
        <div class="exercise-list">
         {%- if review_drawer -%}
-        <span class="exercise-sublist dashboard-review-exercises">
+        <span class="exercise-sublist dashboard-review-exercises hide-on-dashboard-filter">
             <div class="exercise-badge exercise-color review light">
                 <a class="proficient-badge" href="/review">
                     <img src="/images/node-review.png" height="80" width="76">
@@ -43,11 +43,11 @@
             </div>
         </span>
         {%- endif -%}
-        <span class="exercise-sublist dashboard-suggested-exercises">
+        <span class="exercise-sublist dashboard-suggested-exercises hide-on-dashboard-filter">
         <h3>Suggested Exercises <span class="exercise-filter-count"></span></h3>
          <div class="exercise-content suggested-exercises-content"></div>
         </span>
-        <span class="exercise-sublist dashboard-recent-exercises">
+        <span class="exercise-sublist dashboard-recent-exercises hide-on-dashboard-filter">
          <h3>Recent Exercises <span class="exercise-filter-count"></span></h3>
          <div class="exercise-content recent-exercises-content"></div>
         </span>
