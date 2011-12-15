@@ -14,7 +14,7 @@ UserCardModel = Backbone.Model.extend({
         "countVideos": 3000,
         "countExercisesProficient": 0,
         "countExercises": 250,
-        "profilePic": "/images/darth.png"
+        "avatarSrc": "/images/darth.png"
     },
 
     url: "/api/v1/user/profile",
@@ -37,11 +37,23 @@ UserCardView = Backbone.View.extend({
     className: "user-info",
 
     events: {
+        "click #avatar-pic": "onAvatarClick_",
         "change #nickname": "onNicknameChanged_"
     },
 
     initialize: function() {
         this.template = Templates.get( "profile.user-card" );
+        this.model.bind( "change:avatarSrc", _.bind( this.onAvatarChanged_, this ));
+
+        /**
+         * The picker UI component which shows a dialog to change the avatar.
+         * @type {Avatar.Picker}
+         */
+        this.avatarPicker_ = null;
+    },
+
+    onAvatarChanged_: function() {
+        this.$("#avatar-pic").attr( "src", this.model.get( "avatarSrc" ));
     },
 
     render: function() {
@@ -55,5 +67,13 @@ UserCardView = Backbone.View.extend({
         var value = this.$("#nickname").val()
         this.model.set({ "nickname": value });
         this.model.save();
+    },
+
+    onAvatarClick_: function( e ) {
+        if ( !this.avatarPicker_ ) {
+            this.avatarPicker_ = new Avatar.Picker( this.model );
+        }
+        this.avatarPicker_.show();
     }
+
 });

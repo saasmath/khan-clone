@@ -14,11 +14,9 @@ var Avatar = Avatar || {};
 /**
  * The main UI component which displays a modal dialog to select
  * a list of avatars for an image.
- * @param {HTMLImageElement=} imageEl An optional image element that can be
- *     specified to attach the picker to.
  * @constructor
  */
-Avatar.Picker = function(imageEl) {
+Avatar.Picker = function(userModel) {
     /**
      * The container element of the dialog.
      */
@@ -30,30 +28,13 @@ Avatar.Picker = function(imageEl) {
     this.contentEl = null;
 
     /**
-     * The image element that gets changed after a selection is made.
+     * The underlying model for the user profile that gets modified
+     * when an avatar is selected.
      */
-    this.imageEl = imageEl;
-    if ( imageEl ) {
-        $(imageEl).hover( _.bind( this.onImageAnchorHover_, this ) );
-        $(imageEl).click( _.bind( this.onImageAnchorClick_, this ) );
-    }
+    this.userModel = userModel;
 };
 
 Avatar.Picker.template = Templates.get( "profile.avatar-picker" );
-
-/**
- * Handles a mouse hover to the anchor image.
- */
-Avatar.Picker.prototype.onImageAnchorHover_ = function( ev ) {
-    // TODO: show a "change profile pic" affordance
-};
-
-/**
- * Handles a click to the anchor image.
- */
-Avatar.Picker.prototype.onImageAnchorClick_ = function( ev ) {
-    this.render();
-};
 
 /**
  * Renders the contents of the picker and displays it.
@@ -61,6 +42,7 @@ Avatar.Picker.prototype.onImageAnchorClick_ = function( ev ) {
 Avatar.Picker.prototype.getTemplateContext_ = function() {
     // Dummy data for now. Replace with the real thing.
     return {
+        selectedSrc: this.userModel.get( "avatarSrc" ),
         categories: [
             {
                 title: "Easy avatars",
@@ -118,19 +100,33 @@ Avatar.Picker.prototype.bindEvents_ = function() {
             function( ev ) {
                 $(ev.currentTarget).removeClass("hover");
             });
+
+    this.userModel.bind( "change:avatarSrc",
+            _.bind( this.onAvatarChanged_, this ));
 };
 
 /**
  * Handles a selection to an avatar in the list.
  */
 Avatar.Picker.prototype.onAvatarSelected_ = function( ev ) {
-    // TODO: handle
+    var src = $("img.avatar-preview", ev.currentTarget).attr( "src" );
+    if ( src ) {
+        this.userModel.set({ "avatarSrc": src });
+    }
+};
+
+/**
+ * Handles a change to the selected avatar.
+ */
+Avatar.Picker.prototype.onAvatarChanged_ = function() {
+    $("#selected-img", this.contentEl).attr(
+           "src", this.userModel.get( "avatarSrc" ));
 };
 
 /**
  * Renders the contents of the picker and displays it.
  */
-Avatar.Picker.prototype.render = function() {
+Avatar.Picker.prototype.show = function() {
     if ( !this.el ) {
         var rootJel = $("<div class='avatar-picker modal fade hide'></div>");
         var contentJel = $("<div class='modal-body avatar-picker-contents'></div>");
