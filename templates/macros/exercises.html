@@ -11,7 +11,7 @@
 </div>
 {%- endmacro %}
 
-{% macro exercise_dashboard() -%}
+{% macro exercise_dashboard(review_drawer=False) -%}
     <div class="dashboard-header">
         <div class="dashboard-nav">
             <span class="selected"><a href="#">Knowledge Map{% if App.offline_mode %} (<em>not supported in offline mode</em>){% endif %}</a></span> |
@@ -26,6 +26,7 @@
           <input type="text" class="dashboard-filter-text ui-corner-all simple-input" placeholder="Start typing the name of an exercise to find it" /><input type="button" value="Clear" class="dashboard-filter-clear simple-button action-gradient ui-corner-right strict" style="display: none;"></input>
        </div>
        <div class="exercise-list">
+        {%- if review_drawer -%}
         <span class="exercise-sublist dashboard-review-exercises">
             <div class="exercise-badge exercise-color review light">
                 <a class="proficient-badge" href="/review">
@@ -41,6 +42,7 @@
                 </div>
             </div>
         </span>
+        {%- endif -%}
         <span class="exercise-sublist dashboard-suggested-exercises">
         <h3>Suggested Exercises <span class="exercise-filter-count"></span></h3>
          <div class="exercise-content suggested-exercises-content"></div>

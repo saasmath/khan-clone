@@ -310,6 +310,7 @@ def exercise_graph_dict_json(user_data, admin=False):
 class ViewAllExercises(request_handler.RequestHandler):
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
@@ -317,6 +318,7 @@ class ViewAllExercises(request_handler.RequestHandler):
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
             'selected_nav_link': 'practice',
+            'show_review_drawer': not user_exercise_graph.has_completed_review(),
             }
 
         self.render_jinja2_template('viewexercises.html', template_values)
