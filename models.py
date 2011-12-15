@@ -708,11 +708,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
     need_to_reassess = db.BooleanProperty(indexed=False)
     points = db.IntegerProperty(default=0)
     total_seconds_watched = db.IntegerProperty(default=0)
-    
+
     # A list of email values corresponding to the "user" property of the coaches
     # for the user. Note: that it may not be the current, active email
     coaches = db.StringListProperty()
-    
+
     coworkers = db.StringListProperty()
     student_lists = db.ListProperty(db.Key)
     map_coords = db.StringProperty(indexed=False)
@@ -2395,4 +2395,4 @@ class UserExerciseGraph(object):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from goals.models import GoalList
+from goals.models import GoalList, Goal

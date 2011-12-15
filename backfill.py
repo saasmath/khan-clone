@@ -80,7 +80,7 @@ def fix_has_current_goal(goal):
 
     if not goal.completed:
         user_data = goal.parent()
-        if user_data and not user_data.has_current_goal:
+        if user_data and not user_data.has_current_goals:
             user_data.has_current_goal = True
             yield op.db.Put(user_data)
 
