@@ -418,6 +418,8 @@ var Profile = {
             view = new UserCardView({model: model});
 
         $(".user-info-container").html(view.render().el);
+
+        new Avatar.Picker($("#profile-pic").get(0));
     },
 
     populateAchievements: function() {

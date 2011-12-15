@@ -104,7 +104,7 @@ Avatar.Picker.prototype.bindEvents_ = function() {
     $(this.el).delegate(
             ".category-avatars .avatar",
             "click",
-            _.bind( this.onAvatarSelected_, this )
+            _.bind( this.onAvatarSelected_, this ));
 
     $(this.el).delegate(
             ".category-avatars .avatar",
