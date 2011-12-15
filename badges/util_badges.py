@@ -239,7 +239,7 @@ def get_public_user_badges(user_data=None):
 class ViewBadges(request_handler.RequestHandler):
 
     def get(self):
-        self.redirect("/profile#achievements")
+        self.redirect("/profile/achievements")
 
 # /admin/badgestatistics is called periodically by a cron job
 class BadgeStatistics(request_handler.RequestHandler):

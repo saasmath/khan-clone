@@ -802,6 +802,7 @@ application = webapp2.WSGIApplication([
     ('/profile/graph/focus', util_profile.FocusGraph),
     ('/profile/graph/exercisesovertime', util_profile.ExercisesOverTimeGraph),
     ('/profile/graph/exerciseproblems', util_profile.ExerciseProblemsGraph),
+    ('/profile/(.*)', util_profile.ViewProfile),
     ('/profile', util_profile.ViewProfile),
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),

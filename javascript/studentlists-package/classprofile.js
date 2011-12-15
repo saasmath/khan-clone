@@ -434,18 +434,15 @@ var ClassProfile = {
 
                         if (objective.url === "/exercisedashboard") {
                             // Objective is any exercise
-                            objective.url = "/profile?student_email=" + student.email
-                                                + "#vital-statistics/exercise-progress";
+                            objective.url = "/profile/vital-statistics/exercise-progress";
                         } else if (matchExerciseURL) {
                             // Objective is a particular exercise
                             if (matchExerciseURL.length === 2) {
-                                 objective.url = "/profile?student_email=" + student.email
-                                                  + "#vital-statistics/exercise-problems/" + matchExerciseURL[1];
+                                 objective.url = "/profile/vital-statistics/exercise-problems/" + matchExerciseURL[1];
                             }
                         } else {
                             // Objective is a(ny) video
-                            objective.url = "/profile?student_email=" + student.email
-                                                + "#vital-statistics";
+                            objective.url = "/profile/vital-statistics/activity";
                         }
                     });
 
@@ -497,9 +494,9 @@ var ClassProfile = {
 
                 if (goalObjective.type == 'GoalObjectiveExerciseProficiency') {
                     $(this).click(function() {
-                        // TODO: awkward turtle
-                        window.location = "/profile?student_email=" + goalViewModel.student.email 
-                                            + "#vital-statistics/exercise-problems/" + goalObjective.internal_id;
+                        // TODO: awkward turtle w  goalViewModel.student.email 
+                        window.location = "/profile/vital-statistics/exercise-problems/"
+                                            + goalObjective.internal_id;
                     });
                 } else {
                     // Do something here for videos?
@@ -1030,9 +1027,8 @@ var ClassProfile = {
             $.each(student_row.exercises, function(idx2, exercise) {
                 exercise.exercise_display = data.exercise_names[idx2].display_name;
                 exercise.progress = (exercise.progress*100).toFixed(0);
-                // TODO: awkward turtle
-                exercise.link = "/profile?student_email=" + student_row.email
-                                    + "#vital-statistics/exercise-problems/" + data.exercise_names[idx2].name;
+                // TODO: awkward turtle w student_row.email
+                exercise.link = "/profile/vital-statistics/exercise-problems/" + data.exercise_names[idx2].name;
                 if (exercise.last_done) {
                     exercise.seconds_since_done = ((new Date()).getTime() - Date.parse(exercise.last_done)) / 1000;
                 } else {

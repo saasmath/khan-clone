@@ -88,17 +88,24 @@ var Profile = {
         $(".lte8 .goals-accordion-content").remove();
 
         Profile.router = new Profile.TabRouter;
-        Backbone.history.start();
+        $(".profile-navigation .vertical-tab-list").delegate("a", "click", function(event) {
+            if (!event.metaKey) {
+                event.preventDefault();
+                var route = $(this).attr("href").replace(/^\/profile/, "");
+                Profile.router.navigate(route, true);
+            }
+        })
+        Backbone.history.start({pushState: true, root: "/profile"});
     },
 
     TabRouter: Backbone.Router.extend({
         routes: {
             "": "showDefault",
-            "vital-statistics": "showVitalStatistics",
-            "vital-statistics/exercise-problems/:exercise": "showExerciseProblems", // TODO: awkward turtle
-            "vital-statistics/:graph": "showVitalStatistics",
-            "achievements": "showAchievements",
-            "goals": "showGoals"
+            "/vital-statistics": "showVitalStatistics",
+            "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems", // TODO: awkward turtle
+            "/vital-statistics/:graph": "showVitalStatistics",
+            "/achievements": "showAchievements",
+            "/goals": "showGoals"
         },
 
         showDefault: function(){
@@ -300,9 +307,8 @@ var Profile = {
             $("#info-hover-container").hide();
             // Extract the name from the ID, which has been prefixed.
             var exerciseName = this.id.substring( "exercise-".length );
-            // TODO: awkward turtle
-            window.location = "/profile?student_email=" + USER_EMAIL
-                                  + "#vital-statistics/exercise-problems/" + exerciseName;
+            // TODO: awkward turtle w USER_EMAIL
+            Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
         });
     },
 

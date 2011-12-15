@@ -26,17 +26,17 @@
 
 {% macro graph_date_picker(email, graph_type) -%}
 <span class="graph-date-picker">
-    <a href="/profile?student_email={{email|escape}}&dt_start=today#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Today</a> | 
-    <a href="/profile?student_email={{email|escape}}&dt_start=yesterday#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Yesterday</a> | 
-    <a href="/profile?student_email={{email|escape}}&dt_start=lastweek&dt_end=today#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Last 7 Days</a> | 
-    <a href="/profile?student_email={{email|escape}}&dt_start=lastmonth&dt_end=today#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Last 30 Days</a>
+    <a href="/profile/vital-statistics/{{graph_type}}?student_email={{email|escape}}&dt_start=today" class="graph-link graph-sub-link 0">Today</a> | 
+    <a href="/profile/vital-statistics/{{graph_type}}?student_email={{email|escape}}&dt_start=yesterday" class="graph-link graph-sub-link 0">Yesterday</a> | 
+    <a href="/profile/vital-statistics/{{graph_type}}?student_email={{email|escape}}&dt_start=lastweek&dt_end=today" class="graph-link graph-sub-link 0">Last 7 Days</a> | 
+    <a href="/profile/vital-statistics/{{graph_type}}?student_email={{email|escape}}&dt_start=lastmonth&dt_end=today" class="graph-link graph-sub-link 0">Last 30 Days</a>
 </span>
 {%- endmacro %}
 
 {% macro recent_activity_entry_badge(user_data_student, recent_activity, view="standard") -%}
 <li class="achievement" >
     <span class="activity-image" style=""><img src="/images/generic-badge-icon-inset.png" /></span>
-    <div class="ach-text">Earned <a href="#achievements" onclick="$('#achievement-list ul li#category-{{ recent_activity.badge.badge_category }}').click();" class="badge-link category-{{ recent_activity.badge.badge_category }}">{{ recent_activity.badge.description|escape }}</a>
+    <div class="ach-text">Earned <a href="#" onclick="Profile.router.navigate('/achievements', true); $('#achievement-list ul li#category-{{ recent_activity.badge.badge_category }}').click();" class="badge-link category-{{ recent_activity.badge.badge_category }}">{{ recent_activity.badge.description|escape }}</a>
     {% if recent_activity.user_badge.target_context_name %}
         for {{ recent_activity.user_badge.target_context_name|escape }}
     {% endif %}
@@ -51,7 +51,7 @@
 {% macro recent_activity_entry_exercise(user_data_student, recent_activity, view="standard") -%}
 <li class="exercise {% if recent_activity.earned_proficiency %}complete{% endif %}">
     <span class="activity-image"><img src="/images/generic-exercise-icon-inset.png" /></span>
-    <div class="ach-text">Answered <span class="problem-count">{% if view != "mobile" %}<a href="/profile?student_email={{ user_data_student.email|escape }}#vital-statistics/exercise-problems/{{ recent_activity.problem_log.exercise }}">{% endif %}{{ recent_activity.c_problems }} problem{{ recent_activity.c_problems|pluralize }}{% if view != "mobile" %}</a>{% endif %}</span> 
+    <div class="ach-text">Answered <span class="problem-count">{% if view != "mobile" %}<a href="/profile/vital-statistics/exercise-problems/{{ recent_activity.problem_log.exercise }}?student_email={{ user_data_student.email|escape }}">{% endif %}{{ recent_activity.c_problems }} problem{{ recent_activity.c_problems|pluralize }}{% if view != "mobile" %}</a>{% endif %}</span> 
     {% if recent_activity.earned_proficiency %}
         to achieve proficiency in 
     {% else %}

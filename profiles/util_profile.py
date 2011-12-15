@@ -147,7 +147,7 @@ class ViewClassProfile(request_handler.RequestHandler):
 class ViewProfile(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
-    def get(self):
+    def get(self, unused=None):
         student = UserData.current() or UserData.pre_phantom()
 
         user_override = self.request_user_data("student_email")
