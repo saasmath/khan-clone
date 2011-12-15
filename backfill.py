@@ -83,3 +83,7 @@ def fix_has_current_goal(goal):
         if user_data and not user_data.has_current_goals:
             user_data.has_current_goals = True
             yield op.db.Put(user_data)
+
+def remove_user_exercises_of_deleted_exercise(user_exercise):
+    if user_exercise.exercise == "reading_scatter_plots_1":
+        yield op.db.Delete(user_exercise)
