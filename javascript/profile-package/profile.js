@@ -14,7 +14,7 @@ var Profile = {
     init: function() {
         Profile.render();
         Profile.router = new Profile.TabRouter;
-        Backbone.history.start({pushState: true, root: "/profile"});
+        Backbone.history.start({pushState: true, root: "/profile/" + USER_EMAIL});
 
         // Remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
@@ -75,13 +75,13 @@ var Profile = {
             // in a reusable way
             if (!event.metaKey) {
                 event.preventDefault();
-                var route = $(this).attr("href").replace(/^\/profile/, "");
+                var route = $(this).attr("href").replace("/profile/" + USER_EMAIL, "");
                 Profile.router.navigate(route, true);
             }
         });
 
         // Delegate clicks for recent badge-related activity
-        $(".ach-text").delegate("a", "click", function(event) {
+        $(".achievement .ach-text").delegate("a", "click", function(event) {
             // TODO: ditto above
             if (!event.metaKey) {
                 event.preventDefault();
@@ -119,7 +119,7 @@ var Profile = {
         routes: {
             "": "showDefault",
             "/vital-statistics": "showVitalStatistics",
-            "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems", // TODO: awkward turtle
+            "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
             "/vital-statistics/:graph": "showVitalStatistics",
             "/achievements": "showAchievements",
             "/goals": "showGoals"
@@ -134,14 +134,13 @@ var Profile = {
             var graph = graph || "activity",
                 exercise = exercise || "addition_1",
                 translation = {
-                    "activity": "/profile/graph/activity",
-                    "focus": "/profile/graph/focus",
-                    "exercise-progress-over-time": "/profile/graph/exercisesovertime",
-                    "exercise-progress": "/api/v1/user/exercises",
+                    "activity": "/profile/graph/activity?student_email=" + USER_EMAIL,
+                    "focus": "/profile/graph/focus?student_email=" + USER_EMAIL,
+                    "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + USER_EMAIL,
+                    "exercise-progress": "/api/v1/user/exercises?email=" + USER_EMAIL,
                     "exercise-problems": "/profile/graph/exerciseproblems?"
                                             + "exercise_name=" + exercise
-                                            + "&" + "student_email=" + Profile.email
-                                            // TODO: need to pass correct student email somehow
+                                            + "&" + "student_email=" + USER_EMAIL
                 
                 },
                 href = translation[graph],
@@ -324,7 +323,6 @@ var Profile = {
             $("#info-hover-container").hide();
             // Extract the name from the ID, which has been prefixed.
             var exerciseName = this.id.substring( "exercise-".length );
-            // TODO: awkward turtle w USER_EMAIL
             Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
         });
     },
@@ -453,7 +451,10 @@ var Profile = {
         $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
-            data: {"casing": "camel"},
+            data: {
+                casing: "camel",
+                email: USER_EMAIL
+              },
             dataType: "json",
             success: function(data) {
 
@@ -610,12 +611,10 @@ var Profile = {
     },
 
     populateGoals: function() {
-        // TODO: Need to support sending a different user's email,
-        // as when a coach looks at a student's profile/goals.
-        // Probably involves refactoring the Handlebars toAPIGraphURL helper
         $.ajax({
             type: "GET",
             url: "/api/v1/user/goals",
+            data: {email: USER_EMAIL},
             dataType: "json",
             success: function(data) {
                 GoalProfileViewsCollection.render(data, "/api/v1/user/goals?email=" + USER_EMAIL);

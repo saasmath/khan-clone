@@ -10,8 +10,7 @@
       <table style="table-layout: fixed; width: 95px;">
         {{#each students}}
         <tr><td>
-        <!-- TODO: awkward turtle ?student_email={{email}} -->
-        <a class="student-link" href="/profile/vital-statistics/exercise-problems/{{../../name}}">{{nickname}}</a>
+        <a class="student-link" href="/profile/{{email}}/vital-statistics/exercise-problems/{{../../name}}">{{nickname}}</a>
         </td></tr>
         {{/each}}
       </table>

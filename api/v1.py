@@ -951,9 +951,7 @@ def update_public_user_badges():
 @jsonp
 @jsonify
 def get_user_badges():
-    # TODO: below line may be suspect
-    # Furthermore, the ability to override and peer at another's badges is missing
-    user_data = models.UserData.current() or models.UserData.pre_phantom()
+    user_data = get_visible_user_data_from_request() or models.UserData.pre_phantom()
     grouped_badges = util_badges.get_grouped_user_badges(user_data)
 
     user_badges_by_category = {

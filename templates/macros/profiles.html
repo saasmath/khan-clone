@@ -36,7 +36,7 @@
 {% macro recent_activity_entry_badge(user_data_student, recent_activity, view="standard") -%}
 <li class="achievement" >
     <span class="activity-image" style=""><img src="/images/generic-badge-icon-inset.png" /></span>
-    <div class="ach-text">Earned <a href="/profile/achievements" data-category="{{ recent_activity.badge.badge_category }}" class="badge-link category-{{ recent_activity.badge.badge_category }}">{{ recent_activity.badge.description|escape }}</a>
+    <div class="ach-text">Earned <a href="/profile/{{ user_data_student.email|escape }}/achievements" data-category="{{ recent_activity.badge.badge_category }}" class="badge-link category-{{ recent_activity.badge.badge_category }}">{{ recent_activity.badge.description|escape }}</a>
     {% if recent_activity.user_badge.target_context_name %}
         for {{ recent_activity.user_badge.target_context_name|escape }}
     {% endif %}
@@ -51,7 +51,7 @@
 {% macro recent_activity_entry_exercise(user_data_student, recent_activity, view="standard") -%}
 <li class="exercise {% if recent_activity.earned_proficiency %}complete{% endif %}">
     <span class="activity-image"><img src="/images/generic-exercise-icon-inset.png" /></span>
-    <div class="ach-text">Answered <span class="problem-count">{% if view != "mobile" %}<a href="/profile/vital-statistics/exercise-problems/{{ recent_activity.problem_log.exercise }}?student_email={{ user_data_student.email|escape }}">{% endif %}{{ recent_activity.c_problems }} problem{{ recent_activity.c_problems|pluralize }}{% if view != "mobile" %}</a>{% endif %}</span> 
+    <div class="ach-text">Answered <span class="problem-count">{% if view != "mobile" %}<a href="/profile/{{ user_data_student.email|escape }}/vital-statistics/exercise-problems/{{ recent_activity.problem_log.exercise }}">{% endif %}{{ recent_activity.c_problems }} problem{{ recent_activity.c_problems|pluralize }}{% if view != "mobile" %}</a>{% endif %}</span> 
     {% if recent_activity.earned_proficiency %}
         to achieve proficiency in 
     {% else %}

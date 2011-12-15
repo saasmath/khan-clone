@@ -122,8 +122,9 @@
                             point: {
                                 events: {
                                     click: function() {
-                                        // TODO: awkward turtle this.email
-                                         window.location = "/profile/vital-statistics/exercise-problems/" + this.name;
+                                         window.location = "/profile/" + this.email
+                                                            + "/vital-statistics/exercise-problems/"
+                                                            + this.name;
                                     }
                                 }
                             }

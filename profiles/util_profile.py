@@ -85,6 +85,17 @@ def get_coach_student_and_student_list(request_handler):
     student = get_student(coach, request_handler)
     return (coach, student, student_list)
 
+# TODO: Does this already exist somewhere else?
+# Stolen from request_handler.request_user_data
+def get_user_data_from_email(email):
+    user_data_current = UserData.current()
+    if user_data_current and user_data_current.user_email == email:
+        # Avoid an extra DB call in the (fairly often) case that the requested email
+        # is the email of the currently logged-in user
+        return user_data_current
+
+    return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+
 class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
@@ -145,20 +156,21 @@ class ViewClassProfile(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
-
     @ensure_xsrf_cookie
-    def get(self, unused=None):
+    def get(self, student_email=None, unused=None):
         """Render a student profile.
 
         Keyword arguments:
-        unused -- matches the grouping in /profile/(.*),
-        which is ignored server-side, but is used to route client-side
+        student_email -- matches the first grouping in /profile/(.+?)/(.*)
+        unused -- matches the second grouping, and is ignored server-side,
+        but is used to route client-side
 
         """
-        # unused matches anything that appears after khanacademy.org/profile/
+        #TODO: What URL for phantoms?
         student = UserData.current() or UserData.pre_phantom()
 
-        user_override = self.request_user_data("student_email")
+        user_override = get_user_data_from_email(student_email)
+
         if user_override and user_override.key_email != student.key_email:
             if not user_override.is_visible_to(student):
                 # If current user isn't an admin or student's coach, they can't
