@@ -70,25 +70,36 @@ class ViewExercise(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self, exid=None):
 
+        user_data = models.UserData.current() or models.UserData.pre_phantom()
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
+        reviews_left_js_val = "null"
+
         if not exid:
-            # Support old URLs that may pass in exid as a query param
-            self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
-            return
+            # TODO(david): Is there some webapp2 magic that will allow me not to
+            #     repeat this URL string in main.py?
+            if self.request.path == "/review":
+                # Take the first review exercise if available
+                exid = (user_exercise_graph.review_exercise_names() or
+                        user_exercise_graph.proficient_exercise_names() or
+                        ["addition_1"])[0]
+                reviews_left_js_val = user_exercise_graph.reviews_left_count()
+            else:
+                # Support old URLs that may pass in exid as a query param
+                self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
+                return
 
         exercise = models.Exercise.get_by_name(exid)
 
         if not exercise:
             raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
 
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
-
         user_exercise = user_data.get_or_insert_exercise(exercise)
 
         # Cache these so we don't have to worry about future lookups
         user_exercise.exercise_model = exercise
         user_exercise._user_data = user_data
-        user_exercise._user_exercise_graph = (
-                user_exercise.get_user_exercise_graph())
+        user_exercise._user_exercise_graph = user_exercise_graph
         user_exercise.summative = exercise.summative
 
         # Temporarily work around in-app memory caching bug
@@ -209,9 +220,6 @@ class ViewExercise(request_handler.RequestHandler):
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
-        reviews_left_count = (
-                user_exercise.get_user_exercise_graph().reviews_left_count())
-
         template_values = {
             'exercise': exercise,
             'user_exercise_json': user_exercise_json,
@@ -231,7 +239,7 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
-            'reviews_left_count': reviews_left_count,
+            'reviews_left_count': reviews_left_js_val,
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)

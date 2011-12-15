@@ -782,10 +782,8 @@ def attempt_problem_number(exercise_name, problem_number):
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
             user_states = user_exercise_graph.states(exercise.name)
-            review_mode = request.request_bool("review_mode", default=False)
             correct = request.request_bool("complete")
-            reviews_left = user_exercise_graph.reviews_left_count() + (
-                    1 - correct)
+            review_mode = request.request_bool("review_mode", default=False)
 
             action_results = {
                 "exercise_state": {
@@ -795,13 +793,14 @@ def attempt_problem_number(exercise_name, problem_number):
                 },
                 "points_earned": {"points": points_earned},
                 "attempt_correct": correct,
-                "review_done": (review_mode and
-                    user_exercise_graph.has_completed_review()),
-                "reviews_left": reviews_left,
             }
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+
+            if review_mode:
+                action_results['reviews_left'] = (
+                    user_exercise_graph.reviews_left_count() + (1 - correct))
 
             add_action_results(user_exercise, action_results)
             return user_exercise

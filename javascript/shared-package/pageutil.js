@@ -1101,8 +1101,10 @@ $.fx.step.reviewExplode = function(fx) {
 };
 
 var Review = {
-    highlightDone: function( done ) {
-        if ( !done || $( "#review-mode-title" ).hasClass( "review-done" ) ) {
+    REVIEW_DONE_HTML: "Review&nbsp;Done!",
+
+    highlightDone: function() {
+        if ( $( "#review-mode-title" ).hasClass( "review-done" ) ) {
             return;
         }
 
@@ -1130,7 +1132,7 @@ var Review = {
             });
 
         // Huge "REVIEW DONE!" text shrinks to fit in its box
-        $( "#review-mode-title h1" ).html( "Review&nbsp;Done!" ).css({
+        $( "#review-mode-title h1" ).html( Review.REVIEW_DONE_HTML ).css({
             fontSize: "100px",
             right: 0,
             position: "absolute"
@@ -1143,7 +1145,7 @@ var Review = {
         });
     },
 
-    initCounter: function() {
+    initCounter: function( reviewsLeftCount ) {
         var digits = "0 1 2 3 4 5 6 7 8 9 ";
         $( "#review-counter-container" )
             .find( ".ones" ).text( new Array(10 + 1).join(digits) ).end()
@@ -1152,8 +1154,9 @@ var Review = {
 
     updateCounter: function( reviewsLeftCount ) {
 
-        // Spin the remaining reviews counter like slot machines
+        // Spin the remaining reviews counter like a slot machine
         var reviewCounterElem = $( "#review-counter-container" ),
+            reviewTitleElem = $( "#review-mode-title" ),
             oldCount = reviewCounterElem.data( "counter" ) || 0,
             tens = Math.floor( ( reviewsLeftCount % 100 ) / 10 ),
             animationOptions = {
@@ -1172,7 +1175,17 @@ var Review = {
             top: tens * -lineHeight
         }, animationOptions );
 
-        if ( reviewsLeftCount !== 0 ) {
+        if ( reviewsLeftCount === 0 ) {
+            if ( oldCount > 0 ) {
+                // Review just finished, light a champagne supernova in the sky
+                Review.highlightDone();
+            } else {
+                reviewTitleElem
+                    .addClass( "review-done post-animation" )
+                    .find( "h1" )
+                    .html( Review.REVIEW_DONE_HTML );
+            }
+        } else if ( !reviewTitleElem.hasClass( "review-done" ) ) {
             $( "#review-mode-title h1" ).text(
                 reviewsLeftCount === 1 ? "Exercise Left!" : "Exercises Left" );
         }
