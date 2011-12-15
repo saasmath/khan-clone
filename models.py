@@ -80,6 +80,10 @@ class Setting(db.Model):
         return Setting._get_or_set_with_key("cached_library_content_date", val)
 
     @staticmethod
+    def cached_playlist_content_date(val = None):
+        return Setting._get_or_set_with_key("cached_playlist_content_date", val)
+
+    @staticmethod
     def cached_exercises_date(val = None):
         return Setting._get_or_set_with_key("cached_exercises_date", val)
 
@@ -603,11 +607,17 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.STARTED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(),
+                       UserVideoCss.STARTED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def set_completed(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), UserVideoCss.COMPLETED, version)
+        deferred.defer(set_css_deferred, user_data.key(), video.key(),
+                       UserVideoCss.COMPLETED, version,
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def _chunker(seq, size):
@@ -646,20 +656,42 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     uvc.pickled_dict = pickle.dumps(css)
     uvc.load_pickled()
+
+    # if set_css_deferred runs out of order then we bump the version number
+    # to break the cache
+    if version < uvc.version:
+        version = uvc.version + 1
+        user_data.uservideocss_version += 1
+        db.put(user_data)
+
     uvc.version = version
     db.put(uvc)
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
 class UserData(GAEBingoIdentityModel, db.Model):
-    # Canonical reference to the user entity. This should never be changed.
+    # Canonical reference to the user entity. Avoid referencing this directly
+    # as the fields of this property can change; only the ID is stable and
+    # user_id can be used as a unique identifier instead.
     user = db.UserProperty()
 
-    # The current, active user. Can be changed if user changes emails.
+    # Deprecated - this was used to represent the current e-mail address of the
+    # user but is no longer relevant. Do not use - see user_id instead.
     current_user = db.UserProperty()
 
+    # An opaque and uniquely identifying string for a user - this is stable
+    # even if the user changes her e-mail.
     user_id = db.StringProperty()
+
+    # A uniquely identifying string for a user. This is not stable and can
+    # change if a user changes her e-mail. This is not actually always an
+    # e-mail; for non-Google users, this can be a
+    # URI like http://facebookid.khanacademy.org/1234
+    user_email = db.StringProperty()
+
+    # A human-readable name that will be user-configurable.
     user_nickname = db.StringProperty(indexed=False)
+
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
     joined = db.DateTimeProperty(auto_now_add=True)
@@ -676,7 +708,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
     need_to_reassess = db.BooleanProperty(indexed=False)
     points = db.IntegerProperty(default=0)
     total_seconds_watched = db.IntegerProperty(default=0)
+    
+    # A list of email values corresponding to the "user" property of the coaches
+    # for the user. Note: that it may not be the current, active email
     coaches = db.StringListProperty()
+    
     coworkers = db.StringListProperty()
     student_lists = db.ListProperty(db.Key)
     map_coords = db.StringProperty(indexed=False)
@@ -688,7 +724,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
     count_feedback_notification = db.IntegerProperty(default=-1, indexed=False)
     question_sort_order = db.IntegerProperty(default=-1, indexed=False)
-    user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
@@ -1027,10 +1062,20 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
-    def ensure_has_current_goals(self):
-        if not self.has_current_goals:
+    def save_goal(self, goal):
+        '''save a goal, atomically updating the user_data.has_current_goal when
+        necessary'''
+
+        if self.has_current_goals: # no transaction necessary
+            goal.put()
+            return
+
+        # otherwise this is the first goal the user has created, so be sure we
+        # update user_data.has_current_goals too
+        def save_goal():
             self.has_current_goals = True
-            self.put()
+            db.put([self, goal])
+        db.run_in_transaction(save_goal)
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
@@ -1240,6 +1285,11 @@ class Playlist(Searchable, db.Model):
 
         return videos
 
+    def get_video_count(self):
+        video_playlist_query = VideoPlaylist.all()
+        video_playlist_query.filter('playlist =', self)
+        video_playlist_query.filter('live_association =', True)
+        return video_playlist_query.count()
 
 class UserPlaylist(db.Model):
     user = db.UserProperty()
@@ -1443,7 +1493,7 @@ class VideoLog(db.Model):
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
             bingo(['struggling_videos_finished',
-                   'homepage_video_videos_finished'])
+                   'homepage_restructure_videos_finished'])
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))

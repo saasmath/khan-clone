@@ -213,13 +213,15 @@ def compile_templates():
     print "Compiling all templates"
     return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
 
-def prime_autocomplete_cache(version):
+def prime_cache(version):
     try:
         resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/autocomplete?q=calc" % (version, get_app_id()))
         resp.read()
-        print "Primed autocomplete cache"
+        resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/playlists/library/compact" % (version, get_app_id()))
+        resp.read()
+        print "Primed cache"
     except:
-        print "Error when priming autocomplete cache"
+        print "Error when priming cache"
 
 def open_browser_to_ka_version(version):
     webbrowser.open("http://%s.%s.appspot.com" % (version, get_app_id()))
@@ -258,6 +260,11 @@ def main():
         action="store_true", dest="clean",
         help="Clean the old packages and generate them again. If used with -d,the app is not compiled at all and is only cleaned.", default=False)
 
+    parser.add_option('-r', '--report',
+        action="store_true", dest="report",
+        help="Generate a report that displays minified, gzipped file size for each package element",
+            default=False)
+
     options, args = parser.parse_args()
 
     if(options.clean):
@@ -265,6 +272,12 @@ def main():
         tidy_up()
         if options.dryrun:
             return
+
+    if options.report:
+        print "Generating file size report"
+        compile_handlebar_templates()
+        compress.file_size_report()
+        return
 
     includes_local_changes = hg_st()
     if not options.force and includes_local_changes:
@@ -306,7 +319,7 @@ def main():
         if success:
             send_hipchat_deploy_message(version, includes_local_changes, email)
             open_browser_to_ka_version(version)
-            prime_autocomplete_cache(version)
+            prime_cache(version)
 
     end = datetime.datetime.now()
     print "Done. Duration: %s" % (end - start)

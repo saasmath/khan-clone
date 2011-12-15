@@ -635,14 +635,16 @@ function KnowledgeMap(params) {
         this.map.mapTypes.set('knowledge', knowledgeMapType);
         this.map.setMapTypeId('knowledge');
 
-        if (params.mapCoords)
+        // If mapCoords doesn't exist or the zoom level is less than 0,
+        // just show default home position.
+        if (params.mapCoords && params.mapCoords[2] > KnowledgeMapGlobals.options.minZoom)
         {
             this.map.setCenter(new google.maps.LatLng(params.mapCoords[0], params.mapCoords[1]));
             this.map.setZoom(params.mapCoords[2]);
         }
         else
         {
-            this.map.setCenter(this.latLngHome);
+            this.map.setCenter(KnowledgeMapGlobals.latLngHome);
             this.map.setZoom(KnowledgeMapGlobals.options.minZoom + 2);
         }
 

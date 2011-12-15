@@ -1453,6 +1453,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         left: 282px;
         top: 5px;
         line-height: 1px;
+        z-index:20;
     }
     .exercise-show:hover {
         top: 6px;
@@ -1510,6 +1511,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         top: 10px;
         right: 13px;
         z-index: 100;
+    }
+    .dashboard-filter-clear:active {
+        top: 10px;
+        padding-top: 5px;
     }
     .ie .dashboard-filter-clear {
         top: 12px;
@@ -1910,6 +1915,8 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 
 .proficient-badge {
     display: block;
+    position:relative;
+    z-index:10;
 }
 
 .exercise-badge.single-exercise .energy-points-badge {
@@ -2831,6 +2838,13 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     min-width: 58%;
     max-width: 58%;
     left: 21px;
+    /* 
+     * Max-height is used to restrict the vertical size of main-video even when
+     * both the placeholder image and youtube embed are loaded. (We can't
+     * just hide one of them using normal techniques, because unhiding 
+     * makes the video re-render and "pop" into place.)
+     * */
+    max-height: 418px;
 }
 #homepage #main-video object, #homepage #main-video embed {
     width: 100%;
@@ -2868,29 +2882,8 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     filter:alpha(opacity=100);
 }
 #homepage .player-loading-wrapper {
-    /*
-     * We can get rid of the .player-loading-wrapper selectors and the following complication
-     * if we decide to load the main video on placeholder click instead of trying to preload
-     * and keep it hidden.
-     *
-     * Different browsers treat hidden <objects> and <embeds> differently.
-     * Non-IE browsers will fire 'playerloaded' events for visibility:hidden
-     * embeds, but IE won't (see following body.ie selector).
-     * Non-IE browsers will also reload and re-fire these events when changing
-     * the object's position, so visibility:hidden is the way to go for them.
-     * */
-    visibility: hidden;
-
-    /*
-     * position:relative makes safari honor visibility:hidden for the <embed>
-     * content
-     * */
     position: relative;
-}
-body.ie #homepage .player-loading-wrapper {
-    /* See above selector's comment */
-    visibility: visible;
-    position: absolute;
+    top: -395px;
     left: -9999px;
 }
 /* End homepage styles */
