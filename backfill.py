@@ -81,3 +81,6 @@ def transactional_entity_put(entity_key):
         entity.put()
     db.run_in_transaction(entity_put, entity_key)
 
+def remove_user_exercises_of_deleted_exercise(user_exercise):
+    if user_exercise.exercise == "reading_scatter_plots_1":
+        yield op.db.Delete(user_exercise)
