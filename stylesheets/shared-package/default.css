@@ -1610,6 +1610,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     font-size: 11px;
     color: #444;
 }
+.exercise-sublist {
+    margin-top: 24px;
+    display: block;
+}
+.exercise-sublist:first-child {
+    margin-top: 12px;
+}
 .exercise-badge {
     background: #f3f3f3;
     margin-bottom: 5px;
@@ -1646,6 +1653,95 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .exercise-badge .energy-points-badge{
       display:none;
     }
+
+    /* TODO(david): Move review CSS into its own file */
+    .dashboard-review-exercises .exercise-badge:hover .proficient-badge img {
+        -webkit-transition: all 0.3s ease-out;
+        -moz-transition: all 0.3s ease-out;
+        -ms-transition: all 0.3s ease-out;
+        -o-transition: all 0.3s ease-out;
+        transition: all 0.3s ease-out;
+    }
+    .dashboard-review-exercises .exercise-badge:hover .proficient-badge img {
+        box-shadow: 0 0 20px #E35D04;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+    }
+    #dashboard-review-title a {
+        font-weight: normal;
+        position: absolute;
+        left: 0;
+        right: 0;
+        width: auto;
+        top: 12px;
+        padding: 2px 0 2px 15px;
+        font-size: 15px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-decoration: none;
+        color: #444;
+        z-index: 11;
+
+        background: white;
+        background: rgba(255, 255, 255, 0.6);
+        background: -moz-linear-gradient(left, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.4) 100%);
+        background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(255,255,255,0.8)), color-stop(50%,rgba(255,255,255,0.5)), color-stop(100%,rgba(255,255,255,0.4)));
+        background: -webkit-linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
+        background: -o-linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
+        background: -ms-linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
+        background: linear-gradient(left, rgba(255,255,255,0.8) 0%,rgba(255,255,255,0.5) 50%,rgba(255,255,255,0.4) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ccffffff', endColorstr='#66ffffff',GradientType=1 );
+
+        -webkit-transition: all 0.3s ease-out;
+        -moz-transition: all 0.3s ease-out;
+        -ms-transition: all 0.3s ease-out;
+        -o-transition: all 0.3s ease-out;
+        transition: all 0.3s ease-out;
+    }
+    .exercise-badge:hover #dashboard-review-title a {
+        color: #222;
+    }
+    .exercise-badge #dashboard-review-content {
+        position: absolute;
+        top: 50px;
+        left: 90px;
+        z-index: 11;
+        font-size: 20px;
+        font-weight: bold;
+        color: #555;
+
+        -webkit-transition: all 0.3s ease-out;
+        -moz-transition: all 0.3s ease-out;
+        -ms-transition: all 0.3s ease-out;
+        -o-transition: all 0.3s ease-out;
+        transition: all 0.3s ease-out;
+    }
+    .exercise-badge:hover #dashboard-review-content {
+        color: #333;
+    }
+    .dashboard-review-exercises .exercise-badge .fade-out-mask {
+        position: absolute;
+        height: 81px;
+        width: 100%;
+        top: 0;
+        left: 0;
+        background: rgba(255, 255, 255, 0.3);
+        z-index: 10;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+
+        -webkit-transition: all 0.3s ease-out;
+        -moz-transition: all 0.3s ease-out;
+        -ms-transition: all 0.3s ease-out;
+        -o-transition: all 0.3s ease-out;
+        transition: all 0.3s ease-out;
+    }
+    .dashboard-review-exercises .exercise-badge:hover .fade-out-mask {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
     .exercise-badge .exercise-title {
         font-weight: bold;
         position: absolute;
@@ -2079,7 +2175,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     float: right;
     width: 180px;
     margin-top: -8px;
-    padding-left: 10px;
+    padding-left: 15px;
     text-align: left;
 }
 
