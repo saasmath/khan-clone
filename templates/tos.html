@@ -5,11 +5,11 @@
     #tos a:visited { color: #069; }
     #terms-details { margin: 1.5em 0; }
     #terms-details li { margin-bottom: 1.5em; }
-    #terms-details li ol { margin-left: 1.5em; }
+    #terms-details li ol { margin-top: 1.5em; margin-left: 1.5em; }
 </style>
 <script type="text/javascript">
 $(function(){
-    $('#terms-details > li').append("<div class='back-to-top'><a href='#table-of-contents'>Back to Top</a></div>")
+    $('#terms-details > li').append("<p class='back-to-top'><a href='#table-of-contents'>Back to Top</a></p>")
 });
 </script>
 {% endblock pagescript %}
@@ -68,11 +68,11 @@ $(function(){
 			<li> 7.1	Default License Grant.  Unless indicated as being in public domain, all educational videos and exercises provided on the Website by Khan Academy (the “Licensed Educational Content”) are protected by United States copyright, trade dress, patent, and trademark laws, international conventions, and all other relevant intellectual property and proprietary rights, and applicable laws.  Unless otherwise indicated, all Licensed Educational Content is the property of Khan Academy or its subsidiaries or affiliated companies and/or third-party licensors and is licensed to You under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 United States License  (available at http://creativecommons.org/licenses/by-nc-sa/3.0/us/) (the “Creative Commons License”).  By downloading or otherwise accessing such Licensed Educational Content, You agree to comply with all the terms of the Creative Commons License.  Khan Academy reserves all rights in the Licensed Educational Content not expressly granted in the Terms.</li>
 			<li> 7.2	License Restrictions.  The Licensed Educational Content is intended for personal, non-commercial use only.  Without limiting the foregoing, the Licensed Educational Content may not be used, distributed or otherwise exploited for “commercial advantage or private monetary compensation” under the Creative Commons License unless otherwise agreed in writing by Khan Academy. </li> 
 		
-			<br> Whether a particular use of the Licensed Educational Content is “non-commercial” depends on the use, not the user.  Khan Academy defines as “non-commercial” any use that is not directly intended to generate sales or profits for the user. </br>
-			
+			<p> Whether a particular use of the Licensed Educational Content is “non-commercial” depends on the use, not the user.  Khan Academy defines as “non-commercial” any use that is not directly intended to generate sales or profits for the user. </p>
+		<ol>
 			<menu>
-			<li type = disc> •	As an example, the use by a for-profit corporation of the Licensed Educational Content for internal professional development and/or training of its employees is “non-commercial” as long as that corporation does not charge its employees for such use. </li> 
-			<li type = disc> •	As another example, the use by a non-profit corporation of the Licensed Educational Content for the training of its clients in return for a fee is NOT “non-commercial”.  </li>
+			<li type = disc>As an example, the use by a for-profit corporation of the Licensed Educational Content for internal professional development and/or training of its employees is “non-commercial” as long as that corporation does not charge its employees for such use. </li> 
+			<li type = disc>As another example, the use by a non-profit corporation of the Licensed Educational Content for the training of its clients in return for a fee is NOT “non-commercial”.  </li>
 			</menu>
 			
 			<ol type="a">
@@ -81,7 +81,7 @@ $(function(){
 			<li> (c)	providing training, support, or editorial services that use or reference the Licensed Educational Content in exchange for a fee; and </li>
 			<li> (d)	the sale of advertisements, sponsorships, or promotions placed on the Licensed Content or any part thereof, or the sale of advertisements, sponsorships, or promotions on any website or blog containing any part of the Licensed Educational Material, including without limitation any “pop-up advertisements”. </li>
 			</ol>
-			
+		</ol>	
 			<li> 7.3	Crediting Khan Academy.  The Creative Commons License requires attribution to Khan Academy in association with Your use of the Licensed Educational Content.  Accordingly, if You distribute, publicly perform or display, transmit, publish, or otherwise make available any Licensed Educational Content, You must also provide the following notice prominently along with the Licensed Educational Content: “[NOTE: All Khan Academy content available for free at www.khanacademy.org]”.</li>
 		</ol>
 	</li>
