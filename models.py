@@ -670,14 +670,28 @@ def set_css_deferred(user_data_key, video_key, status, version):
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
 class UserData(GAEBingoIdentityModel, db.Model):
-    # Canonical reference to the user entity. This should never be changed.
+    # Canonical reference to the user entity. Avoid referencing this directly
+    # as the fields of this property can change; only the ID is stable and
+    # user_id can be used as a unique identifier instead.
     user = db.UserProperty()
 
-    # The current, active user. Can be changed if user changes emails.
+    # Deprecated - this was used to represent the current e-mail address of the
+    # user but is no longer relevant. Do not use - see user_id instead.
     current_user = db.UserProperty()
 
+    # An opaque and uniquely identifying string for a user - this is stable
+    # even if the user changes her e-mail.
     user_id = db.StringProperty()
+
+    # A uniquely identifying string for a user. This is not stable and can
+    # change if a user changes her e-mail. This is not actually always an
+    # e-mail; for non-Google users, this can be a
+    # URI like http://facebookid.khanacademy.org/1234
+    user_email = db.StringProperty()
+
+    # A human-readable name that will be user-configurable.
     user_nickname = db.StringProperty(indexed=False)
+
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
     joined = db.DateTimeProperty(auto_now_add=True)
@@ -694,7 +708,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
     need_to_reassess = db.BooleanProperty(indexed=False)
     points = db.IntegerProperty(default=0)
     total_seconds_watched = db.IntegerProperty(default=0)
+    
+    # A list of email values corresponding to the "user" property of the coaches
+    # for the user. Note: that it may not be the current, active email
     coaches = db.StringListProperty()
+    
     coworkers = db.StringListProperty()
     student_lists = db.ListProperty(db.Key)
     map_coords = db.StringProperty(indexed=False)
@@ -706,7 +724,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
     count_feedback_notification = db.IntegerProperty(default=-1, indexed=False)
     question_sort_order = db.IntegerProperty(default=-1, indexed=False)
-    user_email = db.StringProperty()
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
