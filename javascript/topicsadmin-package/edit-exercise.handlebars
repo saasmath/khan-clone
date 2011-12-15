@@ -62,19 +62,10 @@
             <tr>
                 <td style="font-weight:bold;">Prerequisites</td>
                 <td style="padding-bottom:9px;">
-                    <div>
-                        {{#each model.prerequisites}}
-                          <div>{{ this }} (<a href="javascript: TopicExerciseNodeEditor.deletePrereq('{{ this }}');">remove</a>)</div>
-                        {{/each}}
-                    </div>
+                    <div id="exercise-prereqs-list"></div>
 
-                    <select id="add-prereq" onchange="TopicExerciseNodeEditor.addPrereq();" style="width:200px;">
-                        <option value=""> - Add prerequisite exercise - </option>
-                        <!-- For all exercises?
-                            <option value="exercise.name">exercise.display_name</option>
-                            -->
-                            <option value="test_exercise">Test Exercise</option>
-                    </select><br/>
+                    <a href="javascript: TopicExerciseNodeEditor.choosePrereq()" class="simple-button action-gradient">Add prerequisite exercise</a>
+                    <br/>
 
                     <em>This exercise will be suggested once these prereqs are completed.</em><br/>
                     {{#if model.summative }}
@@ -86,19 +77,10 @@
             <tr>
                 <td style="font-weight:bold;">Covered exercises</td>
                 <td style="padding-bottom:9px;">
-                    <div>
-                        {{#each model.covers}}
-                          <div>{{ this }} (<a href="javascript: TopicExerciseNodeEditor.deleteCover('{{ this }}');">remove</a>)</div>
-                        {{/each}}
-                    </div>
+                    <div id="exercise-covers-list"></div>
 
-                    <select id="add-cover" onchange="TopicExerciseNodeEditor.addCover();" style="width:200px;">
-                        <option value=""> - Add covered exercise - </option>
-                        <!-- For all exercises?
-                            <option value="exercise.name">exercise.display_name</option>
-                            -->
-                            <option value="test_exercise">Test Exercise</option>
-                    </select><br/>
+                    <a href="javascript: TopicExerciseNodeEditor.chooseCover()" class="simple-button action-gradient">Add a covered exercise</a>
+                    <br/>
 
                     <em>Achieving proficiency in this exercise will give proficiency in all covered exercises.</em>
                 </td>
@@ -108,9 +90,12 @@
             <tr>
                 <td style="font-weight:bold;">Related Videos</td>
                 <td style="padding-bottom:9px;">
-                    <div id="videos-container"></div>
+                    <div id="exercise-videos-list"></div>
 
-                    <input id="related-videos-input" style="width:200px;" type="text" placeholder="- Add related video -" value='' class="placeholder" />
+                    <a href="javascript: TopicExerciseNodeEditor.chooseVideo()" class="simple-button action-gradient">Add a related video</a>
+                    <br/>
+
+                    <em>If the student is struggling on this exercise, we refer them to these related videos.</em>
                 </td>
             </tr>
             {{/unless}}

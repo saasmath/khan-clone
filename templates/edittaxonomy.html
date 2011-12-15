@@ -23,7 +23,10 @@ $(function(){
 {% endblock bottompagescript %}
 
 {% block pagesubmenu %}
-    This is an editing copy of the live topic tree (Created on {{ created_date }}). <a href="javascript: TopicTreeEditor.setTreeDefault()" class="simple-button green action-gradient">Publish to website</a>
+    This is an editing copy of the live topic tree (Created on {{ created_date }}).
+    <a href="javascript: TopicTreeEditor.setTreeDefault()" class="simple-button green action-gradient">Publish to website</a>
+    <div id="topictree-queue-progress-wrapper"><div id="topictree-queue-progress-bar"></div><div id="topictree-queue-progress-text"></div></div>
+
     <span class="breadcrumbs_nav">
         <a href="/admin94040">Exercises</a>
      </span>
@@ -64,6 +67,9 @@ $(function(){
     </li>
     <li class="cut_item">
         <a href="#cut_item">Cut</a>
+    </li>
+    <li class="paste_after_item separator">
+        <a href="#paste_after_item">Paste here</a>
     </li>
     <li class="remove_item">
         <a href="#remove_item">Remove from topic</a>
