@@ -78,7 +78,6 @@ def fix_has_current_goal(goal):
     '''Some user_data entities have inaccurate has_current_goal values due to
     non-atomic puts. Fix them up!'''
 
-    logging.critical("mapping goal %s", goal.title)
     if not goal.completed:
         user_data = goal.parent()
         if user_data and not user_data.has_current_goal:
