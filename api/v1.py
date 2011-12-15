@@ -157,9 +157,6 @@ def topictree(version = None):
 @jsonify
 def topic(topic_id, version = None):
     version = models.TopicVersion.get_by_id(version)
-    logging.info(version)
-    logging.info(version.default)
-    logging.info(version.number)
     topic = models.Topic.get_by_id(topic_id, version)
 
     if not topic:
@@ -217,6 +214,8 @@ def topic_add_child(parent_id, version = "edit"):
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
+    elif kind == "Url":
+        child = models.Url.get_by_key_name(id)
     else:
         return api_invalid_param_response("Invalid kind to delete:" + kind)
 
@@ -249,6 +248,8 @@ def topic_delete_child(parent_id, version = "edit"):
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
+    elif kind == "Url":
+        child = models.Url.get_by_key_name(id)
     else:
         return api_invalid_param_response("Invalid kind to delete:" + kind)
 
@@ -279,6 +280,8 @@ def topic_move_child(old_parent_id, version = "edit"):
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
+    elif kind == "Url":
+        child = models.Url.get_by_key_name(id)
     else:
         return api_invalid_param_response("Invalid kind to move:" + kind)
 

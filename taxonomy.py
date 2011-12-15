@@ -4,6 +4,9 @@ import cgi
 import re
 import urllib
 import logging
+import layer_cache
+import urllib2
+import re
 
 from api.jsonify import jsonify
 
@@ -11,7 +14,63 @@ from google.appengine.ext import db
 
 
 import models
-from models import Topic, TopicVersion, Playlist, Video
+from models import Topic, TopicVersion, Playlist, Video, Url
+
+@layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
+def getSmartHistoryContent():
+    request = urllib2.Request("http://smarthistory.org/khan-home.html")
+    try:
+        response = urllib2.urlopen(request)
+        smart_history = response.read()
+        smart_history = re.search(re.compile("<body>(.*)</body>", re.S), smart_history).group(1).decode("utf-8")
+        smart_history.replace("script", "")
+    except Exception, e:
+        logging.exception("Failed fetching smarthistory video list")
+        smart_history = None
+        pass
+    return smart_history
+
+def importSmartHistory(version):
+    topic = Topic.get_by_id("art-history", version)
+    if not topic:
+        parent = Topic.get_by_id("humanities---other")
+        if not parent:
+            raise Exception("Could not find the Humanities & Other topic to put art history into")
+        topic = Topic.insert(title = "Art History",
+                             parent = parent,
+                             id = "art-history",
+                             standalone_title = "Art History",
+                             description = "Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")  
+    urls = topic.get_urls()
+    href_to_key_dict = dict((url.url, url.key()) for url in urls)
+    hrefs = [url.url for url in urls]
+    content = getSmartHistoryContent()
+    links = ""
+    i=1
+    child_keys = []
+    for link in re.finditer(re.compile('<a.*href="(.*?)"><span.*?>(.*)</span></a>', re.M), content):
+        href = link.group(1)
+        title = link.group(2)
+        if href not in hrefs:
+            key_name = Url.get_new_key_name()
+            logging.info("adding %i %s %s to art-history" % (i, href, title))
+            url = Url(None,
+                      key_name = key_name,
+                      url = href,
+                      title = title,
+                      id = id) 
+            url.put()
+            child_keys.append(url.key())
+            links += str(i)+link.group(1) + " " +link.group(2) + "<br>"
+        else:
+            child_keys.append(href_to_key_dict[href])
+        i += 1
+
+    logging.info("updating child_keys")
+    topic.update(child_keys = child_keys)
+    return links
+ 
+
 class EditTaxonomy(request_handler.RequestHandler):
 
     def get_tree_html(self, t):
@@ -40,6 +99,8 @@ class EditTaxonomy(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
+        # version = models.TopicVersion.get_edit_version()
+        # importSmartHistory(version)
         # t = models.Topic.all().filter("title = ", "Algebra").get()
         # title = t.topic_parent.topic_parent.title
         # logging.info(title)
