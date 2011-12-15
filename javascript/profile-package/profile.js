@@ -13,8 +13,11 @@ var Profile = {
 
     init: function() {
         Profile.render();
-        Profile.router = new Profile.TabRouter;
-        Backbone.history.start({pushState: true, root: "/profile/" + USER_EMAIL});
+        Profile.router = new Profile.TabRouter();
+        Backbone.history.start({
+            pushState: true,
+            root: "/profile/" + encodeURIComponent(USER_EMAIL)
+        });
 
         // Remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
@@ -133,15 +136,15 @@ var Profile = {
         showVitalStatistics: function(graph, exercise){
             var graph = graph || "activity",
                 exercise = exercise || "addition_1",
+                emailEncoded = encodeURIComponent(USER_EMAIL),
                 translation = {
-                    "activity": "/profile/graph/activity?student_email=" + USER_EMAIL,
-                    "focus": "/profile/graph/focus?student_email=" + USER_EMAIL,
-                    "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + USER_EMAIL,
-                    "exercise-progress": "/api/v1/user/exercises?email=" + USER_EMAIL,
+                    "activity": "/profile/graph/activity?student_email=" + emailEncoded,
+                    "focus": "/profile/graph/focus?student_email=" + emailEncoded,
+                    "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
+                    "exercise-progress": "/api/v1/user/exercises?email=" + emailEncoded,
                     "exercise-problems": "/profile/graph/exerciseproblems?"
                                             + "exercise_name=" + exercise
-                                            + "&" + "student_email=" + USER_EMAIL
-                
+                                            + "&" + "student_email=" + emailEncoded
                 },
                 href = translation[graph],
                 jelGraphLinkHeader = $(".graph-link-header[href$='" + graph + "']");

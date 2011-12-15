@@ -169,6 +169,8 @@ class ViewProfile(request_handler.RequestHandler):
         #TODO: What URL for phantoms?
         student = UserData.current() or UserData.pre_phantom()
 
+        if student_email:
+            student_email = urllib.unquote(student_email)
         user_override = get_user_data_from_email(student_email)
 
         if user_override and user_override.key_email != student.key_email:
