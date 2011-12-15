@@ -64,7 +64,10 @@ def importSmartHistory(version):
         i += 1
 
     logging.info("updating child_keys")
-    topic.update(child_keys = child_keys)
+    if topic.child_keys != child_keys:
+        topic.update(child_keys = child_keys)
+    else:
+        logging.info("nothing changed")
     return links
  
 
