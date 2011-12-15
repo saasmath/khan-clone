@@ -1,7 +1,7 @@
 {% if is_graph_empty %}
 <div class="graph-notification">This chart doesn't have any focus to show. Go <a href="/#browse">watch some videos</a> and <a href="/exercisedashboard?k">do some exercises</a>!</div>
 {% endif %}
-
+{% import 'macros/profiles.html' as profile_macros %}
 <script>
     var chart;
     var star = $.browser.msie ? "*" : "★";
@@ -142,6 +142,10 @@
         });
     });
 </script>
+<p class="vital-statistics-description">
+    Shows how well you've focused on exercises and video playlists.
+     {{ profile_macros.graph_date_picker(student_email, "focus") }}
+</p>
 
 <div id="highchart-container" class="{% if is_graph_empty %}empty-chart{% endif %}">
     <div id="highchart"></div>

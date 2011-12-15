@@ -1,32 +1,3 @@
-<div id="student-profile-nav">
-    <div id="top-nav">
-    </div>
-    <div style="clear: both;"></div>
-
-    <p class="vital-statistics-description">
-        Shows how much work you're doing each day.
-        {{#accordion-graph-date-picker-wrapper type="activity"}}
-            {{> accordion-graph-date-picker}}
-        {{/accordion-graph-date-picker-wrapper}}
-    </p>
-    <p class="vital-statistics-description">
-        Shows how well you've focused on exercises and video playlists.
-        {{#accordion-graph-date-picker-wrapper type="focus"}}
-            {{> accordion-graph-date-picker}}
-        {{/accordion-graph-date-picker-wrapper}}
-    </p>
-    <p class="vital-statistics-description">
-        Shows you which exercises you've worked on and completed.
-        <span class="graph-options">
-            <span class="progress-legend exercise-color started">Started</span>
-            <span class="progress-legend exercise-color proficient">Proficient</span>
-            <span class="progress-legend exercise-color review light">Review</span>
-            <span class="progress-legend exercise-color struggling">Struggling</span>
-        </span>
-    </p>
-    <p class="vital-statistics-description">Shows how many exercises you've completed over time.</p>
-</div>
-
 <div id="vital-statistics">
     <div id="stats-charts" class="fancy-scrollbar -ce-capture">
         <div id="graph-control-container">

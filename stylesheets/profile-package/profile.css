@@ -600,14 +600,6 @@ div.graph-notification {
     min-height: 500px;
     border-left: 1px solid #ccc;
 }
-#student-profile-nav .vital-statistics-description {
-    display: none;
-}
-
-#student-profile-nav .vital-statistics-description a.graph-sub-link-selected {
-    text-decoration: none;
-    color: #DD6900;
-}
 
 .inline-editable {
     background: transparent;

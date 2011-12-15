@@ -133,9 +133,6 @@ var Profile = {
                 if (!isSubLink) {
                     $(".graph-link").css("background-color", "")
                         .eq(index).css("background-color", "#eee");
-
-                    $(".vital-statistics-description").hide()
-                        .eq(index).show();
                 }
             }
 

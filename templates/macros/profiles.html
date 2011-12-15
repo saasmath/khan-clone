@@ -24,12 +24,12 @@
 </script>
 {%- endmacro %}
 
-{% macro graph_date_picker(user_data, graph_type) -%}
+{% macro graph_date_picker(email, graph_type) -%}
 <span class="graph-date-picker">
-    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=today" class="graph-link graph-sub-link 0">Today</a> | 
-    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=yesterday" class="graph-link graph-sub-link 0">Yesterday</a> | 
-    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=lastweek&dt_end=today" class="graph-link graph-sub-link 0">Last 7 Days</a> | 
-    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=lastmonth&dt_end=today" class="graph-link graph-sub-link 0">Last 30 Days</a>
+    <a href="/profile?student_email={{email|escape}}&dt_start=today#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Today</a> | 
+    <a href="/profile?student_email={{email|escape}}&dt_start=yesterday#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Yesterday</a> | 
+    <a href="/profile?student_email={{email|escape}}&dt_start=lastweek&dt_end=today#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Last 7 Days</a> | 
+    <a href="/profile?student_email={{email|escape}}&dt_start=lastmonth&dt_end=today#vital-statistics/{{graph_type}}" class="graph-link graph-sub-link 0">Last 30 Days</a>
 </span>
 {%- endmacro %}
 
