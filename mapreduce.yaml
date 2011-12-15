@@ -58,7 +58,7 @@ mapreduce:
 - name: RemoveUserExercisesOfDeletedExercise
   mapper:
     input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler: backfill.update_user_exercise_progress
+    handler: backfill.remove_user_exercises_of_deleted_exercise
     params:
     - name: entity_kind
       default: models.UserExercise
