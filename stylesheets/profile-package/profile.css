@@ -250,10 +250,8 @@
     #individual_report #vital-statistics #stats-charts {
         position: relative;
         top:0;
-        overflow: hidden;
-        overflow-y: auto;
         min-height: 300px;
-        height: 400px;
+        padding-bottom: 20px;
     }
     #individual_report #vital-statistics #stats-charts #module-progress .exercise-progress-block {
         width: 70px;
@@ -583,16 +581,20 @@ div.graph-notification {
 
 .profile-navigation {
     position: absolute;
-    width: 130px;
+    width: 150px;
 }
 .profile-navigation > .vertical-tab-list {
     margin-top: 20px;
 }
-.vertical-tab-list > li.inactive {
-    color: #777;
+.vertical-tab-list .inactive {
+    color: #888;
+}
+.vertical-tab-list .link-section-header {
+    text-transform: uppercase;
+    font-weight: bold;
 }
 .vertical-tab-list ul.second-tier {
-    padding-left: 10px;
+    padding-left: 5px;
 }
 .profile-navigation .tab-link.has-icon {
     padding-left: 20px;
@@ -619,7 +621,7 @@ div.graph-notification {
     background: transparent url(/images/profile-icons/tick-circle.png) no-repeat 0 50%;
 }
 .tab-content {
-    margin-left: 130px;
+    margin-left: 150px;
     padding: 20px 0 0 20px;
     min-height: 500px;
     border-left: 1px solid #ccc;
