@@ -385,7 +385,11 @@ def get_exercises():
 @jsonp
 @jsonify
 def get_exercise(exercise_name):
-    return models.Exercise.get_by_name(exercise_name)
+    exercise = models.Exercise.get_by_name(exercise_name)
+    if exercise:
+        exercise_videos = exercise.related_videos_query()
+        exercise.related_videos = map(lambda exercise_video: exercise_video.video.readable_id, exercise_videos)
+    return exercise
 
 @route("/api/v1/exercises_recent", methods=["GET"])
 @jsonp

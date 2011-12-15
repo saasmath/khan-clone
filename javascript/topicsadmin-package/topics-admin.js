@@ -288,6 +288,8 @@ var TopicNodeEditor = {
 
         $('#details-view').html(html);
 
+        TopicExerciseNodeEditor.deinit();
+
         if (TopicNodeEditor.modelKind == 'Topic') {
             TopicTopicNodeEditor.init();
         } else if (TopicNodeEditor.modelKind == 'Exercise') {
@@ -377,7 +379,7 @@ var TopicTopicNodeEditor = {
             if (!TopicTopicNodeEditor.existingItemView)
                 TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
 
-            TopicTopicNodeEditor.existingItemView.show('video');
+            TopicTopicNodeEditor.existingItemView.show('video', TopicTopicNodeEditor.finishAddExistingItem);
 
         } else if (action == 'add_new_exercise') {
             if (!TopicTopicNodeEditor.newExerciseView)
@@ -389,7 +391,7 @@ var TopicTopicNodeEditor = {
             if (!TopicTopicNodeEditor.existingItemView)
                 TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
 
-            TopicTopicNodeEditor.existingItemView.show('exercise');
+            TopicTopicNodeEditor.existingItemView.show('exercise', TopicTopicNodeEditor.finishAddExistingItem);
 
         } else if (action == 'paste_item') {
 
@@ -511,23 +513,25 @@ var TopicTopicNodeEditor = {
 
 var TopicItemNodeEditor = {
     init: function() {
-        $('#details-view').find('input').change(function() {
-            unsavedChanges = false;
-            inputElements = $('#details-view input[type="text"]');
-            inputElements.add('#details-view input[type="radio"]:checked');
-            inputElements.each(function() {
-                var field = $(this).attr('name');
-                if (field) {
-                    if ((''+TopicNodeEditor.model.get(field)) != $(this).val())
-                        unsavedChanges = true;
-                }
-            });
-            if (unsavedChanges) {
-                $('#details-view .save-button').removeClass('disabled').addClass('green');
-            } else {
-                $('#details-view .save-button').addClass('disabled').removeClass('green');
+        $('#details-view').find('input').change(TopicItemNodeEditor.handleChange);
+    },
+
+    handleChange: function() {
+        unsavedChanges = false;
+        inputElements = $('#details-view input[type="text"]');
+        inputElements.add('#details-view input[type="radio"]:checked');
+        inputElements.each(function() {
+            var field = $(this).attr('name');
+            if (field) {
+                if ((''+TopicNodeEditor.model.get(field)) != $(this).val())
+                    unsavedChanges = true;
             }
         });
+        if (unsavedChanges || TopicExerciseNodeEditor.unsavedChanges()) {
+            $('#details-view .save-button').removeClass('disabled').addClass('green');
+        } else {
+            $('#details-view .save-button').addClass('disabled').removeClass('green');
+        }
     },
 
     handleAction: function(action, node, kind, id, parentModel) {
@@ -550,6 +554,7 @@ var TopicItemNodeEditor = {
                     }
                 }
             });
+            TopicExerciseNodeEditor.applyChanges(attrs);
 
             if (attrs != {}) {
                 Throbber.show($("#details-view .save-button"), true);
@@ -625,45 +630,128 @@ var TopicItemNodeEditor = {
 };
 
 // Details view for exercises
+function arraysEqual(ar1, ar2) {
+    if (ar1 && ar2) {
+        if (!ar1 || !ar2)
+            return false;
+        if (ar1 < ar2 || ar1 > ar2)
+            return false;
+    }
+    return true;
+}
 
 var TopicExerciseNodeEditor = {
-    addCover: function() {
-        var cover = $("#add-cover").val();
+    existingItemView: null,
+    covers: null,
+    prereqs: null,
+    videos: null,
 
-        if (cover) {
-            var covers = TopicNodeEditor.model.get('covers').slice(0);
+    unsavedChanges: function() {
+        if (TopicExerciseNodeEditor.prereqs && TopicExerciseNodeEditor.covers) {
+            return !(
+                arraysEqual(TopicExerciseNodeEditor.prereqs, TopicNodeEditor.model.get('prereqs')) &&
+                arraysEqual(TopicExerciseNodeEditor.covers, TopicNodeEditor.model.get('covers')) &&
+                arraysEqual(TopicExerciseNodeEditor.videos, TopicNodeEditor.model.get('related_videos'))
+            );
+        }
 
-            covers.push(cover);
-            TopicNodeEditor.model.set({covers: covers}); // This triggers a TopicNodeEditor.render()
+        return false;
+    },
+    applyChanges: function(attrs) {
+        if (TopicExerciseNodeEditor.prereqs && !arraysEqual(TopicExerciseNodeEditor.prereqs, TopicNodeEditor.model.get('prereqs')))
+            attrs['prerequisites'] = TopicExerciseNodeEditor.prereqs;
+
+        if (TopicExerciseNodeEditor.covers && !arraysEqual(TopicExerciseNodeEditor.covers, TopicNodeEditor.model.get('covers')))
+            attrs['covers'] = TopicExerciseNodeEditor.covers;
+
+        if (TopicExerciseNodeEditor.videos && !arraysEqual(TopicExerciseNodeEditor.videos, TopicNodeEditor.model.get('related_videos')))
+            attrs['related_videos'] = TopicExerciseNodeEditor.videos;
+    },
+
+    updateCovers: function() {
+        var html = '';
+        _.each(TopicExerciseNodeEditor.covers, function(cover) {
+            html += '<div>' + cover + ' (<a href="javascript: TopicExerciseNodeEditor.deleteCover(\'' + cover + '\');">remove</a>)</div>';
+        });
+        $("#exercise-covers-list").html(html);
+    },
+    chooseCover: function() {
+        if (!TopicExerciseNodeEditor.existingItemView)
+            TopicExerciseNodeEditor.existingItemView = new TopicAddExistingItemView();
+
+        TopicExerciseNodeEditor.existingItemView.show('exercise', TopicExerciseNodeEditor.addCover);
+    },
+    addCover: function(kind, id, title) {
+        if (id) {
+            TopicExerciseNodeEditor.covers.push(id);
+            TopicExerciseNodeEditor.updateCovers();
+            TopicItemNodeEditor.handleChange();
         }
     },
     deleteCover: function(cover) {
-        var covers = TopicNodeEditor.model.get('covers').slice(0);
-
-        var idx = covers.indexOf(cover);
+        var idx = TopicExerciseNodeEditor.covers.indexOf(cover);
         if (idx >= 0) {
-            covers.splice(idx, 1);
-            TopicNodeEditor.model.set({covers: covers}); // This triggers a TopicNodeEditor.render()
+            TopicExerciseNodeEditor.covers.splice(idx, 1);
+            TopicExerciseNodeEditor.updateCovers();
+            TopicItemNodeEditor.handleChange();
         }
     },
 
-    addPrereq: function() {
-        var prereq = $("#add-prereq").val();
+    updatePrereqs: function() {
+        var html = '';
+        _.each(TopicExerciseNodeEditor.prereqs, function(prereq) {
+            html += '<div>' + prereq + ' (<a href="javascript: TopicExerciseNodeEditor.deletePrereq(\'' + prereq + '\');">remove</a>)</div>';
+        });
+        $("#exercise-prereqs-list").html(html);
+    },
+    choosePrereq: function() {
+        if (!TopicExerciseNodeEditor.existingItemView)
+            TopicExerciseNodeEditor.existingItemView = new TopicAddExistingItemView();
 
-        if (prereq) {
-            var prereqs = TopicNodeEditor.model.get('prerequisites').slice(0);
-
-            prereqs.push(prereq);
-            TopicNodeEditor.model.set({prerequisites: prereqs}); // This triggers a TopicNodeEditor.render()
+        TopicExerciseNodeEditor.existingItemView.show('exercise', TopicExerciseNodeEditor.addPrereq);
+    },
+    addPrereq: function(kind, id, title) {
+        if (id) {
+            TopicExerciseNodeEditor.prereqs.push(id);
+            TopicExerciseNodeEditor.updatePrereqs();
+            TopicItemNodeEditor.handleChange();
         }
     },
     deletePrereq: function(prereq) {
-        var prereqs = TopicNodeEditor.model.get('prerequisites').slice(0);
-
-        var idx = prereqs.indexOf(prereq);
+        var idx = TopicExerciseNodeEditor.prereqs.indexOf(prereq);
         if (idx >= 0) {
-            prereqs.splice(idx, 1);
-            TopicNodeEditor.model.set({prerequisites: prereqs}); // This triggers a TopicNodeEditor.render()
+            TopicExerciseNodeEditor.prereqs.splice(idx, 1);
+            TopicExerciseNodeEditor.updatePrereqs();
+            TopicItemNodeEditor.handleChange();
+        }
+    },
+
+    updateVideos: function() {
+        var html = '';
+        _.each(TopicExerciseNodeEditor.videos, function(video) {
+            html += '<div>' + video + ' (<a href="javascript: TopicExerciseNodeEditor.deleteVideo(\'' + video + '\');">remove</a>)</div>';
+        });
+        $("#exercise-videos-list").html(html);
+    },
+    chooseVideo: function() {
+        if (!TopicExerciseNodeEditor.existingItemView)
+            TopicExerciseNodeEditor.existingItemView = new TopicAddExistingItemView();
+
+        TopicExerciseNodeEditor.existingItemView.show('video', TopicExerciseNodeEditor.addVideo);
+    },
+    addVideo: function(kind, id, title) {
+        if (id) {
+            TopicExerciseNodeEditor.videos.push(id);
+            TopicExerciseNodeEditor.updateVideos();
+            TopicItemNodeEditor.handleChange();
+        }
+    },
+    deleteVideo: function(video) {
+        var idx = TopicExerciseNodeEditor.videos.indexOf(video);
+        if (idx >= 0) {
+            TopicExerciseNodeEditor.videos.splice(idx, 1);
+            TopicExerciseNodeEditor.updateVideos();
+            TopicItemNodeEditor.handleChange();
         }
     },
 
@@ -672,10 +760,24 @@ var TopicExerciseNodeEditor = {
 
         TopicItemNodeEditor.init();
 
+        TopicExerciseNodeEditor.prereqs = TopicNodeEditor.model.get('prerequisites').slice(0);
+        TopicExerciseNodeEditor.updatePrereqs();
+
+        TopicExerciseNodeEditor.covers = TopicNodeEditor.model.get('covers').slice(0);
+        TopicExerciseNodeEditor.updateCovers();
+
+        TopicExerciseNodeEditor.videos = TopicNodeEditor.model.get('related_videos').slice(0);
+        TopicExerciseNodeEditor.updateVideos();
+
         // Configure the search form
         $('#related-videos-input').placeholder();
         initAutocomplete("#related-videos-input", false, TopicExerciseNodeEditor.addVideo, true);
-    }
+    },
+    deinit: function() {
+        TopicExerciseNodeEditor.prereqs = null;
+        TopicExerciseNodeEditor.covers = null;
+        TopicExerciseNodeEditor.videos = null;
+    },
 };
 
 // Details view for videos
@@ -693,6 +795,7 @@ var TopicAddExistingItemView = Backbone.View.extend({
     loaded: false,
     type: '',
     results: {},
+    callback: null,
 
     initialize: function() {
         this.render();
@@ -710,7 +813,7 @@ var TopicAddExistingItemView = Backbone.View.extend({
         return this;
     },
 
-    show: function(type) {
+    show: function(type, callback) {
         $(this.el).modal({
             keyboard: true,
             backdrop: true,
@@ -720,6 +823,7 @@ var TopicAddExistingItemView = Backbone.View.extend({
         if (type != this.type)
             this.loaded = false;
         this.type = type;
+        this.callback = callback;
 
         $(this.el).find('.title').html('Choose ' + type + ':');
 
@@ -814,7 +918,7 @@ var TopicAddExistingItemView = Backbone.View.extend({
         else
             kind = 'Exercise';
 
-        TopicTopicNodeEditor.finishAddExistingItem(kind, itemID, this.results[itemID], null, null, -1);
+        this.callback(kind, itemID, this.results[itemID], null, null, -1);
     },
 
     hide: function() {

@@ -616,13 +616,13 @@ class UpdateExercise(request_handler.RequestHandler):
 
         exercise.put()
 
-        if "video_keys" in dict:
-            video_keys = dict["video_keys"]
+        if "related_video_keys" in dict:
+            video_keys = dict["related_video_keys"]
         else:
             video_keys = []
 
-        if "video_ids" in dict:
-            for video_name in dict["video_ids"]:
+        if "related_videos" in dict:
+            for video_name in dict["related_videos"]:
                 video = models.Video.get_for_readable_id(video_name)
                 if not video.key() in video_keys:
                     video_keys.append(str(video.key()))
@@ -707,16 +707,16 @@ class UpdateExercise(request_handler.RequestHandler):
             if cover_append and not cover_append in exercise.covers:
                 dict["covers"].append(cover_append)
 
-        dict["video_keys"] = []
-        dict["video_ids"] = []
+        dict["related_video_keys"] = []
+        dict["related_videos"] = []
         for c_check_video in range(0, 1000):
             video_name_append = self.request_string("video-%s-readable" % c_check_video, default="")
             if video_name_append:
-                dict["video_ids"].append(video_name_append)
+                dict["related_videos"].append(video_name_append)
 
             video_append = self.request_string("video-%s" % c_check_video, default="")
-            if video_append and not video_append in video_keys:
-                video_keys.append(video_append)
+            if video_append and not video_append in dict["related_video_keys"]:
+                dict["related_video_keys"].append(video_append)
 
         self.do_update(dict)
 
