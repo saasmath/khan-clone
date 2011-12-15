@@ -13,29 +13,13 @@ var Profile = {
 
     init: function() {
         Profile.render();
-        $(".share-link").hide();
-        $(".sharepop").hide();
+        Profile.router = new Profile.TabRouter;
+        Backbone.history.start({pushState: true, root: "/profile"});
 
-        $(".achievement,.exercise,.video").hover(
-            function () {
-                $(this).find(".share-link").show();
-                },
-            function () {
-                $(this).find(".share-link").hide();
-                $(this).find(".sharepop").hide();
-              });
+        // Remove goals from IE<=8
+        $(".lte8 .goals-accordion-content").remove();
 
-        $(".share-link").click(function() {
-            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
-                $(this).next(".sharepop").toggle();
-            } else {
-                $(this).next(".sharepop").toggle(
-                        "drop", { direction:"up" }, "fast" );
-            }
-            return false;
-        });
-
-        // Init Highcharts global options.
+        // Init Highcharts global options
         Highcharts.setOptions({
             credits: {
                 enabled: false
@@ -48,6 +32,7 @@ var Profile = {
             }
         });
 
+        // Delegate clicks for badge navigation
         $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
             var category = $(this).attr("id");
             var clickedBadge = $(this);
@@ -84,18 +69,50 @@ var Profile = {
             }
         });
 
-        // remove goals from IE<=8
-        $(".lte8 .goals-accordion-content").remove();
-
-        Profile.router = new Profile.TabRouter;
+        // Delegate clicks for tab navigation
         $(".profile-navigation .vertical-tab-list").delegate("a", "click", function(event) {
+            // TODO: Make sure middle-click + windows control-click Do The Right Thing
+            // in a reusable way
             if (!event.metaKey) {
                 event.preventDefault();
                 var route = $(this).attr("href").replace(/^\/profile/, "");
                 Profile.router.navigate(route, true);
             }
-        })
-        Backbone.history.start({pushState: true, root: "/profile"});
+        });
+
+        // Delegate clicks for recent badge-related activity
+        $(".ach-text").delegate("a", "click", function(event) {
+            // TODO: ditto above
+            if (!event.metaKey) {
+                event.preventDefault();
+                Profile.router.navigate("/achievements", true);
+                $("#achievement-list ul li#category-" + $(this).data("category")).click();
+            }
+
+        });
+
+        // Bind event handlers for sharing controls on recent activity
+        $(".share-link").hide();
+        $(".sharepop").hide();
+
+        $(".achievement,.exercise,.video").hover(
+            function () {
+                $(this).find(".share-link").show();
+                },
+            function () {
+                $(this).find(".share-link").hide();
+                $(this).find(".sharepop").hide();
+              });
+
+        $(".share-link").click(function() {
+            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
+                $(this).next(".sharepop").toggle();
+            } else {
+                $(this).next(".sharepop").toggle(
+                        "drop", { direction:"up" }, "fast" );
+            }
+            return false;
+        });
     },
 
     TabRouter: Backbone.Router.extend({

@@ -802,12 +802,14 @@ application = webapp2.WSGIApplication([
     ('/profile/graph/focus', util_profile.FocusGraph),
     ('/profile/graph/exercisesovertime', util_profile.ExercisesOverTimeGraph),
     ('/profile/graph/exerciseproblems', util_profile.ExerciseProblemsGraph),
-    ('/profile/(.*)', util_profile.ViewProfile),
-    ('/profile', util_profile.ViewProfile),
+
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
+    ('/profile/(.*)', util_profile.ViewProfile),
+
+    ('/profile', util_profile.ViewProfile),
     ('/class_profile', util_profile.ViewClassProfile),
 
     ('/login', Login),

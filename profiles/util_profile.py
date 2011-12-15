@@ -148,6 +148,14 @@ class ViewProfile(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     def get(self, unused=None):
+        """Render a student profile.
+
+        Keyword arguments:
+        unused -- matches the grouping in /profile/(.*),
+        which is ignored server-side, but is used to route client-side
+
+        """
+        # unused matches anything that appears after khanacademy.org/profile/
         student = UserData.current() or UserData.pre_phantom()
 
         user_override = self.request_user_data("student_email")
