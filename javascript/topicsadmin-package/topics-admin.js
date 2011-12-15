@@ -4,6 +4,7 @@ var TopicTreeEditor = {
     tree: null,
     boundList: [],
     maxProgressLength: 0,
+    renameTable: {},
 
     init: function() {
         // Attach the dynatree widget to an existing <div id="tree"> element
@@ -16,12 +17,12 @@ var TopicTreeEditor = {
 
                 TopicNodeEditor.init();
 
-                if (node.data.kind == 'Topic' && node.data.key != 'root') {
-                    topicTree.fetchByID(node.data.key, TopicNodeEditor.initModel, [node]);
+                if (node.data.kind == 'Topic' && node.data.id != 'root') {
+                    topicTree.fetchByID(node.data.id, TopicNodeEditor.initModel, [node]);
                 } else if (node.data.kind == 'Video') {
-                    getVideoList().fetchByID(node.data.key, TopicNodeEditor.initModel, [node]);
+                    getVideoList().fetchByID(node.data.id, TopicNodeEditor.initModel, [node]);
                 } else if (node.data.kind == 'Exercise') {
-                    getExerciseList().fetchByID(node.data.key, TopicNodeEditor.initModel, [node]);
+                    getExerciseList().fetchByID(node.data.id, TopicNodeEditor.initModel, [node]);
                 } else {
                     $('#details-view').html('');
                 }
@@ -30,14 +31,14 @@ var TopicTreeEditor = {
             onCreate: function(node, span) {
                 if (node.data.kind == 'Topic') {
                     $(span).contextMenu({menu: "topic_context_menu"}, function(action, el, pos) {
-                        topicTree.fetchByID(node.data.key, function() {
-                            TopicTopicNodeEditor.handleAction(action, node, this, topicTree.get(node.parent.data.key));
+                        topicTree.fetchByID(node.data.id, function() {
+                            TopicTopicNodeEditor.handleAction(action, node, this, topicTree.get(node.parent.data.id));
                         });
                     });
                 }
                 if (node.data.kind == 'Video' || node.data.kind == 'Exercise') {
                     $(span).contextMenu({menu: "item_context_menu"}, function(action, el, pos) {
-                        TopicItemNodeEditor.handleAction(action, node, node.data.kind, node.data.key, topicTree.get(node.parent.data.key));
+                        TopicItemNodeEditor.handleAction(action, node, node.data.kind, node.data.id, topicTree.get(node.parent.data.id));
                     });
                 }
             },
@@ -49,7 +50,7 @@ var TopicTreeEditor = {
             },
 
             onLazyRead: function(node) {
-                topicTree.fetchByID(node.data.key, this.refreshTreeNode);
+                topicTree.fetchByID(node.data.id, this.refreshTreeNode);
             },
 
             dnd: {
@@ -77,17 +78,18 @@ var TopicTreeEditor = {
 
                     var data = {
                         kind: sourceNode.data.kind,
-                        id: sourceNode.data.key,
-                        new_parent_id: newParent.data.key,
+                        id: sourceNode.data.id,
+                        new_parent_id: newParent.data.id,
                         new_parent_pos: newParent.childList.indexOf(sourceNode)
                     }
-                    TopicTopicNodeEditor.moveItem(oldParent.data.key, data); 
+                    TopicTopicNodeEditor.moveItem(oldParent.data.id, data); 
                 }
             },
 
             children: [ {
                     title: "Loading...",
-                    key:  'root',
+                    key: 'Topic/root',
+                    id: 'root',
                     kind: 'Topic',
                     isFolder: true,
                     isLazy: true
@@ -155,11 +157,52 @@ var TopicTreeEditor = {
         $('#details-view').height(newHeight);
     },
 
+    createChild: function(kind, id, title, hide) {
+        var data = {
+            title: title,
+            key:  kind + '/' + id,
+            id: id,
+            kind: kind
+        };
+        if (kind == 'Topic') {
+            data.isFolder = true;
+            data.isLazy = true;
+            data.icon = 'leaf.png';
+            if (hide) {
+                data.addClass = 'hidden-topic';
+                data.title = title + ' [Hidden]';
+            }
+        } else if (kind == 'Video') {
+            data.icon = 'video-camera-icon-full-small.png';
+        } else if (kind == 'Exercise') {
+            data.icon = 'exercise-icon-small.png';
+        }
+        return data;
+    },
+
     // Called with model as "this"
     refreshTreeNode: function() {
         var model = this;
 
-        node = TopicTreeEditor.tree.getNodeByKey(model.id);
+        if (TopicTreeEditor.renameTable[model.id]) {
+            var old_id = TopicTreeEditor.renameTable[model.id];
+            node = TopicTreeEditor.tree.getNodeByKey(model.get('kind') + '/' + old_id);
+            if (node) {
+                var parent = node.parent;
+                var pos = parent.childList.indexOf(node);
+                var beforeNode = null;
+
+                node.remove();
+
+                if (parent.childList.length > pos)
+                    beforeNode = parent.childList[pos];
+                parent.addChild(TopicTreeEditor.createChild(model.get('kind'), model.id, model.get('title'), model.get('hide')), beforeNode);
+
+                delete TopicTreeEditor.renameTable[model.id];
+            }
+        }
+
+        node = TopicTreeEditor.tree.getNodeByKey(model.get('kind') + '/' + model.id);
         if (!node)
             return;
 
@@ -171,25 +214,7 @@ var TopicTreeEditor = {
         if (model.get('children')) {
             childNodes = []
             _.each(model.get('children'), function(child) {
-                var data = {
-                    title: child.title,
-                    key:  child.id,
-                    kind: child.kind
-                };
-                if (child.kind == 'Topic') {
-                    data.isFolder = true;
-                    data.isLazy = true;
-                    data.icon = 'leaf.png';
-                    if (child.hide) {
-                        data.addClass = 'hidden-topic';
-                        data.title = child.title + ' [Hidden]';
-                    }
-                } else if (child.kind == 'Video') {
-                    data.icon = 'video-camera-icon-full-small.png';
-                } else if (child.kind == 'Exercise') {
-                    data.icon = 'exercise-icon-small.png';
-                }
-                childNodes.push(data);
+                childNodes.push(TopicTreeEditor.createChild(child.kind, child.id, child.title, child.hide));
             });
             node.addChild(childNodes);
         }
@@ -274,7 +299,7 @@ var TopicNodeEditor = {
         TopicNodeEditor.node = node;
         TopicNodeEditor.modelKind = node.data.kind;
         TopicNodeEditor.model = this;
-        TopicNodeEditor.parentModel = getDefaultTopicTree().get(node.parent.data.key);
+        TopicNodeEditor.parentModel = getDefaultTopicTree().get(node.parent.data.id);
         TopicNodeEditor.template = Templates.get("topicsadmin.edit-" + node.data.kind.toLowerCase());
 
         TopicNodeEditor.render();
@@ -472,7 +497,7 @@ var TopicTopicNodeEditor = {
         new_parent = getDefaultTopicTree().fetchByID(moveData.new_parent_id, function() {
             this.addChild(child, moveData.new_parent_pos);
 
-            parent_node = TopicTreeEditor.tree.getNodeByKey(moveData.new_parent_id);
+            parent_node = TopicTreeEditor.tree.getNodeByKey('Topic/' + moveData.new_parent_id);
             parent_node.expand();
             parent_node.getChildren()[moveData.new_parent_pos].activate();
 
@@ -501,6 +526,8 @@ var TopicTopicNodeEditor = {
 
                 var setter = {};
                 setter[field] = value;
+                if (field == 'id' && value != TopicNodeEditor.model.id)
+                    TopicTreeEditor.renameTable[value] = TopicNodeEditor.model.id;
                 TopicNodeEditor.model.set(setter);
 
                 TopicNodeEditor.model.save();
@@ -557,8 +584,42 @@ var TopicItemNodeEditor = {
             TopicExerciseNodeEditor.applyChanges(attrs);
 
             if (attrs != {}) {
+                var url = TopicNodeEditor.model.url();
+
                 Throbber.show($("#details-view .save-button"), true);
+
+                var id_field = 'readable_id';
+                var title_field = 'title';
+                if (TopicNodeEditor.model.get('kind') == 'Exercise') {
+                    id_field = 'name';
+                    title_field = 'display_name';
+                }
+                if (id_field in attrs || title_field in attrs) {
+                    var children = _.map(parentModel.get('children').slice(0), function(child) {
+                        if (child.id == TopicNodeEditor.model.id) {
+                            var new_child = {};
+                            if (id_field in attrs)
+                                new_child.id = attrs[id_field];
+                            else
+                                new_child.id = child.id;
+
+                            if (title_field in attrs)
+                                new_child.title = attrs[title_field];
+                            else
+                                new_child.title = child.title;
+
+                            new_child.kind = child.kind;
+                            new_child.hide = child.hide;
+                            return new_child;
+                        } else {
+                            return child;
+                        }
+                    });
+                    parentModel.set({ children: children });
+                }
+
                 TopicNodeEditor.model.save(attrs, {
+                    url: url,
                     success: function() {
                         Throbber.hide();
                     }
