@@ -157,9 +157,6 @@ def topictree(version = None):
 @jsonify
 def topic(topic_id, version = None):
     version = models.TopicVersion.get_by_id(version)
-    logging.info(version)
-    logging.info(version.default)
-    logging.info(version.number)
     topic = models.Topic.get_by_id(topic_id, version)
 
     if not topic:
@@ -217,6 +214,8 @@ def topic_add_child(parent_id, version = "edit"):
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
+    elif kind == "Url":
+        child = models.Url.get_by_key_name(id)
     else:
         return api_invalid_param_response("Invalid kind to delete:" + kind)
 
@@ -249,6 +248,8 @@ def topic_delete_child(parent_id, version = "edit"):
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
+    elif kind == "Url":
+        child = models.Url.get_by_key_name(id)
     else:
         return api_invalid_param_response("Invalid kind to delete:" + kind)
 
@@ -279,6 +280,8 @@ def topic_move_child(old_parent_id, version = "edit"):
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
+    elif kind == "Url":
+        child = models.Url.get_by_key_name(id)
     else:
         return api_invalid_param_response("Invalid kind to move:" + kind)
 
@@ -316,7 +319,7 @@ def topic_children(topic_id, version = None):
 def topic_children(version = None):
     version = models.TopicVersion.get_by_id(version)
     version.set_default_version()
-    models.TopicVersion.create_edit_version()
+    models.TopicVersion.get_edit_version() # creates a new edit version if one does not already exists
     return version
     
 @route("/api/v1/topicversion/<version>", methods=["GET"])   
@@ -334,6 +337,30 @@ def topic_children(version = None):
     version = models.TopicVersion.all().order("-number").fetch(10000)
     return version
     
+@route("/api/v1/url/<int:url_id>", methods=["GET"])   
+@jsonp
+@jsonify
+def get_url(url_id):
+    return models.Url.get_by_id(url_id)
+
+@route("/api/v1/url/<int:url_id>", methods=["PUT"])   
+@jsonp
+@jsonify
+def get_url(url_id):
+    url = models.Url.get_by_id(url_id)
+    if url is None:
+        return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
+
+    url_json = request.json
+    changed = False
+    for key, value in topic_json.iteritems():
+        if key in ["tags", "title", "url"]:
+            if getattr(url, key) != value:
+                setattr(url, key, value)
+                changed = True
+
+    if changed:
+        url.put()
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())

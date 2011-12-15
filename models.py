@@ -32,6 +32,8 @@ from facebook_util import is_facebook_user_id
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
 import re
+import base64, os
+
 
 from image_cache import ImageCache
 
@@ -1148,7 +1150,6 @@ class TopicVersion(db.Model):
         user = UserData.current().user
         self.last_editted_by = user
         self.put()
-        logging.info("updating")
         if self.default:
             logging.info("setting new library content date")
             Setting.cached_library_content_date(datetime.datetime.now())
@@ -1182,7 +1183,7 @@ class Topic(db.Model):
     ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants 
     child_keys = db.ListProperty(db.Key) # having this avoids having to modify Content entities
     version = db.ReferenceProperty(TopicVersion, required = True)  
-    tags = db.StringListProperty() # not used now, putting in so that playl1st api users don't barf if they are using it 
+    tags = db.StringListProperty() 
     hide = db.BooleanProperty(default = False)
     date_created = db.DateTimeProperty(auto_now_add=True)
     date_updated = db.DateTimeProperty(auto_now=True)
@@ -1200,9 +1201,10 @@ class Topic(db.Model):
         for child in children:
             item = {}
             item["kind"] = child.__class__.__name__
-            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name
+            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().id()
             item["title"] = child.title if hasattr(child, "title") else child.display_name
             item["hide"] = child.hide if hasattr(child, "hide") else False
+            item["url"] = child.ka_url if hasattr(child, "ka_url") else child.url
             self.children.append(item)
         return self
 
@@ -1264,7 +1266,6 @@ class Topic(db.Model):
 
     @staticmethod
     def get_new_key_name():
-        import base64, os
         return base64.urlsafe_b64encode(os.urandom(30))
 
     # updates the ancestor_keys by using the parents' ancestor_keys
@@ -1368,14 +1369,18 @@ class Topic(db.Model):
 
         return db.run_in_transaction(Topic._insert_txn, new_topic)                   
     
-    def add_child(self, child, pos):
+    def add_child(self, child, pos = None):
         if self.version.default:
             raise Exception("You can't edit the default version")
 
         if child.key() in self.child_keys:
             raise Exception("The child %s already appears in %s" % (child.title, self.title))
 
-        self.child_keys.insert(int(pos), child.key())
+        if pos is None:
+            self.child_keys.append(child.key())
+        else:
+            self.child_keys.insert(int(pos), child.key())
+
         entities_updated = set([self])
 
         if child.__class__.__name__ == "Topic":
@@ -1423,7 +1428,8 @@ class Topic(db.Model):
         db.run_in_transaction(delete_txn)  
 
     def delete_tree(self):
-        for parent in self.parent_keys:
+        parents = db.get(self.parent_keys)
+        for parent in parents:
             parent.delete_child(self)
 
     @staticmethod
@@ -1616,7 +1622,7 @@ class Topic(db.Model):
         return topics
 
     @staticmethod
-    def _get_children_of_kind(topic, kind, include_descendants=False, version = None):
+    def _get_children_of_kind(topic, kind, include_descendants=False):
         if include_descendants:
             keys = []
             topics = Topic.all().filter("ancestor_keys =", topic.key())
@@ -1627,13 +1633,16 @@ class Topic(db.Model):
             
         return db.get(keys) 
 
+    def get_urls(self):
+        return Topic._get_children_of_kind(self, "Url")
+
     def get_exercises(self):
         return Topic._get_children_of_kind(self, "Exercise")
                             
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda topic, include_descendants=False, version=None: "%s_videos_for_topic_%s_at_%s" % ("descendant" if include_descendants else "child", topic.key().name(), TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
-    def get_cached_videos_for_topic(topic, include_descendants=False, version = None):
-        return Topic._get_children_of_kind(topic, "Video", include_descendants, version)
+    @layer_cache.cache_with_key_fxn(lambda topic, include_descendants=False, version=None: "%s_videos_for_topic_%s_at_%s" % ("descendant" if include_descendants else "child", topic.key(), TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
+    def get_cached_videos_for_topic(topic, include_descendants=False):
+        return Topic._get_children_of_kind(topic, "Video", include_descendants)
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda video, include_ancestors=False, version=None: "%s_topics_for_video_%s_at_%s" % ("ancestor" if include_ancestors else "parent", video.title, TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
@@ -1683,6 +1692,13 @@ class UserTopicVideos(db.Model):
                         topic = topic)
         else:
             return UserTopicVideos.get_by_key_name(key)
+
+class Url(db.Model):
+    url = db.StringProperty()
+    title = db.StringProperty()
+    tags = db.StringListProperty()
+    date_created = db.DateTimeProperty(auto_now_add=True)
+    date_updated = db.DateTimeProperty(indexed=False, auto_now=True)        
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
