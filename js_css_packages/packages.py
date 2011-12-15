@@ -84,6 +84,8 @@ javascript = {
             "jquery.address-1.4.min.js",
             "jquery.Jcrop.js",
             "highcharts.js",
+            "avatar-picker.handlebars",
+            "avatar-picker.js",
             "user-card.handlebars",
             "user-card.js",
             "profile.handlebars",

@@ -13,7 +13,8 @@ UserCardModel = Backbone.Model.extend({
         "countVideosCompleted": 0,
         "countVideos": 3000,
         "countExercisesProficient": 0,
-        "countExercises": 250
+        "countExercises": 250,
+        "profilePic": "/images/darth.png"
     },
 
     url: "/api/v1/user/profile",

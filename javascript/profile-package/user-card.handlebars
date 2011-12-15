@@ -1,5 +1,6 @@
 <section class="basic-user-info" style="float: left;">
 {{#if loggedIn}}
+  <img src="{{profilePic}}" id="profile-pic" class="profile-pic">
   <input type="text" value="{{nickname}}" id="nickname"
       placeholder="Enter nickname here" class="inline-editable nickname">
   <p class="pulled">Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
@@ -9,8 +10,8 @@
 <div class="sticker-book"></div>
 </section>
 <section class="summary-and-controls" style="float:right; padding-right: 20px;">
-    <p class="pulls"><img src="/images/generic-exercise-icon-shadow.png" style="vertical-align: middle"/>{{countExercisesProficient}}/{{countExercises}}</p>
-    <p class="pulled pulls"><img src="/images/video-camera-icon-shadow.png" style="vertical-align: middle;" /> {{countVideosCompleted}}/{{countVideos}}</p>
+    <p class="pulls"><img class="summary-icon" src="/images/generic-exercise-icon-shadow.png">{{countExercisesProficient}}/{{countExercises}}</p>
+    <p class="pulled pulls"><img class="summary-icon" src="/images/video-camera-icon-shadow.png"> {{countVideosCompleted}}/{{countVideos}}</p>
     <p class="pulled pulls"><span title="{{points}} energy points" class="energy-points-badge" style="float: none;">{{points}}</span> Energy Points</p>
 </section>
 <div style="clear: both;"></div>

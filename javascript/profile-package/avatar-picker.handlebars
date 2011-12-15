@@ -1,0 +1,20 @@
+<div>
+    <div>Current Avatar:</div>
+    <img src="{{selectedSrc}}" id="selected-img">
+</div>
+
+{{#each categories}}
+{{#if avatars}}
+<div class="category-section">
+    <div class="category-title">{{title}}</div>
+    <div class="category-avatars">
+    {{#each avatars}}
+        <div class="avatar">
+            <img src="{{imageSrc}}" class="avatar-preview">
+            <div class="name">{{name}}</div>
+        </div>
+    {{/each}}
+    </div>
+</div>
+{{/if}}
+{{/each}}

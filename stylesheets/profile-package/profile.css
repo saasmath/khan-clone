@@ -563,12 +563,20 @@ div.graph-notification {
   border-radius: 5px;
 }
 .user-info-container .user-info {
-  padding-left: 20px;
+  padding: 20px;
 }
-.user-info-container .user-info img {
+.user-info-container .summary-icon {
   width: 50px;
   height: 50px;
+  vertical-align: middle;
 }
+.user-info-container .user-info .profile-pic {
+  vertical-align: top;
+  cursor: pointer;
+  min-width: 100px;
+  min-height: 100px;
+}
+
 .sticker-book {
   width: 600px;
 }
@@ -617,3 +625,35 @@ div.graph-notification {
 input.nickname {
     font-size: 150%;
 }
+
+.avatar-picker.modal {
+    width: 600px;
+    height: 80%;
+    max-height: 800px;
+    left: 50%;
+    margin-left: -300px;
+    position: fixed;
+    overflow-y: scroll;
+}
+
+.avatar-picker .avatar {
+    display: inline-block;
+    border: 1px solid transparent;
+}
+
+.avatar-picker .avatar.hover {
+    border: 1px solid black;
+}
+
+.avatar-picker .category-section {
+    border: 1px solid green;
+    padding: 5px;
+    margin: 5px;
+}
+
+.avatar-picker .category-title {
+    font-size: 120%;
+    font-weight: bold;
+}
+
+
