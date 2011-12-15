@@ -17,7 +17,7 @@
 
 {% macro username_and_notification(username, user_data) -%}
 {% set count = user_data.feedback_notification_count() if user_data else 0 %}
-<span class="username_and_notification "{% if count %}username_and_notification_shift{% endif %}">
+<span class="username_and_notification {% if count %}username_and_notification_shift{% endif %}">
     <span class="user-notification">
         <a class="notification_link" href="/discussion/videofeedbacknotificationlist"
             {% if count %}

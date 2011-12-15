@@ -269,7 +269,10 @@ var GoalBookView = Backbone.View.extend({
                 e.preventDefault();
                 this.hide();
                 newGoalDialog.show();
-            }, this));
+            }, this))
+
+            .delegate( '.goal-history', 'click',
+                $.proxy(this.goalHistoryButtonClicked, this));
 
         this.model.bind('change', this.render, this);
         this.model.bind('reset', this.render, this);
@@ -321,9 +324,15 @@ var GoalBookView = Backbone.View.extend({
         }
     },
 
-    goToGoalHistory: function() {
-        document.location = '/profile?selected_graph_type=goals';
-        this.hide();
+    goalHistoryButtonClicked: function( e ) {
+        if ( document.location.pathname === "/profile" ) {
+            var jelGoalLink = $(".goals-accordion-content .graph-link");
+            if ( jelGoalLink.length ) {
+                e.preventDefault();
+                jelGoalLink.click();
+                this.hide();
+            }
+        }
     },
 
     added: function(goal, options) {
@@ -436,6 +445,23 @@ var GoalSummaryView = Backbone.View.extend({
     }
 });
 
+function finishLoadingMapsPackage() {
+    KAConsole.log('Loaded Google Maps.');
+    dynamicLoadPackage_maps(function(status, progress) {
+        if (status == 'complete') {
+            KAConsole.log('Loaded maps package.');
+        } else if (status == 'failed') {
+            KAConsole.log('Failed to load maps package.');
+            setTimeout(finishLoadingMapsPackage, 5000); // Try again in 5 seconds
+        } else if (status == 'progress') {
+            KAConsole.log('Maps package ' + (progress*100).toFixed(0) + '% loaded.');
+            if (newCustomGoalDialog) {
+                newCustomGoalDialog.$(".progress-bar")
+                    .progressbar('value', progress*100);
+            }
+        }
+    });
+}
 
 var NewGoalView = Backbone.View.extend({
     template: Templates.get( 'shared.goal-new' ),
@@ -510,22 +536,7 @@ var NewGoalView = Backbone.View.extend({
     createCustomGoal: function( e ) {
         this.trigger("creating");
         e.preventDefault();
-        globalPopupDialog.show('create-custom-goal', null,
-            'Create a custom goal', $("#generic-loading-dialog").html(), false);
-        var needMaps = window.KnowledgeMap ? "0" : "1";
-        $.ajax({
-            url: "/goals/new?need_maps_package=" + needMaps,
-            type: 'GET',
-            dataType: 'html',
-            success: function(html) {
-                if (globalPopupDialog.visible) {
-                    globalPopupDialog.show('create-custom-goal', null, 'Create a custom goal', html, false);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                $("#generic-loading-message").html('Page load failed. Please try again.');
-            }
-        });
+        newCustomGoalDialog.show();
     }
 });
 
@@ -565,6 +576,78 @@ var NewGoalDialog = Backbone.View.extend({
     }
 });
 
+var NewCustomGoalDialog = Backbone.View.extend({
+    template: Templates.get( "shared.goal-new-custom-dialog" ),
+    loaded: false,
+
+    render: function() {
+        // As we're assigning to this.el, event handlers need to be rebound
+        // after each render.
+        this.el = $(this.template()).appendTo(document.body).get(0);
+        this.innerEl = this.$('.modal-body').get(0);
+
+        // turn on fading just before we animate so that dragging is fast
+        var $el = $(this.el);
+        $el.bind('shown', function() { $el.removeClass('fade'); });
+        $el.bind('hide', function() { $el.addClass('fade'); });
+
+        return this;
+    },
+
+    _show: function() {
+        return $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
+    },
+
+    show: function() {
+        if ( !this.innerEl ) {
+            this.render();
+        }
+        // if we haven't yet loaded the contents of this dialog, do it
+        if ( !this.loaded ) {
+            this.loaded = true;
+            this.load().error($.proxy(function() {
+                this.loaded = false;
+            }));
+            this.$(".progress-bar").progressbar({value: 10}).slideDown("fast");
+        }
+        this._show();
+    },
+
+    load: function() {
+        if (!dynamicPackageLoader.packageLoaded('maps')) {
+            $('<script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false&callback=finishLoadingMapsPackage" type="text/javascript"></script>').appendTo(document);
+        }
+        return $.ajax({url: "/goals/new", type: 'GET',  dataType: 'html'})
+            .done($.proxy(function(html) {
+                KAConsole.log('Loaded /goals/new.');
+                this.waitForMapsPackage(html);
+            }, this))
+            .error($.proxy(function() {
+                KAConsole.log(Array.prototype.slice.call(arguments));
+                $(this.innerEl).text('Page load failed. Please try again.');
+            }, this));
+    },
+
+    hide: function() {
+        $(this.el).modal('hide');
+    },
+
+    waitForMapsPackage: function(html) {
+        if (!dynamicPackageLoader.packageLoaded('maps')) {
+            var that = this;
+            setTimeout(function() { that.waitForMapsPackage(html); }, 100);
+            return;
+        }
+        KAConsole.log('Done loading.');
+        $(this.innerEl).html(html);
+        createGoalInitialize();
+    }
+});
+
 $(function() {
     window.GoalBook = new GoalCollection(window.GoalsBootstrap || []);
     APIActionResults.register( "updateGoals",
@@ -582,6 +665,7 @@ $(function() {
 
     myGoalSummaryView.render();
     window.newGoalDialog = new NewGoalDialog({model: GoalBook});
+    window.newCustomGoalDialog = new NewCustomGoalDialog();
 });
 
 // todo: should we do this globally?

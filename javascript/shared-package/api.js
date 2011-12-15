@@ -14,6 +14,11 @@ var APIActionResults = {
         $(document).ajaxComplete(function (e, xhr, settings) {
 
             if (xhr &&
+                xhr.getResponseHeader('X-KA-API-Version-Mismatch')) {
+                apiVersionMismatch();
+            }
+
+            if (xhr &&
                 xhr.getResponseHeader('X-KA-API-Response') &&
                 xhr.responseText) {
 
@@ -33,13 +38,16 @@ var APIActionResults = {
         jQuery.ajaxSetup({
             beforeSend: function(xhr, settings) {
                 if (settings && settings.url && settings.url.indexOf("/api/") > -1) {
-                    if (!fkey)
-                        fkey = 'NO_FKEY_SET';
-                    // Send xsrf token along via header so it can be matched up
-                    // w/ cookie value.
-                    xhr.setRequestHeader("X_KA_FKEY", fkey);
-                } else {
-                    xhr.setRequestHeader("X_KA_FKEY", 'NO_AJAX_SETTINGS');
+                    var xsrfToken = readCookie('fkey');
+                    if (xsrfToken) {
+                        // Send xsrf token along via header so it can be matched up
+                        // w/ cookie value.
+                        xhr.setRequestHeader("X-KA-FKey", xsrfToken);
+                    } else {
+                        apiVersionMismatch();
+                        settings.error();
+                        return false;
+                    }
                 }
             }
         });
@@ -50,6 +58,10 @@ var APIActionResults = {
         this.hooks[this.hooks.length] = {prop: prop, fxn: fxn};
     }
 };
+
+function apiVersionMismatch() {
+    Notifications.showTemplate('shared.api-version-mismatch');
+}
 
 APIActionResults.init();
 
@@ -68,7 +80,7 @@ $(function(){ APIActionResults.register("user_info_html",
 });
 
 // show point animation above progress bar when in exercise pages
-$(function(){ 
+$(function(){
 
   var updatePointDisplay = function( data ) {
     if( jQuery(".single-exercise").length > 0 && data.points > 0) {

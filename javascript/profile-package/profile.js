@@ -14,45 +14,85 @@ var Profile = {
 
     init: function() {
 
-		$('.share-link').hide();
-		$('.sharepop').hide();
+        $('.share-link').hide();
+        $('.sharepop').hide();
 
-		$(".achievement,.exercise,.video").hover(
-			function () {
-			    $(this).find(".share-link").show();
-				},
-			function () {
-			    $(this).find(".share-link").hide();
-				$(this).find(".sharepop").hide();
-			  });
+        $(".achievement,.exercise,.video").hover(
+            function () {
+                $(this).find(".share-link").show();
+                },
+            function () {
+                $(this).find(".share-link").hide();
+                $(this).find(".sharepop").hide();
+              });
 
-		$('.share-link').click(function() {
-			if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
-				$(this).next(".sharepop").toggle();
-			} else {
-				$(this).next(".sharepop").toggle(
-						"drop", { direction:'up' }, "fast" );
-			}
-			return false;
-		});
+        $('.share-link').click(function() {
+            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
+                $(this).next(".sharepop").toggle();
+            } else {
+                $(this).next(".sharepop").toggle(
+                        "drop", { direction:'up' }, "fast" );
+            }
+            return false;
+        });
 
-		// Init Highcharts global options.
-		Highcharts.setOptions({
-			credits: {
-				enabled: false
-			},
-			title: {
-				text: ''
-			},
-			subtitle: {
-				text: ''
-			}
-		});
+        // Init Highcharts global options.
+        Highcharts.setOptions({
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: ''
+            },
+            subtitle: {
+                text: ''
+            }
+        });
 
-        if ($.address)
-            $.address.externalChange(function(){ Profile.historyChange(); });
 
-        $(".graph-link").click(function(){Profile.loadGraphFromLink(this); return false;});
+        if ($.address){
+
+            // this is hackish, but it prevents the change event from being fired twice on load
+            if ( $.address.value() === "/" ){
+                window.location = window.location + "#" + $(".graph-link:eq(0)").attr("href");
+            }
+
+            $.address.change(function( evt ){
+
+                if ( $.address.path() !== "/"){
+                    Profile.historyChange( evt );
+                }
+
+            });
+
+        }
+
+        $(".graph-link").click(
+            function(evt){
+                evt.preventDefault();
+                if($.address){
+                    // only visit the resource described by the url, leave the params unchanged
+                    var href = $( this ).attr( "href" )
+                    var path = href.split("?")[0];
+
+                    // visiting a different resource
+                    if ( path !== $.address.path() ){
+                        $.address.path( path );
+                    }
+
+                    // applying filters for same resource via querystring
+                    else{
+                        // make a dict of current qs params and merge with the link's
+                        var currentParams = {};
+                        _.map( $.address.parameterNames(), function(e){ currentParams[e] = $.address.parameter( e ); } );
+                        var linkParams = Profile.parseQueryString( href );
+                        $.extend( currentParams, linkParams );
+
+                        $.address.queryString( Profile.reconstructQueryString( currentParams ) );
+                    }
+                }
+            }
+        );
 
         $("#individual_report #achievements #achievement-list > ul li").click(function() {
              var category = $(this).attr('id');
@@ -216,29 +256,29 @@ var Profile = {
         return href;
     },
 
-	/**
-	 * Expands the navigation accordion according to the link specified.
-	 * @return {boolean} whether or not a link was found to be a valid link.
-	 */
-	expandAccordionForHref: function(href) {
-		if (!href) {
-			return false;
-		}
+    /**
+     * Expands the navigation accordion according to the link specified.
+     * @return {boolean} whether or not a link was found to be a valid link.
+     */
+    expandAccordionForHref: function(href) {
+        if (!href) {
+            return false;
+        }
 
-		href = this.baseGraphHref(href);
+        href = this.baseGraphHref(href);
 
-		href = href.replace(/[<>']/g, "");
-		var selectorAccordionSection =
-				".graph-link-header[href*='" + href + "']";
-		if ( $(selectorAccordionSection).length ) {
-			$("#stats-nav #nav-accordion").accordion(
-					"activate", selectorAccordionSection);
-			return true;
-		}
+        href = href.replace(/[<>']/g, "");
+        var selectorAccordionSection =
+                ".graph-link-header[href*='" + href + "']";
+        if ( $(selectorAccordionSection).length ) {
+            $("#stats-nav #nav-accordion").accordion(
+                    "activate", selectorAccordionSection);
+            return true;
+        }
 
-		this.collapseAccordion();
-		return false;
-	},
+        this.collapseAccordion();
+        return false;
+    },
 
     styleSublinkFromHref: function(href) {
 
@@ -275,6 +315,13 @@ var Profile = {
         this.loadGraph(url);
     },
 
+    loadFilters : function( href ){
+        // fix the hrefs for each filter
+        var a = $("#stats-filters a[href^=\"" + href + "\"]").parent();
+        $("#stats-filters .filter:visible").not(a).slideUp("slow");
+        a.slideDown();
+    },
+
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
             '/api/v1/user/goals': this.renderUserGoals,
@@ -303,16 +350,16 @@ var Profile = {
         }
 
         $.ajax({
-			type: "GET",
-			url: Timezone.append_tz_offset_query_param(href),
-			data: {},
-			dataType: apiCallback ? 'json' : 'html',
-			success: function(data){
-				Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
-			},
-			error: function() {
-				Profile.finishLoadGraphError();
-			}
+            type: "GET",
+            url: Timezone.append_tz_offset_query_param(href),
+            data: {},
+            dataType: apiCallback ? 'json' : 'html',
+            success: function(data){
+                Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
+            },
+            error: function() {
+                Profile.finishLoadGraphError();
+            }
         });
         $("#graph-content").html("");
         this.showGraphThrobber(true);
@@ -324,9 +371,9 @@ var Profile = {
 
         if (!fNoHistoryEntry) {
             // Add history entry for browser
-            if ($.address) {
-                $.address.parameter("graph_url", encodeURIComponent(href), false);
-			}
+            //             if ($.address) {
+            //                 $.address(href);
+            // }
         }
 
         this.showGraphThrobber(false);
@@ -346,11 +393,18 @@ var Profile = {
         current_goals = [];
         completed_goals = [];
         abandoned_goals = [];
+
         var qs = Profile.parseQueryString(href);
-        currentUser = (qs["email"] == USER_EMAIL);
+        // We don't handle the difference between API calls requiring email and
+        // legacy calls requiring student_email very well, so this page gets
+        // called with both. Need to fix the root cause (and hopefully redo all
+        // the URLs for this page), but for now just be liberal in what we
+        // accept.
+        var qsEmail = qs.email || qs.student_email || null;
+        var viewingOwnGoals = qsEmail === null || qsEmail === USER_EMAIL;
 
         $.each(data, function(idx, goal) {
-            if (goal.completed != undefined) {
+            if (goal.completed) {
                 if (goal.abandoned)
                     abandoned_goals.push(goal);
                 else
@@ -359,7 +413,7 @@ var Profile = {
                 current_goals.push(goal);
             }
         });
-        if (currentUser)
+        if (viewingOwnGoals)
             GoalBook.reset(current_goals);
         else
             CurrentGoalBook = new GoalCollection(current_goals);
@@ -371,24 +425,21 @@ var Profile = {
         Profile.goalsViews = {};
         Profile.goalsViews.current = new GoalProfileView({
             el: "#current-goals-list",
-            model: currentUser ? GoalBook : CurrentGoalBook,
+            model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: 'current',
-            title: 'Current goals',
-            currentUser: currentUser
+            readonly: !viewingOwnGoals
         });
         Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
-            title: 'Completed goals',
-            currentUser: currentUser
+            readonly: true
         });
         Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
-            title: 'Abandoned goals',
-            currentUser: currentUser
+            readonly: true
         });
 
         Profile.userGoalsHref = href;
@@ -405,7 +456,7 @@ var Profile = {
             $('#goal-show-abandoned-link').parent().hide();
         }
 
-        if (currentUser) {
+        if (viewingOwnGoals) {
             $('.new-goal').addClass('green').removeClass('disabled').click(function(e) {
                 e.preventDefault();
                 window.newGoalDialog.show();
@@ -437,7 +488,7 @@ var Profile = {
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
-            student.profile_url = "/profile?selected_graph_type=goals&student_email="+student.email;
+            student.profile_url = "/profile?k&student_email="+ student.email +"#/api/v1/user/goals?email="+student.email;
 
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
@@ -495,7 +546,7 @@ var Profile = {
             }
         });
 
-		var template = Templates.get( "profile.profile-class-goals" );
+        var template = Templates.get( "profile.profile-class-goals" );
         $("#graph-content").html( template(studentGoalsViewModel) );
 
         $("#class-student-goal .goal-row").each(function() {
@@ -697,165 +748,61 @@ var Profile = {
         $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
     },
 
-	/**
-	 * Renders the exercise blocks given the JSON blob about the exercises.
-	 */
-	renderExercisesTable: function(data) {
-		var templateContext = [];
+    /**
+     * Renders the exercise blocks given the JSON blob about the exercises.
+     */
+    renderExercisesTable: function(data) {
+        var templateContext = [];
 
-		for ( var i = 0, exercise; exercise = data[i]; i++ ) {
-			var stat = "Not started";
-			var color = "";
-			var states = exercise["exercise_states"];
-			var totalDone = exercise["total_done"];
+        for ( var i = 0, exercise; exercise = data[i]; i++ ) {
+            var stat = "Not started";
+            var color = "";
+            var states = exercise["exercise_states"];
+            var totalDone = exercise["total_done"];
 
-			if ( states["reviewing"] ) {
-				stat = "Review";
-				color = "review light";
-			} else if ( states["proficient"] ) {
-				// TODO: handle implicit proficiency - is that data in the API?
-				// (due to proficiency in a more advanced module)
-				stat = "Proficient";
-				color = "proficient";
-			} else if ( states["struggling"] ) {
-				stat = "Struggling";
-				color = "struggling";
-			} else if ( totalDone > 0 ) {
-				stat = "Started";
-				color = "started";
-			}
+            if ( states["reviewing"] ) {
+                stat = "Review";
+                color = "review light";
+            } else if ( states["proficient"] ) {
+                // TODO: handle implicit proficiency - is that data in the API?
+                // (due to proficiency in a more advanced module)
+                stat = "Proficient";
+                color = "proficient";
+            } else if ( states["struggling"] ) {
+                stat = "Struggling";
+                color = "struggling";
+            } else if ( totalDone > 0 ) {
+                stat = "Started";
+                color = "started";
+            }
 
-			if ( color ) {
-				color = color + " action-gradient seethrough";
-			} else {
-				color = "transparent";
-			}
-			var model = exercise["exercise_model"];
-			templateContext.push({
-				"name": model["name"],
-				"color": color,
-				"status": stat,
-				"shortName": model["short_display_name"] || model["display_name"],
-				"displayName": model["display_name"],
-				"progress": Math.floor( exercise["progress"] * 100 ) + "%",
-				"totalDone": totalDone
-			});
-		}
-		var template = Templates.get( "profile.exercise_progress" );
+            if ( color ) {
+                color = color + " action-gradient seethrough";
+            } else {
+                color = "transparent";
+            }
+            var model = exercise["exercise_model"];
+            templateContext.push({
+                "name": model["name"],
+                "color": color,
+                "status": stat,
+                "shortName": model["short_display_name"] || model["display_name"],
+                "displayName": model["display_name"],
+                "progress": Math.floor( exercise["progress"] * 100 ) + "%",
+                "totalDone": totalDone
+            });
+        }
+        var template = Templates.get( "profile.exercise_progress" );
         $("#graph-content").html( template({ "exercises": templateContext }) );
 
-		var infoHover = $("#info-hover-container");
-		var lastHoverTime;
-		var mouseX;
-		var mouseY;
-		$("#module-progress .student-module-status").hover(
-			function(e) {
-				var hoverTime = lastHoverTime = Date.now();
-				mouseX = e.pageX;
-				mouseY = e.pageY;
-				var self = this;
-				setTimeout(function() {
-					if (hoverTime != lastHoverTime) {
-						return;
-					}
-
-					var hoverData = $(self).children(".hover-data");
-					if ($.trim(hoverData.html())) {
-						infoHover.html($.trim(hoverData.html()));
-
-						var left = mouseX + 15;
-						var jelGraph = $("#graph-content");
-						var leftMax = jelGraph.offset().left +
-								jelGraph.width() - 150;
-
-						infoHover.css('left', Math.min(left, leftMax));
-						infoHover.css('top', mouseY + 5);
-						infoHover.css('cursor', 'pointer');
-						infoHover.css('position', 'fixed');
-						infoHover.show();
-					}
-				}, 100);
-			},
-			function(e){
-				lastHoverTime = null;
-				$("#info-hover-container").hide();
-			}
-		);
-		$("#module-progress .student-module-status").click(function(e) {
-			$("#info-hover-container").hide();
-			Profile.collapseAccordion();
-			// Extract the name from the ID, which has been prefixed.
-			var exerciseName = this.id.substring( "exercise-".length );
-			Profile.loadGraph(
-				"/profile/graph/exerciseproblems?" +
-				"exercise_name=" + exerciseName + "&" +
-				"student_email=" + encodeURIComponent(Profile.email));
-		});
-	},
-
-	// TODO: move history management out to a common utility
-	historyChange: function(e) {
-		var href = ( $.address ? $.address.parameter("graph_url") : "" ) ||
-				this.initialGraphUrl;
-		if ( href ) {
-			href = decodeURIComponent( href );
-			if ( this.expandAccordionForHref(href) ) {
-				this.loadGraph( href, true );
-			} else {
-				// Invalid URL - just try the first link available.
-				var links = $(".graph-link");
-				if ( links.length ) {
-					Profile.loadGraphFromLink( links[0] );
-				}
-			}
-		}
-	},
-
-    showGraphThrobber: function(fVisible) {
-        if (fVisible)
-            $("#graph-progress-bar").progressbar({value: 100}).slideDown("fast");
-        else
-            $("#graph-progress-bar").slideUp("fast");
-    },
-
-	// TODO: move this out to a more generic utility file.
-    parseQueryString: function(url) {
-        var qs = {};
-        var parts = url.split('?');
-        if(parts.length == 2) {
-            var querystring = parts[1].split('&');
-            for(var i = 0; i<querystring.length; i++) {
-                var kv = querystring[i].split('=');
-                if(kv[0].length > 0) { //fix trailing &
-                    key = decodeURIComponent(kv[0]);
-                    value = decodeURIComponent(kv[1]);
-                    qs[key] = value;
-                }
-            }
-        }
-        return qs;
-    },
-
-	// TODO: move this out to a more generic utility file.
-    reconstructQueryString: function(hash, kvjoin, eljoin) {
-        kvjoin = kvjoin || '=';
-        eljoin = eljoin || '&';
-        qs = [];
-        for(var key in hash) {
-            if(hash.hasOwnProperty(key))
-                qs.push(key + kvjoin + hash[key]);
-        }
-        return qs.join(eljoin);
-    },
-
-    AddObjectiveHover: function(element) {
         var infoHover = $("#info-hover-container");
         var lastHoverTime;
         var mouseX;
         var mouseY;
-        element.find(".objective").hover(
+        $("#module-progress .student-module-status").hover(
             function(e) {
-                var hoverTime = lastHoverTime = Date.now();
+                var hoverTime = +(new Date);
+                lastHoverTime = hoverTime;
                 mouseX = e.pageX;
                 mouseY = e.pageY;
                 var self = this;
@@ -876,7 +823,113 @@ var Profile = {
                         infoHover.css('left', Math.min(left, leftMax));
                         infoHover.css('top', mouseY + 5);
                         infoHover.css('cursor', 'pointer');
-						infoHover.css('position', 'fixed');
+                        infoHover.css('position', 'fixed');
+                        infoHover.show();
+                    }
+                }, 100);
+            },
+            function(e){
+                lastHoverTime = null;
+                $("#info-hover-container").hide();
+            }
+        );
+        $("#module-progress .student-module-status").click(function(e) {
+            $("#info-hover-container").hide();
+            Profile.collapseAccordion();
+            // Extract the name from the ID, which has been prefixed.
+            var exerciseName = this.id.substring( "exercise-".length );
+            Profile.loadGraph(
+                "/profile/graph/exerciseproblems?" +
+                "exercise_name=" + exerciseName + "&" +
+                "student_email=" + Profile.email);
+        });
+    },
+
+    // TODO: move history management out to a common utility
+    historyChange: function(e) {
+        var href = ( $.address.value() === "/" ) ? this.initialGraphUrl : $.address.value();
+        var url = ( $.address.path() === "/" ) ? this.initialGraphUrl : $.address.path();
+        if ( href ) {
+            if ( this.expandAccordionForHref(href) ) {
+                this.loadGraph( href , true );
+                this.loadFilters( url );
+            } else {
+                // Invalid URL - just try the first link available.
+                var links = $(".graph-link");
+                if ( links.length ) {
+                    Profile.loadGraphFromLink( links[0] );
+                }
+            }
+        }
+    },
+
+    showGraphThrobber: function(fVisible) {
+        if (fVisible)
+            $("#graph-progress-bar").progressbar({value: 100}).slideDown("fast");
+        else
+            $("#graph-progress-bar").slideUp("fast");
+    },
+
+    // TODO: move this out to a more generic utility file.
+    parseQueryString: function(url) {
+        var qs = {};
+        var parts = url.split('?');
+        if(parts.length == 2) {
+            var querystring = parts[1].split('&');
+            for(var i = 0; i<querystring.length; i++) {
+                var kv = querystring[i].split('=');
+                if(kv[0].length > 0) { //fix trailing &
+                    key = decodeURIComponent(kv[0]);
+                    value = decodeURIComponent(kv[1]);
+                    qs[key] = value;
+                }
+            }
+        }
+        return qs;
+    },
+
+    // TODO: move this out to a more generic utility file.
+    reconstructQueryString: function(hash, kvjoin, eljoin) {
+        kvjoin = kvjoin || '=';
+        eljoin = eljoin || '&';
+        qs = [];
+        for(var key in hash) {
+            if(hash.hasOwnProperty(key))
+                qs.push(key + kvjoin + hash[key]);
+        }
+        return qs.join(eljoin);
+    },
+
+    AddObjectiveHover: function(element) {
+        var infoHover = $("#info-hover-container");
+        var lastHoverTime;
+        var mouseX;
+        var mouseY;
+        element.find(".objective").hover(
+            function(e) {
+                var hoverTime = +(new Date);
+                lastHoverTime = hoverTime;
+                mouseX = e.pageX;
+                mouseY = e.pageY;
+                var self = this;
+                setTimeout(function() {
+                    if (hoverTime != lastHoverTime) {
+                        return;
+                    }
+
+                    var hoverData = $(self).children(".hover-data");
+                    if ($.trim(hoverData.html())) {
+                        infoHover.html($.trim(hoverData.html()));
+
+                        var left = mouseX + 15;
+                        var jelGraph = $("#graph-content");
+                        var leftMax = jelGraph.offset().left +
+                                jelGraph.width() - 150;
+
+                        infoHover.css('left', Math.min(left, leftMax));
+                        infoHover.css('top', mouseY + 5);
+                        infoHover.css('cursor', 'pointer');
+                        infoHover.css('position', 'fixed');
                         infoHover.show();
                     }
                 }, 100);
@@ -899,17 +952,54 @@ var GoalProfileView = Backbone.View.extend({
         this.model.bind('remove', this.render, this);
         this.model.bind('add', this.render, this);
 
+        // only hookup event handlers if the view allows edits
+        if (this.options.readonly) return;
+
         $(this.el)
-            .delegate('input.goal-title', 'blur', $.proxy(function( e ) {
-                var jel = $(e.target);
-                var goalId = jel.closest('.goal').data('id');
-                var goal = this.model.get(goalId);
-                var newTitle = jel.val();
-                if (newTitle !== goal.get('title')) {
-                    goal.save({title: newTitle});
+            // edit titles
+            .delegate('input.goal-title', 'focusout', $.proxy(this.changeTitle, this))
+            .delegate('input.goal-title', 'keypress', $.proxy(function( e ) {
+                if (e.which == '13') { // enter
+                    e.preventDefault();
+                    this.changeTitle(e);
+                    $(e.target).blur();
                 }
             }, this))
+            .delegate('input.goal-title', 'keyup', $.proxy(function( e ) {
+                if ( e.which == '27' ) { // escape
+                    e.preventDefault();
+
+                    // restore old title
+                    var jel = $(e.target);
+                    var goal = this.model.get(jel.closest('.goal').data('id'));
+                    jel.val(goal.get('title'));
+
+                    jel.blur();
+                }
+            }, this))
+
+            // show abandon button on hover
+            .delegate('.goal', 'mouseenter mouseleave', function( e ) {
+                var el = $(e.currentTarget);
+                if ( e.type == 'mouseenter' ) {
+                    el.find(".goal-description .summary-light").hide();
+                    el.find(".goal-description .goal-controls").show();
+                } else {
+                    el.find(".goal-description .goal-controls").hide();
+                    el.find(".goal-description .summary-light").show();
+                }
+            })
+            // respond to abandon button
             .delegate('.abandon', 'click', $.proxy(this.abandon, this));
+    },
+
+    changeTitle: function( e, options ) {
+        var jel = $(e.target);
+        var goal = this.model.get(jel.closest('.goal').data('id'));
+        var newTitle = jel.val();
+        if (newTitle !== goal.get('title')) {
+            goal.save({title: newTitle});
+        }
     },
 
     show: function() {
@@ -931,23 +1021,11 @@ var GoalProfileView = Backbone.View.extend({
         var json = _.pluck(this.model.models, 'attributes');
         jel.html(this.template({
             goals: json,
-            title: this.options.title,
             isCurrent: (this.options.type == 'current'),
             isCompleted: (this.options.type == 'completed'),
             isAbandoned: (this.options.type == 'abandoned'),
-            isCurrentUser: this.options.currentUser
+            readonly: this.options.readonly
         }));
-
-        jel.find(".goal").hover(
-            function () {
-                $(this).find(".goal-description .summary-light").hide();
-                $(this).find(".goal-controls").show();
-            },
-            function () {
-                $(this).find(".goal-controls").hide();
-                $(this).find(".goal-description .summary-light").show();
-            }
-        );
 
         // attach a NewGoalView to the new goals html
         var newGoalEl = this.$(".goalpicker");
@@ -1007,10 +1085,28 @@ var ProgressSummaryView = function() {
                 review: {
                     fShowOnLeft: false,
                     order: 4}
-            };
+            },
+        updateFilterTimeout = null;
 
     function toPixelWidth(num) {
         return Math.round(200 * num / Profile.numStudents);
+    }
+
+    function filterSummaryRows() {
+        updateFilterTimeout = null;
+        var filterText = $("#student-progresssummary-search").val()
+                            .trim().toLowerCase();
+
+        $(".exercise-row").each(function(index) {
+            var jel = $(this),
+                exerciseName = jel.find(".exercise-name span")
+                                .text().toLowerCase();
+            if (filterText === "" || exerciseName.indexOf(filterText) > -1) {
+                jel.show();
+            } else {
+                jel.hide();
+            }
+        });
     }
 
     function init() {
@@ -1092,8 +1188,15 @@ var ProgressSummaryView = function() {
             Profile.loadGraph(
                 "/profile/graph/exerciseproblems?" +
                 "exercise_name=" + exercise + "&" +
-                "student_email=" + encodeURIComponent(email));
+                "student_email=" + email);
         });
+
+        $("#stats-filters").delegate("#student-progresssummary-search", "keyup", function() {
+            if (updateFilterTimeout == null) {
+                updateFilterTimeout = setTimeout(filterSummaryRows, 250);
+            }
+        });
+
     }
 
     return {

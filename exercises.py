@@ -58,6 +58,7 @@ class ViewExercise(request_handler.RequestHandler):
         ('hints_costly_hint_binary', ConversionTypes.Binary),
         ('hints_problems_done', ConversionTypes.Counting),
         ('hints_gained_proficiency_all', ConversionTypes.Counting),
+        ('hints_gained_new_proficiency', ConversionTypes.Counting),
         ('hints_gained_proficiency_easy_binary', ConversionTypes.Binary),
         ('hints_gained_proficiency_hard_binary', ConversionTypes.Binary),
         ('hints_wrong_problems', ConversionTypes.Counting),
@@ -220,7 +221,7 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)),
-            'alternate_hints_treatment': ab_test('Hints or Show Solution Nov 11',
+            'alternate_hints_treatment': ab_test('Hints or Show Solution Dec 10',
                 ViewExercise._hints_ab_test_alternatives,
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
@@ -472,8 +473,13 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 bingo('struggling_problems_correct')
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
+
                     bingo(['hints_gained_proficiency_all',
-                           'struggling_gained_proficiency_all'])
+                           'struggling_gained_proficiency_all',
+                           'homepage_restructure_gained_proficiency_all'])
+                    if not user_exercise.has_been_proficient():
+                        bingo('hints_gained_new_proficiency')
+                        
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
@@ -489,19 +495,24 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             # Update phantom user notifications
             util_notify.update(user_data, user_exercise)
 
-            bingo(['hints_problems_done', 'struggling_problems_done'])
+            bingo([
+                'hints_problems_done',
+                'struggling_problems_done',
+                'homepage_restructure_problems_done',
+            ])
 
         else:
 
-            if first_response and user_exercise.is_struggling():
-                bingo('struggling_problems_wrong_post_struggling')
-
-            if user_exercise.streak == 0:
-                # 2+ in a row wrong -> not proficient
-                user_exercise.set_proficient(False, user_data)
-
             # Only count wrong answer at most once per problem
             if first_response:
+
+                if user_exercise.is_struggling():
+                    bingo('struggling_problems_wrong_post_struggling')
+    
+                if user_exercise.streak == 0:
+                    # 2+ in a row wrong -> not proficient
+                    user_exercise.set_proficient(False, user_data)
+
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
 

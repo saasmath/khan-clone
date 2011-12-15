@@ -29,7 +29,7 @@
                 events: {
                     load: function() {
                         var series = this.series[0];
-                        setInterval(function() {
+                        var poll = function() {
                             var params = {coach: email_coach, update: 1};
                             
                             var list_id = $('#studentlists_dropdown ol').data('selected').key;
@@ -37,37 +37,46 @@
                             {
                                 params['list_id'] = list_id;
                             }
-                            
-                            $.get("/profile/graph/classenergypointsperminute", params, function(data) {
 
-                                try { eval("var dict_json = " + data); }
-                                catch(e) { return; }
+                            var tab = $("#nav-accordion a[href*='classenergypointsperminute']")
 
-                                var x = (new Date()).getTime();
+                            if( tab.attr("aria-expanded") === "true"){
 
-                                if (pointsLast > -1)
-                                {
-                                    var dPoints = dict_json.points - pointsLast;
+                                $.get("/profile/graph/classenergypointsperminute", params, function(data) {
 
-                                    if (rgPointsChange.length >= cPointsPerAverage) rgPointsChange.shift();
-                                    rgPointsChange[rgPointsChange.length] = dPoints;
+                                    try { eval("var dict_json = " + data); }
+                                    catch(e) { return; }
 
-                                    var sum = 0;
-                                    for (var ix = 0; ix < rgPointsChange.length; ix++)
+                                    var x = (new Date()).getTime();
+
+                                    if (pointsLast > -1)
                                     {
-                                        sum += rgPointsChange[ix];
-                                    }
-                                    var avg = sum / rgPointsChange.length;
+                                        var dPoints = dict_json.points - pointsLast;
 
-                                    series.addPoint({x: x, y: avg}, true, true);
-                                }
-                                else
-                                {
-                                    series.addPoint({x: x, y: 0}, true, true);
-                                }
-                                pointsLast = dict_json.points;
-                            });
-                        }, updateInterval);
+                                        if (rgPointsChange.length >= cPointsPerAverage) rgPointsChange.shift();
+                                        rgPointsChange[rgPointsChange.length] = dPoints;
+
+                                        var sum = 0;
+                                        for (var ix = 0; ix < rgPointsChange.length; ix++)
+                                        {
+                                            sum += rgPointsChange[ix];
+                                        }
+                                        var avg = sum / rgPointsChange.length;
+
+                                        series.addPoint({x: x, y: avg}, true, true);
+                                    }
+                                    else
+                                    {
+                                        series.addPoint({x: x, y: 0}, true, true);
+                                    }
+                                    pointsLast = dict_json.points;
+                                });
+                            }else{
+                                window.clearInterval(pollID);
+                            }
+
+                        };
+                        var pollID = setInterval(poll, updateInterval);
                     }
                 }
             },

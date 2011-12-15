@@ -66,17 +66,16 @@ class Goal(db.Model):
         self.completed_on = datetime.now()
         self.abandoned = True
 
-    def just_watched_video(self, user_data, user_video):
+    def just_watched_video(self, user_data, user_video, just_finished):
         changed = False
         for objective in self.objectives:
             if isinstance(objective, GoalObjectiveWatchVideo):
                 if objective.record_progress(user_data, user_video):
                     changed = True
 
-        if user_video.completed:
+        if just_finished:
             any_videos = [o for o in self.objectives
                 if isinstance(o, GoalObjectiveAnyVideo)]
-
             found = user_video.video.key() in [o.video_key for o in any_videos]
             if not found:
                 for vid_obj in any_videos:
@@ -336,7 +335,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
         if self.video_readable_id:
             return Video.get_relative_url(self.video_readable_id)
         else:
-            return "/"
+            return "/#browse"
 
     def internal_id(self):
         return ''

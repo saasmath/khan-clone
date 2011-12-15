@@ -54,25 +54,28 @@ var ClassProfile = {
         $dropdown.children('li[data-selected=selected]').removeAttr('data-selected');
         $(ui.item).attr('data-selected', 'selected');
 
-        // store which item is selected
+        // store which class list is selected
         var student_list = ClassProfile.getStudentListFromId(ui.item.data('list_id'));
         $dropdown.data('selected', student_list);
+
+        // update the address parameter
+        $.address.parameter("list_id",ui.item.data('list_id'))
+
 
         // update appearance of dropdown
         $('#studentlists_dropdown .ui-button-text').text(student_list.name);
         $dropdown.hide();
 
-        // url of currently selected graph
-        var url = $("#nav-accordion .ui-state-active").attr('href');
-        Profile.loadGraphStudentListAware(url);
-
         $('#count_students').html('&hellip;');
         $('#energy-points .energy-points-badge').html('&hellip;');
     },
 
-    updateStudentInfo: function(students, energy_points) {
+    updateStudentInfo: function(students, energyPoints) {
         $('#count_students').text(students + '');
-        $('#energy-points .energy-points-badge').text(energy_points + '');
+        if ( typeof energyPoints !== "string" ) {
+            energyPoints = addCommas(energyPoints);
+        }
+        $('#energy-points .energy-points-badge').text(energyPoints);
     },
 
     renderStudentProgressReport: function(data, href) {
