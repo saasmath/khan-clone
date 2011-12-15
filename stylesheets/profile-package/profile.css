@@ -599,25 +599,25 @@ div.graph-notification {
 .profile-navigation .tab-link.has-icon {
     padding-left: 20px;
 }
-.vertical-tab-list .tab-link[href="/profile"] {
+a[rel="profile"] {
     background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 0 50%;
 }
-.vertical-tab-list .tab-link[href="/profile/vital-statistics/activity"] {
+a[rel="profile vital-statistics activity"] {
     background: transparent url(/images/profile-icons/chart.png) no-repeat 0 50%;
 }
-.vertical-tab-list .tab-link[href="/profile/vital-statistics/focus"] {
+a[rel="profile vital-statistics focus"] {
     background: transparent url(/images/profile-icons/chart-pie-separate.png) no-repeat 0 50%;
 }
-.vertical-tab-list .tab-link[href="/profile/vital-statistics/exercise-progress"] {
+a[rel="profile vital-statistics exercise-progress"] {
     background: transparent url(/images/profile-icons/color-swatch.png) no-repeat 0 50%;
 }
-.vertical-tab-list .tab-link[href="/profile/vital-statistics/exercise-progress-over-time"] {
+a[rel="profile vital-statistics exercise-progress-over-time"] {
     background: transparent url(/images/profile-icons/chart-up.png) no-repeat 0 50%;
 }
-.vertical-tab-list .tab-link[href="/profile/achievements"] {
+a[rel="profile achievements"] {
     background: transparent url(/images/profile-icons/shield.png) no-repeat 0 50%;
 }
-.vertical-tab-list .tab-link[href="/profile/goals"] {
+a[rel="profile goals"] {
     background: transparent url(/images/profile-icons/tick-circle.png) no-repeat 0 50%;
 }
 .tab-content {
