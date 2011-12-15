@@ -1173,7 +1173,7 @@ var Review = {
 
         if ( reviewsLeftCount !== 0 ) {
             $( "#review-mode-title h1" ).text(
-                reviewsLeftCount === 1 ? "Review!" : "Reviews" );
+                reviewsLeftCount === 1 ? "Exercise Left!" : "Exercises Left" );
         }
 
         reviewCounterElem.data( "counter", reviewsLeftCount );

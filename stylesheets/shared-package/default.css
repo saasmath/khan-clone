@@ -2063,19 +2063,30 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
 }
 
 #review-mode-title h1 {
-    font-size: 30px;
-    letter-spacing: 6px;
-    word-spacing: 10px;
+    font-size: 18px;
+    letter-spacing: 2px;
+    word-spacing: 3px;
     text-transform: uppercase;
-    font-weight: bold;
-    color: #777;
+    font-weight: normal;
+    color: #999;
     float: right;
-    width: 195px;
+    width: 180px;
+    margin-top: -8px;
+    padding-left: 10px;
+    text-align: left;
 }
 
 #review-mode-title.review-done h1 {
+    font-size: 30px;
+    letter-spacing: 6px;
+    word-spacing: 10px;
+    font-weight: bold;
+    color: #777;
     width: auto;
     float: none;
+    text-align: right;
+    margin: 0 0;
+    padding: 0 0;
 }
 
 #review-mode-title.review-done.post-animation h1 {
