@@ -73,9 +73,10 @@ class ViewExercise(request_handler.RequestHandler):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-        reviews_left_js_val = "null"
+        reviews_left_count = None
 
         if not exid:
+            # Enter review mode
             # TODO(david): Is there some webapp2 magic that will allow me not to
             #     repeat this URL string in main.py?
             if self.request.path == "/review":
@@ -83,7 +84,7 @@ class ViewExercise(request_handler.RequestHandler):
                 exid = (user_exercise_graph.review_exercise_names() or
                         user_exercise_graph.proficient_exercise_names() or
                         ["addition_1"])[0]
-                reviews_left_js_val = user_exercise_graph.reviews_left_count()
+                reviews_left_count = user_exercise_graph.reviews_left_count()
             else:
                 # Support old URLs that may pass in exid as a query param
                 self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
@@ -239,7 +240,8 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
-            'reviews_left_count': reviews_left_js_val,
+            'reviews_left_count': ("null" if reviews_left_count is None else
+                reviews_left_count),
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
