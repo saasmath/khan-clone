@@ -739,12 +739,13 @@ application = webapp2.WSGIApplication([
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
-    
+
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
     ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
     ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
+    ('/review', exercises.ViewExercise),
 
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),

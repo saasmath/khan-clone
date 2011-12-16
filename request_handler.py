@@ -314,7 +314,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
 
-        if user_data and user_data.has_current_goals:
+        if user_data:
             goals = GoalList.get_current_goals(user_data)
             goals_data = [g.get_visible_data() for g in goals]
             if goals_data:

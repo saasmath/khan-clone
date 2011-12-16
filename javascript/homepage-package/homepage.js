@@ -17,16 +17,9 @@ var Homepage = {
             // Before any playing, unveil and play the real youtube player
             $(VideoControls).one("beforeplay", function() {
 
-                $(".player-loading-wrapper").removeClass("player-loading-wrapper");
-
-                // We can get rid of the .player-loading-wrapper selectors and the following complication 
-                // if we decide to load the main video on placeholder click instead of trying to preload 
-                // and keep it hidden.
-                //
-                // This strange method of hiding the placeholder skips use of display:none or 
-                // position:absolute so Mozilla doesn't re-layout and load its already-initialized 
-                // <embed> video, which causes a visual hiccup on click.
-                jelPlaceholder.css("visibility", "hidden").height(0);
+                // Use .left to unhide the player without causing any
+                // re-rendering or "pop"-in of the player.
+                $(".player-loading-wrapper").css("left", 0);
 
             });
 

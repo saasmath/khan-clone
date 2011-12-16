@@ -550,25 +550,30 @@ var Profile = {
         $("#graph-content").html( template(studentGoalsViewModel) );
 
         $("#class-student-goal .goal-row").each(function() {
-            var goalViewModel = studentGoalsViewModel.rowData[$(this).attr('data-id')];
+            var jRowEl = $(this);
+            var goalViewModel = studentGoalsViewModel.rowData[jRowEl.attr('data-id')];
             goalViewModel.rowElement = this;
-            goalViewModel.countElement = $(this).find('.goal-count');
-            goalViewModel.startTimeElement = $(this).find('.goal-start-time');
-            goalViewModel.updateTimeElement = $(this).find('.goal-update-time');
+            goalViewModel.countElement = jRowEl.find('.goal-count');
+            goalViewModel.startTimeElement = jRowEl.find('.goal-start-time');
+            goalViewModel.updateTimeElement = jRowEl.find('.goal-update-time');
 
-            Profile.AddObjectiveHover($(this));
+            Profile.AddObjectiveHover(jRowEl);
 
-            $(this).find("a.objective").each(function() {
-                var goalObjective = goalViewModel.goal.objectives[$(this).attr('data-id')];
-                goalObjective.blockElement = this;
+            jRowEl.find("a.objective").each(function() {
+                var obj = goalViewModel.goal.objectives[$(this).attr('data-id')];
+                obj.blockElement = this;
 
-                if (goalObjective.type == 'GoalObjectiveExerciseProficiency') {
-                    $(this).click(function() {
+                if ( obj.internal_id !== "" &&
+                    (obj.type === "GoalObjectiveExerciseProficiency" ||
+                     obj.type === "GoalObjectiveAnyExerciseProficiency")
+                ) {
+                    $(this).click(function( e ) {
+                        e.preventDefault();
                         Profile.collapseAccordion();
-                        Profile.loadGraph('/profile/graph/exerciseproblems?student_email='+goalViewModel.student.email+'&exercise_name='+goalObjective.internal_id);
+                        var url = Profile.exerciseProgressUrl(obj.internal_id,
+                            goalViewModel.student.email);
+                        Profile.loadGraph(url);
                     });
-                } else {
-                    // Do something here for videos?
                 }
             });
         });
@@ -838,10 +843,8 @@ var Profile = {
             Profile.collapseAccordion();
             // Extract the name from the ID, which has been prefixed.
             var exerciseName = this.id.substring( "exercise-".length );
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exerciseName + "&" +
-                "student_email=" + Profile.email);
+            var url = Profile.exerciseProgressUrl(exerciseName, Profile.email);
+            Profile.loadGraph(url);
         });
     },
 
@@ -898,6 +901,12 @@ var Profile = {
                 qs.push(key + kvjoin + hash[key]);
         }
         return qs.join(eljoin);
+    },
+
+    exerciseProgressUrl: function(exercise, email) {
+        return "/profile/graph/exerciseproblems" +
+            "?exercise_name=" + exercise +
+            "&student_email=" + encodeURIComponent(email);
     },
 
     AddObjectiveHover: function(element) {
@@ -1185,10 +1194,8 @@ var ProgressSummaryView = function() {
                 email = jel.data("email");
 
             Profile.collapseAccordion();
-            Profile.loadGraph(
-                "/profile/graph/exerciseproblems?" +
-                "exercise_name=" + exercise + "&" +
-                "student_email=" + email);
+            var url = Profile.exerciseProgressUrl(exercise, email);
+            Profile.loadGraph(url);
         });
 
         $("#stats-filters").delegate("#student-progresssummary-search", "keyup", function() {

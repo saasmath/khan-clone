@@ -465,7 +465,10 @@ class UserExercise(db.Model):
     def get_review_interval(self):
         return UserExercise.get_review_interval_from_seconds(self.review_interval_secs)
 
-    def schedule_review(self, correct, now=datetime.datetime.now()):
+    def schedule_review(self, correct, now=None):
+        if now is None:
+            now = datetime.datetime.now()
+
         # If the user is not now and never has been proficient, don't schedule a review
         if self.progress < 1.0 and not self.has_been_proficient():
             return
@@ -477,43 +480,39 @@ class UserExercise(db.Model):
 
         review_interval = self.get_review_interval()
 
+        # If we correctly did this review while it was in a review state, and
+        # the previous review was correct, extend the review interval
         if correct and self.last_review != datetime.datetime.min:
             time_since_last_review = now - self.last_review
             if time_since_last_review >= review_interval:
                 review_interval = time_since_last_review * 2
-        if not correct:
-            review_interval = review_interval // 2
+
         if correct:
             self.last_review = now
         else:
             self.last_review = datetime.datetime.min
+            review_interval = review_interval // 2
+
         self.review_interval_secs = review_interval.days * 86400 + review_interval.seconds
 
-    def set_proficient(self, proficient, user_data):
-        if not proficient and not self.has_been_proficient():
-            # Not proficient and never has been so nothing to do
+    def set_proficient(self, user_data):
+        if self.exercise in user_data.proficient_exercises:
             return
 
-        if proficient:
-            if self.exercise not in user_data.proficient_exercises:
-                self.proficient_date = datetime.datetime.now()
+        self.proficient_date = datetime.datetime.now()
 
-                user_data.proficient_exercises.append(self.exercise)
-                user_data.need_to_reassess = True
-                user_data.put()
+        user_data.proficient_exercises.append(self.exercise)
+        user_data.need_to_reassess = True
+        user_data.put()
 
-                util_notify.update(user_data, self, False, True)
+        util_notify.update(user_data, self, False, True)
 
-                if self.exercise in UserData.conversion_test_hard_exercises:
-                    bingo('hints_gained_proficiency_hard_binary')
-                elif self.exercise in UserData.conversion_test_easy_exercises:
-                    bingo('hints_gained_proficiency_easy_binary')
-
-        else:
-            if self.exercise in user_data.proficient_exercises:
-                user_data.proficient_exercises.remove(self.exercise)
-                user_data.need_to_reassess = True
-                user_data.put()
+        if self.exercise in UserData.conversion_test_hard_exercises:
+            bingo(['hints_gained_proficiency_hard_binary',
+                   'review_gained_proficiency_hard_binary'])
+        elif self.exercise in UserData.conversion_test_easy_exercises:
+            bingo(['hints_gained_proficiency_easy_binary',
+                   'review_gained_proficiency_easy_binary'])
 
 class CoachRequest(db.Model):
     coach_requesting = db.UserProperty()
@@ -607,14 +606,14 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+        deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.STARTED, version,
                        _queue="video-log-queue",
                        _url="/_ah/queue/deferred_videolog")
 
     @staticmethod
     def set_completed(user_data, video, version):
-        deferred.defer(set_css_deferred, user_data.key(), video.key(), 
+        deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.COMPLETED, version,
                        _queue="video-log-queue",
                        _url="/_ah/queue/deferred_videolog")
@@ -657,13 +656,13 @@ def set_css_deferred(user_data_key, video_key, status, version):
     uvc.pickled_dict = pickle.dumps(css)
     uvc.load_pickled()
 
-    # if set_css_deferred runs out of order then we bump the version number 
+    # if set_css_deferred runs out of order then we bump the version number
     # to break the cache
     if version < uvc.version:
         version = uvc.version + 1
         user_data.uservideocss_version += 1
         db.put(user_data)
-        
+
     uvc.version = version
     db.put(uvc)
 
@@ -708,11 +707,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
     need_to_reassess = db.BooleanProperty(indexed=False)
     points = db.IntegerProperty(default=0)
     total_seconds_watched = db.IntegerProperty(default=0)
-    
+
     # A list of email values corresponding to the "user" property of the coaches
     # for the user. Note: that it may not be the current, active email
     coaches = db.StringListProperty()
-    
+
     coworkers = db.StringListProperty()
     student_lists = db.ListProperty(db.Key)
     map_coords = db.StringProperty(indexed=False)
@@ -1062,10 +1061,20 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return self.count_feedback_notification
 
-    def ensure_has_current_goals(self):
-        if not self.has_current_goals:
+    def save_goal(self, goal):
+        '''save a goal, atomically updating the user_data.has_current_goal when
+        necessary'''
+
+        if self.has_current_goals: # no transaction necessary
+            goal.put()
+            return
+
+        # otherwise this is the first goal the user has created, so be sure we
+        # update user_data.has_current_goals too
+        def save_goal():
             self.has_current_goals = True
-            self.put()
+            db.put([self, goal])
+        db.run_in_transaction(save_goal)
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
@@ -1274,7 +1283,7 @@ class Playlist(Searchable, db.Model):
             videos.append(video)
 
         return videos
-    
+
     def get_video_count(self):
         video_playlist_query = VideoPlaylist.all()
         video_playlist_query.filter('playlist =', self)
@@ -2134,6 +2143,17 @@ class UserExerciseGraph(object):
     def review_exercise_names(self):
         return [graph_dict["name"] for graph_dict in self.review_graph_dicts()]
 
+    def has_completed_review(self):
+        # TODO(david): This should return whether the user has completed today's
+        #     review session.
+        return not self.review_exercise_names()
+
+    def reviews_left_count(self):
+        # TODO(david): For future algorithms this should return # reviews left
+        #     for today's review session.
+        # TODO(david): Make it impossible to have >= 100 reviews.
+        return len(self.review_exercise_names())
+
     def suggested_graph_dicts(self):
         return [graph_dict for graph_dict in self.graph_dicts() if graph_dict["suggested"]]
 
@@ -2153,7 +2173,8 @@ class UserExerciseGraph(object):
         #   * ex and all of ex's covering ancestors either
         #      * are scheduled to have their next review in the past, or
         #      * were answered incorrectly on last review (i.e. streak == 0 with proficient == true)
-        #   * none of ex's covering ancestors should be reviewed
+        #   * none of ex's covering ancestors should be reviewed or ex was
+        #     previously incorrectly answered (ex.streak == 0)
         #   * the user is proficient at ex
         # the algorithm:
         #   for each exercise:
@@ -2162,7 +2183,10 @@ class UserExerciseGraph(object):
         #   select and mark the exercises in which the user is proficient but with next review times in the past as review candidates
         #   for each of those candidates:
         #     traverse it's ancestors, computing and storing whether an ancestor is also a candidate
-        #   all exercises that are candidates but do not have ancestors as candidates should be listed for review
+        #   all exercises that are candidates but do not have ancestors as
+        #   candidates should be listed for review. Covering ancestors are not
+        #   considered for incorrectly answered review questions
+        #   (streak == 0 and proficient).
 
         now = datetime.datetime.now()
 
@@ -2181,7 +2205,8 @@ class UserExerciseGraph(object):
 
                 for covering_graph_dict in graph_dict["coverer_dicts"]:
                     covering_next_review = compute_next_review(covering_graph_dict)
-                    if covering_next_review > graph_dict["next_review"]:
+                    if (covering_next_review > graph_dict["next_review"] and
+                            graph_dict["streak"] != 0):
                         graph_dict["next_review"] = covering_next_review
 
             return graph_dict["next_review"]
@@ -2203,7 +2228,10 @@ class UserExerciseGraph(object):
 
         candidate_dicts = []
         for graph_dict in self.graph_dicts():
-            if not graph_dict["summative"] and graph_dict["proficient"] and graph_dict["next_review"] <= now:
+            if (not graph_dict["summative"] and
+                    graph_dict["proficient"] and
+                    graph_dict["next_review"] <= now and
+                    graph_dict["total_done"] > 0):
                 graph_dict["is_review_candidate"] = True
                 candidate_dicts.append(graph_dict)
             else:
@@ -2211,7 +2239,8 @@ class UserExerciseGraph(object):
 
         review_dicts = []
         for graph_dict in candidate_dicts:
-            if not compute_is_ancestor_review_candidate(graph_dict):
+            if (not compute_is_ancestor_review_candidate(graph_dict) or
+                    graph_dict["streak"] == 0):
                 review_dicts.append(graph_dict)
 
         return review_dicts
@@ -2223,7 +2252,6 @@ class UserExerciseGraph(object):
             "proficient": graph_dict["proficient"],
             "suggested": graph_dict["suggested"],
             "struggling": graph_dict["struggling"],
-            "endangered": graph_dict["endangered"],
             "summative": graph_dict["summative"],
             "reviewing": graph_dict in self.review_graph_dicts(),
         }
@@ -2266,7 +2294,6 @@ class UserExerciseGraph(object):
                 "proficient": None,
                 "explicitly_proficient": None,
                 "suggested": None,
-                "endangered": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
             }
@@ -2372,17 +2399,11 @@ class UserExerciseGraph(object):
 
             return graph_dict["suggested"]
 
-        def set_endangered(graph_dict):
-            graph_dict["endangered"] = (graph_dict["proficient"] and
-                    graph_dict["streak"] == 0 and
-                    graph_dict["proficient_date"] is not None)
-
         for exercise_name in graph:
             set_suggested(graph[exercise_name])
-            set_endangered(graph[exercise_name])
 
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from goals.models import GoalList
+from goals.models import GoalList, Goal

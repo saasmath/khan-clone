@@ -261,16 +261,9 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
-        review_names = user_exercise_graph.review_exercise_names()
         status = ""
-
         if graph_dict["proficient"]:
-
-            if self.exercise_name in review_names:
-                status = "review"
-            else:
-                status = "proficient"
-
+            status = "proficient"
         elif graph_dict["struggling"]:
             status = "struggling"
         elif graph_dict["total_done"] > 0:
