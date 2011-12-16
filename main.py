@@ -756,6 +756,7 @@ application = webapp2.WSGIApplication([
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
 
+    ('/admin/import_smarthistory', taxonomy.ImportSmartHistory),
     ('/admin/edittaxonomy', taxonomy.EditTaxonomy),
     ('/admin/reput', bulk_update.handler.UpdateKind),
     ('/admin/retargetfeedback', RetargetFeedback),

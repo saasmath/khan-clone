@@ -1120,6 +1120,13 @@ class TopicVersion(db.Model):
             logging.warning("Edit version already exists")
             return False
 
+    def copy_version(self):
+        version = TopicVersion.create_new_version()
+        old_root = Topic.get_root(self)
+        old_tree = old_root.make_tree(types = ["Topics"], include_hidden = True)
+        TopicVersion.copy_tree(old_tree, version)
+        return version
+        
     @staticmethod
     def copy_tree(old_tree, new_version, new_root = None, parent = None):
         parent_keys = []
@@ -1138,15 +1145,6 @@ class TopicVersion(db.Model):
         new_tree.child_keys = [child_key if child_key not in old_key_new_key_dict else old_key_new_key_dict[child_key] for child_key in old_tree.child_keys]
         new_tree.put()
         return new_tree
-
-    # copys a topic tree from an old version to a new version
-    @staticmethod
-    def copy_version(old_version, new_version):
-        old_root = Topic.get_root(old_version)
-        old_tree = old_root.make_tree(types = ["Topics"])
-        new_root = old_root.copy(title = old_root.title, 
-                                 parent = None, 
-                                 version = new_version)
 
     def update(self):
         user = UserData.current().user

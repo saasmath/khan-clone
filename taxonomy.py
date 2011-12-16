@@ -30,47 +30,68 @@ def getSmartHistoryContent():
         pass
     return smart_history
 
-def importSmartHistory(version):
-    topic = Topic.get_by_id("art-history", version)
-    if not topic:
-        parent = Topic.get_by_id("humanities---other", version)
-        if not parent:
-            raise Exception("Could not find the Humanities & Other topic to put art history into")
-        topic = Topic.insert(title = "Art History",
-                             parent = parent,
-                             id = "art-history",
-                             standalone_title = "Art History",
-                             description = "Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")  
-    urls = topic.get_urls()
-    href_to_key_dict = dict((url.url, url.key()) for url in urls)
-    hrefs = [url.url for url in urls]
-    content = getSmartHistoryContent()
-    links = ""
-    i=1
-    child_keys = []
-    for link in re.finditer(re.compile('<a.*href="(.*?)"><span.*?>(.*)</span></a>', re.M), content):
-        href = link.group(1)
-        title = link.group(2)
-        if href not in hrefs:
-            logging.info("adding %i %s %s to art-history" % (i, href, title))
-            url = Url(url = href,
-                      title = title,
-                      id = id) 
-            url.put()
-            child_keys.append(url.key())
-            links += str(i)+link.group(1) + " " +link.group(2) + "<br>"
+class ImportSmartHistory(request_handler.RequestHandler):
+
+    # update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)
+    @user_util.developer_only
+    def get(self):
+
+        default = models.TopicVersion.get_default_version()
+        edit = models.TopicVersion.get_edit_version()
+        ImportSmartHistory.importIntoVersion(default)
+        ImportSmartHistory.importIntoVersion(edit)
+    
+    @staticmethod
+    def importIntoVersion(version):
+        logging.info("comparing to version number %i" % version.number)
+        topic = Topic.get_by_id("art-history", version)
+
+        if not topic:
+            parent = Topic.get_by_id("humanities---other", version)
+            if not parent:
+                raise Exception("Could not find the Humanities & Other topic to put art history into")
+            topic = Topic.insert(title = "Art History",
+                                 parent = parent,
+                                 id = "art-history",
+                                 standalone_title = "Art History",
+                                 description = "Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")  
+        
+        urls = topic.get_urls()
+        href_to_key_dict = dict((url.url, url.key()) for url in urls)
+        hrefs = [url.url for url in urls]
+        content = getSmartHistoryContent()
+        child_keys = []
+
+        for link in re.finditer(re.compile('<a.*href="(.*?)"><span.*?>(.*)</span></a>', re.M), content):
+            href = link.group(1)
+            title = link.group(2)
+            if href not in hrefs:
+                logging.info("adding %i %s %s to art-history" % (i, href, title))
+                url = Url(url = href,
+                          title = title,
+                          id = id) 
+                url.put()
+                child_keys.append(url.key())
+            else:
+                child_keys.append(href_to_key_dict[href])
+
+        logging.info("updating child_keys")
+        if topic.child_keys != child_keys:
+            if version.default:
+                logging.info("creating new default version")
+                new_version = version.copy_version()
+                new_version.description = "SmartHistory Update"
+                new_version.put()
+                new_topic = Topic.get_by_id("art-history", new_version)    
+                new_topic.update(child_keys = child_keys)
+                new_version.set_default_version()
+            else:
+                topic.update(child_keys = child_keys)
+            logging.info("finished updating version number %i" % version.number)
         else:
-            child_keys.append(href_to_key_dict[href])
-        i += 1
+            logging.info("nothing changed")
 
-    logging.info("updating child_keys")
-    if topic.child_keys != child_keys:
-        topic.update(child_keys = child_keys)
-    else:
-        logging.info("nothing changed")
-    return links
- 
-
+        
 class EditTaxonomy(request_handler.RequestHandler):
 
     def get_tree_html(self, t):
@@ -99,8 +120,7 @@ class EditTaxonomy(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
-        # version = models.TopicVersion.get_edit_version()
-        # importSmartHistory(version)
+        # importSmartHistory()
         # t = models.Topic.all().filter("title = ", "Algebra").get()
         # title = t.topic_parent.topic_parent.title
         # logging.info(title)
