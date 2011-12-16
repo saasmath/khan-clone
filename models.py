@@ -1126,7 +1126,7 @@ class TopicVersion(db.Model):
             parent_keys = [parent.key()]
             ancestor_keys = parent_keys[:]
             ancestor_keys.extend(parent.ancestor_keys)
-        new_tree = util.clone_entity(old_tree, **{'version': new_version, 'parent': new_root, 'parent_keys': parent_keys, 'ancestor_keys': ancestor_keys})
+        new_tree = util.clone_entity(old_tree, **{'key_name': old_tree.key().name(), 'version': new_version, 'parent': new_root, 'parent_keys': parent_keys, 'ancestor_keys': ancestor_keys})
         new_tree.put()
         if not new_root:
             new_root = new_tree
@@ -1450,7 +1450,7 @@ class Topic(db.Model):
             all_decendant_keys = {} # used to make sure we don't loop
             descendant_keys = {}
             descendants = child_topics
-            while True: # should loop n times making n db.gets() where n is the tree depth under topic
+            while True: # should iterate n+1 times making n db.gets() where n is the tree depth under topic
                 for descendant in descendants:
                     descendant_keys.update(dict((key, True) for key in descendant.child_keys if key.kind() == "Topic" and not all_descendant_keys.has_key(key)))
                 if not descendant_keys: # no more topic descendants that we haven't already seen before
@@ -1501,8 +1501,8 @@ class Topic(db.Model):
             ancestor_keys = parent_keys[:]
             ancestor_keys.extend(parent.ancestor_keys)
             
-            new_topic = Topic(root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
-                              key_name,
+            new_topic = Topic(parent = root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
+                              key_name = key_name,
                               version = version,
                               id = id,
                               title = title,
@@ -1512,8 +1512,8 @@ class Topic(db.Model):
         else:
             root = Topic.get_root(version)
 
-            new_topic = Topic(root,
-                              key_name,
+            new_topic = Topic(parent = root,
+                              key_name = key_name,
                               version = version,
                               id = id,
                               title = title)
