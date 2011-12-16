@@ -433,18 +433,18 @@ var ClassProfile = {
 
                         if (objective.url === "/exercisedashboard") {
                             // Objective is any exercise
-                            objective.url = "/profile/" + student.email
+                            objective.url = "/profile/" + encodeURIComponent(student.email)
                                                 + "/vital-statistics/exercise-progress";
                         } else if (matchExerciseURL) {
                             // Objective is a particular exercise
                             if (matchExerciseURL.length === 2) {
-                                 objective.url = "/profile/" + student.email
+                                 objective.url = "/profile/" + encodeURIComponent(student.email)
                                                     + "/vital-statistics/exercise-problems/"
                                                     + matchExerciseURL[1];
                             }
                         } else {
                             // Objective is a(ny) video
-                            objective.url = "/profile/" + student.email
+                            objective.url = "/profile/" + encodeURIComponent(student.email)
                                                 + "/vital-statistics/activity";
                         }
                     });
@@ -498,7 +498,7 @@ var ClassProfile = {
                 if (goalObjective.type == 'GoalObjectiveExerciseProficiency') {
                     $(this).click(function() {
                         // TODO: awkward turtle, replace with normal href action
-                        window.location = "/profile/" + goalViewModel.student.email
+                        window.location = "/profile/" + encodeURIComponent(goalViewModel.student.email)
                                             + "/vital-statistics/exercise-problems/"
                                             + goalObjective.internal_id;
                     });
@@ -1032,7 +1032,7 @@ var ClassProfile = {
                 exercise.exercise_display = data.exercise_names[idx2].display_name;
                 exercise.progress = (exercise.progress*100).toFixed(0);
                 // TODO: awkward turtle, replace w normal href
-                exercise.link = "/profile/" + student_row.email
+                exercise.link = "/profile/" + encodeURIComponent(student_row.email)
                                     + "/vital-statistics/exercise-problems/"
                                     + data.exercise_names[idx2].name;
                 if (exercise.last_done) {
@@ -1053,6 +1053,7 @@ var ClassProfile = {
         });
 
         var template = Templates.get( "profile.profile-class-progress-report" );
+
         $("#graph-content").html( template(data) );
         ProgressReport.init(data);
     }

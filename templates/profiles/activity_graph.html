@@ -251,7 +251,7 @@
 </script>
 <p class="vital-statistics-description">
     Shows how much work you're doing each day.
-     {{ profile_macros.graph_date_picker(student_email, "activity") }}
+     {{ profile_macros.graph_date_picker(student_email_quoted, "activity") }}
 </p>
 <div id="highchart-container" class="{% if is_graph_empty %}empty-chart{% endif %}">
     <div id="highchart"></div>
