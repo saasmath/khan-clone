@@ -64,13 +64,13 @@ def add_api_header(func):
         if isinstance(result, current_app.response_class):
             result.headers["X-KA-API-Response"] = "true"
 
-        # Note that cacheable responses can be cached by shared caches, such
-        # as proxies. It would be unwise to cache headers that indicate error
-        # conditions, since they are per-user.
-        cacheable = result.cache_control.public
-        if (not cacheable and 
-                not is_current_api_version(os.environ.get(XSRF_HEADER_KEY))):
-            result.headers["X-KA-API-Version-Mismatch"] = "true"
+            # Note that cacheable responses can be cached by shared caches, such
+            # as proxies. It would be unwise to cache headers that indicate error
+            # conditions, since they are per-user.
+            cacheable = result.cache_control.public
+            if (not cacheable and 
+                    not is_current_api_version(os.environ.get(XSRF_HEADER_KEY))):
+                result.headers["X-KA-API-Version-Mismatch"] = "true"
 
         return result
 
