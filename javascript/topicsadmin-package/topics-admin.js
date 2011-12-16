@@ -301,9 +301,7 @@ var TopicTreeEditor = {
                     buttons: null
                 });
             },
-            error: function() {
-                // TomY TODO handle error
-            }
+            error: TopicTreeEditor.handleError
         });
     },
 
@@ -312,12 +310,25 @@ var TopicTreeEditor = {
     },
 
     editVersion: function(versionNumber) {
-        this.versionListView.hide();
+        if (this.versionListView)
+            this.versionListView.hide();
 
         version = getTopicVersionList().get(versionNumber);
-        if (version)
+        if (version) {
+            version.getTopicTree().reset();
             this.init(version)
+        }
     },
+
+    handleError: function() {
+        popupGenericMessageBox({
+            title: "Server error",
+            message: "There has been a server error. The topic tree will now refresh.",
+            buttons: [
+                { title: "OK", action: function() { hideGenericMessageBox(); TopicTreeEditor.editVersion(TopicTreeEditor.currentVersion.get('number')); } }
+            ]
+        });
+    }
 };
 
 // Details view common code
@@ -438,7 +449,8 @@ var TopicTopicNodeEditor = {
 
                             node.expand();
                             node.getChildren()[data.pos].activate();
-                        }
+                        },
+                        error: TopicTreeEditor.handleError
                     });
                 }
             });
@@ -502,7 +514,8 @@ var TopicTopicNodeEditor = {
                 data: data,
                 success: function(json) {
                     parentModel.removeChild('Topic', model.id);
-                }
+                },
+                error: TopicTreeEditor.handleError
             });
         }
     },
@@ -541,7 +554,8 @@ var TopicTopicNodeEditor = {
             data: data,
             success: function(json) {
                 KAConsole.log('Added item successfully.');
-            }
+            },
+            error: TopicTreeEditor.handleError
         });
     },
 
@@ -562,9 +576,7 @@ var TopicTopicNodeEditor = {
                 data: moveData,
                 success: function() {
                 },
-                error: function() {
-                    // ?
-                }
+                error: TopicTreeEditor.handleError
             });
         });
     },
@@ -715,7 +727,8 @@ var TopicItemNodeEditor = {
                 data: data,
                 success: function(json) {
                     parentModel.removeChild(kind, id);
-                }
+                },
+                error: TopicTreeEditor.handleError
             });
 
         }
