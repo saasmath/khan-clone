@@ -331,6 +331,24 @@ def topic_version(version = None):
     version = models.TopicVersion.get_by_id(version)
     return version
 
+@route("/api/v1/topicversion/<version>", methods=["PUT"])   
+@jsonp
+@jsonify
+def topic_version(version = None):
+    version = models.TopicVersion.get_by_id(version)
+    
+    version_json = request.json
+
+    changed = False
+    for key in ["title", "description"]: 
+        if getattr(version, key) != version_json[key]:
+            setattr(version, key, version_json[key])
+            changed = True
+
+    if changed:
+        version.put()
+
+    return version
 
 @route("/api/v1/topicversions/", methods=["GET"])   
 @jsonp
