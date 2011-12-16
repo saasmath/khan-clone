@@ -32,6 +32,12 @@ Avatar.Picker = function(userModel) {
      * when an avatar is selected.
      */
     this.userModel = userModel;
+
+    /**
+     * The list of avatars bucketed by category. This corresponds
+     * directly to the JSON returned by the server (see fetchData_)
+     */
+    this.avatarData_ = [];
 };
 
 Avatar.Picker.template = Templates.get( "profile.avatar-picker" );
@@ -43,39 +49,7 @@ Avatar.Picker.prototype.getTemplateContext_ = function() {
     // Dummy data for now. Replace with the real thing.
     return {
         selectedSrc: this.userModel.get( "avatarSrc" ),
-        categories: [
-            {
-                title: "Easy avatars",
-                avatars: [
-                    {
-                        name: "Easy 1",
-                        imageSrc: "http://www.trinigamers.com/forums/images/avatars/warp_ray_128.gif"
-                    }, {
-                        name: "Easy 2",
-                        imageSrc: "http://www.trinigamers.com/forums/images/avatars/raynor1_128.gif"
-                    }
-                ]
-            }, {
-                title: "Medium avatars",
-                avatars: [
-                    {
-                        name: "Medium 1",
-                        imageSrc: "http://www.trinigamers.com/forums/images/avatars/findlay1_128.gif"
-                    }, {
-                        name: "Medium 2",
-                        imageSrc: "http://www.trinigamers.com/forums/images/avatars/selendis_128.gif"
-                    }
-                ]
-            }, {
-                title: "Hard avatars",
-                avatars: [
-                    {
-                        name: "Hard 1",
-                        imageSrc: "http://www.trinigamers.com/forums/images/avatars/zergling_128.gif"
-                    }
-                ]
-            }
-        ]
+        categories: this.avatarData_
     };
 };
 
@@ -124,6 +98,33 @@ Avatar.Picker.prototype.onAvatarChanged_ = function() {
 };
 
 /**
+ * Fetches the list of avatars from the server.
+ */
+Avatar.Picker.prototype.fetchData_ = function() {
+    $.ajax({
+        method: "GET",
+        url: "/api/v1/avatars",
+        data: { casing: "camel" },
+        success: _.bind( this.onDataLoaded_, this ),
+        error: function() {
+            // TODO: handle
+        }
+    });
+};
+
+/**
+ * Handles a successful response from the server for the list of avatars.
+ */
+Avatar.Picker.prototype.onDataLoaded_ = function( data ) {
+    this.avatarData_ = data;
+
+    // Note that this will just render hidden if the dialog is
+    // not visible. That's OK.
+    $(this.contentEl).html(
+            Avatar.Picker.template( this.getTemplateContext_() ));
+};
+
+/**
  * Renders the contents of the picker and displays it.
  */
 Avatar.Picker.prototype.show = function() {
@@ -134,6 +135,7 @@ Avatar.Picker.prototype.show = function() {
         this.el = rootJel.get( 0 );
         this.contentEl = contentJel.get( 0 );
         this.bindEvents_();
+        this.fetchData_();
     }
 
     $(this.contentEl).html(

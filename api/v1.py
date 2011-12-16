@@ -8,6 +8,7 @@ import models
 import layer_cache
 import topics_list
 import templatetags # Must be imported to register template tags
+from avatars import util_avatars
 from badges import badges, util_badges, models_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
@@ -1346,3 +1347,20 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
+
+@route("/api/v1/avatars", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_avatars():
+    """ Returns the list of all avatars bucketed by categories.
+    If this is an authenticated request and user-info is available, the
+    avatars will be annotated with whether or not they're available.
+    """
+    user_data = models.UserData.current()
+    result = util_avatars.avatars_by_category()
+    if user_data:
+        for category in result:
+            for avatar in category['avatars']:
+                avatar.is_available = avatar.is_satisfied_by(user_data)
+    return result
