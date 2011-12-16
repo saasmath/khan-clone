@@ -1,6 +1,6 @@
 // Creates & handles events for the topic tree
 
-var debugNodeIDs = true;
+var debugNodeIDs = false;
 
 var TopicTreeEditor = {
     tree: null,
