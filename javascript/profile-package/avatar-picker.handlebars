@@ -9,7 +9,7 @@
     <div class="category-title">{{title}}</div>
     <div class="category-avatars">
     {{#each avatars}}
-        <div class="avatar">
+        <div class="avatar{{#unless isAvailable}} locked{{/unless}}">
             <img src="{{imageSrc}}" class="avatar-preview">
             <div class="name">{{name}}</div>
         </div>

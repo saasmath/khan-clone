@@ -680,10 +680,21 @@ input.nickname {
 .avatar-picker .avatar {
     display: inline-block;
     border: 1px solid transparent;
+    cursor: pointer;
 }
 
 .avatar-picker .avatar.hover {
     border: 1px solid black;
+}
+
+.avatar-picker .avatar.locked {
+    opacity: 0.4;
+    filter:alpha(opacity=40);
+    cursor: auto;
+}
+
+.avatar-picker .avatar.locked.hover {
+    border: 1px solid transparent;
 }
 
 .avatar-picker .category-section {
