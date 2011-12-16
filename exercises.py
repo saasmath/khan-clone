@@ -109,7 +109,10 @@ class ViewExercise(request_handler.RequestHandler):
 
         exercise_template_html = exercise_template()
 
-        exercise_body_html, exercise_inline_script, exercise_inline_style, data_require, sha1 = exercise_contents(exercise)
+        
+        exercise_body_html, exercise_inline_script, exercise_inline_style, data_require, sha1 = exercise_contents(exercise) \
+            if not hasattr(exercise, "commit") or exercise.commit == models.REVISION_NUM else github_exercise_contents(exercise)
+            
         user_exercise.exercise_model.sha1 = sha1
 
         user_exercise.exercise_model.related_videos = map(lambda exercise_video: exercise_video.video, user_exercise.exercise_model.related_videos_fetch())
@@ -330,10 +333,7 @@ def exercise_template():
 
     return contents
 
-@layer_cache.cache_with_key_fxn(lambda exercise: "exercise_contents_%s" % exercise.name, layer=layer_cache.Layers.InAppMemory)
-def exercise_contents(exercise):
-    contents = raw_exercise_contents("%s.html" % exercise.name)
-
+def exercise_contents_helper(contents):
     re_data_require = re.compile("^<html.*(data-require=\".*\").*>", re.MULTILINE)
     match_data_require = re_data_require.search(contents)
     data_require = match_data_require.groups()[0] if match_data_require else ""
@@ -356,6 +356,17 @@ def exercise_contents(exercise):
         raise MissingExerciseException("Missing exercise body in content for exid '%s'" % exercise.name)
 
     return map(lambda s: s.decode('utf-8'), (body_contents, script_contents, style_contents, data_require, sha1))
+
+@layer_cache.cache_with_key_fxn(lambda exercise: "exercise_contents_%s" % exercise.name, layer=layer_cache.Layers.InAppMemory)
+def exercise_contents(exercise):
+    return exercise_contents_helper(raw_exercise_contents("%s.html" % exercise.name))
+
+def github_exercise_contents(exercise):
+    try:
+        request = urllib.urlopen("https://raw.github.com/Khan/khan-exercises/%s/exercises/%s.html" % (exercise.commit, exercise.name))
+        return exercise_contents_helper(request.read())
+    except:
+        raise MissingExerciseException("Missing exercise %s, commit %s", (exercise.name, exercise.commit))
 
 @layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
 def raw_exercise_contents(exercise_file):

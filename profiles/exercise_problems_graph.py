@@ -21,7 +21,7 @@ class ProblemPoint:
         # when past sha1s conflict with current exercise contents.
         self.renderable = len(problem_log.sha1 or "") > 0
 
-        self.current = self.renderable and problem_log.sha1 == current_sha1
+        self.current = self.renderable # and problem_log.sha1 == current_sha1
 
     def video_titles_html(self):
         if not self.video_point:
