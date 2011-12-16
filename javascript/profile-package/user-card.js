@@ -64,7 +64,7 @@ UserCardView = Backbone.View.extend({
 
     onNicknameChanged_: function( e ) {
         // TODO: validate
-        var value = this.$("#nickname").val()
+        var value = this.$("#nickname").val();
         this.model.set({ "nickname": value });
         this.model.save();
     },
