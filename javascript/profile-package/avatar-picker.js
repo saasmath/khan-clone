@@ -60,20 +60,15 @@ Avatar.Picker.prototype.bindEvents_ = function() {
     $(this.el).delegate(
             ".category-avatars .avatar",
             "click",
-            _.bind( this.onAvatarSelected_, this ));
-
-    $(this.el).delegate(
+            _.bind( this.onAvatarSelected_, this ))
+        .delegate(
             ".category-avatars .avatar",
             "mouseenter",
-            function( ev ) {
-                $(ev.currentTarget).addClass("hover");
-            });
-    $(this.el).delegate(
+            function( ev ) { $(ev.currentTarget).addClass("hover"); })
+        .delegate(
             ".category-avatars .avatar",
             "mouseleave",
-            function( ev ) {
-                $(ev.currentTarget).removeClass("hover");
-            });
+            function( ev ) { $(ev.currentTarget).removeClass("hover"); });
 
     this.userModel.bind( "change:avatarSrc",
             _.bind( this.onAvatarChanged_, this ));
