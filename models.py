@@ -1071,6 +1071,31 @@ class TopicVersion(db.Model):
         if version:
             return max(version.date_updated, library_content_date_updated)
 
+    # used by get_content_with_no_topic - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda : "TopicVersion.get_all_content_keys_%s" % Setting.cached_library_content_date())
+    def get_all_content_keys():
+        videos = Video.all(keys_only = True).fetch(100000)
+        query = Exercise.all()
+        query._keys_only = True
+        exercises = query.fetch(100000)
+        urls = Url.all(keys_only = True).fetch(100000)
+        content = videos
+        content.extend(exercises)
+        content.extend(urls)
+        return content
+
+    def get_unused_content(self):
+        topics = Topic.all().filter("version =", self).run()
+        used_content_keys = set()
+        for t in topics:
+            used_content_keys.update([child_key for child_key in t.child_keys if child_key.kind() != "Topic"])
+    
+        content_keys = set(TopicVersion.get_all_content_keys())
+
+        return db.get(content_keys.difference(used_content_keys))
+        
+
     @staticmethod
     def get_latest_version():
         return TopicVersion.all().order("-number").get()
@@ -1761,21 +1786,6 @@ class Video(Searchable, db.Model):
 
     def youtube_thumbnail_url(self):
         return ImageCache.url_for("http://img.youtube.com/vi/%s/hqdefault.jpg" % self.youtube_id)
-
-
-    @staticmethod
-    def get_videos_with_no_topic():
-        topics = ConceptTreeNode.all().run()
-        topic_key_dict = dict((t.key(), True) for t in topics)
-        content_keys = set()
-        for t in topics:
-            content_keys.update([child_key for child_key in t.child_keys if not topic_key_dict.has_key(child_key)])
-
-        video_keys = Video.all(keys_only = True).run()
-        video_keys_set = set(video_keys)
-        
-        return video_keys_set.difference(content_keys)
-
 
     @staticmethod
     def get_for_readable_id(readable_id):

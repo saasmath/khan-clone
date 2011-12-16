@@ -327,7 +327,7 @@ def topic_children(version = None):
 @route("/api/v1/topicversion/<version>", methods=["GET"])   
 @jsonp
 @jsonify
-def topic_children(version = None):
+def topic_version(version = None):
     version = models.TopicVersion.get_by_id(version)
     return version
 
@@ -335,10 +335,17 @@ def topic_children(version = None):
 @route("/api/v1/topicversions/", methods=["GET"])   
 @jsonp
 @jsonify
-def topic_children(version = None):
+def topic_versions():
     version = models.TopicVersion.all().order("-number").fetch(10000)
     return version
-    
+
+@route("/api/v1/topicversion/<version>/unused_content", methods=["GET"])   
+@jsonp
+@jsonify
+def topic_version_unused_content(version = None):
+    version = models.TopicVersion.get_by_id(version)
+    return version.get_unused_content()
+
 @route("/api/v1/url/<int:url_id>", methods=["GET"])   
 @jsonp
 @jsonify

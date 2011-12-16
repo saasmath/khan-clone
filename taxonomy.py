@@ -33,7 +33,6 @@ def getSmartHistoryContent():
 class ImportSmartHistory(request_handler.RequestHandler):
 
     # update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)
-    @user_util.developer_only
     def get(self):
 
         default = models.TopicVersion.get_default_version()
@@ -118,8 +117,7 @@ class EditTaxonomy(request_handler.RequestHandler):
         html += "</li>"
         return html
 
-    @user_util.developer_only
-    def get(self):
+    def get(self):        
         # importSmartHistory()
         # t = models.Topic.all().filter("title = ", "Algebra").get()
         # title = t.topic_parent.topic_parent.title
