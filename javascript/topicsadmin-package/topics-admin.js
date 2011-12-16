@@ -1,5 +1,7 @@
 // Creates & handles events for the topic tree
 
+var debugNodeIDs = false;
+
 var TopicTreeEditor = {
     tree: null,
     boundList: [],
@@ -23,6 +25,8 @@ var TopicTreeEditor = {
                     getVideoList().fetchByID(node.data.id, TopicNodeEditor.initModel, [node]);
                 } else if (node.data.kind == 'Exercise') {
                     getExerciseList().fetchByID(node.data.id, TopicNodeEditor.initModel, [node]);
+                } else if (node.data.kind == 'Url') {
+                    getUrlList().fetchByID(node.data.id, TopicNodeEditor.initModel, [node]);
                 } else {
                     $('#details-view').html('');
                 }
@@ -36,7 +40,7 @@ var TopicTreeEditor = {
                         });
                     });
                 }
-                if (node.data.kind == 'Video' || node.data.kind == 'Exercise') {
+                if (node.data.kind == 'Video' || node.data.kind == 'Exercise' || node.data.kind == 'Url') {
                     $(span).contextMenu({menu: "item_context_menu"}, function(action, el, pos) {
                         TopicItemNodeEditor.handleAction(action, node, node.data.kind, node.data.id, topicTree.get(node.parent.data.id));
                     });
@@ -92,7 +96,8 @@ var TopicTreeEditor = {
                     id: 'root',
                     kind: 'Topic',
                     isFolder: true,
-                    isLazy: true
+                    isLazy: true,
+                    icon: 'topictree-icon-small.png'
             } ]
         });
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
@@ -164,10 +169,13 @@ var TopicTreeEditor = {
             id: id,
             kind: kind
         };
+        if (debugNodeIDs) {
+            data.title += ' [(' + id + ')]';
+        }
         if (kind == 'Topic') {
             data.isFolder = true;
             data.isLazy = true;
-            data.icon = 'leaf.png';
+            data.icon = 'leaf-icon-small.png';
             if (hide) {
                 data.addClass = 'hidden-topic';
                 data.title = title + ' [Hidden]';
@@ -176,6 +184,8 @@ var TopicTreeEditor = {
             data.icon = 'video-camera-icon-full-small.png';
         } else if (kind == 'Exercise') {
             data.icon = 'exercise-icon-small.png';
+        } else if (kind == 'Url') {
+            data.icon = 'link-icon-small.png';
         }
         return data;
     },
@@ -208,7 +218,11 @@ var TopicTreeEditor = {
 
         KAConsole.log('refreshing ' + model.id);
 
-        node.setTitle(model.get("title"));
+        if (debugNodeIDs) {
+            node.setTitle(model.get("title") + ' [' + model.id + ']');
+        } else {
+            node.setTitle(model.get("title"));
+        }
 
         node.removeChildren();
         if (model.get('children')) {
@@ -314,6 +328,7 @@ var TopicNodeEditor = {
         $('#details-view').html(html);
 
         TopicExerciseNodeEditor.deinit();
+        TopicUrlNodeEditor.deinit();
 
         if (TopicNodeEditor.modelKind == 'Topic') {
             TopicTopicNodeEditor.init();
@@ -321,7 +336,9 @@ var TopicNodeEditor = {
             TopicExerciseNodeEditor.init();
         } else if (TopicNodeEditor.modelKind == 'Video') {
             TopicVideoNodeEditor.init();
-        }
+        } else if (TopicNodeEditor.modelKind == 'Url') {
+            TopicUrlNodeEditor.init();
+        } 
     }
 };
 
@@ -331,6 +348,7 @@ var TopicTopicNodeEditor = {
     existingItemView: null,
     newExerciseView: null,
     newVideoView: null,
+    newUrlView: null,
     contextNode: null,
     contextModel: null,
     itemCopyBuffer: null,
@@ -417,6 +435,12 @@ var TopicTopicNodeEditor = {
                 TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
 
             TopicTopicNodeEditor.existingItemView.show('exercise', TopicTopicNodeEditor.finishAddExistingItem);
+
+        } else if (action == 'add_new_url') {
+            if (!TopicTopicNodeEditor.newUrlView)
+                TopicTopicNodeEditor.newUrlView = new TopicCreateUrlView();
+
+            TopicTopicNodeEditor.newUrlView.show();
 
         } else if (action == 'paste_item') {
 
@@ -554,7 +578,7 @@ var TopicItemNodeEditor = {
                     unsavedChanges = true;
             }
         });
-        if (unsavedChanges || TopicExerciseNodeEditor.unsavedChanges()) {
+        if (unsavedChanges || TopicExerciseNodeEditor.unsavedChanges() || TopicUrlNodeEditor.unsavedChanges()) {
             $('#details-view .save-button').removeClass('disabled').addClass('green');
         } else {
             $('#details-view .save-button').addClass('disabled').removeClass('green');
@@ -582,6 +606,7 @@ var TopicItemNodeEditor = {
                 }
             });
             TopicExerciseNodeEditor.applyChanges(attrs);
+            TopicUrlNodeEditor.applyChanges(attrs);
 
             if (attrs != {}) {
                 var url = TopicNodeEditor.model.url();
@@ -849,6 +874,63 @@ var TopicVideoNodeEditor = {
     }
 };
 
+// Details view for external links
+
+var TopicUrlNodeEditor = {
+    tags: null,
+
+    unsavedChanges: function() {
+        if (TopicUrlNodeEditor.tags) {
+            return !(
+                arraysEqual(TopicUrlNodeEditor.tags, TopicNodeEditor.model.get('tags'))
+            );
+        }
+
+        return false;
+    },
+    applyChanges: function(attrs) {
+        if (TopicUrlNodeEditor.tags && !arraysEqual(TopicUrlNodeEditor.tags, TopicNodeEditor.model.get('tags')))
+            attrs['tags'] = TopicUrlNodeEditor.tags;
+    },
+
+    updateTags: function() {
+        var html = '';
+        _.each(TopicUrlNodeEditor.tags, function(tag) {
+            html += '<div>' + tag + ' (<a href="javascript: TopicUrlNodeEditor.deleteTag(\'' + tag + '\');">remove</a>)</div>';
+        });
+        $("#url-tags-list").html(html);
+    },
+    addTag: function() {
+        var tag = $('#url-tag-add').val();
+        var idx = TopicUrlNodeEditor.tags.indexOf(tag);
+        if (tag && idx < 0) {
+            TopicUrlNodeEditor.tags.push(tag);
+            TopicUrlNodeEditor.updateTags();
+            TopicItemNodeEditor.handleChange();
+        }
+
+        $('#url-tag-add').val('');
+    },
+    deleteTag: function(tag) {
+        var idx = TopicUrlNodeEditor.tags.indexOf(tag);
+        if (idx >= 0) {
+            TopicUrlNodeEditor.tags.splice(idx, 1);
+            TopicUrlNodeEditor.updateTags();
+            TopicItemNodeEditor.handleChange();
+        }
+    },
+
+    init: function() {
+        TopicItemNodeEditor.init();
+
+        TopicUrlNodeEditor.tags = TopicNodeEditor.model.get('tags').slice(0);
+        TopicUrlNodeEditor.updateTags();
+    },
+    deinit: function() {
+        TopicUrlNodeEditor.tags = null;
+    }
+};
+
 // Add existing video/exercise dialog box
 
 var TopicAddExistingItemView = Backbone.View.extend({
@@ -1099,6 +1181,53 @@ var TopicCreateVideoView = Backbone.View.extend({
                 $(self.el).find('.ok_button').addClass('disabled').removeClass('green');
             },
         });
+    },
+
+    hide: function() {
+        return $(this.el).modal('hide');
+    }
+});
+
+// Add a new url dialog box
+
+var TopicCreateUrlView = Backbone.View.extend({
+    template: Templates.get( "topicsadmin.create-url" ),
+
+    initialize: function() {
+        this.render();
+    },
+
+    events: {
+        'click .ok_button': 'createUrl'
+    },
+
+    render: function() {
+        this.el = $(this.template({type: this.type})).appendTo(document.body).get(0);
+        this.delegateEvents();
+        return this;
+    },
+
+    show: function(type) {
+        $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
+
+        $(this.el).find('input[name="url"]').val('');
+    },
+
+    createUrl: function() {
+        var url = $(this.el).find('input[name="url"]').val();
+        var title = $(this.el).find('input[name="title"]').val();
+        var urlObject = new ExternalURL({ url: url, title: title });
+
+        urlObject.save({}, {
+            success: function(model) {
+                TopicTopicNodeEditor.finishAddExistingItem('Url', model.id, model.get('title'), null, null, -1);
+            }
+        });
+        this.hide();
     },
 
     hide: function() {

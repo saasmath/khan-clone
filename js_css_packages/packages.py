@@ -159,6 +159,8 @@ javascript = {
             "create-exercise.handlebars",
             "edit-exercise.handlebars",
             "add-existing-item.handlebars",
+            "create-url.handlebars",
+            "edit-url.handlebars",
             "topics-admin.js",
         ]
 	},
@@ -209,7 +211,7 @@ stylesheets = {
         "files": [
 			"ui_dynatree.css",
             "jquery.contextMenu.css",
-            "topicsadmin.css"
+            "topics-admin.css"
 		]
 	},
 }

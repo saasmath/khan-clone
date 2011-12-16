@@ -1701,6 +1701,10 @@ class Url(db.Model):
     date_created = db.DateTimeProperty(auto_now_add=True)
     date_updated = db.DateTimeProperty(indexed=False, auto_now=True)        
 
+    @property
+    def id(self):
+        return self.key().id()
+
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
