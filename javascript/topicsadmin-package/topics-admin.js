@@ -1,12 +1,11 @@
 // Creates & handles events for the topic tree
 
-var debugNodeIDs = false;
+var debugNodeIDs = true;
 
 var TopicTreeEditor = {
     tree: null,
     boundList: [],
     maxProgressLength: 0,
-    renameTable: {},
 
     init: function() {
         // Attach the dynatree widget to an existing <div id="tree"> element
@@ -54,7 +53,7 @@ var TopicTreeEditor = {
             },
 
             onLazyRead: function(node) {
-                topicTree.fetchByID(node.data.id, this.refreshTreeNode);
+                topicTree.fetchByID(node.data.id, TopicTreeEditor.refreshTreeNode);
             },
 
             dnd: {
@@ -194,24 +193,6 @@ var TopicTreeEditor = {
     refreshTreeNode: function() {
         var model = this;
 
-        if (TopicTreeEditor.renameTable[model.id]) {
-            var old_id = TopicTreeEditor.renameTable[model.id];
-            node = TopicTreeEditor.tree.getNodeByKey(model.get('kind') + '/' + old_id);
-            if (node) {
-                var parent = node.parent;
-                var pos = parent.childList.indexOf(node);
-                var beforeNode = null;
-
-                node.remove();
-
-                if (parent.childList.length > pos)
-                    beforeNode = parent.childList[pos];
-                parent.addChild(TopicTreeEditor.createChild(model.get('kind'), model.id, model.get('title'), model.get('hide')), beforeNode);
-
-                delete TopicTreeEditor.renameTable[model.id];
-            }
-        }
-
         node = TopicTreeEditor.tree.getNodeByKey(model.get('kind') + '/' + model.id);
         if (!node)
             return;
@@ -237,6 +218,37 @@ var TopicTreeEditor = {
             node.expand();
         }
     },
+
+	handleChange: function(model, oldID) {
+		var kind = model.get('kind');
+		var title_field = 'title';
+		if (kind == 'Exercise')
+			title_field = 'display_name';
+
+		KAConsole.log('Model of type ' + kind + ' changed ID: ' + oldID + ' -> ' + model.id);
+
+		getDefaultTopicTree().each(function(topic) {
+			var found = false;
+			var children = _.map(topic.get('children'), function(child) {
+				if (child.kind == kind && child.id == oldID) {
+					var new_child = {
+						id: model.id,
+						kind: kind,
+						title: model.get(title_field),
+						hide: child.hide
+					};
+
+					found = true;
+
+					return new_child;
+				} else {
+					return child;
+				}
+			});
+			if (found)
+				topic.set({children: children});
+		});
+	},
 
     // Called with TopicTree as "this"
     treeUpdate: function() {
@@ -548,13 +560,15 @@ var TopicTopicNodeEditor = {
                 else
                     value = $(this).val();
 
-                var setter = {};
-                setter[field] = value;
-                if (field == 'id' && value != TopicNodeEditor.model.id)
-                    TopicTreeEditor.renameTable[value] = TopicNodeEditor.model.id;
-                TopicNodeEditor.model.set(setter);
+                var attrs = {};
+                var oldID = TopicNodeEditor.model.id;
+                attrs[field] = value;
 
-                TopicNodeEditor.model.save();
+				// We do special things on save because of the potential ID change
+                TopicNodeEditor.model.save(attrs, {
+                    url: TopicNodeEditor.model.url(), // URL with the old slug value
+                    success: function() { TopicTreeEditor.handleChange(TopicNodeEditor.model, oldID); }
+                });
             }
         });
     }
@@ -609,43 +623,15 @@ var TopicItemNodeEditor = {
             TopicUrlNodeEditor.applyChanges(attrs);
 
             if (attrs != {}) {
-                var url = TopicNodeEditor.model.url();
 
                 Throbber.show($("#details-view .save-button"), true);
 
-                var id_field = 'readable_id';
-                var title_field = 'title';
-                if (TopicNodeEditor.model.get('kind') == 'Exercise') {
-                    id_field = 'name';
-                    title_field = 'display_name';
-                }
-                if (id_field in attrs || title_field in attrs) {
-                    var children = _.map(parentModel.get('children').slice(0), function(child) {
-                        if (child.id == TopicNodeEditor.model.id) {
-                            var new_child = {};
-                            if (id_field in attrs)
-                                new_child.id = attrs[id_field];
-                            else
-                                new_child.id = child.id;
-
-                            if (title_field in attrs)
-                                new_child.title = attrs[title_field];
-                            else
-                                new_child.title = child.title;
-
-                            new_child.kind = child.kind;
-                            new_child.hide = child.hide;
-                            return new_child;
-                        } else {
-                            return child;
-                        }
-                    });
-                    parentModel.set({ children: children });
-                }
-
+				// We do special things on save because of the potential ID change
+                var oldID = TopicNodeEditor.model.id;
                 TopicNodeEditor.model.save(attrs, {
-                    url: url,
+                    url: TopicNodeEditor.model.url(), // URL with the old slug value
                     success: function() {
+                        TopicTreeEditor.handleChange(TopicNodeEditor.model, oldID);
                         Throbber.hide();
                     }
                 });

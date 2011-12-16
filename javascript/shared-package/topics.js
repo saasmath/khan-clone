@@ -71,6 +71,7 @@ IncrementalCollection = Backbone.Collection.extend({
 
         return ret;
     },
+
     resetInited: function(models, options) {
         this.reset(models, options);
         _.each(this.models, function(model) {
@@ -100,8 +101,11 @@ IncrementalCollection = Backbone.Collection.extend({
 		},
 
 		initialize: function() {
-			this.url = '/api/v1/topicversion/edit/topic/' + this.get('id');
 		},
+
+        url: function() {
+			return '/api/v1/topicversion/edit/topic/' + this.id;
+        },
 
         getChild: function(id) {
             var found = false;
