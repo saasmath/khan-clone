@@ -14,11 +14,17 @@
                 {{/if}}
             </div>
             <div class="goal">
-                <ul class="inline-list objective-list">
-                {{#each goal.objectives}}
-                    {{> goal-objectives }}
-                {{/each}}
-                </ul>
+                {{# if goal.objectives }}
+                    <ul class="inline-list objective-list">
+                    {{#each goal.objectives}}
+                        {{> goal-objectives }}
+                    {{/each}}
+                    </ul>
+                {{else}}
+                    <div class="no-goal">
+                        {{student.nickname}} is not current working on a goal
+                    </div>
+                {{/if}}
             </div>
         </div>
     {{/each}}

@@ -181,3 +181,8 @@
 #individual_report #vital-statistics #class-student-goals .goal-row {
     white-space: nowrap;
 }
+
+#class-student-goals .goal .no-goal {
+    color: #aaa;
+    text-align: center;
+}
