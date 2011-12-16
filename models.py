@@ -830,6 +830,18 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return query.get()
 
+    # Avoid an extra DB call in the (fairly often) case that the requested email
+    # is the email of the currently logged-in user
+    @staticmethod
+    def get_possibly_current_user(email):
+        if not email:
+            return None
+
+        user_data_current = UserData.current()
+        if user_data_current and user_data_current.user_email == email:
+            return user_data_current
+        return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+
     @staticmethod
     def insert_for(user_id, email):
         if not user_id or not email:

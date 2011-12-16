@@ -323,6 +323,7 @@ var Profile = {
     },
 
     loadGraph: function(href, fNoHistoryEntry) {
+        console.log('loadGraph called with href=', href);
         var apiCallbacksTable = {
             '/api/v1/user/goals': this.renderUserGoals,
             '/api/v1/user/exercises': this.renderExercisesTable,
