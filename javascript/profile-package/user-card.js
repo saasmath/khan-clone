@@ -37,7 +37,9 @@ UserCardView = Backbone.View.extend({
     className: "user-info",
 
     events: {
-        "click #avatar-pic": "onAvatarClick_",
+        "click .avatar-pic-container": "onAvatarClick_",
+        "mouseenter .avatar-pic-container": "onAvatarHover_",
+        "mouseleave .avatar-pic-container": "onAvatarLeave_",
         "change #nickname": "onNicknameChanged_"
     },
 
@@ -67,6 +69,14 @@ UserCardView = Backbone.View.extend({
         var value = this.$("#nickname").val();
         this.model.set({ "nickname": value });
         this.model.save();
+    },
+
+    onAvatarHover_: function( e ) {
+        this.$(".avatar-change-overlay").show();
+    },
+
+    onAvatarLeave_: function( e ) {
+        this.$(".avatar-change-overlay").hide();
     },
 
     onAvatarClick_: function( e ) {

@@ -1,6 +1,9 @@
 <section class="basic-user-info" style="float: left;">
 {{#if loggedIn}}
-  <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic">
+  <div class="avatar-pic-container">
+    <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic">
+    <div class="avatar-change-overlay" style="display: none">Change avatar</div>
+  </div>
   <input type="text" value="{{nickname}}" id="nickname"
       placeholder="Enter nickname here" class="inline-editable nickname">
   <p class="pulled">Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>

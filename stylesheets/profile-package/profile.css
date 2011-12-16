@@ -568,11 +568,27 @@ div.graph-notification {
   height: 50px;
   vertical-align: middle;
 }
-.user-info-container .user-info .avatar-pic {
-  vertical-align: top;
+
+.user-info-container .avatar-pic-container {
+  display: inline-block;
+  position: relative;
   cursor: pointer;
+}
+
+.user-info-container .avatar-pic {
+  vertical-align: top;
   min-width: 100px;
   min-height: 100px;
+}
+
+.user-info-container .avatar-change-overlay {
+  position: absolute;
+  top: 60%;
+  right: 0;
+  padding: 0 0.5em;
+  background: #fff;
+  opacity: 0.85;
+  filter:alpha(opacity=85);
 }
 
 .sticker-book:before {
