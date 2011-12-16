@@ -65,16 +65,9 @@ def new_and_noteworthy_link_sets():
         return []
 
     exercises = []
-
-    # We use playlist tags to identify new and noteworthy exercises
-    # just so Sal has a really simple, fast, all-YouTube interface
-    for tag in topic.tags:
-        exercise = models.Exercise.get_by_name(tag)
-        if exercise:
-            exercises.append(exercise)
-
+    
     if len(exercises) == 0:
-        # Temporary hard-coding of a couple exercises until Sal picks a few
+        # Temporary hard-coding of a couple exercises - eventually can take exercises in the topic - but not until they all have splashthumbnails
         topic.tags = ['derivative_intuition', 'inequalities_on_a_number_line', 'multiplication_4', 'solid_geometry']
         for tag in topic.tags:
             exercise = models.Exercise.get_by_name(tag)

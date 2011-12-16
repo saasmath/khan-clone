@@ -168,6 +168,7 @@ def topic(topic_id, version = None):
 
 @route("/api/v1/topicversion/<version>/topic/<topic_id>", methods=["PUT"])    
 @route("/api/v1/topic/<topic_id>", methods=["PUT"])
+@developer_required
 @oauth_optional()
 @jsonp
 @jsonify
@@ -198,6 +199,7 @@ def put_topic(topic_id, version = "edit"):
 
 @route("/api/v1/topicversion/<version>/topic/<parent_id>/addchild", methods=["POST"])   
 @route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
+@developer_required
 @jsonp
 @jsonify
 def topic_add_child(parent_id, version = "edit"):
@@ -232,6 +234,7 @@ def topic_add_child(parent_id, version = "edit"):
 
 @route("/api/v1/topicversion/<version>/topic/<parent_id>/deletechild", methods=["POST"])   
 @route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
+@developer_required
 @jsonp
 @jsonify
 def topic_delete_child(parent_id, version = "edit"):
@@ -264,6 +267,7 @@ def topic_delete_child(parent_id, version = "edit"):
   
 @route("/api/v1/topicversion/<version>/topic/<old_parent_id>/movechild", methods=["POST"])   
 @route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
+@developer_required
 @jsonp
 @jsonify
 def topic_move_child(old_parent_id, version = "edit"):
@@ -316,6 +320,7 @@ def topic_children(topic_id, version = None):
         return db.get(topic.child_keys)
 
 @route("/api/v1/topicversion/<version>/setdefault", methods=["GET"])   
+@developer_required
 @jsonp
 @jsonify
 def topic_children(version = None):
@@ -325,6 +330,7 @@ def topic_children(version = None):
     return version
     
 @route("/api/v1/topicversion/<version>", methods=["GET"])   
+@developer_required
 @jsonp
 @jsonify
 def topic_version(version = None):
@@ -332,6 +338,7 @@ def topic_version(version = None):
     return version
 
 @route("/api/v1/topicversion/<version>", methods=["PUT"])   
+@developer_required
 @jsonp
 @jsonify
 def topic_version(version = None):
@@ -351,6 +358,7 @@ def topic_version(version = None):
     return version
 
 @route("/api/v1/topicversions/", methods=["GET"])   
+@developer_required
 @jsonp
 @jsonify
 def topic_versions():
