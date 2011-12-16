@@ -1053,19 +1053,19 @@ class TopicVersion(db.Model):
         if version == "edit":
             return TopicVersion.get_edit_version()
         version = int(version)
-        return TopicVersion.all().filter("number =", version) 
+        return TopicVersion.all().filter("number =", version).get() 
     
     @staticmethod
     # might want to change this function especially with default version so that we do not have to do a RPC
     def get_date_updated_by_id(version):
         version = TopicVersion.get_by_id(version)
-        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date(), "%Y-%m-%d %H:%M:%S.%f") # if a video/exercise/ or url has been updated, then the cache key has
+        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date().split('.')[0], "%Y-%m-%d %H:%M:%S") # if a video/exercise/ or url has been updated, then the cache key has
         return max(version.date_updated, library_content_date_updated)
 
     # function used by Topic.method calls to @layer_cache to figure out when a topic tree is stale
     @staticmethod
     def get_date_updated(version = None):
-        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date(), "%Y-%m-%d %H:%M:%S.%f") # if a video/exercise/ or url has been updated, then the cache key has to change
+        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date().split('.')[0], "%Y-%m-%d %H:%M:%S") # if a video/exercise/ or url has been updated, then the cache key has to change
         if version is None:
             version = TopicVersion.get_default_version()
         if version:

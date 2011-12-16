@@ -1,0 +1,16 @@
+<div style="padding-bottom: 5px; font-size: 120%;">
+  <b>Version #{{ number }}:</b>
+  {{#edit}}
+    <b>[Editing version]</b>
+    <a href="javascript: TopicTreeEditor.setTreeDefault()" class="simple-button green action-gradient">Publish to website</a>
+  {{/edit}}
+  {{#default}}<b>[Currently live version]<b>{{/default}}
+  <a href="/api/v1/topicversion/edit/topictree" class="simple-button green action-gradient">Export to file</a>
+  <div id="topictree-queue-progress-wrapper"><div id="topictree-queue-progress-bar"></div><div id="topictree-queue-progress-text"></div></div>
+</div>
+<div>
+  <b>Title:</b> <input type="text" value="{{ title }}"></input>
+  <b>Description:</b> <input type="text" value="{{ description }}"></input>
+  <b>Created:</b> {{ date_created }}
+  <b>Updated:</b> {{ date_updated }} by {{ last_editted_by }}
+</div>

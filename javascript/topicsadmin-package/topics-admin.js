@@ -7,7 +7,9 @@ var TopicTreeEditor = {
     boundList: [],
     maxProgressLength: 0,
 
-    init: function() {
+    init: function(version) {
+        var topicTree = version.getTopicTree();
+
         // Attach the dynatree widget to an existing <div id="tree"> element
         // and pass the tree options as an argument to the dynatree() function:
         $("#topic_tree").dynatree({
@@ -102,6 +104,8 @@ var TopicTreeEditor = {
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
         $('#topic_tree').bind("mousedown", function(e) { e.preventDefault(); })
 
+        $('#topicversion-editor').html(Templates.get("topicsadmin.edit-version")(version.toJSON()));
+
         $('#topictree-queue-progress-bar').progressbar();
         $('#topictree-queue-progress-bar').progressbar("value", 0);
         $('#topictree-queue-progress-bar').progressbar("disable");
@@ -113,7 +117,6 @@ var TopicTreeEditor = {
 
         // Get the data for the topic tree (may fire callbacks immediately)
 
-        var topicTree = getDefaultTopicTree();
         topicTree.bind("add", this.treeUpdate, topicTree);
         topicTree.bind("remove", this.treeUpdate, topicTree);
         topicTree.bind("clear", this.treeUpdate, topicTree);

@@ -80,6 +80,49 @@ IncrementalCollection = Backbone.Collection.extend({
     },
 });
 
+// Model for a TopicVersion
+
+(function() {
+    var topicVersionList = null;
+
+    TopicVersion = Backbone.Model.extend({
+        defaults: {
+            number: 0, // API ID
+            kind: 'TopicVersion',
+            default: false, // Is the current default version
+            edit: false, // Is the current editing version
+            title: '(untitled version)',
+            last_editted_by: '',
+            description: '',
+            date_created: '',
+            date_updated: ''
+        },
+
+        idAttribute: 'number',
+
+        urlRoot: '/api/v1/topicversion',
+
+        initialize: function() {
+            this.topicTree = new TopicTree(this);
+        },
+
+        getTopicTree: function() {
+            return this.topicTree;
+        }
+    });
+
+	TopicVersionList = IncrementalCollection.extend({
+		model: TopicVersion,
+        url: '/api/v1/topicversions/'
+    });
+
+    getTopicVersionList = function() {
+        if (!topicVersionList)
+            topicVersionList = new TopicVersionList();
+        return topicVersionList;
+    };
+})();
+
 // Model/collection for Topics
 (function() {
 	var defaultTree = null;
@@ -104,7 +147,8 @@ IncrementalCollection = Backbone.Collection.extend({
 		},
 
         url: function() {
-			return '/api/v1/topicversion/edit/topic/' + this.id;
+            var versionID = this.collection ? this.collection.getVersionID() : 'edit';
+			return '/api/v1/topicversion/' + versionID + '/topic/' + this.id;
         },
 
         getChild: function(id) {
@@ -147,6 +191,11 @@ IncrementalCollection = Backbone.Collection.extend({
 
 	TopicTree = IncrementalCollection.extend({
 		model: Topic,
+        version: null,
+
+        initialize: function(version) {
+            this.version = version;
+        },
 
         getRoot: function() {
             ret = this.fetchByID('root');
@@ -193,6 +242,10 @@ IncrementalCollection = Backbone.Collection.extend({
                 other_node.set({'children':children});
             });
         },
+
+        getVersionID: function() {
+            return this.version ? this.version.get('number') : 'edit';
+        }
 	});
 
     getDefaultTopicTree = function() {
