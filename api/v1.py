@@ -4,6 +4,7 @@ from itertools import izip
 
 from flask import request, current_app, Response
 
+import datetime
 import models
 import layer_cache
 import topics_list
@@ -156,6 +157,7 @@ def topictree(version = None):
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic(topic_id, version = None):
+    logging.info("Not using cache")
     version = models.TopicVersion.get_by_id(version)
     topic = models.Topic.get_by_id(topic_id, version)
 
@@ -361,6 +363,7 @@ def get_url(url_id):
 
     if changed:
         url.put()
+        models.Setting.cached_library_content_date(datetime.datetime.now())
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
@@ -554,6 +557,7 @@ def save_video(video_id=""):
             video_data.keywords = request.json["keywords"]
 
         video_data.put()
+        models.Setting.cached_library_content_date(datetime.datetime.now())
         return video_data
 
     return None

@@ -1059,15 +1059,17 @@ class TopicVersion(db.Model):
     # might want to change this function especially with default version so that we do not have to do a RPC
     def get_date_updated_by_id(version):
         version = TopicVersion.get_by_id(version)
-        return version.date_updated
+        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date(), "%Y-%m-%d %H:%M:%S.%f") # if a video/exercise/ or url has been updated, then the cache key has
+        return max(version.date_updated, library_content_date_updated)
 
     # function used by Topic.method calls to @layer_cache to figure out when a topic tree is stale
     @staticmethod
     def get_date_updated(version = None):
+        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date(), "%Y-%m-%d %H:%M:%S.%f") # if a video/exercise/ or url has been updated, then the cache key has to change
         if version is None:
             version = TopicVersion.get_default_version()
         if version:
-            return version.date_updated
+            return max(version.date_updated, library_content_date_updated)
 
     @staticmethod
     def get_latest_version():
@@ -1151,7 +1153,6 @@ class TopicVersion(db.Model):
         self.last_editted_by = user
         self.put()
         if self.default:
-            logging.info("setting new library content date")
             Setting.cached_library_content_date(datetime.datetime.now())
 
     def set_default_version(self):
