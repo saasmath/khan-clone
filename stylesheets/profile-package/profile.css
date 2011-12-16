@@ -253,6 +253,11 @@
         min-height: 300px;
         padding-bottom: 20px;
     }
+    #individual_report #vital-statistics.coach-view #stats-charts {
+        overflow: hidden;
+        overflow-y: auto;
+        height: 400px;
+    }
     #individual_report #vital-statistics #stats-charts #module-progress .exercise-progress-block {
         width: 70px;
         float: left;
@@ -628,6 +633,9 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bcbcbc', end
 .vertical-tab-list .inactive {
     color: #888;
 }
+.vertical-tab-list li {
+    margin-bottom: 3px;
+}
 .vertical-tab-list .link-section-header {
     text-transform: uppercase;
     font-weight: bold;
@@ -635,28 +643,35 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bcbcbc', end
 .vertical-tab-list ul.second-tier {
     padding-left: 5px;
 }
+.profile-navigation .tab-link {
+    display: block;
+}
+.profile-navigation .tab-link:hover,
+.profile-navigation .tab-link.active-tab {
+    background-color: #eee;
+}
 .profile-navigation .tab-link.has-icon {
     padding-left: 20px;
 }
 a[rel="profile"] {
     background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 0 50%;
 }
-a[rel="profile vital-statistics activity"] {
+a[rel="vital-statistics activity"] {
     background: transparent url(/images/profile-icons/chart.png) no-repeat 0 50%;
 }
-a[rel="profile vital-statistics focus"] {
+a[rel="vital-statistics focus"] {
     background: transparent url(/images/profile-icons/chart-pie-separate.png) no-repeat 0 50%;
 }
-a[rel="profile vital-statistics exercise-progress"] {
+a[rel="vital-statistics exercise-progress"] {
     background: transparent url(/images/profile-icons/color-swatch.png) no-repeat 0 50%;
 }
-a[rel="profile vital-statistics exercise-progress-over-time"] {
+a[rel="vital-statistics exercise-progress-over-time"] {
     background: transparent url(/images/profile-icons/chart-up.png) no-repeat 0 50%;
 }
-a[rel="profile achievements"] {
+a[rel="achievements"] {
     background: transparent url(/images/profile-icons/shield.png) no-repeat 0 50%;
 }
-a[rel="profile goals"] {
+a[rel="goals"] {
     background: transparent url(/images/profile-icons/tick-circle.png) no-repeat 0 50%;
 }
 .tab-content {

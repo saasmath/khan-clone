@@ -91,7 +91,6 @@ var Profile = {
                 Profile.router.navigate("/achievements", true);
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
-
         });
 
         // Bind event handlers for sharing controls on recent activity
@@ -132,6 +131,7 @@ var Profile = {
         showDefault: function(){
             $("#tab-content-user-profile").show()
                 .siblings().hide();
+            this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
         },
 
         // TODO: must send TZ offset
@@ -164,7 +164,8 @@ var Profile = {
                         .eq(index).css("background-color", "#eee");
                 }
             }
-
+            
+            this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
             Profile.loadGraph(href);
         },
 
@@ -187,11 +188,18 @@ var Profile = {
         showAchievements: function(){
             $("#tab-content-achievements").show()
                 .siblings().hide();
+            this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
         },
 
         showGoals: function(){
             $("#tab-content-goals").show()
                 .siblings().hide();
+            this.activateRelatedTab($("#tab-content-goals").attr("rel"));
+        },
+
+        activateRelatedTab: function(rel) {
+            $(".profile-navigation .vertical-tab-list a").removeClass("active-tab");
+            $("a[rel*='" + rel + "']").addClass("active-tab");
         }
     }),
 
