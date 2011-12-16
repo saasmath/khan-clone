@@ -1,0 +1,50 @@
+<div>
+  <img src="/images/link-icon.png" width="75" height="64" style="vertical-align: middle">
+  <input type="text" name="title" class="node-title simple-input ui-corner-all blur-on-esc" value="{{ model.title }}">
+  <a href="javascript: TopicItemNodeEditor.handleAction('save');" class="save-button simple-button disabled action-gradient">Save</a>
+</div>
+
+<div>
+  <a href="javascript: TopicItemNodeEditor.handleAction('remove_item');" class="item-action simple-button blue action-gradient">Remove from topic</a>
+</div>
+<div style="clear: both" />
+
+<div style="padding: 9px 23px;">
+  <div>
+    <table class="node-properties">
+
+      <tr>
+        <td colspan="2">Changes are saved to the <b>live version</b> of the site when you click the Save button above.</td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">View</td>
+        <td style="padding-bottom:9px;">
+          <a href="{{ model.url }}" target="_blank">Open {{ model.title }} in new tab</a>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">URL</td>
+        <td style="padding-bottom:9px;">
+          <input type="text" name="url" value="{{ model.url }}" maxlength="256"/><br/>
+          <em>URL to link to</em>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="font-weight:bold;">Tags</td>
+        <td style="padding-bottom:9px;">
+          <div id="url-tags-list"></div>
+
+          <input type="text" id="url-tag-add" class="short" />
+          <a href="javascript: TopicUrlNodeEditor.addTag()" class="simple-button action-gradient">Add tag</a>
+          <br/>
+
+          <em>Terms to include when indexing this video for searching</em>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+</div>

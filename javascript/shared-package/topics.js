@@ -282,3 +282,36 @@ IncrementalCollection = Backbone.Collection.extend({
     };
 
 })();
+
+// Model/collection for URLs
+
+(function() {
+
+	var urlList = null;
+
+    ExternalURL = Backbone.Model.extend({
+        defaults: {
+            id: '', // API ID
+            kind: 'Url',
+            url: '',
+            title: 'New URL',
+            tags: [],
+            date_created: '',
+            date_updated: ''
+        },
+
+        urlRoot: '/api/v1/url'
+    });
+
+	URLList = IncrementalCollection.extend({
+		model: ExternalURL
+    });
+
+    getUrlList = function() {
+        if (!urlList) {
+            urlList = new URLList();
+        }
+        return urlList;
+    };
+
+})();

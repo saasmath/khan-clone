@@ -215,7 +215,7 @@ def topic_add_child(parent_id, version = "edit"):
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
     elif kind == "Url":
-        child = models.Url.get_by_key_name(id)
+        child = models.Url.get_by_id(int(id))
     else:
         return api_invalid_param_response("Invalid kind to delete:" + kind)
 
@@ -249,7 +249,7 @@ def topic_delete_child(parent_id, version = "edit"):
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
     elif kind == "Url":
-        child = models.Url.get_by_key_name(id)
+        child = models.Url.get_by_id(int(id))
     else:
         return api_invalid_param_response("Invalid kind to delete:" + kind)
 
@@ -281,7 +281,7 @@ def topic_move_child(old_parent_id, version = "edit"):
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id)
     elif kind == "Url":
-        child = models.Url.get_by_key_name(id)
+        child = models.Url.get_by_id(int(id))
     else:
         return api_invalid_param_response("Invalid kind to move:" + kind)
 
@@ -343,17 +343,22 @@ def topic_children(version = None):
 def get_url(url_id):
     return models.Url.get_by_id(url_id)
 
+@route("/api/v1/url/", methods=["PUT"])   
 @route("/api/v1/url/<int:url_id>", methods=["PUT"])   
 @jsonp
 @jsonify
-def get_url(url_id):
-    url = models.Url.get_by_id(url_id)
-    if url is None:
-        return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
+def save_url(url_id = None):
+    if url_id == None:
+        url = models.Url()
+        changed = True
+    else:
+        url = models.Url.get_by_id(url_id)
+        if url is None:
+            return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
+        changed = False
 
     url_json = request.json
-    changed = False
-    for key, value in topic_json.iteritems():
+    for key, value in url_json.iteritems():
         if key in ["tags", "title", "url"]:
             if getattr(url, key) != value:
                 setattr(url, key, value)
@@ -361,6 +366,8 @@ def get_url(url_id):
 
     if changed:
         url.put()
+
+    return url
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
