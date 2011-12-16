@@ -78,7 +78,7 @@ var Profile = {
             // in a reusable way
             if (!event.metaKey) {
                 event.preventDefault();
-                var route = $(this).attr("href").replace("/profile/" + USER_EMAIL, "");
+                var route = $(this).attr("href").replace("/profile/" + encodeURIComponent(USER_EMAIL), "");
                 Profile.router.navigate(route, true);
             }
         });
@@ -121,11 +121,12 @@ var Profile = {
     TabRouter: Backbone.Router.extend({
         routes: {
             "": "showDefault",
+            "/achievements": "showAchievements",
+            "/goals": "showGoals",
             "/vital-statistics": "showVitalStatistics",
             "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
-            "/vital-statistics/:graph": "showVitalStatistics",
-            "/achievements": "showAchievements",
-            "/goals": "showGoals"
+            "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
+            "/vital-statistics/:graph": "showVitalStatistics"
         },
 
         showDefault: function(){
@@ -133,9 +134,11 @@ var Profile = {
                 .siblings().hide();
         },
 
-        showVitalStatistics: function(graph, exercise){
+        // TODO: must send TZ offset
+        showVitalStatistics: function(graph, exercise, timeURLParameter){
             var graph = graph || "activity",
                 exercise = exercise || "addition_1",
+                timeURLParameter = timeURLParameter || "",
                 emailEncoded = encodeURIComponent(USER_EMAIL),
                 translation = {
                     "activity": "/profile/graph/activity?student_email=" + emailEncoded,
@@ -146,7 +149,7 @@ var Profile = {
                                             + "exercise_name=" + exercise
                                             + "&" + "student_email=" + emailEncoded
                 },
-                href = translation[graph],
+                href = translation[graph] + timeURLParameter,
                 jelGraphLinkHeader = $(".graph-link-header[href$='" + graph + "']");
 
             $("#tab-content-vital-statistics").show()
@@ -167,6 +170,18 @@ var Profile = {
 
         showExerciseProblems: function(exercise) {
             this.showVitalStatistics("exercise-problems", exercise);
+        },
+
+        showVitalStatisticsForTimePeriod: function(graph, timePeriod) {
+            var translation = {
+                    "today": "&dt_start=today",
+                    "yesterday": "&dt_start=yesterday",
+                    "last-week": "&dt_start=lastweek&dt_end=today",
+                    "last-month": "&dt_start=lastmonth&dt_end=today"
+                },
+                timeURLParameter = translation[timePeriod];
+
+            this.showVitalStatistics(graph, null, timeURLParameter);
         },
 
         showAchievements: function(){
@@ -413,14 +428,6 @@ var Profile = {
     render: function() {
         var profileTemplate = Templates.get("profile.profile");
 
-        // So that the date-picker can update the history param properly
-        Handlebars.registerHelper("accordion-graph-date-picker-wrapper", function(block) {
-            this.type = block.hash.type;
-            return block(this);
-        });
-
-        Handlebars.registerPartial("accordion-graph-date-picker",
-                Templates.get("profile.accordion-graph-date-picker"));
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
         $("#profile-content").html(profileTemplate({email: USER_EMAIL}));
