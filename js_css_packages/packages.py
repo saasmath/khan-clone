@@ -162,6 +162,8 @@ javascript = {
             "add-existing-item.handlebars",
             "create-url.handlebars",
             "edit-url.handlebars",
+            "list-versions.handlebars",
+            "list-versions-item.handlebars",
             "topics-admin.js",
         ]
 	},

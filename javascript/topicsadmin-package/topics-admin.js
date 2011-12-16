@@ -6,9 +6,11 @@ var TopicTreeEditor = {
     tree: null,
     boundList: [],
     maxProgressLength: 0,
+    currentVersion: null,
 
     init: function(version) {
         var topicTree = version.getTopicTree();
+        this.currentVersion = version;
 
         // Attach the dynatree widget to an existing <div id="tree"> element
         // and pass the tree options as an argument to the dynatree() function:
@@ -60,7 +62,7 @@ var TopicTreeEditor = {
 
             dnd: {
                 onDragStart: function(node) {
-                    return true;
+                    return TopicTreeEditor.currentVersion.get('edit');
                 },
 
                 onDragEnter: function(node, sourceNode) {
@@ -103,6 +105,8 @@ var TopicTreeEditor = {
         });
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
         $('#topic_tree').bind("mousedown", function(e) { e.preventDefault(); })
+
+        $('#details-view').html('');
 
         $('#topicversion-editor').html(Templates.get("topicsadmin.edit-version")(version.toJSON()));
 
@@ -230,7 +234,7 @@ var TopicTreeEditor = {
 
 		KAConsole.log('Model of type ' + kind + ' changed ID: ' + oldID + ' -> ' + model.id);
 
-		getDefaultTopicTree().each(function(topic) {
+		TopicTreeEditor.currentVersion.getTopicTree().each(function(topic) {
 			var found = false;
 			var children = _.map(topic.get('children'), function(child) {
 				if (child.kind == kind && child.id == oldID) {
@@ -302,6 +306,18 @@ var TopicTreeEditor = {
             }
         });
     },
+
+    showVersionList: function() {
+        this.versionListView = new TopicVersionListView().show();
+    },
+
+    editVersion: function(versionNumber) {
+        this.versionListView.hide();
+
+        version = getTopicVersionList().get(versionNumber);
+        if (version)
+            this.init(version)
+    },
 };
 
 // Details view common code
@@ -328,7 +344,7 @@ var TopicNodeEditor = {
         TopicNodeEditor.node = node;
         TopicNodeEditor.modelKind = node.data.kind;
         TopicNodeEditor.model = this;
-        TopicNodeEditor.parentModel = getDefaultTopicTree().get(node.parent.data.id);
+        TopicNodeEditor.parentModel = TopicTreeEditor.currentVersion.getTopicTree().get(node.parent.data.id);
         TopicNodeEditor.template = Templates.get("topicsadmin.edit-" + node.data.kind.toLowerCase());
 
         TopicNodeEditor.render();
@@ -338,7 +354,7 @@ var TopicNodeEditor = {
 
     render: function() {
         js = TopicNodeEditor.model.toJSON();
-        html = TopicNodeEditor.template({model: js});
+        html = TopicNodeEditor.template({version: TopicTreeEditor.currentVersion.toJSON(), model: js});
 
         $('#details-view').html(html);
 
@@ -532,8 +548,8 @@ var TopicTopicNodeEditor = {
 
     moveItem: function(oldParentID, moveData) {
         // Apply the change to the model data first
-        child = getDefaultTopicTree().get(oldParentID).removeChild(moveData.kind, moveData.id);
-        new_parent = getDefaultTopicTree().fetchByID(moveData.new_parent_id, function() {
+        child = TopicTreeEditor.currentVersion.getTopicTree().get(oldParentID).removeChild(moveData.kind, moveData.id);
+        new_parent = TopicTreeEditor.currentVersion.getTopicTree().fetchByID(moveData.new_parent_id, function() {
             this.addChild(child, moveData.new_parent_pos);
 
             parent_node = TopicTreeEditor.tree.getNodeByKey('Topic/' + moveData.new_parent_id);
@@ -554,26 +570,28 @@ var TopicTopicNodeEditor = {
     },
 
     init: function() {
-        $('#details-view').find('input').change(function() {
-            var field = $(this).attr('name');
-            if (field) {
-                var value = null;
-                if (this.type == 'checkbox')
-                    value = $(this).is(':checked');
-                else
-                    value = $(this).val();
+        if (TopicTreeEditor.currentVersion.get('edit')) {
+            $('#details-view').find('input').change(function() {
+                var field = $(this).attr('name');
+                if (field) {
+                    var value = null;
+                    if (this.type == 'checkbox')
+                        value = $(this).is(':checked');
+                    else
+                        value = $(this).val();
 
-                var attrs = {};
-                var oldID = TopicNodeEditor.model.id;
-                attrs[field] = value;
+                    var attrs = {};
+                    var oldID = TopicNodeEditor.model.id;
+                    attrs[field] = value;
 
-				// We do special things on save because of the potential ID change
-                TopicNodeEditor.model.save(attrs, {
-                    url: TopicNodeEditor.model.url(), // URL with the old slug value
-                    success: function() { TopicTreeEditor.handleChange(TopicNodeEditor.model, oldID); }
-                });
-            }
-        });
+                    // We do special things on save because of the potential ID change
+                    TopicNodeEditor.model.save(attrs, {
+                        url: TopicNodeEditor.model.url(), // URL with the old slug value
+                        success: function() { TopicTreeEditor.handleChange(TopicNodeEditor.model, oldID); }
+                    });
+                }
+            });
+        }
     }
 };
 
@@ -1217,6 +1235,50 @@ var TopicCreateUrlView = Backbone.View.extend({
             }
         });
         this.hide();
+    },
+
+    hide: function() {
+        return $(this.el).modal('hide');
+    }
+});
+
+// View versions list
+
+var TopicVersionListView = Backbone.View.extend({
+    template: Templates.get( "topicsadmin.list-versions" ),
+    templateItem: Templates.get( "topicsadmin.list-versions-item" ),
+
+    initialize: function() {
+        this.render();
+    },
+
+    events: {
+    },
+
+    render: function() {
+        this.el = $(this.template({})).appendTo(document.body).get(0);
+        this.delegateEvents();
+        return this;
+    },
+
+    show: function(type) {
+        $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
+
+        var self = this;
+        getTopicVersionList().fetch({
+            success: function() {
+                var html = '';
+                _.each(getTopicVersionList().models, function(model) {
+                    html += self.templateItem(model.toJSON());
+                });
+                $('.version-list', self.el).html(html);
+            }
+        });
+        return this;
     },
 
     hide: function() {
