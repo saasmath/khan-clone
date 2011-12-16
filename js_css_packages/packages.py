@@ -152,6 +152,7 @@ javascript = {
 			"jquery.dynatree.js",
             "jquery.contextMenu.js",
             "jquery.ajaxq-0.0.1.js",
+            "edit-version.handlebars",
             "edit-topic.handlebars",
             "create-video.handlebars",
             "create-video-preview.handlebars",
@@ -161,6 +162,8 @@ javascript = {
             "add-existing-item.handlebars",
             "create-url.handlebars",
             "edit-url.handlebars",
+            "list-versions.handlebars",
+            "list-versions-item.handlebars",
             "topics-admin.js",
         ]
 	},

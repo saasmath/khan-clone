@@ -21,7 +21,11 @@
     <table class="node-properties">
 
       <tr>
-        <td colspan="2">Changes will be saved to the <b>editing copy</b> of the topic tree immediately.</td>
+        {{#if version.edit}}
+          <td colspan="2">Changes will be saved to the <b>editing copy</b> of the topic tree immediately.</td>
+        {{else}}
+          <td colspan="2">Changes cannot be made to this version. Only the editing version can be changed.</td>
+        {{/if}}
       </tr>
 
       <tr>

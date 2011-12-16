@@ -1,0 +1,12 @@
+<div>
+  <a href="javascript: TopicTreeEditor.editVersion({{ number }})" class="simple-button green action-gradient" style="float: right">View this version</a>
+  <div><b>Version #{{ number }}:</b> "{{ title }}"
+    {{#edit}}
+      <b>[Editing version]</b>
+    {{/edit}}
+    {{#default}}<b>[Currently live version]</b>{{/default}}
+  </div>
+  <div style="margin-left: 20px;"><b>Description:</b> {{ description }}</div>
+  <div style="margin-left: 20px;"><b>Created:</b> {{ date_created }}</div>
+  <div style="margin-left: 20px;"><b>Updated:</b> {{ date_updated }} by {{ last_editted_by }}</div>
+</div>

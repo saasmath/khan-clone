@@ -29,7 +29,8 @@ ul.dynatree-container {
 .modal.add-existing-item,
 .modal.create-exercise,
 .modal.create-video,
-.modal.create-url {
+.modal.create-url,
+.modal.list-versions {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
   width: 700px; /* this is redundant but here for clarity */
@@ -130,4 +131,9 @@ ul.dynatree-container {
 }
 #topictree-queue-progress-bar .ui-progressbar-value {
     background-image: url('/images/progress-animated.gif');
+}
+
+.modal.list-versions .version-list {
+    height: 600px;
+    overflow-y: auto;
 }

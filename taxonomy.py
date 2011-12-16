@@ -146,16 +146,18 @@ class EditTaxonomy(request_handler.RequestHandler):
             }
         '''
 
+        version_name = self.request.get('version', 'edit')
+
         tree_nodes = []
 
-        version = models.TopicVersion.get_edit_version()
-        root = Topic.get_root(version)
-        data = root.get_visible_data()
+        edit_version = TopicVersion.get_by_id(version_name)
 
+        root = Topic.get_root(edit_version)
+        data = root.get_visible_data()
         tree_nodes.append(data)
         
         template_values = {
-            'created_date': version.date_created.strftime("%A, %d. %B %Y %I:%M%p"),
+            'edit_version': jsonify(edit_version),
             'tree_nodes': jsonify(tree_nodes)
             }
 

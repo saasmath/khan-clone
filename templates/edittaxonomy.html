@@ -10,12 +10,15 @@
 <script>
 
 var initialTreeNodes = {{ tree_nodes }};
+var editVersionData = {{ edit_version }};
 
-$(function(){
-    getDefaultTopicTree().resetInited(initialTreeNodes);
+$(function() {
+    var editVersion = new TopicVersion(editVersionData);
+    getTopicVersionList().add(editVersion);
+    editVersion.getTopicTree().resetInited(initialTreeNodes);
 
     KAConsole.debugEnabled = true;
-    TopicTreeEditor.init();
+    TopicTreeEditor.init(editVersion);
 });
 
 </script>
@@ -23,20 +26,13 @@ $(function(){
 {% endblock bottompagescript %}
 
 {% block pagesubmenu %}
-    This is an editing copy of the live topic tree (Created on {{ created_date }}).
-    <a href="javascript: TopicTreeEditor.setTreeDefault()" class="simple-button green action-gradient">Publish to website</a>
-    <a href="/api/v1/topicversion/edit/topictree" class="simple-button green action-gradient">Export</a>
-    <div id="topictree-queue-progress-wrapper"><div id="topictree-queue-progress-bar"></div><div id="topictree-queue-progress-text"></div></div>
-
-    <span class="breadcrumbs_nav">
-        <a href="/admin94040">Exercises</a>
-     </span>
+    <div id="topicversion-editor"></div>
 {% endblock pagesubmenu %}
 
 {% block pagecontent %}
 
-<div id="topic_tree" style="width: 500px; height: 500px; overflow-y: scroll; float: left;"></div>
-<div id="details-view" style="width: 700px; height: 500px; overflow-y: scroll; float: left;"></div>
+<div id="topic_tree" style="width: 500px; height: 500px; overflow-y: auto; float: left;"></div>
+<div id="details-view" style="width: 700px; height: 500px; overflow-y: auto; float: left;"></div>
 
 <ul id="topic_context_menu" class="contextMenu">
     <li class="add_new_topic">
