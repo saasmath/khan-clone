@@ -596,7 +596,7 @@ var NewCustomGoalDialog = Backbone.View.extend({
 
     _show: function() {
         return $(this.el).modal({
-            keyboard: true,
+            keyboard: false,
             backdrop: true,
             show: true
         });

@@ -39,6 +39,12 @@ var GoalCreator = {
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
         form.find('input[name="title"]')
             .change(function() { GoalCreator.updateViewAndDescription(); } )
+            .keypress(function( e ) {
+                if (e.which == '13') { // enter
+                    e.preventDefault();
+                    $(e.target).blur();
+                }
+            });
 
         GoalCreator.updateViewAndDescription();
     },
