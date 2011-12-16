@@ -7,6 +7,7 @@ var TopicTreeEditor = {
     boundList: [],
     maxProgressLength: 0,
     currentVersion: null,
+    versionEditTemplate: Templates.get("topicsadmin.edit-version"),
 
     init: function(version) {
         var topicTree = version.getTopicTree();
@@ -108,7 +109,18 @@ var TopicTreeEditor = {
 
         $('#details-view').html('');
 
-        $('#topicversion-editor').html(Templates.get("topicsadmin.edit-version")(version.toJSON()));
+        $('#topicversion-editor').html(TopicTreeEditor.versionEditTemplate(version.toJSON()));
+        $('#topicversion-editor').find('input[type="text"]').change(function() {
+            var field = $(this).attr('name');
+            if (field) {
+                var value = $(this).val();
+
+                var attrs = {};
+                attrs[field] = value;
+
+                version.save(attrs);
+            }
+        });
 
         $('#topictree-queue-progress-bar').progressbar();
         $('#topictree-queue-progress-bar').progressbar("value", 0);
