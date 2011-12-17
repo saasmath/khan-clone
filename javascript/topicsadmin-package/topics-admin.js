@@ -8,6 +8,7 @@ var TopicTreeEditor = {
     maxProgressLength: 0,
     currentVersion: null,
     versionEditTemplate: Templates.get("topicsadmin.edit-version"),
+    searchView: null,
 
     init: function(version) {
         var topicTree = version.getTopicTree();
@@ -167,6 +168,8 @@ var TopicTreeEditor = {
         var self = this;
         $(window).resize(function(){self.resize();});
         this.resize();
+
+        this.searchView = new TopicSearchView();
 
         // Get the data for the topic tree (may fire callbacks immediately)
 
@@ -1310,9 +1313,6 @@ var TopicVersionListView = Backbone.View.extend({
         this.render();
     },
 
-    events: {
-    },
-
     render: function() {
         this.el = $(this.template({})).appendTo(document.body).get(0);
         this.delegateEvents();
@@ -1343,3 +1343,130 @@ var TopicVersionListView = Backbone.View.extend({
         return $(this.el).modal('hide');
     }
 });
+
+// Search popup
+
+var TopicSearchView = Backbone.View.extend({
+    template: Templates.get( "topicsadmin.search-topics" ),
+    visible: false,
+    matchingPaths: null,
+    currentIndex: 0,
+
+    events: {
+        'click .search-button': 'toggle',
+        'change input': 'doSearch',
+        'click .prev-button': 'goToPrev',
+        'click .next-button': 'goToNext'
+    },
+
+    initialize: function() {
+        this.render();
+    },
+
+    render: function() {
+        this.el = $(this.template({})).appendTo(document.body).get(0);
+        this.delegateEvents();
+        $(this.el).offset($('#topic_tree').offset());
+        return this;
+    },
+
+    toggle: function() {
+        this.visible = !this.visible;
+        if (this.visible)
+            this.show();
+        else
+            this.hide();
+    },
+
+    show: function() {
+        $('.search-button', this.el).attr('src', '/images/circled_cross.png');
+        $('.search-panel', this.el).slideDown(100);
+    },
+
+    hide: function() {
+        $('.search-button', this.el).attr('src', '/images/jquery-mobile/icon-search-black.png');
+        $('.search-panel', this.el).slideUp(100);
+    },
+
+    doSearch: function() {
+        this.clearResults();
+
+        el = $('input', this.el);
+        query = el.val();
+        if (query != '') {
+            var self = this;
+            Throbber.show(el);
+            $.ajax({
+                url: '/api/v1/topicversion/' + TopicTreeEditor.currentVersion.get('number') + '/search/' + query,
+                success: function(json) {
+                    Throbber.hide();
+                    TopicTreeEditor.currentVersion.getTopicTree().addInited(json.topics);
+                    self.matchingPaths = json.paths;
+                    if (self.matchingPaths.length > 0) {
+                        self.currentIndex = 0;
+                        self.goToResult(0);
+                    }
+                }
+            });
+        }
+    },
+
+    clearResults: function() {
+        this.matchingPaths = [];
+        $('.prev-button', this.el).attr('src', '/images/vote-up-gray.png');
+        $('.next-button', this.el).attr('src', '/images/vote-down-gray.png');
+    },
+
+    goToResult: function(index) {
+        var path = this.matchingPaths[index];
+        var node = TopicTreeEditor.tree.getNodeByKey('Topic/root');
+        var last_key = path[path.length-1] + '/' + path[path.length-2];
+
+        _.each(path, function(key) {
+            if (node) {
+                var nextNode = null;
+
+                node.expand(true);
+
+                KAConsole.log('Opening ' + key + '...');
+
+                _.each(node.childList, function(childNode) {
+                    if (childNode.data.key == last_key) {
+                        childNode.activate();
+                    } else if (childNode.data.key == ('Topic/'+key)) {
+                        childNode.expand(true);
+                        nextNode = childNode;
+                    } else {
+                        childNode.expand(false);
+                    }
+                });
+
+                node = nextNode;
+            }
+        });
+
+        this.currentIndex = index;
+        if (this.currentIndex == 0) {
+            $('.prev-button', this.el).attr('src', '/images/vote-up-gray.png');
+        } else {
+            $('.prev-button', this.el).attr('src', '/images/vote-up.png');
+        }
+        if (this.currentIndex < this.matchingPaths.length-1) {
+            $('.next-button', this.el).attr('src', '/images/vote-down.png');
+        } else {
+            $('.next-button', this.el).attr('src', '/images/vote-down-gray.png');
+        }
+    },
+
+    goToPrev: function() {
+        if (this.currentIndex > 0) {
+            this.goToResult(this.currentIndex-1);
+        }
+    },
+    goToNext: function() {
+        if (this.currentIndex < this.matchingPaths.length-1) {
+            this.goToResult(this.currentIndex+1);
+        }
+    }
+});
+

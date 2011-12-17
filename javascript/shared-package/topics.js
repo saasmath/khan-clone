@@ -78,6 +78,21 @@ IncrementalCollection = Backbone.Collection.extend({
             model.__inited = true;
         });
     },
+
+    addInited: function(models, options) {
+        if (!this.idAttribute) {
+            this.idAttribute = new this.model({}).idAttribute;
+            if (!this.idAttribute)
+                this.idAttribute = 'id';
+        }
+        var self = this;
+
+        this.add(models, options);
+        _.each(models, function(model) {
+            newModel = self.get(model[self.idAttribute])
+            newModel.__inited = true;
+        });
+    }
 });
 
 // Model for a TopicVersion

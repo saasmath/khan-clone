@@ -1604,6 +1604,46 @@ class Topic(db.Model):
         # return the entity that was passed in, now with its children, and its descendants children all added
         return node_dict[self.key()]
 
+    def search_tree_traversal(self, query, node_dict, path, matching_paths, matching_nodes):
+        match = False
+
+        if self.title.lower().find(query) > -1:
+            match_path = path[:]
+            match_path.append('Topic')
+            matching_paths.append(match_path)
+            match = True
+
+        for child_key in self.child_keys:
+            if node_dict.has_key(child_key):
+                child_topic = node_dict[child_key]
+                sub_path = path[:]
+                sub_path.append(child_topic.id)
+                if child_topic.search_tree_traversal(query, node_dict, sub_path, matching_paths, matching_nodes):
+                    match = True
+
+        if match:
+            matching_nodes.append(self.get_visible_data())
+
+        return match
+
+    def search_tree(self, query):
+        query = query.strip().lower()
+
+        nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
+        
+        node_dict = dict((node.key(), node) for node in nodes)
+        node_dict[self.key()] = self # in case the current node is hidden (like root is)
+
+        matching_paths = []
+        matching_nodes = []
+
+        self.search_tree_traversal(query, node_dict, [], matching_paths, matching_nodes)
+
+        return {
+            "paths": matching_paths,
+            "topics": matching_nodes
+        }
+
     @staticmethod
     def get_all_topics(version = None, include_hidden = False):
         if not version:

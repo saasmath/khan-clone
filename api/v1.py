@@ -149,6 +149,13 @@ def topictree(version = None):
     version = models.TopicVersion.get_by_id(version)
     return models.Topic.get_by_id("root", version).make_tree()
 
+@route("/api/v1/topicversion/<version>/search/<query>", methods=["GET"])
+@jsonp
+@jsonify
+def topictreesearch(version, query):
+    version = models.TopicVersion.get_by_id(version)
+    return models.Topic.get_by_id("root", version).search_tree(query)
+
 @route("/api/v1/topicversion/<version>/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
 @jsonp

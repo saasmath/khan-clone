@@ -164,6 +164,7 @@ javascript = {
             "edit-url.handlebars",
             "list-versions.handlebars",
             "list-versions-item.handlebars",
+            "search-topics.handlebars",
             "topics-admin.js",
         ]
 	},
