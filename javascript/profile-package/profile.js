@@ -909,26 +909,28 @@ var Profile = {
             "&student_email=" + encodeURIComponent(email);
     },
 
-    AddObjectiveHover: function(element) {
+    hoverContent: function(elements) {
         var infoHover = $("#info-hover-container");
         var lastHoverTime;
         var mouseX;
         var mouseY;
-        element.find(".objective").hover(
-            function(e) {
-                var hoverTime = +(new Date);
+
+        elements.hover(
+            function( e ) {
+                var hoverTime = +(new Date());
                 lastHoverTime = hoverTime;
                 mouseX = e.pageX;
                 mouseY = e.pageY;
-                var self = this;
+                var el = this;
                 setTimeout(function() {
                     if (hoverTime != lastHoverTime) {
                         return;
                     }
 
-                    var hoverData = $(self).children(".hover-data");
-                    if ($.trim(hoverData.html())) {
-                        infoHover.html($.trim(hoverData.html()));
+                    var hoverData = $(el).children(".hover-data");
+                    var html = $.trim(hoverData.html());
+                    if ( html ) {
+                        infoHover.html(html);
 
                         var left = mouseX + 15;
                         var jelGraph = $("#graph-content");
@@ -942,11 +944,15 @@ var Profile = {
                     }
                 }, 100);
             },
-            function(e){
+            function( e ) {
                 lastHoverTime = null;
                 $("#info-hover-container").hide();
             }
         );
+    },
+
+    AddObjectiveHover: function(element) {
+        Profile.hoverContent(element.find(".objective"));
     }
 };
 
