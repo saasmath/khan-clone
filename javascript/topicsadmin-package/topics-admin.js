@@ -58,7 +58,28 @@ var TopicTreeEditor = {
             },
 
             onLazyRead: function(node) {
-                topicTree.fetchByID(node.data.id, TopicTreeEditor.refreshTreeNode);
+                if (node.data.key == 'UnrefContent') {
+                    $.ajaxq('topics-admin', {
+                        url: '/api/v1/topicversion/' + TopicTreeEditor.currentVersion.get('number') + '/unused_content',
+                        success: function(json) {
+                            node.removeChildren();
+
+                            childNodes = []
+                            _.each(json, function(item) {
+                                if (item.kind == 'Video')
+                                    childNodes.push(TopicTreeEditor.createChild(item.kind, item.readable_id, item.title, false));
+                                else if (item.kind == 'Exercise')
+                                    childNodes.push(TopicTreeEditor.createChild(item.kind, item.name, item.display_name, false));
+                                else if (item.kind == 'Url')
+                                    childNodes.push(TopicTreeEditor.createChild(item.kind, item.id, item.title, false));
+                            });
+                            node.addChild(childNodes);
+                        },
+                        error: TopicTreeEditor.handleError
+                    });
+                } else {
+                    topicTree.fetchByID(node.data.id, TopicTreeEditor.refreshTreeNode);
+                }
             },
 
             dnd: {
@@ -67,6 +88,10 @@ var TopicTreeEditor = {
                 },
 
                 onDragEnter: function(node, sourceNode) {
+                    if (node.data.key == 'UnrefContent' ||
+                        node.parent.data.key == 'UnrefContent')
+                        return [];
+
                     if (node.data.kind != 'Topic')
                         return ["before", "after"];
 
@@ -84,13 +109,17 @@ var TopicTreeEditor = {
 
                     var newParent = sourceNode.parent;
 
-                    var data = {
-                        kind: sourceNode.data.kind,
-                        id: sourceNode.data.id,
-                        new_parent_id: newParent.data.id,
-                        new_parent_pos: newParent.childList.indexOf(sourceNode)
+                    if (oldParent.data.key == 'UnrefContent') {
+                        TopicTopicNodeEditor.finishAddExistingItem(sourceNode.data.kind, sourceNode.data.id, sourceNode.data.title, newParent, topicTree.get(newParent.data.id), newParent.childList.indexOf(sourceNode));
+                    } else {
+                        var data = {
+                            kind: sourceNode.data.kind,
+                            id: sourceNode.data.id,
+                            new_parent_id: newParent.data.id,
+                            new_parent_pos: newParent.childList.indexOf(sourceNode)
+                        }
+                        TopicTopicNodeEditor.moveItem(oldParent.data.id, data); 
                     }
-                    TopicTopicNodeEditor.moveItem(oldParent.data.id, data); 
                 }
             },
 
@@ -99,6 +128,14 @@ var TopicTreeEditor = {
                     key: 'Topic/root',
                     id: 'root',
                     kind: 'Topic',
+                    isFolder: true,
+                    isLazy: true,
+                    icon: 'topictree-icon-small.png'
+                }, {
+                    title: "Unreferenced Content",
+                    key: 'UnrefContent',
+                    id: '',
+                    kind: '',
                     isFolder: true,
                     isLazy: true,
                     icon: 'topictree-icon-small.png'
@@ -886,10 +923,6 @@ var TopicExerciseNodeEditor = {
 
         TopicExerciseNodeEditor.videos = TopicNodeEditor.model.get('related_videos').slice(0);
         TopicExerciseNodeEditor.updateVideos();
-
-        // Configure the search form
-        $('#related-videos-input').placeholder();
-        initAutocomplete("#related-videos-input", false, TopicExerciseNodeEditor.addVideo, true);
     },
     deinit: function() {
         TopicExerciseNodeEditor.prereqs = null;
