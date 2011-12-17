@@ -365,12 +365,12 @@ def topic_version(version = None):
     return version
 
 @route("/api/v1/topicversions/", methods=["GET"])   
-@developer_required
 @jsonp
 @jsonify
 def topic_versions():
-    version = models.TopicVersion.all().order("-number").fetch(10000)
-    return version
+    versions = models.TopicVersion.all().order("-number").fetch(10000)
+    return versions
+    return [version.get_visible_data() for version in versions]
 
 @route("/api/v1/topicversion/<version>/unused_content", methods=["GET"])   
 @jsonp

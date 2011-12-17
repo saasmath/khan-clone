@@ -1039,12 +1039,21 @@ class UserData(GAEBingoIdentityModel, db.Model):
 class TopicVersion(db.Model):
     date_created = db.DateTimeProperty(indexed=False, auto_now_add=True)
     date_updated = db.DateTimeProperty(indexed=False, auto_now=True)
+    date_made_default = db.DateTimeProperty()
+    copied_from = db.SelfReferenceProperty()
     last_editted_by = db.UserProperty(indexed=False)
     number = db.IntegerProperty(required=True)
     title = db.StringProperty(indexed=False) 
     description = db.StringProperty(indexed=False)
     default = db.BooleanProperty(default=False)
     edit = db.BooleanProperty(default=False)
+
+    _serialize_blacklist = ["copied_from"]
+
+    @property
+    def copied_from_number(self):
+        if self.copied_from:
+            return self.copied_from.number
 
     @staticmethod
     def get_by_id(version):
@@ -1133,11 +1142,8 @@ class TopicVersion(db.Model):
     def create_edit_version():
         version = TopicVersion.all().filter("edit = ", True).get()
         if version is None:
-            version = TopicVersion.create_new_version()
             default = TopicVersion.get_default_version()
-            old_root = Topic.get_root(default)
-            old_tree = old_root.make_tree(types = ["Topics"], include_hidden = True)
-            TopicVersion.copy_tree(old_tree, version)
+            version = default.copy_version()
             version.edit = True
             version.put()
             return version
@@ -1150,6 +1156,8 @@ class TopicVersion(db.Model):
         old_root = Topic.get_root(self)
         old_tree = old_root.make_tree(types = ["Topics"], include_hidden = True)
         TopicVersion.copy_tree(old_tree, version)
+        version.copied_from = self
+        version.put()
         return version
         
     @staticmethod
@@ -1168,7 +1176,6 @@ class TopicVersion(db.Model):
         for child in old_tree.children:
             old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_root, new_tree).key()
         new_tree.child_keys = [child_key if child_key not in old_key_new_key_dict else old_key_new_key_dict[child_key] for child_key in old_tree.child_keys]
-        new_tree.put()
         return new_tree
 
     def update(self):
@@ -1186,6 +1193,7 @@ class TopicVersion(db.Model):
                 default_version.default = False
                 default_version.put()
             self.default = True
+            self.date_made_default = datetime.datetime.now()
             self.edit = False
             Setting.cached_library_content_date(datetime.datetime.now())
             self.put()
