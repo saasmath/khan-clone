@@ -78,9 +78,17 @@ Avatar.Picker.prototype.bindEvents_ = function() {
  * Handles a selection to an avatar in the list.
  */
 Avatar.Picker.prototype.onAvatarSelected_ = function( ev ) {
+    if ( $(ev.currentTarget).hasClass( "locked" )) {
+        return;
+    }
+
     var src = $("img.avatar-preview", ev.currentTarget).attr( "src" );
-    if ( src ) {
-        this.userModel.set({ "avatarSrc": src });
+    var name = $(".name", ev.currentTarget).html();
+    if ( src && name ) {
+        this.userModel.save({
+            "avatarName": name,
+            "avatarSrc": src
+        });
     }
 };
 

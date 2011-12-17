@@ -14,23 +14,30 @@ UserCardModel = Backbone.Model.extend({
         "countVideos": 3000,
         "countExercisesProficient": 0,
         "countExercises": 250,
+
+        "avatarName": "darth",
         "avatarSrc": "/images/darth.png"
     },
 
     url: "/api/v1/user/profile",
 
     /**
-     * Override Backbone.Model.Save since only some of the fields are
+     * Override Backbone.Model.save since only some of the fields are
      * mutable and saveable.
      */
     save: function(attrs, options) {
         options = options || {};
         options.contentType = "application/json";
         options.data = JSON.stringify({
-            "nickname": this.get( "nickname" )
+            // Note that Backbone.Model.save accepts arguments to save to
+            // the model before saving, so check for those first.
+            "avatarName": ( attrs && attrs[ "avatarName" ]) ||
+                          this.get( "avatarName" ),
+            "nickname": ( attrs && attrs[ "nickname" ]) ||
+                          this.get( "nickname" ),
         });
         Backbone.Model.prototype.save.call(this, attrs, options);
-    }
+    },
 });
 
 UserCardView = Backbone.View.extend({
@@ -54,6 +61,9 @@ UserCardView = Backbone.View.extend({
         this.avatarPicker_ = null;
     },
 
+    /**
+     * Updates the source preview of the avatar. This does not affect the model.
+     */
     onAvatarChanged_: function() {
         this.$("#avatar-pic").attr( "src", this.model.get( "avatarSrc" ));
     },
@@ -64,11 +74,14 @@ UserCardView = Backbone.View.extend({
         return this;
     },
 
+    /**
+     * Handles a change to the nickname edit field in the view.
+     * Propagates the change to the model.
+     */
     onNicknameChanged_: function( e ) {
         // TODO: validate
         var value = this.$("#nickname").val();
-        this.model.set({ "nickname": value });
-        this.model.save();
+        this.model.save({ "nickname": value });
     },
 
     onAvatarHover_: function( e ) {

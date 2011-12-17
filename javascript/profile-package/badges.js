@@ -215,6 +215,7 @@ Badges.DisplayCase = Backbone.View.extend({
         });
 
         this.showBadgePicker_();
+        return this;
     },
 
     /**
