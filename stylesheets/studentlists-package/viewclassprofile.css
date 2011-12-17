@@ -173,3 +173,16 @@
 .student-list-container.border-only {
   width: 95px;
 }
+
+/* make goals class view horizontally scroll */
+#individual_report #vital-statistics #class-student-goals {
+    overflow-x: auto;
+}
+#individual_report #vital-statistics #class-student-goals .goal-row {
+    white-space: nowrap;
+}
+
+#class-student-goals .goal .no-goal {
+    color: #aaa;
+    text-align: center;
+}

@@ -195,7 +195,7 @@ def remove_compressed(path, suffix):
                 or filename.endswith(COMPRESSED_FILENAME + suffix):
             os.remove(os.path.join(path, filename))
 
-# Use UglifyJS for JS and YUICompressor for CSS to minify the combined file
+# Use UglifyJS for JS and node-cssmin for CSS to minify the combined file
 def minify_package(path, path_combined, suffix):
 
     path_compressed = os.path.join(path, COMPRESSED_FILENAME + suffix)
@@ -203,12 +203,17 @@ def minify_package(path, path_combined, suffix):
 
     if suffix == ".js":
         print popen_results(["uglifyjs", "-o", path_compressed, path_combined])
+    elif suffix == ".css":
+        compressed = popen_results(["cssmin", path_combined])
+        if compressed:
+            f = open(path_compressed, 'w')
+            f.write(compressed)
+            f.close()
     else:
-        path_compressor = os.path.join(os.path.dirname(__file__), "yuicompressor-2.4.2.jar")
-        print popen_results(["java", "-jar", path_compressor, "--charset", "utf-8", path_combined, "-o", path_compressed])
+        raise Exception("Unable to compress %s files" % suffix)
 
     if not os.path.exists(path_compressed):
-        raise Exception("Unable to YUICompress: %s" % path_combined)
+        raise Exception("Unable to compress: %s" % path_combined)
 
     return path_compressed
 
