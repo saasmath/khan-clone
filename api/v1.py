@@ -335,8 +335,18 @@ def update_user_profile():
     if not profile_json:
         return api_invalid_param_response("Profile data expected")
     
-    if profile_json["nickname"] is not None:
-        user_data.user_nickname = profile_json["nickname"]
+    if profile_json['nickname'] is not None:
+        user_data.user_nickname = profile_json['nickname']
+
+    if profile_json['avatarName'] is not None:
+        avatar_name = profile_json['avatarName']
+        name_dict = util_avatars.avatars_by_name()
+
+        # Ensure that the avatar is actually valid and that the user can
+        # indeed earn it.
+        if (avatar_name in name_dict
+                and name_dict[avatar_name].is_satisfied_by(user_data)):
+            user_data.avatar_name = avatar_name
 
     user_data.save()
 

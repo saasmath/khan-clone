@@ -7,6 +7,7 @@ class Avatar(object):
     """
 
     def __init__(self, name, image_src):
+        # Avatar names must be unique.
         self.name = name
         self.image_src = image_src
 
@@ -38,7 +39,7 @@ class AvatarCategory(object):
     def __init__(self, title):
         self.title = title
 
-    def filter(self, avatars):
+    def filter_avatars(self, avatars):
         """ Returns avatars in the given list that match this category.
 
         Subclasses should override based on what they're checking.
@@ -61,7 +62,7 @@ class AvatarPointsCategory(AvatarCategory):
         self.min_points = min_points
         self.max_points = max_points
 
-    def filter(self, avatars):
+    def filter_avatars(self, avatars):
         result = []
         for avatar in avatars:
             if not isinstance(avatar, PointsAvatar):
