@@ -1,6 +1,13 @@
 <div class="exercise_message review">
   <h2 class="pulls">Review Completed!</h2>
-  Congrats, you've consolidated what you've mastered.
+
+  <span id="congrats-message">
+    <span>Congrats, you've wrapped up your review!</span>
+    <span style="display: none">Congrats, you've mastered what you've learned!</span>
+    <span style="display: none">Nice job, you've proven your skills!</span>
+    <span style="display: none">Well done, you know your stuff.</span>
+    <span style="display: none">You're not afraid of any pop quizzes now! :)</span>
+  </span>
 
   <span id="move-on-message">
     <span>
@@ -15,11 +22,16 @@
 </div>
 
 <script>
-  // Randomly select a move on message to show
-  $(function() {
-    var messages = jQuery( '#move-on-message' ).children();
-    var msgToShow = Math.floor( Math.random() * messages.length );
+    function showRandomMessage( elem ) {
+        var messages = $( elem ).children(),
+            msgToShow = Math.floor( Math.random() * messages.length );
 
-    messages.hide().eq( msgToShow ).show();
-  });
+        messages.hide().eq( msgToShow ).show();
+    }
+
+    // Randomly select some messages to show
+    $(function() {
+        showRandomMessage( '#congrats-message' );
+        showRandomMessage( '#move-on-message' );
+    });
 </script>
