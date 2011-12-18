@@ -138,7 +138,7 @@
     #individual_report #vital-statistics #stats-nav {
         width: 280px;
         float: left;
-        margin-bottom: 10px;
+        margin: -10px 20px 10px 0;        
     }
     #individual_report #vital-statistics #stats-nav ul#nav-accordion {
         padding: 10px 0 0 3px;
@@ -246,10 +246,8 @@
         font-weight: bold;
     }
     #individual_report #vital-statistics #stats-charts {
-        float: right;
-        position: absolute;
-        left: 300px;
-        right: 0;
+        position: relative;
+        top:0;
         overflow: hidden;
         overflow-y: auto;
         min-height: 300px;
@@ -274,6 +272,14 @@
     }
     #individual_report #vital-statistics #stats-charts #module-progress .exercise-progress-block.transparent .exercise-display-name {
         color: #aaa;
+    }
+    .coach-view #module-progress #table_div, .coach-view #module-progress #firstcol {
+      /*
+      ~~hv svnt dracones~~ breaks ie8 completely (why?)
+      max-height: 725px;
+      */
+    }
+    .lte8 .coach-view #module-progress #table_div, .lte8 .coach-view #module-progress #firstcol {
     }
 
 #individual_report #achievements {
@@ -512,12 +518,10 @@ div.graph-notification {
 .sharebar {z-index:0; position:absolute;padding-left:100px;}
 
 #individual_report #vital-statistics #stats-charts.coach-view {
-    min-height: 700px;
-    height: 800px;
+  height:auto !important;
 }
 #individual_report #vital-statistics.coach-view {
-    min-height: 700px;
-    height: 800px;
+  /*used to have a min-height here, now clear the floating accordion*/
 }
 
 #current-goals-list input.goal-title {
@@ -530,4 +534,26 @@ div.graph-notification {
 }
 .coach-filter-block {
     display: block;
+}
+
+
+
+#stats-filters { position:relative; min-width:680px; z-index:10; top:-3px;}
+#stats-filters .filter{ display:none; }
+
+#stats-filters a.graph-link{ display:none; }
+
+#stats-filters .filter-block{ display:inline-block; vertical-align:top; margin-right:24px; }
+
+#stats-filters .coach-filter-block {display:inline; margin-right:1em;}
+
+#stats-filters p {font-size:10px; margin: 0; display:inline-block; }
+#stats-filters h3 {
+  font-family: "MuseoSans300"; font-size:18px; 
+  margin-right:.5em;
+  display:inline-block;
+}
+#stats-filters h3 small{ font-size:14px; }
+#stats-filters #targetDatepicker{
+  display:inline-block;
 }

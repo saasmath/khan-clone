@@ -60,17 +60,33 @@ class RequestInputHandler(object):
 
     def request_user_data(self, key):
         email = self.request_string(key)
+        return UserData.get_possibly_current_user(email)
+
+    # get the UserData instance based on the querystring. The precedence is:
+    # 1. email
+    # 2. student_email
+    # the precendence is reversed when legacy is True. A warning will be logged
+    # if a legacy parameter is encountered when not expected.
+    def request_student_user_data(self, legacy=False):
+        if legacy:
+            email = self.request_student_email_legacy()
+        else:
+            email = self.request_student_email()
+        return UserData.get_possibly_current_user(email)
+
+    def request_student_email_legacy(self):
+        email = self.request_string("email")
+        email = self.request_string("student_email", email)
+        # no warning is logged here as we should aim to completely move to
+        # email, but no effort has been made to update old calls yet.
+        return email
+
+    def request_student_email(self):
+        email = self.request_string("student_email")
         if email:
-
-            user_data_current = UserData.current()
-            if user_data_current and user_data_current.user_email == email:
-                # Avoid an extra DB call in the (fairly often) case that the requested email
-                # is the email of the currently logged-in user
-                return user_data_current
-
-            return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
-
-        return None
+            logging.warning("API called with legacy student_email parameter")
+        email = self.request_string("email", email)
+        return email
 
     def request_float(self, key, default = None):
         try:
@@ -314,7 +330,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
 
-        if user_data and user_data.has_current_goals:
+        if user_data:
             goals = GoalList.get_current_goals(user_data)
             goals_data = [g.get_visible_data() for g in goals]
             if goals_data:
@@ -334,7 +350,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         self.response.out.write(json)
 
     def render_jsonp(self, obj):
-        json = obj if type(obj) == str else simplejson.dumps(obj, ensure_ascii=False, indent=4)
+        json = obj if isinstance(obj, basestring) else simplejson.dumps(obj, ensure_ascii=False, indent=4)
         callback = self.request_string("callback")
         if callback:
             self.response.out.write("%s(%s)" % (callback, json))

@@ -4,6 +4,13 @@ from functools import wraps
 
 from app import App
 
+# *PRIVATE* API version number
+# Increment the version if any non-public API calls change in a non-backwards compatible way.
+# The user will get a message that they need to refresh their HTML. Public API users will not be effected.
+XSRF_API_VERSION = "1.0"
+XSRF_COOKIE_KEY = "fkey"
+XSRF_HEADER_KEY = "HTTP_X_KA_FKEY"
+
 package_dir = os.path.abspath(os.path.join(__file__, "..", "packages"))
 
 # Allow unzipped packages to be imported
@@ -38,6 +45,17 @@ def route(rule, **options):
 
     return api_route_wrap
 
+def is_current_api_version(xsrf_token):
+    if not xsrf_token:
+        return True # Only validate website users
+
+    delims = xsrf_token.split("_")
+    if len(delims) != 3 or delims[0] != XSRF_API_VERSION:
+        logging.warning("Out of date API version detected: %s" % (delims[0]))
+        return False
+
+    return True
+
 def add_api_header(func):
     @wraps(func)
     def api_header_added(*args, **kwargs):
@@ -45,6 +63,14 @@ def add_api_header(func):
 
         if isinstance(result, current_app.response_class):
             result.headers["X-KA-API-Response"] = "true"
+
+            # Note that cacheable responses can be cached by shared caches, such
+            # as proxies. It would be unwise to cache headers that indicate error
+            # conditions, since they are per-user.
+            cacheable = result.cache_control.public
+            if (not cacheable and 
+                    not is_current_api_version(os.environ.get(XSRF_HEADER_KEY))):
+                result.headers["X-KA-API-Version-Mismatch"] = "true"
 
         return result
 

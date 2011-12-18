@@ -53,10 +53,10 @@
 <div id="background">
   <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     {{ exercise_macros.exercise_legend() }}
-    {{ exercise_macros.exercise_dashboard() }}
+    {{ exercise_macros.exercise_dashboard(review_drawer=show_review_drawer) }}
 
     <div class="dashboard-map">
-        {{ exercise_macros.knowledgemap(null, true) }}
+        {{ exercise_macros.knowledgemap(true) }}
     </div>
 </div>
 </div>

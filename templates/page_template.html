@@ -1,21 +1,8 @@
 {%- import 'macros/user.html' as user -%}
 <!DOCTYPE html>
-<!--[if lt IE 7]>  <html class="ie ie6 lte9 lte8 lte7" itemscope itemtype="http://schema.org/Organization"
+<html itemscope itemtype="http://schema.org/Organization"
     xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if IE 7]>     <html class="ie ie7 lte9 lte8 lte7" itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if IE 8]>     <html class="ie ie8 lte9 lte8" itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if IE 9]>     <html class="ie ie9 lte9" itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}> <![endif]-->
-<!--[if gt IE 9]>  <html> <![endif]-->
-<!--[if !IE]><!--><html itemscope itemtype="http://schema.org/Organization"
-    xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:og="http://opengraphprotocol.org/schema/"
-    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}>             <!--<![endif]-->
+    xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}>
       <head>
         <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8"/>
 
@@ -69,7 +56,10 @@
             {{ js_css_packages.js_package("shared") }}
         {% endif %}
 
-        {{ xsrf.render_xsrf_js() }}
+        {# Functions that load packages at run-time -#}
+        <script type="text/javascript">
+          {{ js_css_packages.js_dynamic_package("maps") }}
+        </script>
 
         {% block pagescript %}
         {% endblock pagescript %}
@@ -90,8 +80,12 @@
     </script>
     {%- endif -%}
     </head>
-
-    <body class="light">
+<!--[if lt IE 7]>  <body class="ie ie6 lte9 lte8 lte7"> <![endif]-->
+<!--[if IE 7]>     <body class="ie ie7 lte9 lte8 lte7"> <![endif]-->
+<!--[if IE 8]>     <body class="ie ie8 lte9 lte8"> <![endif]-->
+<!--[if IE 9]>     <body class="ie ie9 lte9"> <![endif]-->
+<!--[if gt IE 9]>  <body> <![endif]-->
+<!--[if !IE]><!--> <body> <!--<![endif]-->
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
     <div id="page-container">
@@ -108,7 +102,6 @@
                 <div id="top-header">
                     <div id="top-header-links">
                         <span class="page_links" id="page_auth">
-                            <span id="goals-congrats" style="display: none">You made progress!</span>
                             <span id="goals-container"></span>
                             {% if logged_in %}
                                 <span id="user-info" class="badge-target">
@@ -137,12 +130,12 @@
                             </div>
                             <div id="search-box">
                                 <form id="page_search" action="/search">
-                                    <input id="search-input" type="text" placeholder="Search for a video or playlist" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input" /><input type="submit" value=" " id="search-submit" />
+                                    <input id="search-input" type="text" placeholder="Search for a video or playlist" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " id="search-submit" />
                                 </form>
                             </div>
                             <div class="clear"></div>
                         </div>
-                </div>
+                    </div>
                     <div id="logo">
                         <a id="logo-image" href="/" title="Take me home!"></a>
                     </div>
@@ -167,22 +160,13 @@
             </header>
             {% block pagecontent %}
             {% endblock pagecontent %}
-            <div id="end-of-page-spacer" style="padding: 10px;">&nbsp;</div>
+            <div id="end-of-page-spacer" style="height: 38px;">&nbsp;</div>
 
 
             {{ badges.badge_notifications() }}
 
     </div>
     </div>
-    </div>
-    <div id="popup-dialog" style="display: none">
-      <div class="dark-window">&nbsp;</div>
-      <div class="window-center">
-        <div class="dialog-frame">
-          <div class="dialog-header"><a href="#" class="close-button close">x</a> <div class="description"></div></div>
-          <div class="dialog-contents">&nbsp;</div>
-        </div>
-      </div>
     </div>
     <div class="push"></div>
     {% block pagefooter %}
@@ -204,16 +188,6 @@
     {%- endif -%}
 
     {{ gae_mini_profiler.profiler_includes() }}
-
-    {%- raw -%}
-    </script>
-
-    <script id="generic-loading-dialog" type="text/html">
-      <div id="generic-message">
-        <img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Loading... </span>
-      </div>
-    </script>
-    {%- endraw -%}
 
     {%- if global_goals -%}
     <script type="text/javascript">

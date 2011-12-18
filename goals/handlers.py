@@ -22,14 +22,12 @@ class CreateNewGoal(RequestHandler):
     @create_phantom
     def get(self):
         user_data = UserData.current()
-        need_maps = self.request_bool('need_maps_package', default=True)
 
         from exercises import exercise_graph_dict_json
 
         context = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
-            'need_maps_package': need_maps,
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': deserializeMapCoords(user_data.map_coords),
 
@@ -125,8 +123,7 @@ class CreateRandomGoalData(RequestHandler):
                     user_data)
                 goal = Goal(parent=user_data, title=title,
                     objectives=objectives)
-                goal.put()
-                user_data.ensure_has_current_goals()
+                user_data.save_goal(goal)
 
                 for objective in obj_descriptors:
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':

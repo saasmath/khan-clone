@@ -1,14 +1,3 @@
-import logging
-import os
-import datetime
-import itertools
-from collections import deque
-from pprint import pformat
-from math import sqrt, ceil
-
-from google.appengine.ext import db
-from google.appengine.api import users
-
 from app import App
 import app
 import facebook_util
@@ -63,7 +52,7 @@ class ViewStudents(RequestHandler):
 
             invalid_student = self.request_bool("invalid_student", default = False)
 
-            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data)]
+            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data) if x.student_requested_data]
 
             student_lists_models = StudentList.get_for_coach(user_data.key())
             student_lists_list = [];
@@ -257,7 +246,8 @@ class DeleteStudentList(RequestHandler):
         if not coach_data:
             return
 
-        student_list = util_profile.get_list(coach_data, self)
+        student_list = util_profile.get_student_list(coach_data,
+            self.request_string('list_id'))
         student_list.delete()
         if not self.is_ajax_request():
             self.redirect_to('/students')
@@ -307,5 +297,9 @@ class ViewClassReport(RequestHandler):
 
 class ViewCharts(RequestHandler):
     def get(self):
-        self.redirect("/profile?k&selected_graph_type=%s&student_email=%s&exid=%s" %
-                (ExerciseProblemsGraph.GRAPH_TYPE, self.request_string("student_email"), self.request_string("exercise_name")))
+        student_email = self.request_student_email_legacy()
+        url = "/profile?k&selected_graph_type=%s&student_email=%s&exid=%s" % (
+            ExerciseProblemsGraph.GRAPH_TYPE,
+            student_email,
+            self.request_string("exercise_name"))
+        self.redirect(url)
