@@ -18,33 +18,9 @@ from models import Topic, TopicVersion, Playlist, Video, Url
         
 class EditTaxonomy(request_handler.RequestHandler):
 
-    def get_tree_html(self, t):
-        html = "<ul>"
-        html += self.get_tree_node_html(t)
-        html += "</ul>"
-        return html
-
-    def get_tree_node_html(self, t, parent = None):
-        html = "<li>"
-        if t.__class__.__name__ == "Exercise":
-            title = "Exercise: " + t.display_name
-        else:
-            title = t.title
-        # html += '<a href="%s">%i: %s</a>' % (t.key().name(), 0 if not parent else parent.get_child_order(t.key()), title)      
-        html += '<a href="%s">%s</a>' % (t.key().name(), title)  
-        if hasattr(t, "children"):
-            children = t.children
-            if children:
-                html += "<ul>"
-                for s in children:
-                    html += self.get_tree_node_html(s, t)
-                html += "</ul>"
-        html += "</li>"
-        return html
-
-    def get(self):    
-        models.Topic.reindex()
-           
+    def get(self):   
+        # The following commented out code is for recreating the datastore from playlists- will remove after deploy
+        # models.Topic.reindex()          
         # importSmartHistory()
         # t = models.Topic.all().filter("title = ", "Algebra").get()
         # title = t.topic_parent.topic_parent.title
@@ -66,13 +42,6 @@ class EditTaxonomy(request_handler.RequestHandler):
         # root = Topic.get_by_id("root").make_tree()
         # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()
         
-        '''
-        videos = Video.get_videos_with_no_topic()
-        template_values = {
-            'tree': len(videos) 
-            }
-        '''
-
         version_name = self.request.get('version', 'edit')
 
         tree_nodes = []
@@ -92,6 +61,7 @@ class EditTaxonomy(request_handler.RequestHandler):
         self.render_jinja2_template('edittaxonomy.html', template_values)
         return
 
+    # temporary function for copying the topic structure in topics_list.py ... will remove after deploy    
     def recursive_copy_topic_list_structure(self, parent, topic_list_part):
         delete_topics = {}
         for topic_dict in topic_list_part:
@@ -122,6 +92,7 @@ class EditTaxonomy(request_handler.RequestHandler):
 
         return delete_topics       
 
+    # temporary function for copying the topic structure in topics_list.py ... will remove after deploy  
     def recreate_topic_list_structure(self):
         import topics_list
         version = TopicVersion.get_edit_version()
@@ -131,6 +102,7 @@ class EditTaxonomy(request_handler.RequestHandler):
             topic.delete_tree()
         version.set_default_version()
 
+    # temporary function for marking topics not in topics_list.py as hidden - will remove after deploy
     def hide_topics(self):
         from topics_list import topics_list
 
@@ -144,7 +116,7 @@ class EditTaxonomy(request_handler.RequestHandler):
                 topic.hide = False
                 topic.put()
 
-
+    # temporary function to load videos into the topics - will remove after deploy
     def load_videos(self):
         root = Topic.get_by_id("root")
                         
@@ -184,12 +156,14 @@ class EditTaxonomy(request_handler.RequestHandler):
 
             self.render_jinja2_template('update_datastore.html', context)   
             
+    # temporary function to remove playlist from the fulltext index... will remove after we run it once after it gets deployed        
     def removePlaylistIndex():
         import search
 
         items = search.StemmedIndex.all(keys_only=True).filter("parent_kind", "Playlist").fetch(10000)
         db.delete(items)
 
+    # temporary function to recreate the root - will remove after deploy
     def load_demo(self):
         root = Topic.insert(title = "The Root of All Knowledge",
                             description = "All concepts fit into the root of all knowledge",
