@@ -58,7 +58,6 @@ def exercise_message(exercise, user_exercise_graph, sees_graph=False,
 
     elif exercise_states['struggling']:
         filename = 'exercise_message_struggling.html'
-        exercise_states['exercise_videos'] = exercise.related_videos_fetch()
 
     else:
         return None
