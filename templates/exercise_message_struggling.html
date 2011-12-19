@@ -154,7 +154,7 @@ var setupSuggestedVideos = function() {
     var jel = $('#' + videoState[bestState] + '-video-sug').clone();
 
     // weight by number of videos remaining
-    var weight = parseInt(jel.attr('data-weight')) * suggestions.length;
+    var weight = parseInt(jel.attr('data-weight'), 10) * suggestions.length;
     jel.attr('data-weight', weight);
 
     // make it link to the correct video
@@ -177,15 +177,14 @@ var buildVideoLink = function(video, exid) {
 };
 
 var setupSuggestedPrereqs = function() {
-    if (!prereqs) {
+    if (!prereqs || !prereqs.length) {
         return;
     }
-
     var prereq = randomElement(prereqs);
     var jel = $('#prereq-sug-templates .suggestion').clone();
 
     // Weight by number of prereqs remaining
-    var weight = parseInt(jel.attr('data-weight')) * prereqs.length;
+    var weight = parseInt(jel.attr('data-weight'), 10) * prereqs.length;
     jel.attr('data-weight', weight);
 
     // Render appropriate link and insert
@@ -205,7 +204,7 @@ var showSuggestion = function() {
     // pick a random suggestion by weight, display it
     var els = $( '.exercise_message .suggestion' );
     var weights = els.map( function( i,el ) {
-        return parseInt( $(el).attr('data-weight') || 1 );
+        return parseInt($(el).attr('data-weight') || 1, 10);
     });
     var r = randomElement( els, weights );
     $(r).show();
