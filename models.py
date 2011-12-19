@@ -1227,8 +1227,11 @@ class Topic(db.Model):
     def ka_url(self):
         return util.absolute_url('#%s' % self.id)
 
-    def get_visible_data(self):
-        children = db.get(self.child_keys)
+    def get_visible_data(self, node_dict=None):
+        if node_dict:
+            children = [ node_dict[child_key] for child_key in self.child_keys if child_key in node_dict ]
+        else:
+            children = db.get(self.child_keys)
         self.children = []
         for child in children:
             item = {}
@@ -1623,14 +1626,27 @@ class Topic(db.Model):
 
         for child_key in self.child_keys:
             if node_dict.has_key(child_key):
-                child_topic = node_dict[child_key]
-                sub_path = path[:]
-                sub_path.append(child_topic.id)
-                if child_topic.search_tree_traversal(query, node_dict, sub_path, matching_paths, matching_nodes):
-                    match = True
+                child = node_dict[child_key]
+
+                if child_key.kind() == 'Topic':
+                    sub_path = path[:]
+                    sub_path.append(child.id)
+                    if child.search_tree_traversal(query, node_dict, sub_path, matching_paths, matching_nodes):
+                        match = True
+
+                else:
+                    title = child.title if hasattr(child, "title") else child.display_name
+                    if title.lower().find(query) > -1:
+                        match_path = path[:]
+                        id = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().id()
+                        match_path.append(id)
+                        match_path.append(child_key.kind())
+                        matching_paths.append(match_path)
+                        match = True
+                        matching_nodes.append(child)
 
         if match:
-            matching_nodes.append(self.get_visible_data())
+            matching_nodes.append(self.get_visible_data(node_dict))
 
         return match
 
@@ -1641,6 +1657,17 @@ class Topic(db.Model):
         
         node_dict = dict((node.key(), node) for node in nodes)
         node_dict[self.key()] = self # in case the current node is hidden (like root is)
+        
+        contentKeys = []
+        # cycle through the nodes adding its children to the contentKeys that need to be gotten
+        for key, descendant in node_dict.iteritems():
+            contentKeys.extend([child_key for child_key in descendant.child_keys if not node_dict.has_key(child_key) and child_key.kind() != "Topic"])
+
+        # get all content that belongs in this tree
+        contentItems = db.get(contentKeys)
+        # add the content to the node dict
+        for content in contentItems:
+            node_dict[content.key()]=content 
 
         matching_paths = []
         matching_nodes = []
@@ -1649,7 +1676,7 @@ class Topic(db.Model):
 
         return {
             "paths": matching_paths,
-            "topics": matching_nodes
+            "nodes": matching_nodes
         }
 
     @staticmethod

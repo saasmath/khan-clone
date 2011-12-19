@@ -924,7 +924,10 @@ var TopicExerciseNodeEditor = {
         TopicExerciseNodeEditor.covers = TopicNodeEditor.model.get('covers').slice(0);
         TopicExerciseNodeEditor.updateCovers();
 
-        TopicExerciseNodeEditor.videos = TopicNodeEditor.model.get('related_videos').slice(0);
+        if (TopicNodeEditor.model.get('related_videos'))
+            TopicExerciseNodeEditor.videos = TopicNodeEditor.model.get('related_videos').slice(0);
+        else
+            TopicExerciseNodeEditor.videos = [];
         TopicExerciseNodeEditor.updateVideos();
     },
     deinit: function() {
@@ -1400,7 +1403,17 @@ var TopicSearchView = Backbone.View.extend({
                 url: '/api/v1/topicversion/' + TopicTreeEditor.currentVersion.get('number') + '/search/' + query,
                 success: function(json) {
                     Throbber.hide();
-                    TopicTreeEditor.currentVersion.getTopicTree().addInited(json.topics);
+
+                    var nodes = { };
+                    _.each(json.nodes, function(node) {
+                        if (nodes[node.kind] == undefined) nodes[node.kind] = [];
+                        nodes[node.kind].push(node);
+                    });
+                    TopicTreeEditor.currentVersion.getTopicTree().addInited(nodes['Topic']);
+                    getExerciseList().addInited(nodes['Exercise']);
+                    getVideoList().addInited(nodes['Video']);
+                    getUrlList().addInited(nodes['URL']);
+
                     self.matchingPaths = json.paths;
                     if (self.matchingPaths.length > 0) {
                         self.currentIndex = 0;
