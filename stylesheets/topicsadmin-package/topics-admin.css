@@ -137,3 +137,17 @@ ul.dynatree-container {
     height: 600px;
     overflow-y: auto;
 }
+
+#topic-search-bar .search-panel {
+    background-color: #fff;
+    float: right;
+    width: 196px;
+    height: 24px; 
+}
+
+#topic-search-bar .search-button {
+    background-color: #fff;
+    float: right;
+    margin: 5px;
+    margin-right: 18px;
+}

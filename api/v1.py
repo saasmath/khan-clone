@@ -24,12 +24,14 @@ from profiles import class_progress_report_graph
 from youtube_sync import youtube_get_video_data
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag
+from api.decorators import jsonify, jsonp, compress, decompress, etag,\
+    cacheable, cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
 
 from google.appengine.ext import db
+from templatefilters import slugify
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -79,12 +81,48 @@ def add_action_results(obj, dict_results):
 
     obj.action_results = dict_results
 
+# Return specific user data requests from request
+# IFF currently logged in user has permission to view
+def get_visible_user_data_from_request(disable_coach_visibility=False,
+                                       user_data=None):
+
+    user_data = user_data or models.UserData.current()
+    if not user_data:
+        return None
+
+    user_data_student = request.request_student_user_data()
+    if user_data_student:
+        if user_data_student.user_email == user_data.user_email:
+            # if email in request is that of the current user, simply return the
+            # current user_data, no need to check permission to view
+            return user_data
+
+        if (user_data.developer or
+                (not disable_coach_visibility and
+                user_data_student.is_coached_by(user_data))):
+            return user_data_student
+        else:
+            return None
+
+    else:
+        return user_data
+
+def get_user_data_coach_from_request():
+    user_data_coach = models.UserData.current()
+    user_data_override = request.request_user_data("coach_email")
+
+    if user_data_coach.developer and user_data_override:
+        user_data_coach = user_data_override
+
+    return user_data_coach
+
 @route("/api/v1/topicversion/<version>/content_topics", methods=["GET"])
 @route("/api/v1/topicversion/<version>/playlists", methods=["GET"]) 
 @route("/api/v1/content_topics", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
 @jsonp
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda version = None: "api_content_topics_%s_%s" % (version, models.TopicVersion.get_date_updated_by_id(version)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -98,7 +136,8 @@ def content_topics(version = None):
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda topic_id, version = None: "api_topic_videos_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -120,7 +159,8 @@ def topic_videos(topic_id, version = None):
 @route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda topic_id, version = None: "api_topic_exercises_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -148,6 +188,13 @@ def topic_exercises(topic_id, version = None):
 def topictree(version = None):
     version = models.TopicVersion.get_by_id(version)
     return models.Topic.get_by_id("root", version).make_tree()
+
+@route("/api/v1/topicversion/<version>/search/<query>", methods=["GET"])
+@jsonp
+@jsonify
+def topictreesearch(version, query):
+    version = models.TopicVersion.get_by_id(version)
+    return models.Topic.get_by_id("root", version).search_tree(query)
 
 @route("/api/v1/topicversion/<version>/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
@@ -409,7 +456,8 @@ def save_url(url_id = None):
 @etag(lambda: models.Setting.cached_library_content_date())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
-@layer_cache.cache_with_key_fxn(
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda: "api_library_%s" % models.Setting.cached_library_content_date(),
     layer=layer_cache.Layers.Memcache)
 @compress
@@ -426,10 +474,44 @@ def playlists_library():
 
     return playlist_structure
 
-@route("/api/v1/playlists/library/list", methods=["GET"])
+@route("/api/v1/playlists/library/compact", methods=["GET"])
+@cacheable(caching_age=(60 * 60 * 24 * 60))
+@etag(lambda: models.Setting.cached_library_content_date())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @layer_cache.cache_with_key_fxn(
+    lambda: "api_compact_library_%s" % models.Setting.cached_library_content_date(),
+    layer=layer_cache.Layers.Memcache)
+@compress
+@jsonify
+def playlists_library_compact():
+    playlists = fully_populated_playlists()
+
+    def trimmed_video(video):
+        trimmed_video_dict = {}
+        trimmed_video_dict['readable_id'] = video.readable_id
+        trimmed_video_dict['title'] = video.title
+        trimmed_video_dict['key_id'] = video.key().id()
+        return trimmed_video_dict
+
+    playlist_dict = {}
+    for playlist in playlists:
+        trimmed_info = {}
+        trimmed_info['title'] = playlist.title
+        trimmed_info['slugged_title'] = slugify(playlist.title)
+        trimmed_info['videos'] = [trimmed_video(v) for v in playlist.videos]
+        playlist_dict[playlist.title] = trimmed_info
+
+    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
+    replace_playlist_values(playlist_structure, playlist_dict)
+
+    return playlist_structure
+
+@route("/api/v1/playlists/library/list", methods=["GET"])
+@jsonp
+@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
+@cache_with_key_fxn_and_param(
+    "casing",
     lambda: "api_library_list_%s" % models.Setting.cached_library_content_date(),
     layer=layer_cache.Layers.Memcache)
 @compress
@@ -611,35 +693,14 @@ def replace_playlist_values(structure, playlist_dict):
             replace_playlist_values(structure["items"], playlist_dict)
         elif "playlist" in structure:
             # Replace string playlist title with real playlist object
-            structure["playlist"] = playlist_dict[structure["playlist"]]
+            key = structure["playlist"]
+            if key in playlist_dict:
+                structure["playlist"] = playlist_dict[key]
+            else:
+                del structure["playlist"]
 
-# Return specific user data requests from request
-# IFF currently logged in user has permission to view
-def get_visible_user_data_from_request(disable_coach_visibility=False,
-                                       user_data=None):
-
-    user_data = user_data or models.UserData.current()
-    if not user_data:
-        return None
-
-    if request.request_string("email"):
-        user_data_student = request.request_user_data("email")
-
-        if user_data_student and user_data_student.user_email == user_data.user_email:
-            # if email in request is that of the current user, simply return the
-            # current user_data, no need to check permission to view
-            return user_data
-
-        if (user_data_student and
-                (user_data.developer or
-                        (not disable_coach_visibility and
-                         user_data_student.is_coached_by(user_data)))):
-            return user_data_student
-        else:
-            return None
-
-    else:
-        return user_data
+def get_students_data_from_request(user_data):
+    return util_profile.get_students_data(user_data, request.request_string("list_id"))
 
 @route("/api/v1/user", methods=["GET"])
 @oauth_required()
@@ -665,16 +726,7 @@ def user_data_student():
     if user_data:
         user_data_student = get_visible_user_data_from_request(disable_coach_visibility=True)
         if user_data_student:
-            if request.request_string("list_id"):
-                try:
-                    student_list = util_profile.get_list(user_data_student, request)
-                except Exception, e:
-                    logging.error("%s: %s" % (request.url, e))
-                    return None
-                else:
-                    return student_list.get_students_data()
-            else:
-                return user_data_student.get_students_data()
+            return get_students_data_from_request(user_data_student)
 
     return None
 
@@ -859,22 +911,13 @@ def user_exercises_all():
 @oauth_required()
 @jsonp
 @jsonify
-def coach_progress_summary():
-    user_data_coach = models.UserData.current()
-    user_data_override = request.request_user_data("coach_email")
-    if user_data_coach.developer and user_data_override:
-        user_data_coach = user_data_override
+def get_students_progress_summary():
+    user_data_coach = get_user_data_coach_from_request()
 
-    if request.request_string("list_id"):
-        try:
-            student_list = util_profile.get_list(user_data_coach, request)
-        except Exception, e:
-            logging.error("%s: %s" % (request.url, e))
-            list_students = user_data_coach.get_students_data()
-        else:
-            list_students = student_list.get_students_data()
-    else:
-        list_students = user_data_coach.get_students_data()
+    try:
+        list_students = get_students_data_from_request(user_data_coach)
+    except Exception, e:
+        return api_invalid_param_response(e.message)
 
     list_students = sorted(list_students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(list_students)
@@ -1057,6 +1100,8 @@ def user_problem_logs(exercise_name):
 
     return None
 
+# TODO(david): Factor out duplicated code between attempt_problem_number and
+#     hint_problem_number.
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/attempt", methods=["POST"])
 @oauth_optional()
 @api_create_phantom
@@ -1098,18 +1143,25 @@ def attempt_problem_number(exercise_name, problem_number):
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
             user_states = user_exercise_graph.states(exercise.name)
+            correct = request.request_bool("complete")
+            review_mode = request.request_bool("review_mode", default=False)
 
             action_results = {
                 "exercise_state": {
                     "state": [state for state in user_states if user_states[state]],
-                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                    "template" : templatetags.exercise_message(exercise,
+                        user_exercise_graph, review_mode=review_mode),
                 },
                 "points_earned": {"points": points_earned},
-                "attempt_correct": request.request_bool("complete")
+                "attempt_correct": correct,
             }
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+
+            if review_mode:
+                action_results['reviews_left'] = (
+                    user_exercise_graph.reviews_left_count() + (1 - correct))
 
             add_action_results(user_exercise, action_results)
             return user_exercise
@@ -1132,6 +1184,8 @@ def hint_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            prev_user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
             attempt_number = request.request_int("attempt_number")
             count_hints = request.request_int("count_hints")
 
@@ -1152,11 +1206,15 @@ def hint_problem_number(exercise_name, problem_number):
                     )
 
             user_states = user_exercise_graph.states(exercise.name)
+            review_mode = request.request_bool("review_mode", default=False)
+            exercise_message_html = templatetags.exercise_message(exercise,
+                    user_exercise_graph, review_mode=review_mode)
+
             add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                "exercise_message_html": exercise_message_html,
                 "exercise_state": {
                     "state": [state for state in user_states if user_states[state]],
-                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                    "template" : exercise_message_html,
                 }
             })
 
@@ -1193,6 +1251,29 @@ def _attempt_problem_wrong(exercise_name):
         return make_wrong_attempt(user_data, user_exercise)
 
     return unauthorized_response()
+
+@route("/api/v1/user/exercises/review_problems", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_ordered_review_problems():
+    """Retrieves an ordered list of a subset of the upcoming review problems."""
+
+    # TODO(david): This should probably be abstracted away in exercises.py or
+    # models.py (if/when there's more logic here) with a nice interface.
+
+    user_data = get_visible_user_data_from_request()
+
+    if not user_data:
+        return []
+
+    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    review_exercises = user_exercise_graph.review_exercise_names()
+
+    queued_exercises = request.request_string('queued', '').split(',')
+
+    # Only return those exercises that aren't already queued up
+    return filter(lambda ex: ex not in queued_exercises, review_exercises)
 
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @oauth_required()
@@ -1408,30 +1489,18 @@ def user_data():
 @jsonp
 @jsonify
 def get_student_progress_report():
-    user_data_coach = models.UserData.current()
-
-    user_data_override = request.request_user_data("coach_email")
-    if user_data_coach and user_data_coach.developer and user_data_override:
-        user_data_coach = user_data_override
+    user_data_coach = get_user_data_coach_from_request()
 
     if not user_data_coach:
         return api_invalid_param_response("User is not logged in.")
 
-    student_list = None
+    try:
+        students = get_students_data_from_request(user_data_coach)
+    except Exception, e:
+        return api_invalid_param_response(e.message)
 
-    student_list_key = request.request_string('list_id')
-    if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data_coach)
-        for list in student_lists:
-            if str(list.key()) == student_list_key:
-                student_list = list
-                break
-        if not student_list:
-            return api_invalid_param_response("Invalid list ID.")
-
-    report_data = class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list)
-
-    return report_data
+    return class_progress_report_graph.class_progress_report_graph_context(
+        user_data_coach, students)
 
 @route("/api/v1/user/goals", methods=["GET"])
 @oauth_optional()
@@ -1473,28 +1542,12 @@ def get_user_current_goals():
 @jsonp
 @jsonify
 def get_student_goals():
-    user_data_coach = request.request_user_data("coach_email")
-    if not user_data_coach:
-        return api_invalid_param_response("Coach not specified.")
+    user_data_coach = get_user_data_coach_from_request()
 
-    student_list = None
-
-    # TomY TODO test/improve the performance of this
-
-    student_list_key = request.request_string('list_id')
-    if student_list_key and student_list_key != 'allstudents':
-        student_lists = models.StudentList.get_for_coach(user_data_coach.key())
-        for list in student_lists:
-            if str(list.key()) == student_list_key:
-                student_list = list
-                break
-        if not student_list:
-            return api_invalid_param_response("Invalid list ID.")
-
-    if student_list:
-        students = student_list.get_students_data()
-    else:
-        students = user_data_coach.get_students_data()
+    try:
+        students = get_students_data_from_request(user_data_coach)
+    except Exception, e:
+        return api_invalid_param_response(e.message)
 
     students = sorted(students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(students)
@@ -1504,10 +1557,7 @@ def get_student_goals():
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
-        if student.has_current_goals:
-            goals = GoalList.get_current_goals(student)
-        else:
-            goals = []
+        goals = GoalList.get_current_goals(student)
         student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
         return_data.append(student_data)
 
@@ -1571,8 +1621,8 @@ def create_user_goal():
             user_data)
 
         goal = Goal(parent=user_data, title=title, objectives=objectives)
-        goal.put()
-        user_data.ensure_has_current_goals()
+        user_data.save_goal(goal)
+
         return goal.get_visible_data(None)
     else:
         return api_invalid_param_response("No objectives specified.")

@@ -129,27 +129,21 @@
       <p>Showing Only
         <input type="text" id="student-progressreport-search" placeholder="student or objective" class="search-input simple-input ui-corner-all blur-on-esc"></input>
         <span class="coach-filter-block">
-          <input type="checkbox" class="progressreport-filter-check" name="struggling" />Struggling</span>
-        <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" name="recent" />Worked on in last: 
+            <input type="checkbox" class="progressreport-filter-check" id="progressreport-struggling" name="struggling" /><label for="progressreport-struggling">Struggling</label></span>
+      <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" id="progressreport-recent" name="recent" /><label for="progressreport-recent">Worked on in last:</label>
             <select id="progressreport-filter-last-time"><option value="1">day</option><option value="2">2 days</option><option value="3">3 days</option><option selected value="7">week</option><option value="30">month</option></select></span>
     </div>
-    
-    
   </div>
 
   <div class="filter">
     {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "progress/summary", selected_graph_type, list_id) }}
-    
+
     <div class="filter-block">
       <h3>Progress Summary</h3>
     </div>
-    <div class="filter-block fake-row">
-      <span class="segment exercise-color struggling ui-corner-all"><span>struggling</span></span>
-      <span class="segment exercise-color not-started ui-corner-all"><span>unstarted</span></span>
-      <span class="segment exercise-color started ui-corner-all"><span>started</span></span>
-      <span class="segment exercise-color proficient ui-corner-all"><span>proficient</span></span>
-      <span class="segment exercise-color review ui-corner-all"><span>review</span></span>
-      <div style="clear: both"></div>
+    <div class="filter-block">
+      <p>Showing Only
+        <input type="text" id="student-progresssummary-search" placeholder="exercise name" class="search-input simple-input ui-corner-all blur-on-esc"></input>
     </div>
   </div>
 
@@ -169,7 +163,7 @@
       <p>Sorted by:
         <select id="student-goals-sort">
           <option value="name"> First Name </option>
-          <option value="progress"> Recent Progress </option>
+          <option value="progress"> Progress </option>
           <option value="created"> Started Recently </option>
           <option value="updated"> Updated Recently </option>
         </select>

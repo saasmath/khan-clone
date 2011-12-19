@@ -4,7 +4,6 @@
 
 var GoalCreator = {
     objectives: [],
-    creating: false,
     knowledgeMap: null,
 
     init: function(knowledgeMap) {
@@ -40,6 +39,12 @@ var GoalCreator = {
         form.find('input').mouseup(function() { $(this).removeClass('fieldError'); });
         form.find('input[name="title"]')
             .change(function() { GoalCreator.updateViewAndDescription(); } )
+            .keypress(function( e ) {
+                if (e.which == '13') { // enter
+                    e.preventDefault();
+                    $(e.target).blur();
+                }
+            });
 
         GoalCreator.updateViewAndDescription();
     },
@@ -53,6 +58,18 @@ var GoalCreator = {
         });
         return list;
     },
+
+    // reset window state
+    reset: function() {
+        GoalCreator.objectives = [];
+        $('#create-goal input[name="title"]').val('');
+
+        GoalCreator.updateExerciseCount();
+        GoalCreator.updateVideoCount();
+        GoalCreator.updateViewAndDescription();
+        GoalCreator.showExercises();
+    },
+
     toggleObjectiveInternal: function(type, css, id, name) {
         var idx = 1;
         var found_index = -1;
@@ -190,9 +207,9 @@ var GoalCreator = {
             .add(".dashboard-map", context)
             .add("#goal-choose-videos .dashboard-content-stretch");
 
-        var containerHeight = $('#popup-dialog .dialog-frame').outerHeight(true);
-        var yTopPadding = $('#goal-spacer').offset().top -
-            $('#popup-dialog .dialog-frame').offset().top;
+        var container = $('.goal-new-custom.modal');
+        var containerHeight = container.outerHeight(true);
+        var yTopPadding = $('#goal-spacer').offset().top - container.offset().top;
         var yBottomPadding = 48; // magic numbers ahoy
         var newHeight = containerHeight - (yTopPadding + yBottomPadding);
 
@@ -346,7 +363,7 @@ var GoalCreator = {
         var form = $('#create-goal');
         var html = '';
 
-        if (GoalCreator.creating || !GoalCreator.validate(form))
+        if ( !GoalCreator.validate(form) )
             return;
 
         var titleField = form.find('input[name="title"]');
@@ -354,10 +371,6 @@ var GoalCreator = {
         {
             titleField.val('Custom goal: ' + new Date().toDateString());
         }
-
-        $('#goal-submit-button').html("<img src='/images/throbber.gif' class='throbber'/><span style='margin-left: 20px'>Creating...</span>").removeClass('green');
-        GoalCreator.creating = true;
-        globalPopupDialog.hide();
 
         var goal = new Goal({
             title: titleField.val(),
@@ -376,10 +389,10 @@ var GoalCreator = {
             .fail(function(jqXHR) {
                 KAConsole.log('Goal creation failed: ' + jqXHR.responseText, goal);
                 GoalBook.remove(goal);
-            })
-            .done(function() {
-                GoalCreator.creating = false;
             });
+
+        newCustomGoalDialog.hide();
+        GoalCreator.reset();
 
         return false;
     },
@@ -404,45 +417,49 @@ function createGoalInitialize() {
 
 </script>
 
-  <article class="create-goal-page">
-  <form id="create-goal" action="javascript:">
+<div class="create-goal-page">
+<form id="create-goal" action="javascript:">
     <div class="section-headline">
-    <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green" style="font-size: 16px; float: right; padding: 4px 10px;">Create New Goal</a>
-      <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
-      <input type="text" name="title" class="goal-title simple-input ui-corner-all blur-on-esc" placeholder="New Goal (click to set a title)"></input>
+        <a id="goal-submit-button" onclick="javascript:GoalCreator.submit();" class="simple-button action-gradient green">Create New Goal</a>
+        <a class="simple-button action-gradient close goals-close-button">Cancel</a>
+        <span id="goal-commit-response" style="display:none;" class="goal-response-text"></span>
+        <input type="text" name="title" class="goal-title simple-input ui-corner-all blur-on-esc" placeholder="New Goal (click to set a title)"></input>
     </div>
     <div id="goal-info-section">
-      <div id="create-goal-view"></div>
-      <div id="goal-hidden-values"></div>
+        <div id="create-goal-view"></div>
+        <div id="goal-hidden-values"></div>
     </div>
-  </form>
+</form>
 
-  <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+<div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     <div class="objective-type-picker clearfix">
-      <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
+        <a href="javascript:GoalCreator.showExercises();" class="simple-button action-gradient" id="show-ex-btn">Choose exercises (<span id="goal-exercise-count">0</span> selected)</a>
         <a href="javascript:GoalCreator.showVideos();" class="simple-button action-gradient" id="show-vid-btn">Choose videos (<span id="goal-video-count">0</span> selected)</a>
-      </div>
+    </div>
     <div id="goal-spacer"></div>
     <div id="goal-choose-exercises">
-      {{ exercise_macros.exercise_legend() }}
-      {{ exercise_macros.exercise_dashboard() }}
+        {{ exercise_macros.exercise_legend() }}
+        {{ exercise_macros.exercise_dashboard() }}
 
-      <div class="dashboard-map">
-          {{ exercise_macros.knowledgemap(false) }}
-      </div>
+        <div class="dashboard-map">
+            {{ exercise_macros.knowledgemap(false) }}
+        </div>
     </div>
 
     <div id="goal-choose-videos" style="display: none;">
-      <div class="dashboard-header">
-        <div class="dashboard-nav">
-          {{ templatetags.playlist_browser("browse") }}
+        <div class="dashboard-header">
+            <div class="dashboard-nav">
+                {{ templatetags.playlist_browser("browse") }}
+            </div>
+            <div class="dashboard-title">
+                <img src="/images/video.png" class="dashboard-icon" width=22 height=22 />
+                Videos
+            </div>
         </div>
-        <div class="dashboard-title"><img src="/images/video.png" class="dashboard-icon" width=22 height=22 /> Videos </div>
-      </div>
-      <div class="dashboard-content-stretch">
-    {{ library_content }}
-      </div>
+        <div class="dashboard-content-stretch">
+            {{ library_content }}
+        </div>
     </div>
-  </div>
-  </article>
+</div>
 
+</div>

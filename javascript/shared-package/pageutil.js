@@ -53,7 +53,7 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
             var term = $.trim( req.term );
             if ( !term ) {
                 fxnCallback([]);
-				return;
+                return;
             }
 
             // Get autocomplete matches
@@ -227,8 +227,11 @@ var VideoControls = {
     },
 
     play: function() {
-        if (VideoControls.player && VideoControls.player.playVideo)
+        $(VideoControls).trigger("beforeplay");
+
+        if (VideoControls.player && VideoControls.player.playVideo) {
             VideoControls.player.playVideo();
+        }
     },
 
     pause: function() {
@@ -241,6 +244,13 @@ var VideoControls = {
         // when a play link is clicked.
         var yTop = $(VideoControls.player).offset().top - 2;
         if ($(window).scrollTop() > yTop) $(window).scrollTop(yTop);
+    },
+
+    onYouTubeBlocked: function(callback) {
+        $('<img width=0 height=0>')
+            .error(callback)
+            .attr('src', 'http://www.youtube.com/favicon.ico?' + Math.random())
+            .appendTo('#page-container');
     },
 
     initThumbnails: function() {
@@ -288,8 +298,11 @@ var VideoControls = {
         var youtubeId = jelParent.attr("data-youtube-id");
         if (VideoControls.player && youtubeId)
         {
+            $(VideoControls).trigger("beforeplay");
+
             VideoControls.player.loadVideoById(youtubeId, 0, "default");
             VideoControls.scrollToPlayer();
+
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
 
@@ -422,6 +435,15 @@ var VideoStats = {
         } else if (state == 1) { // play
             this.playing = true;
             this.dtSinceSave = new Date();
+
+            if (!VideoControls.videoBingoSent &&
+                    (typeof Homepage != "undefined")) {
+                gae_bingo.bingo([
+                        "homepage_restructure_homepage_video_played",
+                        "homepage_restructure_homepage_video_played_binary"
+                        ])
+                VideoControls.videoBingoSent = true;
+            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
@@ -547,6 +569,7 @@ function onYouTubePlayerReady(playerID) {
 
     VideoControls.player = player;
     VideoStats.player = player;
+
     // The UniSub (aka mirosubs) widget replaces the YouTube player with a copy
     // and that will cause onYouTubePlayerReady() to be called again.  So, we trigger
     // 'playerready' events on any objects that are using the player so that they can
@@ -577,7 +600,7 @@ var Badges = {
         });
 
         var jelTarget = $(".badge-target");
-        var jelContainer = $("#container");
+        var jelContainer = $("#page-container-inner");
 
         var top = jelTarget.offset().top + jelTarget.height() + 5;
 
@@ -830,12 +853,13 @@ var FacebookHook = {
         if (!window.FB_APP_ID) return;
 
         window.fbAsyncInit = function() {
-            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true});
+            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
 
             if (!USERNAME) {
                 FB.Event.subscribe('auth.login', function(response) {
-                    if (response.session) {
-                        FacebookHook.fixMissingCookie(response.session);
+
+                    if (response.authResponse) {
+                        FacebookHook.fixMissingCookie(response.authResponse);
                     }
 
                     var url = URL_CONTINUE || "/";
@@ -844,10 +868,10 @@ var FacebookHook = {
                     else
                         url += "?fb=1";
 
-                    var hasCookie = !!readCookie("fbs_" + FB_APP_ID);
+                    var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
                     url += "&hc=" + (hasCookie ? "1" : "0");
 
-                    url += "&hs=" + (response.session ? "1": "0");
+                    url += "&hs=" + (response.authResponse ? "1": "0");
 
                     window.location = url;
                });
@@ -855,11 +879,15 @@ var FacebookHook = {
 
             FB.getLoginStatus(function(response) {
 
+                if (response.authResponse) {
+                    FacebookHook.fixMissingCookie(response.authResponse);
+                }
+                
                 $('#page_logout').click(function(e) {
 
-                    eraseCookie("fbs_" + FB_APP_ID);
+                    eraseCookie("fbsr_" + FB_APP_ID);
 
-                    if (response.session) {
+                    if (response.authResponse) {
 
                         FB.logout(function() {
                             window.location = $("#page_logout").attr("href");
@@ -881,22 +909,20 @@ var FacebookHook = {
         });
     },
 
-    fixMissingCookie: function(session) {
+    fixMissingCookie: function(authResponse) {
         // In certain circumstances, Facebook's JS SDK fails to set their cookie
         // but still thinks users are logged in. To avoid continuous reloads, we
         // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
 
-        if (readCookie("fbs_" + FB_APP_ID))
+        if (readCookie("fbsr_" + FB_APP_ID))
             return;
 
-        var sCookie = "";
-        $.each(session, function( key ) {
-            sCookie += key + "=" + encodeURIComponent(session[key]) + "&";
-        });
-
-        // Explicitly use a session cookie here for IE's sake.
-        createCookie("fbs_" + FB_APP_ID, "\"" + sCookie + "\"");
+        if (authResponse && authResponse.signedRequest) {
+            // Explicitly use a session cookie here for IE's sake.
+            createCookie("fbsr_" + FB_APP_ID, authResponse.signedRequest);
+        }
     }
+
 };
 FacebookHook.init();
 
@@ -1160,7 +1186,7 @@ var dynamicPackageLoader = {
             new dynamicPackage(packageName, callback, manifest);
         }
     },
-    
+
     packageLoaded: function(packageName) {
         return this.loadedPackages[packageName];
     },
@@ -1179,3 +1205,103 @@ $(function() {
     });
 });
 
+// An animation that grows a box shadow of the review hue
+$.fx.step.reviewExplode = function(fx) {
+    var val = fx.now + fx.unit;
+    $( fx.elem ).css( 'boxShadow',
+        '0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
+};
+
+var Review = {
+    REVIEW_DONE_HTML: "Review&nbsp;Done!",
+
+    highlightDone: function() {
+        if ( $( "#review-mode-title" ).hasClass( "review-done" ) ) {
+            return;
+        }
+
+        var duration = 800;
+
+        // Make the explosion flare overlap all other elements
+        var overflowBefore = $( "#container" ).css( "overflow" );
+        $( "#container" ).css( "overflow", "visible" )
+            .delay( duration ).queue(function() {
+                $( this ).css( "overflow", overflowBefore );
+            });
+
+        // Review hue explosion
+        $( "#review-mode-title" ).stop().addClass( "review-done" ).animate({
+            reviewExplode: 200,
+        }, duration ).queue(function() {
+            $( this ).removeAttr( "style" ).addClass( "post-animation" );
+        });
+
+        // Temporarily change the color of the review done box to match the explosion
+        $( "#review-mode-title > div" )
+            .css( "backgroundColor", "#F9DFCD" )
+            .delay( duration ).queue(function() {
+                $( this ).removeAttr( "style" ).addClass( "review-done" );
+            });
+
+        // Huge "REVIEW DONE!" text shrinks to fit in its box
+        $( "#review-mode-title h1" ).html( Review.REVIEW_DONE_HTML ).css({
+            fontSize: "100px",
+            right: 0,
+            position: "absolute"
+        }).stop().animate({
+            reviewGlow: 1,
+            opacity: 1,
+            fontSize: 30
+        }, duration ).queue(function() {
+            $( this ).removeAttr( "style" );
+        });
+    },
+
+    initCounter: function( reviewsLeftCount ) {
+        var digits = "0 1 2 3 4 5 6 7 8 9 ";
+        $( "#review-counter-container" )
+            .find( ".ones" ).text( new Array(10 + 1).join(digits) ).end()
+            .find( ".tens" ).text( digits );
+    },
+
+    updateCounter: function( reviewsLeftCount ) {
+
+        // Spin the remaining reviews counter like a slot machine
+        var reviewCounterElem = $( "#review-counter-container" ),
+            reviewTitleElem = $( "#review-mode-title" ),
+            oldCount = reviewCounterElem.data( "counter" ) || 0,
+            tens = Math.floor( ( reviewsLeftCount % 100 ) / 10 ),
+            animationOptions = {
+              duration: Math.log( 1 + Math.abs(reviewsLeftCount - oldCount) )
+                  * 1000 * 0.8,
+              easing: 'easeInOutCubic'
+            },
+            lineHeight = parseInt(
+                reviewCounterElem.children().css('lineHeight'), 10 );
+
+        reviewCounterElem.find( ".ones" ).animate({
+            top: ( reviewsLeftCount % 100 ) * -lineHeight
+        }, animationOptions );
+
+        reviewCounterElem.find( ".tens" ).animate({
+            top: tens * -lineHeight
+        }, animationOptions );
+
+        if ( reviewsLeftCount === 0 ) {
+            if ( oldCount > 0 ) {
+                // Review just finished, light a champagne supernova in the sky
+                Review.highlightDone();
+            } else {
+                reviewTitleElem
+                    .addClass( "review-done post-animation" )
+                    .find( "h1" )
+                    .html( Review.REVIEW_DONE_HTML );
+            }
+        } else if ( !reviewTitleElem.hasClass( "review-done" ) ) {
+            $( "#review-mode-title h1" ).text(
+                reviewsLeftCount === 1 ? "Exercise Left!" : "Exercises Left" );
+        }
+
+        reviewCounterElem.data( "counter", reviewsLeftCount );
+    }
+};

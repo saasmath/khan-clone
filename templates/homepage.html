@@ -16,7 +16,17 @@
 {% block pagecontent %}
 <article id="homepage">
     <div id="main-video">
-        {{ youtube.player_embed(video_id, 480, 395) }}
+
+        {% if is_mobile_capable %}
+            {{ youtube.player_embed(marquee_video["youtube_id"], 480, 395) }}
+        {% else %}
+            <a id="main-video-link" href="{{ marquee_video["href"] }}">
+                <div id="main-video-placeholder" style="background-image:url('{{ marquee_video["thumb_urls"]["sd"]|escape }}')">
+                    <div class="youtube-placeholder-title">{{ marquee_video["title"]|escape }}</div>
+                    <img class="youtube-play" src="/images/youtube_play.png" />
+                </div>
+            </a>
+        {% endif %}
     </div>
     <div id="homepage-text" class="visited-no-recolor">
         <h1 class="section-headline pulls"><a href="/#browse">Watch.</a> <a href="/exercisedashboard?k">Practice.</a></h1>
@@ -75,9 +85,9 @@
 
                                 <a href="{{ thumbnail_link["href"]|escape }}" class="thumbnail_link"><div 
                                         {% if outerloop.first %}
-                                        class="thumb" style="background-image:url('{{ thumbnail_link["thumb_url"]|escape }}')"
+                                        class="thumb" style="background-image:url('{{ thumbnail_link["thumb_urls"]["hq"]|escape }}')"
                                         {% else %}
-                                        class="thumb pending" data-src="{{ thumbnail_link["thumb_url"]|escape }}"
+                                        class="thumb pending" data-src="{{ thumbnail_link["thumb_urls"]["hq"]|escape }}"
                                         {% endif %}
                                         ></div></a>
 
@@ -143,7 +153,10 @@
     {% endif %}
 
     <script type="text/javascript">
-        $(function(){VideoStats.startLoggingProgress("{{ video_key }}");});
+        $(function(){
+            VideoStats.startLoggingProgress("{{ marquee_video["key"]|escapejs }}");
+            Homepage.initPlaceholder("{{ marquee_video["youtube_id"]|escapejs }}");
+        });
 
         (function(){
             var twitterWidgets = document.createElement('script');

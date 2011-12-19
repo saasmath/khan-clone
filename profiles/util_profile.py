@@ -12,8 +12,6 @@ from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
 
-from api.auth.xsrf import ensure_xsrf_cookie
-
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
 
@@ -52,25 +50,38 @@ def get_last_student_list(request_handler, student_lists, use_cookie=True):
     return list_id, current_list
 
 def get_student(coach, request_handler):
-    student = request_handler.request_user_data('student_email')
+    student = request_handler.request_student_user_data(legacy=True)
     if student is None:
-        raise Exception("No student found with email='%s'." % request_handler.request_string('student_email'))
+        raise Exception("No student found with email='%s'."
+            % request_handler.request_student_email_legacy())
     if not student.is_coached_by(coach):
         raise Exception("Not your student!")
     return student
 
-def get_list(coach, request_handler):
-    list_id = request_handler.request_string('list_id')
-    student_list = StudentList.get(list_id)
+def get_student_list(coach, list_key):
+    student_list = StudentList.get(list_key)
     if student_list is None:
-        raise Exception("No list found with list_id='%s'." % list_id)
+        raise Exception("No list found with list_key='%s'." % list_key)
     if coach.key() not in student_list.coaches:
         raise Exception("Not your list!")
     return student_list
 
+# Return a list of students, either from the list or from the user data,
+# dependent on the contents of a querystring parameter.
+def get_students_data(user_data, list_key=None):
+    student_list = None
+    if list_key and list_key != 'allstudents':
+        student_list = get_student_list(user_data, list_key)
+
+    if student_list:
+        return student_list.get_students_data()
+    else:
+        return user_data.get_students_data()
+
 def get_coach_student_and_student_list(request_handler):
     coach = UserData.current()
-    student_list = get_list(coach, request_handler)
+    student_list = get_student_list(coach,
+        request_handler.request_string("list_id"))
     student = get_student(coach, request_handler)
     return (coach, student, student_list)
 
@@ -139,7 +150,7 @@ class ViewProfile(request_handler.RequestHandler):
     def get(self):
         student = UserData.current() or UserData.pre_phantom()
 
-        user_override = self.request_user_data("student_email")
+        user_override = self.request_student_user_data(legacy=True)
         if user_override and user_override.key_email != student.key_email:
             if not user_override.is_visible_to(student):
                 # If current user isn't an admin or student's coach, they can't
@@ -228,7 +239,7 @@ class ProfileGraph(request_handler.RequestHandler):
         student = UserData.current() or UserData.pre_phantom()
 
         if student:
-            user_override = self.request_user_data("student_email")
+            user_override = self.request_student_user_data(legacy=True)
             if user_override and user_override.key_email != student.key_email:
                 if not user_override.is_visible_to(student):
                     # If current user isn't an admin or student's coach, they can't look at anything other than their own profile.

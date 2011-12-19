@@ -11,7 +11,7 @@
 </div>
 {%- endmacro %}
 
-{% macro exercise_dashboard() -%}
+{% macro exercise_dashboard(review_drawer=False) -%}
     <div class="dashboard-header">
         <div class="dashboard-nav">
             <span class="selected"><a href="#">Knowledge Map{% if App.offline_mode %} (<em>not supported in offline mode</em>){% endif %}</a></span> |
@@ -21,21 +21,28 @@
             <a href="#" class="expand-drawer toggle-drawer"><img src="/images/expand-right.png" width="25" height="25" /></a>
         </div>
     <div class="dashboard-drawer drawer-hoverable">
+    {%- if review_drawer -%}
+    <a href="/review" id="dashboard-review-exercises" class="hide-on-dashboard-filter exercise-color review light">
+        <img src="/images/node-review.png" height="40" width="38">
+        <span class="gradient-overlay"></span>
+        <span id="dashboard-review-title" href="/review">Fortify your Knowledge</span>
+        <!-- TODO(david): This is placeholder. Need points info. -->
+        <span id="dashboard-review-content" href="/review">Start Reviews &raquo;</span>
+    </a>
+    {%- endif -%}
     <div class="dashboard-drawer-inner fancy-scrollbar"><div>
        <div class="dashboard-filter">
           <input type="text" class="dashboard-filter-text ui-corner-all simple-input" placeholder="Start typing the name of an exercise to find it" /><input type="button" value="Clear" class="dashboard-filter-clear simple-button action-gradient ui-corner-right strict" style="display: none;"></input>
        </div>
        <div class="exercise-list">
-        <span class="exercise-sublist dashboard-suggested-exercises">
+        <span class="exercise-sublist dashboard-suggested-exercises hide-on-dashboard-filter">
         <h3>Suggested Exercises <span class="exercise-filter-count"></span></h3>
          <div class="exercise-content suggested-exercises-content"></div>
         </span>
-        <br>
-        <span class="exercise-sublist dashboard-recent-exercises">
+        <span class="exercise-sublist dashboard-recent-exercises hide-on-dashboard-filter">
          <h3>Recent Exercises <span class="exercise-filter-count"></span></h3>
          <div class="exercise-content recent-exercises-content"></div>
         </span>
-        <br/>
         <span class="exercise-sublist dashboard-all-exercises">
          <h3>All Exercises <span class="exercise-filter-count"></span>
            <span class="subheader exercise-all-exercises">(<a href="#" class="exercise-all-exercises-text">Show All</a>)</span>
