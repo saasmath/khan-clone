@@ -81,34 +81,26 @@ class ViewExercise(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self, exid=None):
 
+        # TODO(david): Is there some webapp2 magic that will allow me not to
+        #     repeat this URL string in main.py?
+        review_mode = self.request.path == "/review" and (
+            ab_test('Review Mode UI',
+                conversion_name=ViewExercise._review_conversion_names,
+                conversion_type=ViewExercise._review_conversion_types))
+
+        if not exid and not review_mode:
+            self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
+            return
+
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-        reviews_left_count = None
-
-        if not exid:
-
-            sees_new_review = ab_test('Review Mode UI',
-                conversion_name=ViewExercise._review_conversion_names,
-                conversion_type=ViewExercise._review_conversion_types)
-
-            # Enter review mode
-            # TODO(david): Is there some webapp2 magic that will allow me not to
-            #     repeat this URL string in main.py?
-            if self.request.path == "/review" and sees_new_review:
-
-                # Take the first review exercise if available
-                exid = (user_exercise_graph.review_exercise_names() or
-                        user_exercise_graph.proficient_exercise_names() or
-                        ["addition_1"])[0]
-                reviews_left_count = user_exercise_graph.reviews_left_count()
-
-            else:
-
-                # TODO(david): Move this before getting user_data and such
-                # Support old URLs that may pass in exid as a query param
-                self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
-                return
+        if review_mode:
+            # Take the first review exercise if available
+            exid = (user_exercise_graph.review_exercise_names() or
+                    user_exercise_graph.proficient_exercise_names() or
+                    ["addition_1"])[0]
+            reviews_left_count = user_exercise_graph.reviews_left_count()
 
         exercise = models.Exercise.get_by_name(exid)
 
@@ -260,7 +252,7 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
-            'reviews_left_count': json.dumps(reviews_left_count),
+            'reviews_left_count': reviews_left_count if review_mode else "null",
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
