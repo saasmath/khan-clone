@@ -217,6 +217,7 @@ Badges.DisplayCase = Backbone.View.extend({
 
         this.showBadgePicker_();
         this.editControlEl.slideUp(350);
+        return this;
     },
 
     /**

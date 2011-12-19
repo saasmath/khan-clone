@@ -10,6 +10,7 @@ from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
+from avatars import util_avatars
 from badges import util_badges
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
@@ -204,10 +205,14 @@ class ViewProfile(request_handler.RequestHandler):
 
         # TODO: incorporate the tz offset into the timeago stuff on the client
         tz_offset = self.request_int("tz_offset", default=0)
+        avatar = util_avatars.avatar_for_name(student.avatar_name)
 
         template_values = {
             'student_email': student.email,
             'student_nickname': student.nickname,
+            'selected_graph_type': selected_graph_type,
+            'avatar_name': avatar.name,
+            'avatar_src': avatar.image_src,
             'selected_graph_type': selected_graph_type,
             'initial_graph_url': initial_graph_url,
             'tz_offset': tz_offset,
