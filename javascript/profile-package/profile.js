@@ -199,7 +199,7 @@ var Profile = {
 
         activateRelatedTab: function(rel) {
             $(".profile-navigation .vertical-tab-list a").removeClass("active-tab");
-            $("a[rel*='" + rel + "']").addClass("active-tab");
+            $("a[rel$='" + rel + "']").addClass("active-tab");
         }
     }),
 
