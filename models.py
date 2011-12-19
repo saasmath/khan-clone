@@ -1206,7 +1206,7 @@ class TopicVersion(db.Model):
             db.run_in_transaction_options(xg_on, update_txn)
                                     
 
-class Topic(db.Model):
+class Topic(Searchable, db.Model):
     title = db.StringProperty(required = True) # title used when viewing topic in a tree structure
     standalone_title = db.StringProperty() # title used when on its own
     id = db.StringProperty(required = True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
@@ -1220,6 +1220,9 @@ class Topic(db.Model):
     date_created = db.DateTimeProperty(auto_now_add=True)
     date_updated = db.DateTimeProperty(auto_now=True)
     last_editted_by = db.UserProperty()
+    INDEX_ONLY = ['standalone_title', 'description']
+    INDEX_TITLE_FROM_PROP = 'standalone_title'
+    INDEX_USES_MULTI_ENTITIES = False
 
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_editted_by"]
 
@@ -1654,22 +1657,27 @@ class Topic(db.Model):
         return topics
 
     @staticmethod
-    def _get_children_of_kind(topic, kind, include_descendants=False):
+    def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
+        keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]  
         if include_descendants:
             keys = []
-            topics = Topic.all().filter("ancestor_keys =", topic.key())
-            for topic in topics():
-                keys.extend([child_key for child_key in descendant.child_keys if child_key.kind() == kind])
-        else:
-            keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]    
-            
+            subtopics = Topic.all().filter("ancestor_keys =", topic.key())
+            if not include_hidden:
+                subtopics.filter("hide =", False)
+            subtopics.run()
+            for subtopic in subtopics:
+                keys.extend([child_key for child_key in subtopic.child_keys if child_key.kind() == kind])
+              
         return db.get(keys) 
 
-    def get_urls(self):
-        return Topic._get_children_of_kind(self, "Url")
+    def get_urls(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Url", include_descendants)
 
-    def get_exercises(self):
-        return Topic._get_children_of_kind(self, "Exercise")
+    def get_exercises(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Exercise", include_descendants)
+
+    def get_videos(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Video", include_descendants)
                             
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda topic, include_descendants=False, version=None: "%s_videos_for_topic_%s_at_%s" % ("descendant" if include_descendants else "child", topic.key(), TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
@@ -1692,6 +1700,26 @@ class Topic(db.Model):
             topics.extend(db.get(ancestor_dict.keys()))
                                    
         return topics
+
+    @staticmethod
+    def reindex():
+        import search
+        items = search.StemmedIndex.all().filter("parent_kind", "Topic").run()
+        item_dict = dict((item.get_title(item.key().name()), item) for item in items)
+        
+        standalone_titles = []
+        topics = Topic.get_content_topics()
+        for topic in topics:
+            standalone_titles.append(topic.standalone_title)
+            topic.index()
+            topic.indexed_title_changed()
+
+        deleted_items = [item for standalone_title, item in item_dict.iteritems() if standalone_title not in standalone_titles]
+        logging.info(len(item_dict))
+        logging.info(item_dict)
+        logging.info(len(deleted_items))
+        logging.info(deleted_items)
+        db.delete(deleted_items)
 
 class UserTopicVideos(db.Model):
     user = db.UserProperty()
@@ -1816,12 +1844,10 @@ class Video(Searchable, db.Model):
 
     @staticmethod
     def get_all_live():
-        query = VideoPlaylist.all().filter('live_association = ', True)
-        vps = query.fetch(10000)
-        keys = [VideoPlaylist.video.get_value_for_datastore(vp) for vp in vps]
-        config = db.create_config(read_policy=db.EVENTUAL_CONSISTENCY)
-        return Video.get(keys, config=config)
-
+        version = TopicVersion.get_default_version()
+        root = Topic.get_root()
+        videos = root.get_videos(include_descendants = True, include_hidden = False)
+        return videos
 
     # returns the first non-hidden topic
     def first_topic(self):

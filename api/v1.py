@@ -17,7 +17,7 @@ from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo
-from autocomplete import video_title_dicts, playlist_title_dicts
+from autocomplete import video_title_dicts, topic_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
@@ -70,7 +70,7 @@ def add_action_results(obj, dict_results):
 
         if len(badges_earned) > 0:
             dict_results["badges_earned"] = badges_earned
-            dict_results["badges_earned_html"] = badge_notifications_html(user_badges)
+            dict_results["badges_earned_html"] = badge_notifications_html(user_badge)
 
         # Add any new login notifications for phantom users
         login_notifications = user_notifications_dict["login"]
@@ -152,17 +152,17 @@ def topictree(version = None):
 @route("/api/v1/topicversion/<version>/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
 @jsonp
-@layer_cache.cache_with_key_fxn(
-    lambda topic_id, version = None: "6api_topic_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
-    layer=layer_cache.Layers.Memcache)
+# @layer_cache.cache_with_key_fxn(
+#    lambda topic_id, version = None: "6api_topic_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
+#    layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic(topic_id, version = None):
-    logging.info("Not using cache")
     version = models.TopicVersion.get_by_id(version)
+    logging.info(version.number)
     topic = models.Topic.get_by_id(topic_id, version)
-
+    
     if not topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(id))
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
 
     return topic.get_visible_data()
 
@@ -1348,9 +1348,9 @@ def autocomplete():
         video_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 video_title_dicts())
-        playlist_results = filter(
-                lambda playlist_dict: query in playlist_dict["title"].lower(),
-                playlist_title_dicts())
+        topic_results = filter(
+                lambda topic_dict: query in topic_dict["title"].lower(),
+                topic_title_dicts())
 
         exercise_results = sorted(
                 exercise_results,
@@ -1358,14 +1358,14 @@ def autocomplete():
         video_results = sorted(
                 video_results,
                 key=lambda v: v["title"].lower().index(query))[:max_results_per_type]
-        playlist_results = sorted(
-                playlist_results,
-                key=lambda p: p["title"].lower().index(query))[:max_results_per_type]
+        topic_results = sorted(
+                topic_results,
+                key=lambda t: t["title"].lower().index(query))[:max_results_per_type]
 
     return {
             "query": query,
             "videos": video_results,
-            "playlists": playlist_results,
+            "topics": topic_results,
             "exercises": exercise_results
     }
 

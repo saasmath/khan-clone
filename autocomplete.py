@@ -1,5 +1,5 @@
 import layer_cache
-from models import Video, Playlist
+from models import Video, Topic
 from templatefilters import slugify
 
 CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 3 # Expires after three days
@@ -13,9 +13,11 @@ def video_title_dicts():
     }, Video.get_all_live())
 
 @layer_cache.cache(expiration=CACHE_EXPIRATION_SECONDS)
-def playlist_title_dicts():
-    return map(lambda playlist: {
-        "title": playlist.title,
-        "key": str(playlist.key()),
-        "ka_url": "/#%s" % slugify(playlist.title.lower())
-    }, Playlist.all())
+def topic_title_dicts():
+    return map(lambda topic: {
+        "title": topic.title,
+        "key": str(topic.key()),
+        "ka_url": topic.ka_url
+    },  Topic.get_content_topics())
+
+

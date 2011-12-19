@@ -77,29 +77,6 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-
-class DeleteVideoPlaylists(request_handler.RequestHandler):
-# Deletes at most 200 Video-Playlist associations that are no longer live.  Should be run every-now-and-then to make sure the table doesn't get too big
-    @user_util.developer_only
-    def get(self):
-        query = VideoPlaylist.all()
-        all_video_playlists = query.fetch(200)
-        video_playlists_to_delete = []
-        for video_playlist in all_video_playlists:
-            if video_playlist.live_association != True:
-                video_playlists_to_delete.append(video_playlist)
-        db.delete(video_playlists_to_delete)
-
-
-class KillLiveAssociations(request_handler.RequestHandler):
-    @user_util.developer_only
-    def get(self):
-        query = VideoPlaylist.all()
-        all_video_playlists = query.fetch(100000)
-        for video_playlist in all_video_playlists:
-            video_playlist.live_association = False
-        db.put(all_video_playlists)
-
 def get_mangled_topic_name(topic_name):
     for char in " :()":
         topic_name = topic_name.replace(char, "")
@@ -330,38 +307,6 @@ class ViewDMCA(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('dmca.html', {"selected_nav_link": "dmca"})
 
-class ViewSAT(request_handler.RequestHandler):
-
-    def get(self):
-        playlist_title = "SAT Preparation"
-        query = Playlist.all()
-        query.filter('title =', playlist_title)
-        playlist = query.get()
-        query = VideoPlaylist.all()
-        query.filter('playlist =', playlist)
-        query.filter('live_association = ', True) #need to change this to true once I'm done with all of my hacks
-        query.order('video_position')
-        playlist_videos = query.fetch(500)
-
-        template_values = {
-                'videos': playlist_videos,
-        }
-
-        self.render_jinja2_template('sat.html', template_values)
-
-class ViewGMAT(request_handler.RequestHandler):
-
-    def get(self):
-        problem_solving = VideoPlaylist.get_query_for_playlist_title("GMAT: Problem Solving")
-        data_sufficiency = VideoPlaylist.get_query_for_playlist_title("GMAT Data Sufficiency")
-        template_values = {
-                            'data_sufficiency': data_sufficiency,
-                            'problem_solving': problem_solving,
-        }
-
-        self.render_jinja2_template('gmat.html', template_values)
-
-
 class RetargetFeedback(bulk_update.handler.UpdateKind):
     def get_keys_query(self, kind):
         """Returns a keys-only query to get the keys of the entities to update"""
@@ -569,50 +514,50 @@ class Search(request_handler.RequestHandler):
         exvids_future = util.async_queries([exvids_query])
 
         # One full (non-partial) search, then sort by kind
-        all_text_keys = Playlist.full_text_search(
+        all_text_keys = Topic.full_text_search(
                 query, limit=50, kind=None,
-                stemming=Playlist.INDEX_STEMMING,
-                multi_word_literal=Playlist.INDEX_MULTI_WORD,
+                stemming=Topic.INDEX_STEMMING,
+                multi_word_literal=Topic.INDEX_MULTI_WORD,
                 searched_phrases_out=searched_phrases)
 
-
         # Quick title-only partial search
-        playlist_partial_results = filter(
-                lambda playlist_dict: query in playlist_dict["title"].lower(),
-                autocomplete.playlist_title_dicts())
+        topic_partial_results = filter(
+                lambda topic_dict: query in topic_dict["title"].lower(),
+                autocomplete.topic_title_dicts())
         video_partial_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 autocomplete.video_title_dicts())
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        all_key_list.extend([result["key"] for result in playlist_partial_results])
+        all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list = list(set(all_key_list))
+        
         all_entities = db.get(all_key_list)
-
+ 
         # Filter results by type
-        playlists = []
+        topics = []
         videos = []
         for entity in all_entities:
-            if isinstance(entity, Playlist):
-                playlists.append(entity)
+            if isinstance(entity, Topic):
+                topics.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
             elif entity is not None:
                 logging.error("Unhandled kind in search results: " +
                               str(type(entity)))
 
-        playlist_count = len(playlists)
+        topic_count = len(topics)
 
-        # Get playlists for videos not in matching playlists
+        # Get topics for videos not in matching topics
         filtered_videos = []
         filtered_videos_by_key = {}
         for video in videos:
-            if [(playlist.title in video.playlists) for playlist in playlists].count(True) == 0:
-                video_playlist = video.first_playlist()
-                if video_playlist != None:
-                    playlists.append(video_playlist)
+            if [(topic.title in Topic.get_cached_topics_for_video(video)) for topic in topics].count(True) == 0:
+                video_topic = video.first_topic()
+                if video_topic != None:
+                    topics.append(video_topic)
                     filtered_videos.append(video)
                     filtered_videos_by_key[str(video.key())] = []
             else:
@@ -637,21 +582,21 @@ class Search(request_handler.RequestHandler):
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
-        # Count number of videos in each playlist and sort descending
-        for playlist in playlists:
+        # Count number of videos in each topic and sort descending
+        for topic in topics:
             if len(filtered_videos) > 0:
-                playlist.match_count = [(playlist.title in video.playlists) for video in filtered_videos].count(True)
+                topic.match_count = [(topic.title in Topic.get_cached_topics_for_video(video)) for video in filtered_videos].count(True)
             else:
-                playlist.match_count = 0
-        playlists = sorted(playlists, key=lambda playlist: -playlist.match_count)
+                topic.match_count = 0
+        topics = sorted(topics, key=lambda topic: -topic.match_count)
 
         template_values.update({
-                           'playlists': playlists,
+                           'topics': topics,
                            'videos': filtered_videos,
                            'video_exercises': video_exercises,
                            'search_string': query,
                            'video_count': video_count,
-                           'playlist_count': playlist_count,
+                           'topic_count': topic_count,
                            })
         self.render_jinja2_template("searchresults.html", template_values)
 
@@ -743,8 +688,6 @@ application = webapp2.WSGIApplication([
     ('/video/(.*)', ViewVideo),
     ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
-    ('/sat', ViewSAT),
-    ('/gmat', ViewGMAT),
     ('/reportissue', ReportIssue),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.SaveMapCoords),
@@ -818,7 +761,6 @@ application = webapp2.WSGIApplication([
 
     # These are dangerous, should be able to clean things manually from the remote python shell
 
-    ('/deletevideoplaylists', DeleteVideoPlaylists),
     ('/killliveassociations', KillLiveAssociations),
 
     # Below are all discussion related pages

@@ -60,31 +60,31 @@
         <button type="submit">New Search</button>
     </form>
     <section class="searchresult-counts">
-        {% if (video_count == 0 and playlist_count == 0) %}
+        {% if (video_count == 0 and topic_count == 0) %}
             No results for this search. Please try a different query.
         {% else %}
-            Found {{ video_count }} video{{ video_count|pluralize }} and {{ playlist_count }}  playlist{{ playlist_count|pluralize }} that match your query:
+            Found {{ video_count }} video{{ video_count|pluralize }} and {{ topic_count }}  topic{{ topic_count|pluralize }} that match your query:
         {% endif %}
     </section>
-    {% if playlists %}
-    <section class="playlists" id="search-playlists">
+    {% if topics %}
+    <section class="topics" id="search-topics">
         <dl>
-        {% for playlist in playlists %}
-            <dt><h2 class="playlist searchresulthighlight">{{ playlist.title|escape }}
+        {% for topic in topics %}
+            <dt><h2 class="topic searchresulthighlight">{{ topic.title|escape }}
             <span class="match_count">
-                {% if playlist.match_count > 0 %}
-                    ({{ playlist.match_count }} matching video{{ playlist.match_count|pluralize }})
+                {% if topic.match_count > 0 %}
+                    ({{ topic.match_count }} matching video{{ topic.match_count|pluralize }})
                 {% endif %}
             </span>
             </h2>
             </dt>
-            {% if playlist.description %}
-            <dd class="searchresulthighlight">{{ playlist.description|escape }}</dd>
+            {% if topic.description %}
+            <dd class="searchresulthighlight">{{ topic.description|escape }}</dd>
             {% endif %}
 
             <ol>
             {% for video in videos %}
-                {% if playlist.title in video.playlists %}
+                {% if topic.title in video.topics %}
                     <li class="videos">
                       <div class="column">
                         <a href="/video/{{video.readable_id|urlencode}}" class="video-result"><span class="searchresulthighlight">{{ video.title|escape }}</span></a>
@@ -113,7 +113,7 @@
                 {% endif %}
             {% endfor %}        
             <li>
-                <a href="/#{{playlist.title|slugify|escape}}">See all videos from playlist {{ playlist.title|escape }}</a>
+                <a href="/#{{topic.title|slugify|escape}}">See all videos from topic {{ topic.title|escape }}</a>
             </li>
             </ol>
         {% endfor %}        

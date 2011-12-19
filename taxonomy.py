@@ -15,81 +15,6 @@ from google.appengine.ext import db
 
 import models
 from models import Topic, TopicVersion, Playlist, Video, Url
-
-@layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
-def getSmartHistoryContent():
-    request = urllib2.Request("http://smarthistory.org/khan-home.html")
-    try:
-        response = urllib2.urlopen(request)
-        smart_history = response.read()
-        smart_history = re.search(re.compile("<body>(.*)</body>", re.S), smart_history).group(1).decode("utf-8")
-        smart_history.replace("script", "")
-    except Exception, e:
-        logging.exception("Failed fetching smarthistory video list")
-        smart_history = None
-        pass
-    return smart_history
-
-class ImportSmartHistory(request_handler.RequestHandler):
-
-    # update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)
-    def get(self):
-
-        default = models.TopicVersion.get_default_version()
-        edit = models.TopicVersion.get_edit_version()
-        ImportSmartHistory.importIntoVersion(default)
-        ImportSmartHistory.importIntoVersion(edit)
-    
-    @staticmethod
-    def importIntoVersion(version):
-        logging.info("comparing to version number %i" % version.number)
-        topic = Topic.get_by_id("art-history", version)
-
-        if not topic:
-            parent = Topic.get_by_id("humanities---other", version)
-            if not parent:
-                raise Exception("Could not find the Humanities & Other topic to put art history into")
-            topic = Topic.insert(title = "Art History",
-                                 parent = parent,
-                                 id = "art-history",
-                                 standalone_title = "Art History",
-                                 description = "Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")  
-        
-        urls = topic.get_urls()
-        href_to_key_dict = dict((url.url, url.key()) for url in urls)
-        hrefs = [url.url for url in urls]
-        content = getSmartHistoryContent()
-        child_keys = []
-
-        for link in re.finditer(re.compile('<a.*href="(.*?)"><span.*?>(.*)</span></a>', re.M), content):
-            href = link.group(1)
-            title = link.group(2)
-            if href not in hrefs:
-                logging.info("adding %i %s %s to art-history" % (i, href, title))
-                url = Url(url = href,
-                          title = title,
-                          id = id) 
-                url.put()
-                child_keys.append(url.key())
-            else:
-                child_keys.append(href_to_key_dict[href])
-
-        logging.info("updating child_keys")
-        if topic.child_keys != child_keys:
-            if version.default:
-                logging.info("creating new default version")
-                new_version = version.copy_version()
-                new_version.description = "SmartHistory Update"
-                new_version.put()
-                new_topic = Topic.get_by_id("art-history", new_version)    
-                new_topic.update(child_keys = child_keys)
-                new_version.set_default_version()
-            else:
-                topic.update(child_keys = child_keys)
-            logging.info("finished updating version number %i" % version.number)
-        else:
-            logging.info("nothing changed")
-
         
 class EditTaxonomy(request_handler.RequestHandler):
 
@@ -117,7 +42,9 @@ class EditTaxonomy(request_handler.RequestHandler):
         html += "</li>"
         return html
 
-    def get(self):        
+    def get(self):    
+        models.Topic.reindex()
+           
         # importSmartHistory()
         # t = models.Topic.all().filter("title = ", "Algebra").get()
         # title = t.topic_parent.topic_parent.title
@@ -257,6 +184,11 @@ class EditTaxonomy(request_handler.RequestHandler):
 
             self.render_jinja2_template('update_datastore.html', context)   
             
+    def removePlaylistIndex():
+        import search
+
+        items = search.StemmedIndex.all(keys_only=True).filter("parent_kind", "Playlist").fetch(10000)
+        db.delete(items)
 
     def load_demo(self):
         root = Topic.insert(title = "The Root of All Knowledge",
@@ -280,6 +212,77 @@ class EditTaxonomy(request_handler.RequestHandler):
                                 )
         '''
 
+@layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
+def getSmartHistoryContent():
+    request = urllib2.Request("http://smarthistory.org/khan-home.html")
+    try:
+        response = urllib2.urlopen(request)
+        smart_history = response.read()
+        smart_history = re.search(re.compile("<body>(.*)</body>", re.S), smart_history).group(1).decode("utf-8")
+        smart_history.replace("script", "")
+    except Exception, e:
+        logging.exception("Failed fetching smarthistory video list")
+        smart_history = None
+        pass
+    return smart_history
 
+class ImportSmartHistory(request_handler.RequestHandler):
+
+    # update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)
+    def get(self):
+
+        default = models.TopicVersion.get_default_version()
+        edit = models.TopicVersion.get_edit_version()
+        ImportSmartHistory.importIntoVersion(default)
+        ImportSmartHistory.importIntoVersion(edit)
+    
+    @staticmethod
+    def importIntoVersion(version):
+        logging.info("comparing to version number %i" % version.number)
+        topic = Topic.get_by_id("art-history", version)
+
+        if not topic:
+            parent = Topic.get_by_id("humanities---other", version)
+            if not parent:
+                raise Exception("Could not find the Humanities & Other topic to put art history into")
+            topic = Topic.insert(title = "Art History",
+                                 parent = parent,
+                                 id = "art-history",
+                                 standalone_title = "Art History",
+                                 description = "Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")  
         
+        urls = topic.get_urls()
+        href_to_key_dict = dict((url.url, url.key()) for url in urls)
+        hrefs = [url.url for url in urls]
+        content = getSmartHistoryContent()
+        child_keys = []
+
+        for link in re.finditer(re.compile('<a.*href="(.*?)"><span.*?>(.*)</span></a>', re.M), content):
+            href = link.group(1)
+            title = link.group(2)
+            if href not in hrefs:
+                logging.info("adding %i %s %s to art-history" % (i, href, title))
+                url = Url(url = href,
+                          title = title,
+                          id = id) 
+                url.put()
+                child_keys.append(url.key())
+            else:
+                child_keys.append(href_to_key_dict[href])
+
+        logging.info("updating child_keys")
+        if topic.child_keys != child_keys:
+            if version.default:
+                logging.info("creating new default version")
+                new_version = version.copy_version()
+                new_version.description = "SmartHistory Update"
+                new_version.put()
+                new_topic = Topic.get_by_id("art-history", new_version)    
+                new_topic.update(child_keys = child_keys)
+                new_version.set_default_version()
+            else:
+                topic.update(child_keys = child_keys)
+            logging.info("finished updating version number %i" % version.number)
+        else:
+            logging.info("nothing changed")
 
