@@ -22,22 +22,25 @@
 </div>
 
 <script>
-    function showRandomMessage( elem ) {
-        var messages = $( elem ).children(),
-            savedVar = '_Khan_review_msg_shown_' + ( elem.selector || elem ),
-            msgToShowIndex = typeof window[ savedVar ] === "number" ?
-                window[ savedVar ] :
-                Math.floor( Math.random() * messages.length );
 
-        messages.hide().eq( msgToShowIndex ).show();
+(function() {
 
-        // Don't show a different message if the user hasn't navigated away
-        window[ savedVar ] = msgToShowIndex;
-    }
+function showRandomMessage( elem ) {
+    var messages = $( elem ).children(),
+        savedVar = '_Khan_review_msg_shown_' + ( elem.selector || elem ),
+        msgToShowIndex = typeof window[ savedVar ] === "number" ?
+            window[ savedVar ] : Math.floor( Math.random() * messages.length );
 
-    // Randomly select some messages to show
-    $(function() {
-        showRandomMessage( '#congrats-message' );
-        showRandomMessage( '#move-on-message' );
-    });
+    messages.hide().eq( msgToShowIndex ).show();
+
+    // Don't show a different message if the user hasn't navigated away
+    window[ savedVar ] = msgToShowIndex;
+}
+
+// Randomly select some messages to show
+showRandomMessage( '#congrats-message' );
+showRandomMessage( '#move-on-message' );
+
+})();
+
 </script>
