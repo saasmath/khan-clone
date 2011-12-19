@@ -70,7 +70,7 @@
     <section class="topics" id="search-topics">
         <dl>
         {% for topic in topics %}
-            <dt><h2 class="topic searchresulthighlight">{{ topic.title|escape }}
+            <dt><h2 class="topic searchresulthighlight">{{ topic.standalone_title|escape }}
             <span class="match_count">
                 {% if topic.match_count > 0 %}
                     ({{ topic.match_count }} matching video{{ topic.match_count|pluralize }})
@@ -84,7 +84,7 @@
 
             <ol>
             {% for video in videos %}
-                {% if topic.title in video.topics %}
+                {% if topic.standalone_title in video.topics %}
                     <li class="videos">
                       <div class="column">
                         <a href="/video/{{video.readable_id|urlencode}}" class="video-result"><span class="searchresulthighlight">{{ video.title|escape }}</span></a>
@@ -113,7 +113,7 @@
                 {% endif %}
             {% endfor %}
             <li>
-                <a href="/#{{topic.title|slugify|escape}}">See all videos from topic {{ topic.title|escape }}</a>
+                <a href="/#{{topic.standalone_title|slugify|escape}}">See all videos from topic {{ topic.standalone_title|escape }}</a>
             </li>
             </ol>
         {% endfor %}

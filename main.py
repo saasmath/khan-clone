@@ -535,12 +535,13 @@ class Search(request_handler.RequestHandler):
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        all_key_list.extend([result["key"] for result in topic_partial_results])
+        # all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list = list(set(all_key_list))
         
         all_entities = db.get(all_key_list)
- 
+        logging.info(all_entities)
+
         # Filter results by type
         topics = []
         videos = []
@@ -767,10 +768,6 @@ application = webapp2.WSGIApplication([
     ('/logout', Logout),
 
     ('/api-apps/register', oauth_apps.Register),
-
-    # These are dangerous, should be able to clean things manually from the remote python shell
-
-    ('/killliveassociations', KillLiveAssociations),
 
     # Below are all discussion related pages
     ('/discussion/addcomment', comments.AddComment),
