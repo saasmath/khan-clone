@@ -151,6 +151,7 @@ Badges.DisplayCase = Backbone.View.extend({
 
     mainCaseEl: null,
     badgePickerEl: null,
+    editControlEl: null,
 
     initialize: function() {
         this.model.bind( "add", this.render, this );
@@ -215,6 +216,7 @@ Badges.DisplayCase = Backbone.View.extend({
         });
 
         this.showBadgePicker_();
+        this.editControlEl.slideUp(350);
     },
 
     /**
@@ -387,13 +389,11 @@ Badges.DisplayCase = Backbone.View.extend({
             // First render - build the chrome.
             this.mainCaseEl = $("<div class=\"main-case\"></div>");
             this.badgePickerEl = $("<div class=\"badge-picker\"></div>");
-            // TODO: replace this temporary Edit button
-            this.editButtonEl = $("<button id=\"edit\">Edit</button>");
             $(this.el)
                 .append( this.mainCaseEl )
                 .append( this.badgePickerEl )
-                .append( this.editButtonEl );
-            $(this.editButtonEl).click( _.bind( this.toggleEdit_, this ) );
+            this.editControlEl = $(".display-case-cover");
+            this.editControlEl.click( _.bind( this.toggleEdit_, this ) );
         }
         $(this.mainCaseEl).html( this.template( this.getTemplateContext_() ) );
         this.updateEditControls();
