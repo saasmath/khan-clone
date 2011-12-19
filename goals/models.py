@@ -66,17 +66,16 @@ class Goal(db.Model):
         self.completed_on = datetime.now()
         self.abandoned = True
 
-    def just_watched_video(self, user_data, user_video):
+    def just_watched_video(self, user_data, user_video, just_finished):
         changed = False
         for objective in self.objectives:
             if isinstance(objective, GoalObjectiveWatchVideo):
                 if objective.record_progress(user_data, user_video):
                     changed = True
 
-        if user_video.completed:
+        if just_finished:
             any_videos = [o for o in self.objectives
                 if isinstance(o, GoalObjectiveAnyVideo)]
-
             found = user_video.video.key() in [o.video_key for o in any_videos]
             if not found:
                 for vid_obj in any_videos:
@@ -262,16 +261,9 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
             return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
-        review_names = user_exercise_graph.review_exercise_names()
         status = ""
-
         if graph_dict["proficient"]:
-
-            if self.exercise_name in review_names:
-                status = "review"
-            else:
-                status = "proficient"
-
+            status = "proficient"
         elif graph_dict["struggling"]:
             status = "struggling"
         elif graph_dict["total_done"] > 0:
@@ -336,7 +328,7 @@ class GoalObjectiveAnyVideo(GoalObjective):
         if self.video_readable_id:
             return Video.get_relative_url(self.video_readable_id)
         else:
-            return "/"
+            return "/#browse"
 
     def internal_id(self):
         return ''

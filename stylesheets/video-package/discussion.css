@@ -31,7 +31,7 @@
     width: 670px;
 }
 
-.video_questions textarea.watermark { color: #898989; }
+.video_questions textarea.placeholder { color: #898989; }
 
 .video_questions div.question_controls_container { padding-top: 3px; }
 .video_questions div.question_sig { padding: 3px 0 0 0; }

@@ -1,4 +1,5 @@
 var ModalVideo = {
+    template: Templates.get("video.modal-video"),
     modal: null,
 
     linkifyTooltip: function() {
@@ -10,8 +11,8 @@ var ModalVideo = {
         var loginUrl = $('#top-header-links a').filter(function(i,el) {
             return $(el).text() == "Login";
         }).attr('href');
-        var title = $points.attr('title').replace(/Sign in/,
-            '<a href="' + loginUrl + '">Sign in</a>');
+        var title = ( $points.attr('title') || $points.data('title') )
+            .replace(/Sign in/, '<a href="' + loginUrl + '">Sign in</a>');
         $points.data('title', title).removeAttr('title');
 
         VideoStats.tooltip('#points-badge-hover', $points.data('title'));
@@ -73,8 +74,8 @@ var ModalVideo = {
             video_url: Khan.relatedVideoHref(video)
         };
 
-        this.modal = $('#modal-video-tmpl')
-            .tmplPlugin(context).appendTo('body')
+        this.modal = $(this.template(context))
+            .appendTo('body')
             .modal({
                 keyboard: true,
                 backdrop: true,
@@ -85,12 +86,7 @@ var ModalVideo = {
             .bind('shown', $.proxy(function() {
                 // remove fade so that draggable is fast.
                 this.modal.removeClass('fade');
-            }, this))
-            .draggable({
-                containment: 'body',
-                handle: '.modal-header',
-                cancel: '.modal-header .close-button'
-            });
+            }, this));
 
         Video.init();
         ModalVideo.linkifyTooltip();
@@ -129,3 +125,5 @@ var ModalVideo = {
         this.modal = null;
     }
 };
+
+Handlebars.registerPartial('youtube-player', Templates.get( "video.youtube-player" ));
