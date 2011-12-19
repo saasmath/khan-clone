@@ -2,10 +2,13 @@ import math
 
 from jinja2.utils import escape
 
+import api.jsonify as apijsonify
 from templatefilters import slugify
 import topics_list
 import models
 import shared_jinja
+from models import Exercise
+
 
 def user_info(username, user_data):
     context = {"username": username, "user_data": user_data}
@@ -58,6 +61,19 @@ def exercise_message(exercise, user_exercise_graph, sees_graph=False,
 
     elif exercise_states['struggling']:
         filename = 'exercise_message_struggling.html'
+        model = Exercise.get_by_name(exercise.name)
+        if model.prerequisites:
+            proficient_exercises = user_exercise_graph.proficient_graph_dicts()
+            suggested_prereqs = []
+            for prereq in model.prerequisites:
+                if prereq not in proficient_exercises:
+                    prereq_model = Exercise.get_by_name(prereq)
+                    suggested_prereqs.append({
+                          'ka_url': prereq_model.ka_url,
+                          'display_name': prereq_model.display_name
+                          })
+            exercise_states['suggested_prereqs'] = apijsonify.jsonify(
+                    suggested_prereqs)
 
     else:
         return None
