@@ -9,42 +9,10 @@
     </div>
 {% endif %}
 <script type="text/javascript">
-
-$(document).mousemove(function(e){window.mouseX = e.pageX; window.mouseY = e.pageY;});
-
 function drillIntoExercise(url) {
     $("#info-hover-container").hide();
     Profile.collapseAccordion();
     Profile.loadGraph(url);
 }
-
-$("#module-progress .student-module-status").hover( 
-    function(e){
-        var dtLastHover = window.dtLastHover = new Date();
-        var self = this;
-        setTimeout(function(){
-            if (dtLastHover != window.dtLastHover) return;
-        
-            var hoverData = $(self).children(".hover-data");
-            var infoHover = $("#info-hover-container")
-            if ($.trim(hoverData.html())) {
-                infoHover.html($.trim(hoverData.html()));
-                
-                var left = window.mouseX + 15;
-
-                var jelGraph = $("#graph-content");
-                var leftMax = jelGraph.offset().left + jelGraph.width() - 150;
-
-                infoHover.css('left', Math.min(left, leftMax));
-                infoHover.css('top', window.mouseY + 5);
-                infoHover.css('cursor', 'pointer');
-                infoHover.show();
-            }
-        }, 100);
-    },
-    function(e){ 
-        window.dtLastHover = null;
-        $("#info-hover-container").hide();
-    }
-);
+Profile.hoverContent($("#module-progress .student-module-status"));
 </script>
