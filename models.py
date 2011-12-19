@@ -401,8 +401,12 @@ class UserExercise(db.Model):
         return query
 
     def get_user_data(self):
-        user_data = getattr(self, "_user_data",
-                UserData.get_from_db_key_email(self.user.email()))
+        user_data = None
+
+        if hasattr(self, "_user_data"):
+            user_data = self._user_data
+        else:
+            user_data = UserData.get_from_db_key_email(self.user.email())
 
         if not user_data:
             logging.critical("Empty user data for UserExercise w/ .user = %s" % self.user)
