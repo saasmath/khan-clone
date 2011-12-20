@@ -56,7 +56,7 @@ class EditTaxonomy(request_handler.RequestHandler):
             'edit_version': jsonify(edit_version),
             'tree_nodes': jsonify(tree_nodes)
             }
-
+        logging.info(template_values)
         
         self.render_jinja2_template('edittaxonomy.html', template_values)
         return

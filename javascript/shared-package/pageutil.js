@@ -44,7 +44,7 @@ function addAutocompleteMatchToList(list, match, kind, reMatch) {
     list[list.length] = o;
 }
 
-function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
+function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
 {
     var autocompleteWidget = $(selector).autocomplete({
         delay: 150,
@@ -74,13 +74,13 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
                         reMatch = null;
                     }
 
-                    // Add playlist and video matches to list of autocomplete suggestions
+                    // Add topic and video matches to list of autocomplete suggestions
 
-                    if (fPlaylists)
+                    if (fTopics)
                     {
-                        for (var ix = 0; ix < data.playlists.length; ix++)
+                        for (var ix = 0; ix < data.topics.length; ix++)
                         {
-                            addAutocompleteMatchToList(matches, data.playlists[ix], 'playlist', reMatch);
+                            addAutocompleteMatchToList(matches, data.topics[ix], 'topic', reMatch);
                         }
                     }
                     for (var ix = 0; ix < data.videos.length; ix++)
@@ -138,8 +138,8 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
     autocompleteWidget.data("autocomplete")._renderItem = function(ul, item) {
         // Customize the display of autocomplete suggestions
         var jLink = $("<a></a>").html(item.label);
-        if (item.kind == 'playlist')
-            jLink.prepend("<span class='playlist'>Playlist </span>");
+        if (item.kind == 'topic')
+            jLink.prepend("<span class='topic'>Topic </span>");
         else if (item.kind == 'video')
             jLink.prepend("<span class='video'>Video </span>");
         else if (item.kind == 'exercise')
