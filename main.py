@@ -540,7 +540,6 @@ class Search(request_handler.RequestHandler):
         all_key_list = list(set(all_key_list))
         
         all_entities = db.get(all_key_list)
-        logging.info(all_entities)
 
         # Filter results by type
         topics = []
@@ -560,7 +559,8 @@ class Search(request_handler.RequestHandler):
         filtered_videos = []
         filtered_videos_by_key = {}
         for video in videos:
-            if [(topic.title in Topic.get_cached_topics_for_video(video)) for topic in topics].count(True) == 0:
+            video.topics = [t.standalone_title for t in Topic.get_cached_topics_for_video(video)]
+            if [(topic.standalone_title in video.topics) for topic in topics].count(True) == 0:
                 video_topic = video.first_topic()
                 if video_topic != None:
                     topics.append(video_topic)
@@ -570,9 +570,6 @@ class Search(request_handler.RequestHandler):
                 filtered_videos.append(video)
                 filtered_videos_by_key[str(video.key())] = []
         video_count = len(filtered_videos)
-        logging.info(len(videos))
-        logging.info(video_count)
-
 
         # Get the related exercises
         all_exercise_videos = exvids_future[0].get_result()
@@ -607,6 +604,7 @@ class Search(request_handler.RequestHandler):
                            'video_count': video_count,
                            'topic_count': topic_count,
                            })
+        
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
