@@ -162,7 +162,7 @@ var setupSuggestedVideos = function() {
     jel.removeAttr('id').find('span').html( buildVideoLink(suggestion, exid) ).end().hide();
 
     $('.exercise_message').append(jel);
-	$('#video-suggest-link').click(function(e) {
+	$('#video-suggest-link', jel).click(function(e) {
 		gae_bingo.bingo('struggling_videos_clicked_post_struggling');
 	});
 };
@@ -190,6 +190,9 @@ var setupSuggestedPrereqs = function() {
     // Render appropriate link and insert
     jel.removeAttr('id').find('span').html( buildExerciseLink(prereq) ).end().hide();
     $('.exercise_message').append(jel);
+	$('#prereq-suggest-link', jel).click(function(e) {
+		gae_bingo.bingo('struggling_prereq_clicked_post_struggling');
+	});
 };
 
 var buildExerciseLink = function(model) {

@@ -431,8 +431,22 @@ class UserExercise(db.Model):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
     def is_struggling(self, struggling_model=None):
+        """ Whether or not the user is currently "struggling" in this exercise
+        for a given struggling model. Note that regardless of struggling model,
+        if the last question was correct, the student is not considered
+        struggling.
+        """
         if self.has_been_proficient():
             return False
+
+        return self.history_indicates_struggling(struggling_model)
+
+    # TODO(benkomalo): collapse this method with is_struggling above.
+    def history_indicates_struggling(self, struggling_model=None):
+        """ Whether or not the history of answers indicates that the user
+        is struggling on this exercise.
+
+        Does not take into consideration if the last question was correct. """
 
         if struggling_model is None or struggling_model == 'old':
             return self._is_struggling_old()
