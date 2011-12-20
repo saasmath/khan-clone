@@ -42,7 +42,7 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
-import taxonomy
+import topics
 import goals.handlers
 
 import models
@@ -710,8 +710,8 @@ application = webapp2.WSGIApplication([
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
 
-    ('/admin/import_smarthistory', taxonomy.ImportSmartHistory),
-    ('/admin/edittaxonomy', taxonomy.EditTaxonomy),
+    ('/admin/import_smarthistory', topics.ImportSmartHistory),
+    ('/admin/content', topics.EditContent),
     ('/admin/reput', bulk_update.handler.UpdateKind),
     ('/admin/retargetfeedback', RetargetFeedback),
     ('/admin/startnewbadgemapreduce', util_badges.StartNewBadgeMapReduce),
