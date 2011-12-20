@@ -56,7 +56,7 @@ IncrementalCollection = Backbone.Collection.extend({
                         ret.__inited = true;
                         ret.__requesting = false;
                         _.each(ret.__callbacks, function(cb) {
-                            cb.callback.call(null, [ret].concat(cb.args));
+                            cb.callback.apply(null, [ret].concat(cb.args));
                         });
                         ret.__callbacks = [];
                     },
@@ -73,7 +73,7 @@ IncrementalCollection = Backbone.Collection.extend({
         } else {
             KAConsole.log("IC (" + id + "): Already loaded.");
             if (callback)
-                callback.call(null, [ret].concat(args));
+                callback.apply(null, [ret].concat(args));
         }
 
         return ret;

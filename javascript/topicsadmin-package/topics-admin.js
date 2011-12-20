@@ -394,16 +394,16 @@ var TopicNodeEditor = {
         $("#details-view .dialog-progress-bar").progressbar("value", 100);
     }, 
 
-    initModel: function(node) {
+    initModel: function(model, node) {
         TopicNodeEditor.node = node;
-        TopicNodeEditor.modelKind = node.data.kind;
-        TopicNodeEditor.model = this;
+        TopicNodeEditor.modelKind = model.get('kind');
+        TopicNodeEditor.model = model;
         TopicNodeEditor.parentModel = TopicTreeEditor.currentVersion.getTopicTree().get(node.parent.data.id);
-        TopicNodeEditor.template = Templates.get("topicsadmin.edit-" + node.data.kind.toLowerCase());
+        TopicNodeEditor.template = Templates.get("topicsadmin.edit-" + model.get('kind').toLowerCase());
 
         TopicNodeEditor.render();
 
-        this.bind("change", TopicNodeEditor.render);
+        model.bind("change", TopicNodeEditor.render);
     },
 
     render: function() {
@@ -768,13 +768,7 @@ var TopicItemNodeEditor = {
 
 // Details view for exercises
 function arraysEqual(ar1, ar2) {
-    if (ar1 && ar2) {
-        if (!ar1 || !ar2)
-            return false;
-        if (ar1 < ar2 || ar1 > ar2)
-            return false;
-    }
-    return true;
+    return !(ar1 < ar2 || ar1 > ar2);
 }
 
 var TopicExerciseNodeEditor = {
@@ -795,27 +789,32 @@ var TopicExerciseNodeEditor = {
         return false;
     },
     applyChanges: function(attrs) {
-        if (TopicExerciseNodeEditor.prereqs && !arraysEqual(TopicExerciseNodeEditor.prereqs, TopicNodeEditor.model.get("prereqs")))
+        if (TopicExerciseNodeEditor.prereqs && !arraysEqual(TopicExerciseNodeEditor.prereqs, TopicNodeEditor.model.get("prereqs"))) {
             attrs["prerequisites"] = TopicExerciseNodeEditor.prereqs;
+        }
 
-        if (TopicExerciseNodeEditor.covers && !arraysEqual(TopicExerciseNodeEditor.covers, TopicNodeEditor.model.get("covers")))
+        if (TopicExerciseNodeEditor.covers && !arraysEqual(TopicExerciseNodeEditor.covers, TopicNodeEditor.model.get("covers"))) {
             attrs["covers"] = TopicExerciseNodeEditor.covers;
+        }
 
-        if (TopicExerciseNodeEditor.videos && !arraysEqual(TopicExerciseNodeEditor.videos, TopicNodeEditor.model.get("related_videos")))
+        if (TopicExerciseNodeEditor.videos && !arraysEqual(TopicExerciseNodeEditor.videos, TopicNodeEditor.model.get("related_videos"))) {
             attrs["related_videos"] = TopicExerciseNodeEditor.videos;
+        }
     },
 
     updateCovers: function() {
-        var html = "";
+        var elements = [];
         _.each(TopicExerciseNodeEditor.covers, function(cover) {
-            html += "<div>" + cover + " (<a href=\"javascript: TopicExerciseNodeEditor.deleteCover('" + cover + "');\">remove</a>)</div>";
+            elements.push(
+                $("<div>" + cover + " <a href=\"javascript:\">(remove)</a></div>")
+                    .delegate("a", "click", function() { TopicExerciseNodeEditor.deleteCover(cover) })
+            );
         });
-        $("#exercise-covers-list").html(html);
+        $("#exercise-covers-list").children().remove();
+        _.each(elements, function(element) { element.appendTo("#exercise-covers-list"); });
     },
     chooseCover: function() {
-        if (!TopicExerciseNodeEditor.existingItemView)
-            TopicExerciseNodeEditor.existingItemView = new TopicAddExistingItemView();
-
+        TopicExerciseNodeEditor.existingItemView = TopicExerciseNodeEditor.existingItemView || new TopicAddExistingItemView();
         TopicExerciseNodeEditor.existingItemView.show("exercise", TopicExerciseNodeEditor.addCover);
     },
     addCover: function(kind, id, title) {
@@ -835,16 +834,18 @@ var TopicExerciseNodeEditor = {
     },
 
     updatePrereqs: function() {
-        var html = "";
+        var elements = [];
         _.each(TopicExerciseNodeEditor.prereqs, function(prereq) {
-            html += "<div>" + prereq + " (<a href=\"javascript: TopicExerciseNodeEditor.deletePrereq('" + prereq + "');\">remove</a>)</div>";
+            elements.push(
+                $("<div>" + prereq + " <a href=\"javascript:\">(remove)</a></div>")
+                    .delegate("a", "click", function() { TopicExerciseNodeEditor.deletePrereq(prereq) })
+            );
         });
-        $("#exercise-prereqs-list").html(html);
+        $("#exercise-prereqs-list").children().remove();
+        _.each(elements, function(element) { element.appendTo("#exercise-prereqs-list"); });
     },
     choosePrereq: function() {
-        if (!TopicExerciseNodeEditor.existingItemView)
-            TopicExerciseNodeEditor.existingItemView = new TopicAddExistingItemView();
-
+        TopicExerciseNodeEditor.existingItemView = TopicExerciseNodeEditor.existingItemView || new TopicAddExistingItemView();
         TopicExerciseNodeEditor.existingItemView.show("exercise", TopicExerciseNodeEditor.addPrereq);
     },
     addPrereq: function(kind, id, title) {
@@ -864,16 +865,18 @@ var TopicExerciseNodeEditor = {
     },
 
     updateVideos: function() {
-        var html = "";
+        var elements = [];
         _.each(TopicExerciseNodeEditor.videos, function(video) {
-            html += "<div>" + video + " (<a href=\"javascript: TopicExerciseNodeEditor.deleteVideo('" + video + "');\">remove</a>)</div>";
+            elements.push(
+                $("<div>" + video + " <a href=\"javascript:\">(remove)</a></div>")
+                    .delegate("a", "click", function() { TopicExerciseNodeEditor.deleteVideo(video) })
+            );
         });
-        $("#exercise-videos-list").html(html);
+        $("#exercise-videos-list").children().remove();
+        _.each(elements, function(element) { element.appendTo("#exercise-videos-list"); });
     },
     chooseVideo: function() {
-        if (!TopicExerciseNodeEditor.existingItemView)
-            TopicExerciseNodeEditor.existingItemView = new TopicAddExistingItemView();
-
+        TopicExerciseNodeEditor.existingItemView = TopicExerciseNodeEditor.existingItemView || new TopicAddExistingItemView();
         TopicExerciseNodeEditor.existingItemView.show("video", TopicExerciseNodeEditor.addVideo);
     },
     addVideo: function(kind, id, title) {
@@ -903,17 +906,14 @@ var TopicExerciseNodeEditor = {
         TopicExerciseNodeEditor.covers = TopicNodeEditor.model.get("covers").slice(0);
         TopicExerciseNodeEditor.updateCovers();
 
-        if (TopicNodeEditor.model.get("related_videos"))
-            TopicExerciseNodeEditor.videos = TopicNodeEditor.model.get("related_videos").slice(0);
-        else
-            TopicExerciseNodeEditor.videos = [];
+        TopicExerciseNodeEditor.videos = (TopicNodeEditor.model.get("related_videos") || []).slice(0);
         TopicExerciseNodeEditor.updateVideos();
     },
     deinit: function() {
         TopicExerciseNodeEditor.prereqs = null;
         TopicExerciseNodeEditor.covers = null;
         TopicExerciseNodeEditor.videos = null;
-    },
+    }
 };
 
 // Details view for videos
@@ -944,11 +944,15 @@ var TopicUrlNodeEditor = {
     },
 
     updateTags: function() {
-        var html = "";
+        var elements = [];
         _.each(TopicUrlNodeEditor.tags, function(tag) {
-            html += "<div>" + tag + " (<a href=\"javascript: TopicUrlNodeEditor.deleteTag('" + tag + "');\">remove</a>)</div>";
+            elements.push(
+                $("<div>" + tag + " <a href=\"javascript:\">(remove)</a></div>")
+                    .delegate("a", "click", function() { TopicUrlNodeEditor.deleteTag(tag) })
+            );
         });
-        $("#url-tags-list").html(html);
+        $("#url-tags-list").children().remove();
+        _.each(elements, function(element) { element.appendTo("#url-tags-list"); });
     },
     addTag: function() {
         var tag = $("#url-tag-add").val();
