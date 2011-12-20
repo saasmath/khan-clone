@@ -199,7 +199,7 @@ def tidy_up():
 
 def compile_handlebar_templates():
     print "Compiling handlebar templates"
-    return 0 == popen_return_code(['python',
+    return 0 == popen_return_code([sys.executable,
                                    'deploy/compile_handlebar_templates.py'])
 
 def compress_js():
@@ -218,7 +218,7 @@ def replace_commit():
 
 def compile_templates():
     print "Compiling all templates"
-    return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
+    return 0 == popen_return_code([sys.executable, 'deploy/compile_templates.py'])
 
 def prime_autocomplete_cache(version):
     try:
