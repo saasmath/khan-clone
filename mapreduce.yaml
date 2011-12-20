@@ -54,17 +54,3 @@ mapreduce:
       default: backfill-mapreduce-queue
     - name: processing_rate
       default: 350
-
-- name: RemoveUserExercisesOfDeletedExercise
-  mapper:
-    input_reader: mapreduce.input_readers.DatastoreInputReader
-    handler: backfill.remove_user_exercises_of_deleted_exercise
-    params:
-    - name: entity_kind
-      default: models.UserExercise
-    - name: shard_count
-      default: 64
-    - name: queue_name
-      default: backfill-mapreduce-queue
-    - name: processing_rate
-      default: 350
