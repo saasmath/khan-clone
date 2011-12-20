@@ -502,9 +502,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         # Users can only attempt problems for themselves, so the experiment
         # bucket always corresponds to the one for this current user
-        is_current_user = True
         struggling_model = StrugglingExperiment.get_alternative_for_user(
-                 user_data, is_current_user) or StrugglingExperiment.DEFAULT
+                 user_data, current_user=True) or StrugglingExperiment.DEFAULT
         if completed:
 
             user_exercise.total_done += 1
