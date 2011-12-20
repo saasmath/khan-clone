@@ -155,6 +155,8 @@ javascript = {
     },
 	"topicsadmin": {
         "files": [
+            "jquery.ui.draggable.js",
+            "jquery.ui.droppable.js",
 			"jquery.dynatree.js",
             "jquery.contextMenu.js",
             "jquery.ajaxq-0.0.1.js",
