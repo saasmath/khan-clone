@@ -18,7 +18,7 @@ from models import Topic, TopicVersion, Playlist, Video, Url
         
 class EditContent(request_handler.RequestHandler):
 
-    def get(self):   
+    def get(self):  
         # The following commented out code is for recreating the datastore from playlists- will remove after deploy
         # models.Topic.reindex()          
         # importSmartHistory()

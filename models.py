@@ -1097,7 +1097,7 @@ class TopicVersion(db.Model):
     date_updated = db.DateTimeProperty(indexed=False, auto_now=True)
     date_made_default = db.DateTimeProperty()
     copied_from = db.SelfReferenceProperty()
-    last_editted_by = db.UserProperty(indexed=False)
+    last_edited_by = db.UserProperty(indexed=False)
     number = db.IntegerProperty(required=True)
     title = db.StringProperty(indexed=False) 
     description = db.StringProperty(indexed=False)
@@ -1177,7 +1177,7 @@ class TopicVersion(db.Model):
     def create_new_version():
         new_version_number = TopicVersion.get_latest_version_number()+1 
         user = UserData.current().user
-        new_version = TopicVersion(last_editted_by = user,
+        new_version = TopicVersion(last_edited_by = user,
                                    number = new_version_number)
         new_version.put()
         return new_version
@@ -1236,7 +1236,7 @@ class TopicVersion(db.Model):
 
     def update(self):
         user = UserData.current().user
-        self.last_editted_by = user
+        self.last_edited_by = user
         self.put()
         if self.default:
             Setting.cached_library_content_date(datetime.datetime.now())
@@ -1275,12 +1275,12 @@ class Topic(Searchable, db.Model):
     hide = db.BooleanProperty(default = False)
     date_created = db.DateTimeProperty(auto_now_add=True)
     date_updated = db.DateTimeProperty(auto_now=True)
-    last_editted_by = db.UserProperty()
+    last_edited_by = db.UserProperty()
     INDEX_ONLY = ['standalone_title', 'description']
     INDEX_TITLE_FROM_PROP = 'standalone_title'
     INDEX_USES_MULTI_ENTITIES = False
 
-    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_editted_by"]
+    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_edited_by"]
 
     @property
     def ka_url(self):
@@ -1293,13 +1293,13 @@ class Topic(Searchable, db.Model):
             children = db.get(self.child_keys)
         self.children = []
         for child in children:
-            item = {}
-            item["kind"] = child.__class__.__name__
-            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().id()
-            item["title"] = child.title if hasattr(child, "title") else child.display_name
-            item["hide"] = child.hide if hasattr(child, "hide") else False
-            item["url"] = child.ka_url if hasattr(child, "ka_url") else child.url
-            self.children.append(item)
+            self.children.append({
+				"kind": child.__class__.__name__,
+				"id": getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) ),
+				"title": getattr(child, "title", getattr(child, "display_name", "")),
+				"hide": getattr(child, "hide", False),
+				"url": getattr(child, "ka_url", getattr(child, "url", ""))
+			})
         return self
 
     def get_child_order(self, child_key):
@@ -1362,10 +1362,12 @@ class Topic(Searchable, db.Model):
     def get_new_key_name():
         return base64.urlsafe_b64encode(os.urandom(30))
 
-    # updates the ancestor_keys by using the parents' ancestor_keys
-    # furthermore updates the ancestors of all the descendants
-    # returns the list of entities updated (they still need to be put into the db)
     def update_ancestor_keys(self, topic_dict =  {}):
+    	""" Update the ancestor_keys by using the parents' ancestor_keys.
+
+    		furthermore updates the ancestors of all the descendants
+    		returns the list of entities updated (they still need to be put into the db) """
+
         # topic_dict keeps a dict of all descendants and all parent's of those descendants so we don't have to get them from the datastore again
         if not topic_dict:
             descendants = Topic.all().filter("ancestor_key =", self)
@@ -1694,10 +1696,10 @@ class Topic(Searchable, db.Model):
                         match = True
 
                 else:
-                    title = child.title if hasattr(child, "title") else child.display_name
+                    title = getattr(child, "title", getattr(child, "display_name", ""))
                     if title.lower().find(query) > -1:
                         match_path = path[:]
-                        id = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().id()
+                        id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) )
                         match_path.append(id)
                         match_path.append(child_key.kind())
                         matching_paths.append(match_path)

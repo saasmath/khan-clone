@@ -14,9 +14,9 @@ def user_info(username, user_data):
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
 def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, font_size=12):
-    videos = topic.children
-    items_in_column = len(videos) / num_cols
-    remainder = len(videos) % num_cols
+    content = topic.children
+    items_in_column = len(content) / num_cols
+    remainder = len(content) % num_cols
     link_height = font_size * 1.5
     # Calculate the column indexes (tops of columns). Since video lists won't divide evenly, distribute
     # the remainder to the left-most columns first, and correctly increment the indices for remaining columns
@@ -24,7 +24,7 @@ def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, f
 
     template_values = {
         "topic": topic,
-        "videos": videos,
+        "content": content,
         "column_width": column_width,
         "column_indices": column_indices,
         "link_height": link_height,
