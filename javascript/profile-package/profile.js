@@ -800,44 +800,7 @@ var Profile = {
         var template = Templates.get( "profile.exercise_progress" );
         $("#graph-content").html( template({ "exercises": templateContext }) );
 
-        var infoHover = $("#info-hover-container");
-        var lastHoverTime;
-        var mouseX;
-        var mouseY;
-        $("#module-progress .student-module-status").hover(
-            function(e) {
-                var hoverTime = +(new Date);
-                lastHoverTime = hoverTime;
-                mouseX = e.pageX;
-                mouseY = e.pageY;
-                var self = this;
-                setTimeout(function() {
-                    if (hoverTime != lastHoverTime) {
-                        return;
-                    }
-
-                    var hoverData = $(self).children(".hover-data");
-                    if ($.trim(hoverData.html())) {
-                        infoHover.html($.trim(hoverData.html()));
-
-                        var left = mouseX + 15;
-                        var jelGraph = $("#graph-content");
-                        var leftMax = jelGraph.offset().left +
-                                jelGraph.width() - 150;
-
-                        infoHover.css('left', Math.min(left, leftMax));
-                        infoHover.css('top', mouseY + 5);
-                        infoHover.css('cursor', 'pointer');
-                        infoHover.css('position', 'fixed');
-                        infoHover.show();
-                    }
-                }, 100);
-            },
-            function(e){
-                lastHoverTime = null;
-                $("#info-hover-container").hide();
-            }
-        );
+        Profile.hoverContent($("#module-progress .student-module-status"));
         $("#module-progress .student-module-status").click(function(e) {
             $("#info-hover-container").hide();
             Profile.collapseAccordion();
@@ -909,45 +872,51 @@ var Profile = {
             "&student_email=" + encodeURIComponent(email);
     },
 
-    AddObjectiveHover: function(element) {
-        var infoHover = $("#info-hover-container");
+    hoverContent: function(elements) {
         var lastHoverTime;
         var mouseX;
         var mouseY;
-        element.find(".objective").hover(
-            function(e) {
-                var hoverTime = +(new Date);
+
+        elements.hover(
+            function( e ) {
+                var hoverTime = +(new Date());
                 lastHoverTime = hoverTime;
                 mouseX = e.pageX;
                 mouseY = e.pageY;
-                var self = this;
+                var el = this;
                 setTimeout(function() {
                     if (hoverTime != lastHoverTime) {
                         return;
                     }
 
-                    var hoverData = $(self).children(".hover-data");
-                    if ($.trim(hoverData.html())) {
-                        infoHover.html($.trim(hoverData.html()));
-
-                        var left = mouseX + 15;
+                    var hoverData = $(el).children(".hover-data");
+                    var html = $.trim(hoverData.html());
+                    if ( html ) {
                         var jelGraph = $("#graph-content");
                         var leftMax = jelGraph.offset().left +
                                 jelGraph.width() - 150;
+                        var left = Math.min(mouseX + 15, leftMax);
 
-                        infoHover.css('left', Math.min(left, leftMax));
-                        infoHover.css('top', mouseY + 5);
-                        infoHover.css('cursor', 'pointer');
-                        infoHover.css('position', 'fixed');
-                        infoHover.show();
+                        var jHoverEl = $("#info-hover-container");
+                        if ( jHoverEl.length === 0 ) {
+                            jHoverEl = $('<div id="info-hover-container"></div>').appendTo('body');
+                        }
+                        jHoverEl
+                            .html(html)
+                            .css({left: left, top: mouseY + 5})
+                            .show();
                     }
                 }, 100);
             },
-            function(e){
+            function( e ) {
                 lastHoverTime = null;
                 $("#info-hover-container").hide();
             }
         );
+    },
+
+    AddObjectiveHover: function(element) {
+        Profile.hoverContent(element.find(".objective"));
     }
 };
 

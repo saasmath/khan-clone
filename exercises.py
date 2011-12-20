@@ -120,7 +120,7 @@ class ViewExercise(request_handler.RequestHandler):
 
         problem_number = self.request_int('problem_number', default=(user_exercise.total_done + 1))
 
-        user_data_student = self.request_user_data("student_email") or user_data
+        user_data_student = self.request_student_user_data(legacy=True) or user_data
         if user_data_student.key_email != user_data.key_email and not user_data_student.is_visible_to(user_data):
             user_data_student = user_data
 
@@ -527,7 +527,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                            'review_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
-                        
+
                     user_exercise.set_proficient(user_data)
                     user_data.reassess_if_necessary()
 
