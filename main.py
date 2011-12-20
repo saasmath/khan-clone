@@ -570,6 +570,9 @@ class Search(request_handler.RequestHandler):
                 filtered_videos.append(video)
                 filtered_videos_by_key[str(video.key())] = []
         video_count = len(filtered_videos)
+        logging.info(len(videos))
+        logging.info(video_count)
+
 
         # Get the related exercises
         all_exercise_videos = exvids_future[0].get_result()
