@@ -54,29 +54,7 @@ class EditContent(request_handler.RequestHandler):
         logging.info("created root")
         logging.info("loading playlists")
         deferred.defer(load_videos, version)
-    
-        # The following commented out code is for recreating the datastore from playlists- will remove after deploy
-        # models.Topic.reindex()          
-        # importSmartHistory()
-        # t = models.Topic.all().filter("title = ", "Algebra").get()
-        # title = t.topic_parent.topic_parent.title
-        # logging.info(title)
-        # self.load_demo()
-        # return
-        # self.load_videos()
-        # self.hide_topics()
-        # self.recreate_topic_list_structure()
-        # return
-        # version = models.TopicVersion.get_latest_version()
-        # version.set_default_version()
-        # return
-       
-        # version = models.TopicVersion.get_edit_version()
-        # version.set_default_version()
-        # return
-
-        # root = Topic.get_by_id("root").make_tree()
-        # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()
+        print "migration started... progress can be monitored in the logs"
 
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):
