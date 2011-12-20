@@ -4,16 +4,14 @@
 // whether the model is already in the cache.
 
 function TestTopics() {
-	KAConsole.debugEnabled = true;
-
     var tree = getDefaultTopicTree();
-    KAConsole.log('Fetching root...');
-    tree.fetchByID('root',
+    KAConsole.log("Fetching root...");
+    tree.fetchByID("root",
         function() {
-            KAConsole.log('Got root. Fetching first child...');
-            tree.fetchByID(this.get('children')[0].id,
+            KAConsole.log("Got root. Fetching first child...");
+            tree.fetchByID(this.get("children")[0].id,
                 function() {
-                    KAConsole.log('Got child topic:', this);
+                    KAConsole.log("Got child topic:", this);
                 }
             );
         }
@@ -21,6 +19,13 @@ function TestTopics() {
 }
 
 // TomY TODO - Move this to some shared Backbone utils file?
+
+/* Backbone.Collection has no facility to asynchronously fetch individual
+ models. IncrementalCollection.fetchByID() will return the given model
+ if it is already loaded from the server, or fetch it immediately. The
+ callback is called either immediately or when the model is finished
+ loading. The __inited flag on the model is set to true if the model
+ has been loaded from the server. */
 IncrementalCollection = Backbone.Collection.extend({
     fetchByID: function(id, callback, args) {
         var ret = this.get(id);
@@ -28,7 +33,7 @@ IncrementalCollection = Backbone.Collection.extend({
             if (!this.idAttribute) {
                 this.idAttribute = new this.model({}).idAttribute;
                 if (!this.idAttribute)
-                    this.idAttribute = 'id';
+                    this.idAttribute = "id";
             }
 
             var attrs = {};
@@ -36,16 +41,18 @@ IncrementalCollection = Backbone.Collection.extend({
             ret = this._add(attrs);
         }
         if (!ret.__inited) {
-            if (!ret.__callbacks)
+            if (!ret.__callbacks) {
                 ret.__callbacks = [];
-            if (callback)
+			}
+            if (callback) {
                 ret.__callbacks.push({ callback: callback, args: args });
+			}
 
             if (!ret.__requesting) {
-                KAConsole.log('IC (' + id + '): Sending request...');
+                KAConsole.log("IC (" + id + "): Sending request...");
                 ret.fetch({
                     success: function() {
-                        KAConsole.log('IC (' + id + '): Request succeeded.');
+                        KAConsole.log("IC (" + id + "): Request succeeded.");
                         ret.__inited = true;
                         ret.__requesting = false;
                         _.each(ret.__callbacks, function(cb) {
@@ -55,16 +62,16 @@ IncrementalCollection = Backbone.Collection.extend({
                     },
 
                     error: function() {
-                        KAConsole.log('IC (' + id + '): Request failed!');
+                        KAConsole.log("IC (" + id + "): Request failed!");
                         ret.__requesting = false;
                     }
                 });
                 ret.__requesting = true;
             } else {
-                KAConsole.log('IC (' + id + '): Already requested.');
+                KAConsole.log("IC (" + id + "): Already requested.");
             }
         } else {
-            KAConsole.log('IC (' + id + '): Already loaded.');
+            KAConsole.log("IC (" + id + "): Already loaded.");
             if (callback)
                 callback.apply(ret, args);
         }
@@ -83,13 +90,13 @@ IncrementalCollection = Backbone.Collection.extend({
         if (!this.idAttribute) {
             this.idAttribute = new this.model({}).idAttribute;
             if (!this.idAttribute)
-                this.idAttribute = 'id';
+                this.idAttribute = "id";
         }
         var self = this;
 
         this.add(models, options);
         _.each(models, function(model) {
-            newModel = self.get(model[self.idAttribute])
+            newModel = self.get(model[self.idAttribute]);
             newModel.__inited = true;
         });
     }
@@ -100,40 +107,39 @@ IncrementalCollection = Backbone.Collection.extend({
 (function() {
     var topicVersionList = null;
 
-    TopicVersion = Backbone.Model.extend({
-        defaults: {
-            number: 0, // API ID
-            kind: 'TopicVersion',
-            default: false, // Is the current default version
-            edit: false, // Is the current editing version
-            title: '(untitled version)',
-            last_editted_by: '',
-            description: '',
-            date_created: '',
-            date_updated: ''
-        },
+    window.TopicVersion = Backbone.Model.extend({
+		defaults: {
+			number: 0, // API ID
+			kind: "TopicVersion",
+			default: false, // Is the current default version
+			edit: false, // Is the current editing version
+			title: "(untitled version)",
+			last_edited_by: "",
+			description: "",
+			date_created: "",
+			date_updated: "" 
+		},
 
-        idAttribute: 'number',
+        idAttribute: "number",
 
-        urlRoot: '/api/v1/topicversion',
+        urlRoot: "/api/v1/topicversion",
 
         initialize: function() {
-            this.topicTree = new TopicTree(this);
+            this._topicTree = new TopicTree(this);
         },
 
         getTopicTree: function() {
-            return this.topicTree;
+            return this._topicTree;
         }
     });
 
-	TopicVersionList = IncrementalCollection.extend({
+	window.TopicVersionList = IncrementalCollection.extend({
 		model: TopicVersion,
-        url: '/api/v1/topicversions/'
+        url: "/api/v1/topicversions/"
     });
 
-    getTopicVersionList = function() {
-        if (!topicVersionList)
-            topicVersionList = new TopicVersionList();
+    window.getTopicVersionList = function() {
+		topicVersionList = topicVersionList || new TopicVersionList();
         return topicVersionList;
     };
 })();
@@ -142,18 +148,18 @@ IncrementalCollection = Backbone.Collection.extend({
 (function() {
 	var defaultTree = null;
 
-	Topic = Backbone.Model.extend({
+	window.Topic = Backbone.Model.extend({
 		defaults: {
-            // Short version
-			id: 'new_topic', // API ID / slug
-			title: 'New Topic',
-            standalone_title: 'New Topic',
-			kind: 'Topic',
+			// Short version
+			id: "new_topic", // API ID / slug
+			title: "New Topic",
+			standalone_title: "New Topic",
+			kind: "Topic",
 
-            // Long version
-			description: '',
+			// Long version
+			description: "",
 			hide: false,
-			ka_url: '',
+			ka_url: "",
 			tags: [],
 			children: []
 		},
@@ -162,13 +168,13 @@ IncrementalCollection = Backbone.Collection.extend({
 		},
 
         url: function() {
-            var versionID = this.collection ? this.collection.getVersionID() : 'edit';
-			return '/api/v1/topicversion/' + versionID + '/topic/' + this.id;
+            var versionID = this.collection ? this.collection.getVersionID() : "edit";
+			return "/api/v1/topicversion/" + versionID + "/topic/" + this.id;
         },
 
         getChild: function(id) {
             var found = false;
-            _.each(this.get('children'), function(child) {
+            _.each(this.get("children"), function(child) {
                 if (child.id == id) {
                     found = true;
                 }
@@ -178,33 +184,60 @@ IncrementalCollection = Backbone.Collection.extend({
             return null;
         },
         getChildren: function() {
-            childModels = [];
             var self = this;
-            _.each(this.get('children'), function(child) {
-                childModels.push(self.tree.get(child.id));
-            });
-            return childModels;
+            return _.map(this.get("children"), function(child) { return self.tree.get(child.id); });
         },
 
         addChild: function(child, idx) {
-            child_list = this.get('children').slice(0);
+            child_list = this.get("children").slice(0);
             child_list.splice(idx, 0, child);
-            this.set({'children': child_list});
+            this.set({"children": child_list});
         },
         removeChild: function(kind, id) {
             var ret = null;
-            var child_list = _.filter(this.get('children'), function(child) {
+            var child_list = _.filter(this.get("children"), function(child) {
                 if (child.kind != kind || child.id != id)
                     return true;
                 ret = child;
                 return false;
             });
-            this.set({'children': child_list});
+            this.set({"children": child_list});
             return ret;
+        },
+
+        updateNode: function() {
+            var tree = this.tree;
+
+            // Insert "placeholder" nodes into tree so we can track changes
+            _.each(this.get("children"), function(child) {
+                if (child.kind == "Topic" && !tree.get(child.id)) {
+                    var newNode = new Topic(child);
+                    tree.addNode(newNode);
+                    child.__ptr = newNode;
+                }
+            });
+
+            // Update child lists
+            tree.each(function(otherNode) {
+                var children = _.map(otherNode.get("children"), function(child) {
+                    if (child.__ptr && child.__ptr.__inited) {
+                        return {
+                            kind: child.kind,
+                            __ptr: child.__ptr,
+                            id: child.__ptr.id,
+                            title: child.__ptr.get("title"),
+                            hide: child.__ptr.get("hide")
+                        };
+                    } else {
+                        return child;
+                    }
+                });
+                otherNode.set({children: children});
+            });
         },
 	});
 
-	TopicTree = IncrementalCollection.extend({
+	window.TopicTree = IncrementalCollection.extend({
 		model: Topic,
         version: null,
 
@@ -213,60 +246,26 @@ IncrementalCollection = Backbone.Collection.extend({
         },
 
         getRoot: function() {
-            ret = this.fetchByID('root');
+            ret = this.fetchByID("root");
             if (!ret.__inited)
-                ret.set({title: 'Loading...'});
+                ret.set({title: "Loading..."});
             return ret;
         },
 
         addNode: function(node) {
-            KAConsole.log('Adding node to tree: ' + node.get('id'));
+            KAConsole.log("Adding node to tree: " + node.get("id"));
             node.tree = this;
             this.add([ node ]);
-            node.bind('change', this.updateNode, node);
-        },
-
-        updateNode: function() {
-            var node = this;
-            var tree = node.tree;
-
-            // Insert "placeholder" nodes into tree so we can track changes
-            _.each(node.get('children'), function(child) {
-                if (child.kind == 'Topic' && !tree.get(child.id)) {
-                    var newNode = new Topic(child);
-                    tree.addNode(newNode);
-                    child.__ptr = newNode;
-                }
-            });
-
-            // Update child lists
-            tree.each(function(other_node) {
-                var children = _.map(other_node.get('children'), function(child) {
-                    if (child.__ptr && child.__ptr.__inited) {
-                        return {
-                            kind: child.kind,
-                            __ptr: child.__ptr,
-                            id: child.__ptr.id,
-                            title: child.__ptr.get('title'),
-                            hide: child.__ptr.get('hide')
-                        };
-                    } else {
-                        return child;
-                    }
-                });
-                other_node.set({'children':children});
-            });
+            node.bind("change", node.updateNode, node);
         },
 
         getVersionID: function() {
-            return this.version ? this.version.get('number') : 'edit';
+            return this.version ? this.version.get("number") : "edit";
         }
 	});
 
-    getDefaultTopicTree = function() {
-        if (!defaultTree) {
-            defaultTree = new TopicTree();
-        }
+    window.getDefaultTopicTree = function() {
+		defaultTree = defaultTree || new TopicTree();
         return defaultTree;
     };
 
@@ -277,36 +276,34 @@ IncrementalCollection = Backbone.Collection.extend({
 
 	var videoList = null;
 
-    Video = Backbone.Model.extend({
+    window.Video = Backbone.Model.extend({
         defaults: {
-            readable_id: '', // API ID / slug
-			kind: 'Video',
-            title: '',
-            youtube_id: '',
-            description: '',
-            keywords: '',
+            readable_id: "", // API ID / slug
+			kind: "Video",
+            title: "",
+            youtube_id: "",
+            description: "",
+            keywords: "",
             duration: 0,
             views: 0,
-            date_added: '',
-            url: '',
-            ka_url: '',
-            relative_url: '',
+            date_added: "",
+            url: "",
+            ka_url: "",
+            relative_url: "",
             download_urls: null,
         },
 
-        idAttribute: 'readable_id',
+        idAttribute: "readable_id",
 
-        urlRoot: '/api/v1/videos'
+        urlRoot: "/api/v1/videos"
     });
 
-	VideoList = IncrementalCollection.extend({
+	window.VideoList = IncrementalCollection.extend({
 		model: Video
     });
 
-    getVideoList = function() {
-        if (!videoList) {
-            videoList = new VideoList();
-        }
+    window.getVideoList = function() {
+		videoList = videoList || new VideoList();
         return videoList;
     };
 
@@ -318,13 +315,13 @@ IncrementalCollection = Backbone.Collection.extend({
 
 	var exerciseList = null;
 
-    Exercise = Backbone.Model.extend({
+    window.Exercise = Backbone.Model.extend({
         defaults: {
-            name: 'new_exercise', // API ID / slug
-			kind: 'Exercise',
-            display_name: 'New Exercise', 
-            short_display_name: 'New Ex', 
-            creation_date: '', 
+            name: "new_exercise", // API ID / slug
+			kind: "Exercise",
+            display_name: "New Exercise", 
+            short_display_name: "New Ex", 
+            creation_date: "", 
             h_position: 0, 
             v_position: 0,
             live: false, 
@@ -333,23 +330,21 @@ IncrementalCollection = Backbone.Collection.extend({
             seconds_per_fast_problem: 0, 
             covers: [], 
             prerequisites: [], 
-            ka_url: '', 
-            relative_url: ''
+            ka_url: "", 
+            relative_url: ""
         },
 
-        idAttribute: 'name',
+        idAttribute: "name",
 
-        urlRoot: '/api/v1/exercises'
+        urlRoot: "/api/v1/exercises"
     });
 
-	ExerciseList = IncrementalCollection.extend({
+	window.ExerciseList = IncrementalCollection.extend({
 		model: Exercise
     });
 
-    getExerciseList = function() {
-        if (!exerciseList) {
-            exerciseList = new ExerciseList();
-        }
+    window.getExerciseList = function() {
+		exerciseList = exerciseList || new ExerciseList();
         return exerciseList;
     };
 
@@ -361,28 +356,26 @@ IncrementalCollection = Backbone.Collection.extend({
 
 	var urlList = null;
 
-    ExternalURL = Backbone.Model.extend({
+    window.ExternalURL = Backbone.Model.extend({
         defaults: {
-            id: '', // API ID
-            kind: 'Url',
-            url: '',
-            title: 'New URL',
+            id: "", // API ID
+            kind: "Url",
+            url: "",
+            title: "New URL",
             tags: [],
-            date_created: '',
-            date_updated: ''
+            date_created: "",
+            date_updated: ""
         },
 
-        urlRoot: '/api/v1/url'
+        urlRoot: "/api/v1/url"
     });
 
-	URLList = IncrementalCollection.extend({
+	window.URLList = IncrementalCollection.extend({
 		model: ExternalURL
     });
 
-    getUrlList = function() {
-        if (!urlList) {
-            urlList = new URLList();
-        }
+    window.getUrlList = function() {
+		urlList = urlList || new URLList();
         return urlList;
     };
 
