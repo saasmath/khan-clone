@@ -357,12 +357,6 @@ var Profile = {
         return qs.join(eljoin);
     },
 
-    exerciseProgressUrl: function(exercise, email) {
-        return "/profile/graph/exerciseproblems" +
-            "?exercise_name=" + exercise +
-            "&student_email=" + encodeURIComponent(email);
-    },
-
     hoverContent: function(elements) {
         var lastHoverTime;
         var mouseX;
@@ -404,6 +398,10 @@ var Profile = {
                 $("#info-hover-container").hide();
             }
         );
+    },
+
+    AddObjectiveHover: function(element) {
+        Profile.hoverContent(element.find(".objective"));
     },
     render: function() {
         var profileTemplate = Templates.get("profile.profile");

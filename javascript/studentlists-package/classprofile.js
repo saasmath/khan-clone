@@ -926,6 +926,7 @@ var ClassProfile = {
         return qs.join(eljoin);
     },
 
+    // TODO: this is redundant with addobjectivehover in profile.js
     AddObjectiveHover: function(element) {
         var infoHover = $("#info-hover-container");
         var lastHoverTime;

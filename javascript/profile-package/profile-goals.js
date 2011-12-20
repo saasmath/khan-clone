@@ -141,10 +141,11 @@ var GoalProfileViewsCollection = {
 
         $.each(data, function(idx, goal) {
             if (goal.completed) {
-                if (goal.abandoned)
+                if (goal.abandoned) {
                     abandoned_goals.push(goal);
-                else
+                } else {
                     completed_goals.push(goal);
+                }
             } else {
                 current_goals.push(goal);
             }
@@ -158,30 +159,29 @@ var GoalProfileViewsCollection = {
         CompletedGoalBook = new GoalCollection(completed_goals);
         AbandonedGoalBook = new GoalCollection(abandoned_goals);
 
-        $("#graph-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
+        $("#profile-goals-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
 
-        Profile.goalsViews = {};
-        Profile.goalsViews.current = new GoalProfileView({
+        GoalProfileViewsCollection.views.current = new GoalProfileView({
             el: "#current-goals-list",
             model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: 'current',
             readonly: !viewingOwnGoals
         });
-        Profile.goalsViews.completed = new GoalProfileView({
+        GoalProfileViewsCollection.views.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
             readonly: true
         });
-        Profile.goalsViews.abandoned = new GoalProfileView({
+        GoalProfileViewsCollection.views.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
             readonly: true
         });
 
-        Profile.userGoalsHref = href;
-        Profile.showGoalType('current');
+        GoalProfileViewsCollection.userGoalsHref = href;
+        GoalProfileViewsCollection.showGoalType('current');
 
         if (completed_goals.length > 0) {
             $('#goal-show-completed-link').parent().show();
