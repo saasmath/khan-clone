@@ -3,7 +3,7 @@
 // call may be either synchronous or asynchronous, depending on
 // whether the model is already in the cache.
 
-function TestTopics() {
+window.TestTopics = function() {
 	KAConsole.debugEnabled = true;
 
     var tree = getDefaultTopicTree();
@@ -26,7 +26,7 @@ IncrementalCollection = Backbone.Collection.extend({
         var ret = this.get(id);
         if (!ret) {
             if (!this.idAttribute) {
-                this.idAttribute = new this.model({}).idAttribute;
+                this.idAttribute = this.model.prototype.idAttribute;
                 if (!this.idAttribute)
                     this.idAttribute = 'id';
             }
@@ -166,17 +166,6 @@ IncrementalCollection = Backbone.Collection.extend({
 			return '/api/v1/topicversion/' + versionID + '/topic/' + this.id;
         },
 
-        getChild: function(id) {
-            var found = false;
-            _.each(this.get('children'), function(child) {
-                if (child.id == id) {
-                    found = true;
-                }
-            });
-            if (found)
-                return this.tree.get(id);
-            return null;
-        },
         getChildren: function() {
             childModels = [];
             var self = this;
