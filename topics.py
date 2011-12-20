@@ -16,7 +16,7 @@ from google.appengine.ext import db
 import models
 from models import Topic, TopicVersion, Playlist, Video, Url
         
-class EditTaxonomy(request_handler.RequestHandler):
+class EditContent(request_handler.RequestHandler):
 
     def get(self):   
         # The following commented out code is for recreating the datastore from playlists- will remove after deploy
@@ -58,7 +58,7 @@ class EditTaxonomy(request_handler.RequestHandler):
             }
         logging.info(template_values)
         
-        self.render_jinja2_template('edittaxonomy.html', template_values)
+        self.render_jinja2_template('topics-admin.html', template_values)
         return
 
     # temporary function for copying the topic structure in topics_list.py ... will remove after deploy    
@@ -131,7 +131,7 @@ class EditTaxonomy(request_handler.RequestHandler):
         nextplaylist = Playlist.all().filter('title >', title).order('title').get()
         if nextplaylist:
             next_title = nextplaylist.title
-            next_url = "/admin/edittaxonomy?title="+urllib.quote(next_title)
+            next_url = "/admin/content?title="+urllib.quote(next_title)
         else:
             next_title = "FINISHED"
             next_url = None
