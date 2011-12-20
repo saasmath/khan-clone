@@ -18,7 +18,17 @@ from models import Topic, TopicVersion, Playlist, Video, Url
         
 class EditContent(request_handler.RequestHandler):
 
-    def get(self):   
+    def get(self):  
+        v = Video.all().get()
+        u = Url.all().get()
+        t = Topic.all().get()
+
+        template_values = {
+            'content': [u],
+            'topic' : t
+            }
+        self.render_jinja2_template('column_major_order_videos.html', template_values)
+        return
         # The following commented out code is for recreating the datastore from playlists- will remove after deploy
         # models.Topic.reindex()          
         # importSmartHistory()
