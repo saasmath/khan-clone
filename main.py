@@ -326,6 +326,10 @@ class ViewTOS(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('tos.html', {"selected_nav_link": "tos"})
 
+class ViewAPITOS(request_handler.RequestHandler):
+    def get(self):
+        self.render_jinja2_template('api-tos.html', {"selected_nav_link": "api-tos"})
+
 class ViewPrivacyPolicy(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('privacy-policy.html', {"selected_nav_link": "privacy-policy"})
@@ -723,6 +727,7 @@ application = webapp2.WSGIApplication([
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
     ('/about/tos', ViewTOS ),
+    ('/about/api-tos', ViewAPITOS),
     ('/about/privacy-policy', ViewPrivacyPolicy ),
     ('/about/dmca', ViewDMCA ),
     ('/contribute', ViewContribute ),
