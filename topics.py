@@ -131,7 +131,7 @@ class EditContent(request_handler.RequestHandler):
         nextplaylist = Playlist.all().filter('title >', title).order('title').get()
         if nextplaylist:
             next_title = nextplaylist.title
-            next_url = "/admin/content?title="+urllib.quote(next_title)
+            next_url = "/admin/content?title=" + urllib.quote(next_title)
         else:
             next_title = "FINISHED"
             next_url = None

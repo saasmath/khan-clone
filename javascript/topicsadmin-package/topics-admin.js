@@ -45,7 +45,7 @@ var TopicTreeEditor = {
                         });
                     });
                 }
-                if (node.data.kind == 'Video' || node.data.kind == 'Exercise' || node.data.kind == 'Url') {
+                if (_.include(['Video', 'Exercise', 'Url'], node.data.kind)) {
                     $(span).contextMenu({menu: "item_context_menu"}, function(action, el, pos) {
                         TopicItemNodeEditor.handleAction(action, node, node.data.kind, node.data.id, topicTree.get(node.parent.data.id));
                     });
@@ -67,12 +67,13 @@ var TopicTreeEditor = {
 
                             childNodes = []
                             _.each(json, function(item) {
-                                if (item.kind == 'Video')
+                                if (item.kind == 'Video') {
                                     childNodes.push(TopicTreeEditor.createChild(item.kind, item.readable_id, item.title, false));
-                                else if (item.kind == 'Exercise')
+                                } else if (item.kind == 'Exercise') {
                                     childNodes.push(TopicTreeEditor.createChild(item.kind, item.name, item.display_name, false));
-                                else if (item.kind == 'Url')
+                                } else if (item.kind == 'Url') {
                                     childNodes.push(TopicTreeEditor.createChild(item.kind, item.id, item.title, false));
+                                }
                             });
                             node.addChild(childNodes);
                         },
@@ -160,13 +161,11 @@ var TopicTreeEditor = {
             }
         });
 
-        $('#topictree-queue-progress-bar').progressbar();
-        $('#topictree-queue-progress-bar').progressbar("value", 0);
-        $('#topictree-queue-progress-bar').progressbar("disable");
+        $('#topictree-queue-progress-bar').progressbar({ value: 0, disable: true });
         $('#topictree-queue-progress-text').html('');
 
         var self = this;
-        $(window).resize(function(){self.resize();});
+        $(window).resize(function() { self.resize(); } );
         this.resize();
 
         this.searchView = new TopicSearchView();
@@ -194,8 +193,11 @@ var TopicTreeEditor = {
             if (TopicTreeEditor.maxProgressLength < remaining)
                 TopicTreeEditor.maxProgressLength = remaining;
 
-            $('#topictree-queue-progress-bar').progressbar("value", (1 - (remaining / TopicTreeEditor.maxProgressLength)) * 100);
-            $('#topictree-queue-progress-text').html('Updating (' + (TopicTreeEditor.maxProgressLength - remaining + 1) + ' / ' + TopicTreeEditor.maxProgressLength + ')');
+            var progress_percentage = (1 - (remaining / TopicTreeEditor.maxProgressLength)) * 100;
+            var progress = TopicTreeEditor.maxProgressLength - remaining + 1;
+
+            $('#topictree-queue-progress-bar').progressbar("value", progress_percentage);
+            $('#topictree-queue-progress-text').html('Updating (' + progress + ' / ' + TopicTreeEditor.maxProgressLength + ')');
 
         } else {
             if (TopicTreeEditor.maxProgressLength > 0) {
@@ -203,8 +205,7 @@ var TopicTreeEditor = {
                 $('#topictree-queue-progress-bar').progressbar("value", 100);
                 TopicTreeEditor.maxProgressLength = 0; // 1 second delay before we wipe the progress
             } else {
-                $('#topictree-queue-progress-bar').progressbar("value", 0);
-                $('#topictree-queue-progress-bar').progressbar("disable");
+                $('#topictree-queue-progress-bar').progressbar({ value: 0, disable: true });
             }
         }
 
@@ -221,11 +222,18 @@ var TopicTreeEditor = {
     },
 
     createChild: function(kind, id, title, hide) {
+        var iconTable = {
+            Topic: 'leaf-icon-small.png',
+            Video: 'video-camera-icon-full-small.png',
+            Exercise: 'exercise-icon-small.png',
+            Url: 'link-icon-small.png'
+        };
         var data = {
             title: title,
             key:  kind + '/' + id,
             id: id,
-            kind: kind
+            kind: kind,
+            icon: iconTable[kind]
         };
         if (debugNodeIDs) {
             data.title += ' [(' + id + ')]';
@@ -233,17 +241,10 @@ var TopicTreeEditor = {
         if (kind == 'Topic') {
             data.isFolder = true;
             data.isLazy = true;
-            data.icon = 'leaf-icon-small.png';
             if (hide) {
                 data.addClass = 'hidden-topic';
                 data.title = title + ' [Hidden]';
             }
-        } else if (kind == 'Video') {
-            data.icon = 'video-camera-icon-full-small.png';
-        } else if (kind == 'Exercise') {
-            data.icon = 'exercise-icon-small.png';
-        } else if (kind == 'Url') {
-            data.icon = 'link-icon-small.png';
         }
         return data;
     },
