@@ -1293,13 +1293,13 @@ class Topic(Searchable, db.Model):
             children = db.get(self.child_keys)
         self.children = []
         for child in children:
-            item = {}
-            item["kind"] = child.__class__.__name__
-            item["id"] = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().id()
-            item["title"] = child.title if hasattr(child, "title") else child.display_name
-            item["hide"] = child.hide if hasattr(child, "hide") else False
-            item["url"] = child.ka_url if hasattr(child, "ka_url") else child.url
-            self.children.append(item)
+            self.children.append({
+				"kind": child.__class__.__name__,
+				"id": getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) ),
+				"title": getattr(child, "title", getattr(child, "display_name", "")),
+				"hide": getattr(child, "hide", False),
+				"url": getattr(child, "ka_url", getattr(child, "url", ""))
+			})
         return self
 
     def get_child_order(self, child_key):
@@ -1362,10 +1362,12 @@ class Topic(Searchable, db.Model):
     def get_new_key_name():
         return base64.urlsafe_b64encode(os.urandom(30))
 
-    # updates the ancestor_keys by using the parents' ancestor_keys
-    # furthermore updates the ancestors of all the descendants
-    # returns the list of entities updated (they still need to be put into the db)
     def update_ancestor_keys(self, topic_dict =  {}):
+    	""" Update the ancestor_keys by using the parents' ancestor_keys.
+
+    		furthermore updates the ancestors of all the descendants
+    		returns the list of entities updated (they still need to be put into the db) """
+
         # topic_dict keeps a dict of all descendants and all parent's of those descendants so we don't have to get them from the datastore again
         if not topic_dict:
             descendants = Topic.all().filter("ancestor_key =", self)
@@ -1694,10 +1696,10 @@ class Topic(Searchable, db.Model):
                         match = True
 
                 else:
-                    title = child.title if hasattr(child, "title") else child.display_name
+					title = getattr(child, "title", getattr(child, "display_name", "")),
                     if title.lower().find(query) > -1:
                         match_path = path[:]
-                        id = child.id if hasattr(child, "id") else child.readable_id if hasattr(child, "readable_id") else child.name if hasattr(child, "name") else child.key().id()
+						id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) ),
                         match_path.append(id)
                         match_path.append(child_key.kind())
                         matching_paths.append(match_path)
