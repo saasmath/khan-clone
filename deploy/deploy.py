@@ -7,7 +7,6 @@ import urllib2
 import webbrowser
 import getpass
 import re
-import fileinput
 
 sys.path.append(os.path.abspath("."))
 import compress
@@ -210,12 +209,6 @@ def compress_css():
     print "Compressing stylesheets"
     compress.compress_all_stylesheets()
 
-def replace_commit():
-    for line in fileinput.input("models.py", inplace=1):
-        if "replace-revision-num" in line:
-            line = "REVISION_NUM = %s" % git_version()
-        print line,
-
 def compile_templates():
     print "Compiling all templates"
     return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
@@ -306,7 +299,6 @@ def main():
     compile_handlebar_templates()
     compress_js()
     compress_css()
-    replace_commit()
 
     if not options.dryrun:
         (email, password) = get_app_engine_credentials()

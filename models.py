@@ -1687,7 +1687,6 @@ class ProblemLog(db.Model):
     earned_proficiency = db.BooleanProperty(default = False) # True if proficiency was earned on this problem
     suggested = db.BooleanProperty(default = False) # True if the exercise was suggested to the user
     sha1 = db.StringProperty(indexed=False)
-    commit = db.StringProperty(indexed=False)
     seed = db.StringProperty(indexed=False)
     problem_type = db.StringProperty(indexed=False)
     count_attempts = db.IntegerProperty(default = 0, indexed=False)
@@ -1732,8 +1731,6 @@ class ProblemLog(db.Model):
 
     def minutes_spent(self):
         return util.minutes_between(self.time_started(), self.time_ended())
-
-REVISION_NUM = 'HEAD' # replace-revision-num
 
 # commit_problem_log is used by our deferred problem log insertion process
 def commit_problem_log(problem_log_source, user_data = None):
@@ -1823,9 +1820,6 @@ def commit_problem_log(problem_log_source, user_data = None):
 
         # Correct cannot be changed from False to True after first attempt
         problem_log.correct = (problem_log_source.count_attempts == 1 or problem_log.correct) and problem_log_source.correct and not problem_log.count_hints
-
-        # TODO: merge problem logs correctly (don't show old activity?)
-        problem_log.commit = REVISION_NUM
 
         logging.info(problem_log.time_ended())
         problem_log.put()
