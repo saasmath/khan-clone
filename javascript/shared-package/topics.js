@@ -1,5 +1,5 @@
 // These models can automatically fetch the tree incrementally
-// using API calls during traversal. Note that the fetchById()
+// using API calls during traversal. Note that the fetchByID()
 // call may be either synchronous or asynchronous, depending on
 // whether the model is already in the cache.
 
@@ -56,7 +56,7 @@ IncrementalCollection = Backbone.Collection.extend({
                         ret.__inited = true;
                         ret.__requesting = false;
                         _.each(ret.__callbacks, function(cb) {
-                            cb.callback.apply(ret, cb.args);
+                            cb.callback.call(null, [ret].concat(cb.args));
                         });
                         ret.__callbacks = [];
                     },
@@ -73,7 +73,7 @@ IncrementalCollection = Backbone.Collection.extend({
         } else {
             KAConsole.log("IC (" + id + "): Already loaded.");
             if (callback)
-                callback.apply(ret, args);
+                callback.call(null, [ret].concat(args));
         }
 
         return ret;
@@ -252,6 +252,40 @@ IncrementalCollection = Backbone.Collection.extend({
             return this.version ? this.version.get("number") : "edit";
         }
 	});
+
+    var itemIDTable = {
+        Topic: "id",
+        Video: "readable_id",
+        Exercise: "name",
+        Url: "id"
+    };
+    var itemTitleTable = {
+        Topic: "title",
+        Video: "title",
+        Exercise: "display_name",
+        Url: "title"
+    };
+    var itemHideTable = {
+        Topic: "hide"
+    };
+
+    // Utility class to wrap a Video/Exercise/URL model with accessors for the common fields id/title/etc.
+    window.TopicChild = function(childModel) {
+        if (childModel instanceof Backbone.Model) {
+            this.model = childModel.toJSON();
+        } else {
+            this.model = childModel;
+        }
+
+        this.kind = this.model.kind;
+        this.id = this.model[itemIDTable[this.model.kind]]; 
+        this.title = this.model[itemTitleTable[this.model.kind]]; 
+        if (itemHideTable[this.model.kind]) {
+            this.hide = this.model[itemHideTable[this.model.kind]];
+        } else {
+            this.hide = false;
+        }
+    };
 
     window.getDefaultTopicTree = function() {
 		defaultTree = defaultTree || new TopicTree();
