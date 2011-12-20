@@ -116,33 +116,33 @@ def get_user_data_coach_from_request():
 
     return user_data_coach
 
-@route("/api/v1/topicversion/<version>/content_topics", methods=["GET"])
-@route("/api/v1/topicversion/<version>/playlists", methods=["GET"]) 
+@route("/api/v1/topicversion/<version_id>/content_topics", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/playlists", methods=["GET"]) 
 @route("/api/v1/content_topics", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda version = None: "api_content_topics_%s_%s" % (version, models.TopicVersion.get_date_updated_by_id(version)),
+    lambda version_id = None: "api_content_topics_%s_%s" % (version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
-def content_topics(version = None):
-    version = models.TopicVersion.get_by_id(version)
+def content_topics(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_content_topics(version)
 
 
-@route("/api/v1/topicversion/<version>/topic/<topic_id>/videos", methods=["GET"])
-@route("/api/v1/topicversion/<version>/playlists/<topic_id>/videos", methods=["GET"]) 
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/playlists/<topic_id>/videos", methods=["GET"]) 
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda topic_id, version = None: "api_topic_videos_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
+    lambda topic_id, version_id = None: "api_topic_videos_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
-def topic_videos(topic_id, version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic_videos(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     topic = models.Topic.get_by_id(topic_id, version)
     if topic is None: 
         topic = models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
@@ -154,18 +154,18 @@ def topic_videos(topic_id, version = None):
         video.position = i + 1
     return videos
 
-@route("/api/v1/topicversion/<version>/topic/<topic_id>/exercises", methods=["GET"])
-@route("/api/v1/topicversion/<version>/playlists/<topic_id>/exercises", methods=["GET"]) 
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/exercises", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/playlists/<topic_id>/exercises", methods=["GET"]) 
 @route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda topic_id, version = None: "api_topic_exercises_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
+    lambda topic_id, version_id = None: "api_topic_exercises_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
-def topic_exercises(topic_id, version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic_exercises(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     topic = models.Topic.get_by_id(topic_id, version)
     if topic is None: 
         topic = models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
@@ -175,36 +175,36 @@ def topic_exercises(topic_id, version = None):
     exercises = topic.get_exercises()
     return exercises
 
-@route("/api/v1/topicversion/<version>/topictree", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
 @jsonp
 @decompress # too big even with compression ... need to add a datastore layer
 @layer_cache.cache_with_key_fxn(
-    lambda version = None: "api_topictree_%s_%s" % (version, models.TopicVersion.get_date_updated_by_id(version)),
+    lambda version_id = None: "api_topictree_%s_%s" % (version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
-def topictree(version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topictree(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
-@route("/api/v1/topicversion/<version>/search/<query>", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
 @jsonify
-def topictreesearch(version, query):
-    version = models.TopicVersion.get_by_id(version)
+def topictreesearch(version_id, query):
+    version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).search_tree(query)
 
-@route("/api/v1/topicversion/<version>/topic/<topic_id>", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
 @jsonp
 # @layer_cache.cache_with_key_fxn(
-#    lambda topic_id, version = None: "6api_topic_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
+#    lambda topic_id, version_id = None: "6api_topic_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
 #    layer=layer_cache.Layers.Memcache)
 @jsonify
-def topic(topic_id, version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     logging.info(version.number)
     topic = models.Topic.get_by_id(topic_id, version)
     
@@ -213,21 +213,20 @@ def topic(topic_id, version = None):
 
     return topic.get_visible_data()
 
-@route("/api/v1/topicversion/<version>/topic/<topic_id>", methods=["PUT"])    
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["PUT"])    
 @route("/api/v1/topic/<topic_id>", methods=["PUT"])
 @developer_required
 @oauth_optional()
 @jsonp
 @jsonify
-def put_topic(topic_id, version = "edit"):
-    version = models.TopicVersion.get_by_id(version)
+def put_topic(topic_id, version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
 
     user_data = models.UserData.current()
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
     topic_json = request.json
-    logging.info(topic_json)
 
     topic = models.Topic.get_by_id(topic_id, version)
 
@@ -244,23 +243,15 @@ def put_topic(topic_id, version = "edit"):
 
     return topic.get_visible_data()
 
-@route("/api/v1/topicversion/<version>/topic/<parent_id>/addchild", methods=["POST"])   
-@route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
-@developer_required
-@jsonp
-@jsonify
-def topic_add_child(parent_id, version = "edit"):
-    version = models.TopicVersion.get_by_id(version)
+def topic_find_child(parent_id, version_id, kind, id):
+    version = models.TopicVersion.get_by_id(version_id)
 
     parent_topic = models.Topic.get_by_id(parent_id, version)
     if not parent_topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(parent_id))
-    
-    kind = request.request_string("kind")        
-    id = request.request_string("id")
+        return ["Could not find topic with ID %s" % str(parent_id), None, None]
 
     if kind == "Topic":
-        child =  models.Topic.get_by_id(id, version)
+        child = models.Topic.get_by_id(id, version)
     elif kind == "Exercise":
         child = models.Exercise.get_by_name(id)
     elif kind == "Video":
@@ -268,10 +259,26 @@ def topic_add_child(parent_id, version = "edit"):
     elif kind == "Url":
         child = models.Url.get_by_id(int(id))
     else:
-        return api_invalid_param_response("Invalid kind to delete:" + kind)
+        return ["Invalid kind: %s" % kind, None, None]
 
     if not child:
-        return api_invalid_param_response("Could not find a %s with ID %s " % (kind, id))
+        return ["Could not find a %s with ID %s " % (kind, id), None, None]
+
+    return [None, child, parent_topic, version]
+
+@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/addchild", methods=["POST"])   
+@route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_add_child(parent_id, version_id = "edit"):
+    
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+
+    [error, child, parent_topic, version] = topic_find_child(parent_id, version_id, kind, id)
+    if error:
+        return api_invalid_param_response(error)
 
     pos = request.request_int("pos", default=0)
 
@@ -279,67 +286,37 @@ def topic_add_child(parent_id, version = "edit"):
 
     return parent_topic.get_visible_data()
 
-@route("/api/v1/topicversion/<version>/topic/<parent_id>/deletechild", methods=["POST"])   
+@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/deletechild", methods=["POST"])   
 @route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
 @developer_required
 @jsonp
 @jsonify
-def topic_delete_child(parent_id, version = "edit"):
-    version = models.TopicVersion.get_by_id(version)
-
-    parent_topic = models.Topic.get_by_id(parent_id, version)
-    if not parent_topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(parent_id))
+def topic_delete_child(parent_id, version_id = "edit"):
     
     kind = request.request_string("kind")        
     id = request.request_string("id")
 
-    if kind == "Topic":
-        child =  models.Topic.get_by_id(id, version)
-    elif kind == "Exercise":
-        child = models.Exercise.get_by_name(id)
-    elif kind == "Video":
-        child = models.Video.get_for_readable_id(id)
-    elif kind == "Url":
-        child = models.Url.get_by_id(int(id))
-    else:
-        return api_invalid_param_response("Invalid kind to delete:" + kind)
-
-    if not child:
-        return api_invalid_param_response("Could not find a %s with ID %s " % (kind, id))
+    [error, child, parent_topic, version] = topic_find_child(parent_id, version_id, kind, id)
+    if error:
+        return api_invalid_param_response(error)
 
     parent_topic.delete_child(child)
 
     return parent_topic.get_visible_data()
   
-@route("/api/v1/topicversion/<version>/topic/<old_parent_id>/movechild", methods=["POST"])   
+@route("/api/v1/topicversion/<version_id>/topic/<old_parent_id>/movechild", methods=["POST"])   
 @route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
 @developer_required
 @jsonp
 @jsonify
-def topic_move_child(old_parent_id, version = "edit"):
-    version = models.TopicVersion.get_by_id(version)
-
-    old_parent_topic = models.Topic.get_by_id(old_parent_id, version)
-    if not old_parent_topic:
-        return api_invalid_param_response("Could not find topic with ID " + str(old_parent_id))
+def topic_move_child(old_parent_id, version_id = "edit"):
     
     kind = request.request_string("kind")        
     id = request.request_string("id")
 
-    if kind == "Topic":
-        child =  models.Topic.get_by_id(id, version)
-    elif kind == "Exercise":
-        child = models.Exercise.get_by_name(id)
-    elif kind == "Video":
-        child = models.Video.get_for_readable_id(id)
-    elif kind == "Url":
-        child = models.Url.get_by_id(int(id))
-    else:
-        return api_invalid_param_response("Invalid kind to move:" + kind)
-
-    if not child:
-        return api_invalid_param_response("Could not find a %s with ID %s " % (kind, id))
+    [error, child, old_parent_topic, version] = topic_find_child(old_parent_id, version_id, kind, id)
+    if error:
+        return api_invalid_param_response(error)
 
     new_parent_id = request.request_string("new_parent_id")
     new_parent =  models.Topic.get_by_id(new_parent_id, version)
@@ -352,44 +329,46 @@ def topic_move_child(old_parent_id, version = "edit"):
 
     return True    
 
-@route("/api/v1/topicversion/<version>/topic/<topic_id>/children", methods=["GET"])   
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])   
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
-    lambda topic_id, version = None: "api_topic_children_%s_%s_%s" % (topic_id, version, models.TopicVersion.get_date_updated_by_id(version)),
+    lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
-def topic_children(topic_id, version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic_children(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
 
     topic = models.Topic.get_by_id(topic_id, version)
-    if topic is not None:
-        return db.get(topic.child_keys)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
 
-@route("/api/v1/topicversion/<version>/setdefault", methods=["GET"])   
+    return db.get(topic.child_keys)
+
+@route("/api/v1/topicversion/<version_id>/setdefault", methods=["GET"])   
 @developer_required
 @jsonp
 @jsonify
-def topic_children(version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic_children(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     version.set_default_version()
     models.TopicVersion.get_edit_version() # creates a new edit version if one does not already exists
     return version
     
-@route("/api/v1/topicversion/<version>", methods=["GET"])   
+@route("/api/v1/topicversion/<version_id>", methods=["GET"])   
 @developer_required
 @jsonp
 @jsonify
-def topic_version(version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic_version(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     return version
 
-@route("/api/v1/topicversion/<version>", methods=["PUT"])   
+@route("/api/v1/topicversion/<version_id>", methods=["PUT"])   
 @developer_required
 @jsonp
 @jsonify
-def topic_version(version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic_version(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     
     version_json = request.json
 
@@ -410,13 +389,12 @@ def topic_version(version = None):
 def topic_versions():
     versions = models.TopicVersion.all().order("-number").fetch(10000)
     return versions
-    return [version.get_visible_data() for version in versions]
 
-@route("/api/v1/topicversion/<version>/unused_content", methods=["GET"])   
+@route("/api/v1/topicversion/<version_id>/unused_content", methods=["GET"])   
 @jsonp
 @jsonify
-def topic_version_unused_content(version = None):
-    version = models.TopicVersion.get_by_id(version)
+def topic_version_unused_content(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
     return version.get_unused_content()
 
 @route("/api/v1/url/<int:url_id>", methods=["GET"])   
