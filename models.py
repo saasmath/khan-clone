@@ -1696,10 +1696,10 @@ class Topic(Searchable, db.Model):
                         match = True
 
                 else:
-					title = getattr(child, "title", getattr(child, "display_name", "")),
+                    title = getattr(child, "title", getattr(child, "display_name", ""))
                     if title.lower().find(query) > -1:
                         match_path = path[:]
-						id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) ),
+                        id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) )
                         match_path.append(id)
                         match_path.append(child_key.kind())
                         matching_paths.append(match_path)
