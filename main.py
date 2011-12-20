@@ -235,7 +235,8 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
-        bingo(['struggling_videos_landing'])
+        bingo(['struggling_videos_landing',
+               'homepage_restructure_videos_landing'])
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
@@ -323,6 +324,10 @@ class Donate(request_handler.RequestHandler):
 class ViewTOS(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('tos.html', {"selected_nav_link": "tos"})
+
+class ViewAPITOS(request_handler.RequestHandler):
+    def get(self):
+        self.render_jinja2_template('api-tos.html', {"selected_nav_link": "api-tos"})
 
 class ViewPrivacyPolicy(request_handler.RequestHandler):
     def get(self):
@@ -721,6 +726,7 @@ application = webapp2.WSGIApplication([
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
     ('/about/tos', ViewTOS ),
+    ('/about/api-tos', ViewAPITOS),
     ('/about/privacy-policy', ViewPrivacyPolicy ),
     ('/about/dmca', ViewDMCA ),
     ('/contribute', ViewContribute ),
@@ -732,10 +738,13 @@ application = webapp2.WSGIApplication([
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
+
+    # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
     ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
     ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
+    ('/review', exercises.ViewExercise),
 
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),

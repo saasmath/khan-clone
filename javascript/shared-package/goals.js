@@ -370,7 +370,7 @@ var GoalBookView = Backbone.View.extend({
     },
 
     animateGoalToHistory: function(els) {
-        var btnGoalHistory = this.$('#btn-goal-history');
+        var btnGoalHistory = this.$('a.goal-history');
 
         var promises = $(els).map(function(i, el) {
             var dfd = $.Deferred();
@@ -596,7 +596,7 @@ var NewCustomGoalDialog = Backbone.View.extend({
 
     _show: function() {
         return $(this.el).modal({
-            keyboard: true,
+            keyboard: false,
             backdrop: true,
             show: true
         });

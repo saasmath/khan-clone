@@ -131,14 +131,14 @@
         <input type="text" id="student-progressreport-search" placeholder="student or objective" class="search-input simple-input ui-corner-all blur-on-esc"></input>
         <span class="coach-filter-block">
             <input type="checkbox" class="progressreport-filter-check" id="progressreport-struggling" name="struggling" /><label for="progressreport-struggling">Struggling</label></span>
-      <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" id="progressreport-recent" name="recent" /><label for="progressreport-recent">Worked on in last:</label> 
+      <span class="coach-filter-block"><input type="checkbox" class="progressreport-filter-check" id="progressreport-recent" name="recent" /><label for="progressreport-recent">Worked on in last:</label>
             <select id="progressreport-filter-last-time"><option value="1">day</option><option value="2">2 days</option><option value="3">3 days</option><option selected value="7">week</option><option value="30">month</option></select></span>
     </div>
   </div>
 
   <div class="filter">
     {{ profile_macros.class_api_link(user_data_coach, "Progress Summary", "progress/summary", selected_graph_type, list_id) }}
-    
+
     <div class="filter-block">
       <h3>Progress Summary</h3>
     </div>
@@ -164,7 +164,7 @@
       <p>Sorted by:
         <select id="student-goals-sort">
           <option value="name"> First Name </option>
-          <option value="progress"> Recent Progress </option>
+          <option value="progress"> Progress </option>
           <option value="created"> Started Recently </option>
           <option value="updated"> Updated Recently </option>
         </select>

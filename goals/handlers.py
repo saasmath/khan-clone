@@ -123,8 +123,7 @@ class CreateRandomGoalData(RequestHandler):
                     user_data)
                 goal = Goal(parent=user_data, title=title,
                     objectives=objectives)
-                goal.put()
-                user_data.ensure_has_current_goals()
+                user_data.save_goal(goal)
 
                 for objective in obj_descriptors:
                     if objective['type'] == 'GoalObjectiveExerciseProficiency':

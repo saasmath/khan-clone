@@ -11,8 +11,8 @@ var ModalVideo = {
         var loginUrl = $('#top-header-links a').filter(function(i,el) {
             return $(el).text() == "Login";
         }).attr('href');
-        var title = $points.attr('title').replace(/Sign in/,
-            '<a href="' + loginUrl + '">Sign in</a>');
+        var title = ( $points.attr('title') || $points.data('title') )
+            .replace(/Sign in/, '<a href="' + loginUrl + '">Sign in</a>');
         $points.data('title', title).removeAttr('title');
 
         VideoStats.tooltip('#points-badge-hover', $points.data('title'));
@@ -86,12 +86,7 @@ var ModalVideo = {
             .bind('shown', $.proxy(function() {
                 // remove fade so that draggable is fast.
                 this.modal.removeClass('fade');
-            }, this))
-            .draggable({
-                containment: 'body',
-                handle: '.modal-header',
-                cancel: '.modal-header .close-button'
-            });
+            }, this));
 
         Video.init();
         ModalVideo.linkifyTooltip();

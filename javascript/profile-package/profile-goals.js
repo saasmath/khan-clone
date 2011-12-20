@@ -129,8 +129,15 @@ var GoalProfileViewsCollection = {
         current_goals = [];
         completed_goals = [];
         abandoned_goals = [];
+
         var qs = Profile.parseQueryString(href);
-        var viewingOwnGoals = qs.email == USER_EMAIL;
+        // We don't handle the difference between API calls requiring email and
+        // legacy calls requiring student_email very well, so this page gets
+        // called with both. Need to fix the root cause (and hopefully redo all
+        // the URLs for this page), but for now just be liberal in what we
+        // accept.
+        var qsEmail = qs.email || qs.student_email || null;
+        var viewingOwnGoals = qsEmail === null || qsEmail === USER_EMAIL;
 
         $.each(data, function(idx, goal) {
             if (goal.completed) {
@@ -142,36 +149,39 @@ var GoalProfileViewsCollection = {
                 current_goals.push(goal);
             }
         });
-        if (viewingOwnGoals)
+        if (viewingOwnGoals) {
             GoalBook.reset(current_goals);
-        else
-            CurrentGoalBook = new GoalCollection(current_goals);
+        } else {
+            CurrentGoalBook = new GoalCollection(current_goals); 
+        }
+
         CompletedGoalBook = new GoalCollection(completed_goals);
         AbandonedGoalBook = new GoalCollection(abandoned_goals);
 
-        $("#profile-goals-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
+        $("#graph-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
 
-        GoalProfileViewsCollection.views.current = new GoalProfileView({
+        Profile.goalsViews = {};
+        Profile.goalsViews.current = new GoalProfileView({
             el: "#current-goals-list",
             model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: 'current',
             readonly: !viewingOwnGoals
         });
-        GoalProfileViewsCollection.views.completed = new GoalProfileView({
+        Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
             readonly: true
         });
-        GoalProfileViewsCollection.views.abandoned = new GoalProfileView({
+        Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
             readonly: true
         });
 
-        GoalProfileViewsCollection.userGoalsHref = href;
-        GoalProfileViewsCollection.showGoalType('current');
+        Profile.userGoalsHref = href;
+        Profile.showGoalType('current');
 
         if (completed_goals.length > 0) {
             $('#goal-show-completed-link').parent().show();

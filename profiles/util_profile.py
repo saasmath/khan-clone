@@ -51,10 +51,10 @@ def get_last_student_list(request_handler, student_lists, use_cookie=True):
     return list_id, current_list
 
 def get_student(coach, request_handler):
-    student = request_handler.request_user_data('student_email')
+    student = request_handler.request_student_user_data(legacy=True)
     if student is None:
         raise Exception("No student found with email='%s'."
-            % request_handler.request_string('student_email'))
+            % request_handler.request_student_email_legacy())
     if not student.is_coached_by(coach):
         raise Exception("Not your student!")
     return student
@@ -174,6 +174,7 @@ class ViewProfile(request_handler.RequestHandler):
             student_email = urllib.unquote(student_email)
         user_override = get_user_data_from_email(student_email)
 
+        user_override = self.request_student_user_data(legacy=True)
         if user_override and user_override.key_email != student.key_email:
             if not user_override.is_visible_to(student):
                 # If current user isn't an admin or student's coach, they can't
@@ -261,7 +262,7 @@ class ProfileGraph(request_handler.RequestHandler):
         student = UserData.current() or UserData.pre_phantom()
 
         if student:
-            user_override = self.request_user_data("student_email")
+            user_override = self.request_student_user_data(legacy=True)
             if user_override and user_override.key_email != student.key_email:
                 if not user_override.is_visible_to(student):
                     # If current user isn't an admin or student's coach, they can't look at anything other than their own profile.
