@@ -107,7 +107,7 @@ IncrementalCollection = Backbone.Collection.extend({
             default: false, // Is the current default version
             edit: false, // Is the current editing version
             title: '(untitled version)',
-            last_editted_by: '',
+            last_edited_by: '',
             description: '',
             date_created: '',
             date_updated: ''

@@ -1097,7 +1097,7 @@ class TopicVersion(db.Model):
     date_updated = db.DateTimeProperty(indexed=False, auto_now=True)
     date_made_default = db.DateTimeProperty()
     copied_from = db.SelfReferenceProperty()
-    last_editted_by = db.UserProperty(indexed=False)
+    last_edited_by = db.UserProperty(indexed=False)
     number = db.IntegerProperty(required=True)
     title = db.StringProperty(indexed=False) 
     description = db.StringProperty(indexed=False)
@@ -1177,7 +1177,7 @@ class TopicVersion(db.Model):
     def create_new_version():
         new_version_number = TopicVersion.get_latest_version_number()+1 
         user = UserData.current().user
-        new_version = TopicVersion(last_editted_by = user,
+        new_version = TopicVersion(last_edited_by = user,
                                    number = new_version_number)
         new_version.put()
         return new_version
@@ -1236,7 +1236,7 @@ class TopicVersion(db.Model):
 
     def update(self):
         user = UserData.current().user
-        self.last_editted_by = user
+        self.last_edited_by = user
         self.put()
         if self.default:
             Setting.cached_library_content_date(datetime.datetime.now())
@@ -1275,12 +1275,12 @@ class Topic(Searchable, db.Model):
     hide = db.BooleanProperty(default = False)
     date_created = db.DateTimeProperty(auto_now_add=True)
     date_updated = db.DateTimeProperty(auto_now=True)
-    last_editted_by = db.UserProperty()
+    last_edited_by = db.UserProperty()
     INDEX_ONLY = ['standalone_title', 'description']
     INDEX_TITLE_FROM_PROP = 'standalone_title'
     INDEX_USES_MULTI_ENTITIES = False
 
-    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_editted_by"]
+    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_edited_by"]
 
     @property
     def ka_url(self):
