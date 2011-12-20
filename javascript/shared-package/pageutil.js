@@ -76,20 +76,16 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
 
                     // Add topic and video matches to list of autocomplete suggestions
 
-                    if (fTopics)
-                    {
-                        for (var ix = 0; ix < data.topics.length; ix++)
-                        {
-                            addAutocompleteMatchToList(matches, data.topics[ix], 'topic', reMatch);
+                    if (fTopics) {
+                        for (var ix = 0; ix < data.topics.length; ix++) {
+                            addAutocompleteMatchToList(matches, data.topics[ix], "topic", reMatch);
                         }
                     }
-                    for (var ix = 0; ix < data.videos.length; ix++)
-                    {
-                        addAutocompleteMatchToList(matches, data.videos[ix], 'video', reMatch);
+                    for (var ix = 0; ix < data.videos.length; ix++) {
+                        addAutocompleteMatchToList(matches, data.videos[ix], "video", reMatch);
                     }
-                    for (var ix = 0; ix < data.exercises.length; ix++)
-                    {
-                        addAutocompleteMatchToList(matches, data.exercises[ix], 'exercise', reMatch);
+                    for (var ix = 0; ix < data.exercises.length; ix++) {
+                        addAutocompleteMatchToList(matches, data.exercises[ix], "exercise", reMatch);
                     }
                 }
 
@@ -138,11 +134,11 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
     autocompleteWidget.data("autocomplete")._renderItem = function(ul, item) {
         // Customize the display of autocomplete suggestions
         var jLink = $("<a></a>").html(item.label);
-        if (item.kind == 'topic')
+        if (item.kind == "topic")
             jLink.prepend("<span class='topic'>Topic </span>");
-        else if (item.kind == 'video')
+        else if (item.kind == "video")
             jLink.prepend("<span class='video'>Video </span>");
-        else if (item.kind == 'exercise')
+        else if (item.kind == "exercise")
             jLink.prepend("<span class='exercise'>Exercise </span>");
 
         return $("<li></li>")
