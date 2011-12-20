@@ -21,7 +21,7 @@ var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
     userCardData = {
         loggedIn: "{{logged_in}}" === "True",
         email: "{{user_data_student.email}}",
-        nickname: "{{student_nickname}}",
+        nickname: "{{student_nickname|escapejs}}",
         avatarName: "{{avatar_name}}",
         avatarSrc: "{{avatar_src}}",
         countVideosCompleted: {{count_videos_completed}},
