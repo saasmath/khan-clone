@@ -106,9 +106,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.proficient:before {
     background-color: #0080C9;
 }
-.goal a.objective.review:before {
-    background-color: #E35D04;
-}
 .goal a.objective.struggling:before {
     background-color: #C30202;
 }
@@ -439,7 +436,7 @@ input.goal-title:focus {
     font-weight: bold;
 }
 
-#btn-goal-history {
+a.goal-history {
     background-color: #ddd;
     text-shadow: 0 1px 0 rgba(255,255,255,.6);
 }

@@ -1,17 +1,23 @@
 # -*- coding: utf-8 -*-
-import logging
 import os
 import shutil
 import sys
+import commands
 
 def append_paths():
 
     os.environ["SERVER_SOFTWARE"] = ""
     os.environ["CURRENT_VERSION_ID"] = ""
 
-    if sys.platform == 'linux2':
-        gae_path = '/opt/google_appengine'
-    else: # assume OS X (sys.platform == 'darwin')
+    # Can only deploy on unix-based systems for now
+    dev_appserver_path = os.path.realpath( commands.getoutput("which dev_appserver.py") )
+
+    gae_path = None
+    if dev_appserver_path:
+        gae_path = os.path.dirname(dev_appserver_path)
+        
+    if not gae_path:
+        # Default to Mac's default location
         gae_path = "/Applications/GoogleAppEngineLauncher.app/Contents/Resources/GoogleAppEngine-default.bundle/Contents/Resources/google_appengine"
 
     extra_paths = [
