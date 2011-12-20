@@ -9,8 +9,10 @@ def append_paths():
     os.environ["SERVER_SOFTWARE"] = ""
     os.environ["CURRENT_VERSION_ID"] = ""
 
-    # Can only deploy on macs for now
-    gae_path = "/Applications/GoogleAppEngineLauncher.app/Contents/Resources/GoogleAppEngine-default.bundle/Contents/Resources/google_appengine"
+    if sys.platform == 'linux2':
+        gae_path = '/opt/google_appengine'
+    else: # assume OS X (sys.platform == 'darwin')
+        gae_path = "/Applications/GoogleAppEngineLauncher.app/Contents/Resources/GoogleAppEngine-default.bundle/Contents/Resources/google_appengine"
 
     extra_paths = [
         os.path.abspath("."),
