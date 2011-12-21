@@ -39,21 +39,32 @@ var GoalCreator = {
     initVideos: function() {
         $('#goal-choose-videos').find('#smarthistory').remove();
 
-        // Fix links on videos
-        $('#goal-choose-videos').find('.vl').each(function(index, element) {
+        $('#goal-choose-videos').delegate('.vl', 'click', function( e ) {
+            // prevent the href navigation from occuring
+            e.preventDefault();
+
+            var jel = $(e.currentTarget);
+            var span = jel.children('span');
+            var image = $(span).css('background-image');
+
+            if (image.indexOf('indicator-complete') == -1)
+            {
+                // video isn't complete, so set a goal
+                var name = jel.attr('data-id');
+                var title = span.text();
+                GoalCreator.onVideoClicked(name, title);
+            }
+            else {
+                alert("You can't add a video you've already watched to a goal.");
+            }
+        });
+
+        $('#goal-choose-videos .vl').each(function(i, element) {
             var jel = $(element);
             var span = jel.children('span');
             var image = $(span).css('background-image');
 
-            jel.attr('href', 'javascript:void(0)');
-            if (image.indexOf('indicator-complete') == -1)
-            {
-                var video_name = jel.attr('data-id');
-                var video_title = span.text();
-                jel.click(function() {
-                    GoalCreator.onVideoClicked(video_name, video_title);
-                });
-            } else {
+            if (image.indexOf('indicator-complete') >= 0) {
                 jel.addClass('goalVideoInvalid');
             }
         });
