@@ -35,9 +35,30 @@ UserCardModel = Backbone.Model.extend({
                           this.get( "avatarName" ),
             "nickname": ( attrs && attrs[ "nickname" ]) ||
                           this.get( "nickname" ),
+            "username": ( attrs && attrs[ "username" ]) ||
+                            this.get( "username" )
         });
+
+        options.success = function(model, response) {
+            model.showMessage("Yay.", "success");
+        };
+
+        options.error = function(model, response) {
+            model.showMessage(response.responseText, "error");
+        };
+
         Backbone.Model.prototype.save.call(this, attrs, options);
     },
+
+    showMessage: function(message, type) {
+        $("#message-bar").html(message)
+            .addClass(type)
+            .fadeIn()
+            .delay(1000)
+            .fadeOut("fast", function() {
+                $(this).removeClass(type);
+            });
+    }
 });
 
 UserCardView = Backbone.View.extend({
@@ -47,11 +68,14 @@ UserCardView = Backbone.View.extend({
         "click .avatar-pic-container": "onAvatarClick_",
         "mouseenter .avatar-pic-container": "onAvatarHover_",
         "mouseleave .avatar-pic-container": "onAvatarLeave_",
-        "change #nickname": "onNicknameChanged_"
+        "change #nickname": "onNicknameChanged_",
+        "change #username": "onUsernameChanged_"
     },
 
     initialize: function() {
         this.template = Templates.get( "profile.user-card" );
+        Handlebars.registerPartial("username-picker", Templates.get("profile.username-picker"));
+
         this.model.bind( "change:avatarSrc", _.bind( this.onAvatarChanged_, this ));
 
         /**
@@ -82,6 +106,12 @@ UserCardView = Backbone.View.extend({
         // TODO: validate
         var value = this.$("#nickname").val();
         this.model.save({ "nickname": value });
+    },
+
+    onUsernameChanged_: function( e ) {
+        // TODO: validate
+        var value = this.$("#username").val();
+        this.model.save({ "username": value });
     },
 
     onAvatarHover_: function( e ) {

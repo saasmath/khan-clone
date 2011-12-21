@@ -749,4 +749,13 @@ input.nickname {
     font-weight: bold;
 }
 
-
+#message-bar {
+    width: 100%;
+    color: white;
+}
+#message-bar.success {
+    background-color: green;
+}
+#message-bar.error {
+    background-color: red;
+}
