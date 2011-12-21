@@ -320,26 +320,6 @@ def exercise_graph_dict_json(user_data, admin=False):
 
 class ViewAllExercises(request_handler.RequestHandler):
 
-    _review_fact_messages = [
-        'Fortify your knowledge',
-        'Attain mastery',
-        'Review exercises',
-        'Reinforce your learning',
-        'Consolidate what you know',
-        "Master what you've learned",
-        'How much can you recall?',
-        "Let's review",
-        'Refresh your memory',
-    ]
-    _review_action_messages = [
-        'Start Reviews',
-        'Start now',
-        'Go go go!',
-        "Let's go!",
-        "I'll do it",
-        "Let's do this!",
-    ]
-
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
