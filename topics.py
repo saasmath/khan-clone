@@ -7,6 +7,7 @@ import logging
 import layer_cache
 import urllib2
 import re
+from api.auth.xsrf import ensure_xsrf_cookie
 from google.appengine.ext import deferred
 
 
@@ -20,6 +21,7 @@ from models import Topic, TopicVersion, Playlist, Video, Url
         
 class EditContent(request_handler.RequestHandler):
 
+    @ensure_xsrf_cookie
     def get(self):  
         if self.request.get('migrate', False):
             return self.topic_migration()
