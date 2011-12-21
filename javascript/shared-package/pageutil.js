@@ -1048,7 +1048,7 @@ var globalPopupDialog = {
     hide: function() {
         if (globalPopupDialog.visible) {
             $("#popup-dialog")
-                .hide();
+                .hide()
                 .find(".dialog-contents")
                     .html('');
 

@@ -66,7 +66,7 @@ var TopicTreeEditor = {
                         success: function(json) {
                             node.removeChildren();
 
-                            childNodes = []
+                            childNodes = [];
                             _.each(json, function(item) {
                                 var childWrapper = new TopicChild(item);
                                 childNodes.push(TopicTreeEditor.createChild(childWrapper));
@@ -87,11 +87,13 @@ var TopicTreeEditor = {
 
                 onDragEnter: function(node, sourceNode) {
                     if (node.data.key == "UnrefContent" ||
-                        node.parent.data.key == "UnrefContent")
+                        node.parent.data.key == "UnrefContent") {
                         return [];
+                    }
 
-                    if (node.data.kind != "Topic")
+                    if (node.data.kind != "Topic") {
                         return ["before", "after"];
+                    }
 
                     return ["over", "before", "after"];
                 },
@@ -115,7 +117,7 @@ var TopicTreeEditor = {
                             id: sourceNode.data.id,
                             new_parent_id: newParent.data.id,
                             new_parent_pos: newParent.childList.indexOf(sourceNode)
-                        }
+                        };
                         TopicTopicNodeEditor.moveItem(oldParent.data.id, data); 
                     }
                 }
@@ -140,7 +142,7 @@ var TopicTreeEditor = {
             } ]
         });
         TopicTreeEditor.tree = $("#topic_tree").dynatree("getTree");
-        $("#topic_tree").bind("mousedown", function(e) { e.preventDefault(); })
+        $("#topic_tree").bind("mousedown", function(e) { e.preventDefault(); });
 
         $("#details-view").html("");
 
@@ -160,11 +162,14 @@ var TopicTreeEditor = {
         $("#topictree-queue-progress-bar").progressbar({ value: 0, disable: true });
         $("#topictree-queue-progress-text").html("");
 
+        if (!this.searchView) {
+            this.searchView = new TopicSearchView();
+            $(this.searchView.el).appendTo(document.body);
+        }
+
         var self = this;
         $(window).resize(function() { self.resize(); } );
         this.resize();
-
-        this.searchView = new TopicSearchView();
 
         // Get the data for the topic tree (may fire callbacks immediately)
 
@@ -174,8 +179,9 @@ var TopicTreeEditor = {
 
         var root = topicTree.getRoot();
         root.bind("change", this.refreshTreeNode);
-        if (root.__inited)
+        if (root.__inited) {
             this.refreshTreeNode.call(null, root);
+        }
 
         this.updateProgressBar();
     },
@@ -186,8 +192,9 @@ var TopicTreeEditor = {
             $("#topictree-queue-progress-bar").progressbar("enable");
 
             var remaining = document.ajaxq.q["topics-admin"].length;
-            if (TopicTreeEditor.maxProgressLength < remaining)
+            if (TopicTreeEditor.maxProgressLength < remaining) {
                 TopicTreeEditor.maxProgressLength = remaining;
+            }
 
             var progress_percentage = (1 - (remaining / TopicTreeEditor.maxProgressLength)) * 100;
             var progress = TopicTreeEditor.maxProgressLength - remaining + 1;
@@ -215,6 +222,8 @@ var TopicTreeEditor = {
 
         $("#topic_tree").height(newHeight);
         $("#details-view").height(newHeight);
+
+        $(this.searchView.el).offset($("#topic_tree").offset());
     },
 
     createChild: function(child) {
@@ -247,8 +256,9 @@ var TopicTreeEditor = {
 
     refreshTreeNode: function(model) {
         node = TopicTreeEditor.tree.getNodeByKey(model.get("kind") + "/" + model.id);
-        if (!node)
+        if (!node) {
             return;
+        }
 
         KAConsole.log("refreshing " + model.id);
 
@@ -260,7 +270,7 @@ var TopicTreeEditor = {
 
         node.removeChildren();
         if (model.get("children")) {
-            childNodes = []
+            childNodes = [];
             _.each(model.get("children"), function(child) {
                 childNodes.push(TopicTreeEditor.createChild(child));
             });
@@ -295,8 +305,9 @@ var TopicTreeEditor = {
                     return child;
                 }
             });
-            if (found)
+            if (found) {
                 topic.set({children: children});
+            }
         });
     },
 
@@ -305,8 +316,9 @@ var TopicTreeEditor = {
         this.each(function(childModel) {
             var found = false;
             _.each(TopicTreeEditor.boundList, function(childId) {
-                if (childId == childModel.id)
+                if (childId == childModel.id) {
                     found = true;
+                }
             });
             if (!found) {
                 //KAConsole.log("Binding: " + childModel.id);
@@ -353,13 +365,14 @@ var TopicTreeEditor = {
     },
 
     editVersion: function(versionNumber) {
-        if (this.versionListView)
+        if (this.versionListView) {
             this.versionListView.hide();
+        }
 
         version = getTopicVersionList().get(versionNumber);
         if (version) {
             version.getTopicTree().reset();
-            this.init(version)
+            this.init(version);
         }
     },
 
@@ -496,39 +509,30 @@ var TopicTopicNodeEditor = {
             });
 
         } else if (action == "add_new_video") {
-            if (!TopicTopicNodeEditor.newVideoView)
-                TopicTopicNodeEditor.newVideoView = new TopicCreateVideoView();
-
+            TopicTopicNodeEditor.newVideoView = TopicTopicNodeEditor.newVideoView || new TopicCreateVideoView();
             TopicTopicNodeEditor.newVideoView.show();
 
         } else if (action == "add_existing_video") {
-            if (!TopicTopicNodeEditor.existingItemView)
-                TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
-
+            TopicTopicNodeEditor.existingItemView = TopicTopicNodeEditor.existingItemView || new TopicAddExistingItemView();
             TopicTopicNodeEditor.existingItemView.show("video", TopicTopicNodeEditor.finishAddExistingItem);
 
         } else if (action == "add_new_exercise") {
-            if (!TopicTopicNodeEditor.newExerciseView)
-                TopicTopicNodeEditor.newExerciseView = new TopicCreateExerciseView();
-
+            TopicTopicNodeEditor.newExerciseView = TopicTopicNodeEditor.newExerciseView || new TopicCreateExerciseView();
             TopicTopicNodeEditor.newExerciseView.show();
 
         } else if (action == "add_existing_exercise") {
-            if (!TopicTopicNodeEditor.existingItemView)
-                TopicTopicNodeEditor.existingItemView = new TopicAddExistingItemView();
-
+            TopicTopicNodeEditor.existingItemView = TopicTopicNodeEditor.existingItemView || new TopicAddExistingItemView();
             TopicTopicNodeEditor.existingItemView.show("exercise", TopicTopicNodeEditor.finishAddExistingItem);
 
         } else if (action == "add_new_url") {
-            if (!TopicTopicNodeEditor.newUrlView)
-                TopicTopicNodeEditor.newUrlView = new TopicCreateUrlView();
-
+            TopicTopicNodeEditor.newUrlView = TopicTopicNodeEditor.newUrlView || new TopicCreateUrlView();
             TopicTopicNodeEditor.newUrlView.show();
 
         } else if (action == "paste_item") {
 
-            if (!TopicTopicNodeEditor.itemCopyBuffer)
+            if (!TopicTopicNodeEditor.itemCopyBuffer) {
                 return;
+            }
 
             if (TopicTopicNodeEditor.itemCopyBuffer.type == "copy") {
                 TopicTopicNodeEditor.finishAddExistingItem(TopicTopicNodeEditor.itemCopyBuffer.kind, TopicTopicNodeEditor.itemCopyBuffer.id, TopicTopicNodeEditor.itemCopyBuffer.title, null, null, -1);
@@ -539,12 +543,12 @@ var TopicTopicNodeEditor = {
                     id: TopicTopicNodeEditor.itemCopyBuffer.id,
                     new_parent_id: model.id,
                     new_parent_pos: model.get("children").length
-                }
+                };
                 TopicTopicNodeEditor.moveItem(TopicTopicNodeEditor.itemCopyBuffer.originalParent, data);
             }
 
         } else if (action == "delete_topic") {
-            data = {
+            var data = {
                 kind: "Topic",
                 id: model.id
             };
@@ -565,8 +569,9 @@ var TopicTopicNodeEditor = {
         model = model || TopicTopicNodeEditor.contextModel;
         node = node || TopicTopicNodeEditor.contextNode;
 
-        if (pos < 0)
+        if (pos < 0) {
             pos = model.get("children").length;
+        }
 
         KAConsole.log("Adding " + kind + " " + id + " to Topic " + model.get("title"));
 
@@ -655,8 +660,9 @@ var TopicItemNodeEditor = {
             .each(function() {
                 var field = $(this).attr("name");
                 if (field) {
-                    if (String(TopicNodeEditor.model.get(field)) != $(this).val())
+                    if (String(TopicNodeEditor.model.get(field)) != $(this).val()) {
                         unsavedChanges = true;
+                    }
                 }
             });
         if (unsavedChanges || TopicExerciseNodeEditor.unsavedChanges() || TopicUrlNodeEditor.unsavedChanges()) {
@@ -724,19 +730,22 @@ var TopicItemNodeEditor = {
 
             var new_position = _.indexOf(node.parent.childList, node) + 1;
 
-            if (!TopicTopicNodeEditor.itemCopyBuffer)
+            if (!TopicTopicNodeEditor.itemCopyBuffer) {
                 return;
+            }
 
             if (TopicTopicNodeEditor.itemCopyBuffer.type == "copy") {
-                if (parentModel.id == TopicTopicNodeEditor.itemCopyBuffer.originalParent)
+                if (parentModel.id == TopicTopicNodeEditor.itemCopyBuffer.originalParent) {
                     return;
+                }
 
                 TopicTopicNodeEditor.finishAddExistingItem(TopicTopicNodeEditor.itemCopyBuffer.kind, TopicTopicNodeEditor.itemCopyBuffer.id, TopicTopicNodeEditor.itemCopyBuffer.title, node.parent, parentModel, new_position);
 
             } else if (TopicTopicNodeEditor.itemCopyBuffer.type == "cut") {
                 if (parentModel.id == TopicTopicNodeEditor.itemCopyBuffer.originalParent &&
-                    new_position > TopicTopicNodeEditor.itemCopyBuffer.originalPosition)
+                    new_position > TopicTopicNodeEditor.itemCopyBuffer.originalPosition) {
                     new_position--;
+                }
 
                 var data = {
                     kind: TopicTopicNodeEditor.itemCopyBuffer.kind,
@@ -748,7 +757,7 @@ var TopicItemNodeEditor = {
             }
 
         } else if (action == "remove_item") {
-            data = {
+            var data = {
                 kind: kind,
                 id: id
             };
@@ -790,15 +799,15 @@ var TopicExerciseNodeEditor = {
     },
     applyChanges: function(attrs) {
         if (TopicExerciseNodeEditor.prereqs && !arraysEqual(TopicExerciseNodeEditor.prereqs, TopicNodeEditor.model.get("prereqs"))) {
-            attrs["prerequisites"] = TopicExerciseNodeEditor.prereqs;
+            attrs.prerequisites = TopicExerciseNodeEditor.prereqs;
         }
 
         if (TopicExerciseNodeEditor.covers && !arraysEqual(TopicExerciseNodeEditor.covers, TopicNodeEditor.model.get("covers"))) {
-            attrs["covers"] = TopicExerciseNodeEditor.covers;
+            attrs.covers = TopicExerciseNodeEditor.covers;
         }
 
         if (TopicExerciseNodeEditor.videos && !arraysEqual(TopicExerciseNodeEditor.videos, TopicNodeEditor.model.get("related_videos"))) {
-            attrs["related_videos"] = TopicExerciseNodeEditor.videos;
+            attrs.related_videos = TopicExerciseNodeEditor.videos;
         }
     },
 
@@ -1350,9 +1359,8 @@ var TopicSearchView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el = $(this.template({})).appendTo(document.body).get(0);
+        this.el = $(this.template({})).get(0);
         this.delegateEvents();
-        $(this.el).offset($("#topic_tree").offset());
         return this;
     },
 
@@ -1389,7 +1397,7 @@ var TopicSearchView = Backbone.View.extend({
 
                     var nodes = { };
                     _.each(json.nodes, function(node) {
-                        if (nodes[node.kind] == undefined) nodes[node.kind] = [];
+                        nodes[node.kind] = nodes[node.kind] || [];
                         nodes[node.kind].push(node);
                     });
                     TopicTreeEditor.currentVersion.getTopicTree().addInited(nodes["Topic"]);
@@ -1442,26 +1450,18 @@ var TopicSearchView = Backbone.View.extend({
         });
 
         this.currentIndex = index;
-        if (this.currentIndex == 0) {
-            $(".prev-button", this.el).attr("src", "/images/vote-up-gray.png");
-        } else {
-            $(".prev-button", this.el).attr("src", "/images/vote-up.png");
-        }
-        if (this.currentIndex < this.matchingPaths.length-1) {
-            $(".next-button", this.el).attr("src", "/images/vote-down.png");
-        } else {
-            $(".next-button", this.el).attr("src", "/images/vote-down-gray.png");
-        }
+        $(".prev-button", this.el).attr("src", (this.currentIndex == 0) ? "/images/vote-up-gray.png" : "/images/vote-up.png");
+        $(".next-button", this.el).attr("src", (this.currentIndex < this.matchingPaths.length - 1) ? "/images/vote-down.png" : "/images/vote-down-gray.png");
     },
 
     goToPrev: function() {
         if (this.currentIndex > 0) {
-            this.goToResult(this.currentIndex-1);
+            this.goToResult(this.currentIndex - 1);
         }
     },
     goToNext: function() {
-        if (this.currentIndex < this.matchingPaths.length-1) {
-            this.goToResult(this.currentIndex+1);
+        if (this.currentIndex < this.matchingPaths.length - 1) {
+            this.goToResult(this.currentIndex + 1);
         }
     }
 });

@@ -645,7 +645,7 @@ def save_video(video_id=""):
 
     for prop in [ "readable_id", "title", "youtube_id", "description", "keywords" ]:
         if prop in request.json and request.json[prop]:
-            setattr(video_data, prop, request.json[prop]
+            setattr(video_data, prop, request.json[prop])
 
     video_data.put()
     models.Setting.cached_library_content_date(datetime.datetime.now())
