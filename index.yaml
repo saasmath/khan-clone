@@ -247,12 +247,6 @@ indexes:
   - name: points
     direction: desc
 
-- kind: UserData
-  properties:
-  - name: vanity_link
-  - name: points
-    direction: desc
-
 - kind: UserExercise
   properties:
   - name: exercise
