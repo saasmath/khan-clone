@@ -427,25 +427,14 @@ var ClassProfile = {
                         }
                         objective.statusCSS = objective.status ? objective.status : "not-started";
                         objective.objectiveID = idx3;
-
-                        // "/exercise/addition_1" ==> ["exercise/addition_1", "addition_1"]
-                        var matchExerciseURL = objective.url.match(/\/exercise\/(.+)/);
-
-                        if (objective.url === "/exercisedashboard") {
-                            // Objective is any exercise
-                            objective.url = "/profile/" + encodeURIComponent(student.email)
-                                                + "/vital-statistics/exercise-progress";
-                        } else if (matchExerciseURL) {
-                            // Objective is a particular exercise
-                            if (matchExerciseURL.length === 2) {
-                                 objective.url = "/profile/" + encodeURIComponent(student.email)
-                                                    + "/vital-statistics/exercise-problems/"
-                                                    + matchExerciseURL[1];
-                            }
+                        var base = "/profile/" + encodeURIComponent(student.email)
+                                            + "/vital-statistics";
+                        if (objective.type === "GoalObjectiveExerciseProficiency") {
+                            objective.url = base + "/exercise-problems/" + objective.internal_id;
+                        } else if (objective.type === "GoalObjectiveAnyExerciseProficiency") {
+                            objective.url = base + "/exercise-progress";
                         } else {
-                            // Objective is a(ny) video
-                            objective.url = "/profile/" + encodeURIComponent(student.email)
-                                                + "/vital-statistics/activity";
+                            objective.url = base + "/activity";
                         }
                     });
 

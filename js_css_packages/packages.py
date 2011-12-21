@@ -87,6 +87,7 @@ javascript = {
             "handlebars-helpers.js",
             "avatar-picker.handlebars",
             "avatar-picker.js",
+            "username-picker.handlebars",
             "user-card.handlebars",
             "user-card.js",
             "profile.handlebars",

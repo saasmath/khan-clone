@@ -1,3 +1,4 @@
+<div id="message-bar"></div>
 <section class="basic-user-info" style="float: left;">
 {{#if loggedIn}}
   <div class="avatar-pic-container">
@@ -17,6 +18,9 @@
     <p class="pulled pulls"><span title="{{points}} energy points" class="energy-points-badge" style="float: none;">{{points}}</span> Energy Points</p>
 </section>
 <div style="clear: both;"></div>
+
+{{> username-picker}}
+
 <div class="sticker-book">
     <a class="display-case-cover" href="#"></a>
 </div>

@@ -363,7 +363,8 @@ def update_user_profile():
     """ Updates public information about a user.
     
     The posted data should be JSON, with fields representing the values that
-    needs to be changed. Supports "user_nickname" only right now.
+    needs to be changed. Supports "user_nickname", "avatar_name",
+    and "username" right now.
     """
     user_data = models.UserData.current()
 
@@ -385,6 +386,10 @@ def update_user_profile():
             user_data.avatar_name = avatar_name
 
     user_data.save()
+
+    if profile_json['username'] is not None:
+        if not user_data.claim_username(profile_json['username']):
+            return api_invalid_param_response("That username is already taken.")
 
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()

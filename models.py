@@ -656,6 +656,24 @@ def set_css_deferred(user_data_key, video_key, status, version):
     uvc.version = version
     db.put(uvc)
 
+class UniqueUsername(db.Model):
+    @staticmethod
+    def claim(desired_name):
+        """Claim an unclaimed username.
+        
+        Return True on success, False if you are a slow turtle.
+        
+        """
+        def txn(desired_name):
+            entity = UniqueUsername.get_by_key_name(desired_name)
+            is_unclaimed_name = entity is None
+            if is_unclaimed_name:
+                entity = UniqueUsername(key_name=desired_name)
+                entity.put()
+            return is_unclaimed_name
+
+        return db.run_in_transaction(txn, desired_name)
+
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
 class UserData(GAEBingoIdentityModel, db.Model):
@@ -680,6 +698,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     # A human-readable name that will be user-configurable.
     user_nickname = db.StringProperty(indexed=False)
+
+    # TODO: constrain username to alphanumeric or some such
+    # A globally unique user-specified username,
+    # which will be used in URLS like khanacademy.org/profile/<username>
+    username = db.StringProperty(default="", indexed=False)
 
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
@@ -729,7 +752,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
             "last_login", "user", "current_user", "map_coords",
             "expanded_all_exercises", "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
-            "avatar_name"
+            "avatar_name", "username"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1083,6 +1106,13 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.has_current_goals = True
             db.put([self, goal])
         db.run_in_transaction(save_goal)
+
+    def claim_username(self, name):
+        claim_success = UniqueUsername.claim(name)
+        if claim_success:
+            self.username = name
+            self.put()
+        return claim_success
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
