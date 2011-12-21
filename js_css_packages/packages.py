@@ -82,7 +82,6 @@ javascript = {
     },
     "profile": {
         "files": [
-            "jquery.address-1.4.min.js",
             "highcharts.js",
             "handlebars-helpers.js",
             "avatar-picker.handlebars",
