@@ -34,10 +34,10 @@ UserCardModel = Backbone.Model.extend({
             "avatarName": ( attrs && attrs[ "avatarName" ]) ||
                           this.get( "avatarName" ),
             "nickname": ( attrs && attrs[ "nickname" ]) ||
-                          this.get( "nickname" ),
+                          this.get( "nickname" )
         });
         Backbone.Model.prototype.save.call(this, attrs, options);
-    },
+    }
 });
 
 UserCardView = Backbone.View.extend({

@@ -38,8 +38,8 @@ Badges.Badge = Backbone.Model.extend({
         "iconSrc": "",
         "isOwned": false,
         "points": 0,
-        "safeExtendedDescription": "",
-    },
+        "safeExtendedDescription": ""
+    }
 });
 
 /**
@@ -67,8 +67,8 @@ Badges.UserBadge = Backbone.Model.extend({
         this.set({ "badge": badgeModel }, { "silent": true });
         badgeModel.bind(
             "change",
-            function(ev) { this.trigger("change:badge"); },
-            this);
+            function( ev ) { this.trigger( "change:badge" ); },
+            this );
     }
 });
 
@@ -87,7 +87,7 @@ Badges.BadgeList = Backbone.Collection.extend({
     },
 
     toJSON: function() {
-        return this.map(function( badge ) {
+        return this.map( function( badge ) {
             return badge.get( "name" );
         });
     },
@@ -102,10 +102,10 @@ Badges.BadgeList = Backbone.Collection.extend({
         options = options || {};
         options["url"] = this.saveUrl;
         options["contentType"] = "application/json";
-        options["data"] = JSON.stringify(this.map(function( badge ) {
+        options["data"] = JSON.stringify( this.map(function( badge ) {
             return badge.get( "name" );
         }));
-        Backbone.sync.call(this, 'update', this, options);
+        Backbone.sync.call( this, "update", this, options );
     }
 });
 
@@ -359,8 +359,8 @@ Badges.DisplayCase = Backbone.View.extend({
             $(this.editButtonEl).hide();
             return;
         }
-        $(this.editButtonEl).html( this.editing ? "Stop edit" : "Edit" );
-        $(this.editButtonEl).show();
+        $( this.editButtonEl ).html( this.editing ? "Stop edit" : "Edit" );
+        $( this.editButtonEl ).show();
     },
 
     toggleEdit_: function() {
@@ -392,7 +392,7 @@ Badges.DisplayCase = Backbone.View.extend({
             this.badgePickerEl = $("<div class=\"badge-picker\"></div>");
             $(this.el)
                 .append( this.mainCaseEl )
-                .append( this.badgePickerEl )
+                .append( this.badgePickerEl );
             this.editControlEl = $(".display-case-cover");
             this.editControlEl.click( _.bind( this.toggleEdit_, this ) );
         }

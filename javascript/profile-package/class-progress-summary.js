@@ -2,7 +2,7 @@ var ProgressSummaryView = function() {
     var fInitialized = false,
         template = Templates.get("profile.class-progress-summary"),
         statusInfo = {
-                'not-started': {
+                "not-started": {
                     fShowOnLeft: true,
                     order: 0},
                 struggling: {
@@ -13,7 +13,7 @@ var ProgressSummaryView = function() {
                     order: 2},
                 proficient: {
                     fShowOnLeft: false,
-                    order:  3},
+                    order: 3},
                 review: {
                     fShowOnLeft: false,
                     order: 4}
