@@ -110,7 +110,7 @@ var GoalCreator = {
                 url: "javascript:GoalCreator.onSelectedObjectiveClicked('" + type + "', '" + css + "', '" + id + "', '" + name + "');",
 
                 idx: idx,
-                id: id,
+                id: id
             };
 
             GoalCreator.objectives.push(newObjective);
@@ -132,10 +132,10 @@ var GoalCreator = {
             $('#create-goal-view .goal').removeClass('with-border');
         }
 
-        if (GoalCreator.objectives.length == 0) {
+        if (GoalCreator.objectives.length === 0) {
             $('#goal-info-section > .goal-description').remove();
         }
-        if ( GoalCreator.objectives.length > 0 && $("#goal-info-section").children(".goal-description").length == 0 ) {
+        if ( GoalCreator.objectives.length > 0 && $("#goal-info-section").children(".goal-description").length === 0 ) {
             $('#create-goal-view .goal .goal-description').remove().insertAfter('#create-goal-view');
         }
         if (GoalCreator.objectives.length >= 1) {
@@ -147,7 +147,7 @@ var GoalCreator = {
         }
 
         var message = '';
-        if (GoalCreator.objectives.length == 0) {
+        if (GoalCreator.objectives.length === 0) {
             message = 'This goal currently has no objectives selected. Select <b>up to 10</b> exercises or videos to complete below.';
         } else {
             var matchingObjectives;
@@ -167,7 +167,7 @@ var GoalCreator = {
                 } else {
                     message += 's ';
                     $.each(matchingObjectives, function(idx, objective) {
-                        if (idx == 0)
+                        if (idx === 0)
                             message += '<em>' + objective.description + '</em>';
                         else if (idx < matchingObjectives.length-1)
                             message += ', <em>' + objective.description + '</em>';
@@ -191,7 +191,7 @@ var GoalCreator = {
                 } else {
                     message += 's ';
                     $.each(matchingObjectives, function(idx, objective) {
-                        if (idx == 0)
+                        if (idx === 0)
                             message += '<em>' + objective.description + '</em>';
                         else if (idx < matchingObjectives.length-1)
                             message += ', <em>' + objective.description + '</em>';
@@ -315,8 +315,8 @@ var GoalCreator = {
 
         this.resize();
 
-        for (readable_id in GoalCreator.getCurrentVideoObjectives()) {
-            $('.vl[data-id="' + readable_id + '"]').addClass('goalVideoInvalid');
+        for (var readableId in GoalCreator.getCurrentVideoObjectives()) {
+            $('.vl[data-id="' + readableId + '"]').addClass('goalVideoInvalid');
         }
     },
     updateVideoCount: function() {
@@ -343,7 +343,7 @@ var GoalCreator = {
             var goalIcon = $(element).children('.video-goal-icon');
             if (found)
             {
-                if (goalIcon.length == 0)
+                if (goalIcon.length === 0)
                     $('<span class="video-goal-icon"><img src="/images/flag.png"></span>').insertBefore($(element).children('span')[0]);
             }
             else
@@ -367,7 +367,7 @@ var GoalCreator = {
             error = "We'd like you to pick at least two (2) objectives";
         }
 
-        if (error != '') {
+        if (error !== '') {
             $('#goal-commit-response').html(error).show();
             return false;
         }
@@ -382,7 +382,7 @@ var GoalCreator = {
             return;
 
         var titleField = form.find('input[name="title"]');
-        if (titleField.val() == '')
+        if (titleField.val() === '')
         {
             titleField.val('Custom goal: ' + new Date().toDateString());
         }
@@ -393,7 +393,7 @@ var GoalCreator = {
                 var newObj = {
                     type: o.type,
                     internal_id: o.id,
-                    description: o.description,
+                    description: o.description
                 };
                 newObj.url = Goal.objectiveUrl(newObj);
                 return newObj;
