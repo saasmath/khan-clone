@@ -34,18 +34,8 @@ def youtube_get_video_data(video_data):
         if video.statistics:
             video_data.views = int(video.statistics.view_count)
 
-        if video.media.description.text is not None:
-            video_data.description = video.media.description.text.decode('utf-8')
-        else:
-            video_data.decription = ' '
-
-#        if playlist.title.text not in video_data.playlists:
-#            video_data.playlists.append(playlist.title.text.decode('utf-8'))
-
-        if video.media.keywords.text:
-            video_data.keywords = video.media.keywords.text.decode('utf-8')
-        else:
-            video_data.keywords = ''
+        video_data.description = (video.media.description.text or '').decode('utf-8')
+        video_data.keywords = (video.media.keywords.text or '').decode('utf-8')
 
         potential_id = re.sub('[^a-z0-9]', '-', video_data.title.lower());
         potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)

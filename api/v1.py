@@ -640,27 +640,16 @@ def save_video(video_id=""):
         video_data = models.Video(youtube_id=request.json["youtube_id"])
         video_data = youtube_get_video_data(video_data)
 
-    if video_data:
-        if "readable_id" in request.json and request.json["readable_id"]:
-            video_data.readable_id = request.json["readable_id"]
+    if not video_data:
+        return None
 
-        if "title" in request.json and request.json["title"]:
-            video_data.title = request.json["title"]
+    for prop in [ "readable_id", "title", "youtube_id", "description", "keywords" ]:
+        if prop in request.json and request.json[prop]:
+            setattr(video_data, prop, request.json[prop]
 
-        if "youtube_id" in request.json and request.json["youtube_id"]:
-            video_data.youtube_id = request.json["youtube_id"]
-
-        if "description" in request.json and request.json["description"]:
-            video_data.description = request.json["description"]
-
-        if "keywords" in request.json and request.json["keywords"]:
-            video_data.keywords = request.json["keywords"]
-
-        video_data.put()
-        models.Setting.cached_library_content_date(datetime.datetime.now())
-        return video_data
-
-    return None
+    video_data.put()
+    models.Setting.cached_library_content_date(datetime.datetime.now())
+    return video_data
 
 def replace_playlist_values(structure, playlist_dict):
     if type(structure) == list:
