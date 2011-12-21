@@ -996,23 +996,30 @@ var globalPopupDialog = {
 
     // Size can be an array [width,height] to have an auto-centered dialog or null if the positioning is handled in CSS
     show: function(className, size, title, html, autoClose) {
-        $("#popup-dialog").hide();
-        $("#popup-dialog .dialog-frame").attr('class', 'dialog-frame ' + className);
-        if (size) {
-            styleText = 'position: relative;';
-            styleText += 'width: ' + size[0] + 'px;';
-            styleText += 'height: ' + size[1] + 'px;';
-            styleText += 'margin-left: ' + (-0.5*size[0]).toFixed(0) + 'px;';
-            styleText += 'margin-top: ' + (-0.5*size[1] - 100).toFixed(0) + 'px;';
-            $("#popup-dialog .dialog-frame").attr('style', styleText);
-        } else {
-            $("#popup-dialog .dialog-frame").attr('style', '');
+        var css = (!size) ? {} : {
+            position: "relative",
+            width: size[0],
+            height: size[1],
+            marginLeft: (-0.5*size[0]).toFixed(0),
+            marginTop: (-0.5*size[1] - 100).toFixed(0)
         }
-        $("#popup-dialog .dialog-frame .description").html('<h3>' + title + '</h3>');
-        $("#popup-dialog .dialog-contents").html(html);
-        $("#popup-dialog").show();
-
-        $("#popup-dialog .close-button").click(function() { globalPopupDialog.hide(); });
+        $("#popup-dialog")
+            .hide()
+            .find(".dialog-frame")
+                .attr("class", "dialog-frame " + className)
+                .attr('style', '') // clear style
+                .css(css)
+                .find(".description")
+                    .html('<h3>' + title + '</h3>')
+                    .end()
+                .end()
+            .find(".dialog-contents")
+                .html(html)
+                .end()
+            .find(".close-button")
+                .click(function() { globalPopupDialog.hide(); })
+                .end()
+            .show()
 
         if (autoClose && !globalPopupDialog.bindings) {
             // listen for escape key
@@ -1040,8 +1047,10 @@ var globalPopupDialog = {
     },
     hide: function() {
         if (globalPopupDialog.visible) {
-            $("#popup-dialog").hide();
-            $("#popup-dialog .dialog-contents").html('');
+            $("#popup-dialog")
+                .hide();
+                .find(".dialog-contents")
+                    .html('');
 
             if (globalPopupDialog.bindings) {
                 $(document).unbind('keyup.popupdialog');
@@ -1060,18 +1069,14 @@ var globalPopupDialog = {
 
     popupGenericMessageBox = function(options) {
         if (messageBox) {
-            $(messageBox).modal('hide');
-            $(messageBox).remove();
+            $(messageBox).modal('hide').remove();
         }
 
-        if (!options)
-            options = {};
-
-        if (!options.buttons) {
-            options.buttons = [
+        options = _.extend({
+            buttons: [
                 { title: 'OK', action: hideGenericMessageBox }
-            ];
-        }
+            ]
+        }, options);
 
         var template = Templates.get( "shared.generic-dialog" );
         messageBox = $(template(options)).appendTo(document.body).modal({
@@ -1087,8 +1092,7 @@ var globalPopupDialog = {
 
     hideGenericMessageBox = function() {
         if (messageBox) {
-            $(messageBox).modal('hide');
-            $(messageBox).remove();
+            $(messageBox).modal('hide').remove();
         }
         messageBox = null;
     }

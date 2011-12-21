@@ -408,7 +408,7 @@ def get_url(url_id):
 @jsonp
 @jsonify
 def save_url(url_id = None):
-    if url_id == None:
+    if url_id is None:
         url = models.Url()
         changed = True
     else:
