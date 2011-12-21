@@ -1224,7 +1224,14 @@ class TopicVersion(db.Model):
             parent_keys = [parent.key()]
             ancestor_keys = parent_keys[:]
             ancestor_keys.extend(parent.ancestor_keys)
-        new_tree = util.clone_entity(old_tree, **{'key_name': old_tree.key().name(), 'version': new_version, 'parent': new_root, 'parent_keys': parent_keys, 'ancestor_keys': ancestor_keys})
+        
+        if new_root:
+            key_name = old_tree.key().name()
+        else:             
+            #don't copy key_name of root as it is parentless, and needs its own key 
+            key_name = Topic.get_new_key_name()
+
+        new_tree = util.clone_entity(old_tree, **{'key_name': key_name, 'version': new_version, 'parent': new_root, 'parent_keys': parent_keys, 'ancestor_keys': ancestor_keys})
         new_tree.put()
         if not new_root:
             new_root = new_tree
@@ -1232,6 +1239,7 @@ class TopicVersion(db.Model):
         for child in old_tree.children:
             old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_root, new_tree).key()
         new_tree.child_keys = [child_key if child_key not in old_key_new_key_dict else old_key_new_key_dict[child_key] for child_key in old_tree.child_keys]
+        new_tree.put()
         return new_tree
 
     def update(self):

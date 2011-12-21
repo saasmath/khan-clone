@@ -7,6 +7,8 @@ import logging
 import layer_cache
 import urllib2
 import re
+from google.appengine.ext import deferred
+
 
 from api.jsonify import jsonify
 
@@ -19,29 +21,9 @@ from models import Topic, TopicVersion, Playlist, Video, Url
 class EditContent(request_handler.RequestHandler):
 
     def get(self):  
-        # The following commented out code is for recreating the datastore from playlists- will remove after deploy
-        # models.Topic.reindex()          
-        # importSmartHistory()
-        # t = models.Topic.all().filter("title = ", "Algebra").get()
-        # title = t.topic_parent.topic_parent.title
-        # logging.info(title)
-        # self.load_demo()
-        # return
-        # self.load_videos()
-        # self.hide_topics()
-        # self.recreate_topic_list_structure()
-        # return
-        # version = models.TopicVersion.get_latest_version()
-        # version.set_default_version()
-        # return
-       
-        # version = models.TopicVersion.get_edit_version()
-        # version.set_default_version()
-        # return
+        if self.request.get('migrate', False):
+            return self.topic_migration()
 
-        # root = Topic.get_by_id("root").make_tree()
-        # root = models.Topic.get(db.Key.from_path("Topic", "root", "Topic", "math")).make_tree()
-        
         version_name = self.request.get('version', 'edit')
 
         tree_nodes = []
@@ -61,130 +43,142 @@ class EditContent(request_handler.RequestHandler):
         self.render_jinja2_template('topics-admin.html', template_values)
         return
 
-    # temporary function for copying the topic structure in topics_list.py ... will remove after deploy    
-    def recursive_copy_topic_list_structure(self, parent, topic_list_part):
-        delete_topics = {}
-        for topic_dict in topic_list_part:
-            logging.info(topic_dict["name"])
-            if topic_dict.has_key("playlist"):
-                topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
-                if topic:
-                    logging.info(topic_dict["name"] + " is already created")
-                else:
-                    version = TopicVersion.get_edit_version()
-                    root = Topic.get_root(version)
-                    topic = Topic.get_by_title_and_parent(topic_dict["playlist"], root)
-                    delete_topics[topic.key()] = topic
-                    logging.info("copying %s to parent %s" % (topic_dict["name"], parent.title))
-                    topic.copy(title = topic_dict["name"], parent = parent, standalone_title = topic.title)
-            else:
-                topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
-                if topic:
-                    logging.info(topic_dict["name"] + " is already created")
-                else:
-                    logging.info("adding %s to parent %s" % (topic_dict["name"], parent.title))
-                    topic = Topic.insert(title = topic_dict["name"],
-                                         parent = parent
-                                         )
+    def topic_migration(self):
+        version = models.TopicVersion.all().filter("edit =", True).get()
+        if version is None:
+            version = models.TopicVersion.create_new_version()
+            version.edit = True
+            version.put()
+        logging.info("starting migration")
+        create_root(version)
+        logging.info("created root")
+        logging.info("loading playlists")
+        deferred.defer(load_videos, version)
+        print "migration started... progress can be monitored in the logs"
 
-            if topic_dict.has_key("items"):
-                delete_topics.update(self.recursive_copy_topic_list_structure(topic, topic_dict["items"]))
+# temporary function to recreate the root - will remove after deploy
+def create_root(version):
+    root = Topic.insert(title = "The Root of All Knowledge",
+                        description = "All concepts fit into the root of all knowledge",
+                        id = "root",
+                        version = version)
 
-        return delete_topics       
+# temporary function to load videos into the topics - will remove after deploy
+def load_videos(version, title=None):
+    root = Topic.get_by_id("root", version)
+                    
+    if title is None:
+        playlist = Playlist.all().order('title').get()
+    else:
+        playlist = Playlist.all().filter('title = ', title).get()
+    
+    title = playlist.title
+    
+    nextplaylist = Playlist.all().filter('title >', title).order('title').get()
+    if nextplaylist:
+        next_title = nextplaylist.title
 
-    # temporary function for copying the topic structure in topics_list.py ... will remove after deploy  
-    def recreate_topic_list_structure(self):
-        import topics_list
-        version = TopicVersion.get_edit_version()
-        root = Topic.get_by_id("root", version)
-        delete_topics = self.recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
-        for topic in delete_topics.values():
-            topic.delete_tree()
-        version.set_default_version()
+    playlists = [playlist]
+    # playlists = Playlist.all().order('title').fetch(100000)
+    for i, p in enumerate(playlists):
+        videos = p.get_videos()
+        content_keys = [v.key() for v in videos]
+        added = 0
+        for i, v in enumerate(videos):
+            for e in v.related_exercises():
+                if e.key() not in content_keys:
+                    content_keys.insert(i+1+added, e.key())
+                    added += 1
 
-    # temporary function for marking topics not in topics_list.py as hidden - will remove after deploy
-    def hide_topics(self):
-        from topics_list import topics_list
+        topic = Topic.insert(title = p.title,
+                     parent = root,
+                     description = p.description,
+                     child_keys =  content_keys)            
+    
+    logging.info("loading "+title)
+    
+    if nextplaylist:
+        deferred.defer(load_videos, version, next_title)
+    else:                    
+        deferred.defer(hide_topics, version)
 
-        root = Topic.get_by_id("root")
-        topics = Topic.all().ancestor(root).fetch(10000)
-        for topic in topics:
-            if topic.title not in topics_list:
-                topic.hide = True
-                topic.put()
-            else:
-                topic.hide = False
-                topic.put()
+# temporary function for marking topics not in topics_list.py as hidden - will remove after deploy
+def hide_topics(version):
+    from topics_list import topics_list
+    logging.info("hiding topics")
 
-    # temporary function to load videos into the topics - will remove after deploy
-    def load_videos(self):
-        root = Topic.get_by_id("root")
-                        
-        title = self.request.get('title', None)
-        if title is None:
-            playlist = Playlist.all().order('title').get()
+    root = Topic.get_by_id("root", version)
+    topics = Topic.all().ancestor(root).fetch(10000)
+    for topic in topics:
+        if topic.title not in topics_list:
+            topic.hide = True
+            topic.put()
         else:
-            playlist = Playlist.all().filter('title = ', title).get()
-        
-        title = playlist.title
-        
-        nextplaylist = Playlist.all().filter('title >', title).order('title').get()
-        if nextplaylist:
-            next_title = nextplaylist.title
-            next_url = "/admin/content?title=" + urllib.quote(next_title)
+            topic.hide = False
+            topic.put()
+
+    logging.info("hid topics")
+    deferred.defer(recreate_topic_list_structure)
+
+# temporary function for copying the topic structure in topics_list.py ... will remove after deploy    
+def recursive_copy_topic_list_structure(parent, topic_list_part):
+    delete_topics = {}
+    for topic_dict in topic_list_part:
+        logging.info(topic_dict["name"])
+        if topic_dict.has_key("playlist"):
+            topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
+            if topic:
+                logging.info(topic_dict["name"] + " is already created")
+            else:
+                version = TopicVersion.get_edit_version()
+                root = Topic.get_root(version)
+                topic = Topic.get_by_title_and_parent(topic_dict["playlist"], root)
+                delete_topics[topic.key()] = topic
+                logging.info("copying %s to parent %s" % (topic_dict["name"], parent.title))
+                topic.copy(title = topic_dict["name"], parent = parent, standalone_title = topic.title)
         else:
-            next_title = "FINISHED"
-            next_url = None
+            topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
+            if topic:
+                logging.info(topic_dict["name"] + " is already created")
+            else:
+                logging.info("adding %s to parent %s" % (topic_dict["name"], parent.title))
+                topic = Topic.insert(title = topic_dict["name"],
+                                     parent = parent
+                                     )
 
-        # next_url = None
-        playlists = [playlist]
-        # playlists = Playlist.all().order('title').fetch(100000)
-        for i, p in enumerate(playlists):
-            videos = p.get_videos()
-            exercises = p.get_exercises()
-            videos.extend(p.get_exercises())
-            topic = Topic.insert(title = p.title,
-                         parent = root,
-                         description = p.description,
-                         child_keys =  [video.key() for video in videos])            
-                                    
-            context = {
-                'current_item': title,
-                'next_item': next_title,
-                'next_url': next_url,
-            } 
+        if topic_dict.has_key("items"):
+            delete_topics.update(recursive_copy_topic_list_structure(topic, topic_dict["items"]))
 
-            self.render_jinja2_template('update_datastore.html', context)   
-            
-    # temporary function to remove playlist from the fulltext index... will remove after we run it once after it gets deployed        
-    def removePlaylistIndex():
-        import search
+    return delete_topics       
 
-        items = search.StemmedIndex.all(keys_only=True).filter("parent_kind", "Playlist").fetch(10000)
-        db.delete(items)
+# temporary function for copying the topic structure in topics_list.py ... will remove after deploy  
+def recreate_topic_list_structure():
+    import topics_list
+    logging.info("recreating topic_list structure")
 
-    # temporary function to recreate the root - will remove after deploy
-    def load_demo(self):
-        root = Topic.insert(title = "The Root of All Knowledge",
-                            description = "All concepts fit into the root of all knowledge",
-                            id = "root")
-        '''
-        math = Topic.insert(title = "Mathematics",
-                            parent = root,
-                            description = "All mathematical concepts go here"
-                            )
+    version = TopicVersion.get_edit_version()
+    root = Topic.get_by_id("root", version)
+    delete_topics = recursive_copy_topic_list_structure(root, topics_list.PLAYLIST_STRUCTURE)
+    for topic in delete_topics.values():
+        topic.delete_tree()
+    deferred.defer(importSmartHistory)
+
+# temporary function to load smarthistory the first time during migration
+def importSmartHistory():
+    edit = models.TopicVersion.get_edit_version()
+    ImportSmartHistory.importIntoVersion(edit)
+    edit.set_default_version()
+    new_edit = TopicVersion.create_edit_version()
+
+
                 
+# temporary function to remove playlist from the fulltext index... will remove after we run it once after it gets deployed        
+def removePlaylistIndex():
+    import search
 
-        arithmetic = Topic.insert(  title = "Arithmetic",
-                                    parent = math,
-                                    description = "Arithmetic keywords"
-                                   )
+    items = search.StemmedIndex.all(keys_only=True).filter("parent_kind", "Playlist").fetch(10000)
+    db.delete(items)
 
-        algebra = Topic.insert( title = "Algebra",
-                                parent = math,
-                                description = "Algebra keywords"
-                                )
-        '''
 
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():
@@ -204,7 +198,6 @@ class ImportSmartHistory(request_handler.RequestHandler):
 
     # update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)
     def get(self):
-
         default = models.TopicVersion.get_default_version()
         edit = models.TopicVersion.get_edit_version()
         ImportSmartHistory.importIntoVersion(default)
@@ -230,7 +223,7 @@ class ImportSmartHistory(request_handler.RequestHandler):
         hrefs = [url.url for url in urls]
         content = getSmartHistoryContent()
         child_keys = []
-
+        i = 0
         for link in re.finditer(re.compile('<a.*href="(.*?)"><span.*?>(.*)</span></a>', re.M), content):
             href = link.group(1)
             title = link.group(2)
@@ -241,6 +234,7 @@ class ImportSmartHistory(request_handler.RequestHandler):
                           id = id) 
                 url.put()
                 child_keys.append(url.key())
+                i += 1
             else:
                 child_keys.append(href_to_key_dict[href])
 
