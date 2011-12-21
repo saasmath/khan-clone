@@ -48,8 +48,6 @@ UserCardModel = Backbone.Model.extend({
         };
 
         Backbone.Model.prototype.save.call(this, attrs, options);
-<<<<<<< local
-=======
     },
 
     showMessage: function(message, type) {
@@ -60,7 +58,6 @@ UserCardModel = Backbone.Model.extend({
             .fadeOut("fast", function() {
                 $(this).removeClass(type);
             });
->>>>>>> other
     }
 });
 
