@@ -1029,7 +1029,8 @@ function dynamicPackage(packageName, callback, manifest) {
                         script.type = 'text/x-handlebars-template'; // This hasn't been tested
                     else
                         script.type = "text/javascript";
-                    script.appendChild( document.createTextNode( file.content ) );
+
+                    script.text = file.content;
 
                     var head = document.getElementsByTagName("head")[0] || document.documentElement;
                     head.appendChild( script );
