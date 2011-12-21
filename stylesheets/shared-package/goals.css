@@ -529,6 +529,18 @@ a.goal-history {
     color: #777;
     text-decoration:none;
 }
+
+/* disable hover effects for title and objectives */
+.goalpicker a:hover {
+    text-decoration: none;
+}
+.goalpicker .goal a.objective:hover:before {
+    border-color: #fff;
+}
+.goalpicker .goal a.objective:hover {
+    border-color: #3A4759 ! important;
+}
+
 .goalpicker .newgoal:hover{
     cursor:pointer;
     z-index:10;
