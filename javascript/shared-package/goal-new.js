@@ -1,31 +1,12 @@
 var GoalCreator = {
     objectives: [],
     knowledgeMap: null,
+    videosAreInit: false,
 
     init: function(knowledgeMap) {
         this.knowledgeMap = knowledgeMap;
 
         $(window).resize( $.proxy(this.resize, this) );
-
-        $('#goal-choose-videos').find('#smarthistory').detach();
-
-        // Fix links on videos
-        $('#goal-choose-videos').find('.vl').each(function(index, element) {
-            var span = $(this).children('span');
-            var image = $(span).css('background-image');
-
-            $(this).attr('href', 'javascript:');
-            if (image.indexOf('indicator-complete') == -1)
-            {
-                var video_name = $(this).attr('data-id');
-                var video_title = span.text();
-                $(this).click(function() {
-                    GoalCreator.onVideoClicked(video_name, video_title);
-                });
-            } else {
-                $(this).addClass('goalVideoInvalid');
-            }
-        });
 
         $('#create-goal .goal-title')
             .focus(function(){ $(this).animate({width: '600px'});})
@@ -53,6 +34,29 @@ var GoalCreator = {
             });
         });
         return list;
+    },
+
+    initVideos: function() {
+        $('#goal-choose-videos').find('#smarthistory').remove();
+
+        // Fix links on videos
+        $('#goal-choose-videos').find('.vl').each(function(index, element) {
+            var jel = $(element);
+            var span = jel.children('span');
+            var image = $(span).css('background-image');
+
+            jel.attr('href', 'javascript:void(0)');
+            if (image.indexOf('indicator-complete') == -1)
+            {
+                var video_name = jel.attr('data-id');
+                var video_title = span.text();
+                jel.click(function() {
+                    GoalCreator.onVideoClicked(video_name, video_title);
+                });
+            } else {
+                jel.addClass('goalVideoInvalid');
+            }
+        });
     },
 
     // reset window state
@@ -289,6 +293,10 @@ var GoalCreator = {
         GoalCreator.updateViewAndDescription();
     },
     showVideos: function() {
+        if (!GoalCreator.videosAreInit) {
+            GoalCreator.videosAreInit = true;
+            GoalCreator.initVideos();
+        }
         $('#goal-choose-exercises').hide();
         $('#goal-choose-videos').show();
         $('#show-vid-btn').addClass("blue");
@@ -391,5 +399,5 @@ var GoalCreator = {
         GoalCreator.reset();
 
         return false;
-    },
+    }
 };
