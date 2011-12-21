@@ -645,11 +645,6 @@ a.goal-history {
     padding:1em 1em 2em;
 }
 
-.lte8 #goals-container {
-    display: none;
-}
-
-
 .modal.goal-new-custom {
     position: fixed;
     top: 90px;
