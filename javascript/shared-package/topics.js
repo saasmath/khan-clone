@@ -16,91 +16,7 @@ window.TestTopics = function() {
             );
         }
     );
-}
-
-// TomY TODO - Move this to some shared Backbone utils file?
-
-/* Backbone.Collection has no facility to asynchronously fetch individual
- models. IncrementalCollection.fetchByID() will return the given model
- if it is already loaded from the server, or fetch it immediately. The
- callback is called either immediately or when the model is finished
- loading. The __inited flag on the model is set to true if the model
- has been loaded from the server. */
-IncrementalCollection = Backbone.Collection.extend({
-    fetchByID: function(id, callback, args) {
-        var ret = this.get(id);
-        if (!ret) {
-            if (!this.idAttribute) {
-                this.idAttribute = this.model.prototype.idAttribute;
-                if (!this.idAttribute)
-                    this.idAttribute = "id";
-            }
-
-            var attrs = {};
-            attrs[this.idAttribute] = id;
-            ret = this._add(attrs);
-        }
-        if (!ret.__inited) {
-            if (!ret.__callbacks) {
-                ret.__callbacks = [];
-			}
-            if (callback) {
-                ret.__callbacks.push({ callback: callback, args: args });
-			}
-
-            if (!ret.__requesting) {
-                KAConsole.log("IC (" + id + "): Sending request...");
-                ret.fetch({
-                    success: function() {
-                        KAConsole.log("IC (" + id + "): Request succeeded.");
-                        ret.__inited = true;
-                        ret.__requesting = false;
-                        _.each(ret.__callbacks, function(cb) {
-                            cb.callback.apply(null, [ret].concat(cb.args));
-                        });
-                        ret.__callbacks = [];
-                    },
-
-                    error: function() {
-                        KAConsole.log("IC (" + id + "): Request failed!");
-                        ret.__requesting = false;
-                    }
-                });
-                ret.__requesting = true;
-            } else {
-                KAConsole.log("IC (" + id + "): Already requested.");
-            }
-        } else {
-            KAConsole.log("IC (" + id + "): Already loaded.");
-            if (callback)
-                callback.apply(null, [ret].concat(args));
-        }
-
-        return ret;
-    },
-
-    resetInited: function(models, options) {
-        this.reset(models, options);
-        _.each(this.models, function(model) {
-            model.__inited = true;
-        });
-    },
-
-    addInited: function(models, options) {
-        if (!this.idAttribute) {
-            this.idAttribute = new this.model({}).idAttribute;
-            if (!this.idAttribute)
-                this.idAttribute = "id";
-        }
-        var self = this;
-
-        this.add(models, options);
-        _.each(models, function(model) {
-            newModel = self.get(model[self.idAttribute]);
-            newModel.__inited = true;
-        });
-    }
-});
+};
 
 // Model for a TopicVersion
 
@@ -178,15 +94,16 @@ IncrementalCollection = Backbone.Collection.extend({
         },
 
         addChild: function(child, idx) {
-            child_list = this.get("children").slice(0);
+            var child_list = this.get("children").slice(0);
             child_list.splice(idx, 0, child);
             this.set({"children": child_list});
         },
         removeChild: function(kind, id) {
             var ret = null;
             var child_list = _.filter(this.get("children"), function(child) {
-                if (child.kind != kind || child.id != id)
+                if (child.kind != kind || child.id != id) {
                     return true;
+                }
                 ret = child;
                 return false;
             });
@@ -223,7 +140,7 @@ IncrementalCollection = Backbone.Collection.extend({
                 });
                 otherNode.set({children: children});
             });
-        },
+        }
 	});
 
 	window.TopicTree = IncrementalCollection.extend({
@@ -235,9 +152,10 @@ IncrementalCollection = Backbone.Collection.extend({
         },
 
         getRoot: function() {
-            ret = this.fetchByID("root");
-            if (!ret.__inited)
+            var ret = this.fetchByID("root");
+            if (!ret.__inited) {
                 ret.set({title: "Loading..."});
+            }
             return ret;
         },
 
@@ -313,7 +231,7 @@ IncrementalCollection = Backbone.Collection.extend({
             url: "",
             ka_url: "",
             relative_url: "",
-            download_urls: null,
+            download_urls: null
         },
 
         idAttribute: "readable_id",
