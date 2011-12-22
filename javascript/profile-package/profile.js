@@ -423,6 +423,10 @@ var Profile = {
         // TODO: Might there be a better way
         // for server-side + client-side to co-exist in harmony?
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
+
+        var usernameModel = new UsernamePickerModel({username: USERNAME}),
+            usernameView = new UsernamePickerView({model: usernameModel});
+        $("#username-picker-container").html(usernameView.render().el);
     },
 
     populateUserCard: function() {

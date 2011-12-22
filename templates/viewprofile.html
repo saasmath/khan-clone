@@ -18,6 +18,7 @@
 <script>
 // TODO: What might be a better alternative to this?
 var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
+    USERNAME = "{{user_data_student.username|escapejs}}",
     userCardData = {
         loggedIn: "{{logged_in}}" === "True",
         email: "{{user_data_student.email}}",
@@ -25,7 +26,6 @@ var USER_EMAIL = '{{ user_data_student.email|escapejs }}',
         nickname: "{{student_nickname|escapejs}}",
         avatarName: "{{avatar_name}}",
         avatarSrc: "{{avatar_src}}",
-        username: "{{user_data_student.username|escapejs}}",
         countVideosCompleted: {{count_videos_completed}},
         countVideos: {{count_videos}},
         countExercisesProficient: {{count_exercises_proficient}},
