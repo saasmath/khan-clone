@@ -35,8 +35,11 @@ class BadgeStat(db.Model):
         return datetime.datetime.now() - self.dt_last_calculated
 
     def needs_update(self):
-        # Update if it's been at least 6 hours since last calculation.
-        # (We're not recalculating due to a failed task)
+        """ Update this badge's stats if it's been at least 6 hours since last calculation.
+
+        This code runs in a task queue, so if the task fails and requeues itself
+        this protects us from multiple updates per badge in a short time frame.
+        """
         return self.time_since_calculation.seconds > (60 * 60 * 6)
 
     def update(self):
