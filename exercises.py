@@ -221,6 +221,8 @@ class ViewExercise(request_handler.RequestHandler):
                 if problem_log.count_hints is not None:
                     user_exercise.count_hints = problem_log.count_hints
 
+                user_exercise.current = problem_log.sha1 == sha1
+
         is_webos = self.is_webos()
         browser_disabled = is_webos or self.is_older_ie()
         renderable = renderable and not browser_disabled
@@ -230,7 +232,6 @@ class ViewExercise(request_handler.RequestHandler):
             (exid, user_data_student.key_email, problem_number - 1)
         user_exercise.next_problem_url = url_pattern % \
             (exid, user_data_student.key_email, problem_number + 1)
-        user_exercise.current = problem_log.sha1 == sha1
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
