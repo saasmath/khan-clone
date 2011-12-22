@@ -521,7 +521,7 @@ def get_exercise(exercise_name):
         exercise.related_videos = map(lambda exercise_video: exercise_video.video.readable_id, exercise_videos)
     return exercise
 
-@route("/api/v1/exercises_recent", methods=["GET"])
+@route("/api/v1/exercises/recent", methods=["GET"])
 @jsonp
 @jsonify
 def exercise_recent_list():
@@ -561,7 +561,7 @@ def video(video_id):
         return video
     return models.Video.all().filter("youtube_id =", video_id).get()
 
-@route("/api/v1/videos_recent", methods=["GET"])
+@route("/api/v1/videos/recent", methods=["GET"])
 @jsonp
 @jsonify
 def video_recent_list():
@@ -620,7 +620,8 @@ def fully_populated_playlists():
 
     return playlists
 
-@route("/api/v1/videos/youtubeinfo/<youtube_id>", methods=["GET"])
+# Fetches data from YouTube if we don't have it already in the datastore
+@route("/api/v1/videos/<youtube_id>/youtubeinfo", methods=["GET"])
 @developer_required
 @jsonp
 @jsonify

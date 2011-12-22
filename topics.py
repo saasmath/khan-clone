@@ -7,6 +7,7 @@ import logging
 import layer_cache
 import urllib2
 import re
+from api.auth.xsrf import ensure_xsrf_cookie
 from google.appengine.ext import deferred
 
 
@@ -17,10 +18,12 @@ from google.appengine.ext import db
 
 import models
 from models import Topic, TopicVersion, Playlist, Video, Url
+
         
 class EditContent(request_handler.RequestHandler):
 
-    def get(self):  
+    @ensure_xsrf_cookie
+    def get(self):
         if self.request.get('migrate', False):
             return self.topic_migration()
 
@@ -56,12 +59,14 @@ class EditContent(request_handler.RequestHandler):
         deferred.defer(load_videos, version)
         print "migration started... progress can be monitored in the logs"
 
+
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):
-    root = Topic.insert(title = "The Root of All Knowledge",
-                        description = "All concepts fit into the root of all knowledge",
-                        id = "root",
-                        version = version)
+    root = Topic.insert(title="The Root of All Knowledge",
+            description="All concepts fit into the root of all knowledge",
+            id="root",
+            version=version)
+
 
 # temporary function to load videos into the topics - will remove after deploy
 def load_videos(version, title=None):
@@ -90,19 +95,21 @@ def load_videos(version, title=None):
                     content_keys.insert(i + added, e.key())
                     added += 1
 
-        topic = Topic.insert(title = p.title,
-                     parent = root,
-                     description = p.description,
-                     child_keys =  content_keys)            
+        topic = Topic.insert(title=p.title,
+                     parent=root,
+                     description=p.description,
+                     child_keys=content_keys)
     
-    logging.info("loading "+title)
+    logging.info("loading " + title)
     
     if nextplaylist:
         deferred.defer(load_videos, version, next_title)
-    else:                    
+    else:
         deferred.defer(hide_topics, version)
 
-# temporary function for marking topics not in topics_list.py as hidden - will remove after deploy
+
+# temporary function for marking topics not in topics_list.py as
+# hidden - will remove after deploy
 def hide_topics(version):
     from topics_list import topics_list
     logging.info("hiding topics")
@@ -120,12 +127,14 @@ def hide_topics(version):
     logging.info("hid topics")
     deferred.defer(recreate_topic_list_structure)
 
-# temporary function for copying the topic structure in topics_list.py ... will remove after deploy    
+
+# temporary function for copying the topic structure in topics_list.py
+# will remove after deploy
 def recursive_copy_topic_list_structure(parent, topic_list_part):
     delete_topics = {}
     for topic_dict in topic_list_part:
         logging.info(topic_dict["name"])
-        if topic_dict.has_key("playlist"):
+        if "playlist" in topic_dict:
             topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
             if topic:
                 logging.info(topic_dict["name"] + " is already created")
@@ -134,24 +143,28 @@ def recursive_copy_topic_list_structure(parent, topic_list_part):
                 root = Topic.get_root(version)
                 topic = Topic.get_by_title_and_parent(topic_dict["playlist"], root)
                 delete_topics[topic.key()] = topic
-                logging.info("copying %s to parent %s" % (topic_dict["name"], parent.title))
-                topic.copy(title = topic_dict["name"], parent = parent, standalone_title = topic.title)
+                logging.info("copying %s to parent %s" %
+                            (topic_dict["name"], parent.title))
+                topic.copy(title=topic_dict["name"], parent=parent,
+                           standalone_title=topic.title)
         else:
             topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
             if topic:
                 logging.info(topic_dict["name"] + " is already created")
             else:
-                logging.info("adding %s to parent %s" % (topic_dict["name"], parent.title))
-                topic = Topic.insert(title = topic_dict["name"],
-                                     parent = parent
-                                     )
+                logging.info("adding %s to parent %s" %
+                             (topic_dict["name"], parent.title))
+                topic = Topic.insert(title=topic_dict["name"], parent=parent)
 
-        if topic_dict.has_key("items"):
-            delete_topics.update(recursive_copy_topic_list_structure(topic, topic_dict["items"]))
+        if "items" in topic_dict:
+            delete_topics.update(
+                recursive_copy_topic_list_structure(topic,
+                                                    topic_dict["items"]))
 
-    return delete_topics       
+    return delete_topics
 
-# temporary function for copying the topic structure in topics_list.py ... will remove after deploy  
+
+# temporary function for copying the topic structure in topics_list.py ... will remove after deploy
 def recreate_topic_list_structure():
     import topics_list
     logging.info("recreating topic_list structure")
@@ -163,6 +176,7 @@ def recreate_topic_list_structure():
         topic.delete_tree()
     deferred.defer(importSmartHistory)
 
+
 # temporary function to load smarthistory the first time during migration
 def importSmartHistory():
     edit = models.TopicVersion.get_edit_version()
@@ -170,9 +184,9 @@ def importSmartHistory():
     edit.set_default_version()
     new_edit = TopicVersion.create_edit_version()
 
-
                 
-# temporary function to remove playlist from the fulltext index... will remove after we run it once after it gets deployed        
+# temporary function to remove playlist from the fulltext index...
+# will remove after we run it once after it gets deployed
 def removePlaylistIndex():
     import search
 
@@ -193,6 +207,7 @@ def getSmartHistoryContent():
         smart_history = None
     return smart_history
 
+
 class ImportSmartHistory(request_handler.RequestHandler):
 
     def get(self):
@@ -211,11 +226,11 @@ class ImportSmartHistory(request_handler.RequestHandler):
             parent = Topic.get_by_id("humanities---other", version)
             if not parent:
                 raise Exception("Could not find the Humanities & Other topic to put art history into")
-            topic = Topic.insert(title = "Art History",
-                                 parent = parent,
-                                 id = "art-history",
-                                 standalone_title = "Art History",
-                                 description = "Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")  
+            topic = Topic.insert(title="Art History",
+                                 parent=parent,
+                                 id="art-history",
+                                 standalone_title="Art History",
+                                 description="Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")
         
         urls = topic.get_urls()
         href_to_key_dict = dict((url.url, url.key()) for url in urls)
@@ -228,9 +243,9 @@ class ImportSmartHistory(request_handler.RequestHandler):
             title = link.group(2)
             if href not in hrefs:
                 logging.info("adding %i %s %s to art-history" % (i, href, title))
-                url = Url(url = href,
-                          title = title,
-                          id = id) 
+                url = Url(url=href,
+                          title=title,
+                          id=id)
                 url.put()
                 child_keys.append(url.key())
                 i += 1
@@ -244,11 +259,11 @@ class ImportSmartHistory(request_handler.RequestHandler):
                 new_version = version.copy_version()
                 new_version.description = "SmartHistory Update"
                 new_version.put()
-                new_topic = Topic.get_by_id("art-history", new_version)    
-                new_topic.update(child_keys = child_keys)
+                new_topic = Topic.get_by_id("art-history", new_version)
+                new_topic.update(child_keys=child_keys)
                 new_version.set_default_version()
             else:
-                topic.update(child_keys = child_keys)
+                topic.update(child_keys=child_keys)
             logging.info("finished updating version number %i" % version.number)
         else:
             logging.info("nothing changed")
