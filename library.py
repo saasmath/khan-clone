@@ -21,7 +21,12 @@ def library_content_html():
     topics = Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
-    topics = [topic for topic in topics if not (topic.standalone_title == "California Standards Test: Algebra I" and not topic.id == "algebra-i") and not (topic.standalone_title == "California Standards Test: Geometry" and not topic.id == "geometry-2")] 
+    topics = [topic for topic in topics 
+              if not 
+              (topic.standalone_title == "California Standards Test: Algebra I" 
+              and not topic.id == "algebra-i") and not 
+              (topic.standalone_title == "California Standards Test: Geometry" 
+              and not topic.id == "geometry-2")] 
 
     topic_prev = None
     for topic in topics:

@@ -94,7 +94,7 @@ class ViewVideo(request_handler.RequestHandler):
         video = None
         topic = None
         video_id = self.request.get('v')
-        topic_title = self.request_string('topic', default="") or self.request_string('t', default="")
+        topic_title = self.request_string('topic', default="")
         readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
@@ -161,7 +161,7 @@ class ViewVideo(request_handler.RequestHandler):
                 video = v
             elif video is None:
                 previous_video = v
-            elif next_video is None:
+            else:
                 next_video = v
                 break
 
