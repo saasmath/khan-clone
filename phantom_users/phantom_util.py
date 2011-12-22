@@ -90,7 +90,7 @@ def api_create_phantom(method):
 
     return wrapper
 
-def disallow_phantoms(method, redirect_to='/login?k'):
+def disallow_phantoms(method, redirect_to='/login'):
     '''Decorator used to redirect phantom users.'''
 
     @wraps(method)

@@ -155,7 +155,7 @@ class ViewProfile(request_handler.RequestHandler):
             if not user_override.is_visible_to(student):
                 # If current user isn't an admin or student's coach, they can't
                 # look at anything other than their own profile.
-                self.redirect("/profile?k")
+                self.redirect("/profile")
                 return
             else:
                 # Allow access to this student's profile
