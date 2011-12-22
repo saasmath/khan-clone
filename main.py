@@ -94,7 +94,7 @@ class ViewVideo(request_handler.RequestHandler):
         video = None
         topic = None
         video_id = self.request.get('v')
-        topic_title = self.request_string('topic', default="")
+        topic_id = self.request_string('topic', default="")
         readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
@@ -117,11 +117,11 @@ class ViewVideo(request_handler.RequestHandler):
 
             redirect_to_canonical_url = True
 
-        if topic_title is not None and len(topic_title) > 0:
-            topic = Topic.all().filter('title =', topic_title).get()
+        if topic_id is not None and len(topic_id) > 0:
+            topic = Topic.get_by_id(topic_id)
             key_id = 0 if not topic else topic.key().id()
 
-        # If a topic_title wasn't specified or the specified topic wasn't found
+        # If a topic_id wasn't specified or the specified topic wasn't found
         # use the first topic for the requested video.
         if topic is None:
             # Get video by readable_id just to get the first topic for the video
@@ -138,7 +138,7 @@ class ViewVideo(request_handler.RequestHandler):
         exid = self.request_string('exid', default=None)
 
         if redirect_to_canonical_url:
-            qs = {'topic': topic.title}
+            qs = {'topic': topic.id}
             if exid:
                 qs['exid'] = exid
 
@@ -147,7 +147,7 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
-        # If we got here, we have a readable_id and a topic_title, so we can display
+        # If we got here, we have a readable_id and a topic, so we can display
         # the topic and the video in it that has the readable_id.  Note that we don't
         # query the Video entities for one with the requested readable_id because in some
         # cases there are multiple Video objects in the datastore with the same readable_id
@@ -169,7 +169,7 @@ class ViewVideo(request_handler.RequestHandler):
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
         if App.offline_mode:
-            video_path = "/videos/" + get_mangled_topic_name(topic_title) + "/" + video.readable_id + ".flv"
+            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
         else:
             video_path = video.download_video_url()
 
