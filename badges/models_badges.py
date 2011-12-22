@@ -45,6 +45,11 @@ class BadgeStat(db.Model):
     def update(self):
         dt_last_calculated_next = datetime.datetime.now()
 
+        if self.dt_last_calculated:
+            # Only calculate 10 days at a time in case we've fallen into a hole
+            # and need to dig ourselves out.
+            dt_last_calculated_next = min(dt_last_calculated_next, self.dt_last_calculated + datetime.timedelta(days=10))
+
         self.count_awarded += UserBadge.count_by_badge_name_between_dts(
                 self.badge_name, 
                 self.dt_last_calculated, 
