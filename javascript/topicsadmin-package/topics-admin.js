@@ -16,6 +16,7 @@ var TopicTreeEditor = {
         var topicTree = version.getTopicTree();
         this.currentVersion = version;
 
+
         // Attach the dynatree widget to an existing <div id="tree"> element
         // and pass the tree options as an argument to the dynatree() function:
         $("#topic_tree").dynatree({
@@ -464,43 +465,49 @@ var TopicTreeEditor = {
             _.bindAll(this);
             this.nodeEditor = TopicTreeEditor.NodeEditor;
 
-            if (TopicTreeEditor.currentVersion.get("edit")) {
-                $("#details-view").find("input").change(function() {
-                    var field = $(this).attr("name");
-                    if (field) {
-                        var value = (this.type == "checkbox") ?  $(this).is(":checked") : $(this).val();
-                        var attrs = {};
-                        var oldID = this.nodeEditor.model.id;
-                        var self = this;
-                        attrs[field] = value;
+            if ( TopicTreeEditor.currentVersion.get( "edit" ) ) {
+                $( "#details-view" )
+                    .find( "input" )
+                        .change( function() {
+                            var field = $(this).attr( "name" );
+                            if (field) {
+                                var value = ( this.type == "checkbox" ) ?  $( this ).is( ":checked" ) : $( this ).val();
+                                var attrs = {};
+                                var oldID = this.nodeEditor.model.id;
+                                var self = this;
+                                attrs[field] = value;
 
-                        // We do special things on save because of the potential ID change
-                        this.nodeEditor.model.save(attrs, {
-                            url: self.nodeEditor.model.url(), // URL with the old slug value
-                            success: function() { TopicTreeEditor.handleChange(self.nodeEditor.model, oldID); }
-                        });
-                    }
-                });
+                                // We do special things on save because of the potential ID change
+                                this.nodeEditor.model.save( attrs, {
+                                    url: self.nodeEditor.model.url(), // URL with the old slug value
+                                    success: function() { TopicTreeEditor.handleChange( self.nodeEditor.model, oldID ); }
+                                });
+                            }
+                        })
+                        .end()
+                    .find( "#add-tag-button" )
+                        .click( this.addTag )
+                        .end();
             }
         },
 
         addTag: function() {
-            var tag = $("#add-tag").val();
+            var tag = $( "#add-tag" ).val();
 
-            if (tag) {
-                var tags = this.nodeEditor.model.get("tags").slice(0);
-
-                tags.push(tag);
+            if ( tag ) {
+                var tags = this.nodeEditor.model.get( "tags" ).slice( 0 );
+ 
+                tags.push( tag );
                 this.nodeEditor.model.set({tags: tags}); // This triggers a NodeEditor.render()
                 this.nodeEditor.model.save();
             }
         },
         deleteTag: function(tag) {
-            var tags = this.nodeEditor.model.get("tags").slice(0);
+            var tags = this.nodeEditor.model.get( "tags" ).slice( 0 );
 
             var idx = tags.indexOf(tag);
-            if (idx >= 0) {
-                tags.splice(idx, 1);
+            if ( idx >= 0 ) {
+                tags.splice( idx, 1 );
                 this.nodeEditor.model.set({tags: tags}); // This triggers a NodeEditor.render()
                 this.nodeEditor.model.save();
             }
@@ -571,24 +578,24 @@ var TopicTreeEditor = {
                     this.finishAddExistingItem(this.itemCopyBuffer.kind, this.itemCopyBuffer.id, this.itemCopyBuffer.title, null, null, -1);
 
                 } else if (this.itemCopyBuffer.type == "cut") {
-                    var data = {
+                    var moveData = {
                         kind: this.itemCopyBuffer.kind,
                         id: this.itemCopyBuffer.id,
                         new_parent_id: model.id,
                         new_parent_pos: model.get("children").length
                     };
-                    this.moveItem(this.itemCopyBuffer.originalParent, data);
+                    this.moveItem(this.itemCopyBuffer.originalParent, moveData);
                 }
 
             } else if (action == "delete_topic") {
-                var data = {
+                var deleteData = {
                     kind: "Topic",
                     id: model.id
                 };
                 $.ajaxq("topics-admin", {
                     url: "/api/v1/topic/" + parentModel.id + "/deletechild",
                     type: "POST",
-                    data: data,
+                    data: deleteData,
                     success: function(json) {
                         parentModel.removeChild("Topic", model.id);
                     },
@@ -672,13 +679,14 @@ var TopicTreeEditor = {
         },
 
         handleChange: function() {
+            var self = this;
             unsavedChanges = false;
             $("#details-view input[type=\"text\"]")
                 .add("#details-view input[type=\"radio\"]:checked")
                 .each(function() {
                     var field = $(this).attr("name");
                     if (field) {
-                        if (String(this.nodeEditor.model.get(field)) != $(this).val()) {
+                        if (String(self.nodeEditor.model.get(field)) != $(this).val()) {
                             unsavedChanges = true;
                         }
                     }
@@ -766,24 +774,24 @@ var TopicTreeEditor = {
                         new_position--;
                     }
 
-                    var data = {
+                    var moveData = {
                         kind: this.topicEditor.itemCopyBuffer.kind,
                         id: this.topicEditor.itemCopyBuffer.id,
                         new_parent_id: parentModel.id,
                         new_parent_pos: new_position
                     };
-                    this.topicEditor.moveItem(this.topicEditor.itemCopyBuffer.originalParent, data);
+                    this.topicEditor.moveItem(this.topicEditor.itemCopyBuffer.originalParent, moveData);
                 }
 
             } else if (action == "remove_item") {
-                var data = {
+                var deleteData = {
                     kind: kind,
                     id: id
                 };
                 $.ajaxq("topics-admin", {
                     url: "/api/v1/topic/" + parentModel.id + "/deletechild",
                     type: "POST",
-                    data: data,
+                    data: deleteData,
                     success: function(json) {
                         parentModel.removeChild(kind, id);
                     },
@@ -794,10 +802,12 @@ var TopicTreeEditor = {
         }
     },
 
-    // Details view for exercises
+    // Utility function for comparing arrays of strings only (type coercion/null/undefined values are not relevant)
     arraysEqual: function(ar1, ar2) {
         return !(ar1 < ar2 || ar1 > ar2);
     },
+
+    // Details view for exercises
 
     ExerciseEditor: {
         existingItemView: null,
@@ -831,24 +841,24 @@ var TopicTreeEditor = {
         unsavedChanges: function() {
             if (this.prereqs && this.covers) {
                 return !(
-                    arraysEqual(this.prereqs, this.nodeEditor.model.get("prereqs")) &&
-                    arraysEqual(this.covers, this.nodeEditor.model.get("covers")) &&
-                    arraysEqual(this.videos, this.nodeEditor.model.get("related_videos"))
+                    TopicTreeEditor.arraysEqual(this.prereqs, this.nodeEditor.model.get("prereqs")) &&
+                    TopicTreeEditor.arraysEqual(this.covers, this.nodeEditor.model.get("covers")) &&
+                    TopicTreeEditor.arraysEqual(this.videos, this.nodeEditor.model.get("related_videos"))
                 );
             }
 
             return false;
         },
         applyChanges: function(attrs) {
-            if (this.prereqs && !arraysEqual(this.prereqs, this.nodeEditor.model.get("prereqs"))) {
+            if (this.prereqs && !TopicTreeEditor.arraysEqual(this.prereqs, this.nodeEditor.model.get("prereqs"))) {
                 attrs.prerequisites = this.prereqs;
             }
 
-            if (this.covers && !arraysEqual(this.covers, this.nodeEditor.model.get("covers"))) {
+            if (this.covers && !TopicTreeEditor.arraysEqual(this.covers, this.nodeEditor.model.get("covers"))) {
                 attrs.covers = this.covers;
             }
 
-            if (this.videos && !arraysEqual(this.videos, this.nodeEditor.model.get("related_videos"))) {
+            if (this.videos && !TopicTreeEditor.arraysEqual(this.videos, this.nodeEditor.model.get("related_videos"))) {
                 attrs.related_videos = this.videos;
             }
         },
@@ -858,7 +868,7 @@ var TopicTreeEditor = {
             _.each(this.covers, function(cover) {
                 elements.push(
                     $("<div>" + cover + " <a href=\"javascript:\">(remove)</a></div>")
-                        .delegate("a", "click", function() { this.deleteCover(cover) })
+                        .delegate("a", "click", function() { this.deleteCover(cover); })
                 );
             });
             $("#exercise-covers-list").children().remove();
@@ -889,7 +899,7 @@ var TopicTreeEditor = {
             _.each(this.prereqs, function(prereq) {
                 elements.push(
                     $("<div>" + prereq + " <a href=\"javascript:\">(remove)</a></div>")
-                        .delegate("a", "click", function() { this.deletePrereq(prereq) })
+                        .delegate("a", "click", function() { this.deletePrereq(prereq); })
                 );
             });
             $("#exercise-prereqs-list").children().remove();
@@ -920,7 +930,7 @@ var TopicTreeEditor = {
             _.each(this.videos, function(video) {
                 elements.push(
                     $("<div>" + video + " <a href=\"javascript:\">(remove)</a></div>")
-                        .delegate("a", "click", function() { this.deleteVideo(video) })
+                        .delegate("a", "click", function() { this.deleteVideo(video); })
                 );
             });
             $("#exercise-videos-list").children().remove();
@@ -974,6 +984,8 @@ var TopicTreeEditor = {
 
             this.tags = this.nodeEditor.model.get("tags").slice(0);
             this.updateTags();
+
+            $( "#add-tag-button" ).click( this.addTag );
         },
         deinit: function() {
             this.tags = null;
@@ -982,31 +994,32 @@ var TopicTreeEditor = {
         unsavedChanges: function() {
             if (this.tags) {
                 return !(
-                    arraysEqual(this.tags, this.nodeEditor.model.get("tags"))
+                    TopicTreeEditor.arraysEqual(this.tags, this.nodeEditor.model.get("tags"))
                 );
             }
 
             return false;
         },
         applyChanges: function(attrs) {
-            if (this.tags && !arraysEqual(this.tags, this.nodeEditor.model.get("tags"))) {
+            if (this.tags && !TopicTreeEditor.arraysEqual(this.tags, this.nodeEditor.model.get("tags"))) {
                 attrs.tags = this.tags;
             }
         },
 
         updateTags: function() {
             var elements = [];
-            _.each(this.tags, function(tag) {
+            var self = this;
+            _.each( this.tags, function( tag ) {
                 elements.push(
                     $("<div>" + tag + " <a href=\"javascript:\">(remove)</a></div>")
-                        .delegate("a", "click", function() { this.deleteTag(tag) })
+                        .delegate( "a", "click", function() { self.deleteTag(tag); } )
                 );
             });
             $("#url-tags-list").children().remove();
-            _.each(elements, function(element) { element.appendTo("#url-tags-list"); });
+            _.each( elements, function( element ) { element.appendTo("#url-tags-list"); } );
         },
         addTag: function() {
-            var tag = $("#url-tag-add").val();
+            var tag = escape($("#url-tag-add").val());
             var idx = this.tags.indexOf(tag);
             if (tag && idx < 0) {
                 this.tags.push(tag);
@@ -1040,9 +1053,9 @@ var TopicTreeEditor = {
         },
 
         events: {
-            "click .do_search": "doSearch",
-            "click .show_recent": "showRecent",
-            "click .ok_button": "selectItem"
+            "click .do-search": "doSearch",
+            "click .show-recent": "showRecent",
+            "click .ok-button": "selectItem"
         },
 
         render: function() {
@@ -1072,28 +1085,31 @@ var TopicTreeEditor = {
         },
 
         showResults: function(json) {
-            var html = "";
+            var elements = [];
             var self = this;
             this.results = {};
             _.each(json, function(item) {
                 if (self.type == "video") {
-                    html += "<option value=\"" + item.readable_id + "\">" + item.title + "</option>";
-                    self.results[item.readable_id] = item.title;
+                    elements.push( $( '<option value="' + item.readable_id + '"' + item.title + '</option>' ) );
+                    self.results[ item.readable_id ] = item.title;
                 } else {
-                    html += "<option value=\"" + item.name + "\">" + item.display_name + "</option>";
-                    self.results[item.name] = item.display_name;
+                    elements.push( $( '<option value="' + item.name + '"' + item.display_name + '</option>' ) );
+                    self.results[ item.name ] = item.display_name;
                 }
             });
-            $(this.el).find("select.search_results").html(html);
+
+            var resultsElemenet = $( "select.search-results", this.el );
+            resultsElement.html( "" );
+            _.each( elements, function( element ) { element.appendTo( resultsElement.get(0) ); } );
         },
 
         showRecent: function() {
             var self = this;
 
             if (this.type == "video") {
-                $(this.el).find(".search_description").html("Most recent videos:");
+                $(this.el).find(".search-description").html("Most recent videos:");
             } else {
-                $(this.el).find(".search_description").html("Most recent exercises:");
+                $(this.el).find(".search-description").html("Most recent exercises:");
             }
             self.showResults([{
                 readable_id: "_",
@@ -1104,9 +1120,9 @@ var TopicTreeEditor = {
 
             var url;
             if (this.type == "video") {
-                url = "/api/v1/videos_recent";
+                url = "/api/v1/videos/recent";
             } else {
-                url = "/api/v1/exercises_recent";
+                url = "/api/v1/exercises/recent";
             }
             $.ajax({
                 url: url,
@@ -1119,13 +1135,13 @@ var TopicTreeEditor = {
         },
 
         doSearch: function() {
-            var searchText = $(this.el).find("input[name=\"item_search\"]").val();
+            var searchText = $(this.el).find("input[name=\"item-search\"]").val();
             var self = this;
 
             if (this.type == "video") {
-                $(this.el).find(".search_description").html("Videos matching \"" + searchText + "\":");
+                $(this.el).find(".search-description").html("Videos matching \"" + searchText + "\":");
             } else {
-                $(this.el).find(".search_description").html("Exercises matching \"" + searchText + "\":");
+                $(this.el).find(".search-description").html("Exercises matching \"" + searchText + "\":");
             }
             self.showResults([{
                 readable_id: "",
@@ -1149,7 +1165,7 @@ var TopicTreeEditor = {
         },
 
         selectItem: function() {
-            var itemID = $( this.el ).find("select.search_results option:selected").val();
+            var itemID = $( this.el ).find("select.search-results option:selected").val();
             if ( !itemID ||
                 itemID === "_") {
                 return;
@@ -1182,7 +1198,7 @@ var TopicTreeEditor = {
         },
 
         events: {
-            "click .ok_button": "createExercise"
+            "click .ok-button": "createExercise"
         },
 
         render: function() {
@@ -1232,7 +1248,7 @@ var TopicTreeEditor = {
         },
 
         events: {
-            "click .ok_button": "createVideo",
+            "click .ok-button": "createVideo",
             "change input[name=\"youtube_id\"]": "doVideoSearch"
         },
 
@@ -1252,7 +1268,7 @@ var TopicTreeEditor = {
             this.youtubeID = null;
             $(this.el).find("input[name=\"youtube_id\"]").val("");
             $(this.el).find(".create-video-preview").html("Enter a YouTube ID to look up a video.");
-            $(self.el).find(".ok_button").addClass("disabled").removeClass("green");
+            $(self.el).find(".ok-button").addClass("disabled").removeClass("green");
         },
 
         createVideo: function() {
@@ -1274,16 +1290,16 @@ var TopicTreeEditor = {
             var youtubeID = $(this.el).find("input[name=\"youtube_id\"]").val();
             var self = this;
             $.ajax({
-                url: "/api/v1/videos/youtubeinfo/" + youtubeID,
+                url: "/api/v1/videos/" + youtubeID + "/youtubeinfo",
                 success: function(json) {
                     self.youtubeID = youtubeID;
                     $(self.el).find(".create-video-preview").html(self.previewTemplate(json));
-                    $(self.el).find(".ok_button").removeClass("disabled").addClass("green");
+                    $(self.el).find(".ok-button").removeClass("disabled").addClass("green");
                 },
                 error: function(json) {
                     self.youtubeID = null;
                     $(self.el).find(".create-video-preview").html("Video not found.");
-                    $(self.el).find(".ok_button").addClass("disabled").removeClass("green");
+                    $(self.el).find(".ok-button").addClass("disabled").removeClass("green");
                 }
             });
         },
@@ -1303,7 +1319,7 @@ var TopicTreeEditor = {
         },
 
         events: {
-            "click .ok_button": "createUrl"
+            "click .ok-button": "createUrl"
         },
 
         render: function() {

@@ -717,11 +717,11 @@ class UpdateExercise(request_handler.RequestHandler):
                 exercise_video.put() 
 
         # Start ordering
-        ExerciseVideos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
+        exercise_videos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
         
         # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
         topics = {}
-        for exercise_video in ExerciseVideos:
+        for exercise_video in exercise_videos:
             for topic in models.Topic.get_cached_topics_for_video(exercise_video.video):
                 if not topics.has_key(topic.key()):
                     topics[topic.key()] = {}
@@ -745,7 +745,7 @@ class UpdateExercise(request_handler.RequestHandler):
         for exercise_video, i in orders.iteritems():
             exercise_video.exercise_order = i
         
-        db.put(ExerciseVideos)
+        db.put(exercise_videos)
 
         return exercise
 
