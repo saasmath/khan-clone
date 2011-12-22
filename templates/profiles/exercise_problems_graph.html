@@ -142,11 +142,7 @@ function exercise_url(point) {
                                     x: {{ loop.index }} + {{ x_offset }},
                                     y: {{ problem.time_taken }},
                                     renderable: {% if problem.renderable %}true{% else %}false{% endif %},
-                                    color: '{% if problem.correct %}\
-                                              {% if problem.current %}#BAE8FA{% else %}#C4D6E0{% endif %}\
-                                            {% else %}\
-                                              {% if problem.current %}red{% else %}#FEA3A6{% endif %}\
-                                            {% endif %}',
+                                    color: '{% if problem.correct %}#BAE8FA{% else %}red{% endif %}',
                                     current: {% if problem.current %}true{% else %}false{% endif %}
                                 }
                                 {% if not loop.last %},{% endif %}
