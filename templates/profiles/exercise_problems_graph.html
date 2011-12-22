@@ -38,9 +38,7 @@ function exercise_url(point) {
                             point: {
                                 events: {
                                     click: function() {
-                                        if (this.current) {
-                                            window.location = exercise_url(this);
-                                        }
+                                          window.location = exercise_url(this);
                                     }
                                 }
                             },
@@ -99,12 +97,8 @@ function exercise_url(point) {
                                             '</b><br/>' +
                                             point.time_used + ' used<br/><br/>' +
                                             point.timesince +
-                                            (point.exercise_non_summative ? '<br/><br/>From exercise: ' + point.exercise_non_summative_display_name : '');
-                                     if (point.current) {
-                                       s += '<br/><br/><em>Click the graph to view this problem</em>.';
-                                     } else {
-                                       s += '<br/><br/><em>Detailed info no longer available</em>.';
-                                     }
+                                            (point.exercise_non_summative ? '<br/><br/>From exercise: ' + point.exercise_non_summative_display_name : '') +
+                                            '<br/><br/><em>Click the graph to view this problem</em>.';
                                 }
                             }
 

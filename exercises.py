@@ -238,6 +238,7 @@ class ViewExercise(request_handler.RequestHandler):
             (exid, user_data_student.key_email, problem_number - 1)
         user_exercise.next_problem_url = url_pattern % \
             (exid, user_data_student.key_email, problem_number + 1)
+        user_exercise.current = problem_log.sha1 == sha1
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
