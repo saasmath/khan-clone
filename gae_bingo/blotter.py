@@ -109,7 +109,7 @@ class Bingo(RequestHandler):
 
         self.response.headers['Content-Type'] = 'text/json'
 
-        experiment_names = all(
+        found_experiments = all(
                 bingo_cache.get_experiment_names_by_conversion_name(name)
                 for name in conversion_names)
 
@@ -118,7 +118,7 @@ class Bingo(RequestHandler):
         
         if conversion_names:
             
-            if experiment_names:
+            if found_experiments:
                 # send null message and score the conversion
                 status = 204
                 bingo(conversion_names)
