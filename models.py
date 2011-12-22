@@ -1093,9 +1093,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
         db.run_in_transaction(save_goal)
 
 class TopicVersion(db.Model):
-    date_created = db.DateTimeProperty(indexed=False, auto_now_add=True)
-    date_updated = db.DateTimeProperty(indexed=False, auto_now=True)
-    date_made_default = db.DateTimeProperty(indexed=False)
+    created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
+    made_default_on = db.DateTimeProperty(indexed=False)
     copied_from = db.SelfReferenceProperty(indexed=False)
     last_edited_by = db.UserProperty(indexed=False)
     number = db.IntegerProperty(required=True)
@@ -1125,7 +1125,7 @@ class TopicVersion(db.Model):
     def get_date_updated_by_id(version):
         version = TopicVersion.get_by_id(version)
         library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date().split('.')[0], "%Y-%m-%d %H:%M:%S") # if a video/exercise/ or url has been updated, then the cache key has
-        return max(version.date_updated, library_content_date_updated)
+        return max(version.updated_on, library_content_date_updated)
 
     # function used by Topic.method calls to @layer_cache to figure out when a topic tree is stale
     @staticmethod
@@ -1134,7 +1134,7 @@ class TopicVersion(db.Model):
         if version is None:
             version = TopicVersion.get_default_version()
         if version:
-            return max(version.date_updated, library_content_date_updated)
+            return max(version.updated_on, library_content_date_updated)
 
     # used by get_content_with_no_topic - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
     @staticmethod
@@ -1263,7 +1263,7 @@ class TopicVersion(db.Model):
                 default_version.default = False
                 default_version.put()
             self.default = True
-            self.date_made_default = datetime.datetime.now()
+            self.made_default_on = datetime.datetime.now()
             self.edit = False
             Setting.cached_library_content_date(datetime.datetime.now())
             self.put()
@@ -1287,14 +1287,14 @@ class Topic(Searchable, db.Model):
     version = db.ReferenceProperty(TopicVersion, required = True)  
     tags = db.StringListProperty() 
     hide = db.BooleanProperty(default = False)
-    date_created = db.DateTimeProperty(indexed=False, auto_now_add=True)
-    date_updated = db.DateTimeProperty(indexed=False, auto_now=True)
+    created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
     last_edited_by = db.UserProperty(indexed=False)
     INDEX_ONLY = ['standalone_title', 'description']
     INDEX_TITLE_FROM_PROP = 'standalone_title'
     INDEX_USES_MULTI_ENTITIES = False
 
-    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "date_created", "date_updated", "last_edited_by"]
+    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
 
     @property
     def ka_url(self):
@@ -1896,10 +1896,10 @@ class UserTopicVideos(db.Model):
 
 class Url(db.Model):
     url = db.StringProperty()
-    title = db.StringProperty()
+    title = db.StringProperty(indexed=False)
     tags = db.StringListProperty()
-    date_created = db.DateTimeProperty(auto_now_add=True)
-    date_updated = db.DateTimeProperty(indexed=False, auto_now=True)        
+    created_on = db.DateTimeProperty(auto_now_add=True)
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)        
 
     @property
     def id(self):

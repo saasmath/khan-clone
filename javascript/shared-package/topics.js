@@ -32,8 +32,8 @@ window.TestTopics = function() {
 			title: "(untitled version)",
 			last_edited_by: "",
 			description: "",
-			date_created: "",
-			date_updated: "" 
+			created_on: "",
+			updated_on: "" 
 		},
 
         idAttribute: "number",
@@ -304,8 +304,8 @@ window.TestTopics = function() {
             url: "",
             title: "New URL",
             tags: [],
-            date_created: "",
-            date_updated: ""
+            created_on: "",
+            updated_on: ""
         },
 
         urlRoot: "/api/v1/url"

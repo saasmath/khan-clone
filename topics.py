@@ -188,16 +188,15 @@ def getSmartHistoryContent():
         smart_history = response.read()
         smart_history = re.search(re.compile("<body>(.*)</body>", re.S), smart_history).group(1).decode("utf-8")
         smart_history.replace("script", "")
-    except Exception, e:
+    except urllib2.URLError, e:
         logging.exception("Failed fetching smarthistory video list")
         smart_history = None
-        pass
     return smart_history
 
 class ImportSmartHistory(request_handler.RequestHandler):
 
-    # update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)
     def get(self):
+        """update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)"""
         default = models.TopicVersion.get_default_version()
         edit = models.TopicVersion.get_edit_version()
         ImportSmartHistory.importIntoVersion(default)
