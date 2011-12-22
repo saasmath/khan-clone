@@ -501,6 +501,12 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
 function KnowledgeMap(params) {
 
+    if (typeof google === "undefined") {
+        alert("Please make sure you're not using any browser extensions or addons that may be blocking google.com,\n" +
+                "which is needed to display the Khan Academy exercises.\n\nOnce you've done that, restart your browser and reload this page.");
+        return;
+    }
+
     if (!window.KnowledgeMapGlobals)
         KnowledgeMapInitGlobals();
 
