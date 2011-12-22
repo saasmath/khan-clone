@@ -35,6 +35,7 @@ javascript = {
             # application code & templates:
             "pageutil.js",
             "api.js",
+            "backbone-extensions.js",
             "social.js",
             "api-version-mismatch.handlebars",
             "streak-bar.handlebars",
