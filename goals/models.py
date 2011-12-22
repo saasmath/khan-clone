@@ -19,13 +19,13 @@ class Goal(db.Model):
     # a goal is 'completed' if it's finished or abandoned. This property is
     # indexed so that we can quickly fetch currently open goals
     completed = db.BooleanProperty(default=False)
-    completed_on = db.DateTimeProperty(indexed=False)
+    completed_on = db.DateTimeProperty()
 
     # we distinguish finished and abandoned goals with this property
     abandoned = db.BooleanProperty(indexed=False)
 
-    created_on = db.DateTimeProperty(auto_now_add=True, indexed=False)
-    updated_on = db.DateTimeProperty(auto_now=True, indexed=False)
+    created_on = db.DateTimeProperty(auto_now_add=True)
+    updated_on = db.DateTimeProperty(auto_now=True)
 
     def get_visible_data(self, user_exercise_graph=None):
         data = dict(
