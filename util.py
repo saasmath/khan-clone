@@ -58,7 +58,7 @@ def is_phantom_user(user_id):
     return user_id and is_phantom_id(user_id)
 
 def create_login_url(dest_url):
-    return "/login?k&continue=%s" % urllib.quote(dest_url)
+    return "/login?continue=%s" % urllib.quote(dest_url)
 
 def create_mobile_oauth_login_url(dest_url):
     return "/login/mobileoauth?continue=%s" % urllib.quote(dest_url)
