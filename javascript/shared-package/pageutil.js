@@ -1161,7 +1161,7 @@ var Review = {
             tens = Math.floor( ( reviewsLeftCount % 100 ) / 10 ),
             animationOptions = {
               duration: Math.log( 1 + Math.abs(reviewsLeftCount - oldCount) )
-                  * 1000 * 0.8,
+                  * 1000 * 0.5 + 0.2,
               easing: 'easeInOutCubic'
             },
             lineHeight = parseInt(
