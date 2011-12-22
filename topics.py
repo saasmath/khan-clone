@@ -92,7 +92,7 @@ def load_videos(version, title=None):
         for i, v in enumerate(videos):
             for e in v.related_exercises():
                 if e.key() not in content_keys:
-                    content_keys.insert(i + 1 + added, e.key())
+                    content_keys.insert(i + added, e.key())
                     added += 1
 
         topic = Topic.insert(title=p.title,
