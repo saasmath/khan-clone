@@ -34,9 +34,9 @@
 
 {% macro graph_date_picker(user_data, graph_type) -%}
 <span class="graph-date-picker">
-    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=today" class="graph-link graph-sub-link 0">Today</a> | 
-    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=yesterday" class="graph-link graph-sub-link 0">Yesterday</a> | 
-    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=lastweek&dt_end=today" class="graph-link graph-sub-link 0">Last 7 Days</a> | 
+    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=today" class="graph-link graph-sub-link 0">Today</a> |
+    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=yesterday" class="graph-link graph-sub-link 0">Yesterday</a> |
+    <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=lastweek&dt_end=today" class="graph-link graph-sub-link 0">Last 7 Days</a> |
     <a href="/profile/graph/{{graph_type|escape}}?student_email={{user_data.email|escape}}&dt_start=lastmonth&dt_end=today" class="graph-link graph-sub-link 0">Last 30 Days</a>
 </span>
 {%- endmacro %}
@@ -52,37 +52,48 @@
     {% if view != "mobile" %}
     {{ social.share_badge_button(recent_activity.badge.description, recent_activity.badge.icon_src, recent_activity.badge.extended_description, recent_activity.user_badge.target_context_name, "Recent-Activity-Share") }}
     {% endif %}
-    </div>	
+    </div>
 </li>
 {%- endmacro %}
 
 {% macro recent_activity_entry_exercise(user_data_student, recent_activity, view="standard") -%}
 <li class="exercise {% if recent_activity.earned_proficiency %}complete{% endif %}">
-    <span class="activity-image"><img src="/images/generic-exercise-icon-inset.png" /></span>
-    <div class="ach-text">Answered <span class="problem-count">{% if view != "mobile" %}<a href="/profile/graph/exerciseproblems?student_email={{ user_data_student.email|escape }}&exercise_name={{ recent_activity.problem_log.exercise }}">{% endif %}{{ recent_activity.c_problems }} problem{{ recent_activity.c_problems|pluralize }}{% if view != "mobile" %}</a>{% endif %}</span> 
+    <span class="activity-image"><img src="{{ recent_activity.src_icon() }}" /></span>
+    <div class="ach-text">Answered <span class="problem-count">{% if view != "mobile" %}<a href="/profile/graph/exerciseproblems?student_email={{ user_data_student.email|escape }}&exercise_name={{ recent_activity.problem_log.exercise }}">{% endif %}{{ recent_activity.c_problems }} problem{{ recent_activity.c_problems|pluralize }}{% if view != "mobile" %}</a>{% endif %}</span>
     {% if recent_activity.earned_proficiency %}
-        to achieve proficiency in 
+        to achieve proficiency in
     {% else %}
-        in 
+        in
     {% endif %}
     {{ recent_activity.exercise_display_name|escape }}
     <br /><span class="time">{{ recent_activity.timestamp()|escape }}</span>
-	{% if view != "mobile" %}
+    {% if view != "mobile" %}
     {{ social.share_exercise_button(recent_activity.c_problems, recent_activity.earned_proficiency, recent_activity.exercise_display_name, "Recent-Activity-Share") }}
-	{% endif %}
-	</div>
+    {% endif %}
+    </div>
 </li>
 {%- endmacro %}
 
 {% macro recent_activity_entry_video(user_data_student, recent_activity, view="standard") -%}
 <li class="video">
-<span class="activity-image"><img src="/images/video-camera-icon-inset.png" /></span><div class="ach-text">
+<span class="activity-image"><img src="{{ recent_activity.src_icon() }}" /></span><div class="ach-text">
     Watched <span class="video-minutes">{{ recent_activity.time_watched()|escape }}</span> of <a href="/video?v={{recent_activity.video_log.video.youtube_id}}">{{ recent_activity.video_log.video_title|escape }}</a>
    <br /> <span class="time">{{ recent_activity.timestamp()|escape }}</span>
-	{% if view != "mobile" %}
+    {% if view != "mobile" %}
     {{ social.share_video_button(recent_activity.video_log.video_title, recent_activity.video_log.video.description, recent_activity.video_log.video.youtube_id, "Recent-Activity-Share") }}
-	{% endif %}
-	</div>
+    {% endif %}
+    </div>
+</li>
+{%- endmacro %}
+
+{% macro recent_activity_entry_goal(user_data_student, recent_activity, view="standard") -%}
+<li class="achievement" >
+    <span class="activity-image" style=""><img src="{{ recent_activity.src_icon() }}" /></span>
+    <div class="ach-text">
+        Completed the goal <a href="/profile#/api/v1/user/goals">{{ recent_activity.goal.title|escape }}</a> after working toward it for {{ recent_activity.goal.completed_time|escape }}
+    <br /><span class="time">{{ recent_activity.timestamp()|escape }}</span>
+    {# todo: share goal button! #}
+    </div>
 </li>
 {%- endmacro %}
 

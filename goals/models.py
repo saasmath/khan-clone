@@ -186,6 +186,14 @@ class GoalList(object):
             db.put(changes + user_changes)
         return changes
 
+    @staticmethod
+    def get_between_dts(user_data, dt_a, dt_b):
+        query = GoalList.get_goals_query(user_data)
+        query.filter('completed_on >=', dt_a)
+        query.filter('completed_on <=', dt_b)
+        query.order('completed_on')
+        return query
+
 class GoalObjective(object):
     # Objective status
     progress = 0.0
