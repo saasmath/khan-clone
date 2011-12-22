@@ -285,7 +285,7 @@ class ViewSharedPoints(RequestHandler):
 
 class ViewProgressChart(RequestHandler):
     def get(self):
-        self.redirect("/profile?k&selected_graph_type=" + ExercisesOverTimeGraph.GRAPH_TYPE)
+        self.redirect("/profile?selected_graph_type=" + ExercisesOverTimeGraph.GRAPH_TYPE)
 
 class ViewClassTime(RequestHandler):
     def get(self):
@@ -298,7 +298,7 @@ class ViewClassReport(RequestHandler):
 class ViewCharts(RequestHandler):
     def get(self):
         student_email = self.request_student_email_legacy()
-        url = "/profile?k&selected_graph_type=%s&student_email=%s&exid=%s" % (
+        url = "/profile?selected_graph_type=%s&student_email=%s&exid=%s" % (
             ExerciseProblemsGraph.GRAPH_TYPE,
             student_email,
             self.request_string("exercise_name"))

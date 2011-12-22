@@ -488,7 +488,7 @@ var Profile = {
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
-            student.profile_url = "/profile?k&student_email="+ student.email +"#/api/v1/user/goals?email="+student.email;
+            student.profile_url = "/profile?student_email="+ student.email +"#/api/v1/user/goals?email="+student.email;
 
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
