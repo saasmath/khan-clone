@@ -9,7 +9,7 @@ from google.appengine.ext import db
 class BadgeStat(db.Model):
     badge_name = db.StringProperty()
     count_awarded = db.IntegerProperty(default = 0)
-    dt_last_calculated = db.DateTimeProperty(auto_now_add=True)
+    dt_last_calculated = db.DateTimeProperty()
 
     @staticmethod
     def get_or_insert_for(badge_name):
@@ -27,9 +27,27 @@ class BadgeStat(db.Model):
         badge = BadgeStat.get_or_insert_for(badge_name)
         return badge.count_awarded
 
-    def recalculate(self):
-        self.count_awarded = UserBadge.count_by_badge_name(self.badge_name)
-        self.dt_last_calculated = datetime.datetime.now()
+    @property
+    def time_since_calculation(self):
+        if not self.dt_last_calculated:
+            return datetime.timedelta.max
+
+        return datetime.datetime.now() - self.dt_last_calculated
+
+    def needs_update(self):
+        # Update if it's been at least 6 hours since last calculation.
+        # (We're not recalculating due to a failed task)
+        return self.time_since_calculation.seconds > (60 * 60 * 6)
+
+    def update(self):
+        dt_last_calculated_next = datetime.datetime.now()
+
+        self.count_awarded += UserBadge.count_by_badge_name_between_dts(
+                self.badge_name, 
+                self.dt_last_calculated, 
+                dt_last_calculated_next)
+
+        self.dt_last_calculated = dt_last_calculated_next
 
 class CustomBadgeType(db.Model):
     description = db.StringProperty()
@@ -88,8 +106,15 @@ class UserBadge(db.Model):
         return query
 
     @staticmethod
-    def count_by_badge_name(name):
+    def count_by_badge_name_between_dts(name, dt_a, dt_b):
         query = UserBadge.all(keys_only=True)
+
+        if dt_a:
+            query.filter('date >=', dt_a)
+
+        if dt_b:
+            query.filter('date <', dt_b)
+
         query.filter('badge_name = ', name)
 
         count = 0

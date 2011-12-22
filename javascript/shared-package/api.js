@@ -45,7 +45,9 @@ var APIActionResults = {
                         xhr.setRequestHeader("X-KA-FKey", xsrfToken);
                     } else {
                         apiVersionMismatch();
-                        settings.error();
+                        if ( settings.error ) {
+                            settings.error();
+                        }
                         return false;
                     }
                 }
