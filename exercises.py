@@ -221,6 +221,8 @@ class ViewExercise(request_handler.RequestHandler):
                 if problem_log.count_hints is not None:
                     user_exercise.count_hints = problem_log.count_hints
 
+                user_exercise.current = problem_log.sha1 == sha1
+
         is_webos = self.is_webos()
         browser_disabled = is_webos or self.is_older_ie()
         renderable = renderable and not browser_disabled
