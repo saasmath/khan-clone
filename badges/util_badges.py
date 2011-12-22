@@ -238,14 +238,10 @@ class BadgeStatistics(request_handler.RequestHandler):
         for badge in all_badges():
 
             badge_stat = models_badges.BadgeStat.get_or_insert_for(badge.name)
-            if badge_stat:
-                time_delta = datetime.datetime.now() - badge_stat.dt_last_calculated
 
-                # Calculate if it's been at least an hour since last calculation.
-                # (We're not recalculating due to a failed task)
-                if badge_stat.count_awarded == 0 or time_delta.seconds > 3600:
-                    badge_stat.recalculate()
-                    badge_stat.put()
+            if badge_stat and badge_stat.needs_update():
+                badge_stat.update()
+                badge_stat.put()
 
 # /admin/startnewbadgemapreduce is called periodically by a cron job
 class StartNewBadgeMapReduce(request_handler.RequestHandler):
