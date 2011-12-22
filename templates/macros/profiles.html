@@ -24,12 +24,12 @@
 </script>
 {%- endmacro %}
 
-{% macro graph_date_picker(email_quoted, graph_type) -%}
+{% macro graph_date_picker(profile_root, graph_type) -%}
 <span class="graph-date-picker">
-    <a href="/profile/{{email_quoted|escape}}/vital-statistics/{{graph_type}}/today" class="graph-link graph-sub-link 0">Today</a> | 
-    <a href="/profile/{{email_quoted|escape}}/vital-statistics/{{graph_type}}/yesterday" class="graph-link graph-sub-link 0">Yesterday</a> | 
-    <a href="/profile/{{email_quoted|escape}}/vital-statistics/{{graph_type}}/last-week" class="graph-link graph-sub-link 0">Last 7 Days</a> | 
-    <a href="/profile/{{email_quoted|escape}}/vital-statistics/{{graph_type}}/last-month" class="graph-link graph-sub-link 0">Last 30 Days</a>
+    <a href="{{profile_root}}/vital-statistics/{{graph_type}}/today" class="graph-link graph-sub-link 0">Today</a> | 
+    <a href="{{profile_root}}/vital-statistics/{{graph_type}}/yesterday" class="graph-link graph-sub-link 0">Yesterday</a> | 
+    <a href="{{profile_root}}/vital-statistics/{{graph_type}}/last-week" class="graph-link graph-sub-link 0">Last 7 Days</a> | 
+    <a href="{{profile_root}}/vital-statistics/{{graph_type}}/last-month" class="graph-link graph-sub-link 0">Last 30 Days</a>
 </span>
 {%- endmacro %}
 

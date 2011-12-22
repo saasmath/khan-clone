@@ -387,7 +387,7 @@ def update_user_profile():
 
     user_data.save()
 
-    if profile_json['username'] is not None:
+    if profile_json['username']:
         if not user_data.claim_username(profile_json['username']):
             return api_invalid_param_response("That username is already taken.")
 
@@ -633,6 +633,7 @@ def get_students_progress_summary():
             progress_buckets[status].append({
                     'nickname': student.nickname,
                     'email': student.email,
+                    'profile_root': student.profile_root,
             })
 
         progress = [dict([('status', status),
@@ -1282,6 +1283,7 @@ def get_student_goals():
         student_data = {}
         student_data['email'] = student.email
         student_data['nickname'] = student.nickname
+        student_data['profile_root'] = student.profile_root
         goals = GoalList.get_current_goals(student)
         student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
         return_data.append(student_data)

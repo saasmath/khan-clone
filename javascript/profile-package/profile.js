@@ -16,7 +16,7 @@ var Profile = {
         Profile.router = new Profile.TabRouter();
         Backbone.history.start({
             pushState: true,
-            root: "/profile/" + encodeURIComponent(USER_EMAIL)
+            root: userCardData.profileRoot
         });
 
         // Remove goals from IE<=8
@@ -78,7 +78,7 @@ var Profile = {
             // in a reusable way
             if (!event.metaKey) {
                 event.preventDefault();
-                var route = $(this).attr("href").replace("/profile/" + encodeURIComponent(USER_EMAIL), "");
+                var route = $(this).attr("href").replace(userCardData.profileRoot, "");
                 Profile.router.navigate(route, true);
             }
         });
@@ -408,7 +408,7 @@ var Profile = {
 
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
-        $("#profile-content").html(profileTemplate({email: USER_EMAIL}));
+        $("#profile-content").html(profileTemplate({profileRoot: userCardData.profileRoot}));
 
         // Show only the user card tab,
         // since the Backbone default route isn't triggered

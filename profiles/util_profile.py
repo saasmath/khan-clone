@@ -147,27 +147,32 @@ class ViewClassProfile(request_handler.RequestHandler):
 
 class ViewProfile(request_handler.RequestHandler):
     @ensure_xsrf_cookie
-    def get(self, student_email=None, unused=None):
+    def get(self, email_or_username=None, unused=None):
         """Render a student profile.
 
         Keyword arguments:
-        student_email -- matches the first grouping in /profile/(.+?)/(.*)
+        email_or_username -- matches the first grouping in /profile/(.+?)/(.*)
         unused -- matches the second grouping, and is ignored server-side,
         but is used to route client-side
 
         """
-        #TODO: What URL for phantoms?
+        # TODO: What URL for phantoms?
         student = UserData.current() or UserData.pre_phantom()
+        user_override = None
 
-        if student_email:
-            student_email = urllib.unquote(student_email)
-
-        user_override = UserData.get_possibly_current_user(student_email)
+        if email_or_username:
+            email_or_username = urllib.unquote(email_or_username)
+            if email_or_username.find("@") is -1:
+                user_override = UserData.get_possibly_current_user_by_username(email_or_username)
+            else:
+                user_override = UserData.get_possibly_current_user(email_or_username)
 
         if user_override and user_override.key_email != student.key_email:
             if not user_override.is_visible_to(student):
                 # If current user isn't an admin or student's coach, they can't
                 # look at anything other than their own profile.
+                # TODO: Handle case where there is no coach relationship
+                # but the student has opted in to public profiles.
                 self.redirect("/profile?k")
                 return
             else:

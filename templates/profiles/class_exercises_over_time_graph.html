@@ -122,7 +122,7 @@
                             point: {
                                 events: {
                                     click: function() {
-                                         window.location = "/profile/" + this.email
+                                         window.location = this.profile_root
                                                             + "/vital-statistics/exercise-problems/"
                                                             + this.name;
                                     }
@@ -194,6 +194,7 @@
                                     display_name: '{{ exercise_data.display_name()|escapejs }}', 
                                     nickname: '{{ exercise_data.nickname|escapejs }}',
                                     email: '{{ dict_student_exercises[key]["email"]|escapejs }}',
+                                    profile_root: '{{ dict_student_exercises[key]["profile_root"]|escapejs }}',
                                     x: {{ exercise_data.days_until_proficient }}, 
                                     y: {{ loop.index }}
                                 }{% if not loop.last %},{% endif %}

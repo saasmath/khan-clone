@@ -29,11 +29,10 @@ def badge_counts(user_data):
 
     counts_dict = {}
     # TODO: awkward turtle, decide what happens with phantom users
-    link_to_profile = "/profile/"
+    link_to_profile = "/profile"
     if user_data:
         counts_dict = util_badges.get_badge_counts(user_data)
-        link_to_profile += (urllib.quote(user_data.email, "") 
-                            + "/achievements")
+        link_to_profile = user_data.profile_root + "/achievements"
     else:
         counts_dict = badges.BadgeCategory.empty_count_dict()
 

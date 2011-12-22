@@ -402,7 +402,7 @@ var ClassProfile = {
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
-            student.profile_url = "/profile?student_email=" + student.email + "#goals";
+            student.profile_url = student.profile_root + "/goals";
 
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
@@ -427,8 +427,7 @@ var ClassProfile = {
                         }
                         objective.statusCSS = objective.status ? objective.status : "not-started";
                         objective.objectiveID = idx3;
-                        var base = "/profile/" + encodeURIComponent(student.email)
-                                            + "/vital-statistics";
+                        var base = student.profile_root + "/vital-statistics";
                         if (objective.type === "GoalObjectiveExerciseProficiency") {
                             objective.url = base + "/exercise-problems/" + objective.internal_id;
                         } else if (objective.type === "GoalObjectiveAnyExerciseProficiency") {
@@ -487,7 +486,7 @@ var ClassProfile = {
                 if (goalObjective.type == 'GoalObjectiveExerciseProficiency') {
                     $(this).click(function() {
                         // TODO: awkward turtle, replace with normal href action
-                        window.location = "/profile/" + encodeURIComponent(goalViewModel.student.email)
+                        window.location = goalViewModel.student.profile_root
                                             + "/vital-statistics/exercise-problems/"
                                             + goalObjective.internal_id;
                     });
@@ -1022,7 +1021,7 @@ var ClassProfile = {
                 exercise.exercise_display = data.exercise_names[idx2].display_name;
                 exercise.progress = (exercise.progress*100).toFixed(0);
                 // TODO: awkward turtle, replace w normal href
-                exercise.link = "/profile/" + encodeURIComponent(student_row.email)
+                exercise.link = student_row.profile_root
                                     + "/vital-statistics/exercise-problems/"
                                     + data.exercise_names[idx2].name;
                 if (exercise.last_done) {

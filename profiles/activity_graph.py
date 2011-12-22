@@ -1,5 +1,4 @@
 import datetime
-import urllib
 
 import models
 import activity_summary
@@ -271,7 +270,7 @@ def activity_graph_context(user_data_student, dt_start_utc, dt_end_utc, tz_offse
             "dict_proficiency_buckets": dict_proficiency_buckets,
             "dict_points_buckets": dict_points_buckets,
             "student_email": user_data_student.email,
-            "student_email_quoted": urllib.quote(user_data_student.email, ""),
+            "profile_root": user_data_student.profile_root,
             "tz_offset": tz_offset,
             "graph_title": graph_title,
             }

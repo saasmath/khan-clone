@@ -1,7 +1,6 @@
 import datetime
 import time
 import logging
-import urllib
 
 from templatefilters import seconds_to_time_string, pluralize
 
@@ -143,7 +142,7 @@ def focus_graph_context(user_data_student, dt_start_utc, dt_end_utc):
     dict_exercise_seconds = exercise_focus_data[1]
 
     return {
-            "student_email_quoted": urllib.quote(user_data_student.email, ""),
+            "profile_root": user_data_student.profile_root,
             "total_playlist_seconds": total_playlist_seconds,
             "dict_playlist_seconds": dict_playlist_seconds,
             "total_exercise_seconds": total_exercise_seconds,

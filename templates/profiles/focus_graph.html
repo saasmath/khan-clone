@@ -143,7 +143,7 @@
 </script>
 <p class="vital-statistics-description">
     Shows how well you've focused on exercises and video playlists.
-     {{ profile_macros.graph_date_picker(student_email_quoted, "focus") }}
+     {{ profile_macros.graph_date_picker(profile_root, "focus") }}
 </p>
 
 <div id="highchart-container" class="{% if is_graph_empty %}empty-chart{% endif %}">

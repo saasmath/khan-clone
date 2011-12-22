@@ -702,7 +702,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
     # TODO: constrain username to alphanumeric or some such
     # A globally unique user-specified username,
     # which will be used in URLS like khanacademy.org/profile/<username>
-    username = db.StringProperty(default="", indexed=False)
+    username = db.StringProperty(default="")
 
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
@@ -781,6 +781,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def badge_counts(self):
         return util_badges.get_badge_counts(self)
 
+    @property
+    def profile_root(self):
+        return "/profile/" + (self.username or urllib.quote(self.email))
+
     @staticmethod
     @request_cache.cache()
     def current():
@@ -839,6 +843,14 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return query.get()
 
     @staticmethod
+    def get_from_username(username):
+        if not username:
+            return None
+        query = UserData.all()
+        query.filter('username =', username)
+        return query.get()
+
+    @staticmethod
     def get_from_db_key_email(email):
         if not email:
             return None
@@ -860,6 +872,17 @@ class UserData(GAEBingoIdentityModel, db.Model):
         if user_data_current and user_data_current.user_email == email:
             return user_data_current
         return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+
+    @staticmethod
+    def get_possibly_current_user_by_username(username):
+        if not username:
+            return None
+
+        user_data_current = UserData.current()
+        if user_data_current and user_data_current.username == username:
+            return user_data_current
+
+        return UserData.get_from_username(username)
 
     @staticmethod
     def insert_for(user_id, email):
