@@ -113,29 +113,16 @@ var gae_bingo = (function() {
     // set defaults for callbacks
     errorCallback = errorCallback || defaultError;
     successCallback = successCallback || defaultSuccess;
-    
-    var stringify = window.JSON.stringify || $.noop;
 
-    var post_conversion = function(name){
-      jQuery.ajax({
-        url: path + "bingo",
-        type : "POST",
-        data : { convert : name },
-        success : successCallback,
-        error : errorCallback
-      });
-    };
-    
-
-    if( $.isArray( conversion ) ) {
-      $.each( conversion, function( i, v ) {
-        post_conversion( v );
-      });
-    } else {
-      post_conversion( conversion );
-    }
-
-
+    jQuery.ajax({
+      url: path + "bingo",
+      type : "POST",
+      data : {
+        convert : $.isArray(conversion) ? conversion.join("\t") : conversion
+      },
+      success : successCallback,
+      error : errorCallback
+    });
   };
 
   return {

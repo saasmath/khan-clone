@@ -90,14 +90,13 @@ class AB_Test(RequestHandler):
 
 
 class Bingo(RequestHandler):
-    """post a conversion to gae_bingo by passing { convert : "conversion_name" }
-    
-    you cannot currently pass a json list (as the response would be a bit ambiguous)
-    so instead pass multiple calls to post (which is what the js tool does)
+    """post a conversion to gae_bingo by passing
+    { convert : "conversion_name_1\tconversion_name_2\t..." }
     
     successful conversions return HTTP 204
     
-    failed conversions return a 404 (i.e. experiment not found in reverse-lookup)
+    failed conversions return a 404 (i.e. experiment for any conversion name not
+    found in reverse-lookup)
     
     no params returns a 400 error
     """
@@ -106,25 +105,27 @@ class Bingo(RequestHandler):
         
         bingo_cache = BingoCache.get()
         
-        conversion = self.request.get("convert", None)
+        conversion_names = self.request.get("convert", '""').split("\t")
 
         self.response.headers['Content-Type'] = 'text/json'
 
-        experiment_names = bingo_cache.get_experiment_names_by_conversion_name(conversion)
+        experiment_names = all(
+                bingo_cache.get_experiment_names_by_conversion_name(name)
+                for name in conversion_names)
 
         status = 200
         response = None
         
-        if conversion:
+        if conversion_names:
             
             if experiment_names:
                 # send null message and score the conversion
-                status = 204 if conversion != 'hints_free_hint' else 205
-                bingo(conversion)
+                status = 204
+                bingo(conversion_names)
             
             else:
                 # send error, conversion not found
-                status = 404 if conversion != 'hints_free_hint' else 405
+                status = 404
         
         else:
             # no luck, compadre
@@ -134,5 +135,4 @@ class Bingo(RequestHandler):
         self.response.set_status(status)
         if response:
             self.response.out.write(json.dumps(response))
-        return
         
