@@ -320,17 +320,6 @@ def exercise_graph_dict_json(user_data, admin=False):
 
 class ViewAllExercises(request_handler.RequestHandler):
 
-    _review_conversion_tests = [
-        ('review_all_problems_done', ConversionTypes.Counting),
-        ('review_review_problems_done', ConversionTypes.Counting),
-        ('review_finished_review', ConversionTypes.Counting),
-        ('review_gained_proficiency_all', ConversionTypes.Counting),
-        ('review_gained_proficiency_easy_binary', ConversionTypes.Binary),
-        ('review_gained_proficiency_hard_binary', ConversionTypes.Binary),
-    ]
-    _review_conversion_names, _review_conversion_types = [
-        list(x) for x in zip(*_review_conversion_tests)]
-
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
@@ -338,6 +327,8 @@ class ViewAllExercises(request_handler.RequestHandler):
         sees_new_review = ab_test('Review Mode UI',
             conversion_name=ViewExercise._review_conversion_names,
             conversion_type=ViewExercise._review_conversion_types)
+        show_review_drawer = (sees_new_review and not
+                user_exercise_graph.has_completed_review())
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
@@ -345,8 +336,35 @@ class ViewAllExercises(request_handler.RequestHandler):
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
             'selected_nav_link': 'practice',
-            'show_review_drawer': sees_new_review and not user_exercise_graph.has_completed_review(),
-            }
+            'show_review_drawer': show_review_drawer,
+        }
+
+        if show_review_drawer:
+
+            template_values['review_statement'] = ab_test(
+                'review_statement_of_fact', [
+                    'Fortify your knowledge',
+                    'Attain mastery',
+                    'Review exercises',
+                    'Reinforce your learning',
+                    'Consolidate what you know',
+                    "Master what you've learned",
+                    'How much can you recall?',
+                    "Let's review",
+                    'Refresh your memory',
+                ]
+            )
+
+            template_values['review_call_to_action'] = ab_test(
+                'review_call_to_action', [
+                    'Start Reviews',
+                    'Start now',
+                    'Go go go!',
+                    "Let's go!",
+                    "I'll do it",
+                    "Let's do this!",
+                ]
+            )
 
         self.render_jinja2_template('viewexercises.html', template_values)
 

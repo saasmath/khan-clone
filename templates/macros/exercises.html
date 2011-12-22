@@ -11,7 +11,7 @@
 </div>
 {%- endmacro %}
 
-{% macro exercise_dashboard(review_drawer=False) -%}
+{% macro exercise_dashboard(review_drawer=False, review_statement='', review_call_to_action='') -%}
     <div class="dashboard-header">
         <div class="dashboard-nav">
             <span class="selected"><a href="#">Knowledge Map{% if App.offline_mode %} (<em>not supported in offline mode</em>){% endif %}</a></span> |
@@ -25,9 +25,9 @@
     <a href="/review" id="dashboard-review-exercises" class="hide-on-dashboard-filter exercise-color review light">
         <img src="/images/node-review.png" height="40" width="38">
         <span class="gradient-overlay"></span>
-        <span id="dashboard-review-title" href="/review">Fortify your Knowledge</span>
+        <span id="dashboard-review-title" href="/review">{{ review_statement }}</span>
         <!-- TODO(david): This is placeholder. Need points info. -->
-        <span id="dashboard-review-content" href="/review">Start Reviews &raquo;</span>
+        <span id="dashboard-review-content" href="/review">{{ review_call_to_action }} &raquo;</span>
     </a>
     {%- endif -%}
     <div class="dashboard-drawer-inner fancy-scrollbar"><div>
