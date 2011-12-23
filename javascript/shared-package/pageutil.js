@@ -810,17 +810,6 @@ var CSSMenus = {
 };
 $(CSSMenus.init);
 
-var IEHtml5 = {
-    init: function() {
-        // Create a dummy version of each HTML5 element we use so that IE 6-8 can style them.
-        var html5elements = ['header', 'footer', 'nav', 'article', 'section', 'menu'];
-        for (var i = 0; i < html5elements.length; i++) {
-            document.createElement(html5elements[i]);
-        }
-   }
-};
-IEHtml5.init();
-
 var VideoViews = {
     init: function() {
         var seedTime = new Date(2011,3,22);  //Seed Date is set to October 31, 2010  0-January, 11-december
@@ -874,7 +863,7 @@ var FacebookHook = {
                 if (response.authResponse) {
                     FacebookHook.fixMissingCookie(response.authResponse);
                 }
-                
+
                 $('#page_logout').click(function(e) {
 
                     eraseCookie("fbsr_" + FB_APP_ID);
