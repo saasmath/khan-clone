@@ -15,9 +15,14 @@ import math
 import time
 
 @layer_cache.cache_with_key_fxn(
-        lambda *args, **kwargs: "library_content_by_topic_%s" % Setting.cached_library_content_date()
+        lambda ajax = False: "library_content_by_topic_%s_%s" % ("ajax" if ajax else "inline", Setting.cached_playlist_content_date() if ajax else Setting.cached_library_content_date())
         )
-def library_content_html():
+def library_content_html(ajax = False):
+    """" Returns the HTML for the structure of the playlists as they will be
+    populated ont he homepage. Does not actually contain the list of video
+    names as those are filled in later asynchronously via the cache.
+    """
+
     topics = Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
@@ -34,15 +39,21 @@ def library_content_html():
             topic_prev.next = topic
         topic_prev = topic
 
-    # Separating out the columns because the formatting is a little different on each column
+    timestamp = time.time()
     template_values = {
-        'topics': topics
+        'topics': topics,
+        'ajax' : ajax,
+        # convert timestamp to a nice integer for the JS
+        'timestamp': int(round(timestamp * 1000))
     }
 
     html = shared_jinja.get().render_template("library_content_template.html", **template_values)
 
     # Set shared date of last generated content
-    Setting.cached_library_content_date(str(datetime.datetime.now())) 
+    if ajax:
+        Setting.cached_playlist_content_date(str(datetime.datetime.now())) 
+    else:
+        Setting.cached_library_content_date(str(datetime.datetime.now()))
     return html
 
 class GenerateLibraryContent(request_handler.RequestHandler):

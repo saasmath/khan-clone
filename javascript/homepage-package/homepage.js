@@ -79,7 +79,7 @@ var Homepage = {
     },
 
     /**
-     * Loads the contents of the playlist data.
+     * Loads the contents of the topic data.
      */
     loadData: function() {
         var cacheToken = window.Homepage_cacheToken;
@@ -92,7 +92,7 @@ var Homepage = {
         }
         $.ajax({
             type: "GET",
-            url: "/api/v1/playlists/library/compact",
+            url: "/api/v1/topics/library/compact",
             dataType: "jsonp",
 
 			// The cacheToken is supplied by the host page to indicate when the library
@@ -113,49 +113,27 @@ var Homepage = {
         });
     },
 
-    renderLibraryContent: function(content) {
-        var playlists = [];
-        function visitTopicOrPlaylist(item) {
-            if (item["playlist"]) {
-                // Playlist item - add to the master list.
-                playlists.push(item["playlist"]);
-                return;
-            }
-            // Otherwise it's a topic with sub-playlists or sub-topics
-            var subItems = item["items"];
-            if (subItems) {
-                for (var i = 0, sub; sub = subItems[i]; i++) {
-                    visitTopicOrPlaylist(sub);
-                }
-            }
-        }
-        for (var i = 0, item; item = content[i]; i++) {
-            visitTopicOrPlaylist(item);
-        }
-
-		// Playlists collected - go ahead and render them.
+    renderLibraryContent: function(topics) {
         var template = Templates.get("homepage.videolist");
-        for (var i = 0, playlist; playlist = playlists[i]; i++) {
-            var videos = playlist["videos"]
-            var videosPerCol = Math.ceil(videos.length / 3)
-            var colHeight = videosPerCol * 18;
-            playlist["colHeight"] = colHeight;
-            playlist["titleEncoded"] = encodeURIComponent(playlist["title"]);
-            for (var j = 0, video; video = videos[j]; j++) {
-                var col = (j / videosPerCol) | 0;
-                video["col"] = col;
-                if ((j % videosPerCol == 0) && col > 0) {
-                    video["firstInCol"] = true;
+        $.each(topics, function(i, topic){
+            var items = topic["children"]
+            var itemsPerCol = Math.ceil(items.length / 3)
+            var colHeight = itemsPerCol * 18;
+            topic["colHeight"] = colHeight;
+            topic["titleEncoded"] = encodeURIComponent(topic["title"]);
+            for (var j = 0, item; item = items[j]; j++) {
+                var col = (j / itemsPerCol) | 0;
+                item["col"] = col;
+                if ((j % itemsPerCol == 0) && col > 0) {
+                    item["firstInCol"] = true;
                 }
             }
 
-            var sluggified = playlist["slugged_title"];
-            var container = $("#" + sluggified + " ol").get(0);
-            container.innerHTML = template(playlist);
-        }
+            var container = $("#" + topic["id"] + " ol").get(0);
+            container.innerHTML = template(topic);
+        })
 
-		content = null;
+		topics = null;
     }
 }
-
 $(function(){Homepage.init();});

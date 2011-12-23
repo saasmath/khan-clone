@@ -130,6 +130,38 @@ def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_content_topics(version)
 
+# not documented and used only by ajax homepage ... can remove once we remake the homepage with the topic tree
+@route("/api/v1/topics/library/compact", methods=["GET"])
+@cacheable(caching_age=(60 * 60 * 24 * 60))
+@etag(lambda: models.Setting.cached_library_content_date())
+@jsonp
+@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
+@layer_cache.cache_with_key_fxn(
+    lambda: "api_topics_library_compact_%s" % models.Setting.cached_library_content_date(),
+    layer=layer_cache.Layers.Memcache)
+@compress
+@jsonify
+def topics_library_compact():
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
+
+    def trimmed_item(item, topic):
+        trimmed_item_dict = {}
+        if item.kind() == "Video":
+            trimmed_item_dict['url'] = "/video/%s?topic=%s" %(item.readable_id, topic.id)
+            trimmed_item_dict['key_id'] = item.key().id()
+        elif item.kind() == "Url":
+            trimmed_item_dict['url'] = item.url
+        trimmed_item_dict['title'] = item.title
+        return trimmed_item_dict
+
+    topic_dict = {}
+    for topic in topics:
+        trimmed_info = {}
+        trimmed_info['id'] = topic.id
+        trimmed_info['children'] = [trimmed_item(v, topic) for v in topic.children]
+        topic_dict[topic.standalone_title] = trimmed_info
+
+    return topic_dict
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topicversion/<version_id>/playlists/<topic_id>/videos", methods=["GET"]) 
@@ -450,39 +482,6 @@ def playlists_library():
     playlist_dict = {}
     for playlist in playlists:
         playlist_dict[playlist.title] = playlist
-
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
-    replace_playlist_values(playlist_structure, playlist_dict)
-
-    return playlist_structure
-
-@route("/api/v1/playlists/library/compact", methods=["GET"])
-@cacheable(caching_age=(60 * 60 * 24 * 60))
-@etag(lambda: models.Setting.cached_library_content_date())
-@jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
-@layer_cache.cache_with_key_fxn(
-    lambda: "api_compact_library_%s" % models.Setting.cached_library_content_date(),
-    layer=layer_cache.Layers.Memcache)
-@compress
-@jsonify
-def playlists_library_compact():
-    playlists = fully_populated_playlists()
-
-    def trimmed_video(video):
-        trimmed_video_dict = {}
-        trimmed_video_dict['readable_id'] = video.readable_id
-        trimmed_video_dict['title'] = video.title
-        trimmed_video_dict['key_id'] = video.key().id()
-        return trimmed_video_dict
-
-    playlist_dict = {}
-    for playlist in playlists:
-        trimmed_info = {}
-        trimmed_info['title'] = playlist.title
-        trimmed_info['slugged_title'] = slugify(playlist.title)
-        trimmed_info['videos'] = [trimmed_video(v) for v in playlist.videos]
-        playlist_dict[playlist.title] = trimmed_info
 
     playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
     replace_playlist_values(playlist_structure, playlist_dict)

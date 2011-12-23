@@ -170,7 +170,7 @@ class ViewHomePage(request_handler.RequestHandler):
         if render_type == 'original':
             library_content = library.library_content_html()
         else:
-            library_content = library.playlist_content_html()
+            library_content = library.library_content_html(ajax = True)
 
         template_values = {
                             'marquee_video': marquee_video,

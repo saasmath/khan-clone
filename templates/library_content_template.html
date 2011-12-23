@@ -7,7 +7,7 @@
             {% if loop.first %}
                 <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
-            <div data-role="page" id="{{ topic.standalone_title|slugify|escape }}" data-theme="b">
+            <div data-role="page" id="{{ topic.id }}" data-theme="b">
                 <div data-role="header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
                     <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.standalone_title|escape}}</h2>
@@ -17,8 +17,15 @@
                     {% if topic.description %}
                         <p class='topic-desc'>{{topic.description|escape}}</p>
                     {% endif %}
-                    {{ templatetags.column_major_sorted_videos(topic) }}
 
+                    {% if ajax %}
+                        <ol style="height:{{topic.children|length|round(0,'ceil') / 3 * 18}}px;" data-role="listview" data-inset="true">
+                        <span style="padding-left: 16px;">Loading videos...</span>
+                        </ol>
+                    {% else %}
+                        {{ templatetags.column_major_sorted_videos(topic) }}
+                    {% endif %}
+    
                     <div class="clear desktop-only">
                     {% if topic.next %}
                         <a name="{{ topic.next.id|slugify|escape }}" id="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
@@ -33,4 +40,9 @@
         </div>
 </div>
 
+{# Pass along the caching information to the JS so that
+	when it makes its request for content, it can use this token #}
+{% if ajax %}
+    <script>var Homepage_cacheToken = {{ timestamp }};</script>
+{% endif %}
 
