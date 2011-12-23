@@ -43,15 +43,15 @@ var Profile = {
             $("#badge-container").css("display", "");
             clickedBadge.siblings().removeClass("selected");
 
-            if ($("#badge-container > #" + category ).is(":visible")) {
+            if ($("#badge-container > #" + category).is(":visible")) {
                if (clickedBadge.parents().hasClass("standard-view")) {
-                   $("#badge-container > #" + category ).slideUp(300, function(){
+                   $("#badge-container > #" + category).slideUp(300, function() {
                            $("#badge-container").css("display", "none");
                            clickedBadge.removeClass("selected");
                        });
                }
                else {
-                   $("#badge-container > #" + category ).hide();
+                   $("#badge-container > #" + category).hide();
                    $("#badge-container").css("display", "none");
                    clickedBadge.removeClass("selected");
                }
@@ -98,20 +98,20 @@ var Profile = {
         $(".sharepop").hide();
 
         $(".achievement,.exercise,.video").hover(
-            function () {
+            function() {
                 $(this).find(".share-link").show();
                 },
-            function () {
+            function() {
                 $(this).find(".share-link").hide();
                 $(this).find(".sharepop").hide();
               });
 
         $(".share-link").click(function() {
-            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
+            if ($.browser.msie && (parseInt($.browser.version, 10) < 8)) {
                 $(this).next(".sharepop").toggle();
             } else {
                 $(this).next(".sharepop").toggle(
-                        "drop", { direction:"up" }, "fast" );
+                        "drop", { direction: "up" }, "fast");
             }
             return false;
         });
@@ -128,14 +128,14 @@ var Profile = {
             "/vital-statistics/:graph": "showVitalStatistics"
         },
 
-        showDefault: function(){
+        showDefault: function() {
             $("#tab-content-user-profile").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
         },
 
         // TODO: must send TZ offset
-        showVitalStatistics: function(graph, exercise, timeURLParameter){
+        showVitalStatistics: function(graph, exercise, timeURLParameter) {
             var graph = graph || "activity",
                 exercise = exercise || "addition_1",
                 timeURLParameter = timeURLParameter || "",
@@ -164,7 +164,7 @@ var Profile = {
                         .eq(index).css("background-color", "#eee");
                 }
             }
-            
+
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
             Profile.loadGraph(href);
         },
@@ -185,13 +185,13 @@ var Profile = {
             this.showVitalStatistics(graph, null, timeURLParameter);
         },
 
-        showAchievements: function(){
+        showAchievements: function() {
             $("#tab-content-achievements").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
         },
 
-        showGoals: function(){
+        showGoals: function() {
             $("#tab-content-goals").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-goals").attr("rel"));
@@ -205,12 +205,12 @@ var Profile = {
 
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
-            '/api/v1/user/exercises': this.renderExercisesTable,
+            "/api/v1/user/exercises": this.renderExercisesTable
         };
         if (!href) return;
 
         if (this.fLoadingGraph) {
-            setTimeout(function(){Profile.loadGraph(href);}, 200);
+            setTimeout(function() {Profile.loadGraph(href);}, 200);
             return;
         }
 
@@ -227,8 +227,8 @@ var Profile = {
             type: "GET",
             url: Timezone.append_tz_offset_query_param(href),
             data: {},
-            dataType: apiCallback ? 'json' : 'html',
-            success: function(data){
+            dataType: apiCallback ? "json" : "html",
+            success: function(data) {
                 Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
             },
             error: function() {
@@ -252,7 +252,7 @@ var Profile = {
             $("#graph-content").html(data);
         }
         var diff = (new Date).getTime() - start;
-        KAConsole.log('API call rendered in ' + diff + ' ms.');
+        KAConsole.log("API call rendered in " + diff + " ms.");
     },
 
     finishLoadGraphError: function() {
@@ -267,29 +267,29 @@ var Profile = {
     renderExercisesTable: function(data) {
         var templateContext = [];
 
-        for ( var i = 0, exercise; exercise = data[i]; i++ ) {
+        for (var i = 0, exercise; exercise = data[i]; i++) {
             var stat = "Not started";
             var color = "";
             var states = exercise["exercise_states"];
             var totalDone = exercise["total_done"];
 
-            if ( states["reviewing"] ) {
+            if (states["reviewing"]) {
                 stat = "Review";
                 color = "review light";
-            } else if ( states["proficient"] ) {
+            } else if (states["proficient"]) {
                 // TODO: handle implicit proficiency - is that data in the API?
                 // (due to proficiency in a more advanced module)
                 stat = "Proficient";
                 color = "proficient";
-            } else if ( states["struggling"] ) {
+            } else if (states["struggling"]) {
                 stat = "Struggling";
                 color = "struggling";
-            } else if ( totalDone > 0 ) {
+            } else if (totalDone > 0) {
                 stat = "Started";
                 color = "started";
             }
 
-            if ( color ) {
+            if (color) {
                 color = color + " action-gradient seethrough";
             } else {
                 color = "transparent";
@@ -301,18 +301,18 @@ var Profile = {
                 "status": stat,
                 "shortName": model["short_display_name"] || model["display_name"],
                 "displayName": model["display_name"],
-                "progress": Math.floor( exercise["progress"] * 100 ) + "%",
+                "progress": Math.floor(exercise["progress"] * 100) + "%",
                 "totalDone": totalDone
             });
         }
-        var template = Templates.get( "profile.exercise_progress" );
-        $("#graph-content").html( template({ "exercises": templateContext }) );
+        var template = Templates.get("profile.exercise_progress");
+        $("#graph-content").html(template({ "exercises": templateContext }));
 
         Profile.hoverContent($("#module-progress .student-module-status"));
         $("#module-progress .student-module-status").click(function(e) {
             $("#info-hover-container").hide();
             // Extract the name from the ID, which has been prefixed.
-            var exerciseName = this.id.substring( "exercise-".length );
+            var exerciseName = this.id.substring("exercise-".length);
             Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
         });
     },
@@ -330,12 +330,12 @@ var Profile = {
     // TODO: move this out to a more generic utility file.
     parseQueryString: function(url) {
         var qs = {};
-        var parts = url.split('?');
-        if(parts.length == 2) {
-            var querystring = parts[1].split('&');
-            for(var i = 0; i<querystring.length; i++) {
-                var kv = querystring[i].split('=');
-                if(kv[0].length > 0) { //fix trailing &
+        var parts = url.split("?");
+        if (parts.length == 2) {
+            var querystring = parts[1].split("&");
+            for (var i = 0; i < querystring.length; i++) {
+                var kv = querystring[i].split("=");
+                if (kv[0].length > 0) { //fix trailing &
                     key = decodeURIComponent(kv[0]);
                     value = decodeURIComponent(kv[1]);
                     qs[key] = value;
@@ -347,11 +347,11 @@ var Profile = {
 
     // TODO: move this out to a more generic utility file.
     reconstructQueryString: function(hash, kvjoin, eljoin) {
-        kvjoin = kvjoin || '=';
-        eljoin = eljoin || '&';
+        kvjoin = kvjoin || "=";
+        eljoin = eljoin || "&";
         qs = [];
-        for(var key in hash) {
-            if(hash.hasOwnProperty(key))
+        for (var key in hash) {
+            if (hash.hasOwnProperty(key))
                 qs.push(key + kvjoin + hash[key]);
         }
         return qs.join(eljoin);
@@ -363,7 +363,7 @@ var Profile = {
         var mouseY;
 
         elements.hover(
-            function( e ) {
+            function(e) {
                 var hoverTime = +(new Date());
                 lastHoverTime = hoverTime;
                 mouseX = e.pageX;
@@ -376,15 +376,15 @@ var Profile = {
 
                     var hoverData = $(el).children(".hover-data");
                     var html = $.trim(hoverData.html());
-                    if ( html ) {
+                    if (html) {
                         var jelGraph = $("#graph-content");
                         var leftMax = jelGraph.offset().left +
                                 jelGraph.width() - 150;
                         var left = Math.min(mouseX + 15, leftMax);
 
                         var jHoverEl = $("#info-hover-container");
-                        if ( jHoverEl.length === 0 ) {
-                            jHoverEl = $('<div id="info-hover-container"></div>').appendTo('body');
+                        if (jHoverEl.length === 0) {
+                            jHoverEl = $('<div id="info-hover-container"></div>').appendTo("body");
                         }
                         jHoverEl
                             .html(html)
@@ -393,7 +393,7 @@ var Profile = {
                     }
                 }, 100);
             },
-            function( e ) {
+            function(e) {
                 lastHoverTime = null;
                 $("#info-hover-container").hide();
             }
@@ -441,7 +441,7 @@ var Profile = {
         var publicBadgeList = new Badges.BadgeList(publicBadgeData);
         publicBadgeList.setSaveUrl("/api/v1/user/badges/public");
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
-        $(".sticker-book").append( displayCase.render().el );
+        $(".sticker-book").append(displayCase.render().el);
 
         // Asynchronously load the full badge information in the background.
         $.ajax({
@@ -566,22 +566,22 @@ var Profile = {
                 $("#tab-content-achievements").html(achievementsTemplate(data));
 
                 $("#achievements #achievement-list > ul li").click(function() {
-                     var category = $(this).attr('id');
+                     var category = $(this).attr("id");
                      var clickedBadge = $(this);
 
                      $("#badge-container").css("display", "");
 
                      clickedBadge.siblings().removeClass("selected");
 
-                     if ($("#badge-container > #" + category ).is(":visible")) {
+                     if ($("#badge-container > #" + category).is(":visible")) {
                         if (clickedBadge.parents().hasClass("standard-view")) {
-                            $("#badge-container > #" + category ).slideUp(300, function(){
+                            $("#badge-container > #" + category).slideUp(300, function() {
                                     $("#badge-container").css("display", "none");
                                     clickedBadge.removeClass("selected");
                                 });
                         }
                         else {
-                            $("#badge-container > #" + category ).hide();
+                            $("#badge-container > #" + category).hide();
                             $("#badge-container").css("display", "none");
                             clickedBadge.removeClass("selected");
                         }

@@ -31,10 +31,10 @@ UserCardModel = Backbone.Model.extend({
         options.data = JSON.stringify({
             // Note that Backbone.Model.save accepts arguments to save to
             // the model before saving, so check for those first.
-            "avatarName": ( attrs && attrs[ "avatarName" ]) ||
-                          this.get( "avatarName" ),
-            "nickname": ( attrs && attrs[ "nickname" ]) ||
-                          this.get( "nickname" )
+            "avatarName": (attrs && attrs["avatarName"]) ||
+                          this.get("avatarName"),
+            "nickname": (attrs && attrs["nickname"]) ||
+                          this.get("nickname")
         });
 
         Backbone.Model.prototype.save.call(this, attrs, options);
@@ -52,9 +52,9 @@ UserCardView = Backbone.View.extend({
     },
 
     initialize: function() {
-        this.template = Templates.get( "profile.user-card" );
+        this.template = Templates.get("profile.user-card");
 
-        this.model.bind( "change:avatarSrc", _.bind( this.onAvatarChanged_, this ));
+        this.model.bind("change:avatarSrc", _.bind(this.onAvatarChanged_, this));
 
         /**
          * The picker UI component which shows a dialog to change the avatar.
@@ -67,12 +67,12 @@ UserCardView = Backbone.View.extend({
      * Updates the source preview of the avatar. This does not affect the model.
      */
     onAvatarChanged_: function() {
-        this.$("#avatar-pic").attr( "src", this.model.get( "avatarSrc" ));
+        this.$("#avatar-pic").attr("src", this.model.get("avatarSrc"));
     },
 
     render: function() {
-        $( this.el ).html( this.template( this.model.toJSON() ) )
-            .find( "abbr.timeago" ).timeago();
+        $(this.el).html(this.template(this.model.toJSON()))
+            .find("abbr.timeago").timeago();
         return this;
     },
 
@@ -80,23 +80,23 @@ UserCardView = Backbone.View.extend({
      * Handles a change to the nickname edit field in the view.
      * Propagates the change to the model.
      */
-    onNicknameChanged_: function( e ) {
+    onNicknameChanged_: function(e) {
         // TODO: validate
         var value = this.$("#nickname").val();
         this.model.save({ "nickname": value });
     },
 
-    onAvatarHover_: function( e ) {
+    onAvatarHover_: function(e) {
         this.$(".avatar-change-overlay").show();
     },
 
-    onAvatarLeave_: function( e ) {
+    onAvatarLeave_: function(e) {
         this.$(".avatar-change-overlay").hide();
     },
 
-    onAvatarClick_: function( e ) {
-        if ( !this.avatarPicker_ ) {
-            this.avatarPicker_ = new Avatar.Picker( this.model );
+    onAvatarClick_: function(e) {
+        if (!this.avatarPicker_) {
+            this.avatarPicker_ = new Avatar.Picker(this.model);
         }
         this.avatarPicker_.show();
     }

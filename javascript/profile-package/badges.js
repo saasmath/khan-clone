@@ -57,18 +57,18 @@ Badges.UserBadge = Backbone.Model.extend({
     },
 
     initialize: function(attributes, options) {
-        if ( !this.get( "badge" ) ) {
+        if (!this.get("badge")) {
             throw "A UserBadge object needs a reference badge object";
         }
 
         // Wrap the underlying badge info in a Model object and forward
         // change events.
-        var badgeModel = new Badges.Badge( this.get( "badge" ) );
+        var badgeModel = new Badges.Badge(this.get("badge"));
         this.set({ "badge": badgeModel }, { "silent": true });
         badgeModel.bind(
             "change",
-            function( ev ) { this.trigger( "change:badge" ); },
-            this );
+            function(ev) { this.trigger("change:badge"); },
+            this);
     }
 });
 
@@ -82,13 +82,13 @@ Badges.BadgeList = Backbone.Collection.extend({
 
     saveUrl: null,
 
-    setSaveUrl: function( url ) {
+    setSaveUrl: function(url) {
         this.saveUrl = url;
     },
 
     toJSON: function() {
-        return this.map( function( badge ) {
-            return badge.get( "name" );
+        return this.map(function(badge) {
+            return badge.get("name");
         });
     },
 
@@ -98,14 +98,14 @@ Badges.BadgeList = Backbone.Collection.extend({
      * it simply posts the information about what belongs in the set.
      * @param {Object} options Options similar to what Backbone.sync accepts.
      */
-    save: function( options ) {
+    save: function(options) {
         options = options || {};
         options["url"] = this.saveUrl;
         options["contentType"] = "application/json";
-        options["data"] = JSON.stringify( this.map(function( badge ) {
-            return badge.get( "name" );
+        options["data"] = JSON.stringify(this.map(function(badge) {
+            return badge.get("name");
         }));
-        Backbone.sync.call( this, "update", this, options );
+        Backbone.sync.call(this, "update", this, options);
     }
 });
 
@@ -154,15 +154,15 @@ Badges.DisplayCase = Backbone.View.extend({
     editControlEl: null,
 
     initialize: function() {
-        this.model.bind( "add", this.render, this );
-        this.model.bind( "remove", this.render, this );
-        this.model.bind( "change", this.render, this );
-        this.template = Templates.get( "profile.badge-display-case" );
+        this.model.bind("add", this.render, this);
+        this.model.bind("remove", this.render, this);
+        this.model.bind("change", this.render, this);
+        this.template = Templates.get("profile.badge-display-case");
 
         // TODO: register in some central intializing point?
         Handlebars.registerPartial(
             "badge-compact",
-            Templates.get( "profile.badge-compact" )
+            Templates.get("profile.badge-compact")
         );
     },
 
@@ -186,7 +186,7 @@ Badges.DisplayCase = Backbone.View.extend({
      *        to this display case.
      * @return {Badges.DisplayCase} This same instance so calls can be chained.
      */
-    setFullBadgeList: function( fullBadgeList ) {
+    setFullBadgeList: function(fullBadgeList) {
         // TODO: do we want to listen to events on the full badge list?
         this.fullBadgeList = fullBadgeList;
         this.updateEditControls();
@@ -199,20 +199,20 @@ Badges.DisplayCase = Backbone.View.extend({
      *        are available, the last used slot.
      * @return {Badges.DisplayCase} This same instance so calls can be chained.
      */
-    edit: function( index ) {
-        if ( !this.isEditable() || this.editing ) {
+    edit: function(index) {
+        if (!this.isEditable() || this.editing) {
             return this;
         }
 
-        this.setEditing_( true );
+        this.setEditing_(true);
 
         // Visual indicator for the badge edits.
         var self = this;
         $(".achievement-badge", this.mainCaseEl).animate({
             "margin": "5px"
         }, "fast", function() {
-            $(self.el).addClass( "editing" );
-            self.updateEditSelection_( index );
+            $(self.el).addClass("editing");
+            self.updateEditSelection_(index);
         });
 
         this.showBadgePicker_();
@@ -228,12 +228,12 @@ Badges.DisplayCase = Backbone.View.extend({
      *        to be edited. -1 to indicate that none should be selected (i.e.
      *        we're exiting edit mode.
      */
-    updateEditSelection_: function( index ) {
+    updateEditSelection_: function(index) {
         // By default, select the first empty slot, or the last non-empty
         // slot if completely full.
-        index = ( index === undefined ) ? this.model.length : index;
-        var max = Math.min( this.model.length, this.maxVisible - 1);
-        this.selectedIndex = Math.min( index, max );
+        index = (index === undefined) ? this.model.length : index;
+        var max = Math.min(this.model.length, this.maxVisible - 1);
+        this.selectedIndex = Math.min(index, max);
         this.updateSelectionHighlight();
     },
 
@@ -244,8 +244,8 @@ Badges.DisplayCase = Backbone.View.extend({
     showBadgePicker_: function() {
         this.renderBadgePicker();
         var jelPicker = $(this.badgePickerEl);
-        jelPicker.slideDown( "fast", function() { jelPicker.show(); })
-            .css( "margin-left", "300px" )
+        jelPicker.slideDown("fast", function() { jelPicker.show(); })
+            .css("margin-left", "300px")
             .animate({ "margin-left": "0" }, "fast", $.easing.easeInOutCubic);
 
         return this;
@@ -254,50 +254,50 @@ Badges.DisplayCase = Backbone.View.extend({
     /**
      * Handles a click to a badge in the main display case.
      */
-    onBadgeClicked_: function( e ) {
-        if ( !this.editing ) {
+    onBadgeClicked_: function(e) {
+        if (!this.editing) {
             // Noop when not editing.
             return;
         }
-        var index = $(".achievement-badge", this.mainCaseEl).index( e.currentTarget );
-        this.updateEditSelection_( index );
+        var index = $(".achievement-badge", this.mainCaseEl).index(e.currentTarget);
+        this.updateEditSelection_(index);
     },
 
     /**
      * Handles a click to a badge in the badge picker in edit mode.
      */
-    onBadgeInPickerClicked_: function( e ) {
+    onBadgeInPickerClicked_: function(e) {
         var name = e.currentTarget.id;
         var matchedBadge = _.find(
                 this.fullBadgeList.models,
-                function( userBadge ) {
-                    return userBadge.get( "badge" ).get( "name" ) == name;
+                function(userBadge) {
+                    return userBadge.get("badge").get("name") == name;
                 });
-        if ( !matchedBadge ) {
+        if (!matchedBadge) {
             // Shouldn't happen!
             return;
         }
 
         // Backbone.Collection doesn't have a .replce method - do it ourselves
         // TODO: should we be cloning?
-        var existing = this.model.at( this.selectedIndex );
-        if ( existing ) {
-            this.model.remove( existing );
+        var existing = this.model.at(this.selectedIndex);
+        if (existing) {
+            this.model.remove(existing);
         }
-        this.model.add( matchedBadge.get( "badge" ).clone(), { at: this.selectedIndex });
+        this.model.add(matchedBadge.get("badge").clone(), { at: this.selectedIndex });
     },
 
     /**
      * Exits edit mode.
      */
     stopEdit: function() {
-        if ( this.editing ) {
-            this.setEditing_( false );
-            this.updateEditSelection_( -1 );
+        if (this.editing) {
+            this.setEditing_(false);
+            this.updateEditSelection_(-1);
             var jelRootEl = $(this.el);
             var jelPicker = $(this.badgePickerEl);
             jelPicker.slideUp("fast", function() {
-                jelRootEl.removeClass( "editing" );
+                jelRootEl.removeClass("editing");
             });
             jelPicker.undelegate();
 
@@ -311,7 +311,7 @@ Badges.DisplayCase = Backbone.View.extend({
         this.model.save();
     },
 
-    setEditing_: function( editing ) {
+    setEditing_: function(editing) {
         this.editing = editing;
         this.updateEditControls();
     },
@@ -319,9 +319,9 @@ Badges.DisplayCase = Backbone.View.extend({
     /**
      * Builds a context object to render a single badge.
      */
-    getUserBadgeJsonContext_: function( badge ) {
-        var json = badge.get( "badge" ).toJSON();
-        json[ "count" ] = badge.get( "count" );
+    getUserBadgeJsonContext_: function(badge) {
+        var json = badge.get("badge").toJSON();
+        json["count"] = badge.get("count");
         return json;
     },
 
@@ -331,12 +331,12 @@ Badges.DisplayCase = Backbone.View.extend({
     getTemplateContext_: function() {
         var i,
             badges = [],
-            numRendered = Math.min( this.maxVisible, this.model.length );
-        for ( i = 0; i < numRendered; i++ ) {
-            var badge = this.model.at( i );
-            badges.push( badge.toJSON() );
+            numRendered = Math.min(this.maxVisible, this.model.length);
+        for (i = 0; i < numRendered; i++) {
+            var badge = this.model.at(i);
+            badges.push(badge.toJSON());
         }
-        for ( ; i < this.maxVisible; i++ ) {
+        for (; i < this.maxVisible; i++) {
             badges.push({ emptyBadge: true });
         }
         return { badges: badges };
@@ -348,23 +348,23 @@ Badges.DisplayCase = Backbone.View.extend({
      */
     updateSelectionHighlight: function() {
         var badgeSlots = $(".achievement-badge", this.mainCaseEl);
-        badgeSlots.removeClass( "selected" );
-        if ( this.selectedIndex > -1 ) {
-            $(badgeSlots[ this.selectedIndex ]).addClass( "selected" );
+        badgeSlots.removeClass("selected");
+        if (this.selectedIndex > -1) {
+            $(badgeSlots[this.selectedIndex]).addClass("selected");
         }
     },
 
     updateEditControls: function() {
-        if ( !this.isEditable() ) {
+        if (!this.isEditable()) {
             $(this.editButtonEl).hide();
             return;
         }
-        $( this.editButtonEl ).html( this.editing ? "Stop edit" : "Edit" );
-        $( this.editButtonEl ).show();
+        $(this.editButtonEl).html(this.editing ? "Stop edit" : "Edit");
+        $(this.editButtonEl).show();
     },
 
     toggleEdit_: function() {
-        if ( !this.editing ) {
+        if (!this.editing) {
             this.edit();
         } else {
             this.stopEdit();
@@ -378,25 +378,25 @@ Badges.DisplayCase = Backbone.View.extend({
      */
     renderBadgePicker: function() {
         var html = [],
-            badgeTemplate = Templates.get( "profile.badge-compact" );
-        this.fullBadgeList.each(function( badge ) {
-            html.push( badgeTemplate( this.getUserBadgeJsonContext_( badge )));
+            badgeTemplate = Templates.get("profile.badge-compact");
+        this.fullBadgeList.each(function(badge) {
+            html.push(badgeTemplate(this.getUserBadgeJsonContext_(badge)));
         }, this);
-        $(this.badgePickerEl).html( html.join( "" ) );
+        $(this.badgePickerEl).html(html.join(""));
     },
 
     render: function() {
-        if ( !this.mainCaseEl ) {
+        if (!this.mainCaseEl) {
             // First render - build the chrome.
             this.mainCaseEl = $("<div class=\"main-case\"></div>");
             this.badgePickerEl = $("<div class=\"badge-picker\"></div>");
             $(this.el)
-                .append( this.mainCaseEl )
-                .append( this.badgePickerEl );
+                .append(this.mainCaseEl)
+                .append(this.badgePickerEl);
             this.editControlEl = $(".display-case-cover");
-            this.editControlEl.click( _.bind( this.toggleEdit_, this ) );
+            this.editControlEl.click(_.bind(this.toggleEdit_, this));
         }
-        $(this.mainCaseEl).html( this.template( this.getTemplateContext_() ) );
+        $(this.mainCaseEl).html(this.template(this.getTemplateContext_()));
         this.updateEditControls();
         this.updateSelectionHighlight();
         return this;

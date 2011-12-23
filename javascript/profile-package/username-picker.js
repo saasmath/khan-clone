@@ -18,7 +18,7 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     initialize: function() {
-        this.template = Templates.get( "profile.username-picker" );
+        this.template = Templates.get("profile.username-picker");
     },
 
     render: function() {
@@ -44,7 +44,7 @@ UsernamePickerView = Backbone.View.extend({
             });
     },
 
-    onUsernameChanged_: function( e ) {
+    onUsernameChanged_: function(e) {
         // TODO: validate
         var value = this.$("#username").val(),
             that = this,

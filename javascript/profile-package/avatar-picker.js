@@ -40,7 +40,7 @@ Avatar.Picker = function(userModel) {
     this.avatarData_ = [];
 };
 
-Avatar.Picker.template = Templates.get( "profile.avatar-picker" );
+Avatar.Picker.template = Templates.get("profile.avatar-picker");
 
 /**
  * Renders the contents of the picker and displays it.
@@ -48,7 +48,7 @@ Avatar.Picker.template = Templates.get( "profile.avatar-picker" );
 Avatar.Picker.prototype.getTemplateContext_ = function() {
     // Dummy data for now. Replace with the real thing.
     return {
-        selectedSrc: this.userModel.get( "avatarSrc" ),
+        selectedSrc: this.userModel.get("avatarSrc"),
         categories: this.avatarData_
     };
 };
@@ -60,31 +60,31 @@ Avatar.Picker.prototype.bindEvents_ = function() {
     $(this.el).delegate(
             ".category-avatars .avatar",
             "click",
-            _.bind( this.onAvatarSelected_, this ))
+            _.bind(this.onAvatarSelected_, this))
         .delegate(
             ".category-avatars .avatar",
             "mouseenter",
-            function( ev ) { $(ev.currentTarget).addClass("hover"); })
+            function(ev) { $(ev.currentTarget).addClass("hover"); })
         .delegate(
             ".category-avatars .avatar",
             "mouseleave",
-            function( ev ) { $(ev.currentTarget).removeClass("hover"); });
+            function(ev) { $(ev.currentTarget).removeClass("hover"); });
 
-    this.userModel.bind( "change:avatarSrc",
-            _.bind( this.onAvatarChanged_, this ));
+    this.userModel.bind("change:avatarSrc",
+            _.bind(this.onAvatarChanged_, this));
 };
 
 /**
  * Handles a selection to an avatar in the list.
  */
-Avatar.Picker.prototype.onAvatarSelected_ = function( ev ) {
-    if ( $(ev.currentTarget).hasClass( "locked" )) {
+Avatar.Picker.prototype.onAvatarSelected_ = function(ev) {
+    if ($(ev.currentTarget).hasClass("locked")) {
         return;
     }
 
-    var src = $("img.avatar-preview", ev.currentTarget).attr( "src" );
+    var src = $("img.avatar-preview", ev.currentTarget).attr("src");
     var name = $(".name", ev.currentTarget).text();
-    if ( src && name ) {
+    if (src && name) {
         this.userModel.save({
             "avatarName": name,
             "avatarSrc": src
@@ -97,7 +97,7 @@ Avatar.Picker.prototype.onAvatarSelected_ = function( ev ) {
  */
 Avatar.Picker.prototype.onAvatarChanged_ = function() {
     $("#selected-img", this.contentEl).attr(
-           "src", this.userModel.get( "avatarSrc" ));
+           "src", this.userModel.get("avatarSrc"));
 };
 
 /**
@@ -108,7 +108,7 @@ Avatar.Picker.prototype.fetchData_ = function() {
         method: "GET",
         url: "/api/v1/avatars",
         data: { casing: "camel" },
-        success: _.bind( this.onDataLoaded_, this ),
+        success: _.bind(this.onDataLoaded_, this),
         error: function() {
             // TODO: handle
         }
@@ -118,31 +118,31 @@ Avatar.Picker.prototype.fetchData_ = function() {
 /**
  * Handles a successful response from the server for the list of avatars.
  */
-Avatar.Picker.prototype.onDataLoaded_ = function( data ) {
+Avatar.Picker.prototype.onDataLoaded_ = function(data) {
     this.avatarData_ = data;
 
     // Note that this will just render hidden if the dialog is
     // not visible. That's OK.
     $(this.contentEl).html(
-            Avatar.Picker.template( this.getTemplateContext_() ));
+            Avatar.Picker.template(this.getTemplateContext_()));
 };
 
 /**
  * Renders the contents of the picker and displays it.
  */
 Avatar.Picker.prototype.show = function() {
-    if ( !this.el ) {
+    if (!this.el) {
         var rootJel = $("<div class='avatar-picker modal fade hide'></div>");
         var contentJel = $("<div class='modal-body avatar-picker-contents'></div>");
         rootJel.append(contentJel).appendTo(document.body);
-        this.el = rootJel.get( 0 );
-        this.contentEl = contentJel.get( 0 );
+        this.el = rootJel.get(0);
+        this.contentEl = contentJel.get(0);
         this.bindEvents_();
         this.fetchData_();
     }
 
     $(this.contentEl).html(
-            Avatar.Picker.template( this.getTemplateContext_() ));
+            Avatar.Picker.template(this.getTemplateContext_()));
     $(this.el).modal({
         keyboard: true,
         backdrop: true,
