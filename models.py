@@ -1130,11 +1130,17 @@ class TopicVersion(db.Model):
     # function used by Topic.method calls to @layer_cache to figure out when a topic tree is stale
     @staticmethod
     def get_date_updated(version=None):
-        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date().split('.')[0], "%Y-%m-%d %H:%M:%S") # if a video/exercise/ or url has been updated, then the cache key has to change
+        library_content_date_updated = Setting.cached_library_content_date()
         if version is None:
             version = TopicVersion.get_default_version()
         if version:
-            return max(version.updated_on, library_content_date_updated)
+            # dev environment may not have library_content_date_updated ever set
+            if library_content_date_updated:
+                library_content_date_updated = datetime.datetime.strptime(library_content_date_updated.split('.')[0], "%Y-%m-%d %H:%M:%S") # if a video/exercise/ or url has been updated, then the cache key has to change
+
+                return max(version.updated_on, library_content_date_updated)
+            else:
+                return version.updated_on
 
     # used by get_content_with_no_topic - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
     @staticmethod
