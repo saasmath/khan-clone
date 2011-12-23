@@ -5,7 +5,7 @@
 </div>
 
 <div>
-  <a href="javascript:" data-id="remove_item" class="item-action simple-button blue action-gradient">Remove from topic</a>
+  <a href="javascript:" data-id="remove_item" class="item-action left-align simple-button blue action-gradient">Remove from topic</a>
 </div>
 <div style="clear: both" />
 
@@ -62,9 +62,9 @@
             <tr>
                 <td style="font-weight:bold;">Prerequisites</td>
                 <td style="padding-bottom:9px;">
-                    <div id="exercise-prereqs-list"></div>
+                    <div class="exercise-prereqs-list"></div>
 
-                    <a href="javascript: TopicExerciseNodeEditor.choosePrereq()" class="simple-button action-gradient">Add prerequisite exercise</a>
+                    <a href="javascript:" data-id="add-prereq" class="item-action simple-button action-gradient">Add prerequisite exercise</a>
                     <br/>
 
                     <em>This exercise will be suggested once these prereqs are completed.</em><br/>
@@ -77,9 +77,9 @@
             <tr>
                 <td style="font-weight:bold;">Covered exercises</td>
                 <td style="padding-bottom:9px;">
-                    <div id="exercise-covers-list"></div>
+                    <div class="exercise-covers-list"></div>
 
-                    <a href="javascript: TopicExerciseNodeEditor.chooseCover()" class="simple-button action-gradient">Add a covered exercise</a>
+                    <a href="javascript:" data-id="add-cover" class="item-action simple-button action-gradient">Add a covered exercise</a>
                     <br/>
 
                     <em>Achieving proficiency in this exercise will give proficiency in all covered exercises.</em>
@@ -90,10 +90,9 @@
             <tr>
                 <td style="font-weight:bold;">Related Videos</td>
                 <td style="padding-bottom:9px;">
-                    <div id="exercise-videos-list"></div>
+                    <div class="exercise-videos-list"></div>
 
-                    <a href="javascript: TopicExerciseNodeEditor.chooseVideo()" class="simple-button action-gradient">Add a related video</a>
-                    <br/>
+                    <div><a href="javascript:" data-id="add-video" class="item-action simple-button action-gradient">Add a related video</a></div>
 
                     <em>If the student is struggling on this exercise, we refer them to these related videos.</em>
                 </td>

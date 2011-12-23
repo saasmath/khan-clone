@@ -10,8 +10,8 @@
   <a href="javascript:" class="show-versions simple-button green action-gradient">View all versions</a>
 </div>
 <div>
-  <b>Title:</b> <input type="text" name="title" value="{{ title }}"></input>
-  <b>Description:</b> <input type="text" name="description" value="{{ description }}"></input>
+  <b>Title:</b> <input type="text" name="title" value="{{ title }}" {{#unless edit}}disabled{{/unless}}></input>
+  <b>Description:</b> <input type="text" name="description" value="{{ description }}" {{#unless edit}}disabled{{/unless}}></input>
   <b>Created:</b> {{ created_on }}
   <b>Updated:</b> {{ updated_on }} by {{ last_edited_by }}
 </div>

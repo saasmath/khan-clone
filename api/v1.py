@@ -241,14 +241,16 @@ def put_topic(topic_id, version_id = "edit"):
         kwargs["version"]=version
         topic.update(**kwargs)
 
-    return topic.get_visible_data()
+    return {
+        "id": topic.id
+    }
 
 def topic_find_child(parent_id, version_id, kind, id):
     version = models.TopicVersion.get_by_id(version_id)
 
     parent_topic = models.Topic.get_by_id(parent_id, version)
     if not parent_topic:
-        return ["Could not find topic with ID %s" % str(parent_id), None, None]
+        return ["Could not find topic with ID %s" % str(parent_id), None, None, None]
 
     if kind == "Topic":
         child = models.Topic.get_by_id(id, version)
@@ -259,10 +261,10 @@ def topic_find_child(parent_id, version_id, kind, id):
     elif kind == "Url":
         child = models.Url.get_by_id(int(id))
     else:
-        return ["Invalid kind: %s" % kind, None, None]
+        return ["Invalid kind: %s" % kind, None, None, None]
 
     if not child:
-        return ["Could not find a %s with ID %s " % (kind, id), None, None]
+        return ["Could not find a %s with ID %s " % (kind, id), None, None, None]
 
     return [None, child, parent_topic, version]
 
@@ -363,7 +365,7 @@ def topic_version(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return version
 
-@route("/api/v1/topicversion/<version_id>", methods=["PUT"])   
+@route("/api/v1/topicversion/<version_id>", methods=["PUT"])
 @developer_required
 @jsonp
 @jsonify
@@ -381,7 +383,7 @@ def topic_version(version_id = None):
     if changed:
         version.put()
 
-    return version
+    return {}
 
 @route("/api/v1/topicversions/", methods=["GET"])   
 @jsonp
@@ -403,7 +405,7 @@ def topic_version_unused_content(version_id = None):
 def get_url(url_id):
     return models.Url.get_by_id(url_id)
 
-@route("/api/v1/url/", methods=["PUT"])   
+@route("/api/v1/url/", methods=["PUT"])
 @route("/api/v1/url/<int:url_id>", methods=["PUT"])   
 @jsonp
 @jsonify
@@ -428,7 +430,9 @@ def save_url(url_id = None):
         url.put()
         models.Setting.cached_library_content_date(datetime.datetime.now())
 
-    return url
+    return {
+        "id": url.id
+    }
 
 @route("/api/v1/playlists/library", methods=["GET"])
 @etag(lambda: models.Setting.cached_library_content_date())
@@ -550,7 +554,8 @@ def exercise_videos(exercise_name):
 @jsonify
 def exercise_save(exercise_name):
     request.json["name"] = exercise_name
-    return UpdateExercise.do_update(request.json);
+    UpdateExercise.do_update(request.json);
+    return {}
 
 @route("/api/v1/videos/<video_id>", methods=["GET"])
 @jsonp

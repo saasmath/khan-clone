@@ -1,18 +1,21 @@
 <div>
   <img src="/images/leaf.png" width="49" height="43" style="vertical-align: middle">
   <input type="text" name="title" class="node-title simple-input ui-corner-all blur-on-esc" value="{{ model.title }}">
+  <a href="javascript:" data-id="save" class="save-button item-action simple-button disabled action-gradient">Save</a>
 </div>
 
 <div>
-  <a href="javascript:" data-id="add_new_topic" class="item-action simple-button blue action-gradient">Add subtopic</a>
+  <a href="javascript:" data-id="add_new_topic" class="item-action left-align simple-button blue action-gradient">Add subtopic</a>
 
-  <a href="javascript:" data-id="add_new_video" class="item-action separated simple-button blue action-gradient">Add new video</a>
-  <a href="javascript:" data-id="add_existing_video" class="item-action simple-button blue action-gradient">Add existing video</a>
+  <a href="javascript:" data-id="add_new_video" class="item-action left-align separated simple-button blue action-gradient">Add new video</a>
+  <a href="javascript:" data-id="add_existing_video" class="item-action left-align simple-button blue action-gradient">Add existing video</a>
 
-  <a href="javascript:" data-id="add_new_exercise" class="item-action separated simple-button blue action-gradient">Add new exercise</a>
-  <a href="javascript:" data-id="add_existing_exercise" class="item-action simple-button blue action-gradient">Add existing exercise</a>
+  <a href="javascript:" data-id="add_new_exercise" class="item-action left-align separated simple-button blue action-gradient">Add new exercise</a>
+  <a href="javascript:" data-id="add_existing_exercise" class="item-action left-align simple-button blue action-gradient">Add existing exercise</a>
 
-  <a href="javascript:" data-id="delete_topic" class="item-action separated simple-button blue action-gradient">Delete topic</a>
+  <a href="javascript:" data-id="add_new_url" class="item-action left-align separated simple-button blue action-gradient">Add new URL</a>
+
+  <a href="javascript:" data-id="delete_topic" class="item-action left-align separated simple-button blue action-gradient">Delete topic</a>
 </div>
 <div style="clear: both" />
 
@@ -22,7 +25,7 @@
 
       <tr>
         {{#if version.edit}}
-          <td colspan="2">Changes will be saved to the <b>editing copy</b> of the topic tree immediately.</td>
+          <td colspan="2">Changes are saved to the <strong>editing version</strong> of the site when you click the Save button above.</td>
         {{else}}
           <td colspan="2">Changes cannot be made to this version. Only the editing version can be changed.</td>
         {{/if}}
@@ -70,13 +73,10 @@
       <tr>
         <td style="font-weight:bold;">Tags</td>
         <td style="padding-bottom:9px;">
-          <div>
-            {{#each model.tags}}
-              <div>{{ this }} (<a href="javascript: TopicTopicNodeEditor.deleteTag('{{ this }}');">remove</a>)</div>
-            {{/each}}
-          </div>
+          <div class="tags-list"></div>
 
-          <input id="add-tag" type="text" value="" maxlength="32" placeholder="- Add tag" class="placeholder short" /> <input type="submit" id="add-tag-button" value="Add"><br/>
+          <input class="add-tag" type="text" value="" maxlength="32" placeholder="- Add tag" class="placeholder short" /> 
+          <a href="javascript:" data-id="add-tag" class="item-action simple-button action-gradient">Add</a>
         </td>
       </tr>
 
