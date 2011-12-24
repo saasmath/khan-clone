@@ -503,6 +503,12 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
 function KnowledgeMap(params) {
 
+    if (typeof google === "undefined") {
+        alert("Please make sure you're not using any browser extensions or addons that may be blocking google.com,\n" +
+                "which is needed to display the Khan Academy exercises.\n\nOnce you've done that, restart your browser and reload this page.");
+        return;
+    }
+
     if (!window.KnowledgeMapGlobals)
         KnowledgeMapInitGlobals();
 
@@ -556,8 +562,8 @@ function KnowledgeMap(params) {
 
         this.filterSettings.set({'userShowAll': this.admin});
 
-		Handlebars.registerPartial('streak-bar', Templates.get( "shared.streak-bar" )); // TomY TODO do this automatically?
-		Handlebars.registerPartial('knowledgemap-exercise', Templates.get( "shared.knowledgemap-exercise" )); // TomY TODO do this automatically?
+        Handlebars.registerPartial('streak-bar', Templates.get( "shared.streak-bar" )); // TomY TODO do this automatically?
+        Handlebars.registerPartial('knowledgemap-exercise', Templates.get( "shared.knowledgemap-exercise" )); // TomY TODO do this automatically?
 
         // Initial setup of exercise list from embedded data
 
@@ -976,20 +982,6 @@ function KnowledgeMap(params) {
                 counts[exerciseRowView.options.type]++;
         });
 
-        if (!self.admin) {
-            if (counts.suggested > 0) {
-                self.getElement('dashboard-suggested-exercises').find('.exercise-filter-count').html('(Showing ' + counts.suggested + ' of ' + self.numSuggestedExercises + ')');
-                self.getElement('dashboard-suggested-exercises').show();
-            } else {
-                self.getElement('dashboard-suggested-exercises').hide();
-            }
-            if (counts.recent > 0) {
-                self.getElement('dashboard-recent-exercises').find('.exercise-filter-count').html('(Showing ' + counts.recent + ' of ' + self.numRecentExercises + ')');
-                self.getElement('dashboard-recent-exercises').show();
-            } else {
-                self.getElement('dashboard-recent-exercises').hide();
-            }
-        }
         if (filterText && counts.all == 0) {
             self.getElement('exercise-no-results').show();
         } else {
@@ -998,11 +990,13 @@ function KnowledgeMap(params) {
 
         if (filterText) {
             self.getElement('dashboard-filter-clear').show();
+            self.getElement('hide-on-dashboard-filter').hide();
             if (!self.admin)
                 self.getElement('exercise-all-exercises').hide();
             self.getElement('dashboard-all-exercises').find('.exercise-filter-count').html('(Showing ' + counts.all + ' of ' + graph_dict_data.length + ')').show();
         } else {
             self.getElement('dashboard-filter-clear').hide();
+            self.getElement('hide-on-dashboard-filter').show();
             self.getElement('dashboard-all-exercises').find('.exercise-filter-count').hide();
             if (!self.admin) {
                 self.getElement('exercise-all-exercises').show();

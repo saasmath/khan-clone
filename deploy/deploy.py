@@ -12,6 +12,7 @@ sys.path.append(os.path.abspath("."))
 import compress
 import glob
 import tempfile
+import npm
 
 try:
     import secrets
@@ -195,10 +196,13 @@ def tidy_up():
             if please_remove:
                 [ os.renames(stuff, os.path.join(trashdir,stuff)) for stuff in please_remove ]
 
+def check_deps():
+    """Check if npm and friends are installed"""
+    return npm.check_dependencies()
 
 def compile_handlebar_templates():
     print "Compiling handlebar templates"
-    return 0 == popen_return_code(['python',
+    return 0 == popen_return_code([sys.executable,
                                    'deploy/compile_handlebar_templates.py'])
 
 def compress_js():
@@ -211,7 +215,7 @@ def compress_css():
 
 def compile_templates():
     print "Compiling all templates"
-    return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
+    return 0 == popen_return_code([sys.executable, 'deploy/compile_templates.py'])
 
 def prime_cache(version):
     try:
@@ -265,6 +269,11 @@ def main():
         help="Generate a report that displays minified, gzipped file size for each package element",
             default=False)
 
+    parser.add_option('-n', '--no-npm',
+        action="store_false", dest="node",
+        help="Don't check for local npm modules and don't install/update them",
+        default=True)
+
     options, args = parser.parse_args()
 
     if(options.clean):
@@ -272,6 +281,13 @@ def main():
         tidy_up()
         if options.dryrun:
             return
+
+    if(options.node):
+        print "Checking for node and dependencies"
+        if not check_deps():
+            return
+        # if options.dryrun:
+        #     return
 
     if options.report:
         print "Generating file size report"

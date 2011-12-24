@@ -47,11 +47,10 @@ mapreduce:
     handler: backfill.fix_has_current_goal
     params:
     - name: entity_kind
-      default: goals.models.Goal
+      default: models.Goal
     - name: shard_count
       default: 64
     - name: queue_name
       default: backfill-mapreduce-queue
     - name: processing_rate
       default: 350
-

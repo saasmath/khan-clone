@@ -106,9 +106,6 @@ ul.inline-list, ul.inline-list li {
 .goal a.objective.proficient:before {
     background-color: #0080C9;
 }
-.goal a.objective.review:before {
-    background-color: #E35D04;
-}
 .goal a.objective.struggling:before {
     background-color: #C30202;
 }

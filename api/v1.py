@@ -88,18 +88,16 @@ def get_visible_user_data_from_request(disable_coach_visibility=False,
     if not user_data:
         return None
 
-    if request.request_string("email"):
-        user_data_student = request.request_user_data("email")
-
-        if user_data_student and user_data_student.user_email == user_data.user_email:
+    user_data_student = request.request_student_user_data()
+    if user_data_student:
+        if user_data_student.user_email == user_data.user_email:
             # if email in request is that of the current user, simply return the
             # current user_data, no need to check permission to view
             return user_data
 
-        if (user_data_student and
-                (user_data.developer or
-                        (not disable_coach_visibility and
-                         user_data_student.is_coached_by(user_data)))):
+        if (user_data.developer or
+                (not disable_coach_visibility and
+                user_data_student.is_coached_by(user_data))):
             return user_data_student
         else:
             return None
@@ -739,6 +737,8 @@ def user_problem_logs(exercise_name):
 
     return None
 
+# TODO(david): Factor out duplicated code between attempt_problem_number and
+#     hint_problem_number.
 @route("/api/v1/user/exercises/<exercise_name>/problems/<int:problem_number>/attempt", methods=["POST"])
 @oauth_optional()
 @api_create_phantom
@@ -780,18 +780,25 @@ def attempt_problem_number(exercise_name, problem_number):
                 points_earned = user_data.points if (user_data.points == points_earned) else points_earned
 
             user_states = user_exercise_graph.states(exercise.name)
+            correct = request.request_bool("complete")
+            review_mode = request.request_bool("review_mode", default=False)
 
             action_results = {
                 "exercise_state": {
                     "state": [state for state in user_states if user_states[state]],
-                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                    "template" : templatetags.exercise_message(exercise,
+                        user_exercise_graph, review_mode=review_mode),
                 },
                 "points_earned": {"points": points_earned},
-                "attempt_correct": request.request_bool("complete")
+                "attempt_correct": correct,
             }
 
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
+
+            if review_mode:
+                action_results['reviews_left'] = (
+                    user_exercise_graph.reviews_left_count() + (1 - correct))
 
             add_action_results(user_exercise, action_results)
             return user_exercise
@@ -814,6 +821,8 @@ def hint_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            prev_user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
             attempt_number = request.request_int("attempt_number")
             count_hints = request.request_int("count_hints")
 
@@ -834,11 +843,15 @@ def hint_problem_number(exercise_name, problem_number):
                     )
 
             user_states = user_exercise_graph.states(exercise.name)
+            review_mode = request.request_bool("review_mode", default=False)
+            exercise_message_html = templatetags.exercise_message(exercise,
+                    user_exercise_graph, review_mode=review_mode)
+
             add_action_results(user_exercise, {
-                "exercise_message_html": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                "exercise_message_html": exercise_message_html,
                 "exercise_state": {
                     "state": [state for state in user_states if user_states[state]],
-                    "template": templatetags.exercise_message(exercise, user_data.coaches, user_states),
+                    "template" : exercise_message_html,
                 }
             })
 
@@ -875,6 +888,29 @@ def _attempt_problem_wrong(exercise_name):
         return make_wrong_attempt(user_data, user_exercise)
 
     return unauthorized_response()
+
+@route("/api/v1/user/exercises/review_problems", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_ordered_review_problems():
+    """Retrieves an ordered list of a subset of the upcoming review problems."""
+
+    # TODO(david): This should probably be abstracted away in exercises.py or
+    # models.py (if/when there's more logic here) with a nice interface.
+
+    user_data = get_visible_user_data_from_request()
+
+    if not user_data:
+        return []
+
+    user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    review_exercises = user_exercise_graph.review_exercise_names()
+
+    queued_exercises = request.request_string('queued', '').split(',')
+
+    # Only return those exercises that aren't already queued up
+    return filter(lambda ex: ex not in queued_exercises, review_exercises)
 
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @oauth_required()

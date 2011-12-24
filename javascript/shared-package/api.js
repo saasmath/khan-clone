@@ -45,7 +45,9 @@ var APIActionResults = {
                         xhr.setRequestHeader("X-KA-FKey", xsrfToken);
                     } else {
                         apiVersionMismatch();
-                        settings.error();
+                        if ( settings.error ) {
+                            settings.error();
+                        }
                         return false;
                     }
                 }
@@ -82,17 +84,23 @@ $(function(){ APIActionResults.register("user_info_html",
 // show point animation above progress bar when in exercise pages
 $(function(){
 
-  var updatePointDisplay = function( data ) {
-    if( jQuery(".single-exercise").length > 0 && data.points > 0) {
-      var coin = jQuery("<div>+"+data.points+"</div>").addClass("energy-points-badge");
-      jQuery(".streak-bar").append(coin);
-      jQuery(coin)
-        .fadeIn(195)
-        .delay(650)
-        .animate({top:"-30", opacity:0}, 350, "easeInOutCubic",
-          function(){jQuery(coin).hide(0).remove();}); // remove coin on animation complete
-    }
-  };
+    var updatePointDisplay = function( data ) {
+        if( jQuery(".single-exercise").length > 0 && data.points > 0) {
+            var coin = jQuery("<div>+"+data.points+"</div>").addClass("energy-points-badge");
+            jQuery(".streak-bar").append(coin);
+            jQuery(coin)
+                .fadeIn(195)
+                .delay(650)
+                .animate({top:"-30", opacity:0}, 350, "easeInOutCubic",
+                    function(){jQuery(coin).hide(0).remove();}); // remove coin on animation complete
+        }
+    };
 
-  APIActionResults.register( "points_earned", updatePointDisplay );
+    APIActionResults.register( "points_earned", updatePointDisplay );
+});
+
+// Update the "reviewing X exercises" heading counter and also change the
+// heading to indicate reviews are done when appropriate
+$(function() {
+    APIActionResults.register( "reviews_left", Review.updateCounter );
 });

@@ -60,17 +60,33 @@ class RequestInputHandler(object):
 
     def request_user_data(self, key):
         email = self.request_string(key)
+        return UserData.get_possibly_current_user(email)
+
+    # get the UserData instance based on the querystring. The precedence is:
+    # 1. email
+    # 2. student_email
+    # the precendence is reversed when legacy is True. A warning will be logged
+    # if a legacy parameter is encountered when not expected.
+    def request_student_user_data(self, legacy=False):
+        if legacy:
+            email = self.request_student_email_legacy()
+        else:
+            email = self.request_student_email()
+        return UserData.get_possibly_current_user(email)
+
+    def request_student_email_legacy(self):
+        email = self.request_string("email")
+        email = self.request_string("student_email", email)
+        # no warning is logged here as we should aim to completely move to
+        # email, but no effort has been made to update old calls yet.
+        return email
+
+    def request_student_email(self):
+        email = self.request_string("student_email")
         if email:
-
-            user_data_current = UserData.current()
-            if user_data_current and user_data_current.user_email == email:
-                # Avoid an extra DB call in the (fairly often) case that the requested email
-                # is the email of the currently logged-in user
-                return user_data_current
-
-            return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
-
-        return None
+            logging.warning("API called with legacy student_email parameter")
+        email = self.request_string("email", email)
+        return email
 
     def request_float(self, key, default = None):
         try:
@@ -123,7 +139,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         elif type(e) is MissingExerciseException:
 
             title = "This exercise isn't here right now."
-            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard?k'>head back to our other exercises</a>."
+            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard'>head back to our other exercises</a>."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is MissingVideoException:

@@ -67,26 +67,52 @@ class ViewExercise(request_handler.RequestHandler):
     _hints_conversion_names, _hints_conversion_types = [
         list(x) for x in zip(*_hints_conversion_tests)]
 
+    _review_conversion_tests = [
+        ('review_all_problems_done', ConversionTypes.Counting),
+        ('review_review_problems_done', ConversionTypes.Counting),
+        ('review_finished_review', ConversionTypes.Counting),
+        ('review_gained_proficiency_all', ConversionTypes.Counting),
+        ('review_gained_proficiency_easy_binary', ConversionTypes.Binary),
+        ('review_gained_proficiency_hard_binary', ConversionTypes.Binary),
+    ]
+    _review_conversion_names, _review_conversion_types = [
+        list(x) for x in zip(*_review_conversion_tests)]
+
     @ensure_xsrf_cookie
     def get(self, exid=None):
 
-        if not exid:
-            # Support old URLs that may pass in exid as a query param
+        # TODO(david): Is there some webapp2 magic that will allow me not to
+        #     repeat this URL string in main.py?
+        review_mode = self.request.path == "/review" and (
+            ab_test('Review Mode UI',
+                conversion_name=ViewExercise._review_conversion_names,
+                conversion_type=ViewExercise._review_conversion_types))
+
+        if not exid and not review_mode:
             self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
             return
+
+        user_data = models.UserData.current() or models.UserData.pre_phantom()
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
+        if review_mode:
+            # Take the first review exercise if available
+            exid = (user_exercise_graph.review_exercise_names() or
+                    user_exercise_graph.proficient_exercise_names() or
+                    ["addition_1"])[0]
+            reviews_left_count = user_exercise_graph.reviews_left_count()
 
         exercise = models.Exercise.get_by_name(exid)
 
         if not exercise:
             raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
 
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
-
         user_exercise = user_data.get_or_insert_exercise(exercise)
 
-        # Cache this so we don't have to worry about future lookups
+        # Cache these so we don't have to worry about future lookups
         user_exercise.exercise_model = exercise
         user_exercise._user_data = user_data
+        user_exercise._user_exercise_graph = user_exercise_graph
         user_exercise.summative = exercise.summative
 
         # Temporarily work around in-app memory caching bug
@@ -94,7 +120,7 @@ class ViewExercise(request_handler.RequestHandler):
 
         problem_number = self.request_int('problem_number', default=(user_exercise.total_done + 1))
 
-        user_data_student = self.request_user_data("student_email") or user_data
+        user_data_student = self.request_student_user_data(legacy=True) or user_data
         if user_data_student.key_email != user_data.key_email and not user_data_student.is_visible_to(user_data):
             user_data_student = user_data
 
@@ -195,6 +221,8 @@ class ViewExercise(request_handler.RequestHandler):
                 if problem_log.count_hints is not None:
                     user_exercise.count_hints = problem_log.count_hints
 
+                user_exercise.current = problem_log.sha1 == sha1
+
         is_webos = self.is_webos()
         browser_disabled = is_webos or self.is_older_ie()
         renderable = renderable and not browser_disabled
@@ -226,6 +254,7 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
+            'reviews_left_count': reviews_left_count if review_mode else "null",
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
@@ -295,8 +324,16 @@ def exercise_graph_dict_json(user_data, admin=False):
     return json.dumps(graph_dict_data)
 
 class ViewAllExercises(request_handler.RequestHandler):
+
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+
+        sees_new_review = ab_test('Review Mode UI',
+            conversion_name=ViewExercise._review_conversion_names,
+            conversion_type=ViewExercise._review_conversion_types)
+        show_review_drawer = (sees_new_review and not
+                user_exercise_graph.has_completed_review())
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
@@ -304,7 +341,35 @@ class ViewAllExercises(request_handler.RequestHandler):
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
             'selected_nav_link': 'practice',
-            }
+            'show_review_drawer': show_review_drawer,
+        }
+
+        if show_review_drawer:
+
+            template_values['review_statement'] = ab_test(
+                'review_statement_of_fact', [
+                    'Fortify your knowledge',
+                    'Attain mastery',
+                    'Review exercises',
+                    'Reinforce your learning',
+                    'Consolidate what you know',
+                    "Master what you've learned",
+                    'How much can you recall?',
+                    "Let's review",
+                    'Refresh your memory',
+                ]
+            )
+
+            template_values['review_call_to_action'] = ab_test(
+                'review_call_to_action', [
+                    'Start Reviews',
+                    'Start now',
+                    'Go go go!',
+                    "Let's go!",
+                    "I'll do it",
+                    "Let's do this!",
+                ]
+            )
 
         self.render_jinja2_template('viewexercises.html', template_values)
 
@@ -398,6 +463,8 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         dt_now = datetime.datetime.now()
         exercise = user_exercise.exercise_model
 
+        old_graph = user_exercise.get_user_exercise_graph()
+
         user_exercise.last_done = dt_now
         user_exercise.seconds_per_fast_problem = exercise.seconds_per_fast_problem
         user_exercise.summative = exercise.summative
@@ -479,11 +546,12 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                     bingo(['hints_gained_proficiency_all',
                            'struggling_gained_proficiency_all',
-                           'homepage_restructure_gained_proficiency_all'])
+                           'homepage_restructure_gained_proficiency_all',
+                           'review_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
 
-                    user_exercise.set_proficient(True, user_data)
+                    user_exercise.set_proficient(user_data)
                     user_data.reassess_if_necessary()
 
                     just_earned_proficiency = True
@@ -500,9 +568,13 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
             bingo([
                 'hints_problems_done',
+                'review_all_problems_done',
                 'struggling_problems_done',
                 'homepage_restructure_problems_done',
             ])
+
+            if old_graph.states(exercise.name)['reviewing']:
+                bingo('review_review_problems_done')
 
         else:
 
@@ -512,10 +584,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 if user_exercise.is_struggling():
                     bingo('struggling_problems_wrong_post_struggling')
 
-                if user_exercise.streak == 0:
-                    # 2+ in a row wrong -> not proficient
-                    user_exercise.set_proficient(False, user_data)
-
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
 
@@ -524,6 +592,10 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             user_exercise.schedule_review(completed)
 
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
+
+        if (user_exercise_graph.has_completed_review() and not
+                old_graph.has_completed_review()):
+            bingo('review_finished_review')
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_did_exercise(user_data, user_exercise,
