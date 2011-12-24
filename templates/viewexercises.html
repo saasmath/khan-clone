@@ -45,8 +45,8 @@
 
         {% if show_review_drawer %}
             $( "#dashboard-review-exercises" ).one( "click", function() {
-                gae_bingo.bingo( "review_statement_of_fact" );
-                gae_bingo.bingo( "review_call_to_action" );
+                gae_bingo.bingo(["review_statement_of_fact",
+                    "review_call_to_action"]);
             });
         {% endif %}
     });
