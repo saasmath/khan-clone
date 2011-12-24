@@ -281,9 +281,12 @@ def exercise_graph_dict_json(user_data, admin=False):
             'v_position': graph_dict["v_position"],
             'summative': graph_dict["summative"],
             'num_milestones': graph_dict.get("num_milestones", 0),
-            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]],
-            'goal_req': (graph_dict["name"] in goal_exercises)
+            'goal_req': (graph_dict["name"] in goal_exercises),
+
+            # get_by_name returns only exercises visible to current user
+            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"] if models.Exercise.get_by_name(prereq["name"])],
         }
+
         if admin:
             exercise = models.Exercise.get_by_name(graph_dict["name"])
             row["live"] = exercise and exercise.live
@@ -479,7 +482,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                            'homepage_restructure_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
-                        
+
                     user_exercise.set_proficient(True, user_data)
                     user_data.reassess_if_necessary()
 
@@ -508,7 +511,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 if user_exercise.is_struggling():
                     bingo('struggling_problems_wrong_post_struggling')
-    
+
                 if user_exercise.streak == 0:
                     # 2+ in a row wrong -> not proficient
                     user_exercise.set_proficient(False, user_data)
