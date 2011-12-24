@@ -367,9 +367,11 @@ function KnowledgeMapInitGlobals() {
                         self.parent.markers = [];
 
                         $.each(self.parent.dictEdges, function(key, rgTargets) { // this loop lets us update the edges wand will remove the old edges
-                            for (var ix = 0; ix < rgTargets.length; ix++)
-                            {
-                                rgTargets[ix].line.setMap(null);
+                            for (var ix = 0; ix < rgTargets.length; ix++) {
+                                var line = rgTargets[ix].line;
+                                if (line != null) {
+                                    line.setMap(null);
+                                }
                             }
                         });
                         self.parent.overlay.setMap(null);
@@ -863,6 +865,8 @@ function KnowledgeMap(params) {
             for (var ix = 0; ix < rgTargets.length; ix++)
             {
                 var line = rgTargets[ix].line;
+                if (line == null) return;
+
                 var map = self.getMapForEdge(rgTargets[ix], zoom);
                 if (line.getMap() != map) line.setMap(map);
             }
