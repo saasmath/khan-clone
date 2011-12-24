@@ -676,6 +676,11 @@ class UniqueUsername(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
+class ProfileVisibility:
+    NONE = 0
+    PUBLIC = 1
+    ALL = 2
+
 class UserData(GAEBingoIdentityModel, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
@@ -1001,6 +1006,44 @@ class UserData(GAEBingoIdentityModel, db.Model):
         self.reassess_if_necessary()
         return (exid in self.suggested_exercises)
 
+    def get_other_user_data(self, email_or_username):
+        """ Return UserData and visibility of the user identified by email_or_username.
+
+        If self is an admin, the identified user, or the identified user's coach,
+        return (user_data, ProfileVisibility.ALL)
+
+        Otherwise, if the identified user has opted in to a public profile,
+        return (user_data, ProfileVisibility.PUBLIC)
+
+        Else, return (None, ProfileVisibility.NONE)
+
+        """
+        user_data = self
+        visibility = ProfileVisibility.ALL
+
+        if email_or_username:
+            email_or_username = urllib.unquote(email_or_username)
+            user_data_override = None
+            visibility = ProfileVisibility.NONE
+
+            # TODO: This hack doesn't work for fb-user 'email' values, thanks Komalo!
+            if email_or_username.find("@") is -1:
+                user_data_override = UserData.get_possibly_current_user_by_username(email_or_username)
+            else:
+                user_data_override = UserData.get_possibly_current_user(email_or_username)
+
+            if user_data_override and user_data_override.is_visible_to(user_data):
+                visibility = ProfileVisibility.ALL
+            elif user_data_override:
+                if user_data_override.username:
+                    visibility = ProfileVisibility.PUBLIC
+                else:
+                    user_data_override = None
+
+            user_data = user_data_override
+
+        return (user_data, visibility)
+
     def get_students_data(self):
         coach_email = self.key_email
         query = UserData.all().filter('coaches =', coach_email)
@@ -1054,7 +1097,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return user_data and users.is_current_user_admin()
 
     def is_visible_to(self, user_data):
-        return self.is_coached_by(user_data) or self.is_coached_by_coworker_of_coach(user_data) or user_data.developer or user_data.is_administrator()
+        return (self.key_email == user_data.key_email or self.is_coached_by(user_data)
+                or self.is_coached_by_coworker_of_coach(user_data)
+                or user_data.developer or user_data.is_administrator())
 
     def are_students_visible_to(self, user_data):
         return self.is_coworker_of(user_data) or user_data.developer or user_data.is_administrator()
