@@ -170,6 +170,7 @@ class ViewProfile(request_handler.RequestHandler):
         avatar = util_avatars.avatar_for_name(user_data.avatar_name)
 
         template_values = {
+            'is_coaching_logged_in_user': current_user_data.is_coached_by(user_data),
             'visibility': visibility,
             'student_email': user_data.email,
             'student_nickname': user_data.nickname,

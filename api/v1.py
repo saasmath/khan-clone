@@ -404,6 +404,44 @@ def update_user_profile():
 
     user_data.save()
 
+@route("/api/v1/user/coaches/add", methods=["POST"])
+@oauth_required()
+@jsonp
+@jsonify
+def add_coach():
+    current_user_data = models.UserData.current()
+    coach_user_data = request.request_user_data("coach_email")
+    if not coach_user_data:
+        return api_invalid_param_response("Invalid coach email.")
+
+    if not current_user_data.is_coached_by(coach_user_data):
+        current_user_data.coaches.append(coach_user_data.key_email)
+        current_user_data.put()
+
+@route("/api/v1/user/coaches/remove", methods=["POST"])
+@oauth_required()
+@jsonp
+@jsonify
+def remove_coach():
+    current_user_data = models.UserData.current()
+    coach_user_data = request.request_user_data("coach_email")
+
+    if current_user_data.student_lists:
+        actual_lists = StudentList.get(current_user_data.student_lists)
+        current_user_data.student_lists = [l.key() for l in actual_lists if coach_user_data.key() not in l.coaches]
+
+    try:
+        current_user_data.coaches.remove(coach_user_data.key_email)
+    except ValueError:
+        pass
+
+    try:
+        current_user_data.coaches.remove(coach_user_data.key_email.lower())
+    except ValueError:
+        pass
+
+    current_user_data.put()
+
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()
 @jsonp

@@ -7,6 +7,7 @@
 UserCardModel = Backbone.Model.extend({
     defaults: {
         "loggedIn": false,
+        "isCoachingLoggedInUser": false,
         "nickname": "",
         "dateJoined": "",
         "points": 0,
@@ -38,6 +39,28 @@ UserCardModel = Backbone.Model.extend({
         });
 
         Backbone.Model.prototype.save.call(this, attrs, options);
+    },
+
+    /**
+     * Toggle isCoachingLoggedInUser field client-side.
+     * Update server-side if optional options parameter is provided.
+     */
+    toggleIsCoachingLoggedInUser: function(options) {
+        var isCoaching = this.get("isCoachingLoggedInUser");
+
+        this.set({"isCoachingLoggedInUser": !isCoaching});
+
+        if (options) {
+            var url = isCoaching ? "/api/v1/user/coaches/remove" : "/api/v1/user/coaches/add",
+                options = $.extend({
+                    type: "POST",
+                    url: url,
+                    data: {"coach_email": this.get("email")},
+                    dataType: "json"
+                }, options);
+
+            $.ajax(options);
+        }
     }
 });
 
@@ -48,13 +71,16 @@ UserCardView = Backbone.View.extend({
         "click .avatar-pic-container": "onAvatarClick_",
         "mouseenter .avatar-pic-container": "onAvatarHover_",
         "mouseleave .avatar-pic-container": "onAvatarLeave_",
-        "change #nickname": "onNicknameChanged_"
+        "change #nickname": "onNicknameChanged_",
+        "click .add-remove-coach": "onAddRemoveCoachClicked_"
     },
 
     initialize: function() {
         this.template = Templates.get("profile.user-card");
 
         this.model.bind("change:avatarSrc", _.bind(this.onAvatarChanged_, this));
+        this.model.bind("change:isCoachingLoggedInUser",
+                _.bind(this.onIsCoachingLoggedInUserChanged_, this));
 
         /**
          * The picker UI component which shows a dialog to change the avatar.
@@ -99,6 +125,35 @@ UserCardView = Backbone.View.extend({
             this.avatarPicker_ = new Avatar.Picker(this.model);
         }
         this.avatarPicker_.show();
+    },
+
+    onAddRemoveCoachClicked_: function(e) {
+        var options = {
+            success: _.bind(this.onAddRemoveCoachSuccess_, this),
+            error: _.bind(this.onAddRemoveCoachError_, this)
+        };
+
+        this.model.toggleIsCoachingLoggedInUser(options);
+    },
+
+    onAddRemoveCoachSuccess_: function(data) {
+        // TODO: message to user
+    },
+
+    onAddRemoveCoachError_: function(data) {
+        // TODO: message to user
+
+        // Because the add/remove action failed,
+        // toggle back to original client-side state.
+        this.model.toggleIsCoachingLoggedInUser();
+    },
+
+    /**
+     * Toggles the display of the add/remove coach buttons.
+     * Note that only one is showing at any time.
+     */
+    onIsCoachingLoggedInUserChanged_: function() {
+        this.$(".add-remove-coach").toggle();
     }
 
 });
