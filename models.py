@@ -36,6 +36,7 @@ from templatefilters import slugify
 from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
+import re
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -657,18 +658,52 @@ def set_css_deferred(user_data_key, video_key, status, version):
     db.put(uvc)
 
 class UniqueUsername(db.Model):
+    
+    # A username selected by the user.
+    username = db.StringProperty()
+    
+    @staticmethod
+    def build_key_name(username):
+        """ Builds a unique, canonical version of a username. """
+        return username.replace('.', '').lower()
+
+    # Usernames must be at least 5 characters long (excluding periods), must
+    # start with a period
+    VALID_KEY_NAME_RE = re.compile('[a-z][a-z0-9]{4,}')
+    
+    @staticmethod
+    def is_valid_username(username, key_name=None):
+        """ Determines if a candidate for a username is valid
+        according to the limitations we enforce on usernames.
+        
+        Usernames must be at least 5 characters long (excluding dots), start
+        with a letter and be alphanumeric (ascii only).
+        """
+        if username.startswith('.'):
+            return False
+        if key_name is None:
+            key_name = UniqueUsername.build_key_name(username)
+        return UniqueUsername.VALID_KEY_NAME_RE.match(key_name) is not None
+
     @staticmethod
     def claim(desired_name):
         """Claim an unclaimed username.
         
-        Return True on success, False if you are a slow turtle.
+        Return True on success, False if you are a slow turtle or invalid.
+        See is_valid_username for limitations of a username.
         
         """
+
+        key_name = UniqueUsername.build_key_name(desired_name)
+        if not UniqueUsername.is_valid_username(desired_name, key_name):
+            return False
+            
         def txn(desired_name):
-            entity = UniqueUsername.get_by_key_name(desired_name)
+            entity = UniqueUsername.get_by_key_name(key_name)
             is_unclaimed_name = entity is None
             if is_unclaimed_name:
-                entity = UniqueUsername(key_name=desired_name)
+                entity = UniqueUsername(key_name=key_name)
+                entity.username = desired_name
                 entity.put()
             return is_unclaimed_name
 
@@ -704,7 +739,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     # A human-readable name that will be user-configurable.
     user_nickname = db.StringProperty(indexed=False)
 
-    # TODO: constrain username to alphanumeric or some such
     # A globally unique user-specified username,
     # which will be used in URLS like khanacademy.org/profile/<username>
     username = db.StringProperty(default="")
