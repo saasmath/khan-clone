@@ -32,7 +32,7 @@ var Homepage = {
 
         });
 
-        // Start loading the youtube player immediately, 
+        // Start loading the youtube player immediately,
         // and insert it wrapped in a hidden container
         var template = Templates.get("homepage.youtube-embed");
 
@@ -48,17 +48,17 @@ var Homepage = {
     initWaypoints: function() {
 
         // Waypoint behavior not supported in IE7-
-        if ($.browser.msie && parseInt($.browser.version) < 8) return;
+        if ($.browser.msie && parseInt($.browser.version, 10) < 8) return;
 
         $.waypoints.settings.scrollThrottle = 50;
 
         $("#browse").waypoint(function(event, direction) {
 
             var jel = $(this);
-            var jelFixed = $("#browse-fixed")
+            var jelFixed = $("#browse-fixed");
             var jelTop = $("#back-to-top");
 
-            jelTop.click(function(){Homepage.waypointTop(jel, jelFixed, jelTop);});
+            jelTop.click(function() {Homepage.waypointTop(jel, jelFixed, jelTop);});
 
             if (direction == "down")
                 Homepage.waypointVideos(jel, jelFixed, jelTop);
@@ -75,7 +75,7 @@ var Homepage = {
     waypointVideos: function(jel, jelFixed, jelTop) {
         jelFixed.css("width", jel.width()).css("display", "block");
         if (!$.browser.msie) jelTop.css("display", "block");
-        if (CSSMenus.active_menu) CSSMenus.active_menu.removeClass('css-menu-js-hover');
+        if (CSSMenus.active_menu) CSSMenus.active_menu.removeClass("css-menu-js-hover");
     },
 
     /**
@@ -95,15 +95,15 @@ var Homepage = {
             url: "/api/v1/playlists/library/compact",
             dataType: "jsonp",
 
-			// The cacheToken is supplied by the host page to indicate when the library
-			// was updated. Since it's fully cacheable, the browser can pull from the
-			// local client cache if it has the data already.
+            // The cacheToken is supplied by the host page to indicate when the library
+            // was updated. Since it's fully cacheable, the browser can pull from the
+            // local client cache if it has the data already.
             data: {"v": cacheToken},
 
-			// Explicitly specify the callback, since jQuery will otherwise put in
-			// a randomly named callback and break caching.
+            // Explicitly specify the callback, since jQuery will otherwise put in
+            // a randomly named callback and break caching.
             jsonpCallback: "__dataCb",
-            success: function(data){
+            success: function(data) {
                 Homepage.renderLibraryContent(data);
             },
             error: function() {
@@ -133,11 +133,11 @@ var Homepage = {
             visitTopicOrPlaylist(item);
         }
 
-		// Playlists collected - go ahead and render them.
+        // Playlists collected - go ahead and render them.
         var template = Templates.get("homepage.videolist");
         for (var i = 0, playlist; playlist = playlists[i]; i++) {
-            var videos = playlist["videos"]
-            var videosPerCol = Math.ceil(videos.length / 3)
+            var videos = playlist["videos"];
+            var videosPerCol = Math.ceil(videos.length / 3);
             var colHeight = videosPerCol * 18;
             playlist["colHeight"] = colHeight;
             playlist["titleEncoded"] = encodeURIComponent(playlist["title"]);
@@ -154,8 +154,8 @@ var Homepage = {
             container.innerHTML = template(playlist);
         }
 
-		content = null;
+        content = null;
     }
-}
+};
 
-$(function(){Homepage.init();});
+$(function() {Homepage.init();});
