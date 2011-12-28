@@ -33,6 +33,7 @@ javascript = {
             "../../gae_bingo/static/js/gae_bingo.js",
 
             # application code & templates:
+            "handlebars-extras.js",
             "pageutil.js",
             "api.js",
             "social.js",

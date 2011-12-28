@@ -68,6 +68,7 @@ var ModalVideo = {
             video: video,
             height: 480,
             width: 800,
+            youtubeId: video.youtube_id,
             points: points,
             possible_points: 750, // VIDEO_POINTS_BASE in consts.py
             logged_in: !!USERNAME, // phantom users have empty string usernames
