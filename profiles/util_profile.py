@@ -7,10 +7,11 @@ import util
 import models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
-from badges import util_badges
 from phantom_users.phantom_util import disallow_phantoms
-from models import StudentList, UserData
+from models import StudentList, UserData, ProfileVisibility
 import simplejson
+from avatars import util_avatars
+from badges import util_badges
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -145,64 +146,55 @@ class ViewClassProfile(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
-
     @ensure_xsrf_cookie
-    def get(self):
-        student = UserData.current() or UserData.pre_phantom()
+    def get(self, email_or_username=None, unused=None):
+        """Render a student profile.
 
-        user_override = self.request_student_user_data(legacy=True)
-        if user_override and user_override.key_email != student.key_email:
-            if not user_override.is_visible_to(student):
-                # If current user isn't an admin or student's coach, they can't
-                # look at anything other than their own profile.
-                self.redirect("/profile")
-                return
-            else:
-                # Allow access to this student's profile
-                student = user_override
-        user_badges = util_badges.get_user_badges(student)
-        selected_graph_type = (self.request_string("selected_graph_type") or
-                               ActivityGraph.GRAPH_TYPE)
+        Keyword arguments:
+        email_or_username -- matches the first grouping in /profile/(.+?)/(.*)
+        unused -- matches the second grouping, and is ignored server-side,
+        but is used to route client-side
 
-        # TODO: deal with this one-off hackery. Some graphs use the API
-        # to fetch data, instead of the /profile/graph methods.
-        if selected_graph_type == "exerciseprogress":
-            initial_graph_url = ("/api/v1/user/exercises?email=%s" %
-                                 urllib.quote(student.email))
-        elif selected_graph_type == "goals":
-            initial_graph_url = ("/api/v1/user/goals?email=%s" %
-                                 urllib.quote(student.email))
-        else:
-            initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (
-                    selected_graph_type,
-                    urllib.quote(student.email),
-                    urllib.unquote(self.request_string("graph_query_params",
-                                                       default="")))
+        """
+        # TODO: What URL for phantoms?
+        current_user_data = UserData.current() or UserData.pre_phantom()
+        user_data, visibility = current_user_data.get_other_user_data(email_or_username)
+
+        if not user_data:
+            self.redirect("/profile?k")
+            return
+
+        # TODO: incorporate the tz offset into the timeago stuff on the client
         tz_offset = self.request_int("tz_offset", default=0)
 
+        avatar = util_avatars.avatar_for_name(user_data.avatar_name)
+
         template_values = {
-            'student_email': student.email,
-            'student_nickname': student.nickname,
-            'selected_graph_type': selected_graph_type,
-            'initial_graph_url': initial_graph_url,
+            'is_coaching_logged_in_user': current_user_data.is_coached_by(user_data),
+            'visibility': visibility,
+            'student_email': user_data.email,
+            'student_nickname': user_data.nickname,
+            'avatar_name': avatar.name,
+            'avatar_src': avatar.image_src,
             'tz_offset': tz_offset,
-            'student_points': student.points,
+            'public_badges': util_badges.get_public_user_badges(user_data),
+            'student_points': user_data.points,
             'count_videos': models.Setting.count_videos(),
-            'count_videos_completed': student.get_videos_completed(),
+            'count_videos_completed': user_data.get_videos_completed(),
             'count_exercises': models.Exercise.get_count(),
-            'count_exercises_proficient': len(student.all_proficient_exercises),
-            'badge_collections': user_badges['badge_collections'],
-            'user_badges_bronze': user_badges['bronze_badges'],
-            'user_badges_silver': user_badges['silver_badges'],
-            'user_badges_gold': user_badges['gold_badges'],
-            'user_badges_platinum': user_badges['platinum_badges'],
-            'user_badges_diamond': user_badges['diamond_badges'],
-            'user_badges_master': user_badges['user_badges_master'],
-            'user_badges': [user_badges['bronze_badges'], user_badges['silver_badges'], user_badges['gold_badges'], user_badges['platinum_badges'], user_badges['diamond_badges'],user_badges['user_badges_master']],
-            'user_data_student': student,
-            "show_badge_frequencies": self.request_bool("show_badge_frequencies", default=False),
+            'count_exercises_proficient': len(user_data.all_proficient_exercises),
+            'user_data_student': user_data,
             "view": self.request_string("view", default=""),
         }
+
+        # TODO: Before I bengineer more, worth syncing on
+        # what a public profile looks like,
+        # and how similar it is to a normal / complete profile.
+
+        # if visibility == models.ProfileVisibility.PUBLIC:
+            # TODO: Render public profile
+        # else:
+            # TODO: Render complete profile
 
         self.render_jinja2_template('viewprofile.html', template_values)
 
@@ -214,7 +206,6 @@ class ProfileGraph(request_handler.RequestHandler):
 
         user_data_target = self.get_profile_target_user_data()
         if user_data_target:
-
             if self.redirect_if_not_ajax(user_data_target):
                 return
 
@@ -236,19 +227,15 @@ class ProfileGraph(request_handler.RequestHandler):
             self.response.out.write(html)
 
     def get_profile_target_user_data(self):
-        student = UserData.current() or UserData.pre_phantom()
+        current_user_data = UserData.current() or UserData.pre_phantom()
+        email = self.request_student_email_legacy()
+        user_data_target, visibility = current_user_data.get_other_user_data(email)
 
-        if student:
-            user_override = self.request_student_user_data(legacy=True)
-            if user_override and user_override.key_email != student.key_email:
-                if not user_override.is_visible_to(student):
-                    # If current user isn't an admin or student's coach, they can't look at anything other than their own profile.
-                    student = None
-                else:
-                    # Allow access to this student's profile
-                    student = user_override
-
-        return student
+        # TODO: Temp hack to prevent peeking at others' graphs
+        if visibility == ProfileVisibility.ALL:
+            return user_data_target
+        else:
+            return None
 
     def redirect_if_not_ajax(self, student):
         if not self.is_ajax_request():
@@ -398,11 +385,6 @@ class ExerciseProblemsGraph(ProfileGraph):
     GRAPH_TYPE = "exerciseproblems"
     def graph_html_and_context(self, student):
         return templatetags.profile_exercise_problems_graph(student, self.request_string("exercise_name"))
-
-class ExerciseProgressGraph(ProfileGraph):
-    GRAPH_TYPE = "exerciseprogress"
-    def graph_html_and_context(self, student):
-        return templatetags.profile_exercise_progress_graph(student)
 
 class ClassExercisesOverTimeGraph(ClassProfileGraph):
     GRAPH_TYPE = "classexercisesovertime"

@@ -656,7 +656,30 @@ def set_css_deferred(user_data_key, video_key, status, version):
     uvc.version = version
     db.put(uvc)
 
+class UniqueUsername(db.Model):
+    @staticmethod
+    def claim(desired_name):
+        """Claim an unclaimed username.
+        
+        Return True on success, False if you are a slow turtle.
+        
+        """
+        def txn(desired_name):
+            entity = UniqueUsername.get_by_key_name(desired_name)
+            is_unclaimed_name = entity is None
+            if is_unclaimed_name:
+                entity = UniqueUsername(key_name=desired_name)
+                entity.put()
+            return is_unclaimed_name
+
+        return db.run_in_transaction(txn, desired_name)
+
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
+
+class ProfileVisibility:
+    NONE = 0
+    PUBLIC = 1
+    ALL = 2
 
 class UserData(GAEBingoIdentityModel, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
@@ -680,6 +703,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     # A human-readable name that will be user-configurable.
     user_nickname = db.StringProperty(indexed=False)
+
+    # TODO: constrain username to alphanumeric or some such
+    # A globally unique user-specified username,
+    # which will be used in URLS like khanacademy.org/profile/<username>
+    username = db.StringProperty(default="")
 
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
@@ -716,13 +744,20 @@ class UserData(GAEBingoIdentityModel, db.Model):
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
+    # A list of badge names that the user has chosen to display publicly
+    public_badges = object_property.TsvProperty()
+
+    # The name of the avatar the user has chosen. See avatar.util_avatar.py
+    avatar_name = db.StringProperty(indexed=False)
+
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
             "moderator", "expanded_all_exercises", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
             "expanded_all_exercises", "user_nickname", "user_email",
-            "seconds_since_joined", "has_current_goals"
+            "seconds_since_joined", "has_current_goals", "public_badges",
+            "avatar_name", "username"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -750,6 +785,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
     @property
     def badge_counts(self):
         return util_badges.get_badge_counts(self)
+
+    @property
+    def profile_root(self):
+        return "/profile/" + (self.username or urllib.quote(self.email))
 
     @staticmethod
     @request_cache.cache()
@@ -809,6 +848,14 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return query.get()
 
     @staticmethod
+    def get_from_username(username):
+        if not username:
+            return None
+        query = UserData.all()
+        query.filter('username =', username)
+        return query.get()
+
+    @staticmethod
     def get_from_db_key_email(email):
         if not email:
             return None
@@ -830,6 +877,17 @@ class UserData(GAEBingoIdentityModel, db.Model):
         if user_data_current and user_data_current.user_email == email:
             return user_data_current
         return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
+
+    @staticmethod
+    def get_possibly_current_user_by_username(username):
+        if not username:
+            return None
+
+        user_data_current = UserData.current()
+        if user_data_current and user_data_current.username == username:
+            return user_data_current
+
+        return UserData.get_from_username(username)
 
     @staticmethod
     def insert_for(user_id, email):
@@ -948,6 +1006,44 @@ class UserData(GAEBingoIdentityModel, db.Model):
         self.reassess_if_necessary()
         return (exid in self.suggested_exercises)
 
+    def get_other_user_data(self, email_or_username):
+        """ Return UserData and visibility of the user identified by email_or_username.
+
+        If self is an admin, the identified user, or the identified user's coach,
+        return (user_data, ProfileVisibility.ALL)
+
+        Otherwise, if the identified user has opted in to a public profile,
+        return (user_data, ProfileVisibility.PUBLIC)
+
+        Else, return (None, ProfileVisibility.NONE)
+
+        """
+        user_data = self
+        visibility = ProfileVisibility.ALL
+
+        if email_or_username:
+            email_or_username = urllib.unquote(email_or_username)
+            user_data_override = None
+            visibility = ProfileVisibility.NONE
+
+            # TODO: This hack doesn't work for fb-user 'email' values, thanks Komalo!
+            if email_or_username.find("@") is -1:
+                user_data_override = UserData.get_possibly_current_user_by_username(email_or_username)
+            else:
+                user_data_override = UserData.get_possibly_current_user(email_or_username)
+
+            if user_data_override and user_data_override.is_visible_to(user_data):
+                visibility = ProfileVisibility.ALL
+            elif user_data_override:
+                if user_data_override.username:
+                    visibility = ProfileVisibility.PUBLIC
+                else:
+                    user_data_override = None
+
+            user_data = user_data_override
+
+        return (user_data, visibility)
+
     def get_students_data(self):
         coach_email = self.key_email
         query = UserData.all().filter('coaches =', coach_email)
@@ -1001,7 +1097,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return user_data and users.is_current_user_admin()
 
     def is_visible_to(self, user_data):
-        return self.is_coached_by(user_data) or self.is_coached_by_coworker_of_coach(user_data) or user_data.developer or user_data.is_administrator()
+        return (self.key_email == user_data.key_email or self.is_coached_by(user_data)
+                or self.is_coached_by_coworker_of_coach(user_data)
+                or user_data.developer or user_data.is_administrator())
 
     def are_students_visible_to(self, user_data):
         return self.is_coworker_of(user_data) or user_data.developer or user_data.is_administrator()
@@ -1076,6 +1174,13 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.has_current_goals = True
             db.put([self, goal])
         db.run_in_transaction(save_goal)
+
+    def claim_username(self, name):
+        claim_success = UniqueUsername.claim(name)
+        if claim_success:
+            self.username = name
+            self.put()
+        return claim_success
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()

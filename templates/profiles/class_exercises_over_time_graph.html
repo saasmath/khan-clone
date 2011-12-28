@@ -69,7 +69,7 @@
         highlightStudentSeries: function(el) {
             var jel = $(el);
             this.deselectSublinks();
-            Profile.highlightSeries(chart, ClassExerciseProgressChart.getSeriesByEmail(chart, jel.attr("data-email")));
+            ClassProfile.highlightSeries(chart, ClassExerciseProgressChart.getSeriesByEmail(chart, jel.attr("data-email")));
             jel.addClass("selected");
         },
 
@@ -77,7 +77,7 @@
             var jel = $(el);
             this.deselectSublinks();
             var sExerciseName = jel.attr("data-exercise");
-            Profile.highlightPoints(chart, function(point){ return point.name == sExerciseName; });
+            ClassProfile.highlightPoints(chart, function(point){ return point.name == sExerciseName; });
             jel.addClass("selected");
         },
 
@@ -92,15 +92,15 @@
         }
     }
 
-			$(document).ready(function() {
+            $(document).ready(function() {
 
                 ClassExerciseProgressChart.init();
 
-				chart = new Highcharts.Chart({
-					chart: {
-						renderTo: 'highchart',
-						defaultSeriesType: 'scatter'
-					},
+                chart = new Highcharts.Chart({
+                    chart: {
+                        renderTo: 'highchart',
+                        defaultSeriesType: 'scatter'
+                    },
                     credits: {
                         enabled: false
                     },
@@ -122,49 +122,49 @@
                             point: {
                                 events: {
                                     click: function() {
-                                        Profile.collapseAccordion();
-                                        console.log(this)
-                                        Profile.loadGraph('/profile/graph/exerciseproblems?student_email=' + this.series.options.email + '&exercise_name=' + this.name);
+                                         window.location = this.profile_root
+                                                            + "/vital-statistics/exercise-problems/"
+                                                            + this.name;
                                     }
                                 }
                             }
                         }
                     },
-					title: {
+                    title: {
                         text: "",
-						x: -20 //center
-					},
-					subtitle: {
+                        x: -20 //center
+                    },
+                    subtitle: {
                         text: '',
-						x: -20
-					},
-					xAxis: {
-						title: {
+                        x: -20
+                    },
+                    xAxis: {
+                        title: {
                             text: 'Days working on the site'
-						},
+                        },
                         min: 0,
-						plotLines: [{
-							value: 0,
-							width: 1,
-							color: '#808080'
-						}]
-					},
-					yAxis: {
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                    },
+                    yAxis: {
                         min: 1,
-						title: {
-							text: 'Modules Completed'
-						},
-						plotLines: [{
-							value: 0,
-							width: 1,
-							color: '#808080'
-						}]
-					},
-					tooltip: {
-						formatter: function() {
+                        title: {
+                            text: 'Modules Completed'
+                        },
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                    },
+                    tooltip: {
+                        formatter: function() {
                             return '<b>' + this.point.nickname + '</b><br/><br/><b>' + this.point.display_name + '</b><br/>' + this.point.dt;
-						}
-					},
+                        }
+                    },
                     legend: {
                         enabled: false,
                         layout: 'horizontal',
@@ -193,6 +193,8 @@
                                     name: '{{ exercise_data.exid|escapejs }}', 
                                     display_name: '{{ exercise_data.display_name()|escapejs }}', 
                                     nickname: '{{ exercise_data.nickname|escapejs }}',
+                                    email: '{{ dict_student_exercises[key]["email"]|escapejs }}',
+                                    profile_root: '{{ dict_student_exercises[key]["profile_root"]|escapejs }}',
                                     x: {{ exercise_data.days_until_proficient }}, 
                                     y: {{ loop.index }}
                                 }{% if not loop.last %},{% endif %}
@@ -200,8 +202,8 @@
                             ]}{% if not loop.last %},{% endif %}
                             {% endfor %}
                         ]
-				});
-			});
+                });
+            });
 
 </script>
 

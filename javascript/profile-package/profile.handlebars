@@ -1,0 +1,41 @@
+<style>
+  #page_sub_nav {
+    display: none;
+  }
+</style>
+
+<div id="username-picker-container"></div>
+
+<menu class="profile-navigation">
+    <ul class="vertical-tab-list">
+        <li><a href="{{profileRoot}}" class="tab-link has-icon no-recolor" rel="profile">Your Profile</a></li>
+        <li><a href="{{profileRoot}}/achievements" class="tab-link has-icon no-recolor" rel="achievements">Achievements</a></li>
+        <li><a href="{{profileRoot}}/goals" class="tab-link has-icon no-recolor" rel="goals">Goals (beta)</a></li>
+        <li>
+            <span class="inactive link-section-header">Vital statistics</span>
+            <ul class="vertical-tab-list second-tier">
+                <li><a href="{{profileRoot}}/vital-statistics/activity" class="tab-link has-icon no-recolor" rel="vital-statistics activity">Activity</a></li>
+                <li><a href="{{profileRoot}}/vital-statistics/focus" class="tab-link has-icon no-recolor" rel="vital-statistics focus">Focus</a></li>
+                <li><a href="{{profileRoot}}/vital-statistics/exercise-progress" class="tab-link has-icon no-recolor" rel="vital-statistics exercise-progress">Exercise Progress</a></li>
+                <li><a href="{{profileRoot}}/vital-statistics/exercise-progress-over-time" class="tab-link has-icon no-recolor" rel="vital-statistics exercise-progress-over-time">Progress Over Time</a></li>
+            </ul>
+        </li>
+    </ul>
+</menu>
+
+<section class="tab-content">
+    <div id="tab-content-user-profile" rel="profile">
+        <div class="user-info-container vertical-shadow"></div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div id="tab-content-vital-statistics" rel="vital-statistics">
+        {{> vital-statistics}}
+    </div>
+
+    <div id="tab-content-achievements" rel="achievements"></div>
+
+    <div id="tab-content-goals" rel="goals">
+        <div id="profile-goals-content"></div>
+    </div>
+</section>

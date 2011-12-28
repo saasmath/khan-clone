@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<!-- Unit tests and demos for user card -->
+<html>
+<head>
+<script src="../testbase.js"></script>
+<script src="../shared-package/jquery.timeago.js"></script>
+<script src="user-card.js"></script>
+<link rel="stylesheet" type="text/css" href="../../stylesheets/shared-package/default.css"></link>
+<link rel="stylesheet" type="text/css" href="../../stylesheets/profile-package/profile.css"></link>
+<script>
+var SAMPLE_USER_CARD_DATA = {
+    loggedIn: true,
+    email: "curious@george.com",
+    nickname: "curious george",
+    countVideosCompleted: 10,
+    countVideos: 300,
+    countExercisesProficient: 20,
+    countExercises: 200,
+    points: 10,
+    dateJoined: "2011-11-22T02:59:43Z",
+    avatarSrc: "/images/darth.png"
+};
+
+KA_TEST.loadTemplates([
+    "profile.user-card"
+    ], function() {
+        var datas = [ {}, SAMPLE_USER_CARD_DATA ];
+        $.each(datas, function(index, data) {
+            var model = new UserCardModel(data),
+                view = new UserCardView({model: model}),
+                jel = $("<div>").addClass("user-info-container")
+                        .append(view.render().el)
+                        .css("margin", 20),
+                jelClear = $("<div>").css("clear", "both");
+
+            $("body").append(jel)
+                .append(jelClear);
+        });
+});
+
+</script>
+</head>
+
+<body></body>
+
+</html>

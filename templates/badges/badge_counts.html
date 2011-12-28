@@ -1,7 +1,7 @@
 <span id="badge-count-container" class="badge_count_container">
 {% block badge_count_block %}
 {% if sum %}
-<a title="{{ sum }} badges" class="achievement-badge-counts" href="/profile#achievements">
+<a title="{{ sum }} badges" class="achievement-badge-counts" href="{{link_to_profile}}">
     {% if bronze %}
 
         <img src="{{ "/images/badges/meteorite-tiny.png"|static_url }}" width="10" height="10"/> {{bronze}}

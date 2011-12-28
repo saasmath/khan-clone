@@ -3,6 +3,10 @@
 {% import 'macros/profiles.html' as profile_macros %}
 {% import 'macros/analytics.html' as analytics %}
 
+{% block pagecss %}
+    {{ js_css_packages.css_package("profile") }}
+{% endblock pagecss %}
+
 {% block pagescript %}
 {% if view == "mobile" %}
 	<style>
@@ -63,7 +67,7 @@
         {% block profile_is_empty %}{% endblock profile_is_empty %}
 
     {% else %}
-
+        {% if stats_charts_class=="coach-view" %}
         <div id="vital-statistics" class="{{ stats_charts_class }}">
             <div id="stats-nav">
                 <h2>{% block statistics_title %}Vital Statistics{% endblock statistics_title %}</h2>
@@ -77,9 +81,8 @@
             </div>
             <div class="clearfix"></div>
         </div>
-
+        {% endif %}
         {% block profile_extended_sections %}{% endblock profile_extended_sections %}
-
     {% endif %}
 
     </article>
@@ -88,10 +91,6 @@
 
 {% block bottompagescript %}
     {{ js_css_packages.js_package("profile") }}
-    <script type="text/javascript">
-		Profile.initialGraphUrl = '{{ initial_graph_url|escapejs }}';
-		Profile.email = '{{ student_email|escapejs }}';
-	</script>
     {{ analytics.crazyegg_tracker(False) }}
 {% endblock bottompagescript %}
 

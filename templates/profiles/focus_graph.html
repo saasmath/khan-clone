@@ -1,7 +1,7 @@
 {% if is_graph_empty %}
 <div class="graph-notification">This chart doesn't have any focus to show. Go <a href="/#browse">watch some videos</a> and <a href="/exercisedashboard">do some exercises</a>!</div>
 {% endif %}
-
+{% import 'macros/profiles.html' as profile_macros %}
 <script>
     var chart;
     var star = $.browser.msie ? "*" : "★";
@@ -40,7 +40,7 @@
                     innerSize: '13%',
                     center: ['11%', '14%'],
                     dataLabels: {
-                        connectorColor: 'silver', 
+                        connectorColor: 'silver',
                         connectorWidth: 2,
                         color: '#898989'
                     },
@@ -63,7 +63,7 @@
                     innerSize: '3%',
                     center: ['11%', '14%'],
                     dataLabels: {
-                        connectorColor: 'silver', 
+                        connectorColor: 'silver',
                         connectorWidth: 2,
                         color: '#898989'
                     },
@@ -116,8 +116,9 @@
                     point: {
                         events: {
                             click: function() {
-                                Profile.collapseAccordion();
-                                Profile.loadGraph('/profile/graph/exerciseproblems?student_email={{ student_email|escapejs }}&exercise_name=' + this.exid);
+                                Profile.router.navigate(
+                                        "/vital-statistics/exercise-problems/" + this.exid,
+                                        true);
                             }
                         }
                     },
@@ -140,6 +141,10 @@
         });
     });
 </script>
+<p class="vital-statistics-description">
+    Shows how well you've focused on exercises and video playlists.
+     {{ profile_macros.graph_date_picker(profile_root, "focus") }}
+</p>
 
 <div id="highchart-container" class="{% if is_graph_empty %}empty-chart{% endif %}">
     <div id="highchart"></div>

@@ -10,335 +10,210 @@ var Profile = {
     email: null,  // Filled in by the template after script load.
     fLoadingGraph: false,
     fLoadedGraph: false,
-    userGoalsHref: '',
 
     init: function() {
-
-        $('.share-link').hide();
-        $('.sharepop').hide();
-
-        $(".achievement,.exercise,.video").hover(
-            function () {
-                $(this).find(".share-link").show();
-                },
-            function () {
-                $(this).find(".share-link").hide();
-                $(this).find(".sharepop").hide();
-              });
-
-        $('.share-link').click(function() {
-            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
-                $(this).next(".sharepop").toggle();
-            } else {
-                $(this).next(".sharepop").toggle(
-                        "drop", { direction:'up' }, "fast" );
-            }
-            return false;
+        Profile.render();
+        Profile.router = new Profile.TabRouter();
+        Backbone.history.start({
+            pushState: true,
+            root: userCardData.profileRoot
         });
 
-        // Init Highcharts global options.
+        // Remove goals from IE<=8
+        $(".lte8 .goals-accordion-content").remove();
+
+        // Init Highcharts global options
         Highcharts.setOptions({
             credits: {
                 enabled: false
             },
             title: {
-                text: ''
+                text: ""
             },
             subtitle: {
-                text: ''
+                text: ""
             }
         });
 
+        // Delegate clicks for badge navigation
+        $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
+            var category = $(this).attr("id");
+            var clickedBadge = $(this);
 
-        if ($.address){
+            $("#badge-container").css("display", "");
+            clickedBadge.siblings().removeClass("selected");
 
-            // this is hackish, but it prevents the change event from being fired twice on load
-            if ( $.address.value() === "/" ){
-                window.location = window.location + "#" + $(".graph-link:eq(0)").attr("href");
+            if ($("#badge-container > #" + category).is(":visible")) {
+               if (clickedBadge.parents().hasClass("standard-view")) {
+                   $("#badge-container > #" + category).slideUp(300, function() {
+                           $("#badge-container").css("display", "none");
+                           clickedBadge.removeClass("selected");
+                       });
+               }
+               else {
+                   $("#badge-container > #" + category).hide();
+                   $("#badge-container").css("display", "none");
+                   clickedBadge.removeClass("selected");
+               }
             }
-
-            $.address.change(function( evt ){
-
-                if ( $.address.path() !== "/"){
-                    Profile.historyChange( evt );
-                }
-
-            });
-
-        }
-
-        $(".graph-link").click(
-            function(evt){
-                evt.preventDefault();
-                if($.address){
-                    // only visit the resource described by the url, leave the params unchanged
-                    var href = $( this ).attr( "href" )
-                    var path = href.split("?")[0];
-
-                    // visiting a different resource
-                    if ( path !== $.address.path() ){
-                        $.address.path( path );
-                    }
-
-                    // applying filters for same resource via querystring
-                    else{
-                        // make a dict of current qs params and merge with the link's
-                        var currentParams = {};
-                        _.map( $.address.parameterNames(), function(e){ currentParams[e] = $.address.parameter( e ); } );
-                        var linkParams = Profile.parseQueryString( href );
-                        $.extend( currentParams, linkParams );
-
-                        $.address.queryString( Profile.reconstructQueryString( currentParams ) );
-                    }
-                }
+            else {
+               var jelContainer = $("#badge-container");
+               var oldHeight = jelContainer.height();
+               $(jelContainer).children().hide();
+               if (clickedBadge.parents().hasClass("standard-view")) {
+                   $(jelContainer).css("min-height", oldHeight);
+                   $("#" + category, jelContainer).slideDown(300, function() {
+                       $(jelContainer).animate({"min-height": 0}, 200);
+                   });
+               } else {
+                   $("#" + category, jelContainer).show();
+               }
+               clickedBadge.addClass("selected");
             }
-        );
-
-        $("#individual_report #achievements #achievement-list > ul li").click(function() {
-             var category = $(this).attr('id');
-             var clickedBadge = $(this);
-
-             $("#badge-container").css("display", "");
-             clickedBadge.siblings().removeClass("selected");
-
-             if ($("#badge-container > #" + category ).is(":visible")) {
-                if (clickedBadge.parents().hasClass("standard-view")) {
-                    $("#badge-container > #" + category ).slideUp(300, function(){
-                            $("#badge-container").css("display", "none");
-                            clickedBadge.removeClass("selected");
-                        });
-                }
-                else {
-                    $("#badge-container > #" + category ).hide();
-                    $("#badge-container").css("display", "none");
-                    clickedBadge.removeClass("selected");
-                }
-             }
-             else {
-                var jelContainer = $("#badge-container");
-                var oldHeight = jelContainer.height();
-                $(jelContainer).children().hide();
-                if (clickedBadge.parents().hasClass("standard-view")) {
-                    $(jelContainer).css("min-height", oldHeight);
-                    $("#" + category, jelContainer).slideDown(300, function() {
-                        $(jelContainer).animate({"min-height": 0}, 200);
-                    });
-                } else {
-                    $("#" + category, jelContainer).show();
-                }
-                clickedBadge.addClass("selected");
-             }
         });
 
-        // remove goals from IE<=8
-        $(".lte8 .goals-accordion-content").remove();
-
-        $("#stats-nav #nav-accordion")
-            .accordion({
-                header:".header",
-                active:".graph-link-selected",
-                autoHeight: false,
-                clearStyle: true
-            });
-
-        setTimeout(function(){
-            if (!Profile.fLoadingGraph && !Profile.fLoadedGraph)
-            {
-                // If 1000 millis after document.ready fires we still haven't
-                // started loading a graph, load manually.
-                // The externalChange trigger may have fired before we hooked
-                // up a listener.
-                Profile.historyChange();
+        // Delegate clicks for tab navigation
+        $(".profile-navigation .vertical-tab-list").delegate("a", "click", function(event) {
+            // TODO: Make sure middle-click + windows control-click Do The Right Thing
+            // in a reusable way
+            if (!event.metaKey) {
+                event.preventDefault();
+                var route = $(this).attr("href").replace(userCardData.profileRoot, "");
+                Profile.router.navigate(route, true);
             }
-        }, 1000);
+        });
 
-        Profile.ProgressSummaryView = new ProgressSummaryView();
-    },
-    highlightPoints: function(chart, fxnHighlight) {
-
-        if (!chart) return;
-
-        for (var ix = 0; ix < chart.series.length; ix++) {
-            var series = chart.series[ix];
-
-            this.muteSeriesStyles(series);
-
-            for (var ixData = 0; ixData < series.data.length; ixData++) {
-                var pointOptions = series.data[ixData].options;
-                if (!pointOptions.marker) pointOptions.marker = {};
-                pointOptions.marker.enabled = fxnHighlight(pointOptions);
-                if (pointOptions.marker.enabled) pointOptions.marker.radius = 6;
+        // Delegate clicks for recent badge-related activity
+        $(".achievement .ach-text").delegate("a", "click", function(event) {
+            // TODO: ditto above
+            if (!event.metaKey) {
+                event.preventDefault();
+                Profile.router.navigate("/achievements", true);
+                $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
+        });
 
-            series.isDirty = true;
-        }
+        // Bind event handlers for sharing controls on recent activity
+        $(".share-link").hide();
+        $(".sharepop").hide();
 
-        chart.redraw();
-    },
+        $(".achievement,.exercise,.video").hover(
+            function() {
+                $(this).find(".share-link").show();
+                },
+            function() {
+                $(this).find(".share-link").hide();
+                $(this).find(".sharepop").hide();
+              });
 
-    muteSeriesStyles: function(series) {
-        if (series.options.fMuted) return;
-
-        series.graph.attr('opacity', 0.1);
-        series.graph.attr('stroke', '#CCCCCC');
-        series.options.lineWidth = 1;
-        series.options.shadow = false;
-        series.options.fMuted = true;
-    },
-
-    accentuateSeriesStyles: function(series) {
-        series.options.lineWidth = 3.5;
-        series.options.shadow = true;
-        series.options.fMuted = false;
-    },
-
-    highlightSeries: function(chart, seriesHighlight) {
-
-        if (!chart || !seriesHighlight) return;
-
-        for (var ix = 0; ix < chart.series.length; ix++)
-        {
-            var series = chart.series[ix];
-            var fSelected = (series == seriesHighlight);
-
-            if (series.fSelectedLast == null || series.fSelectedLast != fSelected)
-            {
-                if (fSelected)
-                    this.accentuateSeriesStyles(series);
-                else
-                    this.muteSeriesStyles(series);
-
-                for (var ixData = 0; ixData < series.data.length; ixData++) {
-                    series.data[ixData].options.marker = {
-                        enabled: fSelected,
-                        radius: fSelected ? 5 : 4
-                    };
-                }
-
-                series.isDirty = true;
-                series.fSelectedLast = fSelected;
+        $(".share-link").click(function() {
+            if ($.browser.msie && (parseInt($.browser.version, 10) < 8)) {
+                $(this).next(".sharepop").toggle();
+            } else {
+                $(this).next(".sharepop").toggle(
+                        "drop", { direction: "up" }, "fast");
             }
-        }
-
-        var options = seriesHighlight.options;
-        options.color = '#0080C9';
-        seriesHighlight.remove(false);
-        chart.addSeries(options, false, false);
-
-        chart.redraw();
-    },
-
-    collapseAccordion: function() {
-        // Turn on collapsing, collapse everything, and turn off collapsing
-        $("#stats-nav #nav-accordion").accordion(
-                "option", "collapsible", true).accordion(
-                    "activate", false).accordion(
-                        "option", "collapsible", false);
-    },
-
-    baseGraphHref: function(href) {
-        // regex for matching scheme:// part of uri
-        // see http://tools.ietf.org/html/rfc3986#section-3.1
-        var reScheme = /^\w[\w\d+-.]*:\/\//;
-        var match = href.match(reScheme);
-        if (match) {
-            href = href.substring(match[0].length);
-        }
-
-        var ixSlash = href.indexOf("/");
-        if (ixSlash > -1)
-            href = href.substring(href.indexOf("/"));
-
-        var ixQuestionMark = href.indexOf("?");
-        if (ixQuestionMark > -1)
-            href = href.substring(0, ixQuestionMark);
-
-        return href;
-    },
-
-    /**
-     * Expands the navigation accordion according to the link specified.
-     * @return {boolean} whether or not a link was found to be a valid link.
-     */
-    expandAccordionForHref: function(href) {
-        if (!href) {
             return false;
+        });
+    },
+
+    TabRouter: Backbone.Router.extend({
+        routes: {
+            "": "showDefault",
+            "/achievements": "showAchievements",
+            "/goals": "showGoals",
+            "/vital-statistics": "showVitalStatistics",
+            "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
+            "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
+            "/vital-statistics/:graph": "showVitalStatistics"
+        },
+
+        showDefault: function() {
+            $("#tab-content-user-profile").show()
+                .siblings().hide();
+            this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
+        },
+
+        // TODO: must send TZ offset
+        showVitalStatistics: function(graph, exercise, timeURLParameter) {
+            var graph = graph || "activity",
+                exercise = exercise || "addition_1",
+                timeURLParameter = timeURLParameter || "",
+                emailEncoded = encodeURIComponent(USER_EMAIL),
+                translation = {
+                    "activity": "/profile/graph/activity?student_email=" + emailEncoded,
+                    "focus": "/profile/graph/focus?student_email=" + emailEncoded,
+                    "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
+                    "exercise-progress": "/api/v1/user/exercises?email=" + emailEncoded,
+                    "exercise-problems": "/profile/graph/exerciseproblems?"
+                                            + "exercise_name=" + exercise
+                                            + "&" + "student_email=" + emailEncoded
+                },
+                href = translation[graph] + timeURLParameter,
+                jelGraphLinkHeader = $(".graph-link-header[href$='" + graph + "']");
+
+            $("#tab-content-vital-statistics").show()
+                .siblings().hide();
+
+            if (jelGraphLinkHeader.length) {
+                var index = jelGraphLinkHeader.index(),
+                    isSubLink = jelGraphLinkHeader.hasClass("graph-sub-link");
+
+                if (!isSubLink) {
+                    $(".graph-link").css("background-color", "")
+                        .eq(index).css("background-color", "#eee");
+                }
+            }
+
+            this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
+            Profile.loadGraph(href);
+        },
+
+        showExerciseProblems: function(exercise) {
+            this.showVitalStatistics("exercise-problems", exercise);
+        },
+
+        showVitalStatisticsForTimePeriod: function(graph, timePeriod) {
+            var translation = {
+                    "today": "&dt_start=today",
+                    "yesterday": "&dt_start=yesterday",
+                    "last-week": "&dt_start=lastweek&dt_end=today",
+                    "last-month": "&dt_start=lastmonth&dt_end=today"
+                },
+                timeURLParameter = translation[timePeriod];
+
+            this.showVitalStatistics(graph, null, timeURLParameter);
+        },
+
+        showAchievements: function() {
+            $("#tab-content-achievements").show()
+                .siblings().hide();
+            this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
+        },
+
+        showGoals: function() {
+            $("#tab-content-goals").show()
+                .siblings().hide();
+            this.activateRelatedTab($("#tab-content-goals").attr("rel"));
+        },
+
+        activateRelatedTab: function(rel) {
+            $(".profile-navigation .vertical-tab-list a").removeClass("active-tab");
+            $("a[rel$='" + rel + "']").addClass("active-tab");
         }
-
-        href = this.baseGraphHref(href);
-
-        href = href.replace(/[<>']/g, "");
-        var selectorAccordionSection =
-                ".graph-link-header[href*='" + href + "']";
-        if ( $(selectorAccordionSection).length ) {
-            $("#stats-nav #nav-accordion").accordion(
-                    "activate", selectorAccordionSection);
-            return true;
-        }
-
-        this.collapseAccordion();
-        return false;
-    },
-
-    styleSublinkFromHref: function(href) {
-
-        if (!href) return;
-
-        var reDtStart = /dt_start=[^&]+/;
-
-        var matchStart = href.match(reDtStart);
-        var sDtStart = matchStart ? matchStart[0] : "dt_start=lastweek";
-
-        href = href.replace(/[<>']/g, "");
-
-        $(".graph-sub-link").removeClass("graph-sub-link-selected");
-        $(".graph-sub-link[href*='" + this.baseGraphHref(href) + "'][href*='" + sDtStart + "']").addClass("graph-sub-link-selected");
-    },
-
-    // called whenever user clicks graph type accordion
-    loadGraphFromLink: function(el) {
-        if (!el) return;
-        Profile.loadGraphStudentListAware(el.href);
-    },
-
-    loadGraphStudentListAware: function(url) {
-        var $dropdown = $('#studentlists_dropdown ol');
-        if ($dropdown.length == 1) {
-            var list_id = $dropdown.data('selected').key;
-            var qs = this.parseQueryString(url);
-            qs['list_id'] = list_id;
-            qs['version'] = Profile.version;
-            qs['dt'] = $("#targetDatepicker").val();
-            url = this.baseGraphHref(url) + '?' + this.reconstructQueryString(qs);
-        }
-
-        this.loadGraph(url);
-    },
-
-    loadFilters : function( href ){
-        // fix the hrefs for each filter
-        var a = $("#stats-filters a[href^=\"" + href + "\"]").parent();
-        $("#stats-filters .filter:visible").not(a).slideUp("slow");
-        a.slideDown();
-    },
+    }),
 
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
-            '/api/v1/user/goals': this.renderUserGoals,
-            '/api/v1/user/exercises': this.renderExercisesTable,
-            '/api/v1/user/students/goals': this.renderStudentGoals,
-            '/api/v1/user/students/progressreport': window.ClassProfile ? ClassProfile.renderStudentProgressReport : null,
-            '/api/v1/user/students/progress/summary': this.ProgressSummaryView.render
+            "/api/v1/user/exercises": this.renderExercisesTable
         };
-
         if (!href) return;
 
         if (this.fLoadingGraph) {
-            setTimeout(function(){Profile.loadGraph(href);}, 200);
+            setTimeout(function() {Profile.loadGraph(href);}, 200);
             return;
         }
 
-        this.styleSublinkFromHref(href);
         this.fLoadingGraph = true;
         this.fLoadedGraph = true;
 
@@ -348,13 +223,12 @@ var Profile = {
                 apiCallback = apiCallbacksTable[uri];
             }
         }
-
         $.ajax({
             type: "GET",
             url: Timezone.append_tz_offset_query_param(href),
             data: {},
-            dataType: apiCallback ? 'json' : 'html',
-            success: function(data){
+            dataType: apiCallback ? "json" : "html",
+            success: function(data) {
                 Profile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
             },
             error: function() {
@@ -369,15 +243,7 @@ var Profile = {
 
         this.fLoadingGraph = false;
 
-        if (!fNoHistoryEntry) {
-            // Add history entry for browser
-            //             if ($.address) {
-            //                 $.address(href);
-            // }
-        }
-
         this.showGraphThrobber(false);
-        this.styleSublinkFromHref(href);
 
         var start = (new Date).getTime();
         if (apiCallback) {
@@ -759,29 +625,29 @@ var Profile = {
     renderExercisesTable: function(data) {
         var templateContext = [];
 
-        for ( var i = 0, exercise; exercise = data[i]; i++ ) {
+        for (var i = 0, exercise; exercise = data[i]; i++) {
             var stat = "Not started";
             var color = "";
             var states = exercise["exercise_states"];
             var totalDone = exercise["total_done"];
 
-            if ( states["reviewing"] ) {
+            if (states["reviewing"]) {
                 stat = "Review";
                 color = "review light";
-            } else if ( states["proficient"] ) {
+            } else if (states["proficient"]) {
                 // TODO: handle implicit proficiency - is that data in the API?
                 // (due to proficiency in a more advanced module)
                 stat = "Proficient";
                 color = "proficient";
-            } else if ( states["struggling"] ) {
+            } else if (states["struggling"]) {
                 stat = "Struggling";
                 color = "struggling";
-            } else if ( totalDone > 0 ) {
+            } else if (totalDone > 0) {
                 stat = "Started";
                 color = "started";
             }
 
-            if ( color ) {
+            if (color) {
                 color = color + " action-gradient seethrough";
             } else {
                 color = "transparent";
@@ -793,58 +659,41 @@ var Profile = {
                 "status": stat,
                 "shortName": model["short_display_name"] || model["display_name"],
                 "displayName": model["display_name"],
-                "progress": Math.floor( exercise["progress"] * 100 ) + "%",
+                "progress": Math.floor(exercise["progress"] * 100) + "%",
                 "totalDone": totalDone
             });
         }
-        var template = Templates.get( "profile.exercise_progress" );
-        $("#graph-content").html( template({ "exercises": templateContext }) );
+        var template = Templates.get("profile.exercise_progress");
+        $("#graph-content").html(template({ "exercises": templateContext }));
 
         Profile.hoverContent($("#module-progress .student-module-status"));
         $("#module-progress .student-module-status").click(function(e) {
             $("#info-hover-container").hide();
-            Profile.collapseAccordion();
             // Extract the name from the ID, which has been prefixed.
-            var exerciseName = this.id.substring( "exercise-".length );
-            var url = Profile.exerciseProgressUrl(exerciseName, Profile.email);
-            Profile.loadGraph(url);
+            var exerciseName = this.id.substring("exercise-".length);
+            Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
         });
     },
 
-    // TODO: move history management out to a common utility
-    historyChange: function(e) {
-        var href = ( $.address.value() === "/" ) ? this.initialGraphUrl : $.address.value();
-        var url = ( $.address.path() === "/" ) ? this.initialGraphUrl : $.address.path();
-        if ( href ) {
-            if ( this.expandAccordionForHref(href) ) {
-                this.loadGraph( href , true );
-                this.loadFilters( url );
-            } else {
-                // Invalid URL - just try the first link available.
-                var links = $(".graph-link");
-                if ( links.length ) {
-                    Profile.loadGraphFromLink( links[0] );
-                }
-            }
-        }
-    },
-
     showGraphThrobber: function(fVisible) {
-        if (fVisible)
+        if (fVisible) {
             $("#graph-progress-bar").progressbar({value: 100}).slideDown("fast");
-        else
-            $("#graph-progress-bar").slideUp("fast");
+        } else {
+            $("#graph-progress-bar").slideUp("fast", function() {
+                $(this).hide();
+            });
+        }
     },
 
     // TODO: move this out to a more generic utility file.
     parseQueryString: function(url) {
         var qs = {};
-        var parts = url.split('?');
-        if(parts.length == 2) {
-            var querystring = parts[1].split('&');
-            for(var i = 0; i<querystring.length; i++) {
-                var kv = querystring[i].split('=');
-                if(kv[0].length > 0) { //fix trailing &
+        var parts = url.split("?");
+        if (parts.length == 2) {
+            var querystring = parts[1].split("&");
+            for (var i = 0; i < querystring.length; i++) {
+                var kv = querystring[i].split("=");
+                if (kv[0].length > 0) { //fix trailing &
                     key = decodeURIComponent(kv[0]);
                     value = decodeURIComponent(kv[1]);
                     qs[key] = value;
@@ -856,20 +705,14 @@ var Profile = {
 
     // TODO: move this out to a more generic utility file.
     reconstructQueryString: function(hash, kvjoin, eljoin) {
-        kvjoin = kvjoin || '=';
-        eljoin = eljoin || '&';
+        kvjoin = kvjoin || "=";
+        eljoin = eljoin || "&";
         qs = [];
-        for(var key in hash) {
-            if(hash.hasOwnProperty(key))
+        for (var key in hash) {
+            if (hash.hasOwnProperty(key))
                 qs.push(key + kvjoin + hash[key]);
         }
         return qs.join(eljoin);
-    },
-
-    exerciseProgressUrl: function(exercise, email) {
-        return "/profile/graph/exerciseproblems" +
-            "?exercise_name=" + exercise +
-            "&student_email=" + encodeURIComponent(email);
     },
 
     hoverContent: function(elements) {
@@ -878,7 +721,7 @@ var Profile = {
         var mouseY;
 
         elements.hover(
-            function( e ) {
+            function(e) {
                 var hoverTime = +(new Date());
                 lastHoverTime = hoverTime;
                 mouseX = e.pageX;
@@ -891,15 +734,15 @@ var Profile = {
 
                     var hoverData = $(el).children(".hover-data");
                     var html = $.trim(hoverData.html());
-                    if ( html ) {
+                    if (html) {
                         var jelGraph = $("#graph-content");
                         var leftMax = jelGraph.offset().left +
                                 jelGraph.width() - 150;
                         var left = Math.min(mouseX + 15, leftMax);
 
                         var jHoverEl = $("#info-hover-container");
-                        if ( jHoverEl.length === 0 ) {
-                            jHoverEl = $('<div id="info-hover-container"></div>').appendTo('body');
+                        if (jHoverEl.length === 0) {
+                            jHoverEl = $('<div id="info-hover-container"></div>').appendTo("body");
                         }
                         jHoverEl
                             .html(html)
@@ -908,7 +751,7 @@ var Profile = {
                     }
                 }, 100);
             },
-            function( e ) {
+            function(e) {
                 lastHoverTime = null;
                 $("#info-hover-container").hide();
             }
@@ -917,281 +760,220 @@ var Profile = {
 
     AddObjectiveHover: function(element) {
         Profile.hoverContent(element.find(".objective"));
-    }
-};
-
-var GoalProfileView = Backbone.View.extend({
-    template: Templates.get( "profile.profile-goals" ),
-    needsRerender: true,
-
-    initialize: function() {
-        this.model.bind('change', this.render, this);
-        this.model.bind('reset', this.render, this);
-        this.model.bind('remove', this.render, this);
-        this.model.bind('add', this.render, this);
-
-        // only hookup event handlers if the view allows edits
-        if (this.options.readonly) return;
-
-        $(this.el)
-            // edit titles
-            .delegate('input.goal-title', 'focusout', $.proxy(this.changeTitle, this))
-            .delegate('input.goal-title', 'keypress', $.proxy(function( e ) {
-                if (e.which == '13') { // enter
-                    e.preventDefault();
-                    this.changeTitle(e);
-                    $(e.target).blur();
-                }
-            }, this))
-            .delegate('input.goal-title', 'keyup', $.proxy(function( e ) {
-                if ( e.which == '27' ) { // escape
-                    e.preventDefault();
-
-                    // restore old title
-                    var jel = $(e.target);
-                    var goal = this.model.get(jel.closest('.goal').data('id'));
-                    jel.val(goal.get('title'));
-
-                    jel.blur();
-                }
-            }, this))
-
-            // show abandon button on hover
-            .delegate('.goal', 'mouseenter mouseleave', function( e ) {
-                var el = $(e.currentTarget);
-                if ( e.type == 'mouseenter' ) {
-                    el.find(".goal-description .summary-light").hide();
-                    el.find(".goal-description .goal-controls").show();
-                } else {
-                    el.find(".goal-description .goal-controls").hide();
-                    el.find(".goal-description .summary-light").show();
-                }
-            })
-            // respond to abandon button
-            .delegate('.abandon', 'click', $.proxy(this.abandon, this));
     },
-
-    changeTitle: function( e, options ) {
-        var jel = $(e.target);
-        var goal = this.model.get(jel.closest('.goal').data('id'));
-        var newTitle = jel.val();
-        if (newTitle !== goal.get('title')) {
-            goal.save({title: newTitle});
-        }
-    },
-
-    show: function() {
-        // render if necessary
-        if (this.needsRerender) {
-            this.render();
-        }
-        $(this.el).show();
-    },
-
-    hide: function() {
-        $(this.el).hide();
-    },
-
     render: function() {
-        var jel = $(this.el);
-        // delay rendering until the view is actually visible
-        this.needsRerender = false;
-        var json = _.pluck(this.model.models, 'attributes');
-        jel.html(this.template({
-            goals: json,
-            isCurrent: (this.options.type == 'current'),
-            isCompleted: (this.options.type == 'completed'),
-            isAbandoned: (this.options.type == 'abandoned'),
-            readonly: this.options.readonly
-        }));
+        var profileTemplate = Templates.get("profile.profile");
 
-        // attach a NewGoalView to the new goals html
-        var newGoalEl = this.$(".goalpicker");
-        if ( newGoalEl.length > 0) {
-            this.newGoalsView = new NewGoalView({
-                el: newGoalEl,
-                model: this.model
-            });
-        }
+        Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
-        Profile.AddObjectiveHover(jel);
-        return jel;
+        $("#profile-content").html(profileTemplate({profileRoot: userCardData.profileRoot}));
+
+        // Show only the user card tab,
+        // since the Backbone default route isn't triggered
+        // when visiting khanacademy.org/profile
+        $("#tab-content-user-profile").show()
+            .siblings().hide();
+
+        Profile.populateUserCard();
+        Profile.populateAchievements();
+        Profile.populateGoals();
+
+        // TODO: Might there be a better way
+        // for server-side + client-side to co-exist in harmony?
+        $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
+
+        var usernameModel = new UsernamePickerModel({username: USERNAME}),
+            usernameView = new UsernamePickerView({model: usernameModel});
+        $("#username-picker-container").html(usernameView.render().el);
     },
 
-    abandon: function( evt ) {
-        var goalEl = $(evt.target).closest('.goal');
-        var goal = this.model.get(goalEl.data('id'));
-        if ( !goal ) {
-            // haven't yet received a reponse from the server after creating the
-            // goal. Shouldn't happen too often, so just show a message.
-            alert("Please wait a few seconds and try again. If this is the second time you've seen this message, reload the page");
-            return;
-        }
+    populateUserCard: function() {
+        var model = new UserCardModel(userCardData),
+            view = new UserCardView({model: model});
 
-        if (confirm("Abandoning a goal is permanent and cannot be undone. Do you really want to abandon this goal?")) {
-            // move the model to the abandoned collection
-            this.model.remove(goal);
-            goal.set({'abandoned': true});
-            AbandonedGoalBook.add(goal);
+        $(".user-info-container").html(view.render().el);
+    },
 
-            // persist to server
-            goal.save().fail(function() {
-                KAConsole.log("Warning: failed to abandon goal", goal);
-                AbandonedGoalBook.remove(goal);
-                this.model.add(goal);
-            });
-        }
-    }
-});
+    populateAchievements: function() {
+        // Render the public badge list, as that's ready immediately.
+        var publicBadgeList = new Badges.BadgeList(publicBadgeData);
+        publicBadgeList.setSaveUrl("/api/v1/user/badges/public");
+        var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
+        $(".sticker-book").append(displayCase.render().el);
 
-var ProgressSummaryView = function() {
-    var fInitialized = false,
-        template = Templates.get("profile.class-progress-summary"),
-        statusInfo = {
-                'not-started': {
-                    fShowOnLeft: true,
-                    order: 0},
-                struggling: {
-                    fShowOnLeft: true,
-                    order: 1},
-                started: {
-                    fShowOnLeft: false,
-                    order: 2},
-                proficient: {
-                    fShowOnLeft: false,
-                    order:  3},
-                review: {
-                    fShowOnLeft: false,
-                    order: 4}
-            },
-        updateFilterTimeout = null;
+        // Asynchronously load the full badge information in the background.
+        $.ajax({
+            type: "GET",
+            url: "/api/v1/user/badges",
+            data: {
+                casing: "camel",
+                email: USER_EMAIL
+              },
+            dataType: "json",
+            success: function(data) {
 
-    function toPixelWidth(num) {
-        return Math.round(200 * num / Profile.numStudents);
-    }
+                // TODO: save and cache these objects
+                var fullBadgeList = new Badges.UserBadgeList();
 
-    function filterSummaryRows() {
-        updateFilterTimeout = null;
-        var filterText = $("#student-progresssummary-search").val()
-                            .trim().toLowerCase();
+                var collection = data["badgeCollections"];
+                $.each(collection, function(i, categoryJson) {
+                    $.each(categoryJson["userBadges"], function(j, json) {
+                        fullBadgeList.add(new Badges.UserBadge(json));
+                    });
+                });
+                displayCase.setFullBadgeList(fullBadgeList);
 
-        $(".exercise-row").each(function(index) {
-            var jel = $(this),
-                exerciseName = jel.find(".exercise-name span")
-                                .text().toLowerCase();
-            if (filterText === "" || exerciseName.indexOf(filterText) > -1) {
-                jel.show();
-            } else {
-                jel.hide();
-            }
-        });
-    }
+                // TODO: make the rendering of the full badge page use the models above
+                // and consolidate the information
 
-    function init() {
-        fInitialized = true;
+                var badgeInfo = [
+                        {
+                            icon: "/images/badges/meteorite-medium.png",
+                            className: "bronze",
+                            label: "Meteorite"
+                        },
+                        {
+                            icon: "/images/badges/moon-medium.png",
+                            className: "silver",
+                            label: "Moon"
+                        },
+                        {
+                            icon: "/images/badges/earth-medium.png",
+                            className: "gold",
+                            label: "Earth"
+                        },
+                        {
+                            icon: "/images/badges/sun-medium.png",
+                            className: "diamond",
+                            label: "Sun"
+                        },
+                        {
+                            icon: "/images/badges/eclipse-medium.png",
+                            className: "platinum",
+                            label: "Black Hole"
+                        },
+                        {
+                            icon: "/images/badges/master-challenge-blue.png",
+                            className: "master",
+                            label: "Challenge"
+                        }
+                    ];
 
-        // Register partials and helpers
-        Handlebars.registerPartial("class-progress-column", Templates.get("profile.class-progress-column"));
-
-        Handlebars.registerHelper("toPixelWidth", function(num) {
-            return toPixelWidth(num);
-        });
-
-        Handlebars.registerHelper("toNumberOfStudents", function(num) {
-            if (toPixelWidth(num) < 20) {
-                return "";
-            }
-            return num;
-        });
-
-        Handlebars.registerHelper("toDisplay", function(status) {
-            if (status === "not-started") {
-                return "unstarted";
-            }
-            return status;
-        });
-
-        Handlebars.registerHelper("progressColumn", function(block) {
-            this.progressSide = block.hash.side;
-            return block(this)
-        });
-
-        Handlebars.registerHelper("progressIter", function(progress, block) {
-            var result = "",
-                fOnLeft = (block.hash.side === "left");
-
-            $.each(progress, function(index, p) {
-                if (fOnLeft === statusInfo[p.status].fShowOnLeft) {
-                    result += block(p);
-                }
-            });
-
-            return result;
-        });
-
-        // Delegate clicks to expand rows and load student graphs
-        $("#graph-content").delegate(".exercise-row", "click", function(e) {
-            var jRow = $(this),
-                studentLists = jRow.find(".student-lists");
-
-            if (studentLists.is(":visible")) {
-                jRow.find(".segment").each(function(index) {
-                    var jel = $(this),
-                        width = jel.data("width"),
-                        span = width < 20 ? "" : jel.data("num");
-                    jel.animate({width: width}, 350, "easeInOutCubic")
-                        .find("span").html(span);
+                // Because we show the badges in reverse order,
+                // from challenge/master/category-5 to meteorite/bronze/category-0
+                Handlebars.registerHelper("reverseEach", function(context, block) {
+                    var result = "";
+                    for (var i = context.length - 1; i >= 0; i--) {
+                        result += block(context[i]);
+                    }
+                    return result;
                 });
 
-                studentLists.fadeOut(100, "easeInOutCubic");
-            } else {
-                jRow.find(".segment").animate({width: 100}, 450, "easeInOutCubic", function() {
-                    var jel = $(this),
-                        status = jel.data("status");
-                    jel.find("span").html(status);
+                Handlebars.registerHelper("toMediumIconSrc", function(category) {
+                    return badgeInfo[category].icon;
                 });
 
-                studentLists.delay(150).fadeIn(650, "easeInOutCubic");
+                Handlebars.registerHelper("toBadgeClassName", function(category) {
+                    return badgeInfo[category].className;
+                });
+
+                Handlebars.registerHelper("toBadgeLabel", function(category, fStandardView) {
+                    var label = badgeInfo[category].label;
+
+                    if (fStandardView) {
+                        if (label === "Challenge") {
+                            label += " Patches";
+                        } else {
+                            label += " Badges";
+                        }
+                    }
+                    return label;
+                });
+
+                Handlebars.registerPartial(
+                        "badge-container",
+                        Templates.get("profile.badge-container"));
+                Handlebars.registerPartial(
+                        "badge",
+                        Templates.get("profile.badge"));
+                Handlebars.registerPartial(
+                        "user-badge",
+                        Templates.get("profile.user-badge"));
+
+                $.each(data["badgeCollections"], function(collectionIndex, collection) {
+                    $.each(collection["userBadges"], function(badgeIndex, badge) {
+                        var targetContextNames = badge["targetContextNames"];
+                        var numHidden = targetContextNames.length - 1;
+                        badge["visibleContextName"] = targetContextNames[0] || "";
+                        badge["listContextNamesHidden"] = $.map(
+                            targetContextNames.slice(1),
+                            function(name, nameIndex) {
+                                return {
+                                    name: name,
+                                    isLast: (nameIndex === numHidden - 1)
+                                };
+                            });
+                        badge["hasMultiple"] = (badge["count"] > 1);
+                    });
+                });
+
+                // TODO: what about mobile-view?
+                data.fStandardView = true;
+
+                var achievementsTemplate = Templates.get("profile.achievements");
+                $("#tab-content-achievements").html(achievementsTemplate(data));
+
+                $("#achievements #achievement-list > ul li").click(function() {
+                     var category = $(this).attr("id");
+                     var clickedBadge = $(this);
+
+                     $("#badge-container").css("display", "");
+
+                     clickedBadge.siblings().removeClass("selected");
+
+                     if ($("#badge-container > #" + category).is(":visible")) {
+                        if (clickedBadge.parents().hasClass("standard-view")) {
+                            $("#badge-container > #" + category).slideUp(300, function() {
+                                    $("#badge-container").css("display", "none");
+                                    clickedBadge.removeClass("selected");
+                                });
+                        }
+                        else {
+                            $("#badge-container > #" + category).hide();
+                            $("#badge-container").css("display", "none");
+                            clickedBadge.removeClass("selected");
+                        }
+                     }
+                     else {
+                        var jelContainer = $("#badge-container");
+                        var oldHeight = jelContainer.height();
+                        $(jelContainer).children().hide();
+                        if (clickedBadge.parents().hasClass("standard-view")) {
+                            $(jelContainer).css("min-height", oldHeight);
+                            $("#" + category, jelContainer).slideDown(300, function() {
+                                $(jelContainer).animate({"min-height": 0}, 200);
+                            });
+                        } else {
+                            $("#" + category, jelContainer).show();
+                        }
+                        clickedBadge.addClass("selected");
+                     }
+                });
+                $("abbr.timeago").timeago();
             }
         });
+    },
 
-        $("#graph-content").delegate(".student-link", "click", function(e) {
-            e.preventDefault();
-
-            var jel = $(this),
-                exercise = jel.data("exercise"),
-                email = jel.data("email");
-
-            Profile.collapseAccordion();
-            var url = Profile.exerciseProgressUrl(exercise, email);
-            Profile.loadGraph(url);
-        });
-
-        $("#stats-filters").delegate("#student-progresssummary-search", "keyup", function() {
-            if (updateFilterTimeout == null) {
-                updateFilterTimeout = setTimeout(filterSummaryRows, 250);
+    populateGoals: function() {
+        $.ajax({
+            type: "GET",
+            url: "/api/v1/user/goals",
+            data: {email: USER_EMAIL},
+            dataType: "json",
+            success: function(data) {
+                GoalProfileViewsCollection.render(data, "/api/v1/user/goals?email=" + USER_EMAIL);
             }
         });
-
     }
-
-    return {
-        render: function(context) {
-            if (!fInitialized) {
-                init();
-            }
-
-            Profile.numStudents = context.num_students;
-
-            $.each(context.exercises, function(index, exercise) {
-                exercise.progress.sort(function(first, second) {
-                    return statusInfo[first.status].order - statusInfo[second.status].order;
-                });
-            });
-
-            $("#graph-content").html(template(context));
-        }
-    };
 };
 
-$(function(){Profile.init();});

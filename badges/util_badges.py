@@ -142,62 +142,74 @@ def get_badge_counts(user_data):
 
     return count_dict
 
-def get_user_badges(user_data = None):
+def get_grouped_user_badges(user_data=None):
+    """ Retrieves the list of user-earned badges grouped into GroupedUserBadge
+    objects. Also returns the list of possible badges along with them.
+
+    """
 
     if not user_data:
         user_data = models.UserData.current()
 
     user_badges = []
-    user_badges_dict = {}
+    grouped_badges_dict = {}
 
     if user_data:
         user_badges = models_badges.UserBadge.get_for(user_data)
         badges_dict = all_badges_dict()
-        user_badge_last = None
+        grouped_user_badge = None
         for user_badge in user_badges:
-            if user_badge_last and user_badge_last.badge_name == user_badge.badge_name:
-                user_badge_last.count += 1
-                if user_badge_last.count > 1:
-                    user_badge_last.list_context_names_hidden.append(user_badge.target_context_name)
-                else:
-                    user_badge_last.list_context_names.append(user_badge.target_context_name)
+            if (grouped_user_badge and
+                    grouped_user_badge.badge.name == user_badge.badge_name):
+                grouped_user_badge.target_context_names.append(
+                    user_badge.target_context_name)
             else:
-                user_badge.badge = badges_dict.get(user_badge.badge_name)
+                badge = badges_dict.get(user_badge.badge_name)
+                badge.is_owned = True
 
-                if user_badge.badge:
-                    user_badge.badge.is_owned = True
+                grouped_user_badge = badges.GroupedUserBadge.build(user_data,
+                                                                   badge,
+                                                                   user_badge)
+                grouped_badges_dict[user_badge.badge_name] = grouped_user_badge
 
-                user_badge.count = 1
-                user_badge.list_context_names = [user_badge.target_context_name]
-                user_badge.list_context_names_hidden = []
-                user_badge_last = user_badge
-                user_badges_dict[user_badge.badge_name] = True
-
-    possible_badges = all_badges()
+    possible_badges = sorted(all_badges(),
+                             key=lambda badge:badge.badge_category)
     for badge in possible_badges:
-        badge.is_owned = user_badges_dict.has_key(badge.name)
+        badge.is_owned = grouped_badges_dict.has_key(badge.name)
 
-    user_badges = sorted(filter(lambda user_badge: hasattr(user_badge, "badge") and user_badge.badge is not None, user_badges), reverse=True, key=lambda user_badge:user_badge.date)
-    possible_badges = sorted(possible_badges, key=lambda badge:badge.badge_category)
+    grouped_user_badges = sorted(
+            filter(lambda group: (hasattr(group, "badge") and
+                                  group.badge is not None),
+                   grouped_badges_dict.values()),
+            reverse=True,
+            key=lambda group: group.last_earned_date)
 
-    user_badges_normal = filter(lambda user_badge: user_badge.badge.badge_category != badges.BadgeCategory.MASTER, user_badges)
-    user_badges_master = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.MASTER, user_badges)
-    user_badges_diamond = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.DIAMOND, user_badges)
-    user_badges_platinum = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.PLATINUM, user_badges)
-    user_badges_gold = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.GOLD, user_badges)
-    user_badges_silver = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.SILVER, user_badges)
-    user_badges_bronze = filter(lambda user_badge: user_badge.badge.badge_category == badges.BadgeCategory.BRONZE, user_badges)
+    def filter_by_category(category):
+        return filter(lambda group: group.badge.badge_category == category,
+                      grouped_user_badges)
 
-    bronze_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.BRONZE, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    silver_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.SILVER, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    gold_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.GOLD, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    platinum_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.PLATINUM, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    diamond_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.DIAMOND, possible_badges), key=lambda badge:badge.points or sys.maxint)
-    master_badges = sorted(filter(lambda badge:badge.badge_category == badges.BadgeCategory.MASTER, possible_badges), key=lambda badge:badge.points or sys.maxint)
+    user_badges_normal = filter(lambda group: group.badge.badge_category != badges.BadgeCategory.MASTER,
+                                grouped_user_badges)
+    user_badges_master = filter_by_category(badges.BadgeCategory.MASTER)
+    user_badges_diamond = filter_by_category(badges.BadgeCategory.DIAMOND)
+    user_badges_platinum = filter_by_category(badges.BadgeCategory.PLATINUM)
+    user_badges_gold = filter_by_category(badges.BadgeCategory.GOLD)
+    user_badges_silver = filter_by_category(badges.BadgeCategory.SILVER)
+    user_badges_bronze = filter_by_category(badges.BadgeCategory.BRONZE)
 
+    def filter_and_sort(category):
+        return sorted(filter(lambda badge: badge.badge_category == category,
+                             possible_badges),
+                      key=lambda badge: badge.points or sys.maxint)
+
+    bronze_badges = filter_and_sort(badges.BadgeCategory.BRONZE)
+    silver_badges = filter_and_sort(badges.BadgeCategory.SILVER)
+    gold_badges = filter_and_sort(badges.BadgeCategory.GOLD)
+    platinum_badges = filter_and_sort(badges.BadgeCategory.PLATINUM)
+    diamond_badges = filter_and_sort(badges.BadgeCategory.DIAMOND)
+    master_badges = filter_and_sort(badges.BadgeCategory.MASTER)
 
     return { 'possible_badges': possible_badges,
-             'user_badges': user_badges,
              'user_badges_normal': user_badges_normal,
              'user_badges_master': user_badges_master,
              "badge_collections": [bronze_badges, silver_badges, gold_badges, platinum_badges, diamond_badges, master_badges],
@@ -207,20 +219,28 @@ def get_user_badges(user_data = None):
              'platinum_badges': user_badges_platinum,
              'diamond_badges': user_badges_diamond, }
 
+def get_public_user_badges(user_data=None):
+    """ Retrieves the list of user-earned badges that the user has selected
+    to publicly display on his/her profile display-case.
+    This is returned as a list of Badge objects, and not UserBadge objects
+    and therefore does not contain further information about the user's
+    activities.
+
+    """
+    if not user_data:
+        user_data = models.UserData.current()
+        if not user_data:
+            return []
+
+    public_badges = user_data.public_badges or []
+    full_dict = all_badges_dict()
+    return [full_dict[name] for name in public_badges if name in full_dict]
+
 class ViewBadges(request_handler.RequestHandler):
 
     def get(self):
-
-        user_badges = get_user_badges()
-
-        template_values = {
-                "user_badges_normal": user_badges['user_badges_normal'],
-                "user_badges_master": user_badges['user_badges_master'],
-                "badge_collections": user_badges['badge_collections'],
-                "show_badge_frequencies": self.request_bool("show_badge_frequencies", default=False)
-                }
-
-        self.render_jinja2_template('viewbadges.html', template_values)
+        # TODO: turtle redirect to /profile/<email>/achievements
+        self.redirect("/profile")
 
 # /admin/badgestatistics is called periodically by a cron job
 class BadgeStatistics(request_handler.RequestHandler):

@@ -142,7 +142,7 @@ def focus_graph_context(user_data_student, dt_start_utc, dt_end_utc):
     dict_exercise_seconds = exercise_focus_data[1]
 
     return {
-            "student_email": user_data_student.email,
+            "profile_root": user_data_student.profile_root,
             "total_playlist_seconds": total_playlist_seconds,
             "dict_playlist_seconds": dict_playlist_seconds,
             "total_exercise_seconds": total_exercise_seconds,

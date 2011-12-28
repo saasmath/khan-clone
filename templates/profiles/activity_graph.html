@@ -1,7 +1,7 @@
 {% if is_graph_empty %}
 <div class="graph-notification">This chart doesn't have any activity to show. Go <a href="/#browse">watch some videos</a> and <a href="/exercisedashboard">do some exercises</a>!</div>
 {% endif %}
-
+{% import 'macros/profiles.html' as profile_macros %}
 <script>
 
     function drillIntoBucket(ix) {
@@ -249,7 +249,10 @@
         });
     });
 </script>
-
+<p class="vital-statistics-description">
+    Shows how much work you're doing each day.
+     {{ profile_macros.graph_date_picker(profile_root, "activity") }}
+</p>
 <div id="highchart-container" class="{% if is_graph_empty %}empty-chart{% endif %}">
     <div id="highchart"></div>
 </div>

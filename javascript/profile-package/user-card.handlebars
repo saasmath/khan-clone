@@ -1,0 +1,25 @@
+<section class="basic-user-info" style="float: left;">
+{{#if loggedIn}}
+  <div class="avatar-pic-container">
+    <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic">
+    <div class="avatar-change-overlay" style="display: none">Change avatar</div>
+  </div>
+  <input type="text" value="{{nickname}}" id="nickname"
+      placeholder="Enter nickname here" class="inline-editable nickname">
+  <p class="pulled">Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
+{{else}}
+  <p>Log in, Darth!</p>
+{{/if}}
+</section>
+<section class="summary-and-controls" style="float:right; padding-right: 20px;">
+    <p class="pulls"><img class="summary-icon" src="/images/generic-exercise-icon-shadow.png">{{countExercisesProficient}}/{{countExercises}}</p>
+    <p class="pulled pulls"><img class="summary-icon" src="/images/video-camera-icon-shadow.png"> {{countVideosCompleted}}/{{countVideos}}</p>
+    <p class="pulled pulls"><span title="{{points}} energy points" class="energy-points-badge" style="float: none;">{{points}}</span> Energy Points</p>
+    <p class="pulled pulls add-remove-coach" style="background-color: white;{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</p>
+    <p class="pulled pulls add-remove-coach" style="background-color: white;{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</p>
+</section>
+<div style="clear: both;"></div>
+
+<div class="sticker-book">
+    <a class="display-case-cover" href="#"></a>
+</div>

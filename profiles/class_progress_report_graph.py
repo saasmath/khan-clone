@@ -62,6 +62,7 @@ def class_progress_report_graph_context(user_data, list_students):
                 exercise_data[student_email] = {
                     'email': student.email,
                     'nickname': student.nickname,
+                    'profile_root': student.profile_root,
                     'exercises': []
                 }
 

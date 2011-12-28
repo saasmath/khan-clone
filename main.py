@@ -53,9 +53,8 @@ from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
 from custom_exceptions import MissingVideoException
-from templatetags import user_points
 from oauth_provider import apps as oauth_apps
-from phantom_users.phantom_util import create_phantom, get_phantom_user_id_from_cookies
+from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
@@ -812,12 +811,14 @@ application = webapp2.WSGIApplication([
     ('/profile/graph/focus', util_profile.FocusGraph),
     ('/profile/graph/exercisesovertime', util_profile.ExercisesOverTimeGraph),
     ('/profile/graph/exerciseproblems', util_profile.ExerciseProblemsGraph),
-    ('/profile/graph/exerciseprogress', util_profile.ExerciseProgressGraph),
-    ('/profile', util_profile.ViewProfile),
+
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
+    ('/profile/(.+?)/(.*)', util_profile.ViewProfile),
+    ('/profile/(.*)', util_profile.ViewProfile),
+    ('/profile', util_profile.ViewProfile),
     ('/class_profile', util_profile.ViewClassProfile),
 
     ('/login', Login),

@@ -32,6 +32,7 @@ class CustomBadge(Badge):
     def extended_description(self):
         return self.full_description
 
+    @property
     def icon_src(self):
         if self.custom_icon_src:
             return self.custom_icon_src

@@ -23,6 +23,7 @@ javascript = {
             "jquery.js",
             "jquery-ui-1.8.16.custom.js",
             "jquery.ui.menu.js",
+            "jquery.timeago.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "../../khan-exercises/utils/underscore.js",
@@ -83,12 +84,30 @@ javascript = {
         "files": [
             "jquery.address-1.4.min.js",
             "highcharts.js",
+            "handlebars-helpers.js",
+            "avatar-picker.handlebars",
+            "avatar-picker.js",
+            "username-picker.handlebars",
+            "username-picker.js",
+            "user-card.handlebars",
+            "user-card.js",
+            "profile.handlebars",
+            "vital-statistics.handlebars",
+            "achievements.handlebars",
+            "badge-container.handlebars",
+            "user-badge.handlebars",
+            "badge.handlebars",
+            "badge-compact.handlebars",
+            "badge-display-case.handlebars",
+            "badges.js",
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
             "profile-class-progress-report.handlebars",
             "class-progress-column.handlebars",
             "class-progress-summary.handlebars",
+            "class-progress-summary.js",
             "exercise_progress.handlebars",
+            "profile-goals.js",
             "profile.js",
         ]
     },
@@ -160,7 +179,6 @@ stylesheets = {
             "rating.css",
             "stylesheet.css",
             "menu.css",
-            "profile.css",
             "museo-sans.css",
             "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
@@ -185,6 +203,12 @@ stylesheets = {
         "files": [
             "viewstudentlists.css",
             "viewclassprofile.css",
+        ]
+    },
+    "profile": {
+        "files": [
+            "profile.css",
+            "badges.css",
         ]
     },
     "exercises": {
