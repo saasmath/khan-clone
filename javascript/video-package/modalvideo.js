@@ -127,4 +127,4 @@ var ModalVideo = {
     }
 };
 
-Handlebars.registerPartial("youtube-player", Templates.get("video.youtube-player"));
+Handlebars.registerPartial("youtube-player", Templates.get("shared.youtube-player"));

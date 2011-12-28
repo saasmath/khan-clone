@@ -34,12 +34,12 @@ var Homepage = {
 
         // Start loading the youtube player immediately,
         // and insert it wrapped in a hidden container
-        var template = Templates.get("homepage.youtube-embed");
+        var template = Templates.get("shared.youtube-player");
 
         jelPlaceholder
             .parents("#main-video-link")
                 .after(
-                    $(template({"youtube_id": youtube_id}))
+                    $(template({"youtubeId": youtube_id}))
                         .wrap("<div class='player-loading-wrapper'/>")
                         .parent()
             );
