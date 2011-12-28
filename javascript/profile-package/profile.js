@@ -49,6 +49,42 @@ var Profile = {
             }
         });
 
+        // sneakily override the Highcharts.Chart constructor so we can make
+        // Highcharts play nicely with HTML5shiv.
+        if (window.html5) {
+            // See http://stackoverflow.com/questions/3871731/dynamic-object-construction-in-javascript
+            var applyCtor = function(ctor, params) {
+                // Use a fake ctor to ensure prototype is set up correctly
+                var fakeCtor = function() {};
+                fakeCtor.prototype = ctor.prototype;
+                var obj = new fakeCtor();
+                obj.constructor = ctor;
+
+                // Now we can use apply on the empty instance
+                var newobj = ctor.apply(obj, params);
+
+                if (newobj !== null &&
+                    (typeof newobj === "object" || typeof newobj === "function")) {
+                    obj = newobj;
+                }
+
+                return obj;
+            };
+
+            Highcharts._origChart = Highcharts.Chart;
+            Highcharts.Chart = function() {
+                html5.shivInnerHtml = false;
+                var chart;
+                try {
+                    chart = applyCtor(Highcharts._origChart, arguments);
+                }
+                catch(e) {
+                    KAConsole.log(e);
+                }
+                html5.shivInnerHtml = true;
+                return chart;
+            };
+        }
 
         if ($.address){
 
@@ -72,7 +108,7 @@ var Profile = {
                 evt.preventDefault();
                 if($.address){
                     // only visit the resource described by the url, leave the params unchanged
-                    var href = $( this ).attr( "href" )
+                    var href = $( this ).attr( "href" );
                     var path = href.split("?")[0];
 
                     // visiting a different resource
@@ -129,9 +165,6 @@ var Profile = {
                 clickedBadge.addClass("selected");
              }
         });
-
-        // remove goals from IE<=8
-        $(".lte8 .goals-accordion-content").remove();
 
         $("#stats-nav #nav-accordion")
             .accordion({
@@ -490,7 +523,7 @@ var Profile = {
             student.most_recent_update = null;
             student.profile_url = "/profile?student_email="+ student.email +"#/api/v1/user/goals?email="+student.email;
 
-            if (student.goals != undefined && student.goals.length > 0) {
+            if (student.goals && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
                     // Sort objectives by status
                     var progress_count = 0;
@@ -679,18 +712,18 @@ var Profile = {
             studentGoalsViewModel.filterDesc += 'most recently worked on goals';
         }
         if (filters['in-progress']) {
-            if (studentGoalsViewModel.filterDesc != '') studentGoalsViewModel.filterDesc += ', ';
+            if (studentGoalsViewModel.filterDesc !== '') studentGoalsViewModel.filterDesc += ', ';
             studentGoalsViewModel.filterDesc += 'goals in progress';
         }
         if (filters['struggling']) {
-            if (studentGoalsViewModel.filterDesc != '') studentGoalsViewModel.filterDesc += ', ';
+            if (studentGoalsViewModel.filterDesc !== '') studentGoalsViewModel.filterDesc += ', ';
             studentGoalsViewModel.filterDesc += 'students who are struggling';
         }
-        if (filter_text != '') {
-            if (studentGoalsViewModel.filterDesc != '') studentGoalsViewModel.filterDesc += ', ';
+        if (filter_text !== '') {
+            if (studentGoalsViewModel.filterDesc !== '') studentGoalsViewModel.filterDesc += ', ';
             studentGoalsViewModel.filterDesc += 'students/goals matching "' + filter_text + '"';
         }
-        if (studentGoalsViewModel.filterDesc != '')
+        if (studentGoalsViewModel.filterDesc !== '')
             studentGoalsViewModel.filterDesc = 'Showing only ' + studentGoalsViewModel.filterDesc;
         else
             studentGoalsViewModel.filterDesc = 'No filters applied';
@@ -710,7 +743,7 @@ var Profile = {
                 row_visible = row_visible && (row.struggling);
             }
             if (row_visible) {
-                if (filter_text == '' || row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
+                if (filter_text === '' || row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
                     if (row.goal) {
                         $.each(row.goal.objectives, function(idx, objective) {
                             $(objective.blockElement).removeClass('matches-filter');
@@ -1113,7 +1146,7 @@ var ProgressSummaryView = function() {
 
         Handlebars.registerHelper("progressColumn", function(block) {
             this.progressSide = block.hash.side;
-            return block(this)
+            return block(this);
         });
 
         Handlebars.registerHelper("progressIter", function(progress, block) {

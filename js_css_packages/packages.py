@@ -51,6 +51,7 @@ javascript = {
             "goal-new-custom-dialog.handlebars",
             "goal-create.handlebars",
             "goals.js",
+            "goal-new.js",
         ]
     },
     "video": {
