@@ -17,8 +17,7 @@ def etag(func_tag_content):
     def etag_wrapper(func):
         @wraps(func)
         def etag_enabled(*args, **kwargs):
-
-            etag_inner_content = "%s:%s" % (func_tag_content(), App.version)
+            etag_inner_content = "%s:%s" % (func_tag_content(*args, **kwargs), App.version)
             etag_server = "\"%s\"" % hashlib.md5(etag_inner_content).hexdigest()
 
             etag_client = request.headers.get("If-None-Match")

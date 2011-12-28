@@ -124,14 +124,14 @@ var Homepage = {
             for (var j = 0, item; item = items[j]; j++) {
                 var col = (j / itemsPerCol) | 0;
                 item["col"] = col;
-                if ((j % itemsPerCol == 0) && col > 0) {
+                if ((j % itemsPerCol === 0) && col > 0) {
                     item["firstInCol"] = true;
                 }
             }
 
             var container = $("#" + topic["id"] + " ol").get(0);
             container.innerHTML = template(topic);
-        })
+        });
 
 		topics = null;
     }
