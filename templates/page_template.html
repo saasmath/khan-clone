@@ -5,9 +5,16 @@
     xmlns:fb="http://www.facebook.com/2008/fbml" {{ data_require }}>
       <head>
         <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8"/>
-
+        {% if include_errorception and not hide_analytics -%}
+        <script>
+        var _errs=["4efc1674aa8bc407591e0ad6"];(function(a,b){a.onerror=function(){_errs.push(arguments)};
+        var d=function(){var a=b.createElement("script"),c=b.getElementsByTagName("script")[0];
+        a.src=b.location.protocol+"//errorception.com/projects/"+_errs[0]+"/beacon.js";
+        c.parentNode.insertBefore(a,c)};a.addEventListener?a.addEventListener("load",d,!1):
+        a.attachEvent("onload",d)})(window,document);
+        </script>
+        {%- endif %}
         <!--[if lte IE 6]><script src="/javascript/ie-warning.js"></script><script>window.onload=function(){e("/images/ie-warning/")}</script><![endif]-->
-
         <script type="text/javascript">
             var KA_VERSION = '{{ App.version }}';
             var FB_APP_ID = '{{ App.facebook_app_id }}';

@@ -24,6 +24,7 @@ from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
+from gandalf import gandalf
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -235,6 +236,10 @@ class ViewExercise(request_handler.RequestHandler):
 
         user_exercise_json = jsonify.jsonify(user_exercise)
 
+        include_errorception = (not review_mode and
+                                exid == "pre-algebra_challenge" and
+                                gandalf("errorception"))
+
         template_values = {
             'exercise': exercise,
             'user_exercise_json': user_exercise_json,
@@ -255,6 +260,7 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
             'reviews_left_count': reviews_left_count if review_mode else "null",
+            'include_errorception': include_errorception,
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
