@@ -328,7 +328,10 @@ def main():
         print "Failed to compile templates, bailing."
         return
 
-    compile_handlebar_templates()
+    if not compile_handlebar_templates():
+        print "Failed to compile handlebars templates, bailing."
+        return
+
     compress_js()
     compress_css()
 
