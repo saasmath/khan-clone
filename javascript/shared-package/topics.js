@@ -167,7 +167,7 @@ window.TestTopics = function() {
         },
 
         getVersionID: function() {
-            return this.version ? this.version.get("number") : "edit";
+            return _.isString(this.version) ? this.version : this.version.get("number");
         }
 	});
 
@@ -206,7 +206,7 @@ window.TestTopics = function() {
     };
 
     window.getDefaultTopicTree = function() {
-		defaultTree = defaultTree || new TopicTree();
+		defaultTree = defaultTree || new TopicTree("default");
         return defaultTree;
     };
 
