@@ -404,13 +404,14 @@ def update_user_profile():
 
     user_data.save()
 
-@route("/api/v1/user/coaches/add", methods=["POST"])
+@route("/api/v1/user/coaches/<coach_email>", methods=["POST"])
 @oauth_required()
 @jsonp
 @jsonify
-def add_coach():
+def add_coach(coach_email):
     current_user_data = models.UserData.current()
-    coach_user_data = request.request_user_data("coach_email")
+    coach_user_data = models.UserData.get_possibly_current_user(coach_email)
+
     if not coach_user_data:
         return api_invalid_param_response("Invalid coach email.")
 
@@ -418,13 +419,13 @@ def add_coach():
         current_user_data.coaches.append(coach_user_data.key_email)
         current_user_data.put()
 
-@route("/api/v1/user/coaches/remove", methods=["POST"])
+@route("/api/v1/user/coaches/<coach_email>", methods=["DELETE"])
 @oauth_required()
 @jsonp
 @jsonify
-def remove_coach():
+def remove_coach(coach_email):
     current_user_data = models.UserData.current()
-    coach_user_data = request.request_user_data("coach_email")
+    coach_user_data = models.UserData.get_possibly_current_user(coach_email)
 
     if current_user_data.student_lists:
         actual_lists = StudentList.get(current_user_data.student_lists)
@@ -1127,6 +1128,7 @@ def get_user_badges():
             "badge_collections": badge_collections,
         }
 
+# TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
 @admin_required
 @jsonp
