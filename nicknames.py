@@ -10,7 +10,11 @@ def to_unicode(s):
     else:
         return s
 
-def get_nickname_for(user_data):
+def get_default_nickname_for(user_data):
+    """ Gets the default nickname for a user if none is available locally.
+    
+    This will infer a nickname either from Facebook or a Google e-mail address.
+    """
 
     if not user_data:
         return None

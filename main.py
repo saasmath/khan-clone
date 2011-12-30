@@ -58,7 +58,7 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
-from nicknames import get_nickname_for
+from nicknames import get_default_nickname_for
 from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
@@ -498,8 +498,9 @@ class PostLogin(request_handler.RequestHandler):
                 user_data.user_email = current_google_user.email()
                 user_data.put()
 
+            # TODO(benkomalo): fix this for people with public profiles
             # Update nickname if it has changed
-            current_nickname = get_nickname_for(user_data)
+            current_nickname = get_default_nickname_for(user_data)
             if user_data.user_nickname != current_nickname:
                 user_data.user_nickname = current_nickname
                 user_data.put()

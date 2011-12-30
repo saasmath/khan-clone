@@ -806,7 +806,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
         if self.user_nickname and not is_facebook_user_id(self.user_nickname):
             return self.user_nickname
         else:
-            return nicknames.get_nickname_for(self)
+            return nicknames.get_default_nickname_for(self)
 
     @property
     def email(self):
