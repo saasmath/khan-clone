@@ -11,19 +11,19 @@ var APIActionResults = {
     init: function() {
         this.hooks = [];
 
-        $(document).ajaxComplete(function (e, xhr, settings) {
+        $(document).ajaxComplete(function(e, xhr, settings) {
 
             if (xhr &&
-                xhr.getResponseHeader('X-KA-API-Version-Mismatch')) {
+                xhr.getResponseHeader("X-KA-API-Version-Mismatch")) {
                 apiVersionMismatch();
             }
 
             if (xhr &&
-                xhr.getResponseHeader('X-KA-API-Response') &&
+                xhr.getResponseHeader("X-KA-API-Response") &&
                 xhr.responseText) {
 
                 try { eval("var result = " + xhr.responseText); }
-                catch(e) { return; }
+                catch (e) { return; }
 
                 if (result && result.action_results) {
                     $(APIActionResults.hooks).each(function(ix, el) {
@@ -38,14 +38,14 @@ var APIActionResults = {
         jQuery.ajaxSetup({
             beforeSend: function(xhr, settings) {
                 if (settings && settings.url && settings.url.indexOf("/api/") > -1) {
-                    var xsrfToken = readCookie('fkey');
+                    var xsrfToken = readCookie("fkey");
                     if (xsrfToken) {
                         // Send xsrf token along via header so it can be matched up
                         // w/ cookie value.
                         xhr.setRequestHeader("X-KA-FKey", xsrfToken);
                     } else {
                         apiVersionMismatch();
-                        if ( settings.error ) {
+                        if (settings.error) {
                             settings.error();
                         }
                         return false;
@@ -62,19 +62,19 @@ var APIActionResults = {
 };
 
 function apiVersionMismatch() {
-    Notifications.showTemplate('shared.api-version-mismatch');
+    Notifications.showTemplate("shared.api-version-mismatch");
 }
 
 APIActionResults.init();
 
 // Show any badges that were awarded w/ any API ajax request
-$(function(){ APIActionResults.register("badges_earned_html", Badges.show); });
+$(function() { APIActionResults.register("badges_earned_html", Badges.show); });
 
 // Show any login notifications that pop up w/ any API ajax request
-$(function(){ APIActionResults.register("login_notifications_html", Notifications.show); });
+$(function() { APIActionResults.register("login_notifications_html", Notifications.show); });
 
 // Update user info after appropriate API ajax requests
-$(function(){ APIActionResults.register("user_info_html",
+$(function() { APIActionResults.register("user_info_html",
         function(sUserInfoHtml) {
             $("#user-info").html(sUserInfoHtml);
         }
@@ -82,25 +82,25 @@ $(function(){ APIActionResults.register("user_info_html",
 });
 
 // show point animation above progress bar when in exercise pages
-$(function(){
+$(function() {
 
-    var updatePointDisplay = function( data ) {
-        if( jQuery(".single-exercise").length > 0 && data.points > 0) {
-            var coin = jQuery("<div>+"+data.points+"</div>").addClass("energy-points-badge");
+    var updatePointDisplay = function(data) {
+        if (jQuery(".single-exercise").length > 0 && data.points > 0) {
+            var coin = jQuery("<div>+" + data.points + "</div>").addClass("energy-points-badge");
             jQuery(".streak-bar").append(coin);
             jQuery(coin)
                 .fadeIn(195)
                 .delay(650)
-                .animate({top:"-30", opacity:0}, 350, "easeInOutCubic",
-                    function(){jQuery(coin).hide(0).remove();}); // remove coin on animation complete
+                .animate({top: "-30", opacity: 0}, 350, "easeInOutCubic",
+                    function() {jQuery(coin).hide(0).remove();}); // remove coin on animation complete
         }
     };
 
-    APIActionResults.register( "points_earned", updatePointDisplay );
+    APIActionResults.register("points_earned", updatePointDisplay);
 });
 
 // Update the "reviewing X exercises" heading counter and also change the
 // heading to indicate reviews are done when appropriate
 $(function() {
-    APIActionResults.register( "reviews_left", Review.updateCounter );
+    APIActionResults.register("reviews_left", Review.updateCounter);
 });

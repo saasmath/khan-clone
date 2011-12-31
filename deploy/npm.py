@@ -10,7 +10,7 @@ def popen_results(args):
 
 def installed():
     """docstring for npm_installed"""
-    return popen_results(["which", "npm"]).strip()
+    return popen_results(["command", "-v", "npm"]).strip()
 
 def local_modules_setup():
     """see if npm install has been called before"""
@@ -18,7 +18,7 @@ def local_modules_setup():
 
 def package_installed(package, local_only=False):
     """checks to see if the module is installed and returns a path to it"""
-    sys_install = popen_results(["which", package]).strip()
+    sys_install = popen_results(["command", "-v", package]).strip()
     local_install = os.path.exists( os.path.join(MODULE_PATH, ".bin",package))
 
     if local_only:

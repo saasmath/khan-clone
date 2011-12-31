@@ -2045,7 +2045,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         height: 62px;
     }
 
-.proficient-badge {
+a.proficient-badge {
     display: block;
     position:relative;
     z-index:10;

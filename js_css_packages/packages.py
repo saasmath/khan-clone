@@ -33,9 +33,11 @@ javascript = {
             "../../gae_bingo/static/js/gae_bingo.js",
 
             # application code & templates:
+            "handlebars-extras.js",
             "pageutil.js",
             "api.js",
             "social.js",
+            "youtube-player.handlebars",
             "api-version-mismatch.handlebars",
             "streak-bar.handlebars",
             "knowledgemap-exercise.handlebars",
@@ -58,7 +60,6 @@ javascript = {
             "discussion.js",
             "thumbnail.handlebars",
             "related-video-link.handlebars",
-            "youtube-player.handlebars",
             "modal-video.handlebars",
             "modalvideo.js",
         ]
@@ -71,7 +72,6 @@ javascript = {
             "videolist.handlebars",
             "homepage.js",
             "ga_social_tracking.js",
-            "youtube-embed.handlebars",
         ]
     },
     "exercisestats": {

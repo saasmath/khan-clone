@@ -26,4 +26,3 @@ compiled_templates*
 .project
 .pydevproject
 deploy/node_modules/*
-
