@@ -24,6 +24,7 @@ from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
+from gandalf import gandalf
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -255,6 +256,7 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
             'reviews_left_count': reviews_left_count if review_mode else "null",
+            'include_errorception': gandalf("errorception"),
             }
 
         self.render_jinja2_template("exercise_template.html", template_values)
@@ -310,9 +312,12 @@ def exercise_graph_dict_json(user_data, admin=False):
             'v_position': graph_dict["v_position"],
             'summative': graph_dict["summative"],
             'num_milestones': graph_dict.get("num_milestones", 0),
-            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]],
-            'goal_req': (graph_dict["name"] in goal_exercises)
+            'goal_req': (graph_dict["name"] in goal_exercises),
+
+            # get_by_name returns only exercises visible to current user
+            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"] if models.Exercise.get_by_name(prereq["name"])],
         }
+
         if admin:
             exercise = models.Exercise.get_by_name(graph_dict["name"])
             row["live"] = exercise and exercise.live

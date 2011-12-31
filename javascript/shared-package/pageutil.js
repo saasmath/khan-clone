@@ -12,20 +12,20 @@ var KAConsole = {
 
 function addCommas(nStr) // to show clean number format for "people learning right now" -- no built in JS function
 {
-    nStr += '';
-    var x = nStr.split('.');
+    nStr += "";
+    var x = nStr.split(".");
     var x1 = x[0];
-    var x2 = x.length > 1 ? '.' + x[1] : '';
+    var x2 = x.length > 1 ? "." + x[1] : "";
     var rgx = /(\d+)(\d{3})/;
     while (rgx.test(x1)) {
-        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        x1 = x1.replace(rgx, "$1" + "," + "$2");
     }
     return x1 + x2;
 }
 
 function validateEmail(sEmail)
 {
-     var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+     var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
      return sEmail.match(re);
 }
 
@@ -50,8 +50,8 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
         delay: 150,
         source: function(req, fxnCallback) {
 
-            var term = $.trim( req.term );
-            if ( !term ) {
+            var term = $.trim(req.term);
+            if (!term) {
                 fxnCallback([]);
                 return;
             }
@@ -70,7 +70,7 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
                     try {
                         reMatch = new RegExp("(" + data.query + ")", "i");
                     }
-                    catch(e) {
+                    catch (e) {
                         reMatch = null;
                     }
 
@@ -153,47 +153,47 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
 
 $(function() {
     // Configure the search form
-    if ( $("#page_search input[type=text]").placeholder().length ) {
+    if ($("#page_search input[type=text]").placeholder().length) {
         initAutocomplete("#page_search input[type=text]", true);
     }
 
     $("#page_search").submit(function(e) {
         // Only allow submission if there is a non-empty query.
-        return !!$.trim( $("#page_search input[type=text]").val() );
+        return !!$.trim($("#page_search input[type=text]").val());
     });
 });
 
-function createCookie(name,value,days) {
+function createCookie(name, value, days) {
     var expires;
     if (days) {
         var date = new Date();
-        date.setTime(date.getTime()+(days*24*60*60*1000));
-        expires = "; expires="+date.toGMTString();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toGMTString();
     }
     else expires = "";
-    document.cookie = name+"="+value+expires+"; path=/";
+    document.cookie = name + "=" + value + expires + "; path=/";
 }
 
 function readCookie(name) {
     var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for(var i=0;i < ca.length;i++) {
+    var ca = document.cookie.split(";");
+    for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        while (c.charAt(0) == " ") c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
 }
 
 function eraseCookie(name) {
-    createCookie(name,"",-1);
+    createCookie(name, "", -1);
 }
 
 function areCookiesEnabled() {
-    createCookie('detectCookiesEnabled', 'KhanAcademy', 1);
-    if (readCookie('detectCookiesEnabled') == null)
+    createCookie("detectCookiesEnabled", "KhanAcademy", 1);
+    if (readCookie("detectCookiesEnabled") == null)
         return false;
-    eraseCookie('detectCookiesEnabled');
+    eraseCookie("detectCookiesEnabled");
     return true;
 }
 
@@ -239,10 +239,10 @@ var VideoControls = {
     },
 
     onYouTubeBlocked: function(callback) {
-        $('<img width=0 height=0>')
+        $("<img width=0 height=0>")
             .error(callback)
-            .attr('src', 'http://www.youtube.com/favicon.ico?' + Math.random())
-            .appendTo('#page-container');
+            .attr("src", "http://www.youtube.com/favicon.ico?" + Math.random())
+            .appendTo("#page-container");
     },
 
     initThumbnails: function() {
@@ -252,14 +252,14 @@ var VideoControls = {
 
         $("#thumbnails")
             .cycle({
-                fx:     'scrollHorz',
+                fx: "scrollHorz",
                 timeout: 0,
                 speed: 550,
                 slideResize: 0,
-                easing: 'easeInOutBack',
+                easing: "easeInOutBack",
                 startingSlide: 0,
-                prev: '#arrow-left',
-                next: '#arrow-right',
+                prev: "#arrow-left",
+                next: "#arrow-right",
                 before: function() {
                     $(this).find("div.pending").each(function() {
                         $(this).css("background-image", "url('" + $(this).data("src") + "')");
@@ -381,13 +381,13 @@ var VideoStats = {
 
     stopLoggingProgress: function() {
         // unhook event handler initializer
-        $(this).unbind('playerready.videostats');
+        $(this).unbind("playerready.videostats");
 
         // send a final pause event
         this.playerStateChange(2);
 
         // now unhook playback polling
-        if ( this.intervalId !== null ) {
+        if (this.intervalId !== null) {
             clearInterval(this.intervalId);
             this.intervalId = null;
         }
@@ -433,7 +433,7 @@ var VideoStats = {
                 gae_bingo.bingo([
                         "homepage_restructure_homepage_video_played",
                         "homepage_restructure_homepage_video_played_binary"
-                        ])
+                        ]);
                 VideoControls.videoBingoSent = true;
             }
         }
@@ -445,7 +445,7 @@ var VideoStats = {
 
         // Make sure cookies are enabled, otherwise this totally won't work
         if (!areCookiesEnabled()) {
-            KAConsole.log('Cookies appear to be disabled. Not logging video progress.');
+            KAConsole.log("Cookies appear to be disabled. Not logging video progress.");
             return;
         }
 
@@ -459,19 +459,19 @@ var VideoStats = {
             seconds_watched: this.getSecondsWatchedRestrictedByPageTime()
         };
 
-        if ( this.sVideoKey !== null ) {
+        if (this.sVideoKey !== null) {
             data.video_key = this.sVideoKey;
-        } else if ( this.sYoutubeId !== null ) {
+        } else if (this.sYoutubeId !== null) {
             id = this.sYoutubeId;
         }
 
         $.ajax({type: "GET",
                 url: "/api/v1/user/videos/" + id + "/log_compatability",
                 data: data,
-                success: function (data) {
+                success: function(data) {
                     VideoStats.finishSave(data, percent);
                 },
-                error: function () {
+                error: function() {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
                     VideoStats.fSaving = false; VideoStats.dtSinceSave = dtSinceSaveBeforeError;
@@ -493,11 +493,11 @@ var VideoStats = {
                 text: content
             },
             style: {
-                classes: 'ui-tooltip-youtube'
+                classes: "ui-tooltip-youtube"
             },
             position: {
-                my: 'top center',
-                at: 'bottom center'
+                my: "top center",
+                at: "bottom center"
             },
             hide: {
                 fixed: true,
@@ -520,7 +520,7 @@ var VideoStats = {
                 $(".video-energy-points-current", jelPoints).text(video.points);
 
                 // Replace the old tooltip with an updated one.
-                VideoStats.tooltip('#points-badge-hover', jelPoints.data('title'));
+                VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
             }
         }
     },
@@ -552,7 +552,7 @@ var VideoStats = {
 // http://code.google.com/apis/youtube/js_api_reference.html
 function onYouTubePlayerReady(playerID) {
     // Ensure UniSub widget will know about ready players if/when it loads.
-    (window.unisubs_readyAPIIDs = window.unisubs_readyAPIIDs || []).push((playerID == "undefined" || !playerID) ? '' : playerID);
+    (window.unisubs_readyAPIIDs = window.unisubs_readyAPIIDs || []).push((playerID == "undefined" || !playerID) ? "" : playerID);
 
     var player = null;
     if (!player) player = $(".mirosubs-widget object").get(0);
@@ -566,8 +566,8 @@ function onYouTubePlayerReady(playerID) {
     // and that will cause onYouTubePlayerReady() to be called again.  So, we trigger
     // 'playerready' events on any objects that are using the player so that they can
     // take appropriate action to use the new player.
-    $(VideoControls).trigger('playerready');
-    $(VideoStats).trigger('playerready');
+    $(VideoControls).trigger("playerready");
+    $(VideoStats).trigger("playerready");
 }
 
 var Badges = {
@@ -586,7 +586,7 @@ var Badges = {
 
         if (!jel.length) return;
 
-        $(".achievement-badge", jel).click(function(){
+        $(".achievement-badge", jel).click(function() {
             window.location = "/badges/view";
             return false;
         });
@@ -596,18 +596,18 @@ var Badges = {
 
         var top = jelTarget.offset().top + jelTarget.height() + 5;
 
-        setTimeout(function(){
+        setTimeout(function() {
             jel.css("visibility", "hidden").css("display", "");
             jel.css("left", jelContainer.offset().left + (jelContainer.width() / 2) - (jel.width() / 2)).css("top", -1 * jel.height());
             var topBounce = top + 10;
             jel.css("display", "").css("visibility", "visible");
-            jel.animate({top: topBounce}, 300, function(){jel.animate({top: top}, 100);});
+            jel.animate({top: topBounce}, 300, function() {jel.animate({top: top}, 100);});
         }, 100);
     },
 
     hide: function() {
         var jel = $(".badge-award-container");
-        jel.animate({top: -1 * jel.height()}, 500, function(){jel.hide();});
+        jel.animate({top: -1 * jel.height()}, 500, function() {jel.hide();});
     },
 
     showMoreContext: function(el) {
@@ -637,18 +637,18 @@ var Notifications = {
             jel.empty().append(jelNew.children());
         }
 
-        $(".notification-bar-close a").click(function(){
+        $(".notification-bar-close a").click(function() {
             Notifications.hide();
             return false;
         });
 
         if (!jel.is(":visible")) {
-            setTimeout(function(){
+            setTimeout(function() {
 
                 jel
                     .css("visibility", "hidden")
                     .css("display", "")
-                    .css("top",-jel.height() - 2) // 2 for border and outline
+                    .css("top", -jel.height() - 2) // 2 for border and outline
                     .css("visibility", "visible");
 
                 // Queue:false to make sure all of these run at the same time
@@ -662,7 +662,7 @@ var Notifications = {
     },
     showTemplate: function(templateName) {
         var template = Templates.get(templateName);
-        this.show( template() );
+        this.show(template());
     },
 
     hide: function() {
@@ -675,7 +675,7 @@ var Notifications = {
         jel.animate(
                 { top: -jel.height() - 2 }, // 2 for border and outline
                 $.extend({}, animationOptions,
-                    { complete: function(){ jel.empty().css("display", "none"); } }
+                    { complete: function() { jel.empty().css("display", "none"); } }
                 )
         );
 
@@ -703,15 +703,15 @@ var Timezone = {
 
 // not every browser has Date.prototype.toISOString
 // https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date#Example.3a_ISO_8601_formatted_dates
-if ( !Date.prototype.toISOString ) {
+if (!Date.prototype.toISOString) {
     Date.prototype.toISOString = function() {
-        var pad = function(n) { return n < 10 ? '0' + n : n; };
-            return this.getUTCFullYear() + '-' +
-                pad(this.getUTCMonth() + 1) + '-' +
-                pad(this.getUTCDate()) + 'T' +
-                pad(this.getUTCHours()) + ':' +
-                pad(this.getUTCMinutes()) + ':' +
-                pad(this.getUTCSeconds()) + 'Z';
+        var pad = function(n) { return n < 10 ? "0" + n : n; };
+            return this.getUTCFullYear() + "-" +
+                pad(this.getUTCMonth() + 1) + "-" +
+                pad(this.getUTCDate()) + "T" +
+                pad(this.getUTCHours()) + ":" +
+                pad(this.getUTCMinutes()) + ":" +
+                pad(this.getUTCSeconds()) + "Z";
     };
 }
 
@@ -719,16 +719,16 @@ if ( !Date.prototype.toISOString ) {
 // http://anentropic.wordpress.com/2009/06/25/javascript-iso8601-parser-and-pretty-dates/
 var parseISO8601 = function(str) {
     // we assume str is a UTC date ending in 'Z'
-    var parts = str.split('T'),
-        dateParts = parts[0].split('-'),
-        timeParts = parts[1].split('Z'),
-        timeSubParts = timeParts[0].split(':'),
-        timeSecParts = timeSubParts[2].split('.'),
+    var parts = str.split("T"),
+        dateParts = parts[0].split("-"),
+        timeParts = parts[1].split("Z"),
+        timeSubParts = timeParts[0].split(":"),
+        timeSecParts = timeSubParts[2].split("."),
         timeHours = Number(timeSubParts[0]),
         _date = new Date();
 
     _date.setUTCFullYear(Number(dateParts[0]));
-    _date.setUTCMonth(Number(dateParts[1])-1);
+    _date.setUTCMonth(Number(dateParts[1]) - 1);
     _date.setUTCDate(Number(dateParts[2]));
     _date.setUTCHours(Number(timeHours));
     _date.setUTCMinutes(Number(timeSubParts[1]));
@@ -747,14 +747,14 @@ var MailingList = {
         var jelMailingList = $("form", jelMailingListContainer);
         var jelEmail = $(".email", jelMailingList);
 
-        jelEmail.placeholder().change(function(){
+        jelEmail.placeholder().change(function() {
             $(".error", jelMailingListContainer).css("display", (!$(this).val() || validateEmail($(this).val())) ? "none" : "");
-        }).keypress(function(){
+        }).keypress(function() {
             if ($(".error", jelMailingListContainer).is(":visible") && validateEmail($(this).val()))
                 $(".error", jelMailingListContainer).css("display", "none");
         });
 
-        jelMailingList.submit(function(e){
+        jelMailingList.submit(function(e) {
             if (validateEmail(jelEmail.val()))
             {
                 $.post("/mailing-lists/subscribe", {list_id: sIdList, email: jelEmail.val()});
@@ -772,38 +772,38 @@ var CSSMenus = {
 
     init: function() {
         // Make the CSS-only menus click-activated
-        $('.noscript').removeClass('noscript');
-        $(document).delegate('.css-menu > ul > li', 'click', function() {
+        $(".noscript").removeClass("noscript");
+        $(document).delegate(".css-menu > ul > li", "click", function() {
             if (CSSMenus.active_menu)
-                CSSMenus.active_menu.removeClass('css-menu-js-hover');
+                CSSMenus.active_menu.removeClass("css-menu-js-hover");
 
             if (CSSMenus.active_menu && this == CSSMenus.active_menu[0])
                 CSSMenus.active_menu = null;
             else
-                CSSMenus.active_menu = $(this).addClass('css-menu-js-hover');
+                CSSMenus.active_menu = $(this).addClass("css-menu-js-hover");
         });
 
         $(document).bind("click focusin", function(e) {
             if (CSSMenus.active_menu &&
                 $(e.target).closest(".css-menu").length === 0) {
-                CSSMenus.active_menu.removeClass('css-menu-js-hover');
+                CSSMenus.active_menu.removeClass("css-menu-js-hover");
                 CSSMenus.active_menu = null;
             }
         });
 
         // Make the CSS-only menus keyboard-accessible
-        $(document).delegate('.css-menu a', {
+        $(document).delegate(".css-menu a", {
             focus: function(e) {
                 $(e.target)
-                    .addClass('css-menu-js-hover')
+                    .addClass("css-menu-js-hover")
                     .closest(".css-menu > ul > li")
-                        .addClass('css-menu-js-hover');
+                        .addClass("css-menu-js-hover");
             },
             blur: function(e) {
                 $(e.target)
-                    .removeClass('css-menu-js-hover')
+                    .removeClass("css-menu-js-hover")
                     .closest(".css-menu > ul > li")
-                        .removeClass('css-menu-js-hover');
+                        .removeClass("css-menu-js-hover");
             }
         });
     }
@@ -813,7 +813,7 @@ $(CSSMenus.init);
 var IEHtml5 = {
     init: function() {
         // Create a dummy version of each HTML5 element we use so that IE 6-8 can style them.
-        var html5elements = ['header', 'footer', 'nav', 'article', 'section', 'menu'];
+        var html5elements = ["header", "footer", "nav", "article", "section", "menu"];
         for (var i = 0; i < html5elements.length; i++) {
             document.createElement(html5elements[i]);
         }
@@ -823,19 +823,19 @@ IEHtml5.init();
 
 var VideoViews = {
     init: function() {
-        var seedTime = new Date(2011,3,22);  //Seed Date is set to October 31, 2010  0-January, 11-december
+        var seedTime = new Date(2011, 3, 22);  //Seed Date is set to October 31, 2010  0-January, 11-december
         var seedTotalViews = 50397618;
         var seedDailyViews = 170000;
 
         var currentTime = new Date();
-        var secondsSince = (currentTime.getTime()-seedTime.getTime())/1000;
-        var viewsPerSecond = seedDailyViews/24/3600;
-        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince*viewsPerSecond);
+        var secondsSince = (currentTime.getTime() - seedTime.getTime()) / 1000;
+        var viewsPerSecond = seedDailyViews / 24 / 3600;
+        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince * viewsPerSecond);
 
-        var totalViewsString = addCommas(""+estimatedTotalViews);
+        var totalViewsString = addCommas("" + estimatedTotalViews);
 
-        $('#page_num_visitors').append(totalViewsString);
-        $('#page_visitors').css('display', 'inline');
+        $("#page_num_visitors").append(totalViewsString);
+        $("#page_visitors").css("display", "inline");
     }
 };
 $(VideoViews.init);
@@ -848,7 +848,7 @@ var FacebookHook = {
             FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
 
             if (!USERNAME) {
-                FB.Event.subscribe('auth.login', function(response) {
+                FB.Event.subscribe("auth.login", function(response) {
 
                     if (response.authResponse) {
                         FacebookHook.fixMissingCookie(response.authResponse);
@@ -863,7 +863,7 @@ var FacebookHook = {
                     var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
                     url += "&hc=" + (hasCookie ? "1" : "0");
 
-                    url += "&hs=" + (response.authResponse ? "1": "0");
+                    url += "&hs=" + (response.authResponse ? "1" : "0");
 
                     window.location = url;
                });
@@ -874,8 +874,8 @@ var FacebookHook = {
                 if (response.authResponse) {
                     FacebookHook.fixMissingCookie(response.authResponse);
                 }
-                
-                $('#page_logout').click(function(e) {
+
+                $("#page_logout").click(function(e) {
 
                     eraseCookie("fbsr_" + FB_APP_ID);
 
@@ -895,9 +895,9 @@ var FacebookHook = {
         };
 
         $(function() {
-            var e = document.createElement('script'); e.async = true;
-            e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
-            document.getElementById('fb-root').appendChild(e);
+            var e = document.createElement("script"); e.async = true;
+            e.src = document.location.protocol + "//connect.facebook.net/en_US/all.js";
+            document.getElementById("fb-root").appendChild(e);
         });
     },
 
@@ -946,7 +946,7 @@ var Throbber = {
 var SearchResultHighlight = {
     doReplace: function(word, element) {
         // Find all text elements
-        textElements = $(element).contents().filter(function(){ return this.nodeType != 1; });
+        textElements = $(element).contents().filter(function() { return this.nodeType != 1; });
         textElements.each(function(index, textElement) {
             var pos = textElement.data.toLowerCase().indexOf(word);
             if (pos >= 0) {
@@ -960,7 +960,7 @@ var SearchResultHighlight = {
         });
     },
     highlight: function(query) {
-        $('.searchresulthighlight').each(function(index,element) {
+        $(".searchresulthighlight").each(function(index, element) {
             SearchResultHighlight.doReplace(query, element);
         });
     }
@@ -995,27 +995,27 @@ function dynamicPackage(packageName, callback, manifest) {
     dynamicPackageLoader.loadingPackages[packageName] = this;
     _.each(manifest, function(filename) {
         var file = {
-            'filename': filename,
-            'content': null,
-            'evaled': false
+            "filename": filename,
+            "content": null,
+            "evaled": false
         };
         self.files.push(file);
         $.ajax({
-            type:       "GET",
-            url:        filename,
-            data:       null,
-            success:    function(content) {
-                            KAConsole.log('Received contents of ' + filename);
+            type: "GET",
+            url: filename,
+            data: null,
+            success: function(content) {
+                            KAConsole.log("Received contents of " + filename);
                             file.content = content;
 
                             self.progress++;
-                            callback('progress', self.progress/(2*self.files.length));
+                            callback("progress", self.progress / (2 * self.files.length));
                             self.last_progress = self.progress;
                         },
-            error:      function(xml, status, e) {
-                            callback('failed');
+            error: function(xml, status, e) {
+                            callback("failed");
                         },
-            dataType:   "html"
+            dataType: "html"
         });
     });
 
@@ -1025,17 +1025,17 @@ function dynamicPackage(packageName, callback, manifest) {
             if (file.content) {
                 if (!file.evaled) {
                     var script = document.createElement("script");
-                    if (file.filename.indexOf('.handlebars') > 0)
-                        script.type = 'text/x-handlebars-template'; // This hasn't been tested
+                    if (file.filename.indexOf(".handlebars") > 0)
+                        script.type = "text/x-handlebars-template"; // This hasn't been tested
                     else
                         script.type = "text/javascript";
-                    script.appendChild( document.createTextNode( file.content ) );
+                    script.appendChild(document.createTextNode(file.content));
 
                     var head = document.getElementsByTagName("head")[0] || document.documentElement;
-                    head.appendChild( script );
+                    head.appendChild(script);
 
                     file.evaled = true;
-                    KAConsole.log('Evaled contents of ' + file.filename);
+                    KAConsole.log("Evaled contents of " + file.filename);
 
                     self.progress++;
                 }
@@ -1047,14 +1047,14 @@ function dynamicPackage(packageName, callback, manifest) {
 
         if (waiting) {
             if (self.progress != self.last_progress) {
-                callback('progress', self.progress/(2*self.files.length));
+                callback("progress", self.progress / (2 * self.files.length));
                 self.last_progress = self.progress;
             }
             setTimeout(function() { self.checkComplete(); }, 500);
         } else {
             dynamicPackageLoader.loadedPackages[packageName] = true;
             delete dynamicPackageLoader.loadingPackages[packageName];
-            callback('complete');
+            callback("complete");
         }
     }
 
@@ -1085,9 +1085,9 @@ var dynamicPackageLoader = {
 };
 
 $(function() {
-    $(document).delegate('input.blur-on-esc', 'keyup', function( e, options ) {
-        if ( options && options.silent ) return;
-        if ( e.which == '27' ) {
+    $(document).delegate("input.blur-on-esc", "keyup", function(e, options) {
+        if (options && options.silent) return;
+        if (e.which == "27") {
             $(e.target).blur();
         }
     });
@@ -1096,43 +1096,43 @@ $(function() {
 // An animation that grows a box shadow of the review hue
 $.fx.step.reviewExplode = function(fx) {
     var val = fx.now + fx.unit;
-    $( fx.elem ).css( 'boxShadow',
-        '0 0 ' + val + ' ' + val + ' ' + 'rgba(227, 93, 4, 0.2)');
+    $(fx.elem).css("boxShadow",
+        "0 0 " + val + " " + val + " " + "rgba(227, 93, 4, 0.2)");
 };
 
 var Review = {
     REVIEW_DONE_HTML: "Review&nbsp;Done!",
 
     highlightDone: function() {
-        if ( $( "#review-mode-title" ).hasClass( "review-done" ) ) {
+        if ($("#review-mode-title").hasClass("review-done")) {
             return;
         }
 
         var duration = 800;
 
         // Make the explosion flare overlap all other elements
-        var overflowBefore = $( "#container" ).css( "overflow" );
-        $( "#container" ).css( "overflow", "visible" )
-            .delay( duration ).queue(function() {
-                $( this ).css( "overflow", overflowBefore );
+        var overflowBefore = $("#container").css("overflow");
+        $("#container").css("overflow", "visible")
+            .delay(duration).queue(function() {
+                $(this).css("overflow", overflowBefore);
             });
 
         // Review hue explosion
-        $( "#review-mode-title" ).stop().addClass( "review-done" ).animate({
-            reviewExplode: 200,
-        }, duration ).queue(function() {
-            $( this ).removeAttr( "style" ).addClass( "post-animation" );
+        $("#review-mode-title").stop().addClass("review-done").animate({
+            reviewExplode: 200
+        }, duration).queue(function() {
+            $(this).removeAttr("style").addClass("post-animation");
         });
 
         // Temporarily change the color of the review done box to match the explosion
-        $( "#review-mode-title > div" )
-            .css( "backgroundColor", "#F9DFCD" )
-            .delay( duration ).queue(function() {
-                $( this ).removeAttr( "style" ).addClass( "review-done" );
+        $("#review-mode-title > div")
+            .css("backgroundColor", "#F9DFCD")
+            .delay(duration).queue(function() {
+                $(this).removeAttr("style").addClass("review-done");
             });
 
         // Huge "REVIEW DONE!" text shrinks to fit in its box
-        $( "#review-mode-title h1" ).html( Review.REVIEW_DONE_HTML ).css({
+        $("#review-mode-title h1").html(Review.REVIEW_DONE_HTML).css({
             fontSize: "100px",
             right: 0,
             position: "absolute"
@@ -1140,56 +1140,56 @@ var Review = {
             reviewGlow: 1,
             opacity: 1,
             fontSize: 30
-        }, duration ).queue(function() {
-            $( this ).removeAttr( "style" );
+        }, duration).queue(function() {
+            $(this).removeAttr("style");
         });
     },
 
-    initCounter: function( reviewsLeftCount ) {
+    initCounter: function(reviewsLeftCount) {
         var digits = "0 1 2 3 4 5 6 7 8 9 ";
-        $( "#review-counter-container" )
-            .find( ".ones" ).text( new Array(10 + 1).join(digits) ).end()
-            .find( ".tens" ).text( digits );
+        $("#review-counter-container")
+            .find(".ones").text(new Array(10 + 1).join(digits)).end()
+            .find(".tens").text(digits);
     },
 
-    updateCounter: function( reviewsLeftCount ) {
+    updateCounter: function(reviewsLeftCount) {
 
         // Spin the remaining reviews counter like a slot machine
-        var reviewCounterElem = $( "#review-counter-container" ),
-            reviewTitleElem = $( "#review-mode-title" ),
-            oldCount = reviewCounterElem.data( "counter" ) || 0,
-            tens = Math.floor( ( reviewsLeftCount % 100 ) / 10 ),
+        var reviewCounterElem = $("#review-counter-container"),
+            reviewTitleElem = $("#review-mode-title"),
+            oldCount = reviewCounterElem.data("counter") || 0,
+            tens = Math.floor((reviewsLeftCount % 100) / 10),
             animationOptions = {
-              duration: Math.log( 1 + Math.abs(reviewsLeftCount - oldCount) )
+              duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount))
                   * 1000 * 0.5 + 0.2,
-              easing: 'easeInOutCubic'
+              easing: "easeInOutCubic"
             },
             lineHeight = parseInt(
-                reviewCounterElem.children().css('lineHeight'), 10 );
+                reviewCounterElem.children().css("lineHeight"), 10);
 
-        reviewCounterElem.find( ".ones" ).animate({
-            top: ( reviewsLeftCount % 100 ) * -lineHeight
-        }, animationOptions );
+        reviewCounterElem.find(".ones").animate({
+            top: (reviewsLeftCount % 100) * -lineHeight
+        }, animationOptions);
 
-        reviewCounterElem.find( ".tens" ).animate({
+        reviewCounterElem.find(".tens").animate({
             top: tens * -lineHeight
-        }, animationOptions );
+        }, animationOptions);
 
-        if ( reviewsLeftCount === 0 ) {
-            if ( oldCount > 0 ) {
+        if (reviewsLeftCount === 0) {
+            if (oldCount > 0) {
                 // Review just finished, light a champagne supernova in the sky
                 Review.highlightDone();
             } else {
                 reviewTitleElem
-                    .addClass( "review-done post-animation" )
-                    .find( "h1" )
-                    .html( Review.REVIEW_DONE_HTML );
+                    .addClass("review-done post-animation")
+                    .find("h1")
+                    .html(Review.REVIEW_DONE_HTML);
             }
-        } else if ( !reviewTitleElem.hasClass( "review-done" ) ) {
-            $( "#review-mode-title h1" ).text(
-                reviewsLeftCount === 1 ? "Exercise Left!" : "Exercises Left" );
+        } else if (!reviewTitleElem.hasClass("review-done")) {
+            $("#review-mode-title h1").text(
+                reviewsLeftCount === 1 ? "Exercise Left!" : "Exercises Left");
         }
 
-        reviewCounterElem.data( "counter", reviewsLeftCount );
+        reviewCounterElem.data("counter", reviewsLeftCount);
     }
 };

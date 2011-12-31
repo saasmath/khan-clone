@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import sys
 import subprocess
 import os
@@ -176,11 +177,12 @@ def tidy_up():
 
     print "Moving old files to %s." % trashdir
 
-    junkfiles = open(".hgignore","r")
-    please_tidy = [filename.strip() for filename in junkfiles
-                      if not filename.strip().startswith("#")]
-    but_ignore = ["secrets.py", "", "syntax: glob", ".git", ".pydevproject"]
-    [please_tidy.remove(path) for path in but_ignore]
+    with open(".hgignore", "r") as f:
+        please_tidy = [line.strip() for line in f]
+
+    please_tidy = [line for line in please_tidy if not line.startswith("#")]
+    but_ignore = set(["secrets.py", "", "syntax: glob", ".git", ".pydevproject"])
+    please_tidy = set(please_tidy) - but_ignore
 
     for root, dirs, files in os.walk("."):
         if ".git" in dirs:
@@ -189,12 +191,13 @@ def tidy_up():
             dirs.remove(".hg")
 
         for dirname in dirs:
-            removables = [glob.glob( os.path.join(root, dirname, rubbish) ) for rubbish in please_tidy
-                          if len( glob.glob( os.path.join(root, dirname, rubbish) ) ) > 0]
-            # flatten sublists of removable filse
+            removables = [glob.glob(os.path.join(root, dirname, p)) for p in please_tidy]
+            removables = [p for p in removables if p]
+
+            # flatten sublists of removable files
             please_remove = [filename for sublist in removables for filename in sublist]
-            if please_remove:
-                [ os.renames(stuff, os.path.join(trashdir,stuff)) for stuff in please_remove ]
+            for path in please_remove:
+                os.renames(path, os.path.join(trashdir, path))
 
 def check_deps():
     """Check if npm and friends are installed"""
@@ -325,7 +328,10 @@ def main():
         print "Failed to compile templates, bailing."
         return
 
-    compile_handlebar_templates()
+    if not compile_handlebar_templates():
+        print "Failed to compile handlebars templates, bailing."
+        return
+
     compress_js()
     compress_css()
 
