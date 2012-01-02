@@ -296,7 +296,7 @@ def topic_find_child(parent_id, version_id, kind, id):
     elif kind == "Video":
         child = models.Video.get_for_readable_id(id, version)
     elif kind == "Url":
-        child = models.Url.get_by_id(int(id))
+        child = models.Url.get_by_id_for_version(int(id), version)
     else:
         return ["Invalid kind: %s" % kind, None, None, None]
 
