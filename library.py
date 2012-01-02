@@ -15,7 +15,8 @@ import math
 import time
 
 @layer_cache.cache_with_key_fxn(
-        lambda ajax = False: "library_content_by_topic_%s_%s" % ("ajax" if ajax else "inline", Setting.cached_playlist_content_date() if ajax else Setting.cached_library_content_date())
+        lambda ajax = False: "library_content_by_topic_%s_%s" % 
+            ("ajax" if ajax else "inline", Setting.topic_tree_version())
         )
 def library_content_html(ajax = False):
     """" Returns the HTML for the structure of the playlists as they will be
@@ -49,11 +50,6 @@ def library_content_html(ajax = False):
 
     html = shared_jinja.get().render_template("library_content_template.html", **template_values)
 
-    # Set shared date of last generated content
-    if ajax:
-        Setting.cached_playlist_content_date(str(datetime.datetime.now())) 
-    else:
-        Setting.cached_library_content_date(str(datetime.datetime.now()))
     return html
 
 class GenerateLibraryContent(request_handler.RequestHandler):

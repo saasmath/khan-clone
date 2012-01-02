@@ -457,7 +457,7 @@ var TopicTreeEditor = {
             pos: parent_pos
         };
         $.ajaxq("topics-admin", {
-            url: "/api/v1/topic/" + parent_model.id + "/addchild",
+            url: "/api/v1/topicversion/edit/topic/" + parent_model.id + "/addchild",
             type: "POST",
             data: data,
             success: function(json) {
@@ -729,7 +729,7 @@ function stringArraysEqual(ar1, ar2) {
                         pos: self.model.get("children").length
                     };
                     $.ajaxq("topics-admin", {
-                        url: "/api/v1/topic/" + self.model.id + "/addchild",
+                        url: "/api/v1/topicversion/edit/topic/" + self.model.id + "/addchild",
                         type: "POST",
                         data: data,
                         success: function(json) {

@@ -236,7 +236,11 @@ window.TestTopics = function() {
 
         idAttribute: "readable_id",
 
-        urlRoot: "/api/v1/videos"
+        initialize: function(version) {
+            this.version = version;
+        },
+
+        urlRoot: "/api/v1/topicversion/edit/videos",
     });
 
 	window.VideoList = IncrementalCollection.extend({
@@ -277,7 +281,7 @@ window.TestTopics = function() {
 
         idAttribute: "name",
 
-        urlRoot: "/api/v1/exercises"
+        urlRoot: "/api/v1/topicversion/edit/exercises"
     });
 
 	window.ExerciseList = IncrementalCollection.extend({
@@ -308,7 +312,7 @@ window.TestTopics = function() {
             updated_on: ""
         },
 
-        urlRoot: "/api/v1/url"
+        urlRoot: "/api/v1/topicversion/edit/url"
     });
 
 	window.URLList = IncrementalCollection.extend({

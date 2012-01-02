@@ -33,6 +33,7 @@ from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
 import re
 import base64, os
+import sys
 
 
 from image_cache import ImageCache
@@ -41,6 +42,7 @@ from templatefilters import slugify
 from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
+
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -81,12 +83,12 @@ class Setting(db.Model):
         return results
 
     @staticmethod
-    def cached_library_content_date(val = None):
-        return Setting._get_or_set_with_key("cached_library_content_date", val)
+    def cached_content_add_date(val = None):
+        return Setting._get_or_set_with_key("cached_content_add_date", val)
 
     @staticmethod
-    def cached_playlist_content_date(val = None):
-        return Setting._get_or_set_with_key("cached_playlist_content_date", val)
+    def topic_tree_version(val = None):
+        return Setting._get_or_set_with_key("topic_tree_version", val)
 
     @staticmethod
     def cached_exercises_date(val = None):
@@ -156,11 +158,17 @@ class Exercise(db.Model):
         return util.absolute_url(self.relative_url)
 
     @staticmethod
-    def get_by_name(name):
+    def get_by_name(name, version=None):
         dict_exercises = Exercise.__get_dict_use_cache_unsafe__()
         if dict_exercises.has_key(name):
             if dict_exercises[name].is_visible_to_current_user():
-                return dict_exercises[name]
+                exercise = dict_exercises[name]
+                # if there is a version check to see if there are any updates to the video
+                if version:
+                    change = VersionContentChange.get_change_for_content(exercise, version)
+                    if change:
+                        exercise = change.updated_content(exercise)
+                return exercise
         return None
 
     @staticmethod
@@ -1120,31 +1128,11 @@ class TopicVersion(db.Model):
         version = int(version)
         return TopicVersion.all().filter("number =", version).get() 
     
-    @staticmethod
-    # might want to change this function especially with default version so that we do not have to do a RPC
-    def get_date_updated_by_id(version):
-        version = TopicVersion.get_by_id(version)
-        library_content_date_updated = datetime.datetime.strptime(Setting.cached_library_content_date().split('.')[0], "%Y-%m-%d %H:%M:%S") # if a video/exercise/ or url has been updated, then the cache key has
-        return max(version.updated_on, library_content_date_updated)
-
-    # function used by Topic.method calls to @layer_cache to figure out when a topic tree is stale
-    @staticmethod
-    def get_date_updated(version=None):
-        library_content_date_updated = Setting.cached_library_content_date()
-        if version is None:
-            version = TopicVersion.get_default_version()
-        if version:
-            # dev environment may not have library_content_date_updated ever set
-            if library_content_date_updated:
-                library_content_date_updated = datetime.datetime.strptime(library_content_date_updated.split('.')[0], "%Y-%m-%d %H:%M:%S") # if a video/exercise/ or url has been updated, then the cache key has to change
-
-                return max(version.updated_on, library_content_date_updated)
-            else:
-                return version.updated_on
-
     # used by get_unused_content - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda : "TopicVersion.get_all_content_keys_%s" % Setting.cached_library_content_date())
+    @layer_cache.cache_with_key_fxn(lambda :
+        "TopicVersion.get_all_content_keys_%s" % 
+        Setting.cached_content_add_date())
     def get_all_content_keys():
         video_keys = Video.all(keys_only = True).fetch(100000)
         exercise_keys = Exercise.all(keys_only = True).fetch(100000)
@@ -1185,7 +1173,6 @@ class TopicVersion(db.Model):
         return new_version
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda : "TopicVersion.get_default_version_%s" % Setting.cached_library_content_date())
     def get_default_version():
         return TopicVersion.all().filter("default = ", True).get()
 
@@ -1258,20 +1245,23 @@ class TopicVersion(db.Model):
         last_edited_by = UserData.current().user
         self.last_edited_by = last_edited_by
         self.put()
-        if self.default:
-            Setting.cached_library_content_date(datetime.datetime.now())
 
     def set_default_version(self):
         default_version = TopicVersion.get_default_version()
+        changes = VersionContentChange.all().fetch(10000)
+        changes = util.prefetch_refprops(changes, VersionContentChange.content)                
 
         def update_txn():
+            for change in changes:
+                change.apply_change()
+
             if default_version:
                 default_version.default = False
                 default_version.put()
             self.default = True
             self.made_default_on = datetime.datetime.now()
             self.edit = False
-            Setting.cached_library_content_date(datetime.datetime.now())
+            Setting.topic_tree_version(self.number)
             self.put()
 
         # using --high-replication is slow on dev, so instead not using cross-group transactions on dev 
@@ -1281,7 +1271,115 @@ class TopicVersion(db.Model):
             xg_on = db.create_transaction_options(xg=True)
             db.run_in_transaction_options(xg_on, update_txn)
                                     
+class VersionContentChange(db.Model):
+    version = db.ReferenceProperty(TopicVersion, collection_name="changes")
+    content = db.ReferenceProperty()
+    # indexing updated_on as it may be needed for rolling back
+    updated_on = db.DateTimeProperty(auto_now=True) 
+    last_edited_by = db.UserProperty(indexed=False)
+    content_changes = object_property.UnvalidatedObjectProperty()
 
+    def put(self):
+        last_edited_by = UserData.current().user
+        self.last_edited_by = last_edited_by
+        db.Model.put(self)
+
+    def apply_change(self):
+        # exercises imports from request_handler which imports from models,
+        # meaning putting this import at the top creates a import loop
+        from exercises import UpdateExercise
+        content = self.updated_content()
+        content.put()
+
+        if (content.key().kind() == "Exercise" 
+            and hasattr(content, "related_videos")):
+            UpdateExercise.do_update_related_videos(content, 
+                                                    content.related_videos)
+    
+        return content
+
+    # if content is passed as an argument it saves a reference lookup
+    def updated_content(self, content = None):
+        if content is None:
+            content = self.content
+        elif content.key() != self.content.key():
+            raise Exception("key of content passed in does not match self.content")
+        
+        for prop, value in self.content_changes.iteritems():
+            try:
+                setattr(content, prop, value)
+            except AttributeError:
+                logging.info("cant set %s on a %s" % (prop, content.__class__.__name__))
+                
+        return content
+
+    @staticmethod
+    @request_cache.cache()
+    def get_updated_content_dict(version):
+        query = VersionContentChange.all().filter("version =", version)
+        updates = query.fetch(10000)
+        return dict((c.key(), c) for c in 
+                    [u.updated_content(u.content) for u in updates])
+
+    @staticmethod
+    def get_change_for_content(content, version):
+        query = VersionContentChange.all().filter("version =", version)
+        query.filter("content =", content)
+        change = query.get()
+
+        if change:
+            # since we have the content already, updating the property may save 
+            # a reference lookup later
+            change.content = content
+
+        return change
+
+    @staticmethod
+    def add_new_content(klass, version, new_props, changeable_props=None):
+        new_props = dict((str(k), v) for k,v in new_props.iteritems() 
+                         if changeable_props is None or k in changeable_props)
+        change = VersionContentChange(parent = version)
+        change.version = version
+        change.content_changes = new_props 
+        content = klass(**new_props)
+        content.put()
+        change.content = content
+        change.put()
+        return content
+
+    @staticmethod
+    def add_content_change(content, version, new_props, changeable_props=None):
+        if changeable_props is None:
+            changeable_props = new_props.keys()
+                    
+        change = VersionContentChange.get_change_for_content(content, version)
+        
+        if change:
+            # update content with existing changes
+            content = change.updated_content()
+        else:
+            change = VersionContentChange(parent = version)
+            change.version = version
+            change.content = content
+            change.content_changes = {}
+
+        if content and content.is_saved():
+            for prop in changeable_props:
+                if (prop in new_props and 
+                    new_props[prop] is not None and (
+                        not hasattr(content, prop) or
+                        new_props[prop] != getattr(content, prop))
+                        ):
+                    
+                    # add new changes for all props that are different from what
+                    # is currently in content
+                    change.content_changes[prop] = new_props[prop] 
+        else:
+            raise Exception("content does not exit yet, call add_new_content instead")
+            
+        change.put()
+        return change.content_changes
+            
 class Topic(Searchable, db.Model):
     title = db.StringProperty(required = True) # title used when viewing topic in a tree structure
     standalone_title = db.StringProperty() # title used when on its own
@@ -1311,6 +1409,12 @@ class Topic(Searchable, db.Model):
             children = [ node_dict[c] for c in self.child_keys if c in node_dict ]
         else:
             children = db.get(self.child_keys)
+
+        if not self.version.default:
+            updates = VersionContentChange.get_updated_content_dict(self.version)
+            children = [c if c.key() not in updates else updates[c.key()] 
+                        for c in children]
+                 
         self.children = []
         for child in children:
             self.children.append({
@@ -1353,7 +1457,7 @@ class Topic(Searchable, db.Model):
         return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).get()
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda version=None: "Topic.get_root_%s_%s" % (version, TopicVersion.get_date_updated(version)))
+    @layer_cache.cache_with_key_fxn(lambda version=None: "Topic.get_root_%s" % (version))
     def get_root(version = None):
         if not version:
             version = TopicVersion.get_default_version()
@@ -1775,7 +1879,10 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False: "topic.get_content_topic_%s_%s_%s" % (version.number if version else "", include_hidden, TopicVersion.get_date_updated(version)),
+        lambda version=None, include_hidden = False: 
+        "topic.get_content_topic_%s_%s" % (
+            version.key() if version else Setting.topic_tree_version(), 
+            include_hidden),
         layer=layer_cache.Layers.Memcache)
     def get_content_topics(version = None, include_hidden = False):
         topics = Topic.get_all_topics(version, include_hidden)
@@ -1827,12 +1934,24 @@ class Topic(Searchable, db.Model):
         return Topic._get_children_of_kind(self, "Video", include_descendants)
                             
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda topic, include_descendants=False, version=None: "%s_videos_for_topic_%s_at_%s" % ("descendant" if include_descendants else "child", topic.key(), TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
+    @layer_cache.cache_with_key_fxn(lambda 
+        topic, include_descendants=False, version=None: 
+        "%s_videos_for_topic_%s_v%s" % (
+            "descendant" if include_descendants else "child", 
+            topic.key(), 
+            version.key() if version else Setting.topic_tree_version()), 
+        layer=layer_cache.Layers.Memcache)
     def get_cached_videos_for_topic(topic, include_descendants=False):
         return Topic._get_children_of_kind(topic, "Video", include_descendants)
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda video, include_ancestors=False, version=None: "%s_topics_for_video_%s_at_%s" % ("ancestor" if include_ancestors else "parent", video.title, TopicVersion.get_date_updated(version)), layer=layer_cache.Layers.Memcache)
+    @layer_cache.cache_with_key_fxn(lambda 
+        video, include_ancestors=False, version=None: 
+        "%s_topics_for_video_%s_at_%s" % (
+            "ancestor" if include_ancestors else "parent",
+            video.title, 
+            version.key() if version else Setting.topic_tree_version()), 
+        layer=layer_cache.Layers.Memcache)
     def get_cached_topics_for_video(video, include_ancestors=False, version=None):
         if version is None:
             version = TopicVersion.get_default_version()
@@ -1911,6 +2030,17 @@ class Url(db.Model):
     def id(self):
         return self.key().id()
 
+    @staticmethod
+    def get_by_id_for_version(id, version=None):
+        url = Url.get_by_id(id)
+        # if there is a version check to see if there are any updates to the video
+        if version:
+            change = VersionContentChange.get_change_for_content(url, version)
+            if change:
+                url = change.updated_content(url)
+        return url
+
+
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
@@ -1979,7 +2109,7 @@ class Video(Searchable, db.Model):
         }
 
     @staticmethod
-    def get_for_readable_id(readable_id):
+    def get_for_readable_id(readable_id, version = None):
         video = None
         query = Video.all()
         query.filter('readable_id =', readable_id)
@@ -1995,6 +2125,13 @@ class Video(Searchable, db.Model):
                 video = v
                 key_id = v.key().id()
         # End of hack
+        
+         # if there is a version check to see if there are any updates to the video
+        if version:
+            change = VersionContentChange.get_change_for_content(video, version)
+            if change:
+                video = change.updated_content(video)
+
         return video
 
     @staticmethod
@@ -2715,7 +2852,7 @@ class VideoPlaylist(db.Model):
     def get_cached_videos_for_playlist(playlist, limit=500):
 
         key = VideoPlaylist._VIDEO_PLAYLIST_KEY_FORMAT % playlist.key()
-        namespace = str(App.version) + "_" + str(Setting.cached_library_content_date())
+        namespace = str(App.version) + "_" + str(Setting.topic_tree_version())
 
         videos = memcache.get(key, namespace=namespace)
 
@@ -2737,7 +2874,7 @@ class VideoPlaylist(db.Model):
     def get_cached_playlists_for_video(video, limit=5):
 
         key = VideoPlaylist._PLAYLIST_VIDEO_KEY_FORMAT % video.key()
-        namespace = str(App.version) + "_" + str(Setting.cached_library_content_date())
+        namespace = str(App.version) + "_" + str(Setting.topic_tree_version())
 
         playlists = memcache.get(key, namespace=namespace)
 

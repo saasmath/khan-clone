@@ -15,8 +15,7 @@ from google.appengine.ext import db
 from models import Setting, Video, Playlist, VideoPlaylist
 import request_handler
 
-def youtube_get_video_data(video_data):
-
+def youtube_get_video_data_dict(youtube_id):
     yt_service = gdata.youtube.service.YouTubeService()
 
     # Now that we run these queries from the App Engine servers, we need to 
@@ -25,19 +24,20 @@ def youtube_get_video_data(video_data):
     yt_service.developer_key = "AI39si6ctKTnSR_Vx7o7GpkpeSZAKa6xjbZz6WySzTvKVYRDAO7NHBVwofphk82oP-OSUwIZd0pOJyNuWK8bbOlqzJc9OFozrQ"
     yt_service.client_id = "n/a"
 
-    video = yt_service.GetYouTubeVideoEntry(video_id=video_data.youtube_id)
+    video = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
     if video:
-        video_data.title = video.media.title.text.decode('utf-8')
-        video_data.url = video.media.player.url.decode('utf-8')
-        video_data.duration = int(video.media.duration.seconds)
+        video_data = {"youtube_id" : youtube_id,
+                      "title" : video.media.title.text.decode('utf-8'),
+                      "url" : video.media.player.url.decode('utf-8'),
+                      "duration" : int(video.media.duration.seconds)}
 
         if video.statistics:
-            video_data.views = int(video.statistics.view_count)
+            video_data["views"] = int(video.statistics.view_count)
 
-        video_data.description = (video.media.description.text or '').decode('utf-8')
-        video_data.keywords = (video.media.keywords.text or '').decode('utf-8')
+        video_data["description"] = (video.media.description.text or '').decode('utf-8')
+        video_data["keywords"] = (video.media.keywords.text or '').decode('utf-8')
 
-        potential_id = re.sub('[^a-z0-9]', '-', video_data.title.lower());
+        potential_id = re.sub('[^a-z0-9]', '-', video_data["title"].lower());
         potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
         potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)                        
 
@@ -47,7 +47,7 @@ def youtube_get_video_data(video_data):
             query = Video.all()
             query.filter('readable_id=', current_id)
             if (query.get() is None): #id is unique so use it and break out
-                video_data.readable_id = current_id
+                video_data["readable_id"] = current_id
                 break
             else: # id is not unique so will have to go through loop again
                 number_to_add+=1
@@ -56,6 +56,18 @@ def youtube_get_video_data(video_data):
         return video_data
 
     return None
+
+
+def youtube_get_video_data(video):
+    data_dict = youtube_get_video_data_dict(video.youtube_id)
+
+    if data_dict is None:
+        return None
+
+    for prop, value in data_dict.iteritems():
+        setattr(video, prop, value)
+
+    return video
 
 class YouTubeSyncStep:
     START = 0

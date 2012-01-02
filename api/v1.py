@@ -21,7 +21,7 @@ from autocomplete import video_title_dicts, topic_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
-from youtube_sync import youtube_get_video_data
+from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag,\
@@ -122,7 +122,7 @@ def get_user_data_coach_from_request():
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda version_id = None: "api_content_topics_%s_%s" % (version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
+    lambda version_id = None: "api_content_topics_%s_%s" % (version_id, models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def content_topics(version_id = None):
@@ -132,11 +132,11 @@ def content_topics(version_id = None):
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
 @cacheable(caching_age=(60 * 60 * 24 * 60))
-@etag(lambda: models.Setting.cached_library_content_date())
+@etag(lambda: models.Setting.topic_tree_version())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @layer_cache.cache_with_key_fxn(
-    lambda: "api_topics_library_compact_%s" % models.Setting.cached_library_content_date(),
+    lambda: "api_topics_library_compact_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
@@ -168,7 +168,10 @@ def topics_library_compact():
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda topic_id, version_id = None: "api_topic_videos_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
+    (lambda topic_id, version_id = None: "api_topic_videos_%s_%s_%s" % (topic_id, 
+        version_id, 
+        models.Setting.topic_tree_version())         
+        if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_videos(topic_id, version_id = None):
@@ -190,7 +193,9 @@ def topic_videos(topic_id, version_id = None):
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda topic_id, version_id = None: "api_topic_exercises_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
+    (lambda topic_id, version_id = None: "api_topic_exercises_%s_%s_%s" % (
+        topic_id, version_id, models.Setting.topic_tree_version()) 
+        if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_exercises(topic_id, version_id = None):
@@ -206,11 +211,13 @@ def topic_exercises(topic_id, version_id = None):
 
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
-@etag(lambda version_id = None: models.TopicVersion.get_date_updated_by_id(version_id))
+@etag(lambda version_id = None: version_id) 
 @jsonp
 @decompress # too big even with compression ... need to add a datastore layer
 @layer_cache.cache_with_key_fxn(
-    lambda version_id = None: "api_topictree_%s_%s" % (version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
+    (lambda version_id = None: "api_topictree_%s_%s" % (version_id, 
+        models.Setting.topic_tree_version())        
+        if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
@@ -229,7 +236,11 @@ def topictreesearch(version_id, query):
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
-    lambda topic_id, version_id = None: "api_topic_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
+    (lambda topic_id, version_id = None: ("api_topic_%s_%s_%s" % (
+        topic_id, 
+        version_id, 
+        models.Setting.topic_tree_version())
+        if version_id is None or version_id == "default" else None)),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic(topic_id, version_id = None):
@@ -281,9 +292,9 @@ def topic_find_child(parent_id, version_id, kind, id):
     if kind == "Topic":
         child = models.Topic.get_by_id(id, version)
     elif kind == "Exercise":
-        child = models.Exercise.get_by_name(id)
+        child = models.Exercise.get_by_name(id, version)
     elif kind == "Video":
-        child = models.Video.get_for_readable_id(id)
+        child = models.Video.get_for_readable_id(id, version)
     elif kind == "Url":
         child = models.Url.get_by_id(int(id))
     else:
@@ -361,7 +372,9 @@ def topic_move_child(old_parent_id, version_id = "edit"):
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
-    lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
+    (lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (
+        topic_id, version_id, models.Setting.topic_tree_version()) 
+        if version_id is None or version_id=="default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_children(topic_id, version_id = None):
@@ -425,48 +438,47 @@ def topic_version_unused_content(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return version.get_unused_content()
 
+@route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["GET"])
 @route("/api/v1/url/<int:url_id>", methods=["GET"])   
 @jsonp
 @jsonify
-def get_url(url_id):
-    return models.Url.get_by_id(url_id)
+def get_url(url_id, version_id=None):
+    version = models.TopicVersion.get_by_id(version_id) if version_id else None
+    return models.Url.get_by_id_for_version(url_id, version)
 
+@route("/api/v1/topicversion/<version_id>/url/", methods=["PUT"])
+@route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["PUT"])
 @route("/api/v1/url/", methods=["PUT"])
 @route("/api/v1/url/<int:url_id>", methods=["PUT"])   
 @jsonp
 @jsonify
-def save_url(url_id = None):
+def save_url(url_id = None, version_id=None):
+    version = models.TopicVersion.get_by_id(version_id)
+    url_json = request.json
+    changeable_props = ["tags", "title", "url"]
+
     if url_id is None:
-        url = models.Url()
-        changed = True
+        return models.VersionContentChange.add_new_content(models.Url, 
+                                                           version,
+                                                           request.json,
+                                                           changeable_props)
     else:
-        url = models.Url.get_by_id(url_id)
+        url = models.Url.get_by_id_for_version(url_id, version)
         if url is None:
             return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
-        changed = False
-
-    url_json = request.json
-    for key, value in url_json.iteritems():
-        if key in ["tags", "title", "url"]:
-            if getattr(url, key) != value:
-                setattr(url, key, value)
-                changed = True
-
-    if changed:
-        url.put()
-        models.Setting.cached_library_content_date(datetime.datetime.now())
-
-    return {
-        "id": url.id
-    }
+        return models.VersionContentChange.add_content_change(
+            url, 
+            version, 
+            request.json,
+            changeable_props)
 
 @route("/api/v1/playlists/library", methods=["GET"])
-@etag(lambda: models.Setting.cached_library_content_date())
+@etag(lambda: models.Setting.topic_tree_version())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_%s" % models.Setting.cached_library_content_date(),
+    lambda: "api_library_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
@@ -487,7 +499,7 @@ def playlists_library():
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_list_%s" % models.Setting.cached_library_content_date(),
+    lambda: "api_library_list_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
@@ -508,12 +520,14 @@ def playlists_library_list_fresh():
 def get_exercises():
     return models.Exercise.get_all_use_cache()
 
+@route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["GET"])
 @route("/api/v1/exercises/<exercise_name>", methods=["GET"])
 @jsonp
 @jsonify
-def get_exercise(exercise_name):
-    exercise = models.Exercise.get_by_name(exercise_name)
-    if exercise:
+def get_exercise(exercise_name, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id) if version_id else None
+    exercise = models.Exercise.get_by_name(exercise_name, version)
+    if exercise and not hasattr(exercise, "related_videos"):
         exercise_videos = exercise.related_videos_query()
         exercise.related_videos = map(lambda exercise_video: exercise_video.video.readable_id, exercise_videos)
     return exercise
@@ -541,23 +555,53 @@ def exercise_videos(exercise_name):
         return map(lambda exercise_video: exercise_video.video, exercise_videos)
     return []
 
+@route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["POST", "PUT"])
 @route("/api/v1/exercises/<exercise_name>", methods=["PUT","POST"])
 @developer_required
 @jsonp
 @jsonify
-def exercise_save(exercise_name):
+def exercise_save(exercise_name = None, version_id = "edit"):
     request.json["name"] = exercise_name
-    UpdateExercise.do_update(request.json);
-    return {}
+    request.json["live"] = True if request.json["live"] == "true" else False
+    request.json["v_position"] = int(request.json["v_position"])
+    request.json["h_position"] = int(request.json["h_position"])
+    request.json["seconds_per_fast_problem"] = (
+        float(request.json["seconds_per_fast_problem"]))
+    logging.info(request.json["live"])
 
+    version = models.TopicVersion.get_by_id(version_id)
+    # exercise = models.Exercise.get_for_readable_id(video_id, version)
+    query = models.Exercise.all()
+    query.filter('name =', exercise_name)
+    exercise = query.get()
+
+    changeable_props = ["name", "covers", "h_position", "v_position", "live",
+                        "summative", "prerequisites", "covers", 
+                        "related_videos", "short_display_name"]
+    if exercise:
+        return models.VersionContentChange.add_content_change(exercise, 
+            version, 
+            request.json,
+            changeable_props)
+    else:
+        return models.VersionContentChange.add_new_content(models.Exercise, 
+                                                           version,
+                                                           request.json,
+                                                           changeable_props)
+
+@route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
 @route("/api/v1/videos/<video_id>", methods=["GET"])
 @jsonp
 @jsonify
-def video(video_id):
-    video = models.Video.get_for_readable_id(video_id)
-    if video:
-        return video
-    return models.Video.all().filter("youtube_id =", video_id).get()
+def video(video_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id) if version_id else None
+    video = models.Video.get_for_readable_id(video_id, version)
+
+    if video is None:
+        video = models.Video.all().filter("youtube_id =", video_id).get()
+    
+    return video
+
 
 @route("/api/v1/videos/recent", methods=["GET"])
 @jsonp
@@ -624,32 +668,36 @@ def fully_populated_playlists():
 @jsonp
 @jsonify
 def get_youtube_info(youtube_id):
-    video_data = models.Video(youtube_id=youtube_id)
+    video_data = models.Video(youtube_id = youtube_id)
     return youtube_get_video_data(video_data)
 
+    # return youtube_get_video_data_dict(youtube_id)
+
+@route("/api/v1/topicversion/<version_id>/videos/", methods=["POST", "PUT"])
+@route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["POST", "PUT"])
 @route("/api/v1/videos/", methods=["POST","PUT"])
 @route("/api/v1/videos/<video_id>", methods=["POST","PUT"])
 @developer_required
 @jsonp
 @jsonify
-def save_video(video_id=""):
-    video_data = models.Video.get_for_readable_id(video_id)
+def save_video(video_id="", version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    video = models.Video.get_for_readable_id(video_id, version)
 
-    if not video_data:
-        video_data = models.Video(youtube_id=request.json["youtube_id"])
-        video_data = youtube_get_video_data(video_data)
+    if video:
+        return models.VersionContentChange.add_content_change(video, 
+            version, 
+            request.json, 
+            ["readable_id", "title", "youtube_id", "description", "keywords"])
 
-    if not video_data:
-        return None
-
-    for prop in [ "readable_id", "title", "youtube_id", "description", "keywords" ]:
-        if prop in request.json and request.json[prop]:
-            setattr(video_data, prop, request.json[prop])
-
-    video_data.put()
-    models.Setting.cached_library_content_date(datetime.datetime.now())
-    return video_data
-
+    else:
+        video_data = youtube_get_video_data_dict(request.json["youtube_id"])
+        if video_data is None:
+            return None
+        return models.VersionContentChange.add_new_content(models.Video, 
+                                                           version,
+                                                           video_data)
+    
 def replace_playlist_values(structure, playlist_dict):
     if type(structure) == list:
         for sub_structure in structure:

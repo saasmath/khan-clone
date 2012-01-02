@@ -56,7 +56,9 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
     return None
 
 @layer_cache.cache_with_key_fxn(
-        lambda *args, **kwargs: "new_and_noteworthy_link_sets_%s" % models.Setting.cached_library_content_date()
+        lambda *args, **kwargs: "new_and_noteworthy_link_sets_%s" % 
+            models.Setting.topic_tree_version(),
+        expiration=86400
         )
 def new_and_noteworthy_link_sets():
     topic = models.Topic.get_by_id("new-and-noteworthy")

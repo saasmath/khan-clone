@@ -654,7 +654,7 @@ class EditExercise(request_handler.RequestHandler):
             self.render_jinja2_template("editexercise.html", template_values)
 
 class UpdateExercise(request_handler.RequestHandler):
-
+    
     @staticmethod
     def do_update(dict):
         user = models.UserData.current().user
@@ -687,17 +687,29 @@ class UpdateExercise(request_handler.RequestHandler):
 
         exercise.put()
 
-        if "related_video_keys" in dict:
-            video_keys = dict["related_video_keys"]
-        else:
-            video_keys = []
-
         if "related_videos" in dict:
-            for video_name in dict["related_videos"]:
-                video = models.Video.get_for_readable_id(video_name)
-                if not video.key() in video_keys:
-                    video_keys.append(str(video.key()))
+            UpdateExercise.do_update_related_videos(exercise, 
+                                                    dict["related_videos"])
+        elif "related_video_keys" in dict:
+            UpdateExercise.do_update_related_video_keys(exercise, 
+                                                    dict["related_video_keys"])
+        else:
+            UpdateExercise.do_update_related_video_keys(exercise, [])
 
+        return exercise
+
+    @staticmethod
+    def do_update_related_videos(exercise, related_videos):
+        video_keys = []
+        for video_name in related_videos:
+            video = models.Video.get_for_readable_id(video_name)
+            if not video.key() in video_keys:
+                video_keys.append(str(video.key()))
+
+        UpdateExercise.do_update_related_video_keys(exercise, video_keys)
+
+    @staticmethod
+    def do_update_related_video_keys(exercise, video_keys):
         query = models.ExerciseVideo.all()
         query.filter('exercise =', exercise.key())
         existing_exercise_videos = query.fetch(1000)
@@ -746,8 +758,6 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise_video.exercise_order = i
         
         db.put(exercise_videos)
-
-        return exercise
 
     def post(self):
         self.get()
