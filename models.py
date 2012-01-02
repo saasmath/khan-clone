@@ -35,7 +35,6 @@ import re
 import base64, os
 import sys
 
-
 from image_cache import ImageCache
 
 from templatefilters import slugify
@@ -1120,14 +1119,18 @@ class TopicVersion(db.Model):
             return self.copied_from.number
 
     @staticmethod
-    def get_by_id(version):
-        if version is None or version == "default":
+    def get_by_id(version_id):
+        if version_id is None or version_id == "default":
             return TopicVersion.get_default_version()
-        if version == "edit":
+        if version_id == "edit":
             return TopicVersion.get_edit_version()
-        version = int(version)
-        return TopicVersion.all().filter("number =", version).get() 
+        number = int(version_id)
+        return TopicVersion.all().filter("number =", number).get() 
     
+    @staticmethod
+    def get_by_number(number):
+        return TopicVersion.all().filter("number =", number).get() 
+
     # used by get_unused_content - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
@@ -1247,6 +1250,12 @@ class TopicVersion(db.Model):
         self.put()
 
     def set_default_version(self):
+        # causes circular importing if put at the top
+        from library import library_content_html
+        import autocomplete
+        import templatetags
+        logging.info("starting set_default_version")
+
         default_version = TopicVersion.get_default_version()
         changes = VersionContentChange.all().fetch(10000)
         changes = util.prefetch_refprops(changes, VersionContentChange.content)                
@@ -1254,6 +1263,19 @@ class TopicVersion(db.Model):
         def update_txn():
             for change in changes:
                 change.apply_change()
+
+            # preload library and autocomplete cache
+            library_content_html(False, self.number)
+            logging.info("preloaded library_content_html")
+            library_content_html(True, self.number)
+            logging.info("preloaded ajax library_content_html")
+            autocomplete.video_title_dicts(self.number)
+            logging.info("preloaded video autocomplete")
+            autocomplete.topic_title_dicts(self.number)
+            logging.info("preloaded topic autocomplete")
+            templatetags.topic_browser("browse", self.number)
+            templatetags.topic_browser("browse-fixed", self.number)
+            logging.info("preloaded topic_browser")
 
             if default_version:
                 default_version.default = False
@@ -1270,6 +1292,8 @@ class TopicVersion(db.Model):
         else:
             xg_on = db.create_transaction_options(xg=True)
             db.run_in_transaction_options(xg_on, update_txn)
+
+        logging.info("set_default_version complete")
                                     
 class VersionContentChange(db.Model):
     version = db.ReferenceProperty(TopicVersion, collection_name="changes")
@@ -1899,7 +1923,7 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     def get_filled_content_topics(types=[], version=None, include_hidden=False):
-        topics = Topic.get_content_topics()
+        topics = Topic.get_content_topics(version)
         child_dict = {}
         for topic in topics:
             child_dict.update(dict((key, True) for key in topic.child_keys if key.kind() in types or (len(types) == 0 and key.kind() != "Topic")))
@@ -2135,9 +2159,11 @@ class Video(Searchable, db.Model):
         return video
 
     @staticmethod
-    def get_all_live():
-        version = TopicVersion.get_default_version()
-        root = Topic.get_root()
+    def get_all_live(version=None):
+        if not version:
+            version = TopicVersion.get_default_version()
+        
+        root = Topic.get_root(version)
         videos = root.get_videos(include_descendants = True, include_hidden = False)
         return videos
 

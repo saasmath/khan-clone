@@ -5,7 +5,7 @@ import shared_jinja
 
 from app import App
 import layer_cache
-from models import Video, Setting, Topic
+from models import Video, Setting, Topic, TopicVersion
 from topics_list import topics_list
 import request_handler
 import util
@@ -15,16 +15,22 @@ import math
 import time
 
 @layer_cache.cache_with_key_fxn(
-        lambda ajax = False: "library_content_by_topic_%s_%s" % 
-            ("ajax" if ajax else "inline", Setting.topic_tree_version())
+        lambda ajax=False, version_number=None: 
+        "library_content_by_topic_%s_v%s" % (
+        "ajax" if ajax else "inline", 
+        version_number if version_number else Setting.topic_tree_version())
         )
-def library_content_html(ajax = False):
+def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the playlists as they will be
     populated ont he homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
     """
+    if version_number:
+        version = TopicVersion.get_by_number(version_number)
+    else:
+        version = None
 
-    topics = Topic.get_filled_content_topics(types = ["Video", "Url"])
+    topics = Topic.get_filled_content_topics(types = ["Video", "Url"], version=version)
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
     topics = [topic for topic in topics 

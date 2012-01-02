@@ -102,11 +102,17 @@ def streak_bar(user_exercise_dict):
 
     return shared_jinja.get().render_template("streak_bar.html", **template_values)
 
-@layer_cache.cache_with_key_fxn(lambda browser_id:
-    "Templatetags.topic_browser_%s_%s" % 
-    (browser_id, models.Setting.topic_tree_version()))
-def topic_browser(browser_id):
-    tree = models.Topic.get_root().make_tree(types = ["Topics"])
+@layer_cache.cache_with_key_fxn(lambda browser_id, version_number=None:
+    "Templatetags.topic_browser_%s_%s" % (
+    browser_id, 
+    version_number if version_number else models.Setting.topic_tree_version()))
+def topic_browser(browser_id, version_number=None):
+    if version_number:
+        version = models.TopicVersion.get_by_number(version_number)
+    else:
+        version = None
+
+    tree = models.Topic.get_root(version).make_tree(types = ["Topics"])
     template_values = {
        'browser_id': browser_id, 'topic_tree': tree 
     }
