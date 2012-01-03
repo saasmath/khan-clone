@@ -116,9 +116,8 @@ def get_user_data_coach_from_request():
 
     return user_data_coach
 
-@route("/api/v1/topicversion/<version_id>/content_topics", methods=["GET"])
-@route("/api/v1/topicversion/<version_id>/playlists", methods=["GET"]) 
-@route("/api/v1/content_topics", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/topics/with_content", methods=["GET"])
+@route("/api/v1/topics/with_content", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
 @jsonp
 @cache_with_key_fxn_and_param(
@@ -130,7 +129,7 @@ def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_content_topics(version)
 
-# not documented and used only by ajax homepage ... can remove once we remake the homepage with the topic tree
+# private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
 @cacheable(caching_age=(60 * 60 * 24 * 60))
 @etag(lambda: models.Setting.cached_library_content_date())
@@ -164,7 +163,6 @@ def topics_library_compact():
     return topic_dict
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
-@route("/api/v1/topicversion/<version_id>/playlists/<topic_id>/videos", methods=["GET"]) 
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
 @jsonp
@@ -187,7 +185,6 @@ def topic_videos(topic_id, version_id = None):
     return videos
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/exercises", methods=["GET"])
-@route("/api/v1/topicversion/<version_id>/playlists/<topic_id>/exercises", methods=["GET"]) 
 @route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
 @jsonp
@@ -209,7 +206,7 @@ def topic_exercises(topic_id, version_id = None):
 
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
-@etag(lambda: models.Setting.cached_library_content_date())
+@etag(lambda version_id = None: models.TopicVersion.get_date_updated_by_id(version_id))
 @jsonp
 @decompress # too big even with compression ... need to add a datastore layer
 @layer_cache.cache_with_key_fxn(
@@ -231,13 +228,12 @@ def topictreesearch(version_id, query):
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["GET"])
 @route("/api/v1/topic/<topic_id>", methods=["GET"])
 @jsonp
-# @layer_cache.cache_with_key_fxn(
-#    lambda topic_id, version_id = None: "6api_topic_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
-#    layer=layer_cache.Layers.Memcache)
+@layer_cache.cache_with_key_fxn(
+    lambda topic_id, version_id = None: "api_topic_%s_%s_%s" % (topic_id, version_id, models.TopicVersion.get_date_updated_by_id(version_id)),
+    layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic(topic_id, version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    logging.info(version.number)
     topic = models.Topic.get_by_id(topic_id, version)
     
     if not topic:
@@ -264,11 +260,9 @@ def put_topic(topic_id, version_id = "edit"):
 
     if not topic:
         kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['standalone_title', 'description', 'tags'])
-        kwargs["version"]=version
+        kwargs["version"] = version
         topic = models.Topic.insert(title = topic_json['title'], parent = None, **kwargs)
-        # return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
     else:
-        changed = False
         kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['id', 'title', 'standalone_title', 'description', 'tags', 'hide'])
         kwargs["version"]=version
         topic.update(**kwargs)

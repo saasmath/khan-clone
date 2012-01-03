@@ -1142,7 +1142,7 @@ class TopicVersion(db.Model):
             else:
                 return version.updated_on
 
-    # used by get_content_with_no_topic - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
+    # used by get_unused_content - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda : "TopicVersion.get_all_content_keys_%s" % Setting.cached_library_content_date())
     def get_all_content_keys():
