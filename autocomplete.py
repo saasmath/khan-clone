@@ -9,7 +9,8 @@ def video_title_dicts():
     return map(lambda video: {
         "title": video.title,
         "key": str(video.key()),
-        "ka_url": "/video/%s" % video.readable_id
+        "ka_url": "/video/%s" % video.readable_id,
+        "id": video.readable_id
     }, Video.get_all_live())
 
 @layer_cache.cache(expiration=CACHE_EXPIRATION_SECONDS)
@@ -17,7 +18,8 @@ def topic_title_dicts():
     return map(lambda topic: {
         "title": topic.title,
         "key": str(topic.key()),
-        "ka_url": topic.ka_url
+        "ka_url": topic.ka_url,
+        "id": topic.id
     },  Topic.get_content_topics())
 
 

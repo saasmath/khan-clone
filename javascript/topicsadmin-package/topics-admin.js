@@ -1105,7 +1105,7 @@ function stringArraysEqual(ar1, ar2) {
 // Add existing video/exercise dialog box
 
 TopicTreeEditor.AddExistingItemView = Backbone.View.extend({
-    template: Templates.get( "topicsadmin.add-existing-item" ),
+    template: Templates.get("topicsadmin.add-existing-item"),
     loaded: false,
     type: "",
     results: {},
@@ -1158,17 +1158,17 @@ TopicTreeEditor.AddExistingItemView = Backbone.View.extend({
         this.results = {};
         _.each(json, function(item) {
             if (self.type == "video") {
-                elements.push( $( '<option value="' + item.readable_id + '">' + item.title + '</option>' ) );
-                self.results[ item.readable_id ] = item.title;
+                elements.push($('<option value="' + item.id + '">' + item.title + '</option>'));
+                self.results[item.id] = item.title;
             } else {
-                elements.push( $( '<option value="' + item.name + '">' + item.display_name + '</option>' ) );
-                self.results[ item.name ] = item.display_name;
+                elements.push($('<option value="' + item.name + '">' + item.display_name + '</option>'));
+                self.results[item.name] = item.display_name;
             }
         });
 
-        var resultsElement = $( "select.search-results", this.el );
-        resultsElement.html( "" );
-        _.each( elements, function( element ) { element.appendTo( resultsElement.get(0) ); } );
+        var resultsElement = $("select.search-results", this.el);
+        resultsElement.html("");
+        _.each(elements, function(element) { element.appendTo(resultsElement.get(0)); });
     },
 
     showRecent: function() {
@@ -1233,9 +1233,8 @@ TopicTreeEditor.AddExistingItemView = Backbone.View.extend({
     },
 
     selectItem: function() {
-        var itemID = $( this.el ).find("select.search-results option:selected").val();
-        if ( !itemID ||
-            itemID === "_") {
+        var itemID = $(this.el).find("select.search-results option:selected").val();
+        if (!itemID || itemID === "_") {
             return;
         }
 
@@ -1252,14 +1251,14 @@ TopicTreeEditor.AddExistingItemView = Backbone.View.extend({
     },
 
     hide: function() {
-        return $( this.el ).modal("hide");
+        return $(this.el).modal("hide");
     }
 });
 
 // Add a new exercise dialog box
 
 TopicTreeEditor.CreateExerciseView = Backbone.View.extend({
-    template: Templates.get( "topicsadmin.create-exercise" ),
+    template: Templates.get("topicsadmin.create-exercise"),
     contextNode: null,
     contextModel: null,
 
