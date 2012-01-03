@@ -149,6 +149,7 @@ javascript = {
             "utils/tmpl.js",
             "utils/word-problems.js",
             "utils/spin.js",
+            "utils/time.js",
             "utils/unit-circle.js",
         ]
     },
