@@ -113,7 +113,7 @@ var getCssVideo = function() {
 };
 
 var setupSuggestedVideos = function() {
-    var allVideos = Khan.relatedVideos.videos;
+    var allVideos = Khan.relatedVideos && Khan.relatedVideos.videos;
     if (!(allVideos && allVideos.length > 0)) {
         return;
     }
