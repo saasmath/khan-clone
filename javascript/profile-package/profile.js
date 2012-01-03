@@ -49,42 +49,6 @@ var Profile = {
             }
         });
 
-        // sneakily override the Highcharts.Chart constructor so we can make
-        // Highcharts play nicely with HTML5shiv.
-        if (window.html5) {
-            // See http://stackoverflow.com/questions/3871731/dynamic-object-construction-in-javascript
-            var applyCtor = function(ctor, params) {
-                // Use a fake ctor to ensure prototype is set up correctly
-                var fakeCtor = function() {};
-                fakeCtor.prototype = ctor.prototype;
-                var obj = new fakeCtor();
-                obj.constructor = ctor;
-
-                // Now we can use apply on the empty instance
-                var newobj = ctor.apply(obj, params);
-
-                if (newobj !== null &&
-                    (typeof newobj === "object" || typeof newobj === "function")) {
-                    obj = newobj;
-                }
-
-                return obj;
-            };
-
-            Highcharts._origChart = Highcharts.Chart;
-            Highcharts.Chart = function() {
-                html5.shivInnerHtml = false;
-                var chart;
-                try {
-                    chart = applyCtor(Highcharts._origChart, arguments);
-                }
-                catch(e) {
-                    KAConsole.log(e);
-                }
-                html5.shivInnerHtml = true;
-                return chart;
-            };
-        }
 
         if ($.address){
 

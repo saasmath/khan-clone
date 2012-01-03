@@ -18,10 +18,6 @@
 		// a list of html5 elements
 		elements: 'abbr article aside audio bdi canvas data datalist details figcaption figure footer header hgroup mark meter nav output progress section summary time video'.split(' '),
 
-		// globally disable shivving of createElement and createDocumentFragment
-		// for Highcharts compatibility
-		shivInnerHtml: true,
-
 		// the shiv function
 		shivDocument: function (scopeDocument) {
 			scopeDocument = scopeDocument || doc;
@@ -49,7 +45,7 @@
 				// shiv document create element function
 				scopeDocument.createElement = function (nodeName) {
 					var element = documentCreateElement(nodeName);
-					if (html5.shivInnerHtml && element.canHaveChildren){
+					if (element.canHaveChildren){
 						html5.shivDocument(element.document);
 					}
 					return element;
@@ -57,8 +53,7 @@
 
 				// shiv document create element function
 				scopeDocument.createDocumentFragment = function () {
-					var f = documentCreateDocumentFragment();
-					return html5.shivInnerHtml ? html5.shivDocument(f) : f;
+					return html5.shivDocument(documentCreateDocumentFragment());
 				};
 			}
 
