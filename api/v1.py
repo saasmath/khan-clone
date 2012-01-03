@@ -390,7 +390,7 @@ def update_user_profile():
         return api_invalid_param_response("Profile data expected")
     
     if profile_json['nickname'] is not None:
-        user_data.user_nickname = profile_json['nickname']
+        user_data.update_nickname(profile_json['nickname'])
 
     if profile_json['avatarName'] is not None:
         avatar_name = profile_json['avatarName']
@@ -402,7 +402,7 @@ def update_user_profile():
                 and name_dict[avatar_name].is_satisfied_by(user_data)):
             user_data.avatar_name = avatar_name
 
-    user_data.save()
+    user_data.put()
 
 @route("/api/v1/user/coaches/<coach_email>", methods=["POST"])
 @oauth_required()
@@ -1087,7 +1087,7 @@ def update_public_user_badges():
                 "List of names of public badges expected")
 
     user_data.public_badges = public_badges_json
-    user_data.save()
+    user_data.put()
 
 @route("/api/v1/user/badges", methods=["GET"])
 @oauth_optional()

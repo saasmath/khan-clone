@@ -498,12 +498,10 @@ class PostLogin(request_handler.RequestHandler):
                 user_data.user_email = current_google_user.email()
                 user_data.put()
 
-            # TODO(benkomalo): fix this for people with public profiles
-            # Update nickname if it has changed
-            current_nickname = get_default_nickname_for(user_data)
-            if user_data.user_nickname != current_nickname:
-                user_data.user_nickname = current_nickname
-                user_data.put()
+            # If the user has a public profile, we stop "syncing" their username
+            # from Facebook, as they now have an opportunity to set it themself
+            if not user_data.username:
+                user_data.update_nickname()
 
             # Set developer and moderator to True if user is admin
             if (not user_data.developer or not user_data.moderator) and users.is_current_user_admin():

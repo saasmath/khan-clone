@@ -737,6 +737,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
     user_email = db.StringProperty()
 
     # A human-readable name that will be user-configurable.
+    # Do not read or modify this directly! Instead, use the nickname property
+    # and update_nickname method
     user_nickname = db.StringProperty(indexed=False)
 
     # A globally unique user-specified username,
@@ -802,11 +804,23 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     @property
     def nickname(self):
-        # Only return cached value if it exists and it wasn't cached during a Facebook API hiccup
-        if self.user_nickname and not is_facebook_user_id(self.user_nickname):
+        """ Gets a human-friendly display name that the user can optionally set
+        themselves. Will initially default to either the Facebook name or
+        part of the user's e-mail.
+        """
+        if self.user_nickname:
             return self.user_nickname
-        else:
-            return nicknames.get_default_nickname_for(self)
+
+        return nicknames.get_default_nickname_for(self)
+    
+    def update_nickname(self, nickname=None):
+        """ Updates the user's nickname and relevant indices and persists
+        to the datastore.
+        """
+        new_name = nickname or nicknames.get_default_nickname_for(self) 
+        if new_name != self.user_nickname:
+            self.user_nickname = new_name
+            self.put()
 
     @property
     def email(self):
