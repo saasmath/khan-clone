@@ -216,6 +216,10 @@ def compress_css():
     print "Compressing stylesheets"
     compress.compress_all_stylesheets()
 
+def compress_exercises():
+    print "Compressing exercises"
+    subprocess.check_call(["ruby", "khan-exercises/build/pack.rb"])
+
 def compile_templates():
     print "Compiling all templates"
     return 0 == popen_return_code([sys.executable, 'deploy/compile_templates.py'])
@@ -334,6 +338,7 @@ def main():
 
     compress_js()
     compress_css()
+    compress_exercises()
 
     if not options.dryrun:
         (email, password) = get_app_engine_credentials()
