@@ -27,7 +27,7 @@ from discussion import models_discussion
 from topics_list import all_topics_list
 import nicknames
 from counters import user_counter
-from facebook_util import is_facebook_user_id
+from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
 from image_cache import ImageCache
@@ -762,11 +762,6 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
-class ProfileVisibility:
-    NONE = 0
-    PUBLIC = 1
-    ALL = 2
-
 class UserData(GAEBingoIdentityModel, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
@@ -888,9 +883,51 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def badge_counts(self):
         return util_badges.get_badge_counts(self)
 
+    # TODO: read that page on user id and emails
+    @property
+    def prettified_user_email(self):
+        if self.is_facebook_user:
+            return "_fb" + self.user_email[len(FACEBOOK_ID_PREFIX):]
+        elif self.is_phantom:
+            # TODO: Figure out the difference between pre-phantom and phantom
+            return "_ph" + "turtle"
+        else:
+            return "_em" + urllib.quote(self.user_email)
+
+    @staticmethod
+    def get_user_data_from_email_or_username(email_or_username):
+        email = None
+        username = None
+
+        if email_or_username:
+            email_or_username = urllib.unquote(email_or_username)
+            if email_or_username.startswith("_fb"):
+                email = email_or_username.replace("_fb", FACEBOOK_ID_PREFIX)
+            elif email_or_username.startswith("_em"):
+                email = email_or_username.replace("_em", "")
+            elif email_or_username.startswith("_ph"):
+                # TODO: phantom or pre phantom
+                logging.critical("turtle party")
+            else:
+                username = email_or_username
+
+        if email:
+            return UserData.get_possibly_current_user(email)
+        elif username:
+            return UserData.get_possibly_current_user_by_username(email_or_username)
+
+        return None
+
     @property
     def profile_root(self):
-        return "/profile/" + (self.username or urllib.quote(self.email))
+        root = "/profile/"
+
+        if self.username:
+            root += self.username
+        else:
+            root += self.prettified_user_email
+
+        return root
 
     @staticmethod
     @request_cache.cache()
@@ -913,6 +950,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
     @staticmethod
     def pre_phantom():
         return UserData.insert_for(PRE_PHANTOM_EMAIL, PRE_PHANTOM_EMAIL)
+
+    @property
+    def is_facebook_user(self):
+        return self.user_email.startswith(FACEBOOK_ID_PREFIX)
 
     @property
     def is_phantom(self):
@@ -1107,44 +1148,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def is_suggested(self, exid):
         self.reassess_if_necessary()
         return (exid in self.suggested_exercises)
-
-    def get_other_user_data(self, email_or_username):
-        """ Return UserData and visibility of the user identified by email_or_username.
-
-        If self is an admin, the identified user, or the identified user's coach,
-        return (user_data, ProfileVisibility.ALL)
-
-        Otherwise, if the identified user has opted in to a public profile,
-        return (user_data, ProfileVisibility.PUBLIC)
-
-        Else, return (None, ProfileVisibility.NONE)
-
-        """
-        user_data = self
-        visibility = ProfileVisibility.ALL
-
-        if email_or_username:
-            email_or_username = urllib.unquote(email_or_username)
-            user_data_override = None
-            visibility = ProfileVisibility.NONE
-
-            # TODO: This hack doesn't work for fb-user 'email' values, thanks Komalo!
-            if email_or_username.find("@") is -1:
-                user_data_override = UserData.get_possibly_current_user_by_username(email_or_username)
-            else:
-                user_data_override = UserData.get_possibly_current_user(email_or_username)
-
-            if user_data_override and user_data_override.is_visible_to(user_data):
-                visibility = ProfileVisibility.ALL
-            elif user_data_override:
-                if user_data_override.username:
-                    visibility = ProfileVisibility.PUBLIC
-                else:
-                    user_data_override = None
-
-            user_data = user_data_override
-
-        return (user_data, visibility)
 
     def get_students_data(self):
         coach_email = self.key_email
