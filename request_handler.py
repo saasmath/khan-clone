@@ -16,7 +16,6 @@ import shared_jinja
 from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException
 from app import App
 import cookie_util
-from gandalf import gandalf
 
 from api.jsonify import jsonify
 
@@ -364,3 +363,4 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 from models import UserData
 import util
 from goals.models import GoalList
+from gandalf import gandalf
