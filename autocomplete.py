@@ -13,7 +13,8 @@ def video_title_dicts(version_number=None):
     return map(lambda video: {
         "title": video.title,
         "key": str(video.key()),
-        "ka_url": "/video/%s" % video.readable_id
+        "ka_url": "/video/%s" % video.readable_id,
+        "id": video.readable_id
     }, Video.get_all_live(version=version))
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
@@ -28,7 +29,8 @@ def topic_title_dicts(version_number=None):
     return map(lambda topic: {
         "title": topic.title,
         "key": str(topic.key()),
-        "ka_url": topic.ka_url
+        "ka_url": topic.ka_url,
+        "id": topic.id
     },  Topic.get_content_topics(version=version))
 
 
