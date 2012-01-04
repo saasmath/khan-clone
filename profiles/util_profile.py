@@ -8,7 +8,7 @@ import models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms
-from models import StudentList, UserData, ProfileVisibility
+from models import StudentList, UserData
 import simplejson
 from avatars import util_avatars
 from badges import util_badges
@@ -158,11 +158,10 @@ class ViewProfile(request_handler.RequestHandler):
         """
         # TODO: What URL for phantoms?
         current_user_data = UserData.current() or UserData.pre_phantom()
-        user_data, visibility = current_user_data.get_other_user_data(email_or_username)
+        user_data = UserData.get_user_data_from_email_or_username(email_or_username)
 
         if not user_data:
-            self.redirect("/profile?k")
-            return
+            user_data = current_user_data
 
         # TODO: incorporate the tz offset into the timeago stuff on the client
         tz_offset = self.request_int("tz_offset", default=0)
@@ -171,7 +170,6 @@ class ViewProfile(request_handler.RequestHandler):
 
         template_values = {
             'is_coaching_logged_in_user': current_user_data.is_coached_by(user_data),
-            'visibility': visibility,
             'student_email': user_data.email,
             'student_nickname': user_data.nickname,
             'avatar_name': avatar.name,
@@ -186,15 +184,6 @@ class ViewProfile(request_handler.RequestHandler):
             'user_data_student': user_data,
             "view": self.request_string("view", default=""),
         }
-
-        # TODO: Before I bengineer more, worth syncing on
-        # what a public profile looks like,
-        # and how similar it is to a normal / complete profile.
-
-        # if visibility == models.ProfileVisibility.PUBLIC:
-            # TODO: Render public profile
-        # else:
-            # TODO: Render complete profile
 
         self.render_jinja2_template('viewprofile.html', template_values)
 
@@ -229,13 +218,8 @@ class ProfileGraph(request_handler.RequestHandler):
     def get_profile_target_user_data(self):
         current_user_data = UserData.current() or UserData.pre_phantom()
         email = self.request_student_email_legacy()
-        user_data_target, visibility = current_user_data.get_other_user_data(email)
-
-        # TODO: Temp hack to prevent peeking at others' graphs
-        if visibility == ProfileVisibility.ALL:
-            return user_data_target
-        else:
-            return None
+        # TODO: ACL
+        return UserData.get_possibly_current_user(email)
 
     def redirect_if_not_ajax(self, student):
         if not self.is_ajax_request():
