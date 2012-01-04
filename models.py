@@ -1296,11 +1296,17 @@ class TopicVersion(db.Model):
         logging.info("set_default_version complete")
                                     
 class VersionContentChange(db.Model):
+    """ This class keeps track of changes made in the admin/content editor
+    The changes will be applied when the version is set to default
+    """
+    
     version = db.ReferenceProperty(TopicVersion, collection_name="changes")
+    # content is the video/exercise/url that has been changed
     content = db.ReferenceProperty()
     # indexing updated_on as it may be needed for rolling back
     updated_on = db.DateTimeProperty(auto_now=True) 
     last_edited_by = db.UserProperty(indexed=False)
+    # content_changes is a dict of the properties that have been changed
     content_changes = object_property.UnvalidatedObjectProperty()
 
     def put(self):
@@ -1341,9 +1347,8 @@ class VersionContentChange(db.Model):
     @request_cache.cache()
     def get_updated_content_dict(version):
         query = VersionContentChange.all().filter("version =", version)
-        updates = query.fetch(10000)
         return dict((c.key(), c) for c in 
-                    [u.updated_content(u.content) for u in updates])
+                    [u.updated_content(u.content) for u in query])
 
     @staticmethod
     def get_change_for_content(content, version):

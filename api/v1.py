@@ -449,7 +449,8 @@ def get_url(url_id, version_id=None):
 @route("/api/v1/topicversion/<version_id>/url/", methods=["PUT"])
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["PUT"])
 @route("/api/v1/url/", methods=["PUT"])
-@route("/api/v1/url/<int:url_id>", methods=["PUT"])   
+@route("/api/v1/url/<int:url_id>", methods=["PUT"]) 
+@developer_required  
 @jsonp
 @jsonify
 def save_url(url_id = None, version_id=None):
@@ -562,7 +563,7 @@ def exercise_videos(exercise_name):
 @jsonify
 def exercise_save(exercise_name = None, version_id = "edit"):
     request.json["name"] = exercise_name
-    request.json["live"] = True if request.json["live"] == "true" else False
+    request.json["live"] = request.json["live"] == "true"     
     request.json["v_position"] = int(request.json["v_position"])
     request.json["h_position"] = int(request.json["h_position"])
     request.json["seconds_per_fast_problem"] = (
@@ -670,8 +671,6 @@ def fully_populated_playlists():
 def get_youtube_info(youtube_id):
     video_data = models.Video(youtube_id = youtube_id)
     return youtube_get_video_data(video_data)
-
-    # return youtube_get_video_data_dict(youtube_id)
 
 @route("/api/v1/topicversion/<version_id>/videos/", methods=["POST", "PUT"])
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["POST", "PUT"])
