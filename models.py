@@ -712,6 +712,7 @@ class UniqueUsername(db.Model):
 class NicknameIndex(db.Model):
     """ Index entries to be able to search users by their nicknames.
     Each user may have multiple index entries, all pointing to the same user.
+    These entries are expected to be direct children of UserData entities.
 
     These are created for fast user searches.
     """
@@ -719,9 +720,6 @@ class NicknameIndex(db.Model):
     # The index string that queries can be matched again. Must be built out
     # using nicknames.build_index_strings
     index_value = db.StringProperty()
-
-    # Lightweight reference to the user
-    user_value = db.StringProperty()
 
     @staticmethod
     def update_indices(user):
@@ -731,9 +729,7 @@ class NicknameIndex(db.Model):
         index_strings = nicknames.build_index_strings(nickname)
 
         db.delete(NicknameIndex.entries_for_user(user))
-        entries = [NicknameIndex(parent=user,
-                                 index_value=s,
-                                 user_value=user.user_id)
+        entries = [NicknameIndex(parent=user, index_value=s)
                    for s in index_strings]
         db.put(entries)
 
@@ -747,7 +743,7 @@ class NicknameIndex(db.Model):
     @staticmethod
     def users_for_search(raw_query):
         """ Given a raw query string, retrieve a list of the users that match
-        that query by returning a list of their user_id values.
+        that query by returning a list of their entity's key values.
 
         The values are guaranteed to be unique.
 
@@ -758,7 +754,7 @@ class NicknameIndex(db.Model):
 
         q = NicknameIndex.all()
         q.filter("index_value =", nicknames.build_search_query(raw_query))
-        return list(set([entry.user_value for entry in q]))
+        return list(set([entry.parent_key() for entry in q]))
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 

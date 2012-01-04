@@ -40,7 +40,7 @@ class NicknamesTest(unittest.TestCase):
         u = self.make_user('Fake User One')
 
         for raw_query in ['Fake', 'uSeR', 'ONE', 'fake user one']:
-            self.assertSingleResult(u.user_id, raw_query)
+            self.assertSingleResult(u.key(), raw_query)
 
         user_matches = models.NicknameIndex.users_for_search('does not exist')
         self.assertEqual(0, len(user_matches))
@@ -52,7 +52,7 @@ class NicknamesTest(unittest.TestCase):
         for raw_query in ['Lastname, Firstname',
                           'Firstname Lastname',
                           'lastname firstname middlename']:
-            self.assertSingleResult(u.user_id, raw_query)
+            self.assertSingleResult(u.key(), raw_query)
 
     def test_multi_user_search(self):
         han_solo = self.make_user('Han Solo')
@@ -60,17 +60,17 @@ class NicknamesTest(unittest.TestCase):
         jabba = self.make_user('Jabba the Hutt')
 
         for raw_query in ['Han Solo', 'Han']:
-            self.assertSingleResult(han_solo.user_id, raw_query)
+            self.assertSingleResult(han_solo.key(), raw_query)
 
         for raw_query in ['Leia']:
-            self.assertSingleResult(leia.user_id, raw_query)
+            self.assertSingleResult(leia.key(), raw_query)
 
         for raw_query in ['Jabba', 'the Hutt', 'jabba the HUTT']:
-            self.assertSingleResult(jabba.user_id, raw_query)
+            self.assertSingleResult(jabba.key(), raw_query)
 
         matches = models.NicknameIndex.users_for_search('Solo')
         self.assertEquals(2, len(matches))
-        self.assertEquals(set([han_solo.user_id, leia.user_id]), set(matches))
+        self.assertEquals(set([han_solo.key(), leia.key()]), set(matches))
 
     def test_partial_matches(self):
         self.make_user('Firstname Middlename Lastname')
