@@ -16,6 +16,7 @@ import shared_jinja
 from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException
 from app import App
 import cookie_util
+from gandalf import gandalf
 
 from api.jsonify import jsonify
 
@@ -329,6 +330,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         # mode but false for prod.
         hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
+
+        # client-side error logging
+        template_values['include_errorception'] = gandalf('errorception')
 
         if user_data:
             goals = GoalList.get_current_goals(user_data)
