@@ -709,6 +709,57 @@ class UniqueUsername(db.Model):
 
         return db.run_in_transaction(txn, desired_name)
 
+class NicknameIndex(db.Model):
+    """ Index entries to be able to search users by their nicknames.
+    Each user may have multiple index entries, all pointing to the same user.
+
+    These are created for fast user searches.
+    """
+
+    # The index string that queries can be matched again. Must be built out
+    # using nicknames.build_index_strings
+    index_value = db.StringProperty()
+
+    # Lightweight reference to the user
+    user_value = db.StringProperty()
+
+    @staticmethod
+    def update_indices(user):
+        """ Updates the indices for a user given her current nickname. """
+        nickname = user.nickname
+        id = user.user_id
+        index_strings = nicknames.build_index_strings(nickname)
+
+        db.delete(NicknameIndex.entries_for_user(user))
+        entries = [NicknameIndex(parent=user,
+                                 index_value=s,
+                                 user_value=user.user_id)
+                   for s in index_strings]
+        db.put(entries)
+
+    @staticmethod
+    def entries_for_user(user):
+        """ Retrieves all index entries for a given user. """
+        q = NicknameIndex.all()
+        q.ancestor(user)
+        return q.fetch(10000)
+
+    @staticmethod
+    def users_for_search(raw_query):
+        """ Given a raw query string, retrieve a list of the users that match
+        that query by returning a list of their user_id values.
+
+        The values are guaranteed to be unique.
+
+        TODO: there is no ranking among the result set, yet
+        TODO: extend API so that the query can have an optional single token
+              that can be prefixed matched, for autocomplete purposes
+        """
+
+        q = NicknameIndex.all()
+        q.filter("index_value =", nicknames.build_search_query(raw_query))
+        return list(set([entry.user_value for entry in q]))
+
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
 class ProfileVisibility:
@@ -820,7 +871,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
         new_name = nickname or nicknames.get_default_nickname_for(self) 
         if new_name != self.user_nickname:
             self.user_nickname = new_name
-            self.put()
+            def txn():
+                NicknameIndex.update_indices(self)
+                self.put()
+            db.run_in_transaction(txn)
 
     @property
     def email(self):
