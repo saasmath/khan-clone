@@ -1,6 +1,3 @@
-import os
-import logging
-
 import shared_jinja
 
 import badges

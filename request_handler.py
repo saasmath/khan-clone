@@ -17,6 +17,8 @@ from custom_exceptions import MissingVideoException, MissingExerciseException, S
 from app import App
 import cookie_util
 
+from api.jsonify import jsonify
+
 class RequestInputHandler(object):
 
     def request_string(self, key, default = ''):
@@ -58,17 +60,33 @@ class RequestInputHandler(object):
 
     def request_user_data(self, key):
         email = self.request_string(key)
+        return UserData.get_possibly_current_user(email)
+
+    # get the UserData instance based on the querystring. The precedence is:
+    # 1. email
+    # 2. student_email
+    # the precendence is reversed when legacy is True. A warning will be logged
+    # if a legacy parameter is encountered when not expected.
+    def request_student_user_data(self, legacy=False):
+        if legacy:
+            email = self.request_student_email_legacy()
+        else:
+            email = self.request_student_email()
+        return UserData.get_possibly_current_user(email)
+
+    def request_student_email_legacy(self):
+        email = self.request_string("email")
+        email = self.request_string("student_email", email)
+        # no warning is logged here as we should aim to completely move to
+        # email, but no effort has been made to update old calls yet.
+        return email
+
+    def request_student_email(self):
+        email = self.request_string("student_email")
         if email:
-
-            user_data_current = UserData.current()
-            if user_data_current and user_data_current.user_email == email:
-                # Avoid an extra DB call in the (fairly often) case that the requested email
-                # is the email of the currently logged-in user
-                return user_data_current
-
-            return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
-
-        return None
+            logging.warning("API called with legacy student_email parameter")
+        email = self.request_string("email", email)
+        return email
 
     def request_float(self, key, default = None):
         try:
@@ -121,7 +139,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         elif type(e) is MissingExerciseException:
 
             title = "This exercise isn't here right now."
-            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard?k'>head back to our other exercises</a>."
+            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard'>head back to our other exercises</a>."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is MissingVideoException:
@@ -135,6 +153,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is SmartHistoryLoadException:
+            # 404s are very common with Smarthistory as bots have gotten hold of bad urls, silencing these reports and log as info instead
+            silence_report = True
+            logging.info(e)
             title = "This page of the Smarthistory section of Khan Academy does not exist"
             message_html = "Go to <a href='/'>our Smarthistory homepage</a> to find more art history content."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
@@ -306,9 +327,17 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         # overridable hide_analytics querystring that defaults to true in dev
         # mode but false for prod.
-        hide_analytics = os.environ.get('SERVER_SOFTWARE').startswith('Devel')
-        hide_analytics = self.request_bool("hide_analytics", hide_analytics)
+        hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
+
+        # client-side error logging
+        template_values['include_errorception'] = gandalf('errorception')
+
+        if user_data:
+            goals = GoalList.get_current_goals(user_data)
+            goals_data = [g.get_visible_data() for g in goals]
+            if goals_data:
+                template_values['global_goals'] = jsonify(goals_data)
 
         return template_values
 
@@ -324,7 +353,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         self.response.out.write(json)
 
     def render_jsonp(self, obj):
-        json = obj if type(obj) == str else simplejson.dumps(obj, ensure_ascii=False, indent=4)
+        json = obj if isinstance(obj, basestring) else simplejson.dumps(obj, ensure_ascii=False, indent=4)
         callback = self.request_string("callback")
         if callback:
             self.response.out.write("%s(%s)" % (callback, json))
@@ -333,3 +362,5 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
 from models import UserData
 import util
+from goals.models import GoalList
+from gandalf import gandalf

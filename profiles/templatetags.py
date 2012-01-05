@@ -3,7 +3,7 @@ import os
 import shared_jinja
 
 from profiles import focus_graph, activity_graph, exercises_over_time_graph, exercise_problems_graph, exercise_progress_graph, recent_activity
-from profiles import class_exercises_over_time_graph, class_progress_report_graph, class_energy_points_per_minute_graph, class_time_graph
+from profiles import class_exercises_over_time_graph, class_energy_points_per_minute_graph, class_time_graph
 
 from urlparse import urlunparse
 from urllib import urlencode
@@ -31,8 +31,6 @@ def profile_exercise_progress_graph(user_data_student):
 # Class profile graph types
 def class_profile_exercises_over_time_graph(user_data_coach, student_list):
     return render_graph_html_and_context("class_exercises_over_time_graph.html", class_exercises_over_time_graph.class_exercises_over_time_graph_context(user_data_coach, student_list))
-def class_profile_progress_report_graph(user_data_coach, student_list):
-    return render_graph_html_and_context("class_progress_report_graph.html", class_progress_report_graph.class_progress_report_graph_context(user_data_coach, student_list))
 def class_profile_energy_points_per_minute_graph(user_data_coach, student_list):
     return render_graph_html_and_context("class_energy_points_per_minute_graph.html", class_energy_points_per_minute_graph.class_energy_points_per_minute_graph_context(user_data_coach, student_list))
 def class_profile_energy_points_per_minute_update(user_data_coach, student_list):
@@ -53,16 +51,18 @@ def get_graph_url(graph_type, student, coach, list_id):
     urlpath = "/profile/graph/%s" % graph_type
     return urlunparse(('', '', urlpath, '', urlencode(qs), ''))
 
-def get_api_url(api_function, student, coach, list_id):
+def get_api_url(prefix, api_function, student, coach, list_id):
     qs = {}
     if student:
-        qs['student_email'] = student.email
+        # Note - the API expects the email as "email", not "student_email"
+        # like in the legacy graph URL's!
+        qs['email'] = student.email
     if coach:
         qs['coach_email'] = coach.email
     if list_id:
         qs['list_id'] = list_id
 
-    urlpath = "/api/v1/%s" % api_function
+    urlpath = "/api/v1/%s/%s" % (prefix, api_function)
     return urlunparse(('', '', urlpath, '', urlencode(qs), ''))
 
 def profile_recent_activity(user_data, view="standard"):

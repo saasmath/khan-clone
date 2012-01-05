@@ -73,6 +73,7 @@ var randomElement = function(array, weights) {
 
 $('.exercise_message .close-button').click(function(ev) {
     ev.preventDefault();
+	gae_bingo.bingo('struggling_message_dismissed');
     $('#exercise-message-container').slideUp();
 });
 
@@ -112,8 +113,8 @@ var getCssVideo = function() {
 };
 
 var setupSuggestedVideos = function() {
-    var allVideos = userExercise.exercise_model.related_videos;
-    if (allVideos.length == 0) {
+    var allVideos = Khan.relatedVideos && Khan.relatedVideos.videos;
+    if (!(allVideos && allVideos.length > 0)) {
         return;
     }
 
@@ -147,16 +148,18 @@ var setupSuggestedVideos = function() {
     jel.attr('data-weight', weight);
 
     // make it link to the correct video
-    var exid = userExercise.exercise_model.name;
-    jel.removeAttr('id').find('span').html( buildLink(suggestion, exid) ).end().hide();
+    jel.removeAttr('id').find('span').html( buildLink(suggestion) ).end().hide();
 
     $('.exercise_message').append(jel);
+	$('#video-suggest-link').click(function(e) {
+		gae_bingo.bingo('struggling_videos_clicked_post_struggling');
+	});
 };
 
 var buildLink = function(video, exid) {
     var exid_param = exid ? "?exid=" + exid : "";
-    return $('<a></a>')
-        .attr('href', video.ka_url + exid_param)
+    return $('<a id="video-suggest-link"></a>')
+        .attr('href', Khan.relatedVideos.makeHref(video))
         .addClass("related-video")
         .data('video', video)
         .text(video.title);

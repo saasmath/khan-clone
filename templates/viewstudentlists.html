@@ -38,7 +38,11 @@
         <li data-list_id="{{list.key}}"><a href="students?list_id={{list.key}}" class="bullet">{{list.name|escape}}</a></li>
         {% endfor %}
     </ul>
+    <div id="newlist-div" style="display: none;"><div>New list name:</div>
     <input type="textbox" id="newlist-box" />
+    <a id="newlist-ok" class="simple-button action-gradient" href="#">OK</a>
+    <a id="newlist-cancel" class="simple-button action-gradient" href="#">Cancel</a>
+    </div>
     <a id="newlist-button" class="simple-button action-gradient" href="#">Create a new list</a>
 </div>
 
@@ -54,8 +58,8 @@
     </div>
 
     <div id="textbox-container">
-        <input type="text" id="request-student" size="80" placeholder="Type a student's email address to propose becoming their coach"/>
-        <input type="text" id="add-to-list" size="80" placeholder="Type a student's name to add them to this list" style="display: none"/>
+        <input type="text" id="request-student" class="blur-on-esc" size="80" placeholder="Type a student's email address to propose becoming their coach"/>
+        <input type="text" id="add-to-list" class="blur-on-esc" size="80" placeholder="Type a student's name to add them to this list" style="display: none"/>
     </div>
 
     <div class="alert error" id="addstudent-error">
@@ -87,7 +91,7 @@
                 <a class="delete-button" href="#" title="Remove this student from this list"><img src="images/circled_cross.png"/></a>
             </span>
             <div>
-                <span class="student-name visited-no-recolor"><a href="/profile?k&student_email={{ student.email|escape }}" title="View this student's profile page">{{ student.nickname|escape }}</a></span>
+                <span class="student-name visited-no-recolor"><a href="/profile?student_email={{ student.email|escape }}" title="View this student's profile page">{{ student.nickname|escape }}</a></span>
                 <span class="student-email">{{ student.email|escape }}</span>
             </div>
         </div>

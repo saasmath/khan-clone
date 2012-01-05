@@ -7,16 +7,15 @@ import re
 import StringIO
 import base64
 import copy
-from string import lower
-
 from js_css_packages import packages
+import npm
 
 COMBINED_FILENAME = "combined"
 URI_FILENAME = "uri"
 COMPRESSED_FILENAME = "compressed"
 HASHED_FILENAME_PREFIX = "hashed-"
 PATH_PACKAGES = "js_css_packages/packages.py"
-PATH_PACKAGES_TEMP = "js_css_packages/packages.compresstemp.py"
+PATH_PACKAGES_COMPRESSED = "js_css_packages/packages_compressed.py"
 PATH_PACKAGES_HASH = "js_css_packages/packages_hash.py"
 
 packages_stylesheets = copy.deepcopy(packages.stylesheets)
@@ -26,10 +25,6 @@ if os.path.isfile(PATH_PACKAGES_HASH):
     hashes = copy.deepcopy(js_css_packages.packages_hash.hashes)
 else:
     hashes = {}
-
-def revert_js_css_hashes():
-    print "Reverting %s" % PATH_PACKAGES
-    popen_results(['hg', 'revert', '--no-backup', PATH_PACKAGES])
 
 def compress_all_javascript():
     dict_packages = packages.javascript
@@ -43,8 +38,29 @@ def compress_all_stylesheets():
 # into a single combined.js\.css file for each package, then
 # minify into a single compressed.js\.css file.
 def compress_all_packages(default_path, dict_packages, suffix):
-    for package_name in dict_packages:
-        package = dict_packages[package_name]
+    if not check_deps():
+        return
+
+    for package, path, files in resolve_files(default_path, dict_packages, suffix):
+        compress_package(package, path, files, suffix)
+
+        hashed_content = "compressed_javascript=%s\ncompressed_stylesheets=%s\n" % \
+            (str(packages_javascript), str(packages_stylesheets))
+
+        # Remove the old one.
+        if os.path.exists(PATH_PACKAGES_COMPRESSED):
+            os.remove(PATH_PACKAGES_COMPRESSED)
+
+        with open(PATH_PACKAGES_COMPRESSED, "w") as f:
+            f.write(hashed_content)
+
+    with open(PATH_PACKAGES_HASH, 'w') as hash_file:
+        hash_file.write('hashes = %s\n' % str(hashes))
+
+# iterate through the packages file and yield the full path for every file
+def resolve_files(default_path, packages, suffix):
+    for package_name in packages:
+        package = packages[package_name]
 
         if 'files' in package:
             package_path = package.get("base_path")
@@ -53,18 +69,52 @@ def compress_all_packages(default_path, dict_packages, suffix):
                 package_path = os.path.join(default_path, dir_name)
 
             package_path = os.path.join(os.path.dirname(__file__), package_path)
+            package_path = os.path.normpath(package_path)
 
-            compress_package(package_name, package_path, package["files"], suffix)
+            # Assume any files that do not have the correct suffix are already
+            # compiled by some earlier process.
+            # For example, a file called template.handlebars will be compiled
+            # to template.handlebars.js
+            files = []
+            for f in package["files"]:
+                if f.split('.')[-1] == suffix[1:]:
+                    files.append(f)
+                else:
+                    files.append(f + suffix)
 
-            hashed_content = "javascript=%s\nstylesheets=%s\n" % \
-                (str(packages_javascript), str(packages_stylesheets))
-            with open(PATH_PACKAGES_TEMP, "w") as f:
-                f.write(hashed_content)
+            yield (package_name, package_path, files)
 
-            shutil.move(PATH_PACKAGES_TEMP, PATH_PACKAGES)
+def file_size_report():
+    # only works on js for now
+    package = packages.javascript
+    path = os.path.join("..", "javascript")
+    suffix = '.js'
+    uglify_path = npm.package_installed("uglifyjs")
 
-    with open(PATH_PACKAGES_HASH, 'w') as hash_file:
-        hash_file.write('hashes = %s\n' % str(hashes))
+
+    print "Uglifying and gzipping all packages..."
+    file_sizes = []
+    for package_name, path, files in resolve_files(path, package, suffix):
+        for file in files:
+            if file in packages.transformations:
+                file = packages.transformations[file]
+            file_path = os.path.normpath(os.path.join(path, file))
+            file_path_min = file_path[:-len(suffix)] + '.min' + suffix
+            popen_results([uglify_path, '--max-line-len', '72', '-nc', '-o', file_path_min, file_path])
+            subprocess.Popen(['gzip', '-f', file_path_min]).wait()
+            file_path_gz = file_path_min + '.gz'
+
+            file_size = os.stat(file_path_gz).st_size
+            file_sizes.append((package_name, file, file_size))
+
+            # Clean up. The minified file is already deleted by gzip.
+            os.remove(file_path_gz)
+
+    file_sizes.sort(key=lambda f: f[2], reverse=True) # size
+    file_sizes.sort(key=lambda f: f[0]) # package
+
+    for package_name, file, size in file_sizes:
+        print '\t'.join(map(str, [size, package_name, file]))
 
 # Overview:
 # Take a set of js or css files then:
@@ -99,9 +149,9 @@ def compress_package(name, path, files, suffix):
 
     path_compressed = ''
     fullname = name+suffix
-    if fullname not in hashes \
-            or hashes[fullname][0] != new_hash \
-            or not os.path.exists(hashes[fullname][2]):
+    if (fullname not in hashes
+            or hashes[fullname][0] != new_hash
+            or not os.path.exists(hashes[fullname][2])):
 
         path_compressed = minify_package(path, path_combined, suffix)
         path_hashed, hash_sig = hash_package(name, path, path_compressed, suffix)
@@ -150,16 +200,27 @@ def remove_compressed(path, suffix):
                 or filename.endswith(COMPRESSED_FILENAME + suffix):
             os.remove(os.path.join(path, filename))
 
-# Use YUICompressor to minify the combined file
+# Use UglifyJS for JS and node-cssmin for CSS to minify the combined file
 def minify_package(path, path_combined, suffix):
-    path_compressed = os.path.join(path, COMPRESSED_FILENAME + suffix)
-    path_compressor = os.path.join(os.path.dirname(__file__), "yuicompressor-2.4.2.jar")
+    uglify_path = npm.package_installed("uglifyjs")
+    cssmin_path = npm.package_installed("cssmin")
 
+    path_compressed = os.path.join(path, COMPRESSED_FILENAME + suffix)
     print "Compressing %s into %s" % (path_combined, path_compressed)
-    print popen_results(["java", "-jar", path_compressor, "--charset", "utf-8", path_combined, "-o", path_compressed])
+
+    if suffix == ".js":
+        print popen_results([uglify_path, '--max-line-len', '72', '-nc', '-o', path_compressed, path_combined])
+    elif suffix == ".css":
+        compressed = popen_results([cssmin_path, path_combined])
+        if compressed:
+            f = open(path_compressed, 'w')
+            f.write(compressed)
+            f.close()
+    else:
+        raise Exception("Unable to compress %s files" % suffix)
 
     if not os.path.exists(path_compressed):
-        raise Exception("Unable to YUICompress: %s" % path_combined)
+        raise Exception("Unable to compress: %s" % path_combined)
 
     return path_compressed
 
@@ -211,7 +272,7 @@ def remove_images(path, path_combined, suffix):
     new_file.close()
 
     if not os.path.exists(path_without_urls):
-          raise Exception("Unable to remove images: %s" % path_combined)
+        raise Exception("Unable to remove images: %s" % path_combined)
 
     return path_without_urls
 
@@ -232,8 +293,6 @@ def hash_package(name, path, path_compressed, suffix):
     return path_hashed, hash_sig
 
 def insert_hash_sig(name, hash_sig, suffix):
-    print "Inserting %s sig (%s) into %s\n" % (name, hash_sig, PATH_PACKAGES)
-
     current_dict = packages_stylesheets if suffix.endswith('.css') else packages_javascript
     if name not in current_dict:
         current_dict[name] = {}
@@ -247,6 +306,9 @@ def combine_package(path, files, suffix):
 
     content = []
     for static_filename in files:
+        if static_filename in packages.transformations:
+            static_filename = packages.transformations[static_filename]
+
         path_static = os.path.join(path, static_filename)
         print "   ...adding %s" % path_static
         f = open(path_static, 'r')
@@ -267,3 +329,13 @@ def popen_results(args):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)
     return proc.communicate()[0]
 
+def check_deps():
+    """check for node and friends"""
+    uglify_path = npm.package_installed("uglifyjs")
+    cssmin_path = npm.package_installed("cssmin")
+
+    if uglify_path and cssmin_path:
+        return True
+    else:
+        print "uglify and cssmin not found :("
+        return False

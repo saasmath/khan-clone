@@ -1,10 +1,7 @@
 import datetime
-import time
-import logging
 
 import models
 import activity_summary
-import util
 from badges import models_badges, util_badges
 from templatefilters import seconds_to_time_string
 

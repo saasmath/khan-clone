@@ -5,7 +5,6 @@ import urllib
 import urlparse
 import logging
 import re
-import simplejson
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
@@ -35,7 +34,6 @@ from app import App
 import util
 import user_util
 import exercise_statistics
-import backfill
 import activity_summary
 import exercises
 import dashboard
@@ -44,6 +42,7 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
+import goals.handlers
 
 import models
 from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
@@ -61,8 +60,11 @@ from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
 from nicknames import get_nickname_for
+from image_cache import ImageCache
+from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -102,7 +104,9 @@ def get_mangled_playlist_name(playlist_name):
     return playlist_name
 
 class ViewVideo(request_handler.RequestHandler):
-    def get(self):
+
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
 
         # This method displays a video in the context of a particular playlist.
         # To do that we first need to find the appropriate playlist.  If we aren't
@@ -113,8 +117,8 @@ class ViewVideo(request_handler.RequestHandler):
         playlist = None
         video_id = self.request.get('v')
         playlist_title = self.request_string('playlist', default="") or self.request_string('p', default="")
-        path = self.request.path
-        readable_id  = urllib.unquote(path.rpartition('/')[2])
+
+        readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
         # If either the readable_id or playlist title is missing,
@@ -232,57 +236,9 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
+        bingo(['struggling_videos_landing',
+               'homepage_restructure_videos_landing'])
         self.render_jinja2_template('viewvideo.html', template_values)
-
-class LogVideoProgress(request_handler.RequestHandler):
-
-    # LogVideoProgress uses a GET request to solve the IE-behind-firewall
-    # issue with occasionally stripped POST data.
-    # See http://code.google.com/p/khanacademy/issues/detail?id=3098
-    # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
-    def post(self):
-        self.get()
-
-    @create_phantom
-    def get(self):
-        user_data = UserData.current()
-        video_points_total = 0
-
-        if user_data:
-
-            video = None
-
-            key_str = self.request_string("video_key")
-            if key_str:
-                key = db.Key(key_str)
-                app_id = os.environ['APPLICATION_ID']
-                if key.app() != app_id:
-                    new_key = db.Key.from_path(
-                        key.kind(),
-                        key.id() or key.name(),
-                        _app=app_id)
-                    logging.warning("Key '%s' had invalid app_id '%s'. Changed to new key '%s'", str(key), key.app(), str(new_key))
-                    key = new_key
-                video = db.get(key)
-            else:
-                youtube_id = self.request_string("youtube_id")
-                if youtube_id:
-                    video = Video.all().filter('youtube_id =', youtube_id).get()
-
-            if video:
-
-                # Seconds watched is restricted by both the scrubber's position
-                # and the amount of time spent on the video page
-                # so we know how *much* of each video each student has watched
-                seconds_watched = int(self.request_float("seconds_watched", default=0))
-                last_second_watched = int(self.request_float("last_second_watched", default=0))
-
-                user_video, video_log, video_points_total = VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
-
-        user_points_html = self.render_jinja2_template_to_string("user_points_only.html", user_points(user_data))
-
-        json = simplejson.dumps({"user_points_html": user_points_html, "video_points": video_points_total}, ensure_ascii=False)
-        self.response.out.write(json)
 
 class ReportIssue(request_handler.RequestHandler):
 
@@ -369,6 +325,10 @@ class Donate(request_handler.RequestHandler):
 class ViewTOS(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('tos.html', {"selected_nav_link": "tos"})
+
+class ViewAPITOS(request_handler.RequestHandler):
+    def get(self):
+        self.render_jinja2_template('api-tos.html', {"selected_nav_link": "api-tos"})
 
 class ViewPrivacyPolicy(request_handler.RequestHandler):
     def get(self):
@@ -580,6 +540,7 @@ class PostLogin(request_handler.RequestHandler):
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
+            self.delete_cookie("fbsr_" + App.facebook_app_id)
             self.delete_cookie("fbs_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
@@ -650,7 +611,7 @@ class Search(request_handler.RequestHandler):
             elif entity is not None:
                 logging.error("Unhandled kind in search results: " +
                               str(type(entity)))
-                
+
         playlist_count = len(playlists)
 
         # Get playlists for videos not in matching playlists
@@ -684,7 +645,7 @@ class Search(request_handler.RequestHandler):
         video_exercises = {}
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
-                
+
         # Count number of videos in each playlist and sort descending
         for playlist in playlists:
             if len(filtered_videos) > 0:
@@ -766,6 +727,7 @@ application = webapp2.WSGIApplication([
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
     ('/about/tos', ViewTOS ),
+    ('/about/api-tos', ViewAPITOS),
     ('/about/privacy-policy', ViewPrivacyPolicy ),
     ('/about/dmca', ViewDMCA ),
     ('/contribute', ViewContribute ),
@@ -777,18 +739,23 @@ application = webapp2.WSGIApplication([
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
+
+    # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
-    ('/exercises', exercises.ViewExercise),
+
+    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
+    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
+    ('/review', exercises.ViewExercise),
+
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/.*', ViewVideo),
-    ('/v/.*', ViewVideo),
+    ('/video/(.*)', ViewVideo),
+    ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
-    ('/logvideoprogress', LogVideoProgress),
     ('/sat', ViewSAT),
     ('/gmat', ViewGMAT),
     ('/reportissue', ReportIssue),
@@ -796,6 +763,8 @@ application = webapp2.WSGIApplication([
     ('/savemapcoords', knowledgemap.SaveMapCoords),
     ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
     ('/crash', Crash),
+
+    ('/image_cache/(.+)', ImageCache),
 
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
@@ -806,8 +775,6 @@ application = webapp2.WSGIApplication([
     ('/admin/badgestatistics', util_badges.BadgeStatistics),
     ('/admin/startnewexercisestatisticsmapreduce', exercise_statistics.StartNewExerciseStatisticsMapReduce),
     ('/admin/startnewvotemapreduce', voting.StartNewVoteMapReduce),
-    ('/admin/backfill', backfill.StartNewBackfillMapReduce),
-    ('/admin/backfill_entity', backfill.BackfillEntity),
     ('/admin/feedbackflagupdate', qa.StartNewFlagUpdateMapReduce),
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
@@ -849,7 +816,6 @@ application = webapp2.WSGIApplication([
     ('/profile', util_profile.ViewProfile),
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
-    ('/profile/graph/classprogressreport', util_profile.ClassProgressReportGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
     ('/class_profile', util_profile.ViewClassProfile),
@@ -923,6 +889,9 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/exercisenumbertrivia', exercisestats.report_json.ExerciseNumberTrivia),
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
+
+    ('/goals/new', goals.handlers.CreateNewGoal),
+    ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
 
     ('/robots.txt', robots.RobotsTxt),
 

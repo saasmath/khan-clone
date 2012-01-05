@@ -1,18 +1,10 @@
-import re
-import cgi
 import math
-import os
-import simplejson as json
 
 from jinja2.utils import escape
 
-from app import App
-from templatefilters import seconds_to_time_string, slugify
-import consts
-import util
+from templatefilters import slugify
 import topics_list
 import models
-from api.auth import xsrf
 import shared_jinja
 
 def user_info(username, user_data):
@@ -37,28 +29,37 @@ def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, 
 
     return shared_jinja.get().render_template("column_major_order_videos.html", **template_values)
 
-def exercise_message(exercise, coaches, exercise_states, sees_graph=False):
+def exercise_message(exercise, user_exercise_graph, sees_graph=False,
+        review_mode=False):
     """Render UserExercise html for APIActionResults["exercise_message_html"] listener in khan-exercise.js.
-    
-    This is called each time a problem is either attempted or a hint is called (via /api/v1.py) and
-    renders a template only if a user is in any of these states, otherwise, it returns nothing
-    
+
+    This is called **each time** a problem is either attempted or a hint is called (via /api/v1.py)
+    returns nothing unless a user is struggling, proficient, etc. then it returns the appropriat template
+
     See Also: APIActionResults
-    
+
     sees_graph is part of an ab_test to see if a small graph will help
     """
-    if exercise_states['endangered']:
-        filename = 'exercise_message_endangered.html'
-    elif exercise_states['reviewing']:
-        filename = 'exercise_message_reviewing.html'
-    elif exercise_states['proficient']:
+
+    # TODO(david): Should we show a message if the user gets a problem wrong
+    #     after proficiency, to explain that this exercise needs to be reviewed?
+
+    exercise_states = user_exercise_graph.states(exercise.name)
+
+    if review_mode and user_exercise_graph.has_completed_review():
+        filename = 'exercise_message_review_finished.html'
+
+    elif (exercise_states['proficient'] and not exercise_states['reviewing'] and
+            not review_mode):
         if sees_graph:
             filename = 'exercise_message_proficient_withgraph.html'
         else:
             filename = 'exercise_message_proficient.html'
+
     elif exercise_states['struggling']:
         filename = 'exercise_message_struggling.html'
         exercise_states['exercise_videos'] = exercise.related_videos_fetch()
+
     else:
         return None
 

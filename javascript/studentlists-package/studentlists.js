@@ -245,6 +245,7 @@ var StudentLists = {
 
 var AddListTextBox = {
     jElement: null,
+    jNewListElement: null,
 
     init: function() {
         this.jElement = $('#newlist-box')
@@ -258,14 +259,27 @@ var AddListTextBox = {
                 if (event.which == '27') { // escape
                     AddListTextBox.hide();
                 }
-            })
-            .focusout(this.hide);
+            });
+
+        $('#newlist-ok')
+            .click(function(event) {
+                AddListTextBox.createList(event);
+            });
+
+        $('#newlist-cancel')
+            .click(function(event) {
+                AddListTextBox.hide();
+            });
 
         $('#newlist-button').click(function(event) {
             event.stopPropagation();
             event.preventDefault();
-            AddListTextBox.jElement.show().focus();
+            $('#newlist-div').show();
+            $('#newlist-button').hide();
+            AddListTextBox.jElement.focus();
         });
+
+        $('#newlist-div').hide();
 
         $('#delete-list').click(this.deleteList);
     },
@@ -304,9 +318,9 @@ var AddListTextBox = {
     hide: function() {
         AddListTextBox.jElement
             .val('')
-            .hide()
             .removeAttr('disabled');
-        $('#newlist-button').focus();
+        $('#newlist-div').hide();
+        $('#newlist-button').show().focus();
     },
 
     deleteList: function(event) {

@@ -1,5 +1,4 @@
-import models
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import Badge, BadgeCategory
 
 # All badges awarded for completing some specific count of exercises inherit from ExerciseCompletionCountBadge
 class ExerciseCompletionCountBadge(Badge):
@@ -44,29 +43,37 @@ class HardAtWorkBadge(ExerciseCompletionCountBadge):
         self.required_exercises = 25
         self.description = "Hard at Work"
         self.badge_category = BadgeCategory.SILVER
-        self.points = 8000
+        self.points = 6000
 
 class WorkHorseBadge(ExerciseCompletionCountBadge):
     def __init__(self):
         ExerciseCompletionCountBadge.__init__(self)
-        self.required_exercises = 40
+        self.required_exercises = 50
         self.description = "Work Horse"
         self.badge_category = BadgeCategory.GOLD
-        self.points = 12000
+        self.points = 14000
 
 class MagellanBadge(ExerciseCompletionCountBadge):
     def __init__(self):
         ExerciseCompletionCountBadge.__init__(self)
-        self.required_exercises = 80
+        self.required_exercises = 100
         self.description = "Magellan"
         self.badge_category = BadgeCategory.PLATINUM
-        self.points = 25000
+        self.points = 30000
+
+class CopernicusBadge(ExerciseCompletionCountBadge):
+    def __init__(self):
+        ExerciseCompletionCountBadge.__init__(self)
+        self.required_exercises = 200
+        self.description = "Copernicus"
+        self.badge_category = BadgeCategory.PLATINUM
+        self.points = 80000
 
 class AtlasBadge(ExerciseCompletionCountBadge):
     def __init__(self):
         ExerciseCompletionCountBadge.__init__(self)
-        self.required_exercises = 250
+        self.required_exercises = 500
         self.description = "Atlas"
         self.badge_category = BadgeCategory.DIAMOND
-        self.points = 50000
+        self.points = 200000
         self.is_teaser_if_unknown = True

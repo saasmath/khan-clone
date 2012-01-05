@@ -1,15 +1,15 @@
 import os
-import re
 import datetime
 import urllib
 import request_cache
 import logging
 from google.appengine.api import users
-from google.appengine.api import oauth
 from asynctools import AsyncMultiTask, QueryTask
 
 from app import App
-import nicknames
+
+# Needed for side effects of secondary imports
+import nicknames #@UnusedImport
 import facebook_util
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
     is_phantom_id
@@ -58,7 +58,7 @@ def is_phantom_user(user_id):
     return user_id and is_phantom_id(user_id)
 
 def create_login_url(dest_url):
-    return "/login?k&continue=%s" % urllib.quote(dest_url)
+    return "/login?continue=%s" % urllib.quote(dest_url)
 
 def create_mobile_oauth_login_url(dest_url):
     return "/login/mobileoauth?continue=%s" % urllib.quote(dest_url)
@@ -104,8 +104,28 @@ def async_queries(queries, limit=100000):
 
     return task_runner
 
+def config_iterable(plain_config, batch_size=50, limit=1000):
+
+    config = plain_config
+
+    try:
+        # This specific use of the QueryOptions private API was suggested to us by the App Engine team.
+        # Wrapping in try/except in case it ever goes away.
+        from google.appengine.datastore import datastore_query
+        config = datastore_query.QueryOptions(
+            config=plain_config,
+            limit=limit,
+            offset=0,
+            prefetch_size=batch_size,
+            batch_size=batch_size)
+
+    except Exception, e:
+        logging.exception("Failed to create QueryOptions config object: %s", e)
+
+    return config
+
 def absolute_url(relative_url):
-		return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
+    return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
 
 def static_url(relative_url):
     if App.is_dev_server or not os.environ['HTTP_HOST'].lower().endswith(".khanacademy.org"):

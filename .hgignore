@@ -11,6 +11,7 @@ syntax: glob
 hashed-*.css
 hashed-*.js
 js_css_packages/packages_hash.py
+js_css_packages/packages_compressed.py
 *.pem
 secrets.py
 datastore/*
@@ -20,3 +21,8 @@ offline/*
 .*.swp
 .*.un~
 compiled_templates*
+.git
+*.handlebars.js
+.project
+.pydevproject
+deploy/node_modules/*

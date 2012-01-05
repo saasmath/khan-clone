@@ -1,5 +1,5 @@
 {% if not user_exercises %}
-    <div class="graph-notification">You don't have any proficient exercises...yet. <a href="/exercisedashboard?k">Go get some</a>.</div>
+    <div class="graph-notification">You don't have any proficient exercises...yet. <a href="/exercisedashboard">Go get some</a>.</div>
 {% endif %}
 
 <script>
@@ -11,9 +11,6 @@ var chart;
 						renderTo: 'highchart',
 						defaultSeriesType: 'scatter'
 					},
-                    credits: {
-                        enabled: false
-                    },
                     plotOptions: {
                         scatter: {
                             cursor: 'pointer',
@@ -35,14 +32,6 @@ var chart;
                             }
                         }
                     },
-					title: {
-                        text: "",
-						x: -20 //center
-					},
-					subtitle: {
-                        text: '',
-						x: -20
-					},
 					xAxis: {
 						title: {
 							text: 'Days working on the site'

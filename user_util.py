@@ -1,5 +1,6 @@
 from functools import wraps
 import logging
+import urllib
 
 from google.appengine.api import users
 
@@ -18,10 +19,8 @@ def admin_only(method):
             if user_data:
                 logging.warning("Attempt by %s to access admin-only page" % user_data.user_id)
 
-            url = users.create_login_url(self.request.uri)
-
-            if users.get_current_user():
-                url = users.create_logout_url(url)
+            # can't import util here because of circular dependencies
+            url = "/login?continue=%s" % urllib.quote(self.request.uri)
 
             self.redirect(url)
             return
@@ -45,10 +44,8 @@ def developer_only(method):
             if user_data:
                 logging.warning("Attempt by %s to access developer-only page" % user_data.user_id)
 
-            url = users.create_login_url(self.request.uri)
-
-            if users.get_current_user():
-                url = users.create_logout_url(url)
+            # can't import util here because of circular dependencies
+            url = "/login?continue=%s" % urllib.quote(self.request.uri)
 
             self.redirect(url)
             return

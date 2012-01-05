@@ -1,4 +1,3 @@
-import logging
 from phantom_users.phantom_util import is_phantom_id
 import facebook_util
 
