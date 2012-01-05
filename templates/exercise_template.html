@@ -21,12 +21,13 @@
     <script>
       var userExercise = {{ user_exercise_json }};
       var userExerciseName = '{{ exercise.name }}';
+      var initialReviewsLeftCount = {{ reviews_left_count }};
     </script>
 
     {{ js_css_packages.js_package("exercises") }}
 
     <script>{{ exercise_inline_script }}</script>
-    <style>{{exercise_inline_style}}</style>
+    <style id="exercise-inline-style">{{exercise_inline_style}}</style>
 
     <script>
         {% if alternate_hints_treatment == "more_visible" %}
@@ -112,8 +113,7 @@
 <div id="container" class="single-exercise visited-no-recolor" style="overflow: hidden">
     {% if renderable %}
 
-    <!-- Wrap problem definition in <pre> to protect newlines for IE. -->
-    <pre style="display:none;">{{ exercise_body_html }}</pre>
+    {{ exercise_body_html }}
     {{ exercise_template_html }}
 
     {% else %}

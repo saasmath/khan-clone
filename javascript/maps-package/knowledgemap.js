@@ -32,7 +32,7 @@ function KnowledgeMapInitGlobals() {
                         return KnowledgeMapGlobals.getHorizontallyRepeatingTileUrl(coord, zoom,
                                 function(coord, zoom) {
                                   return "/images/map-tiles/field_" +
-                                     Math.floor(Math.random()*4+1) + '.jpg';
+                                     Math.floor(Math.random() * 4 + 1) + ".jpg";
                                 });
                     },
                     tileSize: new google.maps.Size(256, 256),
@@ -60,74 +60,74 @@ function KnowledgeMapInitGlobals() {
                 x = (x % tileRange + tileRange) % tileRange;
             }
 
-            return urlfunc({x:x,y:y}, zoom);
+            return urlfunc({x: x, y: y}, zoom);
         }
     };
 
     window.KnowledgeMapExercise = Backbone.Model.extend({
         initialize: function() {
-            var s_prefix = this.get('summative') ? 'node-challenge' : 'node';
+            var s_prefix = this.get("summative") ? "node-challenge" : "node";
 
-            if (this.get('status') == 'Suggested') {
-                this.set({'isSuggested': true, 'badgeIcon': '/images/'+s_prefix+'-suggested.png?' + KA_VERSION});
-            } else if (this.get('status') == 'Review') {
-                this.set({'isSuggested': true, 'isReview': true, 'badgeIcon': '/images/node-review.png?' + KA_VERSION});
-            } else if (this.get('status') == 'Proficient') {
-                this.set({'isSuggested': false, 'badgeIcon': '/images/'+s_prefix+'-complete.png?' + KA_VERSION});
+            if (this.get("status") == "Suggested") {
+                this.set({"isSuggested": true, "badgeIcon": "/images/" + s_prefix + "-suggested.png?" + KA_VERSION});
+            } else if (this.get("status") == "Review") {
+                this.set({"isSuggested": true, "isReview": true, "badgeIcon": "/images/node-review.png?" + KA_VERSION});
+            } else if (this.get("status") == "Proficient") {
+                this.set({"isSuggested": false, "badgeIcon": "/images/" + s_prefix + "-complete.png?" + KA_VERSION});
             } else {
-                this.set({'isSuggested': false, 'badgeIcon': '/images/'+s_prefix+'-not-started.png?' + KA_VERSION});
+                this.set({"isSuggested": false, "badgeIcon": "/images/" + s_prefix + "-not-started.png?" + KA_VERSION});
             }
 
             this.set({
                 inAllList: false,
-                lowercaseName: this.get('display_name').toLowerCase()
+                lowercaseName: this.get("display_name").toLowerCase()
             });
 
             var milestones = [];
-            for (var milestone = 0; milestone < this.get('num_milestones')-1; milestone++) {
+            for (var milestone = 0; milestone < this.get("num_milestones") - 1; milestone++) {
                 milestones.push({
-                    'left': Math.round((milestone+1)*(228/this.get('num_milestones')))
+                    "left": Math.round((milestone + 1) * (228 / this.get("num_milestones")))
                 });
             }
-            this.set({'streakBar': {
-                'proficient': this.get('progress') >= 1,
-                'suggested': (this.get('status') == 'Suggested' || (this.get('progress') < 1 && this.get('progress') > 0)),
-                'progressDisplay': this.get('progress_display'),
-                'maxWidth': 228,
-                'width': Math.min(1.0, this.get('progress'))*228,
-                'milestones': []
+            this.set({"streakBar": {
+                "proficient": this.get("progress") >= 1,
+                "suggested": (this.get("status") == "Suggested" || (this.get("progress") < 1 && this.get("progress") > 0)),
+                "progressDisplay": this.get("progress_display"),
+                "maxWidth": 228,
+                "width": Math.min(1.0, this.get("progress")) * 228,
+                "milestones": []
             }});
         },
 
         url: function() {
-            return '/exercise/' + this.get('name');
+            return "/exercise/" + this.get("name");
         },
 
         adminUrl: function() {
-            return '/editexercise?name=' + this.get('name');
+            return "/editexercise?name=" + this.get("name");
         }
     });
 
     window.ExerciseRowView = Backbone.View.extend({
         initialize: function() {
             this.visible = false;
-            this.nodeName = this.model.get('name');
+            this.nodeName = this.model.get("name");
             this.parent = this.options.parent;
 
-            this.parent.filterSettings.bind('change', this.doFilter, this);
+            this.parent.filterSettings.bind("change", this.doFilter, this);
         },
 
         events: {
-            "click .exercise-title":    "onBadgeClick",
-            "click .proficient-badge":  "onBadgeClick",
-            "click .exercise-show":     "onShowExerciseClick"
+            "click .exercise-title": "onBadgeClick",
+            "click .proficient-badge": "onBadgeClick",
+            "click .exercise-show": "onShowExerciseClick"
         },
 
         inflate: function() {
             if (this.inflated)
                 return;
 
-            var template = Templates.get( this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise" );
+            var template = Templates.get(this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise");
             var context = this.model.toJSON();
             if (this.options.admin) {
                 context.url = this.model.adminUrl();
@@ -138,8 +138,8 @@ function KnowledgeMapInitGlobals() {
             var newContent = $(template(context));
             var self = this;
             newContent.hover(
-                function(){self.onBadgeMouseover(self.nodeName, newContent);},
-                function(){self.onBadgeMouseout(self.nodeName, newContent);}
+                function() {self.onBadgeMouseover(self.nodeName, newContent);},
+                function() {self.onBadgeMouseout(self.nodeName, newContent);}
             );
 
             this.el.replaceWith(newContent);
@@ -149,9 +149,9 @@ function KnowledgeMapInitGlobals() {
         },
 
         doFilter: function() {
-            var filterText = this.parent.filterSettings.get('filterText');
-            var filterMatches = (this.model.get('lowercaseName').indexOf(filterText) >= 0);
-            var allowVisible = this.options.type != 'all' || filterText || this.parent.filterSettings.get('userShowAll');
+            var filterText = this.parent.filterSettings.get("filterText");
+            var filterMatches = (this.model.get("lowercaseName").indexOf(filterText) >= 0);
+            var allowVisible = this.options.type != "all" || filterText || this.parent.filterSettings.get("userShowAll");
 
             this.visible = allowVisible && filterMatches;
             if (this.visible) {
@@ -163,7 +163,7 @@ function KnowledgeMapInitGlobals() {
                 this.el.hide();
             }
 
-            if (this.options.type == 'all' && this.parent.exerciseMarkerViews[this.nodeName]) {
+            if (this.options.type == "all" && this.parent.exerciseMarkerViews[this.nodeName]) {
                 this.parent.exerciseMarkerViews[this.nodeName].setFiltered(!filterMatches);
             }
         },
@@ -177,13 +177,13 @@ function KnowledgeMapInitGlobals() {
         onBadgeMouseover: function(node_name, element) {
             this.parent.highlightNode(node_name, true);
 
-            element.find('.exercise-show').show();
+            element.find(".exercise-show").show();
         },
 
         onBadgeMouseout: function(node_name, element) {
             this.parent.highlightNode(node_name, false);
 
-            element.find('.exercise-show').hide();
+            element.find(".exercise-show").hide();
         },
 
         onShowExerciseClick: function() {
@@ -193,21 +193,21 @@ function KnowledgeMapInitGlobals() {
 
         showGoalIcon: function(visible) {
             if (visible)
-                this.el.find('.exercise-goal-icon').show();
+                this.el.find(".exercise-goal-icon").show();
             else
-                this.el.find('.exercise-goal-icon').hide();
+                this.el.find(".exercise-goal-icon").hide();
         }
     });
     window.ExerciseMarkerView = Backbone.View.extend({
         initialize: function() {
             var exercise = this.model;
-            this.nodeName = exercise.get('name');
+            this.nodeName = exercise.get("name");
             this.filtered = false;
             this.goalIconVisible = false;
             this.parent = this.options.parent;
 
-            var iconSet = KnowledgeMapGlobals.icons[exercise.get('summative') ? "Summative" : "Exercise"];
-            this.iconUrl = iconSet[exercise.get('status')];
+            var iconSet = KnowledgeMapGlobals.icons[exercise.get("summative") ? "Summative" : "Exercise"];
+            this.iconUrl = iconSet[exercise.get("status")];
             if (!this.iconUrl) this.iconUrl = iconSet.Normal;
 
             this.updateElement(this.el);
@@ -218,10 +218,10 @@ function KnowledgeMapInitGlobals() {
             var self = this;
 
             this.el.click(
-                    function(evt){return self.onNodeClick(evt);}
+                    function(evt) {return self.onNodeClick(evt);}
                 ).hover(
-                    function(){return self.onNodeMouseover();},
-                    function(){return self.onNodeMouseout();}
+                    function() {return self.onNodeMouseover();},
+                    function() {return self.onNodeMouseout();}
                 );
 
             var iconOptions = this.getIconOptions();
@@ -229,14 +229,14 @@ function KnowledgeMapInitGlobals() {
             this.el.attr("class", this.getLabelClass());
 
             if (this.parent.admin)
-                this.el.attr('href', this.model.adminUrl());
+                this.el.attr("href", this.model.adminUrl());
             else
-                this.el.attr('href', this.model.url());
+                this.el.attr("href", this.model.url());
 
             if (this.goalIconVisible)
-                this.el.find('.exercise-goal-icon').show();
+                this.el.find(".exercise-goal-icon").show();
             else
-                this.el.find('.exercise-goal-icon').hide();
+                this.el.find(".exercise-goal-icon").hide();
         },
 
         getIconOptions: function() {
@@ -248,7 +248,7 @@ function KnowledgeMapInitGlobals() {
             {
                 var url = this.iconUrl;
 
-                if (!this.model.get('summative') && this.zoom <= KnowledgeMapGlobals.options.minZoom)
+                if (!this.model.get("summative") && this.zoom <= KnowledgeMapGlobals.options.minZoom)
                 {
                     url = this.iconUrl.replace(".png", "-star.png");
                 }
@@ -259,15 +259,15 @@ function KnowledgeMapInitGlobals() {
         },
 
         getLabelClass: function() {
-            var classText = "nodeLabel nodeLabel" + this.model.get('status');
-            var visible = !this.model.get('summative') || this.zoom == KnowledgeMapGlobals.options.minZoom;
-            if (this.model.get('summative') && visible) this.zoom = KnowledgeMapGlobals.options.maxZoom - 1;
+            var classText = "nodeLabel nodeLabel" + this.model.get("status");
+            var visible = !this.model.get("summative") || this.zoom == KnowledgeMapGlobals.options.minZoom;
+            if (this.model.get("summative") && visible) this.zoom = KnowledgeMapGlobals.options.maxZoom - 1;
 
-            if (this.model.get('summative')) classText += " nodeLabelSummative";
+            if (this.model.get("summative")) classText += " nodeLabelSummative";
             classText += (visible ? "" : " nodeLabelHidden");
             classText += (" nodeLabelZoom" + this.zoom);
             classText += (this.filtered ? " nodeLabelFiltered" : "");
-            classText += (this.model.get('invalidForGoal') ? " goalNodeInvalid" : "");
+            classText += (this.model.get("invalidForGoal") ? " goalNodeInvalid" : "");
 
             return classText;
         },
@@ -276,9 +276,9 @@ function KnowledgeMapInitGlobals() {
             if (filtered != this.filtered) {
                 this.filtered = filtered;
                 if (this.filtered)
-                    this.el.addClass('nodeLabelFiltered');
+                    this.el.addClass("nodeLabelFiltered");
                 else
-                    this.el.removeClass('nodeLabelFiltered');
+                    this.el.removeClass("nodeLabelFiltered");
             }
         },
 
@@ -286,9 +286,9 @@ function KnowledgeMapInitGlobals() {
             if (visible != this.goalIconVisible) {
                 this.goalIconVisible = visible;
                 if (this.goalIconVisible)
-                    this.el.find('.exercise-goal-icon').show();
+                    this.el.find(".exercise-goal-icon").show();
                 else
-                    this.el.find('.exercise-goal-icon').hide();
+                    this.el.find(".exercise-goal-icon").hide();
             }
         },
 
@@ -302,7 +302,7 @@ function KnowledgeMapInitGlobals() {
         onNodeClick: function(evt) {
             var self = this;
 
-            if (!this.model.get('summative') && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
+            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
 
             if (this.parent.admin)
@@ -331,10 +331,10 @@ function KnowledgeMapInitGlobals() {
                 }
 
                 //Unbind other keydowns to prevent a spawn of hell
-                $(document).unbind('keydown');
+                $(document).unbind("keydown");
 
                 // If keydown is an arrow key
-                $(document).keydown(function(e){
+                $(document).keydown(function(e) {
                     var delta_v = 0, delta_h = 0;
 
                     if (e.keyCode == 37) {
@@ -361,15 +361,17 @@ function KnowledgeMapInitGlobals() {
 
                             id_array.push(node_name);
                         });
-                        $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v } );
+                        $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v });
 
                         var zoom = self.parent.map.getZoom();
                         self.parent.markers = [];
 
                         $.each(self.parent.dictEdges, function(key, rgTargets) { // this loop lets us update the edges wand will remove the old edges
-                            for (var ix = 0; ix < rgTargets.length; ix++)
-                            {
-                                rgTargets[ix].line.setMap(null);
+                            for (var ix = 0; ix < rgTargets.length; ix++) {
+                                var line = rgTargets[ix].line;
+                                if (line != null) {
+                                    line.setMap(null);
+                                }
                             }
                         });
                         self.parent.overlay.setMap(null);
@@ -395,7 +397,7 @@ function KnowledgeMapInitGlobals() {
         },
 
         onNodeMouseover: function() {
-            if (!this.model.get('summative') && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
+            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
@@ -405,7 +407,7 @@ function KnowledgeMapInitGlobals() {
         },
 
         onNodeMouseout: function() {
-            if (!this.model.get('summative') && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
+            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
@@ -426,14 +428,14 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
         $("#" + this.container + " .toggle-drawer").click(function() { self.toggle(); return false;});
 
-        $(window).resize(function(){self.resize();});
+        $(window).resize(function() {self.resize();});
         this.resize();
 
         if (window.iScroll)
         {
             // Mobile device, support single-finger touch scrolling
             $("#" + this.container + " .dashboard-drawer").removeClass("drawer-hoverable");
-            var scroller = new iScroll('dashboard-drawer-inner', { hScroll: false, hScrollbar: false, vScrollbar: false });
+            var scroller = new iScroll("dashboard-drawer-inner", { hScroll: false, hScrollbar: false, vScrollbar: false });
         }
     };
 
@@ -452,7 +454,7 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
         var leftDrawer = fExpanded ? -1 * (jelDrawer.width() + 20) : 0;
 
         var jelTitle = $("#" + this.container + " .dashboard-title");
-        var leftTitle = fExpanded ? -1 * (jelTitle.width() +10 ): 5;
+        var leftTitle = fExpanded ? -1 * (jelTitle.width() + 10) : 5;
 
         jelTitle.animate({left: leftTitle}, 500);
 
@@ -465,7 +467,7 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
             $("#" + this.container + " .map-canvas").animate({marginRight: leftMap + "px", left: leftMap + "px"},
                     500,
                     function() {
-                        google.maps.event.trigger(self.knowledgeMap, 'resize');
+                        google.maps.event.trigger(self.knowledgeMap, "resize");
                     }
             );
         }
@@ -492,7 +494,7 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
         jelDrawerInner.height(jelDrawerInner.height() - 20);
 
         if (self.knowledgeMap && self.knowledgeMap.map)
-            google.maps.event.trigger(self.knowledgeMap.map, 'resize');
+            google.maps.event.trigger(self.knowledgeMap.map, "resize");
     };
 
     this.init();
@@ -500,6 +502,12 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
 
 function KnowledgeMap(params) {
+
+    if (typeof google === "undefined") {
+        alert("Please make sure you're not using any browser extensions or addons that may be blocking google.com,\n" +
+                "which is needed to display the Khan Academy exercises.\n\nOnce you've done that, restart your browser and reload this page.");
+        return;
+    }
 
     if (!window.KnowledgeMapGlobals)
         KnowledgeMapInitGlobals();
@@ -515,7 +523,7 @@ function KnowledgeMap(params) {
 
     // Models
     this.exerciseList = {};
-    this.filterSettings = new Backbone.Model({'filterText': '---', 'userShowAll': false});
+    this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
     this.numSuggestedExercises = 0;
     this.numRecentExercises = 0;
 
@@ -538,24 +546,24 @@ function KnowledgeMap(params) {
     this.newGoal = !!params.newGoal;
 
     this.init = function(params) {
-        this.containerID = (!!params.container) ? ('#' + params.container) : null;
+        this.containerID = (!!params.container) ? ("#" + params.container) : null;
         this.elementTable = {};
 
         if (!params.hideDrawer)
             this.drawer = new KnowledgeMapDrawer(params.container, this);
 
-        var suggestedExercisesContent = this.admin ? null : this.getElement('suggested-exercises-content');
-        var recentExercisesContent = this.admin ? null : this.getElement('recent-exercises-content');
-        var allExercisesContent = this.getElement('all-exercises-content');
+        var suggestedExercisesContent = this.admin ? null : this.getElement("suggested-exercises-content");
+        var recentExercisesContent = this.admin ? null : this.getElement("recent-exercises-content");
+        var allExercisesContent = this.getElement("all-exercises-content");
 
         if (!this.admin) {
-            self.getElement('exercise-all-exercises').click(function() { self.toggleShowAll(); });
+            self.getElement("exercise-all-exercises").click(function() { self.toggleShowAll(); });
         }
 
-        this.filterSettings.set({'userShowAll': this.admin});
+        this.filterSettings.set({"userShowAll": this.admin});
 
-		Handlebars.registerPartial('streak-bar', Templates.get( "shared.streak-bar" )); // TomY TODO do this automatically?
-		Handlebars.registerPartial('knowledgemap-exercise', Templates.get( "shared.knowledgemap-exercise" )); // TomY TODO do this automatically?
+        Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar")); // TomY TODO do this automatically?
+        Handlebars.registerPartial("knowledgemap-exercise", Templates.get("shared.knowledgemap-exercise")); // TomY TODO do this automatically?
 
         // Initial setup of exercise list from embedded data
 
@@ -566,24 +574,24 @@ function KnowledgeMap(params) {
 
             var invalidForGoal = (
                 exercise.goal_req ||
-                exercise.status === 'Proficient' ||
-                exercise.status === 'Review'
+                exercise.status === "Proficient" ||
+                exercise.status === "Review"
             );
 
             if (self.newGoal && invalidForGoal) {
-                exerciseModel.set({'invalidForGoal':true});
+                exerciseModel.set({"invalidForGoal": true});
             } else {
                 // Create views
                 var element;
 
-                if (exerciseModel.get('isSuggested')) {
-                    if (!params.hideReview || !exerciseModel.get('isReview')) {
-                        element = $('<div>');
+                if (exerciseModel.get("isSuggested")) {
+                    if (!params.hideReview || !exerciseModel.get("isReview")) {
+                        element = $("<div>");
                         element.appendTo(suggestedExercisesContent);
                         self.exerciseRowViews.push(new ExerciseRowView({
                             model: exerciseModel,
                             el: element,
-                            type: 'suggested',
+                            type: "suggested",
                             admin: self.admin,
                             parent: self
                         }));
@@ -591,13 +599,13 @@ function KnowledgeMap(params) {
                     }
                 }
 
-                if (exerciseModel.get('recent')) {
-                    element = $('<div>');
+                if (exerciseModel.get("recent")) {
+                    element = $("<div>");
                     element.appendTo(recentExercisesContent);
                     self.exerciseRowViews.push(new ExerciseRowView({
                         model: exerciseModel,
                         el: element,
-                        type: 'recent',
+                        type: "recent",
                         admin: self.admin,
                         parent: self
                     }));
@@ -605,12 +613,12 @@ function KnowledgeMap(params) {
                     self.numRecentExercises++;
                 }
 
-                element = $('<div>');
+                element = $("<div>");
                 element.appendTo(allExercisesContent);
                 self.exerciseRowViews.push(new ExerciseRowView({
                     model: exerciseModel,
                     el: element,
-                    type: 'all',
+                    type: "all",
                     admin: self.admin,
                     parent: self
                 }));
@@ -619,8 +627,8 @@ function KnowledgeMap(params) {
             // Update map graph
 
             self.addNode(exerciseModel.toJSON());
-            $.each(exerciseModel.get('prereqs'), function(idx2, prereq) {
-                self.addEdge(exerciseModel.get('name'), prereq, exerciseModel.get('summative'));
+            $.each(exerciseModel.get("prereqs"), function(idx2, prereq) {
+                self.addEdge(exerciseModel.get("name"), prereq, exerciseModel.get("summative"));
             });
         });
 
@@ -632,17 +640,19 @@ function KnowledgeMap(params) {
         });
 
         var knowledgeMapType = new google.maps.ImageMapType(KnowledgeMapGlobals.options);
-        this.map.mapTypes.set('knowledge', knowledgeMapType);
-        this.map.setMapTypeId('knowledge');
+        this.map.mapTypes.set("knowledge", knowledgeMapType);
+        this.map.setMapTypeId("knowledge");
 
-        if (params.mapCoords)
+        // If mapCoords doesn't exist or the zoom level is less than 0,
+        // just show default home position.
+        if (params.mapCoords && params.mapCoords[2] > KnowledgeMapGlobals.options.minZoom)
         {
             this.map.setCenter(new google.maps.LatLng(params.mapCoords[0], params.mapCoords[1]));
             this.map.setZoom(params.mapCoords[2]);
         }
         else
         {
-            this.map.setCenter(this.latLngHome);
+            this.map.setCenter(KnowledgeMapGlobals.latLngHome);
             this.map.setZoom(KnowledgeMapGlobals.options.minZoom + 2);
         }
 
@@ -651,9 +661,9 @@ function KnowledgeMap(params) {
 
         this.latLngBounds = new google.maps.LatLngBounds(new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin), new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax)),
 
-        google.maps.event.addListener(this.map, "center_changed", function(){self.onCenterChange();});
-        google.maps.event.addListener(this.map, "idle", function(){self.onIdle();});
-        google.maps.event.addListener(this.map, "click", function(){self.onClick();});
+        google.maps.event.addListener(this.map, "center_changed", function() {self.onCenterChange();});
+        google.maps.event.addListener(this.map, "idle", function() {self.onIdle();});
+        google.maps.event.addListener(this.map, "click", function() {self.onClick();});
 
         // This handler exists as a hook to override what happens when an
         // exercise node is clicked. By default, it does nothing.
@@ -676,14 +686,14 @@ function KnowledgeMap(params) {
         if (node.summative && this.map.getZoom() > KnowledgeMapGlobals.options.minZoom)
             this.map.setZoom(KnowledgeMapGlobals.options.minZoom);
         else if (!node.summative && this.map.getZoom() == KnowledgeMapGlobals.options.minZoom)
-            this.map.setZoom(KnowledgeMapGlobals.options.minZoom+1);
+            this.map.setZoom(KnowledgeMapGlobals.options.minZoom + 1);
 
         // Move the node to the center of the view
         this.map.panTo(node.latLng);
     };
 
     this.escapeSelector = function(s) {
-        return s.replace(/(:|\.)/g,'\\$1');
+        return s.replace(/(:|\.)/g, "\\$1");
     };
 
     this.giveNasaCredit = function() {
@@ -726,7 +736,7 @@ function KnowledgeMap(params) {
                 self.onZoomChange(jrgNodes);
             }
 
-            jrgNodes.each(function(){
+            jrgNodes.each(function() {
                 var exerciseName = $(this).attr("data-id");
                 var exercise = self.exerciseList[exerciseName];
                 var view = self.exerciseMarkerViews[exerciseName];
@@ -832,7 +842,7 @@ function KnowledgeMap(params) {
                 ["<a data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></a>"],
                 "",
                 node.summative ? 2 : 1,
-                0,0);
+                0, 0);
 
         this.markers[this.markers.length] = marker;
     };
@@ -861,6 +871,8 @@ function KnowledgeMap(params) {
             for (var ix = 0; ix < rgTargets.length; ix++)
             {
                 var line = rgTargets[ix].line;
+                if (line == null) return;
+
                 var map = self.getMapForEdge(rgTargets[ix], zoom);
                 if (line.getMap() != map) line.setMap(map);
             }
@@ -916,13 +928,13 @@ function KnowledgeMap(params) {
         if (Y < AminY) {Y = AminY;}
         if (Y > AmaxY) {Y = AmaxY;}
 
-        this.map.setCenter(new google.maps.LatLng(Y,X));
+        this.map.setCenter(new google.maps.LatLng(Y, X));
     };
 
     // Filtering
 
     this.initFilter = function() {
-        self.getElement('dashboard-filter-text').keyup(function() {
+        self.getElement("dashboard-filter-text").keyup(function() {
             if (self.updateFilterTimeout == null) {
                 self.updateFilterTimeout = setTimeout(function() {
                     self.updateFilter();
@@ -931,24 +943,24 @@ function KnowledgeMap(params) {
             }
         }).placeholder();
 
-        self.getElement('dashboard-filter-clear').click(function() {
+        self.getElement("dashboard-filter-clear").click(function() {
             self.clearFilter();
         });
         this.clearFilter();
     };
 
     this.clearFilter = function() {
-        self.getElement('dashboard-filter-text').val('');
+        self.getElement("dashboard-filter-text").val("");
         this.updateFilter();
     };
 
     this.updateFilter = function() {
-        var filterText = $.trim(self.getElement('dashboard-filter-text').val().toLowerCase());
+        var filterText = $.trim(self.getElement("dashboard-filter-text").val().toLowerCase());
 
         // Temporarily remove the exercise list container div for better performance
-        var reattachFn = temporaryDetachElement(self.getElement('exercise-list'));
+        var reattachFn = temporaryDetachElement(self.getElement("exercise-list"));
 
-        self.filterSettings.set({'filterText': filterText});
+        self.filterSettings.set({"filterText": filterText});
 
         // Re-insert the container div
         reattachFn();
@@ -957,50 +969,38 @@ function KnowledgeMap(params) {
     };
 
     this.toggleShowAll = function() {
-        this.filterSettings.set({'userShowAll': !self.filterSettings.get('userShowAll')});
+        this.filterSettings.set({"userShowAll": !self.filterSettings.get("userShowAll")});
         this.postUpdateFilter();
     };
 
     this.postUpdateFilter = function() {
-        var counts = { 'suggested':0, 'recent':0, 'all':0 };
-        var filterText = self.filterSettings.get('filterText');
+        var counts = { "suggested": 0, "recent": 0, "all": 0 };
+        var filterText = self.filterSettings.get("filterText");
 
         $.each(self.exerciseRowViews, function(idx, exerciseRowView) {
             if (exerciseRowView.visible)
                 counts[exerciseRowView.options.type]++;
         });
 
-        if (!self.admin) {
-            if (counts.suggested > 0) {
-                self.getElement('dashboard-suggested-exercises').find('.exercise-filter-count').html('(Showing ' + counts.suggested + ' of ' + self.numSuggestedExercises + ')');
-                self.getElement('dashboard-suggested-exercises').show();
-            } else {
-                self.getElement('dashboard-suggested-exercises').hide();
-            }
-            if (counts.recent > 0) {
-                self.getElement('dashboard-recent-exercises').find('.exercise-filter-count').html('(Showing ' + counts.recent + ' of ' + self.numRecentExercises + ')');
-                self.getElement('dashboard-recent-exercises').show();
-            } else {
-                self.getElement('dashboard-recent-exercises').hide();
-            }
-        }
         if (filterText && counts.all == 0) {
-            self.getElement('exercise-no-results').show();
+            self.getElement("exercise-no-results").show();
         } else {
-            self.getElement('exercise-no-results').hide();
+            self.getElement("exercise-no-results").hide();
         }
 
         if (filterText) {
-            self.getElement('dashboard-filter-clear').show();
+            self.getElement("dashboard-filter-clear").show();
+            self.getElement("hide-on-dashboard-filter").hide();
             if (!self.admin)
-                self.getElement('exercise-all-exercises').hide();
-            self.getElement('dashboard-all-exercises').find('.exercise-filter-count').html('(Showing ' + counts.all + ' of ' + graph_dict_data.length + ')').show();
+                self.getElement("exercise-all-exercises").hide();
+            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + graph_dict_data.length + ")").show();
         } else {
-            self.getElement('dashboard-filter-clear').hide();
-            self.getElement('dashboard-all-exercises').find('.exercise-filter-count').hide();
+            self.getElement("dashboard-filter-clear").hide();
+            self.getElement("hide-on-dashboard-filter").show();
+            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").hide();
             if (!self.admin) {
-                self.getElement('exercise-all-exercises').show();
-                self.getElement('exercise-all-exercises-text').html(self.filterSettings.get('userShowAll') ? "Hide All" : "Show All");
+                self.getElement("exercise-all-exercises").show();
+                self.getElement("exercise-all-exercises-text").html(self.filterSettings.get("userShowAll") ? "Hide All" : "Show All");
             }
         }
     };
@@ -1010,9 +1010,9 @@ function KnowledgeMap(params) {
             return this.elementTable[id];
         var el = null;
         if (this.containerID)
-            el = $(this.containerID + ' .' + id);
+            el = $(this.containerID + " ." + id);
         else
-            el = $('.' + id);
+            el = $("." + id);
         this.elementTable[id] = el;
         if (el.length == 0)
             throw new Error('Missing element: "' + id + '" in container "' + this.containerID + '"');

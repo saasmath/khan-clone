@@ -3,7 +3,6 @@ import random
 
 from jinja2.utils import escape
 
-import consts
 import library
 import request_handler
 import models
@@ -12,7 +11,7 @@ import templatetags
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
 from gae_bingo.gae_bingo import bingo
-from experiments import HomepageVideoPlaceholderExperiment
+from experiments import HomepageRestructuringExperiment
 
 ITEMS_PER_SET = 4
 
@@ -173,17 +172,18 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        # Get pregenerated library content from our in-memory/memcache two-layer cache
-        library_content = library.library_content_html()
-
-        # Only running placeholder A/B test for non-mobile clients
-        use_placeholder = False
+        # Only running restructure A/B test for non-mobile clients
+        render_type = 'original'
         if not self.is_mobile_capable():
-            use_placeholder = HomepageVideoPlaceholderExperiment.get_video_type() == "placeholder"
-            bingo('homepage_video_visits')
+            render_type = HomepageRestructuringExperiment.get_render_type()
+            bingo('homepage_restructure_visits')
+
+        if render_type == 'original':
+            library_content = library.library_content_html()
+        else:
+            library_content = library.playlist_content_html()
 
         template_values = {
-                            'use_placeholder': use_placeholder,
                             'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,
                             'library_content': library_content,

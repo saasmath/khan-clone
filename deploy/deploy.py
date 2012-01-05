@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import sys
 import subprocess
 import os
@@ -12,6 +13,7 @@ sys.path.append(os.path.abspath("."))
 import compress
 import glob
 import tempfile
+import npm
 
 try:
     import secrets
@@ -175,11 +177,12 @@ def tidy_up():
 
     print "Moving old files to %s." % trashdir
 
-    junkfiles = open(".hgignore","r")
-    please_tidy = [filename.strip() for filename in junkfiles
-                      if not filename.strip().startswith("#")]
-    but_ignore = ["secrets.py", "", "syntax: glob", ".git", ".pydevproject"]
-    [please_tidy.remove(path) for path in but_ignore]
+    with open(".hgignore", "r") as f:
+        please_tidy = [line.strip() for line in f]
+
+    please_tidy = [line for line in please_tidy if not line.startswith("#")]
+    but_ignore = set(["secrets.py", "", "syntax: glob", ".git", ".pydevproject"])
+    please_tidy = set(please_tidy) - but_ignore
 
     for root, dirs, files in os.walk("."):
         if ".git" in dirs:
@@ -188,17 +191,21 @@ def tidy_up():
             dirs.remove(".hg")
 
         for dirname in dirs:
-            removables = [glob.glob( os.path.join(root, dirname, rubbish) ) for rubbish in please_tidy
-                          if len( glob.glob( os.path.join(root, dirname, rubbish) ) ) > 0]
-            # flatten sublists of removable filse
-            please_remove = [filename for sublist in removables for filename in sublist]
-            if please_remove:
-                [ os.renames(stuff, os.path.join(trashdir,stuff)) for stuff in please_remove ]
+            removables = [glob.glob(os.path.join(root, dirname, p)) for p in please_tidy]
+            removables = [p for p in removables if p]
 
+            # flatten sublists of removable files
+            please_remove = [filename for sublist in removables for filename in sublist]
+            for path in please_remove:
+                os.renames(path, os.path.join(trashdir, path))
+
+def check_deps():
+    """Check if npm and friends are installed"""
+    return npm.check_dependencies()
 
 def compile_handlebar_templates():
     print "Compiling handlebar templates"
-    return 0 == popen_return_code(['python',
+    return 0 == popen_return_code([sys.executable,
                                    'deploy/compile_handlebar_templates.py'])
 
 def compress_js():
@@ -209,17 +216,23 @@ def compress_css():
     print "Compressing stylesheets"
     compress.compress_all_stylesheets()
 
+def compress_exercises():
+    print "Compressing exercises"
+    subprocess.check_call(["ruby", "khan-exercises/build/pack.rb"])
+
 def compile_templates():
     print "Compiling all templates"
-    return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
+    return 0 == popen_return_code([sys.executable, 'deploy/compile_templates.py'])
 
-def prime_autocomplete_cache(version):
+def prime_cache(version):
     try:
         resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/autocomplete?q=calc" % (version, get_app_id()))
         resp.read()
-        print "Primed autocomplete cache"
+        resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/playlists/library/compact" % (version, get_app_id()))
+        resp.read()
+        print "Primed cache"
     except:
-        print "Error when priming autocomplete cache"
+        print "Error when priming cache"
 
 def open_browser_to_ka_version(version):
     webbrowser.open("http://%s.%s.appspot.com" % (version, get_app_id()))
@@ -258,6 +271,16 @@ def main():
         action="store_true", dest="clean",
         help="Clean the old packages and generate them again. If used with -d,the app is not compiled at all and is only cleaned.", default=False)
 
+    parser.add_option('-r', '--report',
+        action="store_true", dest="report",
+        help="Generate a report that displays minified, gzipped file size for each package element",
+            default=False)
+
+    parser.add_option('-n', '--no-npm',
+        action="store_false", dest="node",
+        help="Don't check for local npm modules and don't install/update them",
+        default=True)
+
     options, args = parser.parse_args()
 
     if(options.clean):
@@ -265,6 +288,19 @@ def main():
         tidy_up()
         if options.dryrun:
             return
+
+    if(options.node):
+        print "Checking for node and dependencies"
+        if not check_deps():
+            return
+        # if options.dryrun:
+        #     return
+
+    if options.report:
+        print "Generating file size report"
+        compile_handlebar_templates()
+        compress.file_size_report()
+        return
 
     includes_local_changes = hg_st()
     if not options.force and includes_local_changes:
@@ -296,9 +332,13 @@ def main():
         print "Failed to compile templates, bailing."
         return
 
-    compile_handlebar_templates()
+    if not compile_handlebar_templates():
+        print "Failed to compile handlebars templates, bailing."
+        return
+
     compress_js()
     compress_css()
+    compress_exercises()
 
     if not options.dryrun:
         (email, password) = get_app_engine_credentials()
@@ -306,7 +346,7 @@ def main():
         if success:
             send_hipchat_deploy_message(version, includes_local_changes, email)
             open_browser_to_ka_version(version)
-            prime_autocomplete_cache(version)
+            prime_cache(version)
 
     end = datetime.datetime.now()
     print "Done. Duration: %s" % (end - start)

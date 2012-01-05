@@ -1,14 +1,3 @@
-import logging
-import os
-import datetime
-import itertools
-from collections import deque
-from pprint import pformat
-from math import sqrt, ceil
-
-from google.appengine.ext import db
-from google.appengine.api import users
-
 from app import App
 import app
 import facebook_util
@@ -63,7 +52,7 @@ class ViewStudents(RequestHandler):
 
             invalid_student = self.request_bool("invalid_student", default = False)
 
-            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data)]
+            coach_requests = [x.student_requested_data.email for x in CoachRequest.get_for_coach(user_data) if x.student_requested_data]
 
             student_lists_models = StudentList.get_for_coach(user_data.key())
             student_lists_list = [];
@@ -288,7 +277,7 @@ class RemoveStudentFromList(RequestHandler):
 class ViewIndividualReport(RequestHandler):
     def get(self):
         # Individual reports being replaced by user profile
-        self.redirect("/profile?k")
+        self.redirect("/profile")
 
 class ViewSharedPoints(RequestHandler):
     def get(self):
@@ -296,7 +285,7 @@ class ViewSharedPoints(RequestHandler):
 
 class ViewProgressChart(RequestHandler):
     def get(self):
-        self.redirect("/profile?k&selected_graph_type=" + ExercisesOverTimeGraph.GRAPH_TYPE)
+        self.redirect("/profile?selected_graph_type=" + ExercisesOverTimeGraph.GRAPH_TYPE)
 
 class ViewClassTime(RequestHandler):
     def get(self):
@@ -308,5 +297,9 @@ class ViewClassReport(RequestHandler):
 
 class ViewCharts(RequestHandler):
     def get(self):
-        self.redirect("/profile?k&selected_graph_type=%s&student_email=%s&exid=%s" %
-                (ExerciseProblemsGraph.GRAPH_TYPE, self.request_string("student_email"), self.request_string("exercise_name")))
+        student_email = self.request_student_email_legacy()
+        url = "/profile?selected_graph_type=%s&student_email=%s&exid=%s" % (
+            ExerciseProblemsGraph.GRAPH_TYPE,
+            student_email,
+            self.request_string("exercise_name"))
+        self.redirect(url)

@@ -102,25 +102,25 @@ class CommonCore(request_handler.RequestHandler):
             
             for record in reader:
                 
-                if not record["youtube_id"] == "#N/A":
+                if record["youtube_id"] and not record["youtube_id"] == "#N/A":
                     
                     entry = yt_service.GetYouTubeVideoEntry(video_id=record["youtube_id"])
                     
-                    if entry and record["keyword"] not in entry.media.keywords.text:
+                    # if entry and record["keyword"] not in entry.media.keywords.text:
+                    if entry:
                                     
                         keywords = entry.media.keywords.text or "" 
                                     
                         entry.media.keywords.text = keywords + "," + record["keyword"]
                         video_url = "https://gdata.youtube.com/feeds/api/users/"+ yt_account + "/uploads/" + record["youtube_id"]
-                        updated_entry = yt_service.UpdateVideoEntry(entry, video_url)  
-                          
-                        logging.info("***PROCESSED*** Title: " + entry.media.title.text)
-                                
-                        if not updated_entry:
-                                logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"])  
-                
-                        cc_videos.append(record)
-                    
+                        
+                        try:
+                            updated_entry = yt_service.UpdateVideoEntry(entry, video_url)
+                            logging.info("***PROCESSED*** Title: " + entry.media.title.text + " | Keywords: " + entry.media.keywords.text)
+                            cc_videos.append(record)
+                        except Exception, e:
+                            logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"], "\n" + e)                            
+                        
             f.close() 
             
         else:         

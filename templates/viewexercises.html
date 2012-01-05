@@ -42,6 +42,13 @@
             'admin': false,
             'container': 'container'
         });
+
+        {% if show_review_drawer %}
+            $( "#dashboard-review-exercises" ).one( "click", function() {
+                gae_bingo.bingo(["review_statement_of_fact",
+                    "review_call_to_action"]);
+            });
+        {% endif %}
     });
 
     var graph_dict_data = {{ graph_dict_data }};
@@ -53,7 +60,7 @@
 <div id="background">
   <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
     {{ exercise_macros.exercise_legend() }}
-    {{ exercise_macros.exercise_dashboard() }}
+    {{ exercise_macros.exercise_dashboard(show_review_drawer, review_statement, review_call_to_action) }}
 
     <div class="dashboard-map">
         {{ exercise_macros.knowledgemap(true) }}

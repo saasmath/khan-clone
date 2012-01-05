@@ -42,7 +42,6 @@ def main():
              'VideoPlaylist',
              'StemmedIndex',
              'LiteralIndex',
-             'ExerciseStatistic'
              )
     parser = OptionParser(usage="%prog [options] upload|download",
                           description="Uploads the sample data to a server or downloads it from the server.")
