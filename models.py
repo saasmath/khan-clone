@@ -1158,7 +1158,10 @@ class TopicVersion(db.Model):
     @staticmethod
     def create_new_version():
         new_version_number = TopicVersion.get_latest_version_number() + 1 
-        last_edited_by = UserData.current().user
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
         new_version = TopicVersion(last_edited_by = last_edited_by,
                                    number = new_version_number)
         new_version.put()
@@ -1234,7 +1237,10 @@ class TopicVersion(db.Model):
         return new_tree
 
     def update(self):
-        last_edited_by = UserData.current().user
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
         self.last_edited_by = last_edited_by
         self.put()
 
