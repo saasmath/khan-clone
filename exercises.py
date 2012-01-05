@@ -24,6 +24,7 @@ from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
+from js_css_packages import templatetags
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -378,7 +379,15 @@ class RawExercise(request_handler.RequestHandler):
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
         self.response.headers["Content-Type"] = "text/html"
-        self.response.out.write(raw_exercise_contents(exercise_file))
+
+        if templatetags.use_compressed_packages():
+            contents = raw_exercise_contents(exercise_file)
+        else:
+            # read from the unpacked exercises directory
+            contents = raw_exercise_contents_uncached(exercise_file,
+                dir="khan-exercises/exercises")
+
+        self.response.out.write(contents)
 
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def exercise_template():
@@ -425,9 +434,16 @@ def exercise_contents(exercise):
 
     return map(lambda s: s.decode('utf-8'), (body_contents, script_contents, style_contents, data_require, sha1))
 
+
 @layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
 def raw_exercise_contents(exercise_file):
-    path = os.path.join(os.path.dirname(__file__), "khan-exercises/exercises/%s" % exercise_file)
+    """Cached exercise files must come from the packed directory, so we don't
+    cache unpacked files and break IE.
+    """
+    return raw_exercise_contents_uncached(exercise_file)
+
+def raw_exercise_contents_uncached(exercise_file, exercises_dir="khan-exercises/exercises-packed"):
+    path = os.path.join(os.path.dirname(__file__), "%s/%s" % (exercises_dir, exercise_file))
 
     f = None
     contents = ""
