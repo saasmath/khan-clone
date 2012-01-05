@@ -214,6 +214,11 @@ indexes:
 
 - kind: UserBadge
   properties:
+  - name: badge_name
+  - name: date
+
+- kind: UserBadge
+  properties:
   - name: user
   - name: badge_name
   - name: date

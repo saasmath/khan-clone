@@ -19,26 +19,26 @@ Templates.cache_ = {};
 /**
  * Compile a template from an inline script tag.
  */
-Templates.fromScript_ = function( name ) {
-	var jel = $("#template_" + name);
-	if ( !jel.length ) {
-		throw Error( "Can't find a template for [" + name  + "]" );
-	}
-	return Handlebars.compile( jel.html() );
+Templates.fromScript_ = function(name) {
+    var jel = $("#template_" + name);
+    if (!jel.length) {
+        throw Error("Can't find a template for [" + name + "]");
+    }
+    return Handlebars.compile(jel.html());
 };
 
 /**
  * Converts from a namespaced name like "profile.badge" to the internal
  * canonical name used to reference the scripts.
  */
-Templates.getCanonicalName = function( name ) {
-	if ( name.indexOf( "." ) > -1 ) {
-		// Canonical format for the namespaced name uses
-		// underscores internally.
-		var parts = name.split( "." );
-		name = parts[0] + "-package_" + parts[1];
-	}
-	return name;
+Templates.getCanonicalName = function(name) {
+    if (name.indexOf(".") > -1) {
+        // Canonical format for the namespaced name uses
+        // underscores internally.
+        var parts = name.split(".");
+        name = parts[0] + "-package_" + parts[1];
+    }
+    return name;
 };
 
 /**
@@ -46,14 +46,14 @@ Templates.getCanonicalName = function( name ) {
  * @param {string} name The name of the template to retrieve. This will be the
  *     base name of the template file with no extension.
  */
-Templates.get = function( name ) {
-	name = Templates.getCanonicalName( name );
+Templates.get = function(name) {
+    name = Templates.getCanonicalName(name);
 
-	if ( Handlebars.templates ) {
-		var compiled = Handlebars.templates[name];
-		if (compiled) return compiled;
-	}
+    if (Handlebars.templates) {
+        var compiled = Handlebars.templates[name];
+        if (compiled) return compiled;
+    }
 
-	return Templates.cache_[name] ||
-		(Templates.cache_[name] = Templates.fromScript_( name ));
+    return Templates.cache_[name] ||
+        (Templates.cache_[name] = Templates.fromScript_(name));
 };

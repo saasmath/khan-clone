@@ -25,3 +25,4 @@ compiled_templates*
 *.handlebars.js
 .project
 .pydevproject
+deploy/node_modules/*

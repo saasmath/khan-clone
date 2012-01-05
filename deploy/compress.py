@@ -7,8 +7,8 @@ import re
 import StringIO
 import base64
 import copy
-
 from js_css_packages import packages
+import npm
 
 COMBINED_FILENAME = "combined"
 URI_FILENAME = "uri"
@@ -38,6 +38,9 @@ def compress_all_stylesheets():
 # into a single combined.js\.css file for each package, then
 # minify into a single compressed.js\.css file.
 def compress_all_packages(default_path, dict_packages, suffix):
+    if not check_deps():
+        return
+
     for package, path, files in resolve_files(default_path, dict_packages, suffix):
         compress_package(package, path, files, suffix)
 
@@ -86,6 +89,8 @@ def file_size_report():
     package = packages.javascript
     path = os.path.join("..", "javascript")
     suffix = '.js'
+    uglify_path = npm.package_installed("uglifyjs")
+
 
     print "Uglifying and gzipping all packages..."
     file_sizes = []
@@ -95,7 +100,7 @@ def file_size_report():
                 file = packages.transformations[file]
             file_path = os.path.normpath(os.path.join(path, file))
             file_path_min = file_path[:-len(suffix)] + '.min' + suffix
-            popen_results(['uglifyjs', '-o', file_path_min, file_path])
+            popen_results([uglify_path, '--max-line-len', '72', '-nc', '-o', file_path_min, file_path])
             subprocess.Popen(['gzip', '-f', file_path_min]).wait()
             file_path_gz = file_path_min + '.gz'
 
@@ -197,14 +202,16 @@ def remove_compressed(path, suffix):
 
 # Use UglifyJS for JS and node-cssmin for CSS to minify the combined file
 def minify_package(path, path_combined, suffix):
+    uglify_path = npm.package_installed("uglifyjs")
+    cssmin_path = npm.package_installed("cssmin")
 
     path_compressed = os.path.join(path, COMPRESSED_FILENAME + suffix)
     print "Compressing %s into %s" % (path_combined, path_compressed)
 
     if suffix == ".js":
-        print popen_results(["uglifyjs", "-o", path_compressed, path_combined])
+        print popen_results([uglify_path, '--max-line-len', '72', '-nc', '-o', path_compressed, path_combined])
     elif suffix == ".css":
-        compressed = popen_results(["cssmin", path_combined])
+        compressed = popen_results([cssmin_path, path_combined])
         if compressed:
             f = open(path_compressed, 'w')
             f.write(compressed)
@@ -322,3 +329,13 @@ def popen_results(args):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)
     return proc.communicate()[0]
 
+def check_deps():
+    """check for node and friends"""
+    uglify_path = npm.package_installed("uglifyjs")
+    cssmin_path = npm.package_installed("cssmin")
+
+    if uglify_path and cssmin_path:
+        return True
+    else:
+        print "uglify and cssmin not found :("
+        return False
