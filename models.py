@@ -1253,24 +1253,24 @@ class TopicVersion(db.Model):
 
         default_version = TopicVersion.get_default_version()
         changes = VersionContentChange.all().fetch(10000)
-        changes = util.prefetch_refprops(changes, VersionContentChange.content)                
+        changes = util.prefetch_refprops(changes, VersionContentChange.content)
+        for change in changes:
+            change.apply_change()
+
+        # preload library and autocomplete cache
+        library_content_html(False, self.number)
+        logging.info("preloaded library_content_html")
+        library_content_html(True, self.number)
+        logging.info("preloaded ajax library_content_html")
+        autocomplete.video_title_dicts(self.number)
+        logging.info("preloaded video autocomplete")
+        autocomplete.topic_title_dicts(self.number)
+        logging.info("preloaded topic autocomplete")
+        templatetags.topic_browser("browse", self.number)
+        templatetags.topic_browser("browse-fixed", self.number)
+        logging.info("preloaded topic_browser")
 
         def update_txn():
-            for change in changes:
-                change.apply_change()
-
-            # preload library and autocomplete cache
-            library_content_html(False, self.number)
-            logging.info("preloaded library_content_html")
-            library_content_html(True, self.number)
-            logging.info("preloaded ajax library_content_html")
-            autocomplete.video_title_dicts(self.number)
-            logging.info("preloaded video autocomplete")
-            autocomplete.topic_title_dicts(self.number)
-            logging.info("preloaded topic autocomplete")
-            templatetags.topic_browser("browse", self.number)
-            templatetags.topic_browser("browse-fixed", self.number)
-            logging.info("preloaded topic_browser")
 
             if default_version:
                 default_version.default = False
