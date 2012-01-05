@@ -65,6 +65,7 @@ var ModalVideo = {
     init: function(video, points) {
         var context = {
             video: video,
+            downloadUrl: video.download_urls && video.download_urls.mp4 || null,
             height: 480,
             width: 800,
             youtubeId: video.youtube_id,
