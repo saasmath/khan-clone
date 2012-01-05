@@ -3,7 +3,7 @@
 {% import 'macros/coach.html' as coach %}
 
 {% block meta_page_title %}Manage Students | {% endblock meta_page_title %}
-{% block pagescript %}
+{% block pagecss %}
 {{ js_css_packages.css_package("studentlists") }}
 <style type="text/css" media="screen">
 #empty-class ol li.click-register div.coach-email {
@@ -15,7 +15,7 @@
     left: 115px;
 }
 </style>
-{% endblock pagescript %}
+{% endblock pagecss %}
 
 {% block pagesubmenu %}
 <span class="breadcrumbs_nav">
