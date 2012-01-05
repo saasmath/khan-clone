@@ -14,6 +14,7 @@ from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPer
 from phantom_users.phantom_util import disallow_phantoms
 import profiles.util_profile as util_profile
 import simplejson as json
+from api.auth.xsrf import ensure_xsrf_cookie
 
 
 class ViewCoaches(RequestHandler):
@@ -41,6 +42,7 @@ class ViewCoaches(RequestHandler):
 
 class ViewStudents(RequestHandler):
     @disallow_phantoms
+    @ensure_xsrf_cookie
     def get(self):
         user_data = UserData.current()
 
