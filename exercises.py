@@ -379,15 +379,7 @@ class RawExercise(request_handler.RequestHandler):
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
         self.response.headers["Content-Type"] = "text/html"
-
-        if templatetags.use_compressed_packages():
-            contents = raw_exercise_contents(exercise_file)
-        else:
-            # read from the unpacked exercises directory
-            contents = raw_exercise_contents_uncached(exercise_file,
-                dir="khan-exercises/exercises")
-
-        self.response.out.write(contents)
+        self.response.out.write(raw_exercise_contents(exercise_file))
 
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def exercise_template():
@@ -435,15 +427,15 @@ def exercise_contents(exercise):
 
     return map(lambda s: s.decode('utf-8'), (body_contents, script_contents, style_contents, data_require, sha1))
 
-
 @layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
 def raw_exercise_contents(exercise_file):
-    """Cached exercise files must come from the packed directory, so we don't
-    cache unpacked files and break IE.
-    """
-    return raw_exercise_contents_uncached(exercise_file)
+    if templatetags.use_compressed_packages():
+        exercises_dir = "khan-exercises/exercises-packed"
+        safe_to_cache = True
+    else:
+        exercises_dir = "khan-exercises/exercises"
+        safe_to_cache = False
 
-def raw_exercise_contents_uncached(exercise_file, exercises_dir="khan-exercises/exercises-packed"):
     path = os.path.join(os.path.dirname(__file__), "%s/%s" % (exercises_dir, exercise_file))
 
     f = None
@@ -463,7 +455,12 @@ def raw_exercise_contents_uncached(exercise_file, exercises_dir="khan-exercises/
         raise MissingExerciseException(
                 "Missing exercise content for exid '%s'" % exercise_file)
 
-    return contents
+    if safe_to_cache:
+        return contents
+    else:
+        # we are displaying an unpacked exercise, either locally or in prod
+        # with a querystring override. It's unsafe to cache this.
+        return layer_cache.UncachedResult(contents)
 
 def make_wrong_attempt(user_data, user_exercise):
     if user_exercise and user_exercise.belongs_to(user_data):
