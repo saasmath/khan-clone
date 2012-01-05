@@ -411,7 +411,8 @@ def exercise_template():
 def exercise_contents(exercise):
     contents = raw_exercise_contents("%s.html" % exercise.name)
 
-    re_data_require = re.compile("^<html.*(data-require=\".*\").*>", re.MULTILINE)
+    re_data_require = re.compile("<html[^>]*(data-require=\".*?\")[^>]*>",
+        re.DOTALL)
     match_data_require = re_data_require.search(contents)
     data_require = match_data_require.groups()[0] if match_data_require else ""
 
