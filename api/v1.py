@@ -175,7 +175,7 @@ def playlists_library():
     for playlist in playlists:
         playlist_dict[playlist.title] = playlist
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
+    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
     replace_playlist_values(playlist_structure, playlist_dict)
 
     return playlist_structure
@@ -208,7 +208,7 @@ def playlists_library_compact():
         trimmed_info['videos'] = [trimmed_video(v) for v in playlist.videos]
         playlist_dict[playlist.title] = trimmed_info
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
+    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
     replace_playlist_values(playlist_structure, playlist_dict)
 
     return playlist_structure
