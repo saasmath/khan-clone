@@ -276,7 +276,7 @@ def video_download_available(video_id):
 
     video = None
     formats = request.request_string("formats", default="")
-    allowed_formats = ["mp4", "png"]
+    allowed_formats = ["mp4", "png", "m3u8"]
 
     # If for any crazy reason we happen to have multiple entities for a single youtube id,
     # make sure they all have the same downloadable_formats so we don't keep trying to export them.
