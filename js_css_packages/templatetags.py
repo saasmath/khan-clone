@@ -100,13 +100,13 @@ def css_package(package_name):
         for filename in package["files"]:
             list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
                 % (base_url, filename))
-    elif package_name+'-non-ie' not in packages.stylesheets:
+    elif package_name+'-non-ie' not in packages_compressed.compressed_stylesheets:
         list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
             % (util.static_url(base_url), package["hashed-filename"]))
     else:
         # Thank you Jammit (https://github.com/documentcloud/jammit) for the
         # conditional comments.
-        non_ie_package = packages.stylesheets[package_name+'-non-ie']
+        non_ie_package = packages_compressed.compressed_stylesheets[package_name+'-non-ie']
 
         list_css.append("<!--[if (!IE)|(gte IE 8)]><!-->")
 

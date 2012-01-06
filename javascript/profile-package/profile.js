@@ -488,7 +488,7 @@ var Profile = {
         $.each(data, function(idx1, student) {
             student.goal_count = 0;
             student.most_recent_update = null;
-            student.profile_url = "/profile?k&student_email="+ student.email +"#/api/v1/user/goals?email="+student.email;
+            student.profile_url = "/profile?student_email="+ student.email +"#/api/v1/user/goals?email="+student.email;
 
             if (student.goals != undefined && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
@@ -873,7 +873,6 @@ var Profile = {
     },
 
     hoverContent: function(elements) {
-        var infoHover = $("#info-hover-container");
         var lastHoverTime;
         var mouseX;
         var mouseY;
@@ -893,17 +892,19 @@ var Profile = {
                     var hoverData = $(el).children(".hover-data");
                     var html = $.trim(hoverData.html());
                     if ( html ) {
-                        infoHover.html(html);
-
-                        var left = mouseX + 15;
                         var jelGraph = $("#graph-content");
                         var leftMax = jelGraph.offset().left +
                                 jelGraph.width() - 150;
+                        var left = Math.min(mouseX + 15, leftMax);
 
-                        infoHover.css('left', Math.min(left, leftMax));
-                        infoHover.css('top', mouseY + 5);
-                        infoHover.css('cursor', 'pointer');
-                        infoHover.show();
+                        var jHoverEl = $("#info-hover-container");
+                        if ( jHoverEl.length === 0 ) {
+                            jHoverEl = $('<div id="info-hover-container"></div>').appendTo('body');
+                        }
+                        jHoverEl
+                            .html(html)
+                            .css({left: left, top: mouseY + 5})
+                            .show();
                     }
                 }, 100);
             },

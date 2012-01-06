@@ -139,7 +139,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         elif type(e) is MissingExerciseException:
 
             title = "This exercise isn't here right now."
-            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard?k'>head back to our other exercises</a>."
+            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard'>head back to our other exercises</a>."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is MissingVideoException:
@@ -330,6 +330,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
 
+        # client-side error logging
+        template_values['include_errorception'] = gandalf('errorception')
+
         if user_data:
             goals = GoalList.get_current_goals(user_data)
             goals_data = [g.get_visible_data() for g in goals]
@@ -360,3 +363,4 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 from models import UserData
 import util
 from goals.models import GoalList
+from gandalf import gandalf

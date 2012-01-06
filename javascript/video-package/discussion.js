@@ -71,7 +71,7 @@ var Voting = {
         var votesNext = votes + (fAbstain ? 0 : vote_type);
 
         if (jelParent.is(".comment"))
-            jelVotes.html(votesNext + " point" + (votesNext == 1 ? "" : "s") + ", ");
+            jelVotes.html(votesNext + " vote" + (votesNext == 1 ? "" : "s") + ", ");
         else
             jelVotes.html(votesNext);
 

@@ -158,7 +158,7 @@ class Exercise(db.Model):
 
     @staticmethod
     def get_by_name(name, version=None):
-        dict_exercises = Exercise.__get_dict_use_cache_unsafe__()
+        dict_exercises = Exercise._get_dict_use_cache_unsafe()
         if dict_exercises.has_key(name):
             if dict_exercises[name].is_visible_to_current_user():
                 exercise = dict_exercises[name]
@@ -188,14 +188,10 @@ class Exercise(db.Model):
     @staticmethod
     def to_short_name(name):
         exercise = Exercise.get_by_name(name)
-        if exercise:
-            return exercise.short_name()
-        return ""
+        return exercise.short_name() if exercise else ""
 
     def short_name(self):
-        if self.short_display_name:
-            return self.short_display_name[:11]
-        return self.display_name[:11]
+        return (self.short_display_name or self.display_name)[:11]
 
     def is_visible_to_current_user(self):
         return self.live or user_util.is_current_user_developer()
@@ -262,24 +258,24 @@ class Exercise(db.Model):
     @staticmethod
     def get_all_use_cache():
         if user_util.is_current_user_developer():
-            return Exercise.__get_all_use_cache_unsafe__()
+            return Exercise._get_all_use_cache_unsafe()
         else:
-            return Exercise.__get_all_use_cache_safe__()
+            return Exercise._get_all_use_cache_safe()
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "all_exercises_unsafe_%s" % Setting.cached_exercises_date())
-    def __get_all_use_cache_unsafe__():
+    def _get_all_use_cache_unsafe():
         query = Exercise.all_unsafe().order('h_position')
         return query.fetch(400)
 
     @staticmethod
-    def __get_all_use_cache_safe__():
-        return filter(lambda exercise: exercise.live, Exercise.__get_all_use_cache_unsafe__())
+    def _get_all_use_cache_safe():
+        return filter(lambda exercise: exercise.live, Exercise._get_all_use_cache_unsafe())
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "all_exercises_dict_unsafe_%s" % Setting.cached_exercises_date())
-    def __get_dict_use_cache_unsafe__():
-        exercises = Exercise.__get_all_use_cache_unsafe__()
+    def _get_dict_use_cache_unsafe():
+        exercises = Exercise._get_all_use_cache_unsafe()
         dict_exercises = {}
         for exercise in exercises:
             dict_exercises[exercise.name] = exercise
@@ -456,19 +452,13 @@ class UserExercise(db.Model):
                     minimum_attempts=consts.MIN_PROBLEMS_IMPOSED)
 
     def _is_struggling_old(self):
-        return ((self.streak == 0) and
-                (self.total_done > 20))
+        return self.streak == 0 and self.total_done > 20
 
     @staticmethod
+    @clamp(datetime.timedelta(days=consts.MIN_REVIEW_INTERVAL_DAYS),
+            datetime.timedelta(days=consts.MAX_REVIEW_INTERVAL_DAYS))
     def get_review_interval_from_seconds(seconds):
-        review_interval = datetime.timedelta(seconds=seconds)
-
-        if review_interval.days < consts.MIN_REVIEW_INTERVAL_DAYS:
-            review_interval = datetime.timedelta(days=consts.MIN_REVIEW_INTERVAL_DAYS)
-        elif review_interval.days > consts.MAX_REVIEW_INTERVAL_DAYS:
-            review_interval = datetime.timedelta(days=consts.MAX_REVIEW_INTERVAL_DAYS)
-
-        return review_interval
+        return datetime.timedelta(seconds=seconds)
 
     def has_been_proficient(self):
         return self.proficient_date is not None
@@ -1057,20 +1047,19 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return (self.last_activity - self.start_consecutive_activity_date).days
 
     def add_points(self, points):
-        if self.points == None:
+        if self.points is None:
             self.points = 0
 
         if not hasattr(self, "_original_points"):
             self._original_points = self.points
 
-        if (self.points % 2500) > ((self.points+points) % 2500): #Check if we crossed an interval of 2500 points
-            util_notify.update(self,None,True)
+        # Check if we crossed an interval of 2500 points
+        if self.points % 2500 > (self.points + points) % 2500:
+            util_notify.update(self, user_exercise=None, threshold=True)
         self.points += points
 
     def original_points(self):
-        if hasattr(self, "_original_points"):
-            return self._original_points
-        return 0
+        return getattr(self, "_original_points", 0)
 
     def get_videos_completed(self):
         if self.videos_completed < 0:
@@ -1169,7 +1158,10 @@ class TopicVersion(db.Model):
     @staticmethod
     def create_new_version():
         new_version_number = TopicVersion.get_latest_version_number() + 1 
-        last_edited_by = UserData.current().user
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
         new_version = TopicVersion(last_edited_by = last_edited_by,
                                    number = new_version_number)
         new_version.put()
@@ -1245,7 +1237,10 @@ class TopicVersion(db.Model):
         return new_tree
 
     def update(self):
-        last_edited_by = UserData.current().user
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
         self.last_edited_by = last_edited_by
         self.put()
 
@@ -1258,24 +1253,24 @@ class TopicVersion(db.Model):
 
         default_version = TopicVersion.get_default_version()
         changes = VersionContentChange.all().fetch(10000)
-        changes = util.prefetch_refprops(changes, VersionContentChange.content)                
+        changes = util.prefetch_refprops(changes, VersionContentChange.content)
+        for change in changes:
+            change.apply_change()
+
+        # preload library and autocomplete cache
+        library_content_html(False, self.number)
+        logging.info("preloaded library_content_html")
+        library_content_html(True, self.number)
+        logging.info("preloaded ajax library_content_html")
+        autocomplete.video_title_dicts(self.number)
+        logging.info("preloaded video autocomplete")
+        autocomplete.topic_title_dicts(self.number)
+        logging.info("preloaded topic autocomplete")
+        templatetags.topic_browser("browse", self.number)
+        templatetags.topic_browser("browse-fixed", self.number)
+        logging.info("preloaded topic_browser")
 
         def update_txn():
-            for change in changes:
-                change.apply_change()
-
-            # preload library and autocomplete cache
-            library_content_html(False, self.number)
-            logging.info("preloaded library_content_html")
-            library_content_html(True, self.number)
-            logging.info("preloaded ajax library_content_html")
-            autocomplete.video_title_dicts(self.number)
-            logging.info("preloaded video autocomplete")
-            autocomplete.topic_title_dicts(self.number)
-            logging.info("preloaded topic autocomplete")
-            templatetags.topic_browser("browse", self.number)
-            templatetags.topic_browser("browse-fixed", self.number)
-            logging.info("preloaded topic_browser")
 
             if default_version:
                 default_version.default = False
@@ -2243,11 +2238,8 @@ class Playlist(Searchable, db.Model):
 
     @staticmethod
     def get_for_all_topics():
-        playlists = []
-        for playlist in Playlist.all().fetch(1000):
-            if playlist.title in all_topics_list:
-                playlists.append(playlist)
-        return playlists
+        return filter(lambda playlist: playlist.title in all_topics_list,
+                Playlist.all().fetch(1000))
 
     def get_exercises(self):
         video_query = Video.all(keys_only=True)
@@ -2680,7 +2672,7 @@ class LogSummary(db.Model):
         name = LogSummary.get_name(user_data, summary_type, activity, delta)
         config = LogSummaryShardConfig.get_or_insert(name, name=name)
 
-        index = random.randint(0, config.num_shards - 1)
+        index = random.randrange(config.num_shards)
         shard_name = str(index) + ":" + name
 
 
@@ -2889,22 +2881,23 @@ class VideoPlaylist(db.Model):
     _PLAYLIST_VIDEO_KEY_FORMAT = "VideoPlaylist_Playlists_for_Video_%s"
 
     @staticmethod
+    def get_namespace():
+        return "%s_%s" % (App.version, Setting.topic_tree_version())
+
+    @staticmethod
     def get_cached_videos_for_playlist(playlist, limit=500):
 
         key = VideoPlaylist._VIDEO_PLAYLIST_KEY_FORMAT % playlist.key()
-        namespace = str(App.version) + "_" + str(Setting.topic_tree_version())
+        namespace = VideoPlaylist.get_namespace()
 
         videos = memcache.get(key, namespace=namespace)
 
         if not videos:
-            videos = []
             query = VideoPlaylist.all()
             query.filter('playlist =', playlist)
             query.filter('live_association = ', True)
             query.order('video_position')
-            video_playlists = query.fetch(limit)
-            for video_playlist in video_playlists:
-                videos.append(video_playlist.video)
+            videos = [video_playlist.video for video_playlist in query.fetch(limit)]
 
             memcache.set(key, videos, namespace=namespace)
 
@@ -2914,18 +2907,15 @@ class VideoPlaylist(db.Model):
     def get_cached_playlists_for_video(video, limit=5):
 
         key = VideoPlaylist._PLAYLIST_VIDEO_KEY_FORMAT % video.key()
-        namespace = str(App.version) + "_" + str(Setting.topic_tree_version())
+        namespace = VideoPlaylist.get_namespace()
 
         playlists = memcache.get(key, namespace=namespace)
 
         if playlists is None:
-            playlists = []
             query = VideoPlaylist.all()
             query.filter('video =', video)
             query.filter('live_association = ', True)
-            video_playlists = query.fetch(limit)
-            for video_playlist in video_playlists:
-                playlists.append(video_playlist.playlist)
+            playlists = [video_playlist.playlist for video_playlist in query.fetch(limit)]
 
             memcache.set(key, playlists, namespace=namespace)
 
@@ -3099,10 +3089,7 @@ class UserExerciseCache(db.Model):
             user_exercises = UserExercise.get_for_user_data(user_data)
 
         current_user = UserData.current()
-        if current_user is None:
-            is_current_user = False
-        else:
-            is_current_user = current_user.user_id == user_data.user_id
+        is_current_user = current_user and current_user.user_id == user_data.user_id
 
         # Experiment to try different struggling models.
         # It's important to pass in the user_data of the student owning the
