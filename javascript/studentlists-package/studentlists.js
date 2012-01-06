@@ -312,7 +312,7 @@ var AddListTextBox = {
         Throbber.show(this.jElement);
         $.ajax({
             type: 'POST',
-            url: '/api/v1/user/students/lists',
+            url: '/api/v1/user/studentlists',
             data: {'list_name': listname},
             dataType: 'json',
             success: function(data, status, jqxhr) {
@@ -345,7 +345,7 @@ var AddListTextBox = {
             StudentLists.currentList != 'requests') {
                 $.ajax({
                     type: 'DELETE',
-                    url: '/api/v1/user/students/lists/' + StudentLists.currentList
+                    url: '/api/v1/user/studentlists/' + StudentLists.currentList
                 });
 
                 $('#custom-lists li[data-list_id='+StudentLists.currentList+']').remove();

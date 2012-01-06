@@ -368,7 +368,6 @@ def user_data_student():
     return None
 
 @route("/api/v1/user/studentlists", methods=["GET"])
-@route("/api/v1/user/students/lists", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -389,7 +388,7 @@ def user_studentlists():
 
     return None
 
-@route("/api/v1/user/students/lists", methods=["POST"])
+@route("/api/v1/user/studentlists", methods=["POST"])
 @oauth_optional()
 @jsonp
 @jsonify
@@ -412,16 +411,16 @@ def get_user_studentlist():
     }
     return student_list_json
 
-@route("/api/v1/user/students/lists/<list_id>", methods=["DELETE"])
+@route("/api/v1/user/studentlists/<list_key>", methods=["DELETE"])
 @oauth_optional()
 @jsonp
 @jsonify
-def delete_user_studentlist(list_id):
+def delete_user_studentlist(list_key):
     coach_data = models.UserData.current()
     if not coach_data:
         return unauthorized_response()
 
-    student_list = util_profile.get_student_list(coach_data, list_id)
+    student_list = util_profile.get_student_list(coach_data, list_key)
     student_list.delete()
     return True
 
