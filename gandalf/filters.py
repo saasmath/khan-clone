@@ -57,6 +57,14 @@ class BridgeFilter(object):
         return html
 
 
+class IsDeveloperFilter(BridgeFilter):
+    name = "is-developer"
+
+    @staticmethod
+    def _matches(context, identity):
+        return identity.developer
+
+
 class AllUsersBridgeFilter(BridgeFilter):
     name = "all-users"
 

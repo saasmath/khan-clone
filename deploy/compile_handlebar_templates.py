@@ -3,6 +3,8 @@ import os
 import subprocess
 import sys
 import shutil
+import npm
+
 
 def validate_env():
     """ Ensures that pre-requisites are met for compiling handlebar templates.
@@ -10,11 +12,12 @@ def validate_env():
     TODO: point to documents when they're made.
     Handlebars doc: https://github.com/wycats/handlebars.js/
     """
-    try:
-        subprocess.call(["handlebars"],
+    handlebars_path = npm.package_installed("handlebars")
+    if handlebars_path:
+        subprocess.call([handlebars_path],
                         stderr=subprocess.STDOUT,
                         stdout=subprocess.PIPE)
-    except subprocess.CalledProcessError:
+    else:
         sys.exit("Can't find handlebars. Did you install it?")
         
 def compile_template(root_path, rel_path, file_name):
@@ -24,6 +27,7 @@ def compile_template(root_path, rel_path, file_name):
     This logic is dependent on javascript/shared-package/templates.js
     
     """
+    handlebars_path = npm.package_installed("handlebars")
     try:
         dir_path = os.path.join(root_path, rel_path)
         
@@ -47,7 +51,7 @@ def compile_template(root_path, rel_path, file_name):
         
         # "-m" for minified output
         # "-f" specifies output file
-        subprocess.call(["handlebars", "-m", "-f", output_path, input_path],
+        subprocess.call([handlebars_path, "-m", "-f", output_path, input_path],
                         stderr=subprocess.STDOUT,
                         stdout=subprocess.PIPE)
         os.remove(input_path)

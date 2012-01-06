@@ -123,8 +123,8 @@ var getCssVideo = function() {
 };
 
 var setupSuggestedVideos = function() {
-    var allVideos = userExercise.exercise_model.related_videos;
-    if (allVideos.length == 0) {
+    var allVideos = Khan.relatedVideos && Khan.relatedVideos.videos;
+    if (!(allVideos && allVideos.length > 0)) {
         return;
     }
 
@@ -158,8 +158,7 @@ var setupSuggestedVideos = function() {
     jel.attr('data-weight', weight);
 
     // make it link to the correct video
-    var exid = userExercise.exercise_model.name;
-    jel.removeAttr('id').find('span').html( buildVideoLink(suggestion, exid) ).end().hide();
+    jel.removeAttr('id').find('span').html(buildVideoLink(suggestion)).end().hide();
 
     $('.exercise_message').append(jel);
 	$(jel).find('#video-suggest-link').one("click", function(e) {
@@ -167,10 +166,9 @@ var setupSuggestedVideos = function() {
 	});
 };
 
-var buildVideoLink = function(video, exid) {
-    var exid_param = exid ? "?exid=" + exid : "";
+var buildVideoLink = function(video) {
     return $('<a id="video-suggest-link"></a>')
-        .attr('href', video.relative_url + exid_param)
+        .attr('href', Khan.relatedVideos.makeHref(video))
         .addClass("related-video")
         .data('video', video)
         .text(video.title);

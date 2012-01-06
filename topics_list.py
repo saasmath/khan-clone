@@ -1,3 +1,4 @@
+import copy
 import logging
 
 PLAYLIST_STRUCTURE = [
@@ -19,6 +20,10 @@ PLAYLIST_STRUCTURE = [
                         {
                             "name": "Developmental Math 2",
                             "playlist": "Developmental Math 2"
+                        },
+                        {
+                            "name": "Developmental Math 3",
+                            "playlist": "Developmental Math 3"
                         },
                     ]
                 },
@@ -155,6 +160,10 @@ PLAYLIST_STRUCTURE = [
                 "name": "Finance",
                 "items": [
                     {
+                        "name": "Microeconomics",
+                        "playlist": "Microeconomics"
+                    },
+                    {
                         "name": "Core Finance",
                         "playlist": "Finance"
                     },
@@ -253,6 +262,12 @@ PLAYLIST_STRUCTURE = [
 
 UNCATEGORIZED_PLAYLISTS = ['New and Noteworthy']
 
+PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED = copy.deepcopy(PLAYLIST_STRUCTURE)
+PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED.extend([{
+            "name": title,
+            "playlist": title,
+        } for title in UNCATEGORIZED_PLAYLISTS])
+
 # Each DVD needs to stay under 4.4GB
 
 DVDs_dict = {
@@ -270,7 +285,7 @@ DVDs_dict = {
         'Calculus',
         'Differential Equations',
         'Linear Algebra',
-    ],        
+    ],
     'Math Worked Examples': [ # 3.92GB
         'Developmental Math',
         'Developmental Math 2',
@@ -302,18 +317,18 @@ DVDs_dict = {
         'MA Tests for Education Licensure (MTEL) -Pre-Alg',
         'California Standards Test: Algebra I',
         'California Standards Test: Algebra II',
-        'California Standards Test: Geometry',        
+        'California Standards Test: Geometry',
         'CAHSEE Example Problems',
         'SAT Preparation',
         'IIT JEE Questions',
         'GMAT: Problem Solving',
-        'GMAT Data Sufficiency',        
+        'GMAT Data Sufficiency',
     ],
     'Misc': [ # 1.93GB
         'Talks and Interviews',
-        'History',   
+        'History',
         'Brain Teasers',
-    ],    
+    ],
 }
 
 # replace None with the DVD name above that you want to burn

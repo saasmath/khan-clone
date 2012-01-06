@@ -20,7 +20,7 @@ def admin_only(method):
                 logging.warning("Attempt by %s to access admin-only page" % user_data.user_id)
 
             # can't import util here because of circular dependencies
-            url = "/login?k&continue=%s" % urllib.quote(self.request.uri)
+            url = "/login?continue=%s" % urllib.quote(self.request.uri)
 
             self.redirect(url)
             return
@@ -45,7 +45,7 @@ def developer_only(method):
                 logging.warning("Attempt by %s to access developer-only page" % user_data.user_id)
 
             # can't import util here because of circular dependencies
-            url = "/login?k&continue=%s" % urllib.quote(self.request.uri)
+            url = "/login?continue=%s" % urllib.quote(self.request.uri)
 
             self.redirect(url)
             return

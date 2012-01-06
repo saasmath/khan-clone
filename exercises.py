@@ -25,6 +25,7 @@ from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
+from js_css_packages import templatetags
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -82,34 +83,26 @@ class ViewExercise(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self, exid=None):
 
+        # TODO(david): Is there some webapp2 magic that will allow me not to
+        #     repeat this URL string in main.py?
+        review_mode = self.request.path == "/review" and (
+            ab_test('Review Mode UI',
+                conversion_name=ViewExercise._review_conversion_names,
+                conversion_type=ViewExercise._review_conversion_types))
+
+        if not exid and not review_mode:
+            self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
+            return
+
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-        reviews_left_count = None
-
-        if not exid:
-
-            sees_new_review = ab_test('Review Mode UI',
-                conversion_name=ViewExercise._review_conversion_names,
-                conversion_type=ViewExercise._review_conversion_types)
-
-            # Enter review mode
-            # TODO(david): Is there some webapp2 magic that will allow me not to
-            #     repeat this URL string in main.py?
-            if self.request.path == "/review" and sees_new_review:
-
-                # Take the first review exercise if available
-                exid = (user_exercise_graph.review_exercise_names() or
-                        user_exercise_graph.proficient_exercise_names() or
-                        ["addition_1"])[0]
-                reviews_left_count = user_exercise_graph.reviews_left_count()
-
-            else:
-
-                # TODO(david): Move this before getting user_data and such
-                # Support old URLs that may pass in exid as a query param
-                self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
-                return
+        if review_mode:
+            # Take the first review exercise if available
+            exid = (user_exercise_graph.review_exercise_names() or
+                    user_exercise_graph.proficient_exercise_names() or
+                    ["addition_1"])[0]
+            reviews_left_count = user_exercise_graph.reviews_left_count()
 
         exercise = models.Exercise.get_by_name(exid)
 
@@ -230,6 +223,8 @@ class ViewExercise(request_handler.RequestHandler):
                 if problem_log.count_hints is not None:
                     user_exercise.count_hints = problem_log.count_hints
 
+                user_exercise.current = problem_log.sha1 == sha1
+
         is_webos = self.is_webos()
         browser_disabled = is_webos or self.is_older_ie()
         renderable = renderable and not browser_disabled
@@ -261,8 +256,8 @@ class ViewExercise(request_handler.RequestHandler):
                 ViewExercise._hints_conversion_names,
                 ViewExercise._hints_conversion_types,
                 'Hints or Show Solution Nov 5'),
-            'reviews_left_count': json.dumps(reviews_left_count),
-            }
+            'reviews_left_count': reviews_left_count if review_mode else "null",
+        }
 
         self.render_jinja2_template("exercise_template.html", template_values)
 
@@ -317,9 +312,12 @@ def exercise_graph_dict_json(user_data, admin=False):
             'v_position': graph_dict["v_position"],
             'summative': graph_dict["summative"],
             'num_milestones': graph_dict.get("num_milestones", 0),
-            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"]],
-            'goal_req': (graph_dict["name"] in goal_exercises)
+            'goal_req': (graph_dict["name"] in goal_exercises),
+
+            # get_by_name returns only exercises visible to current user
+            'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"] if models.Exercise.get_by_name(prereq["name"])],
         }
+
         if admin:
             exercise = models.Exercise.get_by_name(graph_dict["name"])
             row["live"] = exercise and exercise.live
@@ -329,17 +327,6 @@ def exercise_graph_dict_json(user_data, admin=False):
 
 class ViewAllExercises(request_handler.RequestHandler):
 
-    _review_conversion_tests = [
-        ('review_all_problems_done', ConversionTypes.Counting),
-        ('review_review_problems_done', ConversionTypes.Counting),
-        ('review_finished_review', ConversionTypes.Counting),
-        ('review_gained_proficiency_all', ConversionTypes.Counting),
-        ('review_gained_proficiency_easy_binary', ConversionTypes.Binary),
-        ('review_gained_proficiency_hard_binary', ConversionTypes.Binary),
-    ]
-    _review_conversion_names, _review_conversion_types = [
-        list(x) for x in zip(*_review_conversion_tests)]
-
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
@@ -347,6 +334,8 @@ class ViewAllExercises(request_handler.RequestHandler):
         sees_new_review = ab_test('Review Mode UI',
             conversion_name=ViewExercise._review_conversion_names,
             conversion_type=ViewExercise._review_conversion_types)
+        show_review_drawer = (sees_new_review and not
+                user_exercise_graph.has_completed_review())
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
@@ -354,8 +343,35 @@ class ViewAllExercises(request_handler.RequestHandler):
             'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
             'selected_nav_link': 'practice',
-            'show_review_drawer': sees_new_review and not user_exercise_graph.has_completed_review(),
-            }
+            'show_review_drawer': show_review_drawer,
+        }
+
+        if show_review_drawer:
+
+            template_values['review_statement'] = ab_test(
+                'review_statement_of_fact', [
+                    'Fortify your knowledge',
+                    'Attain mastery',
+                    'Review exercises',
+                    'Reinforce your learning',
+                    'Consolidate what you know',
+                    "Master what you've learned",
+                    'How much can you recall?',
+                    "Let's review",
+                    'Refresh your memory',
+                ]
+            )
+
+            template_values['review_call_to_action'] = ab_test(
+                'review_call_to_action', [
+                    'Start Reviews',
+                    'Start now',
+                    'Go go go!',
+                    "Let's go!",
+                    "I'll do it",
+                    "Let's do this!",
+                ]
+            )
 
         self.render_jinja2_template('viewexercises.html', template_values)
 
@@ -388,7 +404,8 @@ def exercise_template():
 def exercise_contents(exercise):
     contents = raw_exercise_contents("%s.html" % exercise.name)
 
-    re_data_require = re.compile("^<html.*(data-require=\".*\").*>", re.MULTILINE)
+    re_data_require = re.compile("<html[^>]*(data-require=\".*?\")[^>]*>",
+        re.DOTALL)
     match_data_require = re_data_require.search(contents)
     data_require = match_data_require.groups()[0] if match_data_require else ""
 
@@ -409,11 +426,24 @@ def exercise_contents(exercise):
     if not len(body_contents):
         raise MissingExerciseException("Missing exercise body in content for exid '%s'" % exercise.name)
 
-    return map(lambda s: s.decode('utf-8'), (body_contents, script_contents, style_contents, data_require, sha1))
+    result = map(lambda s: s.decode('utf-8'), (body_contents, script_contents,
+        style_contents, data_require, sha1))
+
+    if templatetags.use_compressed_packages():
+        return result
+    else:
+        return layer_cache.UncachedResult(result)
 
 @layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
 def raw_exercise_contents(exercise_file):
-    path = os.path.join(os.path.dirname(__file__), "khan-exercises/exercises/%s" % exercise_file)
+    if templatetags.use_compressed_packages():
+        exercises_dir = "khan-exercises/exercises-packed"
+        safe_to_cache = True
+    else:
+        exercises_dir = "khan-exercises/exercises"
+        safe_to_cache = False
+
+    path = os.path.join(os.path.dirname(__file__), "%s/%s" % (exercises_dir, exercise_file))
 
     f = None
     contents = ""
@@ -432,7 +462,12 @@ def raw_exercise_contents(exercise_file):
         raise MissingExerciseException(
                 "Missing exercise content for exid '%s'" % exercise_file)
 
-    return contents
+    if safe_to_cache:
+        return contents
+    else:
+        # we are displaying an unpacked exercise, either locally or in prod
+        # with a querystring override. It's unsafe to cache this.
+        return layer_cache.UncachedResult(contents)
 
 def make_wrong_attempt(user_data, user_exercise):
     if user_exercise and user_exercise.belongs_to(user_data):
