@@ -1,0 +1,52 @@
+{% extends "page_template.html" %}
+{% block pagesubmenu %}
+    <span class="breadcrumbs_nav">
+        <a href="http://www.khanacademy.org">Home</a>
+    </span>
+{% endblock pagesubmenu %}
+			
+{% block pagecontent %}
+
+<div id="summer_status" style="padding: 9px 23px;">
+  <div>
+    <h2>Khan Academy Discovery Lab Application Status</h2>
+    {% if authenticated %}
+    Logged in as: <u>{{ user_email }}</u><br>
+    {% if is_parent %}
+    You have applied for {{ students|length }} student(s). Please check back periodically for status of your students'
+    application.  We will notify you regarding your status on or before February 15th, 2012.
+    <br><br>
+    {% else %}
+    Your application has been received, please keep checking back periodically for status of your application.
+    We will notify you regarding your status on or before February 15th, 2012.
+    <br><br>
+    {% endif %}
+    <table width="810" cellspacing="5" border="0">
+        <tr>
+            <td><b>Student Name</b></td>
+            <td><b>Student Email</b></td>
+            <td><b>Application status</b></td>
+            <td><b>Application Fee</b></td>
+        </tr>
+        {% for student in students %}
+        <tr>
+            <td>{{ student.first_name }} {{ student.last_name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.application_status }}</td>
+            <td>{{ student.processing_fee }}
+            {% if student.processing_fee_paid %}
+                (paid)
+            {% else %}
+            (<a href="/summer/application?make_payment=1&user_email={{ user_email }}&student_email={{ student.email }}&is_parent={{ is_parent }}">pay now</a>)
+            {% endif %}
+            </td>
+            <td><a href="/summer/application?student_email={{ student.email }}">Update...</a>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <a id="auth_link" class="authenticate-user" href="{{login_url|escape}}">Log in to your Khan Academy account</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock pagecontent %}

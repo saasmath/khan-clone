@@ -13,6 +13,13 @@ PAYPAL_IPN_URL = "https://www.paypal.com/cgi-bin/webscr"
 
 FROM_EMAIL = "no-reply@khan-academy.appspotmail.com"
 
+class AutoReturn(request_handler.RequestHandler):
+    def get(self):
+        self.post()
+
+    def post(self):
+        self.render_jinja2_template('donation_acknowledgement.html', {"selected_nav_link": "paypal/autoreturn"})
+
 # See http://blog.awarelabs.com/2008/paypal-ipn-python-code/ for inspiration
 class IPN(request_handler.RequestHandler):
 

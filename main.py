@@ -43,6 +43,7 @@ import github
 import paypal
 import smarthistory
 import goals.handlers
+import summer
 
 import models
 from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
@@ -859,6 +860,7 @@ application = webapp2.WSGIApplication([
 
     ('/toolkit', RedirectToToolkit),
 
+    ('/paypal/autoreturn', paypal.AutoReturn),
     ('/paypal/ipn', paypal.IPN),
 
     ('/badges/view', util_badges.ViewBadges),
@@ -892,6 +894,14 @@ application = webapp2.WSGIApplication([
 
     ('/goals/new', goals.handlers.CreateNewGoal),
     ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
+
+    # Summer Discovery Camp application/registration
+    ('/summer/application', summer.Application),
+    ('/summer/application-status', summer.Status),
+    ('/summer/getstudent', summer.GetStudent),
+    ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
+    ('/summer/paypal-ipn', summer.PaypalIPN),
+    ('/summer/admin/process', summer.Process),
 
     ('/robots.txt', robots.RobotsTxt),
 
