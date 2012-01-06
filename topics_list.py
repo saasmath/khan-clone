@@ -1,3 +1,4 @@
+import copy
 import logging
 
 PLAYLIST_STRUCTURE = [
@@ -260,6 +261,12 @@ PLAYLIST_STRUCTURE = [
 ]
 
 UNCATEGORIZED_PLAYLISTS = ['New and Noteworthy']
+
+PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED = copy.deepcopy(PLAYLIST_STRUCTURE)
+PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED.extend([{
+            "name": title,
+            "playlist": title,
+        } for title in UNCATEGORIZED_PLAYLISTS])
 
 # Each DVD needs to stay under 4.4GB
 
