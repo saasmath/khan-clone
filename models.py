@@ -1158,7 +1158,10 @@ class TopicVersion(db.Model):
     @staticmethod
     def create_new_version():
         new_version_number = TopicVersion.get_latest_version_number() + 1 
-        last_edited_by = UserData.current().user
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
         new_version = TopicVersion(last_edited_by = last_edited_by,
                                    number = new_version_number)
         new_version.put()
@@ -1234,7 +1237,10 @@ class TopicVersion(db.Model):
         return new_tree
 
     def update(self):
-        last_edited_by = UserData.current().user
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
         self.last_edited_by = last_edited_by
         self.put()
 
@@ -1247,24 +1253,24 @@ class TopicVersion(db.Model):
 
         default_version = TopicVersion.get_default_version()
         changes = VersionContentChange.all().fetch(10000)
-        changes = util.prefetch_refprops(changes, VersionContentChange.content)                
+        changes = util.prefetch_refprops(changes, VersionContentChange.content)
+        for change in changes:
+            change.apply_change()
+
+        # preload library and autocomplete cache
+        library_content_html(False, self.number)
+        logging.info("preloaded library_content_html")
+        library_content_html(True, self.number)
+        logging.info("preloaded ajax library_content_html")
+        autocomplete.video_title_dicts(self.number)
+        logging.info("preloaded video autocomplete")
+        autocomplete.topic_title_dicts(self.number)
+        logging.info("preloaded topic autocomplete")
+        templatetags.topic_browser("browse", self.number)
+        templatetags.topic_browser("browse-fixed", self.number)
+        logging.info("preloaded topic_browser")
 
         def update_txn():
-            for change in changes:
-                change.apply_change()
-
-            # preload library and autocomplete cache
-            library_content_html(False, self.number)
-            logging.info("preloaded library_content_html")
-            library_content_html(True, self.number)
-            logging.info("preloaded ajax library_content_html")
-            autocomplete.video_title_dicts(self.number)
-            logging.info("preloaded video autocomplete")
-            autocomplete.topic_title_dicts(self.number)
-            logging.info("preloaded topic autocomplete")
-            templatetags.topic_browser("browse", self.number)
-            templatetags.topic_browser("browse-fixed", self.number)
-            logging.info("preloaded topic_browser")
 
             if default_version:
                 default_version.default = False
@@ -2047,6 +2053,15 @@ class Url(db.Model):
     @property
     def id(self):
         return self.key().id()
+
+    @staticmethod
+    def get_all_live(version=None):
+        if not version:
+            version = TopicVersion.get_default_version()
+        
+        root = Topic.get_root(version)
+        urls = root.get_urls(include_descendants = True, include_hidden = False)
+        return urls
 
     @staticmethod
     def get_by_id_for_version(id, version=None):

@@ -1,5 +1,5 @@
 import layer_cache
-from models import Video, Topic, Setting, TopicVersion
+from models import Video, Url, Topic, Setting, TopicVersion
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "video_title_dicts_%s" % (
@@ -16,6 +16,22 @@ def video_title_dicts(version_number=None):
         "ka_url": "/video/%s" % video.readable_id,
         "id": video.readable_id
     }, Video.get_all_live(version=version))
+
+@layer_cache.cache_with_key_fxn(lambda version_number=None: 
+    "url_title_dicts_%s" % (
+    version_number if version_number else Setting.topic_tree_version()))
+def url_title_dicts(version_number=None):
+    if version_number:
+        version = TopicVersion.get_by_number(version_number)
+    else:
+        version = None
+
+    return map(lambda url: {
+        "title": url.title,
+        "key": str(url.key()),
+        "ka_url": url.url,
+        "id": url.key().id()
+    }, Url.get_all_live(version=version))
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "topic_title_dicts_%s" % (
