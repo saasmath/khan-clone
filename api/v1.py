@@ -17,7 +17,6 @@ from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, playlist_title_dicts
-from profiles.util_profile import get_student_list
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
@@ -369,6 +368,7 @@ def user_data_student():
     return None
 
 @route("/api/v1/user/studentlists", methods=["GET"])
+@route("/api/v1/user/students/lists", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -388,6 +388,42 @@ def user_studentlists():
             return student_lists
 
     return None
+
+@route("/api/v1/user/students/lists", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_studentlist():
+    coach_data = models.UserData.current()
+    if not coach_data:
+        return unauthorized_response()
+
+    list_name = request.request_string('list_name').strip()
+    if not list_name:
+        raise Exception('Invalid list name')
+
+    student_list = models.StudentList(coaches=[coach_data.key()],
+        name=list_name)
+    student_list.put()
+
+    student_list_json = {
+        'name': student_list.name,
+        'key': str(student_list.key())
+    }
+    return student_list_json
+
+@route("/api/v1/user/students/lists/<list_id>", methods=["DELETE"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_studentlist(list_id):
+    coach_data = models.UserData.current()
+    if not coach_data:
+        return unauthorized_response()
+
+    student_list = util_profile.get_student_list(coach_data, list_id)
+    student_list.delete()
+    return True
 
 def filter_query_by_request_dates(query, property):
 
@@ -940,43 +976,6 @@ def user_video_logs(youtube_id):
             return video_log_query.fetch(500)
 
     return None
-
-@route("/api/v1/user/students/lists", methods=["POST"])
-@oauth_optional()
-@jsonp
-@jsonify
-def get_user_studentlist():
-    coach_data = models.UserData.current()
-
-    if not coach_data:
-        return None
-
-    list_name = request.request_string('list_name')
-    if not list_name:
-        raise Exception('Invalid list name')
-
-    student_list = models.StudentList(coaches=[coach_data.key()],
-        name=list_name)
-    student_list.put()
-
-    student_list_json = {
-        'name': student_list.name,
-        'key': str(student_list.key())
-    }
-    return student_list_json
-
-@route("/api/v1/user/students/lists/<list_id>", methods=["DELETE"])
-@oauth_optional()
-@jsonp
-@jsonify
-def delete_user_studentlist(list_id):
-    coach_data = models.UserData.current()
-
-    if not coach_data:
-        return None
-    student_list = get_student_list(coach_data, list_id)
-    student_list.delete()
-    return True
 
 @route("/api/v1/badges", methods=["GET"])
 @oauth_optional()
