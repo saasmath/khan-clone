@@ -46,7 +46,7 @@ import topics
 import goals.handlers
 
 import models
-from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog, Topic
+from models import UserData, Video, Url, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog, Topic
 from discussion import comments, notification, qa, voting
 from about import blog, util_about
 from phantom_users import util_notify
@@ -532,11 +532,15 @@ class Search(request_handler.RequestHandler):
         video_partial_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 autocomplete.video_title_dicts())
+        url_partial_results = filter(
+                lambda url_dict: query in url_dict["title"].lower(),
+                autocomplete.url_title_dicts())
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
         # all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
+        all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
         
         all_entities = db.get(all_key_list)
@@ -549,6 +553,8 @@ class Search(request_handler.RequestHandler):
                 topics.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
+            elif isinstance(entity, Url):
+                videos.append(entity)
             elif entity is not None:
                 logging.error("Unhandled kind in search results: " +
                               str(type(entity)))
@@ -559,9 +565,10 @@ class Search(request_handler.RequestHandler):
         filtered_videos = []
         filtered_videos_by_key = {}
         for video in videos:
-            video.topics = [t.standalone_title for t in Topic.get_cached_topics_for_video(video)]
+            video_topic_list = Topic.get_cached_topics_for_video(video)
+            video.topics = [t.standalone_title for t in video_topic_list]
             if [(topic.standalone_title in video.topics) for topic in topics].count(True) == 0:
-                video_topic = video.first_topic()
+                video_topic = video_topic_list[0]
                 if video_topic != None:
                     topics.append(video_topic)
                     filtered_videos.append(video)

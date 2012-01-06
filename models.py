@@ -2060,6 +2060,15 @@ class Url(db.Model):
         return self.key().id()
 
     @staticmethod
+    def get_all_live(version=None):
+        if not version:
+            version = TopicVersion.get_default_version()
+        
+        root = Topic.get_root(version)
+        urls = root.get_urls(include_descendants = True, include_hidden = False)
+        return urls
+
+    @staticmethod
     def get_by_id_for_version(id, version=None):
         url = Url.get_by_id(id)
         # if there is a version check to see if there are any updates to the video

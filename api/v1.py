@@ -17,7 +17,7 @@ from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo
-from autocomplete import video_title_dicts, topic_title_dicts
+from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import GoalList, Goal, GoalObjective
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
@@ -1445,12 +1445,15 @@ def autocomplete():
         topic_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
                 topic_title_dicts())
+        url_results = filter(
+                lambda url_dict: query in url_dict["title"].lower(),
+                url_title_dicts())
 
         exercise_results = sorted(
                 exercise_results,
                 key=lambda v: v.display_name.lower().index(query))[:max_results_per_type]
         video_results = sorted(
-                video_results,
+                video_results + url_results,
                 key=lambda v: v["title"].lower().index(query))[:max_results_per_type]
         topic_results = sorted(
                 topic_results,
