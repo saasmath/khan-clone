@@ -64,11 +64,17 @@ class IPN(request_handler.RequestHandler):
             greeting = "Dear %s,\n\n" % first_name
 
         # ...send thank you email
+        first_sentence = ""
+        if parameters['txn_type'] == "recurring_payment":
+            first_sentence = "We greatly appreciate your %s recurring contribution of $%s." % (parameters['payment_cycle'].lower(), parameters['amount_per_cycle'])
+        else:
+            first_sentence = "We greatly appreciate your contribution of $%s made on %s." % (parameters['mc_gross'], parameters['payment_date'])
+
         mail.send_mail( \
                 sender = FROM_EMAIL, \
                 to = email, \
                 subject = "Thank you!", \
-                body = """%sWe greatly appreciate your contribution. With the support of generous donors like you, we are able to increase our efforts to create more video and exercise content, translate content into the world's most common languages, improve our website functionality, and extend our educational reach.
+                body = """%s%s With the support of generous donors like you, we are able to increase our efforts to create more video and exercise content, translate content into the world's most common languages, improve our website functionality, and extend our educational reach.
 
 We are excited about the progress that has been made, but we realize that we have only just begun. Thank you for believing in Khan Academy and supporting our mission to provide a free world class education to anyone anywhere.
 
@@ -77,7 +83,7 @@ Best wishes,
 Sal Khan
 
 Khan Academy, a 501(c)(3) not for profit organization, has not provided any goods or services to you in consideration for this voluntary contribution. The donation is tax deductible to the extent allowed by law. For federal tax purposes Khan Academy's FEIN # is: 26-1544963. 
-""" % greeting)
+""" % (greeting, first_sentence))
 
         logging.info("Sent 'thank you for your donation' email to %s" % email)
 
