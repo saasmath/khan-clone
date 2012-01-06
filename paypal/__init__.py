@@ -18,6 +18,8 @@ class AutoReturn(request_handler.RequestHandler):
         self.post()
 
     def post(self):
+        # For now just show the acknowledge page on the callback from paypal
+        # This should be updated to add donations to the datastore and later award badges to donors
         self.render_jinja2_template('donation_acknowledgement.html', {"selected_nav_link": "paypal/autoreturn"})
 
 # See http://blog.awarelabs.com/2008/paypal-ipn-python-code/ for inspiration
