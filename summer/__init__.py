@@ -90,33 +90,28 @@ class PaypalIPN(RequestHandler):
     def get(self):
         logging.info("Accessing %s" % self.request.path)
         txn_id = self.request.get('txn_id')
+        student_email = self.request.get('custom')
 
-        query = PaypalTransaction.all()
-        query.filter('transaction_id = ', txn_id)
-        paypal_txn = query.get()
+        charset = self.request.get('charset')
+        parameters = dict((arg, self.request.get(arg).encode(charset)) for arg in self.request.arguments())
+        parameters['cmd'] = "_notify-validate"
+        req = urllib2.Request("https://www.sandbox.paypal.com/cgi-bin/webscr", urllib.urlencode(parameters))
+        req.add_header("Content-type", "application/x-www-form-urlencoded")
 
-        if paypal_txn is None:
-            logging.error("Transaction ID <%s> not found" % txn_id)
-            return
+        response = urllib2.urlopen(req)
+        status = response.read()
+        if status == "VERIFIED":
+            query = PaypalTransaction.all()
+            query.filter('transaction_id = ', txn_id)
+            paypal_txn = query.get()
 
-        qs = self.request.query_string
-        url = "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_notify_validate&%s" % qs
-        try:
-            file = urllib2.urlopen(url)
-            response = file.read()
-        finally:
-            if file:
-                file.close()
+            if paypal_txn is None:
+                paypal_txn = PaypalTransaction()
+                paypal_txn.transaction_id = txn_id
+                paypal_txn.status = "Initiated"
 
-        if response == "VERIFIED":
-            output = qs.split('&')
-            count = len(output) - 1
-            paypal_attr = {}
-            for i in range(1,count):
-                nvp = output[i].split('=')
-                paypal_attr[nvp[0]] = nvp[1]
-
-            paypal_txn.status = paypal_attr['payment_status']
+            paypal_txn.student_email = student_email
+            paypal_txn.status = parameters['payment_status']
 
             query = SummerStudent.all()
             query.filter('email = ', paypal_txn.student_email)
@@ -125,7 +120,7 @@ class PaypalIPN(RequestHandler):
             if student is None:
                 logging.error("Student not found in DB for email <%s>" % student_email)
             else:
-                student.processing_fee = paypal_attr['payment_gross']
+                student.processing_fee = parameters['payment_gross']
 
                 if paypal_txn.status == "Completed":
                     student.processing_fee_paid = True
@@ -157,14 +152,10 @@ class PaypalAutoReturn(RequestHandler):
         paypal_txn = query.get()
 
         if paypal_txn is not None:
-            # This is weird, we shouldn't have found this transaction in the DB
-            logging.error("Found a transaction ID <%s> already in DB for student <%s>" %
-                           (txn_id, student_email))
-
-        paypal_txn = PaypalTransaction()
-        paypal_txn.transaction_id = txn_id
-        paypal_txn.student_email = student_email
-        paypal_txn.status = "Initiated"
+            paypal_txn = PaypalTransaction()
+            paypal_txn.transaction_id = txn_id
+            paypal_txn.student_email = student_email
+            paypal_txn.status = "Initiated"
 
         url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
         values = {
