@@ -568,7 +568,7 @@ class Search(request_handler.RequestHandler):
             video_topic_list = Topic.get_cached_topics_for_video(video)
             video.topics = [t.standalone_title for t in video_topic_list]
             if [(topic.standalone_title in video.topics) for topic in topics].count(True) == 0:
-                video_topic = video_topic_list[0]
+                video_topic = video_topic_list[0] if video_topic_list else None
                 if video_topic != None:
                     topics.append(video_topic)
                     filtered_videos.append(video)
