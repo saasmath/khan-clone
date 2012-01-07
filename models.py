@@ -498,7 +498,10 @@ class UserExercise(db.Model):
     def get_review_interval(self):
         return UserExercise.get_review_interval_from_seconds(self.review_interval_secs)
 
-    def schedule_review(self, correct, now=datetime.datetime.now()):
+    def schedule_review(self, correct, now=None):
+        if now is None:
+            now = datetime.datetime.now()
+
         # If the user is not now and never has been proficient, don't schedule a review
         if self.progress < 1.0 and not self.has_been_proficient():
             return
@@ -510,16 +513,19 @@ class UserExercise(db.Model):
 
         review_interval = self.get_review_interval()
 
+        # If we correctly did this review while it was in a review state, and
+        # the previous review was correct, extend the review interval
         if correct and self.last_review != datetime.datetime.min:
             time_since_last_review = now - self.last_review
             if time_since_last_review >= review_interval:
                 review_interval = time_since_last_review * 2
-        if not correct:
-            review_interval = review_interval // 2
+
         if correct:
             self.last_review = now
         else:
             self.last_review = datetime.datetime.min
+            review_interval = review_interval // 2
+
         self.review_interval_secs = review_interval.days * 86400 + review_interval.seconds
 
     def set_proficient(self, proficient, user_data):
