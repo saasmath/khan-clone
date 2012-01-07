@@ -111,7 +111,8 @@ class PaypalIPN(RequestHandler):
                 paypal_txn.status = "Initiated"
 
             paypal_txn.student_email = student_email
-            paypal_txn.status = parameters['payment_status']
+            if 'payment_status' in parameters:
+                paypal_txn.status = parameters['payment_status']
 
             query = SummerStudent.all()
             query.filter('email = ', paypal_txn.student_email)
@@ -120,7 +121,8 @@ class PaypalIPN(RequestHandler):
             if student is None:
                 logging.error("Student not found in DB for email <%s>" % student_email)
             else:
-                student.processing_fee = parameters['payment_gross']
+                if 'mc_gross' in parameters:
+                    student.processing_fee = parameters['mc_gross']
 
                 if paypal_txn.status == "Completed":
                     student.processing_fee_paid = True

@@ -65,10 +65,12 @@ class IPN(request_handler.RequestHandler):
 
         # ...send thank you email
         first_sentence = ""
-        if parameters['txn_type'] == "recurring_payment":
+        if parameters.get('txn_type', '') == "recurring_payment" and 'payment_cycle' in parameters and 'amount_per_cycle' in parameters:
             first_sentence = "We greatly appreciate your %s recurring contribution of $%s." % (parameters['payment_cycle'].lower(), parameters['amount_per_cycle'])
-        else:
+        else if 'mc_gross' in parameters:
             first_sentence = "We greatly appreciate your contribution of $%s made on %s." % (parameters['mc_gross'], parameters['payment_date'])
+        else:
+            first_sentence = "We greatly appreciate your contribution."
 
         mail.send_mail( \
                 sender = FROM_EMAIL, \
