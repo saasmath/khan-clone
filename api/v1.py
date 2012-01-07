@@ -371,7 +371,7 @@ def user_data_student():
 @oauth_required()
 @jsonp
 @jsonify
-def user_studentlists():
+def get_user_studentlists():
     user_data = models.UserData.current()
 
     if user_data:
@@ -392,7 +392,7 @@ def user_studentlists():
 @oauth_optional()
 @jsonp
 @jsonify
-def get_user_studentlist():
+def create_user_studentlist():
     coach_data = models.UserData.current()
     if not coach_data:
         return unauthorized_response()
