@@ -175,7 +175,7 @@ def playlists_library():
     for playlist in playlists:
         playlist_dict[playlist.title] = playlist
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
+    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
     replace_playlist_values(playlist_structure, playlist_dict)
 
     return playlist_structure
@@ -208,7 +208,7 @@ def playlists_library_compact():
         trimmed_info['videos'] = [trimmed_video(v) for v in playlist.videos]
         playlist_dict[playlist.title] = trimmed_info
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
+    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
     replace_playlist_values(playlist_structure, playlist_dict)
 
     return playlist_structure
@@ -276,7 +276,7 @@ def video_download_available(video_id):
 
     video = None
     formats = request.request_string("formats", default="")
-    allowed_formats = ["mp4", "png"]
+    allowed_formats = ["mp4", "png", "m3u8"]
 
     # If for any crazy reason we happen to have multiple entities for a single youtube id,
     # make sure they all have the same downloadable_formats so we don't keep trying to export them.
@@ -371,7 +371,7 @@ def user_data_student():
 @oauth_required()
 @jsonp
 @jsonify
-def user_studentlists():
+def get_user_studentlists():
     user_data = models.UserData.current()
 
     if user_data:
@@ -387,6 +387,42 @@ def user_studentlists():
             return student_lists
 
     return None
+
+@route("/api/v1/user/studentlists", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def create_user_studentlist():
+    coach_data = models.UserData.current()
+    if not coach_data:
+        return unauthorized_response()
+
+    list_name = request.request_string('list_name').strip()
+    if not list_name:
+        raise Exception('Invalid list name')
+
+    student_list = models.StudentList(coaches=[coach_data.key()],
+        name=list_name)
+    student_list.put()
+
+    student_list_json = {
+        'name': student_list.name,
+        'key': str(student_list.key())
+    }
+    return student_list_json
+
+@route("/api/v1/user/studentlists/<list_key>", methods=["DELETE"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_studentlist(list_key):
+    coach_data = models.UserData.current()
+    if not coach_data:
+        return unauthorized_response()
+
+    student_list = util_profile.get_student_list(coach_data, list_key)
+    student_list.delete()
+    return True
 
 def filter_query_by_request_dates(query, property):
 

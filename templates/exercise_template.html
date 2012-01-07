@@ -113,8 +113,7 @@
 <div id="container" class="single-exercise visited-no-recolor" style="overflow: hidden">
     {% if renderable %}
 
-    <!-- Wrap problem definition in <pre> to protect newlines for IE. -->
-    <pre style="display:none;">{{ exercise_body_html }}</pre>
+    {{ exercise_body_html }}
     {{ exercise_template_html }}
 
     {% else %}

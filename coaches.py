@@ -14,6 +14,7 @@ from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPer
 from phantom_users.phantom_util import disallow_phantoms
 import profiles.util_profile as util_profile
 import simplejson as json
+from api.auth.xsrf import ensure_xsrf_cookie
 
 
 class ViewCoaches(RequestHandler):
@@ -41,6 +42,7 @@ class ViewCoaches(RequestHandler):
 
 class ViewStudents(RequestHandler):
     @disallow_phantoms
+    @ensure_xsrf_cookie
     def get(self):
         user_data = UserData.current()
 
@@ -68,7 +70,7 @@ class ViewStudents(RequestHandler):
                 'key': str(s.key()),
                 'email': s.email,
                 'nickname': s.nickname,
-                'student_lists': [l for l in [student_lists_dict.get(str(list_id)) for list_id in s.student_lists] if l],
+                'studentLists': [l for l in [student_lists_dict.get(str(list_id)) for list_id in s.student_lists] if l],
             }, students_data)
             students.sort(key=lambda s: s['nickname'])
 
@@ -216,6 +218,7 @@ class UnregisterStudent(UnregisterStudentCoach):
             "/students"
         )
 
+# deprecated - use api method instead
 class CreateStudentList(RequestHandler):
     @RequestHandler.exceptions_to_http(400)
     def post(self):
@@ -238,6 +241,7 @@ class CreateStudentList(RequestHandler):
 
         self.render_json(student_list_json)
 
+# deprecated - use api method instead
 class DeleteStudentList(RequestHandler):
     @RequestHandler.exceptions_to_http(400)
     def post(self):

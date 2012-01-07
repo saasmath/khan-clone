@@ -1,4 +1,3 @@
-from __future__ import with_statement
 import sys
 import subprocess
 import os
@@ -11,8 +10,6 @@ import re
 
 sys.path.append(os.path.abspath("."))
 import compress
-import glob
-import tempfile
 import npm
 
 try:
@@ -171,34 +168,6 @@ def check_secrets():
     regex = re.compile("^facebook_app_secret = '050c.+'$", re.MULTILINE)
     return regex.search(content)
 
-def tidy_up():
-    """moves all pycs and compressed js/css to a rubbish folder alongside the project"""
-    trashdir = tempfile.mkdtemp(dir="../", prefix="rubbish-")
-
-    print "Moving old files to %s." % trashdir
-
-    with open(".hgignore", "r") as f:
-        please_tidy = [line.strip() for line in f]
-
-    please_tidy = [line for line in please_tidy if not line.startswith("#")]
-    but_ignore = set(["secrets.py", "", "syntax: glob", ".git", ".pydevproject"])
-    please_tidy = set(please_tidy) - but_ignore
-
-    for root, dirs, files in os.walk("."):
-        if ".git" in dirs:
-            dirs.remove(".git")
-        if ".hg" in dirs:
-            dirs.remove(".hg")
-
-        for dirname in dirs:
-            removables = [glob.glob(os.path.join(root, dirname, p)) for p in please_tidy]
-            removables = [p for p in removables if p]
-
-            # flatten sublists of removable files
-            please_remove = [filename for sublist in removables for filename in sublist]
-            for path in please_remove:
-                os.renames(path, os.path.join(trashdir, path))
-
 def check_deps():
     """Check if npm and friends are installed"""
     return npm.check_dependencies()
@@ -215,6 +184,10 @@ def compress_js():
 def compress_css():
     print "Compressing stylesheets"
     compress.compress_all_stylesheets()
+
+def compress_exercises():
+    print "Compressing exercises"
+    subprocess.check_call(["ruby", "khan-exercises/build/pack.rb"])
 
 def compile_templates():
     print "Compiling all templates"
@@ -263,10 +236,6 @@ def main():
         action="store_true", dest="dryrun",
         help="Dry run without the final deploy-to-App-Engine step", default=False)
 
-    parser.add_option('-c', '--clean',
-        action="store_true", dest="clean",
-        help="Clean the old packages and generate them again. If used with -d,the app is not compiled at all and is only cleaned.", default=False)
-
     parser.add_option('-r', '--report',
         action="store_true", dest="report",
         help="Generate a report that displays minified, gzipped file size for each package element",
@@ -278,12 +247,6 @@ def main():
         default=True)
 
     options, args = parser.parse_args()
-
-    if(options.clean):
-        print "Cleaning previously generated files"
-        tidy_up()
-        if options.dryrun:
-            return
 
     if(options.node):
         print "Checking for node and dependencies"
@@ -319,9 +282,6 @@ def main():
     if len(options.version) > 0:
         version = options.version
 
-    if options.clean:
-        compress.hashes = {}
-
     print "Deploying version " + str(version)
 
     if not compile_templates():
@@ -334,6 +294,7 @@ def main():
 
     compress_js()
     compress_css()
+    compress_exercises()
 
     if not options.dryrun:
         (email, password) = get_app_engine_credentials()

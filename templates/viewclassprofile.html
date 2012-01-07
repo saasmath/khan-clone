@@ -56,7 +56,6 @@
                     <span class="progress-legend exercise-color proficient">Proficient</span>
                     <span class="progress-legend exercise-color review light">Review</span>
                     <span class="progress-legend exercise-color struggling">Struggling</span>
-
                 </div>
             </div>
         </li>
@@ -192,7 +191,7 @@
 {{ js_css_packages.js_package("studentlists") }}
 <script type="text/javascript">
 $(function() {
-    ClassProfile.student_lists = {{student_lists_json}};
+    ClassProfile.studentLists = {{student_lists_json}};
     ClassProfile.init();
 })
 </script>
