@@ -727,6 +727,7 @@ application = webapp2.WSGIApplication([
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
+    ('/about/discovery-lab', util_about.ViewDiscoveryLab ),
     ('/about/tos', ViewTOS ),
     ('/about/api-tos', ViewAPITOS),
     ('/about/privacy-policy', ViewPrivacyPolicy ),

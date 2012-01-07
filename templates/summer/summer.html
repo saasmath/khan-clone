@@ -147,14 +147,6 @@
                 <hr>
                 <h3>Student Information</h3>
 
-                <b>Khan Academy email of the student:</b> (recomended, if not provided a psudeo ID will be generated)<br>
-                {% if is_parent %}
-                    <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email }}">
-                    (<a href="#" class="student-autofill">autofill</a>)<br><br>
-                {% else %}
-                    <input type="text" size="32" id="student_email" name="student_email" value="{{ user_email }}"><br><br>
-                {% endif %}
-
                 <b>Student Name: <font color="FF0000">*</font></b><br>
                 <table>
                 <tr>
@@ -200,7 +192,15 @@
                 <input type="text" name="school" id="school" value="{{ student.school }}"><br><br>
 
                 <b>School Zipcode: <font color="FF0000">*</font></b><br>
-                <input type="text" size="10" name="school_zip" id="school_zip" value="{{ student.school_zipcode }}"><br>
+                <input type="text" size="10" name="school_zip" id="school_zip" value="{{ student.school_zipcode }}"><br><br>
+
+                <b>Khan Academy email of the student:</b> (if available)<br>
+                {% if is_parent %}
+                    <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email }}">
+                    <br><br>
+                {% else %}
+                    <input type="text" size="32" id="student_email" name="student_email" value="{{ user_email }}"><br>
+                {% endif %}
 
                 <hr>
 
