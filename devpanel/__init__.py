@@ -16,6 +16,12 @@ import gdata.youtube.service
 import urllib
 import csv
 
+class Panel(request_handler.RequestHandler):
+
+    @user_util.developer_only
+    def get(self):
+        self.render_jinja2_template('devpanel/panel.html', { "selected_id": "panel" })
+
 class Email(request_handler.RequestHandler):
 
     @user_util.developer_only
@@ -37,9 +43,17 @@ class Email(request_handler.RequestHandler):
                 newdata.delete()
             currdata.put()
 
-        template_values = {'App' : App, 'curremail': current_email, 'newemail':  new_email, 'currdata': currdata, 'newdata': newdata, "properties": UserData.properties()}
+        template_values = {
+                'App' : App, 
+                'curremail': current_email, 
+                'newemail': new_email, 
+                'currdata': currdata, 
+                'newdata': newdata, 
+                "properties": UserData.properties(),
+                "selected_id": "users",
+        }
 
-        self.render_jinja2_template('devemailpanel.html', template_values)
+        self.render_jinja2_template('devpanel/email.html', template_values)
         
 class Manage(request_handler.RequestHandler):
 
@@ -48,9 +62,12 @@ class Manage(request_handler.RequestHandler):
     def get(self):
         developers = UserData.all()
         developers.filter('developer = ', True).fetch(1000)
-        template_values = { "developers": developers }
+        template_values = { 
+            "developers": developers,
+            "selected_id": "devs",
+        }
 
-        self.render_jinja2_template('managedevs.html', template_values) 
+        self.render_jinja2_template('devpanel/devs.html', template_values) 
         
 class ManageCoworkers(request_handler.RequestHandler):
 
@@ -66,10 +83,11 @@ class ManageCoworkers(request_handler.RequestHandler):
 
         template_values = {
             "user_data_coach": user_data_coach,
-            "user_data_coworkers": user_data_coworkers
+            "user_data_coworkers": user_data_coworkers,
+            "selected_id": "coworkers",
         }
 
-        self.render_jinja2_template("managecoworkers.html", template_values)
+        self.render_jinja2_template("devpanel/coworkers.html", template_values)
         
 class CommonCore(request_handler.RequestHandler):
     
@@ -137,7 +155,8 @@ class CommonCore(request_handler.RequestHandler):
         template_values = {
             "token" : token,
             "cc_videos" : cc_videos,
-            "auth_sub_url" : auth_sub_url
+            "auth_sub_url" : auth_sub_url,
+            "selected_id": "commoncore",
         }
         
-        self.render_jinja2_template("commoncore.html", template_values)
+        self.render_jinja2_template("devpanel/commoncore.html", template_values)
