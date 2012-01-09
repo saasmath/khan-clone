@@ -1283,6 +1283,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
             self.put()
         return claim_success
 
+    def has_public_profile(self):
+        return self.username is not None and len(self.username) > 0
+
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()

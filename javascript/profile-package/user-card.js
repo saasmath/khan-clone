@@ -2,22 +2,25 @@
  * Code to handle the public components of a profile.
  */
 
-// UserCardModel's fields mostly come from util_profile.py
-// and so they do not match UserData
+// TODO: rename UserCardModel
+
+/**
+ * Profile information about a user.
+ * May be complete, partially filled, or mostly empty depending on the
+ * permissions the current user has to this profile.
+ */
 UserCardModel = Backbone.Model.extend({
     defaults: {
-        "loggedIn": false,
+        "avatarName": "darth",
+        "avatarSrc": "/images/darth.png",
+        "countExercisesProficient": 0,
+        "countVideosCompleted": 0,
+        "dateJoined": "",
+        "email": "",
         "isCoachingLoggedInUser": false,
         "nickname": "",
-        "dateJoined": "",
         "points": 0,
-        "countVideosCompleted": 0,
-        "countVideos": 3000,
-        "countExercisesProficient": 0,
-        "countExercises": 250,
-
-        "avatarName": "darth",
-        "avatarSrc": "/images/darth.png"
+        "username": ""
     },
 
     url: "/api/v1/user/profile",
@@ -95,8 +98,12 @@ UserCardView = Backbone.View.extend({
     },
 
     render: function() {
-        $(this.el).html(this.template(this.model.toJSON()))
-            .find("abbr.timeago").timeago();
+        var json = this.model.toJSON();
+        // TODO: this data isn't specific to any profile and is more about the library.
+        // It should probably be moved out eventially.
+        json["countExercises"] = UserCardView.countExercises;
+        json["countVideos"] = UserCardView.countVideos;
+        $(this.el).html(this.template(json)).find("abbr.timeago").timeago();
         return this;
     },
 
@@ -155,3 +162,15 @@ UserCardView = Backbone.View.extend({
     }
 
 });
+
+// TODO: these should probably go into some other place about the library.
+/**
+ * The total number of videos in the Khan Academy library.
+ */
+UserCardView.countVideos = 0;
+
+/**
+ * The total number of exercises in the Khan Academy library.
+ */
+UserCardView.countExercises = 0;
+

@@ -166,26 +166,95 @@ class ViewProfile(request_handler.RequestHandler):
         # TODO: incorporate the tz offset into the timeago stuff on the client
         tz_offset = self.request_int("tz_offset", default=0)
 
-        avatar = util_avatars.avatar_for_name(user_data.avatar_name)
+        profile = UserProfile.from_user(user_data, current_user_data)
 
         template_values = {
-            'is_coaching_logged_in_user': current_user_data.is_coached_by(user_data),
-            'student_email': user_data.email,
-            'student_nickname': user_data.nickname,
-            'avatar_name': avatar.name,
-            'avatar_src': avatar.image_src,
+            'profile': profile,
             'tz_offset': tz_offset,
-            'public_badges': util_badges.get_public_user_badges(user_data),
-            'student_points': user_data.points,
             'count_videos': models.Setting.count_videos(),
-            'count_videos_completed': user_data.get_videos_completed(),
             'count_exercises': models.Exercise.get_count(),
-            'count_exercises_proficient': len(user_data.all_proficient_exercises),
             'user_data_student': user_data,
             "view": self.request_string("view", default=""),
         }
 
         self.render_jinja2_template('viewprofile.html', template_values)
+
+
+class UserProfile(object):
+    """ Profile information about a user.
+
+    This is a transient object and derived from the information in UserData,
+    and formatted/tailored for use as an object about a user's public profile.
+    """
+
+    def __init__(self):
+        self.username = None
+        self.email = None
+
+        self.is_coaching_logged_in_user = False
+        self.nickname = ""
+        self.date_joined = ""
+        self.points = 0
+        self.count_videos_completed = 0
+        self.count_exercises_proficient = 0
+        self.public_badges = []
+
+        # TODO: pick a more appropriate default
+        self.avatar_name = "darth"
+        self.avatar_src = "/images/darth.png"
+
+    @staticmethod
+    def from_user(user, actor):
+        """ Retrieve profile information about a user for the specified actor.
+
+        This will do the appropriate ACL checks and return the greatest amount
+        of profile data that the actor has access to.
+
+        user - models.UserData object to retrieve information from
+        actor - models.UserData object corresponding to who is requesting
+                the data
+        """
+
+        # TODO: figure out if "coworkers" should affect this
+        is_coached = user.is_coached_by(actor)
+        if is_coached or user.user_id == actor.user_id:
+            # Full data about the user
+            return UserProfile._from_user_internal(
+                    user,
+                    full_projection=True,
+                    is_coaching_logged_in_user=is_coached)
+        elif user.has_public_pofile(actor):
+            # Return only public data
+            return UserProfile._from_user_internal(user, full_projection=False)
+        else:
+            # Return stub data
+            return UserProfile()
+
+    @staticmethod
+    def _from_user_internal(user,
+                            full_projection=False,
+                            is_coaching_logged_in_user=False):
+
+        profile = UserProfile()
+
+        profile.username = user.username
+        profile.nickname = user.nickname
+        profile.date_joined = user.joined
+        avatar = util_avatars.avatar_for_name(user.avatar_name)
+        profile.avatar_name = avatar.name
+        profile.avatar_src = avatar.image_src
+        profile.public_badges = util_badges.get_public_user_badges(user)
+        profile.points = user.points
+        profile.count_videos_completed = user.get_videos_completed()
+        profile.count_exercises_proficient = len(user.all_proficient_exercises)
+
+        profile.is_coaching_logged_in_user = is_coaching_logged_in_user
+
+        if full_projection:
+            profile.email = user.email
+
+        return profile
+
 
 class ProfileGraph(request_handler.RequestHandler):
 

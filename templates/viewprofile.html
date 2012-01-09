@@ -21,23 +21,11 @@ var USER_EMAIL = '{{ user_data_student.email|escapejs }}';
 
 $(function() {
     Profile.init({
-        userName: "{{user_data_student.username|escapejs}}",
-        userCardData: {
-            loggedIn: "{{logged_in}}" === "True",
-            isCoachingLoggedInUser: "{{is_coaching_logged_in_user}}" === "True",
-            email: "{{user_data_student.email}}",
-            profileRoot: "{{user_data_student.profile_root}}",
-            nickname: "{{student_nickname|escapejs}}",
-            avatarName: "{{avatar_name}}",
-            avatarSrc: "{{avatar_src}}",
-            countVideosCompleted: {{count_videos_completed}},
-            countVideos: {{count_videos}},
-            countExercisesProficient: {{count_exercises_proficient}},
-            countExercises: {{count_exercises}},
-            points: {{student_points}},
-            dateJoined: "{{user_data_student.joined}}"
-        },
-        publicBadgeData: {{ templatetags.jsonify(public_badges, true) }}
+        countVideos: {{count_videos}},
+        countExercises: {{count_exercises}},
+        loggedIn: "{{logged_in}}" === "True",
+        profileRoot: "{{user_data_student.profile_root}}",
+        profileData: {{ templatetags.jsonify(profile, true) }}
     });
 });
 </script>

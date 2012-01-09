@@ -1,5 +1,4 @@
 <section class="basic-user-info" style="float: left;">
-{{#if loggedIn}}
   <div class="avatar-pic-container">
     <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic">
     <div class="avatar-change-overlay" style="display: none">Change avatar</div>
@@ -7,9 +6,6 @@
   <input type="text" value="{{nickname}}" id="nickname"
       placeholder="Enter nickname here" class="inline-editable nickname">
   <p class="pulled">Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
-{{else}}
-  <p>Log in, Darth!</p>
-{{/if}}
 </section>
 <section class="summary-and-controls" style="float:right; padding-right: 20px;">
     <p class="pulls"><img class="summary-icon" src="/images/generic-exercise-icon-shadow.png">{{countExercisesProficient}}/{{countExercises}}</p>
