@@ -11,6 +11,7 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     userCardData: null,
+    publicBadgeData: null,
 
     /**
      * Called to initialize the profile page. Passed in with JSON information
@@ -18,6 +19,7 @@ var Profile = {
      */
     init: function(json) {
         this.userCardData = json.userCardData;
+        this.publicBadgeData = json.publicBadgeData;
 
         Profile.render();
         Profile.router = new Profile.TabRouter();
