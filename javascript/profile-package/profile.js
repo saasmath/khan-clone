@@ -10,13 +10,20 @@ var Profile = {
     email: null,  // Filled in by the template after script load.
     fLoadingGraph: false,
     fLoadedGraph: false,
+    userCardData: null,
 
-    init: function() {
+    /**
+     * Called to initialize the profile page. Passed in with JSON information
+     * rendered from the server. See templates/viewprofile.html for details.
+     */
+    init: function(json) {
+        this.userCardData = json.userCardData;
+
         Profile.render();
         Profile.router = new Profile.TabRouter();
         Backbone.history.start({
             pushState: true,
-            root: userCardData.profileRoot
+            root: this.userCardData.profileRoot
         });
 
         // Remove goals from IE<=8
@@ -78,7 +85,8 @@ var Profile = {
             // in a reusable way
             if (!event.metaKey) {
                 event.preventDefault();
-                var route = $(this).attr("href").replace(userCardData.profileRoot, "");
+                var route = $(this).attr("href").replace(
+                        Profile.userCardData.profileRoot, "");
                 Profile.router.navigate(route, true);
             }
         });
@@ -766,7 +774,8 @@ var Profile = {
 
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
-        $("#profile-content").html(profileTemplate({profileRoot: userCardData.profileRoot}));
+        $("#profile-content").html(
+                profileTemplate({profileRoot: this.userCardData.profileRoot}));
 
         // Show only the user card tab,
         // since the Backbone default route isn't triggered
@@ -782,13 +791,13 @@ var Profile = {
         // for server-side + client-side to co-exist in harmony?
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
 
-        var usernameModel = new UsernamePickerModel({username: USERNAME}),
+        var usernameModel = new UsernamePickerModel({username: this.username}),
             usernameView = new UsernamePickerView({model: usernameModel});
         $("#username-picker-container").html(usernameView.render().el);
     },
 
     populateUserCard: function() {
-        var model = new UserCardModel(userCardData),
+        var model = new UserCardModel(this.userCardData),
             view = new UserCardView({model: model});
 
         $(".user-info-container").html(view.render().el);
@@ -796,7 +805,7 @@ var Profile = {
 
     populateAchievements: function() {
         // Render the public badge list, as that's ready immediately.
-        var publicBadgeList = new Badges.BadgeList(publicBadgeData);
+        var publicBadgeList = new Badges.BadgeList(this.publicBadgeData);
         publicBadgeList.setSaveUrl("/api/v1/user/badges/public");
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
         $(".sticker-book").append(displayCase.render().el);

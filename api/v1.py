@@ -365,7 +365,7 @@ def claim_username():
     """
     user_data = models.UserData.current()
     username_json = request.json
-    if not username_json:
+    if not username_json or not username_json.get('username'):
         return api_invalid_param_response("Username expected.")
 
     if username_json['username']:
