@@ -40,8 +40,8 @@ def get_current_user_id_from_oauth_map(oauth_map):
 
     return user_id
 
-# _get_current_user_from_cookies_unsafe is labeled unsafe because it should
-# never be used in our JSONP-enabled API. All calling code should just use _get_current_user.
+# get_current_user_from_cookies_unsafe is labeled unsafe because it should
+# never be used in our JSONP-enabled API. All calling code should just use get_current_user_id.
 def get_current_user_id_from_cookies_unsafe():
     user = users.get_current_user()
 
