@@ -316,7 +316,7 @@ var VideoStats = {
     fEventsAttached: false,
     cachedDuration: 0, // For use by alternative FLV player
     cachedCurrentTime: 0, // For use by alternative FLV player
-    dtSinceSave: null,
+    dtLastSaved: null,
     sVideoKey: null,
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
@@ -326,8 +326,8 @@ var VideoStats = {
         return this.player.getCurrentTime() || 0;
     },
 
-    getSecondsWatchedRestrictedByPageTime: function() {
-        var secondsPageTime = ((new Date()) - this.dtSinceSave) / 1000.0;
+    getSecondsWatchedSinceSave: function() {
+        var secondsPageTime = ((new Date()) - this.dtLastSaved) / 1000.0;
         return Math.min(secondsPageTime, this.getSecondsWatched());
     },
 
@@ -354,7 +354,7 @@ var VideoStats = {
         this.dPercentLastSaved = 0;
         this.cachedDuration = 0;
         this.cachedCurrentTime = 0;
-        this.dtSinceSave = new Date();
+        this.dtLastSaved = new Date();
 
         if (this.fEventsAttached) return;
 
@@ -409,7 +409,7 @@ var VideoStats = {
     },
 
     playerStateChange: function(state) {
-        if (state == -2) { // playing normally
+        if (state == -2 && this.playing) { // playing normally
             var percent = this.getPercentWatched();
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity))
             {
@@ -421,12 +421,13 @@ var VideoStats = {
             this.save();
         } else if (state == 2 && this.playing) { // paused
             this.playing = false;
-            if (this.getSecondsWatchedRestrictedByPageTime() > 1) {
+            if (this.getSecondsWatchedSinceSave() > 1) {
               this.save();
             }
         } else if (state == 1) { // play
             this.playing = true;
-            this.dtSinceSave = new Date();
+            this.dtLastSaved = new Date();
+            this.dPercentLastSaved = this.getPercentWatched();
 
             if (!VideoControls.videoBingoSent &&
                     (typeof Homepage != "undefined")) {
@@ -451,12 +452,12 @@ var VideoStats = {
 
         this.fSaving = true;
         var percent = this.getPercentWatched();
-        var dtSinceSaveBeforeError = this.dtSinceSave;
+        var dtLastSavedBeforeError = this.dtLastSaved;
         var id = 0;
 
         var data = {
             last_second_watched: this.getSecondsWatched(),
-            seconds_watched: this.getSecondsWatchedRestrictedByPageTime()
+            seconds_watched: this.getSecondsWatchedSinceSave()
         };
 
         if (this.sVideoKey !== null) {
@@ -474,11 +475,12 @@ var VideoStats = {
                 error: function() {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
-                    VideoStats.fSaving = false; VideoStats.dtSinceSave = dtSinceSaveBeforeError;
+                    VideoStats.fSaving = false;
+                    VideoStats.dtLastSaved = dtLastSavedBeforeError;
                 }
         });
 
-        this.dtSinceSave = new Date();
+        this.dtLastSaved = new Date();
     },
 
     /* Use qtip2 (http://craigsworks.com/projects/qtip2/) to create a tooltip
