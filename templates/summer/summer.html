@@ -8,9 +8,9 @@
 {% block pagecontent %}
 
 <script type="text/javascript">
-    var is_parent_js = {{ is_parent_js|escapejs }}
-    var student_js = {{ student_js|escapejs }}
-    var parent_js = {{ parent_js|escapejs }}
+    var is_parent_js = {{ is_parent_js }}
+    var student_js = {{ student_js }}
+    var parent_js = {{ parent_js }}
 </script>
 
 <div id="discovery_lab" style="padding: 9px 23px;">
@@ -108,7 +108,11 @@
                 </select><br><br>
 
                 <b>Parent email: <font color="FF0000">*</font></b><br>
-                <input type="text" size="32" id="parent_email" name="parent_email" value="{{ parent.email|escape }}"><br><br>
+                {% if is_parent %}
+                    <input type="text" size="32" id="parent_email" name="parent_email" value="{{ parent.email|escape }}"><br><br>
+                {% else %}
+                    <input type="text" size="32" id="parent_email" name="parent_email" value="{{ user_email|escape }}"><br><br>
+                {% endif %}
 
                 <b>Phone number: <font color="FF0000">*</font></b><br>
                 <input type="text" name="parent_phone" id="parent_phone" value="{{ parent.phone|escape }}"><br>
@@ -193,8 +197,7 @@
 
                 <b>Khan Academy email of the student:</b> (if available)<br>
                 {% if is_parent %}
-                    <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email|escape }}">
-                    <br><br>
+                    <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email|escape }}"><br>
                 {% else %}
                     <input type="text" size="32" id="student_email" name="student_email" value="{{ user_email|escape }}"><br>
                 {% endif %}
@@ -297,7 +300,7 @@
                                     $("input[id='discovery-lab-application-submit']").val("Apply for the Discovery Lab")
                                 }
                                 else {
-                                    var current_user = {{ user_email_js|escapejs }}
+                                    var current_user = {{ user_email_js }}
                                     var update = 1
                                     if (l.parent_email != "None" && l.parent_email != current_user) {
                                         if (alert_user) {
@@ -357,7 +360,7 @@
 
                         $("#student_email").change(function(e) {
                             var email = $("#student_email").val()
-                            var user_email = {{ user_email_js|escapejs }}
+                            var user_email = {{ user_email_js }}
                             if (email != user_email) {
                                 var parent_email = $("#parent_email").val()
                                 $("#parent_email").val(user_email)
@@ -375,23 +378,6 @@
                                     $("#parent_email").val(parent_js.email)
                                 }
                             }
-
-                            autofill(email, false)
-                        });
-
-                        $(".student-autofill").click(function(e) {
-                            if (!is_parent_js) {
-                                return
-                            }
-                            var email = $("#student_email").val()
-                            if (email == "") {
-                                alert("Please enter the student's khan academy email to autofill data")
-                            }
-                            else {
-                                autofill(email, true)
-                            }
-
-                            e.preventDefault();
                         });
 
                         $("#date_of_birth").datepicker();
@@ -401,11 +387,10 @@
                             $("#session_2").val(student_js.session_2)
                             $("#session_3").val(student_js.session_3)
                             $("#relation").val(student_js.parent_relation)
+                            $("#student_email").attr("readonly", "readonly")
                         }
 
-                        var parent_email = $("#parent_email").val()
-                        var user_email = {{ user_email_js|escapejs }}
-                        if (parent_email == user_email) {
+                        if (parent_js != null) {
                             $("#parent_email").attr("readonly", "readonly")
                         }
                     });
