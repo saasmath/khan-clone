@@ -763,7 +763,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         if user_id:
             # Once we have rekeyed legacy entities,
-            # we will be able to simplify this.we make
+            # we will be able to simplify this.
             return  UserData.get_from_user_id(user_id) or \
                     UserData.get_from_db_key_email(email) or \
                     UserData.insert_for(user_id, email)
