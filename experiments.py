@@ -40,20 +40,25 @@ class StrugglingExperiment(object):
     }
     _conversion_tests = [
         ('struggling_problems_done', ConversionTypes.Counting),
-        ('struggling_problems_done_post_struggling', ConversionTypes.Counting),
         ('struggling_problems_wrong', ConversionTypes.Counting),
-        ('struggling_problems_wrong_post_struggling', ConversionTypes.Counting),
         ('struggling_problems_correct', ConversionTypes.Counting),
-        ('struggling_problems_correct_post_struggling', ConversionTypes.Counting),
         ('struggling_gained_proficiency_all', ConversionTypes.Counting),
+        ('struggling_gained_proficiency_post_struggling', ConversionTypes.Counting),
 
         # the user closed the "Need help?" dialog that pops up
         ('struggling_message_dismissed', ConversionTypes.Counting),
 
         # the user clicked on the video in the "Need help?" dialog that pops up
         ('struggling_videos_clicked_post_struggling', ConversionTypes.Counting),
+
+        # the user clicked on the pre-requisite exercise in the
+        # "Need help?" dialog that pops up
+        ('struggling_prereq_clicked_post_struggling', ConversionTypes.Counting),
+
         ('struggling_videos_landing', ConversionTypes.Counting),
         ('struggling_videos_finished', ConversionTypes.Counting),
+        # the number of users that went into struggling at some point
+        ('struggling_struggled_binary', ConversionTypes.Binary),
     ]
     _conversion_names, _conversion_types = [
         list(x) for x in zip(*_conversion_tests)]
@@ -73,9 +78,9 @@ class StrugglingExperiment(object):
         # can get help earlier on. This varies drastically for those with
         # and without coaches, so it is useful to separate the population out.
         if user_data.coaches:
-            exp_name = 'Struggling model (w/coach)'
+            exp_name = 'Struggling model 2 (w/coach)'
         else:
-            exp_name = 'Struggling model (no coach)'
+            exp_name = 'Struggling model 2 (no coach)'
 
         # If it's not the current user, then it must be an admin or coach
         # viewing a dashboard. Don't affect the actual experiment as only the
