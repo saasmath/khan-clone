@@ -290,6 +290,11 @@ Badges.DisplayCase = Backbone.View.extend({
      * Handles a click to a badge in the badge picker in edit mode.
      */
     onBadgeInPickerClicked_: function(e) {
+        if ($(e.currentTarget).hasClass("used")) {
+            // Ignore badges already in the main case.
+            return;
+        }
+
         var name = e.currentTarget.id;
         var matchedBadge = _.find(
                 this.fullBadgeList.models,
@@ -402,8 +407,17 @@ Badges.DisplayCase = Backbone.View.extend({
     renderBadgePicker: function() {
         var html = [],
             badgeTemplate = Templates.get("profile.badge-compact");
-        this.fullBadgeList.each(function(badge) {
-            html.push(badgeTemplate(this.getUserBadgeJsonContext_(badge)));
+        this.fullBadgeList.each(function(userBadge) {
+            var alreadyInCase = this.model.find(function(b) {
+                return b.get("name") === userBadge.get("badge").get("name");
+            });
+
+            // Mark badges that are already used in the display case
+            var jsonContext = this.getUserBadgeJsonContext_(userBadge);
+            if (alreadyInCase) {
+                jsonContext["used"] = true;
+            }
+            html.push(badgeTemplate(jsonContext));
         }, this);
         $(this.badgePickerEl).html(html.join(""));
     },
@@ -420,6 +434,9 @@ Badges.DisplayCase = Backbone.View.extend({
             this.editControlEl.click(_.bind(this.toggleEdit_, this));
         }
         $(this.mainCaseEl).html(this.template(this.getTemplateContext_()));
+        if (this.fullBadgeList) {
+            this.renderBadgePicker();
+        }
         this.updateEditControls();
         this.updateSelectionHighlight();
         return this;

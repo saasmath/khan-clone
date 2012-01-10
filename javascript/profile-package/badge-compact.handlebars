@@ -9,7 +9,7 @@
 
 {{else}}
 
-<div class="achievement-badge achievement-badge-owned" id="{{name}}">
+<div class="achievement-badge achievement-badge-owned{{#if used}} used{{/if}}" id="{{name}}">
   <div id="outline-box">
     <div class="achievement-title">{{description}}</div>
     <img class="badge-icon" src="{{iconSrc}}">
