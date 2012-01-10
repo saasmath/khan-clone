@@ -782,7 +782,7 @@ application = webapp2.WSGIApplication([
     ('/admin/realtimeentitycount', RealtimeEntityCount),
 
     ('/devadmin', devpanel.Panel),
-    ('/devadmin/emailchange', devpanel.Email),
+    ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/commoncore', devpanel.CommonCore),

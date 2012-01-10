@@ -22,38 +22,65 @@ class Panel(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('devpanel/panel.html', { "selected_id": "panel" })
 
-class Email(request_handler.RequestHandler):
+class MergeUsers(request_handler.RequestHandler):
 
     @user_util.developer_only
-    @ensure_xsrf_cookie
     def get(self):
-        current_email = self.request.get('curremail') #email that is currently used 
-        new_email = self.request.get('newemail') #email the user wants to change to
-        swap = self.request.get('swap') #Are we changing emails?
-        
 
-        currdata = UserData.get_from_user_input_email(current_email)
-        newdata = UserData.get_from_user_input_email(new_email)
-        
-        if swap and currdata: #are we swapping? make sure account exists
-            currdata.current_user = users.User(new_email)
-            currdata.user_email = new_email
-            if newdata: #delete old account 
-                currdata.user_id = newdata.user_id
-                newdata.delete()
-            currdata.put()
+        source_email = self.request_string("source_email")
+        target_email = self.request_string("target_email")
+
+        source_description = ""
+        target_description = ""
+
+        source = UserData.get_from_user_input_email(source_email)
+        target = UserData.get_from_user_input_email(target_email)
 
         template_values = {
-                'App' : App, 
-                'curremail': current_email, 
-                'newemail': new_email, 
-                'currdata': currdata, 
-                'newdata': newdata, 
-                "properties": UserData.properties(),
                 "selected_id": "users",
+                "source_email": source_email,
+                "target_email": target_email,
+                "source": source,
+                "target": target,
+                "merged": self.request_bool("merged", default=False),
         }
 
-        self.render_jinja2_template('devpanel/email.html', template_values)
+        self.render_jinja2_template("devpanel/mergeusers.html", template_values)
+
+    @user_util.developer_only
+    def post(self):
+
+        if not self.request_bool("confirm", default=False):
+            self.get()
+            return
+
+        source = self.request_user_data("source_email")
+        target = self.request_user_data("target_email")
+
+        merged = False
+
+        if source and target:
+
+            old_source_email = source.email
+
+            # Make source the new official user, because it has all the historical data.
+            # Just copy over target's identifying properties.
+            source.current_user = target.current_user
+            source.user_email = target.user_email
+            source.user_nickname = target.user_nickname
+            source.user_id = target.user_id
+
+            # Put source, which gives it the same identity as target 
+            source.put()
+
+            # Delete target
+            target.delete()
+
+            self.redirect("/admin/emailchange?merged=1&source_email=%s&target_email=%s" % (old_source_email, target.email))
+            return
+
+        self.redirect("/admin/emailchange")
+
         
 class Manage(request_handler.RequestHandler):
 
