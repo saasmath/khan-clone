@@ -1,12 +1,11 @@
 # npm.py - an interface to our increasing love of node
 import os, sys
-import subprocess
+import commands
 
 MODULE_PATH = os.path.join(os.getcwd(), "deploy", "node_modules")
 
 def popen_results(args):
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-    return proc.communicate()[0]
+    return commands.getoutput(' '.join(args))
 
 def installed():
     """docstring for npm_installed"""
