@@ -426,7 +426,8 @@ Badges.DisplayCase = Backbone.View.extend({
         if (!this.mainCaseEl) {
             // First render - build the chrome.
             this.mainCaseEl = $("<div class=\"main-case\"></div>");
-            this.badgePickerEl = $("<div class=\"badge-picker\"></div>");
+            this.badgePickerEl =
+                $("<div class=\"badge-picker fancy-scrollbar\"></div>");
             $(this.el)
                 .append(this.mainCaseEl)
                 .append(this.badgePickerEl);
