@@ -75,6 +75,10 @@
     padding: 10px;
     margin-top: 5px;
 
+    /* TODO: make the scrollbar less ugly */
+    white-space: nowrap;
+    overflow-x: auto;
+
     /* made visible by JS */
     display: none;
 }
