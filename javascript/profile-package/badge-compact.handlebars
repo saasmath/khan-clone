@@ -1,3 +1,14 @@
+{{#if emptyBadge}}
+
+<div class="achievement-badge empty">
+  <div id="outline-box">
+  EMPTY SLOT - replace with pretty asset
+  <div class="selected-indicator"> </div>
+  </div>
+</div>
+
+{{else}}
+
 <div class="achievement-badge achievement-badge-owned" id="{{name}}">
   <div id="outline-box">
     <div class="achievement-title">{{description}}</div>
@@ -7,6 +18,8 @@
       {{#if count}}<div class="achievement-count">x{{count}}</div>{{/if}}
     </div>
     <div class="delete-icon">X</div>
+    <div class="selected-indicator"> </div>
   </div>
 </div>
 
+{{/if}}
