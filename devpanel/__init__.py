@@ -27,22 +27,21 @@ class MergeUsers(request_handler.RequestHandler):
     @user_util.developer_only
     def get(self):
 
-        source_email = self.request_string("source_email")
-        target_email = self.request_string("target_email")
+        source = self.request_user_data("source_email")
+        target = self.request_user_data("target_email")
 
-        source_description = ""
-        target_description = ""
+        merged = self.request_bool("merged", default=False)
+        merge_error = ""
 
-        source = UserData.get_from_user_input_email(source_email)
-        target = UserData.get_from_user_input_email(target_email)
+        if not merged and bool(source) != bool(target):
+            merge_error = "Both source and target user emails must correspond to existing accounts before they can be merged."
 
         template_values = {
                 "selected_id": "users",
-                "source_email": source_email,
-                "target_email": target_email,
                 "source": source,
                 "target": target,
-                "merged": self.request_bool("merged", default=False),
+                "merged": merged,
+                "merge_error": merge_error,
         }
 
         self.render_jinja2_template("devpanel/mergeusers.html", template_values)
@@ -76,11 +75,10 @@ class MergeUsers(request_handler.RequestHandler):
             # Delete target
             target.delete()
 
-            self.redirect("/admin/emailchange?merged=1&source_email=%s&target_email=%s" % (old_source_email, target.email))
+            self.redirect("/devadmin/emailchange?merged=1&source_email=%s&target_email=%s" % (old_source_email, target.email))
             return
 
-        self.redirect("/admin/emailchange")
-
+        self.redirect("/devadmin/emailchange")
         
 class Manage(request_handler.RequestHandler):
 

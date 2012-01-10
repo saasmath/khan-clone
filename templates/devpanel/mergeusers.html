@@ -35,8 +35,8 @@
 
     <p>
         <form action="/devadmin/emailchange" method="POST">
-            I want to transfer <input type="text" placeholder="source email" name="source_email" style="color:green;" />'s progress over to 
-            <input type="text" placeholder="target email" name="target_email" style="color:red;" />'s account.
+            I want to transfer <input type="text" placeholder="source email" name="source_email" value="{{ source.email|escape }}" style="color:green;" />'s progress over to 
+            <input type="text" placeholder="target email" name="target_email" value="{{ target.email|escape }}" style="color:red;" />'s account.
             
             <br/><br/>
 
@@ -50,8 +50,8 @@
         <form action="/devadmin/emailchange" method="POST">
 
             <input type="hidden" name="confirm" value="1" />
-            <input type="hidden" name="source_email" value="{{ source_email|escape }}" />
-            <input type="hidden" name="target_email" value="{{ target_email|escape }}" />
+            <input type="hidden" name="source_email" value="{{ source.email|escape }}" />
+            <input type="hidden" name="target_email" value="{{ target.email|escape }}" />
 
             I am confirming that I want to replace 
             <span class="target_desc"><nobr>{{ target.nickname|escape }}, {{ target.points|escape }} energy points, member for {{ target.seconds_since_joined|seconds_to_time_string() }}</nobr></span>'s 
