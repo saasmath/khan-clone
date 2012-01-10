@@ -11,7 +11,7 @@
   <div>
     <h2>Khan Academy Discovery Lab Application Processing</h2>
     {% if authenticated %}
-        Logged in as {{ user_email }}.<br> Processing interface will be available shortly
+        Logged in as {{ user_email|escape }}.<br> Processing interface will be available shortly
     {% else %}
         <a id="auth_link" class="authenticate-user" href="{{login_url|escape}}">Log in to your Khan Academy account</a>
     {% endif %}

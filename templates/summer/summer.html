@@ -8,42 +8,41 @@
 {% block pagecontent %}
 
 <script type="text/javascript">
-    var is_parent_js = {{ is_parent_js }}
-    var student_js = {{ student_js }}
-    var parent_js = {{ parent_js }}
+    var is_parent_js = {{ is_parent_js|escapejs }}
+    var student_js = {{ student_js|escapejs }}
+    var parent_js = {{ parent_js|escapejs }}
 </script>
 
 <div id="discovery_lab" style="padding: 9px 23px;">
     <div>
         <h2>Khan Academy Discovery Lab 2012 Application</h2>
         {% if authenticated %}
-            Logged in as: <u>{{ user_email }}</u>.
+            Logged in as: <u>{{ user_email|escape }}</u>.
             {% if make_payment %}
                 {% if student.processing_fee_paid %}
-                    <br><br>Your application processing fee of ${{ student.processing_fee }} has been paid.<br>
+                    <br><br>Your application processing fee of ${{ student.processing_fee|escape }} has been paid.<br>
                     We are still processing all applications, you can always check your application
                     <a href="/summer/application-status">status</a>
                 {% else %}
-                    <br><br>Please pay the processing fee of ${{ student.processing_fee }} via Paypal using the
-                    link below (when you have finished paying, please click return to Khan Academy if prompted)<br><br>
+                <br><br>Please pay the processing fee of ${{ student.processing_fee|escape }} for {{ student.first_name|escape }} {{ student.last_name|escape }} via Paypal using the link below<br><br>
                     <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post">
                         <input type="hidden" name="cmd" value="_s-xclick">
-                        <input type="hidden" name="hosted_button_id" value="39E8HDTV7CHHA">
-                        <input type="hidden" name="first_name" value="{{ payee.first_name }}">
-                        <input type="hidden" name="last_name" value="{{ payee.last_name }}">
-                        <input type="hidden" name="address1" value="{{ payee.address_1 }}">
-                        <input type="hidden" name="address2" value="{{ payee.address_2 }}">
-                        <input type="hidden" name="city" value="{{ payee.city }}">
-                        <input type="hidden" name="state" value="{{ payee.state }}">
-                        <input type="hidden" name="zip" value="{{ payee.zipcode }}">
-                        <input type="hidden" name="email" value="{{ payee.email }}">
-                        <input type="hidden" name="night_phone_a" value="{{ payee_phone_a }}">
-                        <input type="hidden" name="night_phone_b" value="{{ payee_phone_b }}">
-                        <input type="hidden" name="night_phone_c" value="{{ payee_phone_c }}">
-                        <input type="hidden" name="custom" value="{{ student.email }}">
-                        <input type="hidden" name="return" value="http://local.sundartestapp.appspot.com:8080/summer/paypal-autoreturn?student_email={{ student.email }}&user_email={{ user_email }}">
-                        <input type="image" src="https://www.sandbox.paypal.com/en_US/i/btn/btn_paynow_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
-                        <img alt="" border="0" src="https://www.sandbox.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+                        <input type="hidden" name="hosted_button_id" value="E3NNSXP2AXM9L">
+                        <input type="hidden" name="first_name" value="{{ payee.first_name|escape }}">
+                        <input type="hidden" name="last_name" value="{{ payee.last_name|escape }}">
+                        <input type="hidden" name="address1" value="{{ payee.address_1|escape }}">
+                        <input type="hidden" name="address2" value="{{ payee.address_2|escape }}">
+                        <input type="hidden" name="city" value="{{ payee.city|escape }}">
+                        <input type="hidden" name="state" value="{{ payee.state|escape }}">
+                        <input type="hidden" name="zip" value="{{ payee.zipcode|escape }}">
+                        <input type="hidden" name="email" value="{{ payee.email|escape }}">
+                        <input type="hidden" name="night_phone_a" value="{{ payee_phone_a|escape }}">
+                        <input type="hidden" name="night_phone_b" value="{{ payee_phone_b|escape }}">
+                        <input type="hidden" name="night_phone_c" value="{{ payee_phone_c|escape }}">
+                        <input type="hidden" name="custom" value="{{ student.email|escape }}">
+                        <input type="hidden" name="return" value="http://www.khanacademy.org/summer/paypal-autoreturn?student_email={{ student.email|escape }}&user_email={{ user_email|escape }}">
+                        <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_paynow_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+                        <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
                     </form>
                     <br><br>
                 {% endif %}
@@ -55,12 +54,12 @@
                         You have already applied for {{ students|length }} student(s). You can make changes to their
                         application or add a new student<br><br>
                         {% for student in students %}
-                        <input id="{{ student.email }}" type="radio" name="applicant_email" value="{{ student.email }}"> "{{ student.first_name }} {{ student.last_name }}"<br>
+                        <input id="{{ student.email|escape }}" type="radio" name="applicant_email" value="{{ student.email|escape }}"> "{{ student.first_name|escape }} {{ student.last_name|escape }}"<br>
                         {% endfor %}
                         <input id="new" type="radio" name="applicant_email" value="new"> Apply for a new student<br><br>
                     {% else %}
                         You have already applied, You can however make changes to your application<br><br>
-                        <input id="applicant-email" name="applicant_email" type="hidden" value="{{ user_email }}" />
+                        <input id="applicant-email" name="applicant_email" type="hidden" value="{{ user_email|escape }}" />
                     {% endif %}
                 {% else %}
                     Due to overwhelming demand, please fill out the form below to be considered for the 2012 Khan Academy Discovery Lab.
@@ -81,19 +80,17 @@
                 151 Laura Lane<br>
                 Palo Alto CA 94303<br><br>
 
-                Final decisions will be made on or before 15th February, 2012.
+                Final decisions will be made as soon as possible, no later than March 1st, 2012.
                 <hr>
 
-                <input id="user-email" name="user_email" type="hidden" value="{{ user_email }}" />
-                <input id="access-token-key" name="access_token_key" type="hidden" value={{ access_token_key }} />
-                <input id="access-token-secret" name="access_token_secret" type="hidden" value={{ access_token_secret }} />
+                <input id="user-email" name="user_email" type="hidden" value="{{ user_email|escape }}" />
                 <h3>Parent/Guardian Information</h3>
 
                 <b>Name: <font color="FF0000">*</font></b><br>
                 <table>
                 <tr>
-                <td><input type="text" id="parent_first_name" name="parent_first_name" value="{{ parent.first_name }}"></td>
-                <td><input type="text" id="parent_last_name" name="parent_last_name" value="{{ parent.last_name }}"></td>
+                <td><input type="text" id="parent_first_name" name="parent_first_name" value="{{ parent.first_name|escape }}"></td>
+                <td><input type="text" id="parent_last_name" name="parent_last_name" value="{{ parent.last_name|escape }}"></td>
                 </tr>
                 <tr>
                 <td>First</td>
@@ -111,28 +108,28 @@
                 </select><br><br>
 
                 <b>Parent email: <font color="FF0000">*</font></b><br>
-                <input type="text" size="32" id="parent_email" name="parent_email" value="{{ parent.email }}"><br><br>
+                <input type="text" size="32" id="parent_email" name="parent_email" value="{{ parent.email|escape }}"><br><br>
 
                 <b>Phone number: <font color="FF0000">*</font></b><br>
-                <input type="text" name="parent_phone" id="parent_phone" value="{{ parent.phone }}"><br>
+                <input type="text" name="parent_phone" id="parent_phone" value="{{ parent.phone|escape }}"><br>
                 (###-###-####)<br><br>
 
                 <b>Home Mailing Address:</b><br>
-                <input type="text" size="87" name="parent_address_1" id="parent_address_1" value="{{ parent.address_1 }}"><br>
+                <input type="text" size="87" name="parent_address_1" id="parent_address_1" value="{{ parent.address_1|escape }}"><br>
                 Street address<br>
-                <input type="text" size="87" name="parent_address_2" id="parent_address_2 value="{{ parent.address_2 }}""><br>
+                <input type="text" size="87" name="parent_address_2" id="parent_address_2 value="{{ parent.address_2|escape }}""><br>
                 Address line 2<br>
                 <table>
                 <tr>
-                <td><input type="text" size="30" name="parent_city" id="parent_city" value="{{ parent.city }}"></td>
+                <td><input type="text" size="30" name="parent_city" id="parent_city" value="{{ parent.city|escape }}"></td>
                 {% if parent.state %}
-                    <td><input type="text" size="4" name="parent_state" id="parent_state" value="{{ parent.state }}"></td>
+                    <td><input type="text" size="4" name="parent_state" id="parent_state" value="{{ parent.state|escape }}"></td>
                 {% else %}
                     <td><input type="text" size="4" name="parent_state" id="parent_state" value="CA"></td>
                 {% endif %}
-                <td><input type="text" size="10" name="parent_zip" id="parent_zip" value="{{ parent.zipcode }}"></td>
+                <td><input type="text" size="10" name="parent_zip" id="parent_zip" value="{{ parent.zipcode|escape }}"></td>
                 {% if parent.country %}
-                    <td><input type="text" size="25" name="parent_country" id="parent_country" value="{{ parent.country }}"></td>
+                    <td><input type="text" size="25" name="parent_country" id="parent_country" value="{{ parent.country|escape }}"></td>
                 {% else %}
                     <td><input type="text" size="25" name="parent_country" id="parent_country" value="United States"></td>
                 {% endif %}
@@ -150,8 +147,8 @@
                 <b>Student Name: <font color="FF0000">*</font></b><br>
                 <table>
                 <tr>
-                <td><input type="text" id="first_name" name="first_name" value="{{ student.first_name }}"></td>
-                <td><input type="text" id="last_name" name="last_name" value="{{ student.last_name }}"></td>
+                <td><input type="text" id="first_name" name="first_name" value="{{ student.first_name|escape }}"></td>
+                <td><input type="text" id="last_name" name="last_name" value="{{ student.last_name|escape }}"></td>
                 </tr>
                 <tr>
                 <td>First</td>
@@ -162,7 +159,7 @@
                 <b>Date of Birth: <font color="FF0000">*</font></b><br>
                 <table>
                 <tr>
-                <td><input size="16" id="date_of_birth" name="date_of_birth" value="{{ student.date_of_birth }}"></td>
+                <td><input size="16" id="date_of_birth" name="date_of_birth" value="{{ student.date_of_birth|escape }}"></td>
                 </tr>
                 <td><small>(MM/DD/YYYY)</small></td>
                 </table><br>
@@ -189,17 +186,17 @@
                 </select><br><br>
 
                 <b>School attending in Fall 2012: <font color="FF0000">*</font></b><br>
-                <input type="text" name="school" id="school" value="{{ student.school }}"><br><br>
+                <input type="text" name="school" id="school" value="{{ student.school|escape }}"><br><br>
 
                 <b>School Zipcode: <font color="FF0000">*</font></b><br>
-                <input type="text" size="10" name="school_zip" id="school_zip" value="{{ student.school_zipcode }}"><br><br>
+                <input type="text" size="10" name="school_zip" id="school_zip" value="{{ student.school_zipcode|escape }}"><br><br>
 
                 <b>Khan Academy email of the student:</b> (if available)<br>
                 {% if is_parent %}
-                    <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email }}">
+                    <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email|escape }}">
                     <br><br>
                 {% else %}
-                    <input type="text" size="32" id="student_email" name="student_email" value="{{ user_email }}"><br>
+                    <input type="text" size="32" id="student_email" name="student_email" value="{{ user_email|escape }}"><br>
                 {% endif %}
 
                 <hr>
@@ -244,23 +241,24 @@
 
                 <b>Why do you want to come to the Khan Academy Discovery Lab? (to be answered by the student):
                 <font color="FF0000">*</font></b><br>
-                <textarea rows="10" cols="64" id="answer_why" name="answer_why">{{ student.answer_why }}</textarea><br><br>
+                <textarea rows="10" cols="64" id="answer_why" name="answer_why">{{ student.answer_why|escape }}</textarea><br><br>
 
                 <b>How do you use Khan Academy today? (to be answered by the student):
                 <font color="FF0000">*</font></b><br>
-                <textarea rows="10" cols="64" id="answer_how" name="answer_how">{{ student.answer_how }}</textarea><br><br>
+                <textarea rows="10" cols="64" id="answer_how" name="answer_how">{{ student.answer_how|escape }}</textarea><br><br>
 
                 <hr>
                 <b>Any other comments:</b><br>
-                <textarea rows="10" cols="64" id="parent_comments" name="parent_comments">{{ parent.comments }}</textarea><br><br>
+                <textarea rows="10" cols="64" id="parent_comments" name="parent_comments">{{ parent.comments|escape }}</textarea><br><br>
 
                 <b>Processing Fee: <font color="FF0000">*</font></b><br>
                 {% if student.processing_fee_paid %}
-                    $<input type="text" size="5" name="fee" id="fee" value="5 (paid)" readonly><br><br>
+                    $<input type="text" size="5" name="display_fee" id="display_fee" value="5 (paid)" readonly><br><br>
                 {% else %}
-                    $<input type="text" size="5" name="fee" id="fee" value="5" readonly><br><br>
+                    $<input type="text" size="5" name="display_fee" id="display_fee" value="5" readonly><br><br>
                 {% endif %}
 
+                <input type="hidden" size="5" name="fee" id="fee" value="5">
                 <input id="discovery-lab-application-submit" type="submit" value="Apply for the Discovery Lab"/>
 
                 </form>
@@ -299,7 +297,7 @@
                                     $("input[id='discovery-lab-application-submit']").val("Apply for the Discovery Lab")
                                 }
                                 else {
-                                    var current_user = {{ user_email_js }}
+                                    var current_user = {{ user_email_js|escapejs }}
                                     var update = 1
                                     if (l.parent_email != "None" && l.parent_email != current_user) {
                                         if (alert_user) {
@@ -359,7 +357,7 @@
 
                         $("#student_email").change(function(e) {
                             var email = $("#student_email").val()
-                            var user_email = {{ user_email_js }}
+                            var user_email = {{ user_email_js|escapejs }}
                             if (email != user_email) {
                                 var parent_email = $("#parent_email").val()
                                 $("#parent_email").val(user_email)
@@ -406,7 +404,7 @@
                         }
 
                         var parent_email = $("#parent_email").val()
-                        var user_email = {{ user_email_js }}
+                        var user_email = {{ user_email_js|escapejs }}
                         if (parent_email == user_email) {
                             $("#parent_email").attr("readonly", "readonly")
                         }
@@ -563,13 +561,6 @@
                             alert("Either the parent or student email should be " + user_email + " (i.e. logged in user)")
                             e.preventDefault();
                             return
-                        }
-
-                        if (student_js != null) {
-                            if (student_js.processing_fee_paid == "True") {
-                                window.location = "/summer/application-status"
-                                e.preventDefault()
-                            }
                         }
                     });
                 </script>

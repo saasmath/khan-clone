@@ -1,10 +1,9 @@
+from __future__ import absolute_import
 import os
 import simplejson as json
 import datetime
-import cookie_util
 import math
 import logging
-import webbrowser
 import urllib, urllib2
 
 from request_handler import RequestHandler
@@ -14,74 +13,13 @@ from google.appengine.ext import db
 from google.appengine.api import mail
 
 from models import UserData
+from .models import SummerPaypalTransaction, SummerStudent, SummerParentData
 
-class PaypalTransaction(db.Model):
-    transaction_id = db.StringProperty()
-    student_email = db.StringProperty()
-    status = db.StringProperty()
+PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr"
 
-class SummerStudent(db.Model):
-    email = db.StringProperty()
-    applier_email = db.StringProperty()
-    application_year = db.StringProperty()
-    application_status = db.StringProperty()
+PAYPAL_SUMMER_ID_TOKEN = "Probably needs to go into secrets.py"
 
-    first_name = db.StringProperty()
-    last_name = db.StringProperty()
-    date_of_birth = db.StringProperty()
-    is_female = db.BooleanProperty()
-    grade = db.StringProperty()
-    school = db.StringProperty()
-    school_zipcode = db.StringProperty()
-
-    parent_email = db.StringProperty()
-    parent_relation = db.StringProperty()
-
-    first_choice = db.StringListProperty()
-    second_choice = db.StringListProperty()
-    third_choice = db.StringListProperty()
-    no_choice = db.StringListProperty()
-    session_1 = db.StringProperty()
-    session_2 = db.StringProperty()
-    session_3 = db.StringProperty()
-
-    answer_why = db.TextProperty()
-    answer_how = db.TextProperty()
-
-    processing_fee = db.StringProperty()
-    processing_fee_paid = db.BooleanProperty()
-
-    extended_care = db.BooleanProperty()
-    lunch = db.BooleanProperty()
-    
-    tuition = db.StringProperty()
-    tuition_paid = db.BooleanProperty()
-
-    scholarship_applied = db.BooleanProperty()
-    scholarship_granted = db.BooleanProperty()
-    scholarship_amount = db.StringProperty()
-
-    self_applied = db.BooleanProperty()
-
-    def to_dict(self):
-        return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
-
-class ParentData(db.Model):
-    first_name = db.StringProperty()
-    last_name = db.StringProperty()
-    email = db.StringProperty()
-    address_1 = db.StringProperty()
-    address_2 = db.StringProperty()
-    city = db.StringProperty()
-    state = db.StringProperty()
-    zipcode = db.StringProperty()
-    country = db.StringProperty()
-    phone = db.StringProperty()
-    comments = db.TextProperty()
-    students = db.ListProperty(db.Key)
-
-    def to_dict(self):
-        return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
+FROM_EMAIL = "no-reply@khan-academy.appspotmail.com"
 
 class PaypalIPN(RequestHandler):
     def post(self):
@@ -95,18 +33,18 @@ class PaypalIPN(RequestHandler):
         charset = self.request.get('charset')
         parameters = dict((arg, self.request.get(arg).encode(charset)) for arg in self.request.arguments())
         parameters['cmd'] = "_notify-validate"
-        req = urllib2.Request("https://www.sandbox.paypal.com/cgi-bin/webscr", urllib.urlencode(parameters))
+        req = urllib2.Request(PAYPAL_URL, urllib.urlencode(parameters))
         req.add_header("Content-type", "application/x-www-form-urlencoded")
 
         response = urllib2.urlopen(req)
         status = response.read()
         if status == "VERIFIED":
-            query = PaypalTransaction.all()
+            query = SummerPaypalTransaction.all()
             query.filter('transaction_id = ', txn_id)
             paypal_txn = query.get()
 
             if paypal_txn is None:
-                paypal_txn = PaypalTransaction()
+                paypal_txn = SummerPaypalTransaction()
                 paypal_txn.transaction_id = txn_id
                 paypal_txn.status = "Initiated"
 
@@ -146,29 +84,26 @@ class PaypalAutoReturn(RequestHandler):
         student_email = self.request.get('student_email')
         user_email = self.request.get('user_email')
         txn_id = self.request.get('tx')
-        #id_token = "d-bgpj-IRtoq2Fl2wbNQjgjAAWVhnZHlBihznOlZtNnEgcscBdujjOhfA18"
-        id_token = "GpWfe9SEzMcEzlQptmLkJn0xLsxUAISHya6-0OZZWkzWayM0AWKT25DyLbG"
 
-        query = PaypalTransaction.all()
+        query = SummerPaypalTransaction.all()
         query.filter('transaction_id = ', txn_id)
         paypal_txn = query.get()
 
         if paypal_txn is not None:
-            paypal_txn = PaypalTransaction()
+            paypal_txn = SummerPaypalTransaction()
             paypal_txn.transaction_id = txn_id
             paypal_txn.student_email = student_email
             paypal_txn.status = "Initiated"
 
-        url = "https://www.sandbox.paypal.com/cgi-bin/webscr"
         values = {
             "cmd" : "_notify-synch",
             "tx" : txn_id,
-            "at" : id_token
+            "at" : PAYPAL_SUMMER_ID_TOKEN
         }
 
         try:
             data = urllib.urlencode(values)
-            req = urllib2.Request(url, data)
+            req = urllib2.Request(PAYPAL_URL, data)
             response = urllib2.urlopen(req)
             output = response.read().split('\n')
         except Exception, e:
@@ -188,7 +123,7 @@ class PaypalAutoReturn(RequestHandler):
                         paypal_attr[nvp[0]] = nvp[1]
 
                     paypal_txn.status = paypal_attr['payment_status']
-                    student.processing_fee = paypal_attr['payment_gross']
+                    student.processing_fee = paypal_attr['mc_gross']
 
                     if paypal_txn.status == "Completed":
                         student.processing_fee_paid = True
@@ -243,12 +178,12 @@ class Process(RequestHandler):
         user_data = UserData.current()
 
         if user_data is not None:
-	    template_values = self.authenticated_response()
+            template_values = self.authenticated_response()
 
-	else:
+        else:
             template_values = {
-	        "authenticated" : False,
-	    }
+                "authenticated" : False,
+            }
 
         self.add_global_template_values(template_values)
         self.render_jinja2_template('summer/summer_process.html', template_values)
@@ -267,7 +202,7 @@ class Status(RequestHandler):
         is_parent = False
 
         if student is None:
-            query = ParentData.all()
+            query = SummerParentData.all()
             query.filter('email = ', user_email)
             parent = query.get()
             if parent is None:
@@ -294,15 +229,15 @@ class Status(RequestHandler):
         user_data = UserData.current()
 
         if user_data is not None:
-	    template_values = self.authenticated_response()
+            template_values = self.authenticated_response()
             if template_values is None:
                 self.redirect("/summer/application")
                 return
 
-	else:
+        else:
             template_values = {
-	        "authenticated" : False,
-	    }
+                "authenticated" : False,
+            }
 
         self.add_global_template_values(template_values)
         self.render_jinja2_template('summer/summer_status.html', template_values)
@@ -310,7 +245,7 @@ class Status(RequestHandler):
 class Application(RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
-	user_email = user_data.user_email
+        user_email = user_data.user_email
 
         students = []
         is_parent = False
@@ -321,7 +256,7 @@ class Application(RequestHandler):
         if student is not None:
             students.append(student)
         else:
-            query = ParentData.all()
+            query = SummerParentData.all()
             query.filter('email = ', user_email)
             parent = query.get()
             if parent is not None:
@@ -339,7 +274,7 @@ class Application(RequestHandler):
                 logging.error("Student <%s> not expected to be NULL in datastore, but it is" % student_email)
                 student = students[0]
 
-            query = ParentData.all()
+            query = SummerParentData.all()
             query.filter('email = ', student.parent_email)
             parent = query.get()
             assert(parent != None)
@@ -353,9 +288,9 @@ class Application(RequestHandler):
             student_js = json.dumps(student)
             parent_js = json.dumps(parent)
 
-	template_values = {
-	    "authenticated" : True,
-	    "applied" : applied,
+        template_values = {
+            "authenticated" : True,
+            "applied" : applied,
             "is_parent" : is_parent,
             "is_parent_js" : json.dumps(is_parent),
             "students" : students,
@@ -367,13 +302,13 @@ class Application(RequestHandler):
             "user_email" : user_email,
         }
 
-	return template_values
+        return template_values
 
     def post(self):
         self.get()
 
     def get(self):
-	template_values = {}
+        template_values = {}
         user_data = UserData.current()
 
         if user_data is not None:
@@ -398,7 +333,7 @@ class Application(RequestHandler):
                     self.redirect("/summer/application-status")
                     return
 
-                query = ParentData.all()
+                query = SummerParentData.all()
                 query.filter('email = ', student.parent_email)
                 parent = query.get()
 
@@ -435,7 +370,7 @@ class Application(RequestHandler):
                 }
 
             elif not application_filled:
-	        template_values = self.authenticated_response()
+                template_values = self.authenticated_response()
 
             else:
                 first_name = self.request.get('first_name')
@@ -448,6 +383,8 @@ class Application(RequestHandler):
                     student = SummerStudent()
                     student.email = student_email
                     student.applier_email = user_email
+                    student.processing_fee_paid = False
+                    student.tuition_paid = False
 
                 student.first_name = first_name
                 student.last_name = self.request.get('last_name')
@@ -481,10 +418,8 @@ class Application(RequestHandler):
                 student.answer_how = self.request.get('answer_how')
 
                 student.processing_fee = self.request.get('fee')
-                student.processing_fee_paid = False
 
                 student.tuition = 'TBD'
-                student.tuition_paid = False
 
                 student.application_year = '2012'
                 student.application_status = 'Processing'
@@ -501,11 +436,11 @@ class Application(RequestHandler):
 
                 student.put()
 
-                query = ParentData.all()
+                query = SummerParentData.all()
                 query.filter('email = ', student.parent_email)
                 parent = query.get()
                 if parent is None:
-                    parent = ParentData()
+                    parent = SummerParentData()
                     parent.email = student.parent_email
 
                 parent.first_name = self.request.get('parent_first_name')
@@ -524,6 +459,10 @@ class Application(RequestHandler):
 
                 parent.put()
 
+                if student.processing_fee_paid:
+                    self.redirect("/summer/application-status")
+                    return
+
                 payee_phone_a = ""
                 payee_phone_b = ""
                 payee_phone_c = ""
@@ -532,6 +471,19 @@ class Application(RequestHandler):
                     payee_phone_a = phone_parts[0]
                     payee_phone_b = phone_parts[1]
                     payee_phone_c = phone_parts[2]
+
+                mail.send_mail( \
+                    sender = FROM_EMAIL, \
+                    to = parent.email, \
+                    subject = "Khan Academy Discovery Lab Application", \
+                    body = """Dear %s,
+                
+We have received your application for %s %s for the Khan Academy Discovery Lab 2012. Please ensure you have paid the $5.00 processing fee for the application.
+
+We will notify you about the status of the application as soon as possible, no later than March 1st, 2012. You can always check the status of the application any time at http://www.khanacademy.org/summer/application-status.
+
+Thank you!
+Khan Academy Discovery Lab""" % (parent.first_name, student.first_name, student.last_name))
 
                 template_values = {
                     "authenticated" : True,
@@ -549,11 +501,11 @@ class Application(RequestHandler):
                     "user_email" : user_email,
                 }
 
-	else:
+        else:
             template_values = {
                 "authenticated" : False,
-	        "applied" : False
-	    }
+                "applied" : False
+            }
 
         self.add_global_template_values(template_values)
         self.render_jinja2_template('summer/summer.html', template_values)
