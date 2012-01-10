@@ -777,7 +777,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         if user_id:
             # Once we have rekeyed legacy entities,
-            # we will be able to simplify this.we make
+            # we will be able to simplify this.
             return  UserData.get_from_user_id(user_id) or \
                     UserData.get_from_db_key_email(email) or \
                     UserData.insert_for(user_id, email)
@@ -1028,11 +1028,18 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         if dt_activity > self.last_activity:
 
-            # If it has been over 36 hours since we last saw this user, restart the consecutive activity streak.
+            # If it has been over 40 hours since we last saw this user, restart
+            # the consecutive activity streak.
             #
-            # We allow for a lenient 36 hours in order to offer kinder timezone interpretation.
+            # We allow for a lenient 40 hours in order to offer kinder timezone
+            # interpretation.
+            #
+            # 36 hours wasn't quite enough. A user with activity at 8am on
+            # Monday and 8:15pm on Tuesday would not have consecutive days of
+            # activity.
+            #
             # See http://meta.stackoverflow.com/questions/55483/proposed-consecutive-days-badge-tracking-change
-            if util.hours_between(self.last_activity, dt_activity) >= 36:
+            if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
 
             self.last_activity = dt_activity
@@ -1043,8 +1050,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         dt_now = datetime.datetime.now()
 
-        # If it has been over 36 hours since last activity, bail.
-        if util.hours_between(self.last_activity, dt_now) >= 36:
+        # If it has been over 40 hours since last activity, bail.
+        if util.hours_between(self.last_activity, dt_now) >= 40:
             return 0
 
         return (self.last_activity - self.start_consecutive_activity_date).days
