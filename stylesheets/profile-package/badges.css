@@ -19,6 +19,22 @@
     border-color: blue;
 }
 
+.badge-display-case .delete-icon {
+    /* TODO: make pretty! */
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: red;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+
+.badge-display-case.editing .achievement-badge.selected .delete-icon {
+    display: block;
+}
+
 .badge-display-case .achievement-title {
     width: auto;
     position: relative;
@@ -46,4 +62,3 @@
 
 .badge-display-case .full-badge-list {
 }
-

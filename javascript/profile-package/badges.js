@@ -167,6 +167,7 @@ Badges.DisplayCase = Backbone.View.extend({
     },
 
     events: {
+        "click .main-case .achievement-badge .delete-icon": "onDeleteBadgeClicked_",
         "click .main-case .achievement-badge": "onBadgeClicked_",
         "click .badge-picker .achievement-badge": "onBadgeInPickerClicked_"
     },
@@ -259,8 +260,30 @@ Badges.DisplayCase = Backbone.View.extend({
             // Noop when not editing.
             return;
         }
-        var index = $(".achievement-badge", this.mainCaseEl).index(e.currentTarget);
+
+        var index = $(this.mainCaseEl)
+                .find(".achievement-badge")
+                .index(e.currentTarget);
         this.updateEditSelection_(index);
+    },
+
+    /**
+     * Handles a click to a delete button for a badge in the main display case.
+     */
+    onDeleteBadgeClicked_: function(e) {
+        if (!this.editing) {
+            // Noop when not editing.
+            return;
+        }
+        var index = $(this.mainCaseEl)
+                .find(".delete-icon")
+                .index(e.currentTarget);
+        this.model.remove(this.model.at(index));
+        this.updateEditSelection_(index);
+
+        // Prevent the badge click from being processed, since
+        // the X is a child of the badge.
+        e.stopPropagation();
     },
 
     /**
@@ -278,7 +301,7 @@ Badges.DisplayCase = Backbone.View.extend({
             return;
         }
 
-        // Backbone.Collection doesn't have a .replce method - do it ourselves
+        // Backbone.Collection doesn't have a .replace method - do it ourselves
         // TODO: should we be cloning?
         var existing = this.model.at(this.selectedIndex);
         if (existing) {
