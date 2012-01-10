@@ -404,6 +404,7 @@ def update_user_profile():
 
     user_data.put()
 
+# TODO: This probably doesn't work for openID url's
 @route("/api/v1/user/coaches/<coach_email>", methods=["POST"])
 @oauth_required()
 @jsonp
