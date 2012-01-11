@@ -614,6 +614,10 @@ div.graph-notification {
 .user-profile-controls .dropdown {
     float: left;
 }
+.user-profile-controls .dropdown:hover {
+    position: absolute;
+    z-index: 10;
+}
 ul.dropdown li {
     font-weight: bold;
     float: left;
