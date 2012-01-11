@@ -223,7 +223,7 @@ class UserProfile(object):
                     user,
                     full_projection=True,
                     is_coaching_logged_in_user=is_coached)
-        elif user.has_public_pofile(actor):
+        elif user.has_public_profile():
             # Return only public data
             return UserProfile._from_user_internal(user, full_projection=False)
         else:
