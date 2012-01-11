@@ -1929,6 +1929,31 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .achievement-badge.category-0 #badge-icon {
         margin-top: 1px;
     }
+
+    .achievement-badge .add-goal{
+        background-color:#89B908;
+        position:absolute;
+        top: 7px;
+        right: 16px;
+        -webkit-border-radius:6px;
+        -moz-border-radius:6px;
+        -ms-border-radius:6px;
+        -o-border-radius:6px;
+        border-radius:6px;
+        -webkit-transition:all 250ms ease-in-out;
+        -moz-transition:all 250ms ease-in-out;
+        -ms-transition:all 250ms ease-in-out;
+        -o-transition:all 250ms ease-in-out;
+        transition:all 250ms ease-in-out;
+        cursor:pointer;
+        padding: 0 12px 0 6px;
+        color: white;
+        font-weight: bold;
+    }
+    .achievement-badge:hover .add-goal{
+        right:46px;
+    }
+
 .achievement-badges-container .achievement-badge {
     float: left;
 }

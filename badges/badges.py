@@ -197,6 +197,9 @@ class Badge(object):
 
         self.is_owned = False
         
+        # A badge may have an associated goal
+        self.is_goal = False
+
     @staticmethod
     def add_target_context_name(name, target_context_name):
         return "%s[%s]" % (name, target_context_name)
