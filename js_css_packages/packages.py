@@ -26,6 +26,7 @@ javascript = {
             "jquery.timeago.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
+            "jquery.qtip.js",
             "../../khan-exercises/utils/underscore.js",
             "backbone.js",
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
@@ -56,7 +57,6 @@ javascript = {
     },
     "video": {
         "files": [
-            "jquery.qtip.js",
             "video.js",
             "discussion.js",
             "thumbnail.handlebars",
@@ -175,6 +175,7 @@ javascript = {
 stylesheets = {
     "shared": {
         "files": [
+            "jquery.qtip.css",
             "default.css",
             "rating.css",
             "stylesheet.css",
@@ -193,7 +194,6 @@ stylesheets = {
     },
     "video": {
         "files": [
-            "jquery.qtip.css",
             "video.css",
             "discussion.css",
             "modalvideo.css",

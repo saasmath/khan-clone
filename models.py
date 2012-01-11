@@ -686,6 +686,13 @@ class UniqueUsername(db.Model):
         return UniqueUsername.VALID_KEY_NAME_RE.match(key_name) is not None
 
     @staticmethod
+    def is_available_username(username, key_name=None):
+        if key_name is None:
+            key_name = UniqueUsername.build_key_name(username)
+        entity = UniqueUsername.get_by_key_name(key_name)
+        return entity is None
+
+    @staticmethod
     def claim(desired_name):
         """Claim an unclaimed username.
 
@@ -699,13 +706,12 @@ class UniqueUsername(db.Model):
             return False
 
         def txn(desired_name):
-            entity = UniqueUsername.get_by_key_name(key_name)
-            is_unclaimed_name = entity is None
-            if is_unclaimed_name:
+            is_available = UniqueUsername.is_available_username(desired_name, key_name)
+            if is_available:
                 entity = UniqueUsername(key_name=key_name)
                 entity.username = desired_name
                 entity.put()
-            return is_unclaimed_name
+            return is_available
 
         return db.run_in_transaction(txn, desired_name)
 

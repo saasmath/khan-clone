@@ -596,6 +596,56 @@ div.graph-notification {
   filter:alpha(opacity=85);
 }
 
+/* Copied from elsewhere, rough guess */
+#edit-profile-container {
+    position: fixed;
+    /* set the point on which top and left operate to the middle top edge*/
+    width: 830px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -415px;
+    top: 60px;
+    left: 50%;
+}
+
+/**
+ * Edit Profile dropdown
+ * from http://css-tricks.com/examples/SimplejQueryDropdowns/#
+ * Waiting for Monsieur Jason!
+ */
+ul.dropdown li {
+    font-weight: bold;
+    float: left;
+    background: #ccc;
+}
+ul.dropdown li a {
+    display: block;
+    padding: 4px 8px;
+    border-right: 1px solid #333;
+    color: black;
+}
+/* Doesn't work in IE */
+ul.dropdown li:last-child a {
+    border-right: none;
+}
+ul.dropdown li.hover {
+    background: #F3D673;
+    color: black;
+    position: relative;
+}
+ul.dropdown li.hover a {
+    color: black;
+}
+ul.dropdown ul.sub_menu { display: none;}
+ul.dropdown li.hover ul.sub_menu {
+    display: block;
+}
+ul.dropdown ul li {
+    font-weight: normal;
+    background: #f6f6f6;
+    color: black;
+    border-bottom: 1px solid #ccc;
+    float: none;
+}
+
 .display-case-cover {
     display: block;
     position: absolute;
@@ -612,9 +662,8 @@ background: -o-linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 
 background: -ms-linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* IE10+ */
 background: linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* W3C */
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bcbcbc', endColorstr='#070707',GradientType=0 ); /* IE6-9 */
-
-
 }
+
 .sticker-book {
     position: relative;
     padding: 10px;
@@ -708,6 +757,12 @@ input.nickname {
     font-size: 150%;
 }
 
+.username-picker {
+    margin: 10px;
+}
+.username-picker label {
+    font-size: 150%;
+}
 .avatar-picker.modal {
     width: 600px;
     height: 80%;
@@ -747,15 +802,4 @@ input.nickname {
 .avatar-picker .category-title {
     font-size: 120%;
     font-weight: bold;
-}
-
-#message-bar {
-    width: 100%;
-    color: white;
-}
-#message-bar.success {
-    background-color: green;
-}
-#message-bar.error {
-    background-color: red;
 }

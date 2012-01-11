@@ -354,23 +354,17 @@ def user_data_other():
 
     return None
 
-@route("/api/v1/user/username", methods=["POST"])
-@oauth_required()
+@route("/api/v1/user/username_available", methods=["GET"])
 @jsonp
 @jsonify
-def claim_username():
-    """ Claim a username for currently logged in user.
-
-    The posted data should be JSON, with a "username" field.
+def is_username_available():
+    """ Return whether username is available.
     """
-    user_data = models.UserData.current()
-    username_json = request.json
-    if not username_json or not username_json.get('username'):
-        return api_invalid_param_response("Username expected.")
-
-    if username_json['username']:
-        if not user_data.claim_username(username_json['username']):
-            return api_invalid_param_response("That username is already taken.")
+    username = request.request_string('username')
+    if not username:
+        return False
+    else:
+        return models.UniqueUsername.is_available_username(username)
 
 # TODO: the "GET" version of this.
 @route("/api/v1/user/profile", methods=["POST", "PUT"])
@@ -381,7 +375,8 @@ def update_user_profile():
     """ Updates public information about a user.
     
     The posted data should be JSON, with fields representing the values that
-    needs to be changed. Supports "user_nickname" and "avatar_name".
+    needs to be changed. Supports "user_nickname", "avatar_name",
+    and "username".
     """
     user_data = models.UserData.current()
 
@@ -403,7 +398,12 @@ def update_user_profile():
             user_data.avatar_name = avatar_name
 
     user_data.put()
-
+    if profile_json['username'] is not None:
+        username = profile_json['username']
+        if not user_data.claim_username(username):
+            # TODO: How much do we want to communicate to the user?
+            return api_invalid_param_response("Error!")
+    
 # TODO: This probably doesn't work for openID url's
 @route("/api/v1/user/coaches/<coach_email>", methods=["POST"])
 @oauth_required()

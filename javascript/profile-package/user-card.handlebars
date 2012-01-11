@@ -7,7 +7,19 @@
       placeholder="Enter nickname here" class="inline-editable nickname">
   <p class="pulled">Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></p>
 </section>
+<div>
+    <ul class="dropdown">
+        <li>
+            <a href="#">Edit profile</a>
+            <ul class="sub_menu">
+                <li><a id="edit-nickname" href="#">Nickname (does nothing)</a></li>
+                <li><a id="edit-username" href="#">Username (click me!)</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
 <section class="summary-and-controls" style="float:right; padding-right: 20px;">
+    <p class="pulled pulls" id="edit-visibility" style="background-color: white;"><img src="/images/darth.png">imagine a locking/unlocking icon</p>
     <p class="pulls"><img class="summary-icon" src="/images/generic-exercise-icon-shadow.png">{{countExercisesProficient}}/{{countExercises}}</p>
     <p class="pulled pulls"><img class="summary-icon" src="/images/video-camera-icon-shadow.png"> {{countVideosCompleted}}/{{countVideos}}</p>
     <p class="pulled pulls"><span title="{{points}} energy points" class="energy-points-badge" style="float: none;">{{points}}</span> Energy Points</p>
@@ -18,4 +30,7 @@
 
 <div class="sticker-book">
     <a class="display-case-cover" href="javascript:''"></a>
+</div>
+
+<div id="edit-profile-container" class="modal fade hide" style="display: none;">
 </div>

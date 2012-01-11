@@ -38,7 +38,9 @@ UserCardModel = Backbone.Model.extend({
             "avatarName": (attrs && attrs["avatarName"]) ||
                           this.get("avatarName"),
             "nickname": (attrs && attrs["nickname"]) ||
-                          this.get("nickname")
+                          this.get("nickname"),
+            "username": (attrs && attrs["username"]) ||
+                          this.get("username")
         });
 
         Backbone.Model.prototype.save.call(this, attrs, options);
@@ -62,6 +64,40 @@ UserCardModel = Backbone.Model.extend({
 
             $.ajax(options);
         }
+    },
+
+    validateUsername: function(username) {
+        // Can't define validate() (or I don't understand how to)
+        // because of https://github.com/documentcloud/backbone/issues/233
+        username = username.toLowerCase()
+                    .replace(/\./g, "");
+
+        if (/^[a-z][a-z0-9]{4,}$/.test(username)) {
+            $.ajax({
+                url: "/api/v1/user/username_available",
+                type: "GET",
+                data: {
+                    username: username
+                },
+                dataType: "json",
+                success: _.bind(this.onValidateUsernameResponse_, this)
+            });
+        } else {
+            var message = "";
+            if (username.length < 5) {
+                message = "too short";
+            } else if (/^[^a-z]/.test(username)) {
+                message = "must begin with a letter";
+            } else {
+                message = "must be alphanumeric";
+            }
+            this.trigger("validate:username", false, message);
+        }
+    },
+
+    onValidateUsernameResponse_: function(isUsernameAvailable) {
+        var message = isUsernameAvailable ? "available!!!" : "not available :(";
+        this.trigger("validate:username", isUsernameAvailable, message);
     }
 });
 
@@ -73,8 +109,13 @@ UserCardView = Backbone.View.extend({
         "mouseenter .avatar-pic-container": "onAvatarHover_",
         "mouseleave .avatar-pic-container": "onAvatarLeave_",
         "change #nickname": "onNicknameChanged_",
-        "click .add-remove-coach": "onAddRemoveCoachClicked_"
-    },
+        "click .add-remove-coach": "onAddRemoveCoachClicked_",
+        "click #edit-visibility": "onEditVisibilityCicked_",
+        "click #edit-nickname": "onEditNicknameClicked_",
+        "click #edit-username": "onEditUsernameClicked_",
+        "mouseenter ul.dropdown li": "onDropdownEnter_",
+        "mouseleave ul.dropdown li": "onDropdownLeave_"
+     },
 
     initialize: function() {
         this.template = Templates.get("profile.user-card");
@@ -88,6 +129,10 @@ UserCardView = Backbone.View.extend({
          * @type {Avatar.Picker}
          */
         this.avatarPicker_ = null;
+        this.usernamePicker_=  null;
+
+        // Modal view that contains the username and nickname pickers.
+        this.modalEditView_ = null;
     },
 
     /**
@@ -104,7 +149,30 @@ UserCardView = Backbone.View.extend({
         json["countExercises"] = UserCardView.countExercises;
         json["countVideos"] = UserCardView.countVideos;
         $(this.el).html(this.template(json)).find("abbr.timeago").timeago();
+
+        this.bindQtip_();
+
         return this;
+    },
+
+    bindQtip_: function() {
+        // TODO: beautify me!
+        this.$("#edit-visibility").qtip({
+            content: {
+                text: "helpful description goes here?"
+            },
+            style: {
+                classes: "ui-tooltip-youtube"
+            },
+            position: {
+                my: "top center",
+                at: "bottom center"
+            },
+            hide: {
+                fixed: true,
+                delay: 150
+            }
+        });
     },
 
     /**
@@ -159,6 +227,41 @@ UserCardView = Backbone.View.extend({
      */
     onIsCoachingLoggedInUserChanged_: function() {
         this.$(".add-remove-coach").toggle();
+    },
+
+    onDropdownEnter_: function(evt) {
+        $(evt.currentTarget).addClass("hover");
+    },
+
+    onDropdownLeave_: function(evt) {
+        $(evt.currentTarget).removeClass("hover");
+    },
+
+    onEditVisibilityCicked_: function() {
+        // TODO: set public/private flag server side
+        this.$("#edit-visibility img").toggle();
+    },
+
+    onEditNicknameClicked_: function(e) {
+        e.preventDefault();
+    },
+
+    onEditUsernameClicked_: function(e) {
+        e.preventDefault();
+
+        if (!this.usernamePicker_) {
+            this.usernamePicker_ = new UsernamePickerView({model: this.model});
+        }
+
+        if (!this.modalEditView_) {
+            this.modalEditView_ = this.$("#edit-profile-container").modal({
+                keyboard: true,
+                backdrop: true
+            });
+        }
+
+        this.modalEditView_.html(this.usernamePicker_.render().el)
+                .modal("toggle");
     }
 
 });
