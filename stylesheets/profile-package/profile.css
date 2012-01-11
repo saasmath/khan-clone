@@ -774,16 +774,25 @@ a[rel="goals"] {
 }
 .basic-stats .simple-stat {
     float: left;
-    text-align: center;
-    margin-right: 5px;
+    text-align: left;
+    margin-right: 9px;
 }
 .simple-stat .summary-icon {
     display: block;
-    width: 25px;
-    height: 25px;
-    margin: 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 1px;
+    background: #005987;
+    border-radius: 5px;
+    padding: 2px 8px;
 }
 
+.simple-stat .summary-icon.star {
+    width: 14px;
+    height: 14px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
 .username-picker {
     margin: 10px;
 }
