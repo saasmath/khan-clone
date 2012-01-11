@@ -5,7 +5,7 @@
     width: 100px;
     height: 100px;
     padding: 0;
-    margin: 0;
+    margin: 5px;
     font-size: 10px;
 
     opacity: 1.0;
@@ -80,7 +80,8 @@
     position: absolute;
     z-index: 1;
 
-    background: #999; /* must be the same as selected-indicator */
+    background: #f7f7f7;
+    border: 5px solid #999; /* must be the same as selected-indicator */
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
     border-radius: 4px;
@@ -89,10 +90,12 @@
     padding: 10px;
     margin-top: 5px;
 
-    /* TODO: make the scrollbar less ugly */
     white-space: nowrap;
     overflow-x: auto;
 
+    -moz-box-shadow: inset 0 0 0 1px #9f9f9f, inset 0 2px 4px 1px #7f7f7f;
+    -webkit-box-shadow: inset 0 0 0 1px #9f9f9f, inset 0 2px 4px 1px #7f7f7f;
+    box-shadow: inset 0 0 0 1px #9f9f9f, inset 0 2px 4px 1px #7f7f7f;
     /* made visible by JS */
     display: none;
 }
@@ -110,7 +113,7 @@
     border-bottom: 10px solid #999; /* must be the same as badge-picker */
 
     left: 50%;
-    margin-left: -15px;
+    margin-left: -10px;
     bottom: -13px;
 
     display: none;

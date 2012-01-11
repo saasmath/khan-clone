@@ -207,13 +207,9 @@ Badges.DisplayCase = Backbone.View.extend({
         this.setEditing_(true);
 
         // Visual indicator for the badge edits.
-        var self = this;
-        $(".achievement-badge", this.mainCaseEl).animate({
-            "margin": "5px"
-        }, "fast", function() {
-            $(self.el).addClass("editing");
-            self.updateEditSelection_(index);
-        });
+        var self = this;    
+        $(self.el).addClass("editing");
+        self.updateEditSelection_(index);
 
         this.showBadgePicker_();
         this.editControlEl.slideUp(350);
