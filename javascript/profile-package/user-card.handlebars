@@ -1,12 +1,21 @@
 <section class="basic-user-info" style="float: left;">
-  <div class="avatar-pic-container" style="float:left;" >
+  <div class="avatar-pic-container{{#if isSelf}} editable{{/if}}" style="float:left;" >
     <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic" >
     <div class="avatar-change-overlay" style="display: none">Change avatar</div>
   </div>
   <div class="user-deets">
-      <input type="text" value="{{nickname}}" id="nickname"
-          placeholder="Enter nickname here" class="inline-editable nickname" style="display: block;">
-      <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
+      {{#if isSelf}}
+          <input type="text" value="{{nickname}}" id="nickname"
+              placeholder="Enter nickname here" class="inline-editable nickname" style="display: block;">
+      {{else}}
+        <div>
+            <span class="nickname">{{nickname}}</span>
+        </div>
+      {{/if}}
+      <div>
+          <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
+      </div>
+      {{#if isSelf}}
       <div class="user-profile-controls">
           <ul class="dropdown">
               <li>
@@ -22,6 +31,7 @@
               <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
           </div>
       </div>
+      {{/if}}
       <div class="basic-stats clearfix">
           <div class="simple-stat"><img class="summary-icon star" src="/images/profile-icons/inset-star.png">{{countExercisesProficient}}/{{countExercises}}</div>
           <div class="simple-stat"><img class="summary-icon" src="/images/profile-icons/inset-camera.png"> {{countVideosCompleted}}/{{countVideos}}</div>
@@ -38,5 +48,6 @@
 
 <div id="edit-profile-container" class="modal fade hide" style="display: none;">
 </div>
-
+{{#if isSelf}}
 <a href="javascript:''" id="edit-visibility" style="background-color: white;">Private Profile</a>
+{{/if}}
