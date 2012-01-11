@@ -25,7 +25,7 @@
                     <a href="/summer/application-status">status</a>
                 {% else %}
                 <br><br>Please pay the processing fee of ${{ student.processing_fee|escape }} for {{ student.first_name|escape }} {{ student.last_name|escape }} via Paypal using the link below<br><br>
-                    <form action="https://www.sandbox.paypal.com/cgi-bin/webscr" method="post">
+                    <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
                         <input type="hidden" name="cmd" value="_s-xclick">
                         <input type="hidden" name="hosted_button_id" value="E3NNSXP2AXM9L">
                         <input type="hidden" name="first_name" value="{{ payee.first_name|escape }}">
