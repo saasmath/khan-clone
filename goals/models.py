@@ -19,7 +19,7 @@ class Goal(db.Model):
     # a goal is 'completed' if it's finished or abandoned. This property is
     # indexed so that we can quickly fetch currently open goals
     completed = db.BooleanProperty(default=False)
-    completed_on = db.DateTimeProperty()
+    completed_on = db.DateTimeProperty(indexed=False)
 
     # we distinguish finished and abandoned goals with this property
     abandoned = db.BooleanProperty(indexed=False)
@@ -187,11 +187,11 @@ class GoalList(object):
         return changes
 
     @staticmethod
-    def get_between_dts(user_data, dt_a, dt_b):
+    def get_updated_between_dts(user_data, dt_a, dt_b):
         query = GoalList.get_goals_query(user_data)
-        query.filter('completed_on >=', dt_a)
-        query.filter('completed_on <=', dt_b)
-        query.order('completed_on')
+        query.filter('updated_on >=', dt_a)
+        query.filter('updated_on <', dt_b)
+        query.order('updated_on')
         return query
 
 class GoalObjective(object):

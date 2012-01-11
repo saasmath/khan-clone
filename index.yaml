@@ -160,7 +160,7 @@ indexes:
 - kind: Goal
   ancestor: yes
   properties:
-  - name: completed_on
+  - name: updated_on
 
 - kind: HourlyActivityLog
   properties:
