@@ -217,7 +217,7 @@ Badges.DisplayCase = Backbone.View.extend({
 
         this.showBadgePicker_();
         this.editControlEl.slideUp(350);
-        $(document).bind("click", this.getBoundStopEditFn_());
+        $(document).one("click", this.getBoundStopEditFn_());
         return this;
     },
 
@@ -333,7 +333,6 @@ Badges.DisplayCase = Backbone.View.extend({
             });
             jelPicker.undelegate();
             this.editControlEl.slideDown(250);
-            $(document).unbind("click", this.getBoundStopEditFn_());
 
             // TODO: avoid saving if not dirty.
             this.save();
