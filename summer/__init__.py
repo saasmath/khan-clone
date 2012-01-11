@@ -7,6 +7,7 @@ import logging
 import urllib, urllib2
 
 from request_handler import RequestHandler
+from app import App
 from user_util import developer_only
 from google.appengine.ext.webapp import template
 from google.appengine.ext import db
@@ -16,8 +17,6 @@ from models import UserData
 from .models import SummerPaypalTransaction, SummerStudent, SummerParentData
 
 PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr"
-
-PAYPAL_SUMMER_ID_TOKEN = "Probably needs to go into secrets.py"
 
 FROM_EMAIL = "no-reply@khan-academy.appspotmail.com"
 
@@ -98,7 +97,7 @@ class PaypalAutoReturn(RequestHandler):
         values = {
             "cmd" : "_notify-synch",
             "tx" : txn_id,
-            "at" : PAYPAL_SUMMER_ID_TOKEN
+            "at" : App.paypal_token_id
         }
 
         try:

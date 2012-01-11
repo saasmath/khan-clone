@@ -15,6 +15,7 @@ except:
         flask_secret_key = None
         dashboard_secret = None
         khanbugz_passwd = None
+        paypal_token_id = None
 
 # A singleton shared across requests
 class App(object):
@@ -43,6 +44,8 @@ class App(object):
     dashboard_secret = secrets.dashboard_secret
 
     khanbugz_passwd = secrets.khanbugz_passwd
+
+    paypal_token_id = secrets.paypal_token_id
 
     root = os.path.dirname(__file__)
 
