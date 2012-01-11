@@ -1940,11 +1940,11 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         -ms-border-radius:6px;
         -o-border-radius:6px;
         border-radius:6px;
-        -webkit-transition:all 250ms ease-in-out;
-        -moz-transition:all 250ms ease-in-out;
-        -ms-transition:all 250ms ease-in-out;
-        -o-transition:all 250ms ease-in-out;
-        transition:all 250ms ease-in-out;
+        -webkit-transition:right 250ms ease-in-out;
+        -moz-transition:right 250ms ease-in-out;
+        -ms-transition:right 250ms ease-in-out;
+        -o-transition:right 250ms ease-in-out;
+        transition:right 250ms ease-in-out;
         cursor:pointer;
         padding: 0 12px 0 6px;
         color: white;
