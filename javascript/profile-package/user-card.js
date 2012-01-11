@@ -113,8 +113,8 @@ UserCardView = Backbone.View.extend({
         "click #edit-visibility": "onEditVisibilityCicked_",
         "click #edit-nickname": "onEditNicknameClicked_",
         "click #edit-username": "onEditUsernameClicked_",
-        "mouseenter ul.dropdown li": "onDropdownEnter_",
-        "mouseleave ul.dropdown li": "onDropdownLeave_"
+        "click ul.dropdown li": "onDropdownEnter_",
+        "blur ul.dropdown li": "onDropdownLeave_"
      },
 
     initialize: function() {

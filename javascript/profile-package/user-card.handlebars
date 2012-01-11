@@ -10,7 +10,7 @@
       <div class="user-profile-controls">
           <ul class="dropdown">
               <li>
-                  <a href="#">Edit profile</a>
+                  <span class="simple-button action-gradient">Edit profile</span>
                   <ul class="sub_menu">
                       <li><a id="edit-nickname" href="#">Nickname (does nothing)</a></li>
                       <li><a id="edit-username" href="#">Username (click me!)</a></li>
@@ -18,8 +18,8 @@
               </li>
           </ul>
           <div class="add-remove-coach-container">
-              <a href="javascript:''" class="add-remove-coach" style="background-color: white;{{#if isCoachingLoggedInUser}} display: none;{{/if}}float:left;">Add as a coach</a>
-              <a href="javascript:''" class="add-remove-coach" style="background-color: white;{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}float:left;">Remove as a coach</a>
+              <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>
+              <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
           </div>
       </div>
       <div class="basic-stats clearfix">
