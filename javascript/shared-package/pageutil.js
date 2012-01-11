@@ -180,7 +180,7 @@ function readCookie(name) {
     for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0) == " ") c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
 }
@@ -416,7 +416,7 @@ var VideoStats = {
                 // Another 10% has been watched
                 this.save();
             }
-        } else if (state == 0 && this.playing) { // ended
+        } else if (state === 0 && this.playing) { // ended
             this.playing = false;
             this.save();
         } else if (state == 2 && this.playing) { // paused
@@ -815,7 +815,7 @@ $(CSSMenus.init);
 var IEHtml5 = {
     init: function() {
         // Create a dummy version of each HTML5 element we use so that IE 6-8 can style them.
-        var html5elements = ['header', 'footer', 'nav', 'article', 'section', 'menu'];
+        var html5elements = ["header", "footer", "nav", "article", "section", "menu"];
         for (var i = 0; i < html5elements.length; i++) {
             document.createElement(html5elements[i]);
         }
@@ -1059,7 +1059,7 @@ function dynamicPackage(packageName, callback, manifest) {
             delete dynamicPackageLoader.loadingPackages[packageName];
             callback("complete");
         }
-    }
+    };
 
     this.checkComplete();
 }
@@ -1163,9 +1163,9 @@ var Review = {
             oldCount = reviewCounterElem.data("counter") || 0,
             tens = Math.floor((reviewsLeftCount % 100) / 10),
             animationOptions = {
-              duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount))
-                  * 1000 * 0.5 + 0.2,
-              easing: "easeInOutCubic"
+                duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount)) *
+                    1000 * 0.5 + 0.2,
+                easing: "easeInOutCubic"
             },
             lineHeight = parseInt(
                 reviewCounterElem.children().css("lineHeight"), 10);
