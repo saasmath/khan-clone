@@ -611,6 +611,9 @@ div.graph-notification {
  * from http://css-tricks.com/examples/SimplejQueryDropdowns/#
  * Waiting for Monsieur Jason!
  */
+.user-profile-controls .dropdown {
+    float: left;
+}
 ul.dropdown li {
     font-weight: bold;
     float: left;
@@ -670,6 +673,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bcbcbc', end
     background: #fff;
     border: 1px solid #ccc;
     box-shadow: inset 0 0 5px #bbb;
+    margin-left: 350px;
 }
 
 .profile-navigation {
@@ -753,8 +757,32 @@ a[rel="goals"] {
     border: 1px solid green;
 }
 
-input.nickname {
+.user-deets {
+    float:left;
+    margin-left: 10px;
+}
+.user-deets input.nickname {
     font-size: 150%;
+    padding: 0;
+    margin: 0;
+}
+.user-deets .add-remove-coach-container {
+    float: left;
+}
+
+.user-deets .basic-stats {
+    margin-top: 5px;
+}
+.basic-stats .simple-stat {
+    float: left;
+    text-align: center;
+    margin-right: 5px;
+}
+.simple-stat .summary-icon {
+    display: block;
+    width: 25px;
+    height: 25px;
+    margin: 0 auto;
 }
 
 .username-picker {
