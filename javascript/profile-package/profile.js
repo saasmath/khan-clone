@@ -21,7 +21,7 @@ var Profile = {
         this.profile = new UserCardModel(json.profileData);
         this.profileRoot = json.profileRoot;
         UserCardView.countVideos = json.countVideos;
-        UserCardView.countElement = json.countExercises;
+        UserCardView.countExercises = json.countExercises;
 
         Profile.render();
         Profile.router = new Profile.TabRouter();
