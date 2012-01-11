@@ -190,7 +190,6 @@ Badges.DisplayCase = Backbone.View.extend({
     setFullBadgeList: function(fullBadgeList) {
         // TODO: do we want to listen to events on the full badge list?
         this.fullBadgeList = fullBadgeList;
-        this.updateEditControls();
     },
 
     /**
@@ -218,6 +217,7 @@ Badges.DisplayCase = Backbone.View.extend({
 
         this.showBadgePicker_();
         this.editControlEl.slideUp(350);
+        $(document).bind("click", this.getBoundStopEditFn_());
         return this;
     },
 
@@ -265,6 +265,7 @@ Badges.DisplayCase = Backbone.View.extend({
                 .find(".achievement-badge")
                 .index(e.currentTarget);
         this.updateEditSelection_(index);
+        e.stopPropagation();
     },
 
     /**
@@ -312,7 +313,10 @@ Badges.DisplayCase = Backbone.View.extend({
         if (existing) {
             this.model.remove(existing);
         }
-        this.model.add(matchedBadge.get("badge").clone(), { at: this.selectedIndex });
+        this.model.add(
+                matchedBadge.get("badge").clone(),
+                { at: this.selectedIndex });
+        e.stopPropagation();
     },
 
     /**
@@ -328,11 +332,29 @@ Badges.DisplayCase = Backbone.View.extend({
                 jelRootEl.removeClass("editing");
             });
             jelPicker.undelegate();
+            this.editControlEl.slideDown(250);
+            $(document).unbind("click", this.getBoundStopEditFn_());
 
             // TODO: avoid saving if not dirty.
             this.save();
         }
         return this;
+    },
+
+    getBoundStopEditFn_: function() {
+        if (this.boundStopEditFn_) {
+            return this.boundStopEditFn_;
+        }
+        var self = this;
+        return this.boundStopEditFn_ = function(e) {
+            for (var node = e.target; node; node = node.parentNode) {
+                if (node === self.el) {
+                    // Click inside the display-case somewhere - ignore.
+                    return;
+                }
+            }
+            self.stopEdit();
+        };
     },
 
     save: function() {
@@ -341,7 +363,6 @@ Badges.DisplayCase = Backbone.View.extend({
 
     setEditing_: function(editing) {
         this.editing = editing;
-        this.updateEditControls();
     },
 
     /**
@@ -382,21 +403,9 @@ Badges.DisplayCase = Backbone.View.extend({
         }
     },
 
-    updateEditControls: function() {
-        if (!this.isEditable()) {
-            $(this.editButtonEl).hide();
-            return;
-        }
-        $(this.editButtonEl).html(this.editing ? "Stop edit" : "Edit");
-        $(this.editButtonEl).show();
-    },
-
-    toggleEdit_: function() {
-        if (!this.editing) {
-            this.edit();
-        } else {
-            this.stopEdit();
-        }
+    onCoverClicked_: function(e) {
+        this.edit();
+        e.stopPropagation();
     },
 
     /**
@@ -432,13 +441,12 @@ Badges.DisplayCase = Backbone.View.extend({
                 .append(this.mainCaseEl)
                 .append(this.badgePickerEl);
             this.editControlEl = $(".display-case-cover");
-            this.editControlEl.click(_.bind(this.toggleEdit_, this));
+            this.editControlEl.click(_.bind(this.onCoverClicked_, this));
         }
         $(this.mainCaseEl).html(this.template(this.getTemplateContext_()));
         if (this.fullBadgeList) {
             this.renderBadgePicker();
         }
-        this.updateEditControls();
         this.updateSelectionHighlight();
         return this;
     }
