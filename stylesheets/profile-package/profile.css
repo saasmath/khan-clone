@@ -568,11 +568,6 @@ div.graph-notification {
 .user-info-container .user-info {
   padding: 20px;
 }
-.user-info-container .summary-icon {
-  width: 50px;
-  height: 50px;
-  vertical-align: middle;
-}
 
 .user-info-container .avatar-pic-container {
   display: inline-block;
