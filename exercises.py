@@ -24,6 +24,7 @@ from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
+from experiments import StrugglingExperiment
 from js_css_packages import templatetags
 
 class MoveMapNodes(request_handler.RequestHandler):
@@ -379,15 +380,7 @@ class RawExercise(request_handler.RequestHandler):
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
         self.response.headers["Content-Type"] = "text/html"
-
-        if templatetags.use_compressed_packages():
-            contents = raw_exercise_contents(exercise_file)
-        else:
-            # read from the unpacked exercises directory
-            contents = raw_exercise_contents_uncached(exercise_file,
-                dir="khan-exercises/exercises")
-
-        self.response.out.write(contents)
+        self.response.out.write(raw_exercise_contents(exercise_file))
 
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def exercise_template():
@@ -411,7 +404,8 @@ def exercise_template():
 def exercise_contents(exercise):
     contents = raw_exercise_contents("%s.html" % exercise.name)
 
-    re_data_require = re.compile("^<html.*(data-require=\".*\").*>", re.MULTILINE)
+    re_data_require = re.compile("<html[^>]*(data-require=\".*?\")[^>]*>",
+        re.DOTALL)
     match_data_require = re_data_require.search(contents)
     data_require = match_data_require.groups()[0] if match_data_require else ""
 
@@ -432,17 +426,23 @@ def exercise_contents(exercise):
     if not len(body_contents):
         raise MissingExerciseException("Missing exercise body in content for exid '%s'" % exercise.name)
 
-    return map(lambda s: s.decode('utf-8'), (body_contents, script_contents, style_contents, data_require, sha1))
+    result = map(lambda s: s.decode('utf-8'), (body_contents, script_contents,
+        style_contents, data_require, sha1))
 
+    if templatetags.use_compressed_packages():
+        return result
+    else:
+        return layer_cache.UncachedResult(result)
 
 @layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
 def raw_exercise_contents(exercise_file):
-    """Cached exercise files must come from the packed directory, so we don't
-    cache unpacked files and break IE.
-    """
-    return raw_exercise_contents_uncached(exercise_file)
+    if templatetags.use_compressed_packages():
+        exercises_dir = "khan-exercises/exercises-packed"
+        safe_to_cache = True
+    else:
+        exercises_dir = "khan-exercises/exercises"
+        safe_to_cache = False
 
-def raw_exercise_contents_uncached(exercise_file, exercises_dir="khan-exercises/exercises-packed"):
     path = os.path.join(os.path.dirname(__file__), "%s/%s" % (exercises_dir, exercise_file))
 
     f = None
@@ -462,7 +462,12 @@ def raw_exercise_contents_uncached(exercise_file, exercises_dir="khan-exercises/
         raise MissingExerciseException(
                 "Missing exercise content for exid '%s'" % exercise_file)
 
-    return contents
+    if safe_to_cache:
+        return contents
+    else:
+        # we are displaying an unpacked exercise, either locally or in prod
+        # with a querystring override. It's unsafe to cache this.
+        return layer_cache.UncachedResult(contents)
 
 def make_wrong_attempt(user_data, user_exercise):
     if user_exercise and user_exercise.belongs_to(user_data):
@@ -530,12 +535,11 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         just_earned_proficiency = False
 
+        # Users can only attempt problems for themselves, so the experiment
+        # bucket always corresponds to the one for this current user
+        struggling_model = StrugglingExperiment.get_alternative_for_user(
+                 user_data, current_user=True) or StrugglingExperiment.DEFAULT
         if completed:
-
-            if user_exercise.is_struggling():
-                bingo('struggling_problems_done_post_struggling')
-                if problem_log.correct:
-                    bingo('struggling_problems_correct_post_struggling')
 
             user_exercise.total_done += 1
 
@@ -559,13 +563,15 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 bingo('struggling_problems_correct')
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
-
                     bingo(['hints_gained_proficiency_all',
                            'struggling_gained_proficiency_all',
                            'homepage_restructure_gained_proficiency_all',
                            'review_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
+                    
+                    if user_exercise.history_indicates_struggling(struggling_model):
+                        bingo('struggling_gained_proficiency_post_struggling')
 
                     user_exercise.set_proficient(user_data)
                     user_data.reassess_if_necessary()
@@ -593,15 +599,13 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 bingo('review_review_problems_done')
 
         else:
-
             # Only count wrong answer at most once per problem
             if first_response:
-
-                if user_exercise.is_struggling():
-                    bingo('struggling_problems_wrong_post_struggling')
-
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
+                
+            if user_exercise.is_struggling(struggling_model):
+                bingo('struggling_struggled_binary')
 
         # If this is the first attempt, update review schedule appropriately
         if attempt_number == 1:

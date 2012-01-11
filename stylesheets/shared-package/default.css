@@ -3758,11 +3758,6 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
   padding-left: 14px;
 }
 
-#devpanel td{
-    border:black 2px solid;
-    padding:3px;
-}
-
 .images-email {
   background-image: url(/images/email.png); /*! data-uri(/images/email.png) */
   width: 16px;
@@ -3770,7 +3765,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 }
 
 #devpanel {
-   margin: 0px auto;
+   margin: 9px auto;
    width:500px;
 }
 
