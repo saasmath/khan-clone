@@ -217,11 +217,13 @@ class UserProfile(object):
 
         # TODO: figure out if "coworkers" should affect this
         is_coached = user.is_coached_by(actor)
-        if is_coached or user.user_id == actor.user_id:
+        is_self = user.user_id == actor.user_id
+        if is_self or is_coached:
             # Full data about the user
             return UserProfile._from_user_internal(
                     user,
                     full_projection=True,
+                    is_self=is_self,
                     is_coaching_logged_in_user=is_coached)
         elif user.has_public_profile():
             # Return only public data
@@ -233,6 +235,7 @@ class UserProfile(object):
     @staticmethod
     def _from_user_internal(user,
                             full_projection=False,
+                            is_self=False,
                             is_coaching_logged_in_user=False):
 
         profile = UserProfile()
@@ -248,6 +251,7 @@ class UserProfile(object):
         profile.count_videos_completed = user.get_videos_completed()
         profile.count_exercises_proficient = len(user.all_proficient_exercises)
 
+        profile.is_self = is_self
         profile.is_coaching_logged_in_user = is_coaching_logged_in_user
 
         if full_projection:

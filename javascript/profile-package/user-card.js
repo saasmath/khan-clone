@@ -105,16 +105,19 @@ UserCardView = Backbone.View.extend({
     className: "user-info",
 
     events: {
-        "click .avatar-pic-container": "onAvatarClick_",
-        "mouseenter .avatar-pic-container": "onAvatarHover_",
-        "mouseleave .avatar-pic-container": "onAvatarLeave_",
-        "change #nickname": "onNicknameChanged_",
-        "click .add-remove-coach": "onAddRemoveCoachClicked_",
-        "click #edit-visibility": "onEditVisibilityCicked_",
-        "click #edit-nickname": "onEditNicknameClicked_",
-        "click #edit-username": "onEditUsernameClicked_",
-        "mouseenter ul.dropdown li": "onDropdownEnter_",
-        "mouseleave ul.dropdown li": "onDropdownLeave_"
+        "click .add-remove-coach": "onAddRemoveCoachClicked_"
+     },
+
+     editEvents: {
+         "click .avatar-pic-container": "onAvatarClick_",
+         "mouseenter .avatar-pic-container": "onAvatarHover_",
+         "mouseleave .avatar-pic-container": "onAvatarLeave_",
+         "change #nickname": "onNicknameChanged_",
+         "click #edit-visibility": "onEditVisibilityCicked_",
+         "click #edit-nickname": "onEditNicknameClicked_",
+         "click #edit-username": "onEditUsernameClicked_",
+         "mouseenter ul.dropdown li": "onDropdownEnter_",
+         "mouseleave ul.dropdown li": "onDropdownLeave_"
      },
 
     initialize: function() {
@@ -150,9 +153,16 @@ UserCardView = Backbone.View.extend({
         json["countVideos"] = UserCardView.countVideos;
         $(this.el).html(this.template(json)).find("abbr.timeago").timeago();
 
-        this.bindQtip_();
+        this.delegateEditEvents_();
 
         return this;
+    },
+
+    delegateEditEvents_: function() {
+        if (this.model.get("isSelf")) {
+            this.bindQtip_();
+            this.delegateEvents(this.editEvents);
+        }
     },
 
     bindQtip_: function() {

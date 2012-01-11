@@ -572,6 +572,9 @@ div.graph-notification {
 .user-info-container .avatar-pic-container {
   display: inline-block;
   position: relative;
+}
+
+.user-info-container .avatar-pic-container.editable {
   cursor: pointer;
 }
 
@@ -760,7 +763,7 @@ a[rel="goals"] {
     float:left;
     margin-left: 10px;
 }
-.user-deets input.nickname {
+.user-deets .nickname {
     font-size: 150%;
     padding: 0;
     margin: 0;
