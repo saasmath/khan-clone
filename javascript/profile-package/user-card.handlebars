@@ -15,8 +15,8 @@
       <div>
           <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
       </div>
-      {{#if isSelf}}
       <div class="user-profile-controls">
+      {{#if isSelf}}
           <ul class="dropdown">
               <li>
                   <span class="simple-button action-gradient">Edit profile</span>
@@ -26,12 +26,13 @@
                   </ul>
               </li>
           </ul>
+      {{else}}
           <div class="add-remove-coach-container">
               <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>
               <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
           </div>
-      </div>
       {{/if}}
+      </div>
       <div class="basic-stats clearfix">
           <div class="simple-stat"><img class="summary-icon star" src="/images/profile-icons/inset-star.png">{{countExercisesProficient}}/{{countExercises}}</div>
           <div class="simple-stat"><img class="summary-icon" src="/images/profile-icons/inset-camera.png"> {{countVideosCompleted}}/{{countVideos}}</div>
@@ -49,5 +50,5 @@
 <div id="edit-profile-container" class="modal fade hide" style="display: none;">
 </div>
 {{#if isSelf}}
-<a href="javascript:''" id="edit-visibility" style="background-color: white;">Private Profile</a>
+<a href="javascript:''" id="edit-visibility" style="background-color: white;" class="clearfix">Private Profile</a>
 {{/if}}
