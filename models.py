@@ -829,6 +829,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
     # A list of badge names that the user has chosen to display publicly
+    # Note that this list is not contiguous - it may have "holes" in it
+    # indicated by the reserved string "__empty__"
     public_badges = object_property.TsvProperty()
 
     # The name of the avatar the user has chosen. See avatar.util_avatar.py

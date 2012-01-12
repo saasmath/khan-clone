@@ -234,7 +234,14 @@ def get_public_user_badges(user_data=None):
 
     public_badges = user_data.public_badges or []
     full_dict = all_badges_dict()
-    return [full_dict[name] for name in public_badges if name in full_dict]
+    results = []
+    for name in public_badges:
+        if name in full_dict:
+            results.append(full_dict[name])
+        else:
+            # assert - name is "__empty__"
+            results.append(None) # empty slot
+    return results
 
 class ViewBadges(request_handler.RequestHandler):
 

@@ -132,7 +132,7 @@ UserCardView = Backbone.View.extend({
          * @type {Avatar.Picker}
          */
         this.avatarPicker_ = null;
-        this.usernamePicker_=  null;
+        this.usernamePicker_ = null;
 
         // Modal view that contains the username and nickname pickers.
         this.modalEditView_ = null;
