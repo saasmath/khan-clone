@@ -626,17 +626,16 @@ ul.dropdown li a {
 ul.dropdown li:last-child a {
     border-right: none;
 }
-ul.dropdown li.hover {
+ul.dropdown li {
     color: black;
     position: relative;
 }
-ul.dropdown li.hover a {
+ul.dropdown li a {
     color: black;
 }
-ul.dropdown ul.sub_menu { display: none;}
-ul.dropdown li.hover ul.sub_menu {
+ul.dropdown ul.sub_menu {
+    display: none;
     background: #ccc;
-    display: block;
     position: absolute;
     min-width: 120px;
     border: 2px solid #999;
@@ -644,10 +643,10 @@ ul.dropdown li.hover ul.sub_menu {
 
     box-shadow: 0 2px 5px rgba(0,0,0,.3);
 }
-ul.dropdown li.hover ul.sub_menu li:hover{
+ul.dropdown ul.sub_menu li:hover{
     background: #F3D673;
 }
-ul.dropdown li.hover ul.sub_menu:before{
+ul.dropdown ul.sub_menu:before{
     content: ' ';
     position: absolute;
     z-index: 11;
@@ -663,7 +662,6 @@ ul.dropdown li.hover ul.sub_menu:before{
     left: 25%;
     margin-left: -10px;
     top: -25px;
-
     display: block;
 }
 ul.dropdown ul li {

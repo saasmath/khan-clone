@@ -116,8 +116,7 @@ UserCardView = Backbone.View.extend({
          "click #edit-visibility": "onEditVisibilityCicked_",
          "click #edit-nickname": "onEditNicknameClicked_",
          "click #edit-username": "onEditUsernameClicked_",
-         "click ul.dropdown li": "onDropdownEnter_",
-         "blur ul.dropdown li": "onDropdownLeave_"
+         "click #edit-profile": "onEditProfileClicked_"
      },
 
     initialize: function() {
@@ -239,12 +238,33 @@ UserCardView = Backbone.View.extend({
         this.$(".add-remove-coach").toggle();
     },
 
-    onDropdownEnter_: function(evt) {
-        $(evt.currentTarget).addClass("hover");
+    /**
+     * On a click outside the edit profile submenu,
+     * hide the submenu and unbind this handler.
+     */
+    boundHideSubMenuFn_: function(e) {
+        var jelSubMenu = $(".sub_menu");
+        for (var node = e.target; node; node = node.parentNode) {
+            if (node === jelSubMenu.get(0)) {
+                // Click inside the submenu somewhere - ignore.
+                return;
+            }
+        }
+        jelSubMenu.hide();
+        $(document).unbind(e);
     },
 
-    onDropdownLeave_: function(evt) {
-        $(evt.currentTarget).removeClass("hover");
+    onEditProfileClicked_: function(evt) {
+        evt.stopPropagation();
+        var jelSubMenu = $(".sub_menu").toggle();
+
+        if (jelSubMenu.is(":visible")) {
+            $(document).bind("click", this.boundHideSubMenuFn_);
+        } else {
+            // Because the edit profile button can also hide the submenu,
+            // unbind this handler so they don't pile up.
+            $(document).unbind("click", this.boundHideSubMenuFn_);
+        }
     },
 
     onEditVisibilityCicked_: function() {
