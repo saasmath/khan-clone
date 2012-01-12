@@ -37,27 +37,30 @@ var GoalCreator = {
     },
 
     initVideos: function() {
-        $("#goal-choose-videos").find("#smarthistory").remove();
+        $("#goal-choose-videos")
 
-        $("#goal-choose-videos").delegate(".vl", "click", function(e) {
-            // prevent the href navigation from occuring
-            e.preventDefault();
+            // can't set goals for content only on smarthistory.khanacademy.org
+            .find("#smarthistory").remove().end()
 
-            var jel = $(e.currentTarget);
-            var span = jel.children("span");
-            var image = $(span).css("background-image");
+            .on("click", ".vl", function(e) {
+                // prevent the href navigation from occuring
+                e.preventDefault();
 
-            if (image.indexOf("indicator-complete") == -1)
-            {
-                // video isn't complete, so set a goal
-                var name = jel.attr("data-id");
-                var title = span.text();
-                GoalCreator.onVideoClicked(name, title);
-            }
-            else {
-                alert("You can't add a video you've already watched to a goal.");
-            }
-        });
+                var jel = $(e.currentTarget);
+                var span = jel.children("span");
+                var image = $(span).css("background-image");
+
+                if (image.indexOf("indicator-complete") == -1)
+                {
+                    // video isn't complete, so set a goal
+                    var name = jel.attr("data-id");
+                    var title = span.text();
+                    GoalCreator.onVideoClicked(name, title);
+                }
+                else {
+                    alert("You can't add a video you've already watched to a goal.");
+                }
+            });
 
         $("#goal-choose-videos .vl").each(function(i, element) {
             var jel = $(element);
