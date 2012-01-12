@@ -823,16 +823,9 @@ IEHtml5.init();
 
 var VideoViews = {
     init: function() {
-        var seedTime = new Date(2011, 3, 22);  //Seed Date is set to October 31, 2010  0-January, 11-december
-        var seedTotalViews = 50397618;
-        var seedDailyViews = 170000;
-
-        var currentTime = new Date();
-        var secondsSince = (currentTime.getTime() - seedTime.getTime()) / 1000;
-        var viewsPerSecond = seedDailyViews / 24 / 3600;
-        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince * viewsPerSecond);
-
-        var totalViewsString = addCommas("" + estimatedTotalViews);
+        // Exponential fit calculated mid-Jan 2012
+        var estimatedTotalViews = 1.5898395409191447e-19 * Math.exp(4.659582953415592e-11 * (+new Date()));
+        var totalViewsString = addCommas("" + Math.round(estimatedTotalViews));
 
         $("#page_num_visitors").append(totalViewsString);
         $("#page_visitors").css("display", "inline");
