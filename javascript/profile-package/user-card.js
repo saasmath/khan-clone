@@ -57,7 +57,7 @@ UserCardModel = Backbone.Model.extend({
 
         if (options) {
             options = $.extend({
-                url: "/api/v1/user/coaches/" + this.get("email"),
+                url: "/api/v1/user/coaches/" + this.get("username"),
                 type: isCoaching ? "DELETE" : "POST",
                 dataType: "json"
             }, options);

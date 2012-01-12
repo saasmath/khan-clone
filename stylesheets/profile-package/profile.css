@@ -799,17 +799,13 @@ a[rel="goals"] {
     padding: 0;
     margin: 0;
 }
-.user-deets .add-remove-coach-container {
-    float: left;
-    margin-left: 5px;
-}
 .user-deets .add-remove-coach {
     display: inline;
 }
-
 .user-deets .basic-stats {
     margin-top: 14px;
 }
+
 .basic-stats .simple-stat {
     float: left;
     text-align: left;
