@@ -669,7 +669,7 @@ class UniqueUsername(db.Model):
 
     # Usernames must be at least 5 characters long (excluding periods), must
     # start with a letter
-    VALID_KEY_NAME_RE = re.compile('[a-z][a-z0-9]{4,}')
+    VALID_KEY_NAME_RE = re.compile('^[a-z][a-z0-9]{4,}$')
 
     @staticmethod
     def is_valid_username(username, key_name=None):
@@ -899,28 +899,22 @@ class UserData(GAEBingoIdentityModel, db.Model):
             return "_em" + urllib.quote(self.user_email)
 
     @staticmethod
-    def get_user_data_from_email_or_username(email_or_username):
-        email = None
-        username = None
+    def get_from_url_segment(segment):
+        username_or_email = None
 
-        if email_or_username:
-            email_or_username = urllib.unquote(email_or_username)
-            if email_or_username.startswith("_fb"):
-                email = email_or_username.replace("_fb", FACEBOOK_ID_PREFIX)
-            elif email_or_username.startswith("_em"):
-                email = email_or_username.replace("_em", "")
-            elif email_or_username.startswith("_ph"):
+        if segment:
+            segment = urllib.unquote(segment)
+            if segment.startswith("_fb"):
+                username_or_email = segment.replace("_fb", FACEBOOK_ID_PREFIX)
+            elif segment.startswith("_em"):
+                username_or_email = segment.replace("_em", "")
+            elif segment.startswith("_ph"):
                 # TODO: phantom or pre phantom
                 logging.critical("turtle party")
             else:
-                username = email_or_username
+                username_or_email = segment
 
-        if email:
-            return UserData.get_possibly_current_user(email)
-        elif username:
-            return UserData.get_possibly_current_user_by_username(email_or_username)
-
-        return None
+        return UserData.get_from_username_or_email(username_or_email)
 
     @property
     def profile_root(self):
@@ -1012,6 +1006,20 @@ class UserData(GAEBingoIdentityModel, db.Model):
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
+
+    @staticmethod
+    def get_from_username_or_email(username_or_email):
+        if not username_or_email:
+            return None
+
+        user_data = None
+
+        if UniqueUsername.is_valid_username(username_or_email):
+            user_data = UserData.get_from_username(username_or_email)
+        else:
+            user_data = UserData.get_possibly_current_user(username_or_email)
+
+        return user_data
 
     # Avoid an extra DB call in the (fairly often) case that the requested email
     # is the email of the currently logged-in user

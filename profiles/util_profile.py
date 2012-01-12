@@ -158,7 +158,7 @@ class ViewProfile(request_handler.RequestHandler):
         """
         # TODO: What URL for phantoms?
         current_user_data = UserData.current() or UserData.pre_phantom()
-        user_data = UserData.get_user_data_from_email_or_username(email_or_username)
+        user_data = UserData.get_from_url_segment(email_or_username)
 
         if not user_data:
             user_data = current_user_data
