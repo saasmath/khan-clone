@@ -115,6 +115,23 @@ def get_user_data_coach_from_request():
 
     return user_data_coach
 
+def get_user_data_from_json(json):
+    """ Return the user_data specified by a username or an email.
+
+    Expects {'username': "<coach username>" or {'email': "<coach email>"}
+    """
+    if not json:
+        return None
+
+    user_data = None
+
+    if 'username' in json:
+        user_data = models.UserData.get_from_username(json['username'])
+    elif 'email' in json:
+        user_data = models.UserData.get_possibly_current_user(json['email'])
+
+    return user_data
+
 @route("/api/v1/playlists", methods=["GET"])
 @jsonp
 @cache_with_key_fxn_and_param(
@@ -405,40 +422,43 @@ def update_user_profile():
                 not user_data.claim_username(username)):
             # TODO: How much do we want to communicate to the user?
             return api_invalid_param_response("Error!")
-    
-@route("/api/v1/user/coaches/<coach_username>", methods=["POST"])
+
+@route("/api/v1/user/coaches", methods=["POST"])
 @oauth_required()
 @jsonp
 @jsonify
-def add_coach(coach_username):
-    """ Add the coach specified by coach_username
-    for the currently logged in user.
+def add_coach():
+    """ Add a coach for the currently logged in user.
+
+    Expects JSON with a "username" or "email" field that specifies the coach.
     """
     # TODO: Remove redundant path/logic in coaches.py
-    current_user_data = models.UserData.current()
-    coach_user_data = models.UserData.get_from_username(coach_username)
+    coach_user_data = get_user_data_from_json(request.json)
 
     if not coach_user_data:
-        return api_invalid_param_response("Invalid coach username.")
+        return api_invalid_param_response("Invalid coach email or username.")
 
+    current_user_data = models.UserData.current()
     if not current_user_data.is_coached_by(coach_user_data):
         current_user_data.coaches.append(coach_user_data.key_email)
         current_user_data.put()
 
-@route("/api/v1/user/coaches/<coach_username>", methods=["DELETE"])
+@route("/api/v1/user/coaches", methods=["DELETE"])
 @oauth_required()
 @jsonp
 @jsonify
-def remove_coach(coach_username):
-    """ Remove the coach specified by coach_username
-    for the currently logged in user.
+def remove_coach():
+    """ Remove a coach for the currently logged in user.
+
+    Expects JSON with a "username" or "email" field that specifies the coach.
     """
     # TODO: Remove redundant path/logic in coaches.py
-    current_user_data = models.UserData.current()
-    coach_user_data = models.UserData.get_from_username(coach_username)
+    coach_user_data = get_user_data_from_json(request.json)
 
     if not coach_user_data:
-        return api_invalid_param_response("Invalid coach username.")
+        return api_invalid_param_response("Invalid coach email or username.")
+
+    current_user_data = models.UserData.current()
 
     if current_user_data.student_lists:
         actual_lists = StudentList.get(current_user_data.student_lists)
