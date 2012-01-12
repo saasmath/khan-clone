@@ -801,19 +801,21 @@ var Profile = {
     AddObjectiveHover: function(element) {
         Profile.hoverContent(element.find(".objective"));
     },
+
     render: function() {
         var profileTemplate = Templates.get("profile.profile");
 
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
-        $("#profile-content").html(
-                profileTemplate({profileRoot: this.profileRoot}));
+        $("#profile-content").html(profileTemplate({
+            profileRoot: this.profileRoot,
+            profileData: this.profile.toJSON()
+        }));
 
         // Show only the user card tab,
         // since the Backbone default route isn't triggered
         // when visiting khanacademy.org/profile
-        $("#tab-content-user-profile").show()
-            .siblings().hide();
+        $("#tab-content-user-profile").show().siblings().hide();
 
         Profile.populateUserCard();
         Profile.populateAchievements();
@@ -822,6 +824,13 @@ var Profile = {
         // TODO: Might there be a better way
         // for server-side + client-side to co-exist in harmony?
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
+
+        this.profile.bind("change:nickname", function(profile) {
+            $("#profile-tab-link").text(profile.get("nickname"));
+        });
+        this.profile.bind("change:avatarSrc", function(profile) {
+            $(".profile-tab-avatar").attr("src", profile.get("avatarSrc"));
+        });
     },
 
     populateUserCard: function() {

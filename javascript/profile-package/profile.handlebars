@@ -6,7 +6,10 @@
 
 <menu class="profile-navigation">
     <ul class="vertical-tab-list">
-        <li><a href="{{profileRoot}}" class="tab-link has-icon no-recolor" rel="profile">Your Profile</a></li>
+        <li><a href="{{profileRoot}}" class="tab-link no-recolor" rel="profile">
+            <img src="{{profileData.avatarSrc}}" class="profile-tab-avatar">
+            <span id="profile-tab-link" class="profile-tab-text">{{profileData.nickname}}</span>
+        </a></li>
         <li><a href="{{profileRoot}}/achievements" class="tab-link has-icon no-recolor" rel="achievements">Achievements</a></li>
         <li><a href="{{profileRoot}}/goals" class="tab-link has-icon no-recolor" rel="goals">Goals (beta)</a></li>
         <li>
