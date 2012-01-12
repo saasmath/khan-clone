@@ -24,6 +24,7 @@ from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
 from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
+from experiments import StrugglingExperiment
 from js_css_packages import templatetags
 
 class MoveMapNodes(request_handler.RequestHandler):
@@ -534,12 +535,11 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         just_earned_proficiency = False
 
+        # Users can only attempt problems for themselves, so the experiment
+        # bucket always corresponds to the one for this current user
+        struggling_model = StrugglingExperiment.get_alternative_for_user(
+                 user_data, current_user=True) or StrugglingExperiment.DEFAULT
         if completed:
-
-            if user_exercise.is_struggling():
-                bingo('struggling_problems_done_post_struggling')
-                if problem_log.correct:
-                    bingo('struggling_problems_correct_post_struggling')
 
             user_exercise.total_done += 1
 
@@ -563,13 +563,15 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 bingo('struggling_problems_correct')
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
-
                     bingo(['hints_gained_proficiency_all',
                            'struggling_gained_proficiency_all',
                            'homepage_restructure_gained_proficiency_all',
                            'review_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
+                    
+                    if user_exercise.history_indicates_struggling(struggling_model):
+                        bingo('struggling_gained_proficiency_post_struggling')
 
                     user_exercise.set_proficient(user_data)
                     user_data.reassess_if_necessary()
@@ -597,15 +599,13 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 bingo('review_review_problems_done')
 
         else:
-
             # Only count wrong answer at most once per problem
             if first_response:
-
-                if user_exercise.is_struggling():
-                    bingo('struggling_problems_wrong_post_struggling')
-
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
+                
+            if user_exercise.is_struggling(struggling_model):
+                bingo('struggling_struggled_binary')
 
         # If this is the first attempt, update review schedule appropriately
         if attempt_number == 1:

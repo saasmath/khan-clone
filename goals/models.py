@@ -24,8 +24,8 @@ class Goal(db.Model):
     # we distinguish finished and abandoned goals with this property
     abandoned = db.BooleanProperty(indexed=False)
 
-    created_on = db.DateTimeProperty(auto_now_add=True, indexed=False)
-    updated_on = db.DateTimeProperty(auto_now=True, indexed=False)
+    created_on = db.DateTimeProperty(auto_now_add=True)
+    updated_on = db.DateTimeProperty(auto_now=True)
 
     def get_visible_data(self, user_exercise_graph=None):
         data = dict(
@@ -41,9 +41,7 @@ class Goal(db.Model):
 
         if self.completed:
             data['completed_ago'] = timesince_ago(self.completed_on)
-            td = self.completed_on - self.created_on
-            completed_seconds = (td.seconds + td.days * 24 * 3600)
-            data['completed_time'] = seconds_to_time_string(completed_seconds)
+            data['completed_time'] = self.completed_time
 
         data['objectives'] = [dict(
                 type=obj.__class__.__name__,
@@ -113,6 +111,14 @@ class Goal(db.Model):
 
         return changed
 
+    @property
+    def completed_time(self):
+        td = self.completed_on - self.created_on
+        s = td.seconds + td.days * 24 * 3600
+        if td.microseconds > 0:
+            s += 1
+        return seconds_to_time_string(s)
+
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
 class GoalList(object):
@@ -180,6 +186,13 @@ class GoalList(object):
             db.put(changes + user_changes)
         return changes
 
+    @staticmethod
+    def get_updated_between_dts(user_data, dt_a, dt_b):
+        query = GoalList.get_goals_query(user_data)
+        query.filter('updated_on >=', dt_a)
+        query.filter('updated_on <', dt_b)
+        query.order('updated_on')
+        return query
 
 class GoalObjective(object):
     # Objective status
