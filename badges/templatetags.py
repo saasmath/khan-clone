@@ -60,8 +60,10 @@ def badge_block(badge, user_badge=None, show_frequency=False, user_data_student=
     if show_frequency:
         frequency = badge.frequency()
 
+    can_become_goal = user_data_student and not user_data_student.is_phantom and not badge.is_owned and badge.is_goal
+
     template_values = {"badge": badge, "user_badge": user_badge, "extended_description": badge.safe_extended_description, 
-        "frequency": frequency, "user_data": user_data_student}
+        "frequency": frequency, "can_become_goal": can_become_goal}
 
     return shared_jinja.get().render_template("badges/badge_block.html", **template_values)
 
