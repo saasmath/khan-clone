@@ -30,6 +30,7 @@ class UsernameTest(unittest.TestCase):
         self.assertFalse(self.validate('B@dCharacters'))
         self.assertFalse(self.validate('I cannot read instructions'))
         self.assertFalse(self.validate(u'h\u0400llojello')) # Cyrillic chars
+        self.assertFalse(self.validate('mrpants@khanacademy.org'))
 
     def test_good_user_name_validates(self):
         self.assertTrue(self.validate('poopybutt'))

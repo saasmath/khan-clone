@@ -56,22 +56,14 @@ UserCardModel = Backbone.Model.extend({
         this.set({"isCoachingLoggedInUser": !isCoaching});
 
         if (options) {
-            var username = this.get("username"),
-                email = this.get("email"),
-                data = {};
-
-            if (username !== "") {
-                data.username = username;
-            } else if (email !== "") {
-                data.email = email;
-            }
-
             options = $.extend({
                 url: "/api/v1/user/coaches",
-                type: isCoaching ? "DELETE" : "POST",
+                type: isCoaching ? "DELETE" : "PUT",
                 dataType: "json",
                 contentType: "application/json",
-                data: JSON.stringify(data)
+                data: JSON.stringify({
+                        coach: this.get("username") || this.get("email")
+                    })
             }, options);
 
             $.ajax(options);
