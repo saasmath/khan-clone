@@ -285,6 +285,10 @@ Badges.DisplayCase = Backbone.View.extend({
      * Handles a click to a delete button for a badge in the main display case.
      */
     onDeleteBadgeClicked_: function(e) {
+        // Prevent the badge click from being processed, since
+        // the X is a child of the badge.
+        e.stopPropagation();
+
         if (!this.editing) {
             // Noop when not editing.
             return;
@@ -306,16 +310,14 @@ Badges.DisplayCase = Backbone.View.extend({
             this.model.add(Badges.Badge.EMPTY_BADGE, { at: index });
         }
         this.updateEditSelection_(index);
-
-        // Prevent the badge click from being processed, since
-        // the X is a child of the badge.
-        e.stopPropagation();
     },
 
     /**
      * Handles a click to a badge in the badge picker in edit mode.
      */
     onBadgeInPickerClicked_: function(e) {
+        e.stopPropagation();
+
         if ($(e.currentTarget).hasClass("used")) {
             // Ignore badges already in the main case.
             return;
@@ -341,7 +343,6 @@ Badges.DisplayCase = Backbone.View.extend({
         this.model.add(
                 matchedBadge.get("badge").clone(),
                 { at: this.selectedIndex });
-        e.stopPropagation();
     },
 
     /**
