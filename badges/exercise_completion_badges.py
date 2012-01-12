@@ -1,8 +1,13 @@
 import models
 from badges import Badge, BadgeCategory
+import simplejson as json
 
 # All badges awarded for completing some subset of exercises inherit from ExerciseCompletionBadge
 class ExerciseCompletionBadge(Badge):
+
+    def __init__(self):
+        Badge.__init__(self)
+        self.is_goal = True
 
     def is_satisfied_by(self, *args, **kwargs):
         user_data = kwargs.get("user_data", None)
@@ -18,17 +23,24 @@ class ExerciseCompletionBadge(Badge):
 
         return True
 
-    def extended_description(self):
-        s_exercises = ""
-        for exercise_name in self.exercise_names_required:
-            badge_name = models.Exercise.to_display_name(exercise_name)
-            if len(s_exercises) > 80:
-                badge_name = models.Exercise.to_short_name(exercise_name)
+    def goal_objectives(self):
+        if self.exercise_names_required:
+            return json.dumps(self.exercise_names_required)
+        return
 
-            if len(badge_name) > 0:
-                if len(s_exercises) > 0:
-                    s_exercises += ", "
-                s_exercises += badge_name
+    def extended_description(self):
+        badges = []
+        total_len = 0;
+
+        for exercise_name in self.exercise_names_required:
+            display_name = models.Exercise.to_display_name(exercise_name) if (total_len < 80) \
+                else models.Exercise.to_short_name(exercise_name)
+
+            badges.append({ "display_name":display_name, "name":exercise_name })
+            total_len += len(display_name)
+
+        badge_names = [exercise["display_name"] for exercise in badges]
+        s_exercises = ", ".join(badge_names)
 
         return "Achieve proficiency in %s" % s_exercises
 
@@ -73,6 +85,7 @@ class TopLevelArithmeticianBadge(ChallengeCompletionBadge):
         self.description = "Master of Arithmetic"
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
+        self.is_goal = False
     
     def icon_src(self):
         return "/images/badges/Arithmetic.png"
@@ -108,6 +121,7 @@ class TopLevelTrigonometricianBadge(ChallengeCompletionBadge):
         self.description = "Master of Trigonometry"
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
+        self.is_goal = False
     
     def icon_src(self):
         return "/images/badges/Geometry-Trig.png"
@@ -143,6 +157,7 @@ class TopLevelPrealgebraistBadge(ChallengeCompletionBadge):
         self.description = "Master of Pre-algebra"
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
+        self.is_goal = False
     
     def icon_src(self):
         return "/images/badges/Pre-Algebra.png"
@@ -194,6 +209,7 @@ class TopLevelAlgebraistBadge(ChallengeCompletionBadge):
         self.description = "Master of Algebra"
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
+        self.is_goal = False
     
     def icon_src(self):
         return "/images/badges/Algebra.png"
