@@ -1249,7 +1249,6 @@ def create_user_goal():
 
     objective_descriptors = []
 
-    goal_exercises = GoalList.exercises_in_current_goals(user_data)
     goal_videos = GoalList.videos_in_current_goals(user_data)
 
     if json:
