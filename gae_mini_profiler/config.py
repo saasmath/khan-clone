@@ -4,6 +4,7 @@ from google.appengine.api import users
 # will only be enabled for requests made by the following GAE users.
 enabled_profiler_emails = [
     "benkomalo@gmail.com",
+    "chris@khanacademy.org",
     "davidhu91@gmail.com",
     "dmnd@desmondbrand.com",
     "jace.kohlmeier@gmail.com",
