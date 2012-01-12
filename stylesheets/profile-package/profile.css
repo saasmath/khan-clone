@@ -794,6 +794,7 @@ a[rel="goals"] {
     font-size: 150%;
     padding: 0;
     margin: 0;
+    width: 220px;
 }
 .user-deets .add-remove-coach {
     display: inline;
