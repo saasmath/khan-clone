@@ -141,8 +141,7 @@ var Profile = {
         },
 
         showDefault: function() {
-            $("#tab-content-user-profile").show()
-                .siblings().hide();
+            $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
         },
 
@@ -835,7 +834,6 @@ var Profile = {
 
     populateUserCard: function() {
         var view = new UserCardView({model: this.profile});
-
         $(".user-info-container").html(view.render().el);
     },
 

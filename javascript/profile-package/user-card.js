@@ -105,7 +105,7 @@ var ProfileModel = Backbone.Model.extend({
 });
 
 UserCardView = Backbone.View.extend({
-    className: "user-info",
+    className: "user-card",
 
     events: {
         "click .add-remove-coach": "onAddRemoveCoachClicked_"

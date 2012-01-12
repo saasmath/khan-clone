@@ -553,12 +553,12 @@ div.graph-notification {
 #stats-filters #targetDatepicker{
   display:inline-block;
 }
-.user-info-container {
-  background: #eee;
-  border-radius: 5px;
-}
 .user-info-container .user-info {
   padding: 20px;
+  background: #eee;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
 }
 
 .user-info-container .avatar-pic-container {
