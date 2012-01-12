@@ -2,14 +2,12 @@
  * Code to handle the public components of a profile.
  */
 
-// TODO: rename UserCardModel
-
 /**
  * Profile information about a user.
  * May be complete, partially filled, or mostly empty depending on the
  * permissions the current user has to this profile.
  */
-UserCardModel = Backbone.Model.extend({
+var ProfileModel = Backbone.Model.extend({
     defaults: {
         "avatarName": "darth",
         "avatarSrc": "/images/darth.png",

@@ -18,7 +18,7 @@ var Profile = {
      * rendered from the server. See templates/viewprofile.html for details.
      */
     init: function(json) {
-        this.profile = new UserCardModel(json.profileData);
+        this.profile = new ProfileModel(json.profileData);
         this.profileRoot = json.profileRoot;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
