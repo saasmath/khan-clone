@@ -216,18 +216,23 @@ class UserProfile(object):
         """
 
         # TODO: figure out if "coworkers" should affect this
-        is_coached = user.is_coached_by(actor)
         is_self = user.user_id == actor.user_id
-        if is_self or is_coached:
+        user_is_coached_by_actor = user.is_coached_by(actor)
+        actor_is_coached_by_user = actor.is_coached_by(user)
+
+        if is_self or user_is_coached_by_actor:
             # Full data about the user
             return UserProfile._from_user_internal(
                     user,
                     full_projection=True,
-                    is_self=is_self,
-                    is_coaching_logged_in_user=is_coached)
+                    is_coaching_logged_in_user=actor_is_coached_by_user,
+                    is_self=is_self)
         elif user.has_public_profile():
             # Return only public data
-            return UserProfile._from_user_internal(user, full_projection=False)
+            return UserProfile._from_user_internal(
+                    user,
+                    full_projection=False,
+                    is_coaching_logged_in_user=actor_is_coached_by_user)
         else:
             # Return stub data
             return UserProfile()
@@ -235,8 +240,8 @@ class UserProfile(object):
     @staticmethod
     def _from_user_internal(user,
                             full_projection=False,
-                            is_self=False,
-                            is_coaching_logged_in_user=False):
+                            is_coaching_logged_in_user=False,
+                            is_self=False):
 
         profile = UserProfile()
 
