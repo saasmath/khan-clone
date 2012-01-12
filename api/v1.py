@@ -398,9 +398,11 @@ def update_user_profile():
             user_data.avatar_name = avatar_name
 
     user_data.put()
-    if profile_json['username'] is not None:
+
+    if profile_json['username']:
         username = profile_json['username']
-        if not user_data.claim_username(username):
+        if ((username != user_data.username) and
+                not user_data.claim_username(username)):
             # TODO: How much do we want to communicate to the user?
             return api_invalid_param_response("Error!")
     
