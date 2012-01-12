@@ -847,7 +847,7 @@ var Profile = {
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
         $(".sticker-book").append(displayCase.render().el);
 
-        // Asynchronously load the full badge information in the background.
+        // Asynchronously load the full badge information in the background if
         $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
@@ -858,16 +858,21 @@ var Profile = {
             dataType: "json",
             success: function(data) {
 
-                // TODO: save and cache these objects
-                var fullBadgeList = new Badges.UserBadgeList();
+                if (Profile.profile.get("isSelf")) {
+                    // The display-case is only editable if you're viewing your
+                    // own profile
 
-                var collection = data["badgeCollections"];
-                $.each(collection, function(i, categoryJson) {
-                    $.each(categoryJson["userBadges"], function(j, json) {
-                        fullBadgeList.add(new Badges.UserBadge(json));
+                    // TODO: save and cache these objects
+                    var fullBadgeList = new Badges.UserBadgeList();
+
+                    var collection = data["badgeCollections"];
+                    $.each(collection, function(i, categoryJson) {
+                        $.each(categoryJson["userBadges"], function(j, json) {
+                            fullBadgeList.add(new Badges.UserBadge(json));
+                        });
                     });
-                });
-                displayCase.setFullBadgeList(fullBadgeList);
+                    displayCase.setFullBadgeList(fullBadgeList);
+                }
 
                 // TODO: make the rendering of the full badge page use the models above
                 // and consolidate the information

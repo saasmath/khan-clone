@@ -20,7 +20,8 @@ UserCardModel = Backbone.Model.extend({
         "isCoachingLoggedInUser": false,
         "nickname": "",
         "points": 0,
-        "username": ""
+        "username": "",
+        "isSelf": false
     },
 
     url: "/api/v1/user/profile",

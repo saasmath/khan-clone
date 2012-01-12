@@ -681,13 +681,19 @@ ul.dropdown ul li {
     left: 0;
     right: 0;
     background: rgb(188,188,188); /* Old browsers */
-background: -moz-linear-gradient(top,  rgba(188,188,188,1) 0%, rgba(117,117,117,1) 50%, rgba(12,12,12,1) 51%, rgba(7,7,7,1) 100%); /* FF3.6+ */
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(188,188,188,1)), color-stop(50%,rgba(117,117,117,1)), color-stop(51%,rgba(12,12,12,1)), color-stop(100%,rgba(7,7,7,1))); /* Chrome,Safari4+ */
-background: -webkit-linear-gradient(top,  rgba(188,188,188,.2) 0%,rgba(117,117,117,.2) 50%,rgba(12,12,12,.2) 51%,rgba(7,7,7,.2) 100%); /* Chrome10+,Safari5.1+ */
-background: -o-linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* Opera 11.10+ */
-background: -ms-linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* IE10+ */
-background: linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* W3C */
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bcbcbc', endColorstr='#070707',GradientType=0 ); /* IE6-9 */
+    background: -moz-linear-gradient(top,  rgba(188,188,188,1) 0%, rgba(117,117,117,1) 50%, rgba(12,12,12,1) 51%, rgba(7,7,7,1) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(188,188,188,1)), color-stop(50%,rgba(117,117,117,1)), color-stop(51%,rgba(12,12,12,1)), color-stop(100%,rgba(7,7,7,1))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  rgba(188,188,188,.2) 0%,rgba(117,117,117,.2) 50%,rgba(12,12,12,.2) 51%,rgba(7,7,7,.2) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* IE10+ */
+    background: linear-gradient(top,  rgba(188,188,188,1) 0%,rgba(117,117,117,1) 50%,rgba(12,12,12,1) 51%,rgba(7,7,7,1) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#bcbcbc', endColorstr='#070707',GradientType=0 ); /* IE6-9 */
+
+    cursor: default;
+}
+
+.display-case-cover.editable {
+    cursor: pointer;
 }
 
 .sticker-book {

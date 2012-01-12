@@ -208,6 +208,7 @@ Badges.DisplayCase = Backbone.View.extend({
     setFullBadgeList: function(fullBadgeList) {
         // TODO: do we want to listen to events on the full badge list?
         this.fullBadgeList = fullBadgeList;
+        $(this.editControlEl).toggleClass("editable", this.isEditable());
     },
 
     /**
@@ -441,7 +442,9 @@ Badges.DisplayCase = Backbone.View.extend({
     },
 
     onCoverClicked_: function(e) {
-        this.edit();
+        if (this.isEditable()) {
+            this.edit();
+        }
         e.stopPropagation();
     },
 
@@ -479,6 +482,7 @@ Badges.DisplayCase = Backbone.View.extend({
                 .append(this.badgePickerEl);
             this.editControlEl = $(".display-case-cover");
             this.editControlEl.click(_.bind(this.onCoverClicked_, this));
+            $(this.editControlEl).toggleClass("editable", this.isEditable());
         }
         $(this.mainCaseEl).html(this.template(this.getTemplateContext_()));
         if (this.fullBadgeList) {
