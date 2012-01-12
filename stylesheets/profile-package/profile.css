@@ -61,6 +61,15 @@
     #page_sub_nav #profile-header #high-level-stats .count {
         display: inline-block;
     }
+
+.profile-sheet-title, .profile-graph-title {
+    background: #EEE;
+    margin: 0 -19px 18px -20px;
+    padding: 5px 20px;
+    border-top: 1px solid #CCC;
+    border-bottom: 1px solid #CCC;
+    text-transform: capitalize;
+}
 #profile-header #high-level-stats #videos-watched,
 #profile-header #high-level-stats #exercises-completed,
 #profile-header #high-level-stats #students-coached
@@ -99,22 +108,6 @@
         top: -1px;
     }
 
-/* #individual_report > div {
-    margin: 10px 0 20px;
-}*/
-#individual_report h2 {
-    color: #444;
-    font-weight: normal;
-    margin: 0;
-    padding: 5px 5px 7px 1px;
-    width: 280px;
-
-    background: transparent url(/images/profile-header-bg.png) no-repeat 0px 100%;
-
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-}
 #individual_report .inset-container {
     border: 1px solid #bbb;
     background: #f7f7f7;
@@ -133,7 +126,6 @@
     min-height: 375px;
     position: relative;
     margin-top: 0;
-    padding-top: 18px;
 }
     #individual_report #vital-statistics #stats-nav {
         width: 280px;
