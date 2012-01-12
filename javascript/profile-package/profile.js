@@ -178,15 +178,16 @@ var Profile = {
             }
 
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
-            var prettyGraphName = graph.replace(/-/gi," ");
+            var prettyGraphName = graph.replace(/-/gi, " ");
             var sheetTitle = $(".profile-graph-title");
             var nickname = Profile.profile.get("nickname");
-            if ( graph == "exercise-problems" ) {
-                var prettyExName = exercise.replace(/_/gi," ");
-                sheetTitle.html( nickname + " &raquo; " + prettyGraphName + " &raquo; " + prettyExName);
+            if (graph == "exercise-problems") {
+                var prettyExName = exercise.replace(/_/gi, " ");
+                sheetTitle.text(nickname + " > " +
+                        prettyGraphName + " > " + prettyExName);
             }
             else {
-                sheetTitle.html( nickname + " &raquo; " + prettyGraphName);
+                sheetTitle.text(nickname + " > " + prettyGraphName);
             }
             Profile.loadGraph(href);
         },
