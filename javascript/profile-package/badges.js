@@ -245,6 +245,14 @@ Badges.DisplayCase = Backbone.View.extend({
     updateEditSelection_: function(index) {
         // By default, select the first empty slot, or the last non-empty
         // slot if completely full.
+        if (index === undefined) {
+            for (var i = 0, len = this.model.length; i < len; i++) {
+                if (this.model.at(i).isEmpty()) {
+                    index = i;
+                    break;
+                }
+            }
+        }
         index = (index === undefined) ? this.model.length : index;
         var max = Math.min(this.model.length, this.maxVisible - 1);
         this.selectedIndex = Math.min(index, max);
@@ -343,6 +351,9 @@ Badges.DisplayCase = Backbone.View.extend({
         this.model.add(
                 matchedBadge.get("badge").clone(),
                 { at: this.selectedIndex });
+
+        // Pick the next empty slot.
+        this.updateEditSelection_();
     },
 
     /**
