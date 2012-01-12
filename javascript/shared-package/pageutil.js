@@ -512,7 +512,7 @@ var VideoStats = {
         VideoStats.fSaving = false;
         VideoStats.dPercentLastSaved = percent;
 
-        if (dict_json.action_results.user_video) {
+        if (dict_json && dict_json.action_results.user_video) {
             video = dict_json.action_results.user_video;
             // Update the energy points box with the new data.
             var jelPoints = $(".video-energy-points");
