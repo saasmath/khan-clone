@@ -586,8 +586,8 @@ div.graph-notification {
   filter:alpha(opacity=85);
 }
 
-/* Copied from elsewhere, rough guess */
-#edit-profile-container {
+/* Copied from modalvide.css, rough guess */
+#username-picker-container {
     position: fixed;
     /* set the point on which top and left operate to the middle top edge*/
     width: 830px; /* this is redundant but here for clarity */

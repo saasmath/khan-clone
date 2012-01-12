@@ -132,9 +132,6 @@ UserCardView = Backbone.View.extend({
          */
         this.avatarPicker_ = null;
         this.usernamePicker_ = null;
-
-        // Modal view that contains the username and nickname pickers.
-        this.modalEditView_ = null;
     },
 
     /**
@@ -280,18 +277,15 @@ UserCardView = Backbone.View.extend({
         e.preventDefault();
 
         if (!this.usernamePicker_) {
-            this.usernamePicker_ = new UsernamePickerView({model: this.model});
+            var view = new UsernamePickerView({model: this.model});
+            this.usernamePicker_ = this.$("#username-picker-container")
+                    .html(view.render().el)
+                    .modal({
+                        keyboard: true,
+                        backdrop: true
+                    });
         }
-
-        if (!this.modalEditView_) {
-            this.modalEditView_ = this.$("#edit-profile-container").modal({
-                keyboard: true,
-                backdrop: true
-            });
-        }
-
-        this.modalEditView_.html(this.usernamePicker_.render().el)
-                .modal("toggle");
+        this.usernamePicker_.modal("toggle");
     }
 
 });
