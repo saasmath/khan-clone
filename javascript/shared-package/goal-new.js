@@ -10,7 +10,8 @@ var GoalCreator = {
 
         $("#create-goal .goal-title")
             .focus(function() { $(this).animate({width: "600px"});})
-            .blur(function() { $(this).animate({width: "250px"});});
+            .blur(function() { $(this).animate({width: "250px"});})
+            .placeholder();
 
         var form = $("#create-goal");
         form.find("input").mouseup(function() { $(this).removeClass("fieldError"); });
