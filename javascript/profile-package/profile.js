@@ -179,15 +179,13 @@ var Profile = {
 
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
             var prettyGraphName = graph.replace(/-/gi, " ");
-            var sheetTitle = $(".profile-graph-title");
             var nickname = Profile.profile.get("nickname");
             if (graph == "exercise-problems") {
                 var prettyExName = exercise.replace(/_/gi, " ");
-                sheetTitle.text(nickname + " > " +
-                        prettyGraphName + " > " + prettyExName);
+                this.updateTitleBreadcrumbs([nickname, prettyGraphName, prettyExName]);
             }
             else {
-                sheetTitle.text(nickname + " > " + prettyGraphName);
+                this.updateTitleBreadcrumbs([nickname, prettyGraphName]);
             }
             Profile.loadGraph(href);
         },
@@ -212,17 +210,36 @@ var Profile = {
             $("#tab-content-achievements").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
+            var nickname = Profile.profile.get("nickname");
+            this.updateTitleBreadcrumbs([nickname, "Achievements"]);
         },
 
         showGoals: function() {
             $("#tab-content-goals").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-goals").attr("rel"));
+            var nickname = Profile.profile.get("nickname");
+            this.updateTitleBreadcrumbs([nickname, "Goals"]);
         },
 
         activateRelatedTab: function(rel) {
             $(".profile-navigation .vertical-tab-list a").removeClass("active-tab");
             $("a[rel$='" + rel + "']").addClass("active-tab");
+        },
+
+        /**
+         * Updates the title of the profile page to show breadcrumbs
+         * based on the parts in the specified array.
+         * @param {Array.<string>} parts A list of strings that will be HTML-escaped
+         *     to be the breadcrumbs.
+         */
+        updateTitleBreadcrumbs: function(parts) {
+            var sheetTitle = $(".profile-sheet-title");
+            if (parts && parts.length) {
+                sheetTitle.text(parts.join(" » "));
+            } else {
+                sheetTitle.text("");
+            }
         }
     }),
 
