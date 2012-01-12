@@ -57,7 +57,7 @@ UserCardModel = Backbone.Model.extend({
 
         if (options) {
             options = $.extend({
-                url: "/api/v1/user/coaches/" + this.get("email"),
+                url: "/api/v1/user/coaches/" + this.get("username"),
                 type: isCoaching ? "DELETE" : "POST",
                 dataType: "json"
             }, options);
@@ -116,8 +116,8 @@ UserCardView = Backbone.View.extend({
          "click #edit-visibility": "onEditVisibilityCicked_",
          "click #edit-nickname": "onEditNicknameClicked_",
          "click #edit-username": "onEditUsernameClicked_",
-         "mouseenter ul.dropdown li": "onDropdownEnter_",
-         "mouseleave ul.dropdown li": "onDropdownLeave_"
+         "click ul.dropdown li": "onDropdownEnter_",
+         "blur ul.dropdown li": "onDropdownLeave_"
      },
 
     initialize: function() {

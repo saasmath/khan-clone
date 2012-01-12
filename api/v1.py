@@ -372,7 +372,7 @@ def is_username_available():
 @jsonp
 @jsonify
 def update_user_profile():
-    """ Updates public information about a user.
+    """ Update public information about a user.
     
     The posted data should be JSON, with fields representing the values that
     needs to be changed. Supports "user_nickname", "avatar_name",
@@ -404,29 +404,39 @@ def update_user_profile():
             # TODO: How much do we want to communicate to the user?
             return api_invalid_param_response("Error!")
     
-# TODO: This probably doesn't work for openID url's
-@route("/api/v1/user/coaches/<coach_email>", methods=["POST"])
+@route("/api/v1/user/coaches/<coach_username>", methods=["POST"])
 @oauth_required()
 @jsonp
 @jsonify
-def add_coach(coach_email):
+def add_coach(coach_username):
+    """ Add the coach specified by coach_username
+    for the currently logged in user.
+    """
+    # TODO: Remove redundant path/logic in coaches.py
     current_user_data = models.UserData.current()
-    coach_user_data = models.UserData.get_possibly_current_user(coach_email)
+    coach_user_data = models.UserData.get_from_username(coach_username)
 
     if not coach_user_data:
-        return api_invalid_param_response("Invalid coach email.")
+        return api_invalid_param_response("Invalid coach username.")
 
     if not current_user_data.is_coached_by(coach_user_data):
         current_user_data.coaches.append(coach_user_data.key_email)
         current_user_data.put()
 
-@route("/api/v1/user/coaches/<coach_email>", methods=["DELETE"])
+@route("/api/v1/user/coaches/<coach_username>", methods=["DELETE"])
 @oauth_required()
 @jsonp
 @jsonify
-def remove_coach(coach_email):
+def remove_coach(coach_username):
+    """ Remove the coach specified by coach_username
+    for the currently logged in user.
+    """
+    # TODO: Remove redundant path/logic in coaches.py
     current_user_data = models.UserData.current()
-    coach_user_data = models.UserData.get_possibly_current_user(coach_email)
+    coach_user_data = models.UserData.get_from_username(coach_username)
+
+    if not coach_user_data:
+        return api_invalid_param_response("Invalid coach username.")
 
     if current_user_data.student_lists:
         actual_lists = StudentList.get(current_user_data.student_lists)

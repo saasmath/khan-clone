@@ -609,30 +609,32 @@ div.graph-notification {
  * from http://css-tricks.com/examples/SimplejQueryDropdowns/#
  * Waiting for Monsieur Jason!
  */
+ .user-profile-controls {
+     margin-top: 5px;
+ }
 .user-profile-controls .dropdown {
     float: left;
 }
-.user-profile-controls .dropdown:hover {
+.user-profile-controls .dropdown:hover .sub_menu {
     position: absolute;
     z-index: 10;
 }
 ul.dropdown li {
-    font-weight: bold;
     float: left;
-    background: #ccc;
+    background: transparent;
 }
 ul.dropdown li a {
     display: block;
     padding: 4px 8px;
     border-right: 1px solid #333;
     color: black;
+    white-space: nowrap;
 }
 /* Doesn't work in IE */
 ul.dropdown li:last-child a {
     border-right: none;
 }
 ul.dropdown li.hover {
-    background: #F3D673;
     color: black;
     position: relative;
 }
@@ -641,6 +643,35 @@ ul.dropdown li.hover a {
 }
 ul.dropdown ul.sub_menu { display: none;}
 ul.dropdown li.hover ul.sub_menu {
+    background: #ccc;
+    display: block;
+    position: absolute;
+    min-width: 120px;
+    border: 2px solid #999;
+    margin-top: 10px;
+
+    box-shadow: 0 2px 5px rgba(0,0,0,.3);
+}
+ul.dropdown li.hover ul.sub_menu li:hover{
+    background: #F3D673;
+}
+ul.dropdown li.hover ul.sub_menu:before{
+    content: ' ';
+    position: absolute;
+    z-index: 11;
+
+    width: 0;
+    height: 15px;
+
+    /* simulate a triangle with borders */
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #999; /* must be the same as badge-picker */
+
+    left: 25%;
+    margin-left: -10px;
+    top: -25px;
+
     display: block;
 }
 ul.dropdown ul li {
@@ -768,13 +799,13 @@ a[rel="goals"] {
     padding: 0;
     margin: 0;
 }
-.user-deets .add-remove-coach-container {
-    float: left;
+.user-deets .add-remove-coach {
+    display: inline;
+}
+.user-deets .basic-stats {
+    margin-top: 14px;
 }
 
-.user-deets .basic-stats {
-    margin-top: 5px;
-}
 .basic-stats .simple-stat {
     float: left;
     text-align: left;

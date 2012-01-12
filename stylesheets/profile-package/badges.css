@@ -66,6 +66,9 @@
     top: auto;
     right: auto;
     float: none;
+    height: auto;
+    line-height: 20px;
+    padding: 0;
 }
 
 .badge-display-case .achievement-count {
