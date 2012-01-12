@@ -27,10 +27,8 @@
               </li>
           </ul>
       {{else}}
-          <div class="add-remove-coach-container">
-              <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>
-              <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
-          </div>
+          <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>
+          <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
       {{/if}}
       </div>
       <div class="basic-stats clearfix">

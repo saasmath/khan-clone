@@ -33,14 +33,32 @@ Badges.Category = {
 Badges.Badge = Backbone.Model.extend({
     defaults: {
         "badgeCategory": Badges.Category.BRONZE,
-        "name": "",
+        "name": "__empty__",
         "description": "",
         "iconSrc": "",
         "isOwned": false,
         "points": 0,
         "safeExtendedDescription": ""
+    },
+
+    isEmpty: function() {
+        // Specially reserved name for empty badge slots.
+        // Used in display case - must be synced with what the server
+        // understands in util_badges.py
+        return this.get("name") === "__empty__";
+    },
+
+    toJSON: function() {
+        var json = Badges.Badge.__super__.toJSON.call(this);
+        json["isEmpty"] = this.isEmpty();
+        return json;
     }
 });
+
+/**
+ * A re-usable instance of an empty badge.
+ */
+Badges.Badge.EMPTY_BADGE = new Badges.Badge({});
 
 /**
  * Badge information about a badge, or a set of badges that a user has earned
@@ -78,7 +96,7 @@ Badges.UserBadge = Backbone.Model.extend({
  * and saved up to a server.
  */
 Badges.BadgeList = Backbone.Collection.extend({
-    model: this.Badge,
+    model: Badges.Badge,
 
     saveUrl: null,
 
@@ -113,7 +131,7 @@ Badges.BadgeList = Backbone.Collection.extend({
  * A list of user badges that can be listened to.
  */
 Badges.UserBadgeList = Backbone.Collection.extend({
-    model: this.UserBadge
+    model: Badges.UserBadge
 });
 
 /**
@@ -207,9 +225,8 @@ Badges.DisplayCase = Backbone.View.extend({
         this.setEditing_(true);
 
         // Visual indicator for the badge edits.
-        var self = this;    
-        $(self.el).addClass("editing");
-        self.updateEditSelection_(index);
+        $(this.el).addClass("editing");
+        this.updateEditSelection_(index);
 
         this.showBadgePicker_();
         this.editControlEl.slideUp(350);
@@ -228,6 +245,14 @@ Badges.DisplayCase = Backbone.View.extend({
     updateEditSelection_: function(index) {
         // By default, select the first empty slot, or the last non-empty
         // slot if completely full.
+        if (index === undefined) {
+            for (var i = 0, len = this.model.length; i < len; i++) {
+                if (this.model.at(i).isEmpty()) {
+                    index = i;
+                    break;
+                }
+            }
+        }
         index = (index === undefined) ? this.model.length : index;
         var max = Math.min(this.model.length, this.maxVisible - 1);
         this.selectedIndex = Math.min(index, max);
@@ -268,25 +293,39 @@ Badges.DisplayCase = Backbone.View.extend({
      * Handles a click to a delete button for a badge in the main display case.
      */
     onDeleteBadgeClicked_: function(e) {
+        // Prevent the badge click from being processed, since
+        // the X is a child of the badge.
+        e.stopPropagation();
+
         if (!this.editing) {
             // Noop when not editing.
             return;
         }
-        var index = $(this.mainCaseEl)
-                .find(".delete-icon")
-                .index(e.currentTarget);
-        this.model.remove(this.model.at(index));
-        this.updateEditSelection_(index);
 
-        // Prevent the badge click from being processed, since
-        // the X is a child of the badge.
-        e.stopPropagation();
+        var badgeNode = e.currentTarget;
+        while (badgeNode && !$(badgeNode).hasClass("achievement-badge")) {
+            badgeNode = badgeNode.parentNode;
+        }
+        var index = $(this.mainCaseEl)
+                .find(".achievement-badge")
+                .index(badgeNode);
+
+        var isLast = index == (this.model.length - 1);
+        this.model.remove(this.model.at(index));
+
+        if (!isLast) {
+            // Insert an empty badge, since we don't want things shifting
+            this.model.add(Badges.Badge.EMPTY_BADGE, { at: index });
+        }
+        this.updateEditSelection_(index);
     },
 
     /**
      * Handles a click to a badge in the badge picker in edit mode.
      */
     onBadgeInPickerClicked_: function(e) {
+        e.stopPropagation();
+
         if ($(e.currentTarget).hasClass("used")) {
             // Ignore badges already in the main case.
             return;
@@ -312,7 +351,9 @@ Badges.DisplayCase = Backbone.View.extend({
         this.model.add(
                 matchedBadge.get("badge").clone(),
                 { at: this.selectedIndex });
-        e.stopPropagation();
+
+        // Pick the next empty slot.
+        this.updateEditSelection_();
     },
 
     /**
@@ -382,7 +423,7 @@ Badges.DisplayCase = Backbone.View.extend({
             badges.push(badge.toJSON());
         }
         for (; i < this.maxVisible; i++) {
-            badges.push({ emptyBadge: true });
+            badges.push(Badges.Badge.EMPTY_BADGE.toJSON());
         }
         return { badges: badges };
     },

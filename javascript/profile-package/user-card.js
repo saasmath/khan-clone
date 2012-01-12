@@ -57,7 +57,7 @@ UserCardModel = Backbone.Model.extend({
 
         if (options) {
             options = $.extend({
-                url: "/api/v1/user/coaches/" + this.get("email"),
+                url: "/api/v1/user/coaches/" + this.get("username"),
                 type: isCoaching ? "DELETE" : "POST",
                 dataType: "json"
             }, options);
@@ -132,7 +132,7 @@ UserCardView = Backbone.View.extend({
          * @type {Avatar.Picker}
          */
         this.avatarPicker_ = null;
-        this.usernamePicker_=  null;
+        this.usernamePicker_ = null;
 
         // Modal view that contains the username and nickname pickers.
         this.modalEditView_ = null;
