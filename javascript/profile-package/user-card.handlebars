@@ -1,10 +1,3 @@
-{{#if isSelf}}
-<a href="javascript:''" id="edit-visibility"
-    class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
-<div id="username-picker-container" class="modal fade hide" style="display: none;">
-</div>
-{{/if}}
-
 <section class="user-info vertical-shadow clearfix">
 
     <section class="basic-user-info" style="float: left;">
@@ -54,3 +47,9 @@
     </div>
 
 </section>
+{{#if isSelf}}
+<a href="javascript:''" id="edit-visibility"
+    class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
+<div id="username-picker-container" class="modal fade hide" style="display: none;">
+</div>
+{{/if}}
