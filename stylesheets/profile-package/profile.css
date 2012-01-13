@@ -228,12 +228,12 @@
         padding-bottom: 5px;
         border-bottom: 1px solid #ccc;
         position: relative;
-        font-size: 15px;
+        font-size: 13px;
     }
         .tab-content .graph-picker .new-goal {
             margin-top: -7px;
             padding: 0 10px;
-            line-height: 27px;
+            line-height: 23px;
         }
     .tab-content .graph-options {
         font-size: 10px;
