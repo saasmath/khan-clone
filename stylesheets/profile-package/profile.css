@@ -258,9 +258,6 @@
             z-index: 0;
             padding: 0 10px;
         }
-        .tabrow a {
-              color: #555;
-          }
         .tabrow li.selected {
             background: #FFF;
             color: #333;
@@ -771,7 +768,7 @@ ul.dropdown ul li {
     color: #888;
 }
 .vertical-tab-list li {
-    margin-bottom: 3px;
+    margin-bottom: 1px;
 }
 .vertical-tab-list .link-section-header {
     text-transform: uppercase;
@@ -786,6 +783,9 @@ ul.dropdown ul li {
     text-decoration: none;
     white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid transparent;
+    border-right: none;
     
     -webkit-border-radius: 3px 0 0 3px;
     -moz-border-radius: 3px 0 0 3px;
