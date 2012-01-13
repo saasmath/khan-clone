@@ -24,6 +24,19 @@
 .editing .main-case .achievement-badge.selected {
     border-color: blue;
 }
+.achievement-badge.empty {
+    position: relative;
+}
+.achievement-badge.empty:before {
+    content: ' ';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: #eee url(/images/generic-badge-icon-inset.png) no-repeat center center;
+    background-size: 80px;
+}
 
 .badge-display-case .delete-icon {
     /* TODO: make pretty! */
