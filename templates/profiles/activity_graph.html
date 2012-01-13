@@ -249,10 +249,10 @@
         });
     });
 </script>
-<p class="vital-statistics-description">
+<div class="vital-statistics-description">
     Shows how much work you're doing each day.
      {{ profile_macros.graph_date_picker(profile_root, "activity") }}
-</p>
+</div>
 <div id="highchart-container" class="{% if is_graph_empty %}empty-chart{% endif %}">
     <div id="highchart"></div>
 </div>
