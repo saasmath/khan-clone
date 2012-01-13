@@ -1,0 +1,15 @@
+#modal-story {
+  position: fixed;
+  /* set the point on which top and left operate to the middle top edge*/
+  width: 830px; /* this is redundant but here for clarity */
+  margin: 0 0 0 -415px;
+  top: 60px;
+  left: 50%;
+}
+.lte7 #modal-video {
+  border: 1px solid #999;
+}
+
+div.envelopeContainer {
+    padding: 5px;
+}

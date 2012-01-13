@@ -113,6 +113,13 @@ javascript = {
             "classprofile.js",
         ]
     },
+    "about": {
+        "files": [
+            "story.handlebars",
+            "story-full.handlebars",
+            "stories.js",
+        ]
+    },
     "exercises": {
         "base_path": "../khan-exercises",
         "base_url": "/khan-exercises",
@@ -187,6 +194,11 @@ stylesheets = {
         "files": [
             "viewstudentlists.css",
             "viewclassprofile.css",
+        ]
+    },
+    "about": {
+        "files": [
+            "stories.css",
         ]
     },
     "exercises": {

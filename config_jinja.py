@@ -48,6 +48,7 @@ jinja2.default_config = {
     }, 
     "filters": {
         "urlencode": lambda s: quote_plus(s or ""),
+        "strip": lambda s: (s or "").strip(),
         "escapejs": templatefilters.escapejs,
         "phantom_login_link": templatefilters.phantom_login_link,
         "slugify": templatefilters.slugify,

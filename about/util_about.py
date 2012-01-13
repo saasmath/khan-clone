@@ -1,3 +1,8 @@
+import simplejson as json
+import yaml
+import os
+import logging
+
 import request_handler
 import util
 from models import Video
@@ -20,6 +25,32 @@ class ViewAbout(AboutRequestHandler):
 class ViewAboutTheTeam(AboutRequestHandler):
     def get(self):
         self.render_jinja2_template('about/about_the_team.html', {"selected_id": "the-team"})
+
+class ViewAboutTheStories(AboutRequestHandler):
+    def get(self):
+
+        stories = []
+
+        for filename in os.listdir("about/stories"):
+            if filename.endswith(".yaml"):
+
+                f = open("about/stories/%s" % filename, "r")
+                story = None
+
+                if f:
+                    try:
+                        contents = f.read()
+                        story = yaml.load(contents)
+                    finally:
+                        f.close()
+
+                if story:
+                    stories.append(story)
+
+        self.render_jinja2_template('about/about_the_stories.html', {
+            "selected_id": "the-stories",
+            "stories": stories
+        })
 
 class ViewGettingStarted(AboutRequestHandler):
     def get(self):

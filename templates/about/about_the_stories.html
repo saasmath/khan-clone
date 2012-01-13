@@ -1,0 +1,120 @@
+{% extends "about/about_template.html" %}
+
+{% block pagescript %}
+{{ js_css_packages.css_package("about") }}
+
+<style>
+
+.story {
+    float: left;
+    width: 183px;
+    height: 172px;
+    padding: 18px;
+    cursor: pointer;
+    position: relative;
+
+    -webkit-transition: all .2s ease-in-out;
+    -webkit-transform: rotate(-7deg);
+}
+
+.story:hover {
+    -webkit-transform: rotate(0deg);
+}
+
+@-webkit-keyframes letterpeek {
+    0% { -webkit-transform: rotate(-8deg); }
+    30% { -webkit-transform: rotate(-1deg); }
+    100% { -webkit-transform: rotate(4deg) translateY(-24px); }
+}
+
+.story:hover .content-teaser {
+    -webkit-animation: letterpeek .4s ease-in-out 0s 1 normal;
+    -webkit-transform: rotate(4deg) translateY(-24px);
+}
+
+@-webkit-keyframes lettershow {
+    0% { -webkit-transform: rotate(4deg) translateY(-24px); }
+    6% { -webkit-transform: rotate(2deg) translateY(-24px); }
+    12% { -webkit-transform: rotate(-2deg) translateY(-24px); }
+    18% { -webkit-transform: rotate(2deg) translateY(-24px); }
+    70% { -webkit-transform: rotate(0deg) translateY(-80px); }
+    71% { -webkit-transform: rotate(0deg) translateY(-80px); }
+    100% { opacity: 0; }
+}
+
+.story.content-teaser-show .content-teaser, .story.content-teaser-show:hover .content-teaser {
+    -webkit-animation: lettershow 0.65s ease-in-out 0s 1 normal;
+}
+
+.story.content-teaser-hide .content-teaser {
+    opacity: 0;
+    -webkit-transition: all .2s ease-in-out;
+}
+
+.story.content-teaser-show, .story.content-teaser-hide {
+    -webkit-transform: rotate(0deg);
+}
+
+.story .content-teaser {
+    margin: 12px;
+    padding: 9px;
+    background: #C0E3FF;
+    height: 100px;
+    position: absolute;
+    overflow: hidden;
+
+    -webkit-border-radius: 3px;
+
+    -webkit-transform: rotate(-8deg);
+    -webkit-transition: all .5s ease-in-out;
+}
+
+.story .envelope-background {
+    width: 183px;
+    height: 172px;
+    position: absolute;
+    top: 0px;
+    background: url('/images/stories/envelope-background.png') no-repeat;
+}
+
+.story .envelope-foreground {
+    width: 183px;
+    height: 172px;
+    position: absolute;
+    top: 0px;
+    background: url('/images/stories/envelope-foreground.png') no-repeat;
+}
+
+</style>
+
+{% endblock pagescript %}
+
+{% block aboutcontent %}
+
+<h1>Stories</h1>
+
+<div id="stories"></div>
+
+{% endblock aboutcontent %}
+
+{% block bottompagescript %}
+
+{{ js_css_packages.js_package("about") }}
+
+<script>
+    Stories.render({
+        target: "#stories",
+        content: [
+            {% for story in stories %}
+            {
+                "teaser": "{{ story.teaser|strip|linebreaksbr }}",
+                "content": "{{ story.content|strip|linebreaksbr }}",
+                "date": "{{ story.date|strip|escapejs }}",
+                "author": "{{ story.author|strip|escapejs }}",
+            }{% if not loop.last %},{%endif%}
+            {% endfor %}
+        ]
+    });
+</script>
+
+{% endblock bottompagescript %}
