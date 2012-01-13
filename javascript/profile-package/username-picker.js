@@ -47,6 +47,7 @@ UsernamePickerView = Backbone.View.extend({
         this.$(".nickname").val(nickname);
         this.$(".username").val(username);
         this.$(".example-username").val(username);
+        this.$(".sidenote").text("").removeClass("success").removeClass("error");
     },
 
     onUsernameKeyup_: function(e) {
@@ -57,7 +58,6 @@ UsernamePickerView = Backbone.View.extend({
         }
         this.$(".example-username").text(this.$(".username").val());
 
-        this.$(".sidenote").text("typing");
         if (this.keyupTimeout) {
             clearTimeout(this.keyupTimeout);
         }
@@ -65,12 +65,19 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onTimeout_: function() {
-        this.$(".sidenote").text("validating");
+        this.$(".sidenote").text("Checking username...")
+            .removeClass("success")
+            .removeClass("error");
         this.model.validateUsername(this.$(".username").val());
         this.keyupTimeout = null;
     },
 
     showMessage_: function(isValid, message) {
+        if (isValid) {
+            this.$(".sidenote").addClass("success").removeClass("error");
+        } else {
+            this.$(".sidenote").addClass("error").removeClass("success");
+        }
         this.$("#save-profile-info").prop("disabled", !isValid);
         this.$(".sidenote").text(message);
     },

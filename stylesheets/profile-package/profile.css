@@ -894,8 +894,8 @@ li.profile-tab {
 #username-picker-container {
     position: fixed;
     /* set the point on which top and left operate to the middle top edge*/
-    width: 500px; /* this is redundant but here for clarity */
-    margin: 0 0 0 -250px;
+    width: 300px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -150px;
     top: 60px;
     left: 50%;
 }
@@ -906,6 +906,22 @@ li.profile-tab {
 .username-picker input,
 .username-picker label{
     font-size: 150%;
+}
+.username-picker .basic-info input {
+    display: block;
+    margin-bottom: 10px;
+}
+.username-picker .sidenote {
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+}
+.username-picker .sidenote.success {
+    padding-left: 14px;
+    background-image:url(/images/video-indicator-complete.png);
+}
+.username-picker .sidenote.error {
+    background-image:url(/images/cross.png);
+    padding-left: 18px;
 }
 
 .avatar-picker.modal {

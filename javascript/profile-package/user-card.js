@@ -93,18 +93,18 @@ var ProfileModel = Backbone.Model.extend({
         } else {
             var message = "";
             if (username.length < 5) {
-                message = "too short";
+                message = "Username must have at least 5 characters.";
             } else if (/^[^a-z]/.test(username)) {
-                message = "must begin with a letter";
+                message = "Username must begin with a letter.";
             } else {
-                message = "must be alphanumeric";
+                message = "Username must be alphanumeric.";
             }
             this.trigger("validate:username", false, message);
         }
     },
 
     onValidateUsernameResponse_: function(isUsernameAvailable) {
-        var message = isUsernameAvailable ? "available!!!" : "not available :(";
+        var message = isUsernameAvailable ? "Looks good!" : "Username is not available.";
         this.trigger("validate:username", isUsernameAvailable, message);
     }
 });

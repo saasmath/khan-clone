@@ -1,18 +1,16 @@
 <div class="username-picker">
-    <div>
+    <h3>Edit basic info</h3>
+    <div class="basic-info">
         <input type="text" value="{{nickname}}" placeholder="Full name" class="nickname">
-    </div>
-    <div>
         <input type="text" value="{{username}}" placeholder="Username" class="username">
         <span class="sidenote"></span>
+        <!--
+            Should this go here? It could make the modal super wide.
+            <div>http://khanacademy.org/profile/<span class="example-username">{{username}}</span></div>
+        -->
     </div>
-    <div>
-        <p>Explanation stuff. English.</p>
-        <p>Your Khan Academy URL:</p>
-        <p>http://khanacademy.org/profile/<span class="example-username">{{username}}</span></p>
-    </div>
-    <div>
-        <input id="save-profile-info" type="button" class="simple-button action-gradient" value="Save">
+    <div style="padding-top: 5px;">
+        <input id="save-profile-info" type="button" class="simple-button action-gradient green" value="Save">
         <input id="cancel-profile-info" type="button" class="simple-button action-gradient" value="Cancel">
     </div>
 </div>
