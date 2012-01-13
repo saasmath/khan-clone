@@ -1256,17 +1256,17 @@ def create_user_goal():
     if json:
         for obj in json['objectives']:
             if obj['type'] == 'GoalObjectiveAnyExerciseProficiency':
-                for goal in current_goals.objectives:
-                    for obj in goal:
-                        if isinstance(obj, GoalObjectiveAnyExerciseProficiency):
+                for goal in current_goals:
+                    for o in goal.objectives:
+                        if isinstance(o, GoalObjectiveAnyExerciseProficiency):
                             return api_invalid_param_response(
                                 "User already has a current exercise process goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveAnyVideo':
                 for goal in current_goals:
-                    for obj in goal.objectives:
-                        if isinstance(obj, GoalObjectiveAnyVideo):
+                    for o in goal.objectives:
+                        if isinstance(o, GoalObjectiveAnyVideo):
                             return api_invalid_param_response(
                                 "User already has a current video process goal.")
                 objective_descriptors.append(obj)
