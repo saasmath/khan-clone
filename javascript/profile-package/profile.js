@@ -980,7 +980,7 @@ var Profile = {
                 data.fStandardView = true;
 
                 var achievementsTemplate = Templates.get("profile.achievements");
-                $("#tab-content-achievements").html(achievementsTemplate(data));
+                $("#profile-achievements-content").html(achievementsTemplate(data));
 
                 $("#achievements #achievement-list > ul li").click(function() {
                      var category = $(this).attr("id");
