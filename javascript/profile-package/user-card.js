@@ -76,6 +76,8 @@ var ProfileModel = Backbone.Model.extend({
         username = username.toLowerCase()
                     .replace(/\./g, "");
 
+        // Must be synced with server's understanding
+        // in UniqueUsername.is_valid_username()
         if (/^[a-z][a-z0-9]{4,}$/.test(username)) {
             $.ajax({
                 url: "/api/v1/user/username_available",
@@ -119,8 +121,12 @@ UserCardView = Backbone.View.extend({
          "change .nickname": "onNicknameChanged_",
          "click #edit-visibility": "onEditVisibilityCicked_",
          "click #edit-nickname": "onEditNicknameClicked_",
-         "click #change-profile-info": "onChangeProfileInfoClicked_",
-         "click #edit-profile": "onEditProfileClicked_"
+         "click #edit-profile": "onEditProfileClicked_",
+         "click #edit-basic-info": "onEditBasicInfoClicked_",
+         "click #edit-display-case": "onEditDisplayCaseClicked_",
+         "click #edit-avatar": "onAvatarClick_",
+         "click #edit-privacy-setting": "onEditPrivacySettingClicked_"
+         
      },
 
     initialize: function() {
@@ -280,13 +286,24 @@ UserCardView = Backbone.View.extend({
         e.preventDefault();
     },
 
-    onChangeProfileInfoClicked_: function(e) {
+    onEditBasicInfoClicked_: function(e) {
         e.preventDefault();
         if (!this.usernamePicker_) {
             this.usernamePicker_ = new UsernamePickerView({model: this.model});
             $("body").append(this.usernamePicker_.render().el);
         }
         this.usernamePicker_.toggle();
+    },
+
+    onEditDisplayCaseClicked_: function(e) {
+        // TODO: Consider handling outside-the-widget dismissal clicks differently
+        e.preventDefault();
+        e.stopPropagation();
+        $(".display-case-cover").click();
+    },
+
+    onEditPrivacySettingClicked_: function(e) {
+        e.preventDefault();
     }
 
 });
