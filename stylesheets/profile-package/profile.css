@@ -222,10 +222,14 @@
         display: inline-block;
         float: right;
     }
-    .tab-content .vital-statistics-description {
+    .tab-content .vital-statistics-description,
+    .tab-content .graph-picker {
         padding-bottom: 5px;
         border-bottom: 1px solid #ccc;
     }
+        .tab-content .graph-picker .new-goal {
+            margin-top: -10px;
+        }
     .tab-content .graph-options {
         font-size: 10px;
         display: inline-block;
