@@ -40,7 +40,9 @@ var ProfileModel = Backbone.Model.extend({
             "nickname": (attrs && attrs["nickname"]) ||
                           this.get("nickname"),
             "username": (attrs && attrs["username"]) ||
-                          this.get("username")
+                          this.get("username"),
+            "isPublic": ((attrs && attrs["isPublic"]) ||
+                          ((attrs["isPublic"] === undefined) && this.get("isPublic")))
         });
 
         Backbone.Model.prototype.save.call(this, attrs, options);
@@ -125,8 +127,7 @@ UserCardView = Backbone.View.extend({
          "click #edit-basic-info": "onEditBasicInfoClicked_",
          "click #edit-display-case": "onEditDisplayCaseClicked_",
          "click #edit-avatar": "onAvatarClick_",
-         "click #edit-privacy-setting": "onEditPrivacySettingClicked_"
-         
+         "click .edit-visibility": "onEditVisibilityClicked_"
      },
 
     initialize: function() {
@@ -138,6 +139,7 @@ UserCardView = Backbone.View.extend({
         this.model.bind("change:nickname", function(model) {
                 $(".nickname").val(model.get("nickname"));
         });
+        this.model.bind("change:isPublic", this.onIsPublicChanged_);
 
         /**
          * The picker UI component which shows a dialog to change the avatar.
@@ -302,8 +304,26 @@ UserCardView = Backbone.View.extend({
         $(".display-case-cover").click();
     },
 
-    onEditPrivacySettingClicked_: function(e) {
+    onEditVisibilityClicked_: function(e) {
         e.preventDefault();
+        var isPublic = this.model.get("isPublic"),
+            attrs = {
+                isPublic: !isPublic
+            };
+        this.model.save(attrs);
+    },
+
+    onIsPublicChanged_: function(model, isPublic) {
+        var jel = $(".visibility-toggler");
+        if (isPublic) {
+            jel.removeClass("private")
+                .addClass("public")
+                .text("Profile is public");
+        } else {
+            jel.removeClass("public")
+                .addClass("private")
+                .text("Profile is private");
+        }
     }
 
 });

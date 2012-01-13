@@ -1,6 +1,6 @@
 {{#if isSelf}}
 <a href="javascript:''" id="edit-visibility"
-    class="visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
+    class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
 <div id="username-picker-container" class="modal fade hide" style="display: none;">
 </div>
 {{/if}}
@@ -33,7 +33,7 @@
                         <li><a id="edit-basic-info" href="#">Edit basic info</a></li>
                         <li><a id="edit-display-case" href="#">Edit display case</a></li>
                         <li><a id="edit-avatar" href="#">Edit avatar</a></li>
-                        <li><a id="edit-privacy-setting" href="#">Edit privacy setting</a></li>
+                        <li><a class="edit-visibility" href="#">Edit privacy setting</a></li>
                       </ul>
                   </li>
               </ul>

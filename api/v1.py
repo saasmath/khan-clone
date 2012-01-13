@@ -392,7 +392,7 @@ def update_user_profile():
     
     The posted data should be JSON, with fields representing the values that
     needs to be changed. Supports "user_nickname", "avatar_name",
-    and "username".
+    "username", and "isPublic".
     """
     user_data = models.UserData.current()
 
@@ -412,6 +412,8 @@ def update_user_profile():
         if (avatar_name in name_dict
                 and name_dict[avatar_name].is_satisfied_by(user_data)):
             user_data.avatar_name = avatar_name
+    if profile_json['isPublic'] is not None:
+        user_data.is_profile_public = profile_json['isPublic']
 
     user_data.put()
 
