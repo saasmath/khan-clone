@@ -84,20 +84,15 @@ var Profile = {
         });
 
         // Delegate clicks for tab navigation
-        $(".profile-navigation .vertical-tab-list").delegate("a", "click", function(event) {
-            // TODO: Make sure middle-click + windows control-click Do The Right Thing
-            // in a reusable way
-            if (!event.metaKey) {
-                event.preventDefault();
-                var route = $(this).attr("href").replace(
-                        Profile.profileRoot, "");
-                Profile.router.navigate(route, true);
-            }
-        });
+        $(".profile-navigation .vertical-tab-list").delegate("a",
+                "click", this.onNavigationElementClicked_);
+
+        // Delegate clicks for vital statistics time period navigation
+        $("#tab-content-vital-statistics").delegate(".graph-date-picker a",
+                "click", this.onNavigationElementClicked_);
 
         // Delegate clicks for recent badge-related activity
         $(".achievement .ach-text").delegate("a", "click", function(event) {
-            // TODO: ditto above
             if (!event.metaKey) {
                 event.preventDefault();
                 Profile.router.navigate("/achievements", true);
@@ -241,6 +236,21 @@ var Profile = {
             }
         }
     }),
+
+    /**
+     * Navigate the router appropriately,
+     * either to change profile sheets or vital-stats time periods.
+     */
+    onNavigationElementClicked_: function(event) {
+        // TODO: Make sure middle-click + windows control-click Do The Right Thing
+        // in a reusable way
+        if (!event.metaKey) {
+            event.preventDefault();
+            var route = $(this).attr("href").replace(
+                    Profile.profileRoot, "");
+            Profile.router.navigate(route, true);
+        }
+    },
 
     loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
