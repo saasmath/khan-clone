@@ -122,7 +122,6 @@ UserCardView = Backbone.View.extend({
          "mouseleave .avatar-pic-container": "onAvatarLeave_",
          "change .nickname": "onNicknameChanged_",
          "click #edit-visibility": "onEditVisibilityCicked_",
-         "click #edit-nickname": "onEditNicknameClicked_",
          "click #edit-profile": "onEditProfileClicked_",
          "click #edit-basic-info": "onEditBasicInfoClicked_",
          "click #edit-display-case": "onEditDisplayCaseClicked_",
@@ -284,12 +283,7 @@ UserCardView = Backbone.View.extend({
         this.$("#edit-visibility img").toggle();
     },
 
-    onEditNicknameClicked_: function(e) {
-        e.preventDefault();
-    },
-
     onEditBasicInfoClicked_: function(e) {
-        e.preventDefault();
         if (!this.usernamePicker_) {
             this.usernamePicker_ = new UsernamePickerView({model: this.model});
             $("body").append(this.usernamePicker_.render().el);
@@ -299,13 +293,11 @@ UserCardView = Backbone.View.extend({
 
     onEditDisplayCaseClicked_: function(e) {
         // TODO: Consider handling outside-the-widget dismissal clicks differently
-        e.preventDefault();
         e.stopPropagation();
         $(".display-case-cover").click();
     },
 
     onEditVisibilityClicked_: function(e) {
-        e.preventDefault();
         var isPublic = this.model.get("isPublic"),
             attrs = {
                 isPublic: !isPublic
