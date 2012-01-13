@@ -1008,6 +1008,9 @@ var Profile = {
                         clickedBadge.addClass("selected");
                      }
                 });
+
+                // Start with meteorite badges displayed
+                $("#category-0").click();
                 $("abbr.timeago").timeago();
             }
         });
