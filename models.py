@@ -1740,7 +1740,7 @@ class ProblemLog(db.Model):
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     earned_proficiency = db.BooleanProperty(default = False) # True if proficiency was earned on this problem
     suggested = db.BooleanProperty(default = False) # True if the exercise was suggested to the user
-    review_mode = db.BooleanProperty(default = False) # True if the problem was done while in review mode
+    review_mode = db.BooleanProperty(default = False, indexed=False) # True if the problem was done while in review mode
     sha1 = db.StringProperty(indexed=False)
     seed = db.StringProperty(indexed=False)
     problem_type = db.StringProperty(indexed=False)
