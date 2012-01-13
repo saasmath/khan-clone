@@ -19,7 +19,8 @@ var ProfileModel = Backbone.Model.extend({
         "nickname": "",
         "points": 0,
         "username": "",
-        "isSelf": false
+        "isSelf": false,
+        "isPublic": false
     },
 
     url: "/api/v1/user/profile",

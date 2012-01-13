@@ -190,6 +190,12 @@ class UserProfile(object):
     def __init__(self):
         self.username = None
         self.email = None
+        
+        # Indicates whether or not the profile has been marked public. Not
+        # necessarily indicative of what fields are currently filled in this
+        # current instance, as different projections may differ on actor
+        # privileges
+        self.is_public = False
 
         self.is_coaching_logged_in_user = False
         self.nickname = ""
@@ -259,6 +265,7 @@ class UserProfile(object):
         profile.is_self = is_self
         profile.is_coaching_logged_in_user = is_coaching_logged_in_user
 
+        profile.is_public = user.has_public_profile()
         if full_projection:
             profile.email = user.email
 

@@ -1,10 +1,11 @@
 {{#if isSelf}}
-<a href="javascript:''" id="edit-visibility" style="background-color: white;" class="clearfix">Private Profile</a>
+<a href="javascript:''" id="edit-visibility"
+    class="visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
 <div id="username-picker-container" class="modal fade hide" style="display: none;">
 </div>
 {{/if}}
 
-<section class="user-info vertical-shadow">
+<section class="user-info vertical-shadow clearfix">
 
     <section class="basic-user-info" style="float: left;">
       <div class="avatar-pic-container{{#if isSelf}} editable{{/if}}" style="float:left;" >
@@ -45,9 +46,6 @@
               <div class="simple-stat"><span title="{{points}} energy points" class="energy-points-badge" style="float:none; display:block; margin-bottom: 1px; margin-top: 2px; padding:0; line-height: 20px;">{{points}}</span> Energy Points</div>
           </div>
       </div>
-    </section>
-    <section class="summary-and-controls" style="float:right; padding-right: 20px;">
-
     </section>
     <div class="sticker-book">
         <a class="display-case-cover" href="javascript:''"></a>

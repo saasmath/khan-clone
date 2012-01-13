@@ -836,6 +836,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
     # The name of the avatar the user has chosen. See avatar.util_avatar.py
     avatar_name = db.StringProperty(indexed=False)
 
+    # Whether or not the user has indicated she wishes to have a public
+    # profile (and can be searched, etc)
+    is_profile_public = db.BooleanProperty(default=False, indexed=False)
+
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
@@ -843,7 +847,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
             "last_login", "user", "current_user", "map_coords",
             "expanded_all_exercises", "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
-            "avatar_name", "username"
+            "avatar_name", "username", "is_profile_public"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1300,7 +1304,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return claim_success
 
     def has_public_profile(self):
-        return self.username is not None and len(self.username) > 0
+        return (self.is_profile_public
+                and self.username is not None
+                and len(self.username) > 0)
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()

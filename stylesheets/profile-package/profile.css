@@ -555,7 +555,7 @@ div.graph-notification {
 }
 .user-info-container .user-info {
   padding: 20px;
-  background: #eee;
+  background: #eee; /* same as visibility-toggler */
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
@@ -875,4 +875,19 @@ a[rel="goals"] {
 .avatar-picker .category-title {
     font-size: 120%;
     font-weight: bold;
+}
+
+.visibility-toggler {
+    float: right;
+    margin-right: 40px;
+    padding: 0 10px 0 26px;
+
+    border: 1px solid #ccc;
+    border-radius: 5px 5px 0 0;
+}
+.visibility-toggler.public {
+    background: #eee url(/images/unlocked.png) no-repeat 8px 50%;
+}
+.visibility-toggler.private {
+    background: #eee url(/images/locked.png) no-repeat 8px 50%;
 }
