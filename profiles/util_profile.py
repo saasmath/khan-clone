@@ -158,25 +158,33 @@ class ViewProfile(request_handler.RequestHandler):
         """
         # TODO: What URL for phantoms?
         current_user_data = UserData.current() or UserData.pre_phantom()
-        user_data = UserData.get_from_url_segment(email_or_username)
-
-        if not user_data:
+        
+        if not email_or_username:
             user_data = current_user_data
+        else:
+            user_data = UserData.get_from_url_segment(email_or_username)
 
         # TODO: incorporate the tz offset into the timeago stuff on the client
         tz_offset = self.request_int("tz_offset", default=0)
 
         profile = UserProfile.from_user(user_data, current_user_data)
+        
+        if profile is None:
+            self.render_jinja2_template('noprofile.html', {})
+            return
 
+        has_full_access = (user_data.user_id == current_user_data.user_id
+                           or user_data.is_coached_by(current_user_data))
         template_values = {
             'profile': profile,
             'tz_offset': tz_offset,
             'count_videos': models.Setting.count_videos(),
             'count_exercises': models.Exercise.get_count(),
-            'user_data_student': user_data,
+            
+            'user_data_student': user_data if has_full_access else None,
+            'profile_root': user_data.profile_root,
             "view": self.request_string("view", default=""),
         }
-
         self.render_jinja2_template('viewprofile.html', template_values)
 
 
@@ -214,12 +222,16 @@ class UserProfile(object):
         """ Retrieve profile information about a user for the specified actor.
 
         This will do the appropriate ACL checks and return the greatest amount
-        of profile data that the actor has access to.
+        of profile data that the actor has access to, or None if no access
+        is allowed.
 
         user - models.UserData object to retrieve information from
         actor - models.UserData object corresponding to who is requesting
                 the data
         """
+        
+        if user is None:
+            return None
 
         # TODO: figure out if "coworkers" should affect this
         is_self = user.user_id == actor.user_id
@@ -240,8 +252,7 @@ class UserProfile(object):
                     full_projection=False,
                     is_coaching_logged_in_user=actor_is_coached_by_user)
         else:
-            # Return stub data
-            return UserProfile()
+            return None
 
     @staticmethod
     def _from_user_internal(user,

@@ -7,9 +7,11 @@
 
 {% block profile_extended_sections %}
     <div id="profile-content"></div>
+    {% if user_data_student %}
     <div id="server-side-recent-activity" style="display: none;">
         {{ profiles.profile_recent_activity(user_data_student, view) }}
     </div>
+    {% endif %}
 {% endblock profile_extended_sections %}
 
 {% block bottompagescript %}
@@ -24,7 +26,7 @@ $(function() {
         countVideos: {{count_videos}},
         countExercises: {{count_exercises}},
         loggedIn: "{{logged_in}}" === "True",
-        profileRoot: "{{user_data_student.profile_root}}",
+        profileRoot: "{{profile_root}}",
         profileData: {{ templatetags.jsonify(profile, true) }}
     });
 });
