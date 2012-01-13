@@ -238,12 +238,12 @@ var GoalCollection = Backbone.Collection.extend({
     processGoalContext: function() {
         return {
             hasExercise: this.any(function(goal) {
-                return _.any(goal.get('objectives'), function(obj) {
+                return _.any(goal.get("objectives"), function(obj) {
                     return obj.type === "GoalObjectiveAnyExerciseProficiency";
                 });
             }),
             hasVideo: this.any(function(goal) {
-                return _.any(goal.get('objectives'), function(obj) {
+                return _.any(goal.get("objectives"), function(obj) {
                     return obj.type === "GoalObjectiveAnyVideo";
                 });
             })
@@ -482,9 +482,9 @@ var NewGoalView = Backbone.View.extend({
     template: Templates.get("shared.goal-new"),
 
     events: {
-        "click .newgoal.custom":            "createCustomGoal",
-        "click .newgoal.five_exercises":    "createExerciseProcessGoal",
-        "click .newgoal.five_videos":       "createVideoProcessGoal"
+        "click .newgoal.custom": "createCustomGoal",
+        "click .newgoal.five_exercises": "createExerciseProcessGoal",
+        "click .newgoal.five_videos": "createVideoProcessGoal"
     },
 
     initialize: function() {
@@ -533,7 +533,7 @@ var NewGoalView = Backbone.View.extend({
 
     createVideoProcessGoal: function(e) {
         e.preventDefault();
-        if ($(e.currentTarget).hasClass('disabled')) return;
+        if ($(e.currentTarget).hasClass("disabled")) return;
 
         var goal = new Goal({
             title: "Complete Five Videos",
@@ -550,7 +550,7 @@ var NewGoalView = Backbone.View.extend({
 
     createExerciseProcessGoal: function(e) {
         e.preventDefault();
-        if ($(e.currentTarget).hasClass('disabled')) return;
+        if ($(e.currentTarget).hasClass("disabled")) return;
 
         var goal = new Goal({
             title: "Complete Five Exercises",
