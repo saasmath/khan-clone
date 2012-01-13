@@ -6,7 +6,10 @@
 
 <menu class="profile-navigation">
     <ul class="vertical-tab-list">
-        <li><a href="{{profileRoot}}" class="tab-link has-icon no-recolor" rel="profile">Your Profile</a></li>
+        <li><a href="{{profileRoot}}" class="tab-link no-recolor" rel="profile">
+            <img src="{{profileData.avatarSrc}}" class="profile-tab-avatar">
+            <span id="profile-tab-link" class="profile-tab-text">{{profileData.nickname}}</span>
+        </a></li>
         <li><a href="{{profileRoot}}/achievements" class="tab-link has-icon no-recolor" rel="achievements">Achievements</a></li>
         <li><a href="{{profileRoot}}/goals" class="tab-link has-icon no-recolor" rel="goals">Goals (beta)</a></li>
         <li>
@@ -23,8 +26,8 @@
 
 <section class="tab-content">
     <div id="tab-content-user-profile" rel="profile">
-        <div class="user-info-container vertical-shadow"></div>
-        <div style="clear: both;"></div>
+        <div class="user-info-container"></div>
+        <div style="clear: both; margin-bottom: 20px;"></div>
     </div>
 
     <div id="tab-content-vital-statistics" rel="vital-statistics">
@@ -34,7 +37,7 @@
     <div id="tab-content-achievements" rel="achievements"></div>
 
     <div id="tab-content-goals" rel="goals">
-        <h2 class="profile-sheet-title">Jason Rosoff &raquo; Goals</h2>
+        <h2 class="profile-sheet-title"></h2>
         <div id="profile-goals-content"></div>
     </div>
 </section>

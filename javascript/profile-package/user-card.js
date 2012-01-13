@@ -2,14 +2,12 @@
  * Code to handle the public components of a profile.
  */
 
-// TODO: rename UserCardModel
-
 /**
  * Profile information about a user.
  * May be complete, partially filled, or mostly empty depending on the
  * permissions the current user has to this profile.
  */
-UserCardModel = Backbone.Model.extend({
+var ProfileModel = Backbone.Model.extend({
     defaults: {
         "avatarName": "darth",
         "avatarSrc": "/images/darth.png",
@@ -20,7 +18,8 @@ UserCardModel = Backbone.Model.extend({
         "isCoachingLoggedInUser": false,
         "nickname": "",
         "points": 0,
-        "username": ""
+        "username": "",
+        "isSelf": false
     },
 
     url: "/api/v1/user/profile",
@@ -56,22 +55,14 @@ UserCardModel = Backbone.Model.extend({
         this.set({"isCoachingLoggedInUser": !isCoaching});
 
         if (options) {
-            var username = this.get("username"),
-                email = this.get("email"),
-                data = {};
-
-            if (username !== "") {
-                data.username = username;
-            } else if (email !== "") {
-                data.email = email;
-            }
-
             options = $.extend({
                 url: "/api/v1/user/coaches",
-                type: isCoaching ? "DELETE" : "POST",
+                type: isCoaching ? "DELETE" : "PUT",
                 dataType: "json",
                 contentType: "application/json",
-                data: JSON.stringify(data)
+                data: JSON.stringify({
+                        coach: this.get("username") || this.get("email")
+                    })
             }, options);
 
             $.ajax(options);
@@ -114,7 +105,7 @@ UserCardModel = Backbone.Model.extend({
 });
 
 UserCardView = Backbone.View.extend({
-    className: "user-info",
+    className: "user-card",
 
     events: {
         "click .add-remove-coach": "onAddRemoveCoachClicked_"

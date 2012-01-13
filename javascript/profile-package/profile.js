@@ -18,7 +18,7 @@ var Profile = {
      * rendered from the server. See templates/viewprofile.html for details.
      */
     init: function(json) {
-        this.profile = new UserCardModel(json.profileData);
+        this.profile = new ProfileModel(json.profileData);
         this.profileRoot = json.profileRoot;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
@@ -141,8 +141,7 @@ var Profile = {
         },
 
         showDefault: function() {
-            $("#tab-content-user-profile").show()
-                .siblings().hide();
+            $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
         },
 
@@ -178,15 +177,14 @@ var Profile = {
             }
 
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
-            var prettyGraphName = graph.replace(/-/gi," ");
-            var sheetTitle = $(".profile-graph-title");
+            var prettyGraphName = graph.replace(/-/gi, " ");
             var nickname = Profile.profile.get("nickname");
-            if ( graph == "exercise-problems" ) {
-                var prettyExName = exercise.replace(/_/gi," ");
-                sheetTitle.html( nickname + " &raquo; " + prettyGraphName + " &raquo; " + prettyExName);
+            if (graph == "exercise-problems") {
+                var prettyExName = exercise.replace(/_/gi, " ");
+                this.updateTitleBreadcrumbs([nickname, prettyGraphName, prettyExName]);
             }
             else {
-                sheetTitle.html( nickname + " &raquo; " + prettyGraphName);
+                this.updateTitleBreadcrumbs([nickname, prettyGraphName]);
             }
             Profile.loadGraph(href);
         },
@@ -211,17 +209,36 @@ var Profile = {
             $("#tab-content-achievements").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
+            var nickname = Profile.profile.get("nickname");
+            this.updateTitleBreadcrumbs([nickname, "Achievements"]);
         },
 
         showGoals: function() {
             $("#tab-content-goals").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-goals").attr("rel"));
+            var nickname = Profile.profile.get("nickname");
+            this.updateTitleBreadcrumbs([nickname, "Goals"]);
         },
 
         activateRelatedTab: function(rel) {
             $(".profile-navigation .vertical-tab-list a").removeClass("active-tab");
             $("a[rel$='" + rel + "']").addClass("active-tab");
+        },
+
+        /**
+         * Updates the title of the profile page to show breadcrumbs
+         * based on the parts in the specified array.
+         * @param {Array.<string>} parts A list of strings that will be HTML-escaped
+         *     to be the breadcrumbs.
+         */
+        updateTitleBreadcrumbs: function(parts) {
+            var sheetTitle = $(".profile-sheet-title");
+            if (parts && parts.length) {
+                sheetTitle.text(parts.join(" » "));
+            } else {
+                sheetTitle.text("");
+            }
         }
     }),
 
@@ -783,19 +800,21 @@ var Profile = {
     AddObjectiveHover: function(element) {
         Profile.hoverContent(element.find(".objective"));
     },
+
     render: function() {
         var profileTemplate = Templates.get("profile.profile");
 
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
-        $("#profile-content").html(
-                profileTemplate({profileRoot: this.profileRoot}));
+        $("#profile-content").html(profileTemplate({
+            profileRoot: this.profileRoot,
+            profileData: this.profile.toJSON()
+        }));
 
         // Show only the user card tab,
         // since the Backbone default route isn't triggered
         // when visiting khanacademy.org/profile
-        $("#tab-content-user-profile").show()
-            .siblings().hide();
+        $("#tab-content-user-profile").show().siblings().hide();
 
         Profile.populateUserCard();
         Profile.populateAchievements();
@@ -804,11 +823,17 @@ var Profile = {
         // TODO: Might there be a better way
         // for server-side + client-side to co-exist in harmony?
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
+
+        this.profile.bind("change:nickname", function(profile) {
+            $("#profile-tab-link").text(profile.get("nickname"));
+        });
+        this.profile.bind("change:avatarSrc", function(profile) {
+            $(".profile-tab-avatar").attr("src", profile.get("avatarSrc"));
+        });
     },
 
     populateUserCard: function() {
         var view = new UserCardView({model: this.profile});
-
         $(".user-info-container").html(view.render().el);
     },
 
@@ -820,7 +845,7 @@ var Profile = {
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
         $(".sticker-book").append(displayCase.render().el);
 
-        // Asynchronously load the full badge information in the background.
+        // Asynchronously load the full badge information in the background if
         $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
@@ -831,16 +856,21 @@ var Profile = {
             dataType: "json",
             success: function(data) {
 
-                // TODO: save and cache these objects
-                var fullBadgeList = new Badges.UserBadgeList();
+                if (Profile.profile.get("isSelf")) {
+                    // The display-case is only editable if you're viewing your
+                    // own profile
 
-                var collection = data["badgeCollections"];
-                $.each(collection, function(i, categoryJson) {
-                    $.each(categoryJson["userBadges"], function(j, json) {
-                        fullBadgeList.add(new Badges.UserBadge(json));
+                    // TODO: save and cache these objects
+                    var fullBadgeList = new Badges.UserBadgeList();
+
+                    var collection = data["badgeCollections"];
+                    $.each(collection, function(i, categoryJson) {
+                        $.each(categoryJson["userBadges"], function(j, json) {
+                            fullBadgeList.add(new Badges.UserBadge(json));
+                        });
                     });
-                });
-                displayCase.setFullBadgeList(fullBadgeList);
+                    displayCase.setFullBadgeList(fullBadgeList);
+                }
 
                 // TODO: make the rendering of the full badge page use the models above
                 // and consolidate the information

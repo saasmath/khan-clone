@@ -115,22 +115,21 @@ def get_user_data_coach_from_request():
 
     return user_data_coach
 
-def get_user_data_from_json(json):
+def get_user_data_from_json(json, key):
     """ Return the user_data specified by a username or an email.
 
-    Expects {'username': "<coach username>" or {'email': "<coach email>"}
+    Sample usage:
+        get_user_data_from_json(
+                {
+                    'coach': '<username or email>'
+                },
+                'coach'
+            )
     """
-    if not json:
+    if not json or not key or key not in json:
         return None
 
-    user_data = None
-
-    if 'username' in json:
-        user_data = models.UserData.get_from_username(json['username'])
-    elif 'email' in json:
-        user_data = models.UserData.get_possibly_current_user(json['email'])
-
-    return user_data
+    return models.UserData.get_from_username_or_email(json[key])
 
 @route("/api/v1/playlists", methods=["GET"])
 @jsonp
@@ -423,7 +422,7 @@ def update_user_profile():
             # TODO: How much do we want to communicate to the user?
             return api_invalid_param_response("Error!")
 
-@route("/api/v1/user/coaches", methods=["POST"])
+@route("/api/v1/user/coaches", methods=["PUT"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -433,7 +432,7 @@ def add_coach():
     Expects JSON with a "username" or "email" field that specifies the coach.
     """
     # TODO: Remove redundant path/logic in coaches.py
-    coach_user_data = get_user_data_from_json(request.json)
+    coach_user_data = get_user_data_from_json(request.json, 'coach')
 
     if not coach_user_data:
         return api_invalid_param_response("Invalid coach email or username.")
@@ -453,7 +452,7 @@ def remove_coach():
     Expects JSON with a "username" or "email" field that specifies the coach.
     """
     # TODO: Remove redundant path/logic in coaches.py
-    coach_user_data = get_user_data_from_json(request.json)
+    coach_user_data = get_user_data_from_json(request.json, 'coach')
 
     if not coach_user_data:
         return api_invalid_param_response("Invalid coach email or username.")

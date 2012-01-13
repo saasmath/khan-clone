@@ -29,7 +29,7 @@ KA_TEST.loadTemplates([
         UserCardView.countExercises = 200;
         var datas = [ {}, SAMPLE_PROFILE_DATA ];
         $.each(datas, function(index, data) {
-            var model = new UserCardModel(data),
+            var model = new ProfileModel(data),
                 view = new UserCardView({model: model}),
                 jel = $("<div>").addClass("user-info-container")
                         .append(view.render().el)
