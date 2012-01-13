@@ -1,8 +1,18 @@
-<div>
-    <p>Insightful text goes here. This will be a URL! You can change it!</p>
-    <label for="username">http://khanacademy.org/profile/</label>
-    <input type="text" value="{{username}}" id="username"
-        placeholder="Enter username here" class="inline-editable nickname">
-    <span class="sidenote"></span>
-    <input id="claim-username" type="button" value="click me to save">
+<div class="username-picker">
+    <div>
+        <input type="text" value="{{nickname}}" placeholder="Full name" class="nickname">
+    </div>
+    <div>
+        <input type="text" value="{{username}}" placeholder="Username" class="username">
+        <span class="sidenote"></span>
+    </div>
+    <div>
+        <p>Explanation stuff. English.</p>
+        <p>Your Khan Academy URL:</p>
+        <p>http://khanacademy.org/profile/<span class="example-username">{{username}}</span></p>
+    </div>
+    <div>
+        <input id="save-profile-info" type="button" class="simple-button action-gradient" value="Save">
+        <input id="cancel-profile-info" type="button" class="simple-button action-gradient" value="Cancel">
+    </div>
 </div>

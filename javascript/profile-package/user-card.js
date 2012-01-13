@@ -116,10 +116,10 @@ UserCardView = Backbone.View.extend({
          "click .avatar-pic-container": "onAvatarClick_",
          "mouseenter .avatar-pic-container": "onAvatarHover_",
          "mouseleave .avatar-pic-container": "onAvatarLeave_",
-         "change #nickname": "onNicknameChanged_",
+         "change .nickname": "onNicknameChanged_",
          "click #edit-visibility": "onEditVisibilityCicked_",
          "click #edit-nickname": "onEditNicknameClicked_",
-         "click #edit-username": "onEditUsernameClicked_",
+         "click #change-profile-info": "onChangeProfileInfoClicked_",
          "click #edit-profile": "onEditProfileClicked_"
      },
 
@@ -129,6 +129,9 @@ UserCardView = Backbone.View.extend({
         this.model.bind("change:avatarSrc", _.bind(this.onAvatarChanged_, this));
         this.model.bind("change:isCoachingLoggedInUser",
                 _.bind(this.onIsCoachingLoggedInUserChanged_, this));
+        this.model.bind("change:nickname", function(model) {
+                $(".nickname").val(model.get("nickname"));
+        });
 
         /**
          * The picker UI component which shows a dialog to change the avatar.
@@ -191,7 +194,7 @@ UserCardView = Backbone.View.extend({
      */
     onNicknameChanged_: function(e) {
         // TODO: validate
-        var value = this.$("#nickname").val();
+        var value = this.$(".nickname").val();
         this.model.save({ "nickname": value });
     },
 
@@ -277,19 +280,13 @@ UserCardView = Backbone.View.extend({
         e.preventDefault();
     },
 
-    onEditUsernameClicked_: function(e) {
+    onChangeProfileInfoClicked_: function(e) {
         e.preventDefault();
-
         if (!this.usernamePicker_) {
-            var view = new UsernamePickerView({model: this.model});
-            this.usernamePicker_ = this.$("#username-picker-container")
-                    .html(view.render().el)
-                    .modal({
-                        keyboard: true,
-                        backdrop: true
-                    });
+            this.usernamePicker_ = new UsernamePickerView({model: this.model});
+            $("body").append(this.usernamePicker_.render().el);
         }
-        this.usernamePicker_.modal("toggle");
+        this.usernamePicker_.toggle();
     }
 
 });

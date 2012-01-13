@@ -1,13 +1,15 @@
 /**
- * Code to handle the username picker.
+ * Code to handle the profile info changer.
+ * TODO: rename away from username picker
  */
 
 UsernamePickerView = Backbone.View.extend({
-    className: "username-picker",
+    id: "username-picker-container",
 
     events: {
-        "keyup #username": "onUsernameKeyup_",
-        "click #claim-username": "onClaimUsernameClick_"
+        "keyup .username": "onUsernameKeyup_",
+        "click #save-profile-info": "onSaveClick_",
+        "click #cancel-profile-info": "toggle"
     },
 
     initialize: function() {
@@ -18,10 +20,33 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     render: function() {
-        var context = {username: this.model.get("username")},
+        var context = {
+                username: this.model.get("username"),
+                nickname: this.model.get("nickname")
+            },
             html = this.template(context);
-        $(this.el).html(html);
+
+        $(this.el).html(html)
+            .addClass("modal fade hide")
+            .modal({
+                keyboard: true,
+                backdrop: true
+            })
+            .bind("hidden", _.bind(this.resetFields_, this));
         return this;
+    },
+
+    toggle: function() {
+        $(this.el).modal("toggle");
+    },
+
+    resetFields_: function() {
+        var nickname = this.model.get("nickname"),
+            username = this.model.get("username");
+
+        this.$(".nickname").val(nickname);
+        this.$(".username").val(username);
+        this.$(".example-username").val(username);
     },
 
     onUsernameKeyup_: function(e) {
@@ -30,6 +55,7 @@ UsernamePickerView = Backbone.View.extend({
             this.onTimeout_();
             return;
         }
+        this.$(".example-username").text(this.$(".username").val());
 
         this.$(".sidenote").text("typing");
         if (this.keyupTimeout) {
@@ -40,26 +66,29 @@ UsernamePickerView = Backbone.View.extend({
 
     onTimeout_: function() {
         this.$(".sidenote").text("validating");
-        this.model.validateUsername(this.$("#username").val());
+        this.model.validateUsername(this.$(".username").val());
         this.keyupTimeout = null;
     },
 
     showMessage_: function(isValid, message) {
-        this.$("#claim-username").prop("disabled", !isValid);
+        // TODO: ask Jason why this doesn't look disabled
+        this.$("#save-profile-info").prop("disabled", !isValid);
         this.$(".sidenote").text(message);
     },
 
     onChangeSuccess_: function(model, response) {
-        this.showMessage_(true, "saved.");
+        this.toggle();
     },
 
     onChangeError_: function(model, response) {
         this.showMessage_(false, response.responseText);
     },
 
-    onClaimUsernameClick_: function() {
-        var username = this.$("#username").val(),
+    onSaveClick_: function() {
+        var nickname = this.$(".nickname").val(),
+            username = this.$(".username").val(),
             attrs = {
+                nickname: nickname,
                 username: username
             },
             options = {

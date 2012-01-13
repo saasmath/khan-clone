@@ -14,7 +14,7 @@
       </div>
       <div class="user-deets">
           {{#if isSelf}}
-              <input type="text" value="{{nickname}}" id="nickname"
+              <input type="text" value="{{nickname}}"
                   placeholder="Enter nickname here" class="inline-editable nickname" style="display: block;">
           {{else}}
             <div>
@@ -30,8 +30,7 @@
                   <li>
                       <span id="edit-profile" class="simple-button action-gradient">Edit profile</span>
                       <ul class="sub_menu">
-                          <li><a id="edit-nickname" href="#">Nickname (does nothing)</a></li>
-                          <li><a id="edit-username" href="#">Username (click me!)</a></li>
+                        <li><a id="change-profile-info" href="#">Change profile info</a></li>
                       </ul>
                   </li>
               </ul>

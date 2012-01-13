@@ -608,16 +608,6 @@ div.graph-notification {
   filter:alpha(opacity=85);
 }
 
-/* Copied from modalvide.css, rough guess */
-#username-picker-container {
-    position: fixed;
-    /* set the point on which top and left operate to the middle top edge*/
-    width: 830px; /* this is redundant but here for clarity */
-    margin: 0 0 0 -415px;
-    top: 60px;
-    left: 50%;
-}
-
 /**
  * Edit Profile dropdown
  * from http://css-tricks.com/examples/SimplejQueryDropdowns/#
@@ -852,12 +842,24 @@ a[rel="goals"] {
     padding-top: 3px;
     padding-bottom: 3px;
 }
-.username-picker {
-    margin: 10px;
+
+#username-picker-container {
+    position: fixed;
+    /* set the point on which top and left operate to the middle top edge*/
+    width: 500px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -250px;
+    top: 60px;
+    left: 50%;
 }
-.username-picker label {
+
+.username-picker {
+    padding: 20px;
+}
+.username-picker input,
+.username-picker label{
     font-size: 150%;
 }
+
 .avatar-picker.modal {
     width: 600px;
     height: 80%;
