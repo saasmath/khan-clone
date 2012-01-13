@@ -422,7 +422,7 @@ a.graph-link {
 div.graph-notification {
     text-align: center;
     width: 100%;
-    padding-top: 100px;
+    margin-top: 100px;
     font-size: 13px;
     color: #333333;
     position: absolute;
