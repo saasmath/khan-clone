@@ -487,14 +487,25 @@ var NewGoalView = Backbone.View.extend({
         var that = this;
         this.$(".newgoal").hoverIntent(
             function hfa(evt) {
-                that.$(".newgoal").not(this).hoverFlow(evt.type, { opacity: 0.2}, 750, "easeInOutCubic");
-                $(".info.pos-left", this).hoverFlow(evt.type, { left: "+=30px", opacity: "show" }, 350, "easeInOutCubic");
-                $(".info.pos-right, .info.pos-top", this).hoverFlow(evt.type, { right: "+=30px", opacity: "show" }, 350, "easeInOutCubic");
+                that.$(".newgoal").not(this).hoverFlow(
+                    evt.type, { opacity: 0.2},
+                    750, "easeInOutCubic");
+                $(".info.pos-left", this).hoverFlow(
+                    evt.type, { left: "+=30px", opacity: "show" },
+                    350, "easeInOutCubic");
+                $(".info.pos-right, .info.pos-top", this).hoverFlow(
+                    evt.type, { right: "+=30px", opacity: "show" },
+                    350, "easeInOutCubic");
             },
             function hfo(evt) {
-                that.$(".newgoal").not(this).hoverFlow(evt.type, { opacity: 1}, 175, "easeInOutCubic");
-                $(".info.pos-left", this).hoverFlow(evt.type, { left: "-=30px", opacity: "hide" }, 150, "easeInOutCubic");
-                $(".info.pos-right, .info.pos-top", this).hoverFlow(evt.type, { right: "-=30px", opacity: "hide" }, 150, "easeInOutCubic");
+                that.$(".newgoal").not(this).hoverFlow(
+                    evt.type, { opacity: 1}, 175, "easeInOutCubic");
+                $(".info.pos-left", this).hoverFlow(
+                    evt.type, { left: "-=30px", opacity: "hide" },
+                    150, "easeInOutCubic");
+                $(".info.pos-right, .info.pos-top", this).hoverFlow(
+                    evt.type, { right: "-=30px", opacity: "hide" },
+                    150, "easeInOutCubic");
             }
         );
     },
