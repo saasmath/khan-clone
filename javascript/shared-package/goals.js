@@ -467,27 +467,52 @@ var NewGoalView = Backbone.View.extend({
     template: Templates.get("shared.goal-new"),
 
     initialize: function() {
+        this.disableProcessGoals();
         // this View assumes the element is pre-rendered, so automatically
         // hookup events
         this.hookup();
     },
 
+    disableProcessGoals: function() {
+        var hasExerciseProcessGoal = this.model.any(function(goal) {
+            return _.any(goal.get('objectives'), function(obj) {
+                return obj.type === "GoalObjectiveAnyExerciseProficiency";
+            });
+        });
+        if (hasExerciseProcessGoal) {
+            this.$('.newgoal.five_exercises').addClass('disabled');
+        }
+
+        var hasVideoProcessGoal = this.model.any(function(goal) {
+            return _.any(goal.get('objectives'), function(obj) {
+                return obj.type === "GoalObjectiveAnyVideo";
+            });
+        });
+        if (hasVideoProcessGoal) {
+            this.$('.newgoal.five_videos').addClass('disabled');
+        }
+    },
+
     hookup: function() {
         $(this.el)
-            .delegate(".newgoal.custom", "click", $.proxy(this.createCustomGoal, this))
-            .delegate(".newgoal.five_exercises", "click", $.proxy(function(e) {
+            .on("click", ".newgoal.custom", $.proxy(this.createCustomGoal, this))
+            .on("click", ".newgoal.five_exercises", $.proxy(function(e) {
                 e.preventDefault();
-                this.createSimpleGoal("five_exercises");
+                if (!$(e.currentTarget).hasClass('disabled')) {
+                    this.createSimpleGoal("five_exercises");
+                }
             }, this))
-            .delegate(".newgoal.five_videos", "click", $.proxy(function(e) {
+            .on("click", ".newgoal.five_videos", $.proxy(function(e) {
                 e.preventDefault();
-                this.createSimpleGoal("five_videos");
+                if (!$(e.currentTarget).hasClass('disabled')) {
+                    this.createSimpleGoal("five_videos");
+                }
             }, this));
 
         var that = this;
-        this.$(".newgoal").hoverIntent(
+        this.$(".newgoal").not(".disabled").hoverIntent(
             function hfa(evt) {
-                that.$(".newgoal").not(this).hoverFlow(
+                that.$(".newgoal").not(this).not(".disabled").hoverFlow(
                     evt.type, { opacity: 0.2},
                     750, "easeInOutCubic");
                 $(".info.pos-left", this).hoverFlow(
@@ -498,7 +523,7 @@ var NewGoalView = Backbone.View.extend({
                     350, "easeInOutCubic");
             },
             function hfo(evt) {
-                that.$(".newgoal").not(this).hoverFlow(
+                that.$(".newgoal").not(this).not(".disabled").hoverFlow(
                     evt.type, { opacity: 1}, 175, "easeInOutCubic");
                 $(".info.pos-left", this).hoverFlow(
                     evt.type, { left: "-=30px", opacity: "hide" },
