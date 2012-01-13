@@ -1956,6 +1956,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .achievement-badge .add-goal.success, .achievement-badge .add-goal.failure {
         right:5px;
         padding-right:6px;
+        cursor: default;
     }
     .achievement-badge .add-goal.failure {
         background-color:red;
