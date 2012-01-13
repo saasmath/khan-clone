@@ -226,7 +226,7 @@ input.simple-button {
 	border-bottom-color: #803503 !important;
 	text-shadow:  0 -1px 0 #a64403;
 }
-.simple-button.disabled {
+.simple-button:disabled, .simple-button.disabled {
     color: #ddd !important;
 }
 .simple-button.seethrough {

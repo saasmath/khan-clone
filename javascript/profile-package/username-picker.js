@@ -71,7 +71,6 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     showMessage_: function(isValid, message) {
-        // TODO: ask Jason why this doesn't look disabled
         this.$("#save-profile-info").prop("disabled", !isValid);
         this.$(".sidenote").text(message);
     },
