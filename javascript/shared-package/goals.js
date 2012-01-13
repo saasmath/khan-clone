@@ -233,6 +233,21 @@ var GoalCollection = Backbone.Collection.extend({
         }
 
         return matchingGoal;
+    },
+
+    processGoalContext: function() {
+        return {
+            hasExercise: this.any(function(goal) {
+                return _.any(goal.get('objectives'), function(obj) {
+                    return obj.type === "GoalObjectiveAnyExerciseProficiency";
+                });
+            }),
+            hasVideo: this.any(function(goal) {
+                return _.any(goal.get('objectives'), function(obj) {
+                    return obj.type === "GoalObjectiveAnyVideo";
+                });
+            })
+        };
     }
 });
 
@@ -477,30 +492,10 @@ var NewGoalView = Backbone.View.extend({
     },
 
     render: function() {
-        $(this.el).html(this.template())
-        this.disableProcessGoals();
+        var context = this.model.processGoalContext();
+        $(this.el).html(this.template(context));
         this.hookup();
         return this;
-    },
-
-    disableProcessGoals: function() {
-        var hasExerciseProcessGoal = this.model.any(function(goal) {
-            return _.any(goal.get('objectives'), function(obj) {
-                return obj.type === "GoalObjectiveAnyExerciseProficiency";
-            });
-        });
-        if (hasExerciseProcessGoal) {
-            this.$('.newgoal.five_exercises').addClass('disabled');
-        }
-
-        var hasVideoProcessGoal = this.model.any(function(goal) {
-            return _.any(goal.get('objectives'), function(obj) {
-                return obj.type === "GoalObjectiveAnyVideo";
-            });
-        });
-        if (hasVideoProcessGoal) {
-            this.$('.newgoal.five_videos').addClass('disabled');
-        }
     },
 
     hookup: function() {
@@ -594,9 +589,10 @@ var NewGoalDialog = Backbone.View.extend({
     },
 
     render: function() {
+        var context = this.model.processGoalContext();
         // As we're assigning to this.el, event handlers need to be rebound
         // after each render.
-        this.el = $(this.template()).appendTo(document.body).get(0);
+        this.el = $(this.template(context)).appendTo(document.body).get(0);
         this.newGoalView = new NewGoalView({
             el: this.$(".viewcontents"),
             model: this.model
