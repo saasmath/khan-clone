@@ -20,6 +20,8 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     render: function() {
+        // TODO: Make idempotent
+        // maybe making the resetFields_ function obsolete
         var context = {
                 username: this.model.get("username"),
                 nickname: this.model.get("nickname")
@@ -48,6 +50,7 @@ UsernamePickerView = Backbone.View.extend({
         this.$(".username").val(username);
         this.$(".example-username").val(username);
         this.$(".sidenote").text("").removeClass("success").removeClass("error");
+        this.$("#save-profile-info").prop("disabled", false);
     },
 
     onUsernameKeyup_: function(e) {
