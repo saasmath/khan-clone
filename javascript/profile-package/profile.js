@@ -130,6 +130,44 @@ var Profile = {
              }
         });
 
+        // activate +goal button for certain badges
+        $(".add-goal").click(function( evt ){
+            var button = $( this );
+            var badge = button.closest( ".achievement-badge" );
+
+            var goalTitle = badge.find( ".achievement-title" ).text();
+            var goalObjectives = _( badge.data("objectives") ).map( function( elt ){
+                return {
+                    "type" : "GoalObjectiveExerciseProficiency",
+                    "internal_id" : elt
+                }
+            });
+
+            var goal = new Goal({
+                title: goalTitle,
+                objectives: goalObjectives
+            });
+
+            window.GoalBook.add(goal);
+
+            goal.save()
+                // this will usually fail because an exercise in the goal was already completed
+                .fail(function(err) {
+                    var error = err.responseText;
+                    button.addClass("failure")
+                        .text("oh no!").attr("title","This goal could not be saved.");
+                    KAConsole.log("Error while saving new badge goal", goal);
+                    window.GoalBook.remove(goal);
+                })
+                .success(function(){
+                    button.text("Goal Added!").addClass("success");
+                    badge.find(".energy-points-badge").addClass("goal-added");
+                });
+        });
+
+        // remove goals from IE<=8
+        $(".lte8 .goals-accordion-content").remove();
+
         $("#stats-nav #nav-accordion")
             .accordion({
                 header:".header",

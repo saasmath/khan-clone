@@ -1,8 +1,13 @@
 import models
 from badges import Badge, BadgeCategory
+import simplejson as json
 
 # All badges awarded for completing some subset of exercises inherit from ExerciseCompletionBadge
 class ExerciseCompletionBadge(Badge):
+
+    def __init__(self):
+        super(ExerciseCompletionBadge, self).__init__()
+        self.is_goal = True
 
     def is_satisfied_by(self, *args, **kwargs):
         user_data = kwargs.get("user_data", None)
@@ -18,21 +23,33 @@ class ExerciseCompletionBadge(Badge):
 
         return True
 
-    def extended_description(self):
-        s_exercises = ""
-        for exercise_name in self.exercise_names_required:
-            badge_name = models.Exercise.to_display_name(exercise_name)
-            if len(s_exercises) > 80:
-                badge_name = models.Exercise.to_short_name(exercise_name)
+    def goal_objectives(self):
+        if self.exercise_names_required:
+            return json.dumps(self.exercise_names_required)
+        return json.dumps([])
 
-            if len(badge_name) > 0:
-                if len(s_exercises) > 0:
-                    s_exercises += ", "
-                s_exercises += badge_name
+    def extended_description(self):
+        badges = []
+        total_len = 0;
+
+        for exercise_name in self.exercise_names_required:
+            long_name = models.Exercise.to_display_name(exercise_name)
+            short_name = models.Exercise.to_short_name(exercise_name)
+
+            display_name = long_name if (total_len < 80) else short_name
+
+            badges.append(display_name)
+            total_len += len(display_name)
+
+        s_exercises = ", ".join(badges)
 
         return "Achieve proficiency in %s" % s_exercises
 
 class ChallengeCompletionBadge(ExerciseCompletionBadge):
+
+    def __init__(self):
+        super(ChallengeCompletionBadge, self).__init__()
+        self.is_goal = False
 
     def extended_description(self):
         s_exercises = ""

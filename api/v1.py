@@ -1249,7 +1249,6 @@ def create_user_goal():
 
     objective_descriptors = []
 
-    goal_exercises = GoalList.exercises_in_current_goals(user_data)
     goal_videos = GoalList.videos_in_current_goals(user_data)
 
     if json:
@@ -1264,10 +1263,6 @@ def create_user_goal():
                 obj['exercise'] = models.Exercise.get_by_name(obj['internal_id'])
                 if not obj['exercise'] or not obj['exercise'].is_visible_to_current_user():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
-                if user_data.is_proficient_at(obj['exercise'].name):
-                    return api_invalid_param_response("Exercise has already been completed.")
-                if obj['exercise'].name in goal_exercises:
-                    return api_invalid_param_response("Exercise is already an objective in a current goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveWatchVideo':
