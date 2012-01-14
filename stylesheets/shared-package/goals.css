@@ -488,12 +488,20 @@ a.goal-history {
 }
 
 .goalpicker .newgoal {
+    cursor:pointer;
     width:90%;
     padding:4em 3% 2em 1%;
     float:left;
     clear:none;
     position:relative;
     -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.goalpicker .newgoal.disabled {
+    opacity: 0.2;
+    cursor: default;
 }
 
 .goalpicker .newgoal.small{
@@ -529,10 +537,33 @@ a.goal-history {
     color: #777;
     text-decoration:none;
 }
+
+.goalpicker .newgoal.disabled a {
+    cursor: default !important;
+    color: #777 !important;
+}
+
+/* disable hover effects for title and objectives */
+.goalpicker a:hover {
+    text-decoration: none;
+}
+.goalpicker .goal a.objective:hover:before {
+    border-color: #fff;
+}
+.goalpicker .goal a.objective:hover {
+    border-color: #3A4759 ! important;
+}
+
 .goalpicker .newgoal:hover{
-    cursor:pointer;
     z-index:10;
     -webkit-box-shadow:0 0 6px 1px #678D00;
+    -moz-box-shadow:0 0 6px 1px #678D00;
+    box-shadow:0 0 6px 1px #678D00;
+}
+.goalpicker .newgoal.disabled:hover {
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
 }
 
 .goalpicker .newgoal .info p{
@@ -567,22 +598,9 @@ a.goal-history {
     border:1px solid #909090;
     -webkit-box-shadow:0px 0px 10px 5px #ccc;
     -webkit-border-radius:5px;
+    -moz-box-shadow:0px 0px 10px 5px #ccc;
+    -moz-border-radius:5px;
 }
-
-
-/*.goalpicker .info:after {
-    content:'';
-    display:block;
-    position:absolute;
-    top:30px;
-    left:100%;
-    width:0;
-    height:0;
-    border-color: transparent transparent transparent #eee;
-    border-style: solid;
-    border-width: 10px;
-}
-*/
 
 .goalpicker .info.pos-right {
     left:auto;
@@ -629,11 +647,6 @@ a.goal-history {
 .modal .goalpicker .newgoal{
     padding:1em 1em 2em;
 }
-
-.lte8 #goals-container {
-    display: none;
-}
-
 
 .modal.goal-new-custom {
     position: fixed;

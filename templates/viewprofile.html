@@ -139,7 +139,7 @@
                         <div id="all-badges">
                         <h2 style="display: block; margin-left: 10px;">Possible Badges</h2>
                     {% endif %}
-                        {{ badges.badge_block(badge, None, show_badge_frequencies) }}
+                        {{ badges.badge_block(badge, None, show_badge_frequencies, user_data_student) }}
                     {% if loop.last %}
                         </div>
                         <div class="clear"></div>
@@ -158,4 +158,6 @@
 <script>
 var USER_EMAIL = '{{ user_data.email|escapejs }}';
 </script>
+
+{{ super() }}
 {% endblock pagescript %}

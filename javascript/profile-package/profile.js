@@ -72,7 +72,7 @@ var Profile = {
                 evt.preventDefault();
                 if($.address){
                     // only visit the resource described by the url, leave the params unchanged
-                    var href = $( this ).attr( "href" )
+                    var href = $( this ).attr( "href" );
                     var path = href.split("?")[0];
 
                     // visiting a different resource
@@ -130,8 +130,50 @@ var Profile = {
              }
         });
 
-        // remove goals from IE<=8
-        $(".lte8 .goals-accordion-content").remove();
+        var currentGoals = window.GoalBook.map( function(g){ return g.get("title"); });
+        _( $(".add-goal") ).map( function( elt ){
+            var button = $( elt );
+            var badge = button.closest( ".achievement-badge" );
+            var goalTitle = badge.find( ".achievement-title" ).text();
+        
+            // remove +goal button if present in list of active goals
+            if( _.indexOf( currentGoals, goalTitle ) > -1){
+
+                button.remove();
+
+            // add +goal behavior to button, once.
+            } else {
+        
+                button.one("click", function(){
+                    var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
+                        return {
+                            "type" : "GoalObjectiveExerciseProficiency",
+                            "internal_id" : exercise
+                        };
+                    });
+
+                    var goal = new Goal({
+                        title: goalTitle,
+                        objectives: goalObjectives
+                    });
+
+                    window.GoalBook.add(goal);
+
+                    goal.save()
+                        .fail(function(err) {
+                            var error = err.responseText;
+                            button.addClass("failure")
+                                .text("oh no!").attr("title","This goal could not be saved.");
+                            KAConsole.log("Error while saving new badge goal", goal);
+                            window.GoalBook.remove(goal);
+                        })
+                        .success(function(){
+                            button.text("Goal Added!").addClass("success");
+                            badge.find(".energy-points-badge").addClass("goal-added");
+                        });
+                });
+            }
+        });
 
         $("#stats-nav #nav-accordion")
             .accordion({
@@ -490,7 +532,7 @@ var Profile = {
             student.most_recent_update = null;
             student.profile_url = "/profile?student_email="+ student.email +"#/api/v1/user/goals?email="+student.email;
 
-            if (student.goals != undefined && student.goals.length > 0) {
+            if (student.goals && student.goals.length > 0) {
                 $.each(student.goals, function(idx2, goal) {
                     // Sort objectives by status
                     var progress_count = 0;
@@ -679,18 +721,18 @@ var Profile = {
             studentGoalsViewModel.filterDesc += 'most recently worked on goals';
         }
         if (filters['in-progress']) {
-            if (studentGoalsViewModel.filterDesc != '') studentGoalsViewModel.filterDesc += ', ';
+            if (studentGoalsViewModel.filterDesc !== '') studentGoalsViewModel.filterDesc += ', ';
             studentGoalsViewModel.filterDesc += 'goals in progress';
         }
         if (filters['struggling']) {
-            if (studentGoalsViewModel.filterDesc != '') studentGoalsViewModel.filterDesc += ', ';
+            if (studentGoalsViewModel.filterDesc !== '') studentGoalsViewModel.filterDesc += ', ';
             studentGoalsViewModel.filterDesc += 'students who are struggling';
         }
-        if (filter_text != '') {
-            if (studentGoalsViewModel.filterDesc != '') studentGoalsViewModel.filterDesc += ', ';
+        if (filter_text !== '') {
+            if (studentGoalsViewModel.filterDesc !== '') studentGoalsViewModel.filterDesc += ', ';
             studentGoalsViewModel.filterDesc += 'students/goals matching "' + filter_text + '"';
         }
-        if (studentGoalsViewModel.filterDesc != '')
+        if (studentGoalsViewModel.filterDesc !== '')
             studentGoalsViewModel.filterDesc = 'Showing only ' + studentGoalsViewModel.filterDesc;
         else
             studentGoalsViewModel.filterDesc = 'No filters applied';
@@ -710,7 +752,7 @@ var Profile = {
                 row_visible = row_visible && (row.struggling);
             }
             if (row_visible) {
-                if (filter_text == '' || row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
+                if (filter_text === '' || row.student.nickname.toLowerCase().indexOf(filter_text) >= 0) {
                     if (row.goal) {
                         $.each(row.goal.objectives, function(idx, objective) {
                             $(objective.blockElement).removeClass('matches-filter');
@@ -1113,7 +1155,7 @@ var ProgressSummaryView = function() {
 
         Handlebars.registerHelper("progressColumn", function(block) {
             this.progressSide = block.hash.side;
-            return block(this)
+            return block(this);
         });
 
         Handlebars.registerHelper("progressIter", function(progress, block) {

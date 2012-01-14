@@ -190,7 +190,7 @@ def compress_exercises():
     subprocess.check_call(["ruby", "khan-exercises/build/pack.rb"])
 
 def compile_templates():
-    print "Compiling all templates"
+    print "Compiling jinja templates"
     return 0 == popen_return_code([sys.executable, 'deploy/compile_templates.py'])
 
 def prime_cache(version):
@@ -248,12 +248,10 @@ def main():
 
     options, args = parser.parse_args()
 
-    if(options.node):
+    if options.node:
         print "Checking for node and dependencies"
         if not check_deps():
             return
-        # if options.dryrun:
-        #     return
 
     if options.report:
         print "Generating file size report"
@@ -268,7 +266,7 @@ def main():
 
     version = -1
 
-    if not options.noup or len(options.version) == 0:
+    if not options.noup:
         version = hg_pull_up()
         if version <= 0:
             print "Could not find version after 'hg pull', 'hg up', 'hg tip'."
@@ -279,13 +277,8 @@ def main():
             print "Stopping deploy. It doesn't look like you're deploying from a directory with the appropriate secrets.py."
             return
 
-    if len(options.version) > 0:
-        version = options.version
-
-    print "Deploying version " + str(version)
-
     if not compile_templates():
-        print "Failed to compile templates, bailing."
+        print "Failed to compile jinja templates, bailing."
         return
 
     if not compile_handlebar_templates():
@@ -297,6 +290,14 @@ def main():
     compress_exercises()
 
     if not options.dryrun:
+        if options.version:
+            version = options.version
+        elif options.noup:
+            print 'You must supply a version when deploying with --no-up'
+            return
+
+        print "Deploying version " + str(version)
+
         (email, password) = get_app_engine_credentials()
         success = deploy(version, email, password)
         if success:

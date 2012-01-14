@@ -180,7 +180,7 @@ function readCookie(name) {
     for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0) == " ") c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
 }
@@ -416,7 +416,7 @@ var VideoStats = {
                 // Another 10% has been watched
                 this.save();
             }
-        } else if (state == 0 && this.playing) { // ended
+        } else if (state === 0 && this.playing) { // ended
             this.playing = false;
             this.save();
         } else if (state == 2 && this.playing) { // paused
@@ -825,16 +825,14 @@ IEHtml5.init();
 
 var VideoViews = {
     init: function() {
-        var seedTime = new Date(2011, 3, 22);  //Seed Date is set to October 31, 2010  0-January, 11-december
-        var seedTotalViews = 50397618;
-        var seedDailyViews = 170000;
+        // Exponential fit calculated mid-Jan 2012
+        var estimatedTotalViews = 1.5898395409191447e-19 * Math.exp(4.659582953415592e-11 * (+new Date()));
 
-        var currentTime = new Date();
-        var secondsSince = (currentTime.getTime() - seedTime.getTime()) / 1000;
-        var viewsPerSecond = seedDailyViews / 24 / 3600;
-        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince * viewsPerSecond);
+        // Remove these two lines after Jan 22, 2012
+        var counterCatchUpViews = 1.630133005604276e-121 * Math.exp(2.235376353340977e-10 * (+new Date()));
+        estimatedTotalViews = Math.min(estimatedTotalViews, counterCatchUpViews);
 
-        var totalViewsString = addCommas("" + estimatedTotalViews);
+        var totalViewsString = addCommas("" + Math.round(estimatedTotalViews));
 
         $("#page_num_visitors").append(totalViewsString);
         $("#page_visitors").css("display", "inline");
@@ -1031,7 +1029,8 @@ function dynamicPackage(packageName, callback, manifest) {
                         script.type = "text/x-handlebars-template"; // This hasn't been tested
                     else
                         script.type = "text/javascript";
-                    script.appendChild(document.createTextNode(file.content));
+
+                    script.text = file.content;
 
                     var head = document.getElementsByTagName("head")[0] || document.documentElement;
                     head.appendChild(script);
@@ -1058,7 +1057,7 @@ function dynamicPackage(packageName, callback, manifest) {
             delete dynamicPackageLoader.loadingPackages[packageName];
             callback("complete");
         }
-    }
+    };
 
     this.checkComplete();
 }
@@ -1162,9 +1161,9 @@ var Review = {
             oldCount = reviewCounterElem.data("counter") || 0,
             tens = Math.floor((reviewsLeftCount % 100) / 10),
             animationOptions = {
-              duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount))
-                  * 1000 * 0.5 + 0.2,
-              easing: "easeInOutCubic"
+                duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount)) *
+                    1000 * 0.5 + 0.2,
+                easing: "easeInOutCubic"
             },
             lineHeight = parseInt(
                 reviewCounterElem.children().css("lineHeight"), 10);
