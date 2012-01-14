@@ -130,43 +130,50 @@ var Profile = {
              }
         });
 
-        // activate +goal button for certain badges
-        $(".add-goal").click(function( evt ){
-            var button = $( this );
+        var currentGoals = window.GoalBook.map( function(g){ return g.get("title"); });
+        _( $(".add-goal") ).map( function( elt ){
+            var button = $( elt );
             var badge = button.closest( ".achievement-badge" );
-
             var goalTitle = badge.find( ".achievement-title" ).text();
-            var goalObjectives = _( badge.data("objectives") ).map( function( elt ){
-                return {
-                    "type" : "GoalObjectiveExerciseProficiency",
-                    "internal_id" : elt
-                }
-            });
+        
+            // remove +goal button if present in list of active goals
+            if( _.indexOf( currentGoals, goalTitle ) > -1){
 
-            var goal = new Goal({
-                title: goalTitle,
-                objectives: goalObjectives
-            });
+                button.remove();
 
-            window.GoalBook.add(goal);
+            // add +goal behavior to button, once.
+            } else {
+        
+                button.one("click", function(){
+                    var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
+                        return {
+                            "type" : "GoalObjectiveExerciseProficiency",
+                            "internal_id" : exercise
+                        };
+                    });
 
-            goal.save()
-                // this will usually fail because an exercise in the goal was already completed
-                .fail(function(err) {
-                    var error = err.responseText;
-                    button.addClass("failure")
-                        .text("oh no!").attr("title","This goal could not be saved.");
-                    KAConsole.log("Error while saving new badge goal", goal);
-                    window.GoalBook.remove(goal);
-                })
-                .success(function(){
-                    button.text("Goal Added!").addClass("success");
-                    badge.find(".energy-points-badge").addClass("goal-added");
+                    var goal = new Goal({
+                        title: goalTitle,
+                        objectives: goalObjectives
+                    });
+
+                    window.GoalBook.add(goal);
+
+                    goal.save()
+                        .fail(function(err) {
+                            var error = err.responseText;
+                            button.addClass("failure")
+                                .text("oh no!").attr("title","This goal could not be saved.");
+                            KAConsole.log("Error while saving new badge goal", goal);
+                            window.GoalBook.remove(goal);
+                        })
+                        .success(function(){
+                            button.text("Goal Added!").addClass("success");
+                            badge.find(".energy-points-badge").addClass("goal-added");
+                        });
                 });
+            }
         });
-
-        // remove goals from IE<=8
-        $(".lte8 .goals-accordion-content").remove();
 
         $("#stats-nav #nav-accordion")
             .accordion({

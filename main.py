@@ -903,7 +903,7 @@ application = webapp2.WSGIApplication([
     ('/summer/getstudent', summer.GetStudent),
     ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
     ('/summer/paypal-ipn', summer.PaypalIPN),
-    ('/summer/admin/process', summer.Process),
+    ('/summer/admin/download', summer.Download),
 
     ('/robots.txt', robots.RobotsTxt),
 
