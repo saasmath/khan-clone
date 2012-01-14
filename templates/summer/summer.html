@@ -17,7 +17,11 @@
     <div>
         <h2>Khan Academy Discovery Lab 2012 Application</h2>
         {% if authenticated %}
-            Logged in as: <u>{{ user_email|escape }}</u>.
+            {% if nickname %}
+                Logged in as: <u>{{ nickname|escape }}</u>.
+            {% else %}
+                Logged in as: <u>{{ user_email|escape }}</u>.
+            {% endif %}
             {% if make_payment %}
                 {% if student.processing_fee_paid %}
                     <br><br>Your application processing fee of ${{ student.processing_fee|escape }} has been paid.<br>
