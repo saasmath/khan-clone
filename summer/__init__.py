@@ -5,6 +5,9 @@ import datetime
 import math
 import logging
 import urllib, urllib2
+import csv
+import StringIO
+import tarfile
 
 from request_handler import RequestHandler
 from app import App
@@ -13,6 +16,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext import db
 from google.appengine.api import mail
 
+import facebook_util
 from models import UserData
 from .models import SummerPaypalTransaction, SummerStudent, SummerParentData
 
@@ -159,7 +163,7 @@ class GetStudent(RequestHandler):
 
         return
 
-class Process(RequestHandler):
+class Download(RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
         user_email = user_data.user_email
@@ -169,7 +173,42 @@ class Process(RequestHandler):
                 "user_email" : user_email,
         }
 
-        return template_values
+        sio = StringIO.StringIO()
+        sw = csv.writer(sio)
+        properties = [p for p in SummerStudent().properties()]
+        sw.writerow(properties)
+        for student in SummerStudent.all().fetch(5000):
+            sw.writerow([unicode(getattr(student, p)) for p in properties])
+
+        pio = StringIO.StringIO()
+        pw = csv.writer(pio)
+        properties = [p for p in SummerParentData().properties()]
+        pw.writerow(properties)
+        for parent in SummerParentData.all().fetch(5000):
+            pw.writerow([unicode(getattr(parent, p)) for p in properties])
+
+        f = StringIO.StringIO()
+        tf = tarfile.open(fileobj=f, mode='w:gz')
+
+        # All SummerStudents
+        tinfo = tarfile.TarInfo(name="student_data.csv")
+        tinfo.size = sio.len
+        sio.seek(0)
+        tf.addfile(tarinfo=tinfo, fileobj=sio)
+
+        # All parents
+        tinfo = tarfile.TarInfo(name="parent_data.csv")
+        tinfo.size = pio.len
+        pio.seek(0)
+        tf.addfile(tarinfo=tinfo, fileobj=pio)
+
+        tf.close()
+
+        self.response.headers['Content-Type'] = "application/x-tar"
+        self.response.headers['Content-Disposition'] = "attachment; filename=summer.tgz"
+
+        self.response.out.write(f.getvalue())
+        return
 
     @developer_only
     def get(self):
@@ -177,7 +216,7 @@ class Process(RequestHandler):
         user_data = UserData.current()
 
         if user_data is not None:
-            template_values = self.authenticated_response()
+            return self.authenticated_response()
 
         else:
             template_values = {
@@ -192,6 +231,9 @@ class Status(RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
         user_email = user_data.user_email
+        nickname = ""
+        if facebook_util.is_facebook_user_id(user_email):
+            nickname = facebook_util.get_facebook_nickname(user_email)
 
         query = SummerStudent.all()
         query.filter('email = ', user_email)
@@ -205,7 +247,7 @@ class Status(RequestHandler):
             query.filter('email = ', user_email)
             parent = query.get()
             if parent is None:
-                return
+                return None
 
             is_parent = True
             for student_key in parent.students:
@@ -219,6 +261,7 @@ class Status(RequestHandler):
             "is_parent" : is_parent,
             "students" : students,
             "user_email" : user_email,
+            "nickname" : nickname,
         }
 
         return template_values
@@ -245,6 +288,9 @@ class Application(RequestHandler):
     def authenticated_response(self):
         user_data = UserData.current()
         user_email = user_data.user_email
+        nickname = ""
+        if facebook_util.is_facebook_user_id(user_email):
+            nickname = facebook_util.get_facebook_nickname(user_email)
 
         students = []
         is_parent = False
@@ -299,6 +345,7 @@ class Application(RequestHandler):
             "parent_js" : parent_js,
             "user_email_js" : json.dumps(user_email),
             "user_email" : user_email,
+            "nickname" : nickname,
         }
 
         return template_values
@@ -312,6 +359,10 @@ class Application(RequestHandler):
 
         if user_data is not None:
             user_email = user_data.user_email
+            nickname = ""
+            if facebook_util.is_facebook_user_id(user_email):
+                nickname = facebook_util.get_facebook_nickname(user_email)
+
             application_filled = self.request.get('application_filled')
             make_payment = self.request.get('make_payment')
 
@@ -366,6 +417,7 @@ class Application(RequestHandler):
                     "payee_phone_b" : payee_phone_b,
                     "payee_phone_c" : payee_phone_c,
                     "user_email" : user_email,
+                    "nickname" : nickname,
                 }
 
             elif not application_filled:
@@ -498,6 +550,7 @@ Khan Academy Discovery Lab""" % (parent.first_name, student.first_name, student.
                     "payee_phone_b" : payee_phone_b,
                     "payee_phone_c" : payee_phone_c,
                     "user_email" : user_email,
+                    "nickname" : nickname,
                 }
 
         else:

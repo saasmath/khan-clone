@@ -790,6 +790,8 @@ def attempt_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            review_mode = request.request_bool("review_mode", default=False)
+
             user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
                     user_exercise,
@@ -801,6 +803,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     request.request_bool("complete"),
                     request.request_int("count_hints", default=0),
                     int(request.request_float("time_taken")),
+                    review_mode,
                     request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
@@ -818,7 +821,6 @@ def attempt_problem_number(exercise_name, problem_number):
 
             user_states = user_exercise_graph.states(exercise.name)
             correct = request.request_bool("complete")
-            review_mode = request.request_bool("review_mode", default=False)
 
             action_results = {
                 "exercise_state": {
@@ -862,6 +864,7 @@ def hint_problem_number(exercise_name, problem_number):
 
             attempt_number = request.request_int("attempt_number")
             count_hints = request.request_int("count_hints")
+            review_mode = request.request_bool("review_mode", default=False)
 
             user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
@@ -874,13 +877,13 @@ def hint_problem_number(exercise_name, problem_number):
                     request.request_bool("complete"),
                     count_hints,
                     int(request.request_float("time_taken")),
+                    review_mode,
                     request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
 
             user_states = user_exercise_graph.states(exercise.name)
-            review_mode = request.request_bool("review_mode", default=False)
             exercise_message_html = templatetags.exercise_message(exercise,
                     user_exercise_graph, review_mode=review_mode)
 

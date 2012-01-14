@@ -11,7 +11,11 @@
   <div>
     <h2>Khan Academy Discovery Lab Application Status</h2>
     {% if authenticated %}
-    Logged in as: <u>{{ user_email|escape }}</u><br>
+        {% if nickname %}
+            Logged in as: <u>{{ nickname|escape }}</u><br>
+        {% else %}
+            Logged in as: <u>{{ user_email|escape }}</u><br>
+        {% endif %}
     {% if is_parent %}
     You have applied for {{ students|length }} student(s). Please check back periodically for status of your students'
     application.  We will notify you regarding your status as soon as possible, no later than March 1st, 2012.

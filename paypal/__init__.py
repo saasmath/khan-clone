@@ -67,8 +67,9 @@ class IPN(request_handler.RequestHandler):
         first_sentence = ""
         if parameters.get('txn_type', '') == "recurring_payment" and 'payment_cycle' in parameters and 'amount_per_cycle' in parameters:
             first_sentence = "We greatly appreciate your %s recurring contribution of $%s." % (parameters['payment_cycle'].lower(), parameters['amount_per_cycle'])
-        elif 'mc_gross' in parameters:
-            first_sentence = "We greatly appreciate your contribution of $%s made on %s." % (parameters['mc_gross'], parameters['payment_date'])
+        elif 'mc_gross' in parameters and 'payment_date' in parameters:
+            payment_date = datetime.dateime.strptime(parameters['payment_date'], "%H:%M:%S %b %d, %Y %Z").date().strftime("%b %d, %Y")
+            first_sentence = "We greatly appreciate your contribution of $%s made on %s." % (parameters['mc_gross'], payment_date)
         else:
             first_sentence = "We greatly appreciate your contribution."
 
