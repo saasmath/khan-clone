@@ -1144,7 +1144,11 @@ class Video(Searchable, db.Model):
 
         if self.downloadable_formats:
 
-            download_url_template = "http://www.archive.org/download/KA-converted-%s/%s.%s"
+            # We now serve our downloads from s3. Our old archive URL template is...
+            #   "http://www.archive.org/download/KA-converted-%s/%s.%s"
+            # ...which we may want to fall back on in the future should s3 prices climb.
+            
+            download_url_template = "http://s3.amazonaws.com/KA-youtube-converted/%s/%s.%s"
             return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
 
         return None
