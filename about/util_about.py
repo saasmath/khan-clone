@@ -29,6 +29,11 @@ class ViewGettingStarted(AboutRequestHandler):
             "App": App
         })
 
+class ViewDiscoveryLab(request_handler.RequestHandler):
+    def get(self):
+        self.render_jinja2_template('about/discovery_lab.html', {
+            "selected_id": "discovery-lab"})
+
 class ViewFAQ(AboutRequestHandler):
     def get(self):
         self.render_jinja2_template('about/faq.html', {

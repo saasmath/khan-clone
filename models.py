@@ -428,8 +428,22 @@ class UserExercise(db.Model):
         return user_data and self.user.email().lower() == user_data.key_email.lower()
 
     def is_struggling(self, struggling_model=None):
+        """ Whether or not the user is currently "struggling" in this exercise
+        for a given struggling model. Note that regardless of struggling model,
+        if the last question was correct, the student is not considered
+        struggling.
+        """
         if self.has_been_proficient():
             return False
+
+        return self.history_indicates_struggling(struggling_model)
+
+    # TODO(benkomalo): collapse this method with is_struggling above.
+    def history_indicates_struggling(self, struggling_model=None):
+        """ Whether or not the history of answers indicates that the user
+        is struggling on this exercise.
+
+        Does not take into consideration if the last question was correct. """
 
         if struggling_model is None or struggling_model == 'old':
             return self._is_struggling_old()
@@ -943,7 +957,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         if user_id:
             # Once we have rekeyed legacy entities,
-            # we will be able to simplify this.we make
+            # we will be able to simplify this.
             return  UserData.get_from_user_id(user_id) or \
                     UserData.get_from_db_key_email(email) or \
                     UserData.insert_for(user_id, email)
@@ -1233,11 +1247,18 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         if dt_activity > self.last_activity:
 
-            # If it has been over 36 hours since we last saw this user, restart the consecutive activity streak.
+            # If it has been over 40 hours since we last saw this user, restart
+            # the consecutive activity streak.
             #
-            # We allow for a lenient 36 hours in order to offer kinder timezone interpretation.
+            # We allow for a lenient 40 hours in order to offer kinder timezone
+            # interpretation.
+            #
+            # 36 hours wasn't quite enough. A user with activity at 8am on
+            # Monday and 8:15pm on Tuesday would not have consecutive days of
+            # activity.
+            #
             # See http://meta.stackoverflow.com/questions/55483/proposed-consecutive-days-badge-tracking-change
-            if util.hours_between(self.last_activity, dt_activity) >= 36:
+            if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
 
             self.last_activity = dt_activity
@@ -1248,8 +1269,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         dt_now = datetime.datetime.now()
 
-        # If it has been over 36 hours since last activity, bail.
-        if util.hours_between(self.last_activity, dt_now) >= 36:
+        # If it has been over 40 hours since last activity, bail.
+        if util.hours_between(self.last_activity, dt_now) >= 40:
             return 0
 
         return (self.last_activity - self.start_consecutive_activity_date).days
@@ -1950,6 +1971,7 @@ class ProblemLog(db.Model):
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     earned_proficiency = db.BooleanProperty(default = False) # True if proficiency was earned on this problem
     suggested = db.BooleanProperty(default = False) # True if the exercise was suggested to the user
+    review_mode = db.BooleanProperty(default = False, indexed=False) # True if the problem was done while in review mode
     sha1 = db.StringProperty(indexed=False)
     seed = db.StringProperty(indexed=False)
     problem_type = db.StringProperty(indexed=False)
@@ -2036,6 +2058,7 @@ def commit_problem_log(problem_log_source, user_data = None):
                 suggested = problem_log_source.suggested,
                 exercise_non_summative = problem_log_source.exercise_non_summative,
                 ip_address = problem_log_source.ip_address,
+                review_mode = problem_log_source.review_mode,
         )
 
         problem_log.count_hints = max(problem_log.count_hints, problem_log_source.count_hints)

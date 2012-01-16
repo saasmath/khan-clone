@@ -5,6 +5,7 @@ import models
 import templatefilters
 from badges import util_badges, models_badges
 from templatefilters import seconds_to_time_string
+from goals.models import GoalList
 
 # Number of hours until activity is no longer considered "recent" for profiles
 HOURS_RECENT_ACTIVITY = 48
@@ -23,7 +24,7 @@ class RecentActivity:
         return "Activity: " + self.__class__.__name__
 
     def can_combine_dates(self, dt_a, dt_b):
-        return (max(dt_b, dt_a) - min(dt_b, dt_a)) < datetime.timedelta(minutes = 30)
+        return (max(dt_b, dt_a) - min(dt_b, dt_a)) < datetime.timedelta(minutes=30)
 
     def combine_with(self, recent_activity):
         return False
@@ -76,8 +77,14 @@ class RecentVideoActivity(RecentActivity):
                     return True
         return False
 
-def recent_badge_activity(user_badges):
+class RecentGoalActivity(RecentActivity):
+    def __init__(self, goal):
+        self.s_type = "Goal"
+        self.goal = goal
+        self.dt = goal.completed_on
+        self.src_icon_activity = "/images/activity-icon-inset.png"
 
+def recent_badge_activity(user_badges):
     badges_dict = util_badges.all_badges_dict()
     list_badge_activity = []
 
@@ -89,35 +96,30 @@ def recent_badge_activity(user_badges):
     return list_badge_activity
 
 def recent_exercise_activity(problem_logs):
-
-    list_exercise_activity = []
-
-    for problem_log in problem_logs:
-        list_exercise_activity.append(RecentExerciseActivity(problem_log))
-
-    return list_exercise_activity
+    return [RecentExerciseActivity(p) for p in problem_logs]
 
 def recent_video_activity(video_logs):
+    return [RecentVideoActivity(v) for v in video_logs]
 
-    list_video_activity = []
-
-    for video_log in video_logs:
-        list_video_activity.append(RecentVideoActivity(video_log))
-
-    return list_video_activity
+def recent_goal_activity(goals):
+    return [RecentGoalActivity(g) for g in goals
+        if g.completed and not g.abandoned]
 
 def recent_activity_for(user_data, dt_start, dt_end):
 
     query_user_badges = models_badges.UserBadge.get_for_user_data_between_dts(user_data, dt_start, dt_end)
     query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
     query_video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
+    query_goals = GoalList.get_updated_between_dts(user_data, dt_start, dt_end)
 
-    results = util.async_queries([query_user_badges, query_problem_logs, query_video_logs], limit=200)
+    results = util.async_queries([query_user_badges, query_problem_logs,
+        query_video_logs, query_goals], limit=200)
 
     list_recent_activity_types = [
             recent_badge_activity(results[0].get_result()),
             recent_exercise_activity(results[1].get_result()),
             recent_video_activity(results[2].get_result()),
+            recent_goal_activity(results[3].get_result()),
     ]
     list_recent_activity = [activity for sublist in list_recent_activity_types for activity in sublist]
 
@@ -140,6 +142,9 @@ def recent_activity_context(user_data):
     list_recent_activity = []
     if user_data:
         dt_end = datetime.datetime.now()
-        dt_start = dt_end - datetime.timedelta(hours = HOURS_RECENT_ACTIVITY)
+        dt_start = dt_end - datetime.timedelta(hours=HOURS_RECENT_ACTIVITY)
         list_recent_activity = recent_activity_for(user_data, dt_start, dt_end)
-    return { "user_data_student": user_data, "list_recent_activity": list_recent_activity }
+    return {
+        "user_data_student": user_data,
+        "list_recent_activity": list_recent_activity
+    }

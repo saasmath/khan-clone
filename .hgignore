@@ -27,3 +27,5 @@ compiled_templates*
 .pydevproject
 deploy/node_modules/*
 .settings/org.eclipse.core.resources.prefs
+.tags
+.tags_sorted_by_file

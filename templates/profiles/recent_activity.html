@@ -6,7 +6,7 @@
     <div id="activity-list">
   		<ul style="width:100%">
             {% for recent_activity in list_recent_activity %}
-			
+
                 {% if recent_activity.s_type == "Badge" %}
                 {{ profile_macros.recent_activity_entry_badge(user_data_student, recent_activity, view) }}
                 {% endif %}
@@ -17,6 +17,10 @@
 
                 {% if recent_activity.s_type == "Video" %}
                 {{ profile_macros.recent_activity_entry_video(user_data_student, recent_activity, view) }}
+                {% endif %}
+
+                {% if recent_activity.s_type == "Goal" %}
+                {{ profile_macros.recent_activity_entry_goal(user_data_student, recent_activity, view) }}
                 {% endif %}
 
             {% endfor %}

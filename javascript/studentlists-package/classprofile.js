@@ -958,7 +958,7 @@ var ClassProfile = {
 
     getStudentListFromId: function (list_id) {
         var student_list;
-        jQuery.each(this.student_lists, function(i,l) {
+        jQuery.each(this.studentLists, function(i,l) {
             if (l.key == list_id) {
                 student_list = l;
                 return false;

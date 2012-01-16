@@ -53,6 +53,7 @@ javascript = {
             "goal-new-custom-dialog.handlebars",
             "goal-create.handlebars",
             "goals.js",
+            "goal-new.js",
         ]
     },
     "video": {
@@ -167,6 +168,7 @@ javascript = {
             "utils/tmpl.js",
             "utils/word-problems.js",
             "utils/spin.js",
+            "utils/time.js",
             "utils/unit-circle.js",
         ]
     },

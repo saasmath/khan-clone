@@ -43,6 +43,7 @@ import github
 import paypal
 import smarthistory
 import goals.handlers
+import summer
 
 import models
 from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
@@ -724,6 +725,7 @@ application = webapp2.WSGIApplication([
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
+    ('/about/discovery-lab', util_about.ViewDiscoveryLab ),
     ('/about/tos', ViewTOS ),
     ('/about/api-tos', ViewAPITOS),
     ('/about/privacy-policy', ViewPrivacyPolicy ),
@@ -779,7 +781,8 @@ application = webapp2.WSGIApplication([
     ('/admin/changeemail', ChangeEmail),
     ('/admin/realtimeentitycount', RealtimeEntityCount),
 
-    ('/devadmin/emailchange', devpanel.Email),
+    ('/devadmin', devpanel.Panel),
+    ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/commoncore', devpanel.CommonCore),
@@ -792,8 +795,6 @@ application = webapp2.WSGIApplication([
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
 
-    ('/createstudentlist', coaches.CreateStudentList),
-    ('/deletestudentlist', coaches.DeleteStudentList),
     ('/removestudentfromlist', coaches.RemoveStudentFromList),
     ('/addstudenttolist', coaches.AddStudentToList),
 
@@ -802,7 +803,6 @@ application = webapp2.WSGIApplication([
     ('/sharedpoints', coaches.ViewSharedPoints),
     ('/classreport', coaches.ViewClassReport),
     ('/classtime', coaches.ViewClassTime),
-    ('/charts', coaches.ViewCharts),
 
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
@@ -859,6 +859,7 @@ application = webapp2.WSGIApplication([
 
     ('/toolkit', RedirectToToolkit),
 
+    ('/paypal/autoreturn', paypal.AutoReturn),
     ('/paypal/ipn', paypal.IPN),
 
     ('/badges/view', util_badges.ViewBadges),
@@ -892,6 +893,14 @@ application = webapp2.WSGIApplication([
 
     ('/goals/new', goals.handlers.CreateNewGoal),
     ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
+
+    # Summer Discovery Camp application/registration
+    ('/summer/application', summer.Application),
+    ('/summer/application-status', summer.Status),
+    ('/summer/getstudent', summer.GetStudent),
+    ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
+    ('/summer/paypal-ipn', summer.PaypalIPN),
+    ('/summer/admin/download', summer.Download),
 
     ('/robots.txt', robots.RobotsTxt),
 

@@ -37,15 +37,14 @@ var ModalVideo = {
                 if (ev.which == 1) {
                     // left mouse button: show modal video
 
-                    var videoModel = $(ev.currentTarget).data("video") || null;
-                    if (videoModel === null) {
+                    var videoModel = $(ev.currentTarget).data("video");
+                    if (!videoModel) {
                         // no video has been associated, this is probably an
                         // inline link from the exercise itself.
-                        var youtubeId = $(ev.currentTarget).data("youtube-id") || null;
-                        if (youtubeId !== null) {
-                            var videos = userExercise.exercise_model.related_videos;
-                            videoModel = _.find(videos, function(video) {
-                                return video.youtube_id == youtubeId;
+                        var youtubeId = $(ev.currentTarget).data("youtube-id");
+                        if (youtubeId) {
+                            videoModel = _.find(Khan.relatedVideos.videos, function(v) {
+                                return v.youtube_id == youtubeId;
                             });
                         }
                     }
@@ -66,13 +65,14 @@ var ModalVideo = {
     init: function(video, points) {
         var context = {
             video: video,
+            downloadUrl: video.download_urls && video.download_urls.mp4 || null,
             height: 480,
             width: 800,
             youtubeId: video.youtube_id,
             points: points,
             possible_points: 750, // VIDEO_POINTS_BASE in consts.py
             logged_in: !!USERNAME, // phantom users have empty string usernames
-            video_url: Khan.relatedVideoHref(video)
+            video_url: Khan.relatedVideos.makeHref(video)
         };
 
         this.modal = $(this.template(context))

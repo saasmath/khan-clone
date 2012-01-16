@@ -18,7 +18,8 @@ from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, playlist_title_dicts
-from goals.models import GoalList, Goal, GoalObjective
+from goals.models import (GoalList, Goal, GoalObjective,
+    GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
 
@@ -192,7 +193,7 @@ def playlists_library():
     for playlist in playlists:
         playlist_dict[playlist.title] = playlist
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
+    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
     replace_playlist_values(playlist_structure, playlist_dict)
 
     return playlist_structure
@@ -225,7 +226,7 @@ def playlists_library_compact():
         trimmed_info['videos'] = [trimmed_video(v) for v in playlist.videos]
         playlist_dict[playlist.title] = trimmed_info
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE)
+    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
     replace_playlist_values(playlist_structure, playlist_dict)
 
     return playlist_structure
@@ -293,7 +294,7 @@ def video_download_available(video_id):
 
     video = None
     formats = request.request_string("formats", default="")
-    allowed_formats = ["mp4", "png"]
+    allowed_formats = ["mp4", "png", "m3u8"]
 
     # If for any crazy reason we happen to have multiple entities for a single youtube id,
     # make sure they all have the same downloadable_formats so we don't keep trying to export them.
@@ -495,7 +496,7 @@ def user_data_student():
 @oauth_required()
 @jsonp
 @jsonify
-def user_studentlists():
+def get_user_studentlists():
     user_data = models.UserData.current()
 
     if user_data:
@@ -511,6 +512,42 @@ def user_studentlists():
             return student_lists
 
     return None
+
+@route("/api/v1/user/studentlists", methods=["POST"])
+@oauth_optional()
+@jsonp
+@jsonify
+def create_user_studentlist():
+    coach_data = models.UserData.current()
+    if not coach_data:
+        return unauthorized_response()
+
+    list_name = request.request_string('list_name').strip()
+    if not list_name:
+        raise Exception('Invalid list name')
+
+    student_list = models.StudentList(coaches=[coach_data.key()],
+        name=list_name)
+    student_list.put()
+
+    student_list_json = {
+        'name': student_list.name,
+        'key': str(student_list.key())
+    }
+    return student_list_json
+
+@route("/api/v1/user/studentlists/<list_key>", methods=["DELETE"])
+@oauth_optional()
+@jsonp
+@jsonify
+def delete_user_studentlist(list_key):
+    coach_data = models.UserData.current()
+    if not coach_data:
+        return unauthorized_response()
+
+    student_list = util_profile.get_student_list(coach_data, list_key)
+    student_list.delete()
+    return True
 
 def filter_query_by_request_dates(query, property):
 
@@ -878,6 +915,8 @@ def attempt_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            review_mode = request.request_bool("review_mode", default=False)
+
             user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
                     user_exercise,
@@ -889,6 +928,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     request.request_bool("complete"),
                     request.request_int("count_hints", default=0),
                     int(request.request_float("time_taken")),
+                    review_mode,
                     request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
@@ -906,7 +946,6 @@ def attempt_problem_number(exercise_name, problem_number):
 
             user_states = user_exercise_graph.states(exercise.name)
             correct = request.request_bool("complete")
-            review_mode = request.request_bool("review_mode", default=False)
 
             action_results = {
                 "exercise_state": {
@@ -950,6 +989,7 @@ def hint_problem_number(exercise_name, problem_number):
 
             attempt_number = request.request_int("attempt_number")
             count_hints = request.request_int("count_hints")
+            review_mode = request.request_bool("review_mode", default=False)
 
             user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
@@ -962,13 +1002,13 @@ def hint_problem_number(exercise_name, problem_number):
                     request.request_bool("complete"),
                     count_hints,
                     int(request.request_float("time_taken")),
+                    review_mode,
                     request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
 
             user_states = user_exercise_graph.states(exercise.name)
-            review_mode = request.request_bool("review_mode", default=False)
             exercise_message_html = templatetags.exercise_message(exercise,
                     user_exercise_graph, review_mode=review_mode)
 
@@ -1398,25 +1438,31 @@ def create_user_goal():
 
     objective_descriptors = []
 
-    goal_exercises = GoalList.exercises_in_current_goals(user_data)
     goal_videos = GoalList.videos_in_current_goals(user_data)
+    current_goals = GoalList.get_current_goals(user_data)
 
     if json:
         for obj in json['objectives']:
             if obj['type'] == 'GoalObjectiveAnyExerciseProficiency':
+                for goal in current_goals:
+                    for o in goal.objectives:
+                        if isinstance(o, GoalObjectiveAnyExerciseProficiency):
+                            return api_invalid_param_response(
+                                "User already has a current exercise process goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveAnyVideo':
+                for goal in current_goals:
+                    for o in goal.objectives:
+                        if isinstance(o, GoalObjectiveAnyVideo):
+                            return api_invalid_param_response(
+                                "User already has a current video process goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveExerciseProficiency':
                 obj['exercise'] = models.Exercise.get_by_name(obj['internal_id'])
                 if not obj['exercise'] or not obj['exercise'].is_visible_to_current_user():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
-                if user_data.is_proficient_at(obj['exercise'].name):
-                    return api_invalid_param_response("Exercise has already been completed.")
-                if obj['exercise'].name in goal_exercises:
-                    return api_invalid_param_response("Exercise is already an objective in a current goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveWatchVideo':

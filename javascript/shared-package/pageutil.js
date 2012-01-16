@@ -180,7 +180,7 @@ function readCookie(name) {
     for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0) == " ") c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
 }
@@ -316,7 +316,7 @@ var VideoStats = {
     fEventsAttached: false,
     cachedDuration: 0, // For use by alternative FLV player
     cachedCurrentTime: 0, // For use by alternative FLV player
-    dtSinceSave: null,
+    dtLastSaved: null,
     sVideoKey: null,
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
@@ -326,8 +326,8 @@ var VideoStats = {
         return this.player.getCurrentTime() || 0;
     },
 
-    getSecondsWatchedRestrictedByPageTime: function() {
-        var secondsPageTime = ((new Date()) - this.dtSinceSave) / 1000.0;
+    getSecondsWatchedSinceSave: function() {
+        var secondsPageTime = ((new Date()) - this.dtLastSaved) / 1000.0;
         return Math.min(secondsPageTime, this.getSecondsWatched());
     },
 
@@ -354,7 +354,7 @@ var VideoStats = {
         this.dPercentLastSaved = 0;
         this.cachedDuration = 0;
         this.cachedCurrentTime = 0;
-        this.dtSinceSave = new Date();
+        this.dtLastSaved = new Date();
 
         if (this.fEventsAttached) return;
 
@@ -409,24 +409,25 @@ var VideoStats = {
     },
 
     playerStateChange: function(state) {
-        if (state == -2) { // playing normally
+        if (state == -2 && this.playing) { // playing normally
             var percent = this.getPercentWatched();
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity))
             {
                 // Another 10% has been watched
                 this.save();
             }
-        } else if (state == 0 && this.playing) { // ended
+        } else if (state === 0 && this.playing) { // ended
             this.playing = false;
             this.save();
         } else if (state == 2 && this.playing) { // paused
             this.playing = false;
-            if (this.getSecondsWatchedRestrictedByPageTime() > 1) {
+            if (this.getSecondsWatchedSinceSave() > 1) {
               this.save();
             }
         } else if (state == 1) { // play
             this.playing = true;
-            this.dtSinceSave = new Date();
+            this.dtLastSaved = new Date();
+            this.dPercentLastSaved = this.getPercentWatched();
 
             if (!VideoControls.videoBingoSent &&
                     (typeof Homepage != "undefined")) {
@@ -451,12 +452,12 @@ var VideoStats = {
 
         this.fSaving = true;
         var percent = this.getPercentWatched();
-        var dtSinceSaveBeforeError = this.dtSinceSave;
+        var dtLastSavedBeforeError = this.dtLastSaved;
         var id = 0;
 
         var data = {
             last_second_watched: this.getSecondsWatched(),
-            seconds_watched: this.getSecondsWatchedRestrictedByPageTime()
+            seconds_watched: this.getSecondsWatchedSinceSave()
         };
 
         if (this.sVideoKey !== null) {
@@ -474,11 +475,12 @@ var VideoStats = {
                 error: function() {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
-                    VideoStats.fSaving = false; VideoStats.dtSinceSave = dtSinceSaveBeforeError;
+                    VideoStats.fSaving = false;
+                    VideoStats.dtLastSaved = dtLastSavedBeforeError;
                 }
         });
 
-        this.dtSinceSave = new Date();
+        this.dtLastSaved = new Date();
     },
 
     /* Use qtip2 (http://craigsworks.com/projects/qtip2/) to create a tooltip
@@ -510,7 +512,7 @@ var VideoStats = {
         VideoStats.fSaving = false;
         VideoStats.dPercentLastSaved = percent;
 
-        if (dict_json.action_results.user_video) {
+        if (dict_json && dict_json.action_results.user_video) {
             video = dict_json.action_results.user_video;
             // Update the energy points box with the new data.
             var jelPoints = $(".video-energy-points");
@@ -823,16 +825,14 @@ IEHtml5.init();
 
 var VideoViews = {
     init: function() {
-        var seedTime = new Date(2011, 3, 22);  //Seed Date is set to October 31, 2010  0-January, 11-december
-        var seedTotalViews = 50397618;
-        var seedDailyViews = 170000;
+        // Exponential fit calculated mid-Jan 2012
+        var estimatedTotalViews = 1.5898395409191447e-19 * Math.exp(4.659582953415592e-11 * (+new Date()));
 
-        var currentTime = new Date();
-        var secondsSince = (currentTime.getTime() - seedTime.getTime()) / 1000;
-        var viewsPerSecond = seedDailyViews / 24 / 3600;
-        var estimatedTotalViews = Math.round(seedTotalViews + secondsSince * viewsPerSecond);
+        // Remove these two lines after Jan 22, 2012
+        var counterCatchUpViews = 1.630133005604276e-121 * Math.exp(2.235376353340977e-10 * (+new Date()));
+        estimatedTotalViews = Math.min(estimatedTotalViews, counterCatchUpViews);
 
-        var totalViewsString = addCommas("" + estimatedTotalViews);
+        var totalViewsString = addCommas("" + Math.round(estimatedTotalViews));
 
         $("#page_num_visitors").append(totalViewsString);
         $("#page_visitors").css("display", "inline");
@@ -1029,7 +1029,8 @@ function dynamicPackage(packageName, callback, manifest) {
                         script.type = "text/x-handlebars-template"; // This hasn't been tested
                     else
                         script.type = "text/javascript";
-                    script.appendChild(document.createTextNode(file.content));
+
+                    script.text = file.content;
 
                     var head = document.getElementsByTagName("head")[0] || document.documentElement;
                     head.appendChild(script);
@@ -1056,7 +1057,7 @@ function dynamicPackage(packageName, callback, manifest) {
             delete dynamicPackageLoader.loadingPackages[packageName];
             callback("complete");
         }
-    }
+    };
 
     this.checkComplete();
 }
@@ -1160,9 +1161,9 @@ var Review = {
             oldCount = reviewCounterElem.data("counter") || 0,
             tens = Math.floor((reviewsLeftCount % 100) / 10),
             animationOptions = {
-              duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount))
-                  * 1000 * 0.5 + 0.2,
-              easing: "easeInOutCubic"
+                duration: Math.log(1 + Math.abs(reviewsLeftCount - oldCount)) *
+                    1000 * 0.5 + 0.2,
+                easing: "easeInOutCubic"
             },
             lineHeight = parseInt(
                 reviewCounterElem.children().css("lineHeight"), 10);

@@ -1,16 +1,15 @@
 # npm.py - an interface to our increasing love of node
 import os, sys
-import subprocess
+import commands
 
 MODULE_PATH = os.path.join(os.getcwd(), "deploy", "node_modules")
 
 def popen_results(args):
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-    return proc.communicate()[0]
+    return commands.getoutput(' '.join(args))
 
 def installed():
     """docstring for npm_installed"""
-    return popen_results(["which", "npm"]).strip()
+    return popen_results(["command", "-v", "npm"]).strip()
 
 def local_modules_setup():
     """see if npm install has been called before"""
@@ -18,7 +17,7 @@ def local_modules_setup():
 
 def package_installed(package, local_only=False):
     """checks to see if the module is installed and returns a path to it"""
-    sys_install = popen_results(["which", package]).strip()
+    sys_install = popen_results(["command", "-v", package]).strip()
     local_install = os.path.exists( os.path.join(MODULE_PATH, ".bin",package))
 
     if local_only:

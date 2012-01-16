@@ -53,7 +53,7 @@ def badge_counts(user_data):
 
     return shared_jinja.get().render_template("badges/badge_counts.html", **template_context)
 
-def badge_block(badge, user_badge=None, show_frequency=False):
+def badge_block(badge, user_badge=None, show_frequency=False, user_data_student=None):
 
     if user_badge:
         badge.is_owned = True
@@ -65,7 +65,10 @@ def badge_block(badge, user_badge=None, show_frequency=False):
     if show_frequency:
         frequency = badge.frequency()
 
-    template_values = {"badge": badge, "user_badge": user_badge, "extended_description": badge.safe_extended_description, "frequency": frequency}
+    can_become_goal = user_data_student and not user_data_student.is_phantom and not badge.is_owned and badge.is_goal
+
+    template_values = {"badge": badge, "user_badge": user_badge, "extended_description": badge.safe_extended_description, 
+        "frequency": frequency, "can_become_goal": can_become_goal}
 
     return shared_jinja.get().render_template("badges/badge_block.html", **template_values)
 
