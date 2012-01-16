@@ -260,12 +260,3 @@ class ViewClassTime(RequestHandler):
 class ViewClassReport(RequestHandler):
     def get(self):
         self.redirect("/class_profile?selected_graph_type=%s" % ClassProgressReportGraph.GRAPH_TYPE)
-
-class ViewCharts(RequestHandler):
-    def get(self):
-        student_email = self.request_student_email_legacy()
-        url = "/profile?selected_graph_type=%s&student_email=%s&exid=%s" % (
-            ExerciseProblemsGraph.GRAPH_TYPE,
-            student_email,
-            self.request_string("exercise_name"))
-        self.redirect(url)

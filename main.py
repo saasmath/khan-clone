@@ -805,7 +805,6 @@ application = webapp2.WSGIApplication([
     ('/sharedpoints', coaches.ViewSharedPoints),
     ('/classreport', coaches.ViewClassReport),
     ('/classtime', coaches.ViewClassTime),
-    ('/charts', coaches.ViewCharts),
 
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
