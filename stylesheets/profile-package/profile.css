@@ -130,7 +130,7 @@
     #individual_report #vital-statistics #stats-nav {
         width: 280px;
         float: left;
-        margin: -10px 20px 10px 0;
+        margin: 0px 20px 10px 0;
     }
     #individual_report #vital-statistics #stats-nav ul#nav-accordion {
         padding: 10px 0 0 3px;
@@ -596,7 +596,7 @@ div.graph-notification {
 
 
 
-#stats-filters { position:relative; min-width:680px; z-index:10; top:-3px;}
+#stats-filters { position:relative; min-width:680px; z-index:10; margin-top: 18px;}
 #stats-filters .filter{ display:none; }
 
 #stats-filters a.graph-link{ display:none; }
