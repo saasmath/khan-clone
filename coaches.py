@@ -273,33 +273,3 @@ class RemoveStudentFromList(RequestHandler):
 
         student_data.student_lists.remove(student_list.key())
         student_data.put()
-
-class ViewIndividualReport(RequestHandler):
-    def get(self):
-        # Individual reports being replaced by user profile
-        self.redirect("/profile")
-
-class ViewSharedPoints(RequestHandler):
-    def get(self):
-        self.redirect("/class_profile?selected_graph_type=%s" % ClassEnergyPointsPerMinuteGraph.GRAPH_TYPE)
-
-class ViewProgressChart(RequestHandler):
-    def get(self):
-        self.redirect("/profile?selected_graph_type=" + ExercisesOverTimeGraph.GRAPH_TYPE)
-
-class ViewClassTime(RequestHandler):
-    def get(self):
-        self.redirect("/class_profile?selected_graph_type=%s" % ClassTimeGraph.GRAPH_TYPE)
-
-class ViewClassReport(RequestHandler):
-    def get(self):
-        self.redirect("/class_profile?selected_graph_type=%s" % ClassProgressReportGraph.GRAPH_TYPE)
-
-class ViewCharts(RequestHandler):
-    def get(self):
-        student_email = self.request_student_email_legacy()
-        url = "/profile?selected_graph_type=%s&student_email=%s&exid=%s" % (
-            ExerciseProblemsGraph.GRAPH_TYPE,
-            student_email,
-            self.request_string("exercise_name"))
-        self.redirect(url)
