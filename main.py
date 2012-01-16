@@ -798,12 +798,6 @@ application = webapp2.WSGIApplication([
     ('/removestudentfromlist', coaches.RemoveStudentFromList),
     ('/addstudenttolist', coaches.AddStudentToList),
 
-    ('/individualreport', coaches.ViewIndividualReport),
-    ('/progresschart', coaches.ViewProgressChart),
-    ('/sharedpoints', coaches.ViewSharedPoints),
-    ('/classreport', coaches.ViewClassReport),
-    ('/classtime', coaches.ViewClassTime),
-
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
     ('/profile/graph/activity', util_profile.ActivityGraph),

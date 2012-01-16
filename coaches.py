@@ -70,6 +70,7 @@ class ViewStudents(RequestHandler):
                 'key': str(s.key()),
                 'email': s.email,
                 'nickname': s.nickname,
+                'profile_root': s.profile_root,
                 'studentLists': [l for l in [student_lists_dict.get(str(list_id)) for list_id in s.student_lists] if l],
             }, students_data)
             students.sort(key=lambda s: s['nickname'])
@@ -239,24 +240,3 @@ class RemoveStudentFromList(RequestHandler):
 
         student_data.student_lists.remove(student_list.key())
         student_data.put()
-
-class ViewIndividualReport(RequestHandler):
-    def get(self):
-        # Individual reports being replaced by user profile
-        self.redirect("/profile")
-
-class ViewSharedPoints(RequestHandler):
-    def get(self):
-        self.redirect("/class_profile?selected_graph_type=%s" % ClassEnergyPointsPerMinuteGraph.GRAPH_TYPE)
-
-class ViewProgressChart(RequestHandler):
-    def get(self):
-        self.redirect("/profile?selected_graph_type=" + ExercisesOverTimeGraph.GRAPH_TYPE)
-
-class ViewClassTime(RequestHandler):
-    def get(self):
-        self.redirect("/class_profile?selected_graph_type=%s" % ClassTimeGraph.GRAPH_TYPE)
-
-class ViewClassReport(RequestHandler):
-    def get(self):
-        self.redirect("/class_profile?selected_graph_type=%s" % ClassProgressReportGraph.GRAPH_TYPE)

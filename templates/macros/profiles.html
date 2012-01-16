@@ -24,25 +24,6 @@
 </script>
 {%- endmacro %}
 
-{% macro graph_date_picker(profile_root, graph_type) -%}
-<div class="graph-date-picker">
-    <ul class="tabrow">
-        <li>
-            <a href="{{profile_root}}/vital-statistics/{{graph_type}}/today" class="no-recolor graph-link graph-sub-link 0">Today</a>
-        </li>
-        <li>
-            <a href="{{profile_root}}/vital-statistics/{{graph_type}}/yesterday" class="no-recolor graph-link graph-sub-link 0">Yesterday</a>
-        </li>
-        <li>
-            <a href="{{profile_root}}/vital-statistics/{{graph_type}}/last-week" class="no-recolor graph-link graph-sub-link 0">Last 7 Days</a>
-        </li>
-        <li>
-            <a href="{{profile_root}}/vital-statistics/{{graph_type}}/last-month" class="no-recolor graph-link graph-sub-link 0">Last 30 Days</a>
-        </li>
-    </ul>
-</div>
-{%- endmacro %}
-
 {% macro recent_activity_entry_badge(user_data_student, recent_activity, view="standard") -%}
 <li class="achievement" >
     <span class="activity-image" style=""><img src="/images/generic-badge-icon-inset.png" /></span>

@@ -93,6 +93,7 @@ javascript = {
             "user-card.handlebars",
             "user-card.js",
             "profile.handlebars",
+            "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",

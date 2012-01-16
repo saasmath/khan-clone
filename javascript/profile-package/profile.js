@@ -202,8 +202,16 @@ var Profile = {
                 href = translation[graph] + timeURLParameter,
                 jelGraphLinkHeader = $(".graph-link-header[href$='" + graph + "']");
 
+            // Known bug: the wrong graph-date-picker item is selected when
+            // server man decides to show 30 days instead of the default 7.
+            // See redirect_for_more_data in util_profile.py for more on this tragedy.
             $("#tab-content-vital-statistics").show()
-                .siblings().hide();
+                .find(".vital-statistics-description ." + graph).show()
+                    .find(".graph-date-picker .tabrow .last-week").addClass("selected")
+                        .siblings().removeClass("selected").end()
+                    .end()
+                    .siblings().hide().end()
+                .end().siblings().hide();
 
             if (jelGraphLinkHeader.length) {
                 var index = jelGraphLinkHeader.index(),
@@ -240,8 +248,9 @@ var Profile = {
                     "last-month": "&dt_start=lastmonth&dt_end=today"
                 },
                 timeURLParameter = translation[timePeriod];
-
             this.showVitalStatistics(graph, null, timeURLParameter);
+            $(".vital-statistics-description ." + graph + " ." + timePeriod).addClass("selected")
+                .siblings().removeClass("selected");
         },
 
         showAchievements: function() {
@@ -499,7 +508,11 @@ var Profile = {
 
     render: function() {
         var profileTemplate = Templates.get("profile.profile");
-
+        Handlebars.registerHelper("graph-date-picker-wrapper", function(block) {
+            this.graph = block.hash.graph;
+            return block(this);
+        });
+        Handlebars.registerPartial("graph-date-picker", Templates.get("profile.graph-date-picker"));
         Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
 
         $("#profile-content").html(profileTemplate({
@@ -724,4 +737,3 @@ var Profile = {
         });
     }
 };
-
