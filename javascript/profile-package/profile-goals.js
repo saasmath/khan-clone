@@ -9,7 +9,9 @@ var GoalProfileView = Backbone.View.extend({
         this.model.bind("add", this.render, this);
 
         // only hookup event handlers if the view allows edits
-        if (this.options.readonly) return;
+        if (this.options.readonly) {
+            return;
+        }
 
         $(this.el)
             // edit titles
@@ -125,19 +127,11 @@ var GoalProfileView = Backbone.View.extend({
 var GoalProfileViewsCollection = {
     views: {},
 
-    render: function(data, href) {
-        current_goals = [];
-        completed_goals = [];
-        abandoned_goals = [];
-
-        var qs = Profile.parseQueryString(href);
-        // We don't handle the difference between API calls requiring email and
-        // legacy calls requiring student_email very well, so this page gets
-        // called with both. Need to fix the root cause (and hopefully redo all
-        // the URLs for this page), but for now just be liberal in what we
-        // accept.
-        var qsEmail = qs.email || qs.student_email || null;
-        var viewingOwnGoals = qsEmail === null || qsEmail === USER_EMAIL;
+    render: function(data) {
+        var viewingOwnGoals = Profile.profile.get("isSelf"),
+            current_goals = [],
+            completed_goals = [],
+            abandoned_goals = [];
 
         $.each(data, function(idx, goal) {
             if (goal.completed) {
@@ -180,7 +174,6 @@ var GoalProfileViewsCollection = {
             readonly: true
         });
 
-        GoalProfileViewsCollection.userGoalsHref = href;
         GoalProfileViewsCollection.showGoalType("current");
 
         if (completed_goals.length > 0) {

@@ -429,36 +429,6 @@ var Profile = {
         }
     },
 
-    // TODO: move this out to a more generic utility file.
-    parseQueryString: function(url) {
-        var qs = {};
-        var parts = url.split("?");
-        if (parts.length == 2) {
-            var querystring = parts[1].split("&");
-            for (var i = 0; i < querystring.length; i++) {
-                var kv = querystring[i].split("=");
-                if (kv[0].length > 0) { //fix trailing &
-                    key = decodeURIComponent(kv[0]);
-                    value = decodeURIComponent(kv[1]);
-                    qs[key] = value;
-                }
-            }
-        }
-        return qs;
-    },
-
-    // TODO: move this out to a more generic utility file.
-    reconstructQueryString: function(hash, kvjoin, eljoin) {
-        kvjoin = kvjoin || "=";
-        eljoin = eljoin || "&";
-        qs = [];
-        for (var key in hash) {
-            if (hash.hasOwnProperty(key))
-                qs.push(key + kvjoin + hash[key]);
-        }
-        return qs.join(eljoin);
-    },
-
     hoverContent: function(elements) {
         var lastHoverTime;
         var mouseX;
