@@ -23,16 +23,16 @@
                   <li>
                       <span id="edit-profile" class="simple-button action-gradient">Edit profile</span>
                       <ul class="sub_menu">
-                        <li><a id="edit-basic-info" href="javascript:''">Edit basic info</a></li>
-                        <li><a id="edit-display-case" href="javascript:''">Edit display case</a></li>
-                        <li><a id="edit-avatar" href="javascript:''">Edit avatar</a></li>
-                        <li><a class="edit-visibility" href="javascript:''">Edit privacy setting</a></li>
+                        <li><a id="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
+                        <li><a id="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
+                        <li><a id="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
+                        <li><a class="edit-visibility" href="javascript:void(0)">Edit privacy setting</a></li>
                       </ul>
                   </li>
               </ul>
           {{else}}
-              <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>
-              <a href="javascript:''" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
+              <a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>
+              <a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
           {{/if}}
           </div>
           <div class="basic-stats clearfix">
@@ -43,12 +43,12 @@
       </div>
     </section>
     <div class="sticker-book">
-        <a class="display-case-cover" href="javascript:''"></a>
+        <a class="display-case-cover" href="javascript:void(0)"></a>
     </div>
 
 </section>
 {{#if isSelf}}
-<a href="javascript:''" id="edit-visibility"
+<a href="javascript:void(0)" id="edit-visibility"
     class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
 <div id="username-picker-container" class="modal fade hide" style="display: none;">
 </div>

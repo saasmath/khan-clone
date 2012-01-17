@@ -657,7 +657,6 @@ var Profile = {
 
                     // add +goal behavior to button, once.
                     } else {
-                        console.log("believe it or not, ", badge.data("objectives"))
                         button.one("click", function(){
                             var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
                                 return {
