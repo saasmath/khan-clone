@@ -63,6 +63,7 @@ h3.story-title .extra-story-title {
     background: url('/images/stories/stationary-1.png') no-repeat top right;
     padding: 20px 9px 9px 9px;
     height: 125px;
+    width: 259px;
 }
 .story.envelope-1 .envelope {
     width: 300px;
@@ -81,6 +82,7 @@ h3.story-title .extra-story-title {
 .story.envelope-2 .content-teaser {
     padding: 20px 9px 9px 9px;
     height: 125px;
+    width: 252px;
 
     background: #C0E3FF;
     -webkit-border-radius: 5px;
@@ -158,6 +160,34 @@ h3.story-title .extra-story-title {
     -webkit-transition: -webkit-transform .3s ease-in-out;
 } 
 
+.story .content-teaser .youtube-thumbnail-container {
+    text-align: center;
+}
+
+.story .content-teaser .youtube-thumbnail {
+    max-width: 210px;
+}
+
+.story .content-teaser .youtube-thumbnail-title {
+    position: absolute;
+    top: 20px;
+    left: 34px;
+    padding: 2px 6px;
+    width: 198px;
+    font-size: 14px;
+    color: white;
+    /* Fallback for web browsers that doesn't support RGBa */
+    background: rgb(0, 0, 0) transparent;
+    /* RGBa with 0.5 opacity */
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.story .content-teaser .youtube-thumbnail-play {
+    position: absolute;
+    top: 64px;
+    left: 86px;
+}
+
 </style>
 
 {% endblock pagescript %}
@@ -184,8 +214,13 @@ h3.story-title .extra-story-title {
         content: [
             {% for story in stories %}
             {
+                {% if story.youtube_id %}
+                "youtube_id": "{{ story.youtube_id }}",
+                "youtube_title": "{{ story.youtube_title }}",
+                {% else %}
                 "teaser_html": "{{ story.teaser|strip|escapejs|linebreaksbr_js }}",
                 "content_html": "{{ story.content|strip|escapejs|linebreaksbr_js }}",
+                {% endif %}
                 "date": "{{ story.date|strip|escapejs }}",
                 "author": "{{ story.author|strip|escapejs }}",
             }{% if not loop.last %},{%endif%}
