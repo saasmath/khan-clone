@@ -127,10 +127,10 @@ class Goal(db.Model):
             key=db.Key.from_path('Goal', json['id'], parent=user_data.key()),
             title=json['title'],
             completed=bool(json['completed']),
-            completed_on=coalesce(json['completed'], parse_iso8601),
+            completed_on=coalesce(parse_iso8601, json['completed']),
             abandoned=bool(json['abandoned']),
-            created_on=coalesce(json['created'], parse_iso8601),
-            updated_on=coalesce(json['updated'], parse_iso8601),
+            created_on=coalesce(parse_iso8601, json['created']),
+            updated_on=coalesce(parse_iso8601, json['updated']),
             objectives=objectives
         )
 

@@ -535,7 +535,7 @@ class UserExercise(db.Model):
             streak=int(json['streak']),
             longest_streak=int(json['longest_streak']),
             first_done=util.parse_iso8601(json['first_done']),
-            last_done=util.coalesce(json['last_done'], util.parse_iso8601),
+            last_done=util.coalesce(util.parse_iso8601, json['last_done']),
             total_done=int(json['total_done']),
             summative=bool(json['summative']),
             _accuracy_model=AccuracyModel()

@@ -23,6 +23,11 @@ class ImportHandler(RequestHandler):
     Existing data will be overwritten. Please never use this in production!
     Also, don't rely on everything working. Some fields aren't exposed by the
     API, and this simply reads the API. Improvements welcome! :)
+
+    To use this, you need to ensure that secrets.py contains ka_api_consumer_key
+    and ka_api_consumer_secret. Also, you need to put your access token in
+    secrets_dev.py as ka_api_token_key and ka_api_token_secret. See setup_oauth
+    for details.
     """
 
     access_token = ""

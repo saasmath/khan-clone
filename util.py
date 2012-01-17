@@ -137,8 +137,9 @@ def static_url(relative_url):
 def parse_iso8601(s):
     return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
 
-def coalesce(s, fn):
-    if s:
+def coalesce(fn, s):
+    """Call a function only if the argument is not None"""
+    if s is not None:
         return fn(s)
     else:
         return None
