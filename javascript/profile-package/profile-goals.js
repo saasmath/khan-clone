@@ -65,7 +65,7 @@ var GoalProfileView = Backbone.View.extend({
         if (this.needsRerender) {
             this.render();
         }
-        $(this.el).show();
+        return $(this.el).show();
     },
 
     hide: function() {
@@ -174,19 +174,6 @@ var GoalProfileViewsCollection = {
             readonly: true
         });
 
-        GoalProfileViewsCollection.showGoalType("current");
-
-        if (completed_goals.length > 0) {
-            $("#goal-show-completed-link").parent().show();
-        } else {
-            $("#goal-show-completed-link").parent().hide();
-        }
-        if (abandoned_goals.length > 0) {
-            $("#goal-show-abandoned-link").parent().show();
-        } else {
-            $("#goal-show-abandoned-link").parent().hide();
-        }
-
         if (viewingOwnGoals) {
             $(".new-goal").addClass("green").removeClass("disabled").click(function(e) {
                 e.preventDefault();
@@ -196,16 +183,12 @@ var GoalProfileViewsCollection = {
     },
 
     showGoalType: function(type) {
-        if (GoalProfileViewsCollection.views) {
-            $.each(["current", "completed", "abandoned"], function(idx, atype) {
-                if (type == atype) {
-                    GoalProfileViewsCollection.views[atype].show();
-                    $("#goal-show-" + atype + "-link").addClass("graph-sub-link-selected");
-                } else {
-                    GoalProfileViewsCollection.views[atype].hide();
-                    $("#goal-show-" + atype + "-link").removeClass("graph-sub-link-selected");
-                }
-            });
+        var view = this.views[type];
+        if (view) {
+            view.show().siblings().hide();
         }
+
+        $(".graph-picker").find("." + type).addClass("selected")
+            .siblings().removeClass("selected");
     }
 };

@@ -90,6 +90,9 @@ var Profile = {
         $("#tab-content-vital-statistics").delegate(".graph-date-picker a",
                 "click", this.onNavigationElementClicked_);
 
+        $("#tab-content-goals").delegate(".graph-picker .type a",
+                "click", this.onNavigationElementClicked_);
+
         // Delegate clicks for recent badge-related activity
         $(".achievement .ach-text").delegate("a", "click", function(event) {
             if (!event.metaKey) {
@@ -172,6 +175,7 @@ var Profile = {
         routes: {
             "": "showDefault",
             "/achievements": "showAchievements",
+            "/goals/:type": "showGoals",
             "/goals": "showGoals",
             "/vital-statistics": "showVitalStatistics",
             "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
@@ -250,7 +254,11 @@ var Profile = {
             this.updateTitleBreadcrumbs([nickname, "Achievements"]);
         },
 
-        showGoals: function() {
+        showGoals: function(type) {
+            type = type || "current";
+
+            GoalProfileViewsCollection.showGoalType(type);
+
             $("#tab-content-goals").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-goals").attr("rel"));
@@ -691,7 +699,17 @@ var Profile = {
             data: {email: USER_EMAIL},
             dataType: "json",
             success: function(data) {
-                GoalProfileViewsCollection.render(data, "/api/v1/user/goals?email=" + USER_EMAIL);
+                GoalProfileViewsCollection.render(data);
+                var jel = $("#tab-content-goals .graph-picker .type.selected");
+
+                // Because server man can respond after navigating the router,
+                // we need to tell the collection to show the desired goal type.
+                $.each(["current", "completed", "abandoned"], function(index, type) {
+                    if (jel.hasClass(type)) {
+                        GoalProfileViewsCollection.showGoalType(type);
+                        return false;
+                    }
+                });
             }
         });
     }

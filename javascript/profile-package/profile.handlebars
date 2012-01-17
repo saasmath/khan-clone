@@ -45,6 +45,23 @@
 
     <div id="tab-content-goals" rel="goals">
         <h2 class="profile-sheet-title"></h2>
+        <div class="graph-picker">
+            Shows your current, completed and abandoned goals.
+            <ul class="tabrow">
+                <li class="type current">
+                    <a href="{{profileRoot}}/goals/current" class="graph-link no-recolor">Current</a>
+                </li>
+                <li class="type completed">
+                    <a href="{{profileRoot}}/goals/completed" class="graph-link no-recolor">Completed</a>
+                </li>
+                <li class="type abandoned">
+                    <a href="{{profileRoot}}/goals/abandoned" class="graph-link no-recolor">Abandoned</a>
+                </li>
+                <li>
+                    <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);" style="display: inline-block;">Create a new goal</a>
+                </li>
+            </ul> 
+        </div>
         <div id="profile-goals-content"></div>
     </div>
 </section>
