@@ -521,7 +521,7 @@ var Profile = {
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
         $(".sticker-book").append(displayCase.render().el);
 
-        // Asynchronously load the full badge information in the background if
+        // Asynchronously load the full badge information in the background.
         $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
