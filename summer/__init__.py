@@ -178,14 +178,14 @@ class Download(RequestHandler):
         properties = [p for p in SummerStudent().properties()]
         sw.writerow(properties)
         for student in SummerStudent.all().fetch(5000):
-            sw.writerow([unicode(getattr(student, p)) for p in properties])
+            sw.writerow([getattr(student, p) for p in properties])
 
         pio = StringIO.StringIO()
         pw = csv.writer(pio)
         properties = [p for p in SummerParentData().properties()]
         pw.writerow(properties)
         for parent in SummerParentData.all().fetch(5000):
-            pw.writerow([unicode(getattr(parent, p)) for p in properties])
+            pw.writerow([getattr(parent, p) for p in properties])
 
         f = StringIO.StringIO()
         tf = tarfile.open(fileobj=f, mode='w:gz')
