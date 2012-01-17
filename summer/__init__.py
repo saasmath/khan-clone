@@ -523,11 +523,13 @@ class Application(RequestHandler):
                     payee_phone_b = phone_parts[1]
                     payee_phone_c = phone_parts[2]
 
-                mail.send_mail( \
-                    sender = FROM_EMAIL, \
-                    to = parent.email, \
-                    subject = "Khan Academy Discovery Lab Application", \
-                    body = """Dear %s,
+                # Only send email if the user's email is a valid one
+                if not facebook_util.is_facebook_user_id(parent.email):
+                    mail.send_mail( \
+                        sender = FROM_EMAIL, \
+                        to = parent.email, \
+                        subject = "Khan Academy Discovery Lab Application", \
+                        body = """Dear %s,
                 
 We have received your application for %s %s for the Khan Academy Discovery Lab 2012. Please ensure you have paid the $5.00 processing fee for the application.
 
