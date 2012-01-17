@@ -44,11 +44,12 @@
     var adminKnowledgeMap = null;
 	
     $(function() {
-        adminKnowledgeMap = new KnowledgeMap({
-            'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
+        var mapParams = {
+            'mapCoords': {{ map_coords }},
             'admin': true,
             'container': 'container'
-        });
+        }
+        adminKnowledgeMap = new KnowledgeMap(mapParams);
     });
 
     var graph_dict_data = {{ graph_dict_data }};
