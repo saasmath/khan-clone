@@ -518,6 +518,29 @@ class UserExercise(db.Model):
             bingo(['hints_gained_proficiency_easy_binary',
                    'review_gained_proficiency_easy_binary'])
 
+    @classmethod
+    def from_json(cls, json, user_data):
+        exercise = Exercise.get_by_name(json['exercise'])
+        if not exercise:
+            return None
+
+        # this is probably completely broken as we don't serialize anywhere near
+        # all the properties that UserExercise has. Still, let's see if it works
+        return cls(
+            key_name=exercise.name,
+            parent=user_data,
+            user=user_data.user,
+            exercise=exercise.name,
+            exercise_model=exercise,
+            streak=int(json['streak']),
+            longest_streak=int(json['longest_streak']),
+            first_done=util.parse_iso8601(json['first_done']),
+            last_done=util.coalesce(json['last_done'], util.parse_iso8601),
+            total_done=int(json['total_done']),
+            summative=bool(json['summative']),
+            _accuracy_model=AccuracyModel()
+        )
+
 class CoachRequest(db.Model):
     coach_requesting = db.UserProperty()
     student_requested = db.UserProperty()
@@ -845,16 +868,19 @@ class UserData(GAEBingoIdentityModel, db.Model):
             return user_data_current
         return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
 
+    @classmethod
+    def key_for(cls, user_id):
+        return "user_id_key_%s" % user_id
+
     @staticmethod
     def insert_for(user_id, email):
         if not user_id or not email:
             return None
 
         user = users.User(email)
-        key = "user_id_key_%s" % user_id
 
         user_data = UserData.get_or_insert(
-            key_name=key,
+            key_name=UserData.key_for(user_id),
             user=user,
             current_user=user,
             user_id=user_id,
@@ -1098,6 +1124,35 @@ class UserData(GAEBingoIdentityModel, db.Model):
             db.put([self, goal])
         db.run_in_transaction(save_goal)
 
+    @classmethod
+    def from_json(cls, json, user=None):
+        user_id = json['user_id']
+        email = json['email']
+        user = user or users.User(email)
+
+        user_data = cls(
+            key_name=cls.key_for(user_id),
+            user=user,
+            current_user=user,
+            user_id=user_id,
+            user_email=email,
+            moderator=False,
+            joined=util.parse_iso8601(json['joined']),
+            last_activity=util.parse_iso8601(json['last_activity']),
+            last_badge_review=util.parse_iso8601(json['last_badge_review']),
+            start_consecutive_activity_date=util.parse_iso8601(json['start_consecutive_activity_date']),
+            need_to_reassess=True,
+            points=int(json['points']),
+            nickname=json['nickname'],
+            coaches=['test@example.com'],
+            total_seconds_watched=int(json['total_seconds_watched']),
+
+            all_proficient_exercises=json['all_proficient_exercises'],
+            proficient_exercises=json['proficient_exercises'],
+            suggested_exercises=json['suggested_exercises'],
+        )
+        return user_data
+
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
@@ -1147,7 +1202,7 @@ class Video(Searchable, db.Model):
             # We now serve our downloads from s3. Our old archive URL template is...
             #   "http://www.archive.org/download/KA-converted-%s/%s.%s"
             # ...which we may want to fall back on in the future should s3 prices climb.
-            
+
             download_url_template = "http://s3.amazonaws.com/KA-youtube-converted/%s/%s.%s"
             return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
 
@@ -1399,6 +1454,22 @@ class UserVideo(db.Model):
         else:
             return min(1.0, float(self.seconds_watched) / self.duration)
 
+    @classmethod
+    def from_json(cls, json, user_data):
+        readable_id = json['video']['readable_id']
+        video = Video.get_for_readable_id(readable_id)
+
+        return cls(
+            key_name=UserVideo.get_key_name(video, user_data),
+            user=user_data.user,
+            video=video,
+            last_watched=util.parse_iso8601(json['last_watched']),
+            last_second_watched=int(json['last_second_watched']),
+            seconds_watched=int(json['seconds_watched']),
+            duration=int(json['duration']),
+            completed=bool(json['completed'])
+        )
+
 class VideoLog(db.Model):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
@@ -1553,6 +1624,20 @@ class VideoLog(db.Model):
 
     def key_for_video(self):
         return VideoLog.video.get_value_for_datastore(self)
+
+    @classmethod
+    def from_json(cls, json, video, user=None):
+        user = user or users.User(json['user'])
+        return cls(
+            user=user,
+            video=video,
+            video_title=json['video_title'],
+            time_watched=util.parse_iso8601(json['time_watched']),
+            seconds_watched=int(json['seconds_watched']),
+            last_second_watched=int(json['last_second_watched']),
+            points_earned=int(json['points_earned']),
+            playlist_titles=json['playlist_titles']
+        )
 
 # commit_video_log is used by our deferred video log insertion process
 def commit_video_log(video_log, user_data = None):
@@ -1753,6 +1838,41 @@ class ProblemLog(db.Model):
     attempts = db.StringListProperty(indexed=False)
     random_float = db.FloatProperty() # Add a random float in [0, 1) for easy random sampling
     ip_address = db.StringProperty(indexed=False)
+
+    @classmethod
+    def key_for(cls, user_data, exid, problem_number):
+        return "problemlog_%s_%s_%s" % (user_data.key_email, exid,
+            problem_number)
+
+    @classmethod
+    def from_json(cls, json, user_data, exercise):
+        problem_number = int(json['problem_number'])
+        return cls(
+            attempts=json['attempts'],
+            correct=bool(json['correct']),
+            count_attempts=int(json['count_attempts']),
+            count_hints=int(json['count_hints']),
+            earned_proficiency=bool(json['earned_proficiency']),
+            exercise=exercise.name,
+            exercise_non_summative=json['exercise_non_summative'],
+            hint_after_attempt_list=json['hint_after_attempt_list'],
+            hint_time_taken_list=json['hint_time_taken_list'],
+            hint_used=bool(json['hint_used']),
+            ip_address=json['ip_address'],
+            key_name=cls.key_for(user_data, exercise.name, problem_number),
+            points_earned=int(json['points_earned']),
+            problem_number=problem_number,
+            problem_type=json['problem_type'],
+            random_float=json['random_float'],
+            review_mode=bool(json['review_mode']),
+            seed=json['seed'],
+            sha1=json['sha1'],
+            suggested=bool(json['suggested']),
+            time_done=util.parse_iso8601(json['time_done']),
+            time_taken=int(json['time_taken']),
+            time_taken_attempts=json['time_taken_attempts'],
+            user=user_data.user,
+        )
 
     def put(self):
         if self.random_float is None:

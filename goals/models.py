@@ -119,6 +119,21 @@ class Goal(db.Model):
             s += 1
         return seconds_to_time_string(s)
 
+    @classmethod
+    def from_json(cls, json, user_data):
+        from util import parse_iso8601, coalesce
+        objectives = [GoalObjective.from_json(j) for j in json['objectives']]
+        return cls(
+            key=db.Key.from_path('Goal', json['id'], parent=user_data.key()),
+            title=json['title'],
+            completed=bool(json['completed']),
+            completed_on=coalesce(json['completed'], parse_iso8601),
+            abandoned=bool(json['abandoned']),
+            created_on=coalesce(json['created'], parse_iso8601),
+            updated_on=coalesce(json['updated'], parse_iso8601),
+            objectives=objectives
+        )
+
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
 class GoalList(object):
@@ -241,6 +256,24 @@ class GoalObjective(object):
                 objs.append(GoalObjectiveAnyVideo(description="Any video"))
         return objs
 
+    @classmethod
+    def from_json(cls, json):
+        # determine what subclass we need
+        klass_str = json['type']
+        if klass_str not in [c.__name__ for c in cls.__subclasses__()]:
+            raise "Invalid class %s" % klass_str
+        klass = eval(klass_str)
+
+        # create an instance of the objective, but don't call it's __init__
+        objective = klass.__new__(klass)
+
+        # call our custom init instead
+        objective.init_from_json(json)
+        return objective
+
+    def init_from_json(self, json):
+        self.description = json['description']
+        self.progress = json['progress']
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
@@ -250,6 +283,10 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         self.exercise_name = exercise.name
         self.description = exercise.display_name
         self.progress = user_data.get_or_insert_exercise(exercise).progress
+
+    def init_from_json(self, json):
+        super(GoalObjectiveExerciseProficiency, self).init_from_json(json)
+        self.exercise_name = json['internal_id']
 
     def url(self):
         exercise = Exercise.get_by_name(self.exercise_name)
@@ -287,6 +324,10 @@ class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     # which exercise fulfilled this objective, set upon completion
     exercise_name = None
 
+    def init_from_json(self, json):
+        super(GoalObjectiveAnyExerciseProficiency, self).init_from_json(json)
+        self.exercise_name = json['internal_id'] or None
+
     def url(self):
         if self.exercise_name:
             return Exercise.get_relative_url(self.exercise_name)
@@ -318,6 +359,11 @@ class GoalObjectiveWatchVideo(GoalObjective):
         else:
             self.progress = 0.0
 
+    def init_from_json(self, json):
+        super(GoalObjectiveWatchVideo, self).init_from_json(json)
+        self.video_readable_id = json['internal_id']
+        self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
+
     def url(self):
         return Video.get_relative_url(self.video_readable_id)
 
@@ -336,6 +382,12 @@ class GoalObjectiveAnyVideo(GoalObjective):
     # which video fulfilled this objective, set upon completion
     video_key = None
     video_readable_id = None
+
+    def init_from_json(self, json):
+        super(GoalObjectiveAnyVideo, self).init_from_json(json)
+        self.video_readable_id = json['internal_id'] or None
+        if self.video_readable_id:
+            self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
 
     def url(self):
         if self.video_readable_id:

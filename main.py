@@ -65,6 +65,7 @@ from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from importer.handlers import ImportHandler
 from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
@@ -908,6 +909,8 @@ application = webapp2.WSGIApplication([
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),
     ('/redirects/remove', redirects.Remove),
+
+    ('/importer', ImportHandler),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),
