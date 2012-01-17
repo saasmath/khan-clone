@@ -251,8 +251,9 @@ def get_public_user_badges(user_data=None):
 class ViewBadges(request_handler.RequestHandler):
 
     def get(self):
-        # TODO: turtle redirect to /profile/<email>/achievements
-        self.redirect("/profile")
+        user_data = models.UserData.current() or models.UserData.pre_phantom()
+        grouped_badges = get_grouped_user_badges(user_data)
+        self.render_jinja2_template('viewbadges.html', grouped_badges)
 
 # /admin/badgestatistics is called periodically by a cron job
 class BadgeStatistics(request_handler.RequestHandler):

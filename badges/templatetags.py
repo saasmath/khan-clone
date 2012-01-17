@@ -1,7 +1,5 @@
-import shared_jinja
-import urllib
-
 import badges
+import shared_jinja
 import util_badges
 from notifications import UserNotifier
 
