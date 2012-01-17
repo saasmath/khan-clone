@@ -33,43 +33,44 @@
 
     {% if not source or not target %}
 
-    <p>
-        <form action="/devadmin/emailchange" method="POST">
-            I want to transfer <input type="text" placeholder="source email" name="source_email" value="{{ source.email|escape }}" style="color:green;" />'s progress over to 
-            <input type="text" placeholder="target email" name="target_email" value="{{ target.email|escape }}" style="color:red;" />'s account.
+    <form action="/devadmin/emailchange" method="POST">
+        <p>
+            I want to transfer <input type="text" placeholder="source email" name="source_email" value="{{ source.email|escape }}" style="color:green;">'s progress <br>
+            over to 
+            <input type="text" placeholder="target email" name="target_email" value="{{ target.email|escape }}" style="color:red;">'s account.
             
-            <br/><br/>
+            <br><br>
 
-            <input type="submit" class="simple-button action-gradient" value="Start merging (nothing will happen yet)" />
-        </form>
-    </p>
+            <input type="submit" class="simple-button action-gradient" value="Start merging (nothing will happen yet)">
+        </p>
+    </form>
 
     {% else %}
 
-    <p>
-        <form action="/devadmin/emailchange" method="POST">
+    <form action="/devadmin/emailchange" method="POST">
+        <p>
 
-            <input type="hidden" name="confirm" value="1" />
-            <input type="hidden" name="source_email" value="{{ source.email|escape }}" />
-            <input type="hidden" name="target_email" value="{{ target.email|escape }}" />
+            <input type="hidden" name="confirm" value="1">
+            <input type="hidden" name="source_email" value="{{ source.email|escape }}">
+            <input type="hidden" name="target_email" value="{{ target.email|escape }}">
 
             I am confirming that I want to replace 
             <span class="target_desc"><nobr>{{ target.nickname|escape }}, {{ target.points|escape }} energy points, member for {{ target.seconds_since_joined|seconds_to_time_string() }}</nobr></span>'s 
             progress with 
             <span class="source_desc"><nobr>{{ source.nickname|escape }}, {{ source.points|escape }} energy points, member for {{ source.seconds_since_joined|seconds_to_time_string() }}</nobr></span>.
-            <br/><br/>
+            <br><br>
 
-            <strong>The user will login as {{ target.nickname|escape }} with {{ target_email|escape }}.<br/><br/>{{ target_email|escape }}'s current progress will be deleted and replaced with the above data.</strong> Bum bum bummmmmmmm...
-            <br/><br/>
+            <strong>The user will login as {{ target.nickname|escape }} with {{ target_email|escape }}.<br><br>{{ target_email|escape }}'s current progress will be deleted and replaced with the above data.</strong> Bum bum bummmmmmmm...
+            <br><br>
 
             {% if source.points < target.points %}
                 <strong>Warning! The account being overwritten has more points than the source account. Be sure you know what you're doing.</strong>
-                <br/><br/>
+                <br><br>
             {% endif %}
 
-            <input type="submit" class="simple-button action-gradient" value="I know what I'm doing. Let's do it!" />
-        </form>
-    </p>
+            <input type="submit" class="simple-button action-gradient" value="I know what I'm doing. Let's do it!">
+        </p>
+    </form>
 
     {% endif %}
 

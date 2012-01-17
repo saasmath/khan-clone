@@ -218,44 +218,6 @@ class UnregisterStudent(UnregisterStudentCoach):
             "/students"
         )
 
-# deprecated - use api method instead
-class CreateStudentList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
-    def post(self):
-        coach_data = UserData.current()
-
-        if not coach_data:
-            return
-
-        list_name = self.request_string('list_name')
-        if not list_name:
-            raise Exception('Invalid list name')
-
-        student_list = StudentList(coaches=[coach_data.key()], name=list_name)
-        student_list.put()
-
-        student_list_json = {
-            'name': student_list.name,
-            'key': str(student_list.key())
-        }
-
-        self.render_json(student_list_json)
-
-# deprecated - use api method instead
-class DeleteStudentList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
-    def post(self):
-        coach_data = UserData.current()
-
-        if not coach_data:
-            return
-
-        student_list = util_profile.get_student_list(coach_data,
-            self.request_string('list_id'))
-        student_list.delete()
-        if not self.is_ajax_request():
-            self.redirect_to('/students')
-
 class AddStudentToList(RequestHandler):
     @RequestHandler.exceptions_to_http(400)
     def post(self):
@@ -298,12 +260,3 @@ class ViewClassTime(RequestHandler):
 class ViewClassReport(RequestHandler):
     def get(self):
         self.redirect("/class_profile?selected_graph_type=%s" % ClassProgressReportGraph.GRAPH_TYPE)
-
-class ViewCharts(RequestHandler):
-    def get(self):
-        student_email = self.request_student_email_legacy()
-        url = "/profile?selected_graph_type=%s&student_email=%s&exid=%s" % (
-            ExerciseProblemsGraph.GRAPH_TYPE,
-            student_email,
-            self.request_string("exercise_name"))
-        self.redirect(url)
