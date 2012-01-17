@@ -7,8 +7,6 @@
 
 .story {
     float: left;
-    width: 300px;
-    height: 204px;
     padding: 18px;
     cursor: pointer;
     position: relative;
@@ -19,6 +17,32 @@
 h3.story-author {
     margin-bottom: 0;
 }
+
+.story.envelope-1 {
+    width: 300px;
+    height: 204px;
+}
+.story.envelope-1 .content-teaser {
+    background: url('/images/stories/stationary-1.png') no-repeat top right;
+    margin: 12px;
+    padding: 20px 9px 9px 9px;
+    height: 125px;
+    font-size: 16px;
+}
+.story.envelope-1 .envelope {
+    width: 300px;
+    height: 204px;
+    position: absolute;
+    top: 0px;
+}
+.story.envelope-1 .envelope-background {
+    background: url('/images/stories/envelope-1-back-background.png') no-repeat;
+}
+.story.envelope-1 .envelope-foreground {
+    background: url('/images/stories/envelope-1-back-foreground.png') no-repeat;
+}
+
+
 
 .story.rotate:hover {
     -webkit-transform: rotate(0deg);
@@ -81,34 +105,11 @@ h3.story-author {
 }
 
 .story .content-teaser {
-    margin: 12px;
-    padding: 20px 9px 9px 9px;
-    background: url('/images/stories/stationary.png') no-repeat top right;
-    height: 125px;
-    font-size: 16px;
     position: absolute;
     overflow: hidden;
 
-    -webkit-border-radius: 3px;
-
     -webkit-transition: all .5s ease-in-out;
 } 
-
-.story .envelope-background {
-    width: 300px;
-    height: 204px;
-    position: absolute;
-    top: 0px;
-    background: url('/images/stories/envelope-1-back-background.png') no-repeat;
-}
-
-.story .envelope-foreground {
-    width: 300px;
-    height: 204px;
-    position: absolute;
-    top: 0px;
-    background: url('/images/stories/envelope-1-back-foreground.png') no-repeat;
-}
 
 </style>
 
