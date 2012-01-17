@@ -61,7 +61,7 @@ Stories.SmallView = Backbone.View.extend({
             .html(this.template(this.model))
             .find(".story")
                 .addClass(ix % 2 == 0 ? "rotate-5" : (ix % 3 == 0 ? "rotate-neg-7" : "rotate-neg-7"))
-                .addClass(ix % 3 == 0 ? "envelope-1" : "envelope-2")
+                .addClass(ix % 3 == 0 || ix == 2 ? "envelope-1" : "envelope-2")
                 .click(function() { Stories.show(this, model); });
 
         return this;

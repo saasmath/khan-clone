@@ -5,19 +5,46 @@
 
 <style>
 
+h2.stories-header {
+    margin-top: 18px;
+    padding-bottom: 18px;
+}
+
 .story {
     float: left;
     padding: 18px;
-    cursor: pointer;
     position: relative;
     height: 204px;
+    cursor: pointer;
 
-    -webkit-transition: all .2s ease-in-out;
+    -webkit-transition: -webkit-transform .3s ease-in-out;
 }
 
 .story .envelope {
     position: absolute;
     top: 0px;
+}
+
+.story .more-overlay {
+    position: absolute;
+    top: 75%;
+    left: 80px;
+    width: 140px;
+    padding: 4px 0px;
+    text-align: center;
+    background: white;
+    opacity: 0.0;
+    filter:alpha(opacity=85);
+
+    -webkit-transition: opacity .3s ease-in-out;
+}
+.story:hover .more-overlay {
+    opacity: 0.85;
+    filter:alpha(opacity=85);
+}
+.story.content-teaser-show .more-overlay {
+    opacity: 0.0;
+    filter:alpha(opacity=85);
 }
 
 h3.story-author {
@@ -81,32 +108,20 @@ h3.story-title .extra-story-title {
     -webkit-transform: rotate(-7deg);
 }
 .story.rotate-neg-7 .content-teaser {
-    -webkit-transform: rotate(-8deg);
+    -webkit-transform: rotate(7deg);
 }
 .story.rotate-neg-7:hover .content-teaser {
-    -webkit-animation: rotate-neg-7-peek .4s ease-in-out 0s 1 normal;
-    -webkit-transform: rotate(4deg) translateY(-24px);
-}
-@-webkit-keyframes rotate-neg-7-peek {
-    0% { -webkit-transform: rotate(-8deg); }
-    30% { -webkit-transform: rotate(-1deg); }
-    100% { -webkit-transform: rotate(4deg) translateY(-24px); }
+    -webkit-transform: rotate(0deg) translateY(-24px);
 }
 
 .story.rotate-5 {
     -webkit-transform: rotate(5deg);
 }
 .story.rotate-5 .content-teaser {
-    -webkit-transform: rotate(6deg);
+    -webkit-transform: rotate(-5deg);
 }
 .story.rotate-5:hover .content-teaser {
-    -webkit-animation: rotate-5-peek .4s ease-in-out 0s 1 normal;
-    -webkit-transform: rotate(-6deg) translateY(-24px);
-}
-@-webkit-keyframes rotate-5-peek {
-    0% { -webkit-transform: rotate(6deg); }
-    30% { -webkit-transform: rotate(-1deg); }
-    100% { -webkit-transform: rotate(-6deg) translateY(-24px); }
+    -webkit-transform: rotate(0deg) translateY(-24px);
 }
 
 @-webkit-keyframes letter-show {
@@ -125,7 +140,7 @@ h3.story-title .extra-story-title {
 
 .story.content-teaser-hide .content-teaser {
     opacity: 0;
-    -webkit-transition: all .2s ease-in-out;
+    -webkit-transition: -webkit-transform .3s ease-in-out;
 }
 
 .story.content-teaser-show,
@@ -140,7 +155,7 @@ h3.story-title .extra-story-title {
     font-size: 16px;
     margin: 12px;
 
-    -webkit-transition: all .5s ease-in-out;
+    -webkit-transition: -webkit-transform .3s ease-in-out;
 } 
 
 </style>
@@ -149,7 +164,11 @@ h3.story-title .extra-story-title {
 
 {% block aboutcontent %}
 
-<h1>Stories</h1>
+<h2 class="stories-header">
+    These are all real stories from Khan Academy users.<br><br>
+    They are completely unedited.<br><br>
+    <a href="#">Share yours</a>.
+</h2>
 
 <div id="stories"></div>
 
