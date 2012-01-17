@@ -102,51 +102,6 @@ var Profile = {
             }
         });
 
-        var currentGoals = window.GoalBook.map( function(g){ return g.get("title"); });
-        _( $(".add-goal") ).map( function( elt ){
-            var button = $( elt );
-            var badge = button.closest( ".achievement-badge" );
-            var goalTitle = badge.find( ".achievement-title" ).text();
-        
-            // remove +goal button if present in list of active goals
-            if( _.indexOf( currentGoals, goalTitle ) > -1){
-
-                button.remove();
-
-            // add +goal behavior to button, once.
-            } else {
-        
-                button.one("click", function(){
-                    var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
-                        return {
-                            "type" : "GoalObjectiveExerciseProficiency",
-                            "internal_id" : exercise
-                        };
-                    });
-
-                    var goal = new Goal({
-                        title: goalTitle,
-                        objectives: goalObjectives
-                    });
-
-                    window.GoalBook.add(goal);
-
-                    goal.save()
-                        .fail(function(err) {
-                            var error = err.responseText;
-                            button.addClass("failure")
-                                .text("oh no!").attr("title","This goal could not be saved.");
-                            KAConsole.log("Error while saving new badge goal", goal);
-                            window.GoalBook.remove(goal);
-                        })
-                        .success(function(){
-                            button.text("Goal Added!").addClass("success");
-                            badge.find(".energy-points-badge").addClass("goal-added");
-                        });
-                });
-            }
-        });
-
         // Bind event handlers for sharing controls on recent activity
         $(".share-link").hide();
         $(".sharepop").hide();
@@ -688,6 +643,51 @@ var Profile = {
                 // Start with meteorite badges displayed
                 $("#category-0").click();
                 $("abbr.timeago").timeago();
+                
+                var currentGoals = window.GoalBook.map( function(g){ return g.get("title"); });
+                _( $(".add-goal") ).map( function( elt ){
+                    var button = $( elt );
+                    var badge = button.closest( ".achievement-badge" );
+                    var goalTitle = badge.find( ".achievement-title" ).text();
+
+                    // remove +goal button if present in list of active goals
+                    if( _.indexOf( currentGoals, goalTitle ) > -1){
+
+                        button.remove();
+
+                    // add +goal behavior to button, once.
+                    } else {
+                        console.log("believe it or not, ", badge.data("objectives"))
+                        button.one("click", function(){
+                            var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
+                                return {
+                                    "type" : "GoalObjectiveExerciseProficiency",
+                                    "internal_id" : exercise
+                                };
+                            });
+
+                            var goal = new Goal({
+                                title: goalTitle,
+                                objectives: goalObjectives
+                            });
+
+                            window.GoalBook.add(goal);
+
+                            goal.save()
+                                .fail(function(err) {
+                                    var error = err.responseText;
+                                    button.addClass("failure")
+                                        .text("oh no!").attr("title","This goal could not be saved.");
+                                    KAConsole.log("Error while saving new badge goal", goal);
+                                    window.GoalBook.remove(goal);
+                                })
+                                .success(function(){
+                                    button.text("Goal Added!").addClass("success");
+                                    badge.find(".energy-points-badge").addClass("goal-added");
+                                });
+                        });
+                    }
+                });
             }
         });
     },

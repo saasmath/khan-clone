@@ -175,7 +175,7 @@ class Badge(object):
     _serialize_whitelist = [
             "points", "badge_category", "description",
             "safe_extended_description", "name", "user_badges", "icon_src",
-            "is_owned"
+            "is_owned", "objectives", "can_become_goal"
             ]
 
     def __init__(self):

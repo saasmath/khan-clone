@@ -30,6 +30,8 @@ import request_handler
 
 import logging
 
+import simplejson as json
+
 # Authoritative list of all badges
 @layer_cache.cache()
 def all_badges():
@@ -166,7 +168,6 @@ def get_grouped_user_badges(user_data=None):
             else:
                 badge = badges_dict.get(user_badge.badge_name)
                 badge.is_owned = True
-
                 grouped_user_badge = badges.GroupedUserBadge.build(user_data,
                                                                    badge,
                                                                    user_badge)
@@ -176,6 +177,10 @@ def get_grouped_user_badges(user_data=None):
                              key=lambda badge:badge.badge_category)
     for badge in possible_badges:
         badge.is_owned = grouped_badges_dict.has_key(badge.name)
+        badge.can_become_goal = user_data and not user_data.is_phantom and not badge.is_owned and badge.is_goal
+        if badge.can_become_goal:
+            # TODO is there a way to have handlebars json.stringify() a variable?
+            badge.objectives = json.dumps(badge.exercise_names_required)
 
     grouped_user_badges = sorted(
             filter(lambda group: (hasattr(group, "badge") and
