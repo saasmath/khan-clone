@@ -309,6 +309,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         user_data = template_values['user_data']
 
         template_values['username'] = user_data.nickname if user_data else ""
+        template_values['profile_root'] = user_data.profile_root if user_data else ""
         template_values['points'] = user_data.points if user_data else 0
         template_values['logged_in'] = not user_data.is_phantom if user_data else False
 

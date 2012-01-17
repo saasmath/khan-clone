@@ -340,13 +340,13 @@ var GoalBookView = Backbone.View.extend({
     },
 
     goalHistoryButtonClicked: function(e) {
-        if (document.location.pathname === "/profile") {
-            var jelGoalLink = $(".goals-accordion-content .graph-link");
-            if (jelGoalLink.length) {
-                e.preventDefault();
-                jelGoalLink.click();
-                this.hide();
-            }
+        // Stay on the page if the user is already looking at her profile
+        // TODO: if we care about metaKey / control key / middle key working,
+        // then there is probably more to test here.
+        if (typeof Profile !== "undefined" && !e.metaKey) {
+            e.preventDefault();
+            this.hide();
+            Profile.router.navigate("/goals", true);
         }
     },
 
@@ -379,7 +379,10 @@ var GoalBookView = Backbone.View.extend({
             KAConsole.log("rendering GoalBookView", this);
             this.needsRerender = false;
             var json = _.pluck(this.model.models, "attributes");
-            jel.html(this.template({goals: json}));
+            jel.html(this.template({
+                goals: json,
+                profileRoot: KA.profileRoot
+            }));
         }
         return this;
     },
