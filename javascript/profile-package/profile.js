@@ -199,8 +199,7 @@ var Profile = {
                                             "exercise_name=" + exercise +
                                             "&" + "student_email=" + emailEncoded
                 },
-                href = translation[graph] + timeURLParameter,
-                jelGraphLinkHeader = $(".graph-link-header[href$='" + graph + "']");
+                href = translation[graph] + timeURLParameter;
 
             // Known bug: the wrong graph-date-picker item is selected when
             // server man decides to show 30 days instead of the default 7.
@@ -212,16 +211,6 @@ var Profile = {
                     .end()
                     .siblings().hide().end()
                 .end().siblings().hide();
-
-            if (jelGraphLinkHeader.length) {
-                var index = jelGraphLinkHeader.index(),
-                    isSubLink = jelGraphLinkHeader.hasClass("graph-sub-link");
-
-                if (!isSubLink) {
-                    $(".graph-link").css("background-color", "")
-                        .eq(index).css("background-color", "#eee");
-                }
-            }
 
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
             var prettyGraphName = graph.replace(/-/gi, " ");
