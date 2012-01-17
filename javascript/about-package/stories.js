@@ -6,7 +6,7 @@ Stories.render = function(story_data) {
     $.each(story_data.content, function(ix, story) {
 
         var view = new Stories.SmallView({ model: story });
-        $(story_data.target).append(view.render().el);
+        $(story_data.target).append(view.render(ix).el);
 
     });
 
@@ -54,12 +54,13 @@ Stories.SmallView = Backbone.View.extend({
 
     template: Templates.get( "about.story" ),
 
-    render: function() {
+    render: function(ix) {
         var model = this.model;
 
         $(this.el)
             .html(this.template(this.model))
             .find(".story")
+                .addClass(ix % 2 == 0 ? "rotate-5" : "rotate-neg-7")
                 .click(function() { Stories.show(this, model); });
 
         return this;

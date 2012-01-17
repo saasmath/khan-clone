@@ -54,6 +54,7 @@ jinja2.default_config = {
         "slugify": templatefilters.slugify,
         "pluralize": templatefilters.pluralize,
         "linebreaksbr": templatefilters.linebreaksbr,
+        "linebreaksbr_js": templatefilters.linebreaksbr_js,
         "linebreaksbr_ellipsis": templatefilters.linebreaksbr_ellipsis,
         "youtube_timestamp_links": templatefilters.youtube_timestamp_links,
         "timesince_ago": templatefilters.timesince_ago,
