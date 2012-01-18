@@ -409,17 +409,18 @@ var VideoStats = {
     },
 
     playerStateChange: function(state) {
-        if (state == -2 && this.playing) { // playing normally
+        var playing = this.playing || this.fAlternativePlayer;
+        if (state == -2 && playing) { // playing normally
             var percent = this.getPercentWatched();
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity))
             {
                 // Another 10% has been watched
                 this.save();
             }
-        } else if (state === 0 && this.playing) { // ended
+        } else if (state === 0 && playing) { // ended
             this.playing = false;
             this.save();
-        } else if (state == 2 && this.playing) { // paused
+        } else if (state == 2 && playing) { // paused
             this.playing = false;
             if (this.getSecondsWatchedSinceSave() > 1) {
               this.save();
