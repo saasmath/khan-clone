@@ -699,16 +699,6 @@ var Profile = {
             dataType: "json",
             success: function(data) {
                 GoalProfileViewsCollection.render(data);
-                var jel = $("#tab-content-goals .graph-picker .type.selected");
-
-                // Because server man can respond after navigating the router,
-                // we need to tell the collection to show the desired goal type.
-                $.each(["current", "completed", "abandoned"], function(index, type) {
-                    if (jel.hasClass(type)) {
-                        GoalProfileViewsCollection.showGoalType(type);
-                        return false;
-                    }
-                });
             }
         });
     }

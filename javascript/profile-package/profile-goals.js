@@ -155,19 +155,19 @@ var GoalProfileViewsCollection = {
 
         $("#profile-goals-content").html('<div id="current-goals-list"></div><div id="completed-goals-list"></div><div id="abandoned-goals-list"></div>');
 
-        GoalProfileViewsCollection.views.current = new GoalProfileView({
+        this.views.current = new GoalProfileView({
             el: "#current-goals-list",
             model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: "current",
             readonly: !viewingOwnGoals
         });
-        GoalProfileViewsCollection.views.completed = new GoalProfileView({
+        this.views.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: "completed",
             readonly: true
         });
-        GoalProfileViewsCollection.views.abandoned = new GoalProfileView({
+        this.views.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: "abandoned",
@@ -180,6 +180,20 @@ var GoalProfileViewsCollection = {
                 window.newGoalDialog.show();
             });
         }
+
+        // Because we wait for a response from /api/v1/user/goals to render the collection,
+        // a view can be selected by the user before they exist (either by
+        // navigating directly to /profile/username/goals/abandoned or clicking quickly).
+        var jel = $("#tab-content-goals .graph-picker .type"),
+            selectedType = "current";
+        $.each(this.views, function(index, view) {
+            if (jel.filter("." + view.options.type).hasClass("selected")) {
+                selectedType = view.options.type;
+                return false;
+            }
+        });
+
+        this.showGoalType(selectedType);
     },
 
     showGoalType: function(type) {
