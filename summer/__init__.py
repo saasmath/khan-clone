@@ -178,14 +178,26 @@ class Download(RequestHandler):
         properties = [p for p in SummerStudent().properties()]
         sw.writerow(properties)
         for student in SummerStudent.all().fetch(5000):
-            sw.writerow([unicode(getattr(student, p)) for p in properties])
+            row = []
+            for p in properties:
+                v = getattr(student, p)
+                if isinstance(v, basestring):
+                    v.encode("utf-8")
+                row.append(v)
+            sw.writerow(row)
 
         pio = StringIO.StringIO()
         pw = csv.writer(pio)
         properties = [p for p in SummerParentData().properties()]
         pw.writerow(properties)
         for parent in SummerParentData.all().fetch(5000):
-            pw.writerow([unicode(getattr(parent, p)) for p in properties])
+            row = []
+            for p in properties:
+                v = getattr(parent, p)
+                if isinstance(v, basestring):
+                    v.encode("utf-8")
+                row.append(v)
+            pw.writerow(row)
 
         f = StringIO.StringIO()
         tf = tarfile.open(fileobj=f, mode='w:gz')
@@ -523,11 +535,13 @@ class Application(RequestHandler):
                     payee_phone_b = phone_parts[1]
                     payee_phone_c = phone_parts[2]
 
-                mail.send_mail( \
-                    sender = FROM_EMAIL, \
-                    to = parent.email, \
-                    subject = "Khan Academy Discovery Lab Application", \
-                    body = """Dear %s,
+                # Only send email if the user's email is a valid one
+                if not facebook_util.is_facebook_user_id(parent.email):
+                    mail.send_mail( \
+                        sender = FROM_EMAIL, \
+                        to = parent.email, \
+                        subject = "Khan Academy Discovery Lab Application", \
+                        body = """Dear %s,
                 
 We have received your application for %s %s for the Khan Academy Discovery Lab 2012. Please ensure you have paid the $5.00 processing fee for the application.
 

@@ -341,7 +341,7 @@ class ViewAllExercises(request_handler.RequestHandler):
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
-            'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
+            'map_coords': json.dumps(knowledgemap.deserializeMapCoords(user_data.map_coords)),
             'selected_nav_link': 'practice',
             'show_review_drawer': show_review_drawer,
         }
@@ -657,7 +657,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data, admin=True),
-            'map_coords': (0, 0, 0),
+            'map_coords': knowledgemap.deserializeMapCoords(),
             }
 
         self.render_jinja2_template('exerciseadmin.html', template_values)
