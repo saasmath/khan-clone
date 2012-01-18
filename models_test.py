@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 import models
+import phantom_users.phantom_util
 import unittest
+from google.appengine.ext import testbed
+from google.appengine.datastore import datastore_stub_util
+from google.appengine.ext import db
 
 class UsernameTest(unittest.TestCase):
     def setUp(self):
@@ -37,4 +41,52 @@ class UsernameTest(unittest.TestCase):
         self.assertTrue(self.validate('mrpants'))
         self.assertTrue(self.validate('instructionsareeasy'))
         self.assertTrue(self.validate('coolkid1983'))
+
+
+class ProfileSegmentTest(unittest.TestCase):
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+
+        # Create a consistency policy that will simulate the High Replication consistency model.
+        self.policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=0)
+
+        self.testbed.init_datastore_v3_stub(consistency_policy=self.policy)
+        self.testbed.init_user_stub()
+        self.testbed.init_memcache_stub()
+
+    def to_url(self, user):
+        return user.prettified_user_email
+    def from_url(self, segment):
+        return models.UserData.get_from_url_segment(segment)
+
+    def create_phantom(self):
+        user_id = phantom_users.phantom_util._create_phantom_user_id()
+        return models.UserData.insert_for(user_id, user_id)
+
+    def test_url_segment_generation(self):
+        # Pre-phantom users can't have profile URL's
+        prephantom = models.UserData.pre_phantom()
+        self.assertTrue(self.from_url(self.to_url(prephantom)) is None)
+
+        # Phantom users can't have profile URL's
+        phantom = self.create_phantom()
+        self.assertTrue(self.from_url(self.to_url(phantom)) is None)
+
+        # Normal users are cool, though.
+        bob = models.UserData.insert_for(
+                "http://googleid.khanacademy.org/1234",
+                "bob@gmail.com")
+        bob.put()
+        self.assertEqual(
+                self.from_url(self.to_url(bob)).user_id,
+                bob.user_id)
+
+        sally = models.UserData.insert_for(
+                "http://facebook.khanacademy.org/1234",
+                "http://facebook.khanacademy.org/1234")
+        sally.put()
+        self.assertEqual(
+                self.from_url(self.to_url(sally)).user_id,
+                sally.user_id)
 

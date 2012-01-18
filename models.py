@@ -925,8 +925,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 username_or_email = segment.replace("_fb", FACEBOOK_ID_PREFIX)
             elif segment.startswith("_em"):
                 username_or_email = segment.replace("_em", "")
-            elif segment.startswith("_ph"):
-                logging.warning("Can't infer phantom profile from URL")
             else:
                 username_or_email = segment
 
