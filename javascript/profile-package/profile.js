@@ -173,13 +173,12 @@ var Profile = {
 
             this.activateRelatedTab($("#tab-content-vital-statistics").attr("rel") + " " + graph);
             var prettyGraphName = graph.replace(/-/gi, " ");
-            var nickname = Profile.profile.get("nickname");
             if (graph == "exercise-problems") {
                 var prettyExName = exercise.replace(/_/gi, " ");
-                this.updateTitleBreadcrumbs([nickname, prettyGraphName, prettyExName]);
+                this.updateTitleBreadcrumbs([prettyGraphName, prettyExName]);
             }
             else {
-                this.updateTitleBreadcrumbs([nickname, prettyGraphName]);
+                this.updateTitleBreadcrumbs([prettyGraphName]);
             }
             Profile.loadGraph(href);
         },
@@ -205,8 +204,7 @@ var Profile = {
             $("#tab-content-achievements").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
-            var nickname = Profile.profile.get("nickname");
-            this.updateTitleBreadcrumbs([nickname, "Achievements"]);
+            this.updateTitleBreadcrumbs(["Achievements"]);
         },
 
         showGoals: function(type) {
@@ -217,8 +215,7 @@ var Profile = {
             $("#tab-content-goals").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-goals").attr("rel"));
-            var nickname = Profile.profile.get("nickname");
-            this.updateTitleBreadcrumbs([nickname, "Goals"]);
+            this.updateTitleBreadcrumbs(["Goals"]);
         },
 
         activateRelatedTab: function(rel) {
@@ -228,11 +225,15 @@ var Profile = {
 
         /**
          * Updates the title of the profile page to show breadcrumbs
-         * based on the parts in the specified array.
+         * based on the parts in the specified array. Will always pre-pend the profile
+         * nickname.
          * @param {Array.<string>} parts A list of strings that will be HTML-escaped
          *     to be the breadcrumbs.
          */
         updateTitleBreadcrumbs: function(parts) {
+            var rootCrumb = Profile.profile.get("nickname") || "Profile";
+            parts.unshift(rootCrumb);
+
             var sheetTitle = $(".profile-sheet-title");
             if (parts && parts.length) {
                 sheetTitle.text(parts.join(" » "));
