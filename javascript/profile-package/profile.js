@@ -456,7 +456,7 @@ var Profile = {
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
 
         this.profile.bind("change:nickname", function(profile) {
-            $("#profile-tab-link").text(profile.get("nickname"));
+            $("#profile-tab-link").text(profile.get("nickname") || "Profile");
         });
         this.profile.bind("change:avatarSrc", function(profile) {
             $(".profile-tab-avatar").attr("src", profile.get("avatarSrc"));
