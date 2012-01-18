@@ -167,6 +167,8 @@ class ViewProfile(request_handler.RequestHandler):
 
         if not email_or_username:
             user_data = current_user_data
+        elif email_or_username == 'nouser' and current_user_data.is_phantom:
+            user_data = current_user_data
         else:
             user_data = UserData.get_from_url_segment(email_or_username)
 

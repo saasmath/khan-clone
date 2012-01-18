@@ -911,8 +911,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
         if self.is_facebook_user:
             return "_fb" + self.user_email[len(FACEBOOK_ID_PREFIX):]
         elif self.is_phantom:
-            # TODO: Figure out the difference between pre-phantom and phantom
-            return "_ph" + "turtle"
+            return "nouser"
         else:
             return "_em" + urllib.quote(self.user_email)
 
@@ -927,8 +926,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
             elif segment.startswith("_em"):
                 username_or_email = segment.replace("_em", "")
             elif segment.startswith("_ph"):
-                # TODO: phantom or pre phantom
-                logging.critical("turtle party")
+                logging.warning("Can't infer phantom profile from URL")
             else:
                 username_or_email = segment
 
