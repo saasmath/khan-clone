@@ -25,6 +25,21 @@ var ProfileModel = Backbone.Model.extend({
 
     url: "/api/v1/user/profile",
 
+    isPhantom: function() {
+        var email = this.get("email");
+        return email.indexOf(ProfileModel.PHANTOM_EMAIL_PREFIX) === 0;
+    },
+
+    isEditable: function() {
+        return this.get("isSelf") && !this.isPhantom();
+    },
+
+    toJSON: function() {
+        var json = ProfileModel.__super__.toJSON.call(this);
+        json["isPhantom"] = this.isPhantom();
+        return json;
+    },
+
     /**
      * Override Backbone.Model.save since only some of the fields are
      * mutable and saveable.
@@ -109,6 +124,8 @@ var ProfileModel = Backbone.Model.extend({
     }
 });
 
+ProfileModel.PHANTOM_EMAIL_PREFIX = "http://nouserid.khanacademy.org/";
+
 UserCardView = Backbone.View.extend({
     className: "user-card",
 
@@ -169,7 +186,7 @@ UserCardView = Backbone.View.extend({
     },
 
     delegateEditEvents_: function() {
-        if (this.model.get("isSelf")) {
+        if (this.model.isEditable()) {
             this.bindQtip_();
             this.delegateEvents(this.editEvents);
         }

@@ -487,7 +487,7 @@ var Profile = {
             dataType: "json",
             success: function(data) {
 
-                if (Profile.profile.get("isSelf")) {
+                if (Profile.profile.isEditable()) {
                     // The display-case is only editable if you're viewing your
                     // own profile
 

@@ -1,12 +1,12 @@
 <section class="user-info vertical-shadow clearfix">
 
     <section class="basic-user-info" style="float: left;">
-      <div class="avatar-pic-container{{#if isSelf}} editable{{/if}}" style="float:left;" >
+      <div class="avatar-pic-container{{#if isEditable}} editable{{/if}}" style="float:left;" >
         <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic" >
         <div class="avatar-change-overlay" style="display: none">Change avatar</div>
       </div>
       <div class="user-deets">
-          {{#if isSelf}}
+          {{#if isEditable}}
               <input type="text" value="{{nickname}}"
                   placeholder="Enter nickname here" class="inline-editable nickname" style="display: block;">
           {{else}}
@@ -18,7 +18,7 @@
               <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
           </div>
           <div class="user-profile-controls">
-          {{#if isSelf}}
+          {{#if isEditable}}
               <ul class="dropdown">
                   <li>
                       <span id="edit-profile" class="simple-button action-gradient">Edit profile</span>
@@ -31,7 +31,7 @@
                   </li>
               </ul>
           {{else}}
-              <a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>
+              {{#unless isSelf}}<a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>{{/unless}}
               <a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#unless isCoachingLoggedInUser}} display: none;{{/unless}}">Remove as a coach</a>
           {{/if}}
           </div>
@@ -47,7 +47,7 @@
     </div>
 
 </section>
-{{#if isSelf}}
+{{#if isEditable}}
 <a href="javascript:void(0)" id="edit-visibility"
     class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
 <div id="username-picker-container" class="modal fade hide" style="display: none;">
