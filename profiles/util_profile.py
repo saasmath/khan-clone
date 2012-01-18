@@ -159,6 +159,12 @@ class ViewProfile(request_handler.RequestHandler):
         # TODO: What URL for phantoms?
         current_user_data = UserData.current() or UserData.pre_phantom()
         
+        if current_user_data.is_pre_phantom and email_or_username is None:
+            # Pre-phantom users don't have any profiles - just redirect them
+            # to the homepage if they try to view their own.
+            self.redirect("/")
+            return
+
         if not email_or_username:
             user_data = current_user_data
         else:
