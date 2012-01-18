@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
+from __future__ import absolute_import, with_statement
 import simplejson as json
 from collections import defaultdict
 import copy
@@ -119,18 +119,19 @@ class ImportHandler(RequestHandler):
                 db.put(v)
 
         if 'Goal' in params:
-            goals_json = json.loads(self.api("/api/v1/user/goals"))
-            goals = []
-            for goal_json in goals_json[:params['Goal']]:
-                goal = Goal.from_json(goal_json, user_data=user_data)
-                goals.append(goal)
-                self.output("goal", goal, jsonify(goal_json))
+            with AutoNowDisabled(Goal):
+                goals_json = json.loads(self.api("/api/v1/user/goals"))
+                goals = []
+                for goal_json in goals_json[:params['Goal']]:
+                    goal = Goal.from_json(goal_json, user_data=user_data)
+                    goals.append(goal)
+                    self.output("goal", goal, jsonify(goal_json))
 
-            db.put(goals)
+                db.put(goals)
 
-            # need to tell the userdata that it has goals
-            user_data.has_current_goals = not all([g.completed for g in goals])
-            user_data.put()
+                # need to tell the userdata that it has goals
+                user_data.has_current_goals = not all([g.completed for g in goals])
+                user_data.put()
 
     def output(self, name, obj, json_raw):
         self.response.write("//--- %s \n" % name)
@@ -144,7 +145,7 @@ class ImportHandler(RequestHandler):
             secrets.ka_api_consumer_secret)
 
         request_token = OAuthToken(secrets_dev.ka_api_token_key,
-            secrets.ka_api_token_secret)
+            secrets_dev.ka_api_token_secret)
         self.access_token = self.client.fetch_access_token(request_token)
 
     def api(self, url, email=""):
@@ -152,3 +153,23 @@ class ImportHandler(RequestHandler):
         if email:
             url += "?email=%s" % email
         return self.client.access_resource(url, self.access_token)
+
+class AutoNowDisabled(object):
+    '''ContextManager that temporarily disables auto_now on properties like
+    DateTimeProperty. This is useful for importing entites to different
+    datastores'''
+
+    def __init__(self, klass):
+        self.klass = klass
+
+    def __enter__(self,):
+        self.existing = {}
+        for prop in self.klass.properties():
+            if hasattr(prop, 'auto_now'):
+                self.existing[prop] = prop.auto_now
+                prop.auto_now = False
+        return self.klass
+
+    def __exit__(self, type, value, traceback):
+        for prop, value in self.existing.iteritems():
+            prop.auto_now = value
