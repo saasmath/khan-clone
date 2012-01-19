@@ -6,8 +6,6 @@
         {{ js_css_packages.css_package("shared") }}
         {{ js_css_packages.css_package("stories") }}
 
-        {{ js_css_packages.js_package("shared") }}
-
         {% block pagescript %}
         {% endblock pagescript %}
     </head>
@@ -18,11 +16,10 @@
         </div>
     </body>
 
+    {{ js_css_packages.js_package("shared") }}
     {{ js_css_packages.js_package("stories") }}
     {% block bottompagescript %}
     {% endblock bottompagescript %}
 
 </html>
-
-
 
