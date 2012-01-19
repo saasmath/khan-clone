@@ -410,7 +410,7 @@ var VideoStats = {
 
     playerStateChange: function(state) {
         var playing = this.playing || this.fAlternativePlayer;
-        if (state == -2 && playing) { // playing normally
+        if (state == -2) { // playing normally
             var percent = this.getPercentWatched();
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity))
             {

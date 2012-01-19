@@ -294,6 +294,11 @@ indexes:
 
 - kind: VideoLog
   properties:
+  - name: __key__
+    direction: desc
+
+- kind: VideoLog
+  properties:
   - name: user
   - name: time_watched
 
