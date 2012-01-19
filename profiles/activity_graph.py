@@ -261,16 +261,18 @@ def activity_graph_context(user_data_student, dt_start_utc, dt_end_utc, tz_offse
         graph_title = str(get_bucket_value(dt_start_utc, tz_offset, ActivityBucketType.DAY))
 
     return {
-            "is_graph_empty": not has_activity,
-            "bucket_list": bucket_list,
-            "enable_drill_down": (bucket_type != ActivityBucketType.HOUR),
-            "dict_playlist_buckets": dict_playlist_buckets,
-            "dict_exercise_buckets": dict_exercise_buckets,
-            "dict_badge_buckets": dict_badge_buckets,
-            "dict_proficiency_buckets": dict_proficiency_buckets,
-            "dict_points_buckets": dict_points_buckets,
-            "student_email": user_data_student.email,
-            "profile_root": user_data_student.profile_root,
-            "tz_offset": tz_offset,
-            "graph_title": graph_title,
-            }
+            "context": {
+                "is_graph_empty": not has_activity,
+                "bucket_list": bucket_list,
+                "enable_drill_down": (bucket_type != ActivityBucketType.HOUR),
+                "dict_playlist_buckets": dict_playlist_buckets,
+                "dict_exercise_buckets": dict_exercise_buckets,
+                "dict_badge_buckets": dict_badge_buckets,
+                "dict_proficiency_buckets": dict_proficiency_buckets,
+                "dict_points_buckets": dict_points_buckets,
+                "student_email": user_data_student.email,
+                "profile_root": user_data_student.profile_root,
+                "tz_offset": tz_offset,
+                "graph_title": graph_title,
+            },
+        }

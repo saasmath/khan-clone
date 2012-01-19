@@ -3,7 +3,7 @@
 
 import simplejson
 from google.appengine.ext import db
-from datetime import datetime
+from datetime import datetime, date
 import re
 
 SIMPLE_TYPES = (int, long, float, bool, basestring)
@@ -19,6 +19,8 @@ def dumps(obj, camel_cased=False):
         return items
     elif isinstance(obj, datetime):
         return obj.strftime("%Y-%m-%dT%H:%M:%SZ")
+    elif isinstance(obj, date):
+        return obj.strftime("%Y-%m-%d")
     elif isinstance(obj, dict):
         properties = {}
         for key in obj:
@@ -66,6 +68,10 @@ def camel_case_replacer(match):
     return match.group(0)[1:].upper()
 
 def camel_casify(str):
+    if isinstance(str, datetime):
+        str = str.strftime("%Y-%m-%dT%H:%M:%SZ")
+    elif isinstance(str, date):
+        str = str.strftime("%Y-%m-%d")
     return re.sub(UNDERSCORE_RE, camel_case_replacer, str)
 
 def is_visible_property(property, serialize_blacklist):

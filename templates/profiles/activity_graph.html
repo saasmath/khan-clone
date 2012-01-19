@@ -1,49 +1,167 @@
-{% if is_graph_empty %}
+{% if context.is_graph_empty %}
 <div class="graph-notification">This chart doesn't have any activity to show. Go <a href="/#browse">watch some videos</a> and <a href="/exercisedashboard">do some exercises</a>!</div>
 {% endif %}
 {% import 'macros/profiles.html' as profile_macros %}
 <script>
+    var graphData = {{ templatetags.jsonify(context, true) }},
+        chart;
 
     function drillIntoBucket(ix) {
-        if (ix == null) return;
+        if (ix == null) {
+            return;
+        }
         var bucket = chart.options.xAxis.categories[ix];
-        if (bucket)
-            Profile.loadGraph('/profile/graph/activity?student_email={{ student_email|escapejs }}&dt_start=' + bucket);
+        if (bucket) {
+            Profile.loadGraph("/profile/graph/activity?student_email=" +
+                    graphData.studentEmail + "&dt_start=" + bucket);
+        }
     }
 
-    var chart;
+    /**
+     * Generate extra Highcharts fields for bars
+     * Used for exercise and video minutes
+     */
+    function generateBar(info, tag) {
+        if (!info) {
+            return {};
+        }
+        return {
+            y: info["minutes"],
+            desc: "<strong>" + tag + "</strong> (" + info["timeSpent"] + ")<br/>" +
+                info["htmlSummary"]
+        };
+    }
+
+    /**
+     * Generate extra Highcharts fields for splines
+     * Used for energy points
+     */
+    function generateSpline(info) {
+        if (!info) {
+            return {y: 0};
+        }
+        return {y: info};
+    }
+
+    /**
+     * Generate extra Highcharts fields for scatter plots
+     * Used for badges and proficiencies
+     */
+    function generateScatter(info, tag) {
+        if (!info) {
+            return {};
+        }
+        var symbol = "url(/images/node-complete-chart.png)";
+
+        if (tag === "Achievements") {
+            symbol = "url(" + info["badgeUrl"] + ")";
+        }
+
+        return {
+                y: info["y"],
+                desc: "<strong>" + tag + "</strong><br/>" + info["htmlSummary"],
+                marker: {
+                    symbol: symbol
+                },
+                enabled: true
+            };
+    }
+
+    function generateSeries() {
+        var videoMinutes = {
+                type: "column",
+                name: "Video Minutes",
+                color: "#0080C9",
+                data: [],
+                defaultPoint: {
+                    y: 0
+                }
+            },
+            exerciseMinutes = {
+                type: "column",
+                name: "Exercise Minutes",
+                color: "#00C9AF",
+                data: [],
+                defaultPoint: {
+                    y: 0
+                }
+            },
+            energyPoints = {
+                type: "spline",
+                name: "Energy Points",
+                yAxis: 1,
+                marker: {enabled: false},
+                color: "#C9001B",
+                data: [],
+                defaultPoint: {
+                    fEnergyPoints: true
+                }
+            },
+            badges = {
+                type: 'scatter',
+                name: 'Badges',
+                showInLegend: false,
+                data: [],
+                defaultPoint: {
+                    y: 0,
+                    enabled: false
+                }
+            },
+            proficientExercises = {
+                type: 'scatter',
+                name: 'Proficient Exercises',
+                showInLegend: false,
+                data: [],
+                defaultPoint:  {
+                    y: 0,
+                    enabled: false
+                }
+            };
+
+        $.each(graphData.bucketList, function(index, bucket) {
+            var x = {x: index},
+                extra = {};
+
+            extra = generateBar(graphData.dictPlaylistBuckets[bucket], "Videos");
+            videoMinutes.data.push(_.extend({}, videoMinutes.defaultPoint, x, extra));
+
+            extra = generateBar(graphData.dictExerciseBuckets[bucket], "Exercises");
+            exerciseMinutes.data.push(_.extend({}, exerciseMinutes.defaultPoint, x, extra));
+
+            extra = generateSpline(graphData.dictPointsBuckets[bucket]);
+            energyPoints.data.push(_.extend({}, energyPoints.defaultPoint, x, extra));
+
+            extra = generateScatter(graphData.dictBadgeBuckets[bucket], "Achievements");
+            badges.data.push(_.extend({}, badges.defaultPoint, x, extra));
+
+            extra = generateScatter(graphData.dictProficiencyBuckets[bucket], "Proficiencies");
+            proficientExercises.data.push(_.extend({}, proficientExercises.defaultPoint, x, extra));
+        });
+
+        return [
+                videoMinutes,
+                exerciseMinutes,
+                energyPoints,
+                badges,
+                proficientExercises
+        ];
+    }
+
     $(function() {
-        chart = new Highcharts.Chart({
+        var options = {
             chart: {
                 renderTo: 'highchart',
                 events: {
                     click: function(e) {
-                        {% if enable_drill_down %}
-                            if (e && e.xAxis && e.xAxis[0]) drillIntoBucket(Math.round(e.xAxis[0].value || 0));
-                        {% endif %}
+                        if (graphData.enableDrillDown) {
+                            if (e && e.xAxis && e.xAxis[0]) {
+                                drillIntoBucket(Math.round(e.xAxis[0].value || 0));
+                            }
+                        }
                     }
                 }
             },
-            {% if graph_title %}
-            subtitle: {
-                text: "{{ graph_title|escapejs }}",
-                x: -10
-            },
-            {% endif %}
             plotOptions: {
-                series: {
-                    {% if enable_drill_down %}
-                        cursor: 'pointer',
-                    {% endif %}
-                    events: {
-                        legendItemClick: function() { return false; },
-                        click: function(e) {
-                        {% if enable_drill_down %}
-                            if (e && e.point) drillIntoBucket(e.point.x);
-                        {% endif %}
-                        }
-                    }
-                },
                 column: {
                     stacking: 'normal'
                 },
@@ -59,11 +177,7 @@
                 }
             },
             xAxis: {
-                categories: [
-                {% for bucket in bucket_list %}
-                '{{ bucket|escapejs }}'{% if not loop.last %},{% endif %}
-                {% endfor %}
-                ],
+                categories: graphData.bucketList,
                 labels: {
                     align: 'left',
                     x: -5,
@@ -146,109 +260,35 @@
                 itemHoverStyle: {
                     cursor: 'default',
                     color: '#3E576F'
-                }                
-            },
-            series: [
-                    { 
-                        type: 'column',
-                        name: 'Video Minutes',
-                        color: '#0080C9',
-                        data: [
-                        {% for bucket in bucket_list %}
-                        {
-                            x: {{ loop.index0 }}, 
-                            {% if dict_playlist_buckets[bucket] %}
-                                y: {{ dict_playlist_buckets[bucket]["minutes"] }},
-                                desc: '<strong>Videos</strong> ({{ dict_playlist_buckets[bucket]["time_spent"]|escapejs }})<br/>{{ dict_playlist_buckets[bucket]["html_summary"]|escapejs }}'
-                            {% else %}
-                                y: 0
-                            {% endif %}
-                        }{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                        ]
-                    },
-                    { 
-                        type: 'column',
-                        name: 'Exercise Minutes',
-                        color: '#00C9AF',
-                        data: [
-                        {% for bucket in bucket_list %}
-                        {
-                            x: {{ loop.index0 }}, 
-                            {% if dict_exercise_buckets[bucket] %}
-                                y: {{ dict_exercise_buckets[bucket]["minutes"] }},
-                                desc: '<strong>Exercises</strong> ({{ dict_exercise_buckets[bucket]["time_spent"]|escapejs }})<br/>{{ dict_exercise_buckets[bucket]["html_summary"]|escapejs }}'
-                            {% else %}
-                                y: 0
-                            {% endif %}
-                        }{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                        ]
-                    },
-                    { 
-                        type: 'spline',
-                        name: 'Energy Points',
-                        yAxis: 1,
-                        marker: {enabled: false},
-                        color: '#C9001B',
-                        data: [
-                        {% for bucket in bucket_list %}
-                        {
-                            x: {{ loop.index0 }}, 
-                            {% if dict_points_buckets[bucket] %}
-                                y: {{ dict_points_buckets[bucket] }},
-                            {% else %}
-                                y: 0,
-                            {% endif %}
-                            fEnergyPoints: true
-                        }{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                        ]
-                    },
-                    {
-                        type: 'scatter',
-                        name: 'Badges',
-                        showInLegend: false,
-                        data: [
-                        {% for bucket in bucket_list %}
-                        {
-                            x: {{ loop.index0 }},
-                            {% if dict_badge_buckets[bucket] %}
-                                y: {{ dict_badge_buckets[bucket]["y"] }},
-                                desc: '<strong>Achievements</strong><br/>{{ dict_badge_buckets[bucket]["html_summary"]|escapejs }}',
-                                marker: { symbol: 'url({{ dict_badge_buckets[bucket]["badge_url"] }})'}
-                            {% else %}
-                                y: 0,
-                                enabled: false
-                            {% endif %}
-                        }{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                        ]
-                    },
-                    {
-                        type: 'scatter',
-                        name: 'Proficient Exercises',
-                        showInLegend: false,
-                        data: [
-                        {% for bucket in bucket_list %}
-                        {
-                            x: {{ loop.index0 }},
-                            {% if dict_proficiency_buckets[bucket] %}
-                                y: {{ dict_proficiency_buckets[bucket]["y"] }},
-                                desc: '<strong>Proficiencies</strong><br/>{{ dict_proficiency_buckets[bucket]["html_summary"]|escapejs }}',
-                                marker: { symbol: 'url(/images/node-complete-chart.png)'}
-                            {% else %}
-                                y: 0,
-                                enabled: false
-                            {% endif %}
-                        }{% if not loop.last %},{% endif %}
-                        {% endfor %}
-                        ]
+                }
+            }
+        };
+
+        if (graphData.graphTitle) {
+            options.subtitle = {
+                text: graphData.graphTitle,
+                x: -10
+            };
+        }
+
+        if (graphData.enableDrillDown) {
+            options.plotOptions.series = {
+                cursor: 'pointer',
+                events: {
+                    legendItemClick: function() { return false; },
+                    click: function(e) {
+                        if (e && e.point) {
+                            drillIntoBucket(e.point.x);
+                        }
                     }
-                ]
-        });
+                }
+            }
+        }
+
+        options.series = generateSeries();
+        chart = new Highcharts.Chart(options);
     });
 </script>
-<div id="highchart-container" class="{% if is_graph_empty %}empty-chart{% endif %}">
+<div id="highchart-container" class="{% if context.is_graph_empty %}empty-chart{% endif %}">
     <div id="highchart"></div>
 </div>
