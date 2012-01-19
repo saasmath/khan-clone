@@ -164,7 +164,7 @@ class AutoNowDisabled(object):
 
     def __enter__(self,):
         self.existing = {}
-        for prop in self.klass.properties():
+        for name, prop in self.klass.properties().iteritems():
             if hasattr(prop, 'auto_now'):
                 self.existing[prop] = prop.auto_now
                 prop.auto_now = False
