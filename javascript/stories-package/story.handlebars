@@ -1,19 +1,17 @@
-<div class="span-one-third story-container">
-    <div class="story rotate">
-        <div class="envelope envelope-background">
-            <div class="content-teaser">
-                {{#if youtube_id}}
-                <div class="youtube-thumbnail-container">
-                    <img class="youtube-thumbnail" src="http://img.youtube.com/vi/{{ youtube_id }}/hqdefault.jpg">
-                    <div class="youtube-thumbnail-title">{{ youtube_title }}</div>
-                    <img class="youtube-thumbnail-play" src="/images/stories/youtube_play.png">
-                </div>
-                {{else}}
-                &ldquo;{{{ teaser_html }}}&hellip;&rdquo;
-                {{/if}}
+<div class="story rotate">
+    <div class="envelope envelope-background">
+        <div class="content-teaser">
+            {{#if youtube_id}}
+            <div class="youtube-thumbnail-container">
+                <img class="youtube-thumbnail" src="http://img.youtube.com/vi/{{ youtube_id }}/hqdefault.jpg">
+                <div class="youtube-thumbnail-title">{{ youtube_title }}</div>
+                <img class="youtube-thumbnail-play" src="/images/stories/youtube_play.png">
             </div>
-            <div class="envelope envelope-foreground">&nbsp;</div>
-            <div class="more-overlay">{{#if youtube_id}}Play{{else}}Read more{{/if}}</div>
+            {{else}}
+            &ldquo;{{{ teaser_html }}}&hellip;&rdquo;
+            {{/if}}
         </div>
+        <div class="envelope envelope-foreground">&nbsp;</div>
+        <div class="more-overlay">{{#if youtube_id}}Play{{else}}Read more{{/if}}</div>
     </div>
 </div>

@@ -22,6 +22,7 @@ class ViewStories(request_handler.RequestHandler):
                         f.close()
 
                 if story:
+                    story["name"] = filename[:-len(".yaml")]
                     stories.append(story)
 
         self.render_jinja2_template('stories/stories.html', {

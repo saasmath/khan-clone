@@ -246,6 +246,7 @@ h3.story-title .extra-story-title {
                 {% endif %}
                 "date": "{{ story.date|strip|escapejs }}",
                 "author": "{{ story.author|strip|escapejs }}",
+                "name": "{{ story.name|strip|escapejs }}",
             }{% if not loop.last %},{%endif%}
             {% endfor %}
         ]
