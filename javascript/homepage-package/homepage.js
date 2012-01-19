@@ -21,6 +21,8 @@ var Homepage = {
                 // re-rendering or "pop"-in of the player.
                 $(".player-loading-wrapper").css("left", 0);
 
+                jelPlaceholder.find(".youtube-play").css("visibility", "hidden");
+
             });
 
             jelPlaceholder.click(function(e) {
