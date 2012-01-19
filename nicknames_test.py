@@ -1,25 +1,16 @@
 #!/user/bin/env python
 
-import unittest
+import test_utils
 from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
 
 import models
 
-class NicknamesTest(unittest.TestCase):
+class NicknamesTest(test_utils.TestCase):
 
     def setUp(self):
+        super(NicknamesTest, self).setUp()
         self.user_count = 0
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
-
-        # Create a consistency policy that will simulate the High Replication consistency model.
-        self.policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=0)
-        self.testbed.init_datastore_v3_stub(consistency_policy=self.policy)
-        self.testbed.init_memcache_stub()
-
-    def tearDown(self):
-        self.testbed.deactivate()
 
     def assertSingleResult(self, expected, raw_query):
         matches = models.NicknameIndex.users_for_search(raw_query)
