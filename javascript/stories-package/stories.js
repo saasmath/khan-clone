@@ -44,7 +44,7 @@ Stories.SmallView = Backbone.View.extend({
             .addClass("story-container")
             .find(".story")
                 .addClass(ix % 2 == 0 ? "rotate-5" : (ix % 3 == 0 ? "rotate-neg-7" : "rotate-neg-7"))
-                .addClass(ix % 3 == 0 || ix == 2 ? "envelope-1" : "envelope-2")
+                .addClass("envelope-" + ((ix % 3) + 1))
                 .click(function() { Stories.router.navigate("/" + model.name, true); });
 
         return this;
