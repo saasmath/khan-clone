@@ -20,6 +20,14 @@ h2.stories-header {
     padding-bottom: 18px;
 }
 
+.big-tree {
+    position: relative;
+    top: 10px;
+    left: -180px;
+    opacity: 0.75;
+    filter:alpha(opacity=75);
+}
+
 .story {
     float: left;
     padding: 18px;
@@ -204,11 +212,18 @@ h3.story-title .extra-story-title {
 
 {% block pagecontent %}
 
-<h2 class="stories-header">
-    These are all real stories from Khan Academy users.<br><br>
-    They are completely unedited.<br><br>
-    <a href="#">Share yours</a>.
-</h2>
+<div class="row">
+    <div class="span11">
+        <h2 class="stories-header">
+            These are all real stories from Khan Academy users.<br>
+            They are completely unedited.<br><br>
+            &hellip;<a href="#">share yours</a>.
+        </h2>
+    </div>
+    <div class="span5">
+        <img class="big-tree" src="/images/large-tree-transparent.png">
+    </div>
+</div>
 
 <div id="stories"></div>
 
