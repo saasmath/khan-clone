@@ -1,5 +1,4 @@
 import simplejson as json
-import yaml
 import os
 import logging
 
