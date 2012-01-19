@@ -1,9 +1,19 @@
-{% extends "page_template_mini.html" %}
+{% extends "stories/template.html" %}
 
 {% block pagescript %}
-{{ js_css_packages.css_package("stories") }}
 
 <style>
+
+.modal {
+    max-height: 580px;
+    overflow: hidden;
+}
+.modal .modal-body {
+    max-height: 400px;
+    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 
 h2.stories-header {
     margin-top: 18px;
@@ -205,8 +215,6 @@ h3.story-title .extra-story-title {
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
-
-{{ js_css_packages.js_package("stories") }}
 
 <script>
     Stories.render({

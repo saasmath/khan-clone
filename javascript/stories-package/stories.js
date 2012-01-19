@@ -3,10 +3,18 @@ var Stories = Stories || {};
 
 Stories.render = function(story_data) {
 
+    var row = null;
+    var storiesPerRow = 3;
+
     $.each(story_data.content, function(ix, story) {
 
+        if (ix % storiesPerRow == 0) {
+            row = $("<div class='row'></div>");
+            $(story_data.target).append(row);
+        }
+
         var view = new Stories.SmallView({ model: story });
-        $(story_data.target).append($(view.render(ix).el).find(".story"));
+        row.append($(view.render(ix).el).find(".story-container"));
 
     });
 

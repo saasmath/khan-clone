@@ -2,17 +2,17 @@
 
     <div class="modal-header">
         <a href="#" class="close-button close">x</a>
-        <h3 class="story-title"><span class="extra-story-title">(This is a real, unedited story we received.)</span></h3>
+        <h3 class="story-title"><span class="extra-story-title">This is a real, unedited story we received.</span></h3>
     </div>
 
     <div class="modal-body">
         {{#if youtube_id }}
-        <object width="800" height="480" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000">
+        <object width="100%" height="380" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000">
             <param name="movie" value="http://www.youtube.com/v/{{youtube_id}}?version=3&hl=en_US&fs=1&rel=0&enablejsapi=1">
             <param name="allowFullScreen" value="true">
             <param name="allowScriptAccess" value="always">
             <param name="wmode" value="transparent">
-            <embed id="idPlayer" name="idPlayer" wmode="transparent" src="http://www.youtube.com/v/{{youtube_id}}?version=3&hl=en_US&fs=1&rel=0&enablejsapi=1" type="application/x-shockwave-flash" allowScriptAccess="always" allowfullscreen="true" width="800" height="480">
+            <embed id="idPlayer" name="idPlayer" wmode="transparent" src="http://www.youtube.com/v/{{youtube_id}}?version=3&hl=en_US&fs=1&rel=0&enablejsapi=1" type="application/x-shockwave-flash" allowScriptAccess="always" allowfullscreen="true" width="100%" height="380">
         </object>
         {{else}}
         {{{ content_html }}}

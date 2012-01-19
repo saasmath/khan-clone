@@ -43,6 +43,7 @@ import github
 import paypal
 import smarthistory
 import goals.handlers
+import stories
 import summer
 
 import models
@@ -742,7 +743,7 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
 
-    ('/stories', util_about.ViewStories),
+    ('/stories', stories.ViewStories),
 
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
