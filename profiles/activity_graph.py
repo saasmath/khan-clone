@@ -25,7 +25,7 @@ def get_bucket_value(dt_utc, tz_offset, bucket_type):
     dt_ctz = dt_utc + datetime.timedelta(minutes=tz_offset)
 
     if bucket_type == ActivityBucketType.DAY:
-        return datetime.date(dt_ctz.year, dt_ctz.month, dt_ctz.day)
+        return datetime.date(dt_ctz.year, dt_ctz.month, dt_ctz.day).strftime("%Y-%m-%d")
     else:
         return datetime.datetime(dt_ctz.year, dt_ctz.month, dt_ctz.day, dt_ctz.hour).strftime("%I:%M %p")
 
