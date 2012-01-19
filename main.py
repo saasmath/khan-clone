@@ -726,7 +726,6 @@ application = webapp2.WSGIApplication([
     ('/about/blog', blog.ViewBlog),
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
-    ('/about/the-stories', util_about.ViewAboutTheStories),
     ('/about/getting-started', util_about.ViewGettingStarted),
     ('/about/discovery-lab', util_about.ViewDiscoveryLab ),
     ('/about/tos', ViewTOS ),
@@ -742,6 +741,8 @@ application = webapp2.WSGIApplication([
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
+
+    ('/stories', util_about.ViewStories),
 
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),

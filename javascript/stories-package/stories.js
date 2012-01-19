@@ -52,7 +52,7 @@ Stories.show = function(elStory, model) {
 
 Stories.SmallView = Backbone.View.extend({
 
-    template: Templates.get( "about.story" ),
+    template: Templates.get( "stories.story" ),
 
     render: function(ix) {
         var model = this.model;
@@ -71,7 +71,7 @@ Stories.SmallView = Backbone.View.extend({
 
 Stories.FullView = Backbone.View.extend({
 
-    template: Templates.get( "about.story-full" ),
+    template: Templates.get( "stories.story-full" ),
 
     render: function() {
         $(this.el)

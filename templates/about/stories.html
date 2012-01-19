@@ -1,7 +1,7 @@
-{% extends "about/about_template.html" %}
+{% extends "page_template_mini.html" %}
 
 {% block pagescript %}
-{{ js_css_packages.css_package("about") }}
+{{ js_css_packages.css_package("stories") }}
 
 <style>
 
@@ -192,7 +192,7 @@ h3.story-title .extra-story-title {
 
 {% endblock pagescript %}
 
-{% block aboutcontent %}
+{% block pagecontent %}
 
 <h2 class="stories-header">
     These are all real stories from Khan Academy users.<br><br>
@@ -202,11 +202,11 @@ h3.story-title .extra-story-title {
 
 <div id="stories"></div>
 
-{% endblock aboutcontent %}
+{% endblock pagecontent %}
 
 {% block bottompagescript %}
 
-{{ js_css_packages.js_package("about") }}
+{{ js_css_packages.js_package("stories") }}
 
 <script>
     Stories.render({

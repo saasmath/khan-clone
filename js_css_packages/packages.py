@@ -113,7 +113,7 @@ javascript = {
             "classprofile.js",
         ]
     },
-    "about": {
+    "stories": {
         "files": [
             "story.handlebars",
             "story-full.handlebars",
@@ -196,7 +196,7 @@ stylesheets = {
             "viewclassprofile.css",
         ]
     },
-    "about": {
+    "stories": {
         "files": [
             "stories.css",
         ]
