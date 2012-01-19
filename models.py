@@ -673,8 +673,13 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
 class UniqueUsername(db.Model):
 
-    # A username selected by the user.
+    # The username value selected by the user.
     username = db.StringProperty()
+
+    # A holdout date afterwhich the username can be re-claimed by someone else.
+    # This is useful to block of usernames, particularly after they were just
+    # released, so they can be put in a holding period
+    hold_until = db.DateTimeProperty()
 
     @staticmethod
     def build_key_name(username):
@@ -700,15 +705,24 @@ class UniqueUsername(db.Model):
         return UniqueUsername.VALID_KEY_NAME_RE.match(key_name) is not None
 
     @staticmethod
-    def is_available_username(username, key_name=None):
+    def is_available_username(username, key_name=None, clock=None):
         if key_name is None:
             key_name = UniqueUsername.build_key_name(username)
         entity = UniqueUsername.get_by_key_name(key_name)
-        return entity is None
+        if clock is None:
+            clock = datetime.datetime
+        return (entity is None
+                or entity.hold_until < clock.utcnow())
+
+
+    INFINITELY_FAR_FUTURE = datetime.datetime(9999, 1, 1, 0, 0, 0)
+
+    # Released usernames are held for 120 days
+    HOLDING_PERIOD_DELTA = datetime.timedelta(120)
 
     @staticmethod
-    def claim(desired_name):
-        """Claim an unclaimed username.
+    def claim(desired_name, clock=None):
+        """ Claim an unclaimed username.
 
         Return True on success, False if you are a slow turtle or invalid.
         See is_valid_username for limitations of a username.
@@ -720,14 +734,29 @@ class UniqueUsername(db.Model):
             return False
 
         def txn(desired_name):
-            is_available = UniqueUsername.is_available_username(desired_name, key_name)
+            is_available = UniqueUsername.is_available_username(
+                    desired_name, key_name, clock)
             if is_available:
                 entity = UniqueUsername(key_name=key_name)
                 entity.username = desired_name
+                entity.hold_until = UniqueUsername.INFINITELY_FAR_FUTURE
                 entity.put()
             return is_available
 
         return db.run_in_transaction(txn, desired_name)
+
+    @staticmethod
+    def release(username, clock=None):
+        if clock is None:
+            clock = datetime.datetime
+
+        key_name = UniqueUsername.build_key_name(username)
+        entity = UniqueUsername(key_name=key_name)
+        if entity is None:
+            logging.warn("Releasing username %s that doesn't exist" % username)
+            return
+        entity.hold_until = clock.utcnow() + UniqueUsername.HOLDING_PERIOD_DELTA
+        entity.put()
 
 class NicknameIndex(db.Model):
     """ Index entries to be able to search users by their nicknames.
@@ -880,12 +909,12 @@ class UserData(GAEBingoIdentityModel, db.Model):
             return self.user_nickname
 
         return nicknames.get_default_nickname_for(self)
-    
+
     def update_nickname(self, nickname=None):
         """ Updates the user's nickname and relevant indices and persists
         to the datastore.
         """
-        new_name = nickname or nicknames.get_default_nickname_for(self) 
+        new_name = nickname or nicknames.get_default_nickname_for(self)
         if new_name != self.user_nickname:
             self.user_nickname = new_name
             def txn():
@@ -1313,9 +1342,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
             db.put([self, goal])
         db.run_in_transaction(save_goal)
 
-    def claim_username(self, name):
-        claim_success = UniqueUsername.claim(name)
+    def claim_username(self, name, clock=None):
+        claim_success = UniqueUsername.claim(name, clock)
         if claim_success:
+            if self.username:
+                UniqueUsername.release(self.username, clock)
             self.username = name
             self.put()
         return claim_success
@@ -1374,7 +1405,7 @@ class Video(Searchable, db.Model):
             # We now serve our downloads from s3. Our old archive URL template is...
             #   "http://www.archive.org/download/KA-converted-%s/%s.%s"
             # ...which we may want to fall back on in the future should s3 prices climb.
-            
+
             download_url_template = "http://s3.amazonaws.com/KA-youtube-converted/%s/%s.%s"
             return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
 

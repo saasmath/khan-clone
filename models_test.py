@@ -2,14 +2,16 @@
 
 import models
 import phantom_users.phantom_util
-import unittest
+import test_utils
 from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
 from google.appengine.ext import db
 
-class UsernameTest(unittest.TestCase):
-    def setUp(self):
-        pass
+class UsernameTest(test_utils.TestCase):
+    def tearDown(self):
+        # Clear all usernames just to be safe
+        for u in models.UniqueUsername.all():
+            u.delete()
 
     def test_user_name_fuzzy_match(self):
         """ Tests user name search can ignore periods properly. """
@@ -42,19 +44,52 @@ class UsernameTest(unittest.TestCase):
         self.assertTrue(self.validate('instructionsareeasy'))
         self.assertTrue(self.validate('coolkid1983'))
 
+    def make_user(self, email):
+        u = models.UserData.insert_for(email, email)
+        u.put()
+        return u
 
-class ProfileSegmentTest(unittest.TestCase):
-    def setUp(self):
-        self.testbed = testbed.Testbed()
-        self.testbed.activate()
+    def test_claiming_username_works(self):
+        u1 = self.make_user("bob")
+        u2 = self.make_user("robert")
 
-        # Create a consistency policy that will simulate the High Replication consistency model.
-        self.policy = datastore_stub_util.PseudoRandomHRConsistencyPolicy(probability=0)
+        # Free
+        self.assertTrue(u1.claim_username("superbob"))
+        self.assertEqual("superbob", u1.username)
 
-        self.testbed.init_datastore_v3_stub(consistency_policy=self.policy)
-        self.testbed.init_user_stub()
-        self.testbed.init_memcache_stub()
+        # Now it's taken
+        self.assertFalse(u2.claim_username("superbob"))
 
+        # But something completely different should still be good
+        self.assertTrue(u2.claim_username("sadbob"))
+        self.assertEqual("sadbob", u2.username)
+
+    def test_releasing_usernames(self):
+        clock = test_utils.MockClock()
+        u1 = self.make_user("bob")
+        u2 = self.make_user("robert")
+
+        # u1 gets "superbob", but changes his mind.
+        self.assertTrue(u1.claim_username("superbob", clock))
+        self.assertTrue(u1.claim_username("ultrabob", clock))
+        self.assertEqual("ultrabob", u1.username)
+
+        # Usernames go into a holding pool, even after they're released
+        self.assertFalse(u2.claim_username("superbob", clock))
+
+        # Note that the original owner can't even have it back
+        self.assertFalse(u1.claim_username("superbob", clock))
+
+        # Still no good at the border of the holding period
+        clock.advance(models.UniqueUsername.HOLDING_PERIOD_DELTA)
+        self.assertFalse(u2.claim_username("superbob", clock))
+
+        # OK - now u2 can have it.
+        clock.advance_days(1)
+        self.assertTrue(u2.claim_username("superbob", clock))
+        self.assertEqual("superbob", u2.username)
+
+class ProfileSegmentTest(test_utils.TestCase):
     def to_url(self, user):
         return user.prettified_user_email
     def from_url(self, segment):
