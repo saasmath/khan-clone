@@ -37,6 +37,7 @@ var ProfileModel = Backbone.Model.extend({
     toJSON: function() {
         var json = ProfileModel.__super__.toJSON.call(this);
         json["isPhantom"] = this.isPhantom();
+        json["isEditable"] = this.isEditable();
         return json;
     },
 
