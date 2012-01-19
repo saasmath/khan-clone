@@ -158,7 +158,7 @@ class ViewProfile(request_handler.RequestHandler):
         """
         # TODO: What URL for phantoms?
         current_user_data = UserData.current() or UserData.pre_phantom()
-        
+
         if current_user_data.is_pre_phantom and email_or_username is None:
             # Pre-phantom users don't have any profiles - just redirect them
             # to the homepage if they try to view their own.
@@ -176,19 +176,19 @@ class ViewProfile(request_handler.RequestHandler):
         tz_offset = self.request_int("tz_offset", default=0)
 
         profile = UserProfile.from_user(user_data, current_user_data)
-        
+
         if profile is None:
             self.render_jinja2_template('noprofile.html', {})
             return
 
         has_full_access = (user_data.user_id == current_user_data.user_id
                            or user_data.is_coached_by(current_user_data))
+        
         template_values = {
             'profile': profile,
             'tz_offset': tz_offset,
             'count_videos': models.Setting.count_videos(),
             'count_exercises': models.Exercise.get_count(),
-            
             'user_data_student': user_data if has_full_access else None,
             'profile_root': user_data.profile_root,
             "view": self.request_string("view", default=""),
