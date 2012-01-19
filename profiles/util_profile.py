@@ -205,7 +205,7 @@ class UserProfile(object):
 
     def __init__(self):
         self.username = None
-        self.email = None
+        self.email = ""
         
         # Indicates whether or not the profile has been marked public. Not
         # necessarily indicative of what fields are currently filled in this
