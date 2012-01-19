@@ -115,6 +115,7 @@ javascript = {
     },
     "stories": {
         "files": [
+            "bootstrap-modal.js",
             "story.handlebars",
             "story-full.handlebars",
             "stories.js",
@@ -198,6 +199,7 @@ stylesheets = {
     },
     "stories": {
         "files": [
+            "bootstrap.css",
             "stories.css",
         ]
     },
