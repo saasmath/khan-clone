@@ -135,7 +135,7 @@ var Profile = {
             var button = $( elt );
             var badge = button.closest( ".achievement-badge" );
             var goalTitle = badge.find( ".achievement-title" ).text();
-        
+
             // remove +goal button if present in list of active goals
             if( _.indexOf( currentGoals, goalTitle ) > -1){
 
@@ -143,7 +143,7 @@ var Profile = {
 
             // add +goal behavior to button, once.
             } else {
-        
+
                 button.one("click", function(){
                     var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
                         return {
@@ -553,7 +553,6 @@ var Profile = {
                             found_struggling = true;
                             objective.struggling = true;
                         }
-                        objective.statusCSS = objective.status ? objective.status : "not-started";
 
                         objective.objectiveID = idx3;
                     });

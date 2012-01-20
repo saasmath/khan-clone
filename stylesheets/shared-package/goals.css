@@ -45,26 +45,13 @@ ul.inline-list, ul.inline-list li {
     line-height: 23px;
 }
 
-.goal a.objective.exercise,
-.goal a.objective.video,
-.goal a.objective.GoalObjectiveExerciseProficiency,
-.goal a.objective.GoalObjectiveWatchVideo,
-.goal a.objective.GoalObjectiveAnyExerciseProficiency,
-.goal a.objective.GoalObjectiveAnyVideo {
+.goal a.objective {
     padding-left: 22px
 }
 
-#create-goal-view .goal a.objective.exercise:hover:before,
-#create-goal-view .goal a.objective.video:hover:before {
-    background: #3A4759 url(/images/delete-icon-inset-small.png) no-repeat 50% 50%; /*! data-uri(/images/delete-icon-inset-small.png) */
-}
 
-.goal a.objective.video:before,
-.goal a.objective.GoalObjectiveWatchVideo:before,
-.goal a.objective.GoalObjectiveAnyVideo:before,
-.goal a.objective.exercise:before,
-.goal a.objective.GoalObjectiveExerciseProficiency:before,
-.goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
+
+.goal a.objective:before {
     display: block;
     content: " ";
     width: 30px;
@@ -88,29 +75,24 @@ ul.inline-list, ul.inline-list li {
     background: #3A4759 url(/images/video-camera-icon-inset-small.png) no-repeat 50% 50%; /*! data-uri(/images/video-camera-icon-inset-small.png) */
 }
 
-.ie .goal a.objective.video:before,
-.ie .goal a.objective.GoalObjectiveWatchVideo:before,
-.ie .goal a.objective.GoalObjectiveAnyVideo:before,
-.ie .goal a.objective.exercise:before,
-.ie .goal a.objective.GoalObjectiveExerciseProficiency:before,
-.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency:before {
+.ie .goal a.objective:before  {
     border: none;
     left: -2px;
     top: -4px;
     background-color: transparent;
 }
 
-.goal a.objective.started:before {
+.goal a.objective.exercise-color.not-started:before {
+    background-color: #CCC;
+}
+.goal a.objective.exercise-color.started:before {
     background-color: #C7E5F7;
 }
-.goal a.objective.proficient:before {
+.goal a.objective.exercise-color.proficient:before {
     background-color: #0080C9;
 }
-.goal a.objective.struggling:before {
+.goal a.objective.exercise-color.struggling:before {
     background-color: #C30202;
-}
-.goal a.objective.not-started:before {
-    background-color: #CCC;
 }
 
 .goal a.objective:hover:before {
@@ -118,13 +100,6 @@ ul.inline-list, ul.inline-list li {
 }
 .goal a.objective:hover {
     border-color: #89B908 !important;
-}
-
-#create-goal-view .goal a.objective:hover:before {
-    border-color: #C30202;
-}
-#create-goal-view .goal a.objective:hover {
-    border-color: #C30202 !important;
 }
 
 .goal a.objective.video .objective-progress-meter,
@@ -165,12 +140,30 @@ ul.inline-list, ul.inline-list li {
     left: 2px;
 }
 
-.goal a.objective.exercise.complete:before,
-.goal a.objective.video.complete:before,
-.goal a.objective.GoalObjectiveAnyVideo.complete:before,
-.goal a.objective.GoalObjectiveWatchVideo.complete:before,
-.goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
-.goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
+/* override goal styles for student view */
+.goals-personal .goal a.objective.exercise-color.not-started:before,
+.goals-personal .goal a.objective.exercise-color.started:before {
+    background-color: #3A4759;
+}
+.goals-personal .exercise-color.not-started,
+.goals-personal .exercise-color.started {
+    background-color: #3A4759;
+
+    color: #fff !important;
+    border-color: #2c3747;
+    border-bottom-color: #13181f;
+    text-shadow:  0 -1px 0 #13181f;
+}
+
+.goals-personal .goal a.objective.exercise-color.proficient:before {
+    background-color: #C7E5F7;
+}
+.goals-personal .exercise-color.proficient {
+    background-color: #C7E5F7;
+    color: #444 !important;
+}
+
+.goals-personal .goal a.objective.exercise-color.proficient:before {
     content: " ";
     width: 30px;
     height: 30px;
@@ -182,30 +175,35 @@ ul.inline-list, ul.inline-list li {
     border: 1px solid #CCC;
 }
 
-.ie .goal a.objective.exercise.complete:before,
-.ie .goal a.objective.video.complete:before,
-.ie .goal a.objective.GoalObjectiveAnyVideo.complete:before,
-.ie .goal a.objective.GoalObjectiveWatchVideo.complete:before,
-.ie .goal a.objective.GoalObjectiveExerciseProficiency.complete:before,
-.ie .goal a.objective.GoalObjectiveAnyExerciseProficiency.complete:before {
+.ie .goals-personal .goal a.objective.proficient:before {
     border: none;
     left: -2px;
     top: -4px;
     background-color: transparent;
 }
 
-.goal a.objective.exercise.complete,
-.goal a.objective.video.complete,
-.goal a.objective.GoalObjectiveAnyVideo.complete,
-.goal a.objective.GoalObjectiveWatchVideo.complete,
-.goal a.objective.GoalObjectiveExerciseProficiency.complete,
-.goal a.objective.GoalObjectiveAnyExerciseProficiency.complete {
+.goals-personal .goal a.objective.proficient {
     text-decoration: line-through !important;
     opacity: .7;
     filter: alpha(opacity=75);
 }
+/* end style overrides */
 
-.all-goals {
+/* override for create goal page delete hover */
+#create-goal-view .goal a.objective.exercise:hover:before,
+#create-goal-view .goal a.objective.video:hover:before {
+    background: #3A4759 url(/images/delete-icon-inset-small.png) no-repeat 50% 50%; /*! data-uri(/images/delete-icon-inset-small.png) */
+}
+
+#create-goal-view .goal a.objective:hover:before {
+    border-color: #C30202;
+}
+#create-goal-view .goal a.objective:hover {
+    border-color: #C30202 !important;
+}
+/* end create goal page overrides */
+
+#goals-nav-container .goals-area {
     max-height: 500px;
     overflow-x: visible;
     overflow-y: auto;
