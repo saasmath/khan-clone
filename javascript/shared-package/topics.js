@@ -278,7 +278,7 @@ window.TestTopics = function() {
             ka_url: "", 
             relative_url: "",
             description: "",
-			tags: []
+            tags: []
         },
 
         idAttribute: "name",
