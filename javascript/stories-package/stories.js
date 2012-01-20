@@ -3,6 +3,7 @@ var Stories = Stories || {};
 
 Stories.router = null;
 Stories.views = {};
+Stories.cShown = 0;
 
 Stories.render = function(story_data) {
 
@@ -65,7 +66,6 @@ Stories.SmallView = Backbone.View.extend({
 
         var model = this.model;
         var jelStory = $(this.el).find(".story");
-        var wasVisible = $("#modal-story").is(":visible");
 
         setTimeout(function() {
 
@@ -74,31 +74,42 @@ Stories.SmallView = Backbone.View.extend({
             setTimeout(function() {
 
                 $(jelStory).addClass("content-teaser-hide");
-
-                $("#modal-story").modal("hide");
+                var jelOld = $("#modal-story");
 
                 var view = new Stories.FullView({ model: model });
 
+                // If modal was previously visible, remove 'fade' class
+                // so transition swaps immediately
+                var classToRemove = Stories.cShown > 0 ? "fade" : "";
+
                 $(view.render().el)
                     .find("#modal-story")
+                        .removeClass(Stories.cShown > 0 ? "fade" : "")
                         .appendTo(document.body)
+                        .bind("show", function() { Stories.cShown++; })
+                        .bind("hidden", function() {
+
+                            $(this).remove();
+
+                            $(jelStory)
+                                .removeClass("content-teaser-show")
+                                .removeClass("content-teaser-hide");
+
+                            // If no other modal dialog is on its way
+                            // to becoming visible, push history
+                            Stories.cShown--;
+                            if (!Stories.cShown) {
+                                Stories.navigateTo(null);
+                            }
+                        })
                         .modal({
                             keyboard: true,
                             backdrop: true,
                             show: true
-                        })
-                        .bind("hidden", function() {
-                            $(this).remove();
-
-                            var isVisible = $("#modal-story").is(":visible");
-                            if (!wasVisible && !isVisible) {
-                                $(".content-teaser-hide")
-                                    .removeClass("content-teaser-show")
-                                    .removeClass("content-teaser-hide");
-
-                                Stories.navigateTo(null);
-                            }
                         });
+
+                // Hide any existing modal dialog
+                jelOld.removeClass("fade").modal("hide");
 
             }, 400);
 
