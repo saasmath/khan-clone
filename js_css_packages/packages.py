@@ -86,6 +86,7 @@ javascript = {
             "jquery.address-1.4.min.js",
             "highcharts.js",
             "activity-graph.js",
+            "focus-graph.js",
             "handlebars-helpers.js",
             "avatar-picker.handlebars",
             "avatar-picker.js",

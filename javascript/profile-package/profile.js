@@ -194,7 +194,11 @@ var Profile = {
             } else {
                 // Otherwise, show some fake stuff.
                 // TODO: Figure out how to fake the other graphs.
-                new ActivityGraph().render(null, timePeriod);
+                if (graph === "activity") {
+                    new ActivityGraph().render(null, timePeriod);
+                } else if (graph === "focus") {
+                    new FocusGraph().render();
+                }
             }
         },
 
