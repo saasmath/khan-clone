@@ -233,6 +233,21 @@ var GoalCollection = Backbone.Collection.extend({
         }
 
         return matchingGoal;
+    },
+
+    processGoalContext: function() {
+        return {
+            hasExercise: this.any(function(goal) {
+                return _.any(goal.get("objectives"), function(obj) {
+                    return obj.type === "GoalObjectiveAnyExerciseProficiency";
+                });
+            }),
+            hasVideo: this.any(function(goal) {
+                return _.any(goal.get("objectives"), function(obj) {
+                    return obj.type === "GoalObjectiveAnyVideo";
+                });
+            })
+        };
     }
 });
 
@@ -466,65 +481,91 @@ function finishLoadingMapsPackage() {
 var NewGoalView = Backbone.View.extend({
     template: Templates.get("shared.goal-new"),
 
+    events: {
+        "click .newgoal.custom": "createCustomGoal",
+        "click .newgoal.five_exercises": "createExerciseProcessGoal",
+        "click .newgoal.five_videos": "createVideoProcessGoal"
+    },
+
     initialize: function() {
-        // this View assumes the element is pre-rendered, so automatically
-        // hookup events
+        this.render();
+    },
+
+    render: function() {
+        var context = this.model.processGoalContext();
+        $(this.el).html(this.template(context));
         this.hookup();
+        return this;
     },
 
     hookup: function() {
-        $(this.el)
-            .delegate(".newgoal.custom", "click", $.proxy(this.createCustomGoal, this))
-            .delegate(".newgoal.five_exercises", "click", $.proxy(function(e) {
-                e.preventDefault();
-                this.createSimpleGoal("five_exercises");
-            }, this))
-            .delegate(".newgoal.five_videos", "click", $.proxy(function(e) {
-                e.preventDefault();
-                this.createSimpleGoal("five_videos");
-            }, this));
-
         var that = this;
         this.$(".newgoal").hoverIntent(
             function hfa(evt) {
-                that.$(".newgoal").not(this).hoverFlow(evt.type, { opacity: 0.2}, 750, "easeInOutCubic");
-                $(".info.pos-left", this).hoverFlow(evt.type, { left: "+=30px", opacity: "show" }, 350, "easeInOutCubic");
-                $(".info.pos-right, .info.pos-top", this).hoverFlow(evt.type, { right: "+=30px", opacity: "show" }, 350, "easeInOutCubic");
+                if ($(this).hasClass("disabled")) {
+                    return;
+                }
+                that.$(".newgoal").not(this).not(".disabled").hoverFlow(
+                    evt.type, { opacity: 0.2},
+                    750, "easeInOutCubic");
+                $(".info.pos-left", this).hoverFlow(
+                    evt.type, { left: "+=30px", opacity: "show" },
+                    350, "easeInOutCubic");
+                $(".info.pos-right, .info.pos-top", this).hoverFlow(
+                    evt.type, { right: "+=30px", opacity: "show" },
+                    350, "easeInOutCubic");
             },
             function hfo(evt) {
-                that.$(".newgoal").not(this).hoverFlow(evt.type, { opacity: 1}, 175, "easeInOutCubic");
-                $(".info.pos-left", this).hoverFlow(evt.type, { left: "-=30px", opacity: "hide" }, 150, "easeInOutCubic");
-                $(".info.pos-right, .info.pos-top", this).hoverFlow(evt.type, { right: "-=30px", opacity: "hide" }, 150, "easeInOutCubic");
+                if ($(this).hasClass("disabled")) {
+                    return;
+                }
+                that.$(".newgoal").not(this).not(".disabled").hoverFlow(
+                    evt.type, { opacity: 1}, 175, "easeInOutCubic");
+                $(".info.pos-left", this).hoverFlow(
+                    evt.type, { left: "-=30px", opacity: "hide" },
+                    150, "easeInOutCubic");
+                $(".info.pos-right, .info.pos-top", this).hoverFlow(
+                    evt.type, { right: "-=30px", opacity: "hide" },
+                    150, "easeInOutCubic");
             }
         );
     },
 
-    createSimpleGoal: function(selectedType) {
-        var goal;
-        if (selectedType == "five_exercises") {
-            goal = new Goal({
-                title: "Complete Five Exercises",
-                objectives: [
-                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                    { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
-                ]
-            });
-        } else if (selectedType == "five_videos") {
-            goal = new Goal({
-                title: "Complete Five Videos",
-                objectives: [
-                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                    { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                    { description: "Any video", type: "GoalObjectiveAnyVideo" }
-                ]
-            });
-        }
+    createVideoProcessGoal: function(e) {
+        e.preventDefault();
+        if ($(e.currentTarget).hasClass("disabled")) return;
 
+        var goal = new Goal({
+            title: "Complete Five Videos",
+            objectives: [
+                { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                { description: "Any video", type: "GoalObjectiveAnyVideo" },
+                { description: "Any video", type: "GoalObjectiveAnyVideo" }
+            ]
+        });
+        this.createSimpleGoal(goal);
+    },
+
+    createExerciseProcessGoal: function(e) {
+        e.preventDefault();
+        if ($(e.currentTarget).hasClass("disabled")) return;
+
+        var goal = new Goal({
+            title: "Complete Five Exercises",
+            objectives: [
+                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+            ]
+        });
+        this.createSimpleGoal(goal);
+    },
+
+    createSimpleGoal: function(goal) {
         this.model.add(goal);
         goal.save().fail($.proxy(function() {
             KAConsole.log("Error while saving new custom goal", goal);
@@ -548,11 +589,12 @@ var NewGoalDialog = Backbone.View.extend({
     },
 
     render: function() {
+        var context = this.model.processGoalContext();
         // As we're assigning to this.el, event handlers need to be rebound
         // after each render.
-        this.el = $(this.template()).appendTo(document.body).get(0);
+        this.el = $(this.template(context)).appendTo(document.body).get(0);
         this.newGoalView = new NewGoalView({
-            el: this.$(".goalpicker"),
+            el: this.$(".viewcontents"),
             model: this.model
         });
         this.newGoalView.bind("creating", this.hide, this);
@@ -560,6 +602,9 @@ var NewGoalDialog = Backbone.View.extend({
     },
 
     show: function() {
+        // rerender every time we show this in case some process goals should
+        // be disabled
+        this.newGoalView.render();
         return $(this.el).modal({
             keyboard: true,
             backdrop: true,

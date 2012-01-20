@@ -17,7 +17,11 @@
     <div>
         <h2>Khan Academy Discovery Lab 2012 Application</h2>
         {% if authenticated %}
-            Logged in as: <u>{{ user_email|escape }}</u>.
+            {% if nickname %}
+                Logged in as: <u>{{ nickname|escape }}</u>.
+            {% else %}
+                Logged in as: <u>{{ user_email|escape }}</u>.
+            {% endif %}
             {% if make_payment %}
                 {% if student.processing_fee_paid %}
                     <br><br>Your application processing fee of ${{ student.processing_fee|escape }} has been paid.<br>
@@ -70,7 +74,7 @@
                         <li>Session 3: Jul 30 - Aug 10</li>
                     </ul><br>
 
-                    You can check back on the <a href="/summer/application-status">status</a> of your application at any time (or edit your existing
+                    Please note that the cost per week is $500 (total of $1,000 for the 2 weeks). You can check back on the <a href="/summer/application-status">status</a> of your application at any time (or edit your existing
                     application).<br><br>
                 {% endif %}
 
@@ -106,7 +110,7 @@
                 </select><br><br>
 
                 <b>Parent email: <font color="FF0000">*</font></b><br>
-                {% if is_parent %}
+                {% if parent %}
                     <input type="text" size="32" id="parent_email" name="parent_email" value="{{ parent.email|escape }}"><br><br>
                 {% else %}
                     <input type="text" size="32" id="parent_email" name="parent_email" value="{{ user_email|escape }}"><br><br>
@@ -180,10 +184,10 @@
                 <b>Grade entering in Fall 2012: <font color="FF0000">*</font></b><br>
                 <select id="grade" name="grade">
                     <option value=""></option>
-                    <option value="5th grade">5th grade</option>
                     <option value="6th grade">6th grade</option>
                     <option value="7th grade">7th grade</option>
                     <option value="8th grade">8th grade</option>
+                    <option value="9th grade">9th grade</option>
                     <option value="Other">Other</option>
                 </select><br><br>
 
@@ -194,7 +198,7 @@
                 <input type="text" size="10" name="school_zip" id="school_zip" value="{{ student.school_zipcode|escape }}"><br><br>
 
                 <b>Khan Academy email of the student:</b> (if available)<br>
-                {% if is_parent %}
+                {% if student %}
                     <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email|escape }}"><br>
                 {% else %}
                     <input type="text" size="32" id="student_email" name="student_email" value="{{ user_email|escape }}"><br>

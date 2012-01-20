@@ -1144,8 +1144,24 @@ class Video(Searchable, db.Model):
 
         if self.downloadable_formats:
 
-            download_url_template = "http://www.archive.org/download/KA-converted-%s/%s.%s"
-            return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
+            # We now serve our downloads from s3. Our old archive URL template is...
+            #   "http://www.archive.org/download/KA-converted-%s/%s.%s"
+            # ...which we may want to fall back on in the future should s3 prices climb.
+
+            url_template = "http://s3.amazonaws.com/KA-youtube-converted/%s.%s/%s.%s"
+            url_dict = {}
+
+            for suffix in self.downloadable_formats:
+                folder_suffix = suffix
+
+                if suffix == "png":
+                    # Special case: our pngs are generated during mp4 creation
+                    # and they are in the mp4 subfolders
+                    folder_suffix = "mp4"
+
+                url_dict[suffix] = url_template % (self.youtube_id, folder_suffix, self.youtube_id, suffix)
+
+            return url_dict
 
         return None
 
@@ -1740,6 +1756,7 @@ class ProblemLog(db.Model):
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     earned_proficiency = db.BooleanProperty(default = False) # True if proficiency was earned on this problem
     suggested = db.BooleanProperty(default = False) # True if the exercise was suggested to the user
+    review_mode = db.BooleanProperty(default = False, indexed=False) # True if the problem was done while in review mode
     sha1 = db.StringProperty(indexed=False)
     seed = db.StringProperty(indexed=False)
     problem_type = db.StringProperty(indexed=False)
@@ -1826,6 +1843,7 @@ def commit_problem_log(problem_log_source, user_data = None):
                 suggested = problem_log_source.suggested,
                 exercise_non_summative = problem_log_source.exercise_non_summative,
                 ip_address = problem_log_source.ip_address,
+                review_mode = problem_log_source.review_mode,
         )
 
         problem_log.count_hints = max(problem_log.count_hints, problem_log_source.count_hints)

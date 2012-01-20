@@ -558,6 +558,11 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+
+        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
+        self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+        self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 class Search(request_handler.RequestHandler):
@@ -798,8 +803,6 @@ application = webapp2.WSGIApplication([
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
 
-    ('/createstudentlist', coaches.CreateStudentList),
-    ('/deletestudentlist', coaches.DeleteStudentList),
     ('/removestudentfromlist', coaches.RemoveStudentFromList),
     ('/addstudenttolist', coaches.AddStudentToList),
 
@@ -808,7 +811,6 @@ application = webapp2.WSGIApplication([
     ('/sharedpoints', coaches.ViewSharedPoints),
     ('/classreport', coaches.ViewClassReport),
     ('/classtime', coaches.ViewClassTime),
-    ('/charts', coaches.ViewCharts),
 
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
@@ -904,7 +906,7 @@ application = webapp2.WSGIApplication([
     ('/summer/getstudent', summer.GetStudent),
     ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
     ('/summer/paypal-ipn', summer.PaypalIPN),
-    ('/summer/admin/process', summer.Process),
+    ('/summer/admin/download', summer.Download),
 
     ('/robots.txt', robots.RobotsTxt),
 

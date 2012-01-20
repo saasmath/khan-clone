@@ -341,7 +341,7 @@ class ViewAllExercises(request_handler.RequestHandler):
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
-            'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
+            'map_coords': json.dumps(knowledgemap.deserializeMapCoords(user_data.map_coords)),
             'selected_nav_link': 'practice',
             'show_review_drawer': show_review_drawer,
         }
@@ -478,7 +478,7 @@ def make_wrong_attempt(user_data, user_exercise):
 
 def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
     attempt_content, sha1, seed, completed, count_hints, time_taken,
-    exercise_non_summative, problem_type, ip_address):
+    review_mode, exercise_non_summative, problem_type, ip_address):
 
     if user_exercise and user_exercise.belongs_to(user_data):
         dt_now = datetime.datetime.now()
@@ -523,6 +523,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 count_attempts=attempt_number,
                 attempts=[attempt_content],
                 ip_address=ip_address,
+                review_mode=review_mode,
         )
 
         if exercise.summative:
@@ -656,7 +657,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data, admin=True),
-            'map_coords': (0, 0, 0),
+            'map_coords': knowledgemap.deserializeMapCoords(),
             }
 
         self.render_jinja2_template('exerciseadmin.html', template_values)
