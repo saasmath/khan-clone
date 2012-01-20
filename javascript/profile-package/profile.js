@@ -144,12 +144,12 @@ var Profile = {
         },
 
         // TODO: must send TZ offset
-        showVitalStatistics: function(graph, exercise, timeURLParameter) {
+        showVitalStatistics: function(graph, exercise, timePeriod) {
             var graph = graph || "activity",
                 exercise = exercise || "addition_1",
-                timeURLParameter = timeURLParameter || "",
+                timePeriod = timePeriod || "last-week",
                 emailEncoded = encodeURIComponent(USER_EMAIL),
-                translation = {
+                hrefLookup = {
                     "activity": "/profile/graph/activity?student_email=" + emailEncoded,
                     "focus": "/profile/graph/focus?student_email=" + emailEncoded,
                     "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
@@ -158,7 +158,14 @@ var Profile = {
                                             "exercise_name=" + exercise +
                                             "&" + "student_email=" + emailEncoded
                 },
-                href = translation[graph] + timeURLParameter;
+                timePeriodLookup = {
+                    "today": "&dt_start=today",
+                    "yesterday": "&dt_start=yesterday",
+                    "last-week": "&dt_start=lastweek&dt_end=today",
+                    "last-month": "&dt_start=lastmonth&dt_end=today"
+                },
+                timeURLParameter = timePeriod ? timePeriodLookup[timePeriod] : "",
+                href = hrefLookup[graph] + timeURLParameter;
 
             // Known bug: the wrong graph-date-picker item is selected when
             // server man decides to show 30 days instead of the default 7.
@@ -180,7 +187,15 @@ var Profile = {
             else {
                 this.updateTitleBreadcrumbs([prettyGraphName]);
             }
-            Profile.loadGraph(href);
+
+            if (Profile.profile.get("email")) {
+                // If we have access to the profiled person's email, load real data.
+                Profile.loadGraph(href);
+            } else {
+                // Otherwise, show some fake stuff.
+                // TODO: Figure out how to fake the other graphs.
+                new ActivityGraph().render(null, timePeriod);
+            }
         },
 
         showExerciseProblems: function(exercise) {
@@ -188,14 +203,7 @@ var Profile = {
         },
 
         showVitalStatisticsForTimePeriod: function(graph, timePeriod) {
-            var translation = {
-                    "today": "&dt_start=today",
-                    "yesterday": "&dt_start=yesterday",
-                    "last-week": "&dt_start=lastweek&dt_end=today",
-                    "last-month": "&dt_start=lastmonth&dt_end=today"
-                },
-                timeURLParameter = translation[timePeriod];
-            this.showVitalStatistics(graph, null, timeURLParameter);
+            this.showVitalStatistics(graph, null, timePeriod);
             $(".vital-statistics-description ." + graph + " ." + timePeriod).addClass("selected")
                 .siblings().removeClass("selected");
         },
