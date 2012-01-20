@@ -81,7 +81,7 @@ h2.stories-header {
 .slit-overlay-background {
     position: relative;
     left: 9px;
-    top: 135px;
+    top: 140px;
     width: 319px;
 }
 
@@ -193,45 +193,45 @@ h2.stories-header {
 }
 
 .story.rotate:hover {
-    -webkit-transform: rotate(0deg);
-}
-
-.story.rotate:hover .content-teaser {
     -webkit-transform: rotate(0deg) translateY(-24px);
 }
 
-.story.rotate-neg-1 {
-    -webkit-transform: rotate(-1deg);
-}
-.story.rotate-neg-1 .content-teaser {
-    -webkit-transform: rotate(1deg);
+.story.rotate:hover .content-teaser {
+    -webkit-transform: rotate(0deg) translateY(-30px);
 }
 
-.story.rotate-neg-3 {
-    -webkit-transform: rotate(-3deg);
+.story.rotate-neg-4 {
+    -webkit-transform: rotate(-4deg);
 }
-.story.rotate-neg-3 .content-teaser {
-    -webkit-transform: rotate(3deg);
-}
-
-.story.rotate-1 {
-    -webkit-transform: rotate(1deg);
-}
-.story.rotate-1 .content-teaser {
-    -webkit-transform: rotate(-1deg);
+.story.rotate-neg-4 .content-teaser {
+    -webkit-transform: rotate(4deg);
 }
 
-.story.rotate-3 {
-    -webkit-transform: rotate(3deg);
+.story.rotate-neg-2 {
+    -webkit-transform: rotate(-2deg);
 }
-.story.rotate-3 .content-teaser {
-    -webkit-transform: rotate(-3deg);
+.story.rotate-neg-2 .content-teaser {
+    -webkit-transform: rotate(2deg);
+}
+
+.story.rotate-4 {
+    -webkit-transform: rotate(4deg);
+}
+.story.rotate-4 .content-teaser {
+    -webkit-transform: rotate(-4deg);
+}
+
+.story.rotate-2 {
+    -webkit-transform: rotate(2deg);
+}
+.story.rotate-2 .content-teaser {
+    -webkit-transform: rotate(-2deg);
 }
 
 @-webkit-keyframes letter-show {
-    6% { -webkit-transform: rotate(0deg) translateY(-24px); }
-    12% { -webkit-transform: rotate(2deg) translateY(-24px); }
-    18% { -webkit-transform: rotate(-2deg) translateY(-24px); }
+    6% { -webkit-transform: rotate(0deg) translateY(-30px); }
+    12% { -webkit-transform: rotate(2deg) translateY(-30px); }
+    18% { -webkit-transform: rotate(-2deg) translateY(-30px); }
     70% { -webkit-transform: rotate(0deg) translateY(-80px); }
     71% { -webkit-transform: rotate(0deg) translateY(-80px); }
     100% { opacity: 0; }
@@ -249,7 +249,7 @@ h2.stories-header {
 
 .story.content-teaser-show,
 .story.content-teaser-hide {
-    -webkit-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg) translateY(-24px);
 }
 
 .story .content-teaser {

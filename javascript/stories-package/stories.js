@@ -59,7 +59,7 @@ Stories.SmallView = Backbone.View.extend({
     },
 
     randomRotation: function() {
-        return this.randomChoice(["rotate-1", "rotate-3", "rotate-neg-1", "rotate-neg-3"]);
+        return this.randomChoice(["rotate-2", "rotate-4", "rotate-neg-2", "rotate-neg-4"]);
     },
 
     randomEnvelope: function() {
