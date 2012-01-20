@@ -99,7 +99,7 @@ def get_visible_user_data_from_request(disable_coach_visibility=False,
 
         if (user_data.developer or
                 (not disable_coach_visibility and
-                user_data_student.is_coached_by(user_data))):
+                (user_data_student.is_coached_by(user_data) or user_data_student.is_coached_by_coworker_of_coach(user_data)))):
             return user_data_student
         else:
             return None
@@ -111,7 +111,7 @@ def get_user_data_coach_from_request():
     user_data_coach = models.UserData.current()
     user_data_override = request.request_user_data("coach_email")
 
-    if user_data_coach.developer and user_data_override:
+    if user_data_override and (user_data_coach.developer or user_data_coach.is_coworker_of(user_data_override)):
         user_data_coach = user_data_override
 
     return user_data_coach

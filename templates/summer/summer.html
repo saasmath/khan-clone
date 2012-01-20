@@ -110,7 +110,7 @@
                 </select><br><br>
 
                 <b>Parent email: <font color="FF0000">*</font></b><br>
-                {% if is_parent %}
+                {% if parent %}
                     <input type="text" size="32" id="parent_email" name="parent_email" value="{{ parent.email|escape }}"><br><br>
                 {% else %}
                     <input type="text" size="32" id="parent_email" name="parent_email" value="{{ user_email|escape }}"><br><br>
@@ -198,7 +198,7 @@
                 <input type="text" size="10" name="school_zip" id="school_zip" value="{{ student.school_zipcode|escape }}"><br><br>
 
                 <b>Khan Academy email of the student:</b> (if available)<br>
-                {% if is_parent %}
+                {% if student %}
                     <input type="text" size="32" id="student_email" name="student_email" value="{{ student.email|escape }}"><br>
                 {% else %}
                     <input type="text" size="32" id="student_email" name="student_email" value="{{ user_email|escape }}"><br>
