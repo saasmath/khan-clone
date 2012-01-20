@@ -100,6 +100,12 @@ Badges.BadgeList = Backbone.Collection.extend({
 
     saveUrl: null,
 
+    /**
+     * Whether or not this badge list has been modified since the last
+     * save to the server.
+     */
+    dirty_: false,
+
     setSaveUrl: function(url) {
         this.saveUrl = url;
     },
@@ -110,6 +116,16 @@ Badges.BadgeList = Backbone.Collection.extend({
         });
     },
 
+    add: function(models, options) {
+        Badges.BadgeList.__super__.add.apply(this, arguments);
+        this.dirty_ = true;
+    },
+
+    remove: function(models, options) {
+        Badges.BadgeList.__super__.remove.apply(this, arguments);
+        this.dirty_ = true;
+    },
+
     /**
      * Saves the collection to the server via Backbone.sync.
      * This does *not* save any individual edits to Badges within this list;
@@ -117,6 +133,9 @@ Badges.BadgeList = Backbone.Collection.extend({
      * @param {Object} options Options similar to what Backbone.sync accepts.
      */
     save: function(options) {
+        if (!this.dirty_) {
+            return;
+        }
         options = options || {};
         options["url"] = this.saveUrl;
         options["contentType"] = "application/json";
@@ -124,6 +143,7 @@ Badges.BadgeList = Backbone.Collection.extend({
             return badge.get("name");
         }));
         Backbone.sync.call(this, "update", this, options);
+        this.dirty_ = false;
     }
 });
 
