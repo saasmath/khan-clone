@@ -23,13 +23,13 @@
 
         <div class="row">
             <div class="span4">
-                <button class="btn prev-btn">&larr; Previous</btn>
+                <button class="btn prev-btn {{#unless prev_story}}disabled{{/unless}}">&larr; Previous</btn>
             </div>
             <div class="span-middle center">
-            Something
+                Something
             </div>
             <div class="span4 right">
-                <button class="btn next-btn">Next &rarr;</btn>
+                <button class="btn next-btn {{#unless next_story}}disabled{{/unless}}">Next &rarr;</btn>
             </div>
         </div>
 
