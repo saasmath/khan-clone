@@ -677,7 +677,7 @@ class UniqueUsername(db.Model):
     username = db.StringProperty()
 
     # A date indicating when the username was released.
-    # This is useful to block of usernames, particularly after they were just
+    # This is useful to block off usernames, particularly after they were just
     # released, so they can be put in a holding period.
     # This will be set to an "infinitely" far-futures date while the username
     # is in use
