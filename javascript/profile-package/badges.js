@@ -225,8 +225,6 @@ Badges.DisplayCase = Backbone.View.extend({
 
         this.setEditing_(true);
 
-        // Visual indicator for the badge edits.
-        $(this.el).addClass("editing");
         this.updateEditSelection_(index);
 
         this.showBadgePicker_();
@@ -266,10 +264,17 @@ Badges.DisplayCase = Backbone.View.extend({
      */
     showBadgePicker_: function() {
         this.renderBadgePicker();
+        var jel = $(this.el);
         var jelPicker = $(this.badgePickerEl);
         jelPicker.slideDown("fast", function() { jelPicker.show(); })
             .css("margin-left", "300px")
-            .animate({ "margin-left": "0" }, "fast", $.easing.easeInOutCubic);
+            .animate({ "margin-left": "0" }, {
+                duration: "fast",
+                step: $.easing.easeInOutCubic,
+                complete: function() {
+                    jel.addClass("editing");
+                }
+            });
 
         return this;
     },

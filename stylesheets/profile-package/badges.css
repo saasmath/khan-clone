@@ -135,6 +135,6 @@
     display: none;
 }
 
-.main-case .achievement-badge.selected .selected-indicator {
+.editing .achievement-badge.selected .selected-indicator {
     display: block;
 }
