@@ -425,6 +425,8 @@ def update_user_profile():
             # TODO: How much do we want to communicate to the user?
             return api_invalid_param_response("Error!")
 
+    return util_profile.UserProfile.from_user(user_data, user_data)
+
 @route("/api/v1/user/coaches", methods=["PUT"])
 @oauth_required()
 @jsonp

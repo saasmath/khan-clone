@@ -916,11 +916,17 @@ class UserData(GAEBingoIdentityModel, db.Model):
         """
         new_name = nickname or nicknames.get_default_nickname_for(self)
         if new_name != self.user_nickname:
+            if nickname and not nicknames.is_valid_nickname(nickname):
+                # The user picked a name, and it seems offensive. Reject it.
+                return False
+
             self.user_nickname = new_name
             def txn():
-                NicknameIndex.update_indices(self)
+                # TODO: uncomment when we enable people-search
+                #NicknameIndex.update_indices(self)
                 self.put()
             db.run_in_transaction(txn)
+        return True
 
     @property
     def email(self):

@@ -1,6 +1,8 @@
 from phantom_users.phantom_util import is_phantom_id
 import facebook_util
 import search
+import layer_cache
+from google.appengine.ext import db
 
 # Now that we're supporting unicode nicknames, ensure all callers get a
 # consistent type of object back by converting everything to unicode.
@@ -93,3 +95,19 @@ def build_search_query(raw_query):
     tokens = search.PUNCTUATION_REGEX.sub(' ', raw_query).lower().split()
     tokens.sort()
     return INDEX_DELIMITER.join(tokens)
+
+@layer_cache.cache(persist_across_app_versions=True)
+def _get_offensive_terms():
+    return frozenset([entity.term for entity in OffensiveTerm.all()])
+
+class OffensiveTerm(db.Model):
+    term = db.StringProperty()
+
+def is_valid_nickname(name):
+    """ Validates a name to be used, checking for blatantly offensive names.
+    This uses a fairly conservative check to avoid embarassing false positives;
+    the community and social pressures will hopefully deal with the keen
+    offenders.
+    """
+    blacklist = _get_offensive_terms()
+    return not any([token.lower() in blacklist for token in name.split(' ')])
