@@ -568,7 +568,7 @@ def exercise_videos(exercise_name):
 @jsonify
 def exercise_save(exercise_name = None, version_id = "edit"):
     request.json["name"] = exercise_name
-    request.json["live"] = request.json["live"] == "true"     
+    request.json["live"] = request.json["live"] == "true" or request.json["live"] == True      
     request.json["v_position"] = int(request.json["v_position"])
     request.json["h_position"] = int(request.json["h_position"])
     request.json["seconds_per_fast_problem"] = (
@@ -583,7 +583,8 @@ def exercise_save(exercise_name = None, version_id = "edit"):
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "summative", "prerequisites", "covers", 
-                        "related_videos", "short_display_name"]
+                        "related_videos", "short_display_name", "description",
+                        "tags"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise, 
             version, 

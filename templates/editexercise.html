@@ -223,6 +223,27 @@
                     </tr>
                     {% endif %}
 
+
+                    <tr>
+                        <td style="font-weight:bold;">Description</td>
+                        <td style="padding-bottom:9px;">
+                        <input type="text" name="description" value="{{ model.description }}" maxlength="256"/><br/>
+                        <em>Description text visible in topic listings</em>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="font-weight:bold;">Tags</td>
+                        <td style="padding-bottom:9px;">
+                            <div class="tags-list"></div>
+
+                            <input class="add-tag" type="text" value="" maxlength="32" placeholder="- Add tag" class="placeholder short" /> 
+                            <a href="javascript:" data-id="add-tag" class="item-action simple-button action-gradient">Add</a>
+                        </td>
+                    </tr>
+
+
+
                 </table>
 
                 <br/>

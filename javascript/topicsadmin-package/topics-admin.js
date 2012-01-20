@@ -916,6 +916,9 @@ function stringArraysEqual(ar1, ar2) {
         editor.ItemEditor.prototype.render.call(this);
 
         if (this.model) {
+            this.tags = this.model.get("tags").slice(0);
+            this.updateTags();
+
             this.prereqs = this.model.get("prerequisites").slice(0);
             this.updatePrereqs();
 

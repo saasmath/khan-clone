@@ -276,7 +276,9 @@ window.TestTopics = function() {
             covers: [], 
             prerequisites: [], 
             ka_url: "", 
-            relative_url: ""
+            relative_url: "",
+            description: "",
+			tags: []
         },
 
         idAttribute: "name",
