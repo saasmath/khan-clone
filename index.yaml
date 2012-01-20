@@ -160,6 +160,11 @@ indexes:
 - kind: Goal
   ancestor: yes
   properties:
+  - name: created_on
+
+- kind: Goal
+  ancestor: yes
+  properties:
   - name: updated_on
 
 - kind: HourlyActivityLog
