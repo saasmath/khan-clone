@@ -676,10 +676,12 @@ class UniqueUsername(db.Model):
     # The username value selected by the user.
     username = db.StringProperty()
 
-    # A holdout date afterwhich the username can be re-claimed by someone else.
+    # A date indicating when the username was released.
     # This is useful to block of usernames, particularly after they were just
-    # released, so they can be put in a holding period
-    hold_until = db.DateTimeProperty()
+    # released, so they can be put in a holding period.
+    # This will be set to an "infinitely" far-futures date while the username
+    # is in use
+    release_date = db.DateTimeProperty()
 
     @staticmethod
     def build_key_name(username):
@@ -711,9 +713,10 @@ class UniqueUsername(db.Model):
         entity = UniqueUsername.get_by_key_name(key_name)
         if clock is None:
             clock = datetime.datetime
-        return (entity is None
-                or entity.hold_until < clock.utcnow())
+        return entity is None or not entity._is_in_holding(clock.utcnow())
 
+    def _is_in_holding(self, utcnow):
+        return self.release_date + UniqueUsername.HOLDING_PERIOD_DELTA >= utcnow
 
     INFINITELY_FAR_FUTURE = datetime.datetime(9999, 1, 1, 0, 0, 0)
 
@@ -739,7 +742,7 @@ class UniqueUsername(db.Model):
             if is_available:
                 entity = UniqueUsername(key_name=key_name)
                 entity.username = desired_name
-                entity.hold_until = UniqueUsername.INFINITELY_FAR_FUTURE
+                entity.release_date = UniqueUsername.INFINITELY_FAR_FUTURE
                 entity.put()
             return is_available
 
@@ -755,7 +758,7 @@ class UniqueUsername(db.Model):
         if entity is None:
             logging.warn("Releasing username %s that doesn't exist" % username)
             return
-        entity.hold_until = clock.utcnow() + UniqueUsername.HOLDING_PERIOD_DELTA
+        entity.release_date = clock.utcnow()
         entity.put()
 
 class NicknameIndex(db.Model):
