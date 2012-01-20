@@ -192,40 +192,25 @@ h2.stories-header {
     background: url('/images/stories/envelope-4-back-foreground.png') no-repeat;
 }
 
-.story.rotate:hover {
-    -webkit-transform: rotate(0deg) translateY(-24px);
+.story.rotate {
+    -webkit-transform: rotate(0deg);
+}
+.story.rotate .content-teaser {
+    -webkit-transform: rotate(0deg);
 }
 
-.story.rotate:hover .content-teaser {
-    -webkit-transform: rotate(0deg) translateY(-30px);
+.story.rotate-neg-6:hover {
+    -webkit-transform: rotate(-6deg) translateY(-24px);
+}
+.story.rotate-neg-6:hover .content-teaser {
+    -webkit-transform: rotate(6deg) translateY(-30px);
 }
 
-.story.rotate-neg-4 {
-    -webkit-transform: rotate(-4deg);
+.story.rotate-6:hover {
+    -webkit-transform: rotate(6deg) translateY(-24px);
 }
-.story.rotate-neg-4 .content-teaser {
-    -webkit-transform: rotate(4deg);
-}
-
-.story.rotate-neg-2 {
-    -webkit-transform: rotate(-2deg);
-}
-.story.rotate-neg-2 .content-teaser {
-    -webkit-transform: rotate(2deg);
-}
-
-.story.rotate-4 {
-    -webkit-transform: rotate(4deg);
-}
-.story.rotate-4 .content-teaser {
-    -webkit-transform: rotate(-4deg);
-}
-
-.story.rotate-2 {
-    -webkit-transform: rotate(2deg);
-}
-.story.rotate-2 .content-teaser {
-    -webkit-transform: rotate(-2deg);
+.story.rotate-6:hover .content-teaser {
+    -webkit-transform: rotate(-6deg) translateY(-30px);
 }
 
 @-webkit-keyframes letter-show {
@@ -247,9 +232,14 @@ h2.stories-header {
     -webkit-transition: -webkit-transform .3s ease-in-out;
 }
 
-.story.content-teaser-show,
-.story.content-teaser-hide {
-    -webkit-transform: rotate(0deg) translateY(-24px);
+.story.rotate-neg-6.content-teaser-show,
+.story.rotate-neg-6.content-teaser-hide {
+    -webkit-transform: rotate(-6deg) translateY(-24px);
+}
+
+.story.rotate-6.content-teaser-show,
+.story.rotate-6.content-teaser-hide {
+    -webkit-transform: rotate(6deg) translateY(-24px);
 }
 
 .story .content-teaser {
