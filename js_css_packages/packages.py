@@ -118,6 +118,7 @@ javascript = {
             "bootstrap-modal.js",
             "story.handlebars",
             "story-full.handlebars",
+            "seedrandom.js",
             "stories.js",
         ]
     },

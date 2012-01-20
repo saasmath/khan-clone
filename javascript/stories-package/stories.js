@@ -51,11 +51,27 @@ Stories.SmallView = Backbone.View.extend({
             .addClass("span-one-third")
             .addClass("story-container")
             .find(".story")
-                .addClass(ix % 2 == 0 ? "rotate-5" : (ix % 3 == 0 ? "rotate-neg-7" : "rotate-neg-7"))
-                .addClass("envelope-" + ((ix % 4) + 1))
+                .addClass(this.randomRotation())
+                .addClass(this.randomEnvelope())
                 .click(function() { Stories.navigateTo(model); });
 
         return this;
+    },
+
+    randomRotation: function() {
+        return this.randomChoice(["rotate-5", "rotate-neg-7", "rotate-neg-3"]);
+    },
+
+    randomEnvelope: function() {
+        return this.randomChoice(["envelope-1", "envelope-2", "envelope-3", "envelope-4"]);
+    },
+
+    randomChoice: function(choices) {
+        // Consistent style for this particular story
+        Math.seedrandom(this.model.name);
+
+        var index = Math.floor(Math.random() * (choices.length - 1));
+        return choices[index];
     },
 
     showFull: function() {

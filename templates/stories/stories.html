@@ -170,11 +170,12 @@ h2.stories-header {
     background: url('/images/stories/envelope-4-back-foreground.png') no-repeat;
 }
 
-
-
-
 .story.rotate:hover {
     -webkit-transform: rotate(0deg);
+}
+
+.story.rotate:hover .content-teaser {
+    -webkit-transform: rotate(0deg) translateY(-24px);
 }
 
 .story.rotate-neg-7 {
@@ -183,8 +184,12 @@ h2.stories-header {
 .story.rotate-neg-7 .content-teaser {
     -webkit-transform: rotate(7deg);
 }
-.story.rotate-neg-7:hover .content-teaser {
-    -webkit-transform: rotate(0deg) translateY(-24px);
+
+.story.rotate-neg-3 {
+    -webkit-transform: rotate(-3deg);
+}
+.story.rotate-neg-3 .content-teaser {
+    -webkit-transform: rotate(3deg);
 }
 
 .story.rotate-5 {
@@ -192,9 +197,6 @@ h2.stories-header {
 }
 .story.rotate-5 .content-teaser {
     -webkit-transform: rotate(-5deg);
-}
-.story.rotate-5:hover .content-teaser {
-    -webkit-transform: rotate(0deg) translateY(-24px);
 }
 
 @-webkit-keyframes letter-show {
