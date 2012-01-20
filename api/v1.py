@@ -1157,7 +1157,13 @@ def update_public_user_badges():
     if not user_data:
         return api_invalid_param_response("User not logged in")
 
-    user_data.public_badges = request.json or []
+    owned_badges = set([badges.Badge.remove_target_context(name_with_context)
+                        for name_with_context in user_data.badges])
+    updated_badge_list = []
+    for name in request.json or []:
+        if name in owned_badges:
+            updated_badge_list.append(name)
+    user_data.public_badges = updated_badge_list
     user_data.put()
 
 @route("/api/v1/user/badges", methods=["GET"])
