@@ -560,8 +560,9 @@ class Logout(request_handler.RequestHandler):
         self.delete_cookie('ureg_id')
 
         # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
-        self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
-        self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+        if App.facebook_app_id:
+            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
 
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
