@@ -10,9 +10,17 @@
         {% endblock pagescript %}
     </head>
     <body>
-        <div class="container">
-            {% block pagecontent %}
-            {% endblock pagecontent %}
+        <div class="stories-header">
+            <div class="container">
+                {% block headercontent %}
+                {% endblock headercontent %}
+            </div>
+        </div>
+        <div class="stories-body">
+            <div class="container">
+                {% block pagecontent %}
+                {% endblock pagecontent %}
+            </div>
         </div>
     </body>
 

@@ -8,6 +8,35 @@ body {
     background-color: #E9EFDD;
 }
 
+.left-header-container {
+    padding-top: 90px;
+}
+
+.stories-header {
+    background-color: #1A222D;
+    padding: 18px 0;
+}
+
+.stories-header h1 {
+    margin-bottom: 81px;
+    font-size: 54px;
+}
+
+.stories-header h1, 
+.stories-header h2
+{
+    color: #DDD;
+}
+
+.stories-header h2 a:hover {
+    color: #DDD;
+    text-decoration: none;
+}
+
+.stories-body {
+    margin-top: 72px;
+}
+
 .modal {
     max-height: 580px;
     overflow: hidden;
@@ -46,8 +75,8 @@ h2.stories-header {
 
 .big-tree {
     position: relative;
-    top: 10px;
-    left: -180px;
+    left: -36px;
+    width: 350px;
     opacity: 0.75;
     filter:alpha(opacity=75);
 }
@@ -69,7 +98,7 @@ h2.stories-header {
 
 .slit-overlay {
     background: transparent url('/images/stories/slit.png') no-repeat top left;
-    height: 14px;
+    height: 6px;
 }
 
 .slit-overlay-background {
@@ -85,35 +114,12 @@ h2.stories-header {
     width: 319px;
 }
 
-.story .more-overlay {
-    position: absolute;
-    top: 75%;
-    left: 80px;
-    width: 140px;
-    padding: 4px 0px;
-    text-align: center;
-    background: white;
-    opacity: 0.0;
-    filter:alpha(opacity=85);
-
-    -webkit-transition: opacity .3s ease-in-out;
-}
-.story:hover .more-overlay {
-    opacity: 0.85;
-    filter:alpha(opacity=85);
-}
-.story.content-teaser-show .more-overlay {
-    opacity: 0.0;
-    filter:alpha(opacity=85);
-}
-
 .story.envelope-1 {
     width: 300px;
 }
 .story.envelope-1 .content-teaser {
     background: url('/images/stories/stationary-1.png') no-repeat top right;
     padding: 20px 9px 9px 9px;
-    height: 125px;
     width: 259px;
 }
 .story.envelope-1 .envelope {
@@ -132,7 +138,6 @@ h2.stories-header {
 }
 .story.envelope-2 .content-teaser {
     padding: 20px 9px 9px 9px;
-    height: 125px;
     width: 252px;
 
     background: #C0E3FF;
@@ -155,7 +160,6 @@ h2.stories-header {
 }
 .story.envelope-3 .content-teaser {
     padding: 20px 9px 9px 9px;
-    height: 125px;
     width: 252px;
 
     background: url('/images/stories/stationary-2.png') no-repeat top right;
@@ -176,7 +180,7 @@ h2.stories-header {
 }
 .story.envelope-4 .content-teaser {
     padding: 20px 9px 9px 9px;
-    height: 110px;
+    height: 130px;
     width: 252px;
 
     background: url('/images/stories/stationary-3.png') no-repeat top right;
@@ -213,18 +217,30 @@ h2.stories-header {
     -webkit-transform: rotate(-6deg) translateY(-30px);
 }
 
-@-webkit-keyframes letter-show {
+@-webkit-keyframes letter-show-6 {
     6% { -webkit-transform: rotate(0deg) translateY(-30px); }
-    12% { -webkit-transform: rotate(2deg) translateY(-30px); }
-    18% { -webkit-transform: rotate(-2deg) translateY(-30px); }
-    70% { -webkit-transform: rotate(0deg) translateY(-80px); }
-    71% { -webkit-transform: rotate(0deg) translateY(-80px); }
+    12% { -webkit-transform: rotate(-2deg) translateY(-30px); }
+    18% { -webkit-transform: rotate(2deg) translateY(-30px); }
+    70% { -webkit-transform: rotate(-6deg) translateY(-80px); }
     100% { opacity: 0; }
 }
 
-.story.content-teaser-show .content-teaser,
-.story.content-teaser-show:hover .content-teaser {
-    -webkit-animation: letter-show 0.65s ease-in-out 0s 1 normal;
+@-webkit-keyframes letter-show-neg-6 {
+    6% { -webkit-transform: rotate(0deg) translateY(-30px); }
+    12% { -webkit-transform: rotate(2deg) translateY(-30px); }
+    18% { -webkit-transform: rotate(-2deg) translateY(-30px); }
+    70% { -webkit-transform: rotate(6deg) translateY(-80px); }
+    100% { opacity: 0; }
+}
+
+.story.rotate-neg-6.content-teaser-show .content-teaser,
+.story.rotate-neg-6.content-teaser-show:hover .content-teaser {
+    -webkit-animation: letter-show-neg-6 0.65s ease-in-out 0s 1 normal;
+}
+
+.story.rotate-6.content-teaser-show .content-teaser,
+.story.rotate-6.content-teaser-show:hover .content-teaser {
+    -webkit-animation: letter-show-6 0.65s ease-in-out 0s 1 normal;
 }
 
 .story.content-teaser-hide .content-teaser {
@@ -243,11 +259,13 @@ h2.stories-header {
 }
 
 .story .content-teaser {
-    position: absolute;
+    position: relative;
+    top: -20px;
     overflow: hidden;
 
     font-size: 16px;
     margin: 12px;
+    height: 145px;
 
     -webkit-transition: -webkit-transform .3s ease-in-out;
 } 
@@ -284,20 +302,22 @@ h2.stories-header {
 
 {% endblock pagescript %}
 
-{% block pagecontent %}
+{% block headercontent %}
 
 <div class="row">
-    <div class="span11">
-        <h2 class="stories-header">
-            These are all real stories from Khan Academy users.<br>
-            They are completely unedited.<br><br>
-            &hellip;<a href="#">share yours</a>.
-        </h2>
+    <div class="span11 left-header-container">
+        <h1>Khan Academy Stories</h1>
+        <h2>These are all real, unedited stories from our users.</h2>
+        <h2><a href="#" class="btn large primary">Share yours.</a></h2>
     </div>
     <div class="span5">
         <img class="big-tree" src="/images/large-tree-transparent.png">
     </div>
 </div>
+
+{% endblock headercontent %}
+
+{% block pagecontent %}
 
 <div id="stories"></div>
 
