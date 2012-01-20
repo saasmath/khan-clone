@@ -140,6 +140,18 @@ ul.inline-list, ul.inline-list li {
     left: 2px;
 }
 
+.goal.complete a.objective.exercise-color.proficient:before {
+    background-color: #3A4759;
+}
+.goal.complete a.objective.exercise-color.proficient {
+    background-color: #3A4759;
+
+    color: #fff !important;
+    border-color: #2c3747;
+    border-bottom-color: #13181f;
+    text-shadow:  0 -1px 0 #13181f;
+}
+
 /* override goal styles for student view */
 .goals-personal .goal a.objective.exercise-color.not-started:before,
 .goals-personal .goal a.objective.exercise-color.started:before {

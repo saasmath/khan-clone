@@ -138,7 +138,7 @@
     #individual_report #vital-statistics #stats-nav {
         width: 280px;
         float: left;
-        margin: -10px 20px 10px 0;        
+        margin: -10px 20px 10px 0;
     }
     #individual_report #vital-statistics #stats-nav ul#nav-accordion {
         padding: 10px 0 0 3px;
@@ -244,6 +244,13 @@
         height: auto;
         font-size: 11px;
         font-weight: bold;
+    }
+    #individual_report #vital-statistics #stats-nav ul > li > .accordion-content .graph-options .progress-legend.goal-complete {
+        background-color: #3A4759;
+        color: white !important;
+        border-color: #2C3747;
+        border-bottom-color: #13181F;
+        text-shadow: 0 -1px 0 #13181F;
     }
     #individual_report #vital-statistics #stats-charts {
         position: relative;
@@ -549,7 +556,7 @@ div.graph-notification {
 
 #stats-filters p {font-size:10px; margin: 0; display:inline-block; }
 #stats-filters h3 {
-  font-family: "MuseoSans300"; font-size:18px; 
+  font-family: "MuseoSans300"; font-size:18px;
   margin-right:.5em;
   display:inline-block;
 }

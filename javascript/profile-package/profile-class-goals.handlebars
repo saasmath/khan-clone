@@ -13,7 +13,7 @@
                 </div>
                 {{/if}}
             </div>
-            <div class="goal">
+            <div class="goal {{#if goal.completed}}{{#unless goal.abandoned}}complete{{/unless}}{{/if}}">
                 {{#if goal.objectives}}
                     <ul class="inline-list objective-list">
                     {{#each goal.objectives}}
