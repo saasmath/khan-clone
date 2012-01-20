@@ -3,11 +3,8 @@
 import models
 import phantom_users.phantom_util
 import test_utils
-from google.appengine.ext import testbed
-from google.appengine.datastore import datastore_stub_util
-from google.appengine.ext import db
 
-class UsernameTest(test_utils.TestCase):
+class UsernameTest(test_utils.GAEModelTestCase):
     def tearDown(self):
         # Clear all usernames just to be safe
         for u in models.UniqueUsername.all():
@@ -65,7 +62,7 @@ class UsernameTest(test_utils.TestCase):
         self.assertEqual("sadbob", u2.username)
 
     def test_releasing_usernames(self):
-        clock = test_utils.MockClock()
+        clock = test_utils.MockDatetime()
         u1 = self.make_user("bob")
         u2 = self.make_user("robert")
 
@@ -89,7 +86,7 @@ class UsernameTest(test_utils.TestCase):
         self.assertTrue(u2.claim_username("superbob", clock))
         self.assertEqual("superbob", u2.username)
 
-class ProfileSegmentTest(test_utils.TestCase):
+class ProfileSegmentTest(test_utils.GAEModelTestCase):
     def to_url(self, user):
         return user.prettified_user_email
     def from_url(self, segment):

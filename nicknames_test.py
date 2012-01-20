@@ -1,12 +1,12 @@
 #!/user/bin/env python
 
-import test_utils
-from google.appengine.ext import testbed
-from google.appengine.datastore import datastore_stub_util
-
 import models
+import test_utils
 
-class NicknamesTest(test_utils.TestCase):
+# TODO: re-enable this test, as it's currently disabled until the nickname
+# indexing code is re-enabled.
+#class NicknamesTest(test_utils.GAETestCase):
+class NicknamesTest():
 
     def setUp(self):
         super(NicknamesTest, self).setUp()

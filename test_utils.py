@@ -4,10 +4,15 @@ import datetime
 import unittest
 from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
-from google.appengine.ext import db
 
-class TestCase(unittest.TestCase):
-    """ A test case that stubs out appengine DB in setUp """
+class GAEModelTestCase(unittest.TestCase):
+    """ A test case that stubs out appengine's persistence layers in setUp.
+
+    Subclasses can inherit from this if they wish to test models, but don't
+    forget to call the superclass's setUp and tearDown methods if you
+    override them.
+
+    """
     def setUp(self):
         self.testbed = testbed.Testbed()
         self.testbed.activate()
@@ -22,7 +27,7 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         self.testbed.deactivate()
 
-class MockClock(object):
+class MockDatetime(object):
     """ A utility for mocking out the current time.
 
     Exposes methods typically found in Python's normal datetime library,
