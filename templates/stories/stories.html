@@ -34,8 +34,21 @@ body {
     text-decoration: none;
 }
 
+.stories-submit {
+    background-color: #E6E6E6;
+    height: 200px;
+    padding: 18px 0;
+    border-top: 1px solid #CCC;
+    border-bottom: 1px solid #CCC;
+
+    -webkit-box-shadow: inset 0px 3px 5px 2px rgba(204, 204, 204, 0.6);
+}
+
 .stories-body {
-    margin-top: 72px;
+    padding-top: 72px;
+    border-top: 1px solid #F6FEED;
+
+    -webkit-box-shadow: 0px -8px 8px -7px rgba(204, 204, 204, 0.6)
 }
 
 .modal {
@@ -311,7 +324,7 @@ h2.stories-header {
     <div class="span11 left-header-container">
         <h1>Khan Academy<br>Stories</h1>
         <h2>These are all real, unedited stories from our users.</h2>
-        <h2><a href="#" class="btn large primary">Share yours.</a></h2>
+        <h2><a href="#" class="btn large primary share-story-btn">Share yours.</a></h2>
     </div>
     <div class="span5">
         <img class="big-tree" src="/images/large-tree-transparent.png">
@@ -319,6 +332,14 @@ h2.stories-header {
 </div>
 
 {% endblock headercontent %}
+
+{% block submitcontent %}
+
+<div class="row story-submit">
+    Story: <textarea></textarea>
+</div>
+
+{% endblock submitcontent %}
 
 {% block pagecontent %}
 
@@ -329,6 +350,13 @@ h2.stories-header {
 {% block bottompagescript %}
 
 <script>
+    $(function() {
+        $(".share-story-btn").click(function(e) {
+            $(".stories-submit").slideToggle();
+            e.preventDefault();
+        });
+    });
+
     Stories.render({
         target: "#stories",
         content: [
