@@ -114,6 +114,10 @@ h2.stories-header {
     filter:alpha(opacity=75);
 }
 
+.story-container {
+    position: relative;
+}
+
 .story {
     float: left;
     padding: 18px;
@@ -145,6 +149,35 @@ h2.stories-header {
     left: 9px;
     top: 140px;
     width: 319px;
+}
+
+.tape {
+    /* http://www.2expertsdesign.com/tutorials/how-to-create-a-paper-sticky-note-using-only-css3 */
+    position: absolute;
+
+    top: 160px;
+    left: 90px;
+
+    width: 150px;
+    height: 35px;
+    background-color: white;
+
+    text-align: center;
+
+    opacity:0.7;
+    filter:alpha(opacity=70);
+
+    border-left: 1px dashed rgba(0, 0, 0, 0.1);
+    border-right: 1px dashed rgba(0, 0, 0, 0.1);
+
+    -webkit-box-shadow: 0px 0px 1px 0px #cccccc;
+    -moz-box-shadow: 0px 0px 1px 0px #cccccc;
+    box-shadow: 0px 0px 1px 0px #cccccc;
+
+    -webkit-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+    -moz-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+    -o-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+    transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
 }
 
 .story.envelope-1 {
