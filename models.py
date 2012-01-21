@@ -520,6 +520,11 @@ class UserExercise(db.Model):
 
     @classmethod
     def from_json(cls, json, user_data):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
         exercise = Exercise.get_by_name(json['exercise'])
         if not exercise:
             return None
@@ -1126,6 +1131,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     @classmethod
     def from_json(cls, json, user=None):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
         user_id = json['user_id']
         email = json['email']
         user = user or users.User(email)
@@ -1456,6 +1466,11 @@ class UserVideo(db.Model):
 
     @classmethod
     def from_json(cls, json, user_data):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
         readable_id = json['video']['readable_id']
         video = Video.get_for_readable_id(readable_id)
 
@@ -1627,6 +1642,11 @@ class VideoLog(db.Model):
 
     @classmethod
     def from_json(cls, json, video, user=None):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
         user = user or users.User(json['user'])
         return cls(
             user=user,
@@ -1846,6 +1866,11 @@ class ProblemLog(db.Model):
 
     @classmethod
     def from_json(cls, json, user_data, exercise):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
         problem_number = int(json['problem_number'])
         return cls(
             attempts=json['attempts'],

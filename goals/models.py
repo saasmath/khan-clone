@@ -121,6 +121,11 @@ class Goal(db.Model):
 
     @classmethod
     def from_json(cls, json, user_data):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
         from util import parse_iso8601, coalesce
         objectives = [GoalObjective.from_json(j) for j in json['objectives']]
         return cls(
@@ -258,6 +263,11 @@ class GoalObjective(object):
 
     @classmethod
     def from_json(cls, json):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
         # determine what subclass we need
         klass_str = json['type']
         if klass_str not in [c.__name__ for c in cls.__subclasses__()]:
