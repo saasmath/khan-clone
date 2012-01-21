@@ -18,7 +18,6 @@
 
     </head>
     <body>
-        <div id="fb-root"></div>
         <div class="stories-header">
             <div class="container">
                 {% block headercontent %}
@@ -35,6 +34,13 @@
             <div class="container">
                 {% block pagecontent %}
                 {% endblock pagecontent %}
+            </div>
+        </div>
+        <div class="stories-footer">
+            <div class="container">
+                <div class="span16">
+                    <a href="/"><img src="/images/khan-logo-vertical-transparent-small.png"></a>
+                </div>
             </div>
         </div>
     </body>
