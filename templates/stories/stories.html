@@ -50,6 +50,9 @@ body {
     border-bottom: 1px solid #CCC;
 
     -webkit-box-shadow: inset 0px 3px 5px 2px rgba(204, 204, 204, 0.6);
+    -moz-box-shadow: inset 0px 3px 5px 2px rgba(204, 204, 204, 0.6);
+    -o-box-shadow: inset 0px 3px 5px 2px rgba(204, 204, 204, 0.6);
+    box-shadow: inset 0px 3px 5px 2px rgba(204, 204, 204, 0.6);
 }
 
 .stories-submit div.input {
@@ -66,6 +69,9 @@ body {
     border-top: 1px solid #F6FEED;
 
     -webkit-box-shadow: 0px -8px 8px -8px rgba(204, 204, 204, 0.6)
+    -moz-box-shadow: 0px -8px 8px -8px rgba(204, 204, 204, 0.6)
+    -o-box-shadow: 0px -8px 8px -8px rgba(204, 204, 204, 0.6)
+    box-shadow: 0px -8px 8px -8px rgba(204, 204, 204, 0.6)
 }
 
 .modal {
@@ -126,6 +132,9 @@ h2.stories-header {
     cursor: pointer;
 
     -webkit-transition: -webkit-transform .3s ease-in-out;
+    -moz-transition: -moz-transform .3s ease-in-out;
+    -o-transition: -o-transform .3s ease-in-out;
+    transition: transform .3s ease-in-out;
 }
 
 .story .envelope {
@@ -172,10 +181,11 @@ h2.stories-header {
 
     -webkit-box-shadow: 0px 0px 1px 0px #cccccc;
     -moz-box-shadow: 0px 0px 1px 0px #cccccc;
+    -o-box-shadow: 0px 0px 1px 0px #cccccc;
     box-shadow: 0px 0px 1px 0px #cccccc;
 
     -webkit-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
-    -moz-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+    -moz-transform: rotate(0deg) skew(0,0) translate(0%,-5px); /* Moz tape rotation has font issues */
     -o-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
     transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
 }
@@ -208,7 +218,13 @@ h2.stories-header {
 
     background: #C0E3FF;
     -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+
     -webkit-box-shadow: 2px 2px 3px rgba(204, 204, 204, 0.6);
+    -moz-box-shadow: 2px 2px 3px rgba(204, 204, 204, 0.6);
+    -o-box-shadow: 2px 2px 3px rgba(204, 204, 204, 0.6);
+    box-shadow: 2px 2px 3px rgba(204, 204, 204, 0.6);
 }
 .story.envelope-2 .envelope {
     width: 300px;
@@ -264,23 +280,41 @@ h2.stories-header {
 
 .story.rotate {
     -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
 }
 .story.rotate .content-teaser {
     -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
 }
 
 .story.rotate-neg-6:hover {
     -webkit-transform: rotate(-6deg) translateY(-24px);
+    -moz-transform: rotate(-6deg) translateY(-24px);
+    -o-transform: rotate(-6deg) translateY(-24px);
+    transform: rotate(-6deg) translateY(-24px);
 }
 .story.rotate-neg-6:hover .content-teaser {
     -webkit-transform: rotate(6deg) translateY(-30px);
+    -moz-transform: rotate(6deg) translateY(-30px);
+    -o-transform: rotate(6deg) translateY(-30px);
+    transform: rotate(6deg) translateY(-30px);
 }
 
 .story.rotate-6:hover {
     -webkit-transform: rotate(6deg) translateY(-24px);
+    -moz-transform: rotate(6deg) translateY(-24px);
+    -o-transform: rotate(6deg) translateY(-24px);
+    transform: rotate(6deg) translateY(-24px);
 }
 .story.rotate-6:hover .content-teaser {
     -webkit-transform: rotate(-6deg) translateY(-30px);
+    -moz-transform: rotate(-6deg) translateY(-30px);
+    -o-transform: rotate(-6deg) translateY(-30px);
+    transform: rotate(-6deg) translateY(-30px);
 }
 
 @-webkit-keyframes letter-show-6 {
@@ -288,6 +322,14 @@ h2.stories-header {
     12% { -webkit-transform: rotate(-2deg) translateY(-30px); }
     18% { -webkit-transform: rotate(2deg) translateY(-30px); }
     70% { -webkit-transform: rotate(-6deg) translateY(-80px); }
+    100% { opacity: 0; }
+}
+
+@-moz-keyframes letter-show-6 {
+    6% { -moz-transform: rotate(0deg) translateY(-30px); }
+    12% { -moz-transform: rotate(-2deg) translateY(-30px); }
+    18% { -moz-transform: rotate(2deg) translateY(-30px); }
+    70% { -moz-transform: rotate(-6deg) translateY(-80px); }
     100% { opacity: 0; }
 }
 
@@ -299,29 +341,52 @@ h2.stories-header {
     100% { opacity: 0; }
 }
 
+@-moz-keyframes letter-show-neg-6 {
+    6% { -moz-transform: rotate(0deg) translateY(-30px); }
+    12% { -moz-transform: rotate(2deg) translateY(-30px); }
+    18% { -moz-transform: rotate(-2deg) translateY(-30px); }
+    70% { -moz-transform: rotate(6deg) translateY(-80px); }
+    100% { opacity: 0; }
+}
+
 .story.rotate-neg-6.content-teaser-show .content-teaser,
 .story.rotate-neg-6.content-teaser-show:hover .content-teaser {
     -webkit-animation: letter-show-neg-6 0.65s ease-in-out 0s 1 normal;
+    -moz-animation: letter-show-neg-6 0.65s ease-in-out 0s 1 normal;
+    -o-animation: letter-show-neg-6 0.65s ease-in-out 0s 1 normal;
+    animation: letter-show-neg-6 0.65s ease-in-out 0s 1 normal;
 }
 
 .story.rotate-6.content-teaser-show .content-teaser,
 .story.rotate-6.content-teaser-show:hover .content-teaser {
     -webkit-animation: letter-show-6 0.65s ease-in-out 0s 1 normal;
+    -moz-animation: letter-show-6 0.65s ease-in-out 0s 1 normal;
+    -o-animation: letter-show-6 0.65s ease-in-out 0s 1 normal;
+    animation: letter-show-6 0.65s ease-in-out 0s 1 normal;
 }
 
 .story.content-teaser-hide .content-teaser {
     opacity: 0;
     -webkit-transition: -webkit-transform .3s ease-in-out;
+    -moz-transition: -moz-transform .3s ease-in-out;
+    -o-transition: -o-transform .3s ease-in-out;
+    transition: transform .3s ease-in-out;
 }
 
 .story.rotate-neg-6.content-teaser-show,
 .story.rotate-neg-6.content-teaser-hide {
     -webkit-transform: rotate(-6deg) translateY(-24px);
+    -moz-transform: rotate(-6deg) translateY(-24px);
+    -o-transform: rotate(-6deg) translateY(-24px);
+    transform: rotate(-6deg) translateY(-24px);
 }
 
 .story.rotate-6.content-teaser-show,
 .story.rotate-6.content-teaser-hide {
     -webkit-transform: rotate(6deg) translateY(-24px);
+    -moz-transform: rotate(6deg) translateY(-24px);
+    -o-transform: rotate(6deg) translateY(-24px);
+    transform: rotate(6deg) translateY(-24px);
 }
 
 .story .content-teaser {
@@ -334,6 +399,9 @@ h2.stories-header {
     height: 145px;
 
     -webkit-transition: -webkit-transform .3s ease-in-out;
+    -moz-transition: -moz-transform .3s ease-in-out;
+    -o-transition: -o-transform .3s ease-in-out;
+    transition: transform .3s ease-in-out;
 } 
 
 .story .content-teaser .youtube-thumbnail-container {
