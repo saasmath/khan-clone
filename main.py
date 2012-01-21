@@ -743,6 +743,7 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
 
+    ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
 
     # Issues a command to re-generate the library content.

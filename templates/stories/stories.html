@@ -29,19 +29,31 @@ body {
     color: #DDD;
 }
 
-.stories-header h2 a:hover {
+.stories-header a:hover,
+.stories-header a:focus,
+.stories-submit a:hover,
+.stories-submit a:focus {
     color: #DDD;
     text-decoration: none;
 }
 
 .stories-submit {
-    background-color: #E6E6E6;
+    background: #E6E6E6 url('/images/story-submit-bg-tile.png');
     height: 200px;
     padding: 18px 0;
     border-top: 1px solid #CCC;
     border-bottom: 1px solid #CCC;
 
     -webkit-box-shadow: inset 0px 3px 5px 2px rgba(204, 204, 204, 0.6);
+}
+
+.stories-submit div.input {
+    margin-bottom: 18px;
+}
+
+.stories-submit textarea {
+    width: 50%;
+    height: 80px;
 }
 
 .stories-body {
@@ -335,8 +347,34 @@ h2.stories-header {
 
 {% block submitcontent %}
 
-<div class="row story-submit">
-    Story: <textarea></textarea>
+<div class="row">
+    <div class="span16 form-stacked">
+
+        <div class="input">
+            <textarea id="story" placeholder="Your story goes here."></textarea>
+        </div>
+
+        <div class="input">
+        <ul class="inputs-list">
+            <li>
+                <label>
+                    <input type="radio" checked name="shareAllow" value="0">
+                    <span>My story is private, this is for the Khan Academy team only</span>
+                </label>
+            </li>
+            <li>
+                <label>
+                    <input type="radio" name="shareAllow" id="shareAllow" value="1">
+                    <span>Khan Academy can share my story with the world</span>
+                </label>
+            </li>
+        </ul>
+        </div>
+
+        <div class="input">
+            <a href="#" class="btn primary submit-story-btn">Send us your story</a>
+        </div>
+    </div>
 </div>
 
 {% endblock submitcontent %}
@@ -352,7 +390,46 @@ h2.stories-header {
 <script>
     $(function() {
         $(".share-story-btn").click(function(e) {
-            $(".stories-submit").slideToggle();
+            $(".stories-submit")
+                .slideToggle()
+                .find(".submit-story-btn")
+                    .html("Send us your story")
+                    .removeClass("disabled")
+                    .removeClass("success")
+                    .addClass("primary");
+            e.preventDefault();
+        });
+
+        $(".submit-story-btn").click(function(e) {
+
+            if ($("#story").val().length) {
+
+                $(this)
+                    .addClass("disabled")
+                    .html("Sending&hellip;");
+
+                $.post(
+                    "/stories/submit",
+                    {
+                        "story": $("#story").val(),
+                        "share": $("#shareAllow").is(":checked") ? "1": "0"
+                    },
+                    function() {
+                        $(".submit-story-btn")
+                            .removeClass("primary")
+                            .addClass("success")
+                            .html("Success!");
+
+                        setTimeout(function() {
+                            $(".stories-submit")
+                                .slideUp()
+                                .find("textarea")
+                                    .val("");
+                        }, 3000);
+                    });
+
+            }
+
             e.preventDefault();
         });
     });
