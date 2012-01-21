@@ -140,10 +140,10 @@ ul.inline-list, ul.inline-list li {
     left: 2px;
 }
 
-.goal.complete a.objective.exercise-color.proficient:before {
+.goals-class .goal.complete a.objective.exercise-color.proficient:before {
     background-color: #3A4759;
 }
-.goal.complete a.objective.exercise-color.proficient {
+.goals-class .goal.complete a.objective.exercise-color.proficient {
     background-color: #3A4759;
 
     color: #fff !important;

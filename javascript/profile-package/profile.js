@@ -469,19 +469,22 @@ var Profile = {
             el: "#current-goals-list",
             model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: 'current',
-            readonly: !viewingOwnGoals
+            readonly: !viewingOwnGoals,
+            colors: viewingOwnGoals ? "goals-personal" : "goals-class"
         });
         Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
-            readonly: true
+            readonly: true,
+            colors: viewingOwnGoals ? "goals-personal" : "goals-class"
         });
         Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
-            readonly: true
+            readonly: true,
+            colors: viewingOwnGoals ? "goals-personal" : "goals-class"
         });
 
         Profile.userGoalsHref = href;
@@ -524,7 +527,8 @@ var Profile = {
         var studentGoalsViewModel = {
             rowData: [],
             sortDesc: '',
-            filterDesc: ''
+            filterDesc: '',
+            colors: "goals-class"
         };
 
         $.each(data, function(idx1, student) {
@@ -1048,7 +1052,8 @@ var GoalProfileView = Backbone.View.extend({
             isCurrent: (this.options.type == 'current'),
             isCompleted: (this.options.type == 'completed'),
             isAbandoned: (this.options.type == 'abandoned'),
-            readonly: this.options.readonly
+            readonly: this.options.readonly,
+            colors: this.options.colors
         }));
 
         // attach a NewGoalView to the new goals html
