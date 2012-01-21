@@ -44,7 +44,7 @@ body {
 
 .stories-submit {
     background: #E6E6E6 url('/images/story-submit-bg-tile.png');
-    height: 200px;
+    height: 224px;
     padding: 18px 0;
     border-top: 1px solid #CCC;
     border-bottom: 1px solid #CCC;
@@ -465,7 +465,8 @@ h2.stories-header {
     <div class="span16 form-stacked">
 
         <div class="input">
-            <textarea id="story" placeholder="Your story goes here."></textarea>
+            <label for="story">Your story goes here:</label>
+            <textarea id="story"></textarea>
         </div>
 
         <div class="input">
@@ -506,7 +507,9 @@ h2.stories-header {
     $(function() {
         $(".share-story-btn").click(function(e) {
             $(".stories-submit")
-                .slideToggle()
+                .slideToggle(function() {
+                    $(".stories-submit textarea").focus();
+                })
                 .find(".submit-story-btn")
                     .html("Send us your story")
                     .removeClass("disabled")
