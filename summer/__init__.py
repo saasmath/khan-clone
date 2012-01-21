@@ -92,7 +92,7 @@ class PaypalAutoReturn(RequestHandler):
         query.filter('transaction_id = ', txn_id)
         paypal_txn = query.get()
 
-        if paypal_txn is not None:
+        if paypal_txn is None:
             paypal_txn = SummerPaypalTransaction()
             paypal_txn.transaction_id = txn_id
             paypal_txn.student_email = student_email
@@ -178,26 +178,32 @@ class Download(RequestHandler):
         properties = [p for p in SummerStudent().properties()]
         sw.writerow(properties)
         for student in SummerStudent.all().fetch(5000):
-            row = []
-            for p in properties:
-                v = getattr(student, p)
-                if isinstance(v, basestring):
-                    v.encode("utf-8")
-                row.append(v)
-            sw.writerow(row)
+            try:
+                row = []
+                for p in properties:
+                    v = getattr(student, p)
+                    if isinstance(v, basestring):
+                        v = v.encode("utf-8")
+                    row.append(v)
+                sw.writerow(row)
+            except Exception, e:
+                logging.error("Unable to write row for student %s" % student.email)
 
         pio = StringIO.StringIO()
         pw = csv.writer(pio)
         properties = [p for p in SummerParentData().properties()]
         pw.writerow(properties)
         for parent in SummerParentData.all().fetch(5000):
-            row = []
-            for p in properties:
-                v = getattr(parent, p)
-                if isinstance(v, basestring):
-                    v.encode("utf-8")
-                row.append(v)
-            pw.writerow(row)
+            try:
+              row = []
+              for p in properties:
+                  v = getattr(parent, p)
+                  if isinstance(v, basestring):
+                      v = v.encode("utf-8")
+                  row.append(v)
+              pw.writerow(row)
+            except Exception, e:
+                logging.error("Unable to write row for parent %s" % parent.email)
 
         f = StringIO.StringIO()
         tf = tarfile.open(fileobj=f, mode='w:gz')

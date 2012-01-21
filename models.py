@@ -1213,8 +1213,20 @@ class Video(Searchable, db.Model):
             #   "http://www.archive.org/download/KA-converted-%s/%s.%s"
             # ...which we may want to fall back on in the future should s3 prices climb.
 
-            download_url_template = "http://s3.amazonaws.com/KA-youtube-converted/%s/%s.%s"
-            return dict( (suffix, download_url_template % (self.youtube_id, self.youtube_id, suffix) ) for suffix in self.downloadable_formats )
+            url_template = "http://s3.amazonaws.com/KA-youtube-converted/%s.%s/%s.%s"
+            url_dict = {}
+
+            for suffix in self.downloadable_formats:
+                folder_suffix = suffix
+
+                if suffix == "png":
+                    # Special case: our pngs are generated during mp4 creation
+                    # and they are in the mp4 subfolders
+                    folder_suffix = "mp4"
+
+                url_dict[suffix] = url_template % (self.youtube_id, folder_suffix, self.youtube_id, suffix)
+
+            return url_dict
 
         return None
 

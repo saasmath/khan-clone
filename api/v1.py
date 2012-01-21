@@ -1,6 +1,7 @@
 import copy
 import logging
 from itertools import izip
+import datetime
 
 from flask import request, current_app, Response
 
@@ -98,7 +99,7 @@ def get_visible_user_data_from_request(disable_coach_visibility=False,
 
         if (user_data.developer or
                 (not disable_coach_visibility and
-                user_data_student.is_coached_by(user_data))):
+                (user_data_student.is_coached_by(user_data) or user_data_student.is_coached_by_coworker_of_coach(user_data)))):
             return user_data_student
         else:
             return None
@@ -110,7 +111,7 @@ def get_user_data_coach_from_request():
     user_data_coach = models.UserData.current()
     user_data_override = request.request_user_data("coach_email")
 
-    if user_data_coach.developer and user_data_override:
+    if user_data_override and (user_data_coach.developer or user_data_coach.is_coworker_of(user_data_override)):
         user_data_coach = user_data_override
 
     return user_data_coach
@@ -1218,17 +1219,23 @@ def get_student_goals():
     except Exception, e:
         return api_invalid_param_response(e.message)
 
+    dt_end = datetime.datetime.now()
+    days = request.request_int("days", 7)
+    dt_start = dt_end - datetime.timedelta(days=days)
+
     students = sorted(students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(students)
 
     return_data = []
     for student, uex_graph in izip(students, user_exercise_graphs):
-        student_data = {}
-        student_data['email'] = student.email
-        student_data['nickname'] = student.nickname
-        goals = GoalList.get_current_goals(student)
-        student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
-        return_data.append(student_data)
+        goals = GoalList.get_modified_between_dts(student, dt_start, dt_end)
+        goals = [g.get_visible_data(uex_graph) for g in goals if not g.abandoned]
+
+        return_data.append({
+            'email': student.email,
+            'nickname': student.nickname,
+            'goals': goals
+        })
 
     return return_data
 

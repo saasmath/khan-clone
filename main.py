@@ -542,8 +542,9 @@ class PostLogin(request_handler.RequestHandler):
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            self.delete_cookie("fbsr_" + App.facebook_app_id)
-            self.delete_cookie("fbs_" + App.facebook_app_id)
+            if App.facebook_app_id:
+                self.delete_cookie("fbsr_" + App.facebook_app_id)
+                self.delete_cookie("fbs_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
@@ -558,6 +559,12 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+
+        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
+        if App.facebook_app_id:
+            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 class Search(request_handler.RequestHandler):

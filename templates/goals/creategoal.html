@@ -4,14 +4,15 @@
 var graph_dict_data = {{ graph_dict_data }};
 
 function createGoalInitialize() {
-    var knowledgeMap = new KnowledgeMap({
-        'mapCoords': [{{ map_coords.0 }}, {{ map_coords.1 }}, {{ map_coords.2 }}],
+    var mapParams = {
+        'mapCoords': {{ map_coords }},
         'admin': false,
         'hideReview': true,
         'hideDrawer': true,
         'newGoal': true,
         'container': 'goal-choose-exercises'
-    });
+    };
+    var knowledgeMap = new KnowledgeMap(mapParams);
     GoalCreator.init(knowledgeMap);
     knowledgeMap.setNodeClickHandler(GoalCreator.onExerciseClicked);
     GoalCreator.showExercises();

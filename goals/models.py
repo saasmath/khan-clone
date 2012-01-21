@@ -9,6 +9,7 @@ from object_property import ObjectProperty
 from templatefilters import timesince_ago, seconds_to_time_string
 
 from models import Exercise, UserVideo, Video
+import util
 
 
 class Goal(db.Model):
@@ -214,6 +215,23 @@ class GoalList(object):
         query.order('updated_on')
         return query
 
+    @staticmethod
+    def get_created_between_dts(user_data, dt_a, dt_b):
+        query = GoalList.get_goals_query(user_data)
+        query.filter('created_on >=', dt_a)
+        query.filter('created_on <', dt_b)
+        query.order('created_on')
+        return query
+
+    @staticmethod
+    def get_modified_between_dts(user_data, dt_a, dt_b):
+        query_updated = GoalList.get_updated_between_dts(user_data, dt_a, dt_b)
+        query_created = GoalList.get_created_between_dts(user_data, dt_a, dt_b)
+
+        results = util.async_queries([query_updated, query_created], limit=200)
+        goals = set(results[0].get_result()) or set(results[1].get_result())
+        return list(goals)
+
 class GoalObjective(object):
     # Objective status
     progress = 0.0
@@ -243,7 +261,7 @@ class GoalObjective(object):
         if self.progress > 0:
             return "started"
 
-        return ""
+        return "not-started"
 
     @staticmethod
     def from_descriptors(descriptors, user_data):
@@ -317,11 +335,11 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 
     def get_status(self, user_exercise_graph=None):
         if not user_exercise_graph:
-            # fall back to ['', 'started', 'proficient']
+            # fall back to ['not-started', 'started', 'proficient']
             return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
-        status = ""
+        status = "not-started"
         if graph_dict["proficient"]:
             status = "proficient"
         elif graph_dict["struggling"]:

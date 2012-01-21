@@ -295,6 +295,15 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         header_value = cookie_util.set_cookie_value(key, value, max_age, path, domain, secure, httponly, version, comment)
         self.response.headerlist.append(('Set-Cookie', header_value))
 
+    def delete_cookie_including_dot_domain(self, key, path='/', domain=None):
+
+        self.delete_cookie(key, path, domain)
+
+        if domain is None:
+            domain = os.environ["SERVER_NAME"]
+
+        self.delete_cookie(key, path, "." + domain)
+
     def delete_cookie(self, key, path='/', domain=None):
         self.set_cookie(key, '', path=path, domain=domain, max_age=0)
 

@@ -1,10 +1,5 @@
 <li class="objective" style="width: {{objectiveWidth}}%">
-    <a data-id="{{objectiveID}}" class="objective simple-button action-gradient {{type}}
-        {{#if statusCSS}} seethrough exercise-color {{statusCSS}}
-        {{else}}
-          {{#if complete}} complete seethrough exercise-color started {{else}} blue {{/if}}
-        {{/if}}"
-
+    <a data-id="{{objectiveID}}" class="objective {{type}} simple-button seethrough exercise-color {{status}}"
         href="{{url}}"
         data-progress="{{progress}}">
             <span class="objective-description">{{description}}</span>
