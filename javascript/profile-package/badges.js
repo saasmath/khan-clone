@@ -479,6 +479,12 @@ Badges.DisplayCase = Backbone.View.extend({
      * multiple times.
      */
     renderBadgePicker: function() {
+        if (this.fullBadgeList.isEmpty()) {
+            $(this.badgePickerEl).html(
+                    Templates.get("profile.empty-badge-picker")());
+            return;
+        }
+
         var html = [],
             badgeTemplate = Templates.get("profile.badge-compact");
         this.fullBadgeList.each(function(userBadge) {

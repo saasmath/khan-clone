@@ -11,6 +11,13 @@
     opacity: 1.0;
 }
 
+.empty-badge-picker {
+    height: 100px; /* same height as the compact badge */
+
+    display: table-cell;
+    vertical-align: middle;
+}
+
 /* Badges already in the display case are faded/disabled for picking */
 .badge-display-case .achievement-badge-owned.used {
     opacity: 0.6;

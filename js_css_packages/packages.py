@@ -103,6 +103,7 @@ javascript = {
             "badge.handlebars",
             "badge-compact.handlebars",
             "badge-display-case.handlebars",
+            "empty-badge-picker.handlebars",
             "badges.js",
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
