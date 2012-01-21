@@ -13,3 +13,12 @@
 div.envelopeContainer {
     padding: 5px;
 }
+
+.share-container {
+    position: relative;
+    top: 4px;
+}
+
+.modal-header .share-container {
+    left: 9px;
+}
