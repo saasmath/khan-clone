@@ -139,11 +139,11 @@ UserCardView = Backbone.View.extend({
          "mouseenter .avatar-pic-container": "onAvatarHover_",
          "mouseleave .avatar-pic-container": "onAvatarLeave_",
          "change .nickname": "onNicknameChanged_",
-         "click #edit-visibility": "onEditVisibilityCicked_",
          "click #edit-profile": "onEditProfileClicked_",
-         "click #edit-basic-info": "onEditBasicInfoClicked_",
-         "click #edit-display-case": "onEditDisplayCaseClicked_",
-         "click #edit-avatar": "onAvatarClick_",
+         "click .sub_menu #edit-basic-info": "onEditBasicInfoClicked_",
+         "click .sub_menu #edit-display-case": "onEditDisplayCaseClicked_",
+         "click .sub_menu #edit-avatar": "onAvatarClick_",
+         "click .sub_menu #edit-visibility": "onEditVisibilityClicked_",
          "click .edit-visibility": "onEditVisibilityClicked_"
      },
 
@@ -271,16 +271,21 @@ UserCardView = Backbone.View.extend({
      * On a click outside the edit profile submenu,
      * hide the submenu and unbind this handler.
      */
-    boundHideSubMenuFn_: function(e) {
-        var jelSubMenu = $(".sub_menu");
-        for (var node = e.target; node; node = node.parentNode) {
-            if (node === jelSubMenu.get(0)) {
-                // Click inside the submenu somewhere - ignore.
-                return;
-            }
+    getBoundHideSubMenuFn_: function() {
+        if (!this.boundHideSubMenuFn_) {
+            this.boundHideSubMenuFn_ = _.bind(function(e) {
+                var jelSubMenu = $(".sub_menu");
+                for (var node = e.target; node; node = node.parentNode) {
+                    if (node === jelSubMenu.get(0)) {
+                        // Click inside the submenu somewhere - ignore.
+                        return;
+                    }
+                }
+                jelSubMenu.hide();
+                $(document).unbind(e);
+            }, this);
         }
-        jelSubMenu.hide();
-        $(document).unbind(e);
+        return this.boundHideSubMenuFn_;
     },
 
     onEditProfileClicked_: function(evt) {
@@ -288,17 +293,12 @@ UserCardView = Backbone.View.extend({
         var jelSubMenu = $(".sub_menu").toggle();
 
         if (jelSubMenu.is(":visible")) {
-            $(document).bind("click", this.boundHideSubMenuFn_);
+            $(document).bind("click", this.getBoundHideSubMenuFn_());
         } else {
             // Because the edit profile button can also hide the submenu,
             // unbind this handler so they don't pile up.
-            $(document).unbind("click", this.boundHideSubMenuFn_);
+            $(document).unbind("click", this.getBoundHideSubMenuFn_());
         }
-    },
-
-    onEditVisibilityCicked_: function() {
-        // TODO: set public/private flag server side
-        this.$("#edit-visibility img").toggle();
     },
 
     onEditBasicInfoClicked_: function(e) {
@@ -316,11 +316,8 @@ UserCardView = Backbone.View.extend({
     },
 
     onEditVisibilityClicked_: function(e) {
-        var isPublic = this.model.get("isPublic"),
-            attrs = {
-                isPublic: !isPublic
-            };
-        this.model.save(attrs);
+        var isPublic = this.model.get("isPublic");
+        this.model.save({ isPublic: !isPublic });
     },
 
     onIsPublicChanged_: function(model, isPublic) {
@@ -334,6 +331,7 @@ UserCardView = Backbone.View.extend({
                 .addClass("private")
                 .text("Profile is private");
         }
+        jel.effect("bounce");
     }
 
 });
