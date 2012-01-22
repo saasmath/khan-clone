@@ -190,8 +190,25 @@ h2.stories-header {
 .slit-overlay-background {
 }
 
-.tape {
-    /* http://www.2expertsdesign.com/tutorials/how-to-create-a-paper-sticky-note-using-only-css3 */
+.modal-header {
+    background-color: #E9EFDD;
+
+    -webkit-border-top-left-radius: 6px;
+    -webkit-border-top-right-radius: 6px;
+}
+
+.modal-header .tape {
+    display: inline-block;
+    padding: 0 9px;
+
+    position: relative;
+    top: 10px;
+
+    opacity: 0.8;
+    filter:alpha(opacity=80);
+}
+
+.story-container .tape {
     position: absolute;
 
     top: 160px;
@@ -199,6 +216,10 @@ h2.stories-header {
 
     width: 150px;
     height: 35px;
+}
+
+.tape {
+    /* http://www.2expertsdesign.com/tutorials/how-to-create-a-paper-sticky-note-using-only-css3 */
     background-color: white;
 
     text-align: center;
