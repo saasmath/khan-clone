@@ -73,6 +73,10 @@ Stories.SmallView = Backbone.View.extend({
             // should start off the series.
             return "envelope-1";
         }
+        else if (Stories.cRendered == 1) {
+            // Same as above
+            return "envelope-2";
+        }
 
         return this.randomChoice(["envelope-1", "envelope-2", "envelope-3", "envelope-4"]);
     },
