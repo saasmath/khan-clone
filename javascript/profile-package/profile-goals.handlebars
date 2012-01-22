@@ -1,10 +1,10 @@
 {{#if goals}}
-    <div class="student-goals">
+    <div class="student-goals {{colors}}">
     {{#each goals}}
         {{! This element is supposed to be exactly the same as that from
         goalbook-row.handlebars. If you edit this, please also edit the other
         file to maintain consistency. }}
-        <div class="goal pulls" data-id="{{id}}">
+        <div class="goal pulls {{#if completed}}{{#unless abandoned}}complete{{/unless}}{{/if}}" data-id="{{id}}">
             <p class="goal-description">
                 {{#if ../readonly}}
                 <span class="goal-title">{{title}}</span>

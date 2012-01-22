@@ -133,3 +133,13 @@ def static_url(relative_url):
         return relative_url
     else:
         return "http://khan-academy.appspot.com%s" % relative_url
+
+def parse_iso8601(s):
+    return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
+
+def coalesce(fn, s):
+    """Call a function only if the argument is not None"""
+    if s is not None:
+        return fn(s)
+    else:
+        return None

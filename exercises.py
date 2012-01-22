@@ -508,7 +508,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         # Build up problem log for deferred put
         problem_log = models.ProblemLog(
-                key_name="problemlog_%s_%s_%s" % (user_data.key_email, user_exercise.exercise, problem_number),
+                key_name=models.ProblemLog.key_for(user_data, user_exercise.exercise, problem_number),
                 user=user_data.user,
                 exercise=user_exercise.exercise,
                 problem_number=problem_number,
@@ -570,7 +570,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                            'review_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
-                    
+
                     if user_exercise.history_indicates_struggling(struggling_model):
                         bingo('struggling_gained_proficiency_post_struggling')
 
@@ -604,7 +604,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
-                
+
             if user_exercise.is_struggling(struggling_model):
                 bingo('struggling_struggled_binary')
 

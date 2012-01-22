@@ -21,7 +21,7 @@ except Exception, e:
     hipchat_deploy_token = None
 
 try:
-    from secrets import app_engine_username, app_engine_password
+    from secrets_dev import app_engine_username, app_engine_password
 except Exception, e:
     (app_engine_username, app_engine_password) = (None, None)
 
