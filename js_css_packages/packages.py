@@ -119,6 +119,7 @@ javascript = {
             "story.handlebars",
             "story-full.handlebars",
             "seedrandom.js",
+            "events.js",
             "stories.js",
         ]
     },
