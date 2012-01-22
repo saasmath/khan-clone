@@ -4,6 +4,7 @@ var Stories = Stories || {};
 Stories.router = null;
 Stories.views = {};
 Stories.cShown = 0;
+Stories.cRendered = 0;
 
 Stories.render = function(story_data) {
 
@@ -55,6 +56,8 @@ Stories.SmallView = Backbone.View.extend({
                 .addClass(this.randomEnvelope())
                 .click(function() { Stories.navigateTo(model); });
 
+        Stories.cRendered++;
+
         return this;
     },
 
@@ -63,6 +66,14 @@ Stories.SmallView = Backbone.View.extend({
     },
 
     randomEnvelope: function() {
+
+        if (Stories.cRendered == 0) {
+            // Evil dictator override!
+            // I happen to think the first envelope is really pretty and it
+            // should start off the series.
+            return "envelope-1";
+        }
+
         return this.randomChoice(["envelope-1", "envelope-2", "envelope-3", "envelope-4"]);
     },
 
