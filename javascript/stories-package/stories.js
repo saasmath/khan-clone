@@ -122,7 +122,27 @@ Stories.SmallView = Backbone.View.extend({
                             keyboard: true,
                             backdrop: true,
                             show: true
-                        });
+                        })
+                        .find(".modal-body")
+                            .scroll(function() {
+
+                                if (!this.fixedScrollRender) {
+
+                                    // Chrome has an issue with not scrolling
+                                    // content even though the scrollbars are
+                                    // moving. Force a single re-render of the
+                                    // modal dialog on first scroll.
+                                    // 
+                                    // Feel free to enlighten me on the proper
+                                    // fix for this bug...
+                                    var jel = $(this).parents(".modal");
+                                    $(jel).height($(jel).height() + 1);
+                                    $(jel).height($(jel).height() - 1);
+
+                                    this.fixedScrollRender = true;
+                                }
+
+                            });
 
                 // Hide any existing modal dialog
                 jelOld.removeClass("fade").modal("hide");
