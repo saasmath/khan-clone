@@ -138,10 +138,10 @@ h2.stories-header {
 
 .big-tree {
     position: relative;
-    left: -36px;
+    left: -72px;
     top: 17px;
-    width: 375px;
-    height: 302px;
+    width: 419px;
+    height: 338px;
     opacity: 0.75;
     filter:alpha(opacity=75);
 }
