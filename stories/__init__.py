@@ -56,6 +56,17 @@ class ViewStories(request_handler.RequestHandler):
                     story["name"] = filename[:-len(".yaml")]
                     stories.append(story)
 
+        # I think Rayana and Mark's stories are particularly powerful
+        # and set the right tone for the start of this page
+        def prepend_story(name):
+            matches = filter(lambda story: story["name"] == name, stories)
+            if len(matches):
+                stories.remove(matches[0])
+                stories.insert(0, matches[0])
+
+        prepend_story("markh")
+        prepend_story("rayana")
+
         self.render_jinja2_template('stories/stories.html', {
             "stories": stories
         })
