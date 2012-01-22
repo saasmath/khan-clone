@@ -19,7 +19,7 @@ function KnowledgeMapInitGlobals() {
                         Suggested: "/images/node-challenge-suggested.png?" + KA_VERSION
                            }
         },
-        latLngHome: new google.maps.LatLng(-0.064844, 0.736268),
+        coordsHome: { lat: -0.064844, lng: 0.736268, zoom: 9, when: 0 },
         latMin: 90,
         latMax: -90,
         lngMin: 180,
@@ -643,18 +643,20 @@ function KnowledgeMap(params) {
         this.map.mapTypes.set("knowledge", knowledgeMapType);
         this.map.setMapTypeId("knowledge");
 
-        // If mapCoords doesn't exist or the zoom level is less than 0,
-        // just show default home position.
-        if (params.mapCoords && params.mapCoords[2] > KnowledgeMapGlobals.options.minZoom)
-        {
-            this.map.setCenter(new google.maps.LatLng(params.mapCoords[0], params.mapCoords[1]));
-            this.map.setZoom(params.mapCoords[2]);
+        // copy over the defaults
+        var coords = $.extend({}, KnowledgeMapGlobals.coordsHome);
+
+        // overwrite defaults with localStorage values (if any)
+        var localCoords = $.parseJSON( window.localStorage[ "map_coords:"+USERNAME ] || "{}" );
+        $.extend(coords, localCoords);
+
+        // prefer server values if they're more fresh
+        if (params.mapCoords && params.mapCoords.when > coords.when){
+            coords = params.mapCoords;
         }
-        else
-        {
-            this.map.setCenter(KnowledgeMapGlobals.latLngHome);
-            this.map.setZoom(KnowledgeMapGlobals.options.minZoom + 2);
-        }
+
+        this.map.setCenter(new google.maps.LatLng(coords.lat, coords.lng));
+        this.map.setZoom(coords.zoom);
 
         this.layoutGraph();
         this.drawOverlay();
@@ -673,6 +675,8 @@ function KnowledgeMap(params) {
 
         this.giveNasaCredit();
         this.initFilter();
+
+        $(window).on("beforeunload", function(){ self.saveMapCoords(); });
     };
 
     this.setNodeClickHandler = function(handler) {
@@ -879,6 +883,25 @@ function KnowledgeMap(params) {
         });
     };
 
+    this.getMapCoords = function(){
+        var center = this.map.getCenter();
+
+        var coords = {
+            "lat": center.lat(),
+            "lng": center.lng(),
+            "zoom": this.map.getZoom(),
+            "when": +(new Date) // Date.now() not present on ie8
+        };
+
+        return coords
+
+    };
+
+    this.saveMapCoords = function(){
+        // TODO this may not work, could post synchronously to fix, but it's not critical
+        $.post("/savemapcoords", this.getMapCoords());
+    };
+
     this.onIdle = function() {
 
         if (!this.fCenterChanged && !this.fZoomChanged)
@@ -888,12 +911,10 @@ function KnowledgeMap(params) {
         // in case they aren't being rendered at the correct size.
         this.map.panBy(0, 0);
 
-        var center = this.map.getCenter();
-        $.post("/savemapcoords", {
-            "lat": center.lat(),
-            "lng": center.lng(),
-            "zoom": this.map.getZoom()
-        }); // Fire and forget
+        if (window.localStorage && window.JSON){
+            var pos = this.getMapCoords();
+            window.localStorage[ "map_coords:"+USERNAME ] = JSON.stringify(pos);
+        }
     };
 
     this.onClick = function() {

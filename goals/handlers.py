@@ -15,6 +15,7 @@ from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
 from models import UserData, UserExercise, Exercise, Video, VideoLog
 from .models import Goal, GoalList, GoalObjective
+import simplejson as json
 
 class CreateNewGoal(RequestHandler):
 
@@ -29,7 +30,7 @@ class CreateNewGoal(RequestHandler):
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
-            'map_coords': deserializeMapCoords(user_data.map_coords),
+            'map_coords': json.dumps(deserializeMapCoords(user_data.map_coords)),
 
             # Get pregenerated library content from our in-memory/memcache
             # two-layer cache
@@ -146,8 +147,8 @@ class CreateRandomGoalData(RequestHandler):
                             (objective['exercise'].name, count, hints * count))
                         for i in xrange(1, count):
                             attempt_problem(user_data, user_exercise, i, 1,
-                                'TEST', 'TEST', 'TEST', True, hints, 0, "TEST",
-                                'TEST', '0.0.0.0')
+                                'TEST', 'TEST', 'TEST', True, hints, 0, False,
+                                "TEST", 'TEST', '0.0.0.0')
 
                     elif objective['type'] == 'GoalObjectiveWatchVideo':
                         seconds = random.randint(1, 1200)

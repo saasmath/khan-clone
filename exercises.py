@@ -341,7 +341,7 @@ class ViewAllExercises(request_handler.RequestHandler):
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
-            'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
+            'map_coords': json.dumps(knowledgemap.deserializeMapCoords(user_data.map_coords)),
             'selected_nav_link': 'practice',
             'show_review_drawer': show_review_drawer,
         }
@@ -478,7 +478,7 @@ def make_wrong_attempt(user_data, user_exercise):
 
 def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
     attempt_content, sha1, seed, completed, count_hints, time_taken,
-    exercise_non_summative, problem_type, ip_address):
+    review_mode, exercise_non_summative, problem_type, ip_address):
 
     if user_exercise and user_exercise.belongs_to(user_data):
         dt_now = datetime.datetime.now()
@@ -508,7 +508,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         # Build up problem log for deferred put
         problem_log = models.ProblemLog(
-                key_name="problemlog_%s_%s_%s" % (user_data.key_email, user_exercise.exercise, problem_number),
+                key_name=models.ProblemLog.key_for(user_data, user_exercise.exercise, problem_number),
                 user=user_data.user,
                 exercise=user_exercise.exercise,
                 problem_number=problem_number,
@@ -523,6 +523,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 count_attempts=attempt_number,
                 attempts=[attempt_content],
                 ip_address=ip_address,
+                review_mode=review_mode,
         )
 
         if exercise.summative:
@@ -569,7 +570,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                            'review_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
-                    
+
                     if user_exercise.history_indicates_struggling(struggling_model):
                         bingo('struggling_gained_proficiency_post_struggling')
 
@@ -603,7 +604,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
-                
+
             if user_exercise.is_struggling(struggling_model):
                 bingo('struggling_struggled_binary')
 
@@ -656,7 +657,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data, admin=True),
-            'map_coords': (0, 0, 0),
+            'map_coords': knowledgemap.deserializeMapCoords(),
             }
 
         self.render_jinja2_template('exerciseadmin.html', template_values)

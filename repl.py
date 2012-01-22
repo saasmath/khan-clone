@@ -7,6 +7,11 @@ models so that you can do something useful once you're connected.
 
 import optparse
 import os
+import struct
+import fcntl
+import termios
+import signal
+import sys
 
 try:
     import pexpect
@@ -91,6 +96,17 @@ p.expect(prompt)
 
 # useful imports
 p.sendline('from models import *')
+
+# set up initial winsize
+rows, cols = map(int, os.popen('stty size', 'r').read().split())
+p.setwinsize(rows, cols)
+
+# make sure sigwinch get sent to child
+def sigwinch_passthrough(sig, data):
+    s = struct.pack("HHHH", 0, 0, 0, 0)
+    a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s))
+    p.setwinsize(a[0], a[1])
+signal.signal(signal.SIGWINCH, sigwinch_passthrough)
 
 # finally, hand off control to user
 p.interact()

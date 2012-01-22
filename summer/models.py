@@ -54,7 +54,7 @@ class SummerStudent(db.Model):
     self_applied = db.BooleanProperty()
 
     def to_dict(self):
-        return dict([(p, unicode(getattr(self, p))) for p in self.properties()])
+        return dict([(p, getattr(self, p)) for p in self.properties()])
 
 class SummerParentData(db.Model):
     first_name = db.StringProperty()
