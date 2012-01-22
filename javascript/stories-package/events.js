@@ -29,6 +29,7 @@ $(function() {
                 "/stories/submit",
                 {
                     "story": $("#story").val(),
+                    "name": $("#name").val(),
                     "share": $("#shareAllow").is(":checked") ? "1": "0"
                 },
                 function() {

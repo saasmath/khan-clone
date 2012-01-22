@@ -16,12 +16,17 @@ class SubmitStory(request_handler.RequestHandler):
         do well and email management is a pain."""
 
         story = self.request_string("story")
+        name = self.request_string("name")
         share_allowed = self.request_bool("share")
 
         if len(story) == 0:
             return
 
         subject = "Testimonial story submitted"
+
+        if name:
+            subject += " (by \"%s\")" % name
+
         if share_allowed:
             subject += " (sharing with others allowed)"
         else:
