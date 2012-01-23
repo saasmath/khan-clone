@@ -1,5 +1,6 @@
-<div class="story rotate">
+<div class="story {{#if disabled}}disabled{{else}}rotate{{/if}}">
     <div class="envelope envelope-background">
+        {{#unless empty}}
         <div class="content-teaser">
             {{#if youtube_id}}
             <div class="youtube-thumbnail-container">
@@ -11,10 +12,18 @@
             &ldquo;{{{ teaser_html }}}&hellip;&rdquo;
             {{/if}}
         </div>
+        {{/unless}}
         <div class="envelope envelope-foreground">&nbsp;</div>
     </div>
 </div>
 
 <div class="slit-overlay">&nbsp;</div>
 <div class="slit-overlay-background">&nbsp;</div>
-<div class="tape">{{ author }}<br>{{ date }}</div>
+
+{{#if author }}
+<div class="tape envelope-under">{{ author }}<br>{{ date }}</div>
+{{else}}
+<div class="envelope-under">
+    <a href="#" class="btn large primary share-story-btn-bottom">Share your story</a>
+</div>
+{{/if}}

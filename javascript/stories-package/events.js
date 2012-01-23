@@ -16,6 +16,20 @@ $(function() {
         e.preventDefault();
     });
 
+    $(".share-story-btn-bottom").click(function(e) {
+
+        $('html, body').animate({
+            scrollTop: 0
+        }, 250, function() {
+            if (!$(".stories-submit").is(":visible")) {
+                $(".share-story-btn").trigger("click");
+            }
+        });
+
+        e.preventDefault();
+
+    });
+
     $(".submit-story-btn").click(function(e) {
 
         // Submit story

@@ -87,8 +87,13 @@
                 "date": "{{ story.date|strip|escapejs }}",
                 "author": "{{ story.author|strip|escapejs }}",
                 "name": "{{ story.name|strip|escapejs }}",
-            }{% if not loop.last %},{%endif%}
+            },
             {% endfor %}
+            {
+                "empty": true,
+                "disabled": true,
+                "envelope": "envelope-1"
+            }
         ]
     });
 </script>

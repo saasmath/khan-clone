@@ -52,9 +52,10 @@ Stories.SmallView = Backbone.View.extend({
             .addClass("span-one-third")
             .addClass("story-container")
             .find(".story")
-                .addClass(this.randomRotation())
-                .addClass(this.randomEnvelope())
-                .click(function() { Stories.navigateTo(model); });
+                .addClass(this.model.envelope || this.randomEnvelope())
+                .not(".disabled")
+                    .addClass(this.randomRotation())
+                    .click(function() { Stories.navigateTo(model); });
 
         Stories.cRendered++;
 

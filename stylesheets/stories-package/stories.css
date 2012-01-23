@@ -31,6 +31,12 @@ body {
     padding-top: 45px;
 }
 
+a.btn:hover,
+a.btn:focus {
+    color: #DDD;
+    text-decoration: none;
+}
+
 .stories-footer {
     text-align: center;
 }
@@ -51,14 +57,6 @@ body {
 .stories-header h2
 {
     color: #DDD;
-}
-
-.stories-header a:hover,
-.stories-header a:focus,
-.stories-submit a:hover,
-.stories-submit a:focus {
-    color: #DDD;
-    text-decoration: none;
 }
 
 .stories-submit {
@@ -155,7 +153,6 @@ h2.stories-header {
     padding: 18px;
     position: relative;
     height: 204px;
-    cursor: pointer;
 
     -webkit-transition: -webkit-transform .3s ease-in-out;
     -moz-transition: -moz-transform .3s ease-in-out;
@@ -208,7 +205,7 @@ h2.stories-header {
     filter:alpha(opacity=80);
 }
 
-.story-container .tape {
+.story-container .envelope-under {
     position: absolute;
 
     top: 160px;
@@ -336,6 +333,10 @@ h2.stories-header {
     background: url('/images/stories/envelope-4-back-foreground.png') no-repeat;
 }
 /* End envelope 4 */
+
+.story.rotate {
+    cursor: pointer;
+}
 
 /* Rotation negative 6 */
 .story.rotate-neg-6:hover {
