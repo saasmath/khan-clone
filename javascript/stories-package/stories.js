@@ -42,7 +42,7 @@ Stories.render = function(story_data) {
 
 Stories.SmallView = Backbone.View.extend({
 
-    template: Templates.get( "stories.story" ),
+    template: Templates.get("stories.story"),
 
     render: function(ix) {
         var model = this.model;
@@ -148,7 +148,7 @@ Stories.SmallView = Backbone.View.extend({
                                     // content even though the scrollbars are
                                     // moving. Force a single re-render of the
                                     // modal dialog on first scroll.
-                                    // 
+                                    //
                                     // Feel free to enlighten me on the proper
                                     // fix for this bug...
                                     var jel = $(this).parents(".modal");
@@ -168,13 +168,13 @@ Stories.SmallView = Backbone.View.extend({
         }
         , 1);
 
-    },
+    }
 
 });
 
 Stories.FullView = Backbone.View.extend({
 
-    template: Templates.get( "stories.story-full" ),
+    template: Templates.get("stories.story-full"),
 
     render: function() {
         var model = this.model;
