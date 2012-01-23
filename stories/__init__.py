@@ -73,6 +73,12 @@ class ViewStories(request_handler.RequestHandler):
         prepend_story("markh")
         prepend_story("rayana")
 
+        # Anonymous stories aren't quite as person, move 'em to the back
+        anonymous_stories = filter(lambda story: story["author"].lower() == "anonymous", stories)
+        for anonymous_story in anonymous_stories:
+            stories.remove(anonymous_story)
+            stories.append(anonymous_story)
+
         self.render_jinja2_template('stories/stories.html', {
             "stories": stories
         })
