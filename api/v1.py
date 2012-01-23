@@ -220,7 +220,7 @@ def topic_exercises(topic_id, version_id = None):
 @route("/api/v1/topictree", methods=["GET"])
 @etag(lambda version_id = None: version_id) 
 @jsonp
-@decompress # too big even with compression ... need to add a datastore layer
+@decompress 
 @layer_cache.cache_with_key_fxn(
     (lambda version_id = None: "api_topictree_%s_%s" % (version_id, 
         models.Setting.topic_tree_version())        
@@ -231,6 +231,23 @@ def topic_exercises(topic_id, version_id = None):
 def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/topictree/with_hidden", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/topictree/with_hidden", methods=["GET"])
+@route("/api/v1/topictree/with_hidden", methods=["GET"])
+@developer_required
+@jsonp
+@decompress
+@layer_cache.cache_with_key_fxn(
+    (lambda version_id = None, topic_id = "root": "api_topictree_export_%s_%s" % (version_id, 
+        models.Setting.topic_tree_version())        
+        if version_id is None or version_id == "default" else None),
+    layer=layer_cache.Layers.Memcache)
+@compress
+@jsonify
+def topictree_export(version_id = None, topic_id = "root"):
+    version = models.TopicVersion.get_by_id(version_id)
+    return models.Topic.get_by_id(topic_id, version).make_tree(include_hidden=True)
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
