@@ -28,7 +28,7 @@ body {
 }
 
 .left-header-container {
-    padding-top: 45px;
+    padding-top: 30px;
 }
 
 a.btn:hover,
@@ -39,6 +39,7 @@ a.btn:focus {
 
 .stories-footer {
     text-align: center;
+    padding: 18px;
 }
 
 .stories-header {
@@ -49,16 +50,18 @@ a.btn:focus {
 
 .stories-header h1 {
     margin-bottom: 45px;
-    font-size: 54px;
-    line-height: 54px;
+    font-size: 62px;
+    line-height: 62px;
+    font-weight: bold;
 }
 
 .stories-header h1, 
 .stories-header h2
 {
     color: #DDD;
+    font-family: "MuseoSans500", Helvetica Nueue, Helvetica, sans-serif;
+    font-weight: normal;
 }
-
 .stories-submit {
     background: #E6E6E6 url('/images/story-submit-bg-tile.png');
     height: 290px;
@@ -150,7 +153,7 @@ h2.stories-header {
 
 .story {
     float: left;
-    padding: 18px;
+    padding-bottom: 20px;
     position: relative;
     height: 204px;
 
@@ -168,7 +171,7 @@ h2.stories-header {
 .slit-overlay {
     background: transparent url('/images/stories/slit.png') no-repeat top left;
     position: relative;
-    left: 9px;
+    left: -6px;
     top: 140px;
     width: 319px;
     height: 6px;
@@ -177,7 +180,7 @@ h2.stories-header {
 .slit-overlay-background {
     background: #E9EFDD;
     position: relative;
-    left: 0px;
+    left: -15px;
     top: 140px;
     width: 327px;
     height: 95px;
@@ -209,7 +212,8 @@ h2.stories-header {
     position: absolute;
 
     top: 160px;
-    left: 90px;
+    margin-left: -75px; /* Half the width */
+    left: 50%;
 
     width: 150px;
     height: 35px;
@@ -231,11 +235,6 @@ h2.stories-header {
     -moz-box-shadow: 0px 0px 1px 0px #cccccc;
     -o-box-shadow: 0px 0px 1px 0px #cccccc;
     box-shadow: 0px 0px 1px 0px #cccccc;
-
-    -webkit-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
-    -moz-transform: rotate(0deg) skew(0,0) translate(0%,-5px); /* Moz tape rotation has font issues */
-    -o-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
-    transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
 }
 
 /* Envelope 1 */
@@ -447,7 +446,6 @@ h2.stories-header {
     top: -20px;
     overflow: hidden;
 
-    font-size: 16px;
     margin: 12px;
     height: 145px;
 
