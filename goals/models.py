@@ -9,6 +9,7 @@ from object_property import ObjectProperty
 from templatefilters import timesince_ago, seconds_to_time_string
 
 from models import Exercise, UserVideo, Video
+import util
 
 
 class Goal(db.Model):
@@ -24,8 +25,8 @@ class Goal(db.Model):
     # we distinguish finished and abandoned goals with this property
     abandoned = db.BooleanProperty(indexed=False)
 
-    created_on = db.DateTimeProperty(auto_now_add=True, indexed=False)
-    updated_on = db.DateTimeProperty(auto_now=True, indexed=False)
+    created_on = db.DateTimeProperty(auto_now_add=True)
+    updated_on = db.DateTimeProperty(auto_now=True)
 
     def get_visible_data(self, user_exercise_graph=None):
         data = dict(
@@ -41,9 +42,7 @@ class Goal(db.Model):
 
         if self.completed:
             data['completed_ago'] = timesince_ago(self.completed_on)
-            td = self.completed_on - self.created_on
-            completed_seconds = (td.seconds + td.days * 24 * 3600)
-            data['completed_time'] = seconds_to_time_string(completed_seconds)
+            data['completed_time'] = self.completed_time
 
         data['objectives'] = [dict(
                 type=obj.__class__.__name__,
@@ -113,6 +112,34 @@ class Goal(db.Model):
 
         return changed
 
+    @property
+    def completed_time(self):
+        td = self.completed_on - self.created_on
+        s = td.seconds + td.days * 24 * 3600
+        if td.microseconds > 0:
+            s += 1
+        return seconds_to_time_string(s)
+
+    @classmethod
+    def from_json(cls, json, user_data):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
+        from util import parse_iso8601, coalesce
+        objectives = [GoalObjective.from_json(j) for j in json['objectives']]
+        return cls(
+            key=db.Key.from_path('Goal', json['id'], parent=user_data.key()),
+            title=json['title'],
+            completed=bool(json['completed']),
+            completed_on=coalesce(parse_iso8601, json['completed']),
+            abandoned=bool(json['abandoned']),
+            created_on=coalesce(parse_iso8601, json['created']),
+            updated_on=coalesce(parse_iso8601, json['updated']),
+            objectives=objectives
+        )
+
 # todo: think about moving these static methods to UserData. Almost all have
 # user_data as the first argument.
 class GoalList(object):
@@ -180,6 +207,30 @@ class GoalList(object):
             db.put(changes + user_changes)
         return changes
 
+    @staticmethod
+    def get_updated_between_dts(user_data, dt_a, dt_b):
+        query = GoalList.get_goals_query(user_data)
+        query.filter('updated_on >=', dt_a)
+        query.filter('updated_on <', dt_b)
+        query.order('updated_on')
+        return query
+
+    @staticmethod
+    def get_created_between_dts(user_data, dt_a, dt_b):
+        query = GoalList.get_goals_query(user_data)
+        query.filter('created_on >=', dt_a)
+        query.filter('created_on <', dt_b)
+        query.order('created_on')
+        return query
+
+    @staticmethod
+    def get_modified_between_dts(user_data, dt_a, dt_b):
+        query_updated = GoalList.get_updated_between_dts(user_data, dt_a, dt_b)
+        query_created = GoalList.get_created_between_dts(user_data, dt_a, dt_b)
+
+        results = util.async_queries([query_updated, query_created], limit=200)
+        goals = set(results[0].get_result()) or set(results[1].get_result())
+        return list(goals)
 
 class GoalObjective(object):
     # Objective status
@@ -210,7 +261,7 @@ class GoalObjective(object):
         if self.progress > 0:
             return "started"
 
-        return ""
+        return "not-started"
 
     @staticmethod
     def from_descriptors(descriptors, user_data):
@@ -228,6 +279,29 @@ class GoalObjective(object):
                 objs.append(GoalObjectiveAnyVideo(description="Any video"))
         return objs
 
+    @classmethod
+    def from_json(cls, json):
+        '''This method exists for testing convenience only. It's called only
+        by code that runs in exclusively in development mode. Do not rely on
+        this method in production code. If you need to break this code to
+        implement some new feature, feel free!
+        '''
+        # determine what subclass we need
+        klass_str = json['type']
+        if klass_str not in [c.__name__ for c in cls.__subclasses__()]:
+            raise "Invalid class %s" % klass_str
+        klass = eval(klass_str)
+
+        # create an instance of the objective, but don't call it's __init__
+        objective = klass.__new__(klass)
+
+        # call our custom init instead
+        objective.init_from_json(json)
+        return objective
+
+    def init_from_json(self, json):
+        self.description = json['description']
+        self.progress = json['progress']
 
 class GoalObjectiveExerciseProficiency(GoalObjective):
     # Objective definition (Chosen at goal creation time)
@@ -237,6 +311,10 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
         self.exercise_name = exercise.name
         self.description = exercise.display_name
         self.progress = user_data.get_or_insert_exercise(exercise).progress
+
+    def init_from_json(self, json):
+        super(GoalObjectiveExerciseProficiency, self).init_from_json(json)
+        self.exercise_name = json['internal_id']
 
     def url(self):
         exercise = Exercise.get_by_name(self.exercise_name)
@@ -257,11 +335,11 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 
     def get_status(self, user_exercise_graph=None):
         if not user_exercise_graph:
-            # fall back to ['', 'started', 'proficient']
+            # fall back to ['not-started', 'started', 'proficient']
             return super(GoalObjectiveExerciseProficiency, self).get_status()
 
         graph_dict = user_exercise_graph.graph_dict(self.exercise_name)
-        status = ""
+        status = "not-started"
         if graph_dict["proficient"]:
             status = "proficient"
         elif graph_dict["struggling"]:
@@ -273,6 +351,10 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 class GoalObjectiveAnyExerciseProficiency(GoalObjective):
     # which exercise fulfilled this objective, set upon completion
     exercise_name = None
+
+    def init_from_json(self, json):
+        super(GoalObjectiveAnyExerciseProficiency, self).init_from_json(json)
+        self.exercise_name = json['internal_id'] or None
 
     def url(self):
         if self.exercise_name:
@@ -305,6 +387,11 @@ class GoalObjectiveWatchVideo(GoalObjective):
         else:
             self.progress = 0.0
 
+    def init_from_json(self, json):
+        super(GoalObjectiveWatchVideo, self).init_from_json(json)
+        self.video_readable_id = json['internal_id']
+        self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
+
     def url(self):
         return Video.get_relative_url(self.video_readable_id)
 
@@ -323,6 +410,12 @@ class GoalObjectiveAnyVideo(GoalObjective):
     # which video fulfilled this objective, set upon completion
     video_key = None
     video_readable_id = None
+
+    def init_from_json(self, json):
+        super(GoalObjectiveAnyVideo, self).init_from_json(json)
+        self.video_readable_id = json['internal_id'] or None
+        if self.video_readable_id:
+            self.video_key = Video.get_for_readable_id(self.video_readable_id).key()
 
     def url(self):
         if self.video_readable_id:

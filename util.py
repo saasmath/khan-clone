@@ -42,18 +42,19 @@ def get_current_user_id_from_oauth_map(oauth_map):
 
     return user_id
 
-# _get_current_user_from_cookies_unsafe is labeled unsafe because it should
-# never be used in our JSONP-enabled API. All calling code should just use _get_current_user.
+# get_current_user_from_cookies_unsafe is labeled unsafe because it should
+# never be used in our JSONP-enabled API. All calling code should just use get_current_user_id.
 def get_current_user_id_from_cookies_unsafe():
     user = users.get_current_user()
 
-    if user: #if we have a google account
+    if user: # if we have a google account
         user_id = "http://googleid.khanacademy.org/" + user.user_id()
-    else: #if not a google account, try facebook
+    else: # if not a google account, try facebook
         user_id = facebook_util.get_current_facebook_user_id_from_cookies()
 
-    if not user_id: #if we don't have a user_id, then it's not facebook or google
+    if not user_id: # if we don't have a user_id, then it's not facebook or google
         user_id = get_phantom_user_id_from_cookies()
+
     return user_id
 
 def is_phantom_user(user_id):
@@ -155,6 +156,9 @@ def clone_entity(e, **extra_args):
     props.update(extra_args)
     return klass(**props)
 
+def parse_iso8601(s):
+    return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
+
 def prefetch_refprops(entities, *props):
     """http://blog.notdot.net/2010/01/ReferenceProperty-prefetching-in-App-Engine
     Loads referenced models defined by the given model properties
@@ -175,4 +179,12 @@ def prefetch_refprops(entities, *props):
     for (entity, prop), ref_key in zip(fields, ref_keys_with_none):
         if ref_key is not None:
             prop.__set__(entity, ref_entities[ref_key])
-    return entities 
+    return entities
+
+def coalesce(fn, s):
+    """Call a function only if the argument is not None"""
+    if s is not None:
+        return fn(s)
+    else:
+        return None
+

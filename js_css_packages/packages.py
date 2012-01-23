@@ -53,6 +53,7 @@ javascript = {
             "goal-new-custom-dialog.handlebars",
             "goal-create.handlebars",
             "goals.js",
+            "goal-new.js",
 			"topics.js"
         ]
     },
@@ -113,6 +114,16 @@ javascript = {
         "files": [
             "studentlists.js",
             "classprofile.js",
+        ]
+    },
+    "stories": {
+        "files": [
+            "bootstrap-modal.js",
+            "story.handlebars",
+            "story-full.handlebars",
+            "seedrandom.js",
+            "events.js",
+            "stories.js",
         ]
     },
     "exercises": {
@@ -212,6 +223,12 @@ stylesheets = {
         "files": [
             "viewstudentlists.css",
             "viewclassprofile.css",
+        ]
+    },
+    "stories": {
+        "files": [
+            "bootstrap.css",
+            "stories.css",
         ]
     },
     "exercises": {

@@ -6,6 +6,7 @@ from google.appengine.api import users
 
 import models
 import request_cache
+from app import App
 
 def admin_only(method):
     '''Decorator that requires a admin account.'''
@@ -52,3 +53,22 @@ def developer_only(method):
 
     return wrapper
 
+def dev_server_only(method):
+    '''Decorator that prevents a handler from working in production'''
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if App.is_dev_server:
+            return method(self, *args, **kwargs)
+        else:
+            user_data = models.UserData.current()
+            user_id = user_data.user_id or None
+            logging.warning(
+                "Attempt by %s to access production restricted page" % user_id)
+
+            self.response.clear()
+            self.response.set_status(501)  # not implemented
+            self.response.set_message = "Method only allowed on dev server"
+            return
+
+    return wrapper

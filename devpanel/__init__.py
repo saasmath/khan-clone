@@ -16,30 +16,69 @@ import gdata.youtube.service
 import urllib
 import csv
 
-class Email(request_handler.RequestHandler):
+class Panel(request_handler.RequestHandler):
 
     @user_util.developer_only
-    @ensure_xsrf_cookie
     def get(self):
-        current_email = self.request.get('curremail') #email that is currently used 
-        new_email = self.request.get('newemail') #email the user wants to change to
-        swap = self.request.get('swap') #Are we changing emails?
-        
+        self.render_jinja2_template('devpanel/panel.html', { "selected_id": "panel" })
 
-        currdata = UserData.get_from_user_input_email(current_email)
-        newdata = UserData.get_from_user_input_email(new_email)
-        
-        if swap and currdata: #are we swapping? make sure account exists
-            currdata.current_user = users.User(new_email)
-            currdata.user_email = new_email
-            if newdata: #delete old account 
-                currdata.user_id = newdata.user_id
-                newdata.delete()
-            currdata.put()
+class MergeUsers(request_handler.RequestHandler):
 
-        template_values = {'App' : App, 'curremail': current_email, 'newemail':  new_email, 'currdata': currdata, 'newdata': newdata, "properties": UserData.properties()}
+    @user_util.developer_only
+    def get(self):
 
-        self.render_jinja2_template('devemailpanel.html', template_values)
+        source = self.request_user_data("source_email")
+        target = self.request_user_data("target_email")
+
+        merged = self.request_bool("merged", default=False)
+        merge_error = ""
+
+        if not merged and bool(source) != bool(target):
+            merge_error = "Both source and target user emails must correspond to existing accounts before they can be merged."
+
+        template_values = {
+                "selected_id": "users",
+                "source": source,
+                "target": target,
+                "merged": merged,
+                "merge_error": merge_error,
+        }
+
+        self.render_jinja2_template("devpanel/mergeusers.html", template_values)
+
+    @user_util.developer_only
+    def post(self):
+
+        if not self.request_bool("confirm", default=False):
+            self.get()
+            return
+
+        source = self.request_user_data("source_email")
+        target = self.request_user_data("target_email")
+
+        merged = False
+
+        if source and target:
+
+            old_source_email = source.email
+
+            # Make source the new official user, because it has all the historical data.
+            # Just copy over target's identifying properties.
+            source.current_user = target.current_user
+            source.user_email = target.user_email
+            source.user_nickname = target.user_nickname
+            source.user_id = target.user_id
+
+            # Put source, which gives it the same identity as target 
+            source.put()
+
+            # Delete target
+            target.delete()
+
+            self.redirect("/devadmin/emailchange?merged=1&source_email=%s&target_email=%s" % (old_source_email, target.email))
+            return
+
+        self.redirect("/devadmin/emailchange")
         
 class Manage(request_handler.RequestHandler):
 
@@ -48,9 +87,12 @@ class Manage(request_handler.RequestHandler):
     def get(self):
         developers = UserData.all()
         developers.filter('developer = ', True).fetch(1000)
-        template_values = { "developers": developers }
+        template_values = { 
+            "developers": developers,
+            "selected_id": "devs",
+        }
 
-        self.render_jinja2_template('managedevs.html', template_values) 
+        self.render_jinja2_template('devpanel/devs.html', template_values) 
         
 class ManageCoworkers(request_handler.RequestHandler):
 
@@ -66,10 +108,11 @@ class ManageCoworkers(request_handler.RequestHandler):
 
         template_values = {
             "user_data_coach": user_data_coach,
-            "user_data_coworkers": user_data_coworkers
+            "user_data_coworkers": user_data_coworkers,
+            "selected_id": "coworkers",
         }
 
-        self.render_jinja2_template("managecoworkers.html", template_values)
+        self.render_jinja2_template("devpanel/coworkers.html", template_values)
         
 class CommonCore(request_handler.RequestHandler):
     
@@ -137,7 +180,8 @@ class CommonCore(request_handler.RequestHandler):
         template_values = {
             "token" : token,
             "cc_videos" : cc_videos,
-            "auth_sub_url" : auth_sub_url
+            "auth_sub_url" : auth_sub_url,
+            "selected_id": "commoncore",
         }
         
-        self.render_jinja2_template("commoncore.html", template_values)
+        self.render_jinja2_template("devpanel/commoncore.html", template_values)

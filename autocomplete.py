@@ -15,7 +15,7 @@ def video_title_dicts(version_number=None):
         "key": str(video.key()),
         "ka_url": "/video/%s" % video.readable_id,
         "id": video.readable_id
-    }, Video.get_all_live(version=version))
+    }, [v for v in Video.get_all_live(version=version) if v is not None])
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "url_title_dicts_%s" % (
@@ -48,6 +48,4 @@ def topic_title_dicts(version_number=None):
         "ka_url": topic.ka_url,
         "id": topic.id
     },  Topic.get_content_topics(version=version))
-
-
 

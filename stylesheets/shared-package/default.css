@@ -1939,6 +1939,50 @@ ul.ui-autocomplete .ui-menu-item a span.exercise {
     .achievement-badge.category-0 #badge-icon {
         margin-top: 1px;
     }
+
+    .achievement-badge .add-goal {
+        background-color: #89B908;
+        position: absolute;
+        top: 7px;
+        right: 14px;
+        -webkit-border-radius: 6px;
+        -moz-border-radius: 6px;
+        -ms-border-radius: 6px;
+        -o-border-radius: 6px;
+        border-radius: 6px;
+        -webkit-transition: right 250ms ease-in-out, width 250ms ease-in-out, top 450ms ease-in-out;
+        -moz-transition: right 250ms ease-in-out, width 250ms ease-in-out, top 450ms ease-in-out;
+        -ms-transition: right 250ms ease-in-out, width 250ms ease-in-out, top 450ms ease-in-out;
+        -o-transition: right 250ms ease-in-out, width 250ms ease-in-out, top 450ms ease-in-out;
+        transition: right 250ms ease-in-out, width 250ms ease-in-out, top 450ms ease-in-out;
+        cursor: pointer;
+        padding: 0 12px 0 6px;
+        color: white;
+        font-weight: bold;
+    }
+    .achievement-badge:hover .add-goal {
+        right:46px;
+    }
+    .achievement-badge .add-goal.success, .achievement-badge .add-goal.failure {
+        right:5px;
+        padding-right:6px;
+        cursor: default;
+    }
+    .achievement-badge .add-goal.failure {
+        background-color:red;
+        top:27px;
+    }
+    .achievement-badge .energy-points-badge {
+        -webkit-transition: top 250ms ease-in-out;
+        -moz-transition: top 250ms ease-in-out;
+        -ms-transition: top 250ms ease-in-out;
+        -o-transition: top 250ms ease-in-out;
+        transition: top 250ms ease-in-out;
+    }
+    .achievement-badge .energy-points-badge.goal-added{
+        top:25px;
+    }
+
 .achievement-badges-container .achievement-badge {
     float: left;
 }
@@ -3768,11 +3812,6 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
   padding-left: 14px;
 }
 
-#devpanel td{
-    border:black 2px solid;
-    padding:3px;
-}
-
 .images-email {
   background-image: url(/images/email.png); /*! data-uri(/images/email.png) */
   width: 16px;
@@ -3780,7 +3819,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 }
 
 #devpanel {
-   margin: 0px auto;
+   margin: 9px auto;
    width:500px;
 }
 

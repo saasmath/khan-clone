@@ -141,6 +141,9 @@ def static_url(relative_url):
 def linebreaksbr(s):
     return unicode(s).replace('\n', '<br />')
 
+def linebreaksbr_js(s):
+    return unicode(s).replace('\\u000A', '<br />')
+
 def linebreaksbr_ellipsis(content, ellipsis_content = "&hellip;"):
 
     # After a specified number of linebreaks, apply span with a CSS class

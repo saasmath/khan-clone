@@ -44,6 +44,8 @@ import paypal
 import smarthistory
 import topics
 import goals.handlers
+import stories
+import summer
 
 import models
 from models import UserData, Video, Url, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog, Topic
@@ -65,6 +67,7 @@ from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from importer.handlers import ImportHandler
 from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
@@ -481,8 +484,9 @@ class PostLogin(request_handler.RequestHandler):
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            self.delete_cookie("fbsr_" + App.facebook_app_id)
-            self.delete_cookie("fbs_" + App.facebook_app_id)
+            if App.facebook_app_id:
+                self.delete_cookie("fbsr_" + App.facebook_app_id)
+                self.delete_cookie("fbs_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
@@ -497,6 +501,12 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+
+        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
+        if App.facebook_app_id:
+            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 class Search(request_handler.RequestHandler):
@@ -676,6 +686,7 @@ application = webapp2.WSGIApplication([
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
+    ('/about/discovery-lab', util_about.ViewDiscoveryLab ),
     ('/about/tos', ViewTOS ),
     ('/about/api-tos', ViewAPITOS),
     ('/about/privacy-policy', ViewPrivacyPolicy ),
@@ -689,6 +700,9 @@ application = webapp2.WSGIApplication([
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
+
+    ('/stories/submit', stories.SubmitStory),
+    ('/stories/?.*', stories.ViewStories),
 
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
@@ -731,7 +745,8 @@ application = webapp2.WSGIApplication([
     ('/admin/changeemail', ChangeEmail),
     ('/admin/realtimeentitycount', RealtimeEntityCount),
 
-    ('/devadmin/emailchange', devpanel.Email),
+    ('/devadmin', devpanel.Panel),
+    ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/commoncore', devpanel.CommonCore),
@@ -744,8 +759,6 @@ application = webapp2.WSGIApplication([
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
 
-    ('/createstudentlist', coaches.CreateStudentList),
-    ('/deletestudentlist', coaches.DeleteStudentList),
     ('/removestudentfromlist', coaches.RemoveStudentFromList),
     ('/addstudenttolist', coaches.AddStudentToList),
 
@@ -754,7 +767,6 @@ application = webapp2.WSGIApplication([
     ('/sharedpoints', coaches.ViewSharedPoints),
     ('/classreport', coaches.ViewClassReport),
     ('/classtime', coaches.ViewClassTime),
-    ('/charts', coaches.ViewCharts),
 
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
@@ -804,6 +816,7 @@ application = webapp2.WSGIApplication([
 
     ('/toolkit', RedirectToToolkit),
 
+    ('/paypal/autoreturn', paypal.AutoReturn),
     ('/paypal/ipn', paypal.IPN),
 
     ('/badges/view', util_badges.ViewBadges),
@@ -838,12 +851,22 @@ application = webapp2.WSGIApplication([
     ('/goals/new', goals.handlers.CreateNewGoal),
     ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
 
+    # Summer Discovery Camp application/registration
+    ('/summer/application', summer.Application),
+    ('/summer/application-status', summer.Status),
+    ('/summer/getstudent', summer.GetStudent),
+    ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
+    ('/summer/paypal-ipn', summer.PaypalIPN),
+    ('/summer/admin/download', summer.Download),
+
     ('/robots.txt', robots.RobotsTxt),
 
     ('/r/.*', redirects.Redirect),
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),
     ('/redirects/remove', redirects.Remove),
+
+    ('/importer', ImportHandler),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),

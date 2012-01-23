@@ -162,6 +162,16 @@ indexes:
   - name: date
     direction: desc
 
+- kind: Goal
+  ancestor: yes
+  properties:
+  - name: created_on
+
+- kind: Goal
+  ancestor: yes
+  properties:
+  - name: updated_on
+
 - kind: HourlyActivityLog
   properties:
   - name: user

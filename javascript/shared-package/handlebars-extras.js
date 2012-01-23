@@ -13,3 +13,14 @@ Handlebars.registerHelper("opttr", function(options) {
     });
     return new Handlebars.SafeString(attrs.join(" "));
 });
+
+Handlebars.registerHelper("repeat", function(n, options) {
+    var fn = options.fn;
+    var ret = "";
+
+    for (var i = 0; i < n; i++) {
+        ret = ret + fn();
+    }
+
+    return ret;
+});

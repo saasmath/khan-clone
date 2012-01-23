@@ -48,11 +48,13 @@ jinja2.default_config = {
     }, 
     "filters": {
         "urlencode": lambda s: quote_plus(s or ""),
+        "strip": lambda s: (s or "").strip(),
         "escapejs": templatefilters.escapejs,
         "phantom_login_link": templatefilters.phantom_login_link,
         "slugify": templatefilters.slugify,
         "pluralize": templatefilters.pluralize,
         "linebreaksbr": templatefilters.linebreaksbr,
+        "linebreaksbr_js": templatefilters.linebreaksbr_js,
         "linebreaksbr_ellipsis": templatefilters.linebreaksbr_ellipsis,
         "youtube_timestamp_links": templatefilters.youtube_timestamp_links,
         "timesince_ago": templatefilters.timesince_ago,
