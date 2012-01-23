@@ -512,11 +512,9 @@ class UserExercise(db.Model):
         util_notify.update(user_data, self, False, True)
 
         if self.exercise in UserData.conversion_test_hard_exercises:
-            bingo(['hints_gained_proficiency_hard_binary',
-                   'review_gained_proficiency_hard_binary'])
+            bingo('hints_gained_proficiency_hard_binary')
         elif self.exercise in UserData.conversion_test_easy_exercises:
-            bingo(['hints_gained_proficiency_easy_binary',
-                   'review_gained_proficiency_easy_binary'])
+            bingo('hints_gained_proficiency_easy_binary')
 
     @classmethod
     def from_json(cls, json, user_data):
