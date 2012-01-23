@@ -69,6 +69,7 @@ class ViewStories(request_handler.RequestHandler):
                 stories.remove(matches[0])
                 stories.insert(0, matches[0])
 
+        prepend_story("dan")
         prepend_story("markh")
         prepend_story("rayana")
 
