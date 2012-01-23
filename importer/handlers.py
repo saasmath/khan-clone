@@ -15,8 +15,12 @@ from goals.models import Goal
 from api.jsonify import jsonify
 from api.auth.tests.test import TestOAuthClient
 from oauth_provider.oauth import OAuthToken
-import secrets, secrets_dev
-
+try:
+    import secrets, secrets_dev
+except:
+    class secrets(object):
+        pass
+    secrets_dev = secrets
 
 class ImportHandler(RequestHandler):
     """Import data for a particular user to the dev datastore from production.
@@ -45,6 +49,12 @@ class ImportHandler(RequestHandler):
 
     @dev_server_only
     def get(self):
+        if not hasattr(secrets, 'ka_api_consumer_key') or    \
+           not hasattr(secrets, 'ka_api_consumer_secret') or \
+           not hasattr(secrets_dev, 'ka_api_token_key') or   \
+           not hasattr(secrets_dev, 'ka_api_token_secret'):
+            return self.redirect("/")
+
         self.setup_oauth()
 
         self.email = self.request_string("email")
