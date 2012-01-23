@@ -69,26 +69,12 @@ class ViewExercise(request_handler.RequestHandler):
     _hints_conversion_names, _hints_conversion_types = [
         list(x) for x in zip(*_hints_conversion_tests)]
 
-    _review_conversion_tests = [
-        ('review_all_problems_done', ConversionTypes.Counting),
-        ('review_review_problems_done', ConversionTypes.Counting),
-        ('review_finished_review', ConversionTypes.Counting),
-        ('review_gained_proficiency_all', ConversionTypes.Counting),
-        ('review_gained_proficiency_easy_binary', ConversionTypes.Binary),
-        ('review_gained_proficiency_hard_binary', ConversionTypes.Binary),
-    ]
-    _review_conversion_names, _review_conversion_types = [
-        list(x) for x in zip(*_review_conversion_tests)]
-
     @ensure_xsrf_cookie
     def get(self, exid=None):
 
         # TODO(david): Is there some webapp2 magic that will allow me not to
         #     repeat this URL string in main.py?
-        review_mode = self.request.path == "/review" and (
-            ab_test('Review Mode UI',
-                conversion_name=ViewExercise._review_conversion_names,
-                conversion_type=ViewExercise._review_conversion_types))
+        review_mode = self.request.path == "/review" 
 
         if not exid and not review_mode:
             self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
@@ -331,47 +317,20 @@ class ViewAllExercises(request_handler.RequestHandler):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-        sees_new_review = ab_test('Review Mode UI',
-            conversion_name=ViewExercise._review_conversion_names,
-            conversion_type=ViewExercise._review_conversion_types)
-        show_review_drawer = (sees_new_review and not
-                user_exercise_graph.has_completed_review())
+        show_review_drawer = (not user_exercise_graph.has_completed_review())
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'expanded_all_exercises': user_data.expanded_all_exercises,
-            'map_coords': knowledgemap.deserializeMapCoords(user_data.map_coords),
+            'map_coords': json.dumps(knowledgemap.deserializeMapCoords(user_data.map_coords)),
             'selected_nav_link': 'practice',
             'show_review_drawer': show_review_drawer,
         }
 
         if show_review_drawer:
-
-            template_values['review_statement'] = ab_test(
-                'review_statement_of_fact', [
-                    'Fortify your knowledge',
-                    'Attain mastery',
-                    'Review exercises',
-                    'Reinforce your learning',
-                    'Consolidate what you know',
-                    "Master what you've learned",
-                    'How much can you recall?',
-                    "Let's review",
-                    'Refresh your memory',
-                ]
-            )
-
-            template_values['review_call_to_action'] = ab_test(
-                'review_call_to_action', [
-                    'Start Reviews',
-                    'Start now',
-                    'Go go go!',
-                    "Let's go!",
-                    "I'll do it",
-                    "Let's do this!",
-                ]
-            )
+            template_values['review_statement'] = 'Attain mastery'
+            template_values['review_call_to_action'] = "I'll do it"
 
         self.render_jinja2_template('viewexercises.html', template_values)
 
@@ -478,7 +437,7 @@ def make_wrong_attempt(user_data, user_exercise):
 
 def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
     attempt_content, sha1, seed, completed, count_hints, time_taken,
-    exercise_non_summative, problem_type, ip_address):
+    review_mode, exercise_non_summative, problem_type, ip_address):
 
     if user_exercise and user_exercise.belongs_to(user_data):
         dt_now = datetime.datetime.now()
@@ -508,7 +467,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         # Build up problem log for deferred put
         problem_log = models.ProblemLog(
-                key_name="problemlog_%s_%s_%s" % (user_data.key_email, user_exercise.exercise, problem_number),
+                key_name=models.ProblemLog.key_for(user_data, user_exercise.exercise, problem_number),
                 user=user_data.user,
                 exercise=user_exercise.exercise,
                 problem_number=problem_number,
@@ -523,6 +482,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 count_attempts=attempt_number,
                 attempts=[attempt_content],
                 ip_address=ip_address,
+                review_mode=review_mode,
         )
 
         if exercise.summative:
@@ -565,11 +525,10 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo(['hints_gained_proficiency_all',
                            'struggling_gained_proficiency_all',
-                           'homepage_restructure_gained_proficiency_all',
-                           'review_gained_proficiency_all'])
+                           'homepage_restructure_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
-                    
+
                     if user_exercise.history_indicates_struggling(struggling_model):
                         bingo('struggling_gained_proficiency_post_struggling')
 
@@ -590,20 +549,16 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
             bingo([
                 'hints_problems_done',
-                'review_all_problems_done',
                 'struggling_problems_done',
                 'homepage_restructure_problems_done',
             ])
-
-            if old_graph.states(exercise.name)['reviewing']:
-                bingo('review_review_problems_done')
 
         else:
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
                 bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
-                
+
             if user_exercise.is_struggling(struggling_model):
                 bingo('struggling_struggled_binary')
 
@@ -612,10 +567,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             user_exercise.schedule_review(completed)
 
         user_exercise_graph = models.UserExerciseGraph.get_and_update(user_data, user_exercise)
-
-        if (user_exercise_graph.has_completed_review() and not
-                old_graph.has_completed_review()):
-            bingo('review_finished_review')
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_did_exercise(user_data, user_exercise,
@@ -656,7 +607,7 @@ class ExerciseAdmin(request_handler.RequestHandler):
 
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data, admin=True),
-            'map_coords': (0, 0, 0),
+            'map_coords': knowledgemap.deserializeMapCoords(),
             }
 
         self.render_jinja2_template('exerciseadmin.html', template_values)

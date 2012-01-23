@@ -1,6 +1,7 @@
 import copy
 import logging
 from itertools import izip
+import datetime
 
 from flask import request, current_app, Response
 
@@ -17,7 +18,8 @@ from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, playlist_title_dicts
-from goals.models import GoalList, Goal, GoalObjective
+from goals.models import (GoalList, Goal, GoalObjective,
+    GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
 
@@ -97,7 +99,7 @@ def get_visible_user_data_from_request(disable_coach_visibility=False,
 
         if (user_data.developer or
                 (not disable_coach_visibility and
-                user_data_student.is_coached_by(user_data))):
+                (user_data_student.is_coached_by(user_data) or user_data_student.is_coached_by_coworker_of_coach(user_data)))):
             return user_data_student
         else:
             return None
@@ -109,7 +111,7 @@ def get_user_data_coach_from_request():
     user_data_coach = models.UserData.current()
     user_data_override = request.request_user_data("coach_email")
 
-    if user_data_coach.developer and user_data_override:
+    if user_data_override and (user_data_coach.developer or user_data_coach.is_coworker_of(user_data_override)):
         user_data_coach = user_data_override
 
     return user_data_coach
@@ -789,6 +791,8 @@ def attempt_problem_number(exercise_name, problem_number):
 
         if user_exercise and problem_number:
 
+            review_mode = request.request_bool("review_mode", default=False)
+
             user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
                     user_exercise,
@@ -800,6 +804,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     request.request_bool("complete"),
                     request.request_int("count_hints", default=0),
                     int(request.request_float("time_taken")),
+                    review_mode,
                     request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
@@ -817,7 +822,6 @@ def attempt_problem_number(exercise_name, problem_number):
 
             user_states = user_exercise_graph.states(exercise.name)
             correct = request.request_bool("complete")
-            review_mode = request.request_bool("review_mode", default=False)
 
             action_results = {
                 "exercise_state": {
@@ -861,6 +865,7 @@ def hint_problem_number(exercise_name, problem_number):
 
             attempt_number = request.request_int("attempt_number")
             count_hints = request.request_int("count_hints")
+            review_mode = request.request_bool("review_mode", default=False)
 
             user_exercise, user_exercise_graph, goals_updated = attempt_problem(
                     user_data,
@@ -873,13 +878,13 @@ def hint_problem_number(exercise_name, problem_number):
                     request.request_bool("complete"),
                     count_hints,
                     int(request.request_float("time_taken")),
+                    review_mode,
                     request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
 
             user_states = user_exercise_graph.states(exercise.name)
-            review_mode = request.request_bool("review_mode", default=False)
             exercise_message_html = templatetags.exercise_message(exercise,
                     user_exercise_graph, review_mode=review_mode)
 
@@ -1214,17 +1219,23 @@ def get_student_goals():
     except Exception, e:
         return api_invalid_param_response(e.message)
 
+    dt_end = datetime.datetime.now()
+    days = request.request_int("days", 7)
+    dt_start = dt_end - datetime.timedelta(days=days)
+
     students = sorted(students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(students)
 
     return_data = []
     for student, uex_graph in izip(students, user_exercise_graphs):
-        student_data = {}
-        student_data['email'] = student.email
-        student_data['nickname'] = student.nickname
-        goals = GoalList.get_current_goals(student)
-        student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
-        return_data.append(student_data)
+        goals = GoalList.get_modified_between_dts(student, dt_start, dt_end)
+        goals = [g.get_visible_data(uex_graph) for g in goals if not g.abandoned]
+
+        return_data.append({
+            'email': student.email,
+            'nickname': student.nickname,
+            'goals': goals
+        })
 
     return return_data
 
@@ -1249,25 +1260,31 @@ def create_user_goal():
 
     objective_descriptors = []
 
-    goal_exercises = GoalList.exercises_in_current_goals(user_data)
     goal_videos = GoalList.videos_in_current_goals(user_data)
+    current_goals = GoalList.get_current_goals(user_data)
 
     if json:
         for obj in json['objectives']:
             if obj['type'] == 'GoalObjectiveAnyExerciseProficiency':
+                for goal in current_goals:
+                    for o in goal.objectives:
+                        if isinstance(o, GoalObjectiveAnyExerciseProficiency):
+                            return api_invalid_param_response(
+                                "User already has a current exercise process goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveAnyVideo':
+                for goal in current_goals:
+                    for o in goal.objectives:
+                        if isinstance(o, GoalObjectiveAnyVideo):
+                            return api_invalid_param_response(
+                                "User already has a current video process goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveExerciseProficiency':
                 obj['exercise'] = models.Exercise.get_by_name(obj['internal_id'])
                 if not obj['exercise'] or not obj['exercise'].is_visible_to_current_user():
                     return api_invalid_param_response("Internal error: Could not find exercise.")
-                if user_data.is_proficient_at(obj['exercise'].name):
-                    return api_invalid_param_response("Exercise has already been completed.")
-                if obj['exercise'].name in goal_exercises:
-                    return api_invalid_param_response("Exercise is already an objective in a current goal.")
                 objective_descriptors.append(obj)
 
             if obj['type'] == 'GoalObjectiveWatchVideo':

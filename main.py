@@ -43,6 +43,7 @@ import github
 import paypal
 import smarthistory
 import goals.handlers
+import stories
 import summer
 
 import models
@@ -65,6 +66,7 @@ from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from importer.handlers import ImportHandler
 from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
@@ -541,8 +543,9 @@ class PostLogin(request_handler.RequestHandler):
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            self.delete_cookie("fbsr_" + App.facebook_app_id)
-            self.delete_cookie("fbs_" + App.facebook_app_id)
+            if App.facebook_app_id:
+                self.delete_cookie("fbsr_" + App.facebook_app_id)
+                self.delete_cookie("fbs_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
@@ -557,6 +560,12 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+
+        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
+        if App.facebook_app_id:
+            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 class Search(request_handler.RequestHandler):
@@ -742,6 +751,9 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
 
+    ('/stories/submit', stories.SubmitStory),
+    ('/stories/?.*', stories.ViewStories),
+
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
@@ -797,8 +809,6 @@ application = webapp2.WSGIApplication([
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
 
-    ('/createstudentlist', coaches.CreateStudentList),
-    ('/deletestudentlist', coaches.DeleteStudentList),
     ('/removestudentfromlist', coaches.RemoveStudentFromList),
     ('/addstudenttolist', coaches.AddStudentToList),
 
@@ -807,7 +817,6 @@ application = webapp2.WSGIApplication([
     ('/sharedpoints', coaches.ViewSharedPoints),
     ('/classreport', coaches.ViewClassReport),
     ('/classtime', coaches.ViewClassTime),
-    ('/charts', coaches.ViewCharts),
 
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
@@ -903,7 +912,7 @@ application = webapp2.WSGIApplication([
     ('/summer/getstudent', summer.GetStudent),
     ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
     ('/summer/paypal-ipn', summer.PaypalIPN),
-    ('/summer/admin/process', summer.Process),
+    ('/summer/admin/download', summer.Download),
 
     ('/robots.txt', robots.RobotsTxt),
 
@@ -911,6 +920,8 @@ application = webapp2.WSGIApplication([
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),
     ('/redirects/remove', redirects.Remove),
+
+    ('/importer', ImportHandler),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),

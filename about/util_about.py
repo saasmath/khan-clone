@@ -1,3 +1,7 @@
+import simplejson as json
+import os
+import logging
+
 import request_handler
 import util
 from models import Video
@@ -44,3 +48,4 @@ class ViewFAQ(AboutRequestHandler):
 class ViewDownloads(AboutRequestHandler):
     def get(self):
         self.render_jinja2_template('about/downloads.html', {})
+

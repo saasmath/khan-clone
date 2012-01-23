@@ -4,6 +4,7 @@ from google.appengine.api import users
 import util
 import request_handler
 from models import UserData
+import time
 
 class SaveExpandedAllExercises(request_handler.RequestHandler):
     def post(self):
@@ -34,22 +35,26 @@ class SaveMapCoords(request_handler.RequestHandler):
 
             user_data.map_coords = serializeMapCoords(lat, lng, zoom)
             user_data.put()
- 
+
 def serializeMapCoords(lat, lng, zoom):
-    return "%s:%s:%s" % (lat, lng, zoom)
+    return "%s:%s:%s:%s" % (lat, lng, zoom, int(time.time() * 1000))
 
 def deserializeMapCoords(s):
-
+    coords = {'lat':0, 'lng':0, 'zoom':0, 'when':0}
     if (not s):
-        return (0, 0, 0)
+        return coords
 
     try:
         rg = s.split(":")
-        lat = float(rg[0])
-        lng = float(rg[1])
-        zoom = int(rg[2])
+        coords['lat'] = float(rg[0])
+        coords['lng'] = float(rg[1])
+        coords['zoom'] = int(rg[2])
+        if len(rg) == 4:
+            coords['when'] = int(rg[3])
+        else:
+            coords['when'] = 0
     except ValueError:
-        return (0, 0, 0)
+        return coords
 
-    return (lat, lng, zoom)
+    return coords
 

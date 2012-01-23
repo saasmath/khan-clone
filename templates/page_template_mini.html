@@ -6,6 +6,10 @@
         {{ js_css_packages.css_package("shared") }}
         {{ js_css_packages.js_package("shared") }}
         <style>body {background:white;}</style>
+
+        {% block pagescript %}
+        {% endblock pagescript %}
+
     </head>
     <body>
         {% block toppagecontent %}

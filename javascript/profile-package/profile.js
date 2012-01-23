@@ -130,6 +130,51 @@ var Profile = {
              }
         });
 
+        var currentGoals = window.GoalBook.map( function(g){ return g.get("title"); });
+        _( $(".add-goal") ).map( function( elt ){
+            var button = $( elt );
+            var badge = button.closest( ".achievement-badge" );
+            var goalTitle = badge.find( ".achievement-title" ).text();
+
+            // remove +goal button if present in list of active goals
+            if( _.indexOf( currentGoals, goalTitle ) > -1){
+
+                button.remove();
+
+            // add +goal behavior to button, once.
+            } else {
+
+                button.one("click", function(){
+                    var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
+                        return {
+                            "type" : "GoalObjectiveExerciseProficiency",
+                            "internal_id" : exercise
+                        };
+                    });
+
+                    var goal = new Goal({
+                        title: goalTitle,
+                        objectives: goalObjectives
+                    });
+
+                    window.GoalBook.add(goal);
+
+                    goal.save()
+                        .fail(function(err) {
+                            var error = err.responseText;
+                            button.addClass("failure")
+                                .text("oh no!").attr("title","This goal could not be saved.");
+                            KAConsole.log("Error while saving new badge goal", goal);
+                            window.GoalBook.remove(goal);
+                        })
+                        .success(function(){
+                            button.text("Goal Added!").addClass("success");
+                            badge.find(".energy-points-badge").addClass("goal-added");
+                        });
+                });
+            }
+        });
+
         $("#stats-nav #nav-accordion")
             .accordion({
                 header:".header",
@@ -424,19 +469,22 @@ var Profile = {
             el: "#current-goals-list",
             model: viewingOwnGoals ? GoalBook : CurrentGoalBook,
             type: 'current',
-            readonly: !viewingOwnGoals
+            readonly: !viewingOwnGoals,
+            colors: viewingOwnGoals ? "goals-personal" : "goals-class"
         });
         Profile.goalsViews.completed = new GoalProfileView({
             el: "#completed-goals-list",
             model: CompletedGoalBook,
             type: 'completed',
-            readonly: true
+            readonly: true,
+            colors: viewingOwnGoals ? "goals-personal" : "goals-class"
         });
         Profile.goalsViews.abandoned = new GoalProfileView({
             el: "#abandoned-goals-list",
             model: AbandonedGoalBook,
             type: 'abandoned',
-            readonly: true
+            readonly: true,
+            colors: viewingOwnGoals ? "goals-personal" : "goals-class"
         });
 
         Profile.userGoalsHref = href;
@@ -479,7 +527,8 @@ var Profile = {
         var studentGoalsViewModel = {
             rowData: [],
             sortDesc: '',
-            filterDesc: ''
+            filterDesc: '',
+            colors: "goals-class"
         };
 
         $.each(data, function(idx1, student) {
@@ -508,10 +557,14 @@ var Profile = {
                             found_struggling = true;
                             objective.struggling = true;
                         }
-                        objective.statusCSS = objective.status ? objective.status : "not-started";
 
                         objective.objectiveID = idx3;
                     });
+
+                    // normalize so completed goals sort correctly
+                    if (goal.objectives.length) {
+                        progress_count /= goal.objectives.length;
+                    }
 
                     if (!student.most_recent_update || goal.updated > student.most_recent_update)
                         student.most_recent_update = goal;
@@ -999,7 +1052,8 @@ var GoalProfileView = Backbone.View.extend({
             isCurrent: (this.options.type == 'current'),
             isCompleted: (this.options.type == 'completed'),
             isAbandoned: (this.options.type == 'abandoned'),
-            readonly: this.options.readonly
+            readonly: this.options.readonly,
+            colors: this.options.colors
         }));
 
         // attach a NewGoalView to the new goals html
