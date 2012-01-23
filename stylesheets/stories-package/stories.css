@@ -30,6 +30,10 @@ body {
 .left-header-container {
     padding-top: 30px;
 }
+.left-header-container h1 a,
+.left-header-container h1 a:hover {
+    color: #DDD;
+}
 
 a.btn:hover,
 a.btn:focus {
