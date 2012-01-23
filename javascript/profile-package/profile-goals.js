@@ -82,7 +82,8 @@ var GoalProfileView = Backbone.View.extend({
             isCurrent: (this.options.type == "current"),
             isCompleted: (this.options.type == "completed"),
             isAbandoned: (this.options.type == "abandoned"),
-            readonly: this.options.readonly
+            readonly: this.options.readonly,
+            colors: this.options.colors
         }));
 
         // attach a NewGoalView to the new goals html

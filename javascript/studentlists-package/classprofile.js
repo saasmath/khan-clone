@@ -437,6 +437,11 @@ var ClassProfile = {
                         }
                     });
 
+                    // normalize so completed goals sort correctly
+                    if (goal.objectives.length) {
+                        progress_count /= goal.objectives.length;
+                    }
+
                     if (!student.most_recent_update || goal.updated > student.most_recent_update)
                         student.most_recent_update = goal;
 

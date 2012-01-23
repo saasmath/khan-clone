@@ -827,11 +827,7 @@ IEHtml5.init();
 var VideoViews = {
     init: function() {
         // Exponential fit calculated mid-Jan 2012
-        var estimatedTotalViews = 1.5898395409191447e-19 * Math.exp(4.659582953415592e-11 * (+new Date()));
-
-        // Remove these two lines after Jan 22, 2012
-        var counterCatchUpViews = 1.630133005604276e-121 * Math.exp(2.235376353340977e-10 * (+new Date()));
-        estimatedTotalViews = Math.min(estimatedTotalViews, counterCatchUpViews);
+        var estimatedTotalViews = 2.4637851937509475e-13 * Math.exp(3.584901929640884e-11 * (+new Date()));
 
         var totalViewsString = addCommas("" + Math.round(estimatedTotalViews));
 

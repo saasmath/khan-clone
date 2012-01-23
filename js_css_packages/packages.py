@@ -136,6 +136,16 @@ javascript = {
             "classprofile.js",
         ]
     },
+    "stories": {
+        "files": [
+            "bootstrap-modal.js",
+            "story.handlebars",
+            "story-full.handlebars",
+            "seedrandom.js",
+            "events.js",
+            "stories.js",
+        ]
+    },
     "exercises": {
         "base_path": "../khan-exercises",
         "base_url": "/khan-exercises",
@@ -215,6 +225,12 @@ stylesheets = {
         "files": [
             "profile.css",
             "badges.css",
+        ]
+    },
+    "stories": {
+        "files": [
+            "bootstrap.css",
+            "stories.css",
         ]
     },
     "exercises": {

@@ -43,6 +43,7 @@ import github
 import paypal
 import smarthistory
 import goals.handlers
+import stories
 import summer
 
 import models
@@ -64,6 +65,7 @@ from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from importer.handlers import ImportHandler
 from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
@@ -747,6 +749,9 @@ application = webapp2.WSGIApplication([
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
 
+    ('/stories/submit', stories.SubmitStory),
+    ('/stories/?.*', stories.ViewStories),
+
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
@@ -909,6 +914,8 @@ application = webapp2.WSGIApplication([
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),
     ('/redirects/remove', redirects.Remove),
+
+    ('/importer', ImportHandler),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),

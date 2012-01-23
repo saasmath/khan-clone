@@ -14,6 +14,7 @@ js_css_packages/packages_hash.py
 js_css_packages/packages_compressed.py
 *.pem
 secrets.py
+secrets_dev.py
 datastore/*
 sample_data/bulkloader*
 *.DS_Store

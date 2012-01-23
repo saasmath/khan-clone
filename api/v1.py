@@ -1,6 +1,7 @@
 import copy
 import logging
 from itertools import izip
+import datetime
 
 from flask import request, current_app, Response
 
@@ -1405,18 +1406,24 @@ def get_student_goals():
     except Exception, e:
         return api_invalid_param_response(e.message)
 
+    dt_end = datetime.datetime.now()
+    days = request.request_int("days", 7)
+    dt_start = dt_end - datetime.timedelta(days=days)
+
     students = sorted(students, key=lambda student: student.nickname)
     user_exercise_graphs = models.UserExerciseGraph.get(students)
 
     return_data = []
     for student, uex_graph in izip(students, user_exercise_graphs):
-        student_data = {}
-        student_data['email'] = student.email
-        student_data['nickname'] = student.nickname
-        student_data['profile_root'] = student.profile_root
-        goals = GoalList.get_current_goals(student)
-        student_data['goals'] = [g.get_visible_data(uex_graph) for g in goals]
-        return_data.append(student_data)
+        goals = GoalList.get_modified_between_dts(student, dt_start, dt_end)
+        goals = [g.get_visible_data(uex_graph) for g in goals if not g.abandoned]
+
+        return_data.append({
+            'email': student.email,
+            'profile_root': student.profile_root,
+            'goals': goals,
+            'nickname': student.nickname,
+        })
 
     return return_data
 
