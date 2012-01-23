@@ -42,6 +42,17 @@ var ProfileModel = Backbone.Model.extend({
     },
 
     /**
+     * Returns the property from the JSON object if it exists.
+     * Defaults to the current value of the property on "this".
+     */
+    getIfUndefined: function(obj, prop) {
+        if (obj && obj[prop] !== undefined) {
+            return obj[prop];
+        }
+        return this.get(prop);
+    },
+
+    /**
      * Override Backbone.Model.save since only some of the fields are
      * mutable and saveable.
      */
@@ -51,14 +62,10 @@ var ProfileModel = Backbone.Model.extend({
         options.data = JSON.stringify({
             // Note that Backbone.Model.save accepts arguments to save to
             // the model before saving, so check for those first.
-            "avatarName": (attrs && attrs["avatarName"]) ||
-                          this.get("avatarName"),
-            "nickname": (attrs && attrs["nickname"]) ||
-                          this.get("nickname"),
-            "username": (attrs && attrs["username"]) ||
-                          this.get("username"),
-            "isPublic": ((attrs && attrs["isPublic"]) ||
-                          ((attrs["isPublic"] === undefined) && this.get("isPublic")))
+            "avatarName": this.getIfUndefined(attrs, "avatarName"),
+            "nickname": this.getIfUndefined(attrs, "nickname"),
+            "username": this.getIfUndefined(attrs, "username"),
+            "isPublic": this.getIfUndefined(attrs, "isPublic")
         });
 
         Backbone.Model.prototype.save.call(this, attrs, options);

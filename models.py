@@ -908,7 +908,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
         themselves. Will initially default to either the Facebook name or
         part of the user's e-mail.
         """
-        if self.user_nickname:
+        
+        # Note - we make a distinction between "None", which means the user has
+        # never gotten or set their nickname, and the empty string, which means
+        # the user has explicitly made an empty nickname
+        if self.user_nickname is not None:
             return self.user_nickname
 
         return nicknames.get_default_nickname_for(self)
@@ -917,7 +921,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
         """ Updates the user's nickname and relevant indices and persists
         to the datastore.
         """
-        new_name = nickname or nicknames.get_default_nickname_for(self)
+        if nickname is None:
+            nickname = nicknames.get_default_nickname_for(self)
+        new_name = nickname or ""
         if new_name != self.user_nickname:
             if nickname and not nicknames.is_valid_nickname(nickname):
                 # The user picked a name, and it seems offensive. Reject it.
