@@ -1,10 +1,13 @@
 #modal-story {
     position: fixed;
     /* set the point on which top and left operate to the middle top edge*/
-    width: 830px; /* this is redundant but here for clarity */
-    margin: 0 0 0 -415px;
+    width: 730px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -365px;
     top: 60px;
     left: 50%;
+
+    font-size: 16px;
+    line-height: 24px;
 }
 .lte7 #modal-video {
     border: 1px solid #999;
@@ -100,6 +103,7 @@ a.btn:focus {
 }
 .modal .modal-body {
     max-height: 400px;
+    padding: 20px 30px;
     overflow: auto;
     overflow-y: auto;
     overflow-x: hidden;
@@ -112,7 +116,7 @@ a.btn:focus {
 }
 .modal .modal-footer .span-middle {
     margin-left: 0;
-    width: 335px;
+    width: 240px;
 }
 .modal .modal-footer .center {
     text-align: center;
