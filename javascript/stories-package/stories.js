@@ -19,7 +19,7 @@ Stories.render = function(story_data) {
             $(story_data.target).append(row);
         }
 
-        if (lastStory) {
+        if (lastStory && !story.empty) {
             lastStory.next_story = story;
             story.prev_story = lastStory;
         }
