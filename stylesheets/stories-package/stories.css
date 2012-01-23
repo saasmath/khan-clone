@@ -1,10 +1,13 @@
 #modal-story {
     position: fixed;
     /* set the point on which top and left operate to the middle top edge*/
-    width: 830px; /* this is redundant but here for clarity */
-    margin: 0 0 0 -415px;
+    width: 730px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -365px;
     top: 60px;
     left: 50%;
+
+    font-size: 16px;
+    line-height: 24px;
 }
 .lte7 #modal-video {
     border: 1px solid #999;
@@ -104,6 +107,7 @@ a.btn:focus {
 }
 .modal .modal-body {
     max-height: 400px;
+    padding: 20px 30px;
     overflow: auto;
     overflow-y: auto;
     overflow-x: hidden;
@@ -116,7 +120,7 @@ a.btn:focus {
 }
 .modal .modal-footer .span-middle {
     margin-left: 0;
-    width: 335px;
+    width: 240px;
 }
 .modal .modal-footer .center {
     text-align: center;
@@ -489,3 +493,17 @@ h2.stories-header {
     left: 86px;
 }
 
+.stories-footer img {
+    /* 
+     * This crazy little sucker invokes a different rendering path
+     * for the entire page, even though it's only applied to the footer img.
+     *
+     * This hints to webkit that GPU acceleration should be used where
+     * possible, which fixes this annoying bug: http://code.google.com/p/chromium/issues/detail?id=103198
+     *
+     * If another fix for this bug is found, this can be removed.
+     * See "the magic CSS bullet" here: http://www.html5rocks.com/en/tutorials/speed/html5/#toc-hardware-accell
+     *
+     * */
+    -webkit-transform: translateZ(0);
+}
