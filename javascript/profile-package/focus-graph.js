@@ -229,12 +229,10 @@ var FocusGraph = function() {
             this.segmentData = this.generateFakeSegments_();
             if (!$("#highchart-container").length) {
                 $("#graph-content").empty();
-                var jelNotification = $('<div class="graph-notification">Witty text that conveys ACLness in normal-people terms.</div>'),
-                    jelHighchartContainer = $('<div id="highchart-container" class="empty-chart"></div>'),
+                var jelHighchartContainer = $('<div id="highchart-container" class="empty-chart"></div>'),
                     jelHighchart = $('<div id="highchart"></div>');
 
-                $("#graph-content").append(jelNotification)
-                    .append(jelHighchartContainer.append(jelHighchart));
+                $("#graph-content").append(jelHighchartContainer.append(jelHighchart));
             }
         }
 
