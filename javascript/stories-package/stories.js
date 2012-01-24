@@ -6,17 +6,17 @@ Stories.views = {};
 Stories.cShown = 0;
 Stories.cRendered = 0;
 
-Stories.render = function(story_data) {
+Stories.render = function(storyData) {
 
     var row = null;
     var lastStory = null;
     var storiesPerRow = 3;
 
-    $.each(story_data.content, function(ix, story) {
+    $.each(storyData.content, function(ix, story) {
 
         if (ix % storiesPerRow == 0) {
             row = $("<div class='row'></div>");
-            $(story_data.target).append(row);
+            $(storyData.target).append(row);
         }
 
         if (lastStory && !story.empty) {
