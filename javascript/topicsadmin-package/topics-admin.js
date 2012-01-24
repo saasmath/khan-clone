@@ -683,6 +683,8 @@ function stringArraysEqual(ar1, ar2) {
         this.newExerciseView = null;
         this.newVideoView = null;
         this.newUrlView = null;
+        this.importView = null;
+        this.exportView = null;
         this.contextNode = null;
         this.contextModel = null;
         this.itemCopyBuffer = null;
@@ -763,6 +765,14 @@ function stringArraysEqual(ar1, ar2) {
         } else if (action == "add_new_url") {
             this.newUrlView = this.newUrlView || new TopicTreeEditor.CreateUrlView();
             this.newUrlView.show(this.node, this.model);
+
+        } else if (action == "export_topic") {
+            this.exportView = this.exportView || new TopicTreeEditor.ImportExportView({ import: false });
+            this.exportView.show(this.model.id);
+
+        } else if (action == "import_topic") {
+            this.importView = this.importView || new TopicTreeEditor.ImportExportView({ import: true });
+            this.importView.show(this.model.id);
 
         } else if (action == "paste_item") {
 
@@ -1619,3 +1629,72 @@ TopicTreeEditor.SearchView = Backbone.View.extend({
     }
 });
 
+// Import / export
+
+TopicTreeEditor.ImportExportView = Backbone.View.extend({
+    template: Templates.get("topicsadmin.import-export"),
+
+    events: {
+        "click .ok-button": "close"
+    },
+
+    initialize: function() {
+        this.render();
+    },
+
+    render: function() {
+        this.el = $(this.template({ import: this.options.import })).appendTo(document.body).get(0);
+        this.delegateEvents();
+        return this;
+    },
+
+    show: function(topicID) {
+        var self = this;
+
+        $(this.el).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        });
+
+        this.topicID = topicID;
+
+        if (!this.options.import) {
+            $(this.el).find(".topic-data").html("Exporting topic data. Please wait.");
+            $.ajax({
+                url: "/api/v1/dev/topicversion/" + TopicTreeEditor.currentVersion.get("number") + "/topic/" + topicID + "/topictree",
+                dataType: "html",
+                success: function(text) {
+                    $(self.el).find(".topic-data").html(text);
+                }
+            });
+        }
+        return this;
+    },
+
+    hide: function() {
+        return $(this.el).modal("hide");
+    },
+
+    close: function() {
+        var self = this;
+        if (this.options.import) {
+            this.hide();
+            hideGenericMessageBox();
+            popupGenericMessageBox({
+                title: "Importing topic...",
+                message: "Importing topic. Please wait...",
+                buttons: []
+            });
+            $.ajax({
+                url: "/api/v1/dev/topicversion/" + TopicTreeEditor.currentVersion.get("number") + "/topic/" + self.topicID + "/topictree",
+                type: "PUT",
+                success: function() {
+                    hideGenericMessageBox();
+                }
+            });
+        } else {
+            this.hide();
+        }
+    }
+});

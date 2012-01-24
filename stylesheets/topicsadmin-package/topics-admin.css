@@ -37,23 +37,15 @@ ul.dynatree-container {
   margin: 0 0 0 -450px;
   top: 90px;
   left: 50%;
+}
 
-  z-index: 11000;
-  background-color: #ffffff;
-  border: 1px solid #999;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  *border: 1px solid #999;
-  /* IE6-7 */
-
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
-  border-radius: 6px;
-  -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
-  -webkit-background-clip: padding-box;
-  -moz-background-clip: padding-box;
-  background-clip: padding-box;
+.modal.import-export {
+  position: fixed;
+  /* set the point on which top and left operate to the middle top edge*/
+  width: 700px; /* this is redundant but here for clarity */
+  margin: 0 0 0 -450px;
+  top: 90px;
+  left: 50%;
 }
 
 .modal.add-existing-item .search-results {

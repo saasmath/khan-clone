@@ -232,9 +232,9 @@ def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
-@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/topictree/with_hidden", methods=["GET"])
-@route("/api/v1/topicversion/<version_id>/topictree/with_hidden", methods=["GET"])
-@route("/api/v1/topictree/with_hidden", methods=["GET"])
+@route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
+@route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
+@route("/api/v1/dev/topictree", methods=["GET"])
 @developer_required
 @jsonp
 @decompress
