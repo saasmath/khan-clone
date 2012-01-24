@@ -628,10 +628,21 @@ var Profile = {
             });
         });
 
-        $("#student-goals-sort").change(function() { Profile.sortStudentGoals(studentGoalsViewModel); });
-
-        $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
-        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
+        $("#student-goals-sort")
+            .off("change.goalsfilter")
+            .on("change.goalsfilter", function() {
+                Profile.sortStudentGoals(studentGoalsViewModel);
+            });
+        $("input.student-goals-filter-check")
+            .off("change.goalsfilter")
+            .on("change.goalsfilter", function() {
+                Profile.filterStudentGoals(studentGoalsViewModel);
+            });
+        $("#student-goals-search")
+            .off("keyup.goalsfilter")
+            .on("keyup.goalsfilter", function() {
+                Profile.filterStudentGoals(studentGoalsViewModel);
+            });
 
         Profile.sortStudentGoals(studentGoalsViewModel);
         Profile.filterStudentGoals(studentGoalsViewModel);
