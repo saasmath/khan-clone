@@ -3,7 +3,7 @@ from models import Video, Url, Topic, Setting, TopicVersion
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "video_title_dicts_%s" % (
-    version_number if version_number else Setting.topic_tree_version()))
+    version_number or Setting.topic_tree_version()))
 def video_title_dicts(version_number=None):
     if version_number:
         version = TopicVersion.get_by_number(version_number)
@@ -19,7 +19,7 @@ def video_title_dicts(version_number=None):
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "url_title_dicts_%s" % (
-    version_number if version_number else Setting.topic_tree_version()))
+    version_number or Setting.topic_tree_version()))
 def url_title_dicts(version_number=None):
     if version_number:
         version = TopicVersion.get_by_number(version_number)
@@ -35,7 +35,7 @@ def url_title_dicts(version_number=None):
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None: 
     "topic_title_dicts_%s" % (
-    version_number if version_number else Setting.topic_tree_version()))
+    version_number or Setting.topic_tree_version()))
 def topic_title_dicts(version_number=None):
     if version_number:
         version = TopicVersion.get_by_number(version_number)
