@@ -111,6 +111,7 @@ a.btn:focus {
     overflow: auto;
     overflow-y: auto;
     overflow-x: hidden;
+    margin-bottom: 0;
 }
 .modal .modal-header h3 {
     margin-top: 0;
