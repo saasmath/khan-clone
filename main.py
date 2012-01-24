@@ -535,6 +535,9 @@ class Search(request_handler.RequestHandler):
                 multi_word_literal=Topic.INDEX_MULTI_WORD,
                 searched_phrases_out=searched_phrases)
 
+        for key_and_title in all_text_keys:
+            logging.info("Found key: " + str(key_and_title[0]) + " type " + key_and_title[0].kind())
+
         # Quick title-only partial search
         topic_partial_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
@@ -552,7 +555,6 @@ class Search(request_handler.RequestHandler):
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
-
 
         # Filter out anything that isn't a Topic, Url or Video
         all_key_list = [key for key in all_key_list if db.Key(key).kind() in ["Topic", "Url", "Video"]]
