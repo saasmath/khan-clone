@@ -135,6 +135,8 @@ function KnowledgeMapInitGlobals() {
                 context.url = this.model.url();
             }
 
+            context.disabled = this.model.get("invalidForGoal") || false;
+
             var newContent = $(template(context));
             var self = this;
             newContent.hover(
@@ -580,49 +582,48 @@ function KnowledgeMap(params) {
 
             if (self.newGoal && invalidForGoal) {
                 exerciseModel.set({"invalidForGoal": true});
-            } else {
-                // Create views
-                var element;
+            }
 
-                if (exerciseModel.get("isSuggested")) {
-                    if (!params.hideReview || !exerciseModel.get("isReview")) {
-                        element = $("<div>");
-                        element.appendTo(suggestedExercisesContent);
-                        self.exerciseRowViews.push(new ExerciseRowView({
-                            model: exerciseModel,
-                            el: element,
-                            type: "suggested",
-                            admin: self.admin,
-                            parent: self
-                        }));
-                        self.numSuggestedExercises++;
-                    }
-                }
-
-                if (exerciseModel.get("recent")) {
+            // Create views
+            var element;
+            if (exerciseModel.get("isSuggested")) {
+                if (!params.hideReview || !exerciseModel.get("isReview")) {
                     element = $("<div>");
-                    element.appendTo(recentExercisesContent);
+                    element.appendTo(suggestedExercisesContent);
                     self.exerciseRowViews.push(new ExerciseRowView({
                         model: exerciseModel,
                         el: element,
-                        type: "recent",
+                        type: "suggested",
                         admin: self.admin,
                         parent: self
                     }));
-
-                    self.numRecentExercises++;
+                    self.numSuggestedExercises++;
                 }
+            }
 
+            if (exerciseModel.get("recent")) {
                 element = $("<div>");
-                element.appendTo(allExercisesContent);
+                element.appendTo(recentExercisesContent);
                 self.exerciseRowViews.push(new ExerciseRowView({
                     model: exerciseModel,
                     el: element,
-                    type: "all",
+                    type: "recent",
                     admin: self.admin,
                     parent: self
                 }));
+
+                self.numRecentExercises++;
             }
+
+            element = $("<div>");
+            element.appendTo(allExercisesContent);
+            self.exerciseRowViews.push(new ExerciseRowView({
+                model: exerciseModel,
+                el: element,
+                type: "all",
+                admin: self.admin,
+                parent: self
+            }));
 
             // Update map graph
 

@@ -2095,6 +2095,10 @@ a.proficient-badge {
     z-index:10;
 }
 
+a.proficient-badge.disabled {
+    cursor: not-allowed;
+}
+
 .exercise-badge.single-exercise .energy-points-badge {
     left: auto;
     right: 5px;
