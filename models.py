@@ -1374,7 +1374,7 @@ class TopicVersion(db.Model):
             xg_on = db.create_transaction_options(xg=True)
             db.run_in_transaction_options(xg_on, update_txn)
 
-        Topic.reindex()
+        Topic.reindex(self)
 
         logging.info("set_default_version complete")
                                     
@@ -2080,13 +2080,13 @@ class Topic(Searchable, db.Model):
         return topics
 
     @staticmethod
-    def reindex():
+    def reindex(version):
         import search
         items = search.StemmedIndex.all().filter("parent_kind", "Topic").run()
         item_dict = dict((i.get_title(i.key().name()), i) for i in items)
         
         standalone_titles = []
-        topics = Topic.get_content_topics()
+        topics = Topic.get_content_topics(version)
         for topic in topics:
             standalone_titles.append(topic.standalone_title)
             topic.index()

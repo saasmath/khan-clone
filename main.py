@@ -535,9 +535,6 @@ class Search(request_handler.RequestHandler):
                 multi_word_literal=Topic.INDEX_MULTI_WORD,
                 searched_phrases_out=searched_phrases)
 
-        for key_and_title in all_text_keys:
-            logging.info("Found key: " + str(key_and_title[0]) + " type " + key_and_title[0].kind())
-
         # Quick title-only partial search
         topic_partial_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
@@ -559,6 +556,9 @@ class Search(request_handler.RequestHandler):
         # Filter out anything that isn't a Topic, Url or Video
         all_key_list = [key for key in all_key_list if db.Key(key).kind() in ["Topic", "Url", "Video"]]
 
+        for key in all_key_list:
+            logging.info("Getting key: " + key + " type " + db.Key(key).kind()) # TomY TODO remove
+
         # Get all the entities
         all_entities = db.get(all_key_list)
 
@@ -567,11 +567,14 @@ class Search(request_handler.RequestHandler):
         videos = []
         for entity in all_entities:
             if isinstance(entity, Topic):
+                logging.info("Found Topic " + entity.title)
                 topics.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
             elif isinstance(entity, Url):
                 videos.append(entity)
+            else:
+                logging.info("Found unknown object " + repr(entity))
 
         topic_count = len(topics)
 
