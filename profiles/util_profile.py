@@ -181,11 +181,13 @@ class ViewProfile(request_handler.RequestHandler):
             self.render_jinja2_template('noprofile.html', {})
             return
 
-        has_full_access = (user_data.user_id == current_user_data.user_id
-                           or user_data.is_coached_by(current_user_data))
+        is_self = user_data.user_id == current_user_data.user_id
+        has_full_access = is_self or user_data.is_coached_by(current_user_data)
+        show_intro = is_self and models.PromoRecord.record_promo(
+                "New Profile Promo", user_data.user_id)
         
         template_values = {
-            'show_intro': False,
+            'show_intro': show_intro,
             'profile': profile,
             'tz_offset': tz_offset,
             'count_videos': models.Setting.count_videos(),
