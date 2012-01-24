@@ -323,6 +323,12 @@ UserCardView = Backbone.View.extend({
     },
 
     onEditVisibilityClicked_: function(e) {
+        if (!this.model.get("username")) {
+            // Profiles can't be made public until the user acquires a
+            // username first. Pop up the dialog to do that.
+            this.onEditBasicInfoClicked_();
+            return;
+        }
         var isPublic = this.model.get("isPublic");
         this.model.save({ isPublic: !isPublic });
     },
