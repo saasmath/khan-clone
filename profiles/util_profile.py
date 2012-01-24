@@ -185,6 +185,7 @@ class ViewProfile(request_handler.RequestHandler):
                            or user_data.is_coached_by(current_user_data))
         
         template_values = {
+            'show_intro': False,
             'profile': profile,
             'tz_offset': tz_offset,
             'count_videos': models.Setting.count_videos(),

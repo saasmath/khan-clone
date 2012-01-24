@@ -116,6 +116,12 @@ javascript = {
             "profile.js",
         ]
     },
+    "profile-intro": {
+        "files": [
+            "guiders.js",
+            "profile-intro.js",
+        ]
+    },
     "maps": {
         "files": [
             "fastmarkeroverlay.js",
@@ -226,6 +232,11 @@ stylesheets = {
             "profile.css",
             "badges.css",
         ]
+    },
+    "profile-intro": {
+        "files": [
+            "guiders.css",
+        ],
     },
     "stories": {
         "files": [

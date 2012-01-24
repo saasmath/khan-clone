@@ -14,21 +14,32 @@
     {% endif %}
 {% endblock profile_extended_sections %}
 
+{% block pagecss %}
+    {{ super() }}
+    {% if show_intro %}
+        {{ js_css_packages.css_package("profile-intro") }}
+    {% endif %}
+{% endblock pagecss %}
+
 {% block bottompagescript %}
-{{ super() }}
+    {{ super() }}
 
-<script>
-// TODO: move this into the initial JSON below so it's not in global scope.
-var USER_EMAIL = '{{ user_data_student.email|escapejs }}';
+    {% if show_intro %}
+        {{ js_css_packages.js_package("profile-intro") }}
+    {% endif %}
 
-$(function() {
-    Profile.init({
-        countVideos: {{count_videos}},
-        countExercises: {{count_exercises}},
-        loggedIn: "{{logged_in}}" === "True",
-        profileRoot: "{{profile_root}}",
-        profileData: {{ templatetags.jsonify(profile, true) }}
+    <script>
+    // TODO: move this into the initial JSON below so it's not in global scope.
+    var USER_EMAIL = '{{ user_data_student.email|escapejs }}';
+
+    $(function() {
+        Profile.init({
+            countVideos: {{count_videos}},
+            countExercises: {{count_exercises}},
+            loggedIn: "{{logged_in}}" === "True",
+            profileRoot: "{{profile_root}}",
+            profileData: {{ templatetags.jsonify(profile, true) }}
+        });
     });
-});
-</script>
+    </script>
 {% endblock bottompagescript %}
