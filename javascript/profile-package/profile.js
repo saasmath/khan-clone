@@ -847,14 +847,34 @@ var Profile = {
     },
 
     populateGoals: function() {
-        $.ajax({
-            type: "GET",
-            url: "/api/v1/user/goals",
-            data: {email: USER_EMAIL},
-            dataType: "json",
-            success: function(data) {
-                GoalProfileViewsCollection.render(data);
-            }
-        });
+        // TODO: Abstract away profile + actor privileges?
+        var email = Profile.profile.get("email");
+        if (email) {
+            $.ajax({
+                type: "GET",
+                url: "/api/v1/user/goals",
+                data: {email: email},
+                dataType: "json",
+                success: function(data) {
+                    GoalProfileViewsCollection.render(data);
+                }
+            });
+        } else {
+            Profile.renderFakeGoals_();
+        }
+    },
+
+    renderFakeGoals_: function() {
+        var exerciseGoal = new Goal(Goal.defaultExerciseProcessGoalAttrs_),
+            videoGoal = new Goal(Goal.defaultVideoProcessGoalAttrs_),
+            fakeGoalBook = new GoalCollection([exerciseGoal, videoGoal]),
+            fakeView = new GoalProfileView({model: fakeGoalBook}),
+            jelNotification = $('<div class="graph-notification">' +
+                    'Witty text that conveys ACLness in normal-people terms.</div>');
+
+        // TODO: Unify the notification code, tend to the look + feel
+        // Either need to cover up the goals or actually make them unclickable/unhoverable
+        $("#profile-goals-content").append(jelNotification)
+            .append(fakeView.show().addClass("empty-chart"));
     }
 };
