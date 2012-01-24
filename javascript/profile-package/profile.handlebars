@@ -29,39 +29,39 @@
 </menu>
 
 <section class="tab-content">
-    <div id="tab-content-user-profile" rel="profile">
-        <div class="user-info-container"></div>
-        <div style="clear: both; margin-bottom: 20px;"></div>
-    </div>
-
-    <div id="tab-content-vital-statistics" rel="vital-statistics">
-        {{> vital-statistics}}
-    </div>
-
-    <div id="tab-content-achievements" rel="achievements">
-        <h2 class="profile-sheet-title"></h2>
-        <div id="profile-achievements-content"></div>
-    </div>
-
-    <div id="tab-content-goals" rel="goals">
-        <h2 class="profile-sheet-title"></h2>
-        <div class="graph-picker">
-            Shows your current, completed and abandoned goals.
-            <ul class="tabrow">
-                <li class="type current">
-                    <a href="{{profileRoot}}/goals/current" class="graph-link no-recolor">Current</a>
-                </li>
-                <li class="type completed">
-                    <a href="{{profileRoot}}/goals/completed" class="graph-link no-recolor">Completed</a>
-                </li>
-                <li class="type abandoned">
-                    <a href="{{profileRoot}}/goals/abandoned" class="graph-link no-recolor">Abandoned</a>
-                </li>
-                <li>
-                    <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);" style="display: inline-block;">Create a new goal</a>
-                </li>
-            </ul> 
+    <h2 class="profile-sheet-title"></h2>
+    <div>
+        <div id="tab-content-user-profile" rel="profile">
+            <div class="user-info-container"></div>
+            <div style="clear: both; margin-bottom: 20px;"></div>
         </div>
-        <div id="profile-goals-content"></div>
+
+        <div id="tab-content-vital-statistics" rel="vital-statistics">
+            {{> vital-statistics}}
+        </div>
+
+        <div id="tab-content-achievements" rel="achievements">
+        </div>
+
+        <div id="tab-content-goals" rel="goals">
+            <div class="graph-picker">
+                Shows your current, completed and abandoned goals.
+                <ul class="tabrow">
+                    <li class="type current">
+                        <a href="{{profileRoot}}/goals/current" class="graph-link no-recolor">Current</a>
+                    </li>
+                    <li class="type completed">
+                        <a href="{{profileRoot}}/goals/completed" class="graph-link no-recolor">Completed</a>
+                    </li>
+                    <li class="type abandoned">
+                        <a href="{{profileRoot}}/goals/abandoned" class="graph-link no-recolor">Abandoned</a>
+                    </li>
+                    <li>
+                        <a class="new-goal simple-button action-gradient disabled" href="javascript:void(0);" style="display: inline-block;">Create a new goal</a>
+                    </li>
+                </ul> 
+            </div>
+            <div id="profile-goals-content"></div>
+        </div>
     </div>
 </section>

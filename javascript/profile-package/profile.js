@@ -186,6 +186,7 @@ var Profile = {
         showDefault: function() {
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
+            this.updateTitleBreadcrumbs();
         },
 
         // TODO: must send TZ offset
@@ -283,14 +284,13 @@ var Profile = {
          *     to be the breadcrumbs.
          */
         updateTitleBreadcrumbs: function(parts) {
-            var rootCrumb = Profile.profile.get("nickname") || "Profile";
-            parts.unshift(rootCrumb);
-
             var sheetTitle = $(".profile-sheet-title");
             if (parts && parts.length) {
-                sheetTitle.text(parts.join(" » "));
+                var rootCrumb = Profile.profile.get("nickname") || "Profile";
+                parts.unshift(rootCrumb);
+                sheetTitle.text(parts.join(" » ")).show();
             } else {
-                sheetTitle.text("");
+                sheetTitle.text("").hide();
             }
         }
     }),
@@ -759,7 +759,7 @@ var Profile = {
                 data.fStandardView = true;
 
                 var achievementsTemplate = Templates.get("profile.achievements");
-                $("#profile-achievements-content").html(achievementsTemplate(data));
+                $("#tab-content-achievements").html(achievementsTemplate(data));
 
                 $("#achievements #achievement-list > ul li").click(function() {
                      var category = $(this).attr("id");
