@@ -917,6 +917,11 @@ li.profile-tab {
     padding-bottom: 3px;
 }
 
+.simple-stat .stat-divider {
+    font-size: 150%;
+    vertical-align: middle;
+}
+
 #username-picker-container {
     position: fixed;
     /* set the point on which top and left operate to the middle top edge*/
