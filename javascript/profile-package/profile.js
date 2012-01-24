@@ -186,6 +186,7 @@ var Profile = {
         showDefault: function() {
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
+            this.updateTitleBreadcrumbs();
         },
 
         // TODO: must send TZ offset
@@ -283,14 +284,13 @@ var Profile = {
          *     to be the breadcrumbs.
          */
         updateTitleBreadcrumbs: function(parts) {
-            var rootCrumb = Profile.profile.get("nickname") || "Profile";
-            parts.unshift(rootCrumb);
-
             var sheetTitle = $(".profile-sheet-title");
             if (parts && parts.length) {
-                sheetTitle.text(parts.join(" » "));
+                var rootCrumb = Profile.profile.get("nickname") || "Profile";
+                parts.unshift(rootCrumb);
+                sheetTitle.text(parts.join(" » ")).show();
             } else {
-                sheetTitle.text("");
+                sheetTitle.text("").hide();
             }
         }
     }),
@@ -383,6 +383,9 @@ var Profile = {
             Profile.fLoadedGraph = true;
         } else if (graphName === "exercise-progress") {
             Profile.loadGraph("/api/v1/exercises");
+        } else {
+            ExerciseGraphOverTime.render();
+            Profile.fLoadedGraph = true;
         }
 
         $(".graph-notification").html("Witty text that conveys ACLness in normal-people terms.");
@@ -503,7 +506,6 @@ var Profile = {
             });
         }
 
-        // TODO: Update API in v2 to send whether graph is empty, like others?
         if (isEmpty) {
             Profile.renderFakeExercisesTable_(exerciseModels);
             $(".graph-notification").html("This chart doesn't have any progress to show. " +
@@ -757,7 +759,7 @@ var Profile = {
                 data.fStandardView = true;
 
                 var achievementsTemplate = Templates.get("profile.achievements");
-                $("#profile-achievements-content").html(achievementsTemplate(data));
+                $("#tab-content-achievements").html(achievementsTemplate(data));
 
                 $("#achievements #achievement-list > ul li").click(function() {
                      var category = $(this).attr("id");
