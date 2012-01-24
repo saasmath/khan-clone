@@ -255,7 +255,8 @@ ul.inline-list, ul.inline-list li {
     margin: 0 auto;
 }
 #goals-nav-container {
-    position: absolute;
+    position: fixed;
+    top: 0;
     width: 800px;
     z-index: 200;
     background: #fff;
