@@ -625,6 +625,7 @@ div.graph-notification {
 
 .user-info-container .user-info {
   padding: 20px;
+  position: relative;
   background: #eee; /* same as visibility-toggler */
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
@@ -776,7 +777,11 @@ ul.dropdown ul li {
     width: 150px; /* must be the same as left margin of .tab-content */
 }
 .profile-navigation > .vertical-tab-list {
+    /* force a position-context and background color so that it can be
+     * highlighted in the out-of-the-box experience. */
+    background: white;
     margin-top: 20px;
+    position: relative;
 }
 .vertical-tab-list .inactive {
     color: #888;
@@ -881,6 +886,13 @@ li.profile-tab {
 }
 .user-deets .basic-stats {
     margin-top: 14px;
+}
+
+.basic-user-info {
+    /* force a position-context and background color so that it can be
+     * highlighted in the out-of-the-box experience. */
+    background: #eee;
+    position: relative;
 }
 
 .basic-stats .simple-stat {

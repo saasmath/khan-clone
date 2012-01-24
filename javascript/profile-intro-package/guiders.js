@@ -65,7 +65,7 @@ var guiders = (function($) {
   guiders._currentGuiderID = null;
   guiders._guiders = {};
   guiders._lastCreatedGuiderID = null;
-  guiders._zIndexForHighlight = 101;
+  guiders._zIndexForHighlight = 10001;
 
   guiders._addButtons = function(myGuider) {
     // Add buttons
