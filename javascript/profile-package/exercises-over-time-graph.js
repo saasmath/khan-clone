@@ -104,5 +104,15 @@ var ExerciseGraphOverTime = {
 
         this.options.series = this.generateSeries_(userExercisesFromServer);
         this.chart = new Highcharts.Chart(this.options);
+
+        var jelNotification = $(".graph-notification");
+        if (userExercisesFromServer && userExercisesFromServer.length === 0) {
+            jelNotification.html("This chart doesn't have any focus to show. " +
+                    "Go <a href='/#browse'>watch some videos</a> and " +
+                    "<a href='/exercisedashboard'>do some exercises</a>!")
+                .show();
+        } else {
+            jelNotification.hide();
+        }
     }
 };

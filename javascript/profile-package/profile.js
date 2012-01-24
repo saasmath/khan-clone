@@ -289,8 +289,10 @@ var Profile = {
                 var rootCrumb = Profile.profile.get("nickname") || "Profile";
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
+                $(".public-profile-notification").show();
             } else {
                 sheetTitle.text("").hide();
+                $(".public-profile-notification").hide();
             }
         }
     }),
@@ -326,7 +328,6 @@ var Profile = {
 
         this.fLoadingGraph = true;
         this.fLoadedGraph = false;
-        $(".graph-notification").html("");
 
         var apiCallback = null;
         for (var uri in apiCallbacksTable) {
@@ -369,7 +370,11 @@ var Profile = {
     finishLoadGraphError: function() {
         this.fLoadingGraph = false;
         this.showGraphThrobber(false);
-        $(".graph-notification").html("It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.")
+        $(".graph-notification").html("It's our fault. " +
+                "We ran into a problem loading this graph. " +
+                "Try again later, and if this continues to happen please " + 
+                "<a href='/reportissue?type=Defect'>let us know</a>.")
+            .show();
     },
 
     renderFakeGraph: function(graphName, timePeriod) {
@@ -387,8 +392,6 @@ var Profile = {
             ExerciseGraphOverTime.render();
             Profile.fLoadedGraph = true;
         }
-
-        $(".graph-notification").html("Witty text that conveys ACLness in normal-people terms.");
     },
 
     generateFakeExerciseTableData_: function(exerciseData) {
@@ -508,11 +511,14 @@ var Profile = {
 
         if (isEmpty) {
             Profile.renderFakeExercisesTable_(exerciseModels);
-            $(".graph-notification").html("This chart doesn't have any progress to show. " +
+            $(".graph-notification").html("This chart doesn't have any focus to show. " +
                     "Go <a href='/#browse'>watch some videos</a> and " +
-                    "<a href='/exercisedashboard'>do some exercises</a>!");
+                    "<a href='/exercisedashboard'>do some exercises</a>!").show();
             return;
+        } else {
+            $(".graph-notification").hide();
         }
+
         var template = Templates.get("profile.exercise_progress");
         $("#graph-content").html(template({ "exercises": templateContext }));
 
@@ -851,7 +857,8 @@ var Profile = {
     },
 
     populateGoals: function() {
-        // TODO: Abstract away profile + actor privileges?
+        // TODO: Abstract away profile + actor privileges
+        // Also in profile.handlebars
         var email = Profile.profile.get("email");
         if (email) {
             $.ajax({
@@ -872,13 +879,8 @@ var Profile = {
         var exerciseGoal = new Goal(Goal.defaultExerciseProcessGoalAttrs_),
             videoGoal = new Goal(Goal.defaultVideoProcessGoalAttrs_),
             fakeGoalBook = new GoalCollection([exerciseGoal, videoGoal]),
-            fakeView = new GoalProfileView({model: fakeGoalBook}),
-            jelNotification = $('<div class="graph-notification">' +
-                    'Witty text that conveys ACLness in normal-people terms.</div>');
+            fakeView = new GoalProfileView({model: fakeGoalBook});
 
-        // TODO: Unify the notification code, tend to the look + feel
-        // Either need to cover up the goals or actually make them unclickable/unhoverable
-        $("#profile-goals-content").append(jelNotification)
-            .append(fakeView.show().addClass("empty-chart"));
+        $("#profile-goals-content").append(fakeView.show().addClass("empty-chart"));
     }
 };

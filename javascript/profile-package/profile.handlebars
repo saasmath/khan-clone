@@ -30,6 +30,13 @@
 
 <section class="tab-content">
     <h2 class="profile-sheet-title"></h2>
+
+    {{#unless profileData.email}}
+        <div class="public-profile-notification">
+            <h2>Oops, you're not allowed!</h2>
+            <p>To view real data, you must be a coach.</p>
+        </div>
+    {{/unless}}
     <div>
         <div id="tab-content-user-profile" rel="profile">
             <div class="user-info-container"></div>
@@ -40,7 +47,7 @@
             {{> vital-statistics}}
         </div>
 
-        <div id="tab-content-achievements" rel="achievements">
+        <div id="tab-content-achievements" rel="achievements"{{#unless profileData.email}} class="empty-chart"{{/unless}}>
         </div>
 
         <div id="tab-content-goals" rel="goals">

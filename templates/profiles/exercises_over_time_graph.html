@@ -1,7 +1,3 @@
-{% if not user_exercises %}
-    <div class="graph-notification">You don't have any proficient exercises...yet. <a href="/exercisedashboard">Go get some</a>.</div>
-{% endif %}
-
 <script>
     ExerciseGraphOverTime.render({{ templatetags.jsonify(user_exercises, true) }});
 </script>

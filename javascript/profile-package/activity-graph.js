@@ -413,5 +413,15 @@ var ActivityGraph = function() {
 
         this.generateOptions_();
         this.chart = new Highcharts.Chart(this.options);
+
+        var jelNotification = $(".graph-notification");
+        if (bucketDataFromServer && bucketDataFromServer.isGraphEmpty) {
+            jelNotification.html("This chart doesn't have any focus to show. " +
+                    "Go <a href='/#browse'>watch some videos</a> and " +
+                    "<a href='/exercisedashboard'>do some exercises</a>!")
+                .show();
+        } else {
+            jelNotification.hide();
+        }
     }
 };
