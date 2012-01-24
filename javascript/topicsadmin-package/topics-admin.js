@@ -564,6 +564,27 @@ function stringArraysEqual(ar1, ar2) {
                     .end()
                 .find("a.item-action")
                     .click(function() { self.handleAction($(this).attr("data-id")); })
+                    .end()
+                .find(".character-count")
+                    .each(function() {
+                        var counter = this;
+                        var suffix = $(counter).html();
+                        var params = $(counter).attr("data-id").split(" ");
+                        var maxLength = -1;
+                        if (params.length > 1) {
+                            maxLength = params[1];
+                        }
+
+                        var keyUpFn = function() {
+                            var cnt = $(this).val().length;
+                            $(counter).html(cnt + suffix);
+                            $(counter).toggleClass("character-count-over", (cnt > maxLength));
+                        };
+
+                        $("#details-view").find(params[0])
+                            .bind("keyup", keyUpFn)
+                            .each(keyUpFn);
+                    })
                     .end();
         } else {
             this.el = $("#details-view")
