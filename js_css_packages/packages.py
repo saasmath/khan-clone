@@ -87,6 +87,7 @@ javascript = {
             "highcharts.js",
             "activity-graph.js",
             "focus-graph.js",
+            "exercises-over-time-graph.js",
             "handlebars-helpers.js",
             "avatar-picker.handlebars",
             "avatar-picker.js",

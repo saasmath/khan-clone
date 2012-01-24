@@ -383,6 +383,9 @@ var Profile = {
             Profile.fLoadedGraph = true;
         } else if (graphName === "exercise-progress") {
             Profile.loadGraph("/api/v1/exercises");
+        } else {
+            ExerciseGraphOverTime.render();
+            Profile.fLoadedGraph = true;
         }
 
         $(".graph-notification").html("Witty text that conveys ACLness in normal-people terms.");
@@ -503,7 +506,6 @@ var Profile = {
             });
         }
 
-        // TODO: Update API in v2 to send whether graph is empty, like others?
         if (isEmpty) {
             Profile.renderFakeExercisesTable_(exerciseModels);
             $(".graph-notification").html("This chart doesn't have any progress to show. " +
