@@ -50,10 +50,10 @@ var FocusGraph = function() {
             }
             exerciseFocus.data = _.map(this.segmentData.dictExerciseSeconds, function(segment, key) {
                 var proficientText = segment["proficient"] ? (", <b>" + this.star + "Proficient</b>") : "",
-                    tooltip = "<b>" + segment["exerciseTitle"] +"</b> (exercise" + proficientText + ")";
+                    tooltip = "<b>" + segment["exerciseTitle"] + "</b> (exercise" + proficientText + ")";
 
                 return {
-                    name: "<b>" + segment["exerciseTitle"] +  (segment["proficient"] ? " " + this.star : "") + "</b>",
+                    name: "<b>" + segment["exerciseTitle"] + (segment["proficient"] ? " " + this.star : "") + "</b>",
                     exid: segment["exid"],
                     y: segment["percentage"],
                     tooltip_title: tooltip,
@@ -158,7 +158,7 @@ var FocusGraph = function() {
                 }
                 return this.point.tooltip_title + "<br/> - " + this.point.time_spent + " total<br><br>" + this.point.tooltip_more;
             }
-        },
+        }
     };
 
     this.generateFakeSegments_ = function() {

@@ -69,7 +69,7 @@ var ExerciseGraphOverTime = {
     generateSeries_: function(userExercises) {
         if (!userExercises || (userExercises.length === 0)) {
             userExercises = [];
-            for(var day = 1; day < 10; day++) {
+            for (var day = 1; day < 10; day++) {
                 var numExercises = Math.floor(Math.random() * 5);
                 for (var i = 0; i < numExercises; i++) {
                     userExercises.push({
@@ -86,7 +86,7 @@ var ExerciseGraphOverTime = {
                             display_name: userExercise["displayName"],
                             x: userExercise["daysUntilProficient"],
                             y: index + 1
-                        }
+                        };
                     })
             }];
     },
