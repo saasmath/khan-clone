@@ -238,12 +238,7 @@ var Profile = {
                 Profile.loadGraph(href);
             } else {
                 // Otherwise, show some fake stuff.
-                // TODO: Figure out how to fake the other graphs.
-                if (graph === "activity") {
-                    new ActivityGraph().render(null, timePeriod);
-                } else if (graph === "focus") {
-                    new FocusGraph().render();
-                }
+                Profile.renderFakeGraph(graph, timePeriod);
             }
         },
 
@@ -317,7 +312,8 @@ var Profile = {
 
     loadGraph: function(href) {
         var apiCallbacksTable = {
-            "/api/v1/user/exercises": this.renderExercisesTable
+            "/api/v1/user/exercises": this.renderExercisesTable,
+            "/api/v1/exercises": this.renderFakeExercisesTable_,
         };
         if (!href) {
             return;
@@ -329,7 +325,8 @@ var Profile = {
         }
 
         this.fLoadingGraph = true;
-        this.fLoadedGraph = true;
+        this.fLoadedGraph = false;
+        $(".graph-notification").html("");
 
         var apiCallback = null;
         for (var uri in apiCallbacksTable) {
@@ -365,25 +362,112 @@ var Profile = {
         }
         var diff = (new Date).getTime() - start;
         KAConsole.log("API call rendered in " + diff + " ms.");
+
+        this.fLoadedGraph = true;
     },
 
     finishLoadGraphError: function() {
         this.fLoadingGraph = false;
         this.showGraphThrobber(false);
-        $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
+        $(".graph-notification").html("It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.")
+    },
+
+    renderFakeGraph: function(graphName, timePeriod) {
+        if (graphName === "activity") {
+            // TODO: Don't re-initialize unnecessarily
+            new ActivityGraph().render(null, timePeriod);
+            Profile.fLoadedGraph = true;
+        } else if (graphName === "focus") {
+            // TODO: Don't re-initialize unnecessarily
+            new FocusGraph().render();
+            Profile.fLoadedGraph = true;
+        } else if (graphName === "exercise-progress") {
+            Profile.loadGraph("/api/v1/exercises");
+        }
+
+        $(".graph-notification").html("Witty text that conveys ACLness in normal-people terms.");
+    },
+
+    generateFakeExerciseTableData_: function(exerciseData) {
+        // Generate some vaguely plausible exercise progress data
+        return _.map(exerciseData, function(exerciseModel) {
+            // See models.py -- h_position corresponds to the node's vertical position
+            var position = exerciseModel["h_position"],
+                totalDone = 0,
+                states = {},
+                rand = Math.random();
+            if (position < 10) {
+                if (Math.random() < 0.9) {
+                    totalDone = 1;
+                    if (rand < 0.5) {
+                        states["proficient"] = true;
+                    } else if (rand < 0.7) {
+                        states["reviewing"] = true
+                    }
+                }
+            } else if (position < 17) {
+                if (Math.random() < 0.6) {
+                    totalDone = 1;
+                    if (rand < 0.4) {
+                        states["proficient"] = true;
+                    } else if (rand < 0.7) {
+                        states["reviewing"] = true;
+                    } else if (rand < 0.75) {
+                        states["struggling"] = true;
+                    }
+                }
+            } else {
+                if (Math.random() < 0.1) {
+                    totalDone = 1;
+                    if (rand < 0.2) {
+                        states["proficient"] = true;
+                    } else if (rand < 0.5) {
+                        states["struggling"] = true;
+                    }
+                }
+            }
+            return {
+                "exercise_model": exerciseModel,
+                "total_done": totalDone,
+                "exercise_states": states
+            }
+        });
+    },
+
+    renderFakeExercisesTable_: function(exerciseData) {
+        // Do nothing if the user switches sheets before /api/v1/exercises responds
+        // (The other fake sheets are rendered randomly client-side)
+
+        if (Profile.fLoadedGraph) {
+            return;
+        }
+
+        var fakeData = Profile.generateFakeExerciseTableData_(exerciseData);
+
+        Profile.renderExercisesTable(fakeData, false);
+
+        $("#module-progress").addClass("empty-chart");
     },
 
     /**
      * Renders the exercise blocks given the JSON blob about the exercises.
      */
-    renderExercisesTable: function(data) {
-        var templateContext = [];
+    renderExercisesTable: function(data, bindEvents) {
+        var templateContext = [],
+            bindEvents = (bindEvents === undefined) ? true : bindEvents,
+            isEmpty = true,
+            exerciseModels = [];
+        
 
         for (var i = 0, exercise; exercise = data[i]; i++) {
             var stat = "Not started";
             var color = "";
             var states = exercise["exercise_states"];
             var totalDone = exercise["total_done"];
+
+            if (totalDone > 0) {
+                isEmpty = false;
+            }
 
             if (states["reviewing"]) {
                 stat = "Review";
@@ -407,6 +491,7 @@ var Profile = {
                 color = "transparent";
             }
             var model = exercise["exercise_model"];
+            exerciseModels.push(model);
             templateContext.push({
                 "name": model["name"],
                 "color": color,
@@ -417,16 +502,27 @@ var Profile = {
                 "totalDone": totalDone
             });
         }
+
+        // TODO: Update API in v2 to send whether graph is empty, like others?
+        if (isEmpty) {
+            Profile.renderFakeExercisesTable_(exerciseModels);
+            $(".graph-notification").html("This chart doesn't have any progress to show. " +
+                    "Go <a href='/#browse'>watch some videos</a> and " +
+                    "<a href='/exercisedashboard'>do some exercises</a>!");
+            return;
+        }
         var template = Templates.get("profile.exercise_progress");
         $("#graph-content").html(template({ "exercises": templateContext }));
 
-        Profile.hoverContent($("#module-progress .student-module-status"));
-        $("#module-progress .student-module-status").click(function(e) {
-            $("#info-hover-container").hide();
-            // Extract the name from the ID, which has been prefixed.
-            var exerciseName = this.id.substring("exercise-".length);
-            Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
-        });
+        if (bindEvents) {
+            Profile.hoverContent($("#module-progress .student-module-status"));
+            $("#module-progress .student-module-status").click(function(e) {
+                $("#info-hover-container").hide();
+                // Extract the name from the ID, which has been prefixed.
+                var exerciseName = this.id.substring("exercise-".length);
+                Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
+            });
+        }
     },
 
     showGraphThrobber: function(fVisible) {
