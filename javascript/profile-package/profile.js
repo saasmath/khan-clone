@@ -610,7 +610,9 @@ var Profile = {
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
 
         this.profile.bind("change:nickname", function(profile) {
-            $("#profile-tab-link").text(profile.get("nickname") || "Profile");
+            var nickname = profile.get("nickname") || "Profile";
+            $("#profile-tab-link").text(nickname);
+            $("#top-header-links .user-name a").text(nickname);
         });
         this.profile.bind("change:avatarSrc", function(profile) {
             $(".profile-tab-avatar").attr("src", profile.get("avatarSrc"));
