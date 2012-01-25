@@ -22,6 +22,7 @@ from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
+import common_core
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag,\
@@ -304,6 +305,12 @@ def video_exercises(video_id):
     if video:
         return video.related_exercises(bust_cache=True)
     return []
+
+@route("/api/v1/commoncore", methods=["GET"])
+@jsonp
+@jsonify
+def get_cc_map():
+    return common_core.models.CommonCoreMap.get_all()
 
 def fully_populated_playlists():
     playlists = models.Playlist.get_for_all_topics()
