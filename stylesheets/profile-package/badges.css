@@ -23,6 +23,9 @@
     opacity: 0.6;
 }
 
+.main-case {
+    white-space: nowrap;
+}
 .editing .main-case .achievement-badge {
     /* Must be consistent with jQuery animation */
     border: 1px dashed #999;
