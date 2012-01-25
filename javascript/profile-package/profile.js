@@ -612,10 +612,7 @@ var Profile = {
         Profile.populateUserCard();
         Profile.populateAchievements();
         Profile.populateGoals();
-
-        // TODO: Might there be a better way
-        // for server-side + client-side to co-exist in harmony?
-        $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
+        Profile.populateRecentActivity();
 
         this.profile.bind("change:nickname", function(profile) {
             var nickname = profile.get("nickname") || "Profile";
@@ -882,5 +879,51 @@ var Profile = {
             fakeView = new GoalProfileView({model: fakeGoalBook});
 
         $("#profile-goals-content").append(fakeView.show().addClass("empty-chart"));
+    },
+
+    populateRecentActivity: function() {
+        // TODO: Abstract away profile + actor privileges
+        var email = Profile.profile.get("email");
+        if (email) {
+            $.ajax({
+                type: "GET",
+                url: "/api/v1/user/activity",
+                data: {
+                    email: email,
+                    casing: "camel"
+                },
+                dataType: "json",
+                success: function(data) {
+                    var listTemplate = Templates.get("profile.recent-activity-list"),
+                        exerciseTemplate = Templates.get("profile.recent-activity-exercise"),
+                        badgeTemplate = Templates.get("profile.recent-activity-badge"),
+                        videoTemplate = Templates.get("profile.recent-activity-video"),
+                        goalTemplate = Templates.get("profile.recent-activity-goal");
+
+                    Handlebars.registerHelper("activityIter", function(activities, block) {
+                        var result = "",
+                            profile = {profileRoot: KA.profileRoot};
+
+                        _.each(activities, function(activity) {
+                            _.extend(activity, profile);
+                            if (activity.sType === "Exercise") {
+                                result += exerciseTemplate(activity);
+                            } else if (activity.sType === "Badge") {
+                                result += badgeTemplate(activity);
+                            } else if (activity.sType === "Video"){
+                                result += videoTemplate(activity);
+                            } else if (activity.sType === "Goal") {
+                                result += goalTemplate(activity);
+                            }
+                        });
+
+                        return result;
+                    });
+
+                    $("#recent-activity").append(listTemplate(data))
+                        .find("span.timeago").timeago();
+                }
+            });
+        }
     }
 };

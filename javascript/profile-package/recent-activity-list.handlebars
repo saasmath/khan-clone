@@ -1,0 +1,11 @@
+{{#if listRecentActivity.length}}
+    <div id="activity-list">
+        <ul style="width:100%">
+            {{#activityIter listRecentActivity}}
+            {{/activityIter}}
+        </ul>
+    </div>
+{{else}}
+    Recent <a href="/#browse">video</a>, <a href="/exercisedashboard">exercise</a>, and <a href="#achievements">badge</a> activity will show up here.
+{{/if}}
+
