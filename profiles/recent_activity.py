@@ -8,7 +8,7 @@ from templatefilters import seconds_to_time_string
 from goals.models import GoalList
 
 # Number of hours until activity is no longer considered "recent" for profiles
-HOURS_RECENT_ACTIVITY = 48
+HOURS_RECENT_ACTIVITY = 4320 # OK for now, fix before shipping!
 # Number of most-recent items shown in recent activity
 MOST_RECENT_ITEMS = 10
 
