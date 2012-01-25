@@ -1879,7 +1879,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .badge-award-container .achievement-badge {
         cursor: pointer;
         margin: 10px 0;
-        width: 30%;
+        width: 300px;
     }
     .achievement-badge .energy-points-badge {
         padding: 1px 0 0;
