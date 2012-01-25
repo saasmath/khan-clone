@@ -186,6 +186,7 @@ var Profile = {
         showDefault: function() {
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
+            this.updateTitleBreadcrumbs();
         },
 
         // TODO: must send TZ offset
@@ -283,14 +284,15 @@ var Profile = {
          *     to be the breadcrumbs.
          */
         updateTitleBreadcrumbs: function(parts) {
-            var rootCrumb = Profile.profile.get("nickname") || "Profile";
-            parts.unshift(rootCrumb);
-
             var sheetTitle = $(".profile-sheet-title");
             if (parts && parts.length) {
-                sheetTitle.text(parts.join(" » "));
+                var rootCrumb = Profile.profile.get("nickname") || "Profile";
+                parts.unshift(rootCrumb);
+                sheetTitle.text(parts.join(" » ")).show();
+                $(".public-profile-notification").show();
             } else {
-                sheetTitle.text("");
+                sheetTitle.text("").hide();
+                $(".public-profile-notification").hide();
             }
         }
     }),
@@ -326,7 +328,6 @@ var Profile = {
 
         this.fLoadingGraph = true;
         this.fLoadedGraph = false;
-        $(".graph-notification").html("");
 
         var apiCallback = null;
         for (var uri in apiCallbacksTable) {
@@ -369,7 +370,11 @@ var Profile = {
     finishLoadGraphError: function() {
         this.fLoadingGraph = false;
         this.showGraphThrobber(false);
-        $(".graph-notification").html("It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.")
+        $(".graph-notification").html("It's our fault. " +
+                "We ran into a problem loading this graph. " +
+                "Try again later, and if this continues to happen please " + 
+                "<a href='/reportissue?type=Defect'>let us know</a>.")
+            .show();
     },
 
     renderFakeGraph: function(graphName, timePeriod) {
@@ -383,9 +388,10 @@ var Profile = {
             Profile.fLoadedGraph = true;
         } else if (graphName === "exercise-progress") {
             Profile.loadGraph("/api/v1/exercises");
+        } else {
+            ExerciseGraphOverTime.render();
+            Profile.fLoadedGraph = true;
         }
-
-        $(".graph-notification").html("Witty text that conveys ACLness in normal-people terms.");
     },
 
     generateFakeExerciseTableData_: function(exerciseData) {
@@ -503,14 +509,16 @@ var Profile = {
             });
         }
 
-        // TODO: Update API in v2 to send whether graph is empty, like others?
         if (isEmpty) {
             Profile.renderFakeExercisesTable_(exerciseModels);
-            $(".graph-notification").html("This chart doesn't have any progress to show. " +
+            $(".graph-notification").html("This chart doesn't have any focus to show. " +
                     "Go <a href='/#browse'>watch some videos</a> and " +
-                    "<a href='/exercisedashboard'>do some exercises</a>!");
+                    "<a href='/exercisedashboard'>do some exercises</a>!").show();
             return;
+        } else {
+            $(".graph-notification").hide();
         }
+
         var template = Templates.get("profile.exercise_progress");
         $("#graph-content").html(template({ "exercises": templateContext }));
 
@@ -610,7 +618,9 @@ var Profile = {
         $("#tab-content-user-profile").append($("#server-side-recent-activity").html());
 
         this.profile.bind("change:nickname", function(profile) {
-            $("#profile-tab-link").text(profile.get("nickname") || "Profile");
+            var nickname = profile.get("nickname") || "Profile";
+            $("#profile-tab-link").text(nickname);
+            $("#top-header-links .user-name a").text(nickname);
         });
         this.profile.bind("change:avatarSrc", function(profile) {
             $(".profile-tab-avatar").attr("src", profile.get("avatarSrc"));
@@ -755,7 +765,7 @@ var Profile = {
                 data.fStandardView = true;
 
                 var achievementsTemplate = Templates.get("profile.achievements");
-                $("#profile-achievements-content").html(achievementsTemplate(data));
+                $("#tab-content-achievements").html(achievementsTemplate(data));
 
                 $("#achievements #achievement-list > ul li").click(function() {
                      var category = $(this).attr("id");
@@ -847,14 +857,30 @@ var Profile = {
     },
 
     populateGoals: function() {
-        $.ajax({
-            type: "GET",
-            url: "/api/v1/user/goals",
-            data: {email: USER_EMAIL},
-            dataType: "json",
-            success: function(data) {
-                GoalProfileViewsCollection.render(data);
-            }
-        });
+        // TODO: Abstract away profile + actor privileges
+        // Also in profile.handlebars
+        var email = Profile.profile.get("email");
+        if (email) {
+            $.ajax({
+                type: "GET",
+                url: "/api/v1/user/goals",
+                data: {email: email},
+                dataType: "json",
+                success: function(data) {
+                    GoalProfileViewsCollection.render(data);
+                }
+            });
+        } else {
+            Profile.renderFakeGoals_();
+        }
+    },
+
+    renderFakeGoals_: function() {
+        var exerciseGoal = new Goal(Goal.defaultExerciseProcessGoalAttrs_),
+            videoGoal = new Goal(Goal.defaultVideoProcessGoalAttrs_),
+            fakeGoalBook = new GoalCollection([exerciseGoal, videoGoal]),
+            fakeView = new GoalProfileView({model: fakeGoalBook});
+
+        $("#profile-goals-content").append(fakeView.show().addClass("empty-chart"));
     }
 };

@@ -2853,6 +2853,30 @@ class UserExerciseGraph(object):
 
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
+class PromoRecord(db.Model):
+    """ A record to mark when a user has viewed a one-time promotion of some
+    sort.
+    """
+
+    promo_name = db.StringProperty()
+    user_id = db.StringProperty()
+
+    @staticmethod
+    def record_promo(promo_name, user_id):
+        """ Attempt to mark that a user has seen a one-time promotion.
+        Returns True if the registration was successfull, and returns False
+        if the user has already seen that promotion.
+        """
+        record = (PromoRecord.all()
+                             .filter("user_id = ", user_id)
+                             .filter("promo_name = ", promo_name)
+                             .get())
+        if record is not None:
+            # Already shown the promo.
+            return False
+        record = PromoRecord(promo_name=promo_name, user_id=user_id)
+        return True
+
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from goals.models import GoalList, Goal

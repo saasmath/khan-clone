@@ -1,4 +1,4 @@
-var ActivityGraph = function(){
+var ActivityGraph = function() {
     this.chart = null;
     this.videoMinutes = {
         type: "column",
@@ -30,8 +30,8 @@ var ActivityGraph = function(){
         }
     };
     this.badges = {
-        type: 'scatter',
-        name: 'Badges',
+        type: "scatter",
+        name: "Badges",
         showInLegend: false,
         data: [],
         defaultPoint: {
@@ -40,11 +40,11 @@ var ActivityGraph = function(){
         }
     };
     this.proficientExercises = {
-        type: 'scatter',
-        name: 'Proficient Exercises',
+        type: "scatter",
+        name: "Proficient Exercises",
         showInLegend: false,
         data: [],
-        defaultPoint:  {
+        defaultPoint: {
             y: 0,
             enabled: false
         }
@@ -55,7 +55,7 @@ var ActivityGraph = function(){
             enabled: false
         },
         chart: {
-            renderTo: 'highchart',
+            renderTo: "highchart",
             events: {
                 click: _.bind(function(e) {
                     if (ActivityGraph.bucketData.enableDrillDown) {
@@ -68,14 +68,14 @@ var ActivityGraph = function(){
         },
         plotOptions: {
             column: {
-                stacking: 'normal'
+                stacking: "normal"
             },
             scatter: {
                 marker: {
                     states: {
                         hover: {
-                            fillColor: 'transparent',
-                            lineColor: 'transparent'
+                            fillColor: "transparent",
+                            lineColor: "transparent"
                         }
                     }
                 }
@@ -84,14 +84,14 @@ var ActivityGraph = function(){
         yAxis: [
             {
                 title: {
-                    text: 'Time Spent (Minutes)',
+                    text: "Time Spent (Minutes)",
                     style: {
-                        color: '#0080C9'
+                        color: "#0080C9"
                     }
                 },
                 labels: {
                     style: {
-                        color: '#0080C9'
+                        color: "#0080C9"
                     }
                 },
                 min: 0,
@@ -99,42 +99,42 @@ var ActivityGraph = function(){
                 plotLines: [{
                     value: 0,
                     width: 1,
-                    color: '#808080'
+                    color: "#808080"
                 }]
             },
             {
                 title: {
-                    text: 'Energy Points Earned',
+                    text: "Energy Points Earned",
                     style: {
-                        color: '#C9001B'
+                        color: "#C9001B"
                     }
                 },
                 labels: {
                     style: {
-                        color: '#C9001B'
+                        color: "#C9001B"
                     }
                 },
                 plotLines: [{
                     value: 0,
                     width: 1,
-                    color: '#808080'
+                    color: "#808080"
                 }],
                 min: 0,
                 opposite: true
             }
         ],
         legend: {
-            layout: 'vertical',
-            align: 'left',
-            verticalAlign: 'top',
+            layout: "vertical",
+            align: "left",
+            verticalAlign: "top",
             floating: true,
-            backgroundColor: 'white',
+            backgroundColor: "white",
             shadow: true,
             x: 70,
             y: 5,
             itemHoverStyle: {
-                cursor: 'default',
-                color: '#3E576F'
+                cursor: "default",
+                color: "#3E576F"
             }
         }
     };
@@ -189,7 +189,7 @@ var ActivityGraph = function(){
 
             var lastIndex = this.videoMinutes.data.length - 1,
                 y = this.videoMinutes.data[lastIndex].y + this.exerciseMinutes.data[lastIndex].y,
-                symbol = (tag === "Achievements" ? 
+                symbol = (tag === "Achievements" ?
                         "url(/images/badges/meteorite-small-chart.png)" :
                         "url(/images/node-complete-chart.png)"
                         );
@@ -220,7 +220,7 @@ var ActivityGraph = function(){
             };
     };
 
-    this.generateAllMarks_= function(index, bucket) {
+    this.generateAllMarks_ = function(index, bucket) {
         var x = {x: index},
             extra = {};
 
@@ -256,7 +256,7 @@ var ActivityGraph = function(){
         this.options.xAxis = {
             categories: this.bucketData.bucketList,
             labels: {
-                align: 'left',
+                align: "left",
                 x: -5,
                 y: 10,
                 rotation: 45
@@ -294,7 +294,7 @@ var ActivityGraph = function(){
 
         if (this.bucketData.enableDrillDown) {
             this.options.plotOptions.series = {
-                cursor: 'pointer',
+                cursor: "pointer",
                 events: {
                     legendItemClick: function() { return false; },
                     click: _.bind(function(e) {
@@ -303,7 +303,7 @@ var ActivityGraph = function(){
                         }
                     }, this)
                 }
-            }
+            };
         }
         this.options.series = this.generateSeries_();
     };
@@ -389,7 +389,7 @@ var ActivityGraph = function(){
                 var date = new Date(today);
                 date.setDate(today.getDate() - num + index + 1);
                 var str = this.toDateString_(date);
-                
+
                 return str;
             }
         }, this));
@@ -413,5 +413,15 @@ var ActivityGraph = function(){
 
         this.generateOptions_();
         this.chart = new Highcharts.Chart(this.options);
+
+        var jelNotification = $(".graph-notification");
+        if (bucketDataFromServer && bucketDataFromServer.isGraphEmpty) {
+            jelNotification.html("This chart doesn't have any focus to show. " +
+                    "Go <a href='/#browse'>watch some videos</a> and " +
+                    "<a href='/exercisedashboard'>do some exercises</a>!")
+                .show();
+        } else {
+            jelNotification.hide();
+        }
     }
 };

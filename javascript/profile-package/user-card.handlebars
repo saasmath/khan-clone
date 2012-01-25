@@ -36,8 +36,14 @@
           {{/if}}
           </div>
           <div class="basic-stats clearfix">
-              <div class="simple-stat"><img class="summary-icon star" src="/images/profile-icons/inset-star.png">{{countExercisesProficient}}/{{countExercises}}</div>
-              <div class="simple-stat"><img class="summary-icon" src="/images/profile-icons/inset-camera.png"> {{countVideosCompleted}}/{{countVideos}}</div>
+              <div class="simple-stat">
+                  <img class="summary-icon star" src="/images/profile-icons/inset-star.png">
+                  <div class="stat-text">{{countExercisesProficient}}<span class="stat-divider">/</span>{{countExercises}}</div>
+              </div>
+              <div class="simple-stat">
+                  <img class="summary-icon" src="/images/profile-icons/inset-camera.png">
+                  <div class="stat-text">{{countVideosCompleted}}<span class="stat-divider">/</span>{{countVideos}}</div>
+              </div>
               <div class="simple-stat"><span title="{{commafy points}} energy points" class="energy-points-badge" style="float:none; display:block; margin-bottom: 1px; margin-top: 2px; padding:0; line-height: 20px;">{{commafy points}}</span> Energy Points</div>
           </div>
       </div>

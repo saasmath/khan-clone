@@ -21,6 +21,7 @@ var Goal = Backbone.Model.extend({
         _.each(this.get("objectives"), function(o) {
             if (!o.progress) {
                 o.progress = 0;
+                o.status = "not-started";
             }
         });
 
@@ -144,6 +145,28 @@ var Goal = Backbone.Model.extend({
 
     objectiveUrl: function(objective) {
         return Goal.objectiveUrlForType[objective.type](objective);
+    },
+
+    defaultVideoProcessGoalAttrs_: {
+        title: "Complete Five Videos",
+        objectives: [
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" }
+        ]
+    },
+
+    defaultExerciseProcessGoalAttrs_: {
+        title: "Complete Five Exercises",
+        objectives: [
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+        ]
     }
 });
 
@@ -538,16 +561,7 @@ var NewGoalView = Backbone.View.extend({
         e.preventDefault();
         if ($(e.currentTarget).hasClass("disabled")) return;
 
-        var goal = new Goal({
-            title: "Complete Five Videos",
-            objectives: [
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" }
-            ]
-        });
+        var goal = new Goal(Goal.defaultVideoProcessGoalAttrs_);
         this.createSimpleGoal(goal);
     },
 
@@ -555,16 +569,7 @@ var NewGoalView = Backbone.View.extend({
         e.preventDefault();
         if ($(e.currentTarget).hasClass("disabled")) return;
 
-        var goal = new Goal({
-            title: "Complete Five Exercises",
-            objectives: [
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
-            ]
-        });
+        var goal = new Goal(Goal.defaultExerciseProcessGoalAttrs_);
         this.createSimpleGoal(goal);
     },
 

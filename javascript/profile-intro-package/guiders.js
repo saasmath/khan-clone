@@ -199,7 +199,7 @@ var guiders = (function($) {
   };
 
   guiders._dehighlightElement = function(selector) {
-    $(selector).css({'z-index': 1});
+    $(selector).css({'z-index': ''});
   };
 
   guiders._hideOverlay = function() {
@@ -287,9 +287,6 @@ var guiders = (function($) {
       var myGuider = guiders._guiderById(nextGuiderId);
       var omitHidingOverlay = myGuider.overlay ? true : false;
       guiders.hideAll(omitHidingOverlay);
-      if (currentGuider.highlight) {
-          guiders._dehighlightElement(currentGuider.highlight);
-      }
       guiders.show(nextGuiderId);
     }
   };
@@ -349,6 +346,11 @@ var guiders = (function($) {
   };
 
   guiders.hideAll = function(omitHidingOverlay) {
+    var currentGuider = guiders._guiders[guiders._currentGuiderID];
+    if (currentGuider && currentGuider.highlight) {
+      guiders._dehighlightElement(currentGuider.highlight);
+    }
+
     $(".guider").fadeOut("fast");
     if (typeof omitHidingOverlay !== "undefined" && omitHidingOverlay === true) {
       // do nothing for now
