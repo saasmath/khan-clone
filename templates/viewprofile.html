@@ -1,25 +1,29 @@
-{% extends "profile_template.html" %}
+{% extends "page_template.html" %}
 
 {% import 'macros/user.html' as user_macros %}
 {% import 'macros/profiles.html' as profile_macros %}
-
-{% block meta_page_title %}User Profile | {% endblock meta_page_title %}
-
-{% block profile_extended_sections %}
-    <div id="profile-content"></div>
-    {% if user_data_student %}
-    <div id="server-side-recent-activity" style="display: none;">
-        {{ profiles.profile_recent_activity(user_data_student, view) }}
-    </div>
-    {% endif %}
-{% endblock profile_extended_sections %}
+{% import 'macros/analytics.html' as analytics %}
 
 {% block pagecss %}
+    {{ js_css_packages.css_package("profile") }}
     {{ super() }}
     {% if show_intro %}
         {{ js_css_packages.css_package("profile-intro") }}
     {% endif %}
 {% endblock pagecss %}
+
+{% block meta_page_title %}User Profile | {% endblock meta_page_title %}
+
+{% block pagecontent %}
+    <article id="individual_report">
+        <div id="profile-content"></div>
+        {% if user_data_student %}
+        <div id="server-side-recent-activity" style="display: none;">
+            {{ profiles.profile_recent_activity(user_data_student, view) }}
+        </div>
+        {% endif %}
+    </article>
+{% endblock pagecontent %}
 
 {% block bottompagescript %}
     {{ super() }}
@@ -42,4 +46,6 @@
         });
     });
     </script>
+    {{ js_css_packages.js_package("profile") }}
+    {{ analytics.crazyegg_tracker(False) }}
 {% endblock bottompagescript %}
