@@ -17,11 +17,15 @@ from api.decorators import jsonp
 
 from flask import request
 
+def safe_file_name(filename):
+    # Production app engine doesn't like filenames w/ special chars
+    return urllib.quote(filename).replace("%", "")
+
 def frozen_json_content(url_suffix):
     result = ""
 
     try:
-        f = open("v0/frozen_content/%s" % urllib.quote(url_suffix), "r")
+        f = open("v0/frozen_content/%s" % safe_file_name(url_suffix), "r")
         result = f.read()
     except Exception, e:
         # We simply aren't concerned enough with this API to log these errors.
