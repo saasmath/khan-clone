@@ -133,8 +133,7 @@ Avatar.Picker.prototype.onDataLoaded_ = function(data) {
 Avatar.Picker.prototype.show = function() {
     if (!this.el) {
         var rootJel = $("<div class='avatar-picker modal fade hide'></div>");
-        var contentJel = $("<div class='modal-body avatar-picker-contents'></div>");
-        rootJel.append(contentJel).appendTo(document.body);
+        var contentJel = rootJel;
         this.el = rootJel.get(0);
         this.contentEl = contentJel.get(0);
         this.bindEvents_();

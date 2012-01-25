@@ -988,12 +988,9 @@ li.profile-tab {
 
 .avatar-picker.modal {
     width: 600px;
-    height: 80%;
-    max-height: 800px;
     left: 50%;
-    margin-left: -300px;
-    position: fixed;
-    overflow-y: scroll;
+    margin: 10% 0 0 -300px;
+    position: absolute;
 }
 
 .avatar-picker .avatar {
