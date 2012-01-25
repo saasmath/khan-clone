@@ -1,0 +1,11 @@
+<li class="achievement" >
+    <span class="activity-image" style=""><img src="{{srcIconActivity}}" /></span>
+    <div class="ach-text">
+        Completed the goal <a href="{{profileRoot}}/goals/completed">{{goal.title}}</a> after working toward it for {{goal.completedTime}}
+
+        <br /> <span class="time timeago" title="{{dt}}">{{dt}}</span>
+        {{#unless mobileView}}
+            {{! sharing stuff goes here }}
+        {{/unless}}
+    </div>
+</li>

@@ -22,7 +22,7 @@ from autocomplete import video_title_dicts, playlist_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
-from profiles import class_progress_report_graph
+from profiles import class_progress_report_graph, recent_activity
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag,\
@@ -1205,6 +1205,23 @@ def get_user_badges():
     return {
             "badge_collections": badge_collections,
         }
+
+@route("/api/v1/user/activity", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def get_activity():
+    student = models.UserData.current() or models.UserData.pre_phantom()
+    user_override = request.request_user_data("email")
+    if user_override and user_override.key_email != student.key_email:
+        if not user_override.is_visible_to(student):
+            return api_unauthorized_response("Cannot view this profile")
+        else:
+            # Allow access to this student's profile
+            student = user_override
+
+    # TODO: Send only what we need..
+    return recent_activity.recent_activity_context(student)
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])

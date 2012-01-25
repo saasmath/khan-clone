@@ -12,8 +12,7 @@ HOURS_RECENT_ACTIVITY = 4320 # OK for now, fix before shipping!
 # Number of most-recent items shown in recent activity
 MOST_RECENT_ITEMS = 10
 
-class RecentActivity:
-
+class RecentActivity(object):
     def timestamp(self):
         return templatefilters.timesince_ago(self.dt)
 

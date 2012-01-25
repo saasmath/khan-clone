@@ -17,11 +17,6 @@
 {% block pagecontent %}
     <article id="individual_report">
         <div id="profile-content"></div>
-        {% if user_data_student %}
-        <div id="server-side-recent-activity" style="display: none;">
-            {{ profiles.profile_recent_activity(user_data_student, view) }}
-        </div>
-        {% endif %}
     </article>
 {% endblock pagecontent %}
 
