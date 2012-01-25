@@ -508,6 +508,33 @@ def save_url(url_id = None, version_id=None):
 @compress
 @jsonify
 def playlists_library():
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
+
+    def trimmed_item(item, topic):
+        trimmed_item_dict = {}
+        if item.kind() == "Video":
+            trimmed_item_dict['url'] = "/video/%s?topic=%s" %(item.readable_id, topic.id)
+            trimmed_item_dict['key_id'] = item.key().id()
+        elif item.kind() == "Url":
+            trimmed_item_dict['url'] = item.url
+        trimmed_item_dict['title'] = item.title
+        return trimmed_item_dict
+
+    topic_dict = {}
+    for topic in topics:
+        # special cases
+        if ((topic.standalone_title == "California Standards Test: Algebra I" and topic.id != "algebra-i") or 
+            (topic.standalone_title == "California Standards Test: Geometry" and topic.id != "geometry-2")):
+            continue
+
+        trimmed_info = {}
+        trimmed_info['id'] = topic.id
+        trimmed_info['children'] = [trimmed_item(v, topic) for v in topic.children]
+        topic_dict[topic.standalone_title] = trimmed_info
+
+    return topic_dict
+
+
     playlists = fully_populated_playlists()
 
     playlist_dict = {}

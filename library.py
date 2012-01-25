@@ -6,7 +6,6 @@ import shared_jinja
 from app import App
 import layer_cache
 from models import Video, Setting, Topic, TopicVersion
-from topics_list import topics_list
 import request_handler
 import util
 import urllib2
@@ -21,7 +20,7 @@ import time
         version_number if version_number else Setting.topic_tree_version())
         )
 def library_content_html(ajax=False, version_number=None):
-    """" Returns the HTML for the structure of the playlists as they will be
+    """" Returns the HTML for the structure of the topics as they will be
     populated ont he homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
     """

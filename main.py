@@ -48,7 +48,7 @@ import stories
 import summer
 
 import models
-from models import UserData, Video, Url, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog, Topic
+from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, Topic
 from discussion import comments, notification, qa, voting
 from about import blog, util_about
 from phantom_users import util_notify

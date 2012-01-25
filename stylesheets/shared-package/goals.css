@@ -402,7 +402,7 @@ input.goal-title:focus {
     margin-top: 18px;
 }
 
-.create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #playlist-jump > span {
+.create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #topic-jump > span {
     font-weight: normal;
 }
 

@@ -157,9 +157,9 @@
                         {% for bucket in bucket_list %}
                         {
                             x: {{ loop.index0 }}, 
-                            {% if dict_playlist_buckets[bucket] %}
-                                y: {{ dict_playlist_buckets[bucket]["minutes"] }},
-                                desc: '<strong>Videos</strong> ({{ dict_playlist_buckets[bucket]["time_spent"]|escapejs }})<br/>{{ dict_playlist_buckets[bucket]["html_summary"]|escapejs }}'
+                            {% if dict_topic_buckets[bucket] %}
+                                y: {{ dict_topic_buckets[bucket]["minutes"] }},
+                                desc: '<strong>Videos</strong> ({{ dict_topic_buckets[bucket]["time_spent"]|escapejs }})<br/>{{ dict_topic_buckets[bucket]["html_summary"]|escapejs }}'
                             {% else %}
                                 y: 0
                             {% endif %}
