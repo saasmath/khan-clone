@@ -552,22 +552,26 @@ class Search(request_handler.RequestHandler):
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
-        
+
+        # Filter out anything that isn't a Topic, Url or Video
+        all_key_list = [key for key in all_key_list if db.Key(key).kind() in ["Topic", "Url", "Video"]]
+
+        # Get all the entities
         all_entities = db.get(all_key_list)
 
-        # Filter results by type
+        # Group results by type
         topics = []
         videos = []
         for entity in all_entities:
             if isinstance(entity, Topic):
+                logging.info("Found Topic " + entity.title) # TomY TODO remove
                 topics.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
             elif isinstance(entity, Url):
                 videos.append(entity)
-            elif entity is not None:
-                logging.error("Unhandled kind in search results: " +
-                              str(type(entity)))
+            else:
+                logging.info("Found unknown object " + repr(entity))
 
         topic_count = len(topics)
 
@@ -606,12 +610,14 @@ class Search(request_handler.RequestHandler):
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
         # Count number of videos in each topic and sort descending
-        for topic in topics:
+        if topics:
             if len(filtered_videos) > 0:
-                topic.match_count = [(topic.title in Topic.get_cached_topics_for_video(video)) for video in filtered_videos].count(True)
+                for topic in topics:
+                    topic.match_count = [(topic.title in video.topics) for video in filtered_videos].count(True)
+                topics = sorted(topics, key=lambda topic: -topic.match_count)
             else:
-                topic.match_count = 0
-        topics = sorted(topics, key=lambda topic: -topic.match_count)
+                for topic in topics:
+                    topic.match_count = 0
 
         template_values.update({
                            'topics': topics,

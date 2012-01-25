@@ -186,6 +186,7 @@ javascript = {
             "list-versions.handlebars",
             "list-versions-item.handlebars",
             "search-topics.handlebars",
+            "import-export.handlebars",
             "topics-admin.js",
         ]
 	},
