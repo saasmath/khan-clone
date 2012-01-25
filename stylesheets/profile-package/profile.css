@@ -941,22 +941,37 @@ li.profile-tab {
 #username-picker-container {
     position: fixed;
     /* set the point on which top and left operate to the middle top edge*/
-    width: 300px; /* this is redundant but here for clarity */
-    margin: 0 0 0 -150px;
+    width: 470px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -235px;
     top: 60px;
     left: 50%;
 }
-
+#username-picker-container .modal-header {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+}
+#username-picker-container .modal-body {
+    margin-bottom: 0;
+}
 .username-picker {
-    padding: 20px;
+    margin: 0 auto;
 }
 .username-picker input,
 .username-picker label{
-    font-size: 150%;
+    font-size: 15px;
+    font-family: Helvetica Nueue, Helvetica, sans-serif;
 }
 .username-picker .basic-info input {
-    display: block;
-    margin-bottom: 10px;
+    margin: 0 10px;
+    width: 250px;
+}
+.username-picker .input-description {
+    font-size: 12px;
+    font-style: italic;
+    color: #777;
+    width: 250px;
+    margin: 10px 0px 20px 83px;
+    line-height: 15px;
 }
 .username-picker .sidenote {
     background-repeat: no-repeat;
