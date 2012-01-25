@@ -502,9 +502,10 @@ div.graph-notification {
 div.public-profile-notification {
     display: none;
     top: 100px;
-    padding-top: 20px;
+    padding: 20px; /* should be the same as padding on tab-content */
     position: absolute;
-    width: 100%;
+    right: 0;
+    left: 0;
     height: 100%;
     color: #333333;
     z-index: 2;
@@ -868,6 +869,7 @@ li.profile-tab {
     padding: 20px 0 0 20px;
     min-height: 500px;
     border-left: 1px solid #ccc;
+    position: relative;
 }
 
 .inline-editable {
