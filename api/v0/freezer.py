@@ -11,6 +11,10 @@ import urllib
     We can and should remove this in the future if it becomes problematic in any way.
 """
 
+def safe_file_name(filename):
+    # Production app engine doesn't like filenames w/ special chars
+    return urllib.quote(filename).replace("%", "").replace("=", "")
+
 def freeze(api_url_suffix):
 
     print "Freezing %s" % api_url_suffix
@@ -26,7 +30,7 @@ def freeze(api_url_suffix):
     finally:
         request.close()
 
-    result = open("frozen_content/%s" % urllib.quote(api_url_suffix), "w")
+    result = open("frozen_content/%s" % safe_file_name(api_url_suffix))
     result.write(response)
 
     print "Froze %s" % api_url_suffix
