@@ -1879,6 +1879,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .badge-award-container .achievement-badge {
         cursor: pointer;
         margin: 10px 0;
+        width: 30%;
     }
     .achievement-badge .energy-points-badge {
         padding: 1px 0 0;
@@ -1909,17 +1910,16 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         text-align: center;
     }
     .achievement-badge .achievement-desc {
-        position: relative;
-        left: 47px;
-        width: 250px;
         font-size: 11px;
-        margin-top: 4px;
+        margin: 4px 5px 0 47px;
+        max-height: 30px;
         font-style: italic;
         line-height: normal;
-    }
-    .achievement-badge .achievement-desc-no-count {
-        left: 5px;
-        width: 290px;
+        overflow : hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
     .achievement-badge #badge-icon {
         width: 40px;
@@ -2010,6 +2010,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .achievement-badge.category-5 .achievement-desc {
         position: static;
         width: auto;
+        margin-left: 0;
     }
     .achievement-badge.category-5 #outline-box {
         border-top: none;

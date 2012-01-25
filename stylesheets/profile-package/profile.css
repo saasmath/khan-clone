@@ -350,7 +350,6 @@
     }
 
 #individual_report #achievements {
-    min-width: 970px;
 }
     #individual_report #achievements h2 {
         margin-bottom: 20px;
@@ -378,6 +377,7 @@
     }
     #individual_report #achievements #achievement-list .achievement-badge {
         float: left;
+        width: 30%;
     }
     #individual_report #achievements #achievement-list > ul {
         margin: 0;
@@ -441,6 +441,8 @@
             -moz-box-shadow: 0 1px 1px #ccc;
             -webkit-box-shadow: 0 1px 1px #ccc;
             box-shadow: 0 1px 1px #ccc;
+
+            white-space: nowrap;
         }
         #individual_report #achievements #achievement-list > ul li.selected {
             opacity: 1;
