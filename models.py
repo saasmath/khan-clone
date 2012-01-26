@@ -2889,6 +2889,7 @@ class PromoRecord(db.Model):
             # Already shown the promo.
             return False
         record = PromoRecord(promo_name=promo_name, user_id=user_id)
+        record.put()
         return True
 
 from badges import util_badges, last_action_cache
