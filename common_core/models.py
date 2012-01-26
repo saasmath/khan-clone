@@ -95,7 +95,7 @@ class CommonCoreMap(db.Model):
             if exercise_name not in self.exercises:
                 self.exercises.append(ex.key())
         else:
-            logging.info("SUNDAR: Exercise %s not in datastore" % exercise_name)
+            logging.info("Exercise %s not in datastore" % exercise_name)
 
         return
 
@@ -108,6 +108,6 @@ class CommonCoreMap(db.Model):
             if video_youtube_id not in self.videos:
                 self.videos.append(v.key())
         else:
-            logging.info("SUNDAR: Youtube ID %s not in datastore" % video_youtube_id)
+            logging.info("Youtube ID %s not in datastore" % video_youtube_id)
 
         return
