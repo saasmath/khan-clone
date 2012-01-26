@@ -1174,6 +1174,20 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         db.delete(self)
 
+    def is_certain_to_be_thirteen(self):
+        """ A conservative check that guarantees a user is at least 13 years
+        old based on their login type.
+
+        Note that even if someone is over 13, this can return False, but if
+        this returns True, they're guaranteed to be over 13.
+        """
+
+        # Normal Gmail accounts and FB accounts require users be at least 13yo.
+        email = self.email
+        return (email.endswith("@gmail.com")
+                or email.endswith("@googlemail.com")  # Gmail in Germany
+                or is_facebook_user_id(email))
+
     def get_or_insert_exercise(self, exercise, allow_insert = True):
         if not exercise:
             return None
