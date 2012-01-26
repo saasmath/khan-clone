@@ -46,6 +46,7 @@ UsernamePickerView = Backbone.View.extend({
         var nickname = this.model.get("nickname"),
             username = this.model.get("username");
 
+        this.$(".info-notification").hide();
         this.$(".nickname").val(nickname);
         this.$(".username").val(username);
         this.$(".example-username").val(username);
