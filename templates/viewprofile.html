@@ -23,10 +23,6 @@
 {% block bottompagescript %}
     {{ super() }}
 
-    {% if show_intro %}
-        {{ js_css_packages.js_package("profile-intro") }}
-    {% endif %}
-
     <script>
     // TODO: move this into the initial JSON below so it's not in global scope.
     var USER_EMAIL = '{{ user_data_student.email|escapejs }}';
@@ -42,5 +38,9 @@
     });
     </script>
     {{ js_css_packages.js_package("profile") }}
+    {% if show_intro %}
+        {{ js_css_packages.js_package("profile-intro") }}
+    {% endif %}
+
     {{ analytics.crazyegg_tracker(False) }}
 {% endblock bottompagescript %}
