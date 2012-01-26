@@ -46,11 +46,11 @@ Handlebars.registerHelper("secondsToTime", function(seconds) {
         }
         return result;
     } else if (hours) {
-        var result = hours + " hour" + (hours > 1 ? "s": "");
+        var result = hours + " hour" + (hours > 1 ? "s" : "");
         if (minutes) {
             result += minutes + " minute" + (minutes > 1 ? "s" : "");
         }
-    } else if (!minutes && seconds){
+    } else if (!minutes && seconds) {
         return seconds + " second" + (seconds > 1 ? "s" : "");
     } else {
         return minutes + " minute" + (minutes > 1 ? "s" : "");
