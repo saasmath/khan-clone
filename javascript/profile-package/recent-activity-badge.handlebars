@@ -1,11 +1,1 @@
-<li class="achievement" >
-    <span class="activity-image" style=""><img src="/images/generic-badge-icon-inset.png" /></span>
-    <div class="ach-text">
-        Earned <a href="{{profileRoot}}/achievements" data-category="{{badge.badgeCategory}}" class="badge-link category-{{badge.badgeCategory}}">{{badge.description}}</a> {{#if userBadge.targetContextName}}for {{ userBadge.targetContextName }}{{/if}}
-
-        <br /><span class="time timeago" title="{{dt}}">{{dt}}</span>
-        {{#unless mobileView}}
-            {{! sharing stuff goes here }}
-        {{/unless}}
-    </div>
-</li>
+Earned <a href="{{profileRoot}}/achievements" data-category="{{badge.badgeCategory}}" class="badge-link category-{{badge.badgeCategory}}">{{badge.description}}</a> {{#if userBadge.targetContextName}}for {{ userBadge.targetContextName }}{{/if}}

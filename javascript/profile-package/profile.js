@@ -900,24 +900,21 @@ var Profile = {
                         videoTemplate = Templates.get("profile.recent-activity-video"),
                         goalTemplate = Templates.get("profile.recent-activity-goal");
 
-                    Handlebars.registerHelper("activityIter", function(activities, block) {
-                        var result = "",
-                            profile = {profileRoot: KA.profileRoot};
 
-                        _.each(activities, function(activity) {
-                            _.extend(activity, profile);
-                            if (activity.sType === "Exercise") {
-                                result += exerciseTemplate(activity);
-                            } else if (activity.sType === "Badge") {
-                                result += badgeTemplate(activity);
-                            } else if (activity.sType === "Video"){
-                                result += videoTemplate(activity);
-                            } else if (activity.sType === "Goal") {
-                                result += goalTemplate(activity);
-                            }
-                        });
+                    Handlebars.registerHelper("toActivityText", function(activity) {
+                        _.extend(activity, {profileRoot: KA.profileRoot});
 
-                        return result;
+                        if (activity.sType === "Exercise") {
+                            return exerciseTemplate(activity);
+                        } else if (activity.sType === "Badge") {
+                            return badgeTemplate(activity);
+                        } else if (activity.sType === "Video"){
+                            return videoTemplate(activity);
+                        } else if (activity.sType === "Goal") {
+                            return goalTemplate(activity);
+                        }
+
+                        return "";
                     });
 
                     $("#recent-activity").append(listTemplate(data))

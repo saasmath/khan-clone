@@ -1,11 +1,1 @@
-<li class="exercise {{#if earned_proficiency}}complete{{/if}}">
-    <span class="activity-image"><img src="{{srcIconActivity}}" /></span>
-    <div class="ach-text">
-        Answered <span class="problem-count">{{#unless mobileView}}<a href="{{ profileRoot }}/vital-statistics/exercise-problems/{{problemLog.exercise}}">{{/unless}}{{ cProblems }} problem{{pluralize cProblems}}{{#unless mobileView}}</a>{{/unless}}</span>{{#if earnedProficiency}} to achieve proficiency{{/if}} in {{exerciseDisplayName}}
-
-        <br /><span class="time timeago" title="{{dt}}">{{dt}}</span>
-        {{#unless mobileView}}
-            {{! sharing stuff goes here }}
-        {{/unless}}
-    </div>
-</li>
+Answered <span class="problem-count">{{#unless mobileView}}<a href="{{ profileRoot }}/vital-statistics/exercise-problems/{{problemLog.exercise}}">{{/unless}}{{ cProblems }} problem{{pluralize cProblems}}{{#unless mobileView}}</a>{{/unless}}</span>{{#if earnedProficiency}} to achieve proficiency{{/if}} in {{exerciseDisplayName}}

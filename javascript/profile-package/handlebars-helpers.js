@@ -8,7 +8,7 @@ Handlebars.registerHelper("commafy", function(numPoints) {
 });
 
 Handlebars.registerHelper("pluralize", function(num) {
-    return (num == 1) ? "" : "s";
+    return (num === 1) ? "" : "s";
 });
 
 /**
