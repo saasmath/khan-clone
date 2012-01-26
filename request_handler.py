@@ -1,7 +1,6 @@
 import os
 import logging
 import datetime
-import urllib
 import simplejson
 import sys
 import re
