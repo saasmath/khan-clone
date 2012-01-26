@@ -100,7 +100,7 @@ def file_size_report():
                 file = packages.transformations[file]
             file_path = os.path.normpath(os.path.join(path, file))
             file_path_min = file_path[:-len(suffix)] + '.min' + suffix
-            popen_results([uglify_path, '--max-line-len', '72', '-nc', '-o', file_path_min, file_path])
+            popen_results([uglify_path, '-b', '-i', '0', '-nc', '-o', file_path_min, file_path])
             subprocess.Popen(['gzip', '-f', file_path_min]).wait()
             file_path_gz = file_path_min + '.gz'
 
@@ -209,7 +209,7 @@ def minify_package(path, path_combined, suffix):
     print "Compressing %s into %s" % (path_combined, path_compressed)
 
     if suffix == ".js":
-        print popen_results([uglify_path, '--max-line-len', '72', '-nc', '-o', path_compressed, path_combined])
+        print popen_results([uglify_path, '-b', '-i', '0', '-nc', '-o', path_compressed, path_combined])
     elif suffix == ".css":
         compressed = popen_results([cssmin_path, path_combined])
         if compressed:
