@@ -4,7 +4,6 @@ from jinja2.utils import escape
 
 import api.jsonify as apijsonify
 from templatefilters import slugify
-import topics_list
 import models
 import shared_jinja
 import layer_cache

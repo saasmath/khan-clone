@@ -54,7 +54,7 @@
                     ]
                 },
                 {% endif %}
-                {% if total_playlist_seconds %}
+                {% if total_topic_seconds %}
                 {
                     type: 'pie',
                     name: 'Videos',
@@ -97,13 +97,13 @@
                         size: '85%',
                     {% endif %}
                     data: [
-                        {% for key_playlist in dict_playlist_seconds %}
+                        {% for key_topic in dict_topic_seconds %}
                             {
-                                name: '{{ dict_playlist_seconds[key_playlist]["playlist_title"]|escapejs }}',
-                                y: {{ dict_playlist_seconds[key_playlist]["percentage"]|escapejs }},
-                                tooltip_title: '<b>{{ dict_playlist_seconds[key_playlist]["playlist_title"]|escapejs }}</b> (videos)',
-                                time_spent: '{{ dict_playlist_seconds[key_playlist]["time_spent"]|escapejs }}',
-                                tooltip_more: '{{ dict_playlist_seconds[key_playlist]["tooltip_more"]|escapejs }}'
+                                name: '{{ dict_topic_seconds[key_topic]["topic_title"]|escapejs }}',
+                                y: {{ dict_topic_seconds[key_topic]["percentage"]|escapejs }},
+                                tooltip_title: '<b>{{ dict_topic_seconds[key_topic]["topic_title"]|escapejs }}</b> (videos)',
+                                time_spent: '{{ dict_topic_seconds[key_topic]["time_spent"]|escapejs }}',
+                                tooltip_more: '{{ dict_topic_seconds[key_topic]["tooltip_more"]|escapejs }}'
                                 }{% if not loop.last %},{% endif %}
                         {% endfor %}
                     ]

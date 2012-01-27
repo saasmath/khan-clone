@@ -1545,8 +1545,12 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
 
     @property
+    def relative_url(self):
+        return '#%s' % self.id
+
+    @property
     def ka_url(self):
-        return util.absolute_url('#%s' % self.id)
+        return util.absolute_url(self.relative_url)
 
     def get_visible_data(self, node_dict=None):
         if node_dict:

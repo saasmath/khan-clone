@@ -3795,7 +3795,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 /* There are 5 places where video completion icons are shown:
  * 1. Homepage
  * 2. Previous and next videos on video page
- * 3. Playlist dropdown on video page
+ * 3. Topic dropdown on video page
  * 4. Related videos in top left of exercises page
  * 5. Related videos in sidebar of exercises page
  *

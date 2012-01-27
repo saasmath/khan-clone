@@ -17,8 +17,8 @@ from google.appengine.ext import db
 
 
 import models
-from models import Topic, TopicVersion, Playlist, Video, Url
-
+from models import Topic, TopicVersion, Video, Url
+# from models import Playlist
         
 class EditContent(request_handler.RequestHandler):
 
@@ -97,6 +97,7 @@ def load_videos(version, title=None):
         topic = Topic.insert(title=p.title,
                      parent=root,
                      description=p.description,
+                     tags=p.tags
                      child_keys=content_keys)
     
     logging.info("loading " + title)

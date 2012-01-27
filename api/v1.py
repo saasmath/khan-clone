@@ -508,17 +508,45 @@ def save_url(url_id = None, version_id=None):
 @compress
 @jsonify
 def playlists_library():
-    playlists = fully_populated_playlists()
+    tree = models.Topic.get_by_id("root").make_tree()
+    def convert_tree(tree):
+        topics = []
+        for child in tree.children:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
 
-    playlist_dict = {}
-    for playlist in playlists:
-        playlist_dict[playlist.title] = playlist
+            if child.kind() == "Topic":
+                topic = {}
+                topic["name"] = child.title
+                videos = [] 
+                
+                for grandchild in child.children:
+                    if grandchild.kind() == "Video" or grandchild.kind() == "Url":
+                        videos.append(grandchild)
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
-    replace_playlist_values(playlist_structure, playlist_dict)
+                if len(videos):
+                    child.videos = videos
+                    child.url = ""
+                    child.youtube_id = ""
+                    del child.children
+                    topic["playlist"] = child
+                else:
+                    topic["items"] = convert_tree(child)
+                
+                topics.append(topic)
+        return topics            
 
-    return playlist_structure
+    return convert_tree(tree)
 
+# We expose the following "fresh" route but don't publish the URL for internal services
+# that don't want to deal w/ cached values. - since with topics now, the library is garunteed
+# not to change until we have a new version, the cached version is good enough
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"]) 
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
@@ -529,16 +557,20 @@ def playlists_library():
 @compress
 @jsonify
 def playlists_library_list():
-    return fully_populated_playlists()
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
-# We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values.
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"])
-@jsonp
-@jsonify
-def playlists_library_list_fresh():
-    return fully_populated_playlists()
+    topics_list = [t for t in topics if not (
+        (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
+        (t.standalone_title == "California Standards Test: Geometry" and t.id != "geometry-2"))    
+        ]
 
+    for topic in topics_list:
+        topic.videos = topic.children
+        topic.title = topic.standalone_title
+        del topic.children
+
+    return topics_list
+    
 @route("/api/v1/exercises", methods=["GET"])
 @jsonp
 @jsonify

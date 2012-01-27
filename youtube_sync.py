@@ -12,7 +12,7 @@ from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
 
-from models import Setting, Video, Playlist, VideoPlaylist
+from models import Setting, Video
 import request_handler
 
 def youtube_get_video_data_dict(youtube_id):

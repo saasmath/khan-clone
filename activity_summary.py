@@ -23,7 +23,7 @@ class ActivitySummaryVideoItem:
     def __init__(self):
         self.seconds_watched = 0
         self.points_earned = 0
-        self.playlist_titles = None
+        self.topic_titles = None
         self.video_title = None
 
 class DailyActivitySummary:
@@ -95,7 +95,7 @@ class HourlyActivitySummary:
         summary_item = self.dict_videos[video_key]
         summary_item.seconds_watched += video_log.seconds_watched
         summary_item.points_earned += video_log.points_earned
-        summary_item.playlist_titles = video_log.playlist_titles
+        summary_item.topic_titles = video_log.topic_titles
         summary_item.video_title = video_log.video_title
 
 def fill_realtime_recent_daily_activity_summaries(daily_activity_logs, user_data, dt_end):
