@@ -569,7 +569,7 @@ class Search(request_handler.RequestHandler):
                 videos.append(entity)
             elif isinstance(entity, Url):
                 videos.append(entity)
-            else:
+            elif entity:
                 logging.info("Found unknown object " + repr(entity))
 
         topic_count = len(topics)
