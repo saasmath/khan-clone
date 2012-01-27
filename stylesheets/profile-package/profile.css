@@ -1,16 +1,19 @@
-#page_sub_nav #profile-header {
-    margin: -6px 0 -10px;
+#profile-header {
+    font-family: "MuseoSans300",sans-serif;
+    border-bottom: 1px solid #c6d1ad;
+    padding: 4px 20px;
+    margin: 0 -20px;
 }
 
-#page_sub_nav #profile-header #user-info,
-#page_sub_nav #profile-header #high-level-stats {
+#profile-header #user-info,
+#profile-header #high-level-stats {
     display: inline-block;
 }
-#page_sub_nav #profile-header {
+#profile-header {
     position: relative;
     display: block;
 }
-    #page_sub_nav #profile-header img {
+    #profile-header img {
         width: 50px;
         height: 50px;
         vertical-align: middle;
@@ -18,47 +21,43 @@
         top: -4px;
     }
 
-#page_sub_nav #profile-header #user-info {
+#profile-header #user-info {
     position: relative;
     top: 1px;
 }
-#page_sub_nav #profile-header #user-info.has-details {
+#profile-header #user-info.has-details {
     top: -3px;
 }
-#page_sub_nav #profile-header #user-info #name {
+#profile-header #user-info #name {
     font-size: 20px;
 }
-#page_sub_nav #profile-header #user-info #phantom-login {
+#profile-header #user-info #phantom-login {
     position: relative;
     top: 7px;
 }
-#page_sub_nav #profile-header #user-info #phantom-login a {
+#profile-header #user-info #phantom-login a {
     color: #005987;
     font-size: 20px;
 }
-#page_sub_nav #profile-header #user-info img {
+#profile-header #user-info img {
     width: 0px;
     visibility: hidden;
 }
-#page_sub_nav #profile-header #user-info #simple-student-info {
+#profile-header #user-info #simple-student-info {
     color: #666;
     font-size: 11px;
     width: 480px;
-
-    position: absolute;
-    top: 30px;
-    left: 4px;
 }
 
-#page_sub_nav #profile-header #high-level-stats {
+#profile-header #high-level-stats {
     float: right;
     position: relative;
     top: -7px;
 }
-    #page_sub_nav #profile-header #high-level-stats > span {
+    #profile-header #high-level-stats > span {
         display: inline-block;
     }
-    #page_sub_nav #profile-header #high-level-stats .count {
+    #profile-header #high-level-stats .count {
         display: inline-block;
     }
 
@@ -108,6 +107,32 @@
         position: relative;
         top: -1px;
     }
+
+.legacy-report h2 {
+    color: #444;
+    font-weight: normal;
+    margin: 0;
+    padding: 5px 5px 7px 1px;
+    width: 280px;
+
+    background: transparent url(/images/profile-header-bg.png) no-repeat 0px 100%;
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.legacy-report #tab-content-achievements,
+.legacy-report #recent-activity {
+    min-height: 148px;
+}
+
+.legacy .tab-content #vital-statistics {
+    height: 500px;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
 
 #individual_report .inset-container {
     border: 1px solid #bbb;

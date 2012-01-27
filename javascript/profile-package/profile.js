@@ -13,6 +13,12 @@ var Profile = {
     profileRoot: "",
 
     /**
+     * A flag indicating whether or not we should use the "legacy" layout
+     * of the page, which hides any notions of public-profiles.
+     */
+    useLegacy: false,
+
+    /**
      * Called to initialize the profile page. Passed in with JSON information
      * rendered from the server. See templates/viewprofile.html for details.
      */
@@ -591,7 +597,8 @@ var Profile = {
     },
 
     render: function() {
-        var profileTemplate = Templates.get("profile.profile");
+        var profileTemplate = Templates.get(
+                this.useLegacy ? "profile.profile-legacy" : "profile.profile");
         Handlebars.registerHelper("graph-date-picker-wrapper", function(block) {
             this.graph = block.hash.graph;
             return block(this);
@@ -601,8 +608,14 @@ var Profile = {
 
         $("#profile-content").html(profileTemplate({
             profileRoot: this.profileRoot,
-            profileData: this.profile.toJSON()
+            profileData: this.profile.toJSON(),
+            countVideos: UserCardView.countVideos,
+            countExercises: UserCardView.countExercises
         }));
+
+        if (this.useLegacy) {
+            $("#profile-content").addClass("legacy");
+        }
 
         // Show only the user card tab,
         // since the Backbone default route isn't triggered
@@ -801,9 +814,15 @@ var Profile = {
                      }
                 });
 
-                // Start with meteorite badges displayed
-                $("#category-0").click();
                 $("abbr.timeago").timeago();
+
+                if (!Profile.useLegacy) {
+                    // Start with meteorite badges displayed, but only in
+                    // the new layout
+                    $("#category-0").click();
+                } else {
+                    $(".member-for").css({"visibility": ""});
+                }
 
                 // TODO: move into profile-goals.js?
                 var currentGoals = window.GoalBook.map(function(g) { return g.get("title"); });
