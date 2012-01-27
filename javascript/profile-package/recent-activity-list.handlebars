@@ -3,7 +3,7 @@
         <ul style="width:100%">
             {{#each listRecentActivity}}
             <li>
-                <span class="activity-image"><img src="{{srcIconActivity}}"></span>
+                <span class="activity-image"><img src="{{toSrcIcon sType}}"></span>
                 <div class="ach-text">
                     {{#toActivityText this}}{{/toActivityText}}
                     <br>
