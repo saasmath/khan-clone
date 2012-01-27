@@ -2098,6 +2098,7 @@ class Topic(Searchable, db.Model):
         standalone_titles = []
         topics = Topic.get_content_topics(version)
         for topic in topics:
+            logging.info("Indexing topic " + topic.title + " (" + str(topic.key()) + ")")
             standalone_titles.append(topic.standalone_title)
             topic.index()
             topic.indexed_title_changed()
