@@ -295,10 +295,13 @@ var Profile = {
                 var rootCrumb = Profile.profile.get("nickname") || "Profile";
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
-                $(".public-profile-notification").show();
+                $(".profile-notification").show()
+                if (Profile.profile.get("email")) {
+                    $(".profile-notification").children().hide();
+                }
             } else {
                 sheetTitle.text("").hide();
-                $(".public-profile-notification").hide();
+                $(".profile-notification").hide();
             }
         }
     }),
@@ -376,11 +379,7 @@ var Profile = {
     finishLoadGraphError: function() {
         this.fLoadingGraph = false;
         this.showGraphThrobber(false);
-        $(".graph-notification").html("It's our fault. " +
-                "We ran into a problem loading this graph. " +
-                "Try again later, and if this continues to happen please " + 
-                "<a href='/reportissue?type=Defect'>let us know</a>.")
-            .show();
+        $(".error-graph").show();
     },
 
     renderFakeGraph: function(graphName, timePeriod) {
@@ -517,12 +516,8 @@ var Profile = {
 
         if (isEmpty) {
             Profile.renderFakeExercisesTable_(exerciseModels);
-            $(".graph-notification").html("This chart doesn't have any focus to show. " +
-                    "Go <a href='/#browse'>watch some videos</a> and " +
-                    "<a href='/exercisedashboard'>do some exercises</a>!").show();
+            $(".empty-graph").show();
             return;
-        } else {
-            $(".graph-notification").hide();
         }
 
         var template = Templates.get("profile.exercise_progress");

@@ -526,7 +526,7 @@ div.graph-notification {
     z-index: 2;
 }
 
-div.public-profile-notification {
+div.profile-notification {
     display: none;
     top: 100px;
     padding: 20px; /* should be the same as padding on tab-content */
