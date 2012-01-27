@@ -152,7 +152,18 @@ function KnowledgeMapInitGlobals() {
 
         doFilter: function() {
             var filterText = this.parent.filterSettings.get("filterText");
-            var filterMatches = (this.model.get("lowercaseName").indexOf(filterText) >= 0);
+            var exerciseName = this.model.get("lowercaseName");
+
+            // single letter filters have lots of matches, so require exercise
+            // name to start with filter
+            var filterMatches;
+            if (filterText.length == 1) {
+                filterMatches = exerciseName[0] == filterText;
+            }
+            else {
+                filterMatches = exerciseName.indexOf(filterText) >= 0;
+            }
+
             var allowVisible = this.options.type != "all" || filterText || this.parent.filterSettings.get("userShowAll");
 
             this.visible = allowVisible && filterMatches;
