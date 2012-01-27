@@ -194,9 +194,9 @@ var ProgressReport = {
         }
 
         var adjustData = this.preAdjustTable();
-        reattachFn = temporaryDetachElement($('#module-progress'));
-        this.adjustTable(adjustData);
-        reattachFn();
+        reattachFn = temporaryDetachElement($('#module-progress'), function() {
+            this.adjustTable(adjustData);
+        }, this);
 
         this.onResize();
         $("#module-progress td.student-module-status").hover(this.onHover, this.onUnhover);
@@ -361,21 +361,19 @@ var ProgressReport = {
         this.hiddenStudentsModel.visible = (hiddenCount > 0);
         this.hiddenStudentsModel.hiddenCount = hiddenCount;
 
-        reattachFn = temporaryDetachElement($('#module-progress'));
-
-        $.each(this.rowViews, function(idx, rowView) {
-            rowView.updateFilter(visibleColumns);
-        });
-        $.each(this.headingViews, function(idx, colView) {
-            colView.updateFilter(visibleColumns, matchingColumns);
-        });
-
-        reattachFn();
+        temporaryDetachElement($('#module-progress'), function() {
+            _.each(this.rowViews, function(rowView) {
+                rowView.updateFilter(visibleColumns);
+            });
+            _.each(this.headingViews, function(colView) {
+                colView.updateFilter(visibleColumns, matchingColumns);
+            });
+        }, this);
 
         var adjustData = this.preAdjustTable();
-        reattachFn = temporaryDetachElement($('#module-progress'));
-        this.adjustTable(adjustData);
-        reattachFn();
+        temporaryDetachElement($('#module-progress'), function() {
+            this.adjustTable(adjustData);
+        }, this);
     },
 
     showBrowserRequirements: function() {
