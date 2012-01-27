@@ -1376,39 +1376,36 @@ class TopicVersion(db.Model):
 
         Topic.reindex(self)
 
-        TopicVersion.rebuild_content_caches(self)
+        deferred.defer(rebuild_content_caches, self)
 
         logging.info("set_default_version complete")
 
-    @staticmethod
-    def rebuild_content_caches(version):
+def rebuild_content_caches(version):
 
-        topics = Topic.get_all_topics(version)  # does not include hidden topics!
+    topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
-        videos = [v for v in Video.all()]
+    videos = [v for v in Video.all()]
+    video_dict = dict((v.key(), v) for v in videos)
 
-        for video in videos:
-            video.topics = []
+    for video in videos:
+        video.topic_string_keys = []
 
-        found_videos = 0
+    found_videos = 0
 
-        for topic in topics:
-            logging.info("Rebuilding content cache for topic " + topic.title)
-            topic_key_str = str(topic.key())
-            for child_key in topic.child_keys:
-                if child_key.kind() == "Video":
-                    child_key_str = str(child_key)
-                    video_list = [v for v in videos if str(v.key()) == child_key_str]
-                    if len(video_list) > 0:
-                        video_list[0].topics.append(topic_key_str)
-                        found_videos += 1
-                    else:
-                        logging.info("Failed to find video " + str(child_key))
+    for topic in topics:
+        logging.info("Rebuilding content cache for topic " + topic.title)
+        topic_key_str = str(topic.key())
+        for child_key in topic.child_keys:
+            if child_key.kind() == "Video":
+                if child_key in video_dict:
+                    video_dict[child_key].topic_string_keys.append(topic_key_str)
+                    found_videos += 1
+                else:
+                    logging.info("Failed to find video " + str(child_key))
 
-        for video in videos:
-            video.put()
+    db.put(videos)
 
-        logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
+    logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
                                     
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
@@ -2183,7 +2180,7 @@ class Video(Searchable, db.Model):
     readable_id = db.StringProperty()
 
     # List of parent topics
-    topics = object_property.TsvProperty(indexed=False)
+    topic_string_keys = object_property.TsvProperty(indexed=False)
 
     # YouTube view count from last sync.
     views = db.IntegerProperty(default = 0)
@@ -2294,8 +2291,8 @@ class Video(Searchable, db.Model):
 
     # returns the first non-hidden topic
     def first_topic(self):
-        if self.topics:
-            return db.get(self.topics[0])
+        if self.topic_string_keys:
+            return db.get(self.topic_string_keys[0])
         return None
 
     def current_user_points(self):
@@ -2587,7 +2584,7 @@ class VideoLog(db.Model):
             user_data.total_seconds_watched += seconds_watched
 
             # Update seconds_watched of all associated UserTopicVideos
-            topics = db.get(video.topics)
+            topics = db.get(video.topic_string_keys)
 
             first_video_topic = True
             for topic in topics:

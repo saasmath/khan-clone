@@ -97,7 +97,7 @@ def load_videos(version, title=None):
         topic = Topic.insert(title=p.title,
                      parent=root,
                      description=p.description,
-                     tags=p.tags
+                     tags=p.tags,
                      child_keys=content_keys)
     
     logging.info("loading " + title)

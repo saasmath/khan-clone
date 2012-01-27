@@ -720,7 +720,7 @@ class UpdateExercise(request_handler.RequestHandler):
         # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
         topics = {}
         for exercise_video in exercise_videos:
-            video_topics = db.get(exercise_video.video.topics)
+            video_topics = db.get(exercise_video.video.topic_string_keys)
             for topic in video_topics:
                 if not topics.has_key(topic.key()):
                     topics[topic.key()] = {}
