@@ -3465,9 +3465,8 @@ a.nodeLabel:hover {
 .nodeLabelHidden {
     display: none;
 }
-.nodeLabelFiltered {
-    opacity: 0.3;
-    filter:alpha(opacity=30);
+.nodeLabelFiltered div {
+    color: #444;
 }
 .nodeLabelProficient div {
 }

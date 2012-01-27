@@ -255,10 +255,31 @@ function KnowledgeMapInitGlobals() {
         setFiltered: function(filtered) {
             if (filtered != this.filtered) {
                 this.filtered = filtered;
-                if (this.filtered)
+
+                // set class for css to apply styles
+                if (this.filtered) {
                     this.el.addClass("nodeLabelFiltered");
-                else
+                } else {
                     this.el.removeClass("nodeLabelFiltered");
+                }
+
+                // perf hack: instead of changing css opacity, set a whole new image
+                var img = this.el.find('img.node-icon');
+                var url = img.attr('src');
+
+                // don't adjust images of stars when zoomed out
+                if (url.indexOf("-star.png") >= 0) return;
+
+                // normalize
+                if (url.indexOf("faded") >= 0) {
+                    url = url.replace("-faded.png", ".png");
+                }
+
+                if (this.filtered) {
+                    img.attr('src', url.replace(".png", "-faded.png"));
+                } else {
+                    img.attr('src', url);
+                }
             }
         },
 
