@@ -1376,7 +1376,39 @@ class TopicVersion(db.Model):
 
         Topic.reindex(self)
 
+        TopicVersion.rebuild_content_caches(self)
+
         logging.info("set_default_version complete")
+
+    @staticmethod
+    def rebuild_content_caches(version):
+
+        topics = Topic.get_all_topics(version)  # does not include hidden topics!
+
+        videos = [v for v in Video.all()]
+
+        for video in videos:
+            video.topics = []
+
+        found_videos = 0
+
+        for topic in topics:
+            logging.info("Rebuilding content cache for topic " + topic.title)
+            topic_key_str = str(topic.key())
+            for child_key in topic.child_keys:
+                if child_key.kind() == "Video":
+                    child_key_str = str(child_key)
+                    video_list = [v for v in videos if str(v.key()) == child_key_str]
+                    if len(video_list) > 0:
+                        video_list[0].topics.append(topic_key_str)
+                        found_videos += 1
+                    else:
+                        logging.info("Failed to find video " + str(child_key))
+
+        for video in videos:
+            video.put()
+
+        logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
                                     
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
@@ -2057,29 +2089,6 @@ class Topic(Searchable, db.Model):
         return Topic._get_children_of_kind(topic, "Video", include_descendants)
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda 
-        video, include_ancestors=False, version=None: 
-        "%s_topics_for_video_%s_at_%s" % (
-            "ancestor" if include_ancestors else "parent",
-            video.title, 
-            version.key() if version else Setting.topic_tree_version()), 
-        layer=layer_cache.Layers.Memcache)
-    def get_cached_topics_for_video(video, include_ancestors=False, version=None):
-        if version is None:
-            version = TopicVersion.get_default_version()
-            if version is None:
-                version = TopicVersion.get_latest_version()
-
-        topics = Topic.all().filter("child_keys =", video.key()).filter("version =", version).filter("hide =", False).fetch(10000)
-        if include_ancestors:
-            ancestor_dict = {}
-            for topic in topics:
-                ancestor_dict.update(dict((key, True) for key in topic.ancestor_keys))
-            topics.extend(db.get(ancestor_dict.keys()))
-                                   
-        return topics
-
-    @staticmethod
     def reindex(version):
         import search
         items = search.StemmedIndex.all().filter("parent_kind", "Topic").run()
@@ -2168,6 +2177,9 @@ class Video(Searchable, db.Model):
 
     # Human readable, unique id that can be used in URLS.
     readable_id = db.StringProperty()
+
+    # List of parent topics
+    topics = object_property.TsvProperty(indexed=False)
 
     # YouTube view count from last sync.
     views = db.IntegerProperty(default = 0)
@@ -2278,9 +2290,8 @@ class Video(Searchable, db.Model):
 
     # returns the first non-hidden topic
     def first_topic(self):
-        topics = Topic.get_cached_topics_for_video(self)
-        if topics:
-            return topics[0]
+        if self.topics:
+            return db.get(self.topics[0])
         return None
 
     def current_user_points(self):
@@ -2572,7 +2583,7 @@ class VideoLog(db.Model):
             user_data.total_seconds_watched += seconds_watched
 
             # Update seconds_watched of all associated UserTopicVideos
-            topics = Topic.get_cached_topics_for_video(video, include_ancestors=True)
+            topics = db.get(video.topics)
 
             first_video_topic = True
             for topic in topics:

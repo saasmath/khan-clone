@@ -720,10 +720,11 @@ class UpdateExercise(request_handler.RequestHandler):
         # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
         topics = {}
         for exercise_video in exercise_videos:
-            for topic in models.Topic.get_cached_topics_for_video(exercise_video.video):
+            video_topics = db.get(exercise_video.video.topics)
+            for topic in video_topics:
                 if not topics.has_key(topic.key()):
                     topics[topic.key()] = {}
-                
+
                 topics[topic.key()][exercise_video] = topic.get_child_order(exercise_video.video.key())
 
         # sort the list by topics that have the most exercises in them

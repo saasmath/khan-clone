@@ -564,7 +564,6 @@ class Search(request_handler.RequestHandler):
         videos = []
         for entity in all_entities:
             if isinstance(entity, Topic):
-                logging.info("Found Topic " + entity.title) # TomY TODO remove
                 topics.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
@@ -579,10 +578,8 @@ class Search(request_handler.RequestHandler):
         filtered_videos = []
         filtered_videos_by_key = {}
         for video in videos:
-            video_topic_list = Topic.get_cached_topics_for_video(video)
-            video.topics = [t.standalone_title for t in video_topic_list]
-            if [(topic.standalone_title in video.topics) for topic in topics].count(True) == 0:
-                video_topic = video_topic_list[0] if video_topic_list else None
+            if [(str(topic.key()) in video.topics) for topic in topics].count(True) == 0:
+                video_topic = video.first_topic()
                 if video_topic != None:
                     topics.append(video_topic)
                     filtered_videos.append(video)
@@ -613,7 +610,7 @@ class Search(request_handler.RequestHandler):
         if topics:
             if len(filtered_videos) > 0:
                 for topic in topics:
-                    topic.match_count = [(topic.title in video.topics) for video in filtered_videos].count(True)
+                    topic.match_count = [(str(topic.key()) in video.topics) for video in filtered_videos].count(True)
                 topics = sorted(topics, key=lambda topic: -topic.match_count)
             else:
                 for topic in topics:
