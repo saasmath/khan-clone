@@ -310,6 +310,10 @@ def video_exercises(video_id):
 @jsonp
 @jsonify
 def get_cc_map():
+    lightweight = request.request_string('lightweight').strip()
+    if lightweight == "1":
+        return common_core.models.CommonCoreMap.get_all_lightweight()
+
     return common_core.models.CommonCoreMap.get_all()
 
 def fully_populated_playlists():

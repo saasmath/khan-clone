@@ -53,7 +53,7 @@ class CommonCoreMap(db.Model):
     exercises = db.ListProperty(db.Key)
     videos = db.ListProperty(db.Key)
 
-    def get_entry(self):
+    def get_entry(self, lightweight=False):
         entry = {}
         entry['standard'] = self.standard
         entry['grade'] = self.grade
@@ -63,9 +63,17 @@ class CommonCoreMap(db.Model):
         entry['exercises'] = []
         entry['videos'] = []
         for key in self.exercises:
-            entry['exercises'].append(db.get(key))
+            if lightweight:
+                ex = db.get(key)
+                entry['exercises'].append({ "title": ex.display_name, "url": ex.ka_url })
+            else:
+                entry['exercises'].append(db.get(key))
         for key in self.videos:
-            entry['videos'].append(db.get(key))
+            if lightweight:
+                v = db.get(key)
+                entry['videos'].append({ "title": v.title, "url": v.url })
+            else:
+                entry['videos'].append(db.get(key))
 
         return entry
 
@@ -75,6 +83,14 @@ class CommonCoreMap(db.Model):
         all_entries = []
         for e in query:
             all_entries.append(e.get_entry())
+        return all_entries
+
+    @staticmethod
+    def get_all_lightweight():
+        query = CommonCoreMap.all()
+        all_entries = []
+        for e in query:
+            all_entries.append(e.get_entry(lightweight=True))
         return all_entries
 
     def update_standard(self, standard):
