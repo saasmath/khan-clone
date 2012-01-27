@@ -901,6 +901,8 @@ var Profile = {
     },
 
     populateRecentActivity: function() {
+        $("#recent-activity-progress-bar").progressbar({value: 100});
+
         // TODO: Abstract away profile + actor privileges
         var email = Profile.profile.get("email");
         if (email) {
@@ -913,6 +915,10 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
+                    $("#recent-activity-progress-bar").slideUp("fast", function() {
+                        $(this).hide();
+                    });
+
                     var listTemplate = Templates.get("profile.recent-activity-list"),
                         exerciseTemplate = Templates.get("profile.recent-activity-exercise"),
                         badgeTemplate = Templates.get("profile.recent-activity-badge"),

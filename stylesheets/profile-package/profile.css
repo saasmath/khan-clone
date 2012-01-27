@@ -538,6 +538,11 @@ div.public-profile-notification {
     z-index: 2;
 }
 
+#recent-activity-progress-bar {
+    width: 400px;
+    height: 22px;
+    margin-top: 15px;
+}
 #graph-progress-bar {
     width: 400px;
     height: 22px;
@@ -568,7 +573,7 @@ div.public-profile-notification {
     position: relative;
 }
 
-#graph-progress-bar .ui-progressbar-value {
+#recent-activity-progress-bar .ui-progressbar-value, #graph-progress-bar .ui-progressbar-value {
     background-image: url('/images/progress-animated.gif');
 }
 
@@ -584,6 +589,9 @@ div.public-profile-notification {
     margin: 0;
 }
 
+#recent-activity h2 {
+    margin: 0;
+}
 #recent-activity .share-link {
     display: none;
     z-index:5;
