@@ -6,6 +6,12 @@ def all_avatars():
     """ Authoritative list of all avatars available to users. """
 
     return [
+        PointsAvatar("Green Leaf", "/images/avatars/leaf-green.png", 0),
+        PointsAvatar("Blue Leaf", "/images/avatars/leaf-blue.png", 0),
+        PointsAvatar("Grey Leaf", "/images/avatars/leaf-grey.png", 0),
+        PointsAvatar("Red Leaf", "/images/avatars/leaf-red.png", 0),
+        PointsAvatar("Orange Leaf", "/images/avatars/leaf-orange.png", 0),
+        PointsAvatar("Yellow Leaf", "/images/avatars/leaf-yellow.png", 0),
         PointsAvatar("Spunky Sam", "/images/avatars/spunky-sam.png", 10000),
         PointsAvatar("Marcimus", "/images/avatars/marcimus.png", 10000),
         PointsAvatar("Mr. Pink", "/images/avatars/mr-pink.png", 10000),
@@ -31,7 +37,7 @@ def avatar_for_name(name):
     if name in avatars:
         return avatars[name]
     
-    return avatars["Spunky Sam"]
+    return avatars["Leaf Green"]
 
 @layer_cache.cache()
 def avatars_by_category():
