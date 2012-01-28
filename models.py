@@ -2516,7 +2516,6 @@ class VideoLog(db.Model):
     seconds_watched = db.IntegerProperty(default = 0, indexed=False)
     last_second_watched = db.IntegerProperty(indexed=False)
     points_earned = db.IntegerProperty(default = 0, indexed=False)
-    topic_titles = db.StringListProperty(indexed=False)
 
     _serialize_blacklist = ["video"]
 
@@ -2591,8 +2590,6 @@ class VideoLog(db.Model):
                 user_playlist.seconds_watched += seconds_watched
                 user_playlist.last_watched = datetime.datetime.now()
                 user_playlist.put()
-
-                video_log.topic_titles.append(user_playlist.title)
 
                 if first_video_playlist:
                     action_cache.push_video_log(video_log)
