@@ -154,11 +154,6 @@ class ViewHomePage(request_handler.RequestHandler):
 
             if marquee_videos:
                 marquee_video = marquee_videos[day % len(marquee_videos)]
-
-                sopa_videos = filter(lambda vid: vid["youtube_id"] == "tzqMoOk9NWc", marquee_videos)
-                if sopa_videos:
-                    marquee_video = sopa_videos[0]
-
                 marquee_video["selected"] = True
 
             if len(thumbnail_link_sets[current_link_set_offset]) < ITEMS_PER_SET:

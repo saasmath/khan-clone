@@ -63,17 +63,17 @@ def exercise_message(exercise, user_exercise_graph, sees_graph=False,
 
     elif exercise_states['struggling']:
         filename = 'exercise_message_struggling.html'
+        suggested_prereqs = []
         if exercise.prerequisites:
             proficient_exercises = user_exercise_graph.proficient_exercise_names()
-            suggested_prereqs = []
             for prereq in exercise.prerequisites:
                 if prereq not in proficient_exercises:
                     suggested_prereqs.append({
                           'ka_url': Exercise.get_relative_url(prereq),
                           'display_name': Exercise.to_display_name(prereq),
                           })
-            exercise_states['suggested_prereqs'] = apijsonify.jsonify(
-                    suggested_prereqs)
+        exercise_states['suggested_prereqs'] = apijsonify.jsonify(
+                suggested_prereqs)
 
     else:
         return None

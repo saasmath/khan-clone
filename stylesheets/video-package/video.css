@@ -95,14 +95,14 @@
 .video #description {
     padding-top: 18px;
 }
-    .video #description h3 {
+    .video #description .title-header {
         display: block;
         font-size: 15px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
-    .video #description h3 span.long-description {
+    .video #description .title-header .long-description {
         color: #555;
         font-weight: normal;
         position: relative;

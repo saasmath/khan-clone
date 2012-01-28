@@ -131,7 +131,7 @@ var Profile = {
         });
 
         var currentGoals = window.GoalBook.map( function(g){ return g.get("title"); });
-        _( $(".add-goal") ).map( function( elt ){
+        $(".add-goal").each(function(i, elt) {
             var button = $( elt );
             var badge = button.closest( ".achievement-badge" );
             var goalTitle = badge.find( ".achievement-title" ).text();
@@ -144,13 +144,9 @@ var Profile = {
             // add +goal behavior to button, once.
             } else {
 
-                button.one("click", function(){
-                    var goalObjectives = _( badge.data("objectives") ).map( function( exercise ){
-                        return {
-                            "type" : "GoalObjectiveExerciseProficiency",
-                            "internal_id" : exercise
-                        };
-                    });
+                button.one("click", function() {
+                    var goalObjectives = _(badge.data("objectives"))
+                            .map(Goal.GoalObjectiveExerciseProficiency);
 
                     var goal = new Goal({
                         title: goalTitle,
@@ -628,10 +624,21 @@ var Profile = {
             });
         });
 
-        $("#student-goals-sort").change(function() { Profile.sortStudentGoals(studentGoalsViewModel); });
-
-        $("input.student-goals-filter-check").change(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
-        $("#student-goals-search").keyup(function() { Profile.filterStudentGoals(studentGoalsViewModel); });
+        $("#student-goals-sort")
+            .off("change.goalsfilter")
+            .on("change.goalsfilter", function() {
+                Profile.sortStudentGoals(studentGoalsViewModel);
+            });
+        $("input.student-goals-filter-check")
+            .off("change.goalsfilter")
+            .on("change.goalsfilter", function() {
+                Profile.filterStudentGoals(studentGoalsViewModel);
+            });
+        $("#student-goals-search")
+            .off("keyup.goalsfilter")
+            .on("keyup.goalsfilter", function() {
+                Profile.filterStudentGoals(studentGoalsViewModel);
+            });
 
         Profile.sortStudentGoals(studentGoalsViewModel);
         Profile.filterStudentGoals(studentGoalsViewModel);

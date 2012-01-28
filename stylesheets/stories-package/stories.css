@@ -111,6 +111,7 @@ a.btn:focus {
     overflow: auto;
     overflow-y: auto;
     overflow-x: hidden;
+    margin-bottom: 0;
 }
 .modal .modal-header h3 {
     margin-top: 0;
@@ -205,6 +206,10 @@ h2.stories-header {
 
     -webkit-border-top-left-radius: 6px;
     -webkit-border-top-right-radius: 6px;
+    -moz-border-radius-topleft: 6px;
+    -moz-border-radius-topright: 6px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
 }
 
 .modal-header .tape {

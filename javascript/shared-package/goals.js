@@ -19,8 +19,11 @@ var Goal = Backbone.Model.extend({
 
         // default progress value for all objectives
         _.each(this.get("objectives"), function(o) {
-            if (!o.progress) {
+            if (o.progress == null) {
                 o.progress = 0;
+            }
+            if (o.status == null) {
+                o.status = 'not-started';
             }
         });
 
@@ -144,6 +147,20 @@ var Goal = Backbone.Model.extend({
 
     objectiveUrl: function(objective) {
         return Goal.objectiveUrlForType[objective.type](objective);
+    },
+
+    exidToExerciseName: function(exid) {
+        return exid[0].toUpperCase() + exid.slice(1).replace(/_/g, ' ');
+    },
+
+    GoalObjectiveExerciseProficiency: function(exid) {
+        var obj = {
+            type: "GoalObjectiveExerciseProficiency",
+            internal_id: exid,
+            description: Goal.exidToExerciseName(exid)
+        };
+        obj.url = Goal.objectiveUrl(obj);
+        return obj;
     }
 });
 
