@@ -41,7 +41,7 @@
         <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse"></a>
     </div>
     <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
-        <link itemprop="url" href="/video/{{video.readable_id}}?playlist={{playlist.title|urlencode}}">
+        <link itemprop="url" href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}">
         <div id="description">
             {%- if button_top_exercise %}
             <a href="{{button_top_exercise.url}}" class="practice simple-button action-gradient green desktop-only" title="Test your understanding with an exercise">Practice this concept</a>
