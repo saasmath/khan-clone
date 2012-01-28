@@ -2876,6 +2876,12 @@ class PromoRecord(db.Model):
         return self.key().name()
 
     @staticmethod
+    def has_user_seen_promo(promo_name, user_id):
+        key_name = PromoRecord._build_key_name(promo_name, user_id)
+        record = PromoRecord.get_by_key_name(key_name)
+        return record is not None
+
+    @staticmethod
     def _build_key_name(promo_name, user_id):
         escaped_promo_name = urllib.quote(promo_name)
         escaped_user_id = urllib.quote(user_id)

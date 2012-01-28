@@ -384,6 +384,22 @@ def is_username_available():
     else:
         return models.UniqueUsername.is_available_username(username)
 
+@route("/api/v1/user/username_promo", methods=["GET"])
+@jsonp
+@jsonify
+def has_seen_username_promo():
+    user_data = models.UserData.current()
+    promo_name = "Username Holding Period Promo"
+    return models.PromoRecord.has_user_seen_promo(promo_name, user_data.user_id)
+
+@route("/api/v1/user/username_promo", methods=["POST"])
+@jsonp
+@jsonify
+def set_username_promo():
+    user_data = models.UserData.current()
+    promo_name = "Username Holding Period Promo"
+    return models.PromoRecord.record_promo(promo_name, user_data.user_id)
+
 # TODO: the "GET" version of this.
 @route("/api/v1/user/profile", methods=["POST", "PUT"])
 @oauth_required()

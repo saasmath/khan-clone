@@ -2,15 +2,10 @@
     <a href="#" class="close-button close">x</a><h3>Choose Your Avatar</h3>
 </div>
 <div class="modal-body avatar-picker-contents">
-    <div>
-        <div>Current Avatar:</div>
-        <img src="{{selectedSrc}}" id="selected-img">
-    </div>
-
     {{#each categories}}
     {{#if avatars}}
+    <div class="category-title">{{title}}</div>
     <div class="category-section">
-        <div class="category-title">{{title}}</div>
         <div class="category-avatars">
         {{#each avatars}}
             <div class="avatar{{#unless isAvailable}} locked{{/unless}}">
@@ -19,6 +14,7 @@
             </div>
         {{/each}}
         </div>
+        <div class="clear"></div>
     </div>
     {{/if}}
     {{/each}}

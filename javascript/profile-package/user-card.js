@@ -204,13 +204,17 @@ UserCardView = Backbone.View.extend({
         // TODO: beautify me!
         this.$("#edit-visibility").qtip({
             content: {
-                text: "helpful description goes here?"
+                text: "Making your profile public will give you a link to your profile you can share with your friends, and allow your information to appear when others search for you.",
+                title: {
+                    text: "Profile Privacy Setting"
+                }
             },
             style: {
-                classes: "ui-tooltip-youtube"
+                classes: "ui-tooltip-light ui-tooltip-shadow",
+                width: "250px"
             },
             position: {
-                my: "top center",
+                my: "top right",
                 at: "bottom center"
             },
             hide: {
@@ -327,7 +331,7 @@ UserCardView = Backbone.View.extend({
             // Profiles can't be made public until the user acquires a
             // username first. Pop up the dialog to do that.
             this.onEditBasicInfoClicked_();
-            $(".info-notification").show();
+            $(".notification.info").show();
             return;
         }
         var isPublic = this.model.get("isPublic");
