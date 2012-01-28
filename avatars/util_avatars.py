@@ -6,14 +6,15 @@ def all_avatars():
     """ Authoritative list of all avatars available to users. """
 
     return [
-        PointsAvatar("darth", "/images/darth.png", 0),
-        PointsAvatar("warp_ray", "http://www.trinigamers.com/forums/images/avatars/warp_ray_128.gif", 0),
-        PointsAvatar("raynor", "http://www.trinigamers.com/forums/images/avatars/raynor1_128.gif", 0),
+        PointsAvatar("Spunky Sam", "/images/avatars/spunky-sam.png", 0),
+        PointsAvatar("Marcimus", "/images/avatars/marcimus.png", 0),
+        PointsAvatar("Mr. Pink", "/images/avatars/mr-pink.png", 0),
+        PointsAvatar("Orange Juice Squid", "/images/avatars/orange-juice-squid.png", 5000),
 
-        PointsAvatar("marine", "http://www.trinigamers.com/forums/images/avatars/findlay1_128.gif", 5000),
-        PointsAvatar("protoss", "http://www.trinigamers.com/forums/images/avatars/selendis_128.gif", 5000),
+        PointsAvatar("Purple Pi", "/images/avatars/purple-pi.png", 5000),
+        PointsAvatar("Mr. Pants", "/images/avatars/mr-pants.png", 50000),
 
-        PointsAvatar("zergling", "http://www.trinigamers.com/forums/images/avatars/zergling_128.gif", 50000),
+        PointsAvatar("Old Spice Man", "/images/avatars/old-spice-man.png", 50000),
     ]
 
 @layer_cache.cache()
@@ -30,7 +31,7 @@ def avatar_for_name(name):
     if name in avatars:
         return avatars[name]
     
-    return avatars["darth"]
+    return avatars["Spunky Sam"]
 
 @layer_cache.cache()
 def avatars_by_category():
