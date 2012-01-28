@@ -979,9 +979,19 @@ li.profile-tab {
     top: 60px;
     left: 50%;
 }
-#username-picker-container .info-notification {
+#username-picker-container .notification.info {
     background-color: #DDF4FB;
     border-color: #C6EDF9;
+    padding: 5px 5px 5px 10px;
+    margin: -10px 0 15px 0;
+
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+#username-picker-container .notification.error {
+    background-color: #FDDFDE;
+    border-color: #FBC7C6;
     padding: 5px 5px 5px 10px;
     margin: -10px 0 15px 0;
 

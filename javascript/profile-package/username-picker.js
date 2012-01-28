@@ -14,6 +14,7 @@ UsernamePickerView = Backbone.View.extend({
 
     initialize: function() {
         this.template = Templates.get("profile.username-picker");
+        this.shouldShowUsernameWarning_ = false;
         this.keyupTimeout = null;
         this.model.bind("validate:username",
             _.bind(this.showMessage_, this));
@@ -34,7 +35,8 @@ UsernamePickerView = Backbone.View.extend({
                 keyboard: true,
                 backdrop: true
             })
-            .bind("hidden", _.bind(this.resetFields_, this));
+            .bind("hidden", _.bind(this.resetFields_, this))
+            .bind("shown", _.bind(this.getUsernameWarningPromo_, this));
         return this;
     },
 
@@ -46,7 +48,7 @@ UsernamePickerView = Backbone.View.extend({
         var nickname = this.model.get("nickname"),
             username = this.model.get("username");
 
-        this.$(".info-notification").hide();
+        this.$(".notification").hide();
         this.$(".nickname").val(nickname);
         this.$(".username").val(username);
         this.$(".example-username").val(username);
@@ -54,7 +56,36 @@ UsernamePickerView = Backbone.View.extend({
         this.$("#save-profile-info").prop("disabled", false);
     },
 
+    setShowUsernameWarning_: function(hasSeen) {
+        this.shouldShowUsernameWarning_ = !hasSeen;
+    },
+
+    getUsernameWarningPromo_: function() {
+        if(!this.model.get("username")) {
+            return;
+        }
+
+        $.ajax({
+            type: "GET",
+            url: "/api/v1/user/username_promo",
+            dataType: "json",
+            success: _.bind(this.setShowUsernameWarning_, this)
+        });
+    },
+
+    setUsernameWarningPromo_: function() {
+        $.ajax({
+            type: "POST",
+            url: "/api/v1/user/username_promo"
+        });
+    },
+
     onUsernameKeyup_: function(e) {
+        if (this.shouldShowUsernameWarning_) {
+            $(".notification.error").show();
+            this.setUsernameWarningPromo_();
+            this.shouldShowUsernameWarning_ = false;
+        }
         if (e.keyCode === 13) {
             // Pressing enter does not save. Should it?
             this.onTimeout_();
