@@ -2879,7 +2879,7 @@ class PromoRecord(db.Model):
     def _build_key_name(promo_name, user_id):
         escaped_promo_name = urllib.quote(promo_name)
         escaped_user_id = urllib.quote(user_id)
-        return "%s %s" % (escaped_promo_name, escaped_user_id)
+        return "%s:%s" % (escaped_promo_name, escaped_user_id)
 
     @staticmethod
     def record_promo(promo_name, user_id):
