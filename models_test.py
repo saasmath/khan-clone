@@ -115,10 +115,32 @@ class ProfileSegmentTest(test_utils.GAEModelTestCase):
                 bob.user_id)
 
         sally = models.UserData.insert_for(
-                "http://facebook.khanacademy.org/1234",
-                "http://facebook.khanacademy.org/1234")
+                "http://facebookid.khanacademy.org/1234",
+                "http://facebookid.khanacademy.org/1234")
         sally.put()
         self.assertEqual(
                 self.from_url(self.to_url(sally)).user_id,
                 sally.user_id)
 
+class PromoRecordTest(test_utils.GAEModelTestCase):
+    # Shorthand
+    def r(self, promo_name, user_id):
+        return models.PromoRecord.record_promo(promo_name, user_id)
+    
+    def test_promo_record(self):
+        u1 = "http://facebookid.khanacademy.org/1234"
+        u2 = "http://googleid.khanacademy.org/5678"
+        p1 = "Public profiles"
+        p2 = "Skynet"
+
+        # First time
+        self.assertTrue(self.r(p1, u1))
+        # Second time and onwards
+        for i in range(10):
+            self.assertFalse(self.r(p1, u1))
+            
+        # Different user
+        self.assertTrue(self.r(p1, u2))
+        
+        # Different promo
+        self.assertTrue(self.r(p2, u1))

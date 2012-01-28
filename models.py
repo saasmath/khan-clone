@@ -2872,23 +2872,33 @@ class PromoRecord(db.Model):
     sort.
     """
 
-    promo_name = db.StringProperty()
-    user_id = db.StringProperty()
+    def __str__(self):
+        return self.key().name()
+
+    @staticmethod
+    def has_user_seen_promo(promo_name, user_id):
+        key_name = PromoRecord._build_key_name(promo_name, user_id)
+        record = PromoRecord.get_by_key_name(key_name)
+        return record is not None
+
+    @staticmethod
+    def _build_key_name(promo_name, user_id):
+        escaped_promo_name = urllib.quote(promo_name)
+        escaped_user_id = urllib.quote(user_id)
+        return "%s %s" % (escaped_promo_name, escaped_user_id)
 
     @staticmethod
     def record_promo(promo_name, user_id):
         """ Attempt to mark that a user has seen a one-time promotion.
-        Returns True if the registration was successfull, and returns False
+        Returns True if the registration was successful, and returns False
         if the user has already seen that promotion.
         """
-        record = (PromoRecord.all()
-                             .filter("user_id = ", user_id)
-                             .filter("promo_name = ", promo_name)
-                             .get())
+        key_name = PromoRecord._build_key_name(promo_name, user_id)
+        record = PromoRecord.get_by_key_name(key_name)
         if record is not None:
             # Already shown the promo.
             return False
-        record = PromoRecord(promo_name=promo_name, user_id=user_id)
+        record = PromoRecord(key_name=key_name)
         record.put()
         return True
 
