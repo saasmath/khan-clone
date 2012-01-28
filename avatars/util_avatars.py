@@ -6,15 +6,15 @@ def all_avatars():
     """ Authoritative list of all avatars available to users. """
 
     return [
-        PointsAvatar("Spunky Sam", "/images/avatars/spunky-sam.png", 0),
-        PointsAvatar("Marcimus", "/images/avatars/marcimus.png", 0),
-        PointsAvatar("Mr. Pink", "/images/avatars/mr-pink.png", 0),
-        PointsAvatar("Orange Juice Squid", "/images/avatars/orange-juice-squid.png", 5000),
+        PointsAvatar("Spunky Sam", "/images/avatars/spunky-sam.png", 10000),
+        PointsAvatar("Marcimus", "/images/avatars/marcimus.png", 10000),
+        PointsAvatar("Mr. Pink", "/images/avatars/mr-pink.png", 10000),
+        PointsAvatar("Orange Juice Squid", "/images/avatars/orange-juice-squid.png", 50000),
 
-        PointsAvatar("Purple Pi", "/images/avatars/purple-pi.png", 5000),
-        PointsAvatar("Mr. Pants", "/images/avatars/mr-pants.png", 50000),
+        PointsAvatar("Purple Pi", "/images/avatars/purple-pi.png", 50000),
+        PointsAvatar("Mr. Pants", "/images/avatars/mr-pants.png", 100000),
 
-        PointsAvatar("Old Spice Man", "/images/avatars/old-spice-man.png", 50000),
+        PointsAvatar("Old Spice Man", "/images/avatars/old-spice-man.png", 100000),
     ]
 
 @layer_cache.cache()
@@ -38,9 +38,10 @@ def avatars_by_category():
     """ Full list of all avatars available to users segmented by AvatarCategory
     """
     categories = [
-        AvatarPointsCategory("Easy", 0, 5000),
-        AvatarPointsCategory("Coolsville", 5000, 50000),
-        AvatarPointsCategory("Epic", 50000)
+        AvatarPointsCategory("Starter", 0, 10000),
+        AvatarPointsCategory("Common", 10000, 50000),
+        AvatarPointsCategory("Uncommon", 50000, 100000),
+        AvatarPointsCategory("Rare", 100000, 250000)
     ]
     full_list = all_avatars()
     for i, category in enumerate(categories):
