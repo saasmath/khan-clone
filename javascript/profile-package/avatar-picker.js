@@ -82,7 +82,7 @@ Avatar.Picker.prototype.onAvatarSelected_ = function(ev) {
         return;
     }
 
-    var src = $("img.avatar-preview", ev.currentTarget).attr("src");
+    var src = $(ev.currentTarget).find("img.avatar-preview").attr("src");
     var name = $(".name", ev.currentTarget).text();
     if (src && name) {
         this.userModel.save({
@@ -96,8 +96,13 @@ Avatar.Picker.prototype.onAvatarSelected_ = function(ev) {
  * Handles a change to the selected avatar.
  */
 Avatar.Picker.prototype.onAvatarChanged_ = function() {
-    $("#selected-img", this.contentEl).attr(
-           "src", this.userModel.get("avatarSrc"));
+    var newSrc = this.userModel.get("avatarSrc");
+    $(this.contentEl)
+            .find(".avatar")
+                .removeClass("selected")
+            .end()
+            .find("img.avatar-preview[src='" + newSrc + "']")
+                .parent(".avatar").addClass("selected");
 };
 
 /**
@@ -125,6 +130,10 @@ Avatar.Picker.prototype.onDataLoaded_ = function(data) {
     // not visible. That's OK.
     $(this.contentEl).html(
             Avatar.Picker.template(this.getTemplateContext_()));
+
+    // Sync UI to initial state.
+    this.onAvatarChanged_();
+
 };
 
 /**
@@ -142,6 +151,10 @@ Avatar.Picker.prototype.show = function() {
 
     $(this.contentEl).html(
             Avatar.Picker.template(this.getTemplateContext_()));
+
+    // Sync UI to initial state.
+    this.onAvatarChanged_();
+
     $(this.el).modal({
         keyboard: true,
         backdrop: true,

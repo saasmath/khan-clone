@@ -37,7 +37,7 @@ def avatar_for_name(name):
     if name in avatars:
         return avatars[name]
     
-    return avatars["Leaf Green"]
+    return avatars["Green Leaf"]
 
 @layer_cache.cache()
 def avatars_by_category():
