@@ -99,9 +99,9 @@
                     data: [
                         {% for key_topic in dict_topic_seconds %}
                             {
-                                name: '{{ dict_topic_seconds[key_topic]["topic_title"]|escapejs }}',
+                                name: '{{ dict_topic_seconds[key_topic]["playlist_title"]|escapejs }}',
                                 y: {{ dict_topic_seconds[key_topic]["percentage"]|escapejs }},
-                                tooltip_title: '<b>{{ dict_topic_seconds[key_topic]["topic_title"]|escapejs }}</b> (videos)',
+                                tooltip_title: '<b>{{ dict_topic_seconds[key_topic]["playlist_title"]|escapejs }}</b> (videos)',
                                 time_spent: '{{ dict_topic_seconds[key_topic]["time_spent"]|escapejs }}',
                                 tooltip_more: '{{ dict_topic_seconds[key_topic]["tooltip_more"]|escapejs }}'
                                 }{% if not loop.last %},{% endif %}

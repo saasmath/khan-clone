@@ -26,15 +26,15 @@ def get_topic_focus_data(daily_activity_logs, dt_start_utc, dt_end_utc):
             for video_key in hourly_activity_summary.dict_videos.keys():
                 hourly_activity_summary_video_item = hourly_activity_summary.dict_videos[video_key]
 
-                topic_title = "Other"
-                if hourly_activity_summary_video_item.topic_titles:
-                    topic_title = hourly_activity_summary_video_item.topic_titles[0] # Only count against the first topic for now
+                playlist_title = "Other"
+                if hourly_activity_summary_video_item.playlist_titles:
+                    playlist_title = hourly_activity_summary_video_item.playlist_titles[0] # Only count against the first topic for now
 
-                key_topic = topic_title.lower()
+                key_topic = playlist_title.lower()
                 if dict_topic_seconds.has_key(key_topic):
                     dict_topic_seconds[key_topic]["seconds"] += hourly_activity_summary_video_item.seconds_watched
                 else:
-                    dict_topic_seconds[key_topic] = {"topic_title": topic_title, "seconds": hourly_activity_summary_video_item.seconds_watched, "videos": {}}
+                    dict_topic_seconds[key_topic] = {"playlist_title": playlist_title, "seconds": hourly_activity_summary_video_item.seconds_watched, "videos": {}}
 
                 key_video = hourly_activity_summary_video_item.video_title.lower()
                 if dict_topic_seconds[key_topic]["videos"].has_key(key_video):
