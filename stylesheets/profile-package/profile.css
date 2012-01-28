@@ -1048,9 +1048,8 @@ li.profile-tab {
     float: left;
     border: 1px solid transparent;
     cursor: pointer;
-    padding: 5px;
     text-align: center;
-    margin-right: 10px;
+    width: 33%;
     
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
