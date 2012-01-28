@@ -18,7 +18,7 @@ from google.appengine.ext import db
 
 import models
 from models import Topic, TopicVersion, Video, Url
-# from models import Playlist
+from models import Playlist
         
 class EditContent(request_handler.RequestHandler):
 

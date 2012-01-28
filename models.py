@@ -2093,17 +2093,13 @@ class Topic(Searchable, db.Model):
     def reindex(version):
         import search
         items = search.StemmedIndex.all().filter("parent_kind", "Topic").run()
-        item_dict = dict((i.get_title(i.key().name()), i) for i in items)
+        db.delete(items)
         
-        standalone_titles = []
         topics = Topic.get_content_topics(version)
         for topic in topics:
-            standalone_titles.append(topic.standalone_title)
+            logging.info("Indexing topic " + topic.title + " (" + str(topic.key()) + ")")
             topic.index()
             topic.indexed_title_changed()
-
-        deleted_items = [i for t, i in item_dict.iteritems() if t not in standalone_titles]
-        db.delete(deleted_items)
 
 class UserTopicVideos(db.Model):
     user = db.UserProperty()
