@@ -2583,30 +2583,31 @@ class VideoLog(db.Model):
             user_video.seconds_watched += seconds_watched
             user_data.total_seconds_watched += seconds_watched
 
-            # Update seconds_watched of all associated UserTopicVideos
-            topics = db.get(video.topic_string_keys)
+            # Update seconds_watched of all associated UserPlaylists
+            query = VideoPlaylist.all()
+            query.filter('video =', video)
+            query.filter('live_association = ', True)
 
-            first_video_topic = True
-            for topic in topics:
-                user_topic_videos = UserTopicVideos.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
-                user_topic_videos.title = topic.title
-                user_topic_videos.seconds_watched += seconds_watched
-                user_topic_videos.last_watched = datetime.datetime.now()
-                user_topic_videos.put()
- 
-                # not sure where this was getting used
-                video_log.topic_titles.append(topic.title)
+            first_video_playlist = True
+            for video_playlist in query:
+                user_playlist = UserPlaylist.get_for_playlist_and_user_data(video_playlist.playlist, user_data, insert_if_missing=True)
+                user_playlist.title = video_playlist.playlist.title
+                user_playlist.seconds_watched += seconds_watched
+                user_playlist.last_watched = datetime.datetime.now()
+                user_playlist.put()
 
-                if first_video_topic:
+                video_log.topic_titles.append(user_playlist.title)
+
+                if first_video_playlist:
                     action_cache.push_video_log(video_log)
 
-                util_badges.update_with_user_topic_videos(
+                util_badges.update_with_user_playlist(
                         user_data,
-                        user_topic_videos,
-                        include_other_badges = first_video_topic,
+                        user_playlist,
+                        include_other_badges = first_video_playlist,
                         action_cache = action_cache)
 
-                first_video_topic = False
+                first_video_playlist = False
 
         user_video.last_second_watched = last_second_watched
         user_video.last_watched = datetime.datetime.now()

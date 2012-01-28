@@ -74,7 +74,7 @@ def add_action_results(obj, dict_results):
 
         if len(badges_earned) > 0:
             dict_results["badges_earned"] = badges_earned
-            dict_results["badges_earned_html"] = badge_notifications_html(user_badge)
+            dict_results["badges_earned_html"] = badge_notifications_html(user_badges)
 
         # Add any new login notifications for phantom users
         login_notifications = user_notifications_dict["login"]
