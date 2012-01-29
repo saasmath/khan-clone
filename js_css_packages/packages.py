@@ -39,6 +39,7 @@ javascript = {
             "pageutil.js",
             "api.js",
             "social.js",
+            "promos.js",
             "youtube-player.handlebars",
             "api-version-mismatch.handlebars",
             "streak-bar.handlebars",

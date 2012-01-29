@@ -36,7 +36,7 @@ UsernamePickerView = Backbone.View.extend({
                 backdrop: true
             })
             .bind("hidden", _.bind(this.resetFields_, this))
-            .bind("shown", _.bind(this.getUsernameWarningPromo_, this));
+            .bind("shown", _.bind(this.onPickerShown_, this));
         return this;
     },
 
@@ -56,34 +56,22 @@ UsernamePickerView = Backbone.View.extend({
         this.$("#save-profile-info").prop("disabled", false);
     },
 
-    setShowUsernameWarning_: function(hasSeen) {
-        this.shouldShowUsernameWarning_ = !hasSeen;
-    },
-
-    getUsernameWarningPromo_: function() {
-        if(!this.model.get("username")) {
+    onPickerShown_: function() {
+        if (!this.model.get("username")) {
             return;
         }
 
-        $.ajax({
-            type: "GET",
-            url: "/api/v1/user/username_promo",
-            dataType: "json",
-            success: _.bind(this.setShowUsernameWarning_, this)
-        });
-    },
-
-    setUsernameWarningPromo_: function() {
-        $.ajax({
-            type: "POST",
-            url: "/api/v1/user/username_promo"
-        });
+        // If the user already has a username, be sure that we warn them about
+        // the holding period that happens if they change it.
+        Promos.hasUserSeen("Username change warning", function(hasSeen) {
+            this.shouldShowUsernameWarning_ = !hasSeen;
+        }, this);
     },
 
     onUsernameKeyup_: function(e) {
         if (this.shouldShowUsernameWarning_) {
             $(".notification.error").show();
-            this.setUsernameWarningPromo_();
+            Promos.markAsSeen("Username change warning");
             this.shouldShowUsernameWarning_ = false;
         }
         if (e.keyCode === 13) {
