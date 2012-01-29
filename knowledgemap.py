@@ -39,7 +39,7 @@ class SaveMapCoords(request_handler.RequestHandler):
 def serializeMapCoords(lat, lng, zoom):
     return "%s:%s:%s:%s" % (lat, lng, zoom, int(time.time() * 1000))
 
-def deserializeMapCoords(s):
+def deserializeMapCoords(s=False):
     coords = {'lat':0, 'lng':0, 'zoom':0, 'when':0}
     if (not s):
         return coords

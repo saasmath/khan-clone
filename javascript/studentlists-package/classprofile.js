@@ -501,10 +501,21 @@ var ClassProfile = {
             });
         });
 
-        $("#student-goals-sort").change(function() { ClassProfile.sortStudentGoals(studentGoalsViewModel); });
-
-        $("input.student-goals-filter-check").change(function() { ClassProfile.filterStudentGoals(studentGoalsViewModel); });
-        $("#student-goals-search").keyup(function() { ClassProfile.filterStudentGoals(studentGoalsViewModel); });
+        $("#student-goals-sort")
+            .off("change.goalsfilter")
+            .on("change.goalsfilter", function() {
+                ClassProfile.sortStudentGoals(studentGoalsViewModel);
+            });
+        $("input.student-goals-filter-check")
+            .off("change.goalsfilter")
+            .on("change.goalsfilter", function() {
+                ClassProfile.filterStudentGoals(studentGoalsViewModel);
+            });
+        $("#student-goals-search")
+            .off("keyup.goalsfilter")
+            .on("keyup.goalsfilter", function() {
+                ClassProfile.filterStudentGoals(studentGoalsViewModel);
+            });
 
         ClassProfile.sortStudentGoals(studentGoalsViewModel);
         ClassProfile.filterStudentGoals(studentGoalsViewModel);

@@ -554,13 +554,17 @@ var VideoStats = {
 // called by youtube player upon load. see:
 // http://code.google.com/apis/youtube/js_api_reference.html
 function onYouTubePlayerReady(playerID) {
+    // Check .playVideo to ensure that the YouTube JS API is available. Modern
+    // browsers see both the OBJECT and EMBED elements, but only one has the
+    // API attached to it, e.g., OBJECT for IE9, EMBED for Chrome.
+
+    var player = $(".mirosubs-widget object").get(0);
+    if (!player || !player.playVideo) player = document.getElementById("idPlayer");
+    if (!player || !player.playVideo) player = document.getElementById("idOVideo");
+    if (!player || !player.playVideo) throw new Error("YouTube player not found");
+
     // Ensure UniSub widget will know about ready players if/when it loads.
     (window.unisubs_readyAPIIDs = window.unisubs_readyAPIIDs || []).push((playerID == "undefined" || !playerID) ? "" : playerID);
-
-    var player = null;
-    if (!player) player = $(".mirosubs-widget object").get(0);
-    if (!player) player = document.getElementById("idPlayer");
-    if (!player) player = document.getElementById("idOVideo");
 
     VideoControls.player = player;
     VideoStats.player = player;

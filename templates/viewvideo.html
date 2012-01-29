@@ -40,17 +40,18 @@
         <h2>{{video.title|escape}}</h2>
         <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse"></a>
     </div>
-    <div data-role="content">
+    <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
+        <link itemprop="url" href="/video/{{video.readable_id}}?playlist={{playlist.title|urlencode}}">
         <div id="description">
             {%- if button_top_exercise %}
             <a href="{{button_top_exercise.url}}" class="practice simple-button action-gradient green desktop-only" title="Test your understanding with an exercise">Practice this concept</a>
             {%- endif %}
-            <h3>
-                <span class="title desktop-only">{{video.title|escape}}</span>
+            <h1 class="title-header">
+                <span itemprop="name" class="title desktop-only">{{video.title|escape}}</span>
             {% if video.description %}
-                <span class="long-description"><span class="desktop-only">: </span>{{video.description|escape}}</span>
+                <span class="long-description"><span class="desktop-only">: </span><span itemprop="description">{{video.description|escape}}</span></span>
             {% endif %}
-            </h3>
+            </h1>
 
             {%- if related_exercises %}
             <div class="related-content visited-no-recolor">
@@ -87,6 +88,7 @@
             {{ youtube.flv_player_embed(video_path) }}
         </div>
         <div class="youtube-video">
+            <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
             {{ youtube.player_embed(video.youtube_id) }}
             <div class="subtitles-warning">
                 &lArr; Use this menu to view and help create subtitles for this video in many different languages.

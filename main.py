@@ -606,9 +606,14 @@ class Search(request_handler.RequestHandler):
         all_key_list.extend([result["key"] for result in playlist_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list = list(set(all_key_list))
+
+        # Filter out anything that isn't a Playlist or Video
+        all_key_list = [key for key in all_key_list if db.Key(key).kind() in ["Playlist", "Video"]]
+
+        # Get all the entities
         all_entities = db.get(all_key_list)
 
-        # Filter results by type
+        # Group results by type
         playlists = []
         videos = []
         for entity in all_entities:
@@ -616,9 +621,6 @@ class Search(request_handler.RequestHandler):
                 playlists.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
-            elif entity is not None:
-                logging.error("Unhandled kind in search results: " +
-                              str(type(entity)))
 
         playlist_count = len(playlists)
 

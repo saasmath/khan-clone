@@ -19,9 +19,12 @@ var Goal = Backbone.Model.extend({
 
         // default progress value for all objectives
         _.each(this.get("objectives"), function(o) {
-            if (!o.progress) {
+            if (o.progress == null) {
                 o.progress = 0;
                 o.status = "not-started";
+            }
+            if (o.status == null) {
+                o.status = 'not-started';
             }
         });
 
@@ -167,6 +170,23 @@ var Goal = Backbone.Model.extend({
             { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
             { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
         ]
+    },
+
+    // TODO: investigate if this is still used.
+    exidToExerciseName: function(exid) {
+        return exid[0].toUpperCase() + exid.slice(1).replace(/_/g, ' ');
+    },
+
+    // TODO: investigate if this is still used.
+    GoalObjectiveExerciseProficiency: function(exid) {
+        var obj = {
+            type: "GoalObjectiveExerciseProficiency",
+            internal_id: exid,
+            description: Goal.exidToExerciseName(exid)
+        };
+        obj.url = Goal.objectiveUrl(obj);
+        return obj;
+
     }
 });
 
