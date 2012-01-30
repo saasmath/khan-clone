@@ -216,6 +216,10 @@ class UserProfile(object):
         # privileges
         self.is_public = False
 
+        # Whether or not the app is able to collect data about the user.
+        # Note users under 13 without parental consent cannot give private data.
+        self.is_data_collectible = False
+        
         self.is_coaching_logged_in_user = False
         self.nickname = ""
         self.date_joined = ""
@@ -290,6 +294,7 @@ class UserProfile(object):
         profile.is_public = user.has_public_profile()
         if full_projection:
             profile.email = user.email
+            profile.is_data_collectible = user.is_certain_to_be_thirteen()
 
         return profile
 

@@ -29,7 +29,6 @@
         Profile.init({
             countVideos: {{count_videos}},
             countExercises: {{count_exercises}},
-            loggedIn: "{{logged_in}}" === "True",
             profileRoot: "{{profile_root}}",
             profileData: {{ templatetags.jsonify(profile, true) }}
         });

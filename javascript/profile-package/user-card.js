@@ -19,6 +19,7 @@ var ProfileModel = Backbone.Model.extend({
         "nickname": "",
         "points": 0,
         "username": "",
+        "isDataCollectible": false,
         "isSelf": false,
         "isPublic": false
     },
@@ -30,6 +31,12 @@ var ProfileModel = Backbone.Model.extend({
         return email.indexOf(ProfileModel.PHANTOM_EMAIL_PREFIX) === 0;
     },
 
+    /**
+     * Whether or not the current actor can customize this profile.
+     * Note that users under 13 without parental consent can only
+     * edit some data; clients should also check isDataCollectible for full
+     * information about fields which can be edited.
+     */
     isEditable: function() {
         return this.get("isSelf") && !this.isPhantom();
     },
@@ -38,6 +45,11 @@ var ProfileModel = Backbone.Model.extend({
         var json = ProfileModel.__super__.toJSON.call(this);
         json["isPhantom"] = this.isPhantom();
         json["isEditable"] = this.isEditable();
+
+        // Ugh - handlebars can't do boolean logic in conditionals so we have
+        // to do it here.
+        json["isFullyEditable"] =
+                this.isEditable() && this.get("isDataCollectible");
         return json;
     },
 

@@ -13,6 +13,13 @@ var Profile = {
     profileRoot: "",
 
     /**
+     * Whether or not we can collect sensitive information like the user's
+     * name. Users under 13 without parental consent should not be able
+     * to enter data.
+     */
+    isDataCollectible: false,
+
+    /**
      * A flag indicating whether or not we should use the "legacy" layout
      * of the page, which hides any notions of public-profiles.
      */
@@ -25,6 +32,7 @@ var Profile = {
     init: function(json) {
         this.profile = new ProfileModel(json.profileData);
         this.profileRoot = json.profileRoot;
+        this.isDataCollectible = json.isDataCollectible;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
 

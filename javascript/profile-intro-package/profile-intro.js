@@ -8,6 +8,7 @@ if (typeof Profile !== "undefined") {
     // the client. Asynchronously start the intro flow so that those
     // items can be rendered first.
     window.setTimeout(function() {
+        var isFullyEditable = Profile.profile.get("isDataCollectible");
         guiders.createGuider({
             id: "welcome",
             next: "basic-profile",
@@ -61,28 +62,33 @@ if (typeof Profile !== "undefined") {
             highlight: ".vertical-tab-list",
             overlay: true,
             position: 3,
-            buttons: [{
+            buttons: [(isFullyEditable ? {
                 action: guiders.ButtonAction.NEXT,
                 text: "Next"
-            }],
+            } : {
+                action: guiders.ButtonAction.CLOSE,
+                text: "OK! Let me play with the page!"
+            })],
             title: "Checking Your Vitals",
             description: "The statistics about your progress on Khan Academy can still be accessed by just a click here in the navigation menu. Don't worry, though, only you and your coaches can see this and nobody else."
         });
 
-        guiders.createGuider({
-            id: "privacy-settings",
+        if (isFullyEditable) {
+            guiders.createGuider({
+                id: "privacy-settings",
 
-            attachTo: ".edit-visibility",
-            highlight: ".user-info, .edit-visibility",
-            overlay: true,
-            position: 9,
-            buttons: [{
-                action: guiders.ButtonAction.CLOSE,
-                text: "OK! Let me play with the page!"
-            }],
-            title: "Share With The World <span style='font-size:65%'>(but only if you want to)</span>",
-            description: "The information in the box above can be made public. You'll get your own special space on Khan Academy where people can go to visit your page, but only if you enable it with this toggle. You can make your profile private at any time, in which case only you and your coaches can see your info"
-        });
+                attachTo: ".edit-visibility",
+                highlight: ".user-info, .edit-visibility",
+                overlay: true,
+                position: 9,
+                buttons: [{
+                    action: guiders.ButtonAction.CLOSE,
+                    text: "OK! Let me play with the page!"
+                }],
+                title: "Share With The World <span style='font-size:65%'>(but only if you want to)</span>",
+                description: "The information in the box above can be made public. You'll get your own special space on Khan Academy where people can go to visit your page, but only if you enable it with this toggle. You can make your profile private at any time, in which case only you and your coaches can see your info"
+            });
+        }
 
     }, 0);
 }

@@ -6,7 +6,7 @@
         <div class="avatar-change-overlay" style="display: none">Change avatar</div>
       </div>
       <div class="user-deets">
-          {{#if isEditable}}
+          {{#if isFullyEditable}}
               <input type="text" value="{{nickname}}"
                   placeholder="Enter nickname here" class="inline-editable nickname" style="display: block;">
           {{else}}
@@ -23,10 +23,14 @@
                   <li>
                       <span id="edit-profile" class="simple-button action-gradient">Edit profile</span>
                       <ul class="sub_menu">
+                        {{#if isFullyEditable}}
                         <li><a id="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
+                        {{/if}}
                         <li><a id="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
                         <li><a id="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
+                        {{#if isFullyEditable}}
                         <li><a id="edit-visibility" href="javascript:void(0)">Edit privacy setting</a></li>
+                        {{/if}}
                       </ul>
                   </li>
               </ul>
@@ -53,7 +57,7 @@
     </div>
 
 </section>
-{{#if isEditable}}
+{{#if isFullyEditable}}
 <a href="javascript:void(0)" id="edit-visibility"
     class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
 <div id="username-picker-container" class="modal fade hide" style="display: none;">
