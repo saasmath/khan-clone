@@ -131,7 +131,8 @@ def update_common_core_map(cc_file):
         cc = CommonCoreMap.all().filter('standard = ', cc_standard).get()
         if cc is None:
             cc = CommonCoreMap()
-            cc.update_standard(cc_standard)
+
+        cc.update_standard(cc_standard)
 
         if len(exercise_name) > 0:
             cc.update_exercise(exercise_name)
