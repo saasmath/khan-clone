@@ -57,10 +57,6 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onPickerShown_: function() {
-        if (!this.model.get("username")) {
-            return;
-        }
-
         // If the user already has a username, be sure that we warn them about
         // the holding period that happens if they change it.
         Promos.hasUserSeen("Username change warning", function(hasSeen) {
@@ -69,7 +65,7 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onUsernameKeyup_: function(e) {
-        if (this.shouldShowUsernameWarning_) {
+        if (this.shouldShowUsernameWarning_ && this.model.get("username")) {
             $(".notification.error").show();
             Promos.markAsSeen("Username change warning");
             this.shouldShowUsernameWarning_ = false;
