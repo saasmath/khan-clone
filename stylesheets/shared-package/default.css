@@ -49,27 +49,9 @@ table {
 
 /* End Reset */
 
-.clearfix:after {
-   content: ".";
-   display: block;
-   clear: both;
-   visibility: hidden;
-   line-height: 0;
-   height: 0;
-}
-
-.clearfix {
-   display: inline-block;
-}
-
-html[xmlns] .clearfix {
-   display: block;
-}
-
-* html .clearfix {
-   height: 1%;
-   overflow: visible;
-}
+.clearfix:before, .clearfix:after { content: ""; display: table; }
+.clearfix:after { clear: both; }
+.clearfix { *zoom: 1; }
 
 html, body {
     height: 100%;
