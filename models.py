@@ -2099,7 +2099,7 @@ class Topic(Searchable, db.Model):
             topic.key(), 
             version.key() if version else Setting.topic_tree_version()), 
         layer=layer_cache.Layers.Memcache)
-    def get_cached_videos_for_topic(topic, include_descendants=False):
+    def get_cached_videos_for_topic(topic, include_descendants=False, version=None):
         return Topic._get_children_of_kind(topic, "Video", include_descendants)
 
     @staticmethod
