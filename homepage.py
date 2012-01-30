@@ -168,8 +168,8 @@ class ViewHomePage(request_handler.RequestHandler):
         if not self.is_mobile_capable():
             render_type = HomepageRestructuringExperiment.get_render_type()
             bingo('homepage_restructure_visits')
-
-        if render_type != 'original':
+      
+        if render_type == 'original':
             library_content = library.library_content_html()
         else:
             library_content = library.library_content_html(ajax = True)
