@@ -249,7 +249,7 @@ Badges.DisplayCase = Backbone.View.extend({
 
         this.showBadgePicker_();
         this.editControlEl.slideUp(350);
-        $(document).bind("click", this.getBoundStopEditFn_());
+        $(document).bind("mousedown", this.getBoundStopEditFn_());
         return this;
     },
 

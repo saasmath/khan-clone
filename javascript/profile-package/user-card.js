@@ -316,11 +316,11 @@ UserCardView = Backbone.View.extend({
         var jelSubMenu = $(".sub_menu").toggle();
 
         if (jelSubMenu.is(":visible")) {
-            $(document).bind("click", this.getBoundHideSubMenuFn_());
+            $(document).bind("mousedown", this.getBoundHideSubMenuFn_());
         } else {
             // Because the edit profile button can also hide the submenu,
             // unbind this handler so they don't pile up.
-            $(document).unbind("click", this.getBoundHideSubMenuFn_());
+            $(document).unbind("mousedown", this.getBoundHideSubMenuFn_());
         }
     },
 
