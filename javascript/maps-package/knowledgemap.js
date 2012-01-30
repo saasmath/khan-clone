@@ -252,34 +252,52 @@ function KnowledgeMapInitGlobals() {
             return classText;
         },
 
-        setFiltered: function(filtered) {
+        setFiltered: function(filtered, fast, bounds) {
             if (filtered != this.filtered) {
                 this.filtered = filtered;
+            }
 
-                // set class for css to apply styles
-                if (this.filtered) {
-                    this.el.addClass("nodeLabelFiltered");
-                } else {
-                    this.el.removeClass("nodeLabelFiltered");
-                }
+            var updateAppearance;
+            if (fast) {
+                // only update appearance of nodes that are currently on screen
+                bounds = bounds || ExerciseMarkerView.extendBounds(this.parent.map.getBounds());
+                var node = this.parent.dictNodes[this.nodeName];
+                updateAppearance = bounds.contains(node.latLng);
+            }
+            else {
+                updateAppearance = true;
+            }
 
-                // perf hack: instead of changing css opacity, set a whole new image
-                var img = this.el.find('img.node-icon');
-                var url = img.attr('src');
+            // if we're in the window, update
+            if (updateAppearance) {
+                this.updateAppearance();
+            }
+        },
 
-                // don't adjust images of stars when zoomed out
-                if (url.indexOf("-star.png") >= 0) return;
+        updateAppearance: function() {
+            // set class for css to apply styles
+            if (this.filtered) {
+                this.el.addClass("nodeLabelFiltered");
+            } else {
+                this.el.removeClass("nodeLabelFiltered");
+            }
 
-                // normalize
-                if (url.indexOf("faded") >= 0) {
-                    url = url.replace("-faded.png", ".png");
-                }
+            // perf hack: instead of changing css opacity, set a whole new image
+            var img = this.el.find('img.node-icon');
+            var url = img.attr('src');
 
-                if (this.filtered) {
-                    img.attr('src', url.replace(".png", "-faded.png"));
-                } else {
-                    img.attr('src', url);
-                }
+            // don't adjust images of stars when zoomed out
+            if (url.indexOf("-star.png") >= 0) return;
+
+            // normalize
+            if (url.indexOf("faded") >= 0) {
+                url = url.replace("-faded.png", ".png");
+            }
+
+            if (this.filtered) {
+                img.attr('src', url.replace(".png", "-faded.png"));
+            } else {
+                img.attr('src', url);
             }
         },
 
@@ -415,6 +433,19 @@ function KnowledgeMapInitGlobals() {
 
             $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
             this.parent.highlightNode(this.nodeName, false);
+        }
+    }, {
+        extendBounds: function(bounds, dlat, dlng) {
+            dlat = dlat || KnowledgeMapGlobals.nodeSpacing.lat;
+            dlng = dlat || KnowledgeMapGlobals.nodeSpacing.lng;
+
+            var ne = bounds.getNorthEast();
+            var nee = new google.maps.LatLng(ne.lat() + dlat, ne.lng() + dlng);
+
+            var sw = bounds.getSouthWest();
+            var swe = new google.maps.LatLng(sw.lat() - dlat, sw.lng() - dlng);
+
+            return new google.maps.LatLngBounds(swe, nee);
         }
     });
 }
@@ -673,15 +704,15 @@ function KnowledgeMap(params) {
 
     // this inflates all remaining visible rows. We could maybe improve it more
     // by only inflating the next screenful, but for now just do them all.
-    this.queryRendered = false;
+    this.queryRowsRendered = false;
     this.inflateVisible = function(evt) {
-        if (this.queryRendered) return;
+        if (this.queryRowsRendered) return;
         _.each(this.exerciseRowViews, function(rowView) {
             if (rowView.visible && !rowView.inflated) {
                 rowView.inflate();
             }
         });
-        this.queryRendered = true;
+        this.queryRowsRendered = true;
 
         var inflatedAll = (this.filterSettings.get("userShowAll") &&
                            this.filterSettings.get("filterText"));
@@ -700,9 +731,10 @@ function KnowledgeMap(params) {
         var renderedHeight = 0;
 
         var userShowAll = this.filterSettings.get("userShowAll");
+        var filterText = this.filterSettings.get("filterText");
+        var bounds = ExerciseMarkerView.extendBounds(this.map.getBounds());
 
         _.each(this.exerciseRowViews, function(row) {
-            var filterText = this.filterSettings.get("filterText");
             var exerciseName = row.model.get("lowercaseName");
 
             // single letter filters have lots of matches, so require exercise
@@ -737,10 +769,13 @@ function KnowledgeMap(params) {
 
             // filter the item off the map view
             if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
-                this.exerciseMarkerViews[row.nodeName].setFiltered(!filterMatches);
+                this.exerciseMarkerViews[row.nodeName].setFiltered(!filterMatches, true, bounds);
             }
         }, this);
-        this.queryRendered = false;
+
+        // let scroll and dragstart listeners finish the work later
+        this.queryRowsRendered = false;
+        this.queryNodesRendered = false;
     };
 
     this.initMap = function() {
@@ -789,9 +824,10 @@ function KnowledgeMap(params) {
         google.maps.event.addListener(this.map, "center_changed", function() {self.onCenterChange();});
         google.maps.event.addListener(this.map, "idle", function() {self.onIdle();});
         google.maps.event.addListener(this.map, "click", function() {self.onClick();});
+        google.maps.event.addListener(this.map, "dragstart", function() {self.dragstart();});
 
         this.giveNasaCredit();
-        $(window).on("beforeunload", function(){ self.saveMapCoords(); });
+        $(window).on("beforeunload", function() {self.saveMapCoords();});
     };
 
     this.setNodeClickHandler = function(handler) {
@@ -1011,7 +1047,7 @@ function KnowledgeMap(params) {
             "when": +(new Date) // Date.now() not present on ie8
         };
 
-        return coords
+        return coords;
 
     };
 
@@ -1042,6 +1078,18 @@ function KnowledgeMap(params) {
             });
             self.selectedNodes = { };
         }
+    };
+
+    this.queryNodesRendered = true;
+    this.dragstart = function(evt) {
+        if (this.queryNodesRendered) return;
+        this.queryNodesRendered = true;
+
+        _.each(this.exerciseRowViews, function(row) {
+            if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
+                this.exerciseMarkerViews[row.nodeName].updateAppearance();
+            }
+        }, this);
     };
 
     this.onCenterChange = function() {
