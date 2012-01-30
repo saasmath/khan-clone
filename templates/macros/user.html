@@ -17,21 +17,12 @@
 
 {% macro username_and_notification(username, user_data) -%}
 {% set count = user_data.feedback_notification_count() if user_data else 0 %}
-<span class="username_and_notification {% if count %}username_and_notification_shift{% endif %}">
+<span class="username_and_notification">
+    {% if count %}
     <span class="user-notification">
-        <a class="notification_link" href="/discussion/videofeedbacknotificationlist"
-            {% if count %}
-                title="{{ count }} new answers to your questions"
-            {% else %}
-                title="No new answers to your questions"
-            {% endif %}
-        >
-            {% if count %}
-            <img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
-            {% else %}
-            <img src="{{ "/images/email-gray.png"|static_url }}" class="icon" style="width:16px;height:11px;"/></a>
-            {% endif %}
+        <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
     </span>
+    {% endif %}
     <span class="user-name"><a href="/profile">{{username|escape}}</a></span>
 </span>
 {%- endmacro %}
