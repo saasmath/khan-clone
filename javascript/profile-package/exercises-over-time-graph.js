@@ -106,7 +106,7 @@ var ExerciseGraphOverTime = {
         this.chart = new Highcharts.Chart(this.options);
 
         if (userExercisesFromServer && userExercisesFromServer.length === 0) {
-            $(".profile-notification .empty-graph").show();
+            Profile.showNotification("empty-graph");
         }
     }
 };

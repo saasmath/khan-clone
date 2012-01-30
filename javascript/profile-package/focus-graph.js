@@ -240,7 +240,7 @@ var FocusGraph = function() {
         this.chart = new Highcharts.Chart(this.options);
 
         if (segmentDataFromServer && segmentDataFromServer.isGraphEmpty) {
-            $(".profile-notification .empty-graph").show();
+            Profile.showNotification("empty-graph");
         }
         
     }

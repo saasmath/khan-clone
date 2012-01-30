@@ -294,18 +294,19 @@ var Profile = {
          *     to be the breadcrumbs.
          */
         updateTitleBreadcrumbs: function(parts) {
+            $(".profile-notification").hide();
+
             var sheetTitle = $(".profile-sheet-title");
             if (parts && parts.length) {
                 var rootCrumb = Profile.profile.get("nickname") || "Profile";
                 parts.unshift(rootCrumb);
                 sheetTitle.text(parts.join(" » ")).show();
-                $(".profile-notification").show()
-                if (Profile.profile.get("email")) {
-                    $(".profile-notification").children().hide();
+
+                if (!Profile.profile.get("email")) {
+                    $(".profile-notification").show();
                 }
             } else {
                 sheetTitle.text("").hide();
-                $(".profile-notification").hide();
             }
         }
     }),
@@ -383,7 +384,7 @@ var Profile = {
     finishLoadGraphError: function() {
         this.fLoadingGraph = false;
         this.showGraphThrobber(false);
-        $(".error-graph").show();
+        Profile.showNotification("error-graph");
     },
 
     renderFakeGraph: function(graphName, timePeriod) {
@@ -520,7 +521,7 @@ var Profile = {
 
         if (isEmpty) {
             Profile.renderFakeExercisesTable_(exerciseModels);
-            $(".empty-graph").show();
+            Profile.showNotification("empty-graph");
             return;
         }
 
@@ -546,6 +547,16 @@ var Profile = {
                 $(this).hide();
             });
         }
+    },
+
+    /**
+     * Show a profile notification
+     * Expects the class name of the div to show, such as "error-graph"
+     */
+    showNotification: function(className) {
+        $(".profile-notification").show()
+            .find("." + className).show()
+            .siblings().hide();
     },
 
     hoverContent: function(elements) {

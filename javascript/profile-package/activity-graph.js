@@ -415,7 +415,7 @@ var ActivityGraph = function() {
         this.chart = new Highcharts.Chart(this.options);
 
         if (bucketDataFromServer && bucketDataFromServer.isGraphEmpty) {
-            $(".profile-notification .empty-graph").show();
+            Profile.showNotification("empty-graph");
         }
     }
 };
