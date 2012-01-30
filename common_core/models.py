@@ -100,12 +100,12 @@ COMMON_CORE_DOMAINS = {
 class CommonCoreMap(db.Model):
     standard = db.StringProperty()
     grade = db.StringProperty()
-    domain = db.StringProperty()
+    domain = db.StringProperty(indexed=False)
     domain_code = db.StringProperty()
-    level = db.StringProperty()
-    cc_url = db.StringProperty()
-    exercises = db.ListProperty(db.Key)
-    videos = db.ListProperty(db.Key)
+    level = db.StringProperty(indexed=False)
+    cc_url = db.StringProperty(indexed=False)
+    exercises = db.ListProperty(db.Key, indexed=False)
+    videos = db.ListProperty(db.Key, indexed=False)
 
     def get_entry(self, lightweight=False):
         entry = {}

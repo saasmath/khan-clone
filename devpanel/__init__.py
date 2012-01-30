@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import os, logging
 
 from google.appengine.ext import db, deferred
@@ -120,6 +119,7 @@ class ManageCoworkers(request_handler.RequestHandler):
 def update_common_core_map(cc_file):
     reader = csv.reader(cc_file, delimiter='\t')
     headerline = reader.next()
+    cc_list = []
     for line in reader:
         cc_standard = line[0]
         exercise_name = line[1]
@@ -140,7 +140,9 @@ def update_common_core_map(cc_file):
         if len(video_youtube_id) > 0:
             cc.update_video(video_youtube_id)
 
-        cc.put()
+        cc_list.append(cc)
+
+    db.put(cc_list)
 
     return
 
