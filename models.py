@@ -1390,6 +1390,12 @@ def rebuild_content_caches(version):
     for video in videos:
         video.topic_string_keys = []
 
+    urls = [u for u in Url.all()]
+    url_dict = dict((u.key(), u) for u in urls)
+
+    for url in urls:
+        url.topic_string_keys = []
+
     found_videos = 0
 
     for topic in topics:
@@ -1402,8 +1408,15 @@ def rebuild_content_caches(version):
                     found_videos += 1
                 else:
                     logging.info("Failed to find video " + str(child_key))
+            elif child_key.kind() == "Url":
+                if child_key in url_dict:
+                    url_dict[child_key].topic_string_keys.append(topic_key_str)
+                    found_videos += 1
+                else:
+                    logging.info("Failed to find URL " + str(child_key))
 
     db.put(videos)
+    db.put(urls)
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
                                     
@@ -2140,9 +2153,18 @@ class Url(db.Model):
     created_on = db.DateTimeProperty(auto_now_add=True)
     updated_on = db.DateTimeProperty(indexed=False, auto_now=True)        
 
+    # List of parent topics
+    topic_string_keys = object_property.TsvProperty(indexed=False)
+
     @property
     def id(self):
         return self.key().id()
+
+    # returns the first non-hidden topic
+    def first_topic(self):
+        if self.topic_string_keys:
+            return db.get(self.topic_string_keys[0])
+        return None
 
     @staticmethod
     def get_all_live(version=None):
