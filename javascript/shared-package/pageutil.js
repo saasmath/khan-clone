@@ -969,29 +969,24 @@ var SearchResultHighlight = {
 
 // This function detaches the passed in jQuery element and returns a function that re-attaches it
 function temporaryDetachElement(element, fn, context) {
-    var el, ret;
+    var el, reattach;
     el = element.next();
     if (el.length > 0) {
         // This element belongs before some other element
-        ret = function() {
+        reattach = function() {
             element.insertBefore(el);
         };
     } else {
         // This element belongs at the end of the parent's child list
         el = element.parent();
-        ret = function() {
+        reattach = function() {
             element.appendTo(el);
         };
     }
     element.detach();
-    if (fn) {
-        var val = fn.call(context || this);
-        ret();
-        return val;
-    }
-    else {
-        return ret;
-    }
+    var val = fn.call(context || this, element);
+    reattach();
+    return val;
 }
 
 function dynamicPackage(packageName, callback, manifest) {

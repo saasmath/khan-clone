@@ -194,7 +194,7 @@ var ProgressReport = {
         }
 
         var adjustData = this.preAdjustTable();
-        reattachFn = temporaryDetachElement($('#module-progress'), function() {
+        temporaryDetachElement($('#module-progress'), function() {
             this.adjustTable(adjustData);
         }, this);
 
