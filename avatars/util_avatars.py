@@ -12,14 +12,15 @@ def all_avatars():
         PointsAvatar("Red Leaf", "/images/avatars/leaf-red.png", 0),
         PointsAvatar("Orange Leaf", "/images/avatars/leaf-orange.png", 0),
         PointsAvatar("Yellow Leaf", "/images/avatars/leaf-yellow.png", 0),
+
         PointsAvatar("Spunky Sam", "/images/avatars/spunky-sam.png", 10000),
         PointsAvatar("Marcimus", "/images/avatars/marcimus.png", 10000),
         PointsAvatar("Mr. Pink", "/images/avatars/mr-pink.png", 10000),
+
         PointsAvatar("Orange Juice Squid", "/images/avatars/orange-juice-squid.png", 50000),
-
         PointsAvatar("Purple Pi", "/images/avatars/purple-pi.png", 50000),
+        
         PointsAvatar("Mr. Pants", "/images/avatars/mr-pants.png", 100000),
-
         PointsAvatar("Old Spice Man", "/images/avatars/old-spice-man.png", 100000),
     ]
 
