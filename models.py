@@ -1331,54 +1331,66 @@ class TopicVersion(db.Model):
         self.put()
 
     def set_default_version(self):
-        # causes circular importing if put at the top
-        from library import library_content_html
-        import autocomplete
-        import templatetags
         logging.info("starting set_default_version")
 
-        default_version = TopicVersion.get_default_version()
-        changes = VersionContentChange.all().fetch(10000)
-        changes = util.prefetch_refprops(changes, VersionContentChange.content)
-        for change in changes:
-            change.apply_change()
+        deferred.defer(apply_version_content_changes, self)
 
-        # preload library and autocomplete cache
-        library_content_html(False, self.number)
-        logging.info("preloaded library_content_html")
-        library_content_html(True, self.number)
-        logging.info("preloaded ajax library_content_html")
-        autocomplete.video_title_dicts(self.number)
-        logging.info("preloaded video autocomplete")
-        autocomplete.topic_title_dicts(self.number)
-        logging.info("preloaded topic autocomplete")
-        templatetags.topic_browser("browse", self.number)
-        templatetags.topic_browser("browse-fixed", self.number)
-        logging.info("preloaded topic_browser")
+def apply_version_content_changes(version):
+    changes = VersionContentChange.all().fetch(10000)
+    changes = util.prefetch_refprops(changes, VersionContentChange.content)
+    for change in changes:
+        change.apply_change()
+    logging.info("applied content changes")
+    deferred.defer(preload_library, version)
 
-        def update_txn():
 
-            if default_version:
-                default_version.default = False
-                default_version.put()
-            self.default = True
-            self.made_default_on = datetime.datetime.now()
-            self.edit = False
-            Setting.topic_tree_version(self.number)
-            self.put()
+def preload_library(version):
+    # causes circular importing if put at the top
+    from library import library_content_html
+    import autocomplete
+    import templatetags
 
-        # using --high-replication is slow on dev, so instead not using cross-group transactions on dev 
-        if App.is_dev_server:
-            update_txn()
-        else:
-            xg_on = db.create_transaction_options(xg=True)
-            db.run_in_transaction_options(xg_on, update_txn)
+    # preload library and autocomplete cache
+    library_content_html(False, version.number)
+    logging.info("preloaded library_content_html")
+    library_content_html(True, version.number)
+    logging.info("preloaded ajax library_content_html")
+    autocomplete.video_title_dicts(version.number)
+    logging.info("preloaded video autocomplete")
+    autocomplete.topic_title_dicts(version.number)
+    logging.info("preloaded topic autocomplete")
+    templatetags.topic_browser("browse", version.number)
+    templatetags.topic_browser("browse-fixed", version.number)
+    logging.info("preloaded topic_browser")
+    deferred.defer(change_default_version, version)
 
-        Topic.reindex(self)
 
-        deferred.defer(rebuild_content_caches, self)
+def change_default_version(version):
+    default_version = TopicVersion.get_default_version()
 
-        logging.info("set_default_version complete")
+    def update_txn():
+        if default_version:
+            default_version.default = False
+            default_version.put()
+        version.default = True
+        version.made_default_on = datetime.datetime.now()
+        version.edit = False
+        Setting.topic_tree_version(version.number)
+        version.put()
+
+    # using --high-replication is slow on dev, so instead not using cross-group transactions on dev 
+    if App.is_dev_server:
+        update_txn()
+    else:
+        xg_on = db.create_transaction_options(xg=True)
+        db.run_in_transaction_options(xg_on, update_txn)
+
+    logging.info("done setting new default version")
+    Topic.reindex(version)
+    logging.info("done fulltext reindexing topics")
+
+    deferred.defer(rebuild_content_caches, version)
+
 
 def rebuild_content_caches(version):
 
@@ -1415,10 +1427,14 @@ def rebuild_content_caches(version):
                 else:
                     logging.info("Failed to find URL " + str(child_key))
 
+    logging.info("About to put content caches for all videos")
     db.put(videos)
+    logging.info("Finished putting videos. About to put urls")
     db.put(urls)
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
+    logging.info("set_default_version complete")
+
                                     
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
