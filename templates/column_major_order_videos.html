@@ -2,7 +2,7 @@
 
 <ol style="height:{{list_height}}px;" data-role="listview" data-inset="true">
     {% for item in content %}
-        {% if item.kind()=="Video" %}<li class="m{{loop.index0|find_column_index(column_indices)}}"{% if loop.index0|in_list(column_indices) %} style="margin-top:-{{loop.index0|column_height(column_indices) * link_height}}px;"{%endif%}><a href="/video/{{item.readable_id}}?topic={{topic.title|urlencode}}" {% if item.title|length > 40 %}title="{{item.title|escape}}" {% endif %}class='vl'>{{ library.video_name_and_progress(item) }}</a></li>
+        {% if item.kind()=="Video" %}<li class="m{{loop.index0|find_column_index(column_indices)}}"{% if loop.index0|in_list(column_indices) %} style="margin-top:-{{loop.index0|column_height(column_indices) * link_height}}px;"{%endif%}><a href="/video/{{item.readable_id}}?topic={{topic.title|urlencode}}" {% if item.title|length > 40 %}title="{{item.title|escape}}" {% endif %}class='vl' data-id='{{ item.readable_id|escape }}'>{{ library.video_name_and_progress(item) }}</a></li>
         {% elif item.kind()=="Url" %}<li class="m{{loop.index0|find_column_index(column_indices)}}"{% if loop.index0|in_list(column_indices) %} style="margin-top:-{{loop.index0|column_height(column_indices) * link_height}}px;"{%endif%}><a href="{{item.url}}" {% if item.title|length > 40 %}title="{{item.title|escape}}" {% endif %}class='vl'>{{ library.video_name_and_progress(item) }}</a></li>
 {% endif %}{% endfor %}</ol>
 
