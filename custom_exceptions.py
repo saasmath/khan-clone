@@ -1,5 +1,10 @@
+class QuietException(Exception):
+    """ QuietExceptions are only logged via logging.info(),
+        not as full stack-trace-including exception()s.
+    """
+    pass
 
-class MissingVideoException(Exception):
+class MissingVideoException(QuietException):
     pass
 
 class MissingExerciseException(Exception):
@@ -8,5 +13,5 @@ class MissingExerciseException(Exception):
 class TumblrException(Exception):
     pass
 
-class SmartHistoryLoadException(Exception):
+class SmartHistoryLoadException(QuietException):
     pass
