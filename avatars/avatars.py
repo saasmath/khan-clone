@@ -1,3 +1,4 @@
+from util import thousands_separated_number
 
 class Avatar(object):
     """ Base class for data about an avatar that a user can set on her profile.
@@ -55,9 +56,12 @@ class AvatarPointsCategory(AvatarCategory):
     """
     def __init__(self, title, min_points, max_points=-1):
         if max_points == -1:
-            title = "%s (%s+ points)" % (title, min_points)
+            title = "%s (%s+ points)" % (title,
+                                         thousands_separated_number(min_points))
         else:
-            title = "%s (%s - %s points)" % (title, min_points, max_points)
+            title = "%s (%s - %s points)" % (title,
+                                             thousands_separated_number(min_points),
+                                             thousands_separated_number(max_points))
         super(AvatarPointsCategory, self).__init__(title)
         self.min_points = min_points
         self.max_points = max_points
