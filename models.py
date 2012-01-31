@@ -14,6 +14,7 @@ from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
 
 from google.appengine.ext import db
+from google.appengine.ext.db import polymodel
 import object_property
 import util
 import user_util
@@ -30,6 +31,10 @@ from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
+import re
+import base64, os
+import sys
+
 from image_cache import ImageCache
 
 from templatefilters import slugify
@@ -37,6 +42,7 @@ from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
 import re
+
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -77,12 +83,12 @@ class Setting(db.Model):
         return results
 
     @staticmethod
-    def cached_library_content_date(val = None):
-        return Setting._get_or_set_with_key("cached_library_content_date", val)
+    def cached_content_add_date(val = None):
+        return Setting._get_or_set_with_key("cached_content_add_date", val)
 
     @staticmethod
-    def cached_playlist_content_date(val = None):
-        return Setting._get_or_set_with_key("cached_playlist_content_date", val)
+    def topic_tree_version(val = None):
+        return Setting._get_or_set_with_key("topic_tree_version", val)
 
     @staticmethod
     def cached_exercises_date(val = None):
@@ -107,7 +113,6 @@ class Setting(db.Model):
     @staticmethod
     def classtime_report_startdate(val = None):
         return Setting._get_or_set_with_key("classtime_report_startdate", val)
-
 
 class Exercise(db.Model):
 
@@ -134,6 +139,8 @@ class Exercise(db.Model):
     raw_html = db.TextProperty()
     last_modified = db.DateTimeProperty()
     creation_date = db.DateTimeProperty(auto_now_add=True, default=datetime.datetime(2011, 1, 1))
+    description = db.TextProperty()
+    tags = db.StringListProperty() 
 
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
@@ -153,11 +160,17 @@ class Exercise(db.Model):
         return util.absolute_url(self.relative_url)
 
     @staticmethod
-    def get_by_name(name):
+    def get_by_name(name, version=None):
         dict_exercises = Exercise._get_dict_use_cache_unsafe()
         if dict_exercises.has_key(name):
             if dict_exercises[name].is_visible_to_current_user():
-                return dict_exercises[name]
+                exercise = dict_exercises[name]
+                # if there is a version check to see if there are any updates to the video
+                if version:
+                    change = VersionContentChange.get_change_for_content(exercise, version)
+                    if change:
+                        exercise = change.updated_content(exercise)
+                return exercise
         return None
 
     @staticmethod
@@ -235,8 +248,8 @@ class Exercise(db.Model):
         return [exercise for exercise in Exercise.get_all_use_cache() if self.name in exercise.prerequisites]
 
     @classmethod
-    def all(cls, live_only = False):
-        query = super(Exercise, cls).all()
+    def all(cls, live_only = False, **kwargs):
+        query = super(Exercise, cls).all(**kwargs)
         if live_only or not user_util.is_current_user_developer():
             query.filter("live =", True)
         return query
@@ -1448,18 +1461,1047 @@ class UserData(GAEBingoIdentityModel, db.Model):
         )
         return user_data
 
+class TopicVersion(db.Model):
+    created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
+    made_default_on = db.DateTimeProperty(indexed=False)
+    copied_from = db.SelfReferenceProperty(indexed=False)
+    last_edited_by = db.UserProperty(indexed=False)
+    number = db.IntegerProperty(required=True)
+    title = db.StringProperty(indexed=False) 
+    description = db.StringProperty(indexed=False)
+    default = db.BooleanProperty(default=False)
+    edit = db.BooleanProperty(default=False)
+
+    _serialize_blacklist = ["copied_from"]
+
+    @property
+    def copied_from_number(self):
+        if self.copied_from:
+            return self.copied_from.number
+
+    @staticmethod
+    def get_by_id(version_id):
+        if version_id is None or version_id == "default":
+            return TopicVersion.get_default_version()
+        if version_id == "edit":
+            return TopicVersion.get_edit_version()
+        number = int(version_id)
+        return TopicVersion.all().filter("number =", number).get() 
+    
+    @staticmethod
+    def get_by_number(number):
+        return TopicVersion.all().filter("number =", number).get() 
+
+    # used by get_unused_content - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda :
+        "TopicVersion.get_all_content_keys_%s" % 
+        Setting.cached_content_add_date())
+    def get_all_content_keys():
+        video_keys = Video.all(keys_only = True).fetch(100000)
+        exercise_keys = Exercise.all(keys_only = True).fetch(100000)
+        url_keys = Url.all(keys_only = True).fetch(100000)
+
+        content = video_keys
+        content.extend(exercise_keys)
+        content.extend(url_keys)        
+        return content
+
+    def get_unused_content(self):
+        topics = Topic.all().filter("version =", self).run()
+        used_content_keys = set()
+        for t in topics:
+            used_content_keys.update([c for c in t.child_keys if c.kind() != "Topic"])
+    
+        content_keys = set(TopicVersion.get_all_content_keys())
+
+        return db.get(content_keys - used_content_keys)
+        
+
+    @staticmethod
+    def get_latest_version():
+        return TopicVersion.all().order("-number").get()
+
+    @staticmethod
+    def get_latest_version_number():
+        latest_version = TopicVersion.all().order("-number").get()
+        return latest_version.number if latest_version else 0 
+
+    @staticmethod
+    def create_new_version():
+        new_version_number = TopicVersion.get_latest_version_number() + 1 
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
+        new_version = TopicVersion(last_edited_by = last_edited_by,
+                                   number = new_version_number)
+        new_version.put()
+        return new_version
+
+    @staticmethod
+    def get_default_version():
+        return TopicVersion.all().filter("default = ", True).get()
+
+    @staticmethod
+    def get_edit_version():
+        version = TopicVersion.all().filter("edit = ", True).get()
+        if version is None:
+            version = TopicVersion.create_edit_version()    
+        return version
+
+    @staticmethod
+    def create_edit_version():
+        version = TopicVersion.all().filter("edit = ", True).get()
+        if version is None:
+            default = TopicVersion.get_default_version()
+            version = default.copy_version()
+            version.edit = True
+            version.put()
+            return version
+        else:
+            logging.warning("Edit version already exists")
+            return False
+
+    def copy_version(self):
+        version = TopicVersion.create_new_version()
+        
+        old_root = Topic.get_root(self)
+        old_tree = old_root.make_tree(types = ["Topics"], include_hidden = True)
+        TopicVersion.copy_tree(old_tree, version)
+        
+        version.copied_from = self
+        version.put()
+        
+        return version
+        
+    @staticmethod
+    def copy_tree(old_tree, new_version, new_root=None, parent=None):
+        parent_keys = []
+        ancestor_keys = []
+        if parent:
+            parent_keys = [parent.key()]
+            ancestor_keys = parent_keys[:]
+            ancestor_keys.extend(parent.ancestor_keys)
+        
+        if new_root:
+            key_name = old_tree.key().name()
+        else:             
+            #don't copy key_name of root as it is parentless, and needs its own key 
+            key_name = Topic.get_new_key_name()
+
+        new_tree = util.clone_entity(old_tree,
+                                     key_name = key_name,
+                                     version = new_version, 
+                                     parent = new_root, 
+                                     parent_keys = parent_keys,
+                                     ancestor_keys = ancestor_keys)
+        new_tree.put()
+        if not new_root:
+            new_root = new_tree
+
+        old_key_new_key_dict = {}
+        for child in old_tree.children:
+            old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_root, new_tree).key()
+        
+        new_tree.child_keys = [c if c not in old_key_new_key_dict else old_key_new_key_dict[c] for c in old_tree.child_keys]
+        new_tree.put()
+        return new_tree
+
+    def update(self):
+        if UserData.current():
+            last_edited_by = UserData.current().user
+        else:
+            last_edited_by = None
+        self.last_edited_by = last_edited_by
+        self.put()
+
+    def set_default_version(self):
+        logging.info("starting set_default_version")
+
+        deferred.defer(apply_version_content_changes, self)
+
+def apply_version_content_changes(version):
+    changes = VersionContentChange.all().fetch(10000)
+    changes = util.prefetch_refprops(changes, VersionContentChange.content)
+    for change in changes:
+        change.apply_change()
+    logging.info("applied content changes")
+    deferred.defer(preload_library, version)
+
+
+def preload_library(version):
+    # causes circular importing if put at the top
+    from library import library_content_html
+    import autocomplete
+    import templatetags
+
+    # preload library and autocomplete cache
+    library_content_html(False, version.number)
+    logging.info("preloaded library_content_html")
+    library_content_html(True, version.number)
+    logging.info("preloaded ajax library_content_html")
+    autocomplete.video_title_dicts(version.number)
+    logging.info("preloaded video autocomplete")
+    autocomplete.topic_title_dicts(version.number)
+    logging.info("preloaded topic autocomplete")
+    templatetags.topic_browser("browse", version.number)
+    templatetags.topic_browser("browse-fixed", version.number)
+    logging.info("preloaded topic_browser")
+    deferred.defer(change_default_version, version)
+
+
+def change_default_version(version):
+    default_version = TopicVersion.get_default_version()
+
+    def update_txn():
+        if default_version:
+            default_version.default = False
+            default_version.put()
+        version.default = True
+        version.made_default_on = datetime.datetime.now()
+        version.edit = False
+        Setting.topic_tree_version(version.number)
+        version.put()
+
+    # using --high-replication is slow on dev, so instead not using cross-group transactions on dev 
+    if App.is_dev_server:
+        update_txn()
+    else:
+        xg_on = db.create_transaction_options(xg=True)
+        db.run_in_transaction_options(xg_on, update_txn)
+
+    logging.info("done setting new default version")
+    Topic.reindex(version)
+    logging.info("done fulltext reindexing topics")
+
+    deferred.defer(rebuild_content_caches, version)
+
+
+def rebuild_content_caches(version):
+
+    topics = Topic.get_all_topics(version)  # does not include hidden topics!
+
+    videos = [v for v in Video.all()]
+    video_dict = dict((v.key(), v) for v in videos)
+
+    for video in videos:
+        video.topic_string_keys = []
+
+    urls = [u for u in Url.all()]
+    url_dict = dict((u.key(), u) for u in urls)
+
+    for url in urls:
+        url.topic_string_keys = []
+
+    found_videos = 0
+
+    for topic in topics:
+        logging.info("Rebuilding content cache for topic " + topic.title)
+        topic_key_str = str(topic.key())
+        for child_key in topic.child_keys:
+            if child_key.kind() == "Video":
+                if child_key in video_dict:
+                    video_dict[child_key].topic_string_keys.append(topic_key_str)
+                    found_videos += 1
+                else:
+                    logging.info("Failed to find video " + str(child_key))
+            elif child_key.kind() == "Url":
+                if child_key in url_dict:
+                    url_dict[child_key].topic_string_keys.append(topic_key_str)
+                    found_videos += 1
+                else:
+                    logging.info("Failed to find URL " + str(child_key))
+
+    logging.info("About to put content caches for all videos")
+    db.put(videos)
+    logging.info("Finished putting videos. About to put urls")
+    db.put(urls)
+
+    logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
+    logging.info("set_default_version complete")
+
+                                    
+class VersionContentChange(db.Model):
+    """ This class keeps track of changes made in the admin/content editor
+    The changes will be applied when the version is set to default
+    """
+    
+    version = db.ReferenceProperty(TopicVersion, collection_name="changes")
+    # content is the video/exercise/url that has been changed
+    content = db.ReferenceProperty()
+    # indexing updated_on as it may be needed for rolling back
+    updated_on = db.DateTimeProperty(auto_now=True) 
+    last_edited_by = db.UserProperty(indexed=False)
+    # content_changes is a dict of the properties that have been changed
+    content_changes = object_property.UnvalidatedObjectProperty()
+
+    def put(self):
+        last_edited_by = UserData.current().user
+        self.last_edited_by = last_edited_by
+        db.Model.put(self)
+
+    def apply_change(self):
+        # exercises imports from request_handler which imports from models,
+        # meaning putting this import at the top creates a import loop
+        from exercises import UpdateExercise
+        content = self.updated_content()
+        content.put()
+
+        if (content.key().kind() == "Exercise" 
+            and hasattr(content, "related_videos")):
+            UpdateExercise.do_update_related_videos(content, 
+                                                    content.related_videos)
+    
+        return content
+
+    # if content is passed as an argument it saves a reference lookup
+    def updated_content(self, content = None):
+        if content is None:
+            content = self.content
+        elif content.key() != self.content.key():
+            raise Exception("key of content passed in does not match self.content")
+        
+        for prop, value in self.content_changes.iteritems():
+            try:
+                setattr(content, prop, value)
+            except AttributeError:
+                logging.info("cant set %s on a %s" % (prop, content.__class__.__name__))
+                
+        return content
+
+    @staticmethod
+    @request_cache.cache()
+    def get_updated_content_dict(version):
+        query = VersionContentChange.all().filter("version =", version)
+        return dict((c.key(), c) for c in 
+                    [u.updated_content(u.content) for u in query])
+
+    @staticmethod
+    def get_change_for_content(content, version):
+        query = VersionContentChange.all().filter("version =", version)
+        query.filter("content =", content)
+        change = query.get()
+
+        if change:
+            # since we have the content already, updating the property may save 
+            # a reference lookup later
+            change.content = content
+
+        return change
+
+    @staticmethod
+    def add_new_content(klass, version, new_props, changeable_props=None):
+        new_props = dict((str(k), v) for k,v in new_props.iteritems() 
+                         if changeable_props is None or k in changeable_props)
+        change = VersionContentChange(parent = version)
+        change.version = version
+        change.content_changes = new_props 
+        content = klass(**new_props)
+        content.put()
+        change.content = content
+        change.put()
+        return content
+
+    @staticmethod
+    def add_content_change(content, version, new_props, changeable_props=None):
+        if changeable_props is None:
+            changeable_props = new_props.keys()
+                    
+        change = VersionContentChange.get_change_for_content(content, version)
+        
+        if change:
+            # update content with existing changes
+            content = change.updated_content()
+        else:
+            change = VersionContentChange(parent = version)
+            change.version = version
+            change.content = content
+            change.content_changes = {}
+
+        if content and content.is_saved():
+            for prop in changeable_props:
+                if (prop in new_props and 
+                    new_props[prop] is not None and (
+                        not hasattr(content, prop) or
+                        new_props[prop] != getattr(content, prop))
+                        ):
+                    
+                    # add new changes for all props that are different from what
+                    # is currently in content
+                    change.content_changes[prop] = new_props[prop] 
+        else:
+            raise Exception("content does not exit yet, call add_new_content instead")
+            
+        change.put()
+        return change.content_changes
+            
+class Topic(Searchable, db.Model):
+    title = db.StringProperty(required = True) # title used when viewing topic in a tree structure
+    standalone_title = db.StringProperty() # title used when on its own
+    id = db.StringProperty(required = True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
+    description = db.TextProperty(indexed=False)
+    parent_keys = db.ListProperty(db.Key) # to be able to access the parent without having to resort to a query - parent_keys is used to be able to hold more than one parent if we ever want that
+    ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants 
+    child_keys = db.ListProperty(db.Key) # having this avoids having to modify Content entities
+    version = db.ReferenceProperty(TopicVersion, required = True)  
+    tags = db.StringListProperty() 
+    hide = db.BooleanProperty(default = False)
+    created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
+    last_edited_by = db.UserProperty(indexed=False)
+    INDEX_ONLY = ['standalone_title', 'description']
+    INDEX_TITLE_FROM_PROP = 'standalone_title'
+    INDEX_USES_MULTI_ENTITIES = False
+
+    _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
+
+    @property
+    def relative_url(self):
+        return '#%s' % self.id
+
+    @property
+    def ka_url(self):
+        return util.absolute_url(self.relative_url)
+
+    def get_visible_data(self, node_dict=None):
+        if node_dict:
+            children = [ node_dict[c] for c in self.child_keys if c in node_dict ]
+        else:
+            children = db.get(self.child_keys)
+
+        if not self.version.default:
+            updates = VersionContentChange.get_updated_content_dict(self.version)
+            children = [c if c.key() not in updates else updates[c.key()] 
+                        for c in children]
+                 
+        self.children = []
+        for child in children:
+            self.children.append({
+				"kind": child.__class__.__name__,
+				"id": getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) ),
+				"title": getattr(child, "title", getattr(child, "display_name", "")),
+				"hide": getattr(child, "hide", False),
+				"url": getattr(child, "ka_url", getattr(child, "url", ""))
+			})
+        return self
+
+    def get_child_order(self, child_key):
+        return self.child_keys.index(child_key)
+
+    # get the topic by the url slug/readable_id
+    @staticmethod
+    def get_by_id(id, version=None):
+        if version is None:
+            version = TopicVersion.get_default_version()
+            if version is None:
+                logging.info("No default version has been set, getting latest version instead")
+                version = TopicVersion.get_latest_version()
+
+        return Topic.all().filter("id =", id).filter("version =", version).get()
+
+    # title is not necessarily unique - this function is needed for the old playl1st api to return a best guess
+    @staticmethod
+    def get_by_title(title, version=None):
+        if version is None:
+            version = TopicVersion.get_default_version()
+            if version is None:
+                logging.info("No default version has been set, getting latest version instead")
+                version = TopicVersion.get_latest_version()
+
+        return Topic.all().filter("title =", title).filter("version =", version).get()
+
+    @staticmethod
+    # parent specifies version
+    def get_by_title_and_parent(title, parent):
+        return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).get()
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda version=None: "Topic.get_root_%s" % (version))
+    def get_root(version = None):
+        if not version:
+            version = TopicVersion.get_default_version()
+        return Topic.all().filter('id =', 'root').filter('version =', version).get()
+
+    @staticmethod
+    def get_new_id(parent, title, version):
+        potential_id = title.lower()
+        potential_id = re.sub('[^a-z0-9]', '-', potential_id);
+        potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
+        potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)    
+
+        number_to_add = 0
+        current_id = potential_id
+        while True:
+            # need to make this an ancestor query to make sure that it can be used within transactions
+            matching_topic = Topic.all().filter('id =', current_id).filter('version =', version).get()
+            
+            if matching_topic is None: #id is unique so use it and break out
+                return current_id
+            else: # id is not unique so will have to go through loop again
+                number_to_add += 1
+                current_id = '%s-%s' % (potential_id, number_to_add)    
+
+    @staticmethod
+    def get_new_key_name():
+        return base64.urlsafe_b64encode(os.urandom(30))
+
+    def update_ancestor_keys(self, topic_dict=None):
+    	""" Update the ancestor_keys by using the parents' ancestor_keys.
+
+    		furthermore updates the ancestors of all the descendants
+    		returns the list of entities updated (they still need to be put into the db) """
+
+        # topic_dict keeps a dict of all descendants and all parent's of those descendants so we don't have to get them from the datastore again
+        if topic_dict is None:
+            descendants = Topic.all().filter("ancestor_key =", self)
+            topic_dict = dict((d.key(), d) for d in descendants)
+            topic_dict[self.key()] = self
+
+            # as topics in the tree may have more than one parent we need to add their other parents to the dict
+            unknown_parent_dict = {} 
+            for topic_key, topic in topic_dict.iteritems():
+                # add each parent_key that is not already in the topic_dict to the unknown_parents that we still need to get
+                unknown_parent_dict.update(dict((p, True) for p in topic.parent_keys if p not in topic_dict))
+            
+            if unknown_parent_dict:
+                # get the unknown parents from the database and then update the topic_dict to include them
+                unknown_parent_dict.update(dict((p.key(), p) for p in db.get(unknown_parent_dict.keys())))
+                topic_dict.update(unknown_parent_dict)                
+            
+        # calculate the new ancestor keys for self
+        ancestor_keys = set()
+        for parent_key in self.parent_keys:
+            ancestor_keys.update(topic_dict[parent_key].ancestor_keys)
+            ancestor_keys.add(parent_key)
+
+        # update the ancestor_keys and keep track of the entity if we have changed it
+        changed_entities = set()
+        if set(self.ancestor_keys) != ancestor_keys:
+            self.ancestor_keys = list(ancestor_keys)
+            changed_entities.add(self)
+
+            # recursively look at the child entries and update their ancestors, keeping track of which entities ancestors changed
+            for child_key in self.child_keys:
+                if child_key.kind == "Topic":
+                    child = topic_dict[child_key]
+                    changed_entities.update(child.update_ancestors(topic_dict))
+
+        return changed_entities
+
+    def move_child(self, child, new_parent, new_parent_pos):
+        if new_parent.version.default:
+            raise Exception("You can't edit the default version")
+
+        # remove the child
+        old_index = self.child_keys.index(child.key())
+        del self.child_keys[old_index]
+        updated_entities = set([self])
+
+        # check to make sure the new parent is different than the old one
+        if new_parent.key() != self.key():
+            # add the child to the new parent's children list
+            new_parent.child_keys.insert(int(new_parent_pos), child.key())
+            updated_entities.add(new_parent)
+
+            if isinstance(child, Topic): 
+                # if the child is a topic make sure to update its parent list
+                old_index = child.parent_keys.index(self.key())
+                del child.parent_keys[old_index]
+                child.parent_keys.append(new_parent.key())
+                updated_entities.add(child)     
+                # now that the child's parent has changed, go to the child all of the child's descendants and update their ancestors
+                updated_entities.update(child.update_ancestor_keys())
+        
+        else:
+            # they are moving the item within the same node, so just update self with the new position
+            self.child_keys.insert(int(new_parent_pos), child.key())
+
+        def move_txn():
+            db.put(updated_entities)
+
+        self.version.update()
+        return db.run_in_transaction(move_txn)    
+
+    def copy(self, title, parent=None, **kwargs):
+        if not kwargs.has_key("version") and parent is not None:
+            kwargs["version"] = parent.version
+
+        if kwargs["version"].default:
+            raise Exception("You can't edit the default version")
+         
+        if self.parent(): 
+             kwargs["parent"] = Topic.get_root(kwargs["version"]) 
+            
+        if not kwargs.has_key("id"):
+            kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
+
+        kwargs["key_name"] = Topic.get_new_key_name()
+
+        topic = Topic.get_by_key_name(kwargs["key_name"])
+        if topic is not None:
+            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % kwargs["key_name"] )
+
+        kwargs["title"] = title
+        kwargs["parent_keys"] = [parent.key()] if parent else []
+        kwargs["ancestor_keys"] =  kwargs["parent_keys"][:]
+        kwargs["ancestor_keys"].extend(parent.ancestor_keys if parent else []) 
+
+        new_topic = util.clone_entity(self, **kwargs)
+
+        return db.run_in_transaction(Topic._insert_txn, new_topic)                   
+    
+    def add_child(self, child, pos=None):
+        if self.version.default:
+            raise Exception("You can't edit the default version")
+
+        if child.key() in self.child_keys:
+            raise Exception("The child %s already appears in %s" % (child.title, self.title))
+
+        if pos is None:
+            self.child_keys.append(child.key())
+        else:
+            self.child_keys.insert(int(pos), child.key())
+
+        entities_updated = set([self])
+
+        if isinstance(child, Topic):
+            child.parent_keys.append(self.key())
+            entities_updated.add(child)
+            entities_updated.update(child.update_ancestor_keys())
+
+        def add_txn():
+            logging.info(entities_updated)
+            db.put(entities_updated)
+    
+        self.version.update()
+        return db.run_in_transaction(add_txn) 
+
+    def delete_child(self, child):
+        if self.version.default:
+            raise Exception("You can't edit the default version")
+
+        # remove the child key from self
+        self.child_keys = [c for c in self.child_keys if c != child.key()]
+         
+        # remove self from the child's parents
+        if isinstance(child, Topic):
+            child.parent_keys = [p for p in child.parent_keys if p != self.key()]
+            num_parents = len(child.parent_keys)
+            descendants = Topic.all().filter("ancestor_keys =", child.key()).fetch(10000)
+            descendant_dict = dict((d.key(), d) for d in descendants)
+        
+            # if there are still other parents
+            if num_parents:
+                changed_descendants = child.update_ancestor_keys()
+            else:
+                #TODO: If the descendants still have other parents we shouldn't be deleting them - if we are sure we want multiple parents will need to implement this
+                descendants.append(child)
+
+        def delete_txn():
+            self.put()
+            if isinstance(child, Topic):
+                if num_parents:
+                    db.put(changed_descendants)
+                else:
+                    db.delete(descendants)
+        
+        self.version.update()
+        db.run_in_transaction(delete_txn)  
+
+    def delete_tree(self):
+        parents = db.get(self.parent_keys)
+        for parent in parents:
+            parent.delete_child(self)
+
+    @staticmethod
+    def _insert_txn(new_topic):
+        new_topic.put()
+        parents = db.get(new_topic.parent_keys)
+        for parent in parents:
+            parent.child_keys.append(new_topic.key())
+            parent.put()
+        
+        if new_topic.child_keys:
+            child_topic_keys = [c for c in new_topic.child_keys if c.kind() == "Topic"]
+            child_topics = db.get(child_topic_keys)
+            for child in child_topics:
+                child.parent_keys.append(topic.key())
+                child.ancestor_keys.append(topic.key())
+            
+            all_decendant_keys = {} # used to make sure we don't loop
+            descendant_keys = {}
+            descendants = child_topics
+            while True: # should iterate n+1 times making n db.gets() where n is the tree depth under topic
+                for descendant in descendants:
+                    descendant_keys.update(dict((key, True) for key in descendant.child_keys if key.kind() == "Topic" and not all_descendant_keys.has_key(key)))
+                if not descendant_keys: # no more topic descendants that we haven't already seen before
+                    break
+
+                all_descendant_keys.update(descendant_keys)
+                descendants = db.get(descendant_keys.keys())
+                for descendant in descendants:
+                    descendant.ancestor_keys = topic.key()
+                descendant_keys = {}
+
+        return new_topic
+    
+
+    @staticmethod
+    def insert(title, parent=None, **kwargs):
+        if kwargs.has_key("version"):
+            version = kwargs["version"]
+            del kwargs["version"]
+        else:
+            if parent is not None:
+                version = parent.version
+            else:
+                version = TopicVersion.get_edit_version()
+        
+        if version.default:
+            raise Exception("You can't edit the default version")
+
+        if kwargs.has_key("id") and kwargs["id"]:
+            id = kwargs["id"]
+            del kwargs["id"]
+        else:
+            id = Topic.get_new_id(parent, title, version)
+            logging.info("created a new id %s for %s" % (id, title))
+
+        if not kwargs.has_key("standalone_title"):
+            kwargs["standalone_title"] = title
+
+        key_name = Topic.get_new_key_name()
+
+        topic = Topic.get_by_key_name(key_name)
+        if topic is not None:
+            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % key_name)
+
+        if parent:
+            root = Topic.get_root(version)
+            parent_keys = [parent.key()]
+            ancestor_keys = parent_keys[:]
+            ancestor_keys.extend(parent.ancestor_keys)
+            
+            new_topic = Topic(parent = root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
+                              key_name = key_name,
+                              version = version,
+                              id = id,
+                              title = title,
+                              parent_keys = parent_keys,
+                              ancestor_keys = ancestor_keys)
+
+        else:
+            root = Topic.get_root(version)
+
+            new_topic = Topic(parent = root,
+                              key_name = key_name,
+                              version = version,
+                              id = id,
+                              title = title)
+       
+        for key in kwargs:
+            setattr(new_topic, key, kwargs[key])
+       
+        version.update()                   
+        return db.run_in_transaction(Topic._insert_txn, new_topic)
+
+    def update(self, **kwargs):
+        if self.version.default:
+            raise Exception("You can't edit the default version")
+        
+        changed = False
+        if "id" in kwargs and kwargs["id"] != self.id:
+
+            existing_topic = Topic.get_by_id(kwargs["id"], self.version)
+            if not existing_topic:
+                self.id = kwargs["id"]
+                changed = True
+            else:
+                pass # don't allow people to change the slug to a different nodes slug
+            del kwargs["id"]             
+
+        for attr, value in kwargs.iteritems():
+            if getattr(self, attr) != value:
+                setattr(self, attr, value)
+                changed = True
+        
+        if changed:
+            self.put()
+            self.version.update()   
+
+    # too big for memcache ... either add a layer_cache.Layers.Datastore ... or compress it
+    # @layer_cache.cache_with_key_fxn(
+    #    lambda self, types=[], include_hidden = False: "Topic.make_tree_%s_%s_%s" % (self.version.number, include_hidden, TopicVersion.get_date_updated(self.version)),
+    #    layer=layer_cache.Layers.Memcache)
+    def make_tree(self, types=[], include_hidden=False):
+        if include_hidden:
+            nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
+        else:
+            nodes = Topic.all().filter("ancestor_keys =", self.key()).filter("hide = ", False).run()
+        
+        node_dict = dict((node.key(), node) for node in nodes)
+        node_dict[self.key()] = self # in case the current node is hidden (like root is)
+        
+        contentKeys = []
+        # cycle through the nodes adding its children to the contentKeys that need to be gotten
+        for key, descendant in node_dict.iteritems():
+            contentKeys.extend([c for c in descendant.child_keys if not node_dict.has_key(c) and (c.kind() in types or (len(types) == 0 and c.kind() != "Topic"))])
+
+        # get all content that belongs in this tree
+        contentItems = db.get(contentKeys)
+        # add the content to the node dict
+        for content in contentItems:
+            node_dict[content.key()]=content 
+        
+        # cycle through the nodes adding each to its parent's children list
+        for key, descendant in node_dict.iteritems():
+            if hasattr(descendant, "child_keys"):
+                descendant.children = [node_dict[c] for c in descendant.child_keys if node_dict.has_key(c)]
+                
+        # return the entity that was passed in, now with its children, and its descendants children all added
+        return node_dict[self.key()]
+
+    def search_tree_traversal(self, query, node_dict, path, matching_paths, matching_nodes):
+        match = False
+
+        if self.title.lower().find(query) > -1:
+            match_path = path[:]
+            match_path.append('Topic')
+            matching_paths.append(match_path)
+            match = True
+
+        for child_key in self.child_keys:
+            if node_dict.has_key(child_key):
+                child = node_dict[child_key]
+
+                if child_key.kind() == 'Topic':
+                    sub_path = path[:]
+                    sub_path.append(child.id)
+                    if child.search_tree_traversal(query, node_dict, sub_path, matching_paths, matching_nodes):
+                        match = True
+
+                else:
+                    title = getattr(child, "title", getattr(child, "display_name", ""))
+                    if title.lower().find(query) > -1:
+                        match_path = path[:]
+                        id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) )
+                        match_path.append(id)
+                        match_path.append(child_key.kind())
+                        matching_paths.append(match_path)
+                        match = True
+                        matching_nodes.append(child)
+
+        if match:
+            matching_nodes.append(self.get_visible_data(node_dict))
+
+        return match
+
+    def search_tree(self, query):
+        query = query.strip().lower()
+
+        nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
+        
+        node_dict = dict((node.key(), node) for node in nodes)
+        node_dict[self.key()] = self # in case the current node is hidden (like root is)
+        
+        contentKeys = []
+        # cycle through the nodes adding its children to the contentKeys that need to be gotten
+        for key, descendant in node_dict.iteritems():
+            contentKeys.extend([c for c in descendant.child_keys if not node_dict.has_key(c) and c.kind() != "Topic"])
+
+        # get all content that belongs in this tree
+        contentItems = db.get(contentKeys)
+        # add the content to the node dict
+        for content in contentItems:
+            node_dict[content.key()]=content 
+
+        matching_paths = []
+        matching_nodes = []
+
+        self.search_tree_traversal(query, node_dict, [], matching_paths, matching_nodes)
+
+        return {
+            "paths": matching_paths,
+            "nodes": matching_nodes
+        }
+
+    @staticmethod
+    def get_all_topics(version=None, include_hidden=False):
+        if not version:
+            version = TopicVersion.get_default_version()
+
+        query = Topic.all().filter("version =", version)
+        if not include_hidden:
+            query.filter("hide =", False)
+
+        return query.run()
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
+        "topic.get_content_topic_%s_%s" % (
+            version.key() if version else Setting.topic_tree_version(), 
+            include_hidden),
+        layer=layer_cache.Layers.Memcache)
+    def get_content_topics(version = None, include_hidden = False):
+        topics = Topic.get_all_topics(version, include_hidden)
+        
+        content_topics = []
+        for topic in topics:
+            for child_key in topic.child_keys:
+                if child_key.kind() != "Topic":
+                    content_topics.append(topic)
+                    break
+
+        content_topics.sort(key = lambda topic: topic.standalone_title)
+        return content_topics
+
+    @staticmethod
+    def get_filled_content_topics(types=[], version=None, include_hidden=False):
+        topics = Topic.get_content_topics(version)
+        child_dict = {}
+        for topic in topics:
+            child_dict.update(dict((key, True) for key in topic.child_keys if key.kind() in types or (len(types) == 0 and key.kind() != "Topic")))
+        child_dict.update(dict((e.key(), e) for e in db.get(child_dict.keys())))
+        
+        for topic in topics:
+            topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]     
+
+        return topics
+
+    @staticmethod
+    def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
+        keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]  
+        if include_descendants:
+            keys = []
+            subtopics = Topic.all().filter("ancestor_keys =", topic.key())
+            if not include_hidden:
+                subtopics.filter("hide =", False)
+            subtopics.run()
+            for subtopic in subtopics:
+                keys.extend([key for key in subtopic.child_keys if key.kind() == kind])
+              
+        return db.get(keys) 
+
+    def get_urls(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Url", include_descendants)
+
+    def get_exercises(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Exercise", include_descendants)
+
+    def get_videos(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Video", include_descendants)
+                            
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda 
+        topic, include_descendants=False, version=None: 
+        "%s_videos_for_topic_%s_v%s" % (
+            "descendant" if include_descendants else "child", 
+            topic.key(), 
+            version.key() if version else Setting.topic_tree_version()), 
+        layer=layer_cache.Layers.Memcache)
+    def get_cached_videos_for_topic(topic, include_descendants=False, version=None):
+        return Topic._get_children_of_kind(topic, "Video", include_descendants)
+
+    @staticmethod
+    def reindex(version):
+        import search
+        items = search.StemmedIndex.all().filter("parent_kind", "Topic").run()
+        db.delete(items)
+        
+        topics = Topic.get_content_topics(version)
+        for topic in topics:
+            logging.info("Indexing topic " + topic.title + " (" + str(topic.key()) + ")")
+            topic.index()
+            topic.indexed_title_changed()
+
+class UserTopicVideos(db.Model):
+    user = db.UserProperty()
+    topic_key_name = db.StringProperty() # used because key() will change if topic gets moved in the topic tree, or between versions
+    seconds_watched = db.IntegerProperty(indexed=False, default=0)
+    last_watched = db.DateTimeProperty(indexed=False, auto_now_add=True)
+    title = db.StringProperty(indexed=False) # wont be unique unlike with playlists, so this might have to change (or be removed as it can be gotten with a Datastore call to .topic)
+
+    @staticmethod
+    def get_for_user_data(user_data):
+        query = UserTopicVideos.all()
+        query.filter('user =', user_data.user)
+        return query
+
+    @staticmethod
+    def get_key_name(topic, user_data):
+        return user_data.key_email + ":" + topic.key().name()
+
+    @staticmethod
+    def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
+        if not user_data:
+            return None
+
+        key = UserTopicVideos.get_key_name(topic, user_data)
+
+        if insert_if_missing:
+            return UserTopicVideos.get_or_insert(
+                        key_name = key,
+                        user = user_data.user,
+                        topic = topic)
+        else:
+            return UserTopicVideos.get_by_key_name(key)
+
+class Url(db.Model):
+    url = db.StringProperty()
+    title = db.StringProperty(indexed=False)
+    tags = db.StringListProperty()
+    created_on = db.DateTimeProperty(auto_now_add=True)
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)        
+
+    # List of parent topics
+    topic_string_keys = object_property.TsvProperty(indexed=False)
+
+    @property
+    def id(self):
+        return self.key().id()
+
+    # returns the first non-hidden topic
+    def first_topic(self):
+        if self.topic_string_keys:
+            return db.get(self.topic_string_keys[0])
+        return None
+
+    @staticmethod
+    def get_all_live(version=None):
+        if not version:
+            version = TopicVersion.get_default_version()
+        
+        root = Topic.get_root(version)
+        urls = root.get_urls(include_descendants = True, include_hidden = False)
+        return urls
+
+    @staticmethod
+    def get_by_id_for_version(id, version=None):
+        url = Url.get_by_id(id)
+        # if there is a version check to see if there are any updates to the video
+        if version:
+            change = VersionContentChange.get_change_for_content(url, version)
+            if change:
+                url = change.updated_content(url)
+        return url
+
 
 class Video(Searchable, db.Model):
     youtube_id = db.StringProperty()
     url = db.StringProperty()
     title = db.StringProperty()
     description = db.TextProperty()
-    playlists = db.StringListProperty()
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default = 0)
 
     # Human readable, unique id that can be used in URLS.
     readable_id = db.StringProperty()
+
+    # List of parent topics
+    topic_string_keys = object_property.TsvProperty(indexed=False)
 
     # YouTube view count from last sync.
     views = db.IntegerProperty(default = 0)
@@ -1534,7 +2576,7 @@ class Video(Searchable, db.Model):
         }
 
     @staticmethod
-    def get_for_readable_id(readable_id):
+    def get_for_readable_id(readable_id, version = None):
         video = None
         query = Video.all()
         query.filter('readable_id =', readable_id)
@@ -1550,21 +2592,28 @@ class Video(Searchable, db.Model):
                 video = v
                 key_id = v.key().id()
         # End of hack
+        
+         # if there is a version check to see if there are any updates to the video
+        if version:
+            change = VersionContentChange.get_change_for_content(video, version)
+            if change:
+                video = change.updated_content(video)
+
         return video
 
     @staticmethod
-    def get_all_live():
-        query = VideoPlaylist.all().filter('live_association = ', True)
-        vps = query.fetch(10000)
-        keys = [VideoPlaylist.video.get_value_for_datastore(vp) for vp in vps]
-        config = db.create_config(read_policy=db.EVENTUAL_CONSISTENCY)
-        return Video.get(keys, config=config)
+    def get_all_live(version=None):
+        if not version:
+            version = TopicVersion.get_default_version()
+        
+        root = Topic.get_root(version)
+        videos = root.get_videos(include_descendants = True, include_hidden = False)
+        return videos
 
-
-    def first_playlist(self):
-        playlists = VideoPlaylist.get_cached_playlists_for_video(self)
-        if playlists:
-            return playlists[0]
+    # returns the first non-hidden topic
+    def first_topic(self):
+        if self.topic_string_keys:
+            return db.get(self.topic_string_keys[0])
         return None
 
     def current_user_points(self):
@@ -1659,7 +2708,8 @@ class Playlist(Searchable, db.Model):
         video_playlist_query.filter('playlist =', self)
         video_playlist_query.filter('live_association =', True)
         video_playlist_key_dict = VideoPlaylist.get_key_dict(video_playlist_query)
-
+        if not video_playlist_key_dict.has_key(self.key()):
+            return []
         video_playlists = sorted(video_playlist_key_dict[self.key()].values(), key=lambda video_playlist: video_playlist.video_position)
 
         videos = []
@@ -2333,8 +3383,6 @@ def commit_problem_log(problem_log_source, user_data = None):
 # Represents a matching between a playlist and a video
 # Allows us to keep track of which videos are in a playlist and
 # which playlists a video belongs to (not 1-to-1 mapping)
-
-
 class VideoPlaylist(db.Model):
 
     playlist = db.ReferenceProperty(Playlist)
@@ -2350,7 +3398,7 @@ class VideoPlaylist(db.Model):
 
     @staticmethod
     def get_namespace():
-        return "%s_%s" % (App.version, Setting.cached_library_content_date())
+        return "%s_%s" % (App.version, Setting.topic_tree_version())
 
     @staticmethod
     def get_cached_videos_for_playlist(playlist, limit=500):
@@ -2396,7 +3444,7 @@ class VideoPlaylist(db.Model):
         playlist = query.get()
         query = VideoPlaylist.all()
         query.filter('playlist =', playlist)
-        query.filter('live_association = ', True) #need to change this to true once I'm done with all of my hacks
+        query.filter('live_association = ', True) # need to change this to true once I'm done with all of my hacks
         query.order('video_position')
         return query
 
@@ -2417,7 +3465,7 @@ class ExerciseVideo(db.Model):
 
     video = db.ReferenceProperty(Video)
     exercise = db.ReferenceProperty(Exercise)
-    exercise_order = db.IntegerProperty()
+    exercise_order = db.IntegerProperty() # the order videos should appear for this exercise
 
     def key_for_video(self):
         return ExerciseVideo.video.get_value_for_datastore(self)

@@ -197,7 +197,7 @@ def prime_cache(version):
     try:
         resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/autocomplete?q=calc" % (version, get_app_id()))
         resp.read()
-        resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/playlists/library/compact" % (version, get_app_id()))
+        resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/topics/library/compact" % (version, get_app_id()))
         resp.read()
         print "Primed cache"
     except:

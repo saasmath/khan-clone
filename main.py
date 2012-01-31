@@ -42,12 +42,13 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
+import topics
 import goals.handlers
 import stories
 import summer
 
 import models
-from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
+from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, Topic
 from discussion import comments, notification, qa, voting
 from about import blog, util_about
 from phantom_users import util_notify
@@ -77,53 +78,29 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-
-class DeleteVideoPlaylists(request_handler.RequestHandler):
-# Deletes at most 200 Video-Playlist associations that are no longer live.  Should be run every-now-and-then to make sure the table doesn't get too big
-    @user_util.developer_only
-    def get(self):
-        query = VideoPlaylist.all()
-        all_video_playlists = query.fetch(200)
-        video_playlists_to_delete = []
-        for video_playlist in all_video_playlists:
-            if video_playlist.live_association != True:
-                video_playlists_to_delete.append(video_playlist)
-        db.delete(video_playlists_to_delete)
-
-
-class KillLiveAssociations(request_handler.RequestHandler):
-    @user_util.developer_only
-    def get(self):
-        query = VideoPlaylist.all()
-        all_video_playlists = query.fetch(100000)
-        for video_playlist in all_video_playlists:
-            video_playlist.live_association = False
-        db.put(all_video_playlists)
-
-def get_mangled_playlist_name(playlist_name):
+def get_mangled_topic_name(topic_name):
     for char in " :()":
-        playlist_name = playlist_name.replace(char, "")
-    return playlist_name
+        topic_name = topic_name.replace(char, "")
+    return topic_name
 
 class ViewVideo(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
 
-        # This method displays a video in the context of a particular playlist.
-        # To do that we first need to find the appropriate playlist.  If we aren't
-        # given the playlist title in a query param, we need to find a playlist that
+        # This method displays a video in the context of a particular topic.
+        # To do that we first need to find the appropriate topic.  If we aren't
+        # given the topic title in a query param, we need to find a topic that
         # the video is a part of.  That requires finding the video, given it readable_id
         # or, to support old URLs, it's youtube_id.
         video = None
-        playlist = None
+        topic = None
         video_id = self.request.get('v')
-        playlist_title = self.request_string('playlist', default="") or self.request_string('p', default="")
-
+        topic_id = self.request_string('topic', default="")
         readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
-        # If either the readable_id or playlist title is missing,
+        # If either the readable_id or topic title is missing,
         # redirect to the canonical URL that contains them
         redirect_to_canonical_url = False
         if video_id: # Support for old links
@@ -135,39 +112,35 @@ class ViewVideo(request_handler.RequestHandler):
                 raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
 
             readable_id = video.readable_id
-            playlist = video.first_playlist()
+            topic = video.first_topic()
 
-            if not playlist:
-                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
+            if not topic:
+                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
 
             redirect_to_canonical_url = True
 
-        if playlist_title is not None and len(playlist_title) > 0:
-            query = Playlist.all().filter('title =', playlist_title)
-            key_id = 0
-            for p in query:
-                if p.key().id() > key_id and not p.youtube_id.endswith('_player'):
-                    playlist = p
-                    key_id = p.key().id()
+        if topic_id is not None and len(topic_id) > 0:
+            topic = Topic.get_by_id(topic_id)
+            key_id = 0 if not topic else topic.key().id()
 
-        # If a playlist_title wasn't specified or the specified playlist wasn't found
-        # use the first playlist for the requested video.
-        if playlist is None:
-            # Get video by readable_id just to get the first playlist for the video
+        # If a topic_id wasn't specified or the specified topic wasn't found
+        # use the first topic for the requested video.
+        if topic is None:
+            # Get video by readable_id just to get the first topic for the video
             video = Video.get_for_readable_id(readable_id)
             if video is None:
                 raise MissingVideoException("Missing video '%s'" % readable_id)
 
-            playlist = video.first_playlist()
-            if not playlist:
-                raise MissingVideoException("Missing video '%s'" % readable_id)
+            topic = video.first_topic()
+            if not topic:
+                raise MissingVideoException("No topic has video '%s'" % readable_id)
 
             redirect_to_canonical_url = True
 
         exid = self.request_string('exid', default=None)
 
         if redirect_to_canonical_url:
-            qs = {'playlist': playlist.title}
+            qs = {'topic': topic.id}
             if exid:
                 qs['exid'] = exid
 
@@ -176,13 +149,12 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
-        # If we got here, we have a readable_id and a playlist_title, so we can display
-        # the playlist and the video in it that has the readable_id.  Note that we don't
+        # If we got here, we have a readable_id and a topic, so we can display
+        # the topic and the video in it that has the readable_id.  Note that we don't
         # query the Video entities for one with the requested readable_id because in some
         # cases there are multiple Video objects in the datastore with the same readable_id
         # (e.g. there are 2 "Order of Operations" videos).
-
-        videos = VideoPlaylist.get_cached_videos_for_playlist(playlist)
+        videos = Topic.get_cached_videos_for_topic(topic)
         previous_video = None
         next_video = None
         for v in videos:
@@ -191,14 +163,15 @@ class ViewVideo(request_handler.RequestHandler):
                 video = v
             elif video is None:
                 previous_video = v
-            elif next_video is None:
+            else:
                 next_video = v
+                break
 
         if video is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
         if App.offline_mode:
-            video_path = "/videos/" + get_mangled_playlist_name(playlist_title) + "/" + video.readable_id + ".flv"
+            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
         else:
             video_path = video.download_video_url()
 
@@ -222,7 +195,7 @@ class ViewVideo(request_handler.RequestHandler):
             awarded_points = user_video.points
 
         template_values = {
-                            'playlist': playlist,
+                            'topic': topic,
                             'video': video,
                             'videos': videos,
                             'video_path': video_path,
@@ -339,38 +312,6 @@ class ViewPrivacyPolicy(request_handler.RequestHandler):
 class ViewDMCA(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('dmca.html', {"selected_nav_link": "dmca"})
-
-class ViewSAT(request_handler.RequestHandler):
-
-    def get(self):
-        playlist_title = "SAT Preparation"
-        query = Playlist.all()
-        query.filter('title =', playlist_title)
-        playlist = query.get()
-        query = VideoPlaylist.all()
-        query.filter('playlist =', playlist)
-        query.filter('live_association = ', True) #need to change this to true once I'm done with all of my hacks
-        query.order('video_position')
-        playlist_videos = query.fetch(500)
-
-        template_values = {
-                'videos': playlist_videos,
-        }
-
-        self.render_jinja2_template('sat.html', template_values)
-
-class ViewGMAT(request_handler.RequestHandler):
-
-    def get(self):
-        problem_solving = VideoPlaylist.get_query_for_playlist_title("GMAT: Problem Solving")
-        data_sufficiency = VideoPlaylist.get_query_for_playlist_title("GMAT Data Sufficiency")
-        template_values = {
-                            'data_sufficiency': data_sufficiency,
-                            'problem_solving': problem_solving,
-        }
-
-        self.render_jinja2_template('gmat.html', template_values)
-
 
 class RetargetFeedback(bulk_update.handler.UpdateKind):
     def get_keys_query(self, kind):
@@ -586,52 +527,59 @@ class Search(request_handler.RequestHandler):
         exvids_future = util.async_queries([exvids_query])
 
         # One full (non-partial) search, then sort by kind
-        all_text_keys = Playlist.full_text_search(
+        all_text_keys = Topic.full_text_search(
                 query, limit=50, kind=None,
-                stemming=Playlist.INDEX_STEMMING,
-                multi_word_literal=Playlist.INDEX_MULTI_WORD,
+                stemming=Topic.INDEX_STEMMING,
+                multi_word_literal=Topic.INDEX_MULTI_WORD,
                 searched_phrases_out=searched_phrases)
 
-
         # Quick title-only partial search
-        playlist_partial_results = filter(
-                lambda playlist_dict: query in playlist_dict["title"].lower(),
-                autocomplete.playlist_title_dicts())
+        topic_partial_results = filter(
+                lambda topic_dict: query in topic_dict["title"].lower(),
+                autocomplete.topic_title_dicts())
         video_partial_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 autocomplete.video_title_dicts())
+        url_partial_results = filter(
+                lambda url_dict: query in url_dict["title"].lower(),
+                autocomplete.url_title_dicts())
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        all_key_list.extend([result["key"] for result in playlist_partial_results])
+        # all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
+        all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
 
-        # Filter out anything that isn't a Playlist or Video
-        all_key_list = [key for key in all_key_list if db.Key(key).kind() in ["Playlist", "Video"]]
+        # Filter out anything that isn't a Topic, Url or Video
+        all_key_list = [key for key in all_key_list if db.Key(key).kind() in ["Topic", "Url", "Video"]]
 
         # Get all the entities
         all_entities = db.get(all_key_list)
 
         # Group results by type
-        playlists = []
+        topics = []
         videos = []
         for entity in all_entities:
-            if isinstance(entity, Playlist):
-                playlists.append(entity)
+            if isinstance(entity, Topic):
+                topics.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
+            elif isinstance(entity, Url):
+                videos.append(entity)
+            elif entity:
+                logging.info("Found unknown object " + repr(entity))
 
-        playlist_count = len(playlists)
+        topic_count = len(topics)
 
-        # Get playlists for videos not in matching playlists
+        # Get topics for videos not in matching topics
         filtered_videos = []
         filtered_videos_by_key = {}
         for video in videos:
-            if [(playlist.title in video.playlists) for playlist in playlists].count(True) == 0:
-                video_playlist = video.first_playlist()
-                if video_playlist != None:
-                    playlists.append(video_playlist)
+            if [(str(topic.key()) in video.topic_string_keys) for topic in topics].count(True) == 0:
+                video_topic = video.first_topic()
+                if video_topic != None:
+                    topics.append(video_topic)
                     filtered_videos.append(video)
                     filtered_videos_by_key[str(video.key())] = []
             else:
@@ -656,22 +604,25 @@ class Search(request_handler.RequestHandler):
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
-        # Count number of videos in each playlist and sort descending
-        for playlist in playlists:
+        # Count number of videos in each topic and sort descending
+        if topics:
             if len(filtered_videos) > 0:
-                playlist.match_count = [(playlist.title in video.playlists) for video in filtered_videos].count(True)
+                for topic in topics:
+                    topic.match_count = [(str(topic.key()) in video.topic_string_keys) for video in filtered_videos].count(True)
+                topics = sorted(topics, key=lambda topic: -topic.match_count)
             else:
-                playlist.match_count = 0
-        playlists = sorted(playlists, key=lambda playlist: -playlist.match_count)
+                for topic in topics:
+                    topic.match_count = 0
 
         template_values.update({
-                           'playlists': playlists,
+                           'topics': topics,
                            'videos': filtered_videos,
                            'video_exercises': video_exercises,
                            'search_string': query,
                            'video_count': video_count,
-                           'playlist_count': playlist_count,
+                           'topic_count': topic_count,
                            })
+        
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
@@ -770,8 +721,6 @@ application = webapp2.WSGIApplication([
     ('/video/(.*)', ViewVideo),
     ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
-    ('/sat', ViewSAT),
-    ('/gmat', ViewGMAT),
     ('/reportissue', ReportIssue),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.SaveMapCoords),
@@ -783,6 +732,7 @@ application = webapp2.WSGIApplication([
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
 
+    ('/admin/import_smarthistory', topics.ImportSmartHistory),
     ('/admin/reput', bulk_update.handler.UpdateKind),
     ('/admin/retargetfeedback', RetargetFeedback),
     ('/admin/startnewbadgemapreduce', util_badges.StartNewBadgeMapReduce),
@@ -800,6 +750,8 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/commoncore', devpanel.CommonCore),
+    ('/devadmin/content', topics.EditContent),
+
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
@@ -834,11 +786,6 @@ application = webapp2.WSGIApplication([
     ('/logout', Logout),
 
     ('/api-apps/register', oauth_apps.Register),
-
-    # These are dangerous, should be able to clean things manually from the remote python shell
-
-    ('/deletevideoplaylists', DeleteVideoPlaylists),
-    ('/killliveassociations', KillLiveAssociations),
 
     # Below are all discussion related pages
     ('/discussion/addcomment', comments.AddComment),

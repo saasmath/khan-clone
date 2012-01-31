@@ -4,6 +4,8 @@ import urllib
 import request_cache
 import logging
 from google.appengine.api import users
+from google.appengine.ext import db
+
 from asynctools import AsyncMultiTask, QueryTask
 
 from app import App
@@ -134,8 +136,50 @@ def static_url(relative_url):
     else:
         return "http://khan-academy.appspot.com%s" % relative_url
 
+def clone_entity(e, **extra_args):
+    """http://stackoverflow.com/questions/2687724/copy-an-entity-in-google-app-engine-datastore-in-python-without-knowing-property
+    Clones an entity, adding or overriding constructor attributes.
+    
+    The cloned entity will have exactly the same property values as the original
+    entity, except where overridden. By default it will have no parent entity or
+    key name, unless supplied.
+    
+    Args:
+        e: The entity to clone
+        extra_args: Keyword arguments to override from the cloned entity and pass
+        to the constructor.
+    Returns:
+        A cloned, possibly modified, copy of entity e.
+    """
+    klass = e.__class__
+    props = dict((k, v.__get__(e, klass)) for k, v in klass.properties().iteritems())
+    props.update(extra_args)
+    return klass(**props)
+
 def parse_iso8601(s):
     return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
+
+def prefetch_refprops(entities, *props):
+    """http://blog.notdot.net/2010/01/ReferenceProperty-prefetching-in-App-Engine
+    Loads referenced models defined by the given model properties
+    all at once on the given entities.
+
+    Example:
+    posts = Post.all().order("-timestamp").fetch(20)
+    prefetch_refprop(posts, Post.author)
+    """
+    # Get a list of (entity,property of this entity)
+    fields = [(entity, prop) for entity in entities for prop in props]
+    # Pull out an equally sized list of the referenced key for each field (possibly None)
+    ref_keys_with_none = [prop.get_value_for_datastore(x) for x, prop in fields]
+    # Make a dict of keys:fetched entities
+    ref_keys = filter(None, ref_keys_with_none)
+    ref_entities = dict((x.key(), x) for x in db.get(set(ref_keys)))
+    # Set the fetched entity on the non-None reference properties
+    for (entity, prop), ref_key in zip(fields, ref_keys_with_none):
+        if ref_key is not None:
+            prop.__set__(entity, ref_entities[ref_key])
+    return entities
 
 def coalesce(fn, s):
     """Call a function only if the argument is not None"""
@@ -143,3 +187,4 @@ def coalesce(fn, s):
         return fn(s)
     else:
         return None
+

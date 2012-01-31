@@ -168,6 +168,10 @@ def layer_cache_check_set_return(
         del kwargs["bust_cache"]
 
     key = key_fxn(*args, **kwargs)
+    # if key is None, don't bother trying to get it from the cache, just execute the function and return it
+    if key is None:
+        return target(*args, **kwargs)
+
     namespace = App.version
 
     if persist_across_app_versions:

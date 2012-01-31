@@ -224,7 +224,7 @@ var ActivityGraph = function() {
         var x = {x: index},
             extra = {};
 
-        extra = this.generateBar_(this.bucketData.dictPlaylistBuckets[bucket], "Videos");
+        extra = this.generateBar_(this.bucketData.dictTopicBuckets[bucket], "Videos");
         this.videoMinutes.data.push(_.extend({}, this.videoMinutes.defaultPoint, x, extra));
 
         extra = this.generateBar_(this.bucketData.dictExerciseBuckets[bucket], "Exercises");
@@ -369,7 +369,7 @@ var ActivityGraph = function() {
                 bucketList: [],
                 dictBadgeBuckets: {},
                 dictExerciseBuckets: {},
-                dictPlaylistBuckets: {},
+                dictTopicBuckets: {},
                 dictPointsBuckets: {},
                 dictProficiencyBuckets: {},
                 enableDrillDown: false,

@@ -110,7 +110,7 @@ def all_badges():
         consecutive_activity_badges.FiveDayConsecutiveActivityBadge(),
         consecutive_activity_badges.FifteenDayConsecutiveActivityBadge(),
         consecutive_activity_badges.ThirtyDayConsecutiveActivityBadge(),
-        consecutive_activity_badges.HundredDayConsecutiveActivityBadge(),
+        consecutive_activity_badges.HundredDayConsecutiveActivityBadge()
 
     ]
 

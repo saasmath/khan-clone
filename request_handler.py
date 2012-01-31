@@ -12,7 +12,7 @@ from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 import webapp2
 import shared_jinja
 
-from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException
+from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException, QuietException
 from app import App
 import cookie_util
 
@@ -122,8 +122,6 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
     def handle_exception(self, e, *args):
 
-        silence_report = False
-
         title = "Oops. We broke our streak."
         message_html = "We ran into a problem. It's our fault, and we're working on it."
         sub_message_html = "This has been reported to us, and we'll be looking for a fix. If the problem continues, feel free to <a href='/reportissue?type=Defect'>send us a report directly</a>."
@@ -145,21 +143,19 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
             # We don't log missing videos as errors because they're so common due to malformed URLs or renamed videos.
             # Ask users to report any significant problems, and log as info in case we need to research.
-            silence_report = True
-            logging.info(e)
             title = "This video is no longer around."
             message_html = "You're looking for a video that either never existed or wandered away. <a href='/'>Head to our video library</a> to find it."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is SmartHistoryLoadException:
             # 404s are very common with Smarthistory as bots have gotten hold of bad urls, silencing these reports and log as info instead
-            silence_report = True
-            logging.info(e)
             title = "This page of the Smarthistory section of Khan Academy does not exist"
             message_html = "Go to <a href='/'>our Smarthistory homepage</a> to find more art history content."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
-        if not silence_report:
+        if isinstance(e, QuietException):
+            logging.info(e)
+        else:
             self.error(500)
             logging.exception(e)
 

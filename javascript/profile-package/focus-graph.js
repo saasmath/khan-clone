@@ -65,7 +65,7 @@ var FocusGraph = function() {
             series.push(exerciseFocus);
         }
 
-        if (this.segmentData.totalPlaylistSeconds) {
+        if (this.segmentData.totalTopicSeconds) {
             // Video legend in the upper left
             var videoLegend = {
                 type: "pie",
@@ -216,7 +216,7 @@ var FocusGraph = function() {
             },
             isGraphEmpty: true,
             totalExerciseSeconds: 100,
-            totalPlaylistSeconds: 100
+            totalTopicSeconds: 100
         };
 
         return segmentData;

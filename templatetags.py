@@ -4,9 +4,9 @@ from jinja2.utils import escape
 
 from api import jsonify as apijsonify
 from templatefilters import slugify
-import topics_list
 import models
 import shared_jinja
+import layer_cache
 from models import Exercise
 
 
@@ -14,16 +14,18 @@ def user_info(username, user_data):
     context = {"username": username, "user_data": user_data}
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
-def column_major_sorted_videos(videos, num_cols=3, column_width=300, gutter=20, font_size=12):
-    items_in_column = len(videos) / num_cols
-    remainder = len(videos) % num_cols
+def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, font_size=12):
+    content = topic.children
+    items_in_column = len(content) / num_cols
+    remainder = len(content) % num_cols
     link_height = font_size * 1.5
     # Calculate the column indexes (tops of columns). Since video lists won't divide evenly, distribute
     # the remainder to the left-most columns first, and correctly increment the indices for remaining columns
     column_indices = [(items_in_column * multiplier + (multiplier if multiplier <= remainder else remainder)) for multiplier in range(1, num_cols + 1)]
 
     template_values = {
-        "videos": videos,
+        "topic": topic,
+        "content": content,
         "column_width": column_width,
         "column_indices": column_indices,
         "link_height": link_height,
@@ -111,54 +113,53 @@ def streak_bar(user_exercise_dict):
 
     return shared_jinja.get().render_template("streak_bar.html", **template_values)
 
-def playlist_browser(browser_id):
+@layer_cache.cache_with_key_fxn(lambda browser_id, version_number=None:
+    "Templatetags.topic_browser_%s_%s" % (
+    browser_id, 
+    version_number if version_number else models.Setting.topic_tree_version()))
+def topic_browser(browser_id, version_number=None):
+    if version_number:
+        version = models.TopicVersion.get_by_number(version_number)
+    else:
+        version = None
+
+    tree = models.Topic.get_root(version).make_tree(types = ["Topics"])
     template_values = {
-        'browser_id': browser_id, 'playlist_structure': topics_list.PLAYLIST_STRUCTURE
+       'browser_id': browser_id, 'topic_tree': tree 
     }
 
-    return shared_jinja.get().render_template("playlist_browser.html", **template_values)
+    return shared_jinja.get().render_template("topic_browser.html", **template_values)
 
-def playlist_browser_structure(structure, class_name="", level=0):
-    if type(structure) == list:
+def topic_browser_tree(tree, level=0):
+    s = ""
+    class_name = "topline"
+    for child in tree.children:
+        if not child.children:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
 
-        s = ""
-        class_next = "topline"
-        for sub_structure in structure:
-            s += playlist_browser_structure(sub_structure, class_name=class_next, level=level)
-            class_next = ""
-        return s
-
-    else:
-
-        s = ""
-        name = structure["name"]
-
-        if structure.has_key("playlist"):
-
-            playlist_title = structure["playlist"]
-            href = "#%s" % escape(slugify(playlist_title))
-
-            # We have two special case playlist URLs to worry about for now. Should remove later.
-            if playlist_title.startswith("SAT"):
-                href = "/sat"
+            # show leaf node as a link
+            href = "#%s" % escape(slugify(child.id))
 
             if level == 0:
-                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(name))
+                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(child.title))
             else:
-                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(name))
-
-            if playlist_title=="History":
-                s += "<li class=''><a href='#smarthistory'>Art History</a></li>"
+                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(child.title))
 
         else:
-            items = structure["items"]
-
             if level > 0:
                 class_name += " sub"
 
-            s += "<li class='%s'>%s <ul>%s</ul></li>" % (class_name, escape(name), playlist_browser_structure(items, level=level + 1))
+            s += "<li class='%s'>%s <ul>%s</ul></li>" % (class_name, escape(child.title), topic_browser_tree(child, level=level + 1))
 
-        return s
+        class_name = ""
+
+    return s
 
 def video_name_and_progress(video):
     return "<span class='vid-progress v%d'>%s</span>" % (video.key().id(), escape(video.title.encode('utf-8', 'ignore')))

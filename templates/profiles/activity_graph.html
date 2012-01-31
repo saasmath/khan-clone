@@ -3,7 +3,6 @@
 $(function() {
     new ActivityGraph().render({{ templatetags.jsonify(context, true) }});
 });
-
 </script>
 <div id="highchart-container" class="{% if context.is_graph_empty %}empty-chart{% endif %}">
     <div id="highchart"></div>
