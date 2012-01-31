@@ -735,7 +735,6 @@ application = webapp2.WSGIApplication([
     ('/mobilesite', MobileSite),
 
     ('/admin/import_smarthistory', topics.ImportSmartHistory),
-    ('/admin/content', topics.EditContent),
     ('/admin/reput', bulk_update.handler.UpdateKind),
     ('/admin/retargetfeedback', RetargetFeedback),
     ('/admin/startnewbadgemapreduce', util_badges.StartNewBadgeMapReduce),
@@ -753,6 +752,8 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/commoncore', devpanel.CommonCore),
+    ('/devadmin/content', topics.EditContent),
+
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
