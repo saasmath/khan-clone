@@ -1832,3 +1832,14 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
+
+@route("/api/v1/dev/queue/<queue_name>", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def get_queue_statistics(queue_name):
+    from google.appengine.api.taskqueue import Queue
+    queue = Queue(queue_name)
+    statistics = queue.fetch_statistics()
+    return statistics
+

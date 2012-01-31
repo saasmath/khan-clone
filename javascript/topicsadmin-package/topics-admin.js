@@ -394,12 +394,32 @@ var TopicTreeEditor = {
             success: function() {
                 hideGenericMessageBox();
                 popupGenericMessageBox({
-                    title: "Topic tree published",
-                    message: "Topic tree has been published to the live site. The page will now refresh.",
-                    buttons: [
-                        { title: "OK", action: function() { location.reload(true); } }
-                    ]
+                    title: "Topic tree publish begun",
+                    message: "Topic tree publish is now in progress. This may take a few minutes...",
+                    buttons: []
                 });
+                setTimeout(TopicTreeEditor.waitForTreeDefault, 15000);
+            },
+            error: TopicTreeEditor.handleError
+        });
+    },
+
+    waitForTreeDefault: function() {
+        $.ajax({
+            url: "/api/v1/dev/queue/topics-set-default-queue",
+            success: function(statistics) {
+                if (statistics.tasks > 0) {
+                    setTimeout(TopicTreeEditor.waitForTreeDefault, 15000);
+                } else {
+                    hideGenericMessageBox();
+                    popupGenericMessageBox({
+                        title: "Topic tree publish complete",
+                        message: "Topic tree has been published to the live site. The page will now refresh.",
+                        buttons: [
+                            { title: "OK", action: function() { location.reload(true); } }
+                        ]
+                    });
+                }
             },
             error: TopicTreeEditor.handleError
         });
