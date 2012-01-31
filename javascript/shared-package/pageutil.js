@@ -29,13 +29,13 @@ function validateEmail(sEmail)
      return sEmail.match(re);
 }
 
-function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
+function addAutocompleteMatchToList(list, match, kind, reMatch) {
     var o = {
-                "label": match.title,
-                "title": match.title,
-                "value": match.url,
+                "label": (kind == 'exercise') ? match.display_name : match.title,
+                "title": (kind == 'exercise') ? match.display_name : match.title,
+                "value": match.ka_url,
                 "key": match.key,
-                "fPlaylist": fPlaylist
+                "kind": kind
             };
 
     if (reMatch)
@@ -44,7 +44,7 @@ function addAutocompleteMatchToList(list, match, fPlaylist, reMatch) {
     list[list.length] = o;
 }
 
-function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
+function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
 {
     var autocompleteWidget = $(selector).autocomplete({
         delay: 150,
@@ -74,18 +74,18 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
                         reMatch = null;
                     }
 
-                    // Add playlist and video matches to list of autocomplete suggestions
+                    // Add topic and video matches to list of autocomplete suggestions
 
-                    if (fPlaylists)
-                    {
-                        for (var ix = 0; ix < data.playlists.length; ix++)
-                        {
-                            addAutocompleteMatchToList(matches, data.playlists[ix], true, reMatch);
+                    if (fTopics) {
+                        for (var ix = 0; ix < data.topics.length; ix++) {
+                            addAutocompleteMatchToList(matches, data.topics[ix], "topic", reMatch);
                         }
                     }
-                    for (var ix = 0; ix < data.videos.length; ix++)
-                    {
-                        addAutocompleteMatchToList(matches, data.videos[ix], false, reMatch);
+                    for (var ix = 0; ix < data.videos.length; ix++) {
+                        addAutocompleteMatchToList(matches, data.videos[ix], "video", reMatch);
+                    }
+                    for (var ix = 0; ix < data.exercises.length; ix++) {
+                        addAutocompleteMatchToList(matches, data.exercises[ix], "exercise", reMatch);
                     }
                 }
 
@@ -134,8 +134,12 @@ function initAutocomplete(selector, fPlaylists, fxnSelect, fIgnoreSubmitOnEnter)
     autocompleteWidget.data("autocomplete")._renderItem = function(ul, item) {
         // Customize the display of autocomplete suggestions
         var jLink = $("<a></a>").html(item.label);
-        if (item.fPlaylist)
-            jLink.prepend("<span class='playlist'>Playlist </span>");
+        if (item.kind == "topic")
+            jLink.prepend("<span class='autocomplete-topic'>Topic </span>");
+        else if (item.kind == "video")
+            jLink.prepend("<span class='autocomplete-video'>Video </span>");
+        else if (item.kind == "exercise")
+            jLink.prepend("<span class='autocomplete-exercise'>Exercise </span>");
 
         return $("<li></li>")
             .data("item.autocomplete", item)
@@ -988,6 +992,114 @@ function temporaryDetachElement(element, fn, context) {
     reattach();
     return val;
 }
+
+var globalPopupDialog = {
+    visible: false,
+    bindings: false,
+
+    // Size can be an array [width,height] to have an auto-centered dialog or null if the positioning is handled in CSS
+    show: function(className, size, title, html, autoClose) {
+        var css = (!size) ? {} : {
+            position: "relative",
+            width: size[0],
+            height: size[1],
+            marginLeft: (-0.5*size[0]).toFixed(0),
+            marginTop: (-0.5*size[1] - 100).toFixed(0)
+        }
+        $("#popup-dialog")
+            .hide()
+            .find(".dialog-frame")
+                .attr("class", "dialog-frame " + className)
+                .attr('style', '') // clear style
+                .css(css)
+                .find(".description")
+                    .html('<h3>' + title + '</h3>')
+                    .end()
+                .end()
+            .find(".dialog-contents")
+                .html(html)
+                .end()
+            .find(".close-button")
+                .click(function() { globalPopupDialog.hide(); })
+                .end()
+            .show()
+
+        if (autoClose && !globalPopupDialog.bindings) {
+            // listen for escape key
+            $(document).bind('keyup.popupdialog', function ( e ) {
+                if ( e.which == 27 ) {
+                    globalPopupDialog.hide();
+                }
+            });
+
+            // close the goal dialog if user clicks elsewhere on page
+            $('body').bind('click.popupdialog', function( e ) {
+                if ( $(e.target).closest('.dialog-frame').length === 0 ) {
+                    globalPopupDialog.hide();
+                }
+            });
+            globalPopupDialog.bindings = true;
+        } else if (!autoClose && globalPopupDialog.bindings) {
+            $(document).unbind('keyup.popupdialog');
+            $('body').unbind('click.popupdialog');
+            globalPopupDialog.bindings = false;
+        }
+
+        globalPopupDialog.visible = true;
+        return globalPopupDialog;
+    },
+    hide: function() {
+        if (globalPopupDialog.visible) {
+            $("#popup-dialog")
+                .hide()
+                .find(".dialog-contents")
+                    .html('');
+
+            if (globalPopupDialog.bindings) {
+                $(document).unbind('keyup.popupdialog');
+                $('body').unbind('click.popupdialog');
+                globalPopupDialog.bindings = false;
+            }
+
+            globalPopupDialog.visible = false;
+        }
+        return globalPopupDialog;
+    }
+};
+
+(function() {
+    var messageBox = null;
+
+    popupGenericMessageBox = function(options) {
+        if (messageBox) {
+            $(messageBox).modal('hide').remove();
+        }
+
+        options = _.extend({
+            buttons: [
+                { title: 'OK', action: hideGenericMessageBox }
+            ]
+        }, options);
+
+        var template = Templates.get( "shared.generic-dialog" );
+        messageBox = $(template(options)).appendTo(document.body).modal({
+            keyboard: true,
+            backdrop: true,
+            show: true
+        }).get(0);
+
+        _.each(options.buttons, function(button) {
+            $('.generic-button[data-id="' + button.title + '"]', $(messageBox)).click(button.action);
+        });
+    }
+
+    hideGenericMessageBox = function() {
+        if (messageBox) {
+            $(messageBox).modal('hide').remove();
+        }
+        messageBox = null;
+    }
+})();
 
 function dynamicPackage(packageName, callback, manifest) {
     var self = this;

@@ -11,7 +11,6 @@ import templatetags
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
 from gae_bingo.gae_bingo import bingo
-from experiments import HomepageRestructuringExperiment
 
 ITEMS_PER_SET = 4
 
@@ -56,33 +55,24 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
     return None
 
 @layer_cache.cache_with_key_fxn(
-        lambda *args, **kwargs: "new_and_noteworthy_link_sets_%s" % models.Setting.cached_library_content_date()
+        lambda *args, **kwargs: "new_and_noteworthy_link_sets_%s" % 
+            models.Setting.topic_tree_version(),
+        expiration=86400
         )
 def new_and_noteworthy_link_sets():
+    topic = models.Topic.get_by_id("new-and-noteworthy")
+    videos = topic.get_cached_videos_for_topic(topic)
 
-    playlist = models.Playlist.all().filter("title =", "New and Noteworthy").get()
-    if not playlist:
-        # If we can't find the playlist, just show the default TED talk.
-        return []
-
-    videos = models.VideoPlaylist.get_cached_videos_for_playlist(playlist)
     if len(videos) < 2:
         # If there's only one video, don't bother.
         return []
 
     exercises = []
-
-    # We use playlist tags to identify new and noteworthy exercises
-    # just so Sal has a really simple, fast, all-YouTube interface
-    for tag in playlist.tags:
-        exercise = models.Exercise.get_by_name(tag)
-        if exercise:
-            exercises.append(exercise)
-
+    
     if len(exercises) == 0:
-        # Temporary hard-coding of a couple exercises until Sal picks a few
-        playlist.tags = ['derivative_intuition', 'inequalities_on_a_number_line', 'multiplication_4', 'solid_geometry']
-        for tag in playlist.tags:
+        # Temporary hard-coding of a couple exercises - eventually can take exercises in the topic - but not until they all have splashthumbnails
+        topic.tags = ['derivative_intuition', 'inequalities_on_a_number_line', 'multiplication_4', 'solid_geometry']
+        for tag in topic.tags:
             exercise = models.Exercise.get_by_name(tag)
             if exercise:
                 exercises.append(exercise)
@@ -172,17 +162,12 @@ class ViewHomePage(request_handler.RequestHandler):
 
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
-        # Only running restructure A/B test for non-mobile clients
-        render_type = 'original'
+        # Only running ajax version of homepage for non-mobile clients
         if not self.is_mobile_capable():
-            render_type = HomepageRestructuringExperiment.get_render_type()
-            bingo('homepage_restructure_visits')
-
-        if render_type == 'original':
-            library_content = library.library_content_html()
+            library_content = library.library_content_html(ajax = True)
         else:
-            library_content = library.playlist_content_html()
-
+            library_content = library.library_content_html()
+            
         template_values = {
                             'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,

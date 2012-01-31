@@ -43,4 +43,8 @@ cron:
   url: /gae_bingo/log_snapshot
   schedule: every 30 minutes
 
+- description: update smarthistory to default and edit topic trees
+  url: /admin/import_smarthistory
+  schedule: every day 01:00
+  timezone: US/Pacific
 

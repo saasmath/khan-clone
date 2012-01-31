@@ -43,3 +43,4 @@ def class_exercises_over_time_graph_context(user_data, student_list):
             "c_points": reduce(lambda a, b: a + b, map(lambda s: s.points, students_data), 0)
             }
 
+
