@@ -559,35 +559,39 @@ var Profile = {
             .siblings().hide();
     },
 
-    hoverContent: function(elements) {
-        var lastHoverTime;
-        var mouseX;
-        var mouseY;
+    hoverContent: function(elements, containerSelector) {
+        var lastHoverTime,
+            mouseX,
+            mouseY;
+
+        containerSelector = containerSelector || "#graph-content";
 
         elements.hover(
             function(e) {
-                var hoverTime = +(new Date());
+                var hoverTime = +(new Date()),
+                    el = this;
                 lastHoverTime = hoverTime;
                 mouseX = e.pageX;
                 mouseY = e.pageY;
-                var el = this;
+
                 setTimeout(function() {
-                    if (hoverTime != lastHoverTime) {
+                    if (hoverTime !== lastHoverTime) {
                         return;
                     }
 
-                    var hoverData = $(el).children(".hover-data");
-                    var html = $.trim(hoverData.html());
-                    if (html) {
-                        var jelGraph = $("#graph-content");
-                        var leftMax = jelGraph.offset().left +
-                                jelGraph.width() - 150;
-                        var left = Math.min(mouseX + 15, leftMax);
+                    var hoverData = $(el).children(".hover-data"),
+                        html = $.trim(hoverData.html());
 
-                        var jHoverEl = $("#info-hover-container");
+                    if (html) {
+                        var jelContainer = $(containerSelector),
+                            leftMax = jelContainer.offset().left + jelContainer.width() - 150,
+                            left = Math.min(mouseX + 15, leftMax),
+                            jHoverEl = $("#info-hover-container");
+
                         if (jHoverEl.length === 0) {
                             jHoverEl = $('<div id="info-hover-container"></div>').appendTo("body");
                         }
+
                         jHoverEl
                             .html(html)
                             .css({left: left, top: mouseY + 5})
@@ -603,7 +607,7 @@ var Profile = {
     },
 
     AddObjectiveHover: function(element) {
-        Profile.hoverContent(element.find(".objective"));
+        Profile.hoverContent(element.find(".objective"), "#profile-goals-content");
     },
 
     render: function() {
