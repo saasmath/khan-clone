@@ -9,21 +9,30 @@
         If you change your username, you cannot get your old one back for 120 days.
     </div>
     <div class="username-picker">
-        <div class="basic-info">
-            <label>Nickname:</label><input type="text" value="{{nickname}}" placeholder="Full name" class="nickname">
-            <p class="input-description">
-                This is the name that your friends and coaches will see when they
-                look at your profile.
-            </p>
-            <label>Username:</label><input type="text" value="{{username}}" placeholder="Username" class="username"><span class="sidenote"></span>
-            <p class="input-description">
-                Your username is used in the link that others use to access your profile:
-                http://www.khanacademy.org/profile/{{username}}
-            </p>
-            <!--
-                Should this go here? It could make the modal super wide.
-                <div>http://khanacademy.org/profile/<span class="example-username">{{username}}</span></div>
-            -->
+        <div class="row">
+            <div class="labels">
+                <label for="nickname">Real name:</label>
+            </div>
+            <div class="inputs">
+                <input type="text" value="{{nickname}}" class="nickname" id="nickname">
+                <p class="input-description">
+                    This is how your name will appear around Khan Academy.
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="labels">
+                <label for="username">Username:</label>
+            </div>
+            <div class="inputs">
+                <input type="text" value="{{username}}" class="username" id="username"><span class="sidenote"></span>
+                <p class="input-description">
+                    Your username will appear in your Khan Academy address.
+                </p>
+                <p class="input-description">
+                    http://www.khanacademy.org/profile/<span class="example-username">{{username}}</span>
+                </p>
+            </div>
         </div>
     </div>
 </div>

@@ -128,11 +128,11 @@ var ProfileModel = Backbone.Model.extend({
         } else {
             var message = "";
             if (username.length < 5) {
-                message = "Username must have at least 5 characters.";
+                message = "Too short.";
             } else if (/^[^a-z]/.test(username)) {
-                message = "Username must begin with a letter.";
+                message = "Start with a letter.";
             } else {
-                message = "Username must be alphanumeric.";
+                message = "Alphanumeric only.";
             }
             this.trigger("validate:username", false, message);
         }

@@ -974,8 +974,8 @@ li.profile-tab {
 #username-picker-container {
     position: fixed;
     /* set the point on which top and left operate to the middle top edge*/
-    width: 470px; /* this is redundant but here for clarity */
-    margin: 0 0 0 -235px;
+    width: 500px; /* this is redundant but here for clarity */
+    margin: 0 0 0 -250px;
     top: 60px;
     left: 50%;
 }
@@ -1006,34 +1006,50 @@ li.profile-tab {
 .username-picker {
     margin: 0 auto;
 }
+.username-picker .row:first-child {
+    margin: 0;
+}
+.username-picker .row {
+    position: relative;
+    margin: 20px 0px 0px 0px;
+}
+.username-picker .labels{
+    position: absolute;
+    width: 80px;
+    text-align: right;
+}
+.username-picker .inputs {
+    margin-left: 90px;
+}
 .username-picker input,
 .username-picker label{
     font-size: 15px;
     font-family: Helvetica Nueue, Helvetica, sans-serif;
 }
-.username-picker .basic-info input {
-    margin: 0 10px;
+.username-picker .inputs input {
     width: 250px;
+    margin: 0 5px 0 0;
 }
 .username-picker .input-description {
     font-size: 12px;
-    font-style: italic;
-    color: #777;
-    width: 250px;
-    margin: 10px 0px 20px 83px;
+    color: #888;
+    margin: 5px 0 0 0;
     line-height: 15px;
+}
+.username-picker .example-username {
+    color: #678D00;
 }
 .username-picker .sidenote {
     background-repeat: no-repeat;
-    background-position: 0 50%;
+    background-size: 10px 10px;
+    background-position: 0 30%;
+    padding-left: 13px;
 }
 .username-picker .sidenote.success {
-    padding-left: 14px;
     background-image:url(/images/video-indicator-complete.png);
 }
 .username-picker .sidenote.error {
     background-image:url(/images/cross.png);
-    padding-left: 18px;
 }
 
 .avatar-picker.modal {

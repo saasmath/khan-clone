@@ -84,7 +84,7 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onTimeout_: function() {
-        this.$(".sidenote").text("Checking username...")
+        this.$(".sidenote").text("Checking...")
             .removeClass("success")
             .removeClass("error");
         this.model.validateUsername(this.$(".username").val());
