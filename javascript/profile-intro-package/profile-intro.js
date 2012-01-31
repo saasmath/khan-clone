@@ -87,7 +87,7 @@ if (typeof Profile !== "undefined") {
             overlay: true,
             position: 3,
             buttons: [(isFullyEditable ?
-                {
+                ({
                     action: guiders.ButtonAction.CLOSE,
                     text: "Close",
                     classString: "simple-button action-gradient"
@@ -96,9 +96,10 @@ if (typeof Profile !== "undefined") {
                     action: guiders.ButtonAction.NEXT,
                     text: "Next",
                     classString: "simple-button action-gradient green"
-                } : {
-                action: guiders.ButtonAction.CLOSE,
-                text: "OK! Let me play with the page!"
+                }) : {
+                    action: guiders.ButtonAction.CLOSE,
+                    text: "OK! Let me play with the page!",
+                    classString: "simple-button action-gradient green"
                 }
             )],
             title: "Checking Your Vitals",
@@ -109,18 +110,19 @@ if (typeof Profile !== "undefined") {
             guiders.createGuider({
                 id: "privacy-settings",
 
-            attachTo: ".edit-visibility",
-            highlight: ".user-info, .edit-visibility",
-            overlay: true,
-            position: 9,
-            buttons: [{
-                action: guiders.ButtonAction.CLOSE,
-                text: "OK! Let me play with the page!",
-                classString: "simple-button action-gradient green"
-            }],
-            title: "Share With The World <span style='font-size:65%'>(but only if you want to)</span>",
-            description: "The information in the box above can be made public. If you make your profile public, you'll get your own special space on Khan Academy. Other users will be able to visit your page. Don't worry! You can make your profile private at any time, in which case only you and your coaches can see your info."
-        });
+                attachTo: ".edit-visibility",
+                highlight: ".user-info, .edit-visibility",
+                overlay: true,
+                position: 9,
+                buttons: [{
+                    action: guiders.ButtonAction.CLOSE,
+                    text: "OK! Let me play with the page!",
+                    classString: "simple-button action-gradient green"
+                }],
+                title: "Share With The World <span style='font-size:65%'>(but only if you want to)</span>",
+                description: "The information in the box above can be made public. If you make your profile public, you'll get your own special space on Khan Academy. Other users will be able to visit your page. Don't worry! You can make your profile private at any time, in which case only you and your coaches can see your info."
+            });
+        }
 
     }, 0);
 }
