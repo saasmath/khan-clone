@@ -12,6 +12,7 @@ from google.appengine.ext import deferred
 
 
 from api.jsonify import jsonify
+from api.auth.decorators import developer_required
 
 from google.appengine.ext import db
 
@@ -23,6 +24,7 @@ from models import Playlist
 class EditContent(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
+    @developer_required
     def get(self):
         if self.request.get('migrate', False):
             return self.topic_migration()
