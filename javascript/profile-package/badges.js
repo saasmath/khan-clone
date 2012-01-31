@@ -191,6 +191,11 @@ Badges.DisplayCase = Backbone.View.extend({
     badgePickerEl: null,
     editControlEl: null,
 
+    /**
+     * Ephemeral element used in animating a selection.
+     */
+    animatingBadgeEl: null,
+
     initialize: function() {
         this.model.bind("add", this.render, this);
         this.model.bind("remove", this.render, this);
@@ -336,14 +341,41 @@ Badges.DisplayCase = Backbone.View.extend({
                 .find(".achievement-badge")
                 .index(badgeNode);
 
+        // Store position before it's removed.
+        var fromOffset = $(badgeNode).offset();
         var isLast = index == (this.model.length - 1);
-        this.model.remove(this.model.at(index));
+        var removedBadge = this.model.at(index);
+        this.model.remove(removedBadge);
 
         if (!isLast) {
             // Insert an empty badge, since we don't want things shifting
             this.model.add(Badges.Badge.EMPTY_BADGE.clone(), { at: index });
         }
         this.updateEditSelection_(index);
+
+        // Animate-out the deleted badge
+        this.ensureAnimatingBadgeEl();
+        var badgeTemplate = Templates.get("profile.badge-compact");
+        this.animatingBadgeEl.html(badgeTemplate(removedBadge.toJSON()));
+        this.animatingBadgeEl.css({
+            left: fromOffset.left,
+            top: fromOffset.top,
+            opacity: 1.0
+        });
+        this.animatingBadgeEl.show();
+
+        this.animatingBadgeEl.animate({
+            left: fromOffset.left + 5,
+            top: fromOffset.top + 10,
+            opacity: 0
+        }, {
+            duration: 250,
+            step: $.easing.easeInOutCubic,
+            complete: _.bind(function() {
+                this.animatingBadgeEl.hide();
+                this.animatingBadgeEl.css({ opacity: 1.0 });
+            }, this)
+        });
     },
 
     /**
@@ -368,15 +400,70 @@ Badges.DisplayCase = Backbone.View.extend({
             return;
         }
 
+        var badgeToAdd = matchedBadge.get("badge").clone();
+        this.beginSelectionAnimation_(
+                badgeToAdd, $(e.currentTarget), this.selectedIndex);
+    },
+
+    ensureAnimatingBadgeEl: function() {
+        if (!this.animatingBadgeEl) {
+            this.animatingBadgeEl = $("<div id='animating-badge'></div>")
+                    .appendTo("body");
+        }
+    },
+
+    /**
+     * Begin an animation to select a badge from the picker so that
+     * it may be added to the main display case.
+     *
+     * @param {Badges.Badge} badgeSelected The badge to add
+     * @param {jQuery} jelBadgeSelected The jQuery element of the badge
+     *     element that was selected in the picker.
+     * @param {number} index The slot in the display case to add to.
+     */
+    beginSelectionAnimation_: function(
+            badgeSelected, jelBadgeSelected, index) {
+        this.ensureAnimatingBadgeEl();
+
+        var jelTargetSlot = $(this.mainCaseEl)
+                .find(".achievement-badge").eq(index);
+        var badgeTemplate = Templates.get("profile.badge-compact");
+        this.animatingBadgeEl.html(badgeTemplate(badgeSelected.toJSON()));
+
+        var fromOffset = jelBadgeSelected.offset();
+        this.animatingBadgeEl.css({
+            left: fromOffset.left,
+            top: fromOffset.top
+        });
+        this.animatingBadgeEl.show();
+
+        var toOffset = jelTargetSlot.offset();
+        this.animatingBadgeEl.animate({
+            left: toOffset.left,
+            top: toOffset.top
+        }, {
+            duration: 250,
+            step: $.easing.easeInOutCubic,
+            complete: _.bind(function() {
+                this.finishSelection_(badgeSelected, index);
+            }, this)
+        });
+    },
+
+    finishSelection_: function(badgeToAdd, index) {
+        if (!this.animatingBadgeEl) {
+            return;
+        }
+        this.animatingBadgeEl.hide();
+        this.animatingBadgeEl.html("");
+
+        // Do the actual selection!
         // Backbone.Collection doesn't have a .replace method - do it ourselves
-        // TODO: should we be cloning?
-        var existing = this.model.at(this.selectedIndex);
+        var existing = this.model.at(index);
         if (existing) {
             this.model.remove(existing);
         }
-        this.model.add(
-                matchedBadge.get("badge").clone(),
-                { at: this.selectedIndex });
+        this.model.add(badgeToAdd, { at: index });
 
         // Pick the next empty slot.
         this.updateEditSelection_();

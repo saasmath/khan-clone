@@ -1,4 +1,4 @@
-.badge-display-case .achievement-badge {
+.achievement-badge.compact {
     display: inline-block;
     vertical-align: top;
     text-align: center;
@@ -48,7 +48,7 @@
     background-size: 80px;
 }
 
-.badge-display-case .delete-icon {
+.achievement-badge.compact .delete-icon {
     /* TODO: make pretty! */
     position: absolute;
     top: -10px;
@@ -74,7 +74,7 @@
     display: block;
 }
 
-.badge-display-case .achievement-title {
+.achievement-badge.compact .achievement-title {
     width: auto;
     position: relative;
     left: auto;
@@ -84,7 +84,7 @@
     text-overflow: ellipsis;
 }
 
-.badge-display-case .energy-points-badge {
+.achievement-badge.compact .energy-points-badge {
     position: relative;
     display: inline-block;
     left: auto;
@@ -96,7 +96,7 @@
     padding: 0;
 }
 
-.badge-display-case .achievement-count {
+.achievement-badge.compact .achievement-count {
     display: inline-block;
     font-size: 12px;
     width: auto;
@@ -149,4 +149,13 @@
 
 .editing .achievement-badge.selected .selected-indicator {
     display: block;
+}
+
+#animating-badge {
+    position: absolute;
+    z-index: 500;
+    overflow: visible;
+}
+#animating-badge .achievement-badge.compact {
+    border: 1px solid #999;
 }

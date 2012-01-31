@@ -1,6 +1,6 @@
 {{#if isEmpty}}
 
-<div class="achievement-badge empty">
+<div class="achievement-badge compact empty">
   <div id="outline-box">
   <div class="selected-indicator"> </div>
   </div>
@@ -8,7 +8,7 @@
 
 {{else}}
 
-<div class="achievement-badge achievement-badge-owned{{#if used}} used{{/if}}" id="{{name}}">
+<div class="achievement-badge compact achievement-badge-owned{{#if used}} used{{/if}}" id="{{name}}">
   <div id="outline-box">
     <div class="achievement-title">{{description}}</div>
     <img class="badge-icon" src="{{iconSrc}}">
