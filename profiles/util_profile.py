@@ -328,7 +328,6 @@ class ProfileGraph(request_handler.RequestHandler):
             self.response.out.write(html)
 
     def get_profile_target_user_data(self):
-        current_user_data = UserData.current() or UserData.pre_phantom()
         email = self.request_student_email_legacy()
         # TODO: ACL
         return UserData.get_possibly_current_user(email)
