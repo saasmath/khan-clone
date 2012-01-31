@@ -341,7 +341,7 @@ Badges.DisplayCase = Backbone.View.extend({
 
         if (!isLast) {
             // Insert an empty badge, since we don't want things shifting
-            this.model.add(Badges.Badge.EMPTY_BADGE, { at: index });
+            this.model.add(Badges.Badge.EMPTY_BADGE.clone(), { at: index });
         }
         this.updateEditSelection_(index);
     },
