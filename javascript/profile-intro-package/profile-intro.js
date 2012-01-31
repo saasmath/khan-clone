@@ -50,7 +50,7 @@ if (typeof Profile !== "undefined") {
                     classString: "simple-button action-gradient green"
                 }
             ],
-            title: "Its all about you.",
+            title: "It's all about you.",
             description: "This is your basic profile information, which you can now edit! You can change your name and pick a cool avatar just by clicking on it over there on the left."
         });
 
