@@ -1335,17 +1335,17 @@ ul.ui-autocomplete .ui-menu-item a {
     cursor: pointer;
 }
 
-ul.ui-autocomplete .ui-menu-item a span.topic {
+ul.ui-autocomplete .ui-menu-item a span.autocomplete-topic {
     color: #898989;
     font-style: italic;
 }
 
-ul.ui-autocomplete .ui-menu-item a span.video {
+ul.ui-autocomplete .ui-menu-item a span.autocomplete-video {
     color: #598959;
     font-style: italic;
 }
 
-ul.ui-autocomplete .ui-menu-item a span.exercise {
+ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     color: #595989;
     font-style: italic;
 }

@@ -33,7 +33,7 @@ function addAutocompleteMatchToList(list, match, kind, reMatch) {
     var o = {
                 "label": (kind == 'exercise') ? match.display_name : match.title,
                 "title": (kind == 'exercise') ? match.display_name : match.title,
-                "value": match.ka_url,
+                "value": match.relative_url || match.ka_url,
                 "key": match.key,
                 "kind": kind
             };
@@ -135,11 +135,11 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
         // Customize the display of autocomplete suggestions
         var jLink = $("<a></a>").html(item.label);
         if (item.kind == "topic")
-            jLink.prepend("<span class='topic'>Topic </span>");
+            jLink.prepend("<span class='autocomplete-topic'>Topic </span>");
         else if (item.kind == "video")
-            jLink.prepend("<span class='video'>Video </span>");
+            jLink.prepend("<span class='autocomplete-video'>Video </span>");
         else if (item.kind == "exercise")
-            jLink.prepend("<span class='exercise'>Exercise </span>");
+            jLink.prepend("<span class='autocomplete-exercise'>Exercise </span>");
 
         return $("<li></li>")
             .data("item.autocomplete", item)
