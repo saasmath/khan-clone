@@ -111,9 +111,9 @@ var ProfileModel = Backbone.Model.extend({
         // Can't define validate() (or I don't understand how to)
         // because of https://github.com/documentcloud/backbone/issues/233
 
-        // User is allowed to re-type her current username
+        // Remove any feedback if user returns to her current username
         if (username === this.get("username")) {
-            this.onValidateUsernameResponse_(true);
+            $(".sidenote").removeClass("success").removeClass("error").text("");
             return;
         }
 
