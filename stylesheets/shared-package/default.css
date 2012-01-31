@@ -733,43 +733,43 @@ footer {
 
 /* End of visual indicator styles */
 
-#playlist-jump > span {
+#topic-jump > span {
     float: left;
     font-size: 15px;
     color: #555;
     text-shadow: 0 1px 0 rgba(255, 255, 255, .9);
     font-weight: bold;
 }
-#playlist-jump nav ul {
+#topic-jump nav ul {
     margin: 0;
     padding: 0;
 }
-#playlist-jump nav > ul > li {
+#topic-jump nav > ul > li {
     font-size: 15px;
     color: #333;
     text-shadow: 0 1px 0 rgba(255, 255, 255, .9);
 }
-#playlist-jump nav > ul > li.solo > a:visited {
+#topic-jump nav > ul > li.solo > a:visited {
     color: #333;
 }
-#playlist-jump nav > ul > li.solo > a:hover {
+#topic-jump nav > ul > li.solo > a:hover {
     color: #00659E;
 }
-#playlist-jump nav > ul > li:hover {
+#topic-jump nav > ul > li:hover {
     color: #00659E;
     text-shadow: 0 0 5px #fff;
 }
-#playlist-jump nav > ul > li > ul > li.sub {
+#topic-jump nav > ul > li > ul > li.sub {
     background: transparent;
     color: #aaa;
     text-shadow: 0 1px 0 rgba(255, 255, 255, .9);
     font-style: italic;
     padding-left: 2px;
 }
-#playlist-jump nav > ul > li > ul > li.sub li {
+#topic-jump nav > ul > li > ul > li.sub li {
     font-style: normal;
 }
-#playlist-jump nav > ul > li ul {
+#topic-jump nav > ul > li ul {
     font-size: 12px;
 }
 #social-actions #fb-like-badge {
@@ -1127,17 +1127,17 @@ div.video summary {
     font-weight: bold;
 }
 
-div.video label.video_playlist_prev {
+div.video label.video_topic_prev {
     float: left;
     border-right: solid 1px white;
 }
 
-div.video label.video_playlist_next {
+div.video label.video_topic_next {
     float: right;
     border-left: solid 1px white;
 }
 
-div.video div.video_playlist_container {
+div.video div.video_topic_container {
     clear: both;
     border-top: 1px solid grey;
     overflow: hidden;
@@ -1149,7 +1149,7 @@ div.video ol li {
     vertical-align: top;
 }
 
-div.video ol li, div.video summary, div.video label.video_playlist_prev, div.video label.video_playlist_next {
+div.video ol li, div.video summary, div.video label.video_topic_prev, div.video label.video_topic_next {
     padding: .5ex 3px .5ex 3px;
 }
 
@@ -1294,12 +1294,12 @@ a:link.google-analytics-link-track
 				margin-bottom: .9em;
 				color: #333;
 			}
-			#library #library-content #library-content-main h2.playlist-heading {
+			#library #library-content #library-content-main h2.topic-heading {
                 margin-top: 38px;
 				margin-bottom: 5px;
 				font-size: 18px
 			}
-			#library #library-content #library-content-main p.playlist-desc {
+			#library #library-content #library-content-main p.topic-desc {
 				color: #555;
 				margin: 0 0 10px;
 				font-size: 13px;
@@ -1335,8 +1335,18 @@ ul.ui-autocomplete .ui-menu-item a {
     cursor: pointer;
 }
 
-ul.ui-autocomplete .ui-menu-item a span.playlist {
+ul.ui-autocomplete .ui-menu-item a span.topic {
     color: #898989;
+    font-style: italic;
+}
+
+ul.ui-autocomplete .ui-menu-item a span.video {
+    color: #598959;
+    font-style: italic;
+}
+
+ul.ui-autocomplete .ui-menu-item a span.exercise {
+    color: #595989;
     font-style: italic;
 }
 
@@ -1600,10 +1610,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     }
 
     /* Specifically for videos (i.e. in New Goal view) */
-    #container .dashboard-header .dashboard-nav .playlist_browser {
+    #container .dashboard-header .dashboard-nav .topic_browser {
         margin: 0px;
     }
-    #container .dashboard-header .dashboard-nav .playlist_browser_title {
+    #container .dashboard-header .dashboard-nav .topic_browser_title {
         margin-top: 2px;
     }
 
@@ -3119,13 +3129,13 @@ div.arrow-right-shadow, div.arrow-left-shadow {
         right: 6px;
     }
 
-#homepage .playlist_browser {
+#homepage .topic_browser {
     padding: 4px 10px;
     background: #E9EFDD;
     border: 1px solid #C6D1AD;
     margin-bottom: 0;
 }
-#homepage .playlist_browser_title {
+#homepage .topic_browser_title {
     display: inline-block;
     float: left;
 }
@@ -3785,7 +3795,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 /* There are 5 places where video completion icons are shown:
  * 1. Homepage
  * 2. Previous and next videos on video page
- * 3. Playlist dropdown on video page
+ * 3. Topic dropdown on video page
  * 4. Related videos in top left of exercises page
  * 5. Related videos in sidebar of exercises page
  *
@@ -3861,50 +3871,50 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: url(/images/email-button-24.png) no-repeat;
 }
 
-#search-playlists span.highlighted {
+#search-topics span.highlighted {
     font-weight: bold;
 }
-#search-playlists .playlist {
+#search-topics .topic {
     margin-top: 38px;
     margin-bottom: 5px;
     font-size: 18px
 }
-#search-playlists .videos {
+#search-topics .videos {
     margin-left: 0px;
 }
-#search-playlists .video-result {
+#search-topics .video-result {
     font-size: 14px;
 }
-#search-playlists .description {
+#search-topics .description {
     margin: 2px 0px 0px 0px;
     font-size: 11px;
     line-height: 18px;
 }
-#search-playlists li {
+#search-topics li {
     margin-top: 40px;
     margin-bottom: 40px;
 }
-#search-playlists .match_count {
+#search-topics .match_count {
     font-size: 14px;
 }
-#search-playlists .column {
+#search-topics .column {
     float: left;
     width: 200px;
     padding-right: 20px;
 }
-#search-playlists .column:first-child {
+#search-topics .column:first-child {
     width: 360px;
 }
-#search-playlists .column-heading {
+#search-topics .column-heading {
     width: 180px;
     border-bottom: 2px solid black;
     margin: 0px;
 }
-#search-playlists .column li {
+#search-topics .column li {
     margin: 5px 0px 0px 0px;
     line-height: 14px;
 }
-#search-playlists br {
+#search-topics br {
     clear: left;
 }
 
@@ -3938,4 +3948,48 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     -khtml-opacity: 0.2;
     -moz-opacity: 0.2;
     opacity: 0.2;
+}
+
+#popup-dialog .close-button {
+    margin-top: 7px;
+}
+
+#popup-dialog .generic-message-wrapper {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+}
+
+#popup-dialog .dialog-progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+#popup-dialog .dialog-progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
+}
+
+.modal.generic-dialog {
+  position: fixed;
+  /* set the point on which top and left operate to the middle top edge*/
+  width: 450px;
+  margin: 0 0 0 -225px;
+  top: 90px;
+  left: 50%;
+}
+
+.modal .generic-message {
+    margin: 10px 0;
+}
+
+.modal .generic-button {
+    float: right;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    width: 60px;
+    text-align: center;
 }

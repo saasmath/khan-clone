@@ -1,49 +1,34 @@
 {% import 'macros/library.html' as library %}
-
 <div id="library">
         <div id="library-content" >
             {{ library.column_major_order_styles() }}
             <div id="library-content-main">
-            {% for playlist_data in all_playlists %}
+            {% for topic in topics %}
             {% if loop.first %}
-                <div class="clear desktop-only"><a name="{{ playlist_data.title|slugify|escape }}" id="{{ playlist_data.title|slugify|escape }}">&nbsp;</a></div>
+                <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
-            <div data-role="page" id="{{ playlist_data.title|slugify|escape }}" data-theme="b">
+            <div data-role="page" id="{{ topic.id }}" data-theme="b">
                 <div data-role="header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
-                    <h2 class='playlist-heading {% if loop.first %}playlist-heading-first{% endif %}'>{{playlist_data.title|escape}}</h2>
+                    <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.standalone_title|escape}}</h2>
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
                 <div data-role="content">
-                    {% if playlist_data.playlist.description %}
-                        <p class='playlist-desc'>{{playlist_data.playlist.description|escape}}</p>
+                    {% if topic.description %}
+                        <p class='topic-desc'>{{topic.description|escape}}</p>
                     {% endif %}
-                    {{ templatetags.column_major_sorted_videos(playlist_data.videos) }}
 
-
-                    {% if playlist_data.title == "Arithmetic" and smart_history %}
+                    {% if ajax %}
+                        <ol style="height:{{topic.children|length|round(0,'ceil') / 3 * 18}}px;" data-role="listview" data-inset="true">
+                        <span style="padding-left: 16px;">Loading videos...</span>
+                        </ol>
+                    {% else %}
+                        {{ templatetags.column_major_sorted_videos(topic) }}
+                    {% endif %}
+    
                     <div class="clear desktop-only">
-                    {% if playlist_data.next %}
-                        <a name="smarthistory" id="smarthistory">&nbsp;</a>
-                    {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <div data-role="page" id="smarthistory" data-theme="b">
-                <div data-role="header">
-                    <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
-                    <h2 class='playlist-heading'>Art History</h2>
-                    <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
-                </div>
-                <div data-role="content">
-                <p class='playlist-desc'>Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy.  Videos are made <b> by Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b></p>
-                    {{smart_history}}                    
-                    {% endif %}
-
-                    <div class="clear desktop-only">
-                    {% if playlist_data.next %}
-                        <a name="{{ playlist_data.next.title|slugify|escape }}" id="{{ playlist_data.next.title|slugify|escape }}">&nbsp;</a>
+                    {% if topic.next %}
+                        <a name="{{ topic.next.id|slugify|escape }}" id="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
                     {% endif %}
                     </div>
                 </div>
@@ -54,3 +39,10 @@
             </div>
         </div>
 </div>
+
+{# Pass along the caching information to the JS so that
+	when it makes its request for content, it can use this token #}
+{% if ajax %}
+    <script>var Homepage_cacheToken = {{ timestamp }};</script>
+{% endif %}
+

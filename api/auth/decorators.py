@@ -130,7 +130,6 @@ def developer_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         user_data = models.UserData.current()
-
         if user_data and (users.is_current_user_admin() or user_data.developer):
             return func(*args, **kwargs)
 

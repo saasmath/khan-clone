@@ -37,10 +37,10 @@ class UpdateQASort(request_handler.RequestHandler):
             user_data.put()
 
         readable_id = self.request_string("readable_id", default="")
-        playlist_title = self.request_string("playlist_title", default="")
+        topic_title = self.request_string("topic_title", default="")
 
-        if readable_id and playlist_title:
-            self.redirect("/video/%s?playlist=%s&sort=%s" % (urllib.quote(readable_id), urllib.quote(playlist_title), sort))
+        if readable_id and topic_title:
+            self.redirect("/video/%s?topic=%s&sort=%s" % (urllib.quote(readable_id), urllib.quote(topic_title), sort))
         else:
             self.redirect("/")
 

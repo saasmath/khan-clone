@@ -105,7 +105,7 @@ def get_exercise_activity_data(user_data, bucket_list, bucket_type, daily_activi
 
     return dict_bucket
 
-def get_playlist_activity_data(user_data, bucket_list, bucket_type, daily_activity_logs, dt_start_utc, dt_end_utc, tz_offset):
+def get_topic_activity_data(user_data, bucket_list, bucket_type, daily_activity_logs, dt_start_utc, dt_end_utc, tz_offset):
 
     dict_bucket = get_empty_dict_bucket(bucket_list)
 
@@ -199,13 +199,13 @@ def get_proficiency_activity_data(user_data, bucket_list, bucket_type, dt_start_
 
     return dict_bucket
 
-def get_points_activity_data(bucket_list, dict_playlist_buckets, dict_exercise_buckets, dict_badge_buckets):
+def get_points_activity_data(bucket_list, dict_topic_buckets, dict_exercise_buckets, dict_badge_buckets):
     dict_bucket = get_empty_dict_bucket(bucket_list)
 
     for bucket in bucket_list:
         dict_bucket[bucket] = 0
-        if dict_playlist_buckets[bucket]:
-            dict_bucket[bucket] += dict_playlist_buckets[bucket]["points"]
+        if dict_topic_buckets[bucket]:
+            dict_bucket[bucket] += dict_topic_buckets[bucket]["points"]
         if dict_exercise_buckets[bucket]:
             dict_bucket[bucket] += dict_exercise_buckets[bucket]["points"]
         if dict_badge_buckets[bucket]:
@@ -213,13 +213,13 @@ def get_points_activity_data(bucket_list, dict_playlist_buckets, dict_exercise_b
 
     return dict_bucket
 
-def map_scatter_y_values(dict_target, dict_exercise_buckets, dict_playlist_buckets):
-    # Icon's y coordinate is set just above the highest playlist/exercise time spent
+def map_scatter_y_values(dict_target, dict_exercise_buckets, dict_topic_buckets):
+    # Icon's y coordinate is set just above the highest topic/exercise time spent
     for key in dict_target:
         if dict_target[key]:
-            bucket_minutes_playlist = dict_playlist_buckets[key]["minutes"] if dict_playlist_buckets[key] else 0
+            bucket_minutes_topic = dict_topic_buckets[key]["minutes"] if dict_topic_buckets[key] else 0
             bucket_minutes_exercise= dict_exercise_buckets[key]["minutes"] if dict_exercise_buckets[key] else 0
-            dict_target[key]["y"] = bucket_minutes_playlist + bucket_minutes_exercise
+            dict_target[key]["y"] = bucket_minutes_topic + bucket_minutes_exercise
 
 def has_activity_type(dict_target, bucket, key_activity):
     return dict_target[bucket] and dict_target[bucket][key_activity]
@@ -239,18 +239,18 @@ def activity_graph_context(user_data_student, dt_start_utc, dt_end_utc, tz_offse
     bucket_type = get_bucket_type(dt_start_utc, dt_end_utc)
     bucket_list = get_bucket_list(dt_start_utc, dt_end_utc, tz_offset, bucket_type)
 
-    dict_playlist_buckets = get_playlist_activity_data(user_data_student, bucket_list, bucket_type, daily_activity_logs, dt_start_utc, dt_end_utc, tz_offset)
+    dict_topic_buckets = get_topic_activity_data(user_data_student, bucket_list, bucket_type, daily_activity_logs, dt_start_utc, dt_end_utc, tz_offset)
     dict_exercise_buckets = get_exercise_activity_data(user_data_student, bucket_list, bucket_type, daily_activity_logs, dt_start_utc, dt_end_utc, tz_offset)
     dict_badge_buckets = get_badge_activity_data(user_data_student, bucket_list, bucket_type, dt_start_utc, dt_end_utc, tz_offset)
     dict_proficiency_buckets = get_proficiency_activity_data(user_data_student, bucket_list, bucket_type, dt_start_utc, dt_end_utc, tz_offset)
-    dict_points_buckets = get_points_activity_data(bucket_list, dict_playlist_buckets, dict_exercise_buckets, dict_badge_buckets)
+    dict_points_buckets = get_points_activity_data(bucket_list, dict_topic_buckets, dict_exercise_buckets, dict_badge_buckets)
 
-    map_scatter_y_values(dict_badge_buckets, dict_playlist_buckets, dict_exercise_buckets)
-    map_scatter_y_values(dict_proficiency_buckets, dict_playlist_buckets, dict_exercise_buckets)
+    map_scatter_y_values(dict_badge_buckets, dict_topic_buckets, dict_exercise_buckets)
+    map_scatter_y_values(dict_proficiency_buckets, dict_topic_buckets, dict_exercise_buckets)
 
     has_activity = False
     for bucket in bucket_list:
-        if (has_activity_type(dict_playlist_buckets, bucket, "minutes") or
+        if (has_activity_type(dict_topic_buckets, bucket, "minutes") or
             has_activity_type(dict_exercise_buckets, bucket, "minutes") or
             has_activity_type(dict_badge_buckets, bucket, "badge_category")):
                 has_activity = True
@@ -264,7 +264,7 @@ def activity_graph_context(user_data_student, dt_start_utc, dt_end_utc, tz_offse
             "is_graph_empty": not has_activity,
             "bucket_list": bucket_list,
             "enable_drill_down": (bucket_type != ActivityBucketType.HOUR),
-            "dict_playlist_buckets": dict_playlist_buckets,
+            "dict_topic_buckets": dict_topic_buckets,
             "dict_exercise_buckets": dict_exercise_buckets,
             "dict_badge_buckets": dict_badge_buckets,
             "dict_proficiency_buckets": dict_proficiency_buckets,

@@ -123,14 +123,14 @@
         <h2 class="main-headline">Browse our library of over {{approx_vid_count|thousands_separated}} educational videos...</h2>
         {% if DVD_list %}
         <ul class="menu" id="menu">
-            {% for playlist in DVD_list %}
-        	    <li><a href="#{{playlist}}" class="menulink">{{playlist}}</a></li>
+            {% for topic in DVD_list %}
+        	    <li><a href="#{{topic}}" class="menulink">{{topic}}</a></li>
             {% endfor %}
         </ul>
         {% else %}
         <div id="browse-control-anchor"></div>
-        {{ templatetags.playlist_browser("browse") }}
-        {{ templatetags.playlist_browser("browse-fixed") }}
+        {{ templatetags.topic_browser("browse") }}
+        {{ templatetags.topic_browser("browse-fixed") }}
 
         {% endif %}
         <a href="/mobilefullsite" class="mobile-only" data-role="button" data-ajax="false">View standard site</a>
