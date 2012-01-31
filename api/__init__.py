@@ -3,6 +3,7 @@ import logging
 from functools import wraps
 
 from app import App
+from custom_exceptions import QuietException
 
 # *PRIVATE* API version number
 # Increment the version if any non-public API calls change in a non-backwards compatible way.
@@ -98,7 +99,11 @@ def format_api_errors(func):
         except Exception, e:
             # If any exception makes it all the way up to the top of an API request,
             # send possibly helpful message down for consumer
-            logging.exception(e)
+            if isinstance(e, QuietException):
+                logging.info(e)
+            else:
+                logging.exception(e)
+
             return current_app.response_class("API error. %s" % e.message, status=500)
 
     return api_errors_formatted

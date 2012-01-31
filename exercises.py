@@ -19,7 +19,7 @@ import string
 import simplejson as json
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from custom_exceptions import MissingExerciseException
+from custom_exceptions import MissingExerciseException, QuietException
 from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
@@ -455,7 +455,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         # If a non-admin tries to answer a problem out-of-order, just ignore it
         if problem_number != user_exercise.total_done + 1 and not user_util.is_current_user_developer():
             # Only admins can answer problems out of order.
-            raise Exception("Problem number out of order (%s vs %s) for user_id: %s submitting attempt content: %s with seed: %s" % (problem_number, user_exercise.total_done + 1, user_data.user_id, attempt_content, seed))
+            raise QuietException("Problem number out of order (%s vs %s) for user_id: %s submitting attempt content: %s with seed: %s" % (problem_number, user_exercise.total_done + 1, user_data.user_id, attempt_content, seed))
 
         if len(sha1) <= 0:
             raise Exception("Missing sha1 hash of problem content.")
