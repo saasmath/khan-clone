@@ -947,7 +947,7 @@ var Profile = {
                     });
 
                     Handlebars.registerHelper("toActivityText", function(activity) {
-                        _.extend(activity, {profileRoot: KA.profileRoot});
+                        _.extend(activity, {profileRoot: Profile.profileRoot});
 
                         if (activity.sType === "Exercise") {
                             return exerciseTemplate(activity);
