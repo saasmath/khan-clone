@@ -421,7 +421,9 @@ var TopicTreeEditor = {
                     });
                 }
             },
-            error: TopicTreeEditor.handleError
+            error: function() {
+                setTimeout(TopicTreeEditor.waitForTreeDefault, 15000);
+            }
         });
     },
 
