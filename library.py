@@ -27,7 +27,7 @@ def library_content_html(ajax=False, version_number=None):
     if version_number:
         version = TopicVersion.get_by_number(version_number)
     else:
-        version = None
+        version = TopicVersion.get_default_version()
 
     topics = Topic.get_filled_content_topics(types = ["Video", "Url"], version=version)
 
@@ -50,7 +50,9 @@ def library_content_html(ajax=False, version_number=None):
         'topics': topics,
         'ajax' : ajax,
         # convert timestamp to a nice integer for the JS
-        'timestamp': int(round(timestamp * 1000))
+        'timestamp': int(round(timestamp * 1000)),
+        'version_date': str(version.made_default_on),
+        'version_id': version.number
     }
 
     html = shared_jinja.get().render_template("library_content_template.html", **template_values)

@@ -48,6 +48,11 @@ class EditContent(request_handler.RequestHandler):
         return
 
     def topic_migration(self):
+        logging.info("deleting all existing topics")
+        db.delete(models.Topic.all())
+        db.delete(models.TopicVersion.all())
+        db.delete(models.Url.all())
+
         version = models.TopicVersion.all().filter("edit =", True).get()
         if version is None:
             version = models.TopicVersion.create_new_version()
@@ -144,11 +149,14 @@ def recursive_copy_topic_list_structure(parent, topic_list_part):
                 version = TopicVersion.get_edit_version()
                 root = Topic.get_root(version)
                 topic = Topic.get_by_title_and_parent(topic_dict["playlist"], root)
-                delete_topics[topic.key()] = topic
-                logging.info("copying %s to parent %s" %
-                            (topic_dict["name"], parent.title))
-                topic.copy(title=topic_dict["name"], parent=parent,
-                           standalone_title=topic.title)
+                if topic:
+                    delete_topics[topic.key()] = topic
+                    logging.info("copying %s to parent %s" %
+                                (topic_dict["name"], parent.title))
+                    topic.copy(title=topic_dict["name"], parent=parent,
+                               standalone_title=topic.title)
+                else:
+                    logging.error("Topic not found! %s" % (topic_dict["playlist"]))
         else:
             topic = Topic.get_by_title_and_parent(topic_dict["name"], parent)
             if topic:
