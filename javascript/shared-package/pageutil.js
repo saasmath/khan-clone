@@ -33,7 +33,7 @@ function addAutocompleteMatchToList(list, match, kind, reMatch) {
     var o = {
                 "label": (kind == 'exercise') ? match.display_name : match.title,
                 "title": (kind == 'exercise') ? match.display_name : match.title,
-                "value": match.ka_url,
+                "value": match.relative_url || match.ka_url,
                 "key": match.key,
                 "kind": kind
             };

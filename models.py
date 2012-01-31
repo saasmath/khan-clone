@@ -1631,7 +1631,8 @@ class Topic(Searchable, db.Model):
         return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).get()
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda version=None: "Topic.get_root_%s" % (version))
+    @layer_cache.cache_with_key_fxn(lambda version=None: 
+        "topic.get_root_%s" % (version.key() if version else Setting.topic_tree_version()))
     def get_root(version = None):
         if not version:
             version = TopicVersion.get_default_version()

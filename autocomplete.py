@@ -13,7 +13,7 @@ def video_title_dicts(version_number=None):
     return map(lambda video: {
         "title": video.title,
         "key": str(video.key()),
-        "ka_url": "/video/%s" % video.readable_id,
+        "relative_url": "/video/%s" % video.readable_id,
         "id": video.readable_id
     }, [v for v in Video.get_all_live(version=version) if v is not None])
 
@@ -45,7 +45,7 @@ def topic_title_dicts(version_number=None):
     return map(lambda topic: {
         "title": topic.title,
         "key": str(topic.key()),
-        "ka_url": topic.ka_url,
+        "relative_url": topic.relative_url,
         "id": topic.id
     },  Topic.get_content_topics(version=version))
 
