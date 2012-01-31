@@ -788,4 +788,4 @@ class UpdateExercise(request_handler.RequestHandler):
 
         self.do_update(dict)
 
-        self.redirect('/editexercise?saved=1&name=' + exercise_name)
+        self.redirect('/editexercise?saved=1&name=' + dict["name"])
