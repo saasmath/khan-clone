@@ -110,6 +110,13 @@ var ProfileModel = Backbone.Model.extend({
     validateUsername: function(username) {
         // Can't define validate() (or I don't understand how to)
         // because of https://github.com/documentcloud/backbone/issues/233
+
+        // User is allowed to re-type her current username
+        if (username === this.get("username")) {
+            this.onValidateUsernameResponse_(true);
+            return;
+        }
+
         username = username.toLowerCase()
                     .replace(/\./g, "");
 
@@ -139,7 +146,7 @@ var ProfileModel = Backbone.Model.extend({
     },
 
     onValidateUsernameResponse_: function(isUsernameAvailable) {
-        var message = isUsernameAvailable ? "Looks good!" : "Username is not available.";
+        var message = isUsernameAvailable ? "Looks good!" : "Not available.";
         this.trigger("validate:username", isUsernameAvailable, message);
     }
 });
