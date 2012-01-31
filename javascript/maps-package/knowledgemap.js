@@ -817,10 +817,9 @@ function KnowledgeMap(params) {
         this.layoutGraph();
         this.drawOverlay();
 
-        var min = KnowledgeMapGlobals.latMin, max = KnowledgeMapGlobals.latMax;
         this.latLngBounds = new google.maps.LatLngBounds(
-            new google.maps.LatLng(min, min),
-            new google.maps.LatLng(max, max));
+            new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin),
+            new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax));
 
         google.maps.event.addListener(this.map, "center_changed", function() {self.onCenterChange();});
         google.maps.event.addListener(this.map, "idle", function() {self.onIdle();});
