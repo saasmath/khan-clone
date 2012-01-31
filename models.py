@@ -1620,7 +1620,7 @@ class TopicVersion(db.Model):
     def set_default_version(self):
         logging.info("starting set_default_version")
 
-        deferred.defer(apply_version_content_changes, self)
+        deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
 
 def apply_version_content_changes(version):
     changes = VersionContentChange.all().fetch(10000)
@@ -1628,7 +1628,7 @@ def apply_version_content_changes(version):
     for change in changes:
         change.apply_change()
     logging.info("applied content changes")
-    deferred.defer(preload_library, version)
+    deferred.defer(preload_library, version, _queue="topics-set-default-queue")
 
 
 def preload_library(version):
@@ -1649,7 +1649,7 @@ def preload_library(version):
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
-    deferred.defer(change_default_version, version)
+    deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
 
 
 def change_default_version(version):
@@ -1676,7 +1676,7 @@ def change_default_version(version):
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
 
-    deferred.defer(rebuild_content_caches, version)
+    deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
 
 def rebuild_content_caches(version):
@@ -1918,7 +1918,8 @@ class Topic(Searchable, db.Model):
         return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).get()
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda version=None: "Topic.get_root_%s" % (version))
+    @layer_cache.cache_with_key_fxn(lambda version=None: 
+        "topic.get_root_%s" % (version.key() if version else Setting.topic_tree_version()))
     def get_root(version = None):
         if not version:
             version = TopicVersion.get_default_version()

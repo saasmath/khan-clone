@@ -10,6 +10,9 @@ from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
+from google.appengine.api import memcache
+
+from api.auth.decorators import developer_required
 
 import webapp2
 
@@ -676,6 +679,17 @@ class RealtimeEntityCount(request_handler.RequestHandler):
             count = getattr(models, kind).all().count(10000)
             self.response.out.write("%s: %d<br>" % (kind, count))
 
+class MemcacheViewer(request_handler.RequestHandler):
+    @developer_required
+    def get(self):
+        key = self.request_string("key", "__layer_cache_models._get_settings_dict__")
+        namespace = self.request_string("namespace", App.version)
+        values =  memcache.get(key, namespace=namespace)
+        self.response.out.write("Memcache key %s = %s.<br>\n" % (key, values))
+        if type(values) is dict:
+            for k, value in values.iteritems():
+                self.response.out.write("<p><b>%s</b>%s</p>" % (k, dict((key, getattr(value, key)) for key in dir(value))))
+
 applicationSmartHistory = webapp2.WSGIApplication([
     ('/.*', smarthistory.SmartHistoryProxy)
 ])
@@ -751,6 +765,8 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/commoncore', devpanel.CommonCore),
     ('/devadmin/content', topics.EditContent),
+    ('/devadmin/memcacheviewer', MemcacheViewer),
+
 
 
     ('/coaches', coaches.ViewCoaches),
