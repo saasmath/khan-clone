@@ -48,14 +48,14 @@ Badges.Badge = Backbone.Model.extend({
         return this.get("name") === "__empty__";
     },
 
-    getLargeIconSrc: function() {
-        return Badges.Badge.toLargeIcon(this.get("iconSrc"));
+    getMediumIconSrc: function() {
+        return Badges.Badge.toMediumIcon(this.get("iconSrc"));
     },
 
     toJSON: function() {
         var json = Badges.Badge.__super__.toJSON.call(this);
         json["isEmpty"] = this.isEmpty();
-        json["iconSrcLarge"] = this.getLargeIconSrc();
+        json["iconSrcMedium"] = this.getMediumIconSrc();
         return json;
     }
 });
@@ -66,9 +66,9 @@ Badges.Badge = Backbone.Model.extend({
 Badges.Badge.DEFAULT_ICON_SUFFIX_ = "-small.png";
 
 /**
- * Returns the large version of an icon, given the URI for it's default icon.
+ * Returns the medium version of an icon, given the URI for it's default icon.
  */
-Badges.Badge.toLargeIcon = function(iconSrc) {
+Badges.Badge.toMediumIcon = function(iconSrc) {
     if (!iconSrc) {
         return iconSrc;
     }
@@ -77,7 +77,7 @@ Badges.Badge.toLargeIcon = function(iconSrc) {
     if (iconSrc.indexOf(Badges.Badge.DEFAULT_ICON_SUFFIX_) !== suffixPos) {
         return iconSrc;
     }
-    return iconSrc.substring(0, suffixPos) + ".png";
+    return iconSrc.substring(0, suffixPos) + "-medium.png";
 };
 
 /**
