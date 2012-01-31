@@ -1128,3 +1128,15 @@ li.profile-tab {
 .visibility-toggler.private {
     background: #eee url(/images/locked.png) no-repeat 8px 50%;
 }
+
+.ka_guider_button {
+    display: inline-block;
+    float: right;
+    font-size: 90%;
+    font-weight: bold;
+    margin-left: 6px;
+    min-width: 40px;
+    padding: 3px 5px;
+    text-align: center;
+    text-decoration: none;
+}

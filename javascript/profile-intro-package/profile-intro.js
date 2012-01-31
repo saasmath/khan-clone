@@ -13,12 +13,20 @@ if (typeof Profile !== "undefined") {
             id: "welcome",
             next: "basic-profile",
 
-            buttons: [{
-                action: guiders.ButtonAction.NEXT,
-                text: "Cool. Show me around!"
-            }],
-            title: "Welcome!",
-            description: "Welcome to your new profile page. We added some stuff here which will help you track your own progress and share a bit of it with the world.",
+            buttons: [
+                {
+                    action: guiders.ButtonAction.CLOSE,
+                    text: "No thanks. I know what I'm doing.",
+                    classString: "simple-button action-gradient"
+                },
+                {
+                    action: guiders.ButtonAction.NEXT,
+                    text: "Cool. Show me around!",
+                    classString: "simple-button action-gradient green"
+                }
+            ],
+            title: "Welcome to your new profile!",
+            description: "All of the stuff you liked is still here, and we've added some new things you can customize!",
             overlay: true
         }).show();
 
@@ -30,12 +38,20 @@ if (typeof Profile !== "undefined") {
             highlight: ".basic-user-info",
             overlay: true,
             position: 3,
-            buttons: [{
-                action: guiders.ButtonAction.NEXT,
-                text: "Next"
-            }],
-            title: "Khan Academy, now with more You!",
-            description: "This is your basic profile information, which you can now edit to your own liking! You can change your nickname and one of many hip avatars just by clicking on it over there on the left"
+            buttons: [
+                {
+                    action: guiders.ButtonAction.CLOSE,
+                    text: "Close",
+                    classString: "simple-button action-gradient"
+                },
+                {
+                    action: guiders.ButtonAction.NEXT,
+                    text: "Next",
+                    classString: "simple-button action-gradient green"
+                }
+            ],
+            title: "Its all about you.",
+            description: "This is your basic profile information, which you can now edit! You can change your name and pick a cool avatar just by clicking on it over there on the left."
         });
 
         guiders.createGuider({
@@ -46,12 +62,20 @@ if (typeof Profile !== "undefined") {
             highlight: ".sticker-book",
             overlay: true,
             position: 6,
-            buttons: [{
-                action: guiders.ButtonAction.NEXT,
-                text: "More! Show me more!"
-            }],
-            title: "Show Off In Style",
-            description: "You can even select up to five badges to show off in your own shiny display case of achievements!"
+            buttons: [
+                {
+                    action: guiders.ButtonAction.CLOSE,
+                    text: "Close",
+                    classString: "simple-button action-gradient"
+                },
+                {
+                    action: guiders.ButtonAction.NEXT,
+                    text: "More! Show me more.",
+                    classString: "simple-button action-gradient green"
+                }
+            ],
+            title: "Show off your accomplishments.",
+            description: "You can select up to five badges to show off in your very own shiny display case!"
         });
 
         guiders.createGuider({
@@ -62,33 +86,41 @@ if (typeof Profile !== "undefined") {
             highlight: ".vertical-tab-list",
             overlay: true,
             position: 3,
-            buttons: [(isFullyEditable ? {
-                action: guiders.ButtonAction.NEXT,
-                text: "Next"
-            } : {
+            buttons: [(isFullyEditable ?
+                {
+                    action: guiders.ButtonAction.CLOSE,
+                    text: "Close",
+                    classString: "simple-button action-gradient"
+                },
+                {
+                    action: guiders.ButtonAction.NEXT,
+                    text: "Next",
+                    classString: "simple-button action-gradient green"
+                } : {
                 action: guiders.ButtonAction.CLOSE,
                 text: "OK! Let me play with the page!"
-            })],
+                }
+            )],
             title: "Checking Your Vitals",
-            description: "The statistics about your progress on Khan Academy can still be accessed by just a click here in the navigation menu. Don't worry, though, only you and your coaches can see this and nobody else."
+            description: "The statistics about your progress on Khan Academy are just a click away in the navigation menu. Don't worry, though, only you and your coaches can see this and nobody else."
         });
 
         if (isFullyEditable) {
             guiders.createGuider({
                 id: "privacy-settings",
 
-                attachTo: ".edit-visibility",
-                highlight: ".user-info, .edit-visibility",
-                overlay: true,
-                position: 9,
-                buttons: [{
-                    action: guiders.ButtonAction.CLOSE,
-                    text: "OK! Let me play with the page!"
-                }],
-                title: "Share With The World <span style='font-size:65%'>(but only if you want to)</span>",
-                description: "The information in the box above can be made public. You'll get your own special space on Khan Academy where people can go to visit your page, but only if you enable it with this toggle. You can make your profile private at any time, in which case only you and your coaches can see your info"
-            });
-        }
+            attachTo: ".edit-visibility",
+            highlight: ".user-info, .edit-visibility",
+            overlay: true,
+            position: 9,
+            buttons: [{
+                action: guiders.ButtonAction.CLOSE,
+                text: "OK! Let me play with the page!",
+                classString: "simple-button action-gradient green"
+            }],
+            title: "Share With The World <span style='font-size:65%'>(but only if you want to)</span>",
+            description: "The information in the box above can be made public. If you make your profile public, you'll get your own special space on Khan Academy. Other users will be able to visit your page. Don't worry! You can make your profile private at any time, in which case only you and your coaches can see your info."
+        });
 
     }, 0);
 }
