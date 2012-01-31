@@ -726,6 +726,11 @@ def fully_populated_playlists():
 @jsonp
 @jsonify
 def get_youtube_info(youtube_id):
+    video_data = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if video_data:
+        setattr(video_data, "existing", True)
+        return video_data
+
     video_data = models.Video(youtube_id = youtube_id)
     return youtube_get_video_data(video_data)
 
