@@ -252,15 +252,14 @@ function KnowledgeMapInitGlobals() {
             return classText;
         },
 
-        setFiltered: function(filtered, fast, bounds) {
+        setFiltered: function(filtered, bounds) {
             if (filtered != this.filtered) {
                 this.filtered = filtered;
             }
 
             var updateAppearance;
-            if (fast) {
+            if (bounds) {
                 // only update appearance of nodes that are currently on screen
-                bounds = bounds || ExerciseMarkerView.extendBounds(this.parent.map.getBounds());
                 var node = this.parent.dictNodes[this.nodeName];
                 updateAppearance = bounds.contains(node.latLng);
             }
@@ -732,7 +731,9 @@ function KnowledgeMap(params) {
 
         var userShowAll = this.filterSettings.get("userShowAll");
         var filterText = this.filterSettings.get("filterText");
-        var bounds = ExerciseMarkerView.extendBounds(this.map.getBounds());
+        var bounds = this.map.getBounds();
+        if (bounds)
+            bounds = ExerciseMarkerView.extendBounds(bounds);
 
         _.each(this.exerciseRowViews, function(row) {
             var exerciseName = row.model.get("lowercaseName");
@@ -769,7 +770,7 @@ function KnowledgeMap(params) {
 
             // filter the item off the map view
             if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
-                this.exerciseMarkerViews[row.nodeName].setFiltered(!filterMatches, true, bounds);
+                this.exerciseMarkerViews[row.nodeName].setFiltered(!filterMatches, bounds);
             }
         }, this);
 
