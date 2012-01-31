@@ -133,7 +133,6 @@ class Exercise(db.Model):
     raw_html = db.TextProperty()
     last_modified = db.DateTimeProperty()
     creation_date = db.DateTimeProperty(auto_now_add=True, default=datetime.datetime(2011, 1, 1))
-    cc_standards = db.StringListProperty()
 
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
@@ -1170,7 +1169,6 @@ class Video(Searchable, db.Model):
     playlists = db.StringListProperty()
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default = 0)
-    cc_standards = db.StringListProperty()
 
     # Human readable, unique id that can be used in URLS.
     readable_id = db.StringProperty()

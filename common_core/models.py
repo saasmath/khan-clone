@@ -165,10 +165,6 @@ class CommonCoreMap(db.Model):
     def update_exercise(self, exercise_name):
         ex = Exercise.all().filter('name =', exercise_name).get()
         if ex is not None:
-            if self.standard not in ex.cc_standards:
-                ex.cc_standards.append(self.standard)
-                ex.put()
-
             if ex.key() not in self.exercises:
                 self.exercises.append(ex.key())
         else:
@@ -179,10 +175,6 @@ class CommonCoreMap(db.Model):
     def update_video(self, video_youtube_id):
         v = Video.all().filter('youtube_id =', video_youtube_id).get()
         if v is not None:
-            if self.standard not in v.cc_standards:
-                v.cc_standards.append(self.standard)
-                v.put()
-
             if v.key() not in self.videos:
                 self.videos.append(v.key())
         else:
