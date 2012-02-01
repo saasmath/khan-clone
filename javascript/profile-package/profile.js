@@ -199,7 +199,6 @@ var Profile = {
             this.updateTitleBreadcrumbs();
         },
 
-        // TODO: must send TZ offset
         showVitalStatistics: function(graph, exercise, timePeriod) {
             var graph = graph || "activity",
                 exercise = exercise || "addition_1",
@@ -389,12 +388,10 @@ var Profile = {
 
     renderFakeGraph: function(graphName, timePeriod) {
         if (graphName === "activity") {
-            // TODO: Don't re-initialize unnecessarily
-            new ActivityGraph().render(null, timePeriod);
+            ActivityGraph.render(null, timePeriod);
             Profile.fLoadedGraph = true;
         } else if (graphName === "focus") {
-            // TODO: Don't re-initialize unnecessarily
-            new FocusGraph().render();
+            FocusGraph.render();
             Profile.fLoadedGraph = true;
         } else if (graphName === "exercise-progress") {
             Profile.loadGraph("/api/v1/exercises");
