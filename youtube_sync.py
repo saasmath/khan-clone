@@ -12,7 +12,7 @@ from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
 
-from models import Setting, Video
+from models import Setting, Video, Playlist, VideoPlaylist
 import request_handler
 
 def youtube_get_video_data_dict(youtube_id):
@@ -196,7 +196,6 @@ class YouTubeSync(request_handler.RequestHandler):
                         if not video_data:
                             video_data = Video(youtube_id=video_id)
                             self.response.out.write('<p><strong>Creating Video: ' + video.media.title.text.decode('utf-8') + '</strong>')
-                            video_data.playlists = []
 
                         video_data.title = video.media.title.text.decode('utf-8')
                         video_data.url = video.media.player.url.decode('utf-8')
@@ -209,9 +208,6 @@ class YouTubeSync(request_handler.RequestHandler):
                             video_data.description = video.media.description.text.decode('utf-8')
                         else:
                             video_data.decription = ' '
-
-                        if playlist.title.text not in video_data.playlists:
-                            video_data.playlists.append(playlist.title.text.decode('utf-8'))
 
                         if video.media.keywords.text:
                             video_data.keywords = video.media.keywords.text.decode('utf-8')

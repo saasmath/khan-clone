@@ -726,6 +726,11 @@ def fully_populated_playlists():
 @jsonp
 @jsonify
 def get_youtube_info(youtube_id):
+    video_data = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if video_data:
+        setattr(video_data, "existing", True)
+        return video_data
+
     video_data = models.Video(youtube_id = youtube_id)
     return youtube_get_video_data(video_data)
 
@@ -1832,3 +1837,14 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
+
+@route("/api/v1/dev/queue/<queue_name>", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def get_queue_statistics(queue_name):
+    from google.appengine.api.taskqueue import Queue
+    queue = Queue(queue_name)
+    statistics = queue.fetch_statistics()
+    return statistics
+
