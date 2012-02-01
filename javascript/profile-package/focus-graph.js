@@ -1,7 +1,7 @@
-var FocusGraph = function() {
-    this.star = $.browser.msie ? "*" : "★";
+var FocusGraph = {
+    star: $.browser.msie ? "*" : "★",
 
-    this.generateSeries_ = function() {
+    generateSeries_: function() {
         var series = [];
 
         if (this.segmentData.totalExerciseSeconds) {
@@ -130,9 +130,9 @@ var FocusGraph = function() {
         }
 
         return series;
-    };
+    },
 
-    this.options = {
+    options: {
         title: "",
         credits: {
             enabled: false
@@ -159,9 +159,9 @@ var FocusGraph = function() {
                 return this.point.tooltip_title + "<br/> - " + this.point.time_spent + " total<br><br>" + this.point.tooltip_more;
             }
         }
-    };
+    },
 
-    this.generateFakeSegments_ = function() {
+    generateFakeSegments_: function() {
         var segmentData = {
             dictExerciseSeconds: {
                 "unused1": {
@@ -220,9 +220,9 @@ var FocusGraph = function() {
         };
 
         return segmentData;
-    };
+    },
 
-    this.render = function(segmentDataFromServer) {
+    render: function(segmentDataFromServer) {
         if (segmentDataFromServer && !segmentDataFromServer.isGraphEmpty) {
             this.segmentData = segmentDataFromServer;
         } else {
@@ -242,6 +242,5 @@ var FocusGraph = function() {
         if (segmentDataFromServer && segmentDataFromServer.isGraphEmpty) {
             Profile.showNotification("empty-graph");
         }
-        
     }
 };

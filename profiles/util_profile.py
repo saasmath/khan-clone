@@ -156,7 +156,6 @@ class ViewProfile(request_handler.RequestHandler):
         but is used to route client-side
 
         """
-        # TODO: What URL for phantoms?
         current_user_data = UserData.current() or UserData.pre_phantom()
 
         if current_user_data.is_pre_phantom and email_or_username is None:
@@ -172,7 +171,6 @@ class ViewProfile(request_handler.RequestHandler):
         else:
             user_data = UserData.get_from_url_segment(email_or_username)
 
-        # TODO: incorporate the tz offset into the timeago stuff on the client
         tz_offset = self.request_int("tz_offset", default=0)
 
         profile = UserProfile.from_user(user_data, current_user_data)

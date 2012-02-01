@@ -1,7 +1,7 @@
 {% import 'macros/profiles.html' as profile_macros %}
 <script>
 $(function() {
-    new FocusGraph().render({{ templatetags.jsonify(context, true) }});
+    FocusGraph.render({{ templatetags.jsonify(context, true) }});
 });
 </script>
 

@@ -1,6 +1,6 @@
-var ActivityGraph = function() {
-    this.chart = null;
-    this.videoMinutes = {
+var ActivityGraph = {
+    chart: null,
+    videoMinutes: {
         type: "column",
         name: "Video Minutes",
         color: "#0080C9",
@@ -8,8 +8,8 @@ var ActivityGraph = function() {
         defaultPoint: {
             y: 0
         }
-    };
-    this.exerciseMinutes = {
+    },
+    exerciseMinutes: {
         type: "column",
         name: "Exercise Minutes",
         color: "#00C9AF",
@@ -17,8 +17,8 @@ var ActivityGraph = function() {
         defaultPoint: {
             y: 0
         }
-    };
-    this.energyPoints = {
+    },
+    energyPoints: {
         type: "spline",
         name: "Energy Points",
         yAxis: 1,
@@ -28,8 +28,8 @@ var ActivityGraph = function() {
         defaultPoint: {
             fEnergyPoints: true
         }
-    };
-    this.badges = {
+    },
+    badges: {
         type: "scatter",
         name: "Badges",
         showInLegend: false,
@@ -38,8 +38,8 @@ var ActivityGraph = function() {
             y: 0,
             enabled: false
         }
-    };
-    this.proficientExercises = {
+    },
+    proficientExercises: {
         type: "scatter",
         name: "Proficient Exercises",
         showInLegend: false,
@@ -48,8 +48,8 @@ var ActivityGraph = function() {
             y: 0,
             enabled: false
         }
-    };
-    this.options = {
+    },
+    options: {
         title: "",
         credits: {
             enabled: false
@@ -137,12 +137,12 @@ var ActivityGraph = function() {
                 color: "#3E576F"
             }
         }
-    };
+    },
     /**
      * Generate extra Highcharts fields for bars
      * Used for exercise and video minutes
      */
-    this.generateBar_ = function(info, tag) {
+    generateBar_: function(info, tag) {
         if (this.bucketData.isGraphEmpty) {
             var y = Math.floor(Math.random() * 20);
             return {y: y};
@@ -156,13 +156,13 @@ var ActivityGraph = function() {
             desc: "<strong>" + tag + "</strong> (" + info["timeSpent"] + ")<br/>" +
                 info["htmlSummary"]
         };
-    };
+    },
 
     /**
      * Generate extra Highcharts fields for splines
      * Used for energy points
      */
-    this.generateSpline_ = function(info) {
+    generateSpline_: function(info) {
         if (this.bucketData.isGraphEmpty) {
             var lastIndex = this.videoMinutes.data.length - 1,
                 minutes = this.videoMinutes.data[lastIndex].y + this.exerciseMinutes.data[lastIndex].y,
@@ -175,13 +175,13 @@ var ActivityGraph = function() {
         }
 
         return {y: info};
-    };
+    },
 
     /**
      * Generate extra Highcharts fields for scatter plots
      * Used for badges and proficiencies
      */
-    this.generateScatter_ = function(info, tag) {
+    generateScatter_: function(info, tag) {
         if (this.bucketData.isGraphEmpty) {
             if (Math.random() > 0.3) {
                 return {};
@@ -218,9 +218,9 @@ var ActivityGraph = function() {
                 },
                 enabled: true
             };
-    };
+    },
 
-    this.generateAllMarks_ = function(index, bucket) {
+    generateAllMarks_: function(index, bucket) {
         var x = {x: index},
             extra = {};
 
@@ -238,9 +238,15 @@ var ActivityGraph = function() {
 
         extra = this.generateScatter_(this.bucketData.dictProficiencyBuckets[bucket], "Proficiencies");
         this.proficientExercises.data.push(_.extend({}, this.proficientExercises.defaultPoint, x, extra));
-    };
+    },
 
-    this.generateSeries_ = function() {
+    generateSeries_: function() {
+        this.videoMinutes.data = [];
+        this.exerciseMinutes.data = [];
+        this.energyPoints.data = [];
+        this.badges.data = [];
+        this.proficientExercises.data = [];
+
         $.each(this.bucketData.bucketList, _.bind(this.generateAllMarks_, this));
 
         return [
@@ -250,9 +256,9 @@ var ActivityGraph = function() {
                 this.badges,
                 this.proficientExercises
         ];
-    };
+    },
 
-    this.generateOptions_ = function() {
+    generateOptions_: function() {
         this.options.xAxis = {
             categories: this.bucketData.bucketList,
             labels: {
@@ -306,9 +312,9 @@ var ActivityGraph = function() {
             };
         }
         this.options.series = this.generateSeries_();
-    };
+    },
 
-    this.drillIntoBucket_ = function(ix) {
+    drillIntoBucket_: function(ix) {
         if (ix == null) {
             return;
         }
@@ -317,9 +323,9 @@ var ActivityGraph = function() {
             Profile.loadGraph("/profile/graph/activity?student_email=" +
                     this.bucketData.studentEmail + "&dt_start=" + bucket);
         }
-    };
+    },
 
-    this.timePeriodTable_ = {
+    timePeriodTable_: {
         "today": {
             bucket: "hour",
             num: 24
@@ -336,9 +342,9 @@ var ActivityGraph = function() {
             bucket: "day",
             num: 30
         }
-    };
+    },
 
-    this.toTimeString_ = function(date) {
+    toTimeString_: function(date) {
         var hour = date.getHours(),
             minute = date.getMinutes(),
             ampm = "AM",
@@ -358,13 +364,13 @@ var ActivityGraph = function() {
         }
         minuteStr += minute;
         return hourStr + ":" + minuteStr + " " + ampm;
-    };
+    },
 
-    this.toDateString_ = function(date) {
+    toDateString_: function(date) {
         return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
-    };
+    },
 
-    this.generateFakeBuckets_ = function(timePeriod) {
+    generateFakeBuckets_: function(timePeriod) {
         var bucketData = {
                 bucketList: [],
                 dictBadgeBuckets: {},
@@ -395,9 +401,9 @@ var ActivityGraph = function() {
         }, this));
 
         return bucketData;
-    };
+    },
 
-    this.render = function(bucketDataFromServer, timePeriodToFake) {
+    render: function(bucketDataFromServer, timePeriodToFake) {
         if (bucketDataFromServer) {
             this.bucketData = bucketDataFromServer;
         } else {
