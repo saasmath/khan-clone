@@ -247,16 +247,26 @@ class Badge(object):
         return ""
 
     # Overridden by individual badge implementations which each grab various parameters from args and kwargs.
-    # *args and **kwargs should contain all the data necessary for is_satisfied_by's logic, and implementations of is_satisfied_by 
-    # should never talk to the datastore or memcache, etc.
+    # *args and **kwargs should contain all the data necessary for is_satisfied_by's logic, and implementations
+    # should never talk to the datastore or memcache, unless
+    # is_manually_awarded returns True
     def is_satisfied_by(self, *args, **kwargs):
         return False
 
     # Overridden by individual badge implementations which each grab various parameters from args and kwargs
-    # *args and **kwargs should contain all the data necessary for is_already_owned_by's logic, and implementations of is_already_owned_by
-    # should never talk to the datastore or memcache, etc.
+    # *args and **kwargs should contain all the data necessary for is_already_owned_by's logic, and implementations
+    # should never talk to the datastore or memcache, unless
+    # is_manually_awarded returns True
     def is_already_owned_by(self, user_data, *args, **kwargs):
         return self.name in user_data.badges
+
+    # Overridden by individual badge implementations to indicate whether or
+    # not this badge should be awarded through some custom flow that may be
+    # potentially expensive, and therefore excluded from checks related to
+    # exercise problem attempts or video watching.
+    # This should never talk to the datastore or memcache.
+    def is_manually_awarded(self):
+        return False
 
     # Calculates target_context and target_context_name from data passed in and calls complete_award_to appropriately.
     #

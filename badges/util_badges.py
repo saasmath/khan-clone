@@ -110,7 +110,7 @@ def all_badges():
         consecutive_activity_badges.FiveDayConsecutiveActivityBadge(),
         consecutive_activity_badges.FifteenDayConsecutiveActivityBadge(),
         consecutive_activity_badges.ThirtyDayConsecutiveActivityBadge(),
-        consecutive_activity_badges.HundredDayConsecutiveActivityBadge()
+        consecutive_activity_badges.HundredDayConsecutiveActivityBadge(),
 
     ]
 
@@ -346,6 +346,8 @@ def update_with_no_context(user_data, action_cache = None):
 
     awarded = False
     for badge in possible_badges:
+        if badge.is_manually_awarded():
+            continue
         if not badge.is_already_owned_by(user_data=user_data):
             if badge.is_satisfied_by(user_data=user_data, action_cache=action_cache):
                 badge.award_to(user_data=user_data)
@@ -360,6 +362,8 @@ def update_with_user_exercise(user_data, user_exercise, include_other_badges = F
 
     awarded = False
     for badge in possible_badges:
+        if badge.is_manually_awarded():
+            continue
         # Pass in pre-retrieved user_exercise data so each badge check doesn't have to talk to the datastore
         if not badge.is_already_owned_by(user_data=user_data, user_exercise=user_exercise):
             if badge.is_satisfied_by(user_data=user_data, user_exercise=user_exercise, action_cache=action_cache):
@@ -378,6 +382,8 @@ def update_with_user_playlist(user_data, user_playlist, include_other_badges = F
 
     awarded = False
     for badge in possible_badges:
+        if badge.is_manually_awarded():
+            continue
         # Pass in pre-retrieved user_playlist data so each badge check doesn't have to talk to the datastore
         if not badge.is_already_owned_by(user_data=user_data, user_playlist=user_playlist):
             if badge.is_satisfied_by(user_data=user_data, user_playlist=user_playlist, action_cache=action_cache):
