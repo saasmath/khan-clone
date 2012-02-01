@@ -87,39 +87,46 @@ class EditContent(request_handler.RequestHandler):
 
 def fix_duplicate_videos(readable_id, videos):
     logging.info("Video ID " + readable_id + ": " + str(len(videos)) + " instances")
+
+    canonical_key_id = 0
     for video in videos:
-        references = []
+        if video.key().id() > canonical_key_id and not video.youtube_id.endswith('_player'):
+            canonical_key_id = video.key().id()
 
-        # Add topics that refer to this video
-        references.extend(video.topic_string_keys)
+    for video in videos:
+        if video.key().id() != canonical_key_id:
+            references = []
 
-        # Add UserVideos
-        user_videos = [str(e.key()) for e in models.UserVideo.all().filter('video =', video)]
-        references.extend(user_videos)
+            # Add topics that refer to this video
+            references.extend(video.topic_string_keys)
 
-        # Add VideoLogs
-        video_logs = [str(e.key()) for e in models.VideoLog.all().filter('video =', video)]
-        references.extend(video_logs)
+            # Add UserVideos
+            user_videos = [str(e.key()) for e in models.UserVideo.all().filter('video =', video)]
+            references.extend(user_videos)
 
-        # Add VideoPlaylists
-        video_playlists = [str(e.key()) for e in models.VideoPlaylist.all().filter('video =', video)]
-        references.extend(video_playlists)
+            # Add VideoLogs
+            video_logs = [str(e.key()) for e in models.VideoLog.all().filter('video =', video)]
+            references.extend(video_logs)
 
-        # Add ExerciseVideo
-        exercise_videos = [str(e.key()) for e in models.ExerciseVideo.all().filter('video =', video)]
-        references.extend(exercise_videos)
+            # Add VideoPlaylists
+            video_playlists = [str(e.key()) for e in models.VideoPlaylist.all().filter('video =', video)]
+            references.extend(video_playlists)
 
-        logging.info("Instance " + str(video.key()) + ": " + str(len(references)) + " references")
-        if video.topic_string_keys:
-            logging.info(str(len(video.topic_string_keys)) + " Topics.")
-        if user_videos:
-            logging.info(str(len(user_videos)) + " UserVideos.")
-        if video_logs:
-            logging.info(str(len(video_logs)) + " VideoLogs.")
-        if video_playlists:
-            logging.info(str(len(video_playlists)) + " VideoPlaylists.")
-        if exercise_videos:
-            logging.info(str(len(exercise_videos)) + " ExerciseVideos.")
+            # Add ExerciseVideo
+            exercise_videos = [str(e.key()) for e in models.ExerciseVideo.all().filter('video =', video)]
+            references.extend(exercise_videos)
+
+            logging.info("Duplicate instance " + str(video.key()) + ": " + str(len(references)) + " references")
+            if video.topic_string_keys:
+                logging.info(str(len(video.topic_string_keys)) + " Topics.")
+            if user_videos:
+                logging.info(str(len(user_videos)) + " UserVideos.")
+            if video_logs:
+                logging.info(str(len(video_logs)) + " VideoLogs.")
+            if video_playlists:
+                logging.info(str(len(video_playlists)) + " VideoPlaylists.")
+            if exercise_videos:
+                logging.info(str(len(exercise_videos)) + " ExerciseVideos.")
 
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):
