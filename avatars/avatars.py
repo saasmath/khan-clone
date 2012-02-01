@@ -7,9 +7,10 @@ class Avatar(object):
     how to unlock specific ones.
     """
 
-    def __init__(self, name, image_src):
+    def __init__(self, name, display_name, image_src):
         # Avatar names must be unique.
         self.name = name
+        self.display_name = display_name
         self.image_src = image_src
 
     def is_satisfied_by(self, user_data):
@@ -26,8 +27,8 @@ class PointsAvatar(Avatar):
     of energy points before unlocking.
     """
 
-    def __init__(self, name, image_src, min_points):
-        super(PointsAvatar, self).__init__(name, image_src)
+    def __init__(self, name, display_name, image_src, min_points):
+        super(PointsAvatar, self).__init__(name, display_name, image_src)
         self.min_points = min_points
 
     def is_satisfied_by(self, user_data):

@@ -6,22 +6,22 @@ def all_avatars():
     """ Authoritative list of all avatars available to users. """
 
     return [
-        PointsAvatar("Green Leaf", "/images/avatars/leaf-green.png", 0),
-        PointsAvatar("Blue Leaf", "/images/avatars/leaf-blue.png", 0),
-        PointsAvatar("Grey Leaf", "/images/avatars/leaf-grey.png", 0),
-        PointsAvatar("Red Leaf", "/images/avatars/leaf-red.png", 0),
-        PointsAvatar("Orange Leaf", "/images/avatars/leaf-orange.png", 0),
-        PointsAvatar("Yellow Leaf", "/images/avatars/leaf-yellow.png", 0),
+        PointsAvatar("greenleaf", "Green Leaf", "/images/avatars/leaf-green.png", 0),
+        PointsAvatar("blueleaf", "Blue Leaf", "/images/avatars/leaf-blue.png", 0),
+        PointsAvatar("greyleaf", "Grey Leaf", "/images/avatars/leaf-grey.png", 0),
+        PointsAvatar("redleaf", "Red Leaf", "/images/avatars/leaf-red.png", 0),
+        PointsAvatar("orangeleaf", "Orange Leaf", "/images/avatars/leaf-orange.png", 0),
+        PointsAvatar("yellowleaf", "Yellow Leaf", "/images/avatars/leaf-yellow.png", 0),
 
-        PointsAvatar("Spunky Sam", "/images/avatars/spunky-sam.png", 10000),
-        PointsAvatar("Marcimus", "/images/avatars/marcimus.png", 10000),
-        PointsAvatar("Mr. Pink", "/images/avatars/mr-pink.png", 10000),
+        PointsAvatar("spunkysam", "Spunky Sam", "/images/avatars/spunky-sam.png", 10000),
+        PointsAvatar("marcimus", "Marcimus", "/images/avatars/marcimus.png", 10000),
+        PointsAvatar("mrpink", "Mr. Pink", "/images/avatars/mr-pink.png", 10000),
 
-        PointsAvatar("Orange Juice Squid", "/images/avatars/orange-juice-squid.png", 50000),
-        PointsAvatar("Purple Pi", "/images/avatars/purple-pi.png", 50000),
+        PointsAvatar("ojsquid", "Orange Juice Squid", "/images/avatars/orange-juice-squid.png", 50000),
+        PointsAvatar("purplepi", "Purple Pi", "/images/avatars/purple-pi.png", 50000),
         
-        PointsAvatar("Mr. Pants", "/images/avatars/mr-pants.png", 100000),
-        PointsAvatar("Old Spice Man", "/images/avatars/old-spice-man.png", 100000),
+        PointsAvatar("mrpants", "Mr. Pants", "/images/avatars/mr-pants.png", 100000),
+        PointsAvatar("ospiceman", "Old Spice Man", "/images/avatars/old-spice-man.png", 100000),
     ]
 
 @layer_cache.cache()
@@ -38,7 +38,7 @@ def avatar_for_name(name):
     if name in avatars:
         return avatars[name]
     
-    return avatars["Green Leaf"]
+    return all_avatars()[0]
 
 @layer_cache.cache()
 def avatars_by_category():

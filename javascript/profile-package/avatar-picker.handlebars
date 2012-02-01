@@ -8,9 +8,9 @@
     <div class="category-section">
         <div class="category-avatars">
         {{#each avatars}}
-            <div class="avatar{{#unless isAvailable}} locked{{/unless}}">
+            <div class="avatar{{#unless isAvailable}} locked{{/unless}}" data="{{name}}">
                 <img src="{{imageSrc}}" class="avatar-preview">
-                <div class="name">{{name}}</div>
+                <div class="name">{{displayName}}</div>
             </div>
         {{/each}}
         </div>

@@ -83,7 +83,7 @@ Avatar.Picker.prototype.onAvatarSelected_ = function(ev) {
     }
 
     var src = $(ev.currentTarget).find("img.avatar-preview").attr("src");
-    var name = $(".name", ev.currentTarget).text();
+    var name = $(ev.currentTarget).attr("data");
     if (src && name) {
         this.userModel.save({
             "avatarName": name,
