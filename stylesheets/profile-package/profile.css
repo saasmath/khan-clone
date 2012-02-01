@@ -527,14 +527,18 @@ div.graph-notification {
 
 div.profile-notification {
     display: none;
-    top: 100px;
-    padding: 20px; /* should be the same as padding on tab-content */
+    padding: 20px 0 0 20px; /* should be the same as padding on tab-content */
+    margin: 0 -19px 0 0; /* should be the same right margin as .profile-sheet-title */
     position: absolute;
+    top: 55px;
     right: 0;
     left: 0;
-    height: 100%;
+    bottom: 0;
     color: #333333;
-    z-index: 2;
+    background-color: #FFFFFF;
+    opacity: 0.90;
+    filter:alpha(opacity=90);
+    z-index: 101; /* must overlay the goal name shmedit .simple-input at z-index 100 */
 }
 
 #recent-activity-progress-bar {
@@ -561,11 +565,6 @@ div.profile-notification {
     overflow: auto;
     overflow-x: auto;
     overflow-y: hidden;
-}
-
-.empty-chart {
-    opacity: 0.15;
-    filter:alpha(opacity=15);
 }
 
 #graph-content {
