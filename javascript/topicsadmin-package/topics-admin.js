@@ -100,6 +100,41 @@ var TopicTreeEditor = {
                         },
                         error: TopicTreeEditor.handleError
                     });
+                } else if (node.data.key == "ChangedContent") {
+                    $.ajaxq("topics-admin", {
+                        url: "/api/v1/topicversion/" + TopicTreeEditor.currentVersion.get("number") + "/changelist",
+                        success: function(json) {
+                            node.removeChildren();
+
+                            childNodes = [];
+                            _.each(json, function(item) {
+                                var childWrapper = new TopicChild(item.content);
+
+                                var oldValues = {};
+                                _.each(item.content_changes, function(value, key) {
+                                    if (_.isArray(item.content[key]) || _.isArray(value)) {
+                                        if (item.content[key] && item.content[key].length > 0) {
+                                            oldValues[key] = item.content[key];
+                                        } else {
+                                            oldValues[key] = ["(No old values)"];
+                                        }
+                                    } else {
+                                        if (item.content[key]) {
+                                            oldValues[key] = item.content[key];
+                                        } else {
+                                            oldValues[key] = "NULL";
+                                        }
+                                    }
+                                });
+                                childWrapper.model.oldValues = oldValues;
+                                childWrapper.model.changeUser = item.last_edited_by;
+
+                                childNodes.push(TopicTreeEditor.createChild(childWrapper));
+                            });
+                            node.addChild(childNodes);
+                        },
+                        error: TopicTreeEditor.handleError
+                    });
                 } else {
                     TopicTreeEditor.topicTree.fetchByID(node.data.id, TopicTreeEditor.refreshTreeNode);
                 }
@@ -112,7 +147,9 @@ var TopicTreeEditor = {
 
                 onDragEnter: function(node, sourceNode) {
                     if (node.data.key == "UnrefContent" ||
-                        node.parent.data.key == "UnrefContent") {
+                        node.parent.data.key == "UnrefContent" ||
+                        node.data.key == "ChangedContent" ||
+                        node.parent.data.key == "ChangedContent") {
                         return [];
                     }
 
@@ -134,7 +171,8 @@ var TopicTreeEditor = {
 
                     var newParent = sourceNode.parent;
 
-                    if (oldParent.data.key == "UnrefContent") {
+                    if (oldParent.data.key == "UnrefContent" ||
+                        oldParent.data.key == "ChangedContent") {
                         TopicTreeEditor.addItemToTopic(sourceNode.data.kind, sourceNode.data.id, sourceNode.data.title, newParent, TopicTreeEditor.topicTree.get(newParent.data.id), _.indexOf(newParent.childList, sourceNode));
                     } else {
                         var data = {
@@ -148,7 +186,8 @@ var TopicTreeEditor = {
                 }
             },
 
-            children: [ {
+            children: [
+                {
                     title: "Loading...",
                     key: "Topic/root",
                     id: "root",
@@ -164,7 +203,16 @@ var TopicTreeEditor = {
                     isFolder: true,
                     isLazy: true,
                     icon: "topictree-icon-small.png"
-            } ]
+                }, {
+                    title: "Changed Content",
+                    key: "ChangedContent",
+                    id: "",
+                    kind: "",
+                    isFolder: true,
+                    isLazy: true,
+                    icon: "topictree-icon-small.png"
+                }
+            ]
         });
         TopicTreeEditor.dynatree = $("#topic_tree").dynatree("getTree");
         $("#topic_tree").bind("mousedown", function(e) { e.preventDefault(); });
@@ -269,10 +317,14 @@ var TopicTreeEditor = {
             key:  child.kind + "/" + child.id,
             id: child.id,
             kind: child.kind,
-            icon: iconTable[child.kind]
+            icon: iconTable[child.kind],
+            oldValues: child.model ? child.model.oldValues : null
         };
         if (debugNodeIDs) {
             data.title += " [(" + child.id + ")]";
+        }
+        if (child.model && child.model.changeUser) {
+            data.title += " (by " + child.model.changeUser + ")";
         }
         if (child.kind === "Topic") {
             data.isFolder = true;
@@ -577,7 +629,9 @@ function stringArraysEqual(ar1, ar2) {
 
         if (this.model) {
             js = this.model.toJSON();
-            html = this.template({version: editor.currentVersion.toJSON(), model: js});
+            oldValues = this.node.data.oldValues || {};
+
+            html = this.template({version: editor.currentVersion.toJSON(), model: js, oldValues: oldValues});
 
             this.el = $("#details-view")
                 .html(html)
@@ -1373,14 +1427,18 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
     contextModel: null,
 
     youtubeID: null,
+    readableID: null,
+    title: null,
 
     initialize: function() {
+        _.bindAll(this, "doVideoSearch", "queueVideoSearch");
         this.render();
     },
 
     events: {
         "click .ok-button": "createVideo",
-        "change input[name=\"youtube_id\"]": "doVideoSearch"
+        "change input[name=\"youtube_id\"]": "doVideoSearch",
+        "keydown input[name=\"youtube_id\"]": "queueVideoSearch"
     },
 
     render: function() {
@@ -1408,17 +1466,20 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
     createVideo: function() {
         var self = this;
 
-        if (!this.youtubeID) {
-            return;
-        }
-
-        var video = new Video({ youtube_id: this.youtubeID });
-
-        video.save({}, {
-            success: function(model) {
-                TopicTreeEditor.addItemToTopic("Video", model.get("readable_id"), model.get("title"), self.contextNode, self.contextModel, -1);
+        if (this.readableID) {
+            TopicTreeEditor.addItemToTopic("Video", this.readableID, this.title, this.contextNode, this.contextModel, -1);
+        } else {
+            if (!this.youtubeID) {
+                return;
             }
-        });
+
+            var video = new Video({ youtube_id: this.youtubeID });
+            video.save({}, {
+                success: function(model) {
+                    TopicTreeEditor.addItemToTopic("Video", model.get("readable_id"), model.get("title"), self.contextNode, self.contextModel, -1);
+                }
+            });
+        }
         this.hide();
     },
 
@@ -1429,15 +1490,27 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
             url: "/api/v1/videos/" + youtubeID + "/youtubeinfo",
             success: function(json) {
                 self.youtubeID = youtubeID;
+                if (json.existing) {
+                    self.readableID = json.readable_id;
+                    self.title = json.title;
+                } else {
+                    self.readableID = null;
+                }
                 $(self.el).find(".create-video-preview").html(self.previewTemplate(json));
                 $(self.el).find(".ok-button").removeClass("disabled").addClass("green");
             },
             error: function(json) {
                 self.youtubeID = null;
+                self.readableID = null;
                 $(self.el).find(".create-video-preview").html("Video not found.");
                 $(self.el).find(".ok-button").addClass("disabled").removeClass("green");
             }
         });
+    },
+
+    queueVideoSearch: function() {
+        this.queueVideoSearchFn = this.queueVideoSearchFn || _.debounce(this.doVideoSearch, 1000);
+        this.queueVideoSearchFn();
     },
 
     hide: function() {

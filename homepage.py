@@ -129,6 +129,10 @@ class ViewHomePage(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self):
 
+        version_number = None
+        if models.UserData.current() and models.UserData.current().developer:
+            version_number = self.request_string('version', default=None)
+
         thumbnail_link_sets = new_and_noteworthy_link_sets()
 
         # If all else fails, just show the TED talk on the homepage
@@ -165,7 +169,9 @@ class ViewHomePage(request_handler.RequestHandler):
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
         # Only running ajax version of homepage for non-mobile clients
-        if not self.is_mobile_capable():
+        if version_number:
+            library_content = library.library_content_html(version_number=int(version_number))
+        elif not self.is_mobile_capable():
             library_content = library.library_content_html(ajax = True)
         else:
             library_content = library.library_content_html()

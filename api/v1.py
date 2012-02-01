@@ -181,6 +181,14 @@ def topics_library_compact():
 
     return topic_dict
 
+@route("/api/v1/topicversion/<version_id>/changelist", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def topic_version_change_list(version_id):
+    version = models.TopicVersion.get_by_id(version_id)
+    return models.VersionContentChange.all().filter("version =", version).fetch(10000)
+
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
@@ -738,6 +746,11 @@ def fully_populated_playlists():
 @jsonp
 @jsonify
 def get_youtube_info(youtube_id):
+    video_data = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if video_data:
+        setattr(video_data, "existing", True)
+        return video_data
+
     video_data = models.Video(youtube_id = youtube_id)
     return youtube_get_video_data(video_data)
 
