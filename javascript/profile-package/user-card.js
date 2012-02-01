@@ -164,7 +164,6 @@ UserCardView = Backbone.View.extend({
          "click .avatar-pic-container": "onAvatarClick_",
          "mouseenter .avatar-pic-container": "onAvatarHover_",
          "mouseleave .avatar-pic-container": "onAvatarLeave_",
-         "change .nickname": "onNicknameChanged_",
          "click #edit-profile": "onEditProfileClicked_",
          "click .sub_menu #edit-basic-info": "onEditBasicInfoClicked_",
          "click .sub_menu #edit-display-case": "onEditDisplayCaseClicked_",
@@ -241,16 +240,6 @@ UserCardView = Backbone.View.extend({
                 delay: 150
             }
         });
-    },
-
-    /**
-     * Handles a change to the nickname edit field in the view.
-     * Propagates the change to the model.
-     */
-    onNicknameChanged_: function(e) {
-        // TODO: validate
-        var value = this.$(".nickname").val();
-        this.model.save({ "nickname": value });
     },
 
     onAvatarHover_: function(e) {

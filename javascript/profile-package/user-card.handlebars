@@ -6,14 +6,9 @@
         <div class="avatar-change-overlay" style="display: none">Change avatar</div>
       </div>
       <div class="user-deets">
-          {{#if isFullyEditable}}
-              <input type="text" value="{{nickname}}"
-                  placeholder="Enter nickname here" class="inline-editable nickname" style="display: block;">
-          {{else}}
-            <div>
-                <span class="nickname">{{nickname}}</span>
-            </div>
-          {{/if}}
+          <div>
+              <span class="nickname">{{nickname}}</span>
+          </div>
           <div>
               <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
           </div>

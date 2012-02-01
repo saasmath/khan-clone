@@ -905,19 +905,6 @@ li.profile-tab {
     position: relative;
 }
 
-.inline-editable {
-    background: transparent;
-    border: 1px solid transparent;
-    box-shadow: none;
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
-    padding: 0.3em 0.1em;
-}
-
-.inline-editable:hover {
-    border: 1px solid green;
-}
-
 .user-deets {
     float:left;
     margin-left: 10px;
