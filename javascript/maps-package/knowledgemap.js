@@ -780,15 +780,15 @@ function KnowledgeMap(params) {
     };
 
     this.initMap = function() {
-        _.each(self.exercisesByName, function(exerciseModel) {
+        _.each(this.exercisesByName, function(exerciseModel) {
             // Update map graph
-            self.addNode(exerciseModel.toJSON());
-            $.each(exerciseModel.get("prereqs"), function(idx2, prereq) {
-                self.addEdge(exerciseModel.get("name"), prereq, exerciseModel.get("summative"));
-            });
-        });
+            this.addNode(exerciseModel.toJSON());
+            _.each(exerciseModel.get("prereqs"), function(prereq) {
+                this.addEdge(exerciseModel.get("name"), prereq, exerciseModel.get("summative"));
+            }, this);
+        }, this);
 
-        var mapElement = self.getElement("map-canvas");
+        var mapElement = this.getElement("map-canvas");
         this.map = new google.maps.Map(mapElement.get(0), {
             mapTypeControl: false,
             streetViewControl: false,
@@ -821,13 +821,14 @@ function KnowledgeMap(params) {
             new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin),
             new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax));
 
-        google.maps.event.addListener(this.map, "center_changed", function() {self.onCenterChange();});
-        google.maps.event.addListener(this.map, "idle", function() {self.onIdle();});
-        google.maps.event.addListener(this.map, "click", function() {self.onClick();});
-        google.maps.event.addListener(this.map, "center_changed", function() {self.finishRenderingNodes();});
+        _.bindAll(this, "onCenterChange", "onIdle", "onClick", "finishRenderingNodes");
+        google.maps.event.addListener(this.map, "center_changed", this.onCenterChange);
+        google.maps.event.addListener(this.map, "idle", this.onIdle);
+        google.maps.event.addListener(this.map, "click", this.onClick);
+        google.maps.event.addListener(this.map, "center_changed", this.finishRenderingNodes);
 
         this.giveNasaCredit();
-        $(window).on("beforeunload", function() {self.saveMapCoords();});
+        $(window).on("beforeunload", $.proxy(this.saveMapCoords, this));
     };
 
     this.setNodeClickHandler = function(handler) {
