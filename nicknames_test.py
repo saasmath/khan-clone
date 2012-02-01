@@ -5,8 +5,7 @@ import test_utils
 
 # TODO: re-enable this test, as it's currently disabled until the nickname
 # indexing code is re-enabled.
-#class NicknamesTest(test_utils.GAETestCase):
-class NicknamesTest():
+class NicknamesTest(test_utils.GAEModelTestCase):
 
     def setUp(self):
         super(NicknamesTest, self).setUp()

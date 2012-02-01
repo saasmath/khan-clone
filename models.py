@@ -14,7 +14,6 @@ from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
 
 from google.appengine.ext import db
-from google.appengine.ext.db import polymodel
 import object_property
 import util
 import user_util
@@ -31,9 +30,7 @@ from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
 from decorators import clamp
-import re
 import base64, os
-import sys
 
 from image_cache import ImageCache
 
@@ -816,7 +813,6 @@ class NicknameIndex(db.Model):
     def update_indices(user):
         """ Updates the indices for a user given her current nickname. """
         nickname = user.nickname
-        id = user.user_id
         index_strings = nicknames.build_index_strings(nickname)
 
         db.delete(NicknameIndex.entries_for_user(user))
@@ -970,8 +966,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
             self.user_nickname = new_name
             def txn():
-                # TODO: uncomment when we enable people-search
-                #NicknameIndex.update_indices(self)
+                NicknameIndex.update_indices(self)
                 self.put()
             db.run_in_transaction(txn)
         return True
