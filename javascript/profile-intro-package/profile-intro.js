@@ -51,7 +51,9 @@ if (typeof Profile !== "undefined") {
                 }
             ],
             title: "It's all about you.",
-            description: "This is your basic profile information, which you can now edit! You can change your name and pick a cool avatar just by clicking on it over there on the left."
+            description: isFullyEditable ?
+                "This is your basic profile information, which you can now edit! You can change your name and pick a cool avatar just by clicking on it over there on the left." :
+                "This is your basic profile information, which you can now customize with a cool avatar! Just click on it over there on the left."
         });
 
         guiders.createGuider({
