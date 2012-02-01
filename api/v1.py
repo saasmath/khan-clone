@@ -1,20 +1,16 @@
-import copy
 import logging
 from itertools import izip
-import datetime
 
 from flask import request, current_app, Response
 
-import datetime
 import models
 import layer_cache
-import topics_list
 import templatetags # Must be imported to register template tags
 from avatars import util_avatars
 from badges import badges, util_badges, models_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
-from exercises import attempt_problem, make_wrong_attempt, UpdateExercise
+from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
@@ -34,7 +30,6 @@ from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
 from google.appengine.ext import db
-from templatefilters import slugify
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the

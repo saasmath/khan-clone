@@ -1944,7 +1944,7 @@ class Topic(Searchable, db.Model):
         return base64.urlsafe_b64encode(os.urandom(30))
 
     def update_ancestor_keys(self, topic_dict=None):
-    	""" Update the ancestor_keys by using the parents' ancestor_keys.
+        """ Update the ancestor_keys by using the parents' ancestor_keys.
 
     		furthermore updates the ancestors of all the descendants
     		returns the list of entities updated (they still need to be put into the db) """
@@ -2086,7 +2086,6 @@ class Topic(Searchable, db.Model):
             child.parent_keys = [p for p in child.parent_keys if p != self.key()]
             num_parents = len(child.parent_keys)
             descendants = Topic.all().filter("ancestor_keys =", child.key()).fetch(10000)
-            descendant_dict = dict((d.key(), d) for d in descendants)
         
             # if there are still other parents
             if num_parents:
@@ -2589,7 +2588,7 @@ class Video(Searchable, db.Model):
                 key_id = v.key().id()
         # End of hack
         
-         # if there is a version check to see if there are any updates to the video
+        # if there is a version check to see if there are any updates to the video
         if version:
             change = VersionContentChange.get_change_for_content(video, version)
             if change:
