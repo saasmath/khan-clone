@@ -23,7 +23,7 @@ class PageComments(request_handler.RequestHandler):
             pass
 
         video_key = self.request.get("video_key")
-        playlist_key = self.request.get("playlist_key")
+        topic_key = self.request.get("topic_key")
         sort_order = self.request_int("sort_order", default=voting.VotingSortOrder.HighestPointsFirst)
 
         try:
@@ -32,11 +32,14 @@ class PageComments(request_handler.RequestHandler):
             # Temporarily ignore errors caused by cached google pages of non-HR app
             return
 
-        playlist = db.get(playlist_key)
-
         if video:
+            try:
+                topic = db.get(topic_key)
+            except db.BadKeyError:
+                topic = video.first_topic()
+
             comments_hidden = self.request_bool("comments_hidden", default=True)
-            template_values = video_comments_context(video, playlist, page, comments_hidden, sort_order)
+            template_values = video_comments_context(video, topic, page, comments_hidden, sort_order)
 
             html = self.render_jinja2_template_to_string("discussion/video_comments_content.html", template_values)
             json = simplejson.dumps({"html": html, "page": page}, ensure_ascii=False)
@@ -59,7 +62,7 @@ class AddComment(request_handler.RequestHandler):
         comment_text = self.request.get("comment_text")
         comments_hidden = self.request.get("comments_hidden")
         video_key = self.request.get("video_key")
-        playlist_key = self.request.get("playlist_key")
+        topic_key = self.request.get("topic_key")
         video = db.get(video_key)
 
         if comment_text and video:
@@ -73,10 +76,10 @@ class AddComment(request_handler.RequestHandler):
             comment.types = [models_discussion.FeedbackType.Comment]
             comment.put()
 
-        self.redirect("/discussion/pagecomments?video_key=%s&playlist_key=%s&page=0&comments_hidden=%s&sort_order=%s" % 
-                (video_key, playlist_key, comments_hidden, voting.VotingSortOrder.NewestFirst))
+        self.redirect("/discussion/pagecomments?video_key=%s&topic_key=%s&page=0&comments_hidden=%s&sort_order=%s" % 
+                (video_key, topic_key, comments_hidden, voting.VotingSortOrder.NewestFirst))
 
-def video_comments_context(video, playlist, page=0, comments_hidden=True, sort_order=voting.VotingSortOrder.HighestPointsFirst):
+def video_comments_context(video, topic, page=0, comments_hidden=True, sort_order=voting.VotingSortOrder.HighestPointsFirst):
 
     user_data = models.UserData.current()
 
@@ -103,7 +106,7 @@ def video_comments_context(video, playlist, page=0, comments_hidden=True, sort_o
     return {
             "is_mod": util_discussion.is_current_user_moderator(),
             "video": video,
-            "playlist": playlist,
+            "topic": topic,
             "comments": comments,
             "count_total": count_total,
             "comments_hidden": count_page > limit_initially_visible,

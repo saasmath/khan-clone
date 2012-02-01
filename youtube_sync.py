@@ -12,8 +12,62 @@ from google.appengine.api import taskqueue
 from google.appengine.api import users
 from google.appengine.ext import db
 
-from models import Setting, Video, Playlist, VideoPlaylist
+from models import Setting, Video, Playlist, VideoPlaylist, Topic
 import request_handler
+
+def youtube_get_video_data_dict(youtube_id):
+    yt_service = gdata.youtube.service.YouTubeService()
+
+    # Now that we run these queries from the App Engine servers, we need to 
+    # explicitly specify our developer_key to avoid being lumped together w/ rest of GAE and
+    # throttled by YouTube's "Too many request" quota
+    yt_service.developer_key = "AI39si6ctKTnSR_Vx7o7GpkpeSZAKa6xjbZz6WySzTvKVYRDAO7NHBVwofphk82oP-OSUwIZd0pOJyNuWK8bbOlqzJc9OFozrQ"
+    yt_service.client_id = "n/a"
+
+    video = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
+    if video:
+        video_data = {"youtube_id" : youtube_id,
+                      "title" : video.media.title.text.decode('utf-8'),
+                      "url" : video.media.player.url.decode('utf-8'),
+                      "duration" : int(video.media.duration.seconds)}
+
+        if video.statistics:
+            video_data["views"] = int(video.statistics.view_count)
+
+        video_data["description"] = (video.media.description.text or '').decode('utf-8')
+        video_data["keywords"] = (video.media.keywords.text or '').decode('utf-8')
+
+        potential_id = re.sub('[^a-z0-9]', '-', video_data["title"].lower());
+        potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
+        potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)                        
+
+        number_to_add = 0
+        current_id = potential_id
+        while True:
+            query = Video.all()
+            query.filter('readable_id=', current_id)
+            if (query.get() is None): #id is unique so use it and break out
+                video_data["readable_id"] = current_id
+                break
+            else: # id is not unique so will have to go through loop again
+                number_to_add+=1
+                current_id = potential_id+'-'+number_to_add                       
+
+        return video_data
+
+    return None
+
+
+def youtube_get_video_data(video):
+    data_dict = youtube_get_video_data_dict(video.youtube_id)
+
+    if data_dict is None:
+        return None
+
+    for prop, value in data_dict.iteritems():
+        setattr(video, prop, value)
+
+    return video
 
 class YouTubeSyncStep:
     START = 0
@@ -23,6 +77,7 @@ class YouTubeSyncStep:
     INDEX_VIDEO_DATA = 4
     INDEX_PLAYLIST_DATA = 5
     REGENERATE_LIBRARY_CONTENT = 6
+    UPDATE_VI = 7
 
 class YouTubeSyncStepLog(db.Model):
     step = db.IntegerProperty()
@@ -64,13 +119,15 @@ class YouTubeSync(request_handler.RequestHandler):
             self.indexPlaylistData()
         elif step == YouTubeSyncStep.REGENERATE_LIBRARY_CONTENT:
             self.regenerateLibraryContent()
+        elif step == YouTubeSyncStep.UPDATE_VI:
+            self.copyViToPlaylist()
 
         log = YouTubeSyncStepLog()
         log.step = step
         log.generation = int(Setting.last_youtube_sync_generation_start())
         log.put()
 
-        if step < YouTubeSyncStep.REGENERATE_LIBRARY_CONTENT:
+        if step < YouTubeSyncStep.UPDATE_VI:
             self.task_step(step + 1)
 
     def task_step(self, step):
@@ -142,7 +199,6 @@ class YouTubeSync(request_handler.RequestHandler):
                         if not video_data:
                             video_data = Video(youtube_id=video_id)
                             self.response.out.write('<p><strong>Creating Video: ' + video.media.title.text.decode('utf-8') + '</strong>')
-                            video_data.playlists = []
 
                         video_data.title = video.media.title.text.decode('utf-8')
                         video_data.url = video.media.player.url.decode('utf-8')
@@ -155,9 +211,6 @@ class YouTubeSync(request_handler.RequestHandler):
                             video_data.description = video.media.description.text.decode('utf-8')
                         else:
                             video_data.decription = ' '
-
-                        if playlist.title.text not in video_data.playlists:
-                            video_data.playlists.append(playlist.title.text.decode('utf-8'))
 
                         if video.media.keywords.text:
                             video_data.keywords = video.media.keywords.text.decode('utf-8')
@@ -239,4 +292,26 @@ class YouTubeSync(request_handler.RequestHandler):
 
     def regenerateLibraryContent(self):
         taskqueue.add(url='/library_content', queue_name='youtube-sync-queue')
+
+    def copyViToPlaylist(self):
+        topic = Topic.get_by_id("vi-hart")
+        playlist = Playlist.all().filter("title =", "Vi Hart").get()
+        if playlist is None:
+            playlist = Playlist(
+                title="Vi Hart",
+                description="Recreational mathematics and inspirational videos by resident mathemusician Vi Hart",
+                readable_id="vi-hart"
+                )
+            playlist.put()
+        child_keys = topic.child_keys
+        vps = VideoPlaylist.all().filter("playlist =", playlist).fetch(10000)
+        db.delete(vps)
+        for i, child_key in enumerate(topic.child_keys):
+            vp = VideoPlaylist(
+                video=child_key,
+                playlist=playlist,
+                video_position=i,
+                live_association = True
+                )
+            vp.put()
 

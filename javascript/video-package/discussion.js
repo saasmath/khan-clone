@@ -260,7 +260,7 @@ var QA = {
         {
             sUrl = "/discussion/editentity";
             jData = $("textarea:first, input[name=entity_key]:first", parent);
-            var jPlaylist = $("#playlist_key:first");
+            var jPlaylist = $("#topic_key:first");
             jData = jData.add(jPlaylist);
         }
 
@@ -303,7 +303,7 @@ var QA = {
         $.get("/discussion/pagequestions",
                 {
                     video_key: $("#video_key").val(),
-                    playlist_key: $("#playlist_key").val(),
+                    topic_key: $("#topic_key").val(),
                     sort: $("#sort").val(),
                     qa_expand_key: qa_expand_key,
                     page: page
@@ -579,7 +579,7 @@ var Comments = {
         $.get("/discussion/pagecomments",
                 {
                     video_key: $("#video_key").val(),
-                    playlist_key: $("#playlist_key").val(),
+                    topic_key: $("#topic_key").val(),
                     page: page
                 },
                 function(data) { Comments.finishLoadPage(data, fInitialLoad); });

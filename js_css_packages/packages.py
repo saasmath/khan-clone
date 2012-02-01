@@ -26,6 +26,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "../../khan-exercises/utils/underscore.js",
+            "underscore-extras.js",
             "backbone.js",
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
@@ -36,10 +37,12 @@ javascript = {
             "handlebars-extras.js",
             "pageutil.js",
             "api.js",
+            "backbone-extensions.js",
             "social.js",
             "youtube-player.handlebars",
             "api-version-mismatch.handlebars",
             "streak-bar.handlebars",
+            "generic-dialog.handlebars",
             "knowledgemap-exercise.handlebars",
             "knowledgemap-admin-exercise.handlebars",
             "goal-summary-area.handlebars",
@@ -52,6 +55,7 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
+			"topics.js"
         ]
     },
     "video": {
@@ -163,6 +167,30 @@ javascript = {
             "utils/unit-circle.js",
         ]
     },
+	"topicsadmin": {
+        "files": [
+            "jquery.ui.draggable.js",
+            "jquery.ui.droppable.js",
+			"jquery.dynatree.js",
+            "jquery.contextMenu.js",
+            "jquery.ajaxq-0.0.1.js",
+            "edit-version.handlebars",
+            "edit-topic.handlebars",
+            "create-video.handlebars",
+            "create-video-preview.handlebars",
+            "edit-video.handlebars",
+            "create-exercise.handlebars",
+            "edit-exercise.handlebars",
+            "add-existing-item.handlebars",
+            "create-url.handlebars",
+            "edit-url.handlebars",
+            "list-versions.handlebars",
+            "list-versions-item.handlebars",
+            "search-topics.handlebars",
+            "import-export.handlebars",
+            "topics-admin.js",
+        ]
+	},
 }
 
 stylesheets = {
@@ -212,4 +240,11 @@ stylesheets = {
             "khan-exercise.css",
         ]
     },
+	"topicsadmin": {
+        "files": [
+			"ui_dynatree.css",
+            "jquery.contextMenu.css",
+            "topics-admin.css"
+		]
+	},
 }

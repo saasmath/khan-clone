@@ -33,3 +33,5 @@ queue:
 - name: fancy-exercise-stats-queue
   rate: 1/s
 
+- name: topics-set-default-queue
+  rate: 1/s
