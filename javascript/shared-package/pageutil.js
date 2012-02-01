@@ -972,23 +972,25 @@ var SearchResultHighlight = {
 };
 
 // This function detaches the passed in jQuery element and returns a function that re-attaches it
-function temporaryDetachElement(element) {
-    var el, ret;
+function temporaryDetachElement(element, fn, context) {
+    var el, reattach;
     el = element.next();
     if (el.length > 0) {
         // This element belongs before some other element
-        ret = function() {
+        reattach = function() {
             element.insertBefore(el);
         };
     } else {
         // This element belongs at the end of the parent's child list
         el = element.parent();
-        ret = function() {
+        reattach = function() {
             element.appendTo(el);
         };
     }
     element.detach();
-    return ret;
+    var val = fn.call(context || this, element);
+    reattach();
+    return val;
 }
 
 var globalPopupDialog = {

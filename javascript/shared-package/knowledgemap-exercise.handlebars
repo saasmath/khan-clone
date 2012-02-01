@@ -1,5 +1,5 @@
 <div class="exercise-badge" data-id="{{ name }}">
-  <a class="proficient-badge" href="{{ url }}">
+  <a class="proficient-badge {{#if disabled}}disabled{{/if}}" href="{{ url }}">
     <img src="{{ badgeIcon }}" height="80" width="76">
     <div class="exercise-goal-wrapper"><img class="exercise-goal-icon" style="display: none" src="/images/flag.png"></div>
   </a>
