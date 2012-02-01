@@ -70,6 +70,8 @@ class EditContent(request_handler.RequestHandler):
     def fix_duplicates(self):
         video_list = [v for v in models.Video.all()]
         video_dict = dict()
+
+        duplicate_video_count = 0
         
         for video in video_list:
             if not video.readable_id in video_dict:
@@ -78,40 +80,46 @@ class EditContent(request_handler.RequestHandler):
 
         for readable_id, videos in video_dict.iteritems():
             if len(videos) > 1:
-                logging.info("Video ID " + readable_id + ": " + str(len(videos)) + " instances")
-                for video in videos:
-                    references = []
+                deferred.defer(fix_duplicate_videos, readable_id, videos)
+                duplicate_video_count += 1
 
-                    # Add topics that refer to this video
-                    references.extend(video.topic_string_keys)
+        logging.info("Found " + str(duplicate_video_count) + " videos that have duplicates")
 
-                    # Add UserVideos
-                    user_videos = [str(e.key()) for e in models.UserVideo.all().filter('video =', video)]
-                    references.extend(user_videos)
+def fix_duplicate_videos(readable_id, videos):
+    logging.info("Video ID " + readable_id + ": " + str(len(videos)) + " instances")
+    for video in videos:
+        references = []
 
-                    # Add VideoLogs
-                    video_logs = [str(e.key()) for e in models.VideoLog.all().filter('video =', video)]
-                    references.extend(video_logs)
+        # Add topics that refer to this video
+        references.extend(video.topic_string_keys)
 
-                    # Add VideoPlaylists
-                    video_playlists = [str(e.key()) for e in models.VideoPlaylist.all().filter('video =', video)]
-                    references.extend(video_playlists)
+        # Add UserVideos
+        user_videos = [str(e.key()) for e in models.UserVideo.all().filter('video =', video)]
+        references.extend(user_videos)
 
-                    # Add ExerciseVideo
-                    exercise_videos = [str(e.key()) for e in models.ExerciseVideo.all().filter('video =', video)]
-                    references.extend(exercise_videos)
+        # Add VideoLogs
+        video_logs = [str(e.key()) for e in models.VideoLog.all().filter('video =', video)]
+        references.extend(video_logs)
 
-                    logging.info("Instance " + str(video.key()) + ": " + str(len(references)) + " references")
-                    if video.topic_string_keys:
-                        logging.info(str(len(video.topic_string_keys)) + " Topics.")
-                    if user_videos:
-                        logging.info(str(len(user_videos)) + " UserVideos.")
-                    if video_logs:
-                        logging.info(str(len(video_logs)) + " VideoLogs.")
-                    if video_playlists:
-                        logging.info(str(len(video_playlists)) + " VideoPlaylists.")
-                    if exercise_videos:
-                        logging.info(str(len(exercise_videos)) + " ExerciseVideos.")
+        # Add VideoPlaylists
+        video_playlists = [str(e.key()) for e in models.VideoPlaylist.all().filter('video =', video)]
+        references.extend(video_playlists)
+
+        # Add ExerciseVideo
+        exercise_videos = [str(e.key()) for e in models.ExerciseVideo.all().filter('video =', video)]
+        references.extend(exercise_videos)
+
+        logging.info("Instance " + str(video.key()) + ": " + str(len(references)) + " references")
+        if video.topic_string_keys:
+            logging.info(str(len(video.topic_string_keys)) + " Topics.")
+        if user_videos:
+            logging.info(str(len(user_videos)) + " UserVideos.")
+        if video_logs:
+            logging.info(str(len(video_logs)) + " VideoLogs.")
+        if video_playlists:
+            logging.info(str(len(video_playlists)) + " VideoPlaylists.")
+        if exercise_videos:
+            logging.info(str(len(exercise_videos)) + " ExerciseVideos.")
 
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):
