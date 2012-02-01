@@ -29,7 +29,7 @@ def avatars_by_name():
     """ Full list of avatars in a dict, keyed by their unique names """
     return dict([(avatar.name, avatar) for avatar in all_avatars()])
 
-def avatar_for_name(name):
+def avatar_for_name(name=None):
     """ Returns the avatar for the specified name.
 
     If name is None or an invalid avatar, defaults to the "default" avatar.

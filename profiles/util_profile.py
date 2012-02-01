@@ -226,9 +226,9 @@ class UserProfile(object):
         self.count_exercises_proficient = 0
         self.public_badges = []
 
-        # TODO: pick a more appropriate default
-        self.avatar_name = "darth"
-        self.avatar_src = "/images/darth.png"
+        default_avatar = util_avatars.avatar_for_name()
+        self.avatar_name = default_avatar.name
+        self.avatar_src = default_avatar.image_src
 
     @staticmethod
     def from_user(user, actor):
