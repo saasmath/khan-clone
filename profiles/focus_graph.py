@@ -145,10 +145,10 @@ def focus_graph_context(user_data_student, dt_start_utc, dt_end_utc):
             "context": {
                 "profile_root": user_data_student.profile_root,
                 "total_topic_seconds": total_topic_seconds,
-                "dict_playlist_seconds": dict_playlist_seconds,
+                "dict_topic_seconds": dict_topic_seconds,
                 "total_exercise_seconds": total_exercise_seconds,
                 "dict_exercise_seconds": dict_exercise_seconds,
-                "is_graph_empty": (total_playlist_seconds + total_exercise_seconds <= 0),
+                "is_graph_empty": (total_topic_seconds + total_exercise_seconds <= 0),
             },
         }
 
