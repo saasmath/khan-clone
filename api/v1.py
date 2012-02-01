@@ -1609,7 +1609,7 @@ def update_public_user_badges():
                         for name_with_context in user_data.badges])
     updated_badge_list = []
     for name in request.json or []:
-        if name in owned_badges:
+        if name in owned_badges or name == util_badges.EMPTY_BADGE_NAME:
             updated_badge_list.append(name)
     user_data.public_badges = updated_badge_list
     user_data.put()

@@ -224,6 +224,8 @@ def get_grouped_user_badges(user_data=None):
              'platinum_badges': user_badges_platinum,
              'diamond_badges': user_badges_diamond, }
 
+EMPTY_BADGE_NAME = "__empty__"
+
 def get_public_user_badges(user_data=None):
     """ Retrieves the list of user-earned badges that the user has selected
     to publicly display on his/her profile display-case.

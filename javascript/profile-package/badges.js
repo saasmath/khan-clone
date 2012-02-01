@@ -303,8 +303,7 @@ Badges.DisplayCase = Backbone.View.extend({
             }
         }
         index = (index === undefined) ? this.model.length : index;
-        var max = Math.min(this.model.length, this.maxVisible - 1);
-        this.selectedIndex = Math.min(index, max);
+        this.selectedIndex = Math.min(index, this.maxVisible - 1);
         this.updateSelectionHighlight();
     },
 
@@ -487,6 +486,12 @@ Badges.DisplayCase = Backbone.View.extend({
         var existing = this.model.at(index);
         if (existing) {
             this.model.remove(existing);
+        }
+
+        for (var i = this.model.length; i < index; i++) {
+            // Ensure we pad the list with empty badges if the user is
+            // inserting after some holes.
+            this.model.add(Badges.Badge.EMPTY_BADGE.clone());
         }
         this.model.add(badgeToAdd, { at: index });
 
