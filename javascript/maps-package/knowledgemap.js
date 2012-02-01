@@ -113,8 +113,6 @@ function KnowledgeMapInitGlobals() {
             this.visible = false;
             this.nodeName = this.model.get("name");
             this.parent = this.options.parent;
-
-            this.parent.filterSettings.bind("change", this.doFilter, this);
         },
 
         events: {
@@ -135,6 +133,8 @@ function KnowledgeMapInitGlobals() {
                 context.url = this.model.url();
             }
 
+            context.disabled = this.model.get("invalidForGoal") || false;
+
             var newContent = $(template(context));
             var self = this;
             newContent.hover(
@@ -146,26 +146,6 @@ function KnowledgeMapInitGlobals() {
             this.el = newContent;
             this.inflated = true;
             this.delegateEvents();
-        },
-
-        doFilter: function() {
-            var filterText = this.parent.filterSettings.get("filterText");
-            var filterMatches = (this.model.get("lowercaseName").indexOf(filterText) >= 0);
-            var allowVisible = this.options.type != "all" || filterText || this.parent.filterSettings.get("userShowAll");
-
-            this.visible = allowVisible && filterMatches;
-            if (this.visible) {
-                if (!this.inflated) {
-                    this.inflate();
-                }
-                this.el.show();
-            } else {
-                this.el.hide();
-            }
-
-            if (this.options.type == "all" && this.parent.exerciseMarkerViews[this.nodeName]) {
-                this.parent.exerciseMarkerViews[this.nodeName].setFiltered(!filterMatches);
-            }
         },
 
         onBadgeClick: function(evt) {
@@ -272,13 +252,51 @@ function KnowledgeMapInitGlobals() {
             return classText;
         },
 
-        setFiltered: function(filtered) {
+        setFiltered: function(filtered, bounds) {
             if (filtered != this.filtered) {
                 this.filtered = filtered;
-                if (this.filtered)
-                    this.el.addClass("nodeLabelFiltered");
-                else
-                    this.el.removeClass("nodeLabelFiltered");
+            }
+
+            var updateAppearance;
+            if (bounds) {
+                // only update appearance of nodes that are currently on screen
+                var node = this.parent.dictNodes[this.nodeName];
+                updateAppearance = bounds.contains(node.latLng);
+            }
+            else {
+                updateAppearance = true;
+            }
+
+            // if we're in the window, update
+            if (updateAppearance) {
+                this.updateAppearance();
+            }
+        },
+
+        updateAppearance: function() {
+            // set class for css to apply styles
+            if (this.filtered) {
+                this.el.addClass("nodeLabelFiltered");
+            } else {
+                this.el.removeClass("nodeLabelFiltered");
+            }
+
+            // perf hack: instead of changing css opacity, set a whole new image
+            var img = this.el.find('img.node-icon');
+            var url = img.attr('src');
+
+            // don't adjust images of stars when zoomed out
+            if (url.indexOf("-star.png") >= 0) return;
+
+            // normalize
+            if (url.indexOf("faded") >= 0) {
+                url = url.replace("-faded.png", ".png");
+            }
+
+            if (this.filtered) {
+                img.attr('src', url.replace(".png", "-faded.png"));
+            } else {
+                img.attr('src', url);
             }
         },
 
@@ -415,6 +433,19 @@ function KnowledgeMapInitGlobals() {
             $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
             this.parent.highlightNode(this.nodeName, false);
         }
+    }, {
+        extendBounds: function(bounds, dlat, dlng) {
+            dlat = dlat || KnowledgeMapGlobals.nodeSpacing.lat;
+            dlng = dlat || KnowledgeMapGlobals.nodeSpacing.lng;
+
+            var ne = bounds.getNorthEast();
+            var nee = new google.maps.LatLng(ne.lat() + dlat, ne.lng() + dlng);
+
+            var sw = bounds.getSouthWest();
+            var swe = new google.maps.LatLng(sw.lat() - dlat, sw.lng() - dlng);
+
+            return new google.maps.LatLngBounds(swe, nee);
+        }
     });
 }
 
@@ -500,7 +531,6 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
     this.init();
 }
 
-
 function KnowledgeMap(params) {
 
     if (typeof google === "undefined") {
@@ -518,11 +548,16 @@ function KnowledgeMap(params) {
     var self = this;
 
     this.selectedNodes = {};
-    this.nodeClickHandler = null;
+    // This handler exists as a hook to override what happens when an
+    // exercise node is clicked. By default, it does nothing.
+    this.nodeClickHandler = function(exercise, evt) {
+        return true;
+    };
     this.updateFilterTimout = null;
 
     // Models
-    this.exerciseList = {};
+    this.exerciseModels = []; // list of exercises in displayed order
+    this.exercisesByName = {}; // fast access to exercises by name
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
     this.numSuggestedExercises = 0;
     this.numRecentExercises = 0;
@@ -552,9 +587,6 @@ function KnowledgeMap(params) {
         if (!params.hideDrawer)
             this.drawer = new KnowledgeMapDrawer(params.container, this);
 
-        var suggestedExercisesContent = this.admin ? null : this.getElement("suggested-exercises-content");
-        var recentExercisesContent = this.admin ? null : this.getElement("recent-exercises-content");
-        var allExercisesContent = this.getElement("all-exercises-content");
 
         if (!this.admin) {
             self.getElement("exercise-all-exercises").click(function() { self.toggleShowAll(); });
@@ -566,12 +598,7 @@ function KnowledgeMap(params) {
         Handlebars.registerPartial("knowledgemap-exercise", Templates.get("shared.knowledgemap-exercise")); // TomY TODO do this automatically?
 
         // Initial setup of exercise list from embedded data
-
-        $.each(graph_dict_data, function(idx, exercise) {
-
-            var exerciseModel = new KnowledgeMapExercise(exercise);
-            self.exerciseList[exercise.name] = exerciseModel;
-
+        this.exerciseModels = _.map(graph_dict_data, function(exercise) {
             var invalidForGoal = (
                 exercise.goal_req ||
                 exercise.status === "Proficient" ||
@@ -579,53 +606,182 @@ function KnowledgeMap(params) {
             );
 
             if (self.newGoal && invalidForGoal) {
-                exerciseModel.set({"invalidForGoal": true});
-            } else {
-                // Create views
-                var element;
-
-                if (exerciseModel.get("isSuggested")) {
-                    if (!params.hideReview || !exerciseModel.get("isReview")) {
-                        element = $("<div>");
-                        element.appendTo(suggestedExercisesContent);
-                        self.exerciseRowViews.push(new ExerciseRowView({
-                            model: exerciseModel,
-                            el: element,
-                            type: "suggested",
-                            admin: self.admin,
-                            parent: self
-                        }));
-                        self.numSuggestedExercises++;
-                    }
-                }
-
-                if (exerciseModel.get("recent")) {
-                    element = $("<div>");
-                    element.appendTo(recentExercisesContent);
-                    self.exerciseRowViews.push(new ExerciseRowView({
-                        model: exerciseModel,
-                        el: element,
-                        type: "recent",
-                        admin: self.admin,
-                        parent: self
-                    }));
-
-                    self.numRecentExercises++;
-                }
-
-                element = $("<div>");
-                element.appendTo(allExercisesContent);
-                self.exerciseRowViews.push(new ExerciseRowView({
-                    model: exerciseModel,
-                    el: element,
-                    type: "all",
-                    admin: self.admin,
-                    parent: self
-                }));
+                exercise.invalidForGoal = true;
             }
 
-            // Update map graph
+            return new KnowledgeMapExercise(exercise);
+        });
+        this.exercisesByName = _.indexBy(this.exerciseModels, function(ex) {
+            return ex.get("name");
+        });
 
+        this.initSidebar();
+        this.initMap();
+        this.initFilter();
+    };
+
+    this.initSidebar = function() {
+        var suggestedExercisesContent = this.admin ? null : this.getElement("suggested-exercises-content");
+        var recentExercisesContent = this.admin ? null : this.getElement("recent-exercises-content");
+        var allExercisesContent = this.getElement("all-exercises-content");
+
+        // ensure blank elements take up the right amount of space
+        var createEl = function() {
+            return $("<div>", {'class': 'exercise-badge'});
+        };
+
+        _.each(this.exercisesByName, function(exerciseModel) {
+            // Create views
+            var element;
+            if (exerciseModel.get("isSuggested")) {
+                if (!params.hideReview || !exerciseModel.get("isReview")) {
+                    element = createEl();
+                    element.appendTo(suggestedExercisesContent);
+                    this.exerciseRowViews.push(new ExerciseRowView({
+                        model: exerciseModel,
+                        el: element,
+                        type: "suggested",
+                        admin: this.admin,
+                        parent: this
+                    }));
+                    this.numSuggestedExercises++;
+                }
+            }
+
+            if (exerciseModel.get("recent")) {
+                element = createEl();
+                element.appendTo(recentExercisesContent);
+                this.exerciseRowViews.push(new ExerciseRowView({
+                    model: exerciseModel,
+                    el: element,
+                    type: "recent",
+                    admin: this.admin,
+                    parent: this
+                }));
+
+                this.numRecentExercises++;
+            }
+
+            element = createEl();
+            element.appendTo(allExercisesContent);
+            this.exerciseRowViews.push(new ExerciseRowView({
+                model: exerciseModel,
+                el: element,
+                type: "all",
+                admin: this.admin,
+                parent: this
+            }));
+        }, this);
+
+        // use lazy rendering unless all exercises are showing
+        if (!this.filterSettings.get("userShowAll")) {
+            this.getElement(".dashboard-drawer-inner.fancy-scrollbar")
+                .on("scroll.inflateVisible", $.proxy(this.inflateVisible, this));
+        }
+
+        var handler = function(evt) {
+            // as doFilter is running while elements are detached, dimensions
+            // will not work. Record the dimensions before we call it.
+            var row = _.find(this.exerciseRowViews, function(row) { return row.visible; });
+
+            var rowHeight;
+            if (row) {
+                rowHeight = row.el.outerHeight(/* includeMargin */ true);
+            } else {
+                // use a guess because doFilter can't determine this for itself
+                rowHeight = 86;
+            }
+            var screenHeight = this.getElement(".dashboard-drawer-inner.fancy-scrollbar").height();
+
+            temporaryDetachElement(this.getElement("exercise-list"), function() {
+                this.doFilter(evt, rowHeight, screenHeight);
+            }, this);
+        };
+
+        this.filterSettings.bind("change", handler, this);
+    };
+
+    // this inflates all remaining visible rows. We could maybe improve it more
+    // by only inflating the next screenful, but for now just do them all.
+    this.queryRowsRendered = false;
+    this.inflateVisible = function(evt) {
+        if (this.queryRowsRendered) return;
+        _.each(this.exerciseRowViews, function(rowView) {
+            if (rowView.visible && !rowView.inflated) {
+                rowView.inflate();
+            }
+        });
+        this.queryRowsRendered = true;
+
+        var inflatedAll = (this.filterSettings.get("userShowAll") &&
+                           this.filterSettings.get("filterText"));
+        if (inflatedAll) {
+            $(".dashboard-drawer-inner.fancy-scrollbar").off("scroll.inflateVisible");
+        }
+    };
+
+    this.doFilter = function(evt, rowHeight, screenHeight) {
+        // only render the rows that are on screen. Overshoot by a little to be
+        // sure.
+        rowHeight = rowHeight || 0;
+        screenHeight = screenHeight || $(".dashboard-drawer-inner.fancy-scrollbar").height();
+        screenHeight *= 1.3;
+
+        var renderedHeight = 0;
+
+        var userShowAll = this.filterSettings.get("userShowAll");
+        var filterText = this.filterSettings.get("filterText");
+        var bounds = this.map.getBounds();
+        if (bounds)
+            bounds = ExerciseMarkerView.extendBounds(bounds);
+
+        _.each(this.exerciseRowViews, function(row) {
+            var exerciseName = row.model.get("lowercaseName");
+
+            // single letter filters have lots of matches, so require exercise
+            // name to start with filter
+            var filterMatches;
+            if (filterText.length == 1) {
+                filterMatches = exerciseName[0] == filterText;
+            }
+            else {
+                filterMatches = exerciseName.indexOf(filterText) >= 0;
+            }
+
+            var allowVisible = filterText || userShowAll || row.options.type != "all";
+            row.visible = allowVisible && filterMatches;
+
+            if (row.visible) {
+                // only actually inflate if it's going to be on screen
+                if (renderedHeight < screenHeight) {
+                    if (!row.inflated) {
+                        row.inflate();
+                    }
+                }
+                row.el.show();
+
+                if (rowHeight === 0) {
+                    rowHeight = row.el.outerHeight(/* includeMargin */ true);
+                }
+                renderedHeight += rowHeight;
+            } else {
+                row.el.hide();
+            }
+
+            // filter the item off the map view
+            if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
+                this.exerciseMarkerViews[row.nodeName].setFiltered(!filterMatches, bounds);
+            }
+        }, this);
+
+        // let scroll and dragstart listeners finish the work later
+        this.queryRowsRendered = false;
+        this.queryNodesRendered = false;
+    };
+
+    this.initMap = function() {
+        _.each(self.exercisesByName, function(exerciseModel) {
+            // Update map graph
             self.addNode(exerciseModel.toJSON());
             $.each(exerciseModel.get("prereqs"), function(idx2, prereq) {
                 self.addEdge(exerciseModel.get("name"), prereq, exerciseModel.get("summative"));
@@ -661,22 +817,17 @@ function KnowledgeMap(params) {
         this.layoutGraph();
         this.drawOverlay();
 
-        this.latLngBounds = new google.maps.LatLngBounds(new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin), new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax)),
+        this.latLngBounds = new google.maps.LatLngBounds(
+            new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin),
+            new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax));
 
         google.maps.event.addListener(this.map, "center_changed", function() {self.onCenterChange();});
         google.maps.event.addListener(this.map, "idle", function() {self.onIdle();});
         google.maps.event.addListener(this.map, "click", function() {self.onClick();});
-
-        // This handler exists as a hook to override what happens when an
-        // exercise node is clicked. By default, it does nothing.
-        this.nodeClickHandler = function(exercise, evt) {
-            return true;
-        };
+        google.maps.event.addListener(this.map, "dragstart", function() {self.dragstart();});
 
         this.giveNasaCredit();
-        this.initFilter();
-
-        $(window).on("beforeunload", function(){ self.saveMapCoords(); });
+        $(window).on("beforeunload", function() {self.saveMapCoords();});
     };
 
     this.setNodeClickHandler = function(handler) {
@@ -742,7 +893,7 @@ function KnowledgeMap(params) {
 
             jrgNodes.each(function() {
                 var exerciseName = $(this).attr("data-id");
-                var exercise = self.exerciseList[exerciseName];
+                var exercise = self.exercisesByName[exerciseName];
                 var view = self.exerciseMarkerViews[exerciseName];
                 if (view) {
                     view.updateElement($(this));
@@ -843,7 +994,10 @@ function KnowledgeMap(params) {
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name,
                 node.latLng,
-                ["<a data-id='" + node.name + "' class='nodeLabel'><img class='node-icon' src=''/><img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/><div>" + node.display_name + "</div></a>"],
+                [   "<a data-id='" + node.name + "' class='nodeLabel'>" +
+                    "<img class='node-icon' src=''/>" +
+                    "<img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/>" +
+                    "<div>" + node.display_name + "</div></a>"],
                 "",
                 node.summative ? 2 : 1,
                 0, 0);
@@ -893,7 +1047,7 @@ function KnowledgeMap(params) {
             "when": +(new Date) // Date.now() not present on ie8
         };
 
-        return coords
+        return coords;
 
     };
 
@@ -924,6 +1078,18 @@ function KnowledgeMap(params) {
             });
             self.selectedNodes = { };
         }
+    };
+
+    this.queryNodesRendered = true;
+    this.dragstart = function(evt) {
+        if (this.queryNodesRendered) return;
+        this.queryNodesRendered = true;
+
+        _.each(this.exerciseRowViews, function(row) {
+            if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
+                this.exerciseMarkerViews[row.nodeName].updateAppearance();
+            }
+        }, this);
     };
 
     this.onCenterChange = function() {
@@ -977,15 +1143,7 @@ function KnowledgeMap(params) {
 
     this.updateFilter = function() {
         var filterText = $.trim(self.getElement("dashboard-filter-text").val().toLowerCase());
-
-        // Temporarily remove the exercise list container div for better performance
-        var reattachFn = temporaryDetachElement(self.getElement("exercise-list"));
-
         self.filterSettings.set({"filterText": filterText});
-
-        // Re-insert the container div
-        reattachFn();
-
         this.postUpdateFilter();
     };
 

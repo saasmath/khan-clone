@@ -148,3 +148,11 @@ ul.dynatree-container {
     color: #A00;
     font-weight: bold;
 }
+
+.old-value {
+    background-color: #f88;
+    padding: 5px;
+    display: inline-block;
+    font-weight: bold;
+}
+
