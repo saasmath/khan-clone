@@ -148,11 +148,10 @@
 }
 
 #individual_report #vital-statistics {
-    min-width: 970px;
-    min-height: 375px;
     position: relative;
     margin-top: 0;
 }
+    /* Only the class profile page uses #stats-nav these days */
     #individual_report #vital-statistics #stats-nav {
         width: 280px;
         float: left;
