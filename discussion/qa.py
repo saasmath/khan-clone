@@ -114,7 +114,7 @@ class PageQuestions(request_handler.RequestHandler):
                 topic = db.get(topic_key)
             except db.BadKeyError:
                 topic = video.first_topic()
-            logging.info(topic)
+
             template_values = video_qa_context(user_data, video, topic, page, qa_expand_key, sort)
             html = self.render_jinja2_template_to_string("discussion/video_qa_content.html", template_values)
             self.render_json({"html": html, "page": page, "qa_expand_key": qa_expand_key})
