@@ -774,7 +774,7 @@ function KnowledgeMap(params) {
             }
         }, this);
 
-        // let scroll and dragstart listeners finish the work later
+        // let scroll and finishRenderingNodes listeners finish the work later
         this.queryRowsRendered = false;
         this.queryNodesRendered = false;
     };
@@ -824,7 +824,7 @@ function KnowledgeMap(params) {
         google.maps.event.addListener(this.map, "center_changed", function() {self.onCenterChange();});
         google.maps.event.addListener(this.map, "idle", function() {self.onIdle();});
         google.maps.event.addListener(this.map, "click", function() {self.onClick();});
-        google.maps.event.addListener(this.map, "dragstart", function() {self.dragstart();});
+        google.maps.event.addListener(this.map, "center_changed", function() {self.finishRenderingNodes();});
 
         this.giveNasaCredit();
         $(window).on("beforeunload", function() {self.saveMapCoords();});
@@ -1081,7 +1081,7 @@ function KnowledgeMap(params) {
     };
 
     this.queryNodesRendered = true;
-    this.dragstart = function(evt) {
+    this.finishRenderingNodes = function(evt) {
         if (this.queryNodesRendered) return;
         this.queryNodesRendered = true;
 
