@@ -24,7 +24,7 @@ from models import Playlist
 class EditContent(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
-    @developer_required
+    @user_util.developer_only
     def get(self):
         if self.request.get('migrate', False):
             return self.topic_migration()
