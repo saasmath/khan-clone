@@ -1373,14 +1373,18 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
     contextModel: null,
 
     youtubeID: null,
+    readableID: null,
+    title: null,
 
     initialize: function() {
+        _.bindAll(this, "doVideoSearch", "queueVideoSearch");
         this.render();
     },
 
     events: {
         "click .ok-button": "createVideo",
-        "change input[name=\"youtube_id\"]": "doVideoSearch"
+        "change input[name=\"youtube_id\"]": "doVideoSearch",
+        "keydown input[name=\"youtube_id\"]": "queueVideoSearch"
     },
 
     render: function() {
@@ -1408,17 +1412,20 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
     createVideo: function() {
         var self = this;
 
-        if (!this.youtubeID) {
-            return;
-        }
-
-        var video = new Video({ youtube_id: this.youtubeID });
-
-        video.save({}, {
-            success: function(model) {
-                TopicTreeEditor.addItemToTopic("Video", model.get("readable_id"), model.get("title"), self.contextNode, self.contextModel, -1);
+        if (this.readableID) {
+            TopicTreeEditor.addItemToTopic("Video", this.readableID, this.title, this.contextNode, this.contextModel, -1);
+        } else {
+            if (!this.youtubeID) {
+                return;
             }
-        });
+
+            var video = new Video({ youtube_id: this.youtubeID });
+            video.save({}, {
+                success: function(model) {
+                    TopicTreeEditor.addItemToTopic("Video", model.get("readable_id"), model.get("title"), self.contextNode, self.contextModel, -1);
+                }
+            });
+        }
         this.hide();
     },
 
@@ -1429,15 +1436,27 @@ TopicTreeEditor.CreateVideoView = Backbone.View.extend({
             url: "/api/v1/videos/" + youtubeID + "/youtubeinfo",
             success: function(json) {
                 self.youtubeID = youtubeID;
+                if (json.existing) {
+                    self.readableID = json.readable_id;
+                    self.title = json.title;
+                } else {
+                    self.readableID = null;
+                }
                 $(self.el).find(".create-video-preview").html(self.previewTemplate(json));
                 $(self.el).find(".ok-button").removeClass("disabled").addClass("green");
             },
             error: function(json) {
                 self.youtubeID = null;
+                self.readableID = null;
                 $(self.el).find(".create-video-preview").html("Video not found.");
                 $(self.el).find(".ok-button").addClass("disabled").removeClass("green");
             }
         });
+    },
+
+    queueVideoSearch: function() {
+        this.queueVideoSearchFn = this.queueVideoSearchFn || _.debounce(this.doVideoSearch, 1000);
+        this.queueVideoSearchFn();
     },
 
     hide: function() {
