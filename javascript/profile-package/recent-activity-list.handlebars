@@ -1,19 +1,8 @@
 {{#if listRecentActivity.length}}
-    <div id="activity-list">
+    <div class="activity-list">
         <ul>
             {{#each listRecentActivity}}
-            <li>
-                <span class="activity-image"><img src="{{toSrcIcon sType}}"></span>
-                <div class="ach-text">
-                    {{#toActivityText this}}{{/toActivityText}}
-                    <br>
-                    <span class="time timeago" title="{{dt}}">{{dt}}</span>
-
-                    {{#unless mobileView}}
-                        {{! sharing stuff goes here }}
-                    {{/unless}}
-                </div>
-            </li>
+            {{#renderActivity this}}{{/renderActivity}}
             {{/each}}
         </ul>
     </div>

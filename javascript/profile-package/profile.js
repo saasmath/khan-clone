@@ -947,7 +947,7 @@ var Profile = {
                         return typeToIconSrc[type];
                     });
 
-                    Handlebars.registerHelper("toActivityText", function(activity) {
+                    Handlebars.registerHelper("renderActivity", function(activity) {
                         _.extend(activity, {profileRoot: Profile.profileRoot});
 
                         if (activity.sType === "Exercise") {

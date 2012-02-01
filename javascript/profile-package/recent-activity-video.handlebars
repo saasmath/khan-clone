@@ -1,1 +1,12 @@
-Watched <span class="video-minutes">{{secondsToTime secondsWatched}}</span> of <a href="/video?v={{youtubeId}}">{{videoTitle}}</a>
+<li class="activity-video">
+    <span class="activity-image"><img src="{{toSrcIcon sType}}"></span>
+    <div class="ach-text">
+        Watched <span class="video-minutes">{{secondsToTime secondsWatched}}</span> of <a href="/video?v={{youtubeId}}">{{videoTitle}}</a>
+        <br>
+        <span class="time timeago" title="{{dt}}">{{dt}}</span>
+
+        {{#unless mobileView}}
+            {{! sharing stuff goes here }}
+        {{/unless}}
+    </div>
+</li>
