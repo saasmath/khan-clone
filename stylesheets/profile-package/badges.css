@@ -63,6 +63,7 @@
     border-radius: 15px;
 
     text-shadow: none;
+    z-index: 1;
 }
 
 .badge-display-case.editing .achievement-badge.selected .delete-icon {
