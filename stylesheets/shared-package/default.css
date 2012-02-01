@@ -2088,6 +2088,10 @@ a.proficient-badge {
     z-index:10;
 }
 
+a.proficient-badge.disabled {
+    cursor: not-allowed;
+}
+
 .exercise-badge.single-exercise .energy-points-badge {
     left: auto;
     right: 5px;
@@ -3454,9 +3458,8 @@ a.nodeLabel:hover {
 .nodeLabelHidden {
     display: none;
 }
-.nodeLabelFiltered {
-    opacity: 0.3;
-    filter:alpha(opacity=30);
+.nodeLabelFiltered div {
+    color: #444;
 }
 .nodeLabelProficient div {
 }

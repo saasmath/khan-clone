@@ -32,9 +32,12 @@ class PageComments(request_handler.RequestHandler):
             # Temporarily ignore errors caused by cached google pages of non-HR app
             return
 
-        topic = db.get(topic_key)
-
         if video:
+            try:
+                topic = db.get(topic_key)
+            except db.BadKeyError:
+                topic = video.first_topic()
+
             comments_hidden = self.request_bool("comments_hidden", default=True)
             template_values = video_comments_context(video, topic, page, comments_hidden, sort_order)
 

@@ -6,6 +6,12 @@
     <embed id="idPlayer" name="idPlayer" wmode="transparent" src="http://www.youtube.com/v/{{ youtube_id }}&hl=en_US&fs=1&rel=0&hd=1&border=0&enablejsapi=1" type="application/x-shockwave-flash" allowScriptAccess="always" allowfullscreen="true" width="400" height="240">
 </object>
 
+{{#if existing}}
+<div>
+  <em>Video already exists in library. A new reference will be created.</em>
+</div>
+{{/if}}
+
 <div>
   <b>Title:</b> {{ title }}
 </div>

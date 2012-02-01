@@ -471,6 +471,7 @@ a.goal-history {
 
 .goalNodeInvalid {
     text-decoration: line-through;
+    cursor: not-allowed;
 }
 .goalNodeInvalid div {
     color: #777;

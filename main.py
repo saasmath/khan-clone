@@ -689,6 +689,8 @@ class MemcacheViewer(request_handler.RequestHandler):
         if type(values) is dict:
             for k, value in values.iteritems():
                 self.response.out.write("<p><b>%s</b>%s</p>" % (k, dict((key, getattr(value, key)) for key in dir(value))))
+        if self.request_bool("clear", False):
+            memcache.delete(key, namespace=namespace)
 
 applicationSmartHistory = webapp2.WSGIApplication([
     ('/.*', smarthistory.SmartHistoryProxy)
