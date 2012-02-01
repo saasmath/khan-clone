@@ -28,6 +28,8 @@ class EditContent(request_handler.RequestHandler):
     def get(self):
         if self.request.get('migrate', False):
             return self.topic_migration()
+        if self.request.get('fixdupes', False):
+            return self.fix_duplicates()
 
         version_name = self.request.get('version', 'edit')
 
@@ -65,6 +67,51 @@ class EditContent(request_handler.RequestHandler):
         deferred.defer(load_videos, version)
         print "migration started... progress can be monitored in the logs"
 
+    def fix_duplicates(self):
+        video_list = [v for v in models.Video.all()]
+        video_dict = dict()
+        
+        for video in video_list:
+            if not video.readable_id in video_dict:
+                video_dict[video.readable_id] = []
+            video_dict[video.readable_id].append(video)
+
+        for readable_id, videos in video_dict.iteritems():
+            if len(videos) > 1:
+                logging.info("Video ID " + readable_id + ": " + str(len(videos)) + " instances")
+                for video in videos:
+                    references = []
+
+                    # Add topics that refer to this video
+                    references.extend(video.topic_string_keys)
+
+                    # Add UserVideos
+                    user_videos = [str(e.key()) for e in models.UserVideo.all().filter('video =', video)]
+                    references.extend(user_videos)
+
+                    # Add VideoLogs
+                    video_logs = [str(e.key()) for e in models.VideoLog.all().filter('video =', video)]
+                    references.extend(video_logs)
+
+                    # Add VideoPlaylists
+                    video_playlists = [str(e.key()) for e in models.VideoPlaylist.all().filter('video =', video)]
+                    references.extend(video_playlists)
+
+                    # Add ExerciseVideo
+                    exercise_videos = [str(e.key()) for e in models.ExerciseVideo.all().filter('video =', video)]
+                    references.extend(exercise_videos)
+
+                    logging.info("Instance " + str(video.key()) + ": " + str(len(references)) + " references")
+                    if video.topic_string_keys:
+                        logging.info(str(len(video.topic_string_keys)) + " Topics.")
+                    if user_videos:
+                        logging.info(str(len(user_videos)) + " UserVideos.")
+                    if video_logs:
+                        logging.info(str(len(video_logs)) + " VideoLogs.")
+                    if video_playlists:
+                        logging.info(str(len(video_playlists)) + " VideoPlaylists.")
+                    if exercise_videos:
+                        logging.info(str(len(exercise_videos)) + " ExerciseVideos.")
 
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):

@@ -1853,4 +1853,3 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
-
