@@ -77,7 +77,10 @@ def add_action_results(obj, dict_results):
         if len(login_notifications) > 0:
             dict_results["login_notifications_html"] = login_notifications_html(login_notifications, user_data)
 
-    obj['action_results'] = dict_results
+    if type(obj) == dict:
+        obj['action_results'] = dict_results
+    else:
+        obj.action_results = dict_results
 
 # Return specific user data requests from request
 # IFF currently logged in user has permission to view
