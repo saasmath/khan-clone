@@ -308,7 +308,8 @@ class YouTubeSync(request_handler.RequestHandler):
                 for vp in vps:
                     try:
                         playlist_keys.append(vp.video.key())
-                        playlist_info.append((str(vp.video.key()), vp.video.title, vp.video.readable_id))
+                        if vp.video.key().kind() == "Video":
+                            playlist_info.append((str(vp.video.key()), vp.video.title, vp.video.readable_id))
                     except db.ReferencePropertyResolveError:
                         logging.info("Found reference to missing video in VideoPlaylist!")
 
@@ -325,12 +326,13 @@ class YouTubeSync(request_handler.RequestHandler):
 
 #                    vps = []
 #                    for i, child_key in enumerate(topic.child_keys):
-#                        vps.append(VideoPlaylist(
-#                            video=child_key,
-#                            playlist=playlist,
-#                            video_position=i,
-#                            live_association = True
-#                            ))
+#                        if child_key.kind() == "Video":
+#                            vps.append(VideoPlaylist(
+#                                video=child_key,
+#                                playlist=playlist,
+#                                video_position=i,
+#                                live_association = True
+#                                ))
 
 #                    logging.info("Creating new VideoPlaylists...")
 #                    db.put(vps)
