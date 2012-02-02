@@ -85,7 +85,7 @@ Avatar.Picker.prototype.onAvatarSelected_ = function(ev) {
     var src = $(ev.currentTarget).find("img.avatar-preview").attr("src");
     var name = $(ev.currentTarget).attr("data");
     if (src && name) {
-        this.userModel.save({
+        this.userModel.set({
             "avatarName": name,
             "avatarSrc": src
         });
@@ -159,5 +159,13 @@ Avatar.Picker.prototype.show = function() {
         keyboard: true,
         backdrop: true,
         show: true
-    });
+    }).on("hidden", _.bind(this.onHide_, this));
 };
+
+/**
+ * Handles a hiding of the picker, and saves the data.
+ */
+Avatar.Picker.prototype.onHide_ = function() {
+    this.userModel.save();
+};
+
