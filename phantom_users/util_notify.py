@@ -1,11 +1,5 @@
-import logging
-
-from google.appengine.api import memcache
-
-import util
 import models
 from notifications import UserNotifier
-import phantom_util
 import request_handler
 
 def welcome(user_data):
@@ -21,8 +15,6 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
         return False
 
     numquest = None
-    numbadge = None
-    numpoint = None
 
     if user_exercise != None:
         numquest = user_exercise.total_done
@@ -44,7 +36,11 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
         UserNotifier.push_login_for_user_data(user_data,"You're proficient in "+str(prof)+". You should [login]")
     #First Badge
     if numbadge != None and len(numbadge) == 1 and gotBadge:
-        UserNotifier.push_login_for_user_data(user_data,"Congrats on your first <a href='/profile'>badge</a>! You should [login]")
+        achievements_url = "%s/achievements" % user_data.profile_root
+        UserNotifier.push_login_for_user_data(
+                user_data,
+                "Congrats on your first <a href='%s'>badge</a>! You should [login]" %
+                        achievements_url)
     #Every badge after
     if numbadge != None and len(numbadge) > 1 and gotBadge:
         UserNotifier.push_login_for_user_data(user_data,"You've earned <a href='/profile'>"+str(len(numbadge))+" badges</a> so far. You should [login]")

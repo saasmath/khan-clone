@@ -983,7 +983,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def badge_counts(self):
         return util_badges.get_badge_counts(self)
 
-    # TODO: read that page on user id and emails
     @property
     def prettified_user_email(self):
         if self.is_facebook_user:
