@@ -98,6 +98,7 @@ UsernamePickerView = Backbone.View.extend({
 
     onTimeout_: function() {
         this.showSidenote_(".username-row", "Checking...");
+        this.$("#save-profile-info").prop("disabled", true);
         this.model.validateUsername(this.$(".username").val());
         this.keyupTimeout = null;
     },
