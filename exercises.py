@@ -689,7 +689,7 @@ class UpdateExercise(request_handler.RequestHandler):
         video_keys = []
         for video_name in related_videos:
             video = models.Video.get_for_readable_id(video_name)
-            if not video.key() in video_keys:
+            if video and not video.key() in video_keys:
                 video_keys.append(str(video.key()))
 
         UpdateExercise.do_update_related_video_keys(exercise, video_keys)
@@ -766,20 +766,20 @@ class UpdateExercise(request_handler.RequestHandler):
         dict["prerequisites"] = []
         for c_check_prereq in range(0, 1000):
             prereq_append = self.request_string("prereq-%s" % c_check_prereq, default="")
-            if prereq_append and not prereq_append in exercise.prerequisites:
+            if prereq_append and not prereq_append in dict["prerequisites"]:
                 dict["prerequisites"].append(prereq_append)
 
         dict["covers"] = []
         for c_check_cover in range(0, 1000):
             cover_append = self.request_string("cover-%s" % c_check_cover, default="")
-            if cover_append and not cover_append in exercise.covers:
+            if cover_append and not cover_append in dict["covers"]:
                 dict["covers"].append(cover_append)
 
         dict["related_video_keys"] = []
         dict["related_videos"] = []
         for c_check_video in range(0, 1000):
             video_name_append = self.request_string("video-%s-readable" % c_check_video, default="")
-            if video_name_append:
+            if video_name_append and not video_name_append in dict["related_videos"]:
                 dict["related_videos"].append(video_name_append)
 
             video_append = self.request_string("video-%s" % c_check_video, default="")

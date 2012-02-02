@@ -326,6 +326,14 @@ def put_topic(topic_id, version_id = "edit"):
         "id": topic.id
     }
 
+@route("/api/v1/topicversion/default/id", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_default_topic_version_id():
+    default_version = models.TopicVersion.get_default_version()
+    return default_version.number
+
 def topic_find_child(parent_id, version_id, kind, id):
     version = models.TopicVersion.get_by_id(version_id)
 
@@ -2096,17 +2104,6 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
-
-@route("/api/v1/dev/queue/<queue_name>", methods=["GET"])
-@developer_required
-@jsonp
-@jsonify
-def get_queue_statistics(queue_name):
-    from google.appengine.api.taskqueue import Queue
-    queue = Queue(queue_name)
-    statistics = queue.fetch_statistics()
-    return statistics
-
 
 @route("/api/v1/avatars", methods=["GET"])
 @oauth_optional()
