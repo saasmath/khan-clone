@@ -169,6 +169,16 @@ Badges.BadgeList = Backbone.Collection.extend({
         }));
         Backbone.sync.call(this, "update", this, options);
         this.dirty_ = false;
+    },
+
+    // TODO: figure out how to do this in a more systematic way!
+    // Override base Backbone.parse since badge modifications can result in
+    // api_action_results to be sent back.
+    parse: function(resp, xhr) {
+        if ("apiActionResults" in resp && "payload" in resp) {
+            resp = resp["payload"];
+        }
+        Backbone.Model.prototype.parse.call(this, resp, xhr);
     }
 });
 

@@ -83,6 +83,16 @@ var ProfileModel = Backbone.Model.extend({
         Backbone.Model.prototype.save.call(this, attrs, options);
     },
 
+    // TODO: figure out how to do this in a more systematic way!
+    // Override base Backbone.parse since badge modifications can result in
+    // api_action_results to be sent back.
+    parse: function(resp, xhr) {
+        if ("apiActionResults" in resp && "payload" in resp) {
+            resp = resp["payload"];
+        }
+        Backbone.Model.prototype.parse.call(this, resp, xhr);
+    },
+
     /**
      * Toggle isCoachingLoggedInUser field client-side.
      * Update server-side if optional options parameter is provided.

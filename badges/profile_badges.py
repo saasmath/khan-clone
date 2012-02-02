@@ -9,6 +9,9 @@ class ProfileCustomizationBadge(Badge):
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
         
+    def is_already_owned_by(self, user_data, *args, **kwargs):
+        return False
+        
     def is_satisfied_by(self, *args, **kwargs):
         user_data = kwargs.get("user_data", None)
         if user_data is None:

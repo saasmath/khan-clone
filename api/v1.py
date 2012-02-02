@@ -77,7 +77,7 @@ def add_action_results(obj, dict_results):
         if len(login_notifications) > 0:
             dict_results["login_notifications_html"] = login_notifications_html(login_notifications, user_data)
 
-    obj.action_results = dict_results
+    obj['action_results'] = dict_results
 
 # Return specific user data requests from request
 # IFF currently logged in user has permission to view
@@ -860,6 +860,7 @@ def update_user_profile():
     if profile_json['nickname'] is not None:
         user_data.update_nickname(profile_json['nickname'])
 
+    badge_awarded = False
     if profile_json['avatarName'] is not None:
         avatar_name = profile_json['avatarName']
         name_dict = util_avatars.avatars_by_name()
@@ -872,7 +873,7 @@ def update_user_profile():
             user_data.avatar_name = avatar_name
             if profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data):
                 profile_badges.ProfileCustomizationBadge().award_to(user_data)
-                # TODO: send down the API action result to pop up the badge
+                badge_awarded = True
 
     if profile_json['isPublic'] is not None:
         user_data.is_profile_public = profile_json['isPublic']
@@ -886,7 +887,14 @@ def update_user_profile():
             # TODO: How much do we want to communicate to the user?
             return api_invalid_param_response("Error!")
 
-    return util_profile.UserProfile.from_user(user_data, user_data)
+    result = util_profile.UserProfile.from_user(user_data, user_data)
+    if badge_awarded:
+        result = {
+            'payload': result,
+            'action_results': None,
+        }
+        add_action_results(result, {})
+    return result
 
 @route("/api/v1/user/coaches", methods=["PUT"])
 @oauth_required()
@@ -1628,17 +1636,25 @@ def update_public_user_badges():
         elif name == empty_name:
             updated_badge_list.append(None)
     
-    result = updated_badge_list
+    badge_awarded = False
     profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data)
     if (len(updated_badge_list) == util_badges.NUM_PUBLIC_BADGE_SLOTS
             and not any([badge is None for badge in updated_badge_list])):
         if profile_badges.ProfileCustomizationBadge.mark_display_case_filled(user_data):
             profile_badges.ProfileCustomizationBadge().award_to(user_data)
-            # TODO: send down the API action result to pop up the badge
+            badge_awarded = True
 
     user_data.public_badges = [(badge.name if badge else empty_name)
                                for badge in updated_badge_list]
     user_data.put()
+    
+    result = updated_badge_list
+    if badge_awarded:
+        result = {
+            'payload': result,
+            'api_action_results': None
+        }
+        add_action_results(result, {})
     return result
 
 @route("/api/v1/user/badges", methods=["GET"])
