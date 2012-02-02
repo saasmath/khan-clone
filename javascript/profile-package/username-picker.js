@@ -107,7 +107,7 @@ UsernamePickerView = Backbone.View.extend({
         if (isValid) {
             this.showSidenote_(".nickname-row", "");
         } else {
-            this.showSidenote_(".nickname-row", "Too short.", false);
+            this.showSidenote_(".nickname-row", "Can't leave empty.", false);
         }
     },
 
