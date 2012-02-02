@@ -5,6 +5,7 @@
 
 UsernamePickerView = Backbone.View.extend({
     id: "username-picker-container",
+    setPublicAfterSave_: false,
 
     events: {
         "keyup .nickname": "onNicknameKeyup_",
@@ -43,8 +44,13 @@ UsernamePickerView = Backbone.View.extend({
         return this;
     },
 
-    toggle: function() {
+    toggle: function(setPublic) {
         $(this.el).modal("toggle");
+        this.setPublicAfterSave_ = setPublic;
+        if (setPublic) {
+            $(".notification.info").show();
+            $("#save-profile-info").val("Save and make profile public");
+        }
     },
 
     resetFields_: function() {
@@ -56,7 +62,7 @@ UsernamePickerView = Backbone.View.extend({
         this.$(".username").val(username);
         this.$(".example-username").val(username);
         this.$(".sidenote").text("").removeClass("success").removeClass("error");
-        this.$("#save-profile-info").prop("disabled", false);
+        this.$("#save-profile-info").prop("disabled", false).val("Save");
     },
 
     onPickerShown_: function() {
@@ -152,5 +158,9 @@ UsernamePickerView = Backbone.View.extend({
             };
 
         this.model.save(attrs, options);
+
+        if (this.setPublicAfterSave_) {
+            $("#edit-visibility").click();
+        }
     }
 });

@@ -326,12 +326,12 @@ UserCardView = Backbone.View.extend({
         }
     },
 
-    onEditBasicInfoClicked_: function(e) {
+    onEditBasicInfoClicked_: function(evt, setPublic) {
         if (!this.usernamePicker_) {
             this.usernamePicker_ = new UsernamePickerView({model: this.model});
             $("body").append(this.usernamePicker_.render().el);
         }
-        this.usernamePicker_.toggle();
+        this.usernamePicker_.toggle(setPublic);
     },
 
     onEditDisplayCaseClicked_: function(e) {
@@ -344,8 +344,7 @@ UserCardView = Backbone.View.extend({
         if (!this.model.get("username")) {
             // Profiles can't be made public until the user acquires a
             // username first. Pop up the dialog to do that.
-            this.onEditBasicInfoClicked_();
-            $(".notification.info").show();
+            this.onEditBasicInfoClicked_(null, true);
             return;
         }
         var isPublic = this.model.get("isPublic");
