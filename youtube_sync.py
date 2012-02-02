@@ -307,8 +307,6 @@ class YouTubeSync(request_handler.RequestHandler):
                     logging.info("Child keys identical. No changes will be made.")
                 else:
 
-                    logging.info("vps: " + repr([str(vp.video.key()) for vp in vps]))
-                    logging.info("child_keys: " + repr([str(key) for key in topic.child_keys if key.kind() == "Video"]))
                     logging.info("Deleting old VideoPlaylists...")
                     db.delete(vps)
 
