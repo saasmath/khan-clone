@@ -303,31 +303,35 @@ class YouTubeSync(request_handler.RequestHandler):
                 child_keys = topic.child_keys
                 vps = VideoPlaylist.all().filter("playlist =", playlist).order("video_position").fetch(10000)
 
-                video_keys = []
+                playlist_keys = []
                 for vp in vps:
                     try:
-                        video_keys.append(vp.video.key())
+                        playlist_keys.append(vp.video.key())
                     except ReferencePropertyResolveError:
                         logging.info("Found reference to missing video in VideoPlaylist!")
 
-                if video_keys == [key for key in topic.child_keys if key.kind() == "Video"]:
+                topic_keys = [key for key in topic.child_keys if key.kind() == "Video"]
+
+                if playlist_keys == topic_keys:
                     logging.info("Child keys identical. No changes will be made.")
                 else:
+                    logging.info("PLAYLIST: " + repr([str(key) for key in playlist_keys]))
+                    logging.info("TOPIC:    " + repr([str(key) for key in topic_keys]))
 
-                    logging.info("Deleting old VideoPlaylists...")
-                    db.delete(vps)
+#                    logging.info("Deleting old VideoPlaylists...")
+#                    db.delete(vps)
 
-                    vps = []
-                    for i, child_key in enumerate(topic.child_keys):
-                        vps.append(VideoPlaylist(
-                            video=child_key,
-                            playlist=playlist,
-                            video_position=i,
-                            live_association = True
-                            ))
+#                    vps = []
+#                    for i, child_key in enumerate(topic.child_keys):
+#                        vps.append(VideoPlaylist(
+#                            video=child_key,
+#                            playlist=playlist,
+#                            video_position=i,
+#                            live_association = True
+#                            ))
 
-                    logging.info("Creating new VideoPlaylists...")
-                    db.put(vps)
+#                    logging.info("Creating new VideoPlaylists...")
+#                    db.put(vps)
             else:
                 logging.info("Playlist matching topic " + topic.standalone_title + " not found.")
 
