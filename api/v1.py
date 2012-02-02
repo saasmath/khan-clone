@@ -1094,7 +1094,6 @@ def log_user_video(youtube_id):
     if not youtube_id and not video_key_str:
         return api_invalid_param_response("Must supply youtube_id or video_key")
 
-    video_log = None
     if video_key_str:
         key = db.Key(video_key_str)
         video = db.get(key)
@@ -1620,21 +1619,27 @@ def update_public_user_badges():
 
     owned_badges = set([badges.Badge.remove_target_context(name_with_context)
                         for name_with_context in user_data.badges])
+    badges_dict = util_badges.all_badges_dict()
     updated_badge_list = []
     empty_name = util_badges.EMPTY_BADGE_NAME
     for name in request.json or []:
-        if name in owned_badges or name == empty_name:
-            updated_badge_list.append(name)
+        if name in owned_badges:
+            updated_badge_list.append(badges_dict[name])
+        elif name == empty_name:
+            updated_badge_list.append(None)
     
+    result = updated_badge_list
     profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data)
     if (len(updated_badge_list) == util_badges.NUM_PUBLIC_BADGE_SLOTS
-            and not any([name == empty_name for name in updated_badge_list])):
+            and not any([badge is None for badge in updated_badge_list])):
         if profile_badges.ProfileCustomizationBadge.mark_display_case_filled(user_data):
             profile_badges.ProfileCustomizationBadge().award_to(user_data)
             # TODO: send down the API action result to pop up the badge
 
-    user_data.public_badges = updated_badge_list
+    user_data.public_badges = [(badge.name if badge else empty_name)
+                               for badge in updated_badge_list]
     user_data.put()
+    return result
 
 @route("/api/v1/user/badges", methods=["GET"])
 @oauth_optional()
