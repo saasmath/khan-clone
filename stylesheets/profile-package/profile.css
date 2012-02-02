@@ -815,14 +815,33 @@ ul.dropdown ul li {
 .display-case-cover.editable {
     cursor: pointer;
 }
-
+@media all and (max-width: 1185px) {
+    .main-case {
+        width: 435px;
+        overflow: hidden;
+    }
+}
+@media all and (max-width: 1025px) {
+    .main-case {
+        width: 325px;
+        overflow: hidden;
+    }
+}
+.lte8 .user-card {
+    min-width: 970px;
+}
+.lte8 .sticker-book {
+    width: 540px;
+    float: none;
+    margin-left: 370px;
+}
 .sticker-book {
     position: relative;
     padding: 10px;
     background: #fff;
     border: 1px solid #ccc;
     box-shadow: inset 0 0 5px #bbb;
-    margin-left: 370px;
+    float: right;
 }
 
 .profile-navigation {
