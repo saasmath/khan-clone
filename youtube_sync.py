@@ -304,9 +304,11 @@ class YouTubeSync(request_handler.RequestHandler):
                 vps = VideoPlaylist.all().filter("playlist =", playlist).order("video_position").fetch(10000)
 
                 playlist_keys = []
+                playlist_info = []
                 for vp in vps:
                     try:
                         playlist_keys.append(vp.video.key())
+                        playlist_info.append((str(vp.video.key()), vp.video.title, vp.video.readable_id))
                     except ReferencePropertyResolveError:
                         logging.info("Found reference to missing video in VideoPlaylist!")
 
@@ -315,7 +317,7 @@ class YouTubeSync(request_handler.RequestHandler):
                 if playlist_keys == topic_keys:
                     logging.info("Child keys identical. No changes will be made.")
                 else:
-                    logging.info("PLAYLIST: " + repr([str(key) for key in playlist_keys]))
+                    logging.info("PLAYLIST: " + repr(playlist_info))
                     logging.info("TOPIC:    " + repr([str(key) for key in topic_keys]))
 
 #                    logging.info("Deleting old VideoPlaylists...")
