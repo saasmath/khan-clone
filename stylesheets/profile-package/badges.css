@@ -30,11 +30,12 @@
 }
 .editing .main-case .achievement-badge {
     /* Must be consistent with jQuery animation */
-    border: 1px dashed #999;
+    box-shadow: 0 0 2px #005987;
 }
 
 .editing .main-case .achievement-badge.selected {
-    border-color: blue;
+    border-color: #005987;
+    box-shadow: 0 0 2px 1px #005987;
 }
 .achievement-badge.empty {
     position: relative;
@@ -159,11 +160,11 @@
 @media all and (max-width: 1185px) {
     .achievement-badge .selected-indicator {
         border-top: none;
-        border-left: 20px solid transparent;
-        border-right: 20px solid transparent;
-        border-bottom: 10px solid #999;
+        border-left: 7px solid transparent;
+        border-right: 7px solid transparent;
+        border-bottom: 7px solid #005987;
         left: 50%;
-        margin-left: -20px;
+        margin-left: -5px;
         bottom: -1px;
     }
 }
