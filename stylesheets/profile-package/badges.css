@@ -134,7 +134,7 @@
     /* simulate a triangle with borders */
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 10px solid #999; /* must be the same as badge-picker */
+    border-bottom: 10px solid #999; /* must be the same as badge-picker */
 
     left: 50%;
     margin-left: -10px;
