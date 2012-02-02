@@ -1,19 +1,19 @@
 cron:
 
-#- description: badge update
-#  url: /admin/startnewbadgemapreduce
-#  schedule: every day 00:00
-#  timezone: US/Pacific
+- description: badge update
+  url: /admin/startnewbadgemapreduce
+  schedule: every day 00:00
+  timezone: US/Pacific
 
 - description: badge statistics
   url: /admin/badgestatistics
   schedule: every day 22:00
   timezone: US/Pacific
 
-#- description: daily_activity_log
-#  url: /admin/dailyactivitylog
-#  schedule: every 12 hours
-#  timezone: US/Pacific
+- description: daily_activity_log
+  url: /admin/dailyactivitylog
+  schedule: every 20 hours
+  timezone: US/Pacific
 
 - description: exercise statistics update
   url: /admin/startnewexercisestatisticsmapreduce
