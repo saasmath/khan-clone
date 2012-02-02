@@ -45,9 +45,6 @@ class EditContent(request_handler.RequestHandler):
             'edit_version': jsonify(edit_version),
             'tree_nodes': jsonify(tree_nodes)
             }
-
-        for child in data.children:
-            logging.info("Found " + child["title"])
  
         self.render_jinja2_template('topics-admin.html', template_values)
         return
