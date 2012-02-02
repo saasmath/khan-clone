@@ -758,7 +758,11 @@ ul.dropdown ul.sub_menu {
     box-shadow: 0 2px 5px rgba(0,0,0,.3);
 }
 ul.dropdown ul.sub_menu li:hover{
-    background: #F3D673;
+    background: #005987;
+}
+ul.dropdown ul.sub_menu li:hover a {
+    color: #fff !important;
+    text-decoration: none;
 }
 ul.dropdown ul.sub_menu:before{
     content: ' ';
