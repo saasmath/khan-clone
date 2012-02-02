@@ -6,9 +6,13 @@
         <div class="avatar-change-overlay" style="display: none">Change avatar</div>
       </div>
       <div class="user-deets">
+          {{#if isPhantom}}
+             Login, phantom!
+          {{else}}
           <div>
               <span class="nickname">{{nickname}}</span>
           </div>
+          {{/if}}
           <div>
               <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
           </div>
