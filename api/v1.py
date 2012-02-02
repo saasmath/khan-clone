@@ -7,7 +7,7 @@ import models
 import layer_cache
 import templatetags # Must be imported to register template tags
 from avatars import util_avatars
-from badges import badges, util_badges, models_badges
+from badges import badges, util_badges, models_badges, profile_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, make_wrong_attempt
@@ -867,8 +867,13 @@ def update_user_profile():
         # Ensure that the avatar is actually valid and that the user can
         # indeed earn it.
         if (avatar_name in name_dict
+                and user_data.avatar_name != avatar_name
                 and name_dict[avatar_name].is_satisfied_by(user_data)):
             user_data.avatar_name = avatar_name
+            if profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data):
+                profile_badges.ProfileCustomizationBadge().award_to(user_data)
+                # TODO: send down the API action result to pop up the badge
+
     if profile_json['isPublic'] is not None:
         user_data.is_profile_public = profile_json['isPublic']
 
@@ -1616,9 +1621,18 @@ def update_public_user_badges():
     owned_badges = set([badges.Badge.remove_target_context(name_with_context)
                         for name_with_context in user_data.badges])
     updated_badge_list = []
+    empty_name = util_badges.EMPTY_BADGE_NAME
     for name in request.json or []:
-        if name in owned_badges or name == util_badges.EMPTY_BADGE_NAME:
+        if name in owned_badges or name == empty_name:
             updated_badge_list.append(name)
+    
+    profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data)
+    if (len(updated_badge_list) == util_badges.NUM_PUBLIC_BADGE_SLOTS
+            and not any([name == empty_name for name in updated_badge_list])):
+        if profile_badges.ProfileCustomizationBadge.mark_display_case_filled(user_data):
+            profile_badges.ProfileCustomizationBadge().award_to(user_data)
+            # TODO: send down the API action result to pop up the badge
+
     user_data.public_badges = updated_badge_list
     user_data.put()
 

@@ -16,6 +16,7 @@ import exercise_completion_badges
 import exercise_completion_count_badges
 import playlist_time_badges
 import power_time_badges
+import profile_badges
 import recovery_problem_badges
 import unfinished_exercise_badges
 import points_badges
@@ -78,6 +79,8 @@ def all_badges():
         power_time_badges.PowerFifteenMinutesBadge(),
         power_time_badges.PowerHourBadge(),
         power_time_badges.DoublePowerHourBadge(),
+
+        profile_badges.ProfileCustomizationBadge(),
 
         exercise_completion_badges.LevelOneArithmeticianBadge(),
         exercise_completion_badges.LevelTwoArithmeticianBadge(),
@@ -225,6 +228,7 @@ def get_grouped_user_badges(user_data=None):
              'diamond_badges': user_badges_diamond, }
 
 EMPTY_BADGE_NAME = "__empty__"
+NUM_PUBLIC_BADGE_SLOTS = 5
 
 def get_public_user_badges(user_data=None):
     """ Retrieves the list of user-earned badges that the user has selected
