@@ -78,6 +78,7 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onUsernameKeyup_: function(e) {
+        this.$("#save-profile-info").prop("disabled", true);
         if (this.shouldShowUsernameWarning_ && this.model.get("username")) {
             $(".notification.error").show();
             Promos.markAsSeen("Username change warning");
@@ -98,7 +99,6 @@ UsernamePickerView = Backbone.View.extend({
 
     onTimeout_: function() {
         this.showSidenote_(".username-row", "Checking...");
-        this.$("#save-profile-info").prop("disabled", true);
         this.model.validateUsername(this.$(".username").val());
         this.keyupTimeout = null;
     },
