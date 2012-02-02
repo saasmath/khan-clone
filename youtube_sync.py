@@ -304,12 +304,9 @@ class YouTubeSync(request_handler.RequestHandler):
                 vps = VideoPlaylist.all().filter("playlist =", playlist).order("video_position").fetch(10000)
 
                 playlist_keys = []
-                playlist_info = []
                 for vp in vps:
                     try:
                         playlist_keys.append(vp.video.key())
-                        if vp.video.key().kind() == "Video":
-                            playlist_info.append((str(vp.video.key()), vp.video.title, vp.video.readable_id))
                     except db.ReferencePropertyResolveError:
                         logging.info("Found reference to missing video in VideoPlaylist!")
 
@@ -318,24 +315,24 @@ class YouTubeSync(request_handler.RequestHandler):
                 if playlist_keys == topic_keys:
                     logging.info("Child keys identical. No changes will be made.")
                 else:
-                    logging.info("PLAYLIST: " + repr(playlist_info))
-                    logging.info("TOPIC:    " + repr([str(key) for key in topic_keys]))
+#                    logging.info("PLAYLIST: " + repr([str(key) for key in playlist_keys]))
+#                    logging.info("TOPIC:    " + repr([str(key) for key in topic_keys]))
 
-#                    logging.info("Deleting old VideoPlaylists...")
-#                    db.delete(vps)
+                    logging.info("Deleting old VideoPlaylists...")
+                    db.delete(vps)
 
-#                    vps = []
-#                    for i, child_key in enumerate(topic.child_keys):
-#                        if child_key.kind() == "Video":
-#                            vps.append(VideoPlaylist(
-#                                video=child_key,
-#                                playlist=playlist,
-#                                video_position=i,
-#                                live_association = True
-#                                ))
+                    vps = []
+                    for i, child_key in enumerate(topic.child_keys):
+                        if child_key.kind() == "Video":
+                            vps.append(VideoPlaylist(
+                                video=child_key,
+                                playlist=playlist,
+                                video_position=i,
+                                live_association = True
+                                ))
 
-#                    logging.info("Creating new VideoPlaylists...")
-#                    db.put(vps)
+                    logging.info("Creating new VideoPlaylists...")
+                    db.put(vps)
             else:
                 logging.info("Playlist matching topic " + topic.standalone_title + " not found.")
 
