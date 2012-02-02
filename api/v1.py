@@ -1645,7 +1645,6 @@ def update_public_user_badges():
             updated_badge_list.append(None)
     
     badge_awarded = False
-    profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data)
     if (len(updated_badge_list) == util_badges.NUM_PUBLIC_BADGE_SLOTS
             and not any([badge is None for badge in updated_badge_list])):
         if profile_badges.ProfileCustomizationBadge.mark_display_case_filled(user_data):
