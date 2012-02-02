@@ -71,13 +71,13 @@ def youtube_get_video_data(video):
 
 class YouTubeSyncStep:
     START = 0
-    UPDATE_VIDEO_AND_PLAYLIST_DATA = 1 # Sets all VideoPlaylist.last_live_association_generation = Setting.last_youtube_sync_generation_start
-    UPDATE_VIDEO_AND_PLAYLIST_READABLE_NAMES = 2
-    COMMIT_LIVE_ASSOCIATIONS = 3 # Put entire set of video_playlists in bulk according to last_live_association_generation
-    INDEX_VIDEO_DATA = 4
-    INDEX_PLAYLIST_DATA = 5
-    REGENERATE_LIBRARY_CONTENT = 6
-    UPDATE_VI = 7
+#    UPDATE_VIDEO_AND_PLAYLIST_DATA = 1 # Sets all VideoPlaylist.last_live_association_generation = Setting.last_youtube_sync_generation_start
+#    UPDATE_VIDEO_AND_PLAYLIST_READABLE_NAMES = 2
+#    COMMIT_LIVE_ASSOCIATIONS = 3 # Put entire set of video_playlists in bulk according to last_live_association_generation
+#    INDEX_VIDEO_DATA = 4
+#    INDEX_PLAYLIST_DATA = 5
+#    REGENERATE_LIBRARY_CONTENT = 6
+    UPDATE_FROM_TOPICS = 1
 
 class YouTubeSyncStepLog(db.Model):
     step = db.IntegerProperty()
@@ -107,27 +107,27 @@ class YouTubeSync(request_handler.RequestHandler):
 
         if step == YouTubeSyncStep.START:
             self.startYouTubeSync()
-        elif step == YouTubeSyncStep.UPDATE_VIDEO_AND_PLAYLIST_DATA:
-            self.updateVideoAndPlaylistData()
-        elif step == YouTubeSyncStep.UPDATE_VIDEO_AND_PLAYLIST_READABLE_NAMES:
-            self.updateVideoAndPlaylistReadableNames()
-        elif step == YouTubeSyncStep.COMMIT_LIVE_ASSOCIATIONS:
-            self.commitLiveAssociations()
-        elif step == YouTubeSyncStep.INDEX_VIDEO_DATA:
-            self.indexVideoData()
-        elif step == YouTubeSyncStep.INDEX_PLAYLIST_DATA:
-            self.indexPlaylistData()
-        elif step == YouTubeSyncStep.REGENERATE_LIBRARY_CONTENT:
-            self.regenerateLibraryContent()
-        elif step == YouTubeSyncStep.UPDATE_VI:
-            self.copyViToPlaylist()
+#        elif step == YouTubeSyncStep.UPDATE_VIDEO_AND_PLAYLIST_DATA:
+#            self.updateVideoAndPlaylistData()
+#        elif step == YouTubeSyncStep.UPDATE_VIDEO_AND_PLAYLIST_READABLE_NAMES:
+#            self.updateVideoAndPlaylistReadableNames()
+#        elif step == YouTubeSyncStep.COMMIT_LIVE_ASSOCIATIONS:
+#            self.commitLiveAssociations()
+#        elif step == YouTubeSyncStep.INDEX_VIDEO_DATA:
+#            self.indexVideoData()
+#        elif step == YouTubeSyncStep.INDEX_PLAYLIST_DATA:
+#            self.indexPlaylistData()
+#        elif step == YouTubeSyncStep.REGENERATE_LIBRARY_CONTENT:
+#            self.regenerateLibraryContent()
+        elif step == YouTubeSyncStep.UPDATE_FROM_TOPICS:
+            self.copyTopicsToPlaylist()
 
         log = YouTubeSyncStepLog()
         log.step = step
         log.generation = int(Setting.last_youtube_sync_generation_start())
         log.put()
 
-        if step < YouTubeSyncStep.UPDATE_VI:
+        if step < YouTubeSyncStep.UPDATE_FROM_TOPICS:
             self.task_step(step + 1)
 
     def task_step(self, step):
@@ -293,25 +293,34 @@ class YouTubeSync(request_handler.RequestHandler):
     def regenerateLibraryContent(self):
         taskqueue.add(url='/library_content', queue_name='youtube-sync-queue')
 
-    def copyViToPlaylist(self):
-        topic = Topic.get_by_id("vi-hart")
-        playlist = Playlist.all().filter("title =", "Vi Hart").get()
-        if playlist is None:
-            playlist = Playlist(
-                title="Vi Hart",
-                description="Recreational mathematics and inspirational videos by resident mathemusician Vi Hart",
-                readable_id="vi-hart"
-                )
-            playlist.put()
-        child_keys = topic.child_keys
-        vps = VideoPlaylist.all().filter("playlist =", playlist).fetch(10000)
-        db.delete(vps)
-        for i, child_key in enumerate(topic.child_keys):
-            vp = VideoPlaylist(
-                video=child_key,
-                playlist=playlist,
-                video_position=i,
-                live_association = True
-                )
-            vp.put()
+    def copyTopicsToPlaylist(self):
+        topic_list = Topic.get_content_topics()
+
+        for topic in topic_list:
+            playlist = Playlist.all().filter("title =", topic.standalone_title).get()
+            if playlist:
+                logging.info("Copying topic " + topic.standalone_title + " to playlist.")
+                child_keys = topic.child_keys
+                vps = VideoPlaylist.all().filter("playlist =", playlist).order("video_position").fetch(10000)
+
+                if [vp.video.key() for vp in vps] == [key for key in topic.child_keys if key.kind() == "Video"]:
+                    logging.info("Child keys identical. No changes will be made.")
+                else:
+
+                    logging.info("Deleting old VideoPlaylists...")
+                    db.delete(vps)
+
+                    vps = []
+                    for i, child_key in enumerate(topic.child_keys):
+                        vps.append(VideoPlaylist(
+                            video=child_key,
+                            playlist=playlist,
+                            video_position=i,
+                            live_association = True
+                            ))
+
+                    logging.info("Creating new VideoPlaylists...")
+                    db.put(vps)
+            else:
+                logging.info("Playlist matching topic " + topic.standalone_title + " not found.")
 

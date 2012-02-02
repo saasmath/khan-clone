@@ -28,6 +28,8 @@ class EditContent(request_handler.RequestHandler):
     def get(self):
         if self.request.get('migrate', False):
             return self.topic_migration()
+        if self.request.get('fixdupes', False):
+            return self.fix_duplicates()
 
         version_name = self.request.get('version', 'edit')
 
@@ -65,6 +67,50 @@ class EditContent(request_handler.RequestHandler):
         deferred.defer(load_videos, version)
         print "migration started... progress can be monitored in the logs"
 
+    def fix_duplicates(self):
+        video_list = [v for v in models.Video.all()]
+        video_dict = dict()
+
+        duplicate_video_count = 0
+        duplicates = []
+        
+        for video in video_list:
+            if not video.readable_id in video_dict:
+                video_dict[video.readable_id] = []
+            video_dict[video.readable_id].append(video)
+
+        for readable_id, videos in video_dict.iteritems():
+            if len(videos) > 1:
+                canonical_key_id = 0
+                for video in videos:
+                    if video.key().id() > canonical_key_id and not video.youtube_id.endswith('_player'):
+                        canonical_key_id = video.key().id()
+
+                dup_idx = 0
+                for video in videos:
+                    if video.key().id() != canonical_key_id:
+                        video.readable_id = video.readable_id + "_DUP_" + str(dup_idx)
+                        video.youtube_id = video.youtube_id + "_DUP_" + str(dup_idx)
+                        duplicates.append(video)
+                        dup_idx += 1
+
+                duplicate_video_count += 1
+
+        if len(duplicates) > 0:
+            # Create a topic to hold the duplicates
+            logging.info("Creating duplicate videos topic...");
+            version = models.TopicVersion.get_by_id("edit")
+            new_topic = models.Topic.insert(title = "Duplicate videos", parent = None,
+                            version = version,
+                            hide = True, standalone_title = "Duplicate videos",
+                            description = "Automatically generated list of old duplicate videos",
+                            child_keys = [v.key() for v in duplicates])
+            models.Topic.get_by_id("root", version).add_child(new_topic, None)
+            
+            logging.info("Writing " + str(len(duplicates)) + " videos that have duplicates (" + str(duplicate_video_count) + " unique videos)")
+            db.put(duplicates)
+        else:
+            logging.info("No duplicate videos found.")
 
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):

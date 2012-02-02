@@ -5,7 +5,7 @@
 </div>
 
 {{#if oldValues.title }}<span class="old-value">Old value: <input type="text" disabled value="{{ oldValues.title }}" maxlength="32"/></span><br/>{{/if}}
-
+    
 <div>
   <a href="javascript:" data-id="remove_item" class="item-action left-align simple-button blue action-gradient">Remove from topic</a>
 </div>
@@ -29,8 +29,8 @@
       <tr>
         <td style="font-weight:bold;">Slug</td>
         <td style="padding-bottom:9px;">
-          <input type="text" name="readable_id" value="{{ model.readable_id }}" maxlength="32"/><br/>
-          {{#if oldValues.readable_id }}<span class="old-value">Old value: <input type="text" disabled value="{{ oldValues.readable_id }}" maxlength="32"/></span><br/>{{/if}}
+          <input type="text" name="readable_id" value="{{ model.readable_id }}" maxlength="64"/><br/>
+          {{#if oldValues.readable_id }}<span class="old-value">Old value: <input type="text" disabled value="{{ oldValues.readable_id }}" maxlength="64"/></span><br/>{{/if}}
           <em>Short identifier used as a key for the API and in URLs linking to this video</em>
         </td>
       </tr>
