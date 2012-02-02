@@ -761,13 +761,64 @@ def save_video(video_id="", version_id = "edit"):
     version = models.TopicVersion.get_by_id(version_id)
     video = models.Video.get_for_readable_id(video_id, version)
 
+    def check_duplicate(new_data, video=None):
+        # make sure we are not changing the video's readable_id to another one's
+        query = models.Video.all()
+        query = query.filter("readable_id =", new_data["readable_id"])
+        if video:
+            query = query.filter("__key__ !=", video.key())
+        other_video = query.get()
+                
+        if other_video:
+            return api_invalid_param_response(
+                "Video with readable_id %s already exists" %
+                (new_data["readable_id"]))        
+        
+        # make sure we are not changing the video's youtube_id to another one's
+        query = models.Video.all()
+        query = query.filter("youtube_id =", new_data["youtube_id"])
+        if video:
+            query = query.filter("__key__ !=", video.key())
+        other_video = query.get()
+        
+        if other_video:
+            return api_invalid_param_response(
+                "Video with youtube_id %s already appears with readable_id %s" %
+                (new_data["youtube_id"], video.readable_id)) 
+
+        # make sure we are not changing the video's readable_id to an updated one in the Version's Content Changes
+        changes = models.VersionContentChange.get_updated_content_dict(version)
+        for key, content in changes.iteritems():
+            if type(content) == models.Video and (video is None or 
+                                                  key != video.key()): 
+                logging.info(key)
+                logging.info(video.key())
+                if content.readable_id == new_data["readable_id"]:
+                    return api_invalid_param_response(
+                        "Video with readable_id %s already exists" %
+                        (new_data["readable_id"]))
+                       
+                elif content.youtube_id == new_data["youtube_id"]:
+                    return api_invalid_param_response(
+                        "Video with youtube_id %s already appears with readable_id %s" %
+                        (new_data["youtube_id"], video.readable_id))  
+
     if video:
+        error = check_duplicate(request.json, video)
+        if error:
+            return error
         return models.VersionContentChange.add_content_change(video, 
             version, 
             request.json, 
             ["readable_id", "title", "youtube_id", "description", "keywords"])
 
+    # handle making a new video
     else:
+        # make sure video doesn't already exist
+        error = check_duplicate(request.json)
+        if error:
+            return error
+
         video_data = youtube_get_video_data_dict(request.json["youtube_id"])
         if video_data is None:
             return None
