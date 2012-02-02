@@ -303,7 +303,14 @@ class YouTubeSync(request_handler.RequestHandler):
                 child_keys = topic.child_keys
                 vps = VideoPlaylist.all().filter("playlist =", playlist).order("video_position").fetch(10000)
 
-                if [vp.video.key() for vp in vps] == [key for key in topic.child_keys if key.kind() == "Video"]:
+                video_keys = []
+                for vp in vps:
+                    try:
+                        video_keys.append(vp.video.key())
+                    except ReferencePropertyResolveError:
+                        logging.info("Found reference to missing video in VideoPlaylist!")
+
+                if video_keys == [key for key in topic.child_keys if key.kind() == "Video"]:
                     logging.info("Child keys identical. No changes will be made.")
                 else:
 
