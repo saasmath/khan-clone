@@ -88,8 +88,8 @@ if (typeof Profile !== "undefined") {
             highlight: ".vertical-tab-list",
             overlay: true,
             position: 3,
-            buttons: [(isFullyEditable ?
-                ({
+            buttons: (isFullyEditable ?
+                [{
                     action: guiders.ButtonAction.CLOSE,
                     text: "Close",
                     classString: "simple-button action-gradient"
@@ -98,12 +98,12 @@ if (typeof Profile !== "undefined") {
                     action: guiders.ButtonAction.NEXT,
                     text: "Next",
                     classString: "simple-button action-gradient green"
-                }) : {
+                }] : [{
                     action: guiders.ButtonAction.CLOSE,
                     text: "OK! Let me play with the page!",
                     classString: "simple-button action-gradient green"
-                }
-            )],
+                }]
+            ),
             title: "Checking Your Vitals",
             description: "The statistics about your progress on Khan Academy are just a click away in the navigation menu. Don't worry, though, only you and your coaches can see this and nobody else."
         });
