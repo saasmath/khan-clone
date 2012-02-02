@@ -45,6 +45,9 @@ class EditContent(request_handler.RequestHandler):
             'edit_version': jsonify(edit_version),
             'tree_nodes': jsonify(tree_nodes)
             }
+
+        for child in data.children:
+            logging.info("Found " + child["title"])
  
         self.render_jinja2_template('topics-admin.html', template_values)
         return
@@ -72,6 +75,7 @@ class EditContent(request_handler.RequestHandler):
         video_dict = dict()
 
         duplicate_video_count = 0
+        duplicates = []
         
         for video in video_list:
             if not video.readable_id in video_dict:
@@ -80,53 +84,36 @@ class EditContent(request_handler.RequestHandler):
 
         for readable_id, videos in video_dict.iteritems():
             if len(videos) > 1:
-                deferred.defer(fix_duplicate_videos, readable_id, videos)
+                canonical_key_id = 0
+                for video in videos:
+                    if video.key().id() > canonical_key_id and not video.youtube_id.endswith('_player'):
+                        canonical_key_id = video.key().id()
+
+                dup_idx = 0
+                for video in videos:
+                    if video.key().id() != canonical_key_id:
+                        video.readable_id = video.readable_id + "_DUP_" + str(dup_idx)
+                        video.youtube_id = video.youtube_id + "_DUP_" + str(dup_idx)
+                        duplicates.append(video)
+                        dup_idx += 1
+
                 duplicate_video_count += 1
 
-        logging.info("Found " + str(duplicate_video_count) + " videos that have duplicates")
-
-def fix_duplicate_videos(readable_id, videos):
-    logging.info("Video ID " + readable_id + ": " + str(len(videos)) + " instances")
-
-    canonical_key_id = 0
-    for video in videos:
-        if video.key().id() > canonical_key_id and not video.youtube_id.endswith('_player'):
-            canonical_key_id = video.key().id()
-
-    for video in videos:
-        if video.key().id() != canonical_key_id:
-            references = []
-
-            # Add topics that refer to this video
-            references.extend(video.topic_string_keys)
-
-            # Add UserVideos
-            user_videos = [str(e.key()) for e in models.UserVideo.all().filter('video =', video)]
-            references.extend(user_videos)
-
-            # Add VideoLogs
-            video_logs = [str(e.key()) for e in models.VideoLog.all().filter('video =', video)]
-            references.extend(video_logs)
-
-            # Add VideoPlaylists
-            video_playlists = [str(e.key()) for e in models.VideoPlaylist.all().filter('video =', video)]
-            references.extend(video_playlists)
-
-            # Add ExerciseVideo
-            exercise_videos = [str(e.key()) for e in models.ExerciseVideo.all().filter('video =', video)]
-            references.extend(exercise_videos)
-
-            logging.info("Duplicate instance " + str(video.key()) + ": " + str(len(references)) + " references")
-            if video.topic_string_keys:
-                logging.info(str(len(video.topic_string_keys)) + " Topics.")
-            if user_videos:
-                logging.info(str(len(user_videos)) + " UserVideos.")
-            if video_logs:
-                logging.info(str(len(video_logs)) + " VideoLogs.")
-            if video_playlists:
-                logging.info(str(len(video_playlists)) + " VideoPlaylists.")
-            if exercise_videos:
-                logging.info(str(len(exercise_videos)) + " ExerciseVideos.")
+        if len(duplicates) > 0:
+            # Create a topic to hold the duplicates
+            logging.info("Creating duplicate videos topic...");
+            version = models.TopicVersion.get_by_id("edit")
+            new_topic = models.Topic.insert(title = "Duplicate videos", parent = None,
+                            version = version,
+                            hide = True, standalone_title = "Duplicate videos",
+                            description = "Automatically generated list of old duplicate videos",
+                            child_keys = [v.key() for v in duplicates])
+            models.Topic.get_by_id("root", version).add_child(new_topic, None)
+            
+            logging.info("Writing " + str(len(duplicates)) + " videos that have duplicates (" + str(duplicate_video_count) + " unique videos)")
+            db.put(duplicates)
+        else:
+            logging.info("No duplicate videos found.")
 
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):
