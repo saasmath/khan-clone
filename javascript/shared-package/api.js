@@ -25,12 +25,17 @@ var APIActionResults = {
                 try { eval("var result = " + xhr.responseText); }
                 catch (e) { return; }
 
-                if (result && result.action_results) {
-                    $(APIActionResults.hooks).each(function(ix, el) {
-                        if (typeof result.action_results[el.prop] !== "undefined") {
-                            el.fxn(result.action_results[el.prop]);
-                        }
-                    });
+                if (result) {
+                    // Result format may differ depending on if 'casing=camel'
+                    // was provided in the request.
+                    var action = result['action_results'] || result['actionResults'];
+                    if (action) {
+                        $(APIActionResults.hooks).each(function(ix, el) {
+                            if (typeof action[el.prop] !== "undefined") {
+                                el.fxn(action[el.prop]);
+                            }
+                        });
+                    }
                 }
             }
         });
