@@ -46,8 +46,8 @@
 .achievement-badge.compact .delete-icon {
     /* TODO: make pretty! */
     position: absolute;
-    top: -10px;
-    right: -10px;
+    top: -1px;
+    right: -1px;
     background: red;
     cursor: pointer;
     width: 15px;
@@ -58,9 +58,9 @@
     line-height: 15px;
     font-weight: bold;
 
-    -moz-border-radius: 15px;
-    -webkit-border-radius: 15px;
-    border-radius: 15px;
+    -moz-border-radius-topright: 5px;
+    -webkit-border-top-right-radius: 5px;
+    border-top-right-radius: 5px;
 
     text-shadow: none;
     z-index: 1;
