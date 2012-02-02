@@ -818,13 +818,15 @@ ul.dropdown ul li {
 @media all and (max-width: 1185px) {
     .main-case {
         width: 435px;
-        overflow: hidden;
+        overflow-x: scroll;
+        overflow-y: hidden;
     }
 }
 @media all and (max-width: 1025px) {
     .main-case {
         width: 325px;
-        overflow: hidden;
+        overflow-x: scroll;
+        overflow-y: hidden;
     }
 }
 .lte8 .user-card {
