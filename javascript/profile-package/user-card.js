@@ -122,7 +122,7 @@ var ProfileModel = Backbone.Model.extend({
 
         // Must be synced with server's understanding
         // in UniqueUsername.is_valid_username()
-        if (/^[a-z][a-z0-9]{4,}$/.test(username)) {
+        if (/^[a-z][a-z0-9]{2,}$/.test(username)) {
             $.ajax({
                 url: "/api/v1/user/username_available",
                 type: "GET",
@@ -134,7 +134,7 @@ var ProfileModel = Backbone.Model.extend({
             });
         } else {
             var message = "";
-            if (username.length < 5) {
+            if (username.length < 3) {
                 message = "Too short.";
             } else if (/^[^a-z]/.test(username)) {
                 message = "Start with a letter.";

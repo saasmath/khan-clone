@@ -724,9 +724,9 @@ class UniqueUsername(db.Model):
         """ Builds a unique, canonical version of a username. """
         return username.replace('.', '').lower()
 
-    # Usernames must be at least 5 characters long (excluding periods), must
+    # Usernames must be at least 3 characters long (excluding periods), must
     # start with a letter
-    VALID_KEY_NAME_RE = re.compile('^[a-z][a-z0-9]{4,}$')
+    VALID_KEY_NAME_RE = re.compile('^[a-z][a-z0-9]{2,}$')
 
     @staticmethod
     def is_valid_username(username, key_name=None):

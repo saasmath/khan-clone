@@ -26,7 +26,7 @@ class UsernameTest(test_utils.GAEModelTestCase):
     def test_bad_user_name_fails_validation(self):
         self.assertFalse(self.validate(''))
         self.assertFalse(self.validate('a')) # Too short
-        self.assertFalse(self.validate('aaaa')) # Still too short
+        self.assertFalse(self.validate('aa')) # Still too short
         self.assertFalse(self.validate('4scoresand7years')) # Must start with letter
         self.assertFalse(self.validate('.dotsarebadtoo'))
         self.assertFalse(self.validate('!nvalid'))
