@@ -134,7 +134,7 @@
     /* simulate a triangle with borders */
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-bottom: 10px solid #999; /* must be the same as badge-picker */
+    border-top: 10px solid #999; /* must be the same as badge-picker */
 
     left: 50%;
     margin-left: -10px;
@@ -154,4 +154,16 @@
 }
 #animating-badge .achievement-badge.compact {
     border: 1px solid #999;
+}
+
+@media all and (max-width: 1185px) {
+    .achievement-badge .selected-indicator {
+        border-top: none;
+        border-left: 20px solid transparent;
+        border-right: 20px solid transparent;
+        border-bottom: 10px solid #999;
+        left: 50%;
+        margin-left: -20px;
+        bottom: -1px;
+    }
 }
