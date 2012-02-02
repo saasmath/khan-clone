@@ -309,7 +309,7 @@ class YouTubeSync(request_handler.RequestHandler):
                     try:
                         playlist_keys.append(vp.video.key())
                         playlist_info.append((str(vp.video.key()), vp.video.title, vp.video.readable_id))
-                    except ReferencePropertyResolveError:
+                    except db.ReferencePropertyResolveError:
                         logging.info("Found reference to missing video in VideoPlaylist!")
 
                 topic_keys = [key for key in topic.child_keys if key.kind() == "Video"]
