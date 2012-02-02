@@ -75,7 +75,7 @@ var ProfileModel = Backbone.Model.extend({
             // Note that Backbone.Model.save accepts arguments to save to
             // the model before saving, so check for those first.
             "avatarName": this.getIfUndefined(attrs, "avatarName"),
-            "nickname": this.getIfUndefined(attrs, "nickname"),
+            "nickname": this.getIfUndefined(attrs, "nickname").trim(),
             "username": this.getIfUndefined(attrs, "username"),
             "isPublic": this.getIfUndefined(attrs, "isPublic")
         });
@@ -107,13 +107,17 @@ var ProfileModel = Backbone.Model.extend({
         }
     },
 
+    validateNickname: function(nickname) {
+        this.trigger("validate:nickname", (nickname.trim().length > 0));
+    },
+
     validateUsername: function(username) {
         // Can't define validate() (or I don't understand how to)
         // because of https://github.com/documentcloud/backbone/issues/233
 
         // Remove any feedback if user returns to her current username
         if (username === this.get("username")) {
-            $(".sidenote").removeClass("success").removeClass("error").text("");
+            this.trigger("validate:username");
             return;
         }
 
@@ -141,13 +145,13 @@ var ProfileModel = Backbone.Model.extend({
             } else {
                 message = "Alphanumeric only.";
             }
-            this.trigger("validate:username", false, message);
+            this.trigger("validate:username", message, false);
         }
     },
 
     onValidateUsernameResponse_: function(isUsernameAvailable) {
         var message = isUsernameAvailable ? "Looks good!" : "Not available.";
-        this.trigger("validate:username", isUsernameAvailable, message);
+        this.trigger("validate:username", message, isUsernameAvailable);
     }
 });
 
@@ -179,7 +183,7 @@ UserCardView = Backbone.View.extend({
         this.model.bind("change:isCoachingLoggedInUser",
                 _.bind(this.onIsCoachingLoggedInUserChanged_, this));
         this.model.bind("change:nickname", function(model) {
-                $(".nickname").val(model.get("nickname"));
+                $(".nickname").text(model.get("nickname"));
         });
         this.model.bind("change:isPublic", this.onIsPublicChanged_);
 

@@ -7,6 +7,7 @@ UsernamePickerView = Backbone.View.extend({
     id: "username-picker-container",
 
     events: {
+        "keyup .nickname": "onNicknameKeyup_",
         "keyup .username": "onUsernameKeyup_",
         "click #save-profile-info": "onSaveClick_",
         "click #cancel-profile-info": "toggle"
@@ -16,8 +17,10 @@ UsernamePickerView = Backbone.View.extend({
         this.template = Templates.get("profile.username-picker");
         this.shouldShowUsernameWarning_ = false;
         this.keyupTimeout = null;
+        this.model.bind("validate:nickname",
+            _.bind(this.onValidateNickname_, this));
         this.model.bind("validate:username",
-            _.bind(this.showMessage_, this));
+            _.bind(this.onValidateUsername_, this));
     },
 
     render: function() {
@@ -64,6 +67,10 @@ UsernamePickerView = Backbone.View.extend({
         }, this);
     },
 
+    onNicknameKeyup_: function() {
+        this.model.validateNickname(this.$(".nickname").val());
+    },
+
     onUsernameKeyup_: function(e) {
         if (this.shouldShowUsernameWarning_ && this.model.get("username")) {
             $(".notification.error").show();
@@ -84,21 +91,44 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onTimeout_: function() {
-        this.$(".sidenote").text("Checking...")
-            .removeClass("success")
-            .removeClass("error");
+        this.showSidenote_(".username-row", "Checking...");
         this.model.validateUsername(this.$(".username").val());
         this.keyupTimeout = null;
     },
 
-    showMessage_: function(isValid, message) {
+    onValidateNickname_: function(isValid) {
         if (isValid) {
-            this.$(".sidenote").addClass("success").removeClass("error");
+            this.showSidenote_(".nickname-row", "");
         } else {
-            this.$(".sidenote").addClass("error").removeClass("success");
+            this.showSidenote_(".nickname-row", "Too short.", false);
         }
-        this.$("#save-profile-info").prop("disabled", !isValid);
-        this.$(".sidenote").text(message);
+    },
+
+    onValidateUsername_: function(message, isValid) {
+        this.showSidenote_(".username-row", message, isValid);
+    },
+
+    /**
+     * Show the message in the specified row's sidenote.
+     * If isValid === true, show a green checkmark (success),
+     * if isValid === false, show a red x (error),
+     * otherwise, don't show any such indicator.
+     */
+    showSidenote_: function(rowSelector, message, isValid) {
+        var jelSidenote = this.$(rowSelector).find(".sidenote"),
+            message = message || "";
+
+        jelSidenote.removeClass("error").removeClass("success");
+
+        if (isValid === true) {
+            jelSidenote.addClass("success");
+        } else if (isValid === false){
+            jelSidenote.addClass("error");
+        }
+
+        this.$("#save-profile-info").prop("disabled", (isValid === false));
+
+        jelSidenote.text(message);
     },
 
     onChangeSuccess_: function(model, response) {
@@ -106,7 +136,7 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onChangeError_: function(model, response) {
-        this.showMessage_(false, response.responseText);
+        this.onValidateUsername_(response.responseText, false);
     },
 
     onSaveClick_: function() {
