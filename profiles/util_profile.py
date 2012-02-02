@@ -147,12 +147,12 @@ class ViewClassProfile(request_handler.RequestHandler):
 
 class ViewProfile(request_handler.RequestHandler):
     @ensure_xsrf_cookie
-    def get(self, email_or_username=None, unused=None):
+    def get(self, email_or_username=None, subpath=None):
         """Render a student profile.
 
         Keyword arguments:
         email_or_username -- matches the first grouping in /profile/(.+?)/(.*)
-        unused -- matches the second grouping, and is ignored server-side,
+        subpath -- matches the second grouping, and is ignored server-side,
         but is used to route client-side
 
         """
@@ -170,6 +170,18 @@ class ViewProfile(request_handler.RequestHandler):
             user_data = current_user_data
         else:
             user_data = UserData.get_from_url_segment(email_or_username)
+            if (models.UniqueUsername.is_valid_username(email_or_username)
+                    and user_data.username
+                    and user_data.username != email_or_username):
+                # The path segment is a username and resolved to the user,
+                # but is not actually their canonical name. Redirect to the
+                # canonical version.
+                if subpath:
+                    self.redirect("/profile/%s/%s" % (user_data.username,
+                                                      subpath))
+                else:
+                    self.redirect("/profile/%s" % user_data.username)
+                return
 
         tz_offset = self.request_int("tz_offset", default=0)
 

@@ -796,6 +796,16 @@ class UniqueUsername(db.Model):
             return
         entity.release_date = clock.utcnow()
         entity.put()
+        
+    @staticmethod
+    def get_canonical(username):
+        """ Returns the entity with the canonical format of the user name, as
+        it was originally claimed by the user, given a string that may include
+        more or less period characters in it.
+        e.g. "joe.smith" may actually translate to "joesmith"
+        """
+        key_name = UniqueUsername.build_key_name(username)
+        return UniqueUsername.get_by_key_name(key_name)
 
 class NicknameIndex(db.Model):
     """ Index entries to be able to search users by their nicknames.
@@ -1083,8 +1093,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
     def get_from_username(username):
         if not username:
             return None
+        canonical_username = UniqueUsername.get_canonical(username)
+        if not canonical_username:
+            return None
         query = UserData.all()
-        query.filter('username =', username)
+        query.filter('username =', canonical_username.username)
         return query.get()
 
     @staticmethod
