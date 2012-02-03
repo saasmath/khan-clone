@@ -235,7 +235,7 @@ UserCardView = Backbone.View.extend({
     bindQtip_: function() {
         this.$("#edit-visibility").qtip({
             content: {
-                text: "Making your profile public will give you a link to your profile you can share with your friends, and allow your information to appear when others search for you.",
+                text: "Making your profile public will make the information in this user card visible to anyone who visits your profile page. It will also allow your user card to show up when your friends search for you.",
                 title: {
                     text: "Profile Privacy Setting"
                 }
