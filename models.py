@@ -719,6 +719,11 @@ class UniqueUsername(db.Model):
     # is in use
     release_date = db.DateTimeProperty()
 
+    # The user_id value of the UserData that claimed this username.
+    # NOTE - may be None for some old UniqueUsername objects, or if it was
+    # just blocked off for development.
+    claimer_id = db.StringProperty()
+
     @staticmethod
     def build_key_name(username):
         """ Builds a unique, canonical version of a username. """
@@ -760,7 +765,7 @@ class UniqueUsername(db.Model):
     HOLDING_PERIOD_DELTA = datetime.timedelta(120)
 
     @staticmethod
-    def _claim_internal(desired_name, clock=None):
+    def _claim_internal(desired_name, claimer_id=None, clock=None):
         key_name = UniqueUsername.build_key_name(desired_name)
         if not UniqueUsername.is_valid_username(desired_name, key_name):
             return False
@@ -771,11 +776,12 @@ class UniqueUsername(db.Model):
             entity = UniqueUsername(key_name=key_name)
             entity.username = desired_name
             entity.release_date = UniqueUsername.INFINITELY_FAR_FUTURE
+            entity.claimer_id = claimer_id
             entity.put()
         return is_available
 
     @staticmethod
-    def claim(desired_name, clock=None):
+    def claim(desired_name, claimer_id=None, clock=None):
         """ Claim an unclaimed username.
 
         Return True on success, False if you are a slow turtle or invalid.
@@ -789,6 +795,7 @@ class UniqueUsername(db.Model):
 
         return db.run_in_transaction(UniqueUsername._claim_internal,
                                      desired_name,
+                                     claimer_id,
                                      clock)
 
     @staticmethod
@@ -1440,7 +1447,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
         # Since we are guaranteed to be in a transaction, and GAE does not
         # support nested transactions, bypass making a transaction
         # in UniqueUsername
-        claim_success = UniqueUsername._claim_internal(name, clock)
+        claim_success = UniqueUsername._claim_internal(name,
+                                                       claimer_id=self.user_id,
+                                                       clock=clock)
         if claim_success:
             if self.username:
                 UniqueUsername.release(self.username, clock)
