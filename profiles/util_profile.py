@@ -171,6 +171,7 @@ class ViewProfile(request_handler.RequestHandler):
         else:
             user_data = UserData.get_from_url_segment(email_or_username)
             if (models.UniqueUsername.is_valid_username(email_or_username)
+                    and user_data
                     and user_data.username
                     and user_data.username != email_or_username):
                 # The path segment is a username and resolved to the user,
