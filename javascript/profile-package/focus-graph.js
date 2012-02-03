@@ -116,7 +116,7 @@ var FocusGraph = {
                 });
             }
 
-            videoFocus.data = _.map(this.segmentData.dictPlaylistSeconds, function(segment, key) {
+            videoFocus.data = _.map(this.segmentData.dictTopicSeconds, function(segment, key) {
                 return {
                     name: segment["playlistTitle"],
                     y: segment["percentage"],
@@ -151,7 +151,7 @@ var FocusGraph = {
             }
         },
         tooltip: {
-            enabled: false,
+            enabled: true,
             formatter: function() {
                 if (this.point.fLegend) {
                     return false;
@@ -200,7 +200,7 @@ var FocusGraph = {
                     percentage: 10
                 }
             },
-            dictPlaylistSeconds: {
+            dictTopicSeconds: {
                 "unused1": {
                     percentage: 32
                 },
