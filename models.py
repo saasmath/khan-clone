@@ -969,6 +969,12 @@ class UserData(GAEBingoIdentityModel, db.Model):
         if nickname is None:
             nickname = nicknames.get_default_nickname_for(self)
         new_name = nickname or ""
+
+        # TODO: Fix this in a more systematic way
+        # Ending script tags are special since we can put profile data in JSON
+        # embedded inside an HTML. Until we can fix that problem in the jsonify
+        # code, we temporarily disallow these as a stop gap.
+        new_name = new_name.replace('</script>', '')
         if new_name != self.user_nickname:
             if nickname and not nicknames.is_valid_nickname(nickname):
                 # The user picked a name, and it seems offensive. Reject it.
