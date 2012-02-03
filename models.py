@@ -1214,6 +1214,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 or email.endswith("@googlemail.com")  # Gmail in Germany
                 or email.endswith("@khanacademy.org") # We're special
                 or email.endswith("@desmondbrand.com") # so am I
+                or email.endswith("@eater.net") # me too
                 or is_facebook_user_id(email))
 
     def get_or_insert_exercise(self, exercise, allow_insert = True):
