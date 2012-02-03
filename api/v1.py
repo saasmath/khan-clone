@@ -941,14 +941,14 @@ def update_user_profile():
     if profile_json['isPublic'] is not None:
         user_data.is_profile_public = profile_json['isPublic']
 
-    user_data.put()
-
     if profile_json['username']:
         username = profile_json['username']
         if ((username != user_data.username) and
                 not user_data.claim_username(username)):
             # TODO: How much do we want to communicate to the user?
             return api_invalid_param_response("Error!")
+
+    user_data.put()
 
     result = util_profile.UserProfile.from_user(user_data, user_data)
     if badge_awarded:
