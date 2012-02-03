@@ -36,7 +36,7 @@ class CustomBadge(Badge):
     def icon_src(self):
         if self.custom_icon_src:
             return self.custom_icon_src
-        return Badge.icon_src(self)
+        return super(CustomBadge, self).icon_src
 
 class CreateCustomBadge(request_handler.RequestHandler):
     @user_util.developer_only
