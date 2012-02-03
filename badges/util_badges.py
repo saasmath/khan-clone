@@ -170,6 +170,10 @@ def get_grouped_user_badges(user_data=None):
                     user_badge.target_context_name)
             else:
                 badge = badges_dict.get(user_badge.badge_name)
+                if badge is None:
+                    logging.warning("Can't find reference badge named %s" %
+                                    user_badge.badge_name)
+                    continue
                 badge.is_owned = True
                 grouped_user_badge = badges.GroupedUserBadge.build(user_data,
                                                                    badge,
