@@ -189,6 +189,8 @@ def get_grouped_user_badges(user_data=None):
             # TODO is there a way to have handlebars json.stringify() a variable?
             badge.objectives = json.dumps(badge.exercise_names_required)
 
+    possible_badges = filter(lambda badge: not badge.is_hidden(), possible_badges)
+
     grouped_user_badges = sorted(
             filter(lambda group: (hasattr(group, "badge") and
                                   group.badge is not None),
