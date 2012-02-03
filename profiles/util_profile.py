@@ -184,7 +184,6 @@ class ViewProfile(request_handler.RequestHandler):
                     self.redirect("/profile/%s" % user_data.username)
                 return
 
-        tz_offset = self.request_int("tz_offset", default=0)
 
         profile = UserProfile.from_user(user_data, current_user_data)
 
@@ -193,9 +192,26 @@ class ViewProfile(request_handler.RequestHandler):
             return
 
         is_self = user_data.user_id == current_user_data.user_id
+        show_intro = False
+
+        if is_self:
+            promo_record = models.PromoRecord.get_for_values(
+                    "New Profile Promo", user_data.user_id)
+
+            if promo_record is None:
+                # The user has never seen the new profile page! Show a tour.
+                if subpath:
+                    # But if they're not on the root profile page, force them.
+                    self.redirect("/profile")
+                    return
+
+                show_intro = True
+                models.PromoRecord.record_promo("New Profile Promo",
+                                                user_data.user_id,
+                                                skip_check=True)
+
         has_full_access = is_self or user_data.is_coached_by(current_user_data)
-        show_intro = is_self and models.PromoRecord.record_promo(
-                "New Profile Promo", user_data.user_id)
+        tz_offset = self.request_int("tz_offset", default=0)
         
         template_values = {
             'show_intro': show_intro,
