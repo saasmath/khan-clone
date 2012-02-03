@@ -1,6 +1,6 @@
-<section class="user-info vertical-shadow clearfix">
+<div class="user-info vertical-shadow clearfix">
 
-    <section class="basic-user-info" style="float: left;">
+    <div class="basic-user-info" style="float: left;">
       <div class="avatar-pic-container{{#if isEditable}} editable{{/if}}" style="float:left;" >
         <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic" >
         <div class="avatar-change-overlay" style="display: none">Change avatar</div>
@@ -52,12 +52,12 @@
               <div class="simple-stat"><span title="{{commafy points}} energy points" class="energy-points-badge" style="float:none; display:block; margin-bottom: 1px; margin-top: 2px; padding:0; line-height: 20px;">{{commafy points}}</span> Energy Points</div>
           </div>
       </div>
-    </section>
+    </div>
     <div class="sticker-book">
         <a class="display-case-cover" href="javascript:void(0)"></a>
     </div>
 
-</section>
+</div>
 {{#if isFullyEditable}}
 <a href="javascript:void(0)" id="edit-visibility"
     class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
