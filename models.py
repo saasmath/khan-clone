@@ -137,7 +137,7 @@ class Exercise(db.Model):
     last_modified = db.DateTimeProperty()
     creation_date = db.DateTimeProperty(auto_now_add=True, default=datetime.datetime(2011, 1, 1))
     description = db.TextProperty()
-    tags = db.StringListProperty() 
+    tags = db.StringListProperty()
 
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
@@ -796,7 +796,7 @@ class UniqueUsername(db.Model):
             return
         entity.release_date = clock.utcnow()
         entity.put()
-        
+
     @staticmethod
     def get_canonical(username):
         """ Returns the entity with the canonical format of the user name, as
@@ -953,7 +953,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
         themselves. Will initially default to either the Facebook name or
         part of the user's e-mail.
         """
-        
+
         # Note - we make a distinction between "None", which means the user has
         # never gotten or set their nickname, and the empty string, which means
         # the user has explicitly made an empty nickname
@@ -1212,9 +1212,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
         email = self.email
         return (email.endswith("@gmail.com")
                 or email.endswith("@googlemail.com")  # Gmail in Germany
-                or email.endswith("@khanacademy.org") # We're special
-                or email.endswith("@desmondbrand.com") # so am I
-                or email.endswith("@eater.net") # me too
+                or email.endswith("@khanacademy.org")  # We're special
+                or self.developer  # Really little kids don't write software
                 or is_facebook_user_id(email))
 
     def get_or_insert_exercise(self, exercise, allow_insert = True):
@@ -1484,7 +1483,7 @@ class TopicVersion(db.Model):
     copied_from = db.SelfReferenceProperty(indexed=False)
     last_edited_by = db.UserProperty(indexed=False)
     number = db.IntegerProperty(required=True)
-    title = db.StringProperty(indexed=False) 
+    title = db.StringProperty(indexed=False)
     description = db.StringProperty(indexed=False)
     default = db.BooleanProperty(default=False)
     edit = db.BooleanProperty(default=False)
@@ -1503,16 +1502,16 @@ class TopicVersion(db.Model):
         if version_id == "edit":
             return TopicVersion.get_edit_version()
         number = int(version_id)
-        return TopicVersion.all().filter("number =", number).get() 
-    
+        return TopicVersion.all().filter("number =", number).get()
+
     @staticmethod
     def get_by_number(number):
-        return TopicVersion.all().filter("number =", number).get() 
+        return TopicVersion.all().filter("number =", number).get()
 
     # used by get_unused_content - gets expunged by cache to frequently (when people are updating content, while this should only change when content is added)
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
-        "TopicVersion.get_all_content_keys_%s" % 
+        "TopicVersion.get_all_content_keys_%s" %
         Setting.cached_content_add_date())
     def get_all_content_keys():
         video_keys = Video.all(keys_only = True).fetch(100000)
@@ -1521,7 +1520,7 @@ class TopicVersion(db.Model):
 
         content = video_keys
         content.extend(exercise_keys)
-        content.extend(url_keys)        
+        content.extend(url_keys)
         return content
 
     def get_unused_content(self):
@@ -1529,11 +1528,11 @@ class TopicVersion(db.Model):
         used_content_keys = set()
         for t in topics:
             used_content_keys.update([c for c in t.child_keys if c.kind() != "Topic"])
-    
+
         content_keys = set(TopicVersion.get_all_content_keys())
 
         return db.get(content_keys - used_content_keys)
-        
+
 
     @staticmethod
     def get_latest_version():
@@ -1542,11 +1541,11 @@ class TopicVersion(db.Model):
     @staticmethod
     def get_latest_version_number():
         latest_version = TopicVersion.all().order("-number").get()
-        return latest_version.number if latest_version else 0 
+        return latest_version.number if latest_version else 0
 
     @staticmethod
     def create_new_version():
-        new_version_number = TopicVersion.get_latest_version_number() + 1 
+        new_version_number = TopicVersion.get_latest_version_number() + 1
         if UserData.current():
             last_edited_by = UserData.current().user
         else:
@@ -1564,7 +1563,7 @@ class TopicVersion(db.Model):
     def get_edit_version():
         version = TopicVersion.all().filter("edit = ", True).get()
         if version is None:
-            version = TopicVersion.create_edit_version()    
+            version = TopicVersion.create_edit_version()
         return version
 
     @staticmethod
@@ -1582,16 +1581,16 @@ class TopicVersion(db.Model):
 
     def copy_version(self):
         version = TopicVersion.create_new_version()
-        
+
         old_root = Topic.get_root(self)
         old_tree = old_root.make_tree(types = ["Topics"], include_hidden = True)
         TopicVersion.copy_tree(old_tree, version)
-        
+
         version.copied_from = self
         version.put()
-        
+
         return version
-        
+
     @staticmethod
     def copy_tree(old_tree, new_version, new_root=None, parent=None):
         parent_keys = []
@@ -1600,17 +1599,17 @@ class TopicVersion(db.Model):
             parent_keys = [parent.key()]
             ancestor_keys = parent_keys[:]
             ancestor_keys.extend(parent.ancestor_keys)
-        
+
         if new_root:
             key_name = old_tree.key().name()
-        else:             
-            #don't copy key_name of root as it is parentless, and needs its own key 
+        else:
+            #don't copy key_name of root as it is parentless, and needs its own key
             key_name = Topic.get_new_key_name()
 
         new_tree = util.clone_entity(old_tree,
                                      key_name = key_name,
-                                     version = new_version, 
-                                     parent = new_root, 
+                                     version = new_version,
+                                     parent = new_root,
                                      parent_keys = parent_keys,
                                      ancestor_keys = ancestor_keys)
         new_tree.put()
@@ -1620,7 +1619,7 @@ class TopicVersion(db.Model):
         old_key_new_key_dict = {}
         for child in old_tree.children:
             old_key_new_key_dict[child.key()] = TopicVersion.copy_tree(child, new_version, new_root, new_tree).key()
-        
+
         new_tree.child_keys = [c if c not in old_key_new_key_dict else old_key_new_key_dict[c] for c in old_tree.child_keys]
         new_tree.put()
         return new_tree
@@ -1681,7 +1680,7 @@ def change_default_version(version):
         Setting.topic_tree_version(version.number)
         version.put()
 
-    # using --high-replication is slow on dev, so instead not using cross-group transactions on dev 
+    # using --high-replication is slow on dev, so instead not using cross-group transactions on dev
     if App.is_dev_server:
         update_txn()
     else:
@@ -1738,17 +1737,17 @@ def rebuild_content_caches(version):
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
     logging.info("set_default_version complete")
 
-                                    
+
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
     The changes will be applied when the version is set to default
     """
-    
+
     version = db.ReferenceProperty(TopicVersion, collection_name="changes")
     # content is the video/exercise/url that has been changed
     content = db.ReferenceProperty()
     # indexing updated_on as it may be needed for rolling back
-    updated_on = db.DateTimeProperty(auto_now=True) 
+    updated_on = db.DateTimeProperty(auto_now=True)
     last_edited_by = db.UserProperty(indexed=False)
     # content_changes is a dict of the properties that have been changed
     content_changes = object_property.UnvalidatedObjectProperty()
@@ -1765,11 +1764,11 @@ class VersionContentChange(db.Model):
         content = self.updated_content()
         content.put()
 
-        if (content.key().kind() == "Exercise" 
+        if (content.key().kind() == "Exercise"
             and hasattr(content, "related_videos")):
-            UpdateExercise.do_update_related_videos(content, 
+            UpdateExercise.do_update_related_videos(content,
                                                     content.related_videos)
-    
+
         return content
 
     # if content is passed as an argument it saves a reference lookup
@@ -1778,20 +1777,20 @@ class VersionContentChange(db.Model):
             content = self.content
         elif content.key() != self.content.key():
             raise Exception("key of content passed in does not match self.content")
-        
+
         for prop, value in self.content_changes.iteritems():
             try:
                 setattr(content, prop, value)
             except AttributeError:
                 logging.info("cant set %s on a %s" % (prop, content.__class__.__name__))
-                
+
         return content
 
     @staticmethod
     @request_cache.cache()
     def get_updated_content_dict(version):
         query = VersionContentChange.all().filter("version =", version)
-        return dict((c.key(), c) for c in 
+        return dict((c.key(), c) for c in
                     [u.updated_content(u.content) for u in query])
 
     @staticmethod
@@ -1801,7 +1800,7 @@ class VersionContentChange(db.Model):
         change = query.get()
 
         if change:
-            # since we have the content already, updating the property may save 
+            # since we have the content already, updating the property may save
             # a reference lookup later
             change.content = content
 
@@ -1809,11 +1808,11 @@ class VersionContentChange(db.Model):
 
     @staticmethod
     def add_new_content(klass, version, new_props, changeable_props=None):
-        new_props = dict((str(k), v) for k,v in new_props.iteritems() 
+        new_props = dict((str(k), v) for k,v in new_props.iteritems()
                          if changeable_props is None or k in changeable_props)
         change = VersionContentChange(parent = version)
         change.version = version
-        change.content_changes = new_props 
+        change.content_changes = new_props
         content = klass(**new_props)
         content.put()
         change.content = content
@@ -1824,9 +1823,9 @@ class VersionContentChange(db.Model):
     def add_content_change(content, version, new_props, changeable_props=None):
         if changeable_props is None:
             changeable_props = new_props.keys()
-                    
+
         change = VersionContentChange.get_change_for_content(content, version)
-        
+
         if change:
             # update content with existing changes
             content = change.updated_content()
@@ -1838,31 +1837,31 @@ class VersionContentChange(db.Model):
 
         if content and content.is_saved():
             for prop in changeable_props:
-                if (prop in new_props and 
+                if (prop in new_props and
                     new_props[prop] is not None and (
                         not hasattr(content, prop) or
                         new_props[prop] != getattr(content, prop))
                         ):
-                    
+
                     # add new changes for all props that are different from what
                     # is currently in content
-                    change.content_changes[prop] = new_props[prop] 
+                    change.content_changes[prop] = new_props[prop]
         else:
             raise Exception("content does not exit yet, call add_new_content instead")
-            
+
         change.put()
         return change.content_changes
-            
+
 class Topic(Searchable, db.Model):
     title = db.StringProperty(required = True) # title used when viewing topic in a tree structure
     standalone_title = db.StringProperty() # title used when on its own
     id = db.StringProperty(required = True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
     description = db.TextProperty(indexed=False)
     parent_keys = db.ListProperty(db.Key) # to be able to access the parent without having to resort to a query - parent_keys is used to be able to hold more than one parent if we ever want that
-    ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants 
+    ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants
     child_keys = db.ListProperty(db.Key) # having this avoids having to modify Content entities
-    version = db.ReferenceProperty(TopicVersion, required = True)  
-    tags = db.StringListProperty() 
+    version = db.ReferenceProperty(TopicVersion, required = True)
+    tags = db.StringListProperty()
     hide = db.BooleanProperty(default = False)
     created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
     updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
@@ -1889,9 +1888,9 @@ class Topic(Searchable, db.Model):
 
         if not self.version.default:
             updates = VersionContentChange.get_updated_content_dict(self.version)
-            children = [c if c.key() not in updates else updates[c.key()] 
+            children = [c if c.key() not in updates else updates[c.key()]
                         for c in children]
-                 
+
         self.children = []
         for child in children:
             self.children.append({
@@ -1944,19 +1943,19 @@ class Topic(Searchable, db.Model):
         potential_id = title.lower()
         potential_id = re.sub('[^a-z0-9]', '-', potential_id);
         potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
-        potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)    
+        potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)
 
         number_to_add = 0
         current_id = potential_id
         while True:
             # need to make this an ancestor query to make sure that it can be used within transactions
             matching_topic = Topic.all().filter('id =', current_id).filter('version =', version).get()
-            
+
             if matching_topic is None: #id is unique so use it and break out
                 return current_id
             else: # id is not unique so will have to go through loop again
                 number_to_add += 1
-                current_id = '%s-%s' % (potential_id, number_to_add)    
+                current_id = '%s-%s' % (potential_id, number_to_add)
 
     @staticmethod
     def get_new_key_name():
@@ -1975,16 +1974,16 @@ class Topic(Searchable, db.Model):
             topic_dict[self.key()] = self
 
             # as topics in the tree may have more than one parent we need to add their other parents to the dict
-            unknown_parent_dict = {} 
+            unknown_parent_dict = {}
             for topic_key, topic in topic_dict.iteritems():
                 # add each parent_key that is not already in the topic_dict to the unknown_parents that we still need to get
                 unknown_parent_dict.update(dict((p, True) for p in topic.parent_keys if p not in topic_dict))
-            
+
             if unknown_parent_dict:
                 # get the unknown parents from the database and then update the topic_dict to include them
                 unknown_parent_dict.update(dict((p.key(), p) for p in db.get(unknown_parent_dict.keys())))
-                topic_dict.update(unknown_parent_dict)                
-            
+                topic_dict.update(unknown_parent_dict)
+
         # calculate the new ancestor keys for self
         ancestor_keys = set()
         for parent_key in self.parent_keys:
@@ -2020,15 +2019,15 @@ class Topic(Searchable, db.Model):
             new_parent.child_keys.insert(int(new_parent_pos), child.key())
             updated_entities.add(new_parent)
 
-            if isinstance(child, Topic): 
+            if isinstance(child, Topic):
                 # if the child is a topic make sure to update its parent list
                 old_index = child.parent_keys.index(self.key())
                 del child.parent_keys[old_index]
                 child.parent_keys.append(new_parent.key())
-                updated_entities.add(child)     
+                updated_entities.add(child)
                 # now that the child's parent has changed, go to the child all of the child's descendants and update their ancestors
                 updated_entities.update(child.update_ancestor_keys())
-        
+
         else:
             # they are moving the item within the same node, so just update self with the new position
             self.child_keys.insert(int(new_parent_pos), child.key())
@@ -2037,7 +2036,7 @@ class Topic(Searchable, db.Model):
             db.put(updated_entities)
 
         self.version.update()
-        return db.run_in_transaction(move_txn)    
+        return db.run_in_transaction(move_txn)
 
     def copy(self, title, parent=None, **kwargs):
         if not kwargs.has_key("version") and parent is not None:
@@ -2045,10 +2044,10 @@ class Topic(Searchable, db.Model):
 
         if kwargs["version"].default:
             raise Exception("You can't edit the default version")
-         
-        if self.parent(): 
-             kwargs["parent"] = Topic.get_root(kwargs["version"]) 
-            
+
+        if self.parent():
+             kwargs["parent"] = Topic.get_root(kwargs["version"])
+
         if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
 
@@ -2061,12 +2060,12 @@ class Topic(Searchable, db.Model):
         kwargs["title"] = title
         kwargs["parent_keys"] = [parent.key()] if parent else []
         kwargs["ancestor_keys"] =  kwargs["parent_keys"][:]
-        kwargs["ancestor_keys"].extend(parent.ancestor_keys if parent else []) 
+        kwargs["ancestor_keys"].extend(parent.ancestor_keys if parent else [])
 
         new_topic = util.clone_entity(self, **kwargs)
 
-        return db.run_in_transaction(Topic._insert_txn, new_topic)                   
-    
+        return db.run_in_transaction(Topic._insert_txn, new_topic)
+
     def add_child(self, child, pos=None):
         if self.version.default:
             raise Exception("You can't edit the default version")
@@ -2089,9 +2088,9 @@ class Topic(Searchable, db.Model):
         def add_txn():
             logging.info(entities_updated)
             db.put(entities_updated)
-    
+
         self.version.update()
-        return db.run_in_transaction(add_txn) 
+        return db.run_in_transaction(add_txn)
 
     def delete_child(self, child):
         if self.version.default:
@@ -2099,13 +2098,13 @@ class Topic(Searchable, db.Model):
 
         # remove the child key from self
         self.child_keys = [c for c in self.child_keys if c != child.key()]
-         
+
         # remove self from the child's parents
         if isinstance(child, Topic):
             child.parent_keys = [p for p in child.parent_keys if p != self.key()]
             num_parents = len(child.parent_keys)
             descendants = Topic.all().filter("ancestor_keys =", child.key()).fetch(10000)
-        
+
             # if there are still other parents
             if num_parents:
                 changed_descendants = child.update_ancestor_keys()
@@ -2120,9 +2119,9 @@ class Topic(Searchable, db.Model):
                     db.put(changed_descendants)
                 else:
                     db.delete(descendants)
-        
+
         self.version.update()
-        db.run_in_transaction(delete_txn)  
+        db.run_in_transaction(delete_txn)
 
     def delete_tree(self):
         parents = db.get(self.parent_keys)
@@ -2136,14 +2135,14 @@ class Topic(Searchable, db.Model):
         for parent in parents:
             parent.child_keys.append(new_topic.key())
             parent.put()
-        
+
         if new_topic.child_keys:
             child_topic_keys = [c for c in new_topic.child_keys if c.kind() == "Topic"]
             child_topics = db.get(child_topic_keys)
             for child in child_topics:
                 child.parent_keys.append(topic.key())
                 child.ancestor_keys.append(topic.key())
-            
+
             all_decendant_keys = {} # used to make sure we don't loop
             descendant_keys = {}
             descendants = child_topics
@@ -2160,7 +2159,7 @@ class Topic(Searchable, db.Model):
                 descendant_keys = {}
 
         return new_topic
-    
+
 
     @staticmethod
     def insert(title, parent=None, **kwargs):
@@ -2172,7 +2171,7 @@ class Topic(Searchable, db.Model):
                 version = parent.version
             else:
                 version = TopicVersion.get_edit_version()
-        
+
         if version.default:
             raise Exception("You can't edit the default version")
 
@@ -2197,7 +2196,7 @@ class Topic(Searchable, db.Model):
             parent_keys = [parent.key()]
             ancestor_keys = parent_keys[:]
             ancestor_keys.extend(parent.ancestor_keys)
-            
+
             new_topic = Topic(parent = root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
                               key_name = key_name,
                               version = version,
@@ -2214,17 +2213,17 @@ class Topic(Searchable, db.Model):
                               version = version,
                               id = id,
                               title = title)
-       
+
         for key in kwargs:
             setattr(new_topic, key, kwargs[key])
-       
-        version.update()                   
+
+        version.update()
         return db.run_in_transaction(Topic._insert_txn, new_topic)
 
     def update(self, **kwargs):
         if self.version.default:
             raise Exception("You can't edit the default version")
-        
+
         changed = False
         if "id" in kwargs and kwargs["id"] != self.id:
 
@@ -2234,16 +2233,16 @@ class Topic(Searchable, db.Model):
                 changed = True
             else:
                 pass # don't allow people to change the slug to a different nodes slug
-            del kwargs["id"]             
+            del kwargs["id"]
 
         for attr, value in kwargs.iteritems():
             if getattr(self, attr) != value:
                 setattr(self, attr, value)
                 changed = True
-        
+
         if changed:
             self.put()
-            self.version.update()   
+            self.version.update()
 
     # too big for memcache ... either add a layer_cache.Layers.Datastore ... or compress it
     # @layer_cache.cache_with_key_fxn(
@@ -2254,10 +2253,10 @@ class Topic(Searchable, db.Model):
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
         else:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).filter("hide = ", False).run()
-        
+
         node_dict = dict((node.key(), node) for node in nodes)
         node_dict[self.key()] = self # in case the current node is hidden (like root is)
-        
+
         contentKeys = []
         # cycle through the nodes adding its children to the contentKeys that need to be gotten
         for key, descendant in node_dict.iteritems():
@@ -2267,13 +2266,13 @@ class Topic(Searchable, db.Model):
         contentItems = db.get(contentKeys)
         # add the content to the node dict
         for content in contentItems:
-            node_dict[content.key()]=content 
-        
+            node_dict[content.key()]=content
+
         # cycle through the nodes adding each to its parent's children list
         for key, descendant in node_dict.iteritems():
             if hasattr(descendant, "child_keys"):
                 descendant.children = [node_dict[c] for c in descendant.child_keys if node_dict.has_key(c)]
-                
+
         # return the entity that was passed in, now with its children, and its descendants children all added
         return node_dict[self.key()]
 
@@ -2316,10 +2315,10 @@ class Topic(Searchable, db.Model):
         query = query.strip().lower()
 
         nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
-        
+
         node_dict = dict((node.key(), node) for node in nodes)
         node_dict[self.key()] = self # in case the current node is hidden (like root is)
-        
+
         contentKeys = []
         # cycle through the nodes adding its children to the contentKeys that need to be gotten
         for key, descendant in node_dict.iteritems():
@@ -2329,7 +2328,7 @@ class Topic(Searchable, db.Model):
         contentItems = db.get(contentKeys)
         # add the content to the node dict
         for content in contentItems:
-            node_dict[content.key()]=content 
+            node_dict[content.key()]=content
 
         matching_paths = []
         matching_nodes = []
@@ -2354,14 +2353,14 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False: 
+        lambda version=None, include_hidden = False:
         "topic.get_content_topic_%s_%s" % (
-            version.key() if version else Setting.topic_tree_version(), 
+            version.key() if version else Setting.topic_tree_version(),
             include_hidden),
         layer=layer_cache.Layers.Memcache)
     def get_content_topics(version = None, include_hidden = False):
         topics = Topic.get_all_topics(version, include_hidden)
-        
+
         content_topics = []
         for topic in topics:
             for child_key in topic.child_keys:
@@ -2379,15 +2378,15 @@ class Topic(Searchable, db.Model):
         for topic in topics:
             child_dict.update(dict((key, True) for key in topic.child_keys if key.kind() in types or (len(types) == 0 and key.kind() != "Topic")))
         child_dict.update(dict((e.key(), e) for e in db.get(child_dict.keys())))
-        
+
         for topic in topics:
-            topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]     
+            topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]
 
         return topics
 
     @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
-        keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]  
+        keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]
         if include_descendants:
             keys = []
             subtopics = Topic.all().filter("ancestor_keys =", topic.key())
@@ -2396,8 +2395,8 @@ class Topic(Searchable, db.Model):
             subtopics.run()
             for subtopic in subtopics:
                 keys.extend([key for key in subtopic.child_keys if key.kind() == kind])
-              
-        return db.get(keys) 
+
+        return db.get(keys)
 
     def get_urls(self, include_descendants=False, include_hidden=False):
         return Topic._get_children_of_kind(self, "Url", include_descendants)
@@ -2407,14 +2406,14 @@ class Topic(Searchable, db.Model):
 
     def get_videos(self, include_descendants=False, include_hidden=False):
         return Topic._get_children_of_kind(self, "Video", include_descendants)
-                            
+
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda 
-        topic, include_descendants=False, version=None: 
+    @layer_cache.cache_with_key_fxn(lambda
+        topic, include_descendants=False, version=None:
         "%s_videos_for_topic_%s_v%s" % (
-            "descendant" if include_descendants else "child", 
-            topic.key(), 
-            version.key() if version else Setting.topic_tree_version()), 
+            "descendant" if include_descendants else "child",
+            topic.key(),
+            version.key() if version else Setting.topic_tree_version()),
         layer=layer_cache.Layers.Memcache)
     def get_cached_videos_for_topic(topic, include_descendants=False, version=None):
         return Topic._get_children_of_kind(topic, "Video", include_descendants)
@@ -2424,7 +2423,7 @@ class Topic(Searchable, db.Model):
         import search
         items = search.StemmedIndex.all().filter("parent_kind", "Topic").run()
         db.delete(items)
-        
+
         topics = Topic.get_content_topics(version)
         for topic in topics:
             logging.info("Indexing topic " + topic.title + " (" + str(topic.key()) + ")")
@@ -2468,7 +2467,7 @@ class Url(db.Model):
     title = db.StringProperty(indexed=False)
     tags = db.StringListProperty()
     created_on = db.DateTimeProperty(auto_now_add=True)
-    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)        
+    updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
 
     # List of parent topics
     topic_string_keys = object_property.TsvProperty(indexed=False)
@@ -2487,7 +2486,7 @@ class Url(db.Model):
     def get_all_live(version=None):
         if not version:
             version = TopicVersion.get_default_version()
-        
+
         root = Topic.get_root(version)
         urls = root.get_urls(include_descendants = True, include_hidden = False)
         return urls
@@ -2613,23 +2612,23 @@ class Video(Searchable, db.Model):
                 change = VersionContentChange.get_change_for_content(video, version)
                 if change:
                     video = change.updated_content(video)
-            
+
             # if we didnt find any video, check to see if another video's readable_id has been updated to the one we are looking for
             else:
                 changes = VersionContentChange.get_updated_content_dict(version)
                 for key, content in changes.iteritems():
-                    if (type(content) == Video and 
+                    if (type(content) == Video and
                         content.readable_id == readable_id):
                         video = content
-                        break            
-                
+                        break
+
         return video
 
     @staticmethod
     def get_all_live(version=None):
         if not version:
             version = TopicVersion.get_default_version()
-        
+
         root = Topic.get_root(version)
         videos = root.get_videos(include_descendants = True, include_hidden = False)
         return videos
