@@ -65,6 +65,8 @@ var guiders = (function($) {
   guiders._currentGuiderID = null;
   guiders._guiders = {};
   guiders._lastCreatedGuiderID = null;
+
+  // Must be above the guider_overlay, but below the click_mask.
   guiders._zIndexForHighlight = 10001;
 
   guiders._addButtons = function(myGuider) {
@@ -188,6 +190,7 @@ var guiders = (function($) {
       if (this.style.removeAttribute) {
         this.style.removeAttribute("filter");
       }
+      $("#guider_click_mask").show();
     });
     // This callback is needed to fix an IE opacity bug.
     // See also:
@@ -204,11 +207,19 @@ var guiders = (function($) {
 
   guiders._hideOverlay = function() {
     $("#guider_overlay").fadeOut("fast");
+    $("#guider_click_mask").hide();
   };
 
   guiders._initializeOverlay = function() {
     if ($("#guider_overlay").length === 0) {
+      // The guider_overlay provides the tinting effect.
       $("<div id=\"guider_overlay\"></div>").hide().appendTo("body");
+      // The click mask captures events so that highlighted elements
+      // can't be interacted with mid-flow.
+      $("<div id=\"guider_click_mask\"></div>").hide().click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }).appendTo("body");
     }
   };
 
