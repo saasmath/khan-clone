@@ -28,6 +28,10 @@
 .main-case {
     white-space: nowrap;
 }
+.sticker-book .badge-icon {
+    max-width: 40px;
+    max-height: 40px;
+}
 .editing .main-case .achievement-badge {
     /* Must be consistent with jQuery animation */
     box-shadow: 0 0 2px #005987;
