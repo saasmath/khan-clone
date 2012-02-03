@@ -1925,8 +1925,6 @@ class Topic(Searchable, db.Model):
         return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).get()
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda version=None: 
-        "topic.get_root_%s" % (version.key() if version else Setting.topic_tree_version()))
     def get_root(version = None):
         if not version:
             version = TopicVersion.get_default_version()
@@ -2599,13 +2597,23 @@ class Video(Searchable, db.Model):
                 video = v
                 key_id = v.key().id()
         # End of hack
-        
+
         # if there is a version check to see if there are any updates to the video
         if version:
-            change = VersionContentChange.get_change_for_content(video, version)
-            if change:
-                video = change.updated_content(video)
-
+            if video:
+                change = VersionContentChange.get_change_for_content(video, version)
+                if change:
+                    video = change.updated_content(video)
+            
+            # if we didnt find any video, check to see if another video's readable_id has been updated to the one we are looking for
+            else:
+                changes = VersionContentChange.get_updated_content_dict(version)
+                for key, content in changes.iteritems():
+                    if (type(content) == Video and 
+                        content.readable_id == readable_id):
+                        video = content
+                        break            
+                
         return video
 
     @staticmethod
