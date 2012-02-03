@@ -1680,6 +1680,10 @@ def change_default_version(version):
     else:
         xg_on = db.create_transaction_options(xg=True)
         db.run_in_transaction_options(xg_on, update_txn)
+        # setting the topic tree version in the transaction won't update 
+        # memcache as the new values for the setting are not complete till the
+        # transaction finishes ... so updating again outside the txn
+        Setting.topic_tree_version(version.number)
 
     logging.info("done setting new default version")
     Topic.reindex(version)
