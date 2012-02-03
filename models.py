@@ -760,6 +760,21 @@ class UniqueUsername(db.Model):
     HOLDING_PERIOD_DELTA = datetime.timedelta(120)
 
     @staticmethod
+    def _claim_internal(desired_name, clock=None):
+        key_name = UniqueUsername.build_key_name(desired_name)
+        if not UniqueUsername.is_valid_username(desired_name, key_name):
+            return False
+
+        is_available = UniqueUsername.is_available_username(
+                desired_name, key_name, clock)
+        if is_available:
+            entity = UniqueUsername(key_name=key_name)
+            entity.username = desired_name
+            entity.release_date = UniqueUsername.INFINITELY_FAR_FUTURE
+            entity.put()
+        return is_available
+
+    @staticmethod
     def claim(desired_name, clock=None):
         """ Claim an unclaimed username.
 
@@ -772,17 +787,9 @@ class UniqueUsername(db.Model):
         if not UniqueUsername.is_valid_username(desired_name, key_name):
             return False
 
-        def txn(desired_name):
-            is_available = UniqueUsername.is_available_username(
-                    desired_name, key_name, clock)
-            if is_available:
-                entity = UniqueUsername(key_name=key_name)
-                entity.username = desired_name
-                entity.release_date = UniqueUsername.INFINITELY_FAR_FUTURE
-                entity.put()
-            return is_available
-
-        return db.run_in_transaction(txn, desired_name)
+        return db.run_in_transaction(UniqueUsername._claim_internal,
+                                     desired_name,
+                                     clock)
 
     @staticmethod
     def release(username, clock=None):
@@ -1428,15 +1435,27 @@ class UserData(GAEBingoIdentityModel, db.Model):
             db.put([self, goal])
         db.run_in_transaction(save_goal)
 
-
-    def claim_username(self, name, clock=None):
-        claim_success = UniqueUsername.claim(name, clock)
+    def _claim_username_internal(self, name, clock=None):
+        """ Claims a username internally. Must be called in a transaction! """
+        # Since we are guaranteed to be in a transaction, and GAE does not
+        # support nested transactions, bypass making a transaction
+        # in UniqueUsername
+        claim_success = UniqueUsername._claim_internal(name, clock)
         if claim_success:
             if self.username:
                 UniqueUsername.release(self.username, clock)
             self.username = name
             self.put()
         return claim_success
+
+    def claim_username(self, name, clock=None):
+        """ Claims a username for the current user, and assigns it to her
+        atomically. Returns True on success.
+        """
+        def claim_and_set():
+            return self._claim_username_internal(name, clock)
+        xg_on = db.create_transaction_options(xg=True)
+        return db.run_in_transaction_options(xg_on, claim_and_set)
 
     def has_public_profile(self):
         return (self.is_profile_public
