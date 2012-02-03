@@ -133,17 +133,10 @@ UsernamePickerView = Backbone.View.extend({
             jelSidenote.addClass("error");
         }
 
-        this.$("#save-profile-info").prop("disabled", (isValid === false));
+        isValid = isValid || (message === "");
+        this.$("#save-profile-info").prop("disabled", !isValid);
 
         jelSidenote.text(message);
-    },
-
-    onChangeSuccess_: function(model, response) {
-        this.toggle();
-    },
-
-    onChangeError_: function(model, response) {
-        this.onValidateUsername_(response.responseText, false);
     },
 
     onSaveClick_: function() {
@@ -152,16 +145,15 @@ UsernamePickerView = Backbone.View.extend({
             attrs = {
                 nickname: nickname,
                 username: username
-            },
-            options = {
-                success: _.bind(this.onChangeSuccess_, this),
-                error: _.bind(this.onChangeError_, this)
             };
 
-        this.model.save(attrs, options);
+        this.model.save(attrs);
 
         if (this.setPublicAfterSave_) {
             $("#edit-visibility").click();
         }
+
+        $("#save-profile-info").prop("disabled", true);
+        this.toggle();
     }
 });
