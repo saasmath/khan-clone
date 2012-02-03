@@ -289,6 +289,7 @@ Badges.DisplayCase = Backbone.View.extend({
 
         this.showBadgePicker_();
         this.editControlEl.slideUp(350);
+        this.mainCaseEl.addClass("enable-scrolling");
         $(document).bind("mousedown", this.getBoundStopEditFn_());
         return this;
     },
@@ -523,6 +524,7 @@ Badges.DisplayCase = Backbone.View.extend({
             });
             jelPicker.undelegate();
             this.editControlEl.slideDown(250);
+            this.mainCaseEl.removeClass("enable-scrolling");
             $(document).unbind("click", this.getBoundStopEditFn_());
 
             // TODO: avoid saving if not dirty.

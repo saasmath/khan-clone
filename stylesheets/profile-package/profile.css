@@ -821,20 +821,6 @@ ul.dropdown ul li {
 .display-case-cover.editable {
     cursor: pointer;
 }
-@media all and (max-width: 1185px) {
-    .main-case {
-        width: 435px;
-        overflow-x: scroll;
-        overflow-y: hidden;
-    }
-}
-@media all and (max-width: 1025px) {
-    .main-case {
-        width: 325px;
-        overflow-x: scroll;
-        overflow-y: hidden;
-    }
-}
 .lte8 .user-card {
     min-width: 970px;
 }
@@ -1158,4 +1144,20 @@ li.profile-tab {
     padding: 3px 5px;
     text-align: center;
     text-decoration: none;
+}
+.main-case.enable-scrolling {
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+@media all and (max-width: 1185px) {
+    .main-case {
+        width: 435px;
+        overflow: hidden;
+    }
+}
+@media all and (max-width: 1025px) {
+    .main-case {
+        width: 325px;
+        overflow: hidden;
+    }
 }
