@@ -551,7 +551,13 @@ var Profile = {
      * Expects the class name of the div to show, such as "error-graph"
      */
     showNotification: function(className) {
-        $(".profile-notification").show()
+        var jel = $(".profile-notification").removeClass("uncover-nav");
+
+        if (className === "empty-graph") {
+            jel.addClass("uncover-nav");
+        }
+
+        jel.show()
             .find("." + className).show()
             .siblings().hide();
     },
