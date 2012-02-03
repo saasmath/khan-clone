@@ -458,9 +458,9 @@ var TopicTreeEditor = {
 
     waitForTreeDefault: function() {
         $.ajax({
-            url: "/api/v1/dev/queue/topics-set-default-queue",
-            success: function(statistics) {
-                if (statistics.tasks > 0) {
+            url: "/api/v1/topicversion/default/id",
+            success: function(id) {
+                if (id != TopicTreeEditor.currentVersion.get("number")) {
                     setTimeout(TopicTreeEditor.waitForTreeDefault, 15000);
                 } else {
                     hideGenericMessageBox();
