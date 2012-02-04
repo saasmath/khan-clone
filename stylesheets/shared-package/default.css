@@ -2724,6 +2724,10 @@ a.proficient-badge.disabled {
     max-width: 63%;
 }
 
+.spinealign .col1 { text-align:right; }
+.spinealign .col2 { text-align:left; }
+
+
 /* End One-off page styles */
 /* Download page styles */
 #downloads {
