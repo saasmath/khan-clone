@@ -64,7 +64,7 @@ Avatar.Picker.prototype.bindEvents_ = function() {
         .delegate(
             ".category-avatars .avatar",
             "mouseenter",
-            function(ev) { $(ev.currentTarget).addClass("hover"); })
+            function(ev) { $(ev.currentTarget).not(".locked").addClass("hover"); })
         .delegate(
             ".category-avatars .avatar",
             "mouseleave",
