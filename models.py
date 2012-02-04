@@ -811,7 +811,7 @@ class UniqueUsername(db.Model):
             return
 
         key_name = UniqueUsername.build_key_name(username)
-        entity = UniqueUsername(key_name=key_name)
+        entity = UniqueUsername.get_by_key_name(key_name=key_name)
         if entity is None:
             logging.warn("Releasing username %s that doesn't exist" % username)
             return
