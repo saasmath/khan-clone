@@ -727,6 +727,9 @@ class UniqueUsername(db.Model):
     @staticmethod
     def build_key_name(username):
         """ Builds a unique, canonical version of a username. """
+        if username is None:
+            logging.error("Trying to build a key_name for a null username!")
+            return ""
         return username.replace('.', '').lower()
 
     # Usernames must be at least 3 characters long (excluding periods), must
@@ -802,6 +805,10 @@ class UniqueUsername(db.Model):
     def release(username, clock=None):
         if clock is None:
             clock = datetime.datetime
+
+        if username is None:
+            logging.error("Trying to release a null username!")
+            return
 
         key_name = UniqueUsername.build_key_name(username)
         entity = UniqueUsername(key_name=key_name)
