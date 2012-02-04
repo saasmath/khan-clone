@@ -59,6 +59,10 @@ class ChallengeCompletionBadge(ExerciseCompletionBadge):
             s_exercises += models.Exercise.to_display_name(exercise_name)
         return "Complete the %s" % s_exercises
 
+    @property
+    def compact_icon_src(self):
+        return self.icon_src
+
 class LevelOneArithmeticianBadge(ExerciseCompletionBadge):
     def __init__(self):
         ExerciseCompletionBadge.__init__(self)

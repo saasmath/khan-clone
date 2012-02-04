@@ -33,6 +33,12 @@ class CustomBadge(Badge):
         return self.full_description
 
     @property
+    def compact_icon_src(self):
+        if self.custom_icon_src:
+            return self.custom_icon_src
+        return super(CustomBadge, self).compact_icon_src
+
+    @property
     def icon_src(self):
         if self.custom_icon_src:
             return self.custom_icon_src

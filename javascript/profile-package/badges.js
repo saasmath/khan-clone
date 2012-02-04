@@ -35,7 +35,7 @@ Badges.Badge = Backbone.Model.extend({
         "badgeCategory": Badges.Category.BRONZE,
         "name": "__empty__",
         "description": "",
-        "iconSrc": "", // Defaults to "-small.png" versions from the server.
+        "icons": {},
         "isOwned": false,
         "points": 0,
         "safeExtendedDescription": ""
@@ -48,37 +48,12 @@ Badges.Badge = Backbone.Model.extend({
         return this.get("name") === "__empty__";
     },
 
-    getMediumIconSrc: function() {
-        return Badges.Badge.toMediumIcon(this.get("iconSrc"));
-    },
-
     toJSON: function() {
         var json = Badges.Badge.__super__.toJSON.call(this);
         json["isEmpty"] = this.isEmpty();
-        json["iconSrcMedium"] = this.getMediumIconSrc();
         return json;
     }
 });
-
-/**
- * Icon size suffix for the default iconSrc values.
- */
-Badges.Badge.DEFAULT_ICON_SUFFIX_ = "-small.png";
-
-/**
- * Returns the medium version of an icon, given the URI for it's default icon.
- */
-Badges.Badge.toMediumIcon = function(iconSrc) {
-    if (!iconSrc) {
-        return iconSrc;
-    }
-    var suffixLen = Badges.Badge.DEFAULT_ICON_SUFFIX_.length;
-    var suffixPos = iconSrc.length - suffixLen;
-    if (iconSrc.indexOf(Badges.Badge.DEFAULT_ICON_SUFFIX_) !== suffixPos) {
-        return iconSrc;
-    }
-    return iconSrc.substring(0, suffixPos) + "-medium.png";
-};
 
 /**
  * A re-usable instance of an empty badge.

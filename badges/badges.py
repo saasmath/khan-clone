@@ -71,28 +71,42 @@ class BadgeCategory(object):
             return "Challenge Patches are special awards for completing challenge exercises."
         return ""
 
+    @staticmethod
+    def get_icon_filename(category):
+
+        name = "half-moon"
+
+        if category == BadgeCategory.BRONZE:
+            name = "meteorite"
+        elif category == BadgeCategory.SILVER:
+            name = "moon"
+        elif category == BadgeCategory.GOLD:
+            name = "earth"
+        elif category == BadgeCategory.PLATINUM:
+            name = "sun"
+        elif category == BadgeCategory.DIAMOND:
+            name = "eclipse"
+        elif category == BadgeCategory.MASTER:
+            name = "master-challenge-blue"
+        
+        return name
+
     @property
     def icon_src(self):
         return BadgeCategory.get_icon_src(self.category)
 
     @staticmethod
-    def get_icon_src(category):
-        src = "/images/badges/half-moon-small.png"
+    def get_icon_src(category, suffix="-small"):
+        name = BadgeCategory.get_icon_filename(category)
+        return util.static_url("/images/badges/%s%s.png" % (name, suffix))
 
-        if category == BadgeCategory.BRONZE:
-            src = "/images/badges/meteorite-small.png"
-        elif category == BadgeCategory.SILVER:
-            src = "/images/badges/moon-small.png"
-        elif category == BadgeCategory.GOLD:
-            src = "/images/badges/earth-small.png"
-        elif category == BadgeCategory.PLATINUM:
-            src = "/images/badges/sun-small.png"
-        elif category == BadgeCategory.DIAMOND:
-            src = "/images/badges/eclipse-small.png"
-        elif category == BadgeCategory.MASTER:
-            src = "/images/badges/master-challenge-blue-small.png"
+    @property
+    def compact_icon_src(self):
+        return BadgeCategory.get_compact_icon_src(self.category)
 
-        return util.static_url(src)
+    @staticmethod
+    def get_compact_icon_src(category):
+        return BadgeCategory.get_icon_src(category, "-60x60")
 
     @property
     def large_icon_src(self):
@@ -100,22 +114,15 @@ class BadgeCategory(object):
 
     @staticmethod
     def get_large_icon_src(category):
-        src = "/images/badges/half-moon.png"
+        return BadgeCategory.get_icon_src(category, "")
 
-        if category == BadgeCategory.BRONZE:
-            src = "/images/badges/meteorite.png"
-        elif category == BadgeCategory.SILVER:
-            src = "/images/badges/moon.png"
-        elif category == BadgeCategory.GOLD:
-            src = "/images/badges/earth.png"
-        elif category == BadgeCategory.PLATINUM:
-            src = "/images/badges/sun.png"
-        elif category == BadgeCategory.DIAMOND:
-            src = "/images/badges/eclipse.png"
-        elif category == BadgeCategory.MASTER:
-            src = "/images/badges/master-challenge-blue.png"
+    @property
+    def medium_icon_src(self):
+        return BadgeCategory.get_medium_icon_src(self.category)
 
-        return util.static_url(src)
+    @staticmethod
+    def get_medium_icon_src(category):
+        return BadgeCategory.get_icon_src(category, "-medium")
 
     @property
     def chart_icon_src(self):
@@ -123,22 +130,7 @@ class BadgeCategory(object):
 
     @staticmethod
     def get_chart_icon_src(category):
-        src = "/images/badges/meteorite-small-chart.png"
-
-        if category == BadgeCategory.BRONZE:
-            src = "/images/badges/meteorite-small-chart.png"
-        elif category == BadgeCategory.SILVER:
-            src = "/images/badges/moon-small-chart.png"
-        elif category == BadgeCategory.GOLD:
-            src = "/images/badges/earth-small-chart.png"
-        elif category == BadgeCategory.PLATINUM:
-            src = "/images/badges/sun-small-chart.png"
-        elif category == BadgeCategory.DIAMOND:
-            src = "/images/badges/eclipse-small-chart.png"
-        elif category == BadgeCategory.MASTER:
-            src = "/images/badges/master-challenge-blue-chart.png"
-
-        return util.static_url(src)
+        return BadgeCategory.get_icon_src(category, "-small-chart")
 
     @property
     def type_label(self):
@@ -175,7 +167,7 @@ class Badge(object):
     _serialize_whitelist = [
             "points", "badge_category", "description",
             "safe_extended_description", "name", "user_badges", "icon_src",
-            "is_owned", "objectives", "can_become_goal"
+            "is_owned", "objectives", "can_become_goal", "icons",
             ]
 
     def __init__(self):
@@ -219,6 +211,22 @@ class Badge(object):
     @property
     def icon_src(self):
         return BadgeCategory.get_icon_src(self.badge_category)
+
+    @property
+    def compact_icon_src(self):
+        return BadgeCategory.get_compact_icon_src(self.badge_category)
+
+    @property
+    def medium_icon_src(self):
+        return BadgeCategory.get_medium_icon_src(self.badge_category)
+
+    @property
+    def icons(self):
+        return {
+                "small": self.icon_src,
+                "compact": self.compact_icon_src,
+                "medium": self.medium_icon_src,
+        }
 
     def chart_icon_src(self):
         return BadgeCategory.get_chart_icon_src(self.badge_category)

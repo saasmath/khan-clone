@@ -10,12 +10,8 @@
 
 <div class="achievement-badge compact achievement-badge-owned{{#if used}} used{{/if}}" id="{{name}}">
   <div id="outline-box">
-    <div class="achievement-title">{{description}}</div>
-    <img class="badge-icon" src="{{iconSrc}}">
-    <div>
-      <div class="energy-points-badge">{{points}}</div>
-      {{#if count}}<div class="achievement-count">x{{count}}</div>{{/if}}
-    </div>
+    <div class="achievement-title">{{{toBadgeDescriptionWithBreaks description}}}</div>
+    <img class="badge-icon" src="{{icons.compact}}">
     <div class="delete-icon">X</div>
     <div class="selected-indicator"> </div>
   </div>
