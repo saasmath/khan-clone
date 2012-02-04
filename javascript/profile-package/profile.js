@@ -644,15 +644,21 @@ var Profile = {
             var line = "";
 
             _.each(description.split(" "), function(word) {
+
+                if (line.length > 0) {
                 // Split description into up to two lines
-                if (line.length > 0 && line.length + word.length > 12 && lines.length == 0) {
-                    // Insert newline, break it up
-                    lines[lines.length] = line;
-                    line = "";
+
+                    if (line.length + word.length > 12 && lines.length == 0) {
+                        // Insert newline, break it up
+                        lines[lines.length] = line;
+                        line = "";
+                    }
+                    else {
+                        line += " ";
+                    }
+
                 }
-                else if (line.length > 0) {
-                    line += " ";
-                }
+
                 line += word;
             });
 
