@@ -57,13 +57,13 @@ var ActivityGraph = {
         chart: {
             renderTo: "highchart",
             events: {
-                click: _.bind(function(e) {
+                click: function(e) {
                     if (ActivityGraph.bucketData.enableDrillDown) {
                         if (e && e.xAxis && e.xAxis[0]) {
-                            this.drillIntoBucket_(Math.round(e.xAxis[0].value || 0));
+                            ActivityGraph.drillIntoBucket_(Math.round(e.xAxis[0].value || 0));
                         }
                     }
-                }, this)
+                }
             }
         },
         plotOptions: {
@@ -303,11 +303,11 @@ var ActivityGraph = {
                 cursor: "pointer",
                 events: {
                     legendItemClick: function() { return false; },
-                    click: _.bind(function(e) {
+                    click: function(e) {
                         if (e && e.point) {
-                            this.drillIntoBucket_(e.point.x);
+                            ActivityGraph.drillIntoBucket_(e.point.x);
                         }
-                    }, this)
+                    }
                 }
             };
         }
