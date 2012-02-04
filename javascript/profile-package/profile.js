@@ -645,7 +645,7 @@ var Profile = {
 
             _.each(description.split(" "), function(word) {
                 // Split description into up to two lines
-                if (line.length + word.length > 12 && lines.length == 0) {
+                if (line.length > 0 && line.length + word.length > 12 && lines.length == 0) {
                     // Insert newline, break it up
                     lines[lines.length] = line;
                     line = "";
