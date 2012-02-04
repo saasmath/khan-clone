@@ -810,8 +810,7 @@ class UniqueUsername(db.Model):
             logging.error("Trying to release a null username!")
             return
 
-        key_name = UniqueUsername.build_key_name(username)
-        entity = UniqueUsername.get_by_key_name(key_name=key_name)
+        entity = UniqueUsername.get_canonical(username)
         if entity is None:
             logging.warn("Releasing username %s that doesn't exist" % username)
             return
