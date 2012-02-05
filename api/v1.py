@@ -23,7 +23,7 @@ from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph
-import common_core
+from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 
 from api import route
@@ -724,10 +724,8 @@ def video_exercises(video_id):
 @jsonify
 def get_cc_map():
     lightweight = request.request_bool('lightweight', default=False)
-    if lightweight:
-        return common_core.models.CommonCoreMap.get_all_lightweight()
-
-    return common_core.models.CommonCoreMap.get_all()
+    structured = request.request_bool('structured', default=False)
+    return CommonCoreMap.get_all(lightweight, structured)
 
 def fully_populated_playlists():
     playlists = models.Playlist.get_for_all_topics()

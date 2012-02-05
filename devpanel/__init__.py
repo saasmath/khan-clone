@@ -122,8 +122,13 @@ def update_common_core_map(cc_file):
     cc_list = []
     for line in reader:
         cc_standard = line[0]
-        exercise_name = line[1]
-        video_youtube_id = line[2]
+        cc_cluster = line[1]
+        try:
+            cc_description = line[2].encode('utf-8')
+        except Exception, e:
+            cc_description = cc_cluster
+        exercise_name = line[3]
+        video_youtube_id = line[4]
 
         if len(cc_standard) == 0:
             continue
@@ -132,7 +137,7 @@ def update_common_core_map(cc_file):
         if cc is None:
             cc = CommonCoreMap()
 
-        cc.update_standard(cc_standard)
+        cc.update_standard(cc_standard, cc_cluster, cc_description)
 
         if len(exercise_name) > 0:
             cc.update_exercise(exercise_name)
@@ -141,6 +146,10 @@ def update_common_core_map(cc_file):
             cc.update_video(video_youtube_id)
 
         cc_list.append(cc)
+
+        if len(cc_list) > 500:
+            db.put(cc_list)
+            cc_list = []
 
     db.put(cc_list)
 
@@ -151,7 +160,7 @@ class ManageCommonCore(request_handler.RequestHandler):
     @user_util.developer_only
     @ensure_xsrf_cookie
     def get(self):
-
+        
         template_values = {
             "selected_id": "commoncore",
         } 

@@ -6,7 +6,7 @@ from google.appengine.ext import db
 
 from models import Exercise, Video
 
-COMMON_CORE_SEPARATOR = '_'
+COMMON_CORE_SEPARATOR = '.'
 COMMON_CORE_BASE_URL = 'http://www.corestandards.org/the-standards/mathematics/'
 COMMON_CORE_GRADE_URLS = {
         "K": "kindergarten/",
@@ -103,6 +103,8 @@ class CommonCoreMap(db.Model):
     domain = db.StringProperty(indexed=False)
     domain_code = db.StringProperty()
     level = db.StringProperty(indexed=False)
+    cc_description = db.TextProperty(indexed=False)
+    cc_cluster = db.StringProperty(indexed=False)
     cc_url = db.StringProperty(indexed=False)
     exercises = db.ListProperty(db.Key, indexed=False)
     videos = db.ListProperty(db.Key, indexed=False)
@@ -114,6 +116,8 @@ class CommonCoreMap(db.Model):
         entry['domain'] = self.domain
         entry['domain_code'] = self.domain_code
         entry['level'] = self.level
+        entry['cc_description'] = self.cc_description
+        entry['cc_cluster'] = self.cc_cluster
         entry['cc_url'] = self.cc_url
         entry['exercises'] = []
         entry['videos'] = []
@@ -133,31 +137,80 @@ class CommonCoreMap(db.Model):
         return entry
 
     @staticmethod
-    def get_all():
+    def get_all(lightweight=False, structured=False):
+        if structured:
+            return CommonCoreMap.get_all_structured(lightweight)
+
         query = CommonCoreMap.all()
         all_entries = []
         for e in query:
-            all_entries.append(e.get_entry())
+            all_entries.append(e.get_entry(lightweight=lightweight))
         return all_entries
 
     @staticmethod
-    def get_all_lightweight():
-        query = CommonCoreMap.all()
+    def get_all_structured(lightweight=False):
         all_entries = []
-        for e in query:
-            all_entries.append(e.get_entry(lightweight=True))
+        for grade in COMMON_CORE_GRADE_URLS:
+            entry = {}
+            entry['grade'] = grade
+            entry['domains'] = []
+            for domain in COMMON_CORE_DOMAINS:
+                query = CommonCoreMap.all()
+                query.filter('grade =', grade)
+                query.filter('domain_code =', domain)
+                standards = query.fetch(1000)
+                
+                if len(standards) == 0:
+                    continue
+
+                d = {}
+                d['domain'] = COMMON_CORE_DOMAINS[domain]
+                d['domain_code'] = domain
+                d['standards'] = []
+
+                for s in standards:
+                    standard = {}
+
+                    standard['standard'] = s.standard
+                    standard['level'] = s.level
+                    standard['cc_url'] = s.cc_url
+                    standard['cc_description'] = s.cc_description
+                    standard['cc_cluster'] = s.cc_cluster
+                    standard['exercises'] = []
+                    standard['videos'] = []
+                    for key in s.exercises:
+                        if lightweight:
+                            ex = db.get(key)
+                            standard['exercises'].append({ "title": ex.display_name, "url": ex.ka_url })
+                        else:
+                            standard['exercises'].append(db.get(key))
+                    for key in s.videos:
+                        if lightweight:
+                            v = db.get(key)
+                            standard['videos'].append({ "title": v.title, "url": v.url })
+                        else:
+                            standard['videos'].append(db.get(key))
+
+                    d['standards'].append(standard)
+                entry['domains'].append(d)
+            all_entries.append(entry)
         return all_entries
 
-    def update_standard(self, standard):
+
+    def update_standard(self, standard, cluster, description):
         self.standard = standard
+        self.cc_cluster = cluster
+        self.cc_description = description
         cc_components = self.standard.split(COMMON_CORE_SEPARATOR)
-        self.grade = cc_components[1]
-        self.domain = COMMON_CORE_DOMAINS[cc_components[2]]
-        self.domain_code = cc_components[2]
-        self.level = cc_components[3]
+        self.grade = cc_components[0]
+        self.domain = COMMON_CORE_DOMAINS[cc_components[1]]
+        self.domain_code = cc_components[1]
+        self.level = cc_components[2]
+        if len(cc_components) == 4:
+            self.level += "." + cc_components[3]
         self.cc_url = COMMON_CORE_BASE_URL + COMMON_CORE_GRADE_URLS[self.grade] + COMMON_CORE_DOMAIN_URLS[self.domain_code] + "#"
         if self.grade != "9-12":
-           self.cc_url += self.grade.lower() + "-"
+            self.cc_url += self.grade.lower() + "-"
         self.cc_url += self.domain_code.lower() + "-" + self.level.split('.')[0]
 
         return

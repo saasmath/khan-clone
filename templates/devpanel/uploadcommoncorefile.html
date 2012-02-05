@@ -6,7 +6,7 @@
   <div>
       <h2>Upload common core map</h2>
       {% if not done %}
-          Upload a CSV file which maps common core standsard to KA exercises (need admin access)
+          Upload a TSV (tab-separated) file which maps common core standards to KA exercises and videos (need admin access)
           <form id="upload" method="POST" action="/devadmin/managecommoncore" enctype="multipart/form-data" style="display: block; margin: 22px 0">
           <input id="commoncore" name="commoncore" type="file" /><br><br>
           <input id="upload" type="submit" value="Update common core mapping" />
