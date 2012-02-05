@@ -61,6 +61,8 @@ def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
         )
 def new_and_noteworthy_link_sets():
     topic = models.Topic.get_by_id("new-and-noteworthy")
+    if topic is None:
+        return []
     videos = topic.get_cached_videos_for_topic(topic)
 
     if len(videos) < 2:

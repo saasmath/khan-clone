@@ -2,8 +2,7 @@ from google.appengine.ext import db
 from google.appengine.datastore import entity_pb
 from google.appengine.api import memcache
 
-from gandalf.models import GandalfBridge, GandalfFilter
-
+from gandalf.models import GandalfBridge
 _request_cache = {}
 
 def flush_request_cache():

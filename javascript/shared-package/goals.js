@@ -21,6 +21,7 @@ var Goal = Backbone.Model.extend({
         _.each(this.get("objectives"), function(o) {
             if (o.progress == null) {
                 o.progress = 0;
+                o.status = "not-started";
             }
             if (o.status == null) {
                 o.status = 'not-started';
@@ -149,10 +150,34 @@ var Goal = Backbone.Model.extend({
         return Goal.objectiveUrlForType[objective.type](objective);
     },
 
+    defaultVideoProcessGoalAttrs_: {
+        title: "Complete Five Videos",
+        objectives: [
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" },
+            { description: "Any video", type: "GoalObjectiveAnyVideo" }
+        ]
+    },
+
+    defaultExerciseProcessGoalAttrs_: {
+        title: "Complete Five Exercises",
+        objectives: [
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+        ]
+    },
+
+    // TODO: investigate if this is still used.
     exidToExerciseName: function(exid) {
         return exid[0].toUpperCase() + exid.slice(1).replace(/_/g, ' ');
     },
 
+    // TODO: investigate if this is still used.
     GoalObjectiveExerciseProficiency: function(exid) {
         var obj = {
             type: "GoalObjectiveExerciseProficiency",
@@ -161,6 +186,7 @@ var Goal = Backbone.Model.extend({
         };
         obj.url = Goal.objectiveUrl(obj);
         return obj;
+
     }
 });
 
@@ -357,13 +383,13 @@ var GoalBookView = Backbone.View.extend({
     },
 
     goalHistoryButtonClicked: function(e) {
-        if (document.location.pathname === "/profile") {
-            var jelGoalLink = $(".goals-accordion-content .graph-link");
-            if (jelGoalLink.length) {
-                e.preventDefault();
-                jelGoalLink.click();
-                this.hide();
-            }
+        // Stay on the page if the user is already looking at her profile
+        // TODO: if we care about metaKey / control key / middle key working,
+        // then there is probably more to test here.
+        if (typeof Profile !== "undefined" && !e.metaKey) {
+            e.preventDefault();
+            this.hide();
+            Profile.router.navigate("/goals", true);
         }
     },
 
@@ -396,7 +422,10 @@ var GoalBookView = Backbone.View.extend({
             KAConsole.log("rendering GoalBookView", this);
             this.needsRerender = false;
             var json = _.pluck(this.model.models, "attributes");
-            jel.html(this.template({goals: json}));
+            jel.html(this.template({
+                goals: json,
+                profileRoot: KA.profileRoot
+            }));
         }
         return this;
     },
@@ -552,16 +581,7 @@ var NewGoalView = Backbone.View.extend({
         e.preventDefault();
         if ($(e.currentTarget).hasClass("disabled")) return;
 
-        var goal = new Goal({
-            title: "Complete Five Videos",
-            objectives: [
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" },
-                { description: "Any video", type: "GoalObjectiveAnyVideo" }
-            ]
-        });
+        var goal = new Goal(Goal.defaultVideoProcessGoalAttrs_);
         this.createSimpleGoal(goal);
     },
 
@@ -569,16 +589,7 @@ var NewGoalView = Backbone.View.extend({
         e.preventDefault();
         if ($(e.currentTarget).hasClass("disabled")) return;
 
-        var goal = new Goal({
-            title: "Complete Five Exercises",
-            objectives: [
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-                { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
-            ]
-        });
+        var goal = new Goal(Goal.defaultExerciseProcessGoalAttrs_);
         this.createSimpleGoal(goal);
     },
 

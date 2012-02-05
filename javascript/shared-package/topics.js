@@ -27,7 +27,7 @@ window.TestTopics = function() {
 		defaults: {
 			number: 0, // API ID
 			kind: "TopicVersion",
-			default: false, // Is the current default version
+			"default": false, // Is the current default version
 			edit: false, // Is the current editing version
 			title: "(untitled version)",
 			last_edited_by: "",

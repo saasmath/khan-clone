@@ -32,10 +32,17 @@ class CustomBadge(Badge):
     def extended_description(self):
         return self.full_description
 
+    @property
+    def compact_icon_src(self):
+        if self.custom_icon_src:
+            return self.custom_icon_src
+        return super(CustomBadge, self).compact_icon_src
+
+    @property
     def icon_src(self):
         if self.custom_icon_src:
             return self.custom_icon_src
-        return Badge.icon_src(self)
+        return super(CustomBadge, self).icon_src
 
 class CreateCustomBadge(request_handler.RequestHandler):
     @user_util.developer_only

@@ -60,13 +60,12 @@ from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
 from custom_exceptions import MissingVideoException
-from templatetags import user_points
 from oauth_provider import apps as oauth_apps
-from phantom_users.phantom_util import create_phantom, get_phantom_user_id_from_cookies
+from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
-from nicknames import get_nickname_for
+from nicknames import get_default_nickname_for
 from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
@@ -447,11 +446,10 @@ class PostLogin(request_handler.RequestHandler):
                 user_data.user_email = current_google_user.email()
                 user_data.put()
 
-            # Update nickname if it has changed
-            current_nickname = get_nickname_for(user_data)
-            if user_data.user_nickname != current_nickname:
-                user_data.user_nickname = current_nickname
-                user_data.put()
+            # If the user has a public profile, we stop "syncing" their username
+            # from Facebook, as they now have an opportunity to set it themself
+            if not user_data.username:
+                user_data.update_nickname()
 
             # Set developer and moderator to True if user is admin
             if (not user_data.developer or not user_data.moderator) and users.is_current_user_admin():
@@ -786,24 +784,20 @@ application = webapp2.WSGIApplication([
     ('/removestudentfromlist', coaches.RemoveStudentFromList),
     ('/addstudenttolist', coaches.AddStudentToList),
 
-    ('/individualreport', coaches.ViewIndividualReport),
-    ('/progresschart', coaches.ViewProgressChart),
-    ('/sharedpoints', coaches.ViewSharedPoints),
-    ('/classreport', coaches.ViewClassReport),
-    ('/classtime', coaches.ViewClassTime),
-
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
     ('/profile/graph/activity', util_profile.ActivityGraph),
     ('/profile/graph/focus', util_profile.FocusGraph),
     ('/profile/graph/exercisesovertime', util_profile.ExercisesOverTimeGraph),
     ('/profile/graph/exerciseproblems', util_profile.ExerciseProblemsGraph),
-    ('/profile/graph/exerciseprogress', util_profile.ExerciseProgressGraph),
-    ('/profile', util_profile.ViewProfile),
+
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
+    ('/profile/(.+?)/(.*)', util_profile.ViewProfile),
+    ('/profile/(.*)', util_profile.ViewProfile),
+    ('/profile', util_profile.ViewProfile),
     ('/class_profile', util_profile.ViewClassProfile),
 
     ('/login', Login),

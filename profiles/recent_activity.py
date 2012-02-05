@@ -8,21 +8,11 @@ from templatefilters import seconds_to_time_string
 from goals.models import GoalList
 
 # Number of hours until activity is no longer considered "recent" for profiles
-HOURS_RECENT_ACTIVITY = 48
+HOURS_RECENT_ACTIVITY = 4320 # OK for now, fix before shipping!
 # Number of most-recent items shown in recent activity
 MOST_RECENT_ITEMS = 10
 
-class RecentActivity:
-
-    def timestamp(self):
-        return templatefilters.timesince_ago(self.dt)
-
-    def src_icon(self):
-        return self.src_icon_activity
-
-    def description(self):
-        return "Activity: " + self.__class__.__name__
-
+class RecentActivity(object):
     def can_combine_dates(self, dt_a, dt_b):
         return (max(dt_b, dt_a) - min(dt_b, dt_a)) < datetime.timedelta(minutes=30)
 
@@ -34,14 +24,12 @@ class RecentBadgeActivity(RecentActivity):
         self.s_type = "Badge"
         self.user_badge = user_badge
         self.badge = badge
-        self.src_icon_activity = "/images/generic-badge-icon-inset.png"
         self.dt = user_badge.date
 
 class RecentExerciseActivity(RecentActivity):
     def __init__(self, problem_log):
         self.s_type = "Exercise"
-        self.problem_log = problem_log
-        self.src_icon_activity = "/images/generic-exercise-icon-inset.png"
+        self.exercise = problem_log.exercise
         self.dt = problem_log.time_done
         self.c_problems = 1
         self.earned_proficiency = problem_log.earned_proficiency
@@ -49,7 +37,7 @@ class RecentExerciseActivity(RecentActivity):
 
     def combine_with(self, recent_activity):
         if self.__class__ == recent_activity.__class__:
-            if self.problem_log.exercise == recent_activity.problem_log.exercise:
+            if self.exercise == recent_activity.exercise:
                 if self.can_combine_dates(self.dt, recent_activity.dt):
                     self.dt = recent_activity.dt
                     self.c_problems += 1
@@ -60,17 +48,14 @@ class RecentExerciseActivity(RecentActivity):
 class RecentVideoActivity(RecentActivity):
     def __init__(self, video_log):
         self.s_type = "Video"
-        self.video_log = video_log
-        self.src_icon_activity = "/images/video-camera-icon-inset.png"
-        self.dt = video_log.time_watched
+        self.youtube_id = video_log.video.youtube_id
+        self.video_title = video_log.video_title
         self.seconds_watched = video_log.seconds_watched
-
-    def time_watched(self):
-        return seconds_to_time_string(self.seconds_watched, False)
+        self.dt = video_log.time_watched
 
     def combine_with(self, recent_activity):
         if self.__class__ == recent_activity.__class__:
-            if self.video_log.video_title == recent_activity.video_log.video_title:
+            if self.video_title == recent_activity.video_title:
                 if self.can_combine_dates(self.dt, recent_activity.dt):
                     self.dt = recent_activity.dt
                     self.seconds_watched += recent_activity.seconds_watched
@@ -82,7 +67,6 @@ class RecentGoalActivity(RecentActivity):
         self.s_type = "Goal"
         self.goal = goal
         self.dt = goal.completed_on
-        self.src_icon_activity = "/images/activity-icon-inset.png"
 
 def recent_badge_activity(user_badges):
     badges_dict = util_badges.all_badges_dict()

@@ -23,8 +23,10 @@ javascript = {
             "jquery.js",
             "jquery-ui-1.8.16.custom.js",
             "jquery.ui.menu.js",
+            "jquery.timeago.js",
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
+            "jquery.qtip.js",
             "../../khan-exercises/utils/underscore.js",
             "underscore-extras.js",
             "backbone.js",
@@ -39,6 +41,7 @@ javascript = {
             "api.js",
             "backbone-extensions.js",
             "social.js",
+            "promos.js",
             "youtube-player.handlebars",
             "api-version-mismatch.handlebars",
             "streak-bar.handlebars",
@@ -60,7 +63,6 @@ javascript = {
     },
     "video": {
         "files": [
-            "jquery.qtip.js",
             "video.js",
             "discussion.js",
             "thumbnail.handlebars",
@@ -88,13 +90,48 @@ javascript = {
         "files": [
             "jquery.address-1.4.min.js",
             "highcharts.js",
+            "activity-graph.js",
+            "focus-graph.js",
+            "exercises-over-time-graph.js",
+            "handlebars-helpers.js",
+            "avatar-picker.handlebars",
+            "avatar-picker.js",
+            "username-picker.handlebars",
+            "username-picker.js",
+            "user-card.handlebars",
+            "user-card.js",
+            "profile-legacy.handlebars",
+            "profile.handlebars",
+            "recent-activity-list.handlebars",
+            "recent-activity-exercise.handlebars",
+            "recent-activity-badge.handlebars",
+            "recent-activity-video.handlebars",
+            "recent-activity-goal.handlebars",
+            "graph-date-picker.handlebars",
+            "vital-statistics.handlebars",
+            "achievements.handlebars",
+            "badge-container.handlebars",
+            "user-badge.handlebars",
+            "badge.handlebars",
+            "badge-compact.handlebars",
+            "badge-display-case.handlebars",
+            "empty-badge-picker.handlebars",
+            "badges.js",
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
             "profile-class-progress-report.handlebars",
             "class-progress-column.handlebars",
             "class-progress-summary.handlebars",
+            "class-progress-summary.js",
             "exercise_progress.handlebars",
+            "profile-goals.js",
             "profile.js",
+        ]
+    },
+    "profile-intro": {
+        "files": [
+            "guiders.js",
+            "profile-intro.js",
         ]
     },
     "maps": {
@@ -196,11 +233,11 @@ javascript = {
 stylesheets = {
     "shared": {
         "files": [
+            "jquery.qtip.css",
             "default.css",
             "rating.css",
             "stylesheet.css",
             "menu.css",
-            "profile.css",
             "museo-sans.css",
             "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
@@ -215,7 +252,6 @@ stylesheets = {
     },
     "video": {
         "files": [
-            "jquery.qtip.css",
             "video.css",
             "discussion.css",
             "modalvideo.css",
@@ -226,6 +262,17 @@ stylesheets = {
             "viewstudentlists.css",
             "viewclassprofile.css",
         ]
+    },
+    "profile": {
+        "files": [
+            "profile.css",
+            "badges.css",
+        ]
+    },
+    "profile-intro": {
+        "files": [
+            "guiders.css",
+        ],
     },
     "stories": {
         "files": [

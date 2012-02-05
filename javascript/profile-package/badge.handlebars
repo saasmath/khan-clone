@@ -1,0 +1,12 @@
+<div class="achievement-badge category-{{badgeCategory}} {{#if isOwned}}achievement-badge-owned{{/if}}" title="{{typeLabel}}: {{safeExtendedDescription}}" {{#if canBecomeGoal}}data-objectives='{{objectives}}'{{/if}}>
+  <!-- MARCOS / KOMALO TODO typeLabel is nonexistent :( -->
+  <div id="outline-box">
+  <img src="{{iconSrc}}" id="badge-icon"/>
+  <div class="achievement-title">{{description}}</div>
+  <div class="achievement-desc achievement-desc-no-count">
+    {{safeExtendedDescription}}
+  </div>
+  {{#if canBecomeGoal }}<div class="add-goal">+ &emsp; Goal</div>{{/if}}
+  {{#if points}}<div class="energy-points-badge">{{points}}</div>{{/if}}
+  </div>
+</div>

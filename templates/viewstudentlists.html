@@ -3,7 +3,7 @@
 {% import 'macros/coach.html' as coach %}
 
 {% block meta_page_title %}Manage Students | {% endblock meta_page_title %}
-{% block pagescript %}
+{% block pagecss %}
 {{ js_css_packages.css_package("studentlists") }}
 <style type="text/css" media="screen">
 #empty-class ol li.click-register div.coach-email {
@@ -15,7 +15,7 @@
     left: 115px;
 }
 </style>
-{% endblock pagescript %}
+{% endblock pagecss %}
 
 {% block pagesubmenu %}
 <span class="breadcrumbs_nav">
@@ -91,7 +91,7 @@
                 <a class="delete-button" href="#" title="Remove this student from this list"><img src="images/circled_cross.png"/></a>
             </span>
             <div>
-                <span class="student-name visited-no-recolor"><a href="/profile?student_email={{ student.email|escape }}" title="View this student's profile page">{{ student.nickname|escape }}</a></span>
+                <span class="student-name visited-no-recolor"><a href="{{student.profile_root}}" title="View this student's profile page">{{ student.nickname|escape }}</a></span>
                 <span class="student-email">{{ student.email|escape }}</span>
             </div>
         </div>

@@ -1,15 +1,13 @@
 import models
 import util
 
-class ExerciseData:
+class ExerciseData(object):
         def __init__(self, name, exid, days_until_proficient, proficient_date):
             self.name = name
+            self.display_name = models.Exercise.to_display_name(self.name)
             self.exid = exid
             self.days_until_proficient = days_until_proficient
             self.proficient_date = proficient_date
-
-        def display_name(self):
-            return models.Exercise.to_display_name(self.name)
 
 def exercises_over_time_graph_context(user_data):
 
@@ -27,6 +25,5 @@ def exercises_over_time_graph_context(user_data):
         end_date = ue.proficient_date
 
     return {
-        'student_email': user_data.email,
         'user_exercises': user_exercises,
         }

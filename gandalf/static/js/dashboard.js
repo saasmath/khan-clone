@@ -1,5 +1,5 @@
 var GandalfDashboard = {
-    
+
     loadBridges: function() {
         $.ajax({
             url: "/gandalf/api/v1/bridges",
@@ -11,15 +11,15 @@ var GandalfDashboard = {
 
                 $("#progress-bar").css("visibility", "hidden");
 
-                $("#main").append( $("#tmpl-bridges").mustache(data) );
+                $("#main").append($("#tmpl-bridges").mustache(data));
 
-                $("#main .bridge-container-minimized").click( function(e) {
+                $("#main .bridge-container-minimized").click(function(e) {
 
                     // Already expanded
                     if (!$(this).is(".bridge-container-minimized")) {
                         return;
                     }
- 
+
                     GandalfDashboard.loadFilters($(this).data("bridge-name"));
 
                     $(this)
@@ -36,7 +36,7 @@ var GandalfDashboard = {
 
                     e.preventDefault();
 
-                    var submitButton = $(this).find("#bridge-new-button"); 
+                    var submitButton = $(this).find("#bridge-new-button");
                     var bridgeName = $(this).find("[name=bridge_name]").val();
 
                     if (!bridgeName) {
@@ -84,16 +84,16 @@ var GandalfDashboard = {
                 $(document).on("submit", ".filter-new-form", function(e) {
 
                     e.preventDefault();
-                    
-                    var submitButton = $(this).find(".filter-new-button"); 
+
+                    var submitButton = $(this).find(".filter-new-button");
                     var bridgeName = $(this).find("[name=bridge_name]").val();
 
                     $.post(filterUpdateUrl, $(this).serialize(), function(data) {
-                        if (!data.success) { 
+                        if (!data.success) {
                             alert("Something went wrong. Unable to create new filter.");
                         }
 
-                        $( "div.bridge-container[data-bridge-name=\"" + bridgeName + "\"] .filters-container" )
+                        $("div.bridge-container[data-bridge-name=\"" + bridgeName + "\"] .filters-container")
                             .empty()
                             .append($("#progress-bar").clone().css("visibility", "visible"))
                             .animate({height: 250}, 250);
@@ -113,7 +113,7 @@ var GandalfDashboard = {
                     var submitButton = $(this).find(".filter-save-button");
 
                     $.post(filterUpdateUrl, $(this).serialize(), function(data) {
-                        if (!data.success) { 
+                        if (!data.success) {
                             alert("Something went wrong. Your changes were not saved.");
                         }
 
@@ -153,7 +153,7 @@ var GandalfDashboard = {
                             .empty()
                             .height(height)
                             .animate({height: 0}, 300);
-                        
+
                         setTimeout("GandalfDashboard.loadFilters(\"" + bridgeName + "\")", 300);
                     });
 
@@ -172,19 +172,19 @@ var GandalfDashboard = {
             success: function(data) {
 
                 // Template the html of each filter with its own context
-                for(var i = 0; i < data.filters.length; i++) {
+                for (var i = 0; i < data.filters.length; i++) {
                     data.filters[i].html = Mustache.to_html(data.filters[i].html, data.filters[i].context);
                 }
 
-                var filtersContainer = $( "div.bridge-container[data-bridge-name=\"" + bridgeName + "\"] .filters-container" );
+                var filtersContainer = $("div.bridge-container[data-bridge-name=\"" + bridgeName + "\"] .filters-container");
 
                 filtersContainer
                     .stop()
                     .height("")
-                    .html( $( "#tmpl-filters" ).mustache( data ) );
+                    .html($("#tmpl-filters").mustache(data));
             }
         });
-    },
-}
+    }
+};
 
 $(GandalfDashboard.loadBridges);

@@ -2,7 +2,7 @@ import math
 
 from jinja2.utils import escape
 
-import api.jsonify as apijsonify
+from api import jsonify as apijsonify
 from templatefilters import slugify
 import models
 import shared_jinja
@@ -164,3 +164,5 @@ def topic_browser_tree(tree, level=0):
 def video_name_and_progress(video):
     return "<span class='vid-progress v%d'>%s</span>" % (video.key().id(), escape(video.title.encode('utf-8', 'ignore')))
 
+def jsonify(obj, camel_cased):
+    return apijsonify.jsonify(obj, camel_cased=camel_cased)

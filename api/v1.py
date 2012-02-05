@@ -1,19 +1,17 @@
-import copy
+import datetime
 import logging
 from itertools import izip
-import datetime
 
 from flask import request, current_app, Response
 
-import datetime
 import models
 import layer_cache
-import topics_list
 import templatetags # Must be imported to register template tags
-from badges import badges, util_badges, models_badges
+from avatars import util_avatars
+from badges import badges, util_badges, models_badges, profile_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
-from exercises import attempt_problem, make_wrong_attempt, UpdateExercise
+from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
@@ -22,7 +20,7 @@ from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
-from profiles import class_progress_report_graph
+from profiles import class_progress_report_graph, recent_activity
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 
@@ -31,10 +29,9 @@ from api.decorators import jsonify, jsonp, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
-from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
+from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
 from google.appengine.ext import db
-from templatefilters import slugify
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -82,7 +79,10 @@ def add_action_results(obj, dict_results):
         if len(login_notifications) > 0:
             dict_results["login_notifications_html"] = login_notifications_html(login_notifications, user_data)
 
-    obj.action_results = dict_results
+    if type(obj) == dict:
+        obj['action_results'] = dict_results
+    else:
+        obj.action_results = dict_results
 
 # Return specific user data requests from request
 # IFF currently logged in user has permission to view
@@ -118,6 +118,22 @@ def get_user_data_coach_from_request():
         user_data_coach = user_data_override
 
     return user_data_coach
+
+def get_user_data_from_json(json, key):
+    """ Return the user_data specified by a username or an email.
+
+    Sample usage:
+        get_user_data_from_json(
+                {
+                    'coach': '<username or email>'
+                },
+                'coach'
+            )
+    """
+    if not json or not key or key not in json:
+        return None
+
+    return models.UserData.get_from_username_or_email(json[key])
 
 @route("/api/v1/topicversion/<version_id>/topics/with_content", methods=["GET"])
 @route("/api/v1/topics/with_content", methods=["GET"])
@@ -719,7 +735,7 @@ def video_exercises(video_id):
         return video.related_exercises(bust_cache=True)
     return []
 
-@route("/api/v1/commoncore", methods=["GET"])
+route("/api/v1/commoncore", methods=["GET"])
 @jsonp
 @jsonify
 def get_cc_map():
@@ -866,6 +882,144 @@ def user_data_other():
             return user_data_student
 
     return None
+
+@route("/api/v1/user/username_available", methods=["GET"])
+@jsonp
+@jsonify
+def is_username_available():
+    """ Return whether username is available.
+    """
+    username = request.request_string('username')
+    if not username:
+        return False
+    else:
+        return models.UniqueUsername.is_available_username(username)
+
+@route("/api/v1/user/promo/<promo_name>", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def has_seen_promo(promo_name):
+    user_data = models.UserData.current()
+    return models.PromoRecord.has_user_seen_promo(promo_name, user_data.user_id)
+
+@route("/api/v1/user/promo/<promo_name>", methods=["POST"])
+@oauth_required()
+@jsonp
+@jsonify
+def mark_promo_as_seen(promo_name):
+    user_data = models.UserData.current()
+    return models.PromoRecord.record_promo(promo_name, user_data.user_id)
+
+# TODO: the "GET" version of this.
+@route("/api/v1/user/profile", methods=["POST", "PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def update_user_profile():
+    """ Update public information about a user.
+    
+    The posted data should be JSON, with fields representing the values that
+    needs to be changed. Supports "user_nickname", "avatar_name",
+    "username", and "isPublic".
+    """
+    user_data = models.UserData.current()
+
+    profile_json = request.json
+    if not profile_json:
+        return api_invalid_param_response("Profile data expected")
+    
+    if profile_json['nickname'] is not None:
+        user_data.update_nickname(profile_json['nickname'])
+
+    badge_awarded = False
+    if profile_json['avatarName'] is not None:
+        avatar_name = profile_json['avatarName']
+        name_dict = util_avatars.avatars_by_name()
+
+        # Ensure that the avatar is actually valid and that the user can
+        # indeed earn it.
+        if (avatar_name in name_dict
+                and user_data.avatar_name != avatar_name
+                and name_dict[avatar_name].is_satisfied_by(user_data)):
+            user_data.avatar_name = avatar_name
+            if profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data):
+                profile_badges.ProfileCustomizationBadge().award_to(user_data)
+                badge_awarded = True
+
+    if profile_json['isPublic'] is not None:
+        user_data.is_profile_public = profile_json['isPublic']
+
+    if profile_json['username']:
+        username = profile_json['username']
+        if ((username != user_data.username) and
+                not user_data.claim_username(username)):
+            # TODO: How much do we want to communicate to the user?
+            return api_invalid_param_response("Error!")
+
+    user_data.put()
+
+    result = util_profile.UserProfile.from_user(user_data, user_data)
+    if badge_awarded:
+        result = {
+            'payload': result,
+            'action_results': None,
+        }
+        add_action_results(result, {})
+    return result
+
+@route("/api/v1/user/coaches", methods=["PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def add_coach():
+    """ Add a coach for the currently logged in user.
+
+    Expects JSON with a "username" or "email" field that specifies the coach.
+    """
+    # TODO: Remove redundant path/logic in coaches.py
+    coach_user_data = get_user_data_from_json(request.json, 'coach')
+
+    if not coach_user_data:
+        return api_invalid_param_response("Invalid coach email or username.")
+
+    current_user_data = models.UserData.current()
+    if not current_user_data.is_coached_by(coach_user_data):
+        current_user_data.coaches.append(coach_user_data.key_email)
+        current_user_data.put()
+
+@route("/api/v1/user/coaches", methods=["DELETE"])
+@oauth_required()
+@jsonp
+@jsonify
+def remove_coach():
+    """ Remove a coach for the currently logged in user.
+
+    Expects JSON with a "username" or "email" field that specifies the coach.
+    """
+    # TODO: Remove redundant path/logic in coaches.py
+    coach_user_data = get_user_data_from_json(request.json, 'coach')
+
+    if not coach_user_data:
+        return api_invalid_param_response("Invalid coach email or username.")
+
+    current_user_data = models.UserData.current()
+
+    if current_user_data.student_lists:
+        actual_lists = StudentList.get(current_user_data.student_lists)
+        current_user_data.student_lists = [l.key() for l in actual_lists if coach_user_data.key() not in l.coaches]
+
+    try:
+        current_user_data.coaches.remove(coach_user_data.key_email)
+    except ValueError:
+        pass
+
+    try:
+        current_user_data.coaches.remove(coach_user_data.key_email.lower())
+    except ValueError:
+        pass
+
+    current_user_data.put()
 
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()
@@ -1020,7 +1174,6 @@ def log_user_video(youtube_id):
     if not youtube_id and not video_key_str:
         return api_invalid_param_response("Must supply youtube_id or video_key")
 
-    video_log = None
     if video_key_str:
         key = db.Key(video_key_str)
         video = db.get(key)
@@ -1145,6 +1298,7 @@ def get_students_progress_summary():
             progress_buckets[status].append({
                     'nickname': student.nickname,
                     'email': student.email,
+                    'profile_root': student.profile_root,
             })
 
         progress = [dict([('status', status),
@@ -1493,6 +1647,7 @@ def user_video_logs(youtube_id):
 
     return None
 
+# TODO: this should probably not return user data in it.
 @route("/api/v1/badges", methods=["GET"])
 @oauth_optional()
 @jsonp
@@ -1532,6 +1687,104 @@ def badge_categories():
 def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
 
+# TODO: the "GET" version of this.
+@route("/api/v1/user/badges/public", methods=["POST", "PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def update_public_user_badges():
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    owned_badges = set([badges.Badge.remove_target_context(name_with_context)
+                        for name_with_context in user_data.badges])
+    badges_dict = util_badges.all_badges_dict()
+    updated_badge_list = []
+    empty_name = util_badges.EMPTY_BADGE_NAME
+    for name in request.json or []:
+        if name in owned_badges:
+            updated_badge_list.append(badges_dict[name])
+        elif name == empty_name:
+            updated_badge_list.append(None)
+    
+    badge_awarded = False
+    if (len(updated_badge_list) == util_badges.NUM_PUBLIC_BADGE_SLOTS
+            and not any([badge is None for badge in updated_badge_list])):
+        if profile_badges.ProfileCustomizationBadge.mark_display_case_filled(user_data):
+            profile_badges.ProfileCustomizationBadge().award_to(user_data)
+            badge_awarded = True
+
+    user_data.public_badges = [(badge.name if badge else empty_name)
+                               for badge in updated_badge_list]
+    user_data.put()
+    
+    result = updated_badge_list
+    if badge_awarded:
+        result = {
+            'payload': result,
+            'api_action_results': None
+        }
+        add_action_results(result, {})
+    return result
+
+@route("/api/v1/user/badges", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_badges():
+    user_data = get_visible_user_data_from_request() or models.UserData.pre_phantom()
+    grouped_badges = util_badges.get_grouped_user_badges(user_data)
+
+    user_badges_by_category = {
+        badges.BadgeCategory.BRONZE: grouped_badges["bronze_badges"],
+        badges.BadgeCategory.SILVER: grouped_badges["silver_badges"],
+        badges.BadgeCategory.GOLD: grouped_badges["gold_badges"],
+        badges.BadgeCategory.PLATINUM: grouped_badges["platinum_badges"],
+        badges.BadgeCategory.DIAMOND: grouped_badges["diamond_badges"],
+        badges.BadgeCategory.MASTER: grouped_badges["user_badges_master"],
+    }
+
+    user_badge_dicts_by_category = {}
+
+    for category, user_badge_bucket in user_badges_by_category.iteritems():
+        user_badge_dicts_by_category[category] = user_badge_bucket
+
+    badge_collections = []
+
+    # Iterate over the set of all possible badges.
+    for collection in grouped_badges["badge_collections"]:
+        if len(collection):
+            first_badge = collection[0]
+            badge_collections.append({
+                "category": first_badge.badge_category,
+                "category_description": first_badge.category_description(),
+                "badges": collection,
+                "user_badges": user_badge_dicts_by_category[first_badge.badge_category],
+            })
+
+    return {
+            "badge_collections": badge_collections,
+        }
+
+@route("/api/v1/user/activity", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def get_activity():
+    student = models.UserData.current() or models.UserData.pre_phantom()
+    user_override = request.request_user_data("email")
+    if user_override and user_override.key_email != student.key_email:
+        # TODO: Clarify "visibility"
+        if not user_override.is_visible_to(student):
+            return api_unauthorized_response("Cannot view this profile")
+        else:
+            # Allow access to this student's profile
+            student = user_override
+
+    return recent_activity.recent_activity_context(student)
+
+# TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
 @admin_required
 @jsonp
@@ -1756,8 +2009,9 @@ def get_student_goals():
 
         return_data.append({
             'email': student.email,
+            'profile_root': student.profile_root,
+            'goals': goals,
             'nickname': student.nickname,
-            'goals': goals
         })
 
     return return_data
@@ -1913,3 +2167,20 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
+
+@route("/api/v1/avatars", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_avatars():
+    """ Returns the list of all avatars bucketed by categories.
+    If this is an authenticated request and user-info is available, the
+    avatars will be annotated with whether or not they're available.
+    """
+    user_data = models.UserData.current()
+    result = util_avatars.avatars_by_category()
+    if user_data:
+        for category in result:
+            for avatar in category['avatars']:
+                avatar.is_available = avatar.is_satisfied_by(user_data)
+    return result
