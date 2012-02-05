@@ -210,7 +210,7 @@ class ViewProfile(request_handler.RequestHandler):
                                                 user_data.user_id,
                                                 skip_check=True)
 
-        has_full_access = is_self or user_data.is_coached_by(current_user_data)
+        has_full_access = is_self or user_data.is_visible_to(current_user_data)
         tz_offset = self.request_int("tz_offset", default=0)
         
         template_values = {
@@ -277,22 +277,22 @@ class UserProfile(object):
 
         # TODO: figure out if "coworkers" should affect this
         is_self = user.user_id == actor.user_id
-        user_is_coached_by_actor = user.is_coached_by(actor)
-        actor_is_coached_by_user = actor.is_coached_by(user)
+        user_is_visible_to_actor = user.is_visible_to(actor)
+        actor_is_visible_to_user = actor.is_visible_to(user)
 
-        if is_self or user_is_coached_by_actor:
+        if is_self or user_is_visible_to_actor:
             # Full data about the user
             return UserProfile._from_user_internal(
                     user,
                     full_projection=True,
-                    is_coaching_logged_in_user=actor_is_coached_by_user,
+                    is_coaching_logged_in_user=actor_is_visible_to_user,
                     is_self=is_self)
         elif user.has_public_profile():
             # Return only public data
             return UserProfile._from_user_internal(
                     user,
                     full_projection=False,
-                    is_coaching_logged_in_user=actor_is_coached_by_user)
+                    is_coaching_logged_in_user=actor_is_visible_to_user)
         else:
             return None
 
