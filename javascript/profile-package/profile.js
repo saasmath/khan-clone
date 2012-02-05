@@ -96,14 +96,14 @@ var Profile = {
             }
         });
 
-        var currentGoals = window.GoalBook.map( function(g){ return g.get("title"); });
+        var currentGoals = window.GoalBook.map(function(g) { return g.get("title"); });
         $(".add-goal").each(function(i, elt) {
-            var button = $( elt );
-            var badge = button.closest( ".achievement-badge" );
-            var goalTitle = badge.find( ".achievement-title" ).text();
+            var button = $(elt);
+            var badge = button.closest(".achievement-badge");
+            var goalTitle = badge.find(".achievement-title").text();
 
             // remove +goal button if present in list of active goals
-            if( _.indexOf( currentGoals, goalTitle ) > -1){
+            if (_.indexOf(currentGoals, goalTitle) > -1) {
 
                 button.remove();
 
@@ -125,11 +125,11 @@ var Profile = {
                         .fail(function(err) {
                             var error = err.responseText;
                             button.addClass("failure")
-                                .text("oh no!").attr("title","This goal could not be saved.");
+                                .text("oh no!").attr("title", "This goal could not be saved.");
                             KAConsole.log("Error while saving new badge goal", goal);
                             window.GoalBook.remove(goal);
                         })
-                        .success(function(){
+                        .success(function() {
                             button.text("Goal Added!").addClass("success");
                             badge.find(".energy-points-badge").addClass("goal-added");
                         });
@@ -328,7 +328,7 @@ var Profile = {
     loadGraph: function(href) {
         var apiCallbacksTable = {
             "/api/v1/user/exercises": this.renderExercisesTable,
-            "/api/v1/exercises": this.renderFakeExercisesTable_,
+            "/api/v1/exercises": this.renderFakeExercisesTable_
         };
         if (!href) {
             return;
@@ -415,7 +415,7 @@ var Profile = {
                     if (rand < 0.5) {
                         states["proficient"] = true;
                     } else if (rand < 0.7) {
-                        states["reviewing"] = true
+                        states["reviewing"] = true;
                     }
                 }
             } else if (position < 17) {
@@ -443,7 +443,7 @@ var Profile = {
                 "exercise_model": exerciseModel,
                 "total_done": totalDone,
                 "exercise_states": states
-            }
+            };
         });
     },
 
@@ -470,7 +470,7 @@ var Profile = {
             bindEvents = (bindEvents === undefined) ? true : bindEvents,
             isEmpty = true,
             exerciseModels = [];
-        
+
 
         for (var i = 0, exercise; exercise = data[i]; i++) {
             var stat = "Not started";
@@ -995,7 +995,7 @@ var Profile = {
                             return exerciseTemplate(activity);
                         } else if (activity.sType === "Badge") {
                             return badgeTemplate(activity);
-                        } else if (activity.sType === "Video"){
+                        } else if (activity.sType === "Video") {
                             return videoTemplate(activity);
                         } else if (activity.sType === "Goal") {
                             return goalTemplate(activity);
