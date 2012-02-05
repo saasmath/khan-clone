@@ -735,7 +735,7 @@ def video_exercises(video_id):
         return video.related_exercises(bust_cache=True)
     return []
 
-route("/api/v1/commoncore", methods=["GET"])
+@route("/api/v1/commoncore", methods=["GET"])
 @jsonp
 @jsonify
 def get_cc_map():
