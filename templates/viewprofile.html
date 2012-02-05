@@ -8,6 +8,44 @@
     {% if show_intro %}
         {{ js_css_packages.css_package("profile-intro") }}
     {% endif %}
+
+    {% if view == "mobile" %}
+    <style type="text/css">
+        header,
+        footer,
+        .profile-navigation,
+        .user-profile-controls,
+        .visibility-toggler {
+            display: none;
+        }
+
+        #outer-wrapper,
+        #page-container,
+        #page-container-inner {
+            background: 0;
+        }
+
+        #page-container {
+            min-width: 0;
+            max-width: none;
+        }
+
+        #individual_report {
+            border: 0;
+        }
+
+        .tab-content {
+            margin: 0;
+            border: 0;
+            padding: 20px 0 0;
+        }
+
+        .avatar-pic-container,
+        .display-case-cover {
+            pointer-events: none;
+        }
+    </style>
+    {% endif %}
 {% endblock pagecss %}
 
 {% block meta_page_title %}User Profile | {% endblock meta_page_title %}

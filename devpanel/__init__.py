@@ -1,10 +1,11 @@
 import os, logging
 
-from google.appengine.ext import db
+from google.appengine.ext import db, deferred
 from google.appengine.api import users
 import util
 from app import App
 from models import UserData
+from common_core.models import CommonCoreMap
 import request_handler
 import user_util
 import itertools
@@ -15,6 +16,7 @@ import gdata.youtube.data
 import gdata.youtube.service
 import urllib
 import csv
+import StringIO
 
 class Panel(request_handler.RequestHandler):
 
@@ -114,74 +116,68 @@ class ManageCoworkers(request_handler.RequestHandler):
 
         self.render_jinja2_template("devpanel/coworkers.html", template_values)
         
-class CommonCore(request_handler.RequestHandler):
-    
+def update_common_core_map(cc_file):
+    reader = csv.reader(cc_file, delimiter='\t')
+    headerline = reader.next()
+    cc_list = []
+    for line in reader:
+        cc_standard = line[0]
+        cc_cluster = line[1]
+        try:
+            cc_description = line[2].encode('utf-8')
+        except Exception, e:
+            cc_description = cc_cluster
+        exercise_name = line[3]
+        video_youtube_id = line[4]
+
+        if len(cc_standard) == 0:
+            continue
+
+        cc = CommonCoreMap.all().filter('standard = ', cc_standard).get()
+        if cc is None:
+            cc = CommonCoreMap()
+
+        cc.update_standard(cc_standard, cc_cluster, cc_description)
+
+        if len(exercise_name) > 0:
+            cc.update_exercise(exercise_name)
+
+        if len(video_youtube_id) > 0:
+            cc.update_video(video_youtube_id)
+
+        cc_list.append(cc)
+
+        if len(cc_list) > 500:
+            db.put(cc_list)
+            cc_list = []
+
+    db.put(cc_list)
+
+    return
+
+class ManageCommonCore(request_handler.RequestHandler):
+
     @user_util.developer_only
+    @ensure_xsrf_cookie
     def get(self):
         
-        cc_videos = []
-        cc_file = "common_core/"
-        auth_sub_url = ""
-        
-        token = self.request_string("token")
-        
-        if token: # AuthSub token from YouTube API - load and tag videos            
-            
-            # default for yt_user is test account khanacademyschools
-            
-            yt_account = self.request_string("account") if self.request_string("account") else "khanacademyschools"
-            
-            logging.info("****Youtube Account: " + yt_account)
-            
-            cc_file += "cc_video_mapping.csv" if yt_account == "khanacademy" else "test_data.csv"
-            
-            yt_service = gdata.youtube.service.YouTubeService()
-            yt_service.SetAuthSubToken(token)
-            yt_service.UpgradeToSessionToken()
-            yt_service.developer_key = 'AI39si6eFsAasPBlI_xQLee6-Ii70lrEhGAXn_ryCSWQdMP8xW67wkawIjDYI_XieWc0FsdsH5HMPPpvenAtaEl5fCLmHX8A5w'
-            
-            f = open(cc_file, 'U')
-            reader = csv.DictReader(f, dialect='excel')
-            
-            for record in reader:
-                
-                if record["youtube_id"] and not record["youtube_id"] == "#N/A":
-                    
-                    entry = yt_service.GetYouTubeVideoEntry(video_id=record["youtube_id"])
-                    
-                    # if entry and record["keyword"] not in entry.media.keywords.text:
-                    if entry:
-                                    
-                        keywords = entry.media.keywords.text or "" 
-                                    
-                        entry.media.keywords.text = keywords + "," + record["keyword"]
-                        video_url = "https://gdata.youtube.com/feeds/api/users/"+ yt_account + "/uploads/" + record["youtube_id"]
-                        
-                        try:
-                            updated_entry = yt_service.UpdateVideoEntry(entry, video_url)
-                            logging.info("***PROCESSED*** Title: " + entry.media.title.text + " | Keywords: " + entry.media.keywords.text)
-                            cc_videos.append(record)
-                        except Exception, e:
-                            logging.warning("***FAILED update*** Title: " + record["title"] + ", ID: " + record["youtube_id"], "\n" + e)                            
-                        
-            f.close() 
-            
-        else:         
-            params = {
-                'next': self.request.url,
-                'scope': "http://gdata.youtube.com", 
-                'session': "1", 
-                'secure': "0"
-            }
-
-            base_url = "https://www.google.com/accounts/AuthSubRequest?"
-            auth_sub_url = base_url + urllib.urlencode(params)
-                 
         template_values = {
-            "token" : token,
-            "cc_videos" : cc_videos,
-            "auth_sub_url" : auth_sub_url,
             "selected_id": "commoncore",
-        }
-        
-        self.render_jinja2_template("devpanel/commoncore.html", template_values)
+        } 
+
+        self.render_jinja2_template("devpanel/uploadcommoncorefile.html", template_values)
+
+    @user_util.developer_only
+    @ensure_xsrf_cookie
+    def post(self):
+
+        cc_file = StringIO.StringIO(self.request_string('commoncore'))
+        deferred.defer(update_common_core_map, cc_file)
+
+        template_values = {
+            "done": True,
+            "selected_id": "commoncore",
+        } 
+
+        self.redirect("/devadmin")
+        return

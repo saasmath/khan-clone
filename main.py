@@ -49,6 +49,7 @@ import topics
 import goals.handlers
 import stories
 import summer
+import common_core
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, Topic
@@ -765,7 +766,8 @@ application = webapp2.WSGIApplication([
     ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
-    ('/devadmin/commoncore', devpanel.CommonCore),
+    ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
+    ('/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
 
