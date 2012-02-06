@@ -37,7 +37,9 @@ javascript = {
 
             # application code & templates:
             "handlebars-extras.js",
+            "cookies.js",
             "pageutil.js",
+            "video-addons.js",
             "api.js",
             "backbone-extensions.js",
             "social.js",
@@ -144,8 +146,10 @@ javascript = {
         "files": [
             "jquery.js",
             "jquery.mobile-1.0a4.1.js",
-            "iscroll-lite.min.js",
             "mobile.js",
+            "../shared-package/cookies.js",
+            "../shared-package/video-addons.js",
+            "../shared-package/api.js",
         ]
     },
     "studentlists": {

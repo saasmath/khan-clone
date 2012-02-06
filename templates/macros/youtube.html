@@ -1,4 +1,18 @@
-{% macro player_embed(youtube_id, width=800, height=480) -%}
+{% macro player_embed(youtube_id, width=800, height=480, use_iframe_embed=False, http_origin=None) -%}
+
+{% if use_iframe_embed %}
+
+<iframe id="iframePlayer" type="text/html" width="{{ width }}" height="{{ height }}" src="http://www.youtube.com/embed/{{ youtube_id }}?enablejsapi=1&origin=http://{{ http_origin|urlencode }}"></iframe>
+
+<script>
+    var tag = document.createElement('script');
+    tag.src = "http://www.youtube.com/player_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+</script>
+
+{% else %}
+
 <object id="idOVideo" name="idOVideo" width="{{ width }}" height="{{ height }}" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000">
     <param name="movie" value="http://www.youtube.com/v/{{youtube_id}}?version=3&hl=en_US&fs=1&rel=0&enablejsapi=1">
     <param name="allowFullScreen" value="true">
@@ -6,6 +20,8 @@
     <param name="wmode" value="transparent">
     <embed id="idPlayer" name="idPlayer" wmode="transparent" src="http://www.youtube.com/v/{{youtube_id}}?version=3&hl=en_US&fs=1&rel=0&enablejsapi=1" type="application/x-shockwave-flash" allowScriptAccess="always" allowfullscreen="true" width="{{ width }}" height="{{ height }}">
 </object>
+
+{% endif %}
 {%- endmacro %}
 
 {% macro jump_link(content, seconds) -%}

@@ -316,6 +316,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         template_values['viewer_profile_root'] = user_data.profile_root if user_data else ""
         template_values['points'] = user_data.points if user_data else 0
         template_values['logged_in'] = not user_data.is_phantom if user_data else False
+        template_values['http_host'] = os.environ["HTTP_HOST"]
 
         # Always insert a post-login request before our continue url
         template_values['continue'] = util.create_post_login_url(template_values.get('continue') or self.request.uri)
