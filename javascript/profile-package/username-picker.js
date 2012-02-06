@@ -129,7 +129,7 @@ UsernamePickerView = Backbone.View.extend({
 
         if (isValid === true) {
             jelSidenote.addClass("success");
-        } else if (isValid === false){
+        } else if (isValid === false) {
             jelSidenote.addClass("error");
         }
 

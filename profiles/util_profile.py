@@ -275,7 +275,6 @@ class UserProfile(object):
         if user is None:
             return None
 
-        # TODO: figure out if "coworkers" should affect this
         is_self = user.user_id == actor.user_id
         user_is_visible_to_actor = user.is_visible_to(actor)
         actor_is_visible_to_user = actor.is_visible_to(user)

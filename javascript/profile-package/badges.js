@@ -222,7 +222,8 @@ Badges.DisplayCase = Backbone.View.extend({
     events: {
         "click .main-case .achievement-badge .delete-icon": "onDeleteBadgeClicked_",
         "click .main-case .achievement-badge": "onBadgeClicked_",
-        "click .badge-picker .achievement-badge": "onBadgeInPickerClicked_"
+        "click .badge-picker .achievement-badge": "onBadgeInPickerClicked_",
+        "click .display-case-cover": "onCoverClicked_"
     },
 
     /**
@@ -542,20 +543,21 @@ Badges.DisplayCase = Backbone.View.extend({
     },
 
     /**
-     * Gets the handlebars template context for the main display-case element.
+     * Renders the contents of the main case.
      */
-    getTemplateContext_: function() {
+    renderMainCaseContents_: function() {
         var i,
-            badges = [],
+            template = Templates.get("profile.badge-compact"),
+            html = [],
             numRendered = Math.min(this.maxVisible, this.model.length);
         for (i = 0; i < numRendered; i++) {
             var badge = this.model.at(i);
-            badges.push(badge.toJSON());
+            html.push(template(badge.toJSON()));
         }
         for (; i < this.maxVisible; i++) {
-            badges.push(Badges.Badge.EMPTY_BADGE.toJSON());
+            html.push(template(Badges.Badge.EMPTY_BADGE.toJSON()));
         }
-        return { badges: badges };
+        this.mainCaseEl.html(html.join(""));
     },
 
     /**
@@ -609,17 +611,14 @@ Badges.DisplayCase = Backbone.View.extend({
     render: function() {
         if (!this.mainCaseEl) {
             // First render - build the chrome.
-            this.mainCaseEl = $("<div class=\"main-case fancy-scrollbar\"></div>");
-            this.badgePickerEl =
-                $("<div class=\"badge-picker fancy-scrollbar\"></div>");
-            $(this.el)
-                .append(this.mainCaseEl)
-                .append(this.badgePickerEl);
-            this.editControlEl = $(".display-case-cover");
-            this.editControlEl.click(_.bind(this.onCoverClicked_, this));
+            $(this.el).html(Templates.get("profile.badge-display-case")());
+            this.mainCaseEl = this.$(".main-case");
+            this.badgePickerEl = this.$(".badge-picker");
+            this.editControlEl = this.$(".display-case-cover");
+
             $(this.editControlEl).toggleClass("editable", this.isEditable());
         }
-        $(this.mainCaseEl).html(this.template(this.getTemplateContext_()));
+        this.renderMainCaseContents_();
         if (this.fullBadgeList) {
             this.renderBadgePicker();
         }

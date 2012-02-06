@@ -1363,6 +1363,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return user_data and users.is_current_user_admin()
 
     def is_visible_to(self, user_data):
+        """ Returns whether or not this user's information is *fully* visible
+        to the specified user
+        """
         return (self.key_email == user_data.key_email or self.is_coached_by(user_data)
                 or self.is_coached_by_coworker_of_coach(user_data)
                 or user_data.developer or user_data.is_administrator())
