@@ -71,8 +71,11 @@ class EditContent(request_handler.RequestHandler):
         video_list = [v for v in models.Video.all()]
         video_dict = dict()
 
+        version = models.TopicVersion.get_by_id("edit")
+
         duplicate_video_count = 0
         duplicates = []
+        nonduplicates = []
         
         for video in video_list:
             if not video.readable_id in video_dict:
@@ -81,25 +84,30 @@ class EditContent(request_handler.RequestHandler):
 
         for readable_id, videos in video_dict.iteritems():
             if len(videos) > 1:
+                canonical_youtube_id = 'OOPS!'
                 canonical_key_id = 0
                 for video in videos:
-                    if video.key().id() > canonical_key_id and not video.youtube_id.endswith('_player'):
+                    if models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
                         canonical_key_id = video.key().id()
+                    if len(video.youtube_id) == 11:
+                        canonical_youtube_id = video.youtube_id
 
                 dup_idx = 0
                 for video in videos:
                     if video.key().id() != canonical_key_id:
                         video.readable_id = video.readable_id + "_DUP_" + str(dup_idx)
-                        video.youtube_id = video.youtube_id + "_DUP_" + str(dup_idx)
+                        video.youtube_id = canonical_youtube_id + "_DUP_" + str(dup_idx)
                         duplicates.append(video)
                         dup_idx += 1
+                    else:
+                        video.youtube_id = canonical_youtube_id
+                        nonduplicates.append(video)
 
                 duplicate_video_count += 1
 
         if len(duplicates) > 0:
             # Create a topic to hold the duplicates
             logging.info("Creating duplicate videos topic...");
-            version = models.TopicVersion.get_by_id("edit")
             new_topic = models.Topic.insert(title = "Duplicate videos", parent = None,
                             version = version,
                             hide = True, standalone_title = "Duplicate videos",
@@ -109,6 +117,8 @@ class EditContent(request_handler.RequestHandler):
             
             logging.info("Writing " + str(len(duplicates)) + " videos that have duplicates (" + str(duplicate_video_count) + " unique videos)")
             db.put(duplicates)
+            logging.info("Writing " + str(len(nonduplicates)) + " original videos.")
+            db.put(nonduplicates)
         else:
             logging.info("No duplicate videos found.")
 
