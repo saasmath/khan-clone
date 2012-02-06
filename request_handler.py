@@ -265,11 +265,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return user_agent_lower.find("webos") > -1 or \
                 user_agent_lower.find("hp-tablet") > -1
 
-    def is_ios(self):
+    def is_ipad(self):
         user_agent_lower = self.user_agent().lower()
-        return user_agent_lower.find("ipod") > -1 or \
-                user_agent_lower.find("ipad") > -1 or \
-                user_agent_lower.find("iphone") > -1
+        return user_agent_lower.find("ipad") > -1
 
     def is_mobile(self):
         if self.is_mobile_capable():
@@ -331,11 +329,11 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         template_values['is_mobile'] = False
         template_values['is_mobile_capable'] = False
-        template_values['is_ios'] = False
+        template_values['is_ipad'] = False
 
         if self.is_mobile_capable():
             template_values['is_mobile_capable'] = True
-            template_values['is_ios'] = self.is_ios()
+            template_values['is_ipad'] = self.is_ipad()
 
             if 'is_mobile_allowed' in template_values and template_values['is_mobile_allowed']:
                 template_values['is_mobile'] = self.is_mobile()
