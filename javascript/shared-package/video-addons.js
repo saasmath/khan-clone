@@ -383,8 +383,8 @@ function onYouTubePlayerAPIReady() {
         return;
     }
 
-    // Always give each iframe player a unique id so YT.Player construction
-    // works properly. Hopefully in less-beta versions of YT's iframe API this
+    // Always give each iframe player a unique id so YT.Player events 
+    // work properly. Hopefully in less-beta versions of YT's iframe API this
     // won't be necessary.
     //
     onYouTubePlayerAPIReady.players = onYouTubePlayerAPIReady.players || 0;
@@ -399,7 +399,8 @@ function onYouTubePlayerAPIReady() {
 
     $("#page-container-inner")
         .on("pagehide", "div.video", function(a, b) {
-            // Remove page from DOM whenever leaving a video page.
+            // Remove from DOM whenever leaving a video page
+            // so a full refresh is triggered.
             $(a.target).remove();
         });
 
