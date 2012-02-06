@@ -89,7 +89,7 @@
         </div>
         <div class="youtube-video">
             <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
-            {{ youtube.player_embed(video.youtube_id, use_iframe_embed=is_mobile_capable, http_origin=http_host) }}
+            {{ youtube.player_embed(video.youtube_id, use_iframe_embed=is_ios, http_origin=http_host) }}
             <div class="subtitles-warning desktop-only">
                 &lArr; Use this menu to view and help create subtitles for this video in many different languages.
                 You'll probably want to hide YouTube's captions if using these subtitles.
