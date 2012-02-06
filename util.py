@@ -196,8 +196,8 @@ def count_with_cursors(query, max_value=None):
     very slow.
     """
     count = 0
-    while count % 1000 == 0 and
-            (max_value is None or count < max_value):
+    while (count % 1000 == 0 and
+             (max_value is None or count < max_value)):
         current_count = len(query.fetch(1000))
         if current_count == 0:
             break
