@@ -226,6 +226,11 @@
     .main-case {
         margin: 10px 0;
     }
+    /* The padding on the cover has to match the margin+padding on the
+     * main-case so that the badge-overlay can line up with the badge */
+    .display-case-cover {
+        padding: 20px 10px;
+    }
 }
 
 @media all and (max-width: 1040px) {
@@ -242,6 +247,11 @@
     }
     .main-case {
         margin: 14px 0;
+    }
+    /* The padding on the cover has to match the margin+padding on the
+     * main-case so that the badge-overlay can line up with the badge */
+    .display-case-cover {
+        padding: 24px 10px;
     }
 }
 
