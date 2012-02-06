@@ -11,6 +11,7 @@ class UsernameTest(test_utils.GAEModelTestCase):
         # Clear all usernames just to be safe
         for u in models.UniqueUsername.all():
             u.delete()
+        super(UsernameTest, self).tearDown()
 
     def test_user_name_fuzzy_match(self):
         """ Tests user name search can ignore periods properly. """
