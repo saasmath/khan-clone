@@ -203,7 +203,7 @@
     border: 1px solid #999;
 }
 
-@media all and (max-width: 1185px) {
+@media all and (max-width: 1145px) {
     .achievement-badge .selected-indicator {
         border-top: none;
         border-left: 7px solid transparent;
@@ -213,9 +213,6 @@
         margin-left: -5px;
         bottom: -1px;
     }
-}
-
-@media all and (max-width: 1185px) {
     .achievement-badge.compact .achievement-title {
         line-height: 12px;
     }
@@ -226,8 +223,12 @@
     .badge-icon {
         width: 45px;
     }
+    .main-case {
+        margin: 10px 0;
+    }
 }
-@media all and (max-width: 1025px) {
+
+@media all and (max-width: 1040px) {
     .achievement-badge.compact .achievement-title {
         font-size: 9px;
         white-space: nowrap; /* force to a single line */
@@ -238,6 +239,9 @@
     }
     .badge-icon {
         width: 45px;
+    }
+    .main-case {
+        margin: 14px 0;
     }
 }
 
