@@ -1,16 +1,7 @@
 {% macro player_embed(youtube_id, width=800, height=480, use_iframe_embed=False, http_origin=None) -%}
 
 {% if use_iframe_embed %}
-
-<iframe id="iframePlayer" type="text/html" width="{{ width }}" height="{{ height }}" src="http://www.youtube.com/embed/{{ youtube_id }}?enablejsapi=1&origin=http://{{ http_origin|urlencode }}"></iframe>
-
-<script>
-    var tag = document.createElement('script');
-    tag.src = "http://www.youtube.com/player_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-</script>
-
+{{ mobile_iframe_player_embed(youtube_id, height, http_origin) }}
 {% else %}
 
 <object id="idOVideo" name="idOVideo" width="{{ width }}" height="{{ height }}" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000">
@@ -22,6 +13,19 @@
 </object>
 
 {% endif %}
+{%- endmacro %}
+
+{% macro mobile_iframe_player_embed(youtube_id, height=480, http_origin=None) -%}
+<iframe id="iframePlayer" type="text/html" width="100%" height="{{ height }}" src="http://www.youtube.com/embed/{{ youtube_id }}?enablejsapi=1&origin=http://{{ http_origin|urlencode }}"></iframe>
+
+<script>
+    var tag = document.createElement('script');
+    tag.src = "http://www.youtube.com/player_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    $(function() { VideoStats.startLoggingProgress(null, "{{ youtube_id|escapejs }}"); });
+</script>
 {%- endmacro %}
 
 {% macro jump_link(content, seconds) -%}

@@ -142,11 +142,14 @@ var VideoStats = {
     },
 
     startLoggingProgress: function(sVideoKey, sYoutubeId) {
+
         if (sYoutubeId) {
             this.sYoutubeId = sYoutubeId;
+            this.sVideoKey = null;
         }
         else if (sVideoKey) {
             this.sVideoKey = sVideoKey;
+            this.sYoutubeId = null;
         }
         else {
             return; // no key given, can't log anything.
@@ -394,11 +397,11 @@ function onYouTubePlayerAPIReady() {
         }
     });
 
-    // Try to stop the video whenever leaving a video page.
-    $("#page-container-inner").on("pagebeforehide", "div.video", function(){
-        try { playerJS.stopVideo(); }
-        catch (e) { /* ignore failure to stop */ };
-    });
+    $("#page-container-inner")
+        .on("pagehide", "div.video", function(a, b) {
+            // Remove page from DOM whenever leaving a video page.
+            $(a.target).remove();
+        });
 
     // Whenever showing a new video page, making sure onYouTubePlayerAPIReady
     // gets called, even if it's been called previously.
