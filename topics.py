@@ -84,11 +84,11 @@ class EditContent(request_handler.RequestHandler):
         for readable_id, videos in video_dict.iteritems():
             if len(videos) > 1:
                 canonical_key_id = 0
-                canonical_readable_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                canonical_readable_id = None
                 for video in videos:
                     if models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
                         canonical_key_id = video.key().id()
-                    if len(video.readable_id) < len(canonical_readable_id):
+                    if not canonical_readable_id or len(video.readable_id) < len(canonical_readable_id):
                         canonical_readable_id = video.readable_id
                 
                 def print_video(video, is_canonical):
