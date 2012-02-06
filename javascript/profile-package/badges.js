@@ -550,12 +550,20 @@ Badges.DisplayCase = Backbone.View.extend({
             template = Templates.get("profile.badge-compact"),
             html = [],
             numRendered = Math.min(this.maxVisible, this.model.length);
+
+        // While creating the JSON context, also update the badge overlays in
+        // the display case cover.
+        var overlays = this.editControlEl.find(".achievement-badge");
         for (i = 0; i < numRendered; i++) {
             var badge = this.model.at(i);
             html.push(template(badge.toJSON()));
+            overlays[i].setAttribute(
+                    "title",
+                    badge.get("safeExtendedDescription"));
         }
         for (; i < this.maxVisible; i++) {
             html.push(template(Badges.Badge.EMPTY_BADGE.toJSON()));
+            overlays[i].setAttribute("title", "");
         }
         this.mainCaseEl.html(html.join(""));
     },

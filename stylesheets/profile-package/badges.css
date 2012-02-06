@@ -6,7 +6,6 @@
     height: 100px;
     padding: 0;
     margin: 2px;
-    font-size: 10px;
 
     opacity: 1.0;
     filter: alpha(opacity=100);
@@ -40,6 +39,9 @@
     left: 0;
     right: 0;
 
+    padding: 10px;
+    text-decoration: none !important;
+
     background: -moz-linear-gradient(top,  rgba(188,188,188,0.2) 0%, rgba(117,117,117,0.2) 50%, rgba(12,12,12,0.2) 51%, rgba(7,7,7,0.2) 100%); /* FF3.6+ */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(188,188,188,0.2)), color-stop(50%,rgba(117,117,117,0.2)), color-stop(51%,rgba(12,12,12,0.2)), color-stop(100%,rgba(7,7,7,0.2))); /* Chrome,Safari4+ */
     background: -webkit-linear-gradient(top,  rgba(188,188,188,0.2) 0%,rgba(117,117,117,0.2) 50%,rgba(12,12,12,0.2) 51%,rgba(7,7,7,0.2) 100%); /* Chrome10+,Safari5.1+ */
@@ -49,6 +51,12 @@
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#55bcbcbc', endColorstr='#55070707',GradientType=0 ); /* IE6-9 */
 
     cursor: default;
+}
+
+.display-case-cover .badge-overlay {
+    display: inline-block;
+    background: none;
+    border-color: transparent;
 }
 
 .display-case-cover.editable {
@@ -112,6 +120,7 @@
     left: auto;
     top: auto;
     font-size: 10px;
+    white-space: pre;
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 15px;
@@ -194,7 +203,7 @@
     border: 1px solid #999;
 }
 
-@media all and (max-width: 1185px) {
+@media all and (max-width: 1145px) {
     .achievement-badge .selected-indicator {
         border-top: none;
         border-left: 7px solid transparent;
@@ -204,4 +213,45 @@
         margin-left: -5px;
         bottom: -1px;
     }
+    .achievement-badge.compact .achievement-title {
+        line-height: 12px;
+    }
+    .achievement-badge.compact {
+        width: 80px;
+        height: 80px;
+    }
+    .badge-icon {
+        width: 45px;
+    }
+    .main-case {
+        margin: 10px 0;
+    }
+    /* The padding on the cover has to match the margin+padding on the
+     * main-case so that the badge-overlay can line up with the badge */
+    .display-case-cover {
+        padding: 20px 10px;
+    }
 }
+
+@media all and (max-width: 1040px) {
+    .achievement-badge.compact .achievement-title {
+        font-size: 9px;
+        white-space: nowrap; /* force to a single line */
+    }
+    .achievement-badge.compact {
+        width: 72px;
+        height: 72px;
+    }
+    .badge-icon {
+        width: 45px;
+    }
+    .main-case {
+        margin: 14px 0;
+    }
+    /* The padding on the cover has to match the margin+padding on the
+     * main-case so that the badge-overlay can line up with the badge */
+    .display-case-cover {
+        padding: 24px 10px;
+    }
+}
+

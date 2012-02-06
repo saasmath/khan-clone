@@ -1473,7 +1473,14 @@ class UserData(GAEBingoIdentityModel, db.Model):
         def claim_and_set():
             return self._claim_username_internal(name, clock)
         xg_on = db.create_transaction_options(xg=True)
-        return db.run_in_transaction_options(xg_on, claim_and_set)
+        result = db.run_in_transaction_options(xg_on, claim_and_set)
+        if result:
+            # Success! Ensure we flush the apply() phase of the modifications
+            # so that subsequent queries get consistent results. This makes
+            # claiming usernames slightly slower, but safer since rapid
+            # claiming or rapid claim/read won't result in weirdness.
+            db.get([self.key()])
+        return result
 
     def has_public_profile(self):
         return (self.is_profile_public
