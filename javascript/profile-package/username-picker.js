@@ -147,11 +147,11 @@ UsernamePickerView = Backbone.View.extend({
                 username: username
             };
 
-        this.model.save(attrs);
-
         if (this.setPublicAfterSave_) {
-            $("#edit-visibility").click();
+            attrs.isPublic = true;
         }
+
+        this.model.save(attrs);
 
         $("#save-profile-info").prop("disabled", true);
         this.toggle();
