@@ -86,7 +86,7 @@ class EditContent(request_handler.RequestHandler):
                 canonical_key_id = 0
                 canonical_readable_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                 for video in videos:
-                    if video.key().id() > canonical_key_id and not video.youtube_id.endswith('_player'):
+                    if models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
                         canonical_key_id = video.key().id()
                     if len(video.readable_id) < len(canonical_readable_id):
                         canonical_readable_id = video.readable_id
