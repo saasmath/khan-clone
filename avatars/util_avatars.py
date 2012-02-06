@@ -20,7 +20,7 @@ def all_avatars():
         PointsAvatar("ojsquid", "Orange Juice Squid", "/images/avatars/orange-juice-squid.png", 50000),
         PointsAvatar("purplepi", "Purple Pi", "/images/avatars/purple-pi.png", 50000),
         
-        PointsAvatar("mrpants", "Mr. Pants", "/images/avatars/mr-pants.png", 100000),
+        PointsAvatar("mrpants", "Pants", "/images/avatars/mr-pants.png", 100000),
         PointsAvatar("ospiceman", "Old Spice Man", "/images/avatars/old-spice-man.png", 100000),
     ]
 
