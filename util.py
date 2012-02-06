@@ -188,15 +188,16 @@ def coalesce(fn, s):
     else:
         return None
 
-def count_with_cursors(query, max_value=10000):
+def count_with_cursors(query, max_value=None):
     """ Counts the number of items that match a given query, using cursors
     so that it can return a number over 1000.
-    
+
     USE WITH CARE: should not be done in user-serving requests and can be
     very slow.
     """
     count = 0
-    while count % 1000 == 0 and count < max_value:
+    while count % 1000 == 0 and
+            (max_value is None or count < max_value):
         current_count = len(query.fetch(1000))
         if current_count == 0:
             break
@@ -205,5 +206,5 @@ def count_with_cursors(query, max_value=10000):
         if current_count == 1000:
             cursor = query.cursor()
             query.with_cursor(cursor)
-            
+
     return count
