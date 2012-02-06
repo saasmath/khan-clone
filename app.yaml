@@ -19,6 +19,8 @@ skip_files:
 - ^(.*/)?khan-exercises/test/.*
 - ^(.*/)?presskit/.*
 - ^(.*/)?deploy/.*
+- ^requirements\.txt
+- ^agar
 
 handlers:
 - url: /videos
