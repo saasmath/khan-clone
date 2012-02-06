@@ -4,6 +4,7 @@
 import datetime
 
 from google.appengine.ext import db
+import util
 
 class BadgeStat(db.Model):
     badge_name = db.StringProperty()
@@ -130,17 +131,4 @@ class UserBadge(db.Model):
 
         query.filter('badge_name = ', name)
 
-        count = 0
-        while count % 1000 == 0:
-
-            current_count = len(query.fetch(1000))
-            if current_count == 0:
-                break
-
-            count += current_count
-
-            if current_count == 1000:
-                cursor = query.cursor()
-                query.with_cursor(cursor)
-
-        return count
+        return util.count_with_cursors(query)
