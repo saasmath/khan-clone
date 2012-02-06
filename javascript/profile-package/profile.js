@@ -671,7 +671,7 @@ var Profile = {
                 lines[lines.length] = "&nbsp;";
             }
 
-            return lines.join("<br>");
+            return lines.join("\n");
         });
 
         Profile.populateUserCard();
