@@ -396,7 +396,8 @@ var ClassProfile = {
         var studentGoalsViewModel = {
             rowData: [],
             sortDesc: '',
-            filterDesc: ''
+            filterDesc: '',
+            colors: "goals-class"
         };
 
         $.each(data, function(idx1, student) {
