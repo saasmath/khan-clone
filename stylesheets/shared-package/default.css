@@ -2848,6 +2848,10 @@ a.proficient-badge.disabled {
             background: url(/images/contact-blog.png) no-repeat left center;
             /*! data-uri(/images/contact-blog.png) */
         }
+        #the-team .team-card .card-info .contact-ka {
+            background: url(/images/contact-ka.png) no-repeat left center;
+            /*! data-uri(/images/contact-blog.ka) */
+        }
 /* end of team styles */
 /* Blog styles */
 #about-blog {
