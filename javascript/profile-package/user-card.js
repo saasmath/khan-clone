@@ -131,8 +131,8 @@ var ProfileModel = Backbone.Model.extend({
             return;
         }
 
-        username = username.toLowerCase()
-                    .replace(/\./g, "");
+        // Must be consistent with canonicalizing logic on server.
+        username = username.toLowerCase().replace(/\./g, "");
 
         // Must be synced with server's understanding
         // in UniqueUsername.is_valid_username()
