@@ -217,6 +217,7 @@ var Badges = {
             $(".ellipsis", jelLink).remove();
             jelLink.html(jelLink.text());
             jelContext.css("display", "");
+            jelBadge.find(".achievement-desc").addClass("expanded");
             jelBadge.css("min-height", jelBadge.css("height")).css("height", "auto");
             jelBadge.nextAll(".achievement-badge").first().css("clear", "both");
         }
