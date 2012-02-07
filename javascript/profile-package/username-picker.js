@@ -21,7 +21,7 @@ UsernamePickerView = Backbone.View.extend({
         "keyup .nickname": "onNicknameKeyup_",
         "keyup .username": "onUsernameKeyup_",
         "click #save-profile-info": "onSaveClick_",
-        "click #cancel-profile-info": "toggle"
+        "click #cancel-profile-info": "onCancelClicked_"
     },
 
     initialize: function() {
@@ -52,6 +52,10 @@ UsernamePickerView = Backbone.View.extend({
             .bind("hidden", _.bind(this.resetFields_, this))
             .bind("shown", _.bind(this.onPickerShown_, this));
         return this;
+    },
+
+    onCancelClicked_: function() {
+        this.toggle();
     },
 
     toggle: function(setPublic) {
