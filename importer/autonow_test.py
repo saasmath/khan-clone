@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from handlers import AutoNowDisabled
+from __future__ import with_statement
+from importer.handlers import AutoNowDisabled
 from datetime import timedelta
 import time
 
