@@ -8,6 +8,35 @@ if (typeof Profile !== "undefined") {
     // the client. Asynchronously start the intro flow so that those
     // items can be rendered first.
     window.setTimeout(function() {
+        if (Profile.profile.isPhantom()) {
+            // For phantom users, don't show a tour flow, but a single dialog
+            // with clear call-to-action to login.
+            guiders.createGuider({
+                buttons: [
+                    {
+                        action: guiders.ButtonAction.CLOSE,
+                        text: "No thanks",
+                        classString: "simple-button action-gradient"
+                    },
+                    {
+                        action: guiders.ButtonAction.CLOSE,
+                        text: "Cool. Let me login now!",
+                        onclick: function() {
+                            var postLoginUrl = "/postlogin?continue=" +
+                                    encodeURIComponent(window.location.href);
+                            window.location.href = "/login?continue=" +
+                                    encodeURIComponent(postLoginUrl);
+                        },
+                        classString: "simple-button action-gradient green"
+                    }
+                ],
+                title: "Login to save and customize your data!",
+                description: "Your profile page can show you all sorts of cool statistics and help you track your progress. If you login, you can also customize and share your progress, too!",
+                overlay: true
+            }).show();
+            return;
+        }
+
         var isFullyEditable = Profile.profile.get("isDataCollectible");
         guiders.createGuider({
             id: "welcome",

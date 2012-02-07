@@ -206,9 +206,10 @@ class ViewProfile(request_handler.RequestHandler):
                     return
 
                 show_intro = True
-                models.PromoRecord.record_promo("New Profile Promo",
-                                                user_data.user_id,
-                                                skip_check=True)
+                #models.PromoRecord.record_promo("New Profile Promo",
+                                                #user_data.user_id,
+                                                #skip_check=True)
+            show_intro = True
 
         has_full_access = is_self or user_data.is_visible_to(current_user_data)
         tz_offset = self.request_int("tz_offset", default=0)
