@@ -217,6 +217,41 @@ Badges.DisplayCase = Backbone.View.extend({
             "badge-compact",
             Templates.get("profile.badge-compact")
         );
+
+        Handlebars.registerHelper("toBadgeDescriptionWithBreaks", function(description) {
+            var lines = [];
+            var line = "";
+
+            _.each(description.split(" "), function(word) {
+
+                if (line.length > 0) {
+                // Split description into up to two lines
+
+                    if (line.length + word.length > 12 && lines.length == 0) {
+                        // Insert newline, break it up
+                        lines[lines.length] = line;
+                        line = "";
+                    }
+                    else {
+                        line += " ";
+                    }
+
+                }
+
+                line += word;
+            });
+
+            if (line) {
+                lines[lines.length] = line;
+            }
+
+            // Guarantee 2 lines for consistent height
+            while (lines.length < 2) {
+                lines[lines.length] = "&nbsp;";
+            }
+
+            return lines.join("\n");
+        });
     },
 
     events: {
