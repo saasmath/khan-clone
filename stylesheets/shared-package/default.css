@@ -1913,6 +1913,10 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
     }
+    .achievement-badge .achievement-desc.expanded {
+        max-height: 500px;
+        -webkit-line-clamp: 100;
+    }
     .achievement-badge #badge-icon {
         width: 40px;
         height: 40px;
