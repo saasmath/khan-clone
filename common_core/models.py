@@ -10,6 +10,7 @@ COMMON_CORE_SEPARATOR = '.'
 COMMON_CORE_BASE_URL = 'http://www.corestandards.org/the-standards/mathematics/'
 COMMON_CORE_GRADE_URLS = {
         "K": "kindergarten/",
+        "0": "kindergarten/",
         "1": "grade-1/",
         "2": "grade-2/",
         "3": "grade-3/",
@@ -150,15 +151,20 @@ class CommonCoreMap(db.Model):
     @staticmethod
     def get_all_structured(lightweight=False):
         all_entries = []
-        for grade in COMMON_CORE_GRADE_URLS:
+        for grade in sorted(COMMON_CORE_GRADE_URLS.iterkeys()):
+            if grade == 'K':
+                continue
+
             entry = {}
             entry['grade'] = grade
+            if grade == '0':
+                entry['grade'] = 'K'
             entry['domains'] = []
-            for domain in COMMON_CORE_DOMAINS:
+            for domain in sorted(COMMON_CORE_DOMAINS.iterkeys()):
                 query = CommonCoreMap.all()
-                query.filter('grade =', grade)
+                query.filter('grade =', entry['grade'])
                 query.filter('domain_code =', domain)
-                standards = query.fetch(1000)
+                standards = sorted(query.fetch(1000), key=lambda k: k.standard)
                 
                 if len(standards) == 0:
                     continue
