@@ -14,14 +14,16 @@ skip_files:
 - ^(.*/)?.*\.py[co]
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
-- ^(.*/)?.*_test.py
+- ^(.*/)?.*_test\.py
 - ^(.*/)?sample_data/.*
 - ^(.*/)?khan-exercises/test/.*
 - ^(.*/)?presskit/.*
 - ^(.*/)?deploy/.*
-- ^(.*/)?javascript/testbase.js
-- ^(.*/)?.*_test.html
-- ^test_utils.py
+- ^(.*/)?javascript/testbase\.js
+- ^(.*/)?.*_test\.html
+- ^test_utils\.py
+- ^requirements\.txt
+- ^agar
 
 handlers:
 - url: /videos
