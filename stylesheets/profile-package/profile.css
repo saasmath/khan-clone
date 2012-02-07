@@ -506,6 +506,12 @@ padding-left: 3px;
      .activity-list .activity-exercise.proficient .activity-image {
          background: #005987 url(/images/activity-exercise-icon-proficient.png) no-repeat 50% 50%;
      }
+     .activity-list .activity-goal .activity-image {
+         background: #ccc url(/images/activity-icon-goal-inset.png) no-repeat 50% 50%;
+     }
+     .activity-list .activity-goal.completed .activity-image {
+         background: #005987 url(/images/activity-icon-goal-complete.png) no-repeat 50% 50%;
+     }
     .activity-list .activity-image img {
         max-width: 60px;
         max-height: 60px;
