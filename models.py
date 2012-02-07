@@ -1682,7 +1682,7 @@ class TopicVersion(db.Model):
         deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
 
 def apply_version_content_changes(version):
-    changes = VersionContentChange.all().fetch(10000)
+    changes = VersionContentChange.all().filter("version =", version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
     for change in changes:
         change.apply_change()
