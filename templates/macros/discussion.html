@@ -7,7 +7,6 @@
 
         <div class="comments_container"><em>Loading...</em> <img class="icon" src="{{ "/images/throbber.gif"|static_url }}"/></div>
         
-
         {% if logged_in %}
 
         <a href="#" class="control comment_add"><img class="icon" src="{{ "/images/balloon-plus.png"|static_url }}" />Add a comment</a>
@@ -253,7 +252,11 @@
             {{ flag_tools(target) }}
 
             {% if UserData.current().moderator %}
-                {{ mod_tools(target) }}
+                {% if target and target.appears_as_deleted_to(UserData.current()) %}
+                    (deleted or hidden by flags)
+                {% else %}
+                    {{ mod_tools(target) }}
+                {% endif %}
             {% else %}
                 {% if target and target.authored_by(UserData.current()) %}
                     {{ author_tools(target) }}
@@ -269,7 +272,7 @@
     {% for answer in answers %}
         <div class="answer_container">
             <input type="hidden" name="entity_key" value="{{ answer.key() }}" />
-            <div class="answer">
+            <div class="answer {% if answer.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}">
                 {{ vote_tools(answer) }}
                 {% if standalone %}
                     <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_expand_key={{answer.question().key()}}#q_{{answer.question().key()}}">

@@ -16,21 +16,19 @@ def is_honeypot_empty(request):
 def feedback_query(target_key):
     query = models_discussion.Feedback.all()
     query.filter("targets =", target_key)
-    query.filter("deleted =", False)
-    query.filter("is_hidden_by_flags =", False)
     query.order('-date')
     return query
 
-@request_cache.cache_with_key_fxn(models_discussion.Feedback.memcache_key_for_video)
+@request_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video)
 @unpickle
 @base64_decode
 @decompress
-@layer_cache.cache_with_key_fxn(models_discussion.Feedback.memcache_key_for_video, layer=layer_cache.Layers.Memcache)
+@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video, layer=layer_cache.Layers.Datastore)
 @compress
 @base64_encode
 @pickle
 def get_feedback_for_video(video):
-    return feedback_query(video.key()).fetch(500)
+    return feedback_query(video.key()).fetch(1000)
 
 @request_cache.cache_with_key_fxn(lambda v, ud: str(v) + str(ud))
 def get_feedback_for_video_by_user(video_key, user_data_key):
@@ -50,9 +48,9 @@ def get_feedback_by_type_for_video(video, feedback_type, user_data=None):
     user_feedback_dict = dict([(f.key(), f) for f in user_feedback if feedback_type in f.types])
 
     feedback_dict.update(user_feedback_dict)
-    # It's possible that an entity was deleted or flagged by the user.
-    # They'll still be in the main query, but remove the ones by the user here.
     feedback = feedback_dict.values()
-    feedback = filter(lambda f: not (f.deleted or f.is_hidden_by_flags), feedback)
+
+    # Filter out all deleted or flagged feedback (uses hellban technique)
+    feedback = filter(lambda f: f.is_visible_to(user_data), feedback)
 
     return sorted(feedback, key=lambda s: s.date, reverse=True)
