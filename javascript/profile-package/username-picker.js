@@ -203,7 +203,7 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     getFormValue_: function(selector) {
-        return this.$(selector).val().trim();
+        return $.trim(this.$(selector).val());
     },
 
     /**
