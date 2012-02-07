@@ -260,7 +260,7 @@ def topictree(version_id = None):
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topictree", methods=["GET"])
-@developer_required
+# @developer_required
 @jsonp
 @decompress
 @layer_cache.cache_with_key_fxn(
@@ -273,6 +273,192 @@ def topictree(version_id = None):
 def topictree_export(version_id = None, topic_id = "root"):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id(topic_id, version).make_tree(include_hidden=True)
+
+@route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topictree", methods=["PUT"])
+# @developer_required
+@jsonp
+@jsonify
+def topictree_import(version_id = "edit", topic_id="root"):
+    logging.info("starting import")
+    version = models.TopicVersion.get_by_id(version_id)
+    parent = models.Topic.get_by_id(topic_id, version)
+
+    tree_json = request.json
+    topics = models.Topic.get_all_topics(version, True)
+    logging.info("got all topics")
+    topic_dict = dict((topic.id, topic) for topic in topics)
+    topic_keys_dict = dict((topic.key(), topic) for topic in topics)
+    videos = models.Video.get_all()
+    logging.info("got all videos")
+    video_dict = dict((video.youtube_id, video) for video in videos)
+    exercises = models.Exercise.get_all_use_cache()
+    logging.info("got all exercises")
+    exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
+    urls = models.Url.all()
+    url_dict = dict((url.id, url) for url in urls)
+    logging.info("got all urls")
+    all_entities_dict = {}
+
+    # adds key to each entity in json tree, if the node is not in the tree then add it
+    def add_keys_json_tree(tree, parent):
+        if tree["kind"] == "Topic":
+            if tree["id"] in topic_dict:
+                topic = topic_dict[tree["id"]]
+                tree["key"] = topic.key()
+            else:
+                kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
+                kwargs["version"] = version
+                topic = models.Topic.insert(title = tree['title'], parent = None, **kwargs)
+                # since this is a new topic, put it in its correct parent
+                # the order does not matter as we are over-writing the 
+                # child_keys later.  This add_child is done to just make sure
+                # the parent and ancestors will all match
+                parent.add_child(topic, 0)
+                tree["key"] = topic.key()
+                topic_dict[tree["id"]]=topic
+
+            # if this topic is not the parent topic (ie. its root, or the 
+            # topic_id you are updating)
+            if (parent.key() != topic.key() and
+                # and this topic is not in the new parent
+                topic.key() not in parent.child_keys and
+                # if it already exists in a topic
+                len(topic.parent_keys) and 
+                # and that topic is not the parent topic
+                topic.parent_keys[0] != parent.key()):
+    
+                # move it from that old parent topic, its position in the new
+                # parent does not matter as child_keys will get written over 
+                # later.  move_child is needed only to make sure that the 
+                # parent_keys and ancestor_keys will all match up correctly
+                old_parent = topic_keys_dict[topic.parent_keys[0]]
+                old_parent.move_child(topic, parent, 0)
+
+            all_entities_dict[tree["key"]] = topic
+        
+        elif tree["kind"] == "Video":
+            if tree["youtube_id"] in video_dict:
+                video = video_dict[tree["youtube_id"]]
+                tree["key"] = video.key()
+            else:                    
+                tree["date_added"] = datetime.datetime.now()
+                video = models.VersionContentChange.add_new_content(models.Video, 
+                                                                version,
+                                                                tree)
+                tree["key"] = video.key()
+                video_dict[tree["youtube_id"]] = video
+          
+            all_entities_dict[tree["key"]] = video
+
+        elif tree["kind"] == "Exercise":
+            if tree["name"] in exercise_dict:
+                tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
+            else:
+                exercise = exercise_save_data(version, tree)
+                tree["key"] = exercise.key()
+                exercise_dict[tree["name"]] = exercise
+            
+            all_entities_dict[tree["key"]] = exercise_dict[tree["name"]]
+            
+        elif tree["kind"] == "Url":
+            if tree["id"] in url_dict:
+                url = url_dict[tree["id"]]
+                tree["key"] = url.key() 
+            else:    
+                changeable_props = ["tags", "title", "url"]
+                url = models.VersionContentChange.add_new_content(models.Url, 
+                                                           version,
+                                                           tree,
+                                                           changeable_props)
+                tree["key"] = url.key()
+                url_dict[tree["id"]] = url
+
+            all_entities_dict[tree["key"]] = url
+
+        if "children" in tree:
+            for child in tree["children"]:
+                add_keys_json_tree(child, topic_dict[tree["id"]])
+   
+    add_keys_json_tree(tree_json, parent)
+    logging.info("added keys to nodes")
+
+    def add_child_keys_json_tree(tree):
+        if tree["kind"] == "Topic":
+            tree["child_keys"]=[]
+            if "children" in tree:
+                for child in tree["children"]:
+                    '''
+                    if child["kind"] == "Video":
+                        logging.info(child["title"])
+                    else:
+                        logging.info(child["name"])
+                    '''
+                    logging.info(child["key"])
+                    tree["child_keys"].append(child["key"])
+                    add_child_keys_json_tree(child)
+
+    add_child_keys_json_tree(tree_json)
+    logging.info("added children keys")
+
+    def extract_nodes(tree, nodes):
+        if "children" in tree:
+            for child in tree["children"]:
+                nodes.update(extract_nodes(child, nodes))
+            del(tree["children"])
+        # logging.info("adding %s" % (tree["title"] if "title" in tree else tree["name"]))
+        # logging.info(tree["key"])
+        nodes[tree["key"]]=tree
+        return nodes
+    
+    # return len(tree_json)
+    nodes = extract_nodes(tree_json, {})
+    logging.info("extracted nodes")
+    # logging.info(nodes)
+    changed_nodes = []
+
+    # now loop through all the nodes 
+    for key, node in nodes.iteritems():
+        if node["kind"] == "Topic":
+            topic = all_entities_dict[node["key"]]
+            
+            kwargs = (dict((str(key), value) for key, value in node.iteritems() 
+                    if key in ['id', 'title', 'standalone_title', 'description',
+                    'tags', 'hide', 'child_keys']))
+            kwargs["version"] = version
+            kwargs["put"] = False
+            if topic.update(**kwargs):
+                changed_nodes.append(topic)
+        
+        elif node["kind"] == "Video":
+            video = all_entities_dict[node["key"]]
+            
+            models.VersionContentChange.add_content_change(video, 
+                version, 
+                node, 
+                ["readable_id", "title", "youtube_id", "description", "keywords"])
+        
+        elif node["kind"] == "Exercise":
+            if node["key"] in all_entities_dict:
+                exercise = all_entities_dict[node["key"]]
+
+            exercise_save_data(version, node, exercise)
+
+        elif node["kind"] == "Url":
+            url = all_entities_dict[node["key"]]
+            changeable_props = ["tags", "title", "url"]
+
+            models.VersionContentChange.add_content_change(
+                url, 
+                version, 
+                request.json,
+                changeable_props)
+
+
+    logging.info([n.child_keys for n in changed_nodes])
+    db.put(changed_nodes)
+    return [n.get_visible_data() for n in changed_nodes]
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
@@ -652,32 +838,33 @@ def exercise_videos(exercise_name):
 @jsonify
 def exercise_save(exercise_name = None, version_id = "edit"):
     request.json["name"] = exercise_name
-    request.json["live"] = request.json["live"] == "true" or request.json["live"] == True      
-    request.json["v_position"] = int(request.json["v_position"])
-    request.json["h_position"] = int(request.json["h_position"])
-    request.json["seconds_per_fast_problem"] = (
-        float(request.json["seconds_per_fast_problem"]))
-    logging.info(request.json["live"])
-
     version = models.TopicVersion.get_by_id(version_id)
-    # exercise = models.Exercise.get_for_readable_id(video_id, version)
     query = models.Exercise.all()
     query.filter('name =', exercise_name)
     exercise = query.get()
+    return exercise_save_data(version, request.json, exercise)
+
+def exercise_save_data(version, data, exercise=None):
+    if "name" not in data:
+        raise Exception("exercise 'name' missing")
+    data["live"] = data["live"] = data["live"] == "true" or data["live"] == True    
+    data["v_position"] = int(data["v_position"])
+    data["h_position"] = int(data["h_position"])
+    data["seconds_per_fast_problem"] = (
+        float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "summative", "prerequisites", "covers", 
-                        "related_videos", "short_display_name", "description",
-                        "tags"]
+                        "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise, 
             version, 
-            request.json,
+            data,
             changeable_props)
     else:
         return models.VersionContentChange.add_new_content(models.Exercise, 
                                                            version,
-                                                           request.json,
+                                                           data,
                                                            changeable_props)
 
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
