@@ -1605,10 +1605,7 @@ class TopicVersion(db.Model):
 
     @staticmethod
     def get_edit_version():
-        version = TopicVersion.all().filter("edit = ", True).get()
-        if version is None:
-            version = TopicVersion.create_edit_version()
-        return version
+        return TopicVersion.all().filter("edit = ", True).get()
 
     @staticmethod
     def create_edit_version():
@@ -1736,8 +1733,12 @@ def change_default_version(version):
         Setting.topic_tree_version(version.number)
 
     logging.info("done setting new default version")
+
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
+    
+    TopicVersion.create_edit_version()
+    logging.info("done creating new edit version")
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
