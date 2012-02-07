@@ -81,6 +81,9 @@ class EditContent(request_handler.RequestHandler):
                 video_dict[video.readable_id] = []
             video_dict[video.readable_id].append(video)
 
+        video_idx = 0
+        print "IDX,Canon,DUP,Key,ID,YTID,Title,Topics"
+
         for readable_id, videos in video_dict.iteritems():
             if len(videos) > 1:
                 canonical_key_id = 0
@@ -91,10 +94,10 @@ class EditContent(request_handler.RequestHandler):
                     if not canonical_readable_id or len(video.readable_id) < len(canonical_readable_id):
                         canonical_readable_id = video.readable_id
                 
-                def print_video(video, is_canonical):
+                def print_video(video, is_canonical, dup_idx):
                     canon_str = "CANONICAL" if is_canonical else "DUPLICATE"
                     topic_strings = "|".join([topic.id for topic in models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).run()])
-                    print "%s,%s,%s,%s,%s,%s" % (canon_str, str(video.key()), video.readable_id, video.youtube_id, video.title, topic_strings)
+                    print "%d,%s,%d,%s,%s,%s,%s,%s" % (video_idx, canon_str, dup_idx, str(video.key()), video.readable_id, video.youtube_id, video.title, topic_strings)
 
                 for video in videos:
                     if video.key().id() == canonical_key_id:
@@ -102,19 +105,22 @@ class EditContent(request_handler.RequestHandler):
                             video.readable_id = canonical_readable_id
                             videos_to_update.append(video)
 
-                        print_video(video, True)
+                        print_video(video, True, 0)
 
                 dup_idx = 1
                 for video in videos:
                     if video.key().id() != canonical_key_id:
                         new_readable_id = canonical_readable_id + "_DUP_" + str(dup_idx)
-                        dup_idx += 1
 
                         if video.readable_id != new_readable_id:
                             video.readable_id = new_readable_id
                             videos_to_update.append(video)
 
-                        print_video(video, False)
+                        print_video(video, False, dup_idx)
+
+                        dup_idx += 1
+
+                video_idx += 1
 
         if len(videos_to_update) > 0:
             logging.info("Writing " + str(len(videos_to_update)) + " videos with duplicate IDs")
