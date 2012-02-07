@@ -30,8 +30,8 @@ if (typeof Profile !== "undefined") {
                         classString: "simple-button action-gradient green"
                     }
                 ],
-                title: "Login to save and customize your data!",
-                description: "Your profile page can show you all sorts of cool statistics and help you track your progress. If you login, you can also customize and share your progress, too!",
+                title: "Log in to save and customize your profile!",
+                description: "Your profile page shows you all the great progress you've made on Khan Academy. If you login, you can even customize and share your profile with your friends!",
                 overlay: true
             }).show();
             return;
