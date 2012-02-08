@@ -205,8 +205,9 @@ var Profile = {
     getRoutes_: function() {
         var routes = {};
 
-         _.each(this.subRoutes, function(fxn, subRoute) {
-             var key = Profile.profileRoot + subRoute;
+        _.each(this.subRoutes, function(fxn, subRoute) {
+            // Internally, backbone expects these routes to be decoded.
+            var key = decodeURIComponent(Profile.profileRoot) + subRoute;
             routes[key] = fxn;
         });
 
