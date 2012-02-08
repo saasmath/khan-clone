@@ -2406,7 +2406,17 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False:
+        lambda version=None: 
+        "topic.get_visible_topics_%s" % (
+            version.key() if version else Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
+    def get_visible_topics(version = None):
+        topics = Topic.get_all_topics(version, False)
+        return [t for t in topics]
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
         "topic.get_content_topic_%s_%s" % (
             version.key() if version else Setting.topic_tree_version(),
             include_hidden),
@@ -2439,17 +2449,24 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
-        keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]
+        keys = [child_key for child_key in topic.child_keys if not kind or child_key.kind() == kind]  
         if include_descendants:
             keys = []
+
             subtopics = Topic.all().filter("ancestor_keys =", topic.key())
             if not include_hidden:
                 subtopics.filter("hide =", False)
             subtopics.run()
-            for subtopic in subtopics:
-                keys.extend([key for key in subtopic.child_keys if key.kind() == kind])
 
-        return db.get(keys)
+            for subtopic in subtopics:
+                keys.extend([key for key in subtopic.child_keys if not kind or key.kind() == kind])
+              
+        nodes = db.get(keys) 
+
+        if not kind:
+            nodes.extend(subtopics)
+
+        return nodes
 
     def get_urls(self, include_descendants=False, include_hidden=False):
         return Topic._get_children_of_kind(self, "Url", include_descendants)
@@ -2482,6 +2499,124 @@ class Topic(Searchable, db.Model):
             logging.info("Indexing topic " + topic.title + " (" + str(topic.key()) + ")")
             topic.index()
             topic.indexed_title_changed()
+
+    def get_user_progress(self, user_data):
+
+        def get_user_video_progress(video_id, user_video_dict):
+            status_flags = {}
+
+            id = '.v%d' % video_id
+
+            if id in user_video_dict['completed']:
+                status_flags["VideoCompleted"] = 1
+                status_flags["VideoStarted"] = 1
+
+            if id in user_video_dict['started']:
+                status_flags["VideoStarted"] = 1
+
+            if status_flags != {}:
+                return {
+                    "kind": "Video",
+                    "id": video_id,
+                    "status_flags": status_flags
+                }
+
+            return None
+
+        def get_user_exercise_progress(exercise_id, user_exercise_dict):
+            status_flags = {}
+
+            if exercise_id in user_exercise_dict:
+                exercise_dict = user_exercise_dict[exercise_id]
+
+                if exercise_dict["proficient"]:
+                    status_flags["ExerciseProficient"] = 1
+
+                if exercise_dict["struggling"]:
+                    status_flags["ExerciseStruggling"] = 1
+
+                if exercise_dict["total_done"] > 0:
+                    status_flags["ExerciseStarted"] = 1
+
+            if status_flags != {}:
+                return {
+                    "kind": "Exercise",
+                    "id": exercise_id,
+                    "status_flags": status_flags
+                }
+
+            return None
+
+        def get_user_progress_recurse(topic, topics_dict, user_video_dict, user_exercise_dict):
+            stats = {
+                "kind": "Topic",
+                "id": topic.id,
+                "status_flags": {},
+
+                "video_aggregates": {},
+                "exercise_aggregates": {},
+                "topic_aggregates": {},
+
+                "children": [],
+                "video_count": 0,
+                "exercise_count": 0,
+                "topic_count": 0
+            }
+
+            for child_key in topic.child_keys:
+                if child_key.kind() == "Topic":
+                    if child_key in topics_dict:
+                        child_topic = topics_dict[child_key]
+                        progress = get_user_progress_recurse(child_topic, topics_dict, user_video_dict, user_exercise_dict)
+                        if progress:
+                            stats["children"].append(progress)
+                        stats["topic_count"] += 1
+
+                elif child_key.kind() == "Video":
+                    video_id = child_key.id()
+                    progress = get_user_video_progress(video_id, user_video_dict)
+                    if progress:
+                        stats["children"].append(progress)
+                    stats["video_count"] += 1
+
+                elif child_key.kind() == "Exercise":
+                    exercise_id = child_key.id()
+                    progress = get_user_exercise_progress(exercise_id, user_exercise_dict)
+                    if progress:
+                        stats["children"].append(progress)
+                    stats["exercise_count"] += 1
+                    pass
+
+            for child_stat in stats["children"]:
+                aggregate_name = child_stat["kind"].lower() + "_aggregates"
+                for flag, value in child_stat["status_flags"].iteritems():
+                    if flag not in stats[aggregate_name]:
+                        stats[aggregate_name][flag] = 0
+                    stats[aggregate_name][flag] += value
+
+            for kind in ["topic", "video", "exercise"]:
+                for flag, value in stats[kind + "_aggregates"].iteritems():
+                    if value >= stats[kind + "_count"]:
+                        stats["status_flags"][flag] = 1
+
+            if stats["children"] != [] or stats["status_flags"] != {}:
+                return stats
+            else:
+                return None
+
+        user_video_css = UserVideoCss.get_for_user_data(user_data)
+        if user_video_css:
+            user_video_dict = pickle.loads(user_video_css.pickled_dict)
+        else:
+            user_video_dict = {}
+
+        user_exercise_graph = UserExerciseGraph.get(user_data)
+        user_exercise_dict = dict((exdict["id"], exdict) for name, exdict in user_exercise_graph.graph.iteritems())
+
+        topics = Topic.get_visible_topics()
+        topics_dict = dict((topic.key(), topic) for topic in topics)
+
+        return get_user_progress_recurse(self, topics_dict, user_video_dict, user_exercise_dict)
 
 class UserTopicVideos(db.Model):
     user = db.UserProperty()
@@ -3872,6 +4007,7 @@ class UserExerciseGraph(object):
     @staticmethod
     def dict_from_exercise(exercise):
         return {
+                "id": exercise.key().id(),
                 "name": exercise.name,
                 "display_name": exercise.display_name,
                 "h_position": exercise.h_position,

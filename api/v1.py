@@ -241,6 +241,21 @@ def topic_exercises(topic_id, version_id = None):
     exercises = topic.get_exercises()
     return exercises
 
+@route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def topic_progress(topic_id):
+    user_data = models.UserData.current()
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        raise ValueError("Invalid topic id.")
+
+    return topic.get_user_progress(user_data)
+
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
 @etag(lambda version_id = None: version_id) 
