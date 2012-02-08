@@ -77,4 +77,13 @@ class BannedList(request_handler.RequestHandler):
             user_data.discussion_banned = self.request_bool("banned")
             db.put(user_data)
 
+            if user_data.discussion_banned:
+                # Delete all old posts by hellbanned user
+                query = models_discussion.Feedback.all()
+                query.ancestor(user_data)
+                for feedback in query:
+                    if not feedback.deleted:
+                        feedback.deleted = True
+                        feedback.put()
+
         self.redirect("/discussion/mod/bannedlist")
