@@ -21,7 +21,6 @@ skip_files:
 - ^(.*/)?deploy/.*
 - ^(.*/)?javascript/testbase\.js
 - ^(.*/)?.*_test\.html
-- ^test_utils\.py
 - ^requirements\.txt
 - ^agar
 - ^testutil
