@@ -174,7 +174,7 @@ class ManageCommonCore(request_handler.RequestHandler):
             if e.standard in standard_list:
                 delete_list.append(e)
             else:
-                standard_list.append(e)
+                standard_list.append(e.standard)
 
         db.delete(delete_list)
 
