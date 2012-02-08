@@ -23,6 +23,7 @@ import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph, recent_activity
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
+from app import App
 
 from api import route
 from api.decorators import jsonify, jsonp, compress, decompress, etag,\
@@ -182,7 +183,7 @@ def topics_library_compact():
         trimmed_info = {}
         trimmed_info['id'] = topic.id
         trimmed_info['children'] = [trimmed_item(v, topic) for v in topic.children]
-        topic_dict[topic.standalone_title] = trimmed_info
+        topic_dict[topic.id] = trimmed_info
 
     return topic_dict
 
@@ -260,7 +261,7 @@ def topictree(version_id = None):
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topictree", methods=["GET"])
-# @developer_required
+@developer_required
 @jsonp
 @decompress
 @layer_cache.cache_with_key_fxn(
@@ -277,7 +278,7 @@ def topictree_export(version_id = None, topic_id = "root"):
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topictree", methods=["PUT"])
-# @developer_required
+@developer_required
 @jsonp
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root"):
@@ -300,9 +301,17 @@ def topictree_import(version_id = "edit", topic_id="root"):
     url_dict = dict((url.id, url) for url in urls)
     logging.info("got all urls")
     all_entities_dict = {}
+    new_content_keys = []
+
+    # on dev server dont record new items in ContentVersionChanges
+    if App.is_dev_server:
+        put_change = False
+    else:
+        put_change = True
 
     # adds key to each entity in json tree, if the node is not in the tree then add it
     def add_keys_json_tree(tree, parent):
+
         if tree["kind"] == "Topic":
             if tree["id"] in topic_dict:
                 topic = topic_dict[tree["id"]]
@@ -311,6 +320,7 @@ def topictree_import(version_id = "edit", topic_id="root"):
                 kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
                 kwargs["version"] = version
                 topic = models.Topic.insert(title = tree['title'], parent = None, **kwargs)
+                logging.info("added topic %s" % topic.title)
                 # since this is a new topic, put it in its correct parent
                 # the order does not matter as we are over-writing the 
                 # child_keys later.  This add_child is done to just make sure
@@ -334,6 +344,8 @@ def topictree_import(version_id = "edit", topic_id="root"):
                 # later.  move_child is needed only to make sure that the 
                 # parent_keys and ancestor_keys will all match up correctly
                 old_parent = topic_keys_dict[topic.parent_keys[0]]
+                logging.info("moving topic %s from %s to %s" % (topic.id, 
+                    old_parent.id, parent.id))
                 old_parent.move_child(topic, parent, 0)
 
             all_entities_dict[tree["key"]] = topic
@@ -343,10 +355,16 @@ def topictree_import(version_id = "edit", topic_id="root"):
                 video = video_dict[tree["youtube_id"]]
                 tree["key"] = video.key()
             else:                    
-                tree["date_added"] = datetime.datetime.now()
+                changeable_props = ["youtube_id", "url", "title", "description",
+                                    "keywords", "duration", "readable_id", 
+                                    "views"]
                 video = models.VersionContentChange.add_new_content(models.Video, 
                                                                 version,
-                                                                tree)
+                                                                tree, 
+                                                                changeable_props,
+                                                                put_change)
+                logging.info("added video %s" % video.title)
+                new_content_keys.append(video.key())
                 tree["key"] = video.key()
                 video_dict[tree["youtube_id"]] = video
           
@@ -356,7 +374,9 @@ def topictree_import(version_id = "edit", topic_id="root"):
             if tree["name"] in exercise_dict:
                 tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
             else:
-                exercise = exercise_save_data(version, tree)
+                exercise = exercise_save_data(version, tree, None, put_change)
+                logging.info("added Exercise %s" % exercise.name)
+                new_content_keys.append(exercise.key())
                 tree["key"] = exercise.key()
                 exercise_dict[tree["name"]] = exercise
             
@@ -371,12 +391,16 @@ def topictree_import(version_id = "edit", topic_id="root"):
                 url = models.VersionContentChange.add_new_content(models.Url, 
                                                            version,
                                                            tree,
-                                                           changeable_props)
+                                                           changeable_props,
+                                                           put_change)
+                logging.info("added Url %s" % url.title)
+                new_content_keys.append(url.key())
                 tree["key"] = url.key()
                 url_dict[tree["id"]] = url
 
             all_entities_dict[tree["key"]] = url
 
+        # recurse through the tree's children
         if "children" in tree:
             for child in tree["children"]:
                 add_keys_json_tree(child, topic_dict[tree["id"]])
@@ -395,7 +419,6 @@ def topictree_import(version_id = "edit", topic_id="root"):
                     else:
                         logging.info(child["name"])
                     '''
-                    logging.info(child["key"])
                     tree["child_keys"].append(child["key"])
                     add_child_keys_json_tree(child)
 
@@ -414,15 +437,17 @@ def topictree_import(version_id = "edit", topic_id="root"):
     
     # return len(tree_json)
     nodes = extract_nodes(tree_json, {})
-    logging.info("extracted nodes")
+    logging.info("extracted %i nodes" % len(nodes))
     # logging.info(nodes)
     changed_nodes = []
 
+    i = 0
     # now loop through all the nodes 
     for key, node in nodes.iteritems():
         if node["kind"] == "Topic":
             topic = all_entities_dict[node["key"]]
-            
+            logging.info("%i/%i Updating any change to Topic %s" % (i, len(nodes), topic.title))
+
             kwargs = (dict((str(key), value) for key, value in node.iteritems() 
                     if key in ['id', 'title', 'standalone_title', 'description',
                     'tags', 'hide', 'child_keys']))
@@ -431,34 +456,49 @@ def topictree_import(version_id = "edit", topic_id="root"):
             if topic.update(**kwargs):
                 changed_nodes.append(topic)
         
-        elif node["kind"] == "Video":
+        elif node["kind"] == "Video" and node["key"] not in new_content_keys:
             video = all_entities_dict[node["key"]]
+            logging.info("%i/%i Updating any change to Video %s" % (i, len(nodes), video.title))
             
-            models.VersionContentChange.add_content_change(video, 
+            change = models.VersionContentChange.add_content_change(video, 
                 version, 
                 node, 
                 ["readable_id", "title", "youtube_id", "description", "keywords"])
+            if change:
+                logging.info("changed")
         
-        elif node["kind"] == "Exercise":
-            if node["key"] in all_entities_dict:
-                exercise = all_entities_dict[node["key"]]
+        elif node["kind"] == "Exercise" and node["key"] not in new_content_keys:
+            exercise = all_entities_dict[node["key"]]
+            logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
 
-            exercise_save_data(version, node, exercise)
+            change = exercise_save_data(version, node, exercise)
+            if change:
+                logging.info("changed")
 
-        elif node["kind"] == "Url":
+        elif node["kind"] == "Url" and node["key"] not in new_content_keys:
             url = all_entities_dict[node["key"]]
+            logging.info("%i/%i Updating any changes to Url %s" % (i, len(nodes), url.title))
+
             changeable_props = ["tags", "title", "url"]
 
-            models.VersionContentChange.add_content_change(
+            change = models.VersionContentChange.add_content_change(
                 url, 
                 version, 
-                request.json,
+                node,
                 changeable_props)
 
+            if change:
+                logging.info("changed")
 
-    logging.info([n.child_keys for n in changed_nodes])
+
+        i += 1
+
+    logging.info("about to put %i topic nodes" % len(changed_nodes))
+    # logging.info([n.child_keys for n in changed_nodes])
     db.put(changed_nodes)
-    return [n.get_visible_data() for n in changed_nodes]
+    logging.info("done with import")
+    return True
+    # return [n.get_visible_data() for n in changed_nodes]
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
@@ -844,7 +884,7 @@ def exercise_save(exercise_name = None, version_id = "edit"):
     exercise = query.get()
     return exercise_save_data(version, request.json, exercise)
 
-def exercise_save_data(version, data, exercise=None):
+def exercise_save_data(version, data, exercise=None, put_change=True):
     if "name" not in data:
         raise Exception("exercise 'name' missing")
     data["live"] = data["live"] = data["live"] == "true" or data["live"] == True    
@@ -865,7 +905,8 @@ def exercise_save_data(version, data, exercise=None):
         return models.VersionContentChange.add_new_content(models.Exercise, 
                                                            version,
                                                            data,
-                                                           changeable_props)
+                                                           changeable_props,
+                                                           put_change)
 
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
 @route("/api/v1/videos/<video_id>", methods=["GET"])

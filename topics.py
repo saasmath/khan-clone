@@ -34,7 +34,6 @@ class EditContent(request_handler.RequestHandler):
         version_name = self.request.get('version', 'edit')
 
         tree_nodes = []
-
         edit_version = TopicVersion.get_by_id(version_name)
         if edit_version is None:
             default_version = TopicVersion.get_default_version()
@@ -43,10 +42,12 @@ class EditContent(request_handler.RequestHandler):
                 edit_version = TopicVersion.create_new_version()
                 edit_version.edit = True
                 edit_version.put()
-                root = create_root(edit_version)
-        else:
-            root = Topic.get_root(edit_version)
+                create_root(edit_version)
+            else:
+                raise Exception("Wait for setting default version to finish making an edit version.")
+
         
+        root = Topic.get_root(edit_version)
         data = root.get_visible_data()
         tree_nodes.append(data)
         

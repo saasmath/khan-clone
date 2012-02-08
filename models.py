@@ -1706,8 +1706,7 @@ def preload_library(version):
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
     deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
-
-
+    
 def change_default_version(version):
     default_version = TopicVersion.get_default_version()
 
@@ -1719,7 +1718,7 @@ def change_default_version(version):
         version.made_default_on = datetime.datetime.now()
         version.edit = False
         Setting.topic_tree_version(version.number)
-        Setting.cached_content_add_date(datetime.now())
+        Setting.cached_content_add_date(datetime.datetime.now())
         version.put()
 
     # using --high-replication is slow on dev, so instead not using cross-group transactions on dev
@@ -1740,6 +1739,9 @@ def change_default_version(version):
     
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
+
+    vids = Video.get_all_live()
+    Setting.count_videos(len(vids))
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
@@ -1857,17 +1859,19 @@ class VersionContentChange(db.Model):
         return change
 
     @staticmethod
-    def add_new_content(klass, version, new_props, changeable_props=None):
+    def add_new_content(klass, version, new_props, changeable_props=None, 
+                        put_change=True):
         new_props = dict((str(k), v) for k,v in new_props.iteritems()
                          if changeable_props is None or k in changeable_props)
-        change = VersionContentChange(parent = version)
-        change.version = version
-        change.content_changes = new_props
         content = klass(**new_props)
         content.put()
-        Setting.cached_content_add_date(datetime.datetime.now())
-        change.content = content
-        change.put()
+        if put_change:
+            change = VersionContentChange(parent = version)
+            change.version = version
+            change.content_changes = new_props
+            Setting.cached_content_add_date(datetime.datetime.now())
+            change.content = content
+            change.put()
         return content
 
     @staticmethod
@@ -2144,7 +2148,6 @@ class Topic(Searchable, db.Model):
             entities_updated.update(child.update_ancestor_keys())
 
         def add_txn():
-            logging.info(entities_updated)
             db.put(entities_updated)
 
         self.version.update()
@@ -2607,7 +2610,7 @@ class Video(Searchable, db.Model):
     # List of currently available downloadable formats for this video
     downloadable_formats = object_property.TsvProperty(indexed=False)
 
-    _serialize_blacklist = ["downloadable_formats"]
+    _serialize_blacklist = ["downloadable_formats", "topic_string_keys"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
     INDEX_TITLE_FROM_PROP = 'title'
