@@ -60,7 +60,7 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
-			"topics.js"
+            "topics.js"
         ]
     },
     "video": {
@@ -208,11 +208,11 @@ javascript = {
             "utils/unit-circle.js",
         ]
     },
-	"topicsadmin": {
+    "topicsadmin": {
         "files": [
             "jquery.ui.draggable.js",
             "jquery.ui.droppable.js",
-			"jquery.dynatree.js",
+            "jquery.dynatree.js",
             "jquery.contextMenu.js",
             "jquery.ajaxq-0.0.1.js",
             "edit-version.handlebars",
@@ -231,7 +231,7 @@ javascript = {
             "import-export.handlebars",
             "topics-admin.js",
         ]
-	},
+    },
 }
 
 stylesheets = {
@@ -291,11 +291,11 @@ stylesheets = {
             "khan-exercise.css",
         ]
     },
-	"topicsadmin": {
+    "topicsadmin": {
         "files": [
-			"ui_dynatree.css",
+            "ui_dynatree.css",
             "jquery.contextMenu.css",
             "topics-admin.css"
-		]
-	},
+        ]
+    },
 }

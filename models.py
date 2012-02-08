@@ -909,6 +909,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
     joined = db.DateTimeProperty(auto_now_add=True)
     last_login = db.DateTimeProperty(indexed=False)
 
+    # Whether or not user has been hellbanned from community participation
+    # by a moderator
+    discussion_banned = db.BooleanProperty(default=False)
+
     # Names of exercises in which the user is *explicitly* proficient
     proficient_exercises = object_property.StringListCompatTsvProperty()
 
@@ -4029,8 +4033,9 @@ class UserExerciseGraph(object):
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
 class PromoRecord(db.Model):
-    """ A record to mark when a user has viewed a one-time promotion of some
-    sort.
+    """ A record to mark when a user has viewed a one-time event of some
+    sort, such as a promo.
+    
     """
 
     def __str__(self):

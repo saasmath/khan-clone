@@ -389,7 +389,7 @@ var GoalBookView = Backbone.View.extend({
         if (typeof Profile !== "undefined" && !e.metaKey) {
             e.preventDefault();
             this.hide();
-            Profile.router.navigate("/goals", true);
+            Profile.router.navigate(Profile.profileRoot + "/goals", true);
         }
     },
 

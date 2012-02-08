@@ -7,8 +7,10 @@ from functools import wraps
 import flask
 from flask import request
 from flask import current_app
-import api.jsonify as apijsonify
+from google.appengine.ext import db
+from google.appengine.datastore import entity_pb
 
+import api.jsonify as apijsonify
 from app import App
 import datetime
 from layer_cache import layer_cache_check_set_return, Layers,\
@@ -143,6 +145,28 @@ def unpickle(func):
     def unpickled(*args, **kwargs):
         return loads(func(*args, **kwargs))
     return unpickled
+
+def protobuf_encode(func):
+    @wraps(func)
+    def protobuf_encoded(*args, **kwargs):
+        v = func(*args, **kwargs)
+        if type(v) == list:
+            return map(lambda entity: db.model_to_protobuf(entity).Encode(), v)
+        else:
+            return db.model_to_protobuf(v).Encode()
+
+    return protobuf_encoded
+
+def protobuf_decode(func):
+    @wraps(func)
+    def protobuf_decoded(*args, **kwargs):
+        v = func(*args, **kwargs)
+        if type(v) == list:
+            return map(lambda pb: db.model_from_protobuf(entity_pb.EntityProto(pb)), v)
+        else:
+            return db.model_from_protobuf(entity_pb.EntityProto(v))
+
+    return protobuf_decoded
 
 def base64_encode(func):
     @wraps(func)

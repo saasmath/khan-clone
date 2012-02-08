@@ -117,9 +117,11 @@ class ManageCoworkers(request_handler.RequestHandler):
         self.render_jinja2_template("devpanel/coworkers.html", template_values)
         
 def update_common_core_map(cc_file):
+    logging.info("Deferred job <update_common_core_map> started")
     reader = csv.reader(cc_file, delimiter='\t')
     headerline = reader.next()
     cc_list = []
+    cc_standards = {}
     for line in reader:
         cc_standard = line[0]
         cc_cluster = line[1]
@@ -133,9 +135,15 @@ def update_common_core_map(cc_file):
         if len(cc_standard) == 0:
             continue
 
-        cc = CommonCoreMap.all().filter('standard = ', cc_standard).get()
-        if cc is None:
-            cc = CommonCoreMap()
+        if cc_standard in cc_standards:
+            cc = cc_standards[cc_standard]
+        else:
+            cc = CommonCoreMap.all().filter('standard = ', cc_standard).get()
+            if cc is None:
+                cc = CommonCoreMap()
+
+            cc_standards[cc_standard] = cc
+            cc_list.append(cc)
 
         cc.update_standard(cc_standard, cc_cluster, cc_description)
 
@@ -145,11 +153,10 @@ def update_common_core_map(cc_file):
         if len(video_youtube_id) > 0:
             cc.update_video(video_youtube_id)
 
-        cc_list.append(cc)
-
         if len(cc_list) > 500:
             db.put(cc_list)
             cc_list = []
+            cc_standards = {}
 
     db.put(cc_list)
 
@@ -160,7 +167,6 @@ class ManageCommonCore(request_handler.RequestHandler):
     @user_util.developer_only
     @ensure_xsrf_cookie
     def get(self):
-        
         template_values = {
             "selected_id": "commoncore",
         } 
@@ -171,13 +177,10 @@ class ManageCommonCore(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def post(self):
 
+        logging.info("Accessing %s" % self.request.path)
+
         cc_file = StringIO.StringIO(self.request_string('commoncore'))
         deferred.defer(update_common_core_map, cc_file)
-
-        template_values = {
-            "done": True,
-            "selected_id": "commoncore",
-        } 
 
         self.redirect("/devadmin")
         return

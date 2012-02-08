@@ -31,16 +31,20 @@ var Profile = {
      */
     init: function(json) {
         this.profile = new ProfileModel(json.profileData);
+        this.profile.bind("change:username", Profile.onUsernameChange_);
+
         this.profileRoot = json.profileRoot;
         this.isDataCollectible = json.isDataCollectible;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
 
         Profile.render();
-        Profile.router = new Profile.TabRouter();
+
+        Profile.router = new Profile.TabRouter({routes: this.getRoutes_()});
+
         Backbone.history.start({
             pushState: true,
-            root: this.profileRoot
+            root: ""
         });
 
         // Remove goals from IE<=8
@@ -152,7 +156,7 @@ var Profile = {
         $(".achievement .ach-text").delegate("a", "click", function(event) {
             if (!event.metaKey) {
                 event.preventDefault();
-                Profile.router.navigate("/achievements", true);
+                Profile.router.navigate(Profile.profileRoot + "/achievements", true);
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
         });
@@ -181,18 +185,64 @@ var Profile = {
         });
     },
 
-    TabRouter: Backbone.Router.extend({
-        routes: {
-            "": "showDefault",
-            "/achievements": "showAchievements",
-            "/goals/:type": "showGoals",
-            "/goals": "showGoals",
-            "/vital-statistics": "showVitalStatistics",
-            "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
-            "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
-            "/vital-statistics/:graph": "showVitalStatistics"
-        },
+    /**
+     * All the tabs that you could encounter on the profile page.
+     */
+    subRoutes: {
+        "": "showDefault",
+        "/achievements": "showAchievements",
+        "/goals/:type": "showGoals",
+        "/goals": "showGoals",
+        "/vital-statistics": "showVitalStatistics",
+        "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
+        "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
+        "/vital-statistics/:graph": "showVitalStatistics"
+    },
 
+    /**
+     * Generate routes hash to be used by Profile.router
+     */
+    getRoutes_: function() {
+        var routes = {};
+
+        _.each(this.subRoutes, function(fxn, subRoute) {
+            // Internally, backbone expects these routes to be decoded.
+            var key = decodeURIComponent(Profile.profileRoot) + subRoute;
+            routes[key] = fxn;
+        });
+
+        return routes;
+    },
+
+    /*
+     * Update Profile.router, address bar, and links on the page
+     */
+    onUsernameChange_: function(model) {
+        var oldRoot = Profile.profileRoot;
+        Profile.profileRoot = "/profile/" + model.get("username");
+
+        // Clear routes with old root
+        Backbone.history.handlers = [];
+
+        // Create a new router
+        Profile.router = new Profile.TabRouter({routes: Profile.getRoutes_()});
+
+        // Update address bar so user can see new url
+        // Note: assumes that user is on the main tab, which has no subroute
+        Profile.router.navigate(Profile.profileRoot, true);
+
+        // Change all links on the page...
+        $("a").each(function(index, elem) {
+            var jel = $(elem),
+                href = jel.attr("href");
+            if (href.indexOf(oldRoot) === 0) {
+                var updatedHref = href.replace(oldRoot, Profile.profileRoot);
+                jel.attr("href", updatedHref);
+            }
+        });
+    },
+
+    TabRouter: Backbone.Router.extend({
         showDefault: function() {
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
@@ -319,8 +369,7 @@ var Profile = {
         // in a reusable way
         if (!event.metaKey) {
             event.preventDefault();
-            var route = $(this).attr("href").replace(
-                    Profile.profileRoot, "");
+            var route = $(this).attr("href");
             Profile.router.navigate(route, true);
         }
     },
@@ -531,7 +580,7 @@ var Profile = {
                 $("#info-hover-container").hide();
                 // Extract the name from the ID, which has been prefixed.
                 var exerciseName = this.id.substring("exercise-".length);
-                Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
+                Profile.router.navigate(Profile.profileRoot + "/vital-statistics/exercise-problems/" + exerciseName, true);
             });
         }
     },
