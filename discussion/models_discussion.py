@@ -54,7 +54,7 @@ class Feedback(db.Model):
 
     @staticmethod
     def cache_key_for_video(video):
-        return "videofeedback:%s" % video.key()
+        return "videofeedbackcache:%s" % video.key()
 
     def __init__(self, *args, **kwargs):
         db.Model.__init__(self, *args, **kwargs)
