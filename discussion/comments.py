@@ -8,6 +8,7 @@ import simplejson
 import models
 import models_discussion
 import util_discussion
+import user_util
 import app
 import util
 import request_handler
@@ -104,7 +105,7 @@ def video_comments_context(video, topic, page=0, comments_hidden=True, sort_orde
     count_page = len(comments)
     pages_total = max(1, ((count_total - 1) / limit_per_page) + 1)
     return {
-            "is_mod": util_discussion.is_current_user_moderator(),
+            "is_mod": user_util.is_current_user_moderator(),
             "video": video,
             "topic": topic,
             "comments": comments,

@@ -53,7 +53,7 @@ import common_core
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, Topic
-from discussion import comments, notification, qa, voting
+from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from phantom_users import util_notify
 from badges import util_badges, custom_badges
@@ -826,8 +826,12 @@ application = webapp2.WSGIApplication([
     ('/discussion/changeentitytype', qa.ChangeEntityType),
     ('/discussion/videofeedbacknotificationlist', notification.VideoFeedbackNotificationList),
     ('/discussion/videofeedbacknotificationfeed', notification.VideoFeedbackNotificationFeed),
-    ('/discussion/moderatorlist', qa.ModeratorList),
-    ('/discussion/flaggedfeedback', qa.FlaggedFeedback),
+
+    ('/discussion/mod', moderation.ModPanel),
+    ('/discussion/moderatorlist', moderation.RedirectToModPanel),
+    ('/discussion/flaggedfeedback', moderation.RedirectToModPanel),
+    ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
+    ('/discussion/mod/moderatorlist', moderation.ModeratorList),
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),

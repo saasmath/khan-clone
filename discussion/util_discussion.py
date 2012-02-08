@@ -6,10 +6,6 @@ import request_cache
 import layer_cache
 import models_discussion
 
-@request_cache.cache()
-def is_current_user_moderator():
-    return users.is_current_user_admin() or (UserData.current() and UserData.current().moderator)
-
 def is_honeypot_empty(request):
     return not request.get("honey_input") and not request.get("honey_textarea")
 

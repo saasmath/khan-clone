@@ -1,7 +1,6 @@
 import os
 import logging
 
-from google.appengine.api import users
 from google.appengine.ext import db
 from mapreduce import control
 from mapreduce import operation as op
@@ -12,6 +11,7 @@ import models
 import models_discussion
 import notification
 import util_discussion
+import user_util
 import app
 import util
 import request_handler
@@ -19,53 +19,6 @@ import privileges
 import voting
 from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter
-
-class ModeratorList(request_handler.RequestHandler):
-    def get(self):
-
-        # Must be an admin to change moderators
-        if not users.is_current_user_admin():
-            return
-
-        mods = models.UserData.gql("WHERE moderator = :1", True)
-        self.render_jinja2_template('discussion/mod_list.html', {"mods" : mods})
-
-    def post(self):
-
-        # Must be an admin to change moderators
-        if not users.is_current_user_admin():
-            return
-
-        user_data = self.request_user_data("user")
-
-        if user_data:
-            user_data.moderator = self.request_bool("mod")
-            db.put(user_data)
-
-        self.redirect("/discussion/moderatorlist")
-
-class FlaggedFeedback(request_handler.RequestHandler):
-    def get(self):
-
-        if not util_discussion.is_current_user_moderator():
-            self.redirect(users.create_login_url(self.request.uri))
-            return
-
-        # Show all non-deleted feedback flagged for moderator attention
-        feedback_query = models_discussion.Feedback.all().filter("is_flagged = ", True).filter("deleted = ", False)
-
-        feedback_count = feedback_query.count()
-        feedbacks = feedback_query.fetch(50)
-
-        template_content = {
-                "feedbacks": feedbacks, 
-                "feedback_count": feedback_count,
-                "has_more": len(feedbacks) < feedback_count,
-                "feedback_type_question": models_discussion.FeedbackType.Question,
-                "feedback_type_comment": models_discussion.FeedbackType.Comment,
-                }
-
-        self.render_jinja2_template("discussion/flagged_feedback.html", template_content)
 
 def feedback_flag_update_map(feedback):
     feedback.recalculate_flagged()
@@ -185,7 +138,7 @@ class Answers(request_handler.RequestHandler):
 
             template_values = {
                 "answers": answers,
-                "is_mod": util_discussion.is_current_user_moderator()
+                "is_mod": user_util.is_current_user_moderator()
             }
 
             html = self.render_jinja2_template_to_string('discussion/question_answers_only.html', template_values)
@@ -243,7 +196,7 @@ class EditEntity(request_handler.RequestHandler):
         if key and text:
             feedback = db.get(key)
             if feedback:
-                if feedback.authored_by(user_data) or util_discussion.is_current_user_moderator():
+                if feedback.authored_by(user_data) or user_util.is_current_user_moderator():
 
                     feedback.content = text
                     feedback.put()
@@ -284,7 +237,7 @@ class FlagEntity(request_handler.RequestHandler):
 
 class ClearFlags(request_handler.RequestHandler):
     def post(self):
-        if not util_discussion.is_current_user_moderator():
+        if not user_util.is_current_user_moderator():
             return
 
         key = self.request.get("entity_key")
@@ -299,7 +252,7 @@ class ClearFlags(request_handler.RequestHandler):
 class ChangeEntityType(request_handler.RequestHandler):
     def post(self):
         # Must be a moderator to change types of anything
-        if not util_discussion.is_current_user_moderator():
+        if not user_util.is_current_user_moderator():
             return
 
         key = self.request.get("entity_key")
@@ -328,7 +281,7 @@ class DeleteEntity(request_handler.RequestHandler):
             entity = db.get(key)
             if entity:
                 # Must be a moderator or author of entity to delete
-                if entity.authored_by(user_data) or util_discussion.is_current_user_moderator():
+                if entity.authored_by(user_data) or user_util.is_current_user_moderator():
                     entity.deleted = True
                     entity.put()
 
@@ -388,7 +341,7 @@ def video_qa_context(user_data, video, topic=None, page=0, qa_expand_key=None, s
     count_page = len(questions)
     pages_total = max(1, ((count_total - 1) / limit_per_page) + 1)
     return {
-            "is_mod": util_discussion.is_current_user_moderator(),
+            "is_mod": user_util.is_current_user_moderator(),
             "video": video,
             "topic": topic,
             "questions": questions,
