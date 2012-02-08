@@ -138,8 +138,7 @@ def _task_handler(uid, task_id=0, cursor=None, report=None):
 
     # Generate a report if there is nothing left to process
 
-    if len(videos) < BATCH_SIZE or task_id > 0:
-    #if len(videos) < BATCH_SIZE:
+    if len(videos) < BATCH_SIZE:
         deferred.defer(_task_report_handler, uid, report, _name='%s_report' % uid)
     else:
         next_id = task_id + 1
