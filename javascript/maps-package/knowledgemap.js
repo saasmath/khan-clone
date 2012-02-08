@@ -461,13 +461,6 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
         $(window).resize(function() {self.resize();});
         this.resize();
-
-        if (window.iScroll)
-        {
-            // Mobile device, support single-finger touch scrolling
-            $("#" + this.container + " .dashboard-drawer").removeClass("drawer-hoverable");
-            var scroller = new iScroll("dashboard-drawer-inner", { hScroll: false, hScrollbar: false, vScrollbar: false });
-        }
     };
 
     this.isExpanded = function() {

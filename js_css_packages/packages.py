@@ -37,7 +37,9 @@ javascript = {
 
             # application code & templates:
             "handlebars-extras.js",
+            "cookies.js",
             "pageutil.js",
+            "video-addons.js",
             "api.js",
             "backbone-extensions.js",
             "social.js",
@@ -58,7 +60,7 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
-			"topics.js"
+            "topics.js"
         ]
     },
     "video": {
@@ -144,8 +146,10 @@ javascript = {
         "files": [
             "jquery.js",
             "jquery.mobile-1.0a4.1.js",
-            "iscroll-lite.min.js",
             "mobile.js",
+            "../shared-package/cookies.js",
+            "../shared-package/video-addons.js",
+            "../shared-package/api.js",
         ]
     },
     "studentlists": {
@@ -204,11 +208,11 @@ javascript = {
             "utils/unit-circle.js",
         ]
     },
-	"topicsadmin": {
+    "topicsadmin": {
         "files": [
             "jquery.ui.draggable.js",
             "jquery.ui.droppable.js",
-			"jquery.dynatree.js",
+            "jquery.dynatree.js",
             "jquery.contextMenu.js",
             "jquery.ajaxq-0.0.1.js",
             "edit-version.handlebars",
@@ -227,7 +231,7 @@ javascript = {
             "import-export.handlebars",
             "topics-admin.js",
         ]
-	},
+    },
 }
 
 stylesheets = {
@@ -287,11 +291,11 @@ stylesheets = {
             "khan-exercise.css",
         ]
     },
-	"topicsadmin": {
+    "topicsadmin": {
         "files": [
-			"ui_dynatree.css",
+            "ui_dynatree.css",
             "jquery.contextMenu.css",
             "topics-admin.css"
-		]
-	},
+        ]
+    },
 }

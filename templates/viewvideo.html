@@ -18,14 +18,14 @@
 <span class="breadcrumbs_nav video-nav">
         <a href="/#browse">All videos</a>
         <span class="breadcrumb-separator">&#187;</span>
-        <a href="/?video={{video.readable_id|urlencode}}#{{topic.title|slugify|urlencode}}">{{topic.title|escape}}</a>
+        <a href="/?video={{video.readable_id|urlencode}}#{{topic.id|slugify|urlencode}}">{{topic.title|escape}}</a>
         <span class="breadcrumb-separator">&#187;</span>
     <span id="video_dropdown" style="display:none;" class="selected">
-        <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}">{{video.title|escape}}</a>
+        <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}">{{video.title|escape}}</a>
         <div id="video_menu">
             <ol>
                 {% for v in videos %}
-                <li data-selected='{{v.selected|default("")}}'><a href="/video/{{v.readable_id}}?topic={{topic.title|urlencode}}">{{ library.video_name_and_progress(v) }}</a></li>
+                <li data-selected='{{v.selected|default("")}}'><a href="/video/{{v.readable_id}}?topic={{topic.id|urlencode}}">{{ library.video_name_and_progress(v) }}</a></li>
                 {% endfor %}
             </ol>
         </div>
@@ -41,7 +41,7 @@
         <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse"></a>
     </div>
     <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
-        <link itemprop="url" href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}">
+        <link itemprop="url" href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}">
         <div id="description">
             {%- if button_top_exercise %}
             <a href="{{button_top_exercise.url}}" class="practice simple-button action-gradient green desktop-only" title="Test your understanding with an exercise">Practice this concept</a>
@@ -89,8 +89,8 @@
         </div>
         <div class="youtube-video">
             <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
-            {{ youtube.player_embed(video.youtube_id) }}
-            <div class="subtitles-warning">
+            {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host) }}
+            <div class="subtitles-warning desktop-only">
                 &lArr; Use this menu to view and help create subtitles for this video in many different languages.
                 You'll probably want to hide YouTube's captions if using these subtitles.
                <a href="#" class="subtitles-link">Close subtitles</a>
@@ -129,12 +129,12 @@
         </div>
     </div>
     </div>
-
 </div>
 </article>
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
+
     {{ js_css_packages.js_package("video") }}
     <script>
       $(function() {

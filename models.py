@@ -909,6 +909,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
     joined = db.DateTimeProperty(auto_now_add=True)
     last_login = db.DateTimeProperty(indexed=False)
 
+    # Whether or not user has been hellbanned from community participation
+    # by a moderator
+    discussion_banned = db.BooleanProperty(default=False)
+
     # Names of exercises in which the user is *explicitly* proficient
     proficient_exercises = object_property.StringListCompatTsvProperty()
 
@@ -1473,7 +1477,14 @@ class UserData(GAEBingoIdentityModel, db.Model):
         def claim_and_set():
             return self._claim_username_internal(name, clock)
         xg_on = db.create_transaction_options(xg=True)
-        return db.run_in_transaction_options(xg_on, claim_and_set)
+        result = db.run_in_transaction_options(xg_on, claim_and_set)
+        if result:
+            # Success! Ensure we flush the apply() phase of the modifications
+            # so that subsequent queries get consistent results. This makes
+            # claiming usernames slightly slower, but safer since rapid
+            # claiming or rapid claim/read won't result in weirdness.
+            db.get([self.key()])
+        return result
 
     def has_public_profile(self):
         return (self.is_profile_public
@@ -1598,10 +1609,7 @@ class TopicVersion(db.Model):
 
     @staticmethod
     def get_edit_version():
-        version = TopicVersion.all().filter("edit = ", True).get()
-        if version is None:
-            version = TopicVersion.create_edit_version()
-        return version
+        return TopicVersion.all().filter("edit = ", True).get()
 
     @staticmethod
     def create_edit_version():
@@ -1675,7 +1683,7 @@ class TopicVersion(db.Model):
         deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
 
 def apply_version_content_changes(version):
-    changes = VersionContentChange.all().fetch(10000)
+    changes = VersionContentChange.all().filter("version =", version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
     for change in changes:
         change.apply_change()
@@ -1729,8 +1737,12 @@ def change_default_version(version):
         Setting.topic_tree_version(version.number)
 
     logging.info("done setting new default version")
+
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
+    
+    TopicVersion.create_edit_version()
+    logging.info("done creating new edit version")
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
@@ -3980,8 +3992,9 @@ class UserExerciseGraph(object):
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
 class PromoRecord(db.Model):
-    """ A record to mark when a user has viewed a one-time promotion of some
-    sort.
+    """ A record to mark when a user has viewed a one-time event of some
+    sort, such as a promo.
+    
     """
 
     def __str__(self):

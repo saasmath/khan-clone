@@ -406,3 +406,9 @@ div.vote_tools {
 div.feedback_flag:hover {
     background: #fff url(/images/flag.png) no-repeat 0 0;
 }
+
+.question.deleted span, 
+.answer.deleted span,
+.comment.deleted {
+    text-decoration: line-through;
+}

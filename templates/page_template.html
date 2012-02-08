@@ -61,7 +61,6 @@
 
         {% if is_mobile %}
             {{ js_css_packages.css_package("mobile") }}
-            {{ user.user_video_css(user_data) }}
             {{ js_css_packages.js_package("mobile") }}
         {% else %}
             {{ js_css_packages.css_package("shared") }}

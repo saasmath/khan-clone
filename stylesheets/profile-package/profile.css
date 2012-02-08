@@ -506,6 +506,12 @@ padding-left: 3px;
      .activity-list .activity-exercise.proficient .activity-image {
          background: #005987 url(/images/activity-exercise-icon-proficient.png) no-repeat 50% 50%;
      }
+     .activity-list .activity-goal .activity-image {
+         background: #ccc url(/images/activity-icon-goal-inset.png) no-repeat 50% 50%;
+     }
+     .activity-list .activity-goal.completed .activity-image {
+         background: #005987 url(/images/activity-icon-goal-complete.png) no-repeat 50% 50%;
+     }
     .activity-list .activity-image img {
         max-width: 60px;
         max-height: 60px;
@@ -1011,6 +1017,7 @@ li.profile-tab {
     color: #888;
     margin: 5px 0 0 0;
     line-height: 15px;
+    word-wrap: break-word;
 }
 .username-picker .example-username {
     color: #678D00;
@@ -1117,23 +1124,3 @@ li.profile-tab {
     text-decoration: none;
 }
 
-@media all and (max-width: 1185px) {
-    .main-case {
-        width: 435px;
-        overflow: hidden;
-    }
-    .main-case.enable-scrolling {
-        overflow-x: scroll;
-        overflow-y: hidden;
-    }
-}
-@media all and (max-width: 1025px) {
-    .main-case {
-        width: 325px;
-        overflow: hidden;
-    }
-    .main-case.enable-scrolling {
-        overflow-x: scroll;
-        overflow-y: hidden;
-    }
-}

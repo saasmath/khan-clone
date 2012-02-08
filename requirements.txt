@@ -1,0 +1,8 @@
+# GAE dictates the production and dev appserver environments.
+# This file lists additional packages used during development.
+
+# Packages required for unit testing
+WebOb==0.9
+WebTest==1.3.3
+unittest2==0.5.1
+wsgiref==0.1.2

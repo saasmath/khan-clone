@@ -8,7 +8,7 @@
 {% endif %}
 
 {% for comment in comments %}
-    <div class="comment">
+    <div class="comment {% if comment.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}">
         {{ discussion.vote_tools(comment) }}
         {{ comment.content|escape|urlize|linebreaksbr_ellipsis(" continue&hellip;")|youtube_timestamp_links }}<br/>
         <span class="comment_sig sig">{{ discussion.signature(comment) }}</span>

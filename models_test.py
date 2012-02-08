@@ -4,11 +4,14 @@ import models
 import phantom_users.phantom_util
 import test_utils
 
+from google.appengine.ext import db
+
 class UsernameTest(test_utils.GAEModelTestCase):
     def tearDown(self):
         # Clear all usernames just to be safe
         for u in models.UniqueUsername.all():
             u.delete()
+        super(UsernameTest, self).tearDown()
 
     def test_user_name_fuzzy_match(self):
         """ Tests user name search can ignore periods properly. """
@@ -68,8 +71,20 @@ class UsernameTest(test_utils.GAEModelTestCase):
 
         # u1 gets "superbob", but changes his mind.
         self.assertTrue(u1.claim_username("superbob", clock))
+        self.assertEqual("superbob", u1.username)
         self.assertTrue(u1.claim_username("ultrabob", clock))
         self.assertEqual("ultrabob", u1.username)
+
+        # TOTAL HACK - for some reason without this read (which shouldn't
+        # actually have any side effect), the following assert fails because
+        # there's no strong consistency ensured on the HRD.
+        db.get([u1.key()])
+        self.assertEqual(
+                u1.user_id,
+                models.UserData.get_from_username("ultrabob").user_id)
+        self.assertEqual(
+                None,
+                models.UserData.get_from_username("superbob"))
 
         # Usernames go into a holding pool, even after they're released
         self.assertFalse(u2.claim_username("superbob", clock))
@@ -85,6 +100,11 @@ class UsernameTest(test_utils.GAEModelTestCase):
         clock.advance_days(1)
         self.assertTrue(u2.claim_username("superbob", clock))
         self.assertEqual("superbob", u2.username)
+
+        db.get([u2.key()])
+        self.assertEqual(
+                u2.user_id,
+                models.UserData.get_from_username("superbob").user_id)
 
 class ProfileSegmentTest(test_utils.GAEModelTestCase):
     def to_url(self, user):

@@ -73,10 +73,14 @@ function apiVersionMismatch() {
 APIActionResults.init();
 
 // Show any badges that were awarded w/ any API ajax request
-$(function() { APIActionResults.register("badges_earned_html", Badges.show); });
+if (typeof Badges !== "undefined") {
+    $(function() { APIActionResults.register("badges_earned_html", Badges.show); });
+}
 
 // Show any login notifications that pop up w/ any API ajax request
-$(function() { APIActionResults.register("login_notifications_html", Notifications.show); });
+if (typeof Notifications !== "undefined") {
+    $(function() { APIActionResults.register("login_notifications_html", Notifications.show); });
+}
 
 // Update user info after appropriate API ajax requests
 $(function() { APIActionResults.register("user_info_html",
@@ -106,6 +110,6 @@ $(function() {
 
 // Update the "reviewing X exercises" heading counter and also change the
 // heading to indicate reviews are done when appropriate
-$(function() {
-    APIActionResults.register("reviews_left", Review.updateCounter);
-});
+if (typeof Review !== "undefined") {
+    $(function() { APIActionResults.register("reviews_left", Review.updateCounter); });
+}

@@ -3,10 +3,10 @@
 import logging
 
 from google.appengine.ext import db
-from google.appengine.api import memcache
 
 from app import App
 import request_cache
+import layer_cache
 
 class FeedbackType:
     Question="question"
@@ -53,16 +53,23 @@ class Feedback(db.Model):
     inner_score = db.FloatProperty(default=0.0)
 
     @staticmethod
-    def memcache_key_for_video(video):
-        return "videofeedback:%s" % video.key()
+    def cache_key_for_video(video):
+        return "videofeedbackcache:%s" % video.key()
 
     def __init__(self, *args, **kwargs):
         db.Model.__init__(self, *args, **kwargs)
         self.children_cache = [] # For caching each question's answers during render
 
+    def clear_cache_for_video(self):
+        layer_cache.KeyValueCache.delete(Feedback.cache_key_for_video(self.video()), namespace=App.version)
+
+    def delete(self):
+        db.delete(self)
+        self.clear_cache_for_video()
+
     def put(self):
-        memcache.delete(Feedback.memcache_key_for_video(self.video()), namespace=App.version)
         db.Model.put(self)
+        self.clear_cache_for_video()
 
     def set_author(self, user_data):
         self.author = user_data.user
@@ -70,6 +77,22 @@ class Feedback(db.Model):
 
     def authored_by(self, user_data):
         return user_data and self.author == user_data.user
+
+    def is_visible_to_public(self):
+        return (not self.deleted and not self.is_hidden_by_flags)
+
+    def is_visible_to(self, user_data):
+        """ Returns true if this post should be visible to user_data.
+        If user_data is empty, true only if the post should be visible to the general public.
+        If someone's post has been deleted or flagged, it's only visible to the original author and developers.
+        """
+        return self.is_visible_to_public() or self.authored_by(user_data) or (user_data and user_data.developer)
+
+    def appears_as_deleted_to(self, user_data):
+        """ Returns true if the post should appear as deleted to user_data.
+        This should only be true for posts that are deleted and being viewed by developers.
+        """
+        return user_data and (user_data.developer or user_data.moderator) and not self.is_visible_to_public()
 
     @property
     def sum_votes_incremented(self):

@@ -155,7 +155,10 @@
     <script type="text/javascript">
         $(function(){
             VideoStats.startLoggingProgress("{{ marquee_video["key"]|escapejs }}");
-            Homepage.initPlaceholder("{{ marquee_video["youtube_id"]|escapejs }}");
+
+            if (typeof(Homepage) !== "undefined") {
+                Homepage.initPlaceholder("{{ marquee_video["youtube_id"]|escapejs }}");
+            }
         });
 
         (function(){

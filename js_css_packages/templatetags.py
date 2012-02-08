@@ -52,7 +52,7 @@ def get_inline_template(package_name, file_name):
 
 
 def js_package(package_name):
-    loaded_script = "<script type='text/javascript'>dynamicPackageLoader.setPackageLoaded('%s');</script>" % package_name
+    loaded_script = "<script type='text/javascript'>if (typeof dynamicPackageLoader !== 'undefined') dynamicPackageLoader.setPackageLoaded('%s');</script>" % package_name
     if not use_compressed_packages():
         package = packages.javascript[package_name]
         base_url = package.get("base_url") or "/javascript/%s-package" % package_name

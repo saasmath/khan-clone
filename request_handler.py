@@ -265,6 +265,10 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return user_agent_lower.find("webos") > -1 or \
                 user_agent_lower.find("hp-tablet") > -1
 
+    def is_ipad(self):
+        user_agent_lower = self.user_agent().lower()
+        return user_agent_lower.find("ipad") > -1
+
     def is_mobile(self):
         if self.is_mobile_capable():
             return not self.has_mobile_full_site_cookie()
@@ -313,9 +317,10 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         user_data = template_values['user_data']
 
         template_values['username'] = user_data.nickname if user_data else ""
-        template_values['viewer_profile_root'] = user_data.profile_root if user_data else ""
+        template_values['viewer_profile_root'] = user_data.profile_root if user_data else "/profile/nouser"
         template_values['points'] = user_data.points if user_data else 0
         template_values['logged_in'] = not user_data.is_phantom if user_data else False
+        template_values['http_host'] = os.environ["HTTP_HOST"]
 
         # Always insert a post-login request before our continue url
         template_values['continue'] = util.create_post_login_url(template_values.get('continue') or self.request.uri)
@@ -324,9 +329,12 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         template_values['is_mobile'] = False
         template_values['is_mobile_capable'] = False
+        template_values['is_ipad'] = False
 
         if self.is_mobile_capable():
             template_values['is_mobile_capable'] = True
+            template_values['is_ipad'] = self.is_ipad()
+
             if 'is_mobile_allowed' in template_values and template_values['is_mobile_allowed']:
                 template_values['is_mobile'] = self.is_mobile()
 
