@@ -1,6 +1,7 @@
 import datetime
 import logging
 from itertools import izip
+import pickle
 
 from flask import request, current_app, Response
 
@@ -1896,6 +1897,14 @@ def autocomplete():
             "exercises": exercise_results
     }
 
+@route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
+@oauth_required()
+@developer_required
+def protobuf_entitys(entity):
+    query = db.class_for_kind(entity).all()
+    lst = map(lambda entity: db.model_to_protobuf(entity).Encode(),
+              query.fetch(request.request_int("max", default=500)))
+    return pickle.dumps(lst)
 
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
