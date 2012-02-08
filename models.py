@@ -2130,6 +2130,100 @@ class Topic(Searchable, db.Model):
             topic.index()
             topic.indexed_title_changed()
 
+    def get_user_progress(self, user_data, user_video_dict=None, user_exercise_graph=None):
+
+        def get_user_video_progress(video, user_video_dict):
+            stats = {
+                "kind": "Video",
+                "id": video.readable_id,
+                "status_flags": {} 
+            }
+
+            id = '.v%d' % video.key().id()
+
+            if id in user_video_dict['completed']:
+                stats["status_flags"]["VIDEO_COMPLETED"] = 1
+                stats["status_flags"]["VIDEO_STARTED"] = 1
+
+            if id in user_video_dict['started']:
+                stats["status_flags"]["VIDEO_STARTED"] = 1
+
+            return stats
+
+        def get_user_exercise_progress(exercise, user_exercise_graph):
+            stats = {
+                "kind": "Exercise",
+                "id": exercise.name,
+                "status_flags": {} 
+            }
+
+            exercise_dict = user_exercise_graph.graph_dict(exercise.name)
+
+            if exercise_dict["proficient"]:
+                stats["status_flags"]["EXERCISE_PROFICIENT"] = 1
+
+            if exercise_dict["struggling"]:
+                stats["status_flags"]["EXERCISE_STRUGGLING"] = 1
+
+            if exercise_dict["total_done"] > 0:
+                stats["status_flags"]["EXERCISE_STARTED"] = 1
+
+            return stats
+
+        if not user_video_dict:
+            user_video_css = UserVideoCss.get_for_user_data(user_data)
+            if user_video_css:
+                user_video_dict = pickle.loads(user_video_css.pickled_dict)
+            else:
+                user_video_dict = {}
+
+        if not user_exercise_graph:
+            user_exercise_graph = UserExerciseGraph.get(user_data)
+
+        stats = {
+            "kind": "Topic",
+            "id": self.id,
+            "status_flags": {},
+
+            "video_aggregates": {},
+            "exercise_aggregates": {},
+            "topic_aggregates": {},
+
+            "children": {},
+            "video_count": 0,
+            "exercise_count": 0,
+            "topic_count": 0
+        }
+
+        children = db.get(self.child_keys)
+        for child in children:
+            if type(child) == Topic:
+                stats["children"][child.id] = child.get_user_progress(user_data, user_video_dict=user_video_dict, user_exercise_graph=user_exercise_graph)
+                stats["topic_count"] += 1
+
+
+            elif type(child) == Video:
+                stats["children"][child.readable_id] = get_user_video_progress(child, user_video_dict)
+                stats["video_count"] += 1
+
+            elif type(child) == Exercise:
+                stats["children"][child.name] = get_user_exercise_progress(child, user_exercise_graph)
+                stats["exercise_count"] += 1
+
+        for id, child_stat in stats["children"].iteritems():
+            aggregate_name = child_stat["kind"].lower() + "_aggregates"
+            for flag, value in child_stat["status_flags"].iteritems():
+                if flag not in stats[aggregate_name]:
+                    stats[aggregate_name][flag] = 0
+                stats[aggregate_name][flag] += value
+
+        for kind in ["topic", "video", "exercise"]:
+            for flag, value in stats[kind + "_aggregates"].iteritems():
+                if value >= stats[kind + "_count"]:
+                    stats["status_flags"][flag] = 1
+
+        return stats
+
 class UserTopicVideos(db.Model):
     user = db.UserProperty()
     topic_key_name = db.StringProperty() # used because key() will change if topic gets moved in the topic tree, or between versions
