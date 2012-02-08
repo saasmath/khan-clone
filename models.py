@@ -2500,7 +2500,7 @@ class Topic(Searchable, db.Model):
             topic.index()
             topic.indexed_title_changed()
 
-    def get_user_progress(self, user_data):
+    def get_user_progress(self, user_data, flatten=True):
 
         def get_user_video_progress(video_id, user_video_dict):
             status_flags = {}
@@ -2547,59 +2547,73 @@ class Topic(Searchable, db.Model):
 
             return None
 
-        def get_user_progress_recurse(topic, topics_dict, user_video_dict, user_exercise_dict):
-            stats = {
-                "kind": "Topic",
-                "id": topic.id,
-                "status_flags": {},
+        def get_user_progress_recurse(flat_output, topic, topics_dict, user_video_dict, user_exercise_dict):
 
-                "video_aggregates": {},
-                "exercise_aggregates": {},
-                "topic_aggregates": {},
-
-                "children": [],
-                "video_count": 0,
-                "exercise_count": 0,
-                "topic_count": 0
+            children = []
+            status_flags = {}
+            aggregates = {
+                "video": {},
+                "exercise": {},
+                "topic": {}
+            }
+            counts = {
+                "video": 0,
+                "exercise": 0,
+                "topic": 0
             }
 
             for child_key in topic.child_keys:
                 if child_key.kind() == "Topic":
                     if child_key in topics_dict:
                         child_topic = topics_dict[child_key]
-                        progress = get_user_progress_recurse(child_topic, topics_dict, user_video_dict, user_exercise_dict)
+                        progress = get_user_progress_recurse(flat_output, child_topic, topics_dict, user_video_dict, user_exercise_dict)
                         if progress:
-                            stats["children"].append(progress)
-                        stats["topic_count"] += 1
+                            children.append(progress)
+                            if flat_output:
+                                flat_output["topic"][child_topic.id] = progress
+                        counts["topic"] += 1
 
                 elif child_key.kind() == "Video":
                     video_id = child_key.id()
                     progress = get_user_video_progress(video_id, user_video_dict)
                     if progress:
-                        stats["children"].append(progress)
-                    stats["video_count"] += 1
+                        children.append(progress)
+                        if flat_output:
+                            flat_output["video"][video_id] = progress
+                    counts["video"] += 1
 
                 elif child_key.kind() == "Exercise":
                     exercise_id = child_key.id()
                     progress = get_user_exercise_progress(exercise_id, user_exercise_dict)
                     if progress:
-                        stats["children"].append(progress)
-                    stats["exercise_count"] += 1
+                        children.append(progress)
+                        if flat_output:
+                            flat_output["exercise"][exercise_id] = progress
+                    counts["exercise"] += 1
                     pass
 
-            for child_stat in stats["children"]:
-                aggregate_name = child_stat["kind"].lower() + "_aggregates"
+            for child_stat in children:
+                kind = child_stat["kind"].lower()
                 for flag, value in child_stat["status_flags"].iteritems():
-                    if flag not in stats[aggregate_name]:
-                        stats[aggregate_name][flag] = 0
-                    stats[aggregate_name][flag] += value
+                    if flag not in aggregates[kind]:
+                        aggregates[kind][flag] = 0
+                    aggregates[kind][flag] += value
 
-            for kind in ["topic", "video", "exercise"]:
-                for flag, value in stats[kind + "_aggregates"].iteritems():
-                    if value >= stats[kind + "_count"]:
-                        stats["status_flags"][flag] = 1
+            for kind, aggregate in aggregates.iteritems():
+                for flag, value in aggregate.iteritems():
+                    if value >= counts[kind]:
+                        status_flags[flag] = 1
 
-            if stats["children"] != [] or stats["status_flags"] != {}:
+            if children != [] or status_flags != {}:
+                stats = {
+                    "kind": "Topic",
+                    "id": topic.id,
+                    "status_flags": status_flags,
+                    "aggregates": aggregates,
+                    "counts": counts
+                }
+                if not flat_output:
+                    stats["children"] = children
                 return stats
             else:
                 return None
@@ -2616,7 +2630,21 @@ class Topic(Searchable, db.Model):
         topics = Topic.get_visible_topics()
         topics_dict = dict((topic.key(), topic) for topic in topics)
 
-        return get_user_progress_recurse(self, topics_dict, user_video_dict, user_exercise_dict)
+        flat_output = None
+        if flatten:
+            flat_output = {
+                "topic": {},
+                "video": {},
+                "exercise": {}
+            }
+
+        progress_tree = get_user_progress_recurse(flat_output, self, topics_dict, user_video_dict, user_exercise_dict)
+
+        if flat_output:
+            flat_output["topic"][self.id] = progress_tree
+            return flat_output
+        else:
+            return progress_tree
 
 class UserTopicVideos(db.Model):
     user = db.UserProperty()
