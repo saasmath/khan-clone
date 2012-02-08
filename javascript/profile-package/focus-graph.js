@@ -42,7 +42,7 @@ var FocusGraph = {
                     events: {
                         click: function() {
                             Profile.router.navigate(
-                                    "/vital-statistics/exercise-problems/" + this.exid,
+                                    Profile.profileRoot + "/vital-statistics/exercise-problems/" + this.exid,
                                     true);
                         }
                     }
