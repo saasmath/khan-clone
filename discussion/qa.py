@@ -120,7 +120,9 @@ class AddAnswer(request_handler.RequestHandler):
             # and we're choosing to crash in this case until someone legitimately runs into this.
             # See Issue 841.
             answer.put()
-            notification.new_answer_for_video_question(video, question, answer)
+
+            if not answer.deleted:
+                notification.new_answer_for_video_question(video, question, answer)
 
         self.redirect("/discussion/answers?question_key=%s" % question_key)
 
