@@ -8,6 +8,35 @@ if (typeof Profile !== "undefined") {
     // the client. Asynchronously start the intro flow so that those
     // items can be rendered first.
     window.setTimeout(function() {
+        if (Profile.profile.isPhantom()) {
+            // For phantom users, don't show a tour flow, but a single dialog
+            // with clear call-to-action to login.
+            guiders.createGuider({
+                buttons: [
+                    {
+                        action: guiders.ButtonAction.CLOSE,
+                        text: "No thanks",
+                        classString: "simple-button action-gradient"
+                    },
+                    {
+                        action: guiders.ButtonAction.CLOSE,
+                        text: "Cool. Let me login now!",
+                        onclick: function() {
+                            var postLoginUrl = "/postlogin?continue=" +
+                                    encodeURIComponent(window.location.href);
+                            window.location.href = "/login?continue=" +
+                                    encodeURIComponent(postLoginUrl);
+                        },
+                        classString: "simple-button action-gradient green"
+                    }
+                ],
+                title: "Log in to save and customize your profile!",
+                description: "Your profile page shows you all the great progress you've made on Khan Academy. If you login, you can even customize and share your profile with your friends!",
+                overlay: true
+            }).show();
+            return;
+        }
+
         var isFullyEditable = Profile.profile.get("isDataCollectible");
         guiders.createGuider({
             id: "welcome",

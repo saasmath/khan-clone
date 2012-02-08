@@ -3988,8 +3988,9 @@ class UserExerciseGraph(object):
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
 class PromoRecord(db.Model):
-    """ A record to mark when a user has viewed a one-time promotion of some
-    sort.
+    """ A record to mark when a user has viewed a one-time event of some
+    sort, such as a promo.
+    
     """
 
     def __str__(self):
