@@ -293,7 +293,12 @@ class DeleteEntity(request_handler.RequestHandler):
             entity = db.get(key)
             if entity:
                 # Must be a moderator or author of entity to delete
-                if entity.authored_by(user_data) or user_util.is_current_user_moderator():
+                if entity.authored_by(user_data):
+                    # Entity authors can completely delete their posts.
+                    # Posts that are flagged as deleted by moderators won't show up
+                    # as deleted to authors, so we just completely delete in this special case.
+                    entity.delete()
+                elif user_util.is_current_user_moderator():
                     entity.deleted = True
                     entity.put()
 

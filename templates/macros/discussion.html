@@ -225,7 +225,7 @@
 
 {% macro author_tools(target) -%}
     <span class="mod_tools">
-        <span class="mod_tools_hidden">
+        <span class="mod_tools_hidden tools_hidden">
             {% if not target.is_type("comment") %}
                 <a href="#" class="control mod_edit" data-key="{{ target.key() }}">edit</a>
                 | 

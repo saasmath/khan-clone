@@ -60,9 +60,16 @@ class Feedback(db.Model):
         db.Model.__init__(self, *args, **kwargs)
         self.children_cache = [] # For caching each question's answers during render
 
-    def put(self):
+    def clear_cache_for_video(self):
         layer_cache.KeyValueCache.delete(Feedback.cache_key_for_video(self.video()), namespace=App.version)
+
+    def delete(self):
+        db.delete(self)
+        self.clear_cache_for_video()
+
+    def put(self):
         db.Model.put(self)
+        self.clear_cache_for_video()
 
     def set_author(self, user_data):
         self.author = user_data.user
