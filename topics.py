@@ -68,49 +68,68 @@ class EditContent(request_handler.RequestHandler):
         print "migration started... progress can be monitored in the logs"
 
     def fix_duplicates(self):
+        dry_run = self.request.get('dry_run', False)
         video_list = [v for v in models.Video.all()]
         video_dict = dict()
 
-        duplicate_video_count = 0
-        duplicates = []
+        version = models.TopicVersion.get_by_id("edit")
+
+        videos_to_update = []
         
         for video in video_list:
             if not video.readable_id in video_dict:
                 video_dict[video.readable_id] = []
             video_dict[video.readable_id].append(video)
 
+        video_idx = 0
+        print "IDX,Canon,DUP,Key,ID,YTID,Title,Topics"
+
         for readable_id, videos in video_dict.iteritems():
             if len(videos) > 1:
                 canonical_key_id = 0
+                canonical_readable_id = None
                 for video in videos:
-                    if video.key().id() > canonical_key_id and not video.youtube_id.endswith('_player'):
+                    if models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).get():
                         canonical_key_id = video.key().id()
+                    if not canonical_readable_id or len(video.readable_id) < len(canonical_readable_id):
+                        canonical_readable_id = video.readable_id
+                
+                def print_video(video, is_canonical, dup_idx):
+                    canon_str = "CANONICAL" if is_canonical else "DUPLICATE"
+                    topic_strings = "|".join([topic.id for topic in models.Topic.all().filter("version = ", version).filter("child_keys =", video.key()).run()])
+                    print "%d,%s,%d,%s,%s,%s,%s,%s" % (video_idx, canon_str, dup_idx, str(video.key()), video.readable_id, video.youtube_id, video.title, topic_strings)
 
-                dup_idx = 0
+                for video in videos:
+                    if video.key().id() == canonical_key_id:
+                        if video.readable_id != canonical_readable_id:
+                            video.readable_id = canonical_readable_id
+                            videos_to_update.append(video)
+
+                        print_video(video, True, 0)
+
+                dup_idx = 1
                 for video in videos:
                     if video.key().id() != canonical_key_id:
-                        video.readable_id = video.readable_id + "_DUP_" + str(dup_idx)
-                        video.youtube_id = video.youtube_id + "_DUP_" + str(dup_idx)
-                        duplicates.append(video)
+                        new_readable_id = canonical_readable_id + "_DUP_" + str(dup_idx)
+
+                        if video.readable_id != new_readable_id:
+                            video.readable_id = new_readable_id
+                            videos_to_update.append(video)
+
+                        print_video(video, False, dup_idx)
+
                         dup_idx += 1
 
-                duplicate_video_count += 1
+                video_idx += 1
 
-        if len(duplicates) > 0:
-            # Create a topic to hold the duplicates
-            logging.info("Creating duplicate videos topic...");
-            version = models.TopicVersion.get_by_id("edit")
-            new_topic = models.Topic.insert(title = "Duplicate videos", parent = None,
-                            version = version,
-                            hide = True, standalone_title = "Duplicate videos",
-                            description = "Automatically generated list of old duplicate videos",
-                            child_keys = [v.key() for v in duplicates])
-            models.Topic.get_by_id("root", version).add_child(new_topic, None)
-            
-            logging.info("Writing " + str(len(duplicates)) + " videos that have duplicates (" + str(duplicate_video_count) + " unique videos)")
-            db.put(duplicates)
+        if len(videos_to_update) > 0:
+            logging.info("Writing " + str(len(videos_to_update)) + " videos with duplicate IDs")
+            if not dry_run:
+                db.put(videos_to_update)
+            else:
+                logging.info("Just kidding! This is a dry run.")
         else:
-            logging.info("No duplicate videos found.")
+            logging.info("No videos to update.")
 
 # temporary function to recreate the root - will remove after deploy
 def create_root(version):
