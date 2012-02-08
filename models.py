@@ -2053,6 +2053,16 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
+        lambda version=None: 
+        "topic.get_visible_topics_%s" % (
+            version.key() if version else Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
+    def get_visible_topics(version = None):
+        topics = Topic.get_all_topics(version, False)
+        return [t for t in topics]
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
         "topic.get_content_topic_%s_%s" % (
             version.key() if version else Setting.topic_tree_version(), 
@@ -2140,43 +2150,49 @@ class Topic(Searchable, db.Model):
     def get_user_progress(self, user_data):
 
         def get_user_video_progress(video_id, user_video_dict):
-            stats = {
-                "kind": "Video",
-                "id": video_id,
-                "status_flags": {} 
-            }
+            status_flags = {}
 
             id = '.v%d' % video_id
 
             if id in user_video_dict['completed']:
-                stats["status_flags"]["VideoCompleted"] = 1
-                stats["status_flags"]["VideoStarted"] = 1
+                status_flags["VideoCompleted"] = 1
+                status_flags["VideoStarted"] = 1
 
             if id in user_video_dict['started']:
-                stats["status_flags"]["VideoStarted"] = 1
+                status_flags["VideoStarted"] = 1
 
-            return stats
+            if status_flags != {}:
+                return {
+                    "kind": "Video",
+                    "id": video_id,
+                    "status_flags": status_flags
+                }
+
+            return None
 
         def get_user_exercise_progress(exercise_id, user_exercise_dict):
-            stats = {
-                "kind": "Exercise",
-                "id": exercise_id,
-                "status_flags": {} 
-            }
+            status_flags = {}
 
             if exercise_id in user_exercise_dict:
                 exercise_dict = user_exercise_dict[exercise_id]
 
                 if exercise_dict["proficient"]:
-                    stats["status_flags"]["ExerciseProficient"] = 1
+                    status_flags["ExerciseProficient"] = 1
 
                 if exercise_dict["struggling"]:
-                    stats["status_flags"]["ExerciseStruggling"] = 1
+                    status_flags["ExerciseStruggling"] = 1
 
                 if exercise_dict["total_done"] > 0:
-                    stats["status_flags"]["ExerciseStarted"] = 1
+                    status_flags["ExerciseStarted"] = 1
 
-            return stats
+            if status_flags != {}:
+                return {
+                    "kind": "Exercise",
+                    "id": exercise_id,
+                    "status_flags": status_flags
+                }
+
+            return None
 
         def get_user_progress_recurse(topic, topics_dict, user_video_dict, user_exercise_dict):
             stats = {
@@ -2198,17 +2214,23 @@ class Topic(Searchable, db.Model):
                 if child_key.kind() == "Topic":
                     if child_key in topics_dict:
                         child_topic = topics_dict[child_key]
-                        stats["children"].append(get_user_progress_recurse(child_topic, topics_dict, user_video_dict, user_exercise_dict))
+                        progress = get_user_progress_recurse(child_topic, topics_dict, user_video_dict, user_exercise_dict)
+                        if progress:
+                            stats["children"].append(progress)
                         stats["topic_count"] += 1
 
                 elif child_key.kind() == "Video":
                     video_id = child_key.id()
-                    stats["children"].append(get_user_video_progress(video_id, user_video_dict))
+                    progress = get_user_video_progress(video_id, user_video_dict)
+                    if progress:
+                        stats["children"].append(progress)
                     stats["video_count"] += 1
 
                 elif child_key.kind() == "Exercise":
                     exercise_id = child_key.id()
-                    stats["children"].append(get_user_exercise_progress(exercise_id, user_exercise_dict))
+                    progress = get_user_exercise_progress(exercise_id, user_exercise_dict)
+                    if progress:
+                        stats["children"].append(progress)
                     stats["exercise_count"] += 1
                     pass
 
@@ -2224,7 +2246,10 @@ class Topic(Searchable, db.Model):
                     if value >= stats[kind + "_count"]:
                         stats["status_flags"][flag] = 1
 
-            return stats
+            if stats["children"] != [] or stats["status_flags"] != {}:
+                return stats
+            else:
+                return None
 
         user_video_css = UserVideoCss.get_for_user_data(user_data)
         if user_video_css:
@@ -2235,7 +2260,7 @@ class Topic(Searchable, db.Model):
         user_exercise_graph = UserExerciseGraph.get(user_data)
         user_exercise_dict = dict((exdict["id"], exdict) for name, exdict in user_exercise_graph.graph.iteritems())
 
-        topics = Topic.get_all_topics()
+        topics = Topic.get_visible_topics()
         topics_dict = dict((topic.key(), topic) for topic in topics)
 
         return get_user_progress_recurse(self, topics_dict, user_video_dict, user_exercise_dict)
