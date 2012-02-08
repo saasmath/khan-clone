@@ -72,3 +72,28 @@ def dev_server_only(method):
             return
 
     return wrapper
+
+@request_cache.cache()
+def is_current_user_moderator():
+    user_data = models.UserData.current()
+    return users.is_current_user_admin() or (user_data and (user_data.moderator or user_data.developer))
+
+def moderator_only(method):
+    '''Decorator that requires a moderator account.'''
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if is_current_user_moderator():
+            return method(self, *args, **kwargs)
+        else:
+            user_data = models.UserData.current()
+            if user_data:
+                logging.warning("Attempt by %s to access moderator-only page" % user_data.user_id)
+
+            # can't import util here because of circular dependencies
+            url = "/login?continue=%s" % urllib.quote(self.request.uri)
+
+            self.redirect(url)
+            return
+
+    return wrapper
