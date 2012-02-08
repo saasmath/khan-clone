@@ -75,6 +75,11 @@ class AddComment(request_handler.RequestHandler):
             comment.content = comment_text
             comment.targets = [video.key()]
             comment.types = [models_discussion.FeedbackType.Comment]
+
+            if user_data.discussion_banned:
+                # Hellbanned users' posts are automatically hidden
+                comment.deleted = True
+
             comment.put()
 
         self.redirect("/discussion/pagecomments?video_key=%s&topic_key=%s&page=0&comments_hidden=%s&sort_order=%s" % 

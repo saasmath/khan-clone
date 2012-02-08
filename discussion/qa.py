@@ -110,6 +110,10 @@ class AddAnswer(request_handler.RequestHandler):
             answer.targets = [video.key(), question.key()]
             answer.types = [models_discussion.FeedbackType.Answer]
 
+            if user_data.discussion_banned:
+                # Hellbanned users' posts are automatically hidden
+                answer.deleted = True
+
             # We don't limit answer.content length, which means we're vulnerable to
             # RequestTooLargeErrors being thrown if somebody submits a POST over the GAE
             # limit of 1MB per entity.  This is *highly* unlikely for a legitimate piece of feedback,
@@ -130,7 +134,8 @@ class Answers(request_handler.RequestHandler):
             video = question.video()
             dict_votes = models_discussion.FeedbackVote.get_dict_for_user_data_and_video(user_data, video)
 
-            answers = models_discussion.Feedback.gql("WHERE types = :1 AND targets = :2 AND deleted = :3 AND is_hidden_by_flags = :4", models_discussion.FeedbackType.Answer, question.key(), False, False).fetch(1000)
+            answers = models_discussion.Feedback.gql("WHERE types = :1 AND targets = :2", models_discussion.FeedbackType.Answer, question.key()).fetch(1000)
+            answers = filter(lambda answer: answer.is_visible_to(user_data), answers)
             answers = voting.VotingSortOrder.sort(answers)
 
             for answer in answers:
@@ -176,6 +181,11 @@ class AddQuestion(request_handler.RequestHandler):
             question.content = question_text
             question.targets = [video.key()]
             question.types = [models_discussion.FeedbackType.Question]
+
+            if user_data.discussion_banned:
+                # Hellbanned users' posts are automatically hidden
+                question.deleted = True
+
             question.put()
             question_key = question.key()
 
