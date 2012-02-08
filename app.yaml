@@ -24,6 +24,7 @@ skip_files:
 - ^test_utils\.py
 - ^requirements\.txt
 - ^agar
+- ^testutil
 
 handlers:
 - url: /videos
