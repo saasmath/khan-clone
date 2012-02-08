@@ -1017,6 +1017,7 @@ li.profile-tab {
     color: #888;
     margin: 5px 0 0 0;
     line-height: 15px;
+    word-wrap: break-word;
 }
 .username-picker .example-username {
     color: #678D00;
