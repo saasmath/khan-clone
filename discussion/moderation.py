@@ -59,3 +59,22 @@ class FlaggedFeedback(request_handler.RequestHandler):
 
         self.render_jinja2_template("discussion/mod/flaggedfeedback.html", template_content)
 
+class BannedList(request_handler.RequestHandler):
+
+    @moderator_only
+    def get(self):
+        banned_user_data_list = models.UserData.gql("WHERE discussion_banned = :1", True)
+        self.render_jinja2_template('discussion/mod/bannedlist.html', {
+            "banned_user_data_list" : banned_user_data_list,
+            "selected_id": "bannedlist",
+        })
+
+    @moderator_only
+    def post(self):
+        user_data = self.request_user_data("user")
+
+        if user_data:
+            user_data.discussion_banned = self.request_bool("banned")
+            db.put(user_data)
+
+        self.redirect("/discussion/mod/bannedlist")

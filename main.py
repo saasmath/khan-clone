@@ -832,6 +832,7 @@ application = webapp2.WSGIApplication([
     ('/discussion/flaggedfeedback', moderation.RedirectToModPanel),
     ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
     ('/discussion/mod/moderatorlist', moderation.ModeratorList),
+    ('/discussion/mod/bannedlist', moderation.BannedList),
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
