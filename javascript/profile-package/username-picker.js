@@ -76,7 +76,7 @@ UsernamePickerView = Backbone.View.extend({
         this.$(".notification").hide();
         this.$(".nickname").val(nickname);
         this.$(".username").val(username);
-        this.$(".example-username").val(username);
+        this.$(".example-username").text(username);
         this.$(".sidenote").text("").removeClass("success").removeClass("error");
         this.$("#save-profile-info").prop("disabled", false).val("Save");
     },

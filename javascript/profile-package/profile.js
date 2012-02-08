@@ -205,8 +205,9 @@ var Profile = {
     getRoutes_: function() {
         var routes = {};
 
-         _.each(this.subRoutes, function(fxn, subRoute) {
-             var key = Profile.profileRoot + subRoute;
+        _.each(this.subRoutes, function(fxn, subRoute) {
+            // Internally, backbone expects these routes to be decoded.
+            var key = decodeURIComponent(Profile.profileRoot) + subRoute;
             routes[key] = fxn;
         });
 
@@ -220,11 +221,14 @@ var Profile = {
         var oldRoot = Profile.profileRoot;
         Profile.profileRoot = "/profile/" + model.get("username");
 
-        // Marginally shady? Also, not unbinding old routes
-        Profile.router.routes = Profile.getRoutes_();
-        Profile.router._bindRoutes();
+        // Clear routes with old root
+        Backbone.history.handlers = [];
+
+        // Create a new router
+        Profile.router = new Profile.TabRouter({routes: Profile.getRoutes_()});
 
         // Update address bar so user can see new url
+        // Note: assumes that user is on the main tab, which has no subroute
         Profile.router.navigate(Profile.profileRoot, true);
 
         // Change all links on the page...

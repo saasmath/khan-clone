@@ -3821,6 +3821,11 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
    width:500px;
 }
 
+#modpanel {
+   margin: 9px auto;
+   width:1000px;
+}
+
 .images-email-gray {
   background-image: url(/images/email.png); /*! data-uri(/images/email.png) */
   width: 16px;

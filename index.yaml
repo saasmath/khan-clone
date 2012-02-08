@@ -138,6 +138,12 @@ indexes:
     direction: desc
 
 - kind: Feedback
+  properties:
+  - name: targets
+  - name: date
+    direction: desc
+
+- kind: Feedback
   ancestor: yes
   properties:
   - name: deleted
