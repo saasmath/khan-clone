@@ -125,13 +125,13 @@ class CommonCoreMap(db.Model):
         for key in self.exercises:
             if lightweight:
                 ex = db.get(key)
-                entry['exercises'].append({ "title": ex.display_name, "url": ex.ka_url })
+                entry['exercises'].append({ "display_name": ex.display_name, "ka_url": ex.ka_url })
             else:
                 entry['exercises'].append(db.get(key))
         for key in self.videos:
             if lightweight:
                 v = db.get(key)
-                entry['videos'].append({ "title": v.title, "url": v.ka_url })
+                entry['videos'].append({ "title": v.title, "ka_url": v.ka_url })
             else:
                 entry['videos'].append(db.get(key))
 
@@ -187,13 +187,13 @@ class CommonCoreMap(db.Model):
                     for key in s.exercises:
                         if lightweight:
                             ex = db.get(key)
-                            standard['exercises'].append({ "title": ex.display_name, "url": ex.ka_url })
+                            standard['exercises'].append({ "display_name": ex.display_name, "ka_url": ex.ka_url })
                         else:
                             standard['exercises'].append(db.get(key))
                     for key in s.videos:
                         if lightweight:
                             v = db.get(key)
-                            standard['videos'].append({ "title": v.title, "url": v.url })
+                            standard['videos'].append({ "title": v.title, "ka_url": v.ka_url })
                         else:
                             standard['videos'].append(db.get(key))
 
