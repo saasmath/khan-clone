@@ -10,6 +10,7 @@ COMMON_CORE_SEPARATOR = '.'
 COMMON_CORE_BASE_URL = 'http://www.corestandards.org/the-standards/mathematics/'
 COMMON_CORE_GRADE_URLS = {
         "K": "kindergarten/",
+        "0": "kindergarten/",
         "1": "grade-1/",
         "2": "grade-2/",
         "3": "grade-3/",
@@ -124,13 +125,13 @@ class CommonCoreMap(db.Model):
         for key in self.exercises:
             if lightweight:
                 ex = db.get(key)
-                entry['exercises'].append({ "title": ex.display_name, "url": ex.ka_url })
+                entry['exercises'].append({ "display_name": ex.display_name, "ka_url": ex.ka_url })
             else:
                 entry['exercises'].append(db.get(key))
         for key in self.videos:
             if lightweight:
                 v = db.get(key)
-                entry['videos'].append({ "title": v.title, "url": v.url })
+                entry['videos'].append({ "title": v.title, "ka_url": v.ka_url })
             else:
                 entry['videos'].append(db.get(key))
 
@@ -150,15 +151,20 @@ class CommonCoreMap(db.Model):
     @staticmethod
     def get_all_structured(lightweight=False):
         all_entries = []
-        for grade in COMMON_CORE_GRADE_URLS:
+        for grade in sorted(COMMON_CORE_GRADE_URLS.iterkeys()):
+            if grade == 'K':
+                continue
+
             entry = {}
             entry['grade'] = grade
+            if grade == '0':
+                entry['grade'] = 'K'
             entry['domains'] = []
-            for domain in COMMON_CORE_DOMAINS:
+            for domain in sorted(COMMON_CORE_DOMAINS.iterkeys()):
                 query = CommonCoreMap.all()
-                query.filter('grade =', grade)
+                query.filter('grade =', entry['grade'])
                 query.filter('domain_code =', domain)
-                standards = query.fetch(1000)
+                standards = sorted(query.fetch(1000), key=lambda k: k.standard)
                 
                 if len(standards) == 0:
                     continue
@@ -181,13 +187,13 @@ class CommonCoreMap(db.Model):
                     for key in s.exercises:
                         if lightweight:
                             ex = db.get(key)
-                            standard['exercises'].append({ "title": ex.display_name, "url": ex.ka_url })
+                            standard['exercises'].append({ "display_name": ex.display_name, "ka_url": ex.ka_url })
                         else:
                             standard['exercises'].append(db.get(key))
                     for key in s.videos:
                         if lightweight:
                             v = db.get(key)
-                            standard['videos'].append({ "title": v.title, "url": v.url })
+                            standard['videos'].append({ "title": v.title, "ka_url": v.ka_url })
                         else:
                             standard['videos'].append(db.get(key))
 
