@@ -131,7 +131,7 @@ class CommonCoreMap(db.Model):
         for key in self.videos:
             if lightweight:
                 v = db.get(key)
-                entry['videos'].append({ "title": v.title, "url": v.url })
+                entry['videos'].append({ "title": v.title, "url": v.ka_url })
             else:
                 entry['videos'].append(db.get(key))
 

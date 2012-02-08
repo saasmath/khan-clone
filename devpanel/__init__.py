@@ -167,17 +167,6 @@ class ManageCommonCore(request_handler.RequestHandler):
     @user_util.developer_only
     @ensure_xsrf_cookie
     def get(self):
-        query = CommonCoreMap.all()
-        delete_list = []
-        standard_list = []
-        for e in query:
-            if e.standard in standard_list:
-                delete_list.append(e)
-            else:
-                standard_list.append(e.standard)
-
-        db.delete(delete_list)
-
         template_values = {
             "selected_id": "commoncore",
         } 
