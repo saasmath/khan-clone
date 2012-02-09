@@ -2576,7 +2576,10 @@ class Url(db.Model):
 
         root = Topic.get_root(version)
         urls = root.get_urls(include_descendants = True, include_hidden = False)
-        return urls
+        
+        # return only unique urls
+        url_dict = dict((u.key(), u) for u in urls)
+        return url_dict.values()
 
     @staticmethod
     def get_by_id_for_version(id, version=None):
@@ -2725,7 +2728,10 @@ class Video(Searchable, db.Model):
 
         root = Topic.get_root(version)
         videos = root.get_videos(include_descendants = True, include_hidden = False)
-        return videos
+        
+        # return only unique videos
+        video_dict = dict((v.key(), v) for v in videos)
+        return video_dict.values()
 
     # returns the first non-hidden topic
     def first_topic(self):
