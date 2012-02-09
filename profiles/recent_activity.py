@@ -110,10 +110,14 @@ def recent_goal_activity(goals):
 
 def recent_activity_for(user_data, dt_start, dt_end):
 
-    query_user_badges = models_badges.UserBadge.get_for_user_data_between_dts(user_data, dt_start, dt_end)
-    query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
-    query_video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
-    query_goals = GoalList.get_updated_between_dts(user_data, dt_start, dt_end)
+    query_user_badges = models_badges.UserBadge.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end, reverse=True)
+    query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end, reverse=True)
+    query_video_logs = models.VideoLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end, reverse=True)
+    query_goals = GoalList.get_updated_between_dts(
+            user_data, dt_start, dt_end, reverse=True)
 
     results = util.async_queries([query_user_badges, query_problem_logs,
                                   query_video_logs, query_goals], limit=200)

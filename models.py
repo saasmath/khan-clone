@@ -2976,13 +2976,16 @@ class VideoLog(db.Model):
     _serialize_blacklist = ["video"]
 
     @staticmethod
-    def get_for_user_data_between_dts(user_data, dt_a, dt_b):
+    def get_for_user_data_between_dts(user_data, dt_a, dt_b, reverse=False):
         query = VideoLog.all()
         query.filter('user =', user_data.user)
 
         query.filter('time_watched >=', dt_a)
         query.filter('time_watched <=', dt_b)
-        query.order('time_watched')
+        if reverse:
+            query.order('-time_watched')
+        else:
+            query.order('time_watched')
 
         return query
 
@@ -3388,14 +3391,17 @@ class ProblemLog(db.Model):
             (self.exercise, self.problem_number))
 
     @staticmethod
-    def get_for_user_data_between_dts(user_data, dt_a, dt_b):
+    def get_for_user_data_between_dts(user_data, dt_a, dt_b, reverse=False):
         query = ProblemLog.all()
         query.filter('user =', user_data.user)
 
         query.filter('time_done >=', dt_a)
         query.filter('time_done <', dt_b)
 
-        query.order('time_done')
+        if reverse:
+            query.order('-time_done')
+        else:
+            query.order('time_done')
 
         return query
 
