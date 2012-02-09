@@ -58,9 +58,9 @@ def oauth_required(require_anointed_consumer = False):
                     return oauth_error_response(e)
 
             elif util.allow_cookie_based_auth():
-                if not util.get_current_user_id_from_cookies_unsafe():
+                if not util.get_current_user_id():
                     return oauth_error_response(OAuthError(
-                            "Unable to read user value from cookies"))
+                            "Unable to read user value from cookies/oauth map"))
             else:
                 return oauth_error_response(OAuthError(
                         "Invalid parameters to Oauth request"))
