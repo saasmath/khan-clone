@@ -2841,6 +2841,13 @@ class UserVideo(db.Model):
         return user_data.key_email + ":" + video.youtube_id
 
     @staticmethod
+    def get_for_youtube_id_and_user_data(youtube_id, user_data):
+        if not user_data:
+            return None
+        key_name = user_data.key_email + ":" + youtube_id
+        return UserVideo.get_by_key_name(key_name)
+        
+    @staticmethod
     def get_for_video_and_user_data(video, user_data, insert_if_missing=False):
         if not user_data:
             return None

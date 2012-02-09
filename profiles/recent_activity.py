@@ -6,6 +6,7 @@ from badges import util_badges, models_badges
 from goals.models import GoalList
 import points
 import consts
+import logging
 
 # Number of hours until activity is no longer considered "recent" for profiles
 HOURS_RECENT_ACTIVITY = 4320 # OK for now, fix before shipping!
@@ -47,13 +48,14 @@ class RecentExerciseActivity(RecentActivity):
         return False
 
 class RecentVideoActivity(RecentActivity):
-    def __init__(self, video_log):
+    def __init__(self, video_log, user_data):
         self.s_type = "Video"
         self.youtube_id = video_log.video.youtube_id
         self.video_title = video_log.video_title
         self.seconds_watched = video_log.seconds_watched
         self.dt = video_log.time_watched
         self.points_earned = video_log.points_earned
+        self.user_data = user_data
 
     def combine_with(self, recent_activity):
         if self.__class__ == recent_activity.__class__:
@@ -71,11 +73,14 @@ class RecentVideoActivity(RecentActivity):
         if self.points_earned >= consts.VIDEO_POINTS_BASE:
             return True
 
-        # TODO: We really need to check to see if the user has completed the
-        # video, probably by looking up their UserVideo object. Since it could
-        # be the case the user watched it in parts, and not contiguously in
-        # one "activity"
-        return False
+        # Need to hit the database to find out if the user finished.
+        user_video = models.UserVideo.get_for_youtube_id_and_user_data(
+                self.youtube_id, self.user_data)
+        if not user_video:
+            # Really shouldn't happen!
+            logging.warning("Can't find UserVideo for a recent video activity")
+            return False
+        return user_video.completed
 
 class RecentGoalActivity(RecentActivity):
     def __init__(self, goal):
@@ -97,8 +102,8 @@ def recent_badge_activity(user_badges):
 def recent_exercise_activity(problem_logs):
     return [RecentExerciseActivity(p) for p in problem_logs]
 
-def recent_video_activity(video_logs):
-    return [RecentVideoActivity(v) for v in video_logs]
+def recent_video_activity(video_logs, user_data):
+    return [RecentVideoActivity(v, user_data) for v in video_logs]
 
 def recent_goal_activity(goals):
     return [RecentGoalActivity(g) for g in goals
@@ -117,7 +122,7 @@ def recent_activity_for(user_data, dt_start, dt_end):
     list_recent_activity_types = [
         recent_badge_activity(results[0].get_result()),
         recent_exercise_activity(results[1].get_result()),
-        recent_video_activity(results[2].get_result()),
+        recent_video_activity(results[2].get_result(), user_data),
         recent_goal_activity(results[3].get_result()),
     ]
     list_recent_activity = [activity
