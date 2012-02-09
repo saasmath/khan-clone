@@ -8,7 +8,7 @@ import consts
 import logging
 
 # Number of hours until activity is no longer considered "recent" for profiles
-HOURS_RECENT_ACTIVITY = 4320 # OK for now, fix before shipping!
+HOURS_RECENT_ACTIVITY = (4 * 7 * 24)
 # Number of most-recent items shown in recent activity
 MOST_RECENT_ITEMS = 10
 
