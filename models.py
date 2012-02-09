@@ -4081,6 +4081,40 @@ class PromoRecord(db.Model):
         record.put()
         return True
 
+class VideoSubtitles(db.Model):
+    """Subtitles for a YouTube video
+
+    This is a cache of the content from Universal Subtitles for a video. A job
+    runs periodically to keep these up-to-date.
+
+    Store with a key name of "LANG:YOUTUBEID", e.g., "en:9Ek61w1LxSc".
+    """
+    modified = db.DateTimeProperty(auto_now=True, indexed=False)
+    youtube_id = db.StringProperty()
+    language = db.StringProperty()
+    json = db.TextProperty()
+
+    @staticmethod
+    def get_key_name(language, youtube_id):
+        return '%s:%s' % (language, youtube_id)
+
+class VideoSubtitlesFetchReport(db.Model):
+    """Report on fetching of subtitles from Universal Subtitles
+
+    Jobs that fail or are cancelled from the admin interface leave a hanging
+    status since there's no callback to update the report.
+
+    Store with a key name of JOB_NAME. Usually this is the UUID4 used by the
+    task chain for processing. The key name is displayed as the report name.
+    """
+    created = db.DateTimeProperty(auto_now_add=True)
+    modified = db.DateTimeProperty(auto_now=True, indexed=False)
+    status = db.StringProperty(indexed=False)
+    fetches = db.IntegerProperty(indexed=False)
+    writes = db.IntegerProperty(indexed=False)
+    errors = db.IntegerProperty(indexed=False)
+    redirects = db.IntegerProperty(indexed=False)
+
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from goals.models import GoalList, Goal

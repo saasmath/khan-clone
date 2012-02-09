@@ -318,16 +318,25 @@ class BlobCache():
         return "blobcache-%s-%s" % (namespace, key)
 
     @staticmethod
-    def get_blob_info(key, namespace=""):
+    def get_blob_infos(key, namespace=""):
         filename = BlobCache.get_filename(key, namespace)
-        info = blobstore.BlobInfo.all().filter("filename =", filename).get()
-        return info
+        return blobstore.BlobInfo.all().filter("filename =", filename)
+        
+    @staticmethod
+    def get_first_blob_info(key, namespace=""):
+        infos = BlobCache.get_blob_infos(key, namespace).fetch(100)
+
+        if infos:
+            infos = sorted(infos, key=lambda info: info.creation)
+            return infos[-1]
+        else:
+            return None
 
     @staticmethod
     def get(key, namespace=""):
         from datetime import datetime
         start = datetime.now()
-        blob_info = BlobCache.get_blob_info(key, namespace)
+        blob_info = BlobCache.get_first_blob_info(key, namespace)
         end = datetime.now()
         logging.info("time to get blob info %s", (end-start))
 
@@ -344,11 +353,10 @@ class BlobCache():
             logging.info("time to depickle %s", (end-start))
 
             return obj
-
        
     @staticmethod
     def set(key, result, time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, namespace=""):
-        old_blob_info = BlobCache.get_blob_info(key, namespace)
+        old_blob_infos = BlobCache.get_blob_infos(key, namespace)
       
         value = pickle.dumps(result)
         
@@ -372,5 +380,19 @@ class BlobCache():
         # Get the file's blob key
         blob_key = files.blobstore.get_blob_key(file_name)
 
-        if old_blob_info:
-            old_blob_info.delete()
+        for info in old_blob_infos:
+            try:
+                info.delete()
+            except Exception, e:
+                # If deleting blob times out, don't crash the request. Just log the error.
+                logging.error("Failed to delete old blob from layer_cache: %s" % e)
+
+    @staticmethod
+    def delete(key, namespace=""):
+        for info in BlobCache.get_blob_infos(key, namespace):
+            try:
+                info.delete()
+            except Exception, e:
+                # If deleting blob times out, don't crash the request. Just log the error.
+                logging.error("Failed to delete old blob from layer_cache: %s" % e)
+

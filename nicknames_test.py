@@ -1,9 +1,9 @@
 #!/user/bin/env python
 
 import models
-import test_utils
+import testutil
 
-class NicknamesTest(test_utils.GAEModelTestCase):
+class NicknamesTest(testutil.GAEModelTestCase):
 
     def setUp(self):
         super(NicknamesTest, self).setUp()
