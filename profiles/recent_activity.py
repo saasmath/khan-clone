@@ -143,7 +143,6 @@ def collapse_recent_activity(list_recent_activity):
 
     return sorted(filter(lambda activity: activity is not None,
                          list_recent_activity),
-                  reverse=True,
                   key=lambda activity: activity.dt)
 
 def recent_activity_context(user_data):
