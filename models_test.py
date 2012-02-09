@@ -165,3 +165,8 @@ class PromoRecordTest(testutil.GAEModelTestCase):
         
         # Different promo
         self.assertTrue(self.r(p2, u1))
+
+class VideoSubtitlesTest(unittest2.TestCase):
+    def test_get_key_name(self):
+        kn = models.VideoSubtitles.get_key_name('en', 'YOUTUBEID')
+        self.assertEqual(kn, 'en:YOUTUBEID')

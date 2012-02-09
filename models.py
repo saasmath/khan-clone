@@ -4040,12 +4040,16 @@ class VideoSubtitles(db.Model):
     This is a cache of the content from Universal Subtitles for a video. A job
     runs periodically to keep these up-to-date.
 
-    Store with a key name of "LANG_YOUTUBEID", e.g., "en_9Ek61w1LxSc".
+    Store with a key name of "LANG:YOUTUBEID", e.g., "en:9Ek61w1LxSc".
     """
     modified = db.DateTimeProperty(auto_now=True, indexed=False)
     youtube_id = db.StringProperty()
     language = db.StringProperty()
     json = db.TextProperty()
+
+    @staticmethod
+    def get_key_name(language, youtube_id):
+        return '%s:%s' % (language, youtube_id)
 
 class VideoSubtitlesFetchReport(db.Model):
     """Report on fetching of subtitles from Universal Subtitles

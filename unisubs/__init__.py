@@ -17,6 +17,7 @@ REPORT_TEMPLATE = (('status', 'started'), ('fetches', 0), ('writes', 0),
                    ('errors', 0), ('redirects', 0))
 YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
 UNISUBS_URL = 'http://www.universalsubtitles.org/api/1.0/subtitles/?language=en&video_url=%s'
+TASK_QUEUE = 'subtitles-fetch-queue'
 
 
 class ReportHandler(request_handler.RequestHandler):
@@ -52,7 +53,7 @@ class ImportHandler(request_handler.RequestHandler):
         This entry point is intended to be run as a manual HTTP POST.
         """
         uid = str(uuid.uuid4())
-        deferred.defer(_task_handler, uid, _name=uid)
+        deferred.defer(_task_handler, uid, _name=uid, _queue=TASK_QUEUE)
 
         interactive = self.request_bool('interactive', False)
         if interactive:
@@ -111,7 +112,7 @@ def _task_handler(uid, task_id=0, cursor=None, report=None):
         try:
             resp = rpc.get_result()
             if resp.status_code != 200:
-                raise RuntimeError()
+                raise RuntimeError('status code: %s' % resp.status_code)
 
             if resp.final_url:
                 logging.warn('youtube_id=%s: redirect to %s' % (youtube_id,
@@ -122,7 +123,7 @@ def _task_handler(uid, task_id=0, cursor=None, report=None):
 
             # Only update stale records
 
-            key_name = 'en_%s' % youtube_id
+            key_name = VideoSubtitles.get_key_name('en', youtube_id)
             current = VideoSubtitles.get_by_key_name(key_name)
             if not current or current.json != json:
                 new = VideoSubtitles(key_name=key_name, youtube_id=youtube_id,
@@ -132,17 +133,20 @@ def _task_handler(uid, task_id=0, cursor=None, report=None):
             else:
                 logging.info('youtube_id=%s: content already up-to-date' %
                              youtube_id)
-        except:
-            logging.error('youtube_id=%s: subtitles fetch failed' % youtube_id)
+        except Exception, e:
+            logging.error('youtube_id=%s: subtitles fetch failed: %s' %
+                          (youtube_id, e))
             report['errors'] += 1
 
     # Generate a report if there is nothing left to process
 
     if len(videos) < BATCH_SIZE:
-        deferred.defer(_task_report_handler, uid, report, _name='%s_report' % uid)
+        deferred.defer(_task_report_handler, uid, report,
+                       _name='%s_report' % uid, _queue=TASK_QUEUE)
     else:
         next_id = task_id + 1
         cursor = query.cursor()
         deferred.defer(_task_handler, uid, next_id, cursor, report,
                        _name='%s_%s' % (uid, next_id),
+                       _queue=TASK_QUEUE,
                        _countdown=DEFER_SECONDS)
