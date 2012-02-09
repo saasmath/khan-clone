@@ -4067,6 +4067,7 @@ class VideoSubtitlesFetchReport(db.Model):
     writes = db.IntegerProperty(indexed=False)
     errors = db.IntegerProperty(indexed=False)
     redirects = db.IntegerProperty(indexed=False)
+
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from goals.models import GoalList, Goal
