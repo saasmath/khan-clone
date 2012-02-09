@@ -171,6 +171,23 @@ class ViewVideo(request_handler.RequestHandler):
                 next_video = v
                 break
 
+        # If we're at the beginning or end of a topic, show the adjacent topic.
+        # previous_topic/next_topic are the topic to display.
+        # previous_video_topic/next_video_topic are the subtopics the videos
+        # are actually in.
+        previous_topic = None
+        previous_video_topic = None
+        next_topic = None
+        next_video_topic = None
+        if not previous_video:
+            previous_topic = topic.get_previous_topic()
+            if previous_topic:
+                (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+        if not next_video:
+            next_topic = topic.get_next_topic()
+            if next_topic:
+                (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+
         if video is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
@@ -206,8 +223,12 @@ class ViewVideo(request_handler.RequestHandler):
                             'video_points_base': consts.VIDEO_POINTS_BASE,
                             'button_top_exercise': button_top_exercise,
                             'related_exercises': [], # disabled for now
+                            'previous_topic': previous_topic,
                             'previous_video': previous_video,
+                            'previous_video_topic': previous_video_topic,
+                            'next_topic': next_topic,
                             'next_video': next_video,
+                            'next_video_topic': next_video_topic,
                             'selected_nav_link': 'watch',
                             'awarded_points': awarded_points,
                             'issue_labels': ('Component-Videos,Video-%s' % readable_id),

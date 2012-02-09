@@ -2014,6 +2014,48 @@ class Topic(Searchable, db.Model):
     def get_new_key_name():
         return base64.urlsafe_b64encode(os.urandom(30))
 
+    def get_previous_topic(self):
+        if self.parent_keys:
+            parent_topic = db.get(self.parent_keys[0])
+            prev_index = parent_topic.child_keys.index(self.key()) - 1
+            if prev_index >= 0:
+                return db.get(parent_topic.child_keys[prev_index])
+
+            return parent_topic.get_previous_topic()
+
+        return None
+
+    def get_next_topic(self):
+        if self.parent_keys:
+            parent_topic = db.get(self.parent_keys[0])
+            next_index = parent_topic.child_keys.index(self.key()) + 1
+            if next_index < len(parent_topic.child_keys):
+                return db.get(parent_topic.child_keys[next_index])
+
+            return parent_topic.get_next_topic()
+
+        return None
+
+    def get_first_video_and_topic(self):
+        videos = Topic.get_cached_videos_for_topic(self)
+        if videos:
+            return (videos[0], self)
+
+        if self.child_keys and self.child_keys[0].kind() == 'Topic':
+            return db.get(self.child_keys[0]).get_first_video_and_topic()
+
+        return None
+
+    def get_last_video_and_topic(self):
+        videos = Topic.get_cached_videos_for_topic(self)
+        if videos:
+            return (videos[-1], self)
+
+        if self.child_keys and self.child_keys[-1].kind() == 'Topic':
+            return db.get(self.child_keys[-1]).get_last_video_and_topic()
+
+        return None
+
     def update_ancestor_keys(self, topic_dict=None):
         """ Update the ancestor_keys by using the parents' ancestor_keys.
 
