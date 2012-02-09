@@ -70,3 +70,9 @@ def badge_block(badge, user_badge=None, show_frequency=False, user_data_student=
 
     return shared_jinja.get().render_template("badges/badge_block.html", **template_values)
 
+
+def visible_context_names(badge):
+    return badge.target_context_names[0:1]
+
+def hidden_context_names(badge):
+    return badge.target_context_names[1:]

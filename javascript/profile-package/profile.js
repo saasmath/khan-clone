@@ -26,6 +26,11 @@ var Profile = {
     useLegacy: false,
 
     /**
+     * Overridden w profile-intro.js if necessary
+     */
+    showIntro_: function() {},
+
+    /**
      * Called to initialize the profile page. Passed in with JSON information
      * rendered from the server. See templates/viewprofile.html for details.
      */
@@ -46,6 +51,8 @@ var Profile = {
             pushState: true,
             root: ""
         });
+
+        Profile.showIntro_();
 
         // Remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();

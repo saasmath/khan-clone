@@ -1,3 +1,8 @@
+# the following 3 imports are needed for blobcache
+from __future__ import with_statement
+from google.appengine.api import files
+from google.appengine.ext import blobstore
+
 import datetime
 import logging
 import pickle
@@ -89,6 +94,7 @@ class Layers:
     Datastore = 1
     Memcache = 2
     InAppMemory = 4
+    Blobstore = 8
 
 def cache(
         expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
@@ -147,6 +153,12 @@ def layer_cache_check_set_return(
                 if layer & Layers.Memcache:
                     memcache.set(key, result, time=expiration, namespace=namespace)
                 return result
+        
+        if layer & Layers.Blobstore:
+            result = BlobCache.get(key, namespace=namespace)
+            # TODO: fill upward layers if size of dumped result is going to be less than 1MB (might be too costly to figure that out
+            return result
+
 
     def set_cached_result(key, namespace, expiration, layer, result):
         # Cache the result
@@ -160,6 +172,8 @@ def layer_cache_check_set_return(
         if layer & Layers.Datastore:
             KeyValueCache.set(key, result, time=expiration, namespace=namespace)
 
+        if layer & Layers.Blobstore:
+            BlobCache.set(key, result, time=expiration, namespace=namespace)
 
     bust_cache = False
     if "bust_cache" in kwargs:
@@ -297,3 +311,66 @@ class KeyValueCache(db.Model):
         if key_value:
             db.delete(key_value)
 
+class BlobCache():
+
+    @staticmethod
+    def get_filename(key, namespace=""):
+        return "blobcache-%s-%s" % (namespace, key)
+
+    @staticmethod
+    def get_blob_info(key, namespace=""):
+        filename = BlobCache.get_filename(key, namespace)
+        info = blobstore.BlobInfo.all().filter("filename =", filename).get()
+        return info
+
+    @staticmethod
+    def get(key, namespace=""):
+        from datetime import datetime
+        start = datetime.now()
+        blob_info = BlobCache.get_blob_info(key, namespace)
+        end = datetime.now()
+        logging.info("time to get blob info %s", (end-start))
+
+        if blob_info:
+            start = datetime.now()
+            blob_reader = blob_info.open()
+            value = blob_reader.read()
+            end = datetime.now()
+            logging.info("time to read blob into mem %s", (end-start))
+
+            start = datetime.now()
+            obj = pickle.loads(value)
+            end = datetime.now()
+            logging.info("time to depickle %s", (end-start))
+
+            return obj
+
+       
+    @staticmethod
+    def set(key, result, time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, namespace=""):
+        old_blob_info = BlobCache.get_blob_info(key, namespace)
+      
+        value = pickle.dumps(result)
+        
+        # Create the file
+        file_name = files.blobstore.create(mime_type='application/octet-stream', _blobinfo_uploaded_filename=BlobCache.get_filename(key, namespace))
+ 
+        # might need to wrap it in an object to handle expiration time here
+        
+        # write the pickled result to the file
+        pos = 0
+        chunkSize = 65536
+        with files.open(file_name, 'a') as f:
+            while pos < len(value):
+                chunk = value[pos:pos+chunkSize]
+                pos += chunkSize
+                f.write(chunk)
+
+        # Finalize the file. Do this before attempting to read it.
+        files.finalize(file_name)
+
+        # Get the file's blob key
+        blob_key = files.blobstore.get_blob_key(file_name)
+
+        if old_blob_info:
+            old_blob_info.delete()

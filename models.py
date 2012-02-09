@@ -1683,7 +1683,7 @@ class TopicVersion(db.Model):
         deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
 
 def apply_version_content_changes(version):
-    changes = VersionContentChange.all().filter("version =", version).fetch(10000)
+    changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
     for change in changes:
         change.apply_change()
@@ -1710,8 +1710,7 @@ def preload_library(version):
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
     deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
-
-
+    
 def change_default_version(version):
     default_version = TopicVersion.get_default_version()
 
@@ -1723,6 +1722,7 @@ def change_default_version(version):
         version.made_default_on = datetime.datetime.now()
         version.edit = False
         Setting.topic_tree_version(version.number)
+        Setting.cached_content_add_date(datetime.datetime.now())
         version.put()
 
     # using --high-replication is slow on dev, so instead not using cross-group transactions on dev
@@ -1743,6 +1743,9 @@ def change_default_version(version):
     
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
+
+    vids = Video.get_all_live()
+    Setting.count_videos(len(vids))
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
@@ -1806,7 +1809,7 @@ class VersionContentChange(db.Model):
     content_changes = object_property.UnvalidatedObjectProperty()
 
     def put(self):
-        last_edited_by = UserData.current().user
+        last_edited_by = UserData.current().user if UserData.current() else None
         self.last_edited_by = last_edited_by
         db.Model.put(self)
 
@@ -1860,16 +1863,19 @@ class VersionContentChange(db.Model):
         return change
 
     @staticmethod
-    def add_new_content(klass, version, new_props, changeable_props=None):
+    def add_new_content(klass, version, new_props, changeable_props=None, 
+                        put_change=True):
         new_props = dict((str(k), v) for k,v in new_props.iteritems()
                          if changeable_props is None or k in changeable_props)
-        change = VersionContentChange(parent = version)
-        change.version = version
-        change.content_changes = new_props
         content = klass(**new_props)
         content.put()
-        change.content = content
-        change.put()
+        if put_change:
+            change = VersionContentChange(parent = version)
+            change.version = version
+            change.content_changes = new_props
+            Setting.cached_content_add_date(datetime.datetime.now())
+            change.content = content
+            change.put()
         return content
 
     @staticmethod
@@ -1878,11 +1884,11 @@ class VersionContentChange(db.Model):
             changeable_props = new_props.keys()
 
         change = VersionContentChange.get_change_for_content(content, version)
-
+       
         if change:
-            # update content with existing changes
-            content = change.updated_content()
+            previous_changes = True
         else:
+            previous_changes = False 
             change = VersionContentChange(parent = version)
             change.version = version
             change.content = content
@@ -1902,7 +1908,14 @@ class VersionContentChange(db.Model):
         else:
             raise Exception("content does not exit yet, call add_new_content instead")
 
-        change.put()
+        # only put the change if we have actually changed any props
+        if change.content_changes:
+            change.put()
+
+        # delete the change if we are back to the original values
+        elif previous_changes:
+            change.delete()
+
         return change.content_changes
 
 class Topic(Searchable, db.Model):
@@ -2139,7 +2152,6 @@ class Topic(Searchable, db.Model):
             entities_updated.update(child.update_ancestor_keys())
 
         def add_txn():
-            logging.info(entities_updated)
             db.put(entities_updated)
 
         self.version.update()
@@ -2276,7 +2288,14 @@ class Topic(Searchable, db.Model):
     def update(self, **kwargs):
         if self.version.default:
             raise Exception("You can't edit the default version")
+     
 
+        if "put" in kwargs:
+            put = kwargs["put"]
+            del kwargs["put"]
+        else:
+            put = True
+        
         changed = False
         if "id" in kwargs and kwargs["id"] != self.id:
 
@@ -2286,16 +2305,18 @@ class Topic(Searchable, db.Model):
                 changed = True
             else:
                 pass # don't allow people to change the slug to a different nodes slug
-            del kwargs["id"]
+            del kwargs["id"]             
 
         for attr, value in kwargs.iteritems():
             if getattr(self, attr) != value:
                 setattr(self, attr, value)
                 changed = True
-
+        
         if changed:
-            self.put()
-            self.version.update()
+            if put:
+                self.put()
+                self.version.update()   
+            return self
 
     # too big for memcache ... either add a layer_cache.Layers.Datastore ... or compress it
     # @layer_cache.cache_with_key_fxn(
@@ -2394,6 +2415,12 @@ class Topic(Searchable, db.Model):
         }
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
+        "topic.get_content_topic_%s_%s" % (
+            version.updated_on if version else Setting.topic_tree_version(), 
+            include_hidden),
+        layer=layer_cache.Layers.Memcache)    
     def get_all_topics(version=None, include_hidden=False):
         if not version:
             version = TopicVersion.get_default_version()
@@ -2402,13 +2429,13 @@ class Topic(Searchable, db.Model):
         if not include_hidden:
             query.filter("hide =", False)
 
-        return query.run()
+        return query.fetch(10000)
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False:
         "topic.get_content_topic_%s_%s" % (
-            version.key() if version else Setting.topic_tree_version(),
+            version.updated_on if version else Setting.topic_tree_version(),
             include_hidden),
         layer=layer_cache.Layers.Memcache)
     def get_content_topics(version = None, include_hidden = False):
@@ -2536,6 +2563,13 @@ class Url(db.Model):
         return None
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda :
+        "Url.get_all_%s" % 
+        Setting.cached_content_add_date())
+    def get_all():
+        return Url.all().fetch(100000)
+
+    @staticmethod
     def get_all_live(version=None):
         if not version:
             version = TopicVersion.get_default_version()
@@ -2580,7 +2614,7 @@ class Video(Searchable, db.Model):
     # List of currently available downloadable formats for this video
     downloadable_formats = object_property.TsvProperty(indexed=False)
 
-    _serialize_blacklist = ["downloadable_formats"]
+    _serialize_blacklist = ["downloadable_formats", "topic_string_keys"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
     INDEX_TITLE_FROM_PROP = 'title'
@@ -2676,6 +2710,13 @@ class Video(Searchable, db.Model):
                         break
 
         return video
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda : "Video.get_all_%s" % (Setting.cached_content_add_date()),
+        layer=layer_cache.Layers.Blobstore)
+    def get_all():
+        return Video.all().fetch(100000)
 
     @staticmethod
     def get_all_live(version=None):

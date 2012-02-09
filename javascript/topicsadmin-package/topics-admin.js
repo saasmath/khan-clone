@@ -1809,6 +1809,8 @@ TopicTreeEditor.ImportExportView = Backbone.View.extend({
             $.ajax({
                 url: "/api/v1/dev/topicversion/" + TopicTreeEditor.currentVersion.get("number") + "/topic/" + self.topicID + "/topictree",
                 type: "PUT",
+                contentType: "application/json",
+                data:  $(self.el).find(".topic-data").val(),
                 success: function() {
                     hideGenericMessageBox();
                 }
