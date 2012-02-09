@@ -20,7 +20,7 @@ from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
-from profiles import class_progress_report_graph, recent_activity
+from profiles import class_progress_report_graph, recent_activity, suggested_activity
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
@@ -1993,6 +1993,14 @@ def get_user_badges():
     return {
             "badge_collections": badge_collections,
         }
+
+@route("/api/v1/user/activity/suggested", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def get_suggested_activity():
+    student = models.UserData.current()
+    return suggested_activity.SuggestedActivity.get_for(student)
 
 @route("/api/v1/user/activity", methods=["GET"])
 @oauth_required()

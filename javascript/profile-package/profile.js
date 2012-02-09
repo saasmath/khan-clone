@@ -698,6 +698,7 @@ var Profile = {
         Profile.populateUserCard();
         Profile.populateAchievements();
         Profile.populateGoals();
+        Profile.populateSuggestedActivity();
         Profile.populateRecentActivity();
 
         this.profile.bind("change:nickname", function(profile) {
@@ -971,6 +972,27 @@ var Profile = {
             fakeView = new GoalProfileView({model: fakeGoalBook});
 
         $("#profile-goals-content").append(fakeView.show().addClass("empty-chart"));
+    },
+
+    populateSuggestedActivity: function() {
+        // Yikes, how many requests are we making?
+        // We should chat-talk about this!
+        var email = Profile.profile.get("email");
+        if (email) {
+            $.ajax({
+                type: "GET",
+                url: "/api/v1/user/activity/suggested",
+                data: {
+                    email: email,
+                    casing: "camel"
+                },
+                dataType: "json",
+                success: function(data) {
+                    var suggestedTemplate = Templates.get("profile.suggested-activity");
+                    $("#suggested-activity").append(suggestedTemplate(data));
+                }
+            });
+        }
     },
 
     populateRecentActivity: function() {
