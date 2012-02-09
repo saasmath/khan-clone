@@ -2208,7 +2208,7 @@ class Topic(Searchable, db.Model):
                 child.parent_keys.append(topic.key())
                 child.ancestor_keys.append(topic.key())
 
-            all_decendant_keys = {} # used to make sure we don't loop
+            all_descendant_keys = {} # used to make sure we don't loop
             descendant_keys = {}
             descendants = child_topics
             while True: # should iterate n+1 times making n db.gets() where n is the tree depth under topic
