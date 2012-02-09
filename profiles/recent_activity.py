@@ -57,6 +57,7 @@ class RecentVideoActivity(RecentActivity):
         self.dt = video_log.time_watched
         self.points_earned = video_log.points_earned
         self.user_data = user_data
+        self.is_video_completed = video_log.is_video_completed
 
     def combine_with(self, recent_activity):
         if self.__class__ == recent_activity.__class__:
@@ -65,23 +66,10 @@ class RecentVideoActivity(RecentActivity):
                     self.dt = recent_activity.dt
                     self.seconds_watched += recent_activity.seconds_watched
                     self.points_earned += recent_activity.points_earned
+                    self.is_video_completed = (self.is_video_completed
+                            or recent_activity.is_video_completed)
                     return True
         return False
-    
-    @property
-    def is_complete(self):
-        # If there's enough here to earn "completion", look no further.
-        if self.points_earned >= consts.VIDEO_POINTS_BASE:
-            return True
-
-        # Need to hit the database to find out if the user finished.
-        user_video = models.UserVideo.get_for_youtube_id_and_user_data(
-                self.youtube_id, self.user_data)
-        if not user_video:
-            # Really shouldn't happen!
-            logging.warning("Can't find UserVideo for a recent video activity")
-            return False
-        return user_video.completed
 
 class RecentGoalActivity(RecentActivity):
     def __init__(self, goal):

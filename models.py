@@ -2888,13 +2888,6 @@ class UserVideo(db.Model):
         return user_data.key_email + ":" + video.youtube_id
 
     @staticmethod
-    def get_for_youtube_id_and_user_data(youtube_id, user_data):
-        if not user_data:
-            return None
-        key_name = user_data.key_email + ":" + youtube_id
-        return UserVideo.get_by_key_name(key_name)
-        
-    @staticmethod
     def get_for_video_and_user_data(video, user_data, insert_if_missing=False):
         if not user_data:
             return None
@@ -2972,6 +2965,11 @@ class VideoLog(db.Model):
     last_second_watched = db.IntegerProperty(indexed=False)
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     playlist_titles = db.StringListProperty(indexed=False)
+
+    # Indicates whether or not the video is deemed "complete" by the user.
+    # This does not mean that this particular log was the one that resulted
+    # in the completion - just that the video has been complete at some point.
+    is_video_completed = db.BooleanProperty(indexed=False)
 
     _serialize_blacklist = ["video"]
 
@@ -3080,6 +3078,7 @@ class VideoLog(db.Model):
 
             bingo(['struggling_videos_finished',
                    'homepage_restructure_videos_finished'])
+        video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
