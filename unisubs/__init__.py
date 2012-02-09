@@ -109,33 +109,31 @@ def _task_handler(uid, task_id=0, cursor=None, report=None):
     # Process asynchronous fetches
 
     for youtube_id, rpc in rpcs:
+        lang = 'en'
+        key_name = VideoSubtitles.get_key_name(lang, youtube_id)
         try:
             resp = rpc.get_result()
             if resp.status_code != 200:
                 raise RuntimeError('status code: %s' % resp.status_code)
 
             if resp.final_url:
-                logging.warn('youtube_id=%s: redirect to %s' % (youtube_id,
-                                                                resp.final_url))
+                logging.warn('%s redirect to %s' % (key_name, resp.final_url))
                 report['redirects'] += 1
 
             json = resp.content.decode('utf-8')
 
             # Only update stale records
 
-            key_name = VideoSubtitles.get_key_name('en', youtube_id)
             current = VideoSubtitles.get_by_key_name(key_name)
             if not current or current.json != json:
                 new = VideoSubtitles(key_name=key_name, youtube_id=youtube_id,
-                                     language='en', json=json)
+                                     language=lang, json=json)
                 new.put()
                 report['writes'] += 1
             else:
-                logging.info('youtube_id=%s: content already up-to-date' %
-                             youtube_id)
+                logging.info('%s content already up-to-date' % key_name)
         except Exception, e:
-            logging.error('youtube_id=%s: subtitles fetch failed: %s' %
-                          (youtube_id, e))
+            logging.error('%s subtitles fetch failed: %s' % (key_name, e))
             report['errors'] += 1
 
     # Generate a report if there is nothing left to process
