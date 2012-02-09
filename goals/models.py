@@ -208,14 +208,11 @@ class GoalList(object):
         return changes
 
     @staticmethod
-    def get_updated_between_dts(user_data, dt_a, dt_b, reverse=False):
+    def get_updated_between_dts(user_data, dt_a, dt_b):
         query = GoalList.get_goals_query(user_data)
         query.filter('updated_on >=', dt_a)
         query.filter('updated_on <', dt_b)
-        if reverse:
-            query.order('-updated_on')
-        else:
-            query.order('updated_on')
+        query.order('updated_on')
         return query
 
     @staticmethod

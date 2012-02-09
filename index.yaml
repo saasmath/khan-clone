@@ -185,12 +185,6 @@ indexes:
   properties:
   - name: updated_on
 
-- kind: Goal
-  ancestor: yes
-  properties:
-  - name: updated_on
-    direction: desc
-
 - kind: HourlyActivityLog
   properties:
   - name: user
@@ -231,12 +225,6 @@ indexes:
   - name: user
   - name: time_done
 
-- kind: ProblemLog
-  properties:
-  - name: user
-  - name: time_done
-    direction: desc
-
 - kind: StemmedIndex
   properties:
   - name: __key__
@@ -263,12 +251,6 @@ indexes:
   properties:
   - name: user
   - name: date
-
-- kind: UserBadge
-  properties:
-  - name: user
-  - name: date
-    direction: desc
 
 - kind: UserData
   properties:
@@ -337,12 +319,6 @@ indexes:
   properties:
   - name: user
   - name: time_watched
-
-- kind: VideoLog
-  properties:
-  - name: user
-  - name: time_watched
-    direction: desc
 
 - kind: VideoLog
   properties:
