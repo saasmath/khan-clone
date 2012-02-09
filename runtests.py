@@ -6,7 +6,7 @@ import sys
 # Install the Python unittest2 package before you run this script.
 import unittest2
 
-USAGE = """%prog TEST_PATH [options]
+USAGE = """%prog [TEST_PATH] [options]
 
 Runs unit tests for App Engine apps.
 
@@ -66,10 +66,10 @@ if __name__ == '__main__':
                       help='path to the App Engine SDK')
     options, args = parser.parse_args()
 
-    if len(args) != 1:
-        parser.print_help()
-        sys.exit(1)
-    TEST_PATH = args[0]
+    if len(args) == 1:
+        TEST_PATH = args[0]
+    else:
+        TEST_PATH = os.getcwd()
 
     if options.sdk:
         sys.path.append(options.sdk)
