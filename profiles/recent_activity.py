@@ -6,7 +6,6 @@ from badges import util_badges, models_badges
 from goals.models import GoalList
 import points
 import consts
-import logging
 
 # Number of hours until activity is no longer considered "recent" for profiles
 HOURS_RECENT_ACTIVITY = 4320 # OK for now, fix before shipping!
@@ -68,7 +67,6 @@ class RecentVideoActivity(RecentActivity):
     
     @property
     def is_complete(self):
-        logging.error("points earned for %s is %s" % (self.video_title, self.points_earned))
         # If there's enough here to earn "completion", look no further.
         if self.points_earned >= consts.VIDEO_POINTS_BASE:
             return True
