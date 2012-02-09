@@ -20,7 +20,7 @@ def feedback_query(target_key):
 @unpickle
 @base64_decode
 @decompress
-@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video, layer=layer_cache.Layers.Datastore)
+@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video, layer=layer_cache.Layers.Blobstore)
 @compress
 @base64_encode
 @pickle
