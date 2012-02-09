@@ -4,7 +4,6 @@ import util
 import models
 from badges import util_badges, models_badges
 from goals.models import GoalList
-import points
 import consts
 import logging
 

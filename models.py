@@ -2099,7 +2099,7 @@ class Topic(Searchable, db.Model):
             raise Exception("You can't edit the default version")
 
         if self.parent():
-             kwargs["parent"] = Topic.get_root(kwargs["version"])
+            kwargs["parent"] = Topic.get_root(kwargs["version"])
 
         if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
@@ -4043,4 +4043,4 @@ class PromoRecord(db.Model):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from goals.models import GoalList, Goal
+from goals.models import GoalList
