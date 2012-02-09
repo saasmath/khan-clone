@@ -2009,7 +2009,7 @@ def get_activity():
             # Allow access to this student's profile
             student = user_override
 
-    return recent_activity.recent_activity_context(student)
+    return recent_activity.recent_activity_list(student)
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])

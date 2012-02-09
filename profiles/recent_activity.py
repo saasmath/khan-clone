@@ -19,6 +19,8 @@ class RecentActivity(object):
     def combine_with(self, recent_activity):
         return False
 
+    _serialize_blacklist = ['user_data']
+
 class RecentBadgeActivity(RecentActivity):
     def __init__(self, user_badge, badge):
         self.s_type = "Badge"
@@ -146,13 +148,10 @@ def collapse_recent_activity(list_recent_activity):
                   reverse=True,
                   key=lambda activity: activity.dt)
 
-def recent_activity_context(user_data):
-    list_recent_activity = []
+def recent_activity_list(user_data):
+    result = []
     if user_data:
         dt_end = datetime.datetime.now()
         dt_start = dt_end - datetime.timedelta(hours=HOURS_RECENT_ACTIVITY)
-        list_recent_activity = recent_activity_for(user_data, dt_start, dt_end)
-    return {
-        "user_data_student": user_data,
-        "list_recent_activity": list_recent_activity
-    }
+        result = recent_activity_for(user_data, dt_start, dt_end)
+    return result
