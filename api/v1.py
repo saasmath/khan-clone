@@ -512,7 +512,6 @@ def get_url(url_id, version_id=None):
 @jsonify
 def save_url(url_id = None, version_id=None):
     version = models.TopicVersion.get_by_id(version_id)
-    url_json = request.json
     changeable_props = ["tags", "title", "url"]
 
     if url_id is None:
@@ -1859,7 +1858,6 @@ def remove_coworker():
 def autocomplete():
 
     video_results = []
-    playlist_results = []
 
     query = request.request_string("q", default="").strip().lower()
     if query:
