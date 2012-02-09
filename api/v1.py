@@ -289,17 +289,21 @@ def topictree_import(version_id = "edit", topic_id="root"):
     tree_json = request.json
     topics = models.Topic.get_all_topics(version, True)
     logging.info("got all topics")
+
     topic_dict = dict((topic.id, topic) for topic in topics)
     topic_keys_dict = dict((topic.key(), topic) for topic in topics)
     videos = models.Video.get_all()
     logging.info("got all videos")
+
     video_dict = dict((video.youtube_id, video) for video in videos)
     exercises = models.Exercise.get_all_use_cache()
     logging.info("got all exercises")
+
     exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
     urls = models.Url.all()
     url_dict = dict((url.id, url) for url in urls)
     logging.info("got all urls")
+
     all_entities_dict = {}
     new_content_keys = []
 
@@ -430,15 +434,11 @@ def topictree_import(version_id = "edit", topic_id="root"):
             for child in tree["children"]:
                 nodes.update(extract_nodes(child, nodes))
             del(tree["children"])
-        # logging.info("adding %s" % (tree["title"] if "title" in tree else tree["name"]))
-        # logging.info(tree["key"])
         nodes[tree["key"]]=tree
         return nodes
     
-    # return len(tree_json)
     nodes = extract_nodes(tree_json, {})
     logging.info("extracted %i nodes" % len(nodes))
-    # logging.info(nodes)
     changed_nodes = []
 
     i = 0
@@ -494,11 +494,9 @@ def topictree_import(version_id = "edit", topic_id="root"):
         i += 1
 
     logging.info("about to put %i topic nodes" % len(changed_nodes))
-    # logging.info([n.child_keys for n in changed_nodes])
     db.put(changed_nodes)
     logging.info("done with import")
     return True
-    # return [n.get_visible_data() for n in changed_nodes]
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
