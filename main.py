@@ -50,6 +50,7 @@ import goals.handlers
 import stories
 import summer
 import common_core
+import unisubs
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, Topic
@@ -761,6 +762,8 @@ application = webapp2.WSGIApplication([
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
     ('/admin/changeemail', ChangeEmail),
     ('/admin/realtimeentitycount', RealtimeEntityCount),
+    ('/admin/unisubs', unisubs.ReportHandler),
+    ('/admin/unisubs/import', unisubs.ImportHandler),
 
     ('/devadmin', devpanel.Panel),
     ('/devadmin/emailchange', devpanel.MergeUsers),

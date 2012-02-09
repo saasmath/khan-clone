@@ -24,7 +24,11 @@ def youtube_get_video_data_dict(youtube_id):
     yt_service.developer_key = "AI39si6ctKTnSR_Vx7o7GpkpeSZAKa6xjbZz6WySzTvKVYRDAO7NHBVwofphk82oP-OSUwIZd0pOJyNuWK8bbOlqzJc9OFozrQ"
     yt_service.client_id = "n/a"
 
-    video = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
+    logging.info("trying to get info for youtube_id: %s" % youtube_id)
+    try:
+        video = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
+    except:
+        video = None
     if video:
         video_data = {"youtube_id" : youtube_id,
                       "title" : video.media.title.text.decode('utf-8'),

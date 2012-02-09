@@ -104,8 +104,23 @@ def jsonp(func):
         callback = request.values.get("callback")
         if callback:
             val = "%s(%s)" % (callback, val)
-        return current_app.response_class(val, mimetype="application/json")
+        return current_app.response_class(val, mimetype="application/json; charset=utf-8")
     return jsonp_enabled
+
+def utf8(func):
+    @wraps(func)
+    def utf8_headed(*args, **kwargs):
+        val = func(*args, **kwargs)
+
+        if isinstance(val, current_app.response_class):
+            return val
+
+        callback = request.values.get("callback")
+        if callback:
+            val = "%s(%s)" % (callback, val)
+        return current_app.response_class(val, contentencoding="utf8")
+    return utf8_headed
+
 
 def compress(func):
     @wraps(func)
