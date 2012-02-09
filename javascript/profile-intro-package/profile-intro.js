@@ -4,10 +4,7 @@
  */
 
 if (typeof Profile !== "undefined") {
-    // Some of the items highlighted in the intro flow are rendered on
-    // the client. Asynchronously start the intro flow so that those
-    // items can be rendered first.
-    window.setTimeout(function() {
+    Profile.showIntro_ = function() {
         if (Profile.profile.isPhantom()) {
             // For phantom users, don't show a tour flow, but a single dialog
             // with clear call-to-action to login.
@@ -154,6 +151,5 @@ if (typeof Profile !== "undefined") {
                 description: "The information in the box above can be made public. If you make your profile public, you'll get your own special space on Khan Academy. Other users will be able to visit your page. Don't worry! You can make your profile private at any time, in which case only you and your coaches can see your info."
             });
         }
-
-    }, 0);
+    }
 }

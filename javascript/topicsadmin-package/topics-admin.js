@@ -358,7 +358,11 @@ var TopicTreeEditor = {
 
         // Update the parent so we don't unnecessarily refresh all the sibling nodes
         if (model.id != "root") {
-            var parentOriginalChild = node.parent.data.original.children[ _.indexOf(node.parent.childList, node) ];
+            var parentOriginalChild = _.find(node.parent.data.original.children, function(child) {
+                if (child.id == model.id)
+                    return child;
+                return null;
+            });
             parentOriginalChild.title = model.get("title");
             parentOriginalChild.hide = model.get("hide");
         }
@@ -1805,6 +1809,8 @@ TopicTreeEditor.ImportExportView = Backbone.View.extend({
             $.ajax({
                 url: "/api/v1/dev/topicversion/" + TopicTreeEditor.currentVersion.get("number") + "/topic/" + self.topicID + "/topictree",
                 type: "PUT",
+                contentType: "application/json",
+                data:  $(self.el).find(".topic-data").val(),
                 success: function() {
                     hideGenericMessageBox();
                 }
