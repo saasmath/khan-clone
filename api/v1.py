@@ -1994,14 +1994,6 @@ def get_user_badges():
             "badge_collections": badge_collections,
         }
 
-@route("/api/v1/user/activity/suggested", methods=["GET"])
-@oauth_required()
-@jsonp
-@jsonify
-def get_suggested_activity():
-    student = models.UserData.current()
-    return suggested_activity.SuggestedActivity.get_for(student)
-
 @route("/api/v1/user/activity", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -2017,7 +2009,10 @@ def get_activity():
             # Allow access to this student's profile
             student = user_override
 
-    return recent_activity.recent_activity_list(student)
+    return {
+            "suggested": suggested_activity.SuggestedActivity.get_for(student),
+            "recent": recent_activity.recent_activity_list(student),
+        }
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])

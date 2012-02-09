@@ -4013,6 +4013,8 @@ class UserExerciseGraph(object):
             set_implicit_proficiency(graph[exercise_name])
 
         # Calculate suggested
+        # TODO(marcia): Additionally incorporate whether student has attempted exercise,
+        # perhaps also accuracy and when it was last attempted. Details TBD.
         def set_suggested(graph_dict):
             if graph_dict["suggested"] is not None:
                 return graph_dict["suggested"]

@@ -15,19 +15,31 @@ class SuggestedActivity(object):
 
     @staticmethod
     def get_for(user_data):
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
-        exercise_graph_dicts = sorted(user_exercise_graph.graph_dicts(),
-                                    reverse=True,
-                                    key=lambda graph_dict: graph_dict["last_done"])
+        return {
+            "exercises": SuggestedActivity.get_exercises_for(user_data),
+            "videos": SuggestedActivity.get_videos_for(user_data),
+            "goals": SuggestedActivity.get_goals_for(user_data),
+        }
 
-        min_date = datetime.datetime.min
+    @staticmethod
+    def get_videos_for(user_data):
+        # Not sure how this will work if we're iterating through videologs
+        # and separating them into either suggested or recent.
+        return []
+
+    @staticmethod
+    def get_goals_for(user_data):
+        return []
+
+    @staticmethod
+    def get_exercises_for(user_data):
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        exercise_graph_dicts = user_exercise_graph.suggested_graph_dicts()
+
         activities = []
 
         for graph_dict in exercise_graph_dicts:
-            if graph_dict["last_done"] == min_date:
-                break
-            if not graph_dict["proficient"]:
-                activities.append(SuggestedActivity.from_exercise(graph_dict))
+            activities.append(SuggestedActivity.from_exercise(graph_dict))
 
         return activities
 

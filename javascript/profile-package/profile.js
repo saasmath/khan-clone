@@ -698,8 +698,7 @@ var Profile = {
         Profile.populateUserCard();
         Profile.populateAchievements();
         Profile.populateGoals();
-        Profile.populateSuggestedActivity();
-        Profile.populateRecentActivity();
+        Profile.populateActivity();
 
         this.profile.bind("change:nickname", function(profile) {
             var nickname = profile.get("nickname") || "Profile";
@@ -974,28 +973,54 @@ var Profile = {
         $("#profile-goals-content").append(fakeView.show().addClass("empty-chart"));
     },
 
-    populateSuggestedActivity: function() {
-        // Yikes, how many requests are we making?
-        // We should chat-talk about this!
-        var email = Profile.profile.get("email");
-        if (email) {
-            $.ajax({
-                type: "GET",
-                url: "/api/v1/user/activity/suggested",
-                data: {
-                    email: email,
-                    casing: "camel"
-                },
-                dataType: "json",
-                success: function(data) {
-                    var suggestedTemplate = Templates.get("profile.suggested-activity");
-                    $("#suggested-activity").append(suggestedTemplate(data));
-                }
-            });
-        }
+    populateSuggestedActivity: function(activities) {
+        var suggestedTemplate = Templates.get("profile.suggested-activity");
+        $("#suggested-activity").append(suggestedTemplate(activities));
     },
 
-    populateRecentActivity: function() {
+    populateRecentActivity: function(activities) {
+        $("#recent-activity-progress-bar").slideUp("fast", function() {
+            $(this).hide();
+        });
+
+        var listTemplate = Templates.get("profile.recent-activity-list"),
+            exerciseTemplate = Templates.get("profile.recent-activity-exercise"),
+            badgeTemplate = Templates.get("profile.recent-activity-badge"),
+            videoTemplate = Templates.get("profile.recent-activity-video"),
+            goalTemplate = Templates.get("profile.recent-activity-goal"),
+            typeToIconSrc = {
+                "Exercise": "/images/generic-exercise-icon-inset.png",
+                "Badge": "/images/generic-badge-icon-inset.png",
+                "Video": "/images/video-camera-icon-inset.png",
+                "Goal": "/images/activity-icon-inset.png"
+            };
+
+
+        Handlebars.registerHelper("toSrcIcon", function(type) {
+            return typeToIconSrc[type];
+        });
+
+        Handlebars.registerHelper("renderActivity", function(activity) {
+            _.extend(activity, {profileRoot: Profile.profileRoot});
+
+            if (activity.sType === "Exercise") {
+                return exerciseTemplate(activity);
+            } else if (activity.sType === "Badge") {
+                return badgeTemplate(activity);
+            } else if (activity.sType === "Video") {
+                return videoTemplate(activity);
+            } else if (activity.sType === "Goal") {
+                return goalTemplate(activity);
+            }
+
+            return "";
+        });
+
+        $("#recent-activity").append(listTemplate(activities))
+            .find("span.timeago").timeago();
+    },
+
+    populateActivity: function() {
         $("#recent-activity-progress-bar").progressbar({value: 100});
 
         // TODO: Abstract away profile + actor privileges
@@ -1010,45 +1035,8 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
-                    $("#recent-activity-progress-bar").slideUp("fast", function() {
-                        $(this).hide();
-                    });
-
-                    var listTemplate = Templates.get("profile.recent-activity-list"),
-                        exerciseTemplate = Templates.get("profile.recent-activity-exercise"),
-                        badgeTemplate = Templates.get("profile.recent-activity-badge"),
-                        videoTemplate = Templates.get("profile.recent-activity-video"),
-                        goalTemplate = Templates.get("profile.recent-activity-goal"),
-                        typeToIconSrc = {
-                            "Exercise": "/images/generic-exercise-icon-inset.png",
-                            "Badge": "/images/generic-badge-icon-inset.png",
-                            "Video": "/images/video-camera-icon-inset.png",
-                            "Goal": "/images/activity-icon-inset.png"
-                        };
-
-
-                    Handlebars.registerHelper("toSrcIcon", function(type) {
-                        return typeToIconSrc[type];
-                    });
-
-                    Handlebars.registerHelper("renderActivity", function(activity) {
-                        _.extend(activity, {profileRoot: Profile.profileRoot});
-
-                        if (activity.sType === "Exercise") {
-                            return exerciseTemplate(activity);
-                        } else if (activity.sType === "Badge") {
-                            return badgeTemplate(activity);
-                        } else if (activity.sType === "Video") {
-                            return videoTemplate(activity);
-                        } else if (activity.sType === "Goal") {
-                            return goalTemplate(activity);
-                        }
-
-                        return "";
-                    });
-
-                    $("#recent-activity").append(listTemplate(data))
-                        .find("span.timeago").timeago();
+                    Profile.populateSuggestedActivity(data.suggested);
+                    Profile.populateRecentActivity(data.recent);
                 }
             });
         }
