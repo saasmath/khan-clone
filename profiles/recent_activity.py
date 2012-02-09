@@ -2,10 +2,11 @@ import datetime
 
 import util
 import models
-import templatefilters
 from badges import util_badges, models_badges
-from templatefilters import seconds_to_time_string
 from goals.models import GoalList
+import points
+import consts
+import logging
 
 # Number of hours until activity is no longer considered "recent" for profiles
 HOURS_RECENT_ACTIVITY = 4320 # OK for now, fix before shipping!
@@ -41,7 +42,8 @@ class RecentExerciseActivity(RecentActivity):
                 if self.can_combine_dates(self.dt, recent_activity.dt):
                     self.dt = recent_activity.dt
                     self.c_problems += 1
-                    self.earned_proficiency = self.earned_proficiency or recent_activity.earned_proficiency
+                    self.earned_proficiency = (self.earned_proficiency or
+                                               recent_activity.earned_proficiency)
                     return True
         return False
 
@@ -52,6 +54,7 @@ class RecentVideoActivity(RecentActivity):
         self.video_title = video_log.video_title
         self.seconds_watched = video_log.seconds_watched
         self.dt = video_log.time_watched
+        self.points_earned = video_log.points_earned
 
     def combine_with(self, recent_activity):
         if self.__class__ == recent_activity.__class__:
@@ -59,7 +62,21 @@ class RecentVideoActivity(RecentActivity):
                 if self.can_combine_dates(self.dt, recent_activity.dt):
                     self.dt = recent_activity.dt
                     self.seconds_watched += recent_activity.seconds_watched
+                    self.points_earned += recent_activity.points_earned
                     return True
+        return False
+    
+    @property
+    def is_complete(self):
+        logging.error("points earned for %s is %s" % (self.video_title, self.points_earned))
+        # If there's enough here to earn "completion", look no further.
+        if self.points_earned >= consts.VIDEO_POINTS_BASE:
+            return True
+
+        # TODO: We really need to check to see if the user has completed the
+        # video, probably by looking up their UserVideo object. Since it could
+        # be the case the user watched it in parts, and not contiguously in
+        # one "activity"
         return False
 
 class RecentGoalActivity(RecentActivity):
@@ -97,15 +114,17 @@ def recent_activity_for(user_data, dt_start, dt_end):
     query_goals = GoalList.get_updated_between_dts(user_data, dt_start, dt_end)
 
     results = util.async_queries([query_user_badges, query_problem_logs,
-        query_video_logs, query_goals], limit=200)
+                                  query_video_logs, query_goals], limit=200)
 
     list_recent_activity_types = [
-            recent_badge_activity(results[0].get_result()),
-            recent_exercise_activity(results[1].get_result()),
-            recent_video_activity(results[2].get_result()),
-            recent_goal_activity(results[3].get_result()),
+        recent_badge_activity(results[0].get_result()),
+        recent_exercise_activity(results[1].get_result()),
+        recent_video_activity(results[2].get_result()),
+        recent_goal_activity(results[3].get_result()),
     ]
-    list_recent_activity = [activity for sublist in list_recent_activity_types for activity in sublist]
+    list_recent_activity = [activity
+                            for sublist in list_recent_activity_types
+                            for activity in sublist]
 
     return collapse_recent_activity(list_recent_activity)[:MOST_RECENT_ITEMS]
 
@@ -120,7 +139,10 @@ def collapse_recent_activity(list_recent_activity):
         else:
             last_recent_activity = recent_activity
 
-    return sorted(filter(lambda activity: activity is not None, list_recent_activity), reverse=True, key=lambda activity: activity.dt)
+    return sorted(filter(lambda activity: activity is not None,
+                         list_recent_activity),
+                  reverse=True,
+                  key=lambda activity: activity.dt)
 
 def recent_activity_context(user_data):
     list_recent_activity = []
