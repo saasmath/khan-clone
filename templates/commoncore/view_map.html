@@ -108,7 +108,6 @@
 	}
 	
 	.grade-link {
-		float:left;
 		padding:6px;
 		margin-bottom: 0px;
 	}
@@ -134,6 +133,10 @@
 	
 	.domain-link ul {
 		margin-left: 2em;
+	}
+	
+	.hidden-videos {
+		display: none;
 	}
 	
 	</style>
@@ -177,6 +180,16 @@
 					
 					$(this).next().show();					
 						
+				});
+				
+				$(".expand-videos").click(function() {
+					
+					var hiddenVideos = $(this).parent().next();
+					
+					if (hiddenVideos.css("display") === "none") hiddenVideos.slideDown("fast");
+					else hiddenVideos.slideUp("fast");
+					
+					return false;
 				});
 				
 			});
@@ -292,14 +305,18 @@
 										<td>
 											<ul>
     										    {% for video in standard["videos"]|sort(attribute='title') %}
-        											{% if loop.index <= 8 %}
+												
+        											{% if loop.index == 9 %}
+        												<li>...and <a href="#" class="expand-videos">{{standard.videos|count - 8}} more</a> ...</li>
+														<div class="hidden-videos">
+													{% endif %}
         												<li><a href="{{video["ka_url"]|escape}}" title="{{video["title"]|escape}}" target="_blank">{{video["title"]|escape}}</a></li>
-        											{% endif %}
+													
+													{% if loop.last and loop.index >= 9 %}
+														</div>
+													{% endif %}	
+													
         										{% endfor %}
-
-        											{% if standard.videos|count > 8 %}
-        												<li>...and {{standard.videos|count - 8}} more ...</li>
-        											{% endif %}
 
     										</ul>
 										</td>
