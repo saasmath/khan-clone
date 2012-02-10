@@ -987,18 +987,8 @@ var Profile = {
             exerciseTemplate = Templates.get("profile.recent-activity-exercise"),
             badgeTemplate = Templates.get("profile.recent-activity-badge"),
             videoTemplate = Templates.get("profile.recent-activity-video"),
-            goalTemplate = Templates.get("profile.recent-activity-goal"),
-            typeToIconSrc = {
-                "Exercise": "/images/generic-exercise-icon-inset.png",
-                "Badge": "/images/generic-badge-icon-inset.png",
-                "Video": "/images/video-camera-icon-inset.png",
-                "Goal": "/images/activity-icon-inset.png"
-            };
+            goalTemplate = Templates.get("profile.recent-activity-goal");
 
-
-        Handlebars.registerHelper("toSrcIcon", function(type) {
-            return typeToIconSrc[type];
-        });
 
         Handlebars.registerHelper("renderActivity", function(activity) {
             _.extend(activity, {profileRoot: Profile.profileRoot});
