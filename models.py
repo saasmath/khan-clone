@@ -3949,6 +3949,103 @@ class UserExerciseGraph(object):
         return UserExerciseGraph.generate(user_data, user_exercise_cache, UserExerciseGraph.exercise_dicts())
 
     @staticmethod
+    def get_boundary_names(graph):
+        """ Return the names of the exercises that succeed
+        the student's proficient exercises.
+        """
+        all_exercises_dict = {}
+
+        def is_boundary(graph_dict):
+            name = graph_dict["name"]
+
+            if name in all_exercises_dict:
+                return all_exercises_dict[name]
+
+            # Don't suggest already-proficient exercises
+            if graph_dict["proficient"]:
+                all_exercises_dict.update({name: False})
+                return False
+
+            # First, assume we're suggesting this exercise
+            is_suggested = True
+
+            # Don't suggest exercises that are covered by other suggested exercises
+            for covering_graph_dict in graph_dict["coverer_dicts"]:
+                if is_boundary(covering_graph_dict):
+                    all_exercises_dict.update({name: False})
+                    return False
+
+            # Don't suggest exercises if the user isn't proficient in all prerequisites
+            for prerequisite_graph_dict in graph_dict["prerequisite_dicts"]:
+                if not prerequisite_graph_dict["proficient"]:
+                    all_exercises_dict.update({name: False})
+                    return False
+
+            all_exercises_dict.update({name: True})
+            return True
+
+        boundary_graph_dicts = []
+        for exercise_name in graph:
+            graph_dict = graph[exercise_name]
+            if is_boundary(graph_dict):
+                boundary_graph_dicts.append(graph_dict)
+
+        boundary_graph_dicts = sorted(sorted(boundary_graph_dicts,
+                             key=lambda graph_dict: graph_dict["v_position"]),
+                             key=lambda graph_dict: graph_dict["h_position"])
+
+        return [graph_dict["name"]
+                    for graph_dict in boundary_graph_dicts]
+
+    @staticmethod
+    def get_attempted_names(graph):
+        """ Return the names of the exercises that the student has attempted.
+        
+        Exact details, such as the threshold that marks a real attempt
+        or the relevance rankings of attempted exercises, TBD.
+        """
+        progress_threshold = 0.5
+
+        attempted_graph_dicts = filter(
+                                    lambda graph_dict:
+                                        (graph_dict["progress"] > progress_threshold
+                                            and not graph_dict["proficient"]),
+                                    graph.values())
+
+        attempted_graph_dicts = sorted(attempted_graph_dicts,
+                            reverse=True,
+                            key=lambda graph_dict: graph_dict["progress"])
+
+        return [graph_dict["name"] for graph_dict in attempted_graph_dicts]
+
+    @staticmethod
+    def mark_suggested(graph):
+        """ Mark 5 exercises as suggested, which are used by the knowledge map
+        and the profile page.
+        
+        Attempted but not proficient exercises are suggested first,
+        then padded with exercises just beyond the proficiency boundary.
+        
+        TODO: Although exercises might be marked in a particular order,
+        they will always be returned by suggested_graph_dicts()
+        sorted by knowledge map position. We might want to change that.
+        """
+        num_to_suggest = 5
+        suggested_names = UserExerciseGraph.get_attempted_names(graph)
+
+        if len(suggested_names) < num_to_suggest:
+            boundary_names = UserExerciseGraph.get_boundary_names(graph)
+            suggested_names.extend(boundary_names)
+
+        suggested_names = suggested_names[:num_to_suggest]
+
+        for exercise_name in graph:
+            is_suggested = exercise_name in suggested_names
+            graph[exercise_name]["suggested"] = is_suggested
+
+        return graph
+
+    @staticmethod
     def generate(user_data, user_exercise_cache, exercise_dicts):
 
         graph = {}
@@ -4013,36 +4110,7 @@ class UserExerciseGraph(object):
             set_implicit_proficiency(graph[exercise_name])
 
         # Calculate suggested
-        # TODO(marcia): Additionally incorporate whether student has attempted exercise,
-        # perhaps also accuracy and when it was last attempted. Details TBD.
-        def set_suggested(graph_dict):
-            if graph_dict["suggested"] is not None:
-                return graph_dict["suggested"]
-
-            # Don't suggest already-proficient exercises
-            if graph_dict["proficient"]:
-                graph_dict["suggested"] = False
-                return graph_dict["suggested"]
-
-            # First, assume we're suggesting this exercise
-            graph_dict["suggested"] = True
-
-            # Don't suggest exercises that are covered by other suggested exercises
-            for covering_graph_dict in graph_dict["coverer_dicts"]:
-                if set_suggested(covering_graph_dict):
-                    graph_dict["suggested"] = False
-                    return graph_dict["suggested"]
-
-            # Don't suggest exercises if the user isn't proficient in all prerequisites
-            for prerequisite_graph_dict in graph_dict["prerequisite_dicts"]:
-                if not prerequisite_graph_dict["proficient"]:
-                    graph_dict["suggested"] = False
-                    return graph_dict["suggested"]
-
-            return graph_dict["suggested"]
-
-        for exercise_name in graph:
-            set_suggested(graph[exercise_name])
+        graph = UserExerciseGraph.mark_suggested(graph)
 
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
