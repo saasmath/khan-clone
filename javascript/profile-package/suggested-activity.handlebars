@@ -1,14 +1,19 @@
-<h3>Exercises</h3>
-{{! Arbitrarily categorizing the suggestions, for now. }}
-{{#each exercises}}
-    <p><a href="{{url}}">{{name}}</a></p>
-{{/each}}
+{{#if videos}}
+    <h3>Exercises</h3>
+    {{#each exercises}}
+        <p><a href="{{url}}">{{name}}</a></p>
+    {{/each}}
+{{/if}}
 
-<h3>Videos</h3>
-{{#each videos}}
-    <p><a href="{{url}}">{{name}}</a></p>
-{{/each}}
+{{#if videos}}
+    <h3>Videos</h3>
+    {{#each videos}}
+        <p><a href="{{url}}">{{name}}</a></p>
+    {{/each}}
+{{/if}}
 
-<h3>Goals</h3>
-{{#each goals}}
-{{/each}}
+{{#if goals}}
+    <h3>Goals</h3>
+    {{#each goals}}
+    {{/each}}
+{{/if}}
