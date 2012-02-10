@@ -2012,8 +2012,9 @@ def get_activity():
     recent_activities = recent_activity.recent_activity_list(student)
 
     return {
-        "suggested": suggested_activity.SuggestedActivity.get_for(
-                student, recent_activities),
+        # TODO: re-enable this
+        #"suggested": suggested_activity.SuggestedActivity.get_for(
+                #student, recent_activities),
         "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
     }
 

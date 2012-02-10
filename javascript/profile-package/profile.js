@@ -1025,7 +1025,7 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
-                    Profile.populateSuggestedActivity(data.suggested);
+                    //Profile.populateSuggestedActivity(data.suggested);
                     Profile.populateRecentActivity(data.recent);
                 }
             });
