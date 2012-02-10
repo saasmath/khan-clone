@@ -19,6 +19,7 @@ import privileges
 import voting
 from phantom_users.phantom_util import disallow_phantoms
 from rate_limiter import FlagRateLimiter
+from badges.discussion_badges import FirstFlagBadge
 
 class ModeratorList(request_handler.RequestHandler):
     def get(self):
@@ -281,6 +282,10 @@ class FlagEntity(request_handler.RequestHandler):
             entity = db.get(key)
             if entity and entity.add_flag_by(flag, user_data):
                 entity.put()
+
+                if not FirstFlagBadge().is_already_owned_by(user_data):
+                    FirstFlagBadge().award_to(user_data)
+                    user_data.put()
 
 class ClearFlags(request_handler.RequestHandler):
     def post(self):
