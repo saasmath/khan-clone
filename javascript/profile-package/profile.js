@@ -20,12 +20,6 @@ var Profile = {
     isDataCollectible: false,
 
     /**
-     * A flag indicating whether or not we should use the "legacy" layout
-     * of the page, which hides any notions of public-profiles.
-     */
-    useLegacy: false,
-
-    /**
      * Overridden w profile-intro.js if necessary
      */
     showIntro_: function() {},
@@ -670,8 +664,7 @@ var Profile = {
     },
 
     render: function() {
-        var profileTemplate = Templates.get(
-                this.useLegacy ? "profile.profile-legacy" : "profile.profile");
+        var profileTemplate = Templates.get("profile.profile");
         Handlebars.registerHelper("graph-date-picker-wrapper", function(block) {
             this.graph = block.hash.graph;
             return block(this);
@@ -685,10 +678,6 @@ var Profile = {
             countVideos: UserCardView.countVideos,
             countExercises: UserCardView.countExercises
         }));
-
-        if (this.useLegacy) {
-            $("#profile-content").addClass("legacy");
-        }
 
         // Show only the user card tab,
         // since the Backbone default route isn't triggered
@@ -889,13 +878,8 @@ var Profile = {
 
                 $("abbr.timeago").timeago();
 
-                if (!Profile.useLegacy) {
-                    // Start with meteorite badges displayed, but only in
-                    // the new layout
-                    $("#category-0").click();
-                } else {
-                    $(".member-for").css({"visibility": ""});
-                }
+                // Start with meteorite badges displayed
+                $("#category-0").click();
 
                 // TODO: move into profile-goals.js?
                 var currentGoals = window.GoalBook.map(function(g) { return g.get("title"); });
