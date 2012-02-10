@@ -162,6 +162,13 @@ indexes:
   - name: date
     direction: desc
 
+- kind: Feedback
+  ancestor: yes
+  properties:
+  - name: targets
+  - name: date
+    direction: desc
+
 - kind: FeedbackNotification
   properties:
   - name: user

@@ -1683,7 +1683,7 @@ class TopicVersion(db.Model):
         deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
 
 def apply_version_content_changes(version):
-    changes = VersionContentChange.all().filter("version =", version).fetch(10000)
+    changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
     for change in changes:
         change.apply_change()
@@ -1710,8 +1710,7 @@ def preload_library(version):
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
     deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
-
-
+    
 def change_default_version(version):
     default_version = TopicVersion.get_default_version()
 
@@ -1723,6 +1722,7 @@ def change_default_version(version):
         version.made_default_on = datetime.datetime.now()
         version.edit = False
         Setting.topic_tree_version(version.number)
+        Setting.cached_content_add_date(datetime.datetime.now())
         version.put()
 
     # using --high-replication is slow on dev, so instead not using cross-group transactions on dev
@@ -1743,6 +1743,9 @@ def change_default_version(version):
     
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
+
+    vids = Video.get_all_live()
+    Setting.count_videos(len(vids))
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
@@ -1806,7 +1809,7 @@ class VersionContentChange(db.Model):
     content_changes = object_property.UnvalidatedObjectProperty()
 
     def put(self):
-        last_edited_by = UserData.current().user
+        last_edited_by = UserData.current().user if UserData.current() else None
         self.last_edited_by = last_edited_by
         db.Model.put(self)
 
@@ -1860,16 +1863,19 @@ class VersionContentChange(db.Model):
         return change
 
     @staticmethod
-    def add_new_content(klass, version, new_props, changeable_props=None):
+    def add_new_content(klass, version, new_props, changeable_props=None, 
+                        put_change=True):
         new_props = dict((str(k), v) for k,v in new_props.iteritems()
                          if changeable_props is None or k in changeable_props)
-        change = VersionContentChange(parent = version)
-        change.version = version
-        change.content_changes = new_props
         content = klass(**new_props)
         content.put()
-        change.content = content
-        change.put()
+        if put_change:
+            change = VersionContentChange(parent = version)
+            change.version = version
+            change.content_changes = new_props
+            Setting.cached_content_add_date(datetime.datetime.now())
+            change.content = content
+            change.put()
         return content
 
     @staticmethod
@@ -1878,11 +1884,11 @@ class VersionContentChange(db.Model):
             changeable_props = new_props.keys()
 
         change = VersionContentChange.get_change_for_content(content, version)
-
+       
         if change:
-            # update content with existing changes
-            content = change.updated_content()
+            previous_changes = True
         else:
+            previous_changes = False 
             change = VersionContentChange(parent = version)
             change.version = version
             change.content = content
@@ -1902,7 +1908,14 @@ class VersionContentChange(db.Model):
         else:
             raise Exception("content does not exit yet, call add_new_content instead")
 
-        change.put()
+        # only put the change if we have actually changed any props
+        if change.content_changes:
+            change.put()
+
+        # delete the change if we are back to the original values
+        elif previous_changes:
+            change.delete()
+
         return change.content_changes
 
 class Topic(Searchable, db.Model):
@@ -2141,7 +2154,7 @@ class Topic(Searchable, db.Model):
             raise Exception("You can't edit the default version")
 
         if self.parent():
-             kwargs["parent"] = Topic.get_root(kwargs["version"])
+            kwargs["parent"] = Topic.get_root(kwargs["version"])
 
         if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
@@ -2181,7 +2194,6 @@ class Topic(Searchable, db.Model):
             entities_updated.update(child.update_ancestor_keys())
 
         def add_txn():
-            logging.info(entities_updated)
             db.put(entities_updated)
 
         self.version.update()
@@ -2238,7 +2250,7 @@ class Topic(Searchable, db.Model):
                 child.parent_keys.append(topic.key())
                 child.ancestor_keys.append(topic.key())
 
-            all_decendant_keys = {} # used to make sure we don't loop
+            all_descendant_keys = {} # used to make sure we don't loop
             descendant_keys = {}
             descendants = child_topics
             while True: # should iterate n+1 times making n db.gets() where n is the tree depth under topic
@@ -2318,7 +2330,14 @@ class Topic(Searchable, db.Model):
     def update(self, **kwargs):
         if self.version.default:
             raise Exception("You can't edit the default version")
+     
 
+        if "put" in kwargs:
+            put = kwargs["put"]
+            del kwargs["put"]
+        else:
+            put = True
+        
         changed = False
         if "id" in kwargs and kwargs["id"] != self.id:
 
@@ -2328,16 +2347,18 @@ class Topic(Searchable, db.Model):
                 changed = True
             else:
                 pass # don't allow people to change the slug to a different nodes slug
-            del kwargs["id"]
+            del kwargs["id"]             
 
         for attr, value in kwargs.iteritems():
             if getattr(self, attr) != value:
                 setattr(self, attr, value)
                 changed = True
-
+        
         if changed:
-            self.put()
-            self.version.update()
+            if put:
+                self.put()
+                self.version.update()   
+            return self
 
     # too big for memcache ... either add a layer_cache.Layers.Datastore ... or compress it
     # @layer_cache.cache_with_key_fxn(
@@ -2436,6 +2457,12 @@ class Topic(Searchable, db.Model):
         }
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
+        "topic.get_content_topic_%s_%s" % (
+            version.updated_on if version else Setting.topic_tree_version(), 
+            include_hidden),
+        layer=layer_cache.Layers.Memcache)    
     def get_all_topics(version=None, include_hidden=False):
         if not version:
             version = TopicVersion.get_default_version()
@@ -2444,7 +2471,7 @@ class Topic(Searchable, db.Model):
         if not include_hidden:
             query.filter("hide =", False)
 
-        return query.run()
+        return query.fetch(10000)
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
@@ -2460,7 +2487,7 @@ class Topic(Searchable, db.Model):
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
         "topic.get_content_topic_%s_%s" % (
-            version.key() if version else Setting.topic_tree_version(),
+            version.updated_on if version else Setting.topic_tree_version(),
             include_hidden),
         layer=layer_cache.Layers.Memcache)
     def get_content_topics(version = None, include_hidden = False):
@@ -2709,13 +2736,23 @@ class Url(db.Model):
         return None
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(lambda :
+        "Url.get_all_%s" % 
+        Setting.cached_content_add_date())
+    def get_all():
+        return Url.all().fetch(100000)
+
+    @staticmethod
     def get_all_live(version=None):
         if not version:
             version = TopicVersion.get_default_version()
 
         root = Topic.get_root(version)
         urls = root.get_urls(include_descendants = True, include_hidden = False)
-        return urls
+        
+        # return only unique urls
+        url_dict = dict((u.key(), u) for u in urls)
+        return url_dict.values()
 
     @staticmethod
     def get_by_id_for_version(id, version=None):
@@ -2753,7 +2790,7 @@ class Video(Searchable, db.Model):
     # List of currently available downloadable formats for this video
     downloadable_formats = object_property.TsvProperty(indexed=False)
 
-    _serialize_blacklist = ["downloadable_formats"]
+    _serialize_blacklist = ["downloadable_formats", "topic_string_keys"]
 
     INDEX_ONLY = ['title', 'keywords', 'description']
     INDEX_TITLE_FROM_PROP = 'title'
@@ -2851,13 +2888,23 @@ class Video(Searchable, db.Model):
         return video
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda : "Video.get_all_%s" % (Setting.cached_content_add_date()),
+        layer=layer_cache.Layers.Blobstore)
+    def get_all():
+        return Video.all().fetch(100000)
+
+    @staticmethod
     def get_all_live(version=None):
         if not version:
             version = TopicVersion.get_default_version()
 
         root = Topic.get_root(version)
         videos = root.get_videos(include_descendants = True, include_hidden = False)
-        return videos
+        
+        # return only unique videos
+        video_dict = dict((v.key(), v) for v in videos)
+        return video_dict.values()
 
     # returns the first non-hidden topic
     def first_topic(self):
@@ -3091,6 +3138,11 @@ class VideoLog(db.Model):
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     playlist_titles = db.StringListProperty(indexed=False)
 
+    # Indicates whether or not the video is deemed "complete" by the user.
+    # This does not mean that this particular log was the one that resulted
+    # in the completion - just that the video has been complete at some point.
+    is_video_completed = db.BooleanProperty(indexed=False)
+
     _serialize_blacklist = ["video"]
 
     @staticmethod
@@ -3196,6 +3248,7 @@ class VideoLog(db.Model):
 
             bingo(['struggling_videos_finished',
                    'homepage_restructure_videos_finished'])
+        video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
@@ -4131,6 +4184,8 @@ class UserExerciseGraph(object):
             set_implicit_proficiency(graph[exercise_name])
 
         # Calculate suggested
+        # TODO(marcia): Additionally incorporate whether student has attempted exercise,
+        # perhaps also accuracy and when it was last attempted. Details TBD.
         def set_suggested(graph_dict):
             if graph_dict["suggested"] is not None:
                 return graph_dict["suggested"]
@@ -4205,6 +4260,40 @@ class PromoRecord(db.Model):
         record.put()
         return True
 
+class VideoSubtitles(db.Model):
+    """Subtitles for a YouTube video
+
+    This is a cache of the content from Universal Subtitles for a video. A job
+    runs periodically to keep these up-to-date.
+
+    Store with a key name of "LANG:YOUTUBEID", e.g., "en:9Ek61w1LxSc".
+    """
+    modified = db.DateTimeProperty(auto_now=True, indexed=False)
+    youtube_id = db.StringProperty()
+    language = db.StringProperty()
+    json = db.TextProperty()
+
+    @staticmethod
+    def get_key_name(language, youtube_id):
+        return '%s:%s' % (language, youtube_id)
+
+class VideoSubtitlesFetchReport(db.Model):
+    """Report on fetching of subtitles from Universal Subtitles
+
+    Jobs that fail or are cancelled from the admin interface leave a hanging
+    status since there's no callback to update the report.
+
+    Store with a key name of JOB_NAME. Usually this is the UUID4 used by the
+    task chain for processing. The key name is displayed as the report name.
+    """
+    created = db.DateTimeProperty(auto_now_add=True)
+    modified = db.DateTimeProperty(auto_now=True, indexed=False)
+    status = db.StringProperty(indexed=False)
+    fetches = db.IntegerProperty(indexed=False)
+    writes = db.IntegerProperty(indexed=False)
+    errors = db.IntegerProperty(indexed=False)
+    redirects = db.IntegerProperty(indexed=False)
+
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from goals.models import GoalList, Goal
+from goals.models import GoalList

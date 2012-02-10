@@ -11,10 +11,10 @@
                 Last achieved {{ user_badge.date|timesince_ago }}
                 {% if user_badge.count > 1 %}
                     in 
-                    {% for context_name in user_badge.list_context_names %}
+                    {% for context_name in badges.visible_context_names(user_badge) %}
                         <strong>{{ context_name|escape }}</strong>{% if not loop.last %},{% endif %}
                     {% endfor %}
-                    {% for context_name in user_badge.list_context_names_hidden %}
+                    {% for context_name in badges.hidden_context_names(user_badge) %}
                         {% if loop.first %}
                         <span class="badge-context-hidden-link"><a href="#" onclick="Badges.showMoreContext(this);return false;">and also in<span class="ellipsis">...</span></a></span>
                         <span class="badge-context-hidden" style="display:none;">
@@ -23,9 +23,9 @@
                         {% if loop.last %}</span>{% endif %}
                     {% endfor %}
                 {% else %}
-                    {% if user_badge.target_context_name %}
-                        in <strong>{{ user_badge.target_context_name|escape }}</strong>
-                    {% endif %}
+                    {% for context_name in badges.visible_context_names(user_badge) %}
+                        in <strong>{{ context_name|escape }}</strong>
+                    {% endfor %}
                 {% endif %}
             {% else %}
                 {{ extended_description|escape }}

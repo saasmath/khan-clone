@@ -1,7 +1,7 @@
-{{#if listRecentActivity.length}}
+{{#if this.length}}
     <div class="activity-list">
         <ul>
-            {{#each listRecentActivity}}
+            {{#each this}}
             {{#renderActivity this}}{{/renderActivity}}
             {{/each}}
         </ul>

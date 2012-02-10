@@ -212,7 +212,7 @@ class ViewProfile(request_handler.RequestHandler):
 
         has_full_access = is_self or user_data.is_visible_to(current_user_data)
         tz_offset = self.request_int("tz_offset", default=0)
-        
+
         template_values = {
             'show_intro': show_intro,
             'profile': profile,

@@ -35,3 +35,6 @@ queue:
 
 - name: topics-set-default-queue
   rate: 1/s
+
+- name: subtitles-fetch-queue
+  rate: 1/s

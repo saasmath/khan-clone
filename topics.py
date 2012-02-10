@@ -34,9 +34,19 @@ class EditContent(request_handler.RequestHandler):
         version_name = self.request.get('version', 'edit')
 
         tree_nodes = []
-
         edit_version = TopicVersion.get_by_id(version_name)
+        if edit_version is None:
+            default_version = TopicVersion.get_default_version()
+            if default_version is None:
+                # Assuming this is dev, there is an empty datastore and we need an import
+                edit_version = TopicVersion.create_new_version()
+                edit_version.edit = True
+                edit_version.put()
+                create_root(edit_version)
+            else:
+                raise Exception("Wait for setting default version to finish making an edit version.")
 
+        
         root = Topic.get_root(edit_version)
         data = root.get_visible_data()
         tree_nodes.append(data)
@@ -131,7 +141,7 @@ class EditContent(request_handler.RequestHandler):
         else:
             logging.info("No videos to update.")
 
-# temporary function to recreate the root - will remove after deploy
+# function to create the root, needed for first import into a dev env
 def create_root(version):
     root = Topic.insert(title="The Root of All Knowledge",
             description="All concepts fit into the root of all knowledge",

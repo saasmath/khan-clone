@@ -104,6 +104,7 @@ javascript = {
             "user-card.js",
             "profile-legacy.handlebars",
             "profile.handlebars",
+            "suggested-activity.handlebars",
             "recent-activity-list.handlebars",
             "recent-activity-exercise.handlebars",
             "recent-activity-badge.handlebars",

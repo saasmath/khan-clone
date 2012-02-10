@@ -1,5 +1,4 @@
 import datetime
-import logging
 
 from mapreduce import control
 from google.appengine.ext import db
@@ -7,8 +6,6 @@ from google.appengine.ext import db
 import util
 import request_handler
 import models
-import consts
-import points
 import fast_slow_queue
 
 class ActivitySummaryExerciseItem:
