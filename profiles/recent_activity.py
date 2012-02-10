@@ -4,8 +4,6 @@ import util
 import models
 from badges import util_badges, models_badges
 from goals.models import GoalList
-import consts
-import logging
 
 # Number of hours until activity is no longer considered "recent" for profiles
 HOURS_RECENT_ACTIVITY = (4 * 7 * 24)
@@ -118,10 +116,9 @@ def recent_activity_for(user_data, dt_start, dt_end):
                             for sublist in list_recent_activity_types
                             for activity in sublist]
 
-    return collapse_recent_activity(list_recent_activity)[:MOST_RECENT_ITEMS]
+    return _collapse_recent_activity(list_recent_activity)
 
-def collapse_recent_activity(list_recent_activity):
-
+def _collapse_recent_activity(list_recent_activity):
     last_recent_activity = None
 
     for ix in range(len(list_recent_activity)):
@@ -136,10 +133,12 @@ def collapse_recent_activity(list_recent_activity):
                   reverse=True,
                   key=lambda activity: activity.dt)
 
-def recent_activity_list(user_data):
+def recent_activity_list(user_data, limit=None):
     result = []
     if user_data:
         dt_end = datetime.datetime.now()
         dt_start = dt_end - datetime.timedelta(hours=HOURS_RECENT_ACTIVITY)
         result = recent_activity_for(user_data, dt_start, dt_end)
+    if limit:
+        return result[:limit]
     return result

@@ -2009,10 +2009,13 @@ def get_activity():
             # Allow access to this student's profile
             student = user_override
 
+    recent_activities = recent_activity.recent_activity_list(student)
+
     return {
-            "suggested": suggested_activity.SuggestedActivity.get_for(student),
-            "recent": recent_activity.recent_activity_list(student),
-        }
+        "suggested": suggested_activity.SuggestedActivity.get_for(
+                student, recent_activities),
+        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+    }
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
