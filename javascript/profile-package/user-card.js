@@ -75,7 +75,7 @@ var ProfileModel = Backbone.Model.extend({
             // Note that Backbone.Model.save accepts arguments to save to
             // the model before saving, so check for those first.
             "avatarName": this.getIfUndefined(attrs, "avatarName"),
-            "nickname": this.getIfUndefined(attrs, "nickname").trim(),
+            "nickname": $.trim(this.getIfUndefined(attrs, "nickname")),
             "username": this.getIfUndefined(attrs, "username"),
             "isPublic": this.getIfUndefined(attrs, "isPublic")
         });
@@ -118,7 +118,7 @@ var ProfileModel = Backbone.Model.extend({
     },
 
     validateNickname: function(nickname) {
-        this.trigger("validate:nickname", (nickname.trim().length > 0));
+        this.trigger("validate:nickname", ($.trim(nickname).length > 0));
     },
 
     validateUsername: function(username) {
@@ -131,8 +131,8 @@ var ProfileModel = Backbone.Model.extend({
             return;
         }
 
-        username = username.toLowerCase()
-                    .replace(/\./g, "");
+        // Must be consistent with canonicalizing logic on server.
+        username = username.toLowerCase().replace(/\./g, "");
 
         // Must be synced with server's understanding
         // in UniqueUsername.is_valid_username()

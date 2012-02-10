@@ -313,11 +313,11 @@ class Badge(object):
 
     def frequency(self):
         return models_badges.BadgeStat.count_by_badge_name(self.name)
-    
+
 class GroupedUserBadge(object):
     """ Represents a set of user badges for any particular type. For example,
     it can represent a streak badge that a user earned in multiple exercises.
-    
+
     This is a transient object that is programmatically computed; it is not
     persisted to the datastore.
     """
@@ -332,9 +332,9 @@ class GroupedUserBadge(object):
         # A list of name keys for contexts in which this badge was earned
         # (e.g. the name of the exercise the badge was earned in)
         self.target_context_names = []
-        
+
     _serialize_blacklist = ["user"]
-        
+
     @staticmethod
     def build(user, badge, user_badge):
         """ Builds an initial GroupedUserBadge from a single instance.
@@ -351,4 +351,3 @@ class GroupedUserBadge(object):
     @property
     def count(self):
         return len(self.target_context_names)
-    

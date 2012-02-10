@@ -489,6 +489,7 @@ padding-left: 3px;
     padding: 10px 0;
 }
      .activity-list .activity-image {
+        float: left;
         width: 60px;
         height: 60px;
         background-color: #ccc;
@@ -505,6 +506,12 @@ padding-left: 3px;
      }
      .activity-list .activity-exercise.proficient .activity-image {
          background: #005987 url(/images/activity-exercise-icon-proficient.png) no-repeat 50% 50%;
+     }
+     .activity-list .activity-goal .activity-image {
+         background: #ccc url(/images/activity-icon-goal-inset.png) no-repeat 50% 50%;
+     }
+     .activity-list .activity-goal.completed .activity-image {
+         background: #005987 url(/images/activity-icon-goal-complete.png) no-repeat 50% 50%;
      }
     .activity-list .activity-image img {
         max-width: 60px;
@@ -616,9 +623,8 @@ div.profile-notification.uncover-nav {
 }
 .ach-text {
     padding-left: 10px;
-	position:relative;
-	top:-20px;
-	display: inline-block;
+	display: block;
+    float: left;
 }
 
 #recent-activity .sharepop {
@@ -1011,6 +1017,7 @@ li.profile-tab {
     color: #888;
     margin: 5px 0 0 0;
     line-height: 15px;
+    word-wrap: break-word;
 }
 .username-picker .example-username {
     color: #678D00;

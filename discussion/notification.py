@@ -25,6 +25,11 @@ class VideoFeedbackNotificationList(request_handler.RequestHandler):
 
         answers = feedback_answers_for_user_data(user_data)
 
+        # Whenever looking at this page, make sure the feedback count is recalculated
+        # in case the user was notified about deleted or flagged posts.
+        user_data.count_feedback_notification = -1
+        user_data.put()
+
         dict_videos = {}
         dict_answers = {}
 

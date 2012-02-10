@@ -254,4 +254,12 @@
         padding: 24px 10px;
     }
 }
-
+@media all and (max-width: 768px) {
+    .achievement-badge.compact {
+        width: 58px;
+        height: 72px;
+    }
+    .ach-text {
+        max-width: 500px;
+    }
+}

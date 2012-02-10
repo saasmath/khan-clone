@@ -8,7 +8,7 @@
         {% endif %}
     ">
         <input type="hidden" name="entity_key" value="{{ question.key() }}" />
-        <div class="question" data-question_key="{{ question.key() }}">
+        <div class="question {% if question.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
             {{ discussion.vote_tools(question) }}
             {% if qa_expand_key != question.key().__str__() %}
                 <a class="question_link" href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_expand_key={{question.key()}}#q_{{question.key()}}" onclick="return false;">
