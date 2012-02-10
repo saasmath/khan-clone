@@ -280,8 +280,8 @@
 				<h4 class="grade-heading">Grade: {{grade["grade"]|escape}}</h4>
 				<p class="content-totals">
 					{% filter upper %}
-						{{ grade_totals[grade_level].videos }} videos <br />
-						{{ grade_totals[grade_level].exercises }} exercises
+						{{ grade_totals[grade_level].videos|escape }} videos <br />
+						{{ grade_totals[grade_level].exercises|escape }} exercises
 					{% endfilter %}
 				</p>
 			</div>
