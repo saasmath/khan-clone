@@ -10,7 +10,6 @@ import layer_cache
 import templatetags
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
-from gae_bingo.gae_bingo import bingo
 
 ITEMS_PER_SET = 4
 

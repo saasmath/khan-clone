@@ -20,7 +20,7 @@ from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
-from profiles import class_progress_report_graph, recent_activity
+from profiles import class_progress_report_graph, recent_activity, suggested_activity
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
@@ -289,17 +289,21 @@ def topictree_import(version_id = "edit", topic_id="root"):
     tree_json = request.json
     topics = models.Topic.get_all_topics(version, True)
     logging.info("got all topics")
+
     topic_dict = dict((topic.id, topic) for topic in topics)
     topic_keys_dict = dict((topic.key(), topic) for topic in topics)
     videos = models.Video.get_all()
     logging.info("got all videos")
+
     video_dict = dict((video.youtube_id, video) for video in videos)
     exercises = models.Exercise.get_all_use_cache()
     logging.info("got all exercises")
+
     exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
     urls = models.Url.all()
     url_dict = dict((url.id, url) for url in urls)
     logging.info("got all urls")
+
     all_entities_dict = {}
     new_content_keys = []
 
@@ -430,15 +434,11 @@ def topictree_import(version_id = "edit", topic_id="root"):
             for child in tree["children"]:
                 nodes.update(extract_nodes(child, nodes))
             del(tree["children"])
-        # logging.info("adding %s" % (tree["title"] if "title" in tree else tree["name"]))
-        # logging.info(tree["key"])
         nodes[tree["key"]]=tree
         return nodes
     
-    # return len(tree_json)
     nodes = extract_nodes(tree_json, {})
     logging.info("extracted %i nodes" % len(nodes))
-    # logging.info(nodes)
     changed_nodes = []
 
     i = 0
@@ -494,11 +494,9 @@ def topictree_import(version_id = "edit", topic_id="root"):
         i += 1
 
     logging.info("about to put %i topic nodes" % len(changed_nodes))
-    # logging.info([n.child_keys for n in changed_nodes])
     db.put(changed_nodes)
     logging.info("done with import")
     return True
-    # return [n.get_visible_data() for n in changed_nodes]
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
@@ -738,7 +736,6 @@ def get_url(url_id, version_id=None):
 @jsonify
 def save_url(url_id = None, version_id=None):
     version = models.TopicVersion.get_by_id(version_id)
-    url_json = request.json
     changeable_props = ["tags", "title", "url"]
 
     if url_id is None:
@@ -1044,8 +1041,7 @@ def save_video(video_id="", version_id = "edit"):
         for key, content in changes.iteritems():
             if type(content) == models.Video and (video is None or 
                                                   key != video.key()): 
-                logging.info(key)
-                logging.info(video.key())
+
                 if content.readable_id == new_data["readable_id"]:
                     return api_invalid_param_response(
                         "Video with readable_id %s already exists" %
@@ -1054,7 +1050,7 @@ def save_video(video_id="", version_id = "edit"):
                 elif content.youtube_id == new_data["youtube_id"]:
                     return api_invalid_param_response(
                         "Video with youtube_id %s already appears with readable_id %s" %
-                        (new_data["youtube_id"], video.readable_id))  
+                        (new_data["youtube_id"], content.readable_id))  
 
     if video:
         error = check_duplicate(request.json, video)
@@ -2010,7 +2006,14 @@ def get_activity():
             # Allow access to this student's profile
             student = user_override
 
-    return recent_activity.recent_activity_context(student)
+    recent_activities = recent_activity.recent_activity_list(student)
+
+    return {
+        # TODO: re-enable this
+        #"suggested": suggested_activity.SuggestedActivity.get_for(
+                #student, recent_activities),
+        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+    }
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
@@ -2087,7 +2090,6 @@ def remove_coworker():
 def autocomplete():
 
     video_results = []
-    playlist_results = []
 
     query = request.request_string("q", default="").strip().lower()
     if query:

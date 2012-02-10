@@ -1,9 +1,7 @@
 import re
 import os
-import itertools
 import hashlib
 import urllib
-import logging
 
 from google.appengine.ext import db
 from google.appengine.ext import deferred

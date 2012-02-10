@@ -1,16 +1,7 @@
-import datetime
-import logging
-
-import shared_jinja
-
-from app import App
 import layer_cache
-from models import Video, Setting, Topic, TopicVersion
+from models import Setting, Topic, TopicVersion
 import request_handler
-import util
-import urllib2
-import re
-import math
+import shared_jinja
 import time
 
 @layer_cache.cache_with_key_fxn(

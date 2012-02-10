@@ -513,6 +513,12 @@ padding-left: 3px;
      .activity-list .activity-goal.completed .activity-image {
          background: #005987 url(/images/activity-icon-goal-complete.png) no-repeat 50% 50%;
      }
+     .activity-list .activity-video .activity-image {
+         background: #ccc url(/images/activity-video-icon-inset.png) no-repeat 50% 50%;
+     }
+     .activity-list .activity-video.completed .activity-image {
+         background: #005987 url(/images/activity-video-icon-complete.png) no-repeat 50% 50%;
+     }
     .activity-list .activity-image img {
         max-width: 60px;
         max-height: 60px;
