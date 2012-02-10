@@ -151,55 +151,71 @@ class CommonCoreMap(db.Model):
     @staticmethod
     def get_all_structured(lightweight=False):
         all_entries = []
-        for grade in sorted(COMMON_CORE_GRADE_URLS.iterkeys()):
-            if grade == 'K':
-                continue
+        query = CommonCoreMap.all()
+        for e in query:
+            if e.grade == 'K':
+                e.grade = '0'
+            g = [x for x in all_entries if x['grade'] == e.grade]
+            if len(g) == 0:
+                grade = {}
+                grade['grade'] = e.grade
+                grade['domains'] = []
+                all_entries.append(grade)
+            else:
+                grade = g[0]
 
-            entry = {}
-            entry['grade'] = grade
-            if grade == '0':
-                entry['grade'] = 'K'
-            entry['domains'] = []
-            for domain in sorted(COMMON_CORE_DOMAINS.iterkeys()):
-                query = CommonCoreMap.all()
-                query.filter('grade =', entry['grade'])
-                query.filter('domain_code =', domain)
-                standards = sorted(query.fetch(1000), key=lambda k: k.standard)
-                
-                if len(standards) == 0:
-                    continue
+            d = [x for x in grade['domains'] if x['domain_code'] == e.domain_code]
+            if len(d) == 0:
+                domain = {}
+                domain['domain_code'] = e.domain_code
+                domain['domain'] = COMMON_CORE_DOMAINS[e.domain_code]
+                domain['standards'] = []
+                grade['domains'].append(domain)
+            else:
+                domain = d[0]
 
-                d = {}
-                d['domain'] = COMMON_CORE_DOMAINS[domain]
-                d['domain_code'] = domain
-                d['standards'] = []
+            s = [x for x in domain['standards'] if x['standard'] == e.standard]
+            if len(s) == 0:
+                standard = {}
+                standard['standard'] = e.standard
+                standard['cc_url'] = e.cc_url
+                standard['cc_description'] = e.cc_description
+                standard['cc_cluster'] = e.cc_cluster
+                standard['exercises'] = []
+                standard['videos'] = []
+                domain['standards'].append(standard)
+            else:
+                standard = s[0]
 
-                for s in standards:
-                    standard = {}
+            for key in e.exercises:
+                ex = db.get(key)
+                if lightweight:
+                    standard['exercises'].append({
+                        'display_name': ex.display_name,
+                        'ka_url': ex.ka_url
+                    })
+                else:
+                    standard['exercises'].append(ex)
 
-                    standard['standard'] = s.standard
-                    standard['level'] = s.level
-                    standard['cc_url'] = s.cc_url
-                    standard['cc_description'] = s.cc_description
-                    standard['cc_cluster'] = s.cc_cluster
-                    standard['exercises'] = []
-                    standard['videos'] = []
-                    for key in s.exercises:
-                        if lightweight:
-                            ex = db.get(key)
-                            standard['exercises'].append({ "display_name": ex.display_name, "ka_url": ex.ka_url })
-                        else:
-                            standard['exercises'].append(db.get(key))
-                    for key in s.videos:
-                        if lightweight:
-                            v = db.get(key)
-                            standard['videos'].append({ "title": v.title, "ka_url": v.ka_url })
-                        else:
-                            standard['videos'].append(db.get(key))
+            for key in e.videos:
+                v = db.get(key)
+                if lightweight:
+                    standard['videos'].append({
+                        'title': v.title,
+                        'ka_url': v.ka_url
+                    })
+                else:
+                    standard['videos'].append(v)
 
-                    d['standards'].append(standard)
-                entry['domains'].append(d)
-            all_entries.append(entry)
+        all_entries = sorted(all_entries, key=lambda k: k['grade'])
+        for x in all_entries:
+            if x['grade'] == '0':
+                x['grade'] = 'K'
+
+            x['domains'] = sorted(x['domains'], key=lambda k: k['domain'])
+            for y in x['domains']:
+                y['standards'] = sorted(y['standards'], key=lambda k: k['standard'])
+
         return all_entries
 
 

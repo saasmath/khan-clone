@@ -20,7 +20,7 @@ def feedback_query(target_key):
 @unpickle
 @base64_decode
 @decompress
-@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video, layer=layer_cache.Layers.Datastore)
+@layer_cache.cache_with_key_fxn(models_discussion.Feedback.cache_key_for_video, layer=layer_cache.Layers.Blobstore)
 @compress
 @base64_encode
 @pickle
@@ -30,11 +30,7 @@ def get_feedback_for_video(video):
 
 @request_cache.cache_with_key_fxn(lambda v, ud: str(v) + str(ud))
 def get_feedback_for_video_by_user(video_key, user_data_key):
-    query = models_discussion.Feedback.all()
-    query.ancestor(user_data_key)
-    query.filter("targets =", video_key)
-    query.order('-date')
-    return feedback_query(video_key).fetch(20)
+    return feedback_query(video_key).ancestor(user_data_key).fetch(20)
 
 def get_feedback_by_type_for_video(video, feedback_type, user_data=None):
     feedback = [f for f in get_feedback_for_video(video) if feedback_type in f.types]
