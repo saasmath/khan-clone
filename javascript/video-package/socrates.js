@@ -196,7 +196,7 @@ Socrates.Question = (function() {
 		return "/socrates/questions/" + this.key() + ".html";
 	};
 	Question.prototype.imageUrl = function() {
-		return "/videodata/" + this.key() + ".jpeg";
+		return "/socrates/questions/" + this.key() + ".jpeg";
 	};
 	Question.prototype.submit = function() {
 		var data = this.getData();
