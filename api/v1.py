@@ -20,7 +20,7 @@ from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
-from profiles import class_progress_report_graph, recent_activity
+from profiles import class_progress_report_graph, recent_activity, suggested_activity
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
@@ -736,7 +736,6 @@ def get_url(url_id, version_id=None):
 @jsonify
 def save_url(url_id = None, version_id=None):
     version = models.TopicVersion.get_by_id(version_id)
-    url_json = request.json
     changeable_props = ["tags", "title", "url"]
 
     if url_id is None:
@@ -2007,7 +2006,14 @@ def get_activity():
             # Allow access to this student's profile
             student = user_override
 
-    return recent_activity.recent_activity_context(student)
+    recent_activities = recent_activity.recent_activity_list(student)
+
+    return {
+        # TODO: re-enable this
+        #"suggested": suggested_activity.SuggestedActivity.get_for(
+                #student, recent_activities),
+        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+    }
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
@@ -2084,7 +2090,6 @@ def remove_coworker():
 def autocomplete():
 
     video_results = []
-    playlist_results = []
 
     query = request.request_string("q", default="").strip().lower()
     if query:

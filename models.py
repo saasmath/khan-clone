@@ -2112,7 +2112,7 @@ class Topic(Searchable, db.Model):
             raise Exception("You can't edit the default version")
 
         if self.parent():
-             kwargs["parent"] = Topic.get_root(kwargs["version"])
+            kwargs["parent"] = Topic.get_root(kwargs["version"])
 
         if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
@@ -2966,6 +2966,11 @@ class VideoLog(db.Model):
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     playlist_titles = db.StringListProperty(indexed=False)
 
+    # Indicates whether or not the video is deemed "complete" by the user.
+    # This does not mean that this particular log was the one that resulted
+    # in the completion - just that the video has been complete at some point.
+    is_video_completed = db.BooleanProperty(indexed=False)
+
     _serialize_blacklist = ["video"]
 
     @staticmethod
@@ -3073,6 +3078,7 @@ class VideoLog(db.Model):
 
             bingo(['struggling_videos_finished',
                    'homepage_restructure_videos_finished'])
+        video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
@@ -4007,6 +4013,8 @@ class UserExerciseGraph(object):
             set_implicit_proficiency(graph[exercise_name])
 
         # Calculate suggested
+        # TODO(marcia): Additionally incorporate whether student has attempted exercise,
+        # perhaps also accuracy and when it was last attempted. Details TBD.
         def set_suggested(graph_dict):
             if graph_dict["suggested"] is not None:
                 return graph_dict["suggested"]
@@ -4117,4 +4125,4 @@ class VideoSubtitlesFetchReport(db.Model):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from goals.models import GoalList, Goal
+from goals.models import GoalList
