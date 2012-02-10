@@ -2,11 +2,11 @@
     <span class="activity-image"></span>
     <div class="ach-text">
         Earned <a href="{{profileRoot}}/achievements" data-category="{{badge.badgeCategory}}" class="badge-link category-{{badge.badgeCategory}}">{{badge.description}}</a> {{#if userBadge.targetContextName}}for {{ userBadge.targetContextName }}{{/if}}
-        <br>
-        <span class="time timeago" title="{{dt}}">{{dt}}</span>
-
-        {{#unless mobileView}}
-            {{! sharing stuff goes here }}
-        {{/unless}}
+        <div class="activity-controls">
+	        <span class="time timeago" title="{{dt}}">{{dt}}</span>
+	        {{#unless mobileView}}
+	            <a href="#" class="activity-share simple-button action-gradient">Share</a>
+	        {{/unless}}
+	    </div>
     </div>
 </li>

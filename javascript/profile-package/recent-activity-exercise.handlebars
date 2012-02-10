@@ -2,12 +2,12 @@
     <span class="activity-image"></span>
     <div class="ach-text">
         Answered <span class="problem-count">{{#unless mobileView}}<a href="{{ profileRoot }}/vital-statistics/exercise-problems/{{exercise}}">{{/unless}}{{ cProblems }} problem{{pluralize cProblems}}{{#unless mobileView}}</a>{{/unless}}</span>{{#if earnedProficiency}} to achieve proficiency{{/if}} in {{exerciseDisplayName}}
-        <br>
-        <span class="time timeago" title="{{dt}}">{{dt}}</span>
-
-        {{#unless mobileView}}
-            {{! sharing stuff goes here }}
-        {{/unless}}
+        <div class="activity-controls">
+	        <span class="time timeago" title="{{dt}}">{{dt}}</span>
+	        {{#unless mobileView}}
+	            <a href="#" class="activity-share simple-button action-gradient">Share</a>
+	        {{/unless}}
+	    </div>
     </div>
 </li>
 

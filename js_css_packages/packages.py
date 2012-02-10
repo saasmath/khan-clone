@@ -102,7 +102,6 @@ javascript = {
             "username-picker.js",
             "user-card.handlebars",
             "user-card.js",
-            "profile-legacy.handlebars",
             "profile.handlebars",
             "suggested-activity.handlebars",
             "recent-activity-list.handlebars",
