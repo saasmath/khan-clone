@@ -19,5 +19,5 @@ class PlaylistBadge(Badge):
         if user_playlist is None:
             return False
 
-        self.complete_award_to(user_data, user_playlist.playlist, user_playlist.playlist.title)
+        self.complete_award_to(user_data, None, user_playlist.title)
 

@@ -2688,38 +2688,6 @@ class Topic(Searchable, db.Model):
         else:
             return progress_tree
 
-class UserTopicVideos(db.Model):
-    user = db.UserProperty()
-    topic_key_name = db.StringProperty() # used because key() will change if topic gets moved in the topic tree, or between versions
-    seconds_watched = db.IntegerProperty(indexed=False, default=0)
-    last_watched = db.DateTimeProperty(indexed=False, auto_now_add=True)
-    title = db.StringProperty(indexed=False) # wont be unique unlike with playlists, so this might have to change (or be removed as it can be gotten with a Datastore call to .topic)
-
-    @staticmethod
-    def get_for_user_data(user_data):
-        query = UserTopicVideos.all()
-        query.filter('user =', user_data.user)
-        return query
-
-    @staticmethod
-    def get_key_name(topic, user_data):
-        return user_data.key_email + ":" + topic.key().name()
-
-    @staticmethod
-    def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
-        if not user_data:
-            return None
-
-        key = UserTopicVideos.get_key_name(topic, user_data)
-
-        if insert_if_missing:
-            return UserTopicVideos.get_or_insert(
-                        key_name = key,
-                        user = user_data.user,
-                        topic = topic)
-        else:
-            return UserTopicVideos.get_by_key_name(key)
-
 class Url(db.Model):
     url = db.StringProperty()
     title = db.StringProperty(indexed=False)
@@ -3007,9 +2975,9 @@ class Playlist(Searchable, db.Model):
         video_playlist_query.filter('live_association =', True)
         return video_playlist_query.count()
 
+# No longer depends on the Playlist model; currently used only with Topics
 class UserPlaylist(db.Model):
     user = db.UserProperty()
-    playlist = db.ReferenceProperty(Playlist)
     seconds_watched = db.IntegerProperty(default = 0)
     last_watched = db.DateTimeProperty(auto_now_add = True)
     title = db.StringProperty(indexed=False)
@@ -3021,21 +2989,20 @@ class UserPlaylist(db.Model):
         return query
 
     @staticmethod
-    def get_key_name(playlist, user_data):
-        return user_data.key_email + ":" + playlist.youtube_id
+    def get_key_name(topic, user_data):
+        return user_data.key_email + ":" + topic.id
 
     @staticmethod
-    def get_for_playlist_and_user_data(playlist, user_data, insert_if_missing=False):
+    def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
         if not user_data:
             return None
 
-        key = UserPlaylist.get_key_name(playlist, user_data)
+        key = UserPlaylist.get_key_name(topic, user_data)
 
         if insert_if_missing:
             return UserPlaylist.get_or_insert(
                         key_name = key,
-                        user = user_data.user,
-                        playlist = playlist)
+                        user = user_data.user)
         else:
             return UserPlaylist.get_by_key_name(key)
 
@@ -3185,31 +3152,29 @@ class VideoLog(db.Model):
             user_video.seconds_watched += seconds_watched
             user_data.total_seconds_watched += seconds_watched
 
-            # Update seconds_watched of all associated UserPlaylists
-            query = VideoPlaylist.all()
-            query.filter('video =', video)
-            query.filter('live_association = ', True)
+            # Update seconds_watched of all associated topics
+            video_topics = db.get(video.topic_string_keys)
 
-            first_video_playlist = True
-            for video_playlist in query:
-                user_playlist = UserPlaylist.get_for_playlist_and_user_data(video_playlist.playlist, user_data, insert_if_missing=True)
-                user_playlist.title = video_playlist.playlist.title
+            first_topic = True
+            for topic in video_topics:
+                user_playlist = UserPlaylist.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
+                user_playlist.title = topic.standalone_title
                 user_playlist.seconds_watched += seconds_watched
                 user_playlist.last_watched = datetime.datetime.now()
                 user_playlist.put()
 
                 video_log.playlist_titles.append(user_playlist.title)
 
-                if first_video_playlist:
+                if first_topic:
                     action_cache.push_video_log(video_log)
 
                 util_badges.update_with_user_playlist(
                         user_data,
                         user_playlist,
-                        include_other_badges = first_video_playlist,
-                        action_cache = action_cache)
+                        include_other_badges=first_topic,
+                        action_cache=action_cache)
 
-                first_video_playlist = False
+                first_topic = False
 
         user_video.last_second_watched = last_second_watched
         user_video.last_watched = datetime.datetime.now()
