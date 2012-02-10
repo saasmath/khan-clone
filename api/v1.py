@@ -2121,6 +2121,12 @@ def autocomplete():
         topic_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
                 topic_title_dicts())
+        topic_results.extend(map(lambda topic: {
+                "title": topic.standalone_title,
+                "key": str(topic.key()),
+                "relative_url": topic.relative_url,
+                "id": topic.id
+            }, filter(lambda topic: query in topic.title.lower(), models.Topic.get_super_topics())))
         url_results = filter(
                 lambda url_dict: query in url_dict["title"].lower(),
                 url_title_dicts())
