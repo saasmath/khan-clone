@@ -165,29 +165,30 @@ Socrates.InputText = Backbone.View.extend({
 $(Socrates.ControlPanel.onReady);
 
 Socrates.Question = (function() {
-	function Question(youtubeId, timestamp, id, $controlsArea, $frameImg) {
-		this.youtubeId = youtubeId;
-		this.timestamp = timestamp;
-		this.id = id;
-
-		this.$controlsArea = $controlsArea;
-		this.$frameImg = $frameImg;
+	function Question(options) {
+		this.version = 1;
+		_.extend(this, options);
 	}
 
 	Question.prototype.submit = function() {
+		var data = this.getData();
 		return {
+			timestamp: this.timestamp,
+			youtubeId: this.youtubeId,
 			id: this.id,
-			version: 1,
-			correct: true,
-			data: null
+			version: this.version,
+			correct: this.isCorrect(data),
+			data: data
 		};
 	};
+
 	Question.prototype.render = function() {
 		$.get(this.htmlUrl()).success($.proxy(function(html) {
 			this.$controlsArea.html(html);
 			this.$frameImg.attr("src", this.imageUrl());
 		}, this));
 	};
+
 	Question.prototype.key = function() {
 		return this.youtubeId + "-" + this.timestamp;
 	};
@@ -195,14 +196,16 @@ Socrates.Question = (function() {
 	Question.prototype.htmlUrl = function() {
 		return "/socrates/questions/" + this.key() + ".html";
 	};
+
 	Question.prototype.imageUrl = function() {
 		return "/socrates/questions/" + this.key() + ".jpeg";
 	};
-	Question.prototype.submit = function() {
-		var data = this.getData();
-		console.log(data);
-		return data;
+
+	Question.prototype.isCorrect = function(data) {
+		// todo: look at how khan-exercise does their fancy number handling
+		return _.isEqual(data, this.correctData);
 	};
+
 	Question.prototype.getData = function() {
 		// possible ideal impl: ask editing controls for info?
 
@@ -247,20 +250,22 @@ Socrates.Controller = (function() {
 		var response = this.question.submit();
 
 		// validate the response
-		var exampleResponse = {
-			id: "unique string identifying question",
-			version: 1,
-			correct: true,
-			data: null
-		};
-		exampleResponse.youtubeId = "string";
-		exampleResponse.timestamp = "03:30";
+		mandatedProperties = ['id', 'version', 'correct', 'data', 'youtubeId',
+			'timestamp'];
+		var hasAllProps = _.all(mandatedProperties, function(prop) {
+			return response[prop] != null;
+		});
+		if (!hasAllProps) {
+			console.log(response);
+			throw "Invalid response from question";
+		}
 
 		// log the data on the server side
 		// $.post(response);
 
+		console.log(response);
 		if (response.correct) {
-			console.log(response);
+			console.log("correct");
 		} else {
 			console.log("incorrect!");
 		}
@@ -276,6 +281,11 @@ Socrates.Controller = (function() {
 $(function() {
 	window.Controller = new Socrates.Controller();
 	// display a question
-	window.InlineQuestion = new Socrates.Question("xyAuNHPsq-g", "000320.000", "matrix-indexing");
+	window.InlineQuestion = new Socrates.Question({
+		youtubeId: "xyAuNHPsq-g",
+		timestamp: "000320.000",
+		id: "matrix-indexing",
+		correctData: { answer: "2" }
+	});
 	window.Controller.load(InlineQuestion);
 });
