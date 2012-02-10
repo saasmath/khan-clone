@@ -100,7 +100,7 @@ class LevelTwoQuestionVoteCountBadge(QuestionVoteCountBadge):
 class LevelThreeQuestionVoteCountBadge(QuestionVoteCountBadge):
     def __init__(self):
         QuestionVoteCountBadge.__init__(self)
-        self.required_votes = 2
+        self.required_votes = 50
         self.description = "Incredible Question"
         self.badge_category = BadgeCategory.GOLD
         self.points = 0
