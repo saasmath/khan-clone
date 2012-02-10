@@ -475,6 +475,17 @@
             z-index: 5;
         }
 
+.activity-column {
+    width: 58%;
+    float: left;
+}
+.mini-stats-column {
+    margin-left: 3%;
+    width: 39%;
+    height: 500px;
+    background: #eee;
+    float: left;
+}
 .activity-list {
 padding-left: 3px;
 }
@@ -498,7 +509,6 @@ padding-left: 3px;
         float: left;
         background: #EEE;
         padding: 10px 15px;
-        width: 50%;
         border-radius: 5px;
         position: relative;
 
