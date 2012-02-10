@@ -168,6 +168,11 @@ javascript = {
             "stories.js",
         ]
     },
+    "commoncore": {
+        "files": [
+            "jquery.sticky.js",
+        ]
+    },
     "exercises": {
         "base_path": "../khan-exercises",
         "base_url": "/khan-exercises",
