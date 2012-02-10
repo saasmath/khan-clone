@@ -119,7 +119,7 @@ def streak_bar(user_exercise_dict):
     version_number if version_number else models.Setting.topic_tree_version()))
 def topic_browser(browser_id, version_number=None):
     if version_number:
-        version = models.TopicVersion.get_by_number(version_number)
+        version = models.TopicVersion.get_by_number(int(version_number))
     else:
         version = None
 
