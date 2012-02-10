@@ -2112,7 +2112,7 @@ class Topic(Searchable, db.Model):
             raise Exception("You can't edit the default version")
 
         if self.parent():
-             kwargs["parent"] = Topic.get_root(kwargs["version"])
+            kwargs["parent"] = Topic.get_root(kwargs["version"])
 
         if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
@@ -2208,7 +2208,7 @@ class Topic(Searchable, db.Model):
                 child.parent_keys.append(topic.key())
                 child.ancestor_keys.append(topic.key())
 
-            all_decendant_keys = {} # used to make sure we don't loop
+            all_descendant_keys = {} # used to make sure we don't loop
             descendant_keys = {}
             descendants = child_topics
             while True: # should iterate n+1 times making n db.gets() where n is the tree depth under topic
@@ -2576,7 +2576,10 @@ class Url(db.Model):
 
         root = Topic.get_root(version)
         urls = root.get_urls(include_descendants = True, include_hidden = False)
-        return urls
+        
+        # return only unique urls
+        url_dict = dict((u.key(), u) for u in urls)
+        return url_dict.values()
 
     @staticmethod
     def get_by_id_for_version(id, version=None):
@@ -2725,7 +2728,10 @@ class Video(Searchable, db.Model):
 
         root = Topic.get_root(version)
         videos = root.get_videos(include_descendants = True, include_hidden = False)
-        return videos
+        
+        # return only unique videos
+        video_dict = dict((v.key(), v) for v in videos)
+        return video_dict.values()
 
     # returns the first non-hidden topic
     def first_topic(self):
@@ -2960,6 +2966,11 @@ class VideoLog(db.Model):
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     playlist_titles = db.StringListProperty(indexed=False)
 
+    # Indicates whether or not the video is deemed "complete" by the user.
+    # This does not mean that this particular log was the one that resulted
+    # in the completion - just that the video has been complete at some point.
+    is_video_completed = db.BooleanProperty(indexed=False)
+
     _serialize_blacklist = ["video"]
 
     @staticmethod
@@ -3067,6 +3078,7 @@ class VideoLog(db.Model):
 
             bingo(['struggling_videos_finished',
                    'homepage_restructure_videos_finished'])
+        video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
@@ -4001,6 +4013,8 @@ class UserExerciseGraph(object):
             set_implicit_proficiency(graph[exercise_name])
 
         # Calculate suggested
+        # TODO(marcia): Additionally incorporate whether student has attempted exercise,
+        # perhaps also accuracy and when it was last attempted. Details TBD.
         def set_suggested(graph_dict):
             if graph_dict["suggested"] is not None:
                 return graph_dict["suggested"]
@@ -4075,6 +4089,40 @@ class PromoRecord(db.Model):
         record.put()
         return True
 
+class VideoSubtitles(db.Model):
+    """Subtitles for a YouTube video
+
+    This is a cache of the content from Universal Subtitles for a video. A job
+    runs periodically to keep these up-to-date.
+
+    Store with a key name of "LANG:YOUTUBEID", e.g., "en:9Ek61w1LxSc".
+    """
+    modified = db.DateTimeProperty(auto_now=True, indexed=False)
+    youtube_id = db.StringProperty()
+    language = db.StringProperty()
+    json = db.TextProperty()
+
+    @staticmethod
+    def get_key_name(language, youtube_id):
+        return '%s:%s' % (language, youtube_id)
+
+class VideoSubtitlesFetchReport(db.Model):
+    """Report on fetching of subtitles from Universal Subtitles
+
+    Jobs that fail or are cancelled from the admin interface leave a hanging
+    status since there's no callback to update the report.
+
+    Store with a key name of JOB_NAME. Usually this is the UUID4 used by the
+    task chain for processing. The key name is displayed as the report name.
+    """
+    created = db.DateTimeProperty(auto_now_add=True)
+    modified = db.DateTimeProperty(auto_now=True, indexed=False)
+    status = db.StringProperty(indexed=False)
+    fetches = db.IntegerProperty(indexed=False)
+    writes = db.IntegerProperty(indexed=False)
+    errors = db.IntegerProperty(indexed=False)
+    redirects = db.IntegerProperty(indexed=False)
+
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from goals.models import GoalList, Goal
+from goals.models import GoalList
