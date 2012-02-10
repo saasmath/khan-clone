@@ -1937,6 +1937,9 @@ class Topic(Searchable, db.Model):
     INDEX_USES_MULTI_ENTITIES = False
 
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
+    # the ids of the topic on the homepage in which we will display their first
+    # level child topics
+    _super_topic_ids = ["algebra", "arithmetic-1"] 
 
     @property
     def relative_url(self):
@@ -2360,11 +2363,13 @@ class Topic(Searchable, db.Model):
                 self.version.update()   
             return self
 
-    # too big for memcache ... either add a layer_cache.Layers.Datastore ... or compress it
-    # @layer_cache.cache_with_key_fxn(
-    #    lambda self, types=[], include_hidden = False: "Topic.make_tree_%s_%s_%s" % (self.version.number, include_hidden, TopicVersion.get_date_updated(self.version)),
-    #    layer=layer_cache.Layers.Memcache)
-    def make_tree(self, types=[], include_hidden=False):
+    @layer_cache.cache_with_key_fxn(
+    lambda self, types=[], include_hidden=False, version=None:
+            "topic.make_tree_%s_%s_%s_%s" % (
+            (version.number + version.updated_on) if version else Setting.topic_tree_version(),
+            self.id, types, include_hidden),
+            layer=layer_cache.Layers.Blobstore)
+    def make_tree(self, types=[], include_hidden=False, version=None):
         if include_hidden:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
         else:
@@ -2459,7 +2464,7 @@ class Topic(Searchable, db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
-        "topic.get_content_topic_%s_%s" % (
+        "topic.get_all_topic_%s_%s" % (
             version.updated_on if version else Setting.topic_tree_version(), 
             include_hidden),
         layer=layer_cache.Layers.Memcache)    
@@ -2483,13 +2488,27 @@ class Topic(Searchable, db.Model):
         topics = Topic.get_all_topics(version, False)
         return [t for t in topics]
 
+
     @staticmethod
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
-        "topic.get_content_topic_%s_%s" % (
-            version.updated_on if version else Setting.topic_tree_version(),
+        "topic.get_super_topics_%s_%s" % (
+            (version.number+version.updated_on) if version 
+            else Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Memcache)
+        layer=layer_cache.Layers.Memcache) 
+    def get_super_topics(version=None):
+        topics = Topic.get_visible_topics()
+        return [t for t in topics if t.id in Topic._super_topic_ids]
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
+        "topic.get_content_topics_%s_%s" % (
+            (version.number+version.updated_on) if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Memcache) 
     def get_content_topics(version = None, include_hidden = False):
         topics = Topic.get_all_topics(version, include_hidden)
 
@@ -2499,13 +2518,24 @@ class Topic(Searchable, db.Model):
                 if child_key.kind() != "Topic":
                     content_topics.append(topic)
                     break
-
+        
         content_topics.sort(key = lambda topic: topic.standalone_title)
         return content_topics
 
     @staticmethod
-    def get_filled_content_topics(types=[], version=None, include_hidden=False):
+    @layer_cache.cache_with_key_fxn(
+        lambda types=None, version=None, include_hidden = False: 
+        "topic.get_filled_content_topics_%s_%s" % (
+            (version.number+version.updated_on) if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Blobstore) 
+    def get_filled_content_topics(types=None, version=None, include_hidden=False):
+        if types is None:
+            types = []
+
         topics = Topic.get_content_topics(version)
+        
         child_dict = {}
         for topic in topics:
             child_dict.update(dict((key, True) for key in topic.child_keys if key.kind() in types or (len(types) == 0 and key.kind() != "Topic")))
@@ -2515,6 +2545,10 @@ class Topic(Searchable, db.Model):
             topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]
 
         return topics
+
+    @staticmethod
+    def get_homepage_topics(version=None):
+        return list(set(Topic.get_content_topics()+Topic.get_super_topics()))
 
     @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
