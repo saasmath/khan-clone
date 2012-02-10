@@ -169,6 +169,7 @@ class ViewHomePage(request_handler.RequestHandler):
 
         # Only running ajax version of homepage for non-mobile clients
         if version_number:
+            layer_cache.disable()
             library_content = library.library_content_html(version_number=int(version_number))
         elif not self.is_mobile_capable():
             library_content = library.library_content_html(ajax = True)
@@ -184,6 +185,9 @@ class ViewHomePage(request_handler.RequestHandler):
                             'approx_vid_count': models.Video.approx_count(),
                             'exercise_count': models.Exercise.get_count(),
                             'link_heat': self.request_bool("heat", default=False),
+                            'version_number': version_number
                         }
 
         self.render_jinja2_template('homepage.html', template_values)
+
+        layer_cache.enable()

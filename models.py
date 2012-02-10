@@ -2030,47 +2030,83 @@ class Topic(Searchable, db.Model):
     def get_new_key_name():
         return base64.urlsafe_b64encode(os.urandom(30))
 
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_previous_topic_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
     def get_previous_topic(self):
         if self.parent_keys:
             parent_topic = db.get(self.parent_keys[0])
             prev_index = parent_topic.child_keys.index(self.key()) - 1
-            if prev_index >= 0:
-                return db.get(parent_topic.child_keys[prev_index])
+
+            while prev_index >= 0:
+                prev_topic = db.get(parent_topic.child_keys[prev_index])
+                if not prev_topic.hide:
+                    return prev_topic
+
+                prev_index -= 1
 
             return parent_topic.get_previous_topic()
 
         return None
 
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_next_topic_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
     def get_next_topic(self):
         if self.parent_keys:
             parent_topic = db.get(self.parent_keys[0])
             next_index = parent_topic.child_keys.index(self.key()) + 1
-            if next_index < len(parent_topic.child_keys):
-                return db.get(parent_topic.child_keys[next_index])
+
+            while next_index < len(parent_topic.child_keys):
+                next_topic = db.get(parent_topic.child_keys[next_index])
+                if not next_topic.hide:
+                    return next_topic
+
+                next_index += 1
 
             return parent_topic.get_next_topic()
 
         return None
 
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_first_video_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
     def get_first_video_and_topic(self):
         videos = Topic.get_cached_videos_for_topic(self)
         if videos:
             return (videos[0], self)
 
-        if self.child_keys and self.child_keys[0].kind() == 'Topic':
-            return db.get(self.child_keys[0]).get_first_video_and_topic()
+        for key in self.child_keys:
+            if key.kind() == 'Topic':
+                topic = db.get(key)
+                if not topic.hide:
+                    ret = topic.get_first_video_and_topic()
+                    if ret != (None, None):
+                        return ret
 
-        return None
+        return (None, None)
 
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_last_video_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
     def get_last_video_and_topic(self):
         videos = Topic.get_cached_videos_for_topic(self)
         if videos:
             return (videos[-1], self)
 
-        if self.child_keys and self.child_keys[-1].kind() == 'Topic':
-            return db.get(self.child_keys[-1]).get_last_video_and_topic()
+        for key in reversed(self.child_keys):
+            if key.kind() == 'Topic':
+                topic = db.get(key)
+                if not topic.hide:
+                    ret = topic.get_last_video_and_topic()
+                    if ret != (None, None):
+                        return ret
 
-        return None
+        return (None, None)
 
     def update_ancestor_keys(self, topic_dict=None):
         """ Update the ancestor_keys by using the parents' ancestor_keys.
