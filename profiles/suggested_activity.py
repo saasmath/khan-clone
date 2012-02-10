@@ -23,10 +23,18 @@ class SuggestedActivity(object):
 
     @staticmethod
     def get_videos_for(user_data, recent_activities):
+        recent_completed_ids = set([v.youtube_id for v in filter(
+	            lambda entry:
+	                    (entry.__class__ == recent_activity.RecentVideoActivity
+	                     and entry.is_video_completed),
+	            recent_activities)])
+
+        # Note that we can't just look for entries with is_video_completed false
+        # since the user may have completed it in a later entry after a break.
         recent_incomplete_videos = filter(
 	            lambda entry:
 	                    (entry.__class__ == recent_activity.RecentVideoActivity
-	                     and not entry.is_video_completed
+	                     and entry.youtube_id not in recent_completed_ids
 	                     and entry.seconds_watched > 90),
 	            recent_activities)
 
