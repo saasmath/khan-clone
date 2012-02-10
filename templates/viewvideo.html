@@ -34,6 +34,16 @@
 {% endblock pagesubmenu %}
 {% block pagecontent %}
 <article id="video-page">
+<div class="interactive-video-controls">
+    <h3>Controls</h3>
+    <ul>
+        <li><button id="label">Label</button></li>
+        <li><button id="inputtext">InputText</button></li>
+    </ul>
+    <ul>
+        <li><button id="toggle">Toggle</button></li>
+    </ul>
+</div>
 <div class="video" data-role="page" data-theme="b">
     <div data-role="header" class="mobile-only">
         <a href="#" data-rel="back" data-icon="arrow-l">Back</a>
@@ -84,19 +94,33 @@
             <div class="clear"></div>
         </nav>
 
-        <div id="youtube_blocked" class="desktop-only">
-            {{ youtube.flv_player_embed(video_path) }}
-        </div>
-        <div class="youtube-video">
-            <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
-            {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host) }}
-            <div class="subtitles-warning desktop-only">
-                &lArr; Use this menu to view and help create subtitles for this video in many different languages.
-                You'll probably want to hide YouTube's captions if using these subtitles.
-               <a href="#" class="subtitles-link">Close subtitles</a>
+        <div class="video-container" style="position: relative">
+            <div class="video-overlay">
+                <div class="layer screenshot">
+                    <img class="video-frame" src="">
+                </div>
+                <div class="layer question"></div>
+                <div class="submit-area">
+                    <div class="transparency-container">
+                        <div class="transparent"></div>
+                        <a class="submit simple-button action-gradient green" href="javascript:void 0">Submit</a>
+                        <a class="skip simple-button action-gradient" href="javascript:void 0">Skip »</a>
+                    </div>
+                </div>
+            </div>
+            <div id="youtube_blocked" class="desktop-only">
+                {{ youtube.flv_player_embed(video_path) }}
+            </div>
+            <div class="youtube-video">
+                <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
+                {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host) }}
+                <div class="subtitles-warning desktop-only">
+                    &lArr; Use this menu to view and help create subtitles for this video in many different languages.
+                    You'll probably want to hide YouTube's captions if using these subtitles.
+                   <a href="#" class="subtitles-link">Close subtitles</a>
+                </div>
             </div>
         </div>
-
         <span class="video_extra_links desktop-only">
             <nobr>
 

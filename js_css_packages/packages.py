@@ -71,6 +71,13 @@ javascript = {
             "related-video-link.handlebars",
             "modal-video.handlebars",
             "modalvideo.js",
+
+            # socrates stuff
+            "../topicsadmin-package/jquery.ui.draggable.js",
+            "jquery.ui.resizable.js",
+            "label.handlebars",
+            "inputtext.handlebars",
+            "socrates.js",
         ]
     },
     "homepage": {
@@ -260,6 +267,7 @@ stylesheets = {
             "video.css",
             "discussion.css",
             "modalvideo.css",
+            "socrates.css",
         ]
     },
     "studentlists": {
