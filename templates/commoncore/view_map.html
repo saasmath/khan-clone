@@ -61,7 +61,20 @@
 		z-index:-1;
 	}
 	
-	.heading.hover {
+	.grade-heading {
+		margin-bottom: 0px;
+	}
+	
+	.content-totals {
+		margin: 0px;
+		padding: 0px;
+		font-size: .9em;
+		color: #CCCCCC;
+		line-height: 1.3em;
+	}
+	
+	
+	.grade-heading.hover {
 		background-color: #DBDBDB;
 		cursor: pointer;
 		text-decoration: underline;
@@ -95,6 +108,7 @@
 	}
 	
 	.grade-link {
+		float:left;
 		padding:6px;
 		margin-bottom: 0px;
 	}
@@ -120,10 +134,6 @@
 	
 	.domain-link ul {
 		margin-left: 2em;
-	}
-	
-	.nav-link {
-		
 	}
 	
 	</style>
@@ -202,7 +212,8 @@
 								<li class="nav-link"><a href="#domain-{{grade["grade"]|escape}}-{{domain["domain_code"]|escape}}">{{domain["domain"]|escape}}</a></li>
 							{% endfor %}		
 						</ul>	
-					</div>	
+					</div>
+					<div style="clear:both;"></div>	
 				{% endfor %}
 				
 			</div>	
@@ -248,9 +259,19 @@
 		
 		{% for grade in cc_map %}
 		
+		{% set grade_level = grade["grade"] %}
+		
 		<div id="grade-{{grade["grade"]|escape}}" class="grade-level">
 			
-			<h4 class="heading">Grade: {{grade["grade"]|escape}}</h4>
+			<div class="heading">
+				<h4 class="grade-heading">Grade: {{grade["grade"]|escape}}</h4>
+				<p class="content-totals">
+					{% filter upper %}
+						{{ grade_totals[grade_level].videos }} videos <br />
+						{{ grade_totals[grade_level].exercises }} exercises
+					{% endfilter %}
+				</p>
+			</div>
 			
 			{% for domain in grade["domains"] %}
 			

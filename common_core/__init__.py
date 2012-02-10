@@ -23,5 +23,20 @@ class CommonCore(RequestHandler):
         f = open('common_core/data/ccmap.json', 'rb')
         cc_map = json.loads(f.read())
         
-        self.render_jinja2_template('commoncore/view_map.html', {'cc_map' : cc_map})
+        grade_totals = {} # Number of unique [exercise | videos] applying to each grade
+        
+        for grade in cc_map:
+            video_set = set([])
+            exercise_set = set([])
+            
+            for domain in grade['domains']:
+                for standard in domain['standards']:
+                    for exercise in standard['exercises']: exercise_set.add(exercise['display_name'])
+                    for video in standard['videos']: video_set.add(video['title'])
+            
+            grade_total = {'videos' : len(video_set), 'exercises' : len(exercise_set)}
+            grade_totals[grade['grade']] = grade_total
+                
+        
+        self.render_jinja2_template('commoncore/view_map.html', {'cc_map' : cc_map, 'grade_totals' : grade_totals})
 
