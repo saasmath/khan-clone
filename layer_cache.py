@@ -11,6 +11,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 
 from app import App
+import request_cache
 
 if App.is_dev_server:
     # cachepy disables itself during development presumably to avoid confusion.
@@ -85,7 +86,14 @@ else:
 #
 # If key has expired or is no longer in the current cache and throws an error when trying to be recomputed, then try getting resource from permanent key that is not set to expire
 # @layer_cache.cache(... expiration=60, permanent_cache_key = lambda object: "permanent_layer_cache_key_for_object_%s" % object.id())
-
+#
+# _____Disabling:_____
+#
+# You can disable layer_cache for the rest of the request by calling:
+# layer_cache.disable()
+# 
+# Re-enable it with
+# layer_cache.enable()
 
 
 DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 25 # Expire after 25 days by default
@@ -95,6 +103,15 @@ class Layers:
     Memcache = 2
     InAppMemory = 4
     Blobstore = 8
+
+def disable():
+    request_cache.set("layer_cache_disabled", True)
+
+def enable():
+    request_cache.set("layer_cache_disabled", False)
+
+def is_disabled():
+    return request_cache.get("layer_cache_disabled") or False
 
 def cache(
         expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
@@ -182,8 +199,10 @@ def layer_cache_check_set_return(
         del kwargs["bust_cache"]
 
     key = key_fxn(*args, **kwargs)
-    # if key is None, don't bother trying to get it from the cache, just execute the function and return it
-    if key is None:
+
+    # if key is None, or layer_cache is disabled don't bother trying to get it 
+    # from the cache, just execute the function and return it
+    if key is None or request_cache.get("layer_cache_disabled"):
         return target(*args, **kwargs)
 
     namespace = App.version
