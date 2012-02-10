@@ -2904,10 +2904,14 @@ class UserVideo(db.Model):
 
     @staticmethod
     def count_completed_for_user_data(user_data):
+        return UserVideo.get_completed_user_videos(user_data).count(limit=10000)
+
+    @staticmethod
+    def get_completed_user_videos(user_data):
         query = UserVideo.all()
-        query.filter("user = ", user_data.user)
-        query.filter("completed = ", True)
-        return query.count(limit=10000)
+        query.filter("user =", user_data.user)
+        query.filter("completed =", True)
+        return query
 
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
