@@ -5,6 +5,7 @@ import urllib
 import urlparse
 import logging
 import re
+import simplejson as json
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
@@ -53,7 +54,7 @@ import common_core
 import unisubs
 
 import models
-from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, Topic
+from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from phantom_users import util_notify
@@ -199,12 +200,19 @@ class ViewVideo(request_handler.RequestHandler):
         if user_video:
             awarded_points = user_video.points
 
+        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_json = None
+        if subtitles:
+            subtitles_json = subtitles.load_json()
+
         template_values = {
                             'topic': topic,
                             'video': video,
                             'videos': videos,
                             'video_path': video_path,
                             'video_points_base': consts.VIDEO_POINTS_BASE,
+                            'subtitles_json': subtitles_json,
                             'button_top_exercise': button_top_exercise,
                             'related_exercises': [], # disabled for now
                             'previous_video': previous_video,
