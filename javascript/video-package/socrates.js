@@ -182,6 +182,9 @@ Socrates.Question = (function() {
 		};
 	};
 
+	// may as well alias skip to submit...
+	Question.prototype.skip = Question.prototype.submit;
+
 	Question.prototype.render = function() {
 		$.get(this.htmlUrl()).success($.proxy(function(html) {
 			this.$controlsArea.html(html);
@@ -220,6 +223,7 @@ Socrates.Question = (function() {
 	return Question;
 })();
 
+// need to clean this up, I think it's a mixture of a Backbone.{View,Router}
 Socrates.Controller = (function() {
 	function Controller() {
 		_.bindAll(this);
@@ -227,6 +231,9 @@ Socrates.Controller = (function() {
 		$(".video-overlay .submit-area")
 			.on("click", "a.submit", this.submit)
 			.on("click", "a.skip", this.skip);
+
+		// this does not beling here
+		$("#trigger").on("click", this.triggerQuestion);
 	}
 
 	Controller.prototype.clear = function() {
@@ -246,33 +253,55 @@ Socrates.Controller = (function() {
 		question.$frameImg.show();
 	};
 
-	Controller.prototype.submit = function() {
-		var response = this.question.submit();
-
-		// validate the response
-		mandatedProperties = ['id', 'version', 'correct', 'data', 'youtubeId',
+	Controller.prototype.validateResponse = function(response) {
+		requiredProps = ['id', 'version', 'correct', 'data', 'youtubeId',
 			'timestamp'];
-		var hasAllProps = _.all(mandatedProperties, function(prop) {
+		var hasAllProps = _.all(requiredProps, function(prop) {
 			return response[prop] != null;
 		});
 		if (!hasAllProps) {
 			console.log(response);
 			throw "Invalid response from question";
 		}
+		return true;
+	};
 
-		// log the data on the server side
-		// $.post(response);
+	Controller.prototype.submit = function() {
+		var response = this.question.submit();
+		this.validateResponse(response);
 
-		console.log(response);
+		this.log('submit', response);
+
 		if (response.correct) {
 			console.log("correct");
 		} else {
 			console.log("incorrect!");
 		}
+
+		this.resume();
 	};
 
 	Controller.prototype.skip = function() {
-		console.log("skipped");
+		var response = this.question.skip();
+		this.validateResponse(response);
+
+		this.log('skip', response);
+		this.resume();
+	};
+
+	Controller.prototype.resume = function() {
+		window.ControlPanel.$overlayEl.hide();
+		// seek to correct spot?
+		window.VideoControls.play();
+	};
+
+	Controller.prototype.triggerQuestion = function() {
+		window.VideoControls.pause();
+		ControlPanel.$overlayEl.show();
+	};
+
+	Controller.prototype.log = function(kind, response) {
+		console.log("POSTing response", kind, response);
 	};
 
 	return Controller;
