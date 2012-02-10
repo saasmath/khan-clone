@@ -3041,6 +3041,102 @@ class Video(Searchable, db.Model):
     def approx_count():
         return int(Setting.count_videos()) / 100 * 100
 
+    @staticmethod
+    def get_play_data(readable_id, topic):
+        video = None
+
+        # If we got here, we have a readable_id and a topic, so we can display
+        # the topic and the video in it that has the readable_id.  Note that we don't
+        # query the Video entities for one with the requested readable_id because in some
+        # cases there are multiple Video objects in the datastore with the same readable_id
+        # (e.g. there are 2 "Order of Operations" videos).
+        videos = Topic.get_cached_videos_for_topic(topic)
+        previous_video = None
+        next_video = None
+        for v in videos:
+            if v.readable_id == readable_id:
+                v.selected = 'selected'
+                video = v
+            elif video is None:
+                previous_video = v
+            else:
+                next_video = v
+                break
+
+        if video is None:
+            return None
+
+        # If we're at the beginning or end of a topic, show the adjacent topic.
+        # previous_topic/next_topic are the topic to display.
+        # previous_video_topic/next_video_topic are the subtopics the videos
+        # are actually in.
+        previous_topic = None
+        previous_video_topic = None
+        next_topic = None
+        next_video_topic = None
+
+        if not previous_video:
+            previous_topic = topic
+            while not previous_video:
+                previous_topic = previous_topic.get_previous_topic()
+                if previous_topic:
+                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+                else:
+                    break
+
+        if not next_video:
+            next_topic = topic
+            while not next_video:
+                next_topic = next_topic.get_next_topic()
+                if next_topic:
+                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+                else:
+                    break
+
+        if App.offline_mode:
+            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
+        else:
+            video_path = video.download_video_url()
+
+        if video.description == video.title:
+            video.description = None
+
+        related_exercises = video.related_exercises()
+        button_top_exercise = None
+        if related_exercises:
+            def ex_to_dict(exercise):
+                return {
+                    'name': exercise.display_name,
+                    'url': exercise.relative_url,
+                }
+            button_top_exercise = ex_to_dict(related_exercises[0])
+
+        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
+
+        awarded_points = 0
+        if user_video:
+            awarded_points = user_video.points
+
+        return {
+            'topic': topic,
+            'video': video,
+            'videos': videos,
+            'video_path': video_path,
+            'video_points_base': consts.VIDEO_POINTS_BASE,
+            'button_top_exercise': button_top_exercise,
+            'related_exercises': [], # disabled for now
+            'previous_topic': previous_topic,
+            'previous_video': previous_video,
+            'previous_video_topic': previous_video_topic,
+            'next_topic': next_topic,
+            'next_video': next_video,
+            'next_video_topic': next_video_topic,
+            'selected_nav_link': 'watch',
+            'awarded_points': awarded_points,
+            'issue_labels': ('Component-Videos,Video-%s' % readable_id),
+            'author_profile': 'https://plus.google.com/103970106103092409324'
+        }
+
 class Playlist(Searchable, db.Model):
 
     youtube_id = db.StringProperty()
