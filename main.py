@@ -180,14 +180,24 @@ class ViewVideo(request_handler.RequestHandler):
         previous_video_topic = None
         next_topic = None
         next_video_topic = None
+
         if not previous_video:
-            previous_topic = topic.get_previous_topic()
-            if previous_topic:
-                (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+            previous_topic = topic
+            while not previous_video:
+                previous_topic = previous_topic.get_previous_topic()
+                if previous_topic:
+                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+                else:
+                    break
+
         if not next_video:
-            next_topic = topic.get_next_topic()
-            if next_topic:
-                (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+            next_topic = topic
+            while not next_video:
+                next_topic = next_topic.get_next_topic()
+                if next_topic:
+                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+                else:
+                    break
 
         if video is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
