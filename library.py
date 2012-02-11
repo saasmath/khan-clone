@@ -4,43 +4,70 @@ import request_handler
 import shared_jinja
 import time
 
-def flatten_tree(tree, topics_dict, ancestors=None, depth=0, show=False):
-    return_topics = []
+# helpful function to see topic structure from the console.  In the console:
+# import library
+# library.library_content_html(bust_cache=True)
+#
+# Within library_content_html: print_topics(topics)
+def print_topics(topics):
+    for topic in topics:
+        print topic.homepage_title
+        print topic.depth
+        if topic.subtopics:
+            print "subtopics:"
+            for subtopic in topic.subtopics:
+                print subtopic.homepage_title
+                if subtopic.subtopics:
+                    print "subsubtopics:"
+                    for subsubtopic in subtopic.subtopics:
+                        print subsubtopic.homepage_title
+                    print " "
+            print " "
+        print " "
+
+def flatten_tree(tree, super_title=None, depth=0):
+    homepage_topics=[]
+    tree.content = []
+    tree.subtopics = []
     
-    if tree.id in topics_dict:
-        topic = topics_dict[tree.id]
-        topic.ancestors = ancestors
-        topic.depth = depth
-        if depth > 0:
-            topic.breadcrumb_title = ""
-            if ancestors:
-                topic.breadcrumb_title = ancestors[0].title + " : "
-            topic.breadcrumb_title += topic.title
-
+    if super_title:
         depth += 1
-        return_topics.append(topic)
-        show = True 
 
-    if ancestors is None:
-        ancestors = []
+    tree.depth = depth
 
-    ancestors = ancestors[:]
+    if super_title:
+        tree.homepage_title = super_title + ": " + tree.title
+    else:
+        tree.homepage_title = tree.standalone_title
 
-    if tree.id in topics_dict or show:
-        ancestors.append(tree)
+    if tree.id in Topic._super_topic_ids:
+        tree.is_super = True
+        super_title = tree.standalone_title
 
     for child in tree.children:
-        return_topics = return_topics + flatten_tree(child, topics_dict, ancestors, depth, show)
-    
-    return return_topics
+        if child.key().kind() == "Topic":
+            tree.subtopics.append(child)
+        else:
+            tree.content.append(child)
+
+    del tree.children
+
+    if hasattr(tree, "is_super") or tree.content:
+        homepage_topics.append(tree)
+
+    for subtopic in tree.subtopics:
+        homepage_topics += prepare_tree(subtopic, super_title, depth)
+
+    return homepage_topics
 
 @layer_cache.cache_with_key_fxn(
         lambda ajax=False, version_number=None: 
         "library_content_by_topic_%s_v%s" % (
         "ajax" if ajax else "inline", 
-        version_number if version_number else Setting.topic_tree_version())
+        version_number if version_number else Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Blobstore
         )
-def library_content_html(ajax=False, version_number=None, bust_cache=True):
+def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the topics as they will be
     populated ont he homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
@@ -50,20 +77,9 @@ def library_content_html(ajax=False, version_number=None, bust_cache=True):
     else:
         version = TopicVersion.get_default_version()
 
-    topics = Topic.get_filled_content_topics(types = ["Video", "Url"], version=version)
-    topics_dict = dict((t.id, t) for t in topics)
 
-    # add the super topics which are not also content topics
-    super_topics = dict((t.id, t) for t in Topic.get_super_topics() 
-                        if t.id not in topics_dict)
-    
-    for id, topic in super_topics.iteritems():
-        topic.children = []
-
-    topics_dict.update(super_topics)
-
-    tree = Topic.get_root(version).make_tree(types = ["Topics"])
-    topics = flatten_tree(tree, topics_dict)
+    tree = Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
+    topics = flatten_tree(tree)
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
     topics = [topic for topic in topics 
@@ -73,6 +89,8 @@ def library_content_html(ajax=False, version_number=None, bust_cache=True):
               (topic.standalone_title == "California Standards Test: Geometry" 
               and not topic.id == "geometry-2")] 
 
+    # print_topics(topics)
+
     topic_prev = None
     for topic in topics:
         if topic_prev:
@@ -80,6 +98,7 @@ def library_content_html(ajax=False, version_number=None, bust_cache=True):
         topic_prev = topic
 
     timestamp = time.time()
+
     template_values = {
         'topics': topics,
         'ajax' : ajax,

@@ -328,6 +328,10 @@ def topictree_import(version_id = "edit", topic_id="root"):
     else:
         put_change = True
 
+    # delete all subtopics of node we are copying over the same topic
+    if tree_json["id"] == parent.id:
+        parent.delete_descendants() 
+
     # adds key to each entity in json tree, if the node is not in the tree then add it
     def add_keys_json_tree(tree, parent):
 
@@ -348,7 +352,7 @@ def topictree_import(version_id = "edit", topic_id="root"):
                 tree["key"] = topic.key()
                 topic_dict[tree["id"]]=topic
 
-            # if this topic is not the parent topic (ie. its root, or the 
+            # if this topic is not the parent topic (ie. its not root, nor the 
             # topic_id you are updating)
             if (parent.key() != topic.key() and
                 # and this topic is not in the new parent

@@ -1944,7 +1944,7 @@ class Topic(Searchable, db.Model):
 
     @property
     def relative_url(self):
-        return '/#%s' % self.id
+        return '#%s' % self.id
 
     @property
     def ka_url(self):
@@ -2610,13 +2610,27 @@ class Topic(Searchable, db.Model):
         return nodes
 
     def get_urls(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Url", include_descendants)
+        return Topic._get_children_of_kind(self, "Url", include_descendants, 
+                                           include_hidden)
 
     def get_exercises(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Exercise", include_descendants)
+        return Topic._get_children_of_kind(self, "Exercise", 
+                                           include_descendants, include_hidden)
 
     def get_videos(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Video", include_descendants)
+        return Topic._get_children_of_kind(self, "Video", include_descendants,
+                                           include_hidden)
+
+    def get_descendants(self, include_hidden=False):
+        subtopics = Topic.all().filter("ancestor_keys =", self.key())
+        if not include_hidden:
+            subtopics.filter("hide =", False)
+        return subtopics.fetch(10000)
+
+    def delete_descendants(self):
+        query = Topic.all(keys_only=True)
+        descendants = query.filter("ancestor_keys =", self.key()).fetch(10000)
+        db.delete(descendants)
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda
