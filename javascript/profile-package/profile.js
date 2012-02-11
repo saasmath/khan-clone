@@ -951,12 +951,14 @@ var Profile = {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
 
         _.each(activities["exercises"] || [], function(activity) {
+            var progress = activity["progress"] || 0;
+            var formattedProgress = progress ?
+                    (100 * progress).toPrecision(4) + "%" :
+                    "not started";
             activity["streakBar"] = {
                 "proficient": false,
                 "suggested": true,
-                // TODO: better format this.
-                "progressDisplay": "Current progress: " +
-                        (100 * activity["progress"]) + "%",
+                "progressDisplay": formattedProgress,
                 // TODO: is this the right width?
                 "maxWidth": 228,
                 "width": activity["progress"] * 228
