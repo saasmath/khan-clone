@@ -36,7 +36,19 @@
 
 {{#if goals}}
     <h3>Goals</h3>
-    {{#each goals}}
-        <p>Complete {{name}} by going to <a href="{{url}}">{{description}}</a></p>
-    {{/each}}
+    <div class="activity-list suggested-list">
+        <ul>
+        {{#each goals}}
+            <li class="activity-goal clearfix">
+                <span class="activity-image"></span>
+                <div class="ach-text">
+                    <a href="{{url}}">{{description}}</a> in {{name}}
+                    <div class="activity-controls">
+                    </div>
+                </div>
+            <p></p>
+            </li>
+        {{/each}}
+        </ul>
+    </div>
 {{/if}}
