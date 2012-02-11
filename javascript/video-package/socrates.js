@@ -318,6 +318,10 @@ $(function() {
 		el: $(".video-overlay"),
 		videoControls: window.VideoControls
 	});
+
+	nav = new Socrates.Nav({ el: ".socrates-nav" });
+	nav.render();
+
 	Controller.loadQuestions([
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
@@ -332,8 +336,24 @@ $(function() {
 			time: 3*60 + 20,
 			id: "matrix-indexing",
 			correctData: { answer: "2" }
+		}),
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			timestamp: "000441.000",
+			time: 4*60 + 41,
+			id: "matrix-uses",
+			correctData: { answer: [true, true, true, true, true] }
 		})
 	]);
+});
+
+Socrates.Nav = Backbone.View.extend({
+	template: Templates.get("video.socrates-nav"),
+
+	render: function() {
+		$(this.el).html(this.template());
+		return this;
+	}
 });
 
 var Poppler = (function() {

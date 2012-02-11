@@ -76,6 +76,7 @@ javascript = {
             "../topicsadmin-package/jquery.ui.draggable.js",
             "jquery.ui.resizable.js",
             "inputtext.handlebars",
+            "socrates-nav.handlebars",
             "socrates.js",
         ]
     },
