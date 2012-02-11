@@ -203,7 +203,7 @@
     border: 1px solid #999;
 }
 
-@media all and (max-width: 1145px) {
+@media all and (max-width: 1180px) {
     .achievement-badge .selected-indicator {
         border-top: none;
         border-left: 7px solid transparent;
@@ -233,7 +233,7 @@
     }
 }
 
-@media all and (max-width: 1040px) {
+@media all and (max-width: 1075px) {
     .achievement-badge.compact .achievement-title {
         font-size: 9px;
         white-space: nowrap; /* force to a single line */
