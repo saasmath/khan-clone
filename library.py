@@ -13,8 +13,8 @@ def flatten_tree(tree, topics_dict, ancestors=None, depth=0, show=False):
         topic.depth = depth
         if depth > 0:
             topic.breadcrumb_title = ""
-            for ancestor in ancestors[1:]:
-                topic.breadcrumb_title += ancestor.title + " > "
+            if ancestors:
+                topic.breadcrumb_title = ancestors[0].title + " : "
             topic.breadcrumb_title += topic.title
 
         depth += 1
