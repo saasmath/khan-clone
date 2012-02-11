@@ -1,25 +1,14 @@
 Socrates = {};
 
+// this should work with a QuestionView
 Socrates.ControlPanel = Backbone.View.extend({
 	el: ".interactive-video-controls",
 
 	controls: [],
 
 	events: {
-		'click #toggle': 'toggle',
 		'click button#label': 'addLabel',
 		'click button#inputtext': 'addInputText'
-	},
-
-	initialize: function(options) {
-		this.overlayEl = options.overlayEl;
-		this.$overlayEl = $(this.overlayEl);
-
-		this.$controlEl = this.$overlayEl.find('.layer.question');
-	},
-
-	toggle: function() {
-		this.$overlayEl.toggle();
 	},
 
 	addLabel: function() {
@@ -47,9 +36,7 @@ Socrates.ControlPanel = Backbone.View.extend({
 	}
 }, {
 	onReady: function() {
-		window.ControlPanel = new Socrates.ControlPanel({
-			overlayEl: $('.video-overlay')
-		});
+		window.ControlPanel = new Socrates.ControlPanel();
 	}
 });
 
@@ -164,19 +151,39 @@ Socrates.InputText = Backbone.View.extend({
 
 $(Socrates.ControlPanel.onReady);
 
-Socrates.Question = (function() {
-	function Question(options) {
+// extract model from this?
+Socrates.Question = Backbone.View.extend({
+	className: "question",
+
+	initialize: function() {
+		_.extend(this, this.options);
 		this.version = 1;
-		_.extend(this, options);
+		this.loaded = false;
+		this.render();
+	},
 
-		this.load();
-	}
+	render: function() {
+		// preload the image
+		var img = document.createElement('img');
+		img.src = this.imageUrl();
+		this.$screenShotLayer = $("<div>", {"class": "layer screenshot"}).append(img);
 
-	Question.prototype.load = function() {
-		this.htmlPromise = $.get(this.htmlUrl());
-	};
+		// preload html
+		this.$controlsLayer = $("<div>", {"class": "layer controls"});
+		$.get(this.htmlUrl()).success(_.bind(function(html) {
+			this.$controlsLayer.html(html);
+			this.loaded = true;
+		}, this));
 
-	Question.prototype.submit = function() {
+		// append to view. Still not added to DOM
+		$(this.el)
+			.append(this.$screenShotLayer)
+			.append(this.$controlsLayer);
+
+		return this;
+	},
+
+	submit: function() {
 		var data = this.getData();
 		return {
 			timestamp: this.timestamp,
@@ -186,76 +193,89 @@ Socrates.Question = (function() {
 			correct: this.isCorrect(data),
 			data: data
 		};
-	};
+	},
 
-	// may as well alias skip to submit...
-	Question.prototype.skip = Question.prototype.submit;
-
-	Question.prototype.render = function() {
-		this.htmlPromise.success($.proxy(function(html) {
-			this.$controlsArea.html(html);
-			this.$frameImg.attr("src", this.imageUrl());
-		}, this));
-	};
-
-	Question.prototype.key = function() {
+	key: function() {
 		return this.youtubeId + "-" + this.timestamp;
-	};
+	},
 
-	Question.prototype.htmlUrl = function() {
+	htmlUrl: function() {
 		return "/socrates/questions/" + this.key() + ".html";
-	};
+	},
 
-	Question.prototype.imageUrl = function() {
+	imageUrl: function() {
 		return "/socrates/questions/" + this.key() + ".jpeg";
-	};
+	},
 
-	Question.prototype.isCorrect = function(data) {
+	isCorrect: function(data) {
 		// todo: look at how khan-exercise does their fancy number handling
 		return _.isEqual(data, this.correctData);
-	};
+	},
 
-	Question.prototype.getData = function() {
+	getData: function() {
 		// possible ideal impl: ask editing controls for info?
 
 		// for now: do it myself.
 		data = {};
-		_.each(this.$controlsArea.find("input"), function(el) {
+		_.each(this.$controlsLayer.find("input"), function(el) {
 			var $el = $(el);
 			data[$el.attr("name")] = $(el).val();
 		});
 		return data;
-	};
-	return Question;
-})();
+	}
+});
+
+// alias skip to submit
+Socrates.Question.prototype.skip = Socrates.Question.prototype.submit;
 
 // need to clean this up, I think it's a mixture of a Backbone.{View,Router}
-Socrates.Controller = (function() {
-	function Controller() {
-		_.bindAll(this);
+Socrates.Controller = Backbone.View.extend({
+	events: {
+		'click .submit-area a.submit': 'submit',
+		'click .submit-area a.skip': 'skip'
+	},
 
-		$(".video-overlay .submit-area")
-			.on("click", "a.submit", this.submit)
-			.on("click", "a.skip", this.skip);
-	}
+	initialize: function() {
+		this.videoControls = this.options.videoControls;
+	},
 
-	Controller.prototype.clear = function() {
-		this.question = null;
-		$(".video-overlay .layer.question").empty();
-		$(".video-overlay .layer.screenshot .video-frame").attr("src", "");
-		ControlPanel.$overlayEl.hide();
-	};
+	loadQuestions: function(questions) {
+		this.$(".questions").append(_.pluck(questions, 'el'));
 
-	Controller.prototype.load = function(question) {
+		var poppler = new Poppler();
+		_.each(questions, function(question) {
+			// subscribe to display event
+			poppler.add(question.time, _.bind(this.show, this, question));
+		}, this);
+
+		// watch video time every 100 ms
+		recursiveTrigger(_.bind(poppler.trigger, poppler));
+	},
+
+	show: function(question) {
+		this.videoControls.pause();
 		this.question = question;
+		$(this.el).show();
+		$(question.el).show();
+	},
 
-		question.$controlsArea = $(".video-overlay .layer.question");
-		question.$frameImg = $(".video-overlay .layer.screenshot .video-frame");
-		question.render();
-		ControlPanel.$overlayEl.show();
-	};
+	submit: function() {
+		var response = this.question.submit();
+		this.validateResponse(response);
+		this.log('submit', response);
 
-	Controller.prototype.validateResponse = function(response) {
+		if (response.correct) {
+			console.log("correct");
+			// todo: fancy correct animation
+			// todo: skip explanation on correct
+			$(this.el).hide();
+			window.VideoControls.play();
+		} else {
+			console.log("incorrect!");
+		}
+	},
+
+	validateResponse: function(response) {
 		requiredProps = ['id', 'version', 'correct', 'data', 'youtubeId',
 			'timestamp'];
 		var hasAllProps = _.all(requiredProps, function(prop) {
@@ -266,48 +286,21 @@ Socrates.Controller = (function() {
 			throw "Invalid response from question";
 		}
 		return true;
-	};
+	},
 
-	Controller.prototype.submit = function() {
-		var response = this.question.submit();
-		this.validateResponse(response);
-		this.log('submit', response);
-
-		if (response.correct) {
-			console.log("correct");
-		} else {
-			console.log("incorrect!");
-		}
-
-		this.resume();
-	};
-
-	Controller.prototype.skip = function() {
+	skip: function() {
 		var response = this.question.skip();
 		this.validateResponse(response);
-
 		this.log('skip', response);
-		this.resume();
-	};
 
-	Controller.prototype.resume = function() {
-		window.ControlPanel.$overlayEl.hide();
-		this.clear();
-		// seek to correct spot?
+		$(this.el).hide();
 		window.VideoControls.play();
-	};
+	},
 
-	Controller.prototype.triggerQuestion = function(question) {
-		window.VideoControls.pause();
-		this.load(question);
-	};
-
-	Controller.prototype.log = function(kind, response) {
+	log: function(kind, response) {
 		console.log("POSTing response", kind, response);
-	};
-
-	return Controller;
-})();
+	}
+});
 
 var recursiveTrigger = function recursiveTrigger(triggerFn) {
 	var t = VideoStats.getSecondsWatched();
@@ -321,22 +314,26 @@ var recursiveTrigger = function recursiveTrigger(triggerFn) {
 };
 
 $(function() {
-	window.Controller = new Socrates.Controller();
-	window.poppler = new Poppler();
-
-	// display a question
-	question = new Socrates.Question({
-		youtubeId: "xyAuNHPsq-g",
-		timestamp: "000320.000",
-		id: "matrix-indexing",
-		correctData: { answer: "2" }
+	window.Controller = new Socrates.Controller({
+		el: $(".video-overlay"),
+		videoControls: window.VideoControls
 	});
-
-	poppler.add(3*60+20, function() {
-		Controller.triggerQuestion(question);
-	});
-
-	recursiveTrigger($.proxy(poppler.trigger, poppler));
+	Controller.loadQuestions([
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			timestamp: "000320.000",
+			time: 4,
+			id: "matrix-indexing-pre",
+			correctData: { answer: "50" }
+		}),
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			timestamp: "000320.000",
+			time: 3*60 + 20,
+			id: "matrix-indexing",
+			correctData: { answer: "2" }
+		})
+	]);
 });
 
 var Poppler = (function() {
