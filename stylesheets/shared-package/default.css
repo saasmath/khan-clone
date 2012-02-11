@@ -1095,60 +1095,6 @@ div.video > div {
     width: 800px;
 }
 
-div.video details {
-    display: block;
-    width: 798px;
-    background-color: #d2dded;
-}
-
-div.video summary {
-    display: block;
-    background-color: #E6F8DD;
-    border-top: 1px solid #80C65A;
-    border-bottom: 1px solid white;
-    font-weight: bold;
-}
-
-div.video label.video_topic_prev {
-    float: left;
-    border-right: solid 1px white;
-}
-
-div.video label.video_topic_next {
-    float: right;
-    border-left: solid 1px white;
-}
-
-div.video div.video_topic_container {
-    clear: both;
-    border-top: 1px solid grey;
-    overflow: hidden;
-}
-
-div.video ol li {
-    display: inline-block;
-    width: 260px;
-    vertical-align: top;
-}
-
-div.video ol li, div.video summary, div.video label.video_topic_prev, div.video label.video_topic_next {
-    padding: .5ex 3px .5ex 3px;
-}
-
-div.video ol li:before {
-    content: counter(video) ".";
-    counter-increment: video;
-}
-
-div.video ol {
-    counter-reset: video;
-    padding: 0ex 0em 8ex 0em;
-    display: inline;
-    background: #eee;
-    background-break: continuous; /* CSS3 */
-    background-image: url(/images/798white_798grey.png); /*! data-uri(/images/798white_798grey.png) */
-}
-
 div.video p#keywords {
     clear: both;
 }
