@@ -123,6 +123,9 @@
 .youtube-video {
     position: relative;
 }
+.subtitles {
+    display: none;
+}
 .subtitles-warning {
     display: none;
     margin-left: 256px;
