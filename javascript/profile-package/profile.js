@@ -950,10 +950,6 @@ var Profile = {
     populateSuggestedActivity: function(activities) {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
 
-        // TODO: do this in a shared spot.
-        Handlebars.registerPartial(
-                "streak-bar",
-                Templates.get("shared.streak-bar"));
         _.each(activities["exercises"] || [], function(activity) {
             activity["streakBar"] = {
                 "proficient": false,

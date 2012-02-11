@@ -32,3 +32,5 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
     }
     return result;
 });
+
+Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
