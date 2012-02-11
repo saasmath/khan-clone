@@ -104,6 +104,7 @@ class SuggestedActivity(object):
         activity = SuggestedActivity()
         activity.name = exercise_graph_dict["display_name"]
         activity.url = models.Exercise.get_relative_url(exercise_graph_dict["name"])
+        activity.progress = exercise_graph_dict["progress"]
         return activity
 
     @staticmethod
