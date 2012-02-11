@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime, logging
+import simplejson as json
 import math
 import urllib
 import pickle
@@ -4177,6 +4178,16 @@ class VideoSubtitles(db.Model):
     @staticmethod
     def get_key_name(language, youtube_id):
         return '%s:%s' % (language, youtube_id)
+
+    def load_json(self):
+        """Return subtitles JSON as a Python object
+
+        If there is an issue loading the JSON, None is returned.
+        """
+        try:
+            return json.loads(self.json)
+        except json.JSONDecodeError:
+            logging.warn('VideoSubtitles.load_json: json decode error')
 
 class VideoSubtitlesFetchReport(db.Model):
     """Report on fetching of subtitles from Universal Subtitles
