@@ -1,0 +1,25 @@
+<nav class="prev_next_nav desktop-only">
+    {{#if previous_video }}
+    <label id="prev_video">
+      {{#if previous_topic }}
+        <a rel=prev class="previous-video" href="/video/{{ previous_video.readable_id }}?topic={{ previous_video_topic.id}}"><b>Previous Topic:</b> {{ previous_topic.standalone_title }}</a>
+      {{else}}
+        <a rel=prev class="previous-video" href="/video/{{ previous_video.readable_id }}?topic={{ topic.id }}"><b>Previous Video:</b> <span class='vid-progress v{{ previous_video.key_id }}'>{{ previous_video.title }}</span> </a>
+      {{/if}}
+    </label>
+    {{/if}}
+    {{#if next_video }}
+    <label id="next_video">
+      {{#if next_topic }}
+        <a rel=next class="next-video" href="/video/{{ next_video.readable_id }}?topic={{ next_video_topic.id }}"><b>Next Topic:</b> {{ next_topic.standalone_title }}</a>
+      {{else}}
+        <a rel=next class="next-video" href="/video/{{ next_video.readable_id }}?topic={{ topic.id }}"><b>Next Video:</b>  <span class='vid-progress v{{ next_video.key_id }}'>{{ next_video.title }}</span> </a>
+      {{/if}}
+    </label>
+    {{/if}}
+    <div class="clear"></div>
+</nav>
+
+{{{ player_html }}}
+
+{{{ discussion_html }}}

@@ -51,6 +51,7 @@ import stories
 import summer
 import common_core
 import unisubs
+import api.jsonify
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -154,14 +155,16 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
-        template_values = Video.get_play_data(readable_id, topic)
+        discussion_options = qa.add_template_values({}, self.request)
+        play_data = Video.get_play_data(readable_id, topic, discussion_options)
 
-        if template_values is None:
+        if play_data is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
-        template_values["video_points_base"] = consts.VIDEO_POINTS_BASE
-        template_values["selected_nav_link"] = 'watch'
-        template_values = qa.add_template_values(template_values, self.request)
+        template_values = {
+            "video_data_json": api.jsonify.jsonify(play_data),
+            "selected_nav_link": 'watch'
+        }
 
         bingo(['struggling_videos_landing',
                'homepage_restructure_videos_landing'])

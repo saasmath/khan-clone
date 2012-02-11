@@ -3042,7 +3042,7 @@ class Video(Searchable, db.Model):
         return int(Setting.count_videos()) / 100 * 100
 
     @staticmethod
-    def get_play_data(readable_id, topic):
+    def get_play_data(readable_id, topic, discussion_options):
         video = None
 
         # If we got here, we have a readable_id and a topic, so we can display
@@ -3063,6 +3063,13 @@ class Video(Searchable, db.Model):
                 next_video = v
                 break
 
+        videos_dict = [{
+            "selected": v.readable_id == readable_id,
+            "readable_id": v.readable_id,
+            "key_id": v.key().id(),
+            "title": v.title
+        } for v in videos]
+
         if video is None:
             return None
 
@@ -3072,8 +3079,10 @@ class Video(Searchable, db.Model):
         # are actually in.
         previous_topic = None
         previous_video_topic = None
+        previous_video_dict = None
         next_topic = None
         next_video_topic = None
+        next_video_dict = None
 
         if not previous_video:
             previous_topic = topic
@@ -3084,6 +3093,13 @@ class Video(Searchable, db.Model):
                 else:
                     break
 
+        if previous_video:
+            previous_video_dict = {
+                "readable_id": previous_video.readable_id,
+                "key_id": previous_video.key().id(),
+                "title": previous_video.title
+            }
+
         if not next_video:
             next_topic = topic
             while not next_video:
@@ -3092,6 +3108,13 @@ class Video(Searchable, db.Model):
                     (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
                 else:
                     break
+
+        if next_video:
+            next_video_dict = {
+                "readable_id": next_video.readable_id,
+                "key_id": next_video.key().id(),
+                "title": next_video.title
+            }
 
         if App.offline_mode:
             video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
@@ -3117,24 +3140,29 @@ class Video(Searchable, db.Model):
         if user_video:
             awarded_points = user_video.points
 
+        import shared_jinja
+        player_html = shared_jinja.get().render_template('videoplayer.html', video_path=video_path, video=video, awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
+
+        discussion_html = shared_jinja.get().render_template('videodiscussion.html', video=video, topic=topic, **discussion_options)
+
         return {
             'topic': topic,
             'video': video,
-            'videos': videos,
+            'videos': videos_dict,
             'video_path': video_path,
-            'video_points_base': consts.VIDEO_POINTS_BASE,
             'button_top_exercise': button_top_exercise,
             'related_exercises': [], # disabled for now
             'previous_topic': previous_topic,
-            'previous_video': previous_video,
+            'previous_video': previous_video_dict,
             'previous_video_topic': previous_video_topic,
             'next_topic': next_topic,
-            'next_video': next_video,
+            'next_video': next_video_dict,
             'next_video_topic': next_video_topic,
             'selected_nav_link': 'watch',
-            'awarded_points': awarded_points,
             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
-            'author_profile': 'https://plus.google.com/103970106103092409324'
+            'author_profile': 'https://plus.google.com/103970106103092409324',
+            'player_html': player_html,
+            'discussion_html': discussion_html
         }
 
 class Playlist(Searchable, db.Model):

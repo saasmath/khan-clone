@@ -70,6 +70,9 @@ javascript = {
             "thumbnail.handlebars",
             "related-video-link.handlebars",
             "modal-video.handlebars",
+            "video-nav.handlebars",
+            "video-description.handlebars",
+            "video-content.handlebars",
             "modalvideo.js",
         ]
     },
