@@ -1944,7 +1944,7 @@ class Topic(Searchable, db.Model):
 
     @property
     def relative_url(self):
-        return '#%s' % self.id
+        return '/#%s' % self.id
 
     @property
     def ka_url(self):
