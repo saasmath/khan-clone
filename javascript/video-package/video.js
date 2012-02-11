@@ -3,9 +3,13 @@ var Video = {
 
     SHOW_SUBTITLES_COOKIE: 'show_subtitles',
 
+    waitingForVideo: null,
+
     init: function() {
 
-        this.renderPage();
+        this.router = new VideoRouter();
+
+        Backbone.history.start({pushState: true, root: "/video/"});
 
         VideoControls.onYouTubeBlocked(function() {
 
@@ -64,7 +68,7 @@ var Video = {
 
     },
 
-    renderPage: function() {
+    renderPage: function(videoData) {
         var navTemplate = Templates.get("video.video-nav");
         var descTemplate = Templates.get("video.video-description");
         var contentTemplate = Templates.get("video.video-content");
@@ -81,40 +85,61 @@ var Video = {
         $("div.video-description").html(descTemplate(videoData));
         $("span.video-content").html(contentTemplate(videoData));
 
+
+        // Start up various scripts
+        VideoStats.startLoggingProgress(videoData.video_key);
+        Discussion.init();
+        Moderation.init();
+        Voting.init();
+        Comments.init();
+        QA.init();
+
+        // We take the message in the title of the energy points box and place it
+        // in a tooltip, and if it's the message with a link to the login we
+        // replace it with a nicer link (we don't want to have to pass the url to
+        // the templatetag).
+        var $points = $(".video-energy-points");
+        $points.data("title", $points.attr("title").replace(/Sign in/,
+                   "<a href=\"" + loginURL + "\">Sign in</a>"))
+               .removeAttr("title");
+
+        VideoStats.tooltip("#points-badge-hover", $points.data("title"));
+
         // Set up next/previous links
         $("a.previous-video").click(function(event) {
-            var url;
-            if (videoData.previous_topic) {
-                url = "/api/v1/videos/" + videoData.previous_video_topic.id + "/" + videoData.previous_video.readable_id + "/play";
-            } else {
-                url = "/api/v1/videos/" + videoData.topic.id + "/" + videoData.previous_video.readable_id + "/play";
-            }
-            $.ajax({
-                url: url,
-                success: function(json) {
-                    window.videoData = json;
-                    Video.renderPage();
-                }
-            });
+            var fragment = videoData.previous_video.readable_id + "?topic=" + (videoData.previous_video_topic ? videoData.previous_video_topic.id : videoData.topic.id);
+            Video.router.navigate(fragment, {trigger: true});
             event.stopPropagation();
             return false;
         });
         $("a.next-video").click(function(event) {
-            if (videoData.next_topic) {
-                url = "/api/v1/videos/" + videoData.next_video_topic.id + "/" + videoData.next_video.readable_id + "/play";
-            } else {
-                url = "/api/v1/videos/" + videoData.topic.id + "/" + videoData.next_video.readable_id + "/play";
-            }
-            $.ajax({
-                url: url,
-                success: function(json) {
-                    window.videoData = json;
-                    Video.renderPage();
-                }
-            });
+            var fragment = videoData.next_video.readable_id + "?topic=" + (videoData.next_video_topic ? videoData.next_video_topic.id : videoData.topic.id);
+            Video.router.navigate(fragment, {trigger: true});
             event.stopPropagation();
             return false;
         });
+
+        this.waitingForVideo = null;
+    },
+
+    loadVideo: function(topic, video) {
+        var fragment = video + "?topic=" + topic;
+        if (videoLibrary[fragment]) {
+            if (Video.waitingForVideo == fragment) {
+                Video.renderPage(videoLibrary[fragment]);
+            }
+        } else {
+            url = "/api/v1/videos/" + topic + "/" + video + "/play";
+            $.ajax({
+                url: url,
+                success: function(json) {
+                    videoLibrary[fragment] = json;
+                    if (Video.waitingForVideo == fragment) {
+                        Video.renderPage(json);
+                    }
+                }
+            });
+        }
     },
 
     toggleSubtitles: function() {
@@ -166,4 +191,17 @@ var Video = {
             });
         }
     }
-}
+};
+
+window.VideoRouter = Backbone.Router.extend({
+    routes: {
+        ":video?topic=:topic": "video"
+    },
+
+    video: function(video, topic) {
+        var fragment = video + "?topic=" + topic;
+        Video.waitingForVideo = fragment;
+        Video.loadVideo(topic, video);
+    }
+});
+

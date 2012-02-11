@@ -1006,7 +1006,7 @@ def video_play_data(topic_id, video_id):
     discussion_options = {
         "comments_page": 0,
         "qa_page": 0,
-        "qa_expand_key": False,
+        "qa_expand_key": "",
         "sort": -1
     }
     play_data = models.Video.get_play_data(video_id, topic, discussion_options)

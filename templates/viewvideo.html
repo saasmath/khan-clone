@@ -40,28 +40,13 @@
 
     {{ js_css_packages.js_package("video") }}
     <script>
-      window.videoData = {{ video_data_json }}
+      window.videoLibrary = {
+        "{{ video.readable_id }}?topic={{ topic.id }}": {{ video_data_json }}
+      };
+      window.loginURL = "{{ login_url|escape }}";
 
       $(function() {
         Video.init();
-        VideoStats.startLoggingProgress("{{ video.key()|escapejs }}");
-
-        Discussion.init();
-        Moderation.init();
-        Voting.init();
-        Comments.init();
-        QA.init();
-
-        // We take the message in the title of the energy points box and place it
-        // in a tooltip, and if it's the message with a link to the login we
-        // replace it with a nicer link (we don't want to have to pass the url to
-        // the templatetag).
-        var $points = $('.video-energy-points');
-        $points.data('title', $points.attr('title').replace(/Sign in/,
-                   '<a href="{{ login_url|escape }}">Sign in</a>'))
-               .removeAttr('title');
-
-        VideoStats.tooltip('#points-badge-hover', $points.data('title'));
       });
     </script>
     {{ analytics.crazyegg_tracker(False) }}

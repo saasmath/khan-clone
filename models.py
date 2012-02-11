@@ -3148,6 +3148,7 @@ class Video(Searchable, db.Model):
         return {
             'topic': topic,
             'video': video,
+            'video_key': video.key(),
             'videos': videos_dict,
             'video_path': video_path,
             'button_top_exercise': button_top_exercise,

@@ -162,6 +162,8 @@ class ViewVideo(request_handler.RequestHandler):
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
         template_values = {
+            "video": play_data["video"],
+            "topic": play_data["topic"],
             "video_data_json": api.jsonify.jsonify(play_data),
             "selected_nav_link": 'watch'
         }
