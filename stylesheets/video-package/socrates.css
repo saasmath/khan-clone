@@ -42,17 +42,27 @@
 }
 .video-overlay .layer.question .inputtext input {
 	font-size: 150%;
+	background-color: #444;
+	border: 1px solid #444;
+	color: #ddd;
 }
-
+.video-overlay .layer.question .inputtext input:focus {
+	background-color: #555;
+	color: #fff;
+}
 
 .video-overlay .layer.question .label {
 	position: absolute;
 	top: 0;
 	left: 0;
 	display: inline-block;
-	background-color: #fff;
-	font-size: 150%;
+	font-size: 160%;
 	padding: 5px;
+	color: #f60;
+}
+
+.video-overlay .layer.question.edit .label {
+	border: 1px solid #fff;
 }
 
 

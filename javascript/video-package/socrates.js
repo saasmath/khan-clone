@@ -168,7 +168,13 @@ Socrates.Question = (function() {
 	function Question(options) {
 		this.version = 1;
 		_.extend(this, options);
+
+		this.load();
 	}
+
+	Question.prototype.load = function() {
+		this.htmlPromise = $.get(this.htmlUrl());
+	};
 
 	Question.prototype.submit = function() {
 		var data = this.getData();
@@ -186,7 +192,7 @@ Socrates.Question = (function() {
 	Question.prototype.skip = Question.prototype.submit;
 
 	Question.prototype.render = function() {
-		$.get(this.htmlUrl()).success($.proxy(function(html) {
+		this.htmlPromise.success($.proxy(function(html) {
 			this.$controlsArea.html(html);
 			this.$frameImg.attr("src", this.imageUrl());
 		}, this));
@@ -231,17 +237,13 @@ Socrates.Controller = (function() {
 		$(".video-overlay .submit-area")
 			.on("click", "a.submit", this.submit)
 			.on("click", "a.skip", this.skip);
-
-		// this does not beling here
-		$("#trigger").on("click", this.triggerQuestion);
 	}
 
 	Controller.prototype.clear = function() {
 		this.question = null;
 		$(".video-overlay .layer.question").empty();
-		$(".video-overlay .layer.screenshot .video-frame")
-			.attr("src", "")
-			.hide();
+		$(".video-overlay .layer.screenshot .video-frame").attr("src", "");
+		ControlPanel.$overlayEl.hide();
 	};
 
 	Controller.prototype.load = function(question) {
@@ -250,7 +252,7 @@ Socrates.Controller = (function() {
 		question.$controlsArea = $(".video-overlay .layer.question");
 		question.$frameImg = $(".video-overlay .layer.screenshot .video-frame");
 		question.render();
-		question.$frameImg.show();
+		ControlPanel.$overlayEl.show();
 	};
 
 	Controller.prototype.validateResponse = function(response) {
@@ -269,7 +271,6 @@ Socrates.Controller = (function() {
 	Controller.prototype.submit = function() {
 		var response = this.question.submit();
 		this.validateResponse(response);
-
 		this.log('submit', response);
 
 		if (response.correct) {
@@ -291,13 +292,14 @@ Socrates.Controller = (function() {
 
 	Controller.prototype.resume = function() {
 		window.ControlPanel.$overlayEl.hide();
+		this.clear();
 		// seek to correct spot?
 		window.VideoControls.play();
 	};
 
-	Controller.prototype.triggerQuestion = function() {
+	Controller.prototype.triggerQuestion = function(question) {
 		window.VideoControls.pause();
-		ControlPanel.$overlayEl.show();
+		this.load(question);
 	};
 
 	Controller.prototype.log = function(kind, response) {
@@ -307,14 +309,87 @@ Socrates.Controller = (function() {
 	return Controller;
 })();
 
+var recursiveTrigger = function recursiveTrigger(triggerFn) {
+	var t = VideoStats.getSecondsWatched();
+
+	triggerFn(t);
+
+	// schedule another call when the duration is probably ticking over to
+	// the next tenth of a second
+	t = VideoStats.getSecondsWatched();
+	_.delay(recursiveTrigger, (Poppler.nextPeriod(t, 0.1) - t)*1000, triggerFn);
+};
+
 $(function() {
 	window.Controller = new Socrates.Controller();
+	window.poppler = new Poppler();
+
 	// display a question
-	window.InlineQuestion = new Socrates.Question({
+	question = new Socrates.Question({
 		youtubeId: "xyAuNHPsq-g",
 		timestamp: "000320.000",
 		id: "matrix-indexing",
 		correctData: { answer: "2" }
 	});
-	window.Controller.load(InlineQuestion);
+
+	poppler.add(3*60+20, function() {
+		Controller.triggerQuestion(question);
+	});
+
+	recursiveTrigger($.proxy(poppler.trigger, poppler));
 });
+
+var Poppler = (function() {
+	function Poppler() {
+		this.events = [];
+		this.duration = 0;
+		_.bindAll(this);
+	}
+
+	Poppler.timeFn = function(e) { return e.time; };
+
+	Poppler.nextPeriod = function(n, period) {
+		return Math.round(Math.floor(n/period + 1)) * period;
+	};
+
+	Poppler.prototype.add = function(time, fn) {
+		fn.time = time;
+		var i = _.sortedIndex(this.events, Poppler.timeFn);
+		this.events.splice(i, 0, fn);
+	};
+
+	Poppler.prototype.trigger = function trigger(time) {
+		var epsilon = 0.001;
+		// ignore duplicate triggers
+		if (time == this.duration) return;
+
+		if (time < this.duration) {
+			// out of order, just treat as a seek
+			this.seek(time);
+			return;
+		}
+
+		// find the index for which all events prior to duration are to the left
+		var i = _.sortedIndex(this.events, {time: this.duration}, Poppler.timeFn);
+
+		// skip any events with times equal to the prior duration, as they were
+		// executed in the last call
+		while (this.events[i] && Math.abs(this.events[i].time - this.duration) < epsilon) {
+			i++;
+		}
+
+		// get a new duration
+		this.seek(time);
+
+		// trigger events
+		for (var j = i; this.events[j] && this.events[j].time <= this.duration; j++) {
+			this.events[j]();
+		}
+	};
+
+	Poppler.prototype.seek = function(time) {
+		this.duration = time;
+	};
+
+	return Poppler;
+})();
