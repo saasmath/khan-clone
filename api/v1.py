@@ -1,7 +1,6 @@
 import datetime
 import logging
 from itertools import izip
-import pickle
 
 from flask import request, current_app, Response
 
@@ -27,7 +26,7 @@ from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag,\
+from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
@@ -2127,14 +2126,46 @@ def autocomplete():
             "exercises": exercise_results
     }
 
+@route("/api/v1/dev/getbackupmodels", methods=["GET"])
+@oauth_required
+@developer_required
+@jsonify
+def getbackupmodels():
+    """Return the names of all models that inherit from models.Backup."""
+
+    # I'm not thrilled about using db._kind_map, but I don't know how to do
+    # this any other way
+    namesandclasses = filter(
+        lambda x: issubclass(x[1], models.Backup) and x[1] != models.Backup,
+        db._kind_map.iteritems()
+        )
+    names = map(lambda x: x[0], namesandclasses)
+    return names
+
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
 @oauth_required()
 @developer_required
-def protobuf_entitys(entity):
-    query = db.class_for_kind(entity).all()
-    lst = map(lambda entity: db.model_to_protobuf(entity).Encode(),
-              query.fetch(request.request_int("max", default=500)))
-    return pickle.dumps(lst)
+@pickle
+def protobuf_entities(entity):
+    """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
+
+    Notes: 'entity' must be a subclass of 'models.Backup'
+           'dt{start,end}' must be in ISO 8601 format
+           'max' defaults to 500
+    Example:
+        /api/v1/dev/protobuf/ProblemLog?dt_start=2012-02-11T20%3A07%3A49Z&dt_end=2012-02-11T21%3A07%3A49Z
+        Returns up to 500 problem_logs from between 'dt_start' and 'dt_end'
+    """
+    entity_class = db.class_for_kind(entity)
+    if not (entity_class and issubclass(entity_class, models.Backup)):
+        return api_error_response(ValueError("Invalid class '%s' (must be a \
+                subclass of models.Backup)" % entity))
+    query = entity_class.all()
+    filter_query_by_request_dates(query, "timestamp")
+    query.order("timestamp")
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               query.fetch(request.request_int("max", default=500)))
 
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
