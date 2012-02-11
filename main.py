@@ -5,7 +5,6 @@ import urllib
 import urlparse
 import logging
 import re
-import simplejson as json
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
