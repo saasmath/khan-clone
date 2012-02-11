@@ -775,16 +775,6 @@ var Profile = {
                         }
                     ];
 
-                // Because we show the badges in reverse order,
-                // from challenge/master/category-5 to meteorite/bronze/category-0
-                Handlebars.registerHelper("reverseEach", function(context, block) {
-                    var result = "";
-                    for (var i = context.length - 1; i >= 0; i--) {
-                        result += block(context[i]);
-                    }
-                    return result;
-                });
-
                 Handlebars.registerHelper("toMediumIconSrc", function(category) {
                     return badgeInfo[category].icon;
                 });
