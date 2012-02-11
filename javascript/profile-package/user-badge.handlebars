@@ -9,14 +9,14 @@
       Last achieved <abbr class="timeago" title="{{lastEarnedDate}}">{{lastEarnedDate}}</abbr>
       {{#if visibleContextName}}
         in <strong>{{visibleContextName}}</strong>
-      {{/if}}
-      {{#if hasMultiple}}
-        <span class="badge-context-hidden-link"><a href="#" onclick="Badges.showMoreContext(this);return false;">and also in<span class="ellipsis">...</span></a></span>
-        <span class="badge-context-hidden" style="display:none;">
-        {{#each listContextNamesHidden}}
-           <strong>{{name}}{{#unless isLast}}, {{/unless}}</strong>
-        {{/each}}
-        </span>
+        {{#if hasMultiple}}
+          <span class="badge-context-hidden-link"><a href="#" onclick="Badges.showMoreContext(this);return false;">and also in<span class="ellipsis">...</span></a></span>
+          <span class="badge-context-hidden" style="display:none;">
+          {{#each listContextNamesHidden}}
+             <strong>{{name}}{{#unless isLast}}, {{/unless}}</strong>
+          {{/each}}
+          </span>
+        {{/if}}
       {{/if}}
   </div>
   {{#if badge.points}}<div class="energy-points-badge">{{badge.points}}</div>{{/if}}

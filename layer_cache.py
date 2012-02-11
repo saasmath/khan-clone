@@ -339,11 +339,11 @@ class BlobCache():
     @staticmethod
     def get_blob_infos(key, namespace=""):
         filename = BlobCache.get_filename(key, namespace)
-        return blobstore.BlobInfo.all().filter("filename =", filename)
+        return blobstore.BlobInfo.all().filter("filename =", filename).fetch(100)
         
     @staticmethod
     def get_first_blob_info(key, namespace=""):
-        infos = BlobCache.get_blob_infos(key, namespace).fetch(100)
+        infos = BlobCache.get_blob_infos(key, namespace)
 
         if infos:
             infos = sorted(infos, key=lambda info: info.creation)

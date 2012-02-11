@@ -104,7 +104,13 @@
                <a href="#" class="subtitles-link">Close subtitles</a>
             </div>
         </div>
-
+        {% if subtitles_json %}
+        <div itemprop="transcript" class="subtitles">
+            {% for entry in subtitles_json: %}
+            <p>{{ entry.text|e }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
         <span class="video_extra_links desktop-only">
             <nobr>
 
