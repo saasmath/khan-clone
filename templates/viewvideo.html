@@ -97,7 +97,7 @@
             </div>
         </div>
         {% if subtitles_json %}
-        <div itemtype="transcript" class="subtitles">
+        <div itemprop="transcript" class="subtitles">
             {% for entry in subtitles_json: %}
             <p>{{ entry.text|e }}</p>
             {% endfor %}
