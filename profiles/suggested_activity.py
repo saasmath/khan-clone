@@ -1,4 +1,5 @@
 from profiles import recent_activity
+from goals.models import GoalList
 import models
 
 class SuggestedActivity(object):
@@ -76,7 +77,15 @@ class SuggestedActivity(object):
 
     @staticmethod
     def get_goals_for(user_data):
-        return []
+        # TODO: Consider suggesting exercises for
+        # when the student has nearly completed the requirements
+        # for one of Marcos's badge-goal hybrids
+
+        goals = GoalList.get_current_goals(user_data)
+
+        max_activities = 3
+        return [SuggestedActivity.from_goal(g)
+                for g in goals[0:max_activities]]
 
     @staticmethod
     def get_exercises_for(user_data):
@@ -89,6 +98,9 @@ class SuggestedActivity(object):
 
     @staticmethod
     def from_exercise(exercise_graph_dict):
+        """ Build a SuggestedActivity dict
+            from a UserExerciseGraph exercise graph dict.
+        """
         activity = SuggestedActivity()
         activity.name = exercise_graph_dict["display_name"]
         activity.url = models.Exercise.get_relative_url(exercise_graph_dict["name"])
@@ -96,7 +108,7 @@ class SuggestedActivity(object):
 
     @staticmethod
     def from_video_activity(recent_video_activity):
-        """ Builds a SuggestedActivity dict from a RecentVideoActivity obect """
+        """ Build a SuggestedActivity dict from a RecentVideoActivity object. """
         activity = SuggestedActivity()
         activity.name = recent_video_activity.video_title
         activity.url = "/video?v=%s" % recent_video_activity.youtube_id
@@ -104,9 +116,33 @@ class SuggestedActivity(object):
 
     @staticmethod
     def from_video(video):
-        """ Builds a SuggestedActivity dict from a models.Video object """
+        """ Build a SuggestedActivity dict from a models.Video object. """
         activity = SuggestedActivity()
         activity.name = video.title
         activity.url = video.relative_url
         return activity
 
+    @staticmethod
+    def from_goal(goal):
+        """ Build a SuggestedActivity dict from a goals.models.Goal.
+
+        TODO: Currently, we suggest the objective that is closest to
+        completion (but not yet completed). We could also consider recency.
+        """
+        activity = SuggestedActivity()
+        goal_data = goal.get_visible_data()
+
+        activity.name = goal_data["title"]
+        suggested_objective = {
+            "progress": -1
+        }
+
+        for objective in goal_data["objectives"]:
+            progress = objective["progress"]
+            if progress < 1 and progress > suggested_objective["progress"]:
+                suggested_objective = objective
+
+        activity.url = suggested_objective["url"]
+        activity.description = suggested_objective["description"]
+
+        return activity
