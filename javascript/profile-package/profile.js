@@ -949,6 +949,23 @@ var Profile = {
 
     populateSuggestedActivity: function(activities) {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
+
+        // TODO: do this in a shared spot.
+        Handlebars.registerPartial(
+                "streak-bar",
+                Templates.get("shared.streak-bar"));
+        _.each(activities["exercises"] || [], function(activity) {
+            activity["streakBar"] = {
+                "proficient": false,
+                "suggested": true,
+                // TODO: better format this.
+                "progressDisplay": "Current progress: " +
+                        (100 * activity["progress"]) + "%",
+                // TODO: is this the right width?
+                "maxWidth": 228,
+                "width": activity["progress"] * 228
+            };
+        });
         $("#suggested-activity").append(suggestedTemplate(activities));
     },
 
