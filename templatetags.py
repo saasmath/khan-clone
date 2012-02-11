@@ -119,7 +119,7 @@ def streak_bar(user_exercise_dict):
     version_number if version_number else models.Setting.topic_tree_version()))
 def topic_browser(browser_id, version_number=None):
     if version_number:
-        version = models.TopicVersion.get_by_number(int(version_number))
+        version = models.TopicVersion.get_by_number(version_number)
     else:
         version = None
 
@@ -134,7 +134,7 @@ def topic_browser_tree(tree, level=0):
     s = ""
     class_name = "topline"
     for child in tree.children:
-        if not child.children:
+        if not child.children or child.id in models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
                 continue

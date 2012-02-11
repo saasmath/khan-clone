@@ -1,4 +1,5 @@
 {% import 'macros/library.html' as library %}
+
 <div id="library">
         <div id="library-content" >
             {{ library.column_major_order_styles() }}
@@ -10,7 +11,11 @@
             <div data-role="page" id="{{ topic.id }}" data-theme="b">
                 <div data-role="header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
+                    {% if topic.breadcrumb_title %}
+                    <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.breadcrumb_title|escape}}</h2}}>
+                    {% else %}
                     <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.standalone_title|escape}}</h2>
+                    {% endif %}
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
                 <div data-role="content">

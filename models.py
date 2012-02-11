@@ -2501,7 +2501,8 @@ class Topic(Searchable, db.Model):
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
         "topic.get_all_topic_%s_%s" % (
-            version.updated_on if version else Setting.topic_tree_version(), 
+            (str(version.number)+str(version.updated_on)) if version 
+            else Setting.topic_tree_version(), 
             include_hidden),
         layer=layer_cache.Layers.Memcache)    
     def get_all_topics(version=None, include_hidden=False):
@@ -2529,7 +2530,7 @@ class Topic(Searchable, db.Model):
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
         "topic.get_super_topics_%s_%s" % (
-            (version.number+version.updated_on) if version 
+            (str(version.number)+str(version.updated_on))  if version 
             else Setting.topic_tree_version(),
             include_hidden),
         layer=layer_cache.Layers.Memcache) 
@@ -2541,7 +2542,7 @@ class Topic(Searchable, db.Model):
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
         "topic.get_content_topics_%s_%s" % (
-            (version.number+version.updated_on) if version 
+            (str(version.number)+str(version.updated_on))  if version 
             else Setting.topic_tree_version(),
             include_hidden),
         layer=layer_cache.Layers.Memcache) 
@@ -2562,7 +2563,7 @@ class Topic(Searchable, db.Model):
     @layer_cache.cache_with_key_fxn(
         lambda types=None, version=None, include_hidden = False: 
         "topic.get_filled_content_topics_%s_%s" % (
-            (version.number+version.updated_on) if version 
+            (str(version.number)+str(version.updated_on)) if version 
             else Setting.topic_tree_version(),
             include_hidden),
         layer=layer_cache.Layers.Blobstore) 
