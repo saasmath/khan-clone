@@ -103,6 +103,14 @@ var VideoControls = {
 
             return false;
         }
+    },
+
+    onPlayerReady: function(cb) {
+        if (VideoControls.playerreadyFired) {
+            return cb();
+        } else {
+            $(VideoControls).one("playerready", cb);
+        }
     }
 };
 
@@ -383,7 +391,7 @@ function onYouTubePlayerAPIReady() {
         return;
     }
 
-    // Always give each iframe player a unique id so YT.Player events 
+    // Always give each iframe player a unique id so YT.Player events
     // work properly. Hopefully in less-beta versions of YT's iframe API this
     // won't be necessary.
     //
@@ -423,6 +431,7 @@ function connectYouTubePlayer(player) {
     // 'playerready' events on any objects that are using the player so that they can
     // take appropriate action to use the new player.
     $(VideoControls).trigger("playerready");
+    VideoControls.playerreadyFired = true;
     $(VideoStats).trigger("playerready");
 
 }
