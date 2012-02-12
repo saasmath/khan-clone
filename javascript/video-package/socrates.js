@@ -151,8 +151,42 @@ Socrates.InputText = Backbone.View.extend({
 
 $(Socrates.ControlPanel.onReady);
 
-// extract model from this?
-Socrates.Question = Backbone.View.extend({
+Socrates.Question = Backbone.Model.extend({
+	seconds: function() {
+		return Socrates.Question.timeToSeconds(this.get("time"));
+	},
+
+	key: function() {
+		return this.get('youtubeId') + "-" + this.get('time');
+	}
+}, {
+	timeToSeconds: function(time) {
+		// convert a string like "4m21s" into just the number of seconds
+		result = 0;
+		var i = 0;
+		while(time[i]) {
+			var start = i;
+			while(time[i] && /[\d\.,]/.test(time[i])) i++;
+			var n = parseFloat(time.slice(start, i));
+			var unit = time[i] || "s"; // assume seconds if reached end
+			if (unit == "m") {
+				result += n * 60;
+			} else if (unit == "s") {
+				result += n;
+			} else {
+				throw "Unimplemented unit, only ISO8601 durations with mins and secs";
+			}
+			i++;
+		}
+		return result;
+	}
+});
+
+Socrates.QuestionCollection = Backbone.Collection.extend({
+	model: Socrates.Question
+});
+
+Socrates.QuestionView = Backbone.View.extend({
 	className: "question",
 
 	initialize: function() {
@@ -163,10 +197,17 @@ Socrates.Question = Backbone.View.extend({
 	},
 
 	render: function() {
-		// preload the image
-		var img = document.createElement('img');
-		img.src = this.imageUrl();
-		this.$screenShotLayer = $("<div>", {"class": "layer screenshot"}).append(img);
+		this.$screenShotLayer = $("<div>", {"class": "layer screenshot"});
+		if (this.model.get('backgroundColor')) {
+			this.$screenShotLayer.css('background-color',
+				this.model.get('backgroundColor'));
+		}
+		if (this.model.get('screenshot')) {
+			// preload the image
+			var img = document.createElement('img');
+			img.src = this.imageUrl();
+			this.$screenShotLayer.append(img);
+		}
 
 		// preload html
 		this.$controlsLayer = $("<div>", {"class": "layer controls"});
@@ -183,33 +224,39 @@ Socrates.Question = Backbone.View.extend({
 		return this;
 	},
 
+	hide: function() {
+		$(this.el).hide();
+		return this;
+	},
+
+	show: function() {
+		$(this.el).show();
+		return this;
+	},
+
 	submit: function() {
 		var data = this.getData();
 		return {
-			timestamp: this.timestamp,
-			youtubeId: this.youtubeId,
-			id: this.id,
+			time: this.model.get('time'),
+			youtubeId: this.model.get('youtubeId'),
+			id: this.model.get('id'),
 			version: this.version,
 			correct: this.isCorrect(data),
 			data: data
 		};
 	},
 
-	key: function() {
-		return this.youtubeId + "-" + this.timestamp;
-	},
-
 	htmlUrl: function() {
-		return "/socrates/questions/" + this.key() + ".html";
+		return "/socrates/questions/" + this.model.get('slug') + ".html";
 	},
 
 	imageUrl: function() {
-		return "/socrates/questions/" + this.key() + ".jpeg";
+		return "/socrates/questions/" + this.model.key() + ".jpeg";
 	},
 
 	isCorrect: function(data) {
 		// todo: look at how khan-exercise does their fancy number handling
-		return _.isEqual(data, this.correctData);
+		return _.isEqual(data, this.model.get('correctData'));
 	},
 
 	getData: function() {
@@ -226,10 +273,10 @@ Socrates.Question = Backbone.View.extend({
 });
 
 // alias skip to submit
-Socrates.Question.prototype.skip = Socrates.Question.prototype.submit;
+Socrates.QuestionView.prototype.skip = Socrates.QuestionView.prototype.submit;
 
 // need to clean this up, I think it's a mixture of a Backbone.{View,Router}
-Socrates.Controller = Backbone.View.extend({
+Socrates.SubmitView = Backbone.View.extend({
 	events: {
 		'click .submit-area a.submit': 'submit',
 		'click .submit-area a.skip': 'skip'
@@ -237,30 +284,45 @@ Socrates.Controller = Backbone.View.extend({
 
 	initialize: function() {
 		this.videoControls = this.options.videoControls;
+
+		// wrap each model in a view
+		this.views = this.model.map(function(question) {
+			return new Socrates.QuestionView({model: question});
+		});
 	},
 
-	loadQuestions: function(questions) {
-		this.$(".questions").append(_.pluck(questions, 'el'));
-
-		var poppler = new Poppler();
-		_.each(questions, function(question) {
-			// subscribe to display event
-			poppler.add(question.time, _.bind(this.show, this, question));
-		}, this);
-
-		// watch video time every 100 ms
-		recursiveTrigger(_.bind(poppler.trigger, poppler));
+	render: function() {
+		this.$(".questions").append(_.pluck(this.views, 'el'));
 	},
 
-	show: function(question) {
+	show: function(view) {
+		if (view.__proto__ == Socrates.Question.prototype) {
+			// recieved a question, find the corresponding view
+			view = _.find(this.views, function(v) { return v.model == view; });
+		}
 		this.videoControls.pause();
-		this.question = question;
+
+		if (this.currentView) {
+			this.currentView.hide();
+		}
+		this.currentView = view;
+
 		$(this.el).show();
-		$(question.el).show();
+		this.currentView.show();
+		return this;
+	},
+
+	hide: function() {
+		if (this.currentView) {
+			$(this.currentView.el).hide();
+			this.currentView = null;
+		}
+		$(this.el).hide();
+		return this;
 	},
 
 	submit: function() {
-		var response = this.question.submit();
+		var response = this.currentView.submit();
 		this.validateResponse(response);
 		this.log('submit', response);
 
@@ -277,7 +339,7 @@ Socrates.Controller = Backbone.View.extend({
 
 	validateResponse: function(response) {
 		requiredProps = ['id', 'version', 'correct', 'data', 'youtubeId',
-			'timestamp'];
+			'time'];
 		var hasAllProps = _.all(requiredProps, function(prop) {
 			return response[prop] != null;
 		});
@@ -289,11 +351,17 @@ Socrates.Controller = Backbone.View.extend({
 	},
 
 	skip: function() {
-		var response = this.question.skip();
+		var response = this.currentView.skip();
 		this.validateResponse(response);
 		this.log('skip', response);
+		console.log(this.currentView);
 
-		$(this.el).hide();
+		// clear the fragment
+		Router.navigate("", false);
+
+		console.log(this.currentView);
+		window.VideoControls.player.seekTo(this.currentView.model.seconds());
+		this.hide();
 		window.VideoControls.play();
 	},
 
@@ -313,46 +381,59 @@ var recursiveTrigger = function recursiveTrigger(triggerFn) {
 	_.delay(recursiveTrigger, (Poppler.nextPeriod(t, 0.1) - t)*1000, triggerFn);
 };
 
-$(function() {
-	window.Controller = new Socrates.Controller({
-		el: $(".video-overlay"),
-		videoControls: window.VideoControls
-	});
-
-	nav = new Socrates.Nav({ el: ".socrates-nav" });
-	nav.render();
-
-	Controller.loadQuestions([
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			timestamp: "000320.000",
-			time: 4,
-			id: "matrix-indexing-pre",
-			correctData: { answer: "50" }
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			timestamp: "000320.000",
-			time: 3*60 + 20,
-			id: "matrix-indexing",
-			correctData: { answer: "2" }
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			timestamp: "000441.000",
-			time: 4*60 + 41,
-			id: "matrix-uses",
-			correctData: { answer: [true, true, true, true, true] }
-		})
-	]);
-});
-
 Socrates.Nav = Backbone.View.extend({
 	template: Templates.get("video.socrates-nav"),
 
 	render: function() {
-		$(this.el).html(this.template());
+		$(this.el).html(this.template({
+			questions: this.model.toJSON()
+		}));
 		return this;
+	}
+});
+
+Socrates.QuestionRouter = Backbone.Router.extend({
+	routes: {
+		":slug": "show"
+	},
+
+	initialize: function(options) {
+		this.questions = options.questions;
+		this.masterView = options.masterView;
+		this.videoControls = options.videoControls;
+	},
+
+	show: function(slug) {
+		// blank fragment for current state of video
+		if (slug === "") {
+			this.masterView.hide();
+		}
+
+		// slug for navigating to a particular question
+		var question = this.questions.find(function(q) {
+			return q.get('slug') == slug;
+		});
+		if (question) {
+			this.masterView.show(question);
+			return;
+		}
+
+		// todo: parse as a time, and seek to that time in the video
+		if (/\d+m\d+s/.test(slug)) {
+			var seconds = Socrates.Question.timeToSeconds(slug);
+			this.videoControls.onPlayerReady(_.bind(function() {
+				this.videoControls.player.seekTo(seconds);
+			}, this));
+			return;
+		}
+
+		// invalid fragment, replace it with nothing
+		this.navigate("", {replace: true, trigger: true});
+	},
+
+	navigateToQuestion: function(question) {
+		this.navigate(question.get('slug'));
+		this.masterView.show(question);
 	}
 });
 
@@ -410,3 +491,57 @@ var Poppler = (function() {
 
 	return Poppler;
 })();
+
+$(function() {
+	window.Questions = new Socrates.QuestionCollection([
+		new Socrates.Question({
+			screenshot: true,
+			youtubeId: "xyAuNHPsq-g",
+			time: "3m20s",
+			id: 1,
+			title: "Elements in a matrix",
+			slug: "elements-in-a-matrix",
+			correctData: { answer: "2" }
+		}),
+		new Socrates.Question({
+			backgroundColor: "#fff",
+			youtubeId: "xyAuNHPsq-g",
+			time: "4m41s",
+			id: 2,
+			title: "What are matrices used for?",
+			slug: "what-are-matrices-used-for",
+			correctData: { answer: [true, true, true, true, true] }
+		})
+	]);
+
+	window.SubmitView = new Socrates.SubmitView({
+		el: $(".video-overlay"),
+		videoControls: window.VideoControls,
+		model: Questions
+	});
+	SubmitView.render();
+
+	nav = new Socrates.Nav({
+		el: ".socrates-nav",
+		model: Questions
+	});
+	nav.render();
+
+	window.Router = new Socrates.QuestionRouter({
+		masterView: window.SubmitView,
+		questions: window.Questions,
+		videoControls: window.VideoControls
+	});
+
+	window.poppler = new Poppler();
+	window.Questions.each(function(q) {
+		poppler.add(q.seconds(), _.bind(Router.navigateToQuestion, Router, q));
+	});
+
+	// watch video time every 100 ms
+	recursiveTrigger(_.bind(poppler.trigger, poppler));
+
+	Backbone.history.start({
+		root: "video/introduction-to-matrices?topic=linear-algebra-1#elements-in-a-matrix"
+	});
+});
