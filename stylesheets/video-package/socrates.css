@@ -1,11 +1,13 @@
+/* initially hide overlay and questions */
 .video-overlay {
 	display: none;
 }
-
 .video-overlay .questions .question {
 	display: none;
 }
 
+
+/* a layer is used to display form controls over a screenshot */
 .video-overlay .layer {
 	position: absolute;
 	top: 0;
@@ -14,6 +16,8 @@
 	width: 800px;
 }
 
+
+/* screenshot layer */
 .video-overlay .layer.screenshot {
 	z-index: 1;
 	background: #000;
@@ -24,8 +28,10 @@
 	margin: 0 auto 0 auto;
 }
 
+
+/* controls layer */
 .video-overlay .layer.controls {
-	z-index: 3;
+	z-index: 2;
 }
 
 .video-overlay .layer.controls .inputtext {
@@ -34,22 +40,27 @@
 	height: 25px;
 	padding: 3px 20px 10px 3px;
 }
+
 .video-overlay .layer.controls .inputtext.moveable {
 	background-color: red;
 }
+
 .video-overlay .layer.controls .inputtext.ui-draggable {
 	cursor: move;
 }
+
 .video-overlay .layer.controls .inputtext input {
 	width: 100%;
 	height: 100%;
 }
+
 .video-overlay .layer.controls .inputtext input {
 	font-size: 150%;
 	background-color: #444;
 	border: 1px solid #444;
 	color: #ddd;
 }
+
 .video-overlay .layer.controls .inputtext input:focus {
 	background-color: #555;
 	color: #fff;
@@ -70,10 +81,11 @@
 }
 
 
+/* submit area */
 .video-overlay .submit-area {
 	position: absolute;
 	z-index: 3;
-	bottom: 10px; /* no idea why this value works */
+	bottom: 10px;
 	right: 0;
 }
 /* needed so that buttons don't inherit opacity */
@@ -98,15 +110,9 @@
 	margin-left: 15px;
 }
 
+
+/* other stuff */
 .interactive-video-controls {
 	position: absolute;
 	float: left;
-}
-
-
-
-
-/* todo: style form elements so they look ok on a black background */
-input[type="text"], input[type="email"] {
-	outline: inherit;
 }
