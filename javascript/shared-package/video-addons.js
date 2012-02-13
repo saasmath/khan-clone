@@ -121,6 +121,7 @@ var VideoStats = {
     sVideoKey: null,
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
+    autoplay: false,
 
     getSecondsWatched: function() {
         if (!this.player) return 0;
@@ -212,9 +213,23 @@ var VideoStats = {
         }
     },
 
+    checkVideoComplete: function() {
+        var state = this.player.getPlayerState();
+        if (state === 0) {
+            videoAutoPlayFunc();
+        } else if (state === 2) {
+            this.autoplay = false;
+        }
+    },
+
     playerStateChange: function(state) {
+        var self = this;
         var playing = this.playing || this.fAlternativePlayer;
-        if (state == -2) { // playing normally
+        if (state == -1) { // Not started
+            if (this.autoplay) {
+                this.player.playVideo();
+            }
+        } else if (state == -2) { // playing normally
             var percent = this.getPercentWatched();
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity))
             {
@@ -224,10 +239,22 @@ var VideoStats = {
         } else if (state === 0 && playing) { // ended
             this.playing = false;
             this.save();
+
+            if (this.autoplay && videoAutoPlayFunc) {
+                setTimeout(function() { self.checkVideoComplete() }, 500);
+            } else {
+                this.autoplay = false;
+            }
         } else if (state == 2 && playing) { // paused
             this.playing = false;
             if (this.getSecondsWatchedSinceSave() > 1) {
-              this.save();
+                this.save();
+            }
+
+            if (this.autoplay && videoAutoPlayFunc) {
+                setTimeout(function() { self.checkVideoComplete() }, 500);
+            } else {
+                this.autoplay = false;
             }
         } else if (state == 1) { // play
             this.playing = true;

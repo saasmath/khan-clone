@@ -119,6 +119,16 @@ var Video = {
             return false;
         });
 
+        if (videoData.next_video_topic) {
+            // Don't autoplay to next video
+            window.videoAutoPlayFunc = null;
+        } else {
+            var fragment = videoData.previous_video.readable_id + "?topic=" + (videoData.previous_video_topic ? videoData.previous_video_topic.id : videoData.topic.id);
+            window.videoAutoPlayFunc = function() {
+                Video.router.navigate(fragment, {trigger: true});
+            }
+        }
+
         this.waitingForVideo = null;
     },
 
