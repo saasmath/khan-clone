@@ -668,6 +668,22 @@ def topic_move_child(old_parent_id, version_id = "edit"):
 
     return True    
 
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/movechild", methods=["POST"])  
+@route("/api/v1/topic/<topic_id>/ungroup")
+@developer_required
+@jsonp
+@jsonify
+def topic_ungroup(topic_id, version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    topic = models.Topic.get_by_id(topic_id, version)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+
+    topic.ungroup()
+
+    return True
+
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])   
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
 @jsonp
