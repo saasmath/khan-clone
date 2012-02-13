@@ -241,7 +241,28 @@ Socrates.QuestionView = Backbone.View.extend({
 		data = {};
 		_.each(this.$("input"), function(el) {
 			var $el = $(el);
-			data[$el.attr("name")] = $(el).val();
+			var key = $el.attr("name");
+
+			var val;
+			if (_.indexOf(["checkbox", "radio"], $el.attr("type")) >= 0) {
+				val = $el.prop("checked");
+			} else {
+				val = $el.val();
+			}
+
+			var isArray = false;
+			if (data[key]) {
+				if (!_.isArray(data[key])) {
+					data[key] = [data[key]];
+				}
+				isArray = true;
+			}
+
+			if (isArray) {
+				data[key].push(val);
+			} else {
+				data[key] = val;
+			}
 		});
 		return data;
 	},
@@ -493,7 +514,7 @@ $(function() {
 			id: 3,
 			title: "What are matrices used for?",
 			slug: "what-are-matrices-used-for",
-			correctData: { answer: [true, true, true, true, true] }
+			correctData: { answer: [true, true, true, true, true, true] }
 		}),
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
