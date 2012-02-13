@@ -477,7 +477,7 @@ $(function() {
 			id: 1,
 			title: "Dimensions of a matrix",
 			slug: "dimensions-of-a-matrix",
-			correctData: { rows: "5", cols: "4" }
+			correctData: { rows: "4", cols: "5" }
 		}),
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
