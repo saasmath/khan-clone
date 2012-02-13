@@ -197,29 +197,11 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	render: function() {
-		this.$screenShotLayer = $("<div>", {"class": "layer screenshot"});
-		if (this.model.get('backgroundColor')) {
-			this.$screenShotLayer.css('background-color',
-				this.model.get('backgroundColor'));
-		}
-		if (this.model.get('screenshot')) {
-			// preload the image
-			var img = document.createElement('img');
-			img.src = this.imageUrl();
-			this.$screenShotLayer.append(img);
-		}
-
 		// preload html
-		this.$controlsLayer = $("<div>", {"class": "layer controls"});
 		$.get(this.htmlUrl()).success(_.bind(function(html) {
-			this.$controlsLayer.html(html);
+			$(this.el).html(html);
 			this.loaded = true;
 		}, this));
-
-		// append to view. Still not added to DOM
-		$(this.el)
-			.append(this.$screenShotLayer)
-			.append(this.$controlsLayer);
 
 		return this;
 	},
@@ -495,7 +477,6 @@ var Poppler = (function() {
 $(function() {
 	window.Questions = new Socrates.QuestionCollection([
 		new Socrates.Question({
-			screenshot: true,
 			youtubeId: "xyAuNHPsq-g",
 			time: "3m20s",
 			id: 1,
@@ -504,7 +485,6 @@ $(function() {
 			correctData: { answer: "2" }
 		}),
 		new Socrates.Question({
-			backgroundColor: "#fff",
 			youtubeId: "xyAuNHPsq-g",
 			time: "4m41s",
 			id: 2,
