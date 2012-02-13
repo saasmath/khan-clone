@@ -39,7 +39,7 @@
 
             $.ajax({
                 type: 'GET',
-                url: 'http://localhost:8085/translations/getsubtitlelanguages',
+                url: 'http://khan-report.appspot.com/translations/getsubtitlelanguagescount',
                 dataType: 'jsonp',
                 success: function(l) {
                     $.each(l, function(i) {
@@ -71,7 +71,7 @@
                             enabled: false
                         },
                         title: {
-                            text: 'Languages with most translations'
+                            text: 'Languages with most subtitles'
                         },
                         colors: bar_color,
                         plotOptions: {
