@@ -486,6 +486,20 @@ $(function() {
 			title: "What are matrices used for?",
 			slug: "what-are-matrices-used-for",
 			correctData: { answer: [true, true, true, true, true] }
+		}),
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			time: "6m31s",
+			id: 3,
+			title: "Defining matrix addition",
+			slug: "defining-matrix-addition"
+		}),
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			time: "8m9s",
+			id: 4,
+			title: "Defining matrix addition (part 2)",
+			slug: "defining-matrix-addition-part-2"
 		})
 	]);
 

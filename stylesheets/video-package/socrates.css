@@ -105,14 +105,20 @@
 	border: 1px solid #fff;
 }
 
-/* checkbox */
-.video-overlay .layer.controls label {
+/* bootstrap form styles */
+.video-overlay label {
 	display: block;
 	margin-bottom: 5px;
 }
 
-.checkbox, .radio {
+.video-overlay .checkbox, .video-overlay .radio {
 	padding-left: 18px;
+}
+
+.video-overlay .radio.inline, .checkbox.inline {
+	display: inline-block;
+	margin-bottom: 0;
+	vertical-align: middle;
 }
 
 /* buttons */
