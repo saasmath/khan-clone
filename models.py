@@ -2186,6 +2186,16 @@ class Topic(Searchable, db.Model):
         self.version.update()
         return db.run_in_transaction(move_txn)
 
+    # Ungroup takes all of a topics children, moves them up a level, then 
+    # deletes the topic
+    def ungroup(self):
+        parent = db.get(self.parent_keys[0])
+        pos = parent.child_keys.index(self.key())
+        children = db.get(self.child_keys)
+        for i, child in enumerate(children):
+            self.move_child(child, parent, pos+i)
+        parent.delete_child(self)
+
     def copy(self, title, parent=None, **kwargs):
         if not kwargs.has_key("version") and parent is not None:
             kwargs["version"] = parent.version
