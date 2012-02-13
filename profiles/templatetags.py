@@ -64,9 +64,3 @@ def get_api_url(prefix, api_function, student, coach, list_id):
 
     urlpath = "/api/v1/%s/%s" % (prefix, api_function)
     return urlunparse(('', '', urlpath, '', urlencode(qs), ''))
-
-def profile_recent_activity(user_data, view="standard"):
-    context = recent_activity.recent_activity_context(user_data)
-    context["view"] = view
-
-    return shared_jinja.get().render_template("profiles/recent_activity.html", **context)

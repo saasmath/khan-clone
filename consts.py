@@ -55,6 +55,9 @@ MIN_SECONDS_PER_FAST_PROBLEM = 2.0
 # Maximum seconds we'd ever allow for a "fast" problem
 MAX_SECONDS_PER_FAST_PROBLEM = 60.0
 
+# Starting estimate for new exercises
+INITIAL_SECONDS_PER_FAST_PROBLEM = 4.0
+
 # Maximum number of days we're willing to postpone a review
 MAX_REVIEW_INTERVAL_DAYS = 45
 

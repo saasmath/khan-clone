@@ -1,5 +1,7 @@
+import logging
 import datetime
 import sys
+import simplejson as json
 
 from google.appengine.api import taskqueue
 from mapreduce import control
@@ -23,15 +25,12 @@ import points_badges
 import tenure_badges
 import video_time_badges
 import consecutive_activity_badges
+import discussion_badges
+import feedback_badges
 
 import fast_slow_queue
-
 import layer_cache
 import request_handler
-
-import logging
-
-import simplejson as json
 
 # Authoritative list of all badges
 @layer_cache.cache()
@@ -43,6 +42,7 @@ def all_badges():
         exercise_completion_count_badges.WorkHorseBadge(),
         exercise_completion_count_badges.MagellanBadge(),
         exercise_completion_count_badges.CopernicusBadge(),
+        exercise_completion_count_badges.KeplerBadge(),
         exercise_completion_count_badges.AtlasBadge(),
 
         points_badges.TenThousandaireBadge(),
@@ -114,6 +114,18 @@ def all_badges():
         consecutive_activity_badges.FifteenDayConsecutiveActivityBadge(),
         consecutive_activity_badges.ThirtyDayConsecutiveActivityBadge(),
         consecutive_activity_badges.HundredDayConsecutiveActivityBadge(),
+
+        feedback_badges.LevelOneAnswerVoteCountBadge(),
+        feedback_badges.LevelTwoAnswerVoteCountBadge(),
+        feedback_badges.LevelThreeAnswerVoteCountBadge(),
+
+        feedback_badges.LevelOneQuestionVoteCountBadge(),
+        feedback_badges.LevelTwoQuestionVoteCountBadge(),
+        feedback_badges.LevelThreeQuestionVoteCountBadge(),
+
+        discussion_badges.FirstFlagBadge(),
+        discussion_badges.FirstUpVoteBadge(),
+        discussion_badges.FirstDownVoteBadge(),
 
     ]
 

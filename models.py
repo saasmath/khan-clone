@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime, logging
+import simplejson as json
 import math
 import urllib
 import pickle
@@ -119,7 +120,7 @@ class Exercise(db.Model):
     covers = db.StringListProperty()
     v_position = db.IntegerProperty() # actually horizontal position on knowledge map
     h_position = db.IntegerProperty() # actually vertical position on knowledge map
-    seconds_per_fast_problem = db.FloatProperty(default = consts.MIN_SECONDS_PER_FAST_PROBLEM) # Seconds expected to finish a problem 'quickly' for badge calculation
+    seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM) # Seconds expected to finish a problem 'quickly' for badge calculation
 
     # True if this exercise is live and visible to all users.
     # Non-live exercises are only visible to admins.
@@ -314,7 +315,7 @@ class UserExercise(db.Model):
     last_review = db.DateTimeProperty(default=datetime.datetime.min)
     review_interval_secs = db.IntegerProperty(default=(60 * 60 * 24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS), indexed=False) # Default 7 days until review
     proficient_date = db.DateTimeProperty()
-    seconds_per_fast_problem = db.FloatProperty(default = consts.MIN_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
+    seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
     summative = db.BooleanProperty(default=False, indexed=False)
     _accuracy_model = object_property.ObjectProperty()  # Stateful function object that estimates P(next problem correct). May not exist for old UserExercise objects (but will be created when needed).
 
@@ -2112,7 +2113,7 @@ class Topic(Searchable, db.Model):
             raise Exception("You can't edit the default version")
 
         if self.parent():
-             kwargs["parent"] = Topic.get_root(kwargs["version"])
+            kwargs["parent"] = Topic.get_root(kwargs["version"])
 
         if not kwargs.has_key("id"):
             kwargs["id"] = Topic.get_new_id(parent, title, kwargs["version"])
@@ -2966,6 +2967,11 @@ class VideoLog(db.Model):
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     playlist_titles = db.StringListProperty(indexed=False)
 
+    # Indicates whether or not the video is deemed "complete" by the user.
+    # This does not mean that this particular log was the one that resulted
+    # in the completion - just that the video has been complete at some point.
+    is_video_completed = db.BooleanProperty(indexed=False)
+
     _serialize_blacklist = ["video"]
 
     @staticmethod
@@ -3073,6 +3079,7 @@ class VideoLog(db.Model):
 
             bingo(['struggling_videos_finished',
                    'homepage_restructure_videos_finished'])
+        video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
             lambda goal: goal.just_watched_video(user_data, user_video, just_finished_video))
@@ -4007,6 +4014,8 @@ class UserExerciseGraph(object):
             set_implicit_proficiency(graph[exercise_name])
 
         # Calculate suggested
+        # TODO(marcia): Additionally incorporate whether student has attempted exercise,
+        # perhaps also accuracy and when it was last attempted. Details TBD.
         def set_suggested(graph_dict):
             if graph_dict["suggested"] is not None:
                 return graph_dict["suggested"]
@@ -4098,6 +4107,16 @@ class VideoSubtitles(db.Model):
     def get_key_name(language, youtube_id):
         return '%s:%s' % (language, youtube_id)
 
+    def load_json(self):
+        """Return subtitles JSON as a Python object
+
+        If there is an issue loading the JSON, None is returned.
+        """
+        try:
+            return json.loads(self.json)
+        except json.JSONDecodeError:
+            logging.warn('VideoSubtitles.load_json: json decode error')
+
 class VideoSubtitlesFetchReport(db.Model):
     """Report on fetching of subtitles from Universal Subtitles
 
@@ -4117,4 +4136,4 @@ class VideoSubtitlesFetchReport(db.Model):
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from goals.models import GoalList, Goal
+from goals.models import GoalList
