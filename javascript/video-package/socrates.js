@@ -230,8 +230,16 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	isCorrect: function(data) {
+		var correctAnswer = this.model.get('correctData');
+
+		// if no answer is specified, any answer is correct
+		if (correctAnswer == null) {
+			return true;
+		}
+
+		// otherwise make sure they got it right.
 		// todo: look at how khan-exercise does their fancy number handling
-		return _.isEqual(data, this.model.get('correctData'));
+		return _.isEqual(data, correctAnswer);
 	},
 
 	getData: function() {
