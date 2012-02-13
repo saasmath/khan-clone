@@ -125,12 +125,14 @@ var Video = {
 
         if (videoData.next_video_topic) {
             // Don't autoplay to next video
-            window.videoAutoPlayFunc = null;
+            VideoControls.setAutoPlayCallback(null);
         } else {
-            window.videoAutoPlayFunc = function() {
+            VideoControls.setAutoPlayCallback(function() {
                 Video.router.navigate(nextVideoFragment, {trigger: true});
-            }
+            });
         }
+
+        VideoControls.initContinuousPlayLinks($("span.video-content"));
 
         // Preload adjacent videos after 15 seconds
         setTimeout(function() {

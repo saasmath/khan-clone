@@ -5,9 +5,20 @@ function onYouTubePlayerStateChange(state) {
 var VideoControls = {
 
     player: null,
+    autoPlayEnabled: false,
+    autoPlayCallback: null,
+    continuousPlayButton: null,
 
     initJumpLinks: function() {
         $("span.youTube").addClass("playYouTube").removeClass("youTube").click(VideoControls.clickYouTubeJump);
+    },
+
+    initContinuousPlayLinks: function(parentEl) {
+        this.continuousPlayButton = $("a.continuous-play", parentEl).get(0);
+        $(this.continuousPlayButton).click(function() {
+            VideoControls.setAutoPlayEnabled(!VideoControls.autoPlayEnabled);
+        });
+        this.setAutoPlayEnabled(VideoControls.autoPlayEnabled);
     },
 
     clickYouTubeJump: function() {
@@ -30,6 +41,20 @@ var VideoControls = {
     pause: function() {
         if (VideoControls.player && VideoControls.player.pauseVideo)
             VideoControls.player.pauseVideo();
+    },
+
+    setAutoPlayEnabled: function(enabled) {
+        this.autoPlayEnabled = enabled;
+        $(this.continuousPlayButton).toggleClass("green", enabled);
+        if (enabled) {
+            $(this.continuousPlayButton).html("Continuous play is ON");
+        } else {
+            $(this.continuousPlayButton).html("Continuous play is OFF");
+        }
+    },
+
+    setAutoPlayCallback: function(callback) {
+        this.autoPlayCallback = callback;
     },
 
     scrollToPlayer: function() {
@@ -121,7 +146,6 @@ var VideoStats = {
     sVideoKey: null,
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
-    autoplay: false,
 
     getSecondsWatched: function() {
         if (!this.player) return 0;
@@ -216,9 +240,12 @@ var VideoStats = {
     checkVideoComplete: function() {
         var state = this.player.getPlayerState();
         if (state === 0) {
-            videoAutoPlayFunc();
+            if (VideoControls.autoPlayCallback)
+                VideoControls.autoPlayCallback();
+            else
+                VideoControls.setAutoPlayEnabled(false);
         } else if (state === 2) {
-            this.autoplay = false;
+            VideoControls.setAutoPlayEnabled(false);
         }
     },
 
@@ -226,7 +253,7 @@ var VideoStats = {
         var self = this;
         var playing = this.playing || this.fAlternativePlayer;
         if (state == -1) { // Not started
-            if (this.autoplay) {
+            if (VideoControls.autoPlayEnabled) {
                 this.player.playVideo();
             }
         } else if (state == -2) { // playing normally
@@ -240,10 +267,10 @@ var VideoStats = {
             this.playing = false;
             this.save();
 
-            if (this.autoplay && videoAutoPlayFunc) {
+            if (VideoControls.autoPlayEnabled) {
                 setTimeout(function() { self.checkVideoComplete() }, 500);
             } else {
-                this.autoplay = false;
+                VideoControls.setAutoPlayEnabled(false);
             }
         } else if (state == 2 && playing) { // paused
             this.playing = false;
@@ -251,10 +278,10 @@ var VideoStats = {
                 this.save();
             }
 
-            if (this.autoplay && videoAutoPlayFunc) {
+            if (VideoControls.autoPlayEnabled) {
                 setTimeout(function() { self.checkVideoComplete() }, 500);
             } else {
-                this.autoplay = false;
+                VideoControls.setAutoPlayEnabled(false);
             }
         } else if (state == 1) { // play
             this.playing = true;
