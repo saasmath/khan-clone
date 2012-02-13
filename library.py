@@ -3,6 +3,7 @@ from models import Setting, Topic, TopicVersion
 import request_handler
 import shared_jinja
 import time
+import math
 
 # helpful function to see topic structure from the console.  In the console:
 # import library
@@ -36,7 +37,10 @@ def flatten_tree(tree, super_title=None, depth=0):
     tree.depth = depth
 
     if super_title:
-        tree.homepage_title = super_title + ": " + tree.title
+        if depth == 1:
+            tree.homepage_title = super_title + ": " + tree.title
+        else:
+            tree.homepage_title = tree.title
     else:
         tree.homepage_title = tree.standalone_title
 
@@ -52,11 +56,14 @@ def flatten_tree(tree, super_title=None, depth=0):
 
     del tree.children
 
-    if hasattr(tree, "is_super") or tree.content:
+    if tree.content:
+        tree.height = math.ceil(len(tree.content)/3.0) * 18
+
+    if hasattr(tree, "is_super") or tree.content or depth:
         homepage_topics.append(tree)
 
     for subtopic in tree.subtopics:
-        homepage_topics += prepare_tree(subtopic, super_title, depth)
+        homepage_topics += flatten_tree(subtopic, super_title, depth)
 
     return homepage_topics
 

@@ -12,19 +12,20 @@
                 <div data-role="header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
                     {% if topic.depth %}
-                        <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
+                        <h2 class='subtopic-{{ topic.depth }}-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
                     {% else %}
-                        <h2 class='subtopic topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
+                        <h2 class='topic-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
                     {% endif %}
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
+                {% if topic.content %}
                 <div data-role="content">
                     {% if topic.description %}
                         <p class='topic-desc'>{{topic.description|escape}}</p>
                     {% endif %}
 
                     {% if ajax %}
-                        <ol style="height:{{topic.content|length|round(0,'ceil') / 3 * 18}}px;" data-role="listview" data-inset="true">
+                        <ol style="height:{{topic.height}}px;" data-role="listview" data-inset="true">
                         <span style="padding-left: 16px;">Loading videos...</span>
                         </ol>
                     {% else %}
@@ -34,7 +35,7 @@
                     {% if topic.is_super %}
                         <div id="{{ browser_id|escape }}" class="topic_browser pulled" {% if hidden %}style="display:none;"{% endif %}>
                         <div id="topic-jump">
-                        <span class="topic_browser_title desktop-only">Jump to subtopic:</span>
+                        <span class="topic_browser_title desktop-only">Jump to subtopic in {{ topic.homepage_title }}:</span>
                         <nav class="css-menu" id="page_main_nav">
                         <ul data-role="listview" data-inset="true">
                         {% for subtopic in topic.subtopics recursive%}
@@ -64,6 +65,7 @@
                     {% endif %}
                     </div>
                 </div>
+                {% endif %}
             </div>
 
            
