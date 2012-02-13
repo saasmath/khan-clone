@@ -125,36 +125,25 @@
 	margin: 0 10px;
 }
 
+/* default submit area */
 .video-overlay .submit-area {
 	margin: 30px 0 0;
 }
-
-
-/* default submit area */
-.video-overlay .abs-bl {
+.video-overlay .submit-area.abs-bl {
 	position: absolute;
-	z-index: 3;
-	bottom: 10px;
+	bottom: 0;
 	right: 0;
+	padding: 20px 5px;
+	margin: 0;
 }
-/* needed so that buttons don't inherit opacity */
-.transparency-container {
-	position: relative;
-	padding: 20px 15px;
-}
-.video-overlay .transparent {
+
+.video-overlay .watermark-blocker {
 	position: absolute;
-	top: 0;
-	right: 0;
-	left: 0;
+	width: 800px;
+	height: 65px;
 	bottom: 0;
 	background-color: #000;
-	opacity: 0.8;
 }
-.video-overlay .transparency-container .simple-button {
-	opacity: 1.0;
-}
-
 
 /* other stuff */
 .interactive-video-controls {
