@@ -105,16 +105,20 @@ var Video = {
 
         VideoStats.tooltip("#points-badge-hover", $points.data("title"));
 
+        var previousVideoTopic = (videoData.previous_video_topic ? videoData.previous_video_topic.id : videoData.topic.id);
+        var previousVideoFragment = videoData.previous_video.readable_id + "?topic=" + previousVideoTopic;
+
+        var nextVideoTopic = (videoData.next_video_topic ? videoData.next_video_topic.id : videoData.topic.id);
+        var nextVideoFragment = videoData.next_video.readable_id + "?topic=" + nextVideoTopic;
+
         // Set up next/previous links
         $("a.previous-video").click(function(event) {
-            var fragment = videoData.previous_video.readable_id + "?topic=" + (videoData.previous_video_topic ? videoData.previous_video_topic.id : videoData.topic.id);
-            Video.router.navigate(fragment, {trigger: true});
+            Video.router.navigate(previousVideoFragment, {trigger: true});
             event.stopPropagation();
             return false;
         });
         $("a.next-video").click(function(event) {
-            var fragment = videoData.next_video.readable_id + "?topic=" + (videoData.next_video_topic ? videoData.next_video_topic.id : videoData.topic.id);
-            Video.router.navigate(fragment, {trigger: true});
+            Video.router.navigate(nextVideoFragment, {trigger: true});
             event.stopPropagation();
             return false;
         });
@@ -123,11 +127,16 @@ var Video = {
             // Don't autoplay to next video
             window.videoAutoPlayFunc = null;
         } else {
-            var fragment = videoData.previous_video.readable_id + "?topic=" + (videoData.previous_video_topic ? videoData.previous_video_topic.id : videoData.topic.id);
             window.videoAutoPlayFunc = function() {
-                Video.router.navigate(fragment, {trigger: true});
+                Video.router.navigate(nextVideoFragment, {trigger: true});
             }
         }
+
+        // Preload adjacent videos after 15 seconds
+        setTimeout(function() {
+            Video.loadVideo(previousVideoTopic, videoData.previous_video.readable_id);
+            Video.loadVideo(nextVideoTopic, videoData.next_video.readable_id);
+        }, 15000);
 
         this.waitingForVideo = null;
     },
@@ -136,15 +145,18 @@ var Video = {
         var fragment = video + "?topic=" + topic;
         if (videoLibrary[fragment]) {
             if (Video.waitingForVideo == fragment) {
+                KAConsole.log("Switching to video: " + fragment);
                 Video.renderPage(videoLibrary[fragment]);
             }
         } else {
+            KAConsole.log("Loading video: " + fragment);
             url = "/api/v1/videos/" + topic + "/" + video + "/play";
             $.ajax({
                 url: url,
                 success: function(json) {
                     videoLibrary[fragment] = json;
                     if (Video.waitingForVideo == fragment) {
+                        KAConsole.log("Switching to video: " + fragment);
                         Video.renderPage(json);
                     }
                 }
