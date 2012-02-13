@@ -2,9 +2,11 @@
   <!-- MARCOS / KOMALO TODO typeLabel is nonexistent :( -->
   <div id="outline-box">
   <img src="{{iconSrc}}" id="badge-icon"/>
+  <div class="achievement-text">
   <div class="achievement-title">{{description}}</div>
   <div class="achievement-desc achievement-desc-no-count">
     {{safeExtendedDescription}}
+  </div>
   </div>
   {{#if canBecomeGoal }}<div class="add-goal">+ &emsp; Goal</div>{{/if}}
   {{#if points}}<div class="energy-points-badge">{{points}}</div>{{/if}}

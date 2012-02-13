@@ -1041,8 +1041,7 @@ def save_video(video_id="", version_id = "edit"):
         for key, content in changes.iteritems():
             if type(content) == models.Video and (video is None or 
                                                   key != video.key()): 
-                logging.info(key)
-                logging.info(video.key())
+
                 if content.readable_id == new_data["readable_id"]:
                     return api_invalid_param_response(
                         "Video with readable_id %s already exists" %
@@ -1051,7 +1050,7 @@ def save_video(video_id="", version_id = "edit"):
                 elif content.youtube_id == new_data["youtube_id"]:
                     return api_invalid_param_response(
                         "Video with youtube_id %s already appears with readable_id %s" %
-                        (new_data["youtube_id"], video.readable_id))  
+                        (new_data["youtube_id"], content.readable_id))  
 
     if video:
         error = check_duplicate(request.json, video)
