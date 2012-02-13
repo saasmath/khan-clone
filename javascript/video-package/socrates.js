@@ -473,8 +473,16 @@ $(function() {
 	window.Questions = new Socrates.QuestionCollection([
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
-			time: "3m20s",
+			time: "2m5s",
 			id: 1,
+			title: "Dimensions of a matrix",
+			slug: "dimensions-of-a-matrix",
+			correctData: { rows: "5", cols: "4" }
+		}),
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			time: "3m20s",
+			id: 2,
 			title: "Elements in a matrix",
 			slug: "elements-in-a-matrix",
 			correctData: { answer: "2" }
@@ -482,7 +490,7 @@ $(function() {
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
 			time: "4m23.9s",
-			id: 2,
+			id: 3,
 			title: "What are matrices used for?",
 			slug: "what-are-matrices-used-for",
 			correctData: { answer: [true, true, true, true, true] }
@@ -490,16 +498,30 @@ $(function() {
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
 			time: "6m31s",
-			id: 3,
+			id: 4,
 			title: "Defining matrix addition",
 			slug: "defining-matrix-addition"
 		}),
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
 			time: "8m9s",
-			id: 4,
+			id: 5,
 			title: "Defining matrix addition (part 2)",
 			slug: "defining-matrix-addition-part-2"
+		}),
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			time: "8m10s",
+			id: 6,
+			title: "Matrix addition",
+			slug: "matrix-addition"
+		}),
+		new Socrates.Question({
+			youtubeId: "xyAuNHPsq-g",
+			time: "8m10s",
+			id: 7,
+			title: "Matrix terminology",
+			slug: "matrix-terminology"
 		})
 	]);
 

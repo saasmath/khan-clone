@@ -63,49 +63,7 @@
 	font-size: 100%;
 }
 
-
-/* inputtext */
-.video-overlay .layer.controls .inputtext {
-	position: absolute;
-	width: 40px;
-	height: 25px;
-	padding: 3px 20px 10px 3px;
-}
-.video-overlay .layer.controls .inputtext.moveable {
-	background-color: red;
-}
-.video-overlay .layer.controls .inputtext.ui-draggable {
-	cursor: move;
-}
-.video-overlay .layer.controls .inputtext input {
-	font-size: 100%;
-	width: 100%;
-	height: 100%;
-}
-.video-overlay .layer.controls .inputtext input {
-	background-color: #444;
-	border: 1px solid #444;
-	color: #ddd;
-}
-.video-overlay .layer.controls .inputtext input:focus {
-	background-color: #555;
-	color: #fff;
-}
-
-/* label */
-.video-overlay .layer.controls .label {
-	position: absolute;
-	top: 0;
-	left: 0;
-	display: inline-block;
-	padding: 5px;
-	color: #f60;
-}
-.video-overlay .layer.controls.edit .label {
-	border: 1px solid #fff;
-}
-
-/* bootstrap form styles */
+/* default form styles */
 .video-overlay label {
 	display: block;
 	margin-bottom: 5px;
@@ -119,6 +77,10 @@
 	display: inline-block;
 	margin-bottom: 0;
 	vertical-align: middle;
+}
+
+.video-overlay input[type=text] {
+	font-size: 100%;
 }
 
 /* buttons */
@@ -144,6 +106,136 @@
 	height: 65px;
 	bottom: 0;
 	background-color: #000;
+}
+
+
+/* heap of table css from bootstrap */
+table {
+  max-width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.table {
+  width: 100%;
+  margin-bottom: 18px;
+}
+.table th, .table td {
+  padding: 8px;
+  line-height: 18px;
+  text-align: left;
+  border-top: 1px solid #ddd;
+}
+.table th {
+  font-weight: bold;
+  vertical-align: bottom;
+}
+.table td {
+  vertical-align: top;
+}
+.table thead:first-child tr th, .table thead:first-child tr td {
+  border-top: 0;
+}
+.table tbody + tbody {
+  border-top: 2px solid #ddd;
+}
+.table-condensed th, .table-condensed td {
+  padding: 4px 5px;
+}
+.table-bordered {
+  border: 1px solid #ddd;
+  border-collapse: separate;
+  *border-collapse: collapsed;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+.table-bordered th + th,
+.table-bordered td + td,
+.table-bordered th + td,
+.table-bordered td + th {
+  border-left: 1px solid #ddd;
+}
+.table-bordered thead:first-child tr:first-child th, .table-bordered tbody:first-child tr:first-child th, .table-bordered tbody:first-child tr:first-child td {
+  border-top: 0;
+}
+.table-bordered thead:first-child tr:first-child th:first-child, .table-bordered tbody:first-child tr:first-child td:first-child {
+  -webkit-border-radius: 4px 0 0 0;
+  -moz-border-radius: 4px 0 0 0;
+  border-radius: 4px 0 0 0;
+}
+.table-bordered thead:first-child tr:first-child th:last-child, .table-bordered tbody:first-child tr:first-child td:last-child {
+  -webkit-border-radius: 0 4px 0 0;
+  -moz-border-radius: 0 4px 0 0;
+  border-radius: 0 4px 0 0;
+}
+.table-bordered thead:last-child tr:last-child th:first-child, .table-bordered tbody:last-child tr:last-child td:first-child {
+  -webkit-border-radius: 0 0 0 4px;
+  -moz-border-radius: 0 0 0 4px;
+  border-radius: 0 0 0 4px;
+}
+.table-bordered thead:last-child tr:last-child th:last-child, .table-bordered tbody:last-child tr:last-child td:last-child {
+  -webkit-border-radius: 0 0 4px 0;
+  -moz-border-radius: 0 0 4px 0;
+  border-radius: 0 0 4px 0;
+}
+.table-striped tbody tr:nth-child(odd) td, .table-striped tbody tr:nth-child(odd) th {
+  background-color: #f9f9f9;
+}
+
+.table.centered td {
+	text-align: center;
+	vertical-align: middle;
+}
+
+table.matrix-input {
+	display: inline-block;
+	position: relative;
+	top: 1em
+}
+
+table.matrix-input td {
+	border: none;
+	padding: 2px;
+}
+
+/* inputtext */
+.video-overlay .layer.controls .inputtext {
+	position: absolute;
+	width: 40px;
+	height: 25px;
+	padding: 3px 20px 10px 3px;
+}
+.video-overlay .layer.controls .inputtext.moveable {
+	background-color: red;
+}
+.video-overlay .layer.controls .inputtext.ui-draggable {
+	cursor: move;
+}
+.video-overlay .layer.controls .inputtext input {
+	width: 100%;
+	height: 100%;
+}
+.video-overlay .layer.controls .inputtext input {
+	background-color: #444;
+	border: 1px solid #444;
+	color: #ddd;
+}
+.video-overlay .layer.controls .inputtext input:focus {
+	background-color: #555;
+	color: #fff;
+}
+
+/* label */
+.video-overlay .layer.controls .label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: inline-block;
+	padding: 5px;
+	color: #f60;
+}
+.video-overlay .layer.controls.edit .label {
+	border: 1px solid #fff;
 }
 
 /* other stuff */
