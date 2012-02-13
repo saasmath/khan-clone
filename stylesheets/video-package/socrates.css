@@ -7,7 +7,7 @@
 }
 
 
-/* a layer is used to display form controls over a screenshot */
+/* a layer is used to display form controls over a backdrop */
 .video-overlay .layer {
 	position: absolute;
 	top: 0;
@@ -38,12 +38,20 @@
 	font-size: 150%;
 }
 
-/* screenshot layer */
-.video-overlay .layer.screenshot {
+/* backdrop layer */
+.video-overlay .layer.backdrop {
 	z-index: 1;
+}
+.video-overlay .layer.backdrop.whiteout {
+	background: #fff;
+	opacity: 0.9;
+	-moz-opacity: 0.9;
+	filter:alpha(opacity=9);
+}
+.video-overlay .layer.backdrop.screenshot {
 	background: #000;
 }
-.video-overlay .layer.screenshot img {
+.video-overlay .layer.backdrop.screenshot img {
 	display: block;
 	height: 450px;
 	margin: 0 auto 0 auto;
