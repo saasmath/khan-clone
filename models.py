@@ -120,7 +120,7 @@ class Exercise(db.Model):
     covers = db.StringListProperty()
     v_position = db.IntegerProperty() # actually horizontal position on knowledge map
     h_position = db.IntegerProperty() # actually vertical position on knowledge map
-    seconds_per_fast_problem = db.FloatProperty(default = consts.MIN_SECONDS_PER_FAST_PROBLEM) # Seconds expected to finish a problem 'quickly' for badge calculation
+    seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM) # Seconds expected to finish a problem 'quickly' for badge calculation
 
     # True if this exercise is live and visible to all users.
     # Non-live exercises are only visible to admins.
@@ -315,7 +315,7 @@ class UserExercise(db.Model):
     last_review = db.DateTimeProperty(default=datetime.datetime.min)
     review_interval_secs = db.IntegerProperty(default=(60 * 60 * 24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS), indexed=False) # Default 7 days until review
     proficient_date = db.DateTimeProperty()
-    seconds_per_fast_problem = db.FloatProperty(default = consts.MIN_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
+    seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
     summative = db.BooleanProperty(default=False, indexed=False)
     _accuracy_model = object_property.ObjectProperty()  # Stateful function object that estimates P(next problem correct). May not exist for old UserExercise objects (but will be created when needed).
 
