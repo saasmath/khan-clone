@@ -1,19 +1,14 @@
-/* initially hide overlay and questions */
-.video-overlay {
+.video-overlay .question {
 	display: none;
 }
-.video-overlay .questions .question {
-	display: none;
-}
-
 
 /* a layer is used to display form controls over a backdrop */
 .video-overlay .layer {
 	position: absolute;
 	top: 0;
 	left: 0;
+	right: 0;
 	height: 480px;
-	width: 800px;
 }
 
 .ontop {

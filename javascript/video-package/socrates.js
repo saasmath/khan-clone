@@ -189,6 +189,11 @@ Socrates.QuestionCollection = Backbone.Collection.extend({
 Socrates.QuestionView = Backbone.View.extend({
 	className: "question",
 
+	events: {
+		'click .submit-area a.submit': 'submit',
+		'click .submit-area a.skip': 'skip'
+	},
+
 	initialize: function() {
 		_.extend(this, this.options);
 		this.version = 1;
@@ -216,18 +221,6 @@ Socrates.QuestionView = Backbone.View.extend({
 		return this;
 	},
 
-	submit: function() {
-		var data = this.getData();
-		return {
-			time: this.model.get('time'),
-			youtubeId: this.model.get('youtubeId'),
-			id: this.model.get('id'),
-			version: this.version,
-			correct: this.isCorrect(data),
-			data: data
-		};
-	},
-
 	htmlUrl: function() {
 		return "/socrates/questions/" + this.model.get('slug') + ".html";
 	},
@@ -246,77 +239,23 @@ Socrates.QuestionView = Backbone.View.extend({
 
 		// for now: do it myself.
 		data = {};
-		_.each(this.$controlsLayer.find("input"), function(el) {
+		_.each(this.$("input"), function(el) {
 			var $el = $(el);
 			data[$el.attr("name")] = $(el).val();
 		});
 		return data;
-	}
-});
-
-// alias skip to submit
-Socrates.QuestionView.prototype.skip = Socrates.QuestionView.prototype.submit;
-
-// need to clean this up, I think it's a mixture of a Backbone.{View,Router}
-Socrates.SubmitView = Backbone.View.extend({
-	events: {
-		'click .submit-area a.submit': 'submit',
-		'click .submit-area a.skip': 'skip'
 	},
 
-	initialize: function() {
-		this.videoControls = this.options.videoControls;
-
-		// wrap each model in a view
-		this.views = this.model.map(function(question) {
-			return new Socrates.QuestionView({model: question});
-		});
-	},
-
-	render: function() {
-		this.$(".questions").append(_.pluck(this.views, 'el'));
-	},
-
-	show: function(view) {
-		if (view.__proto__ == Socrates.Question.prototype) {
-			// recieved a question, find the corresponding view
-			view = _.find(this.views, function(v) { return v.model == view; });
-		}
-		this.videoControls.pause();
-
-		if (this.currentView) {
-			this.currentView.hide();
-		}
-		this.currentView = view;
-
-		$(this.el).show();
-		this.currentView.show();
-		return this;
-	},
-
-	hide: function() {
-		if (this.currentView) {
-			$(this.currentView.el).hide();
-			this.currentView = null;
-		}
-		$(this.el).hide();
-		return this;
-	},
-
-	submit: function() {
-		var response = this.currentView.submit();
-		this.validateResponse(response);
-		this.log('submit', response);
-
-		if (response.correct) {
-			console.log("correct");
-			// todo: fancy correct animation
-			// todo: skip explanation on correct
-			$(this.el).hide();
-			window.VideoControls.play();
-		} else {
-			console.log("incorrect!");
-		}
+	getResponse: function() {
+		var data = this.getData();
+		return {
+			time: this.model.get('time'),
+			youtubeId: this.model.get('youtubeId'),
+			id: this.model.get('id'),
+			version: this.version,
+			correct: this.isCorrect(data),
+			data: data
+		};
 	},
 
 	validateResponse: function(response) {
@@ -332,23 +271,60 @@ Socrates.SubmitView = Backbone.View.extend({
 		return true;
 	},
 
+	submit: function() {
+		var response = this.getResponse();
+		this.validateResponse(response);
+		this.log('submit', response);
+
+		if (response.correct) {
+			console.log("correct");
+			// todo: fancy correct animation
+			// todo: skip explanation on correct
+			$(this.el).hide();
+			window.VideoControls.play();
+		} else {
+			console.log("incorrect!");
+		}
+	},
+
 	skip: function() {
-		var response = this.currentView.skip();
+		var response = this.getResponse();
 		this.validateResponse(response);
 		this.log('skip', response);
-		console.log(this.currentView);
 
 		// clear the fragment
 		Router.navigate("", false);
 
-		console.log(this.currentView);
-		window.VideoControls.player.seekTo(this.currentView.model.seconds());
+		window.VideoControls.player.seekTo(this.model.seconds(), true);
 		this.hide();
 		window.VideoControls.play();
 	},
 
 	log: function(kind, response) {
 		console.log("POSTing response", kind, response);
+	}
+});
+
+Socrates.MasterView = Backbone.View.extend({
+	className: "video-overlay",
+
+	initialize: function() {
+		// wrap each model in a view
+		this.views = this.model.map(function(question) {
+			return new Socrates.QuestionView({model: question});
+		});
+	},
+
+	questionToView: function(view) {
+		if (view.__proto__ == Socrates.Question.prototype) {
+			// recieved a question, find the corresponding view
+			view = _.find(this.views, function(v) { return v.model == view; });
+		}
+		return view;
+	},
+
+	render: function() {
+		$(this.el).append(_.pluck(this.views, 'el'));
 	}
 });
 
@@ -388,7 +364,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 	show: function(slug) {
 		// blank fragment for current state of video
 		if (slug === "") {
-			this.masterView.hide();
+			this.hide();
 		}
 
 		// slug for navigating to a particular question
@@ -396,7 +372,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 			return q.get('slug') == slug;
 		});
 		if (question) {
-			this.masterView.show(question);
+			this.showQuestion(question);
 			return;
 		}
 
@@ -415,7 +391,26 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 
 	navigateToQuestion: function(question) {
 		this.navigate(question.get('slug'));
-		this.masterView.show(question);
+		this.showQuestion(question);
+	},
+
+	showQuestion: function(view) {
+		this.hide();
+		this.videoControls.pause();
+
+		view = this.masterView.questionToView(view);
+		this.currentView = view;
+
+		this.currentView.show();
+		return this;
+	},
+
+	hide: function() {
+		if (this.currentView) {
+			this.currentView.hide();
+			this.currentView = null;
+		}
+		return this;
 	}
 });
 
@@ -486,7 +481,7 @@ $(function() {
 		}),
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
-			time: "4m41s",
+			time: "4m23.9s",
 			id: 2,
 			title: "What are matrices used for?",
 			slug: "what-are-matrices-used-for",
@@ -494,21 +489,21 @@ $(function() {
 		})
 	]);
 
-	window.SubmitView = new Socrates.SubmitView({
+	window.masterView = new Socrates.MasterView({
 		el: $(".video-overlay"),
 		videoControls: window.VideoControls,
 		model: Questions
 	});
-	SubmitView.render();
+	masterView.render();
 
-	nav = new Socrates.Nav({
+	window.nav = new Socrates.Nav({
 		el: ".socrates-nav",
 		model: Questions
 	});
 	nav.render();
 
 	window.Router = new Socrates.QuestionRouter({
-		masterView: window.SubmitView,
+		masterView: window.masterView,
 		questions: window.Questions,
 		videoControls: window.VideoControls
 	});
