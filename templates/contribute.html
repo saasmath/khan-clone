@@ -37,6 +37,12 @@
             var subtitled_last_week = []
             var bar_color = []
 
+            var sort_language_list = function(selectId) {
+                $(selectId).html($(selectId + " option").sort(function(a, b) {
+                    return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+                }))
+            }
+
             $.ajax({
                 type: 'GET',
                 url: 'http://khan-report.appspot.com/translations/getsubtitlelanguagescount',
@@ -56,6 +62,7 @@
                         }
                     });
 
+                    sort_language_list("#language-id")
                     $("#language-id").val('Spanish')
 
                     Highcharts.setOptions({
