@@ -15,7 +15,7 @@ def user_info(username, user_data):
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
 def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, font_size=12):
-    content = topic.children
+    content = topic.content
     items_in_column = len(content) / num_cols
     remainder = len(content) % num_cols
     link_height = font_size * 1.5
