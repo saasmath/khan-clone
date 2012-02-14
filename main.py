@@ -226,7 +226,6 @@ class ViewVideo(request_handler.RequestHandler):
         bingo([
             'struggling_videos_landing',
             'suggested_activity_videos_landing',
-            'homepage_restructure_videos_landing'
         ])
         self.render_jinja2_template('viewvideo.html', template_values)
 
@@ -781,10 +780,9 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
     ('/commoncore', common_core.CommonCore),
+    ('/staging/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
-
-
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
