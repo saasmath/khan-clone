@@ -778,10 +778,9 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
     ('/commoncore', common_core.CommonCore),
+    ('/staging/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
-
-
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
