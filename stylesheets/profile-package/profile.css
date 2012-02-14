@@ -405,7 +405,7 @@
     }
     #individual_report #achievements #achievement-list > ul {
         margin: 0;
-        padding: 0;
+        padding: 0 0 0 2%;
         list-style: none;
     }
     #individual_report #achievements #achievement-list > ul li {
@@ -416,7 +416,7 @@
         width: auto;
         text-align: center;
         min-width: 16%;
-        margin-right: 5px;
+        margin-left: 0.5%;
     }
         #individual_report #achievements #achievement-list > ul li img {
             /* On iOS, disable the Save popup so that holding an image down makes the gray background */
@@ -460,6 +460,7 @@
             background: #ddd;
             background-image: -webkit-gradient(linear, left top, left bottom,  from(#eee), to(#ccc));
             background-image: -moz-linear-gradient( top, #eee, #ccc );
+            background-image: -o-linear-gradient( top, #eee, #ccc );
             filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeee', endColorstr='#cccccc');
 
             -moz-box-shadow: 0 1px 1px #ccc;
@@ -869,7 +870,7 @@ ul.dropdown ul li {
     text-overflow: ellipsis;
     border: 1px solid transparent;
     border-right: none;
-    
+
     -webkit-border-radius: 3px 0 0 3px;
     -moz-border-radius: 3px 0 0 3px;
     border-radius: 3px 0 0 3px;
@@ -1071,7 +1072,7 @@ li.profile-tab {
     cursor: pointer;
     text-align: center;
     width: 33%;
-    
+
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;

@@ -536,7 +536,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                         'hints_gained_proficiency_all',
                         'struggling_gained_proficiency_all',
                         'suggested_activity_gained_proficiency_all',
-                        'homepage_restructure_gained_proficiency_all',
                     ])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
@@ -563,7 +562,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 'hints_problems_done',
                 'struggling_problems_done',
                 'suggested_activity_problems_done',
-                'homepage_restructure_problems_done',
             ])
 
         else:

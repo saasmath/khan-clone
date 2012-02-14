@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import os
 import logging
+import bisect
 
 from google.appengine.ext import db
 
@@ -150,32 +151,33 @@ class CommonCoreMap(db.Model):
 
     @staticmethod
     def get_all_structured(lightweight=False):
-        all_entries = []
+        all_entries = [
+                { 'grade': 'K', 'domains': [] }, { 'grade': '1', 'domains': [] }, { 'grade': '2', 'domains': [] },
+                { 'grade': '3', 'domains': [] }, { 'grade': '4', 'domains': [] }, { 'grade': '5', 'domains': [] },
+                { 'grade': '6', 'domains': [] }, { 'grade': '7', 'domains': [] }, { 'grade': '8', 'domains': [] },
+                { 'grade': '9-12', 'domains': [] }
+        ]
+        domains_dict = {}
+        standards_dict = {}
+        exercise_cache = {}
+        video_cache = {}
+
         query = CommonCoreMap.all()
         for e in query:
-            if e.grade == 'K':
-                e.grade = '0'
-            g = [x for x in all_entries if x['grade'] == e.grade]
-            if len(g) == 0:
-                grade = {}
-                grade['grade'] = e.grade
-                grade['domains'] = []
-                all_entries.append(grade)
-            else:
-                grade = g[0]
+            grade = (x for x in all_entries if x['grade'] == e.grade).next()
 
-            d = [x for x in grade['domains'] if x['domain_code'] == e.domain_code]
-            if len(d) == 0:
+            dkey = e.grade + '.' + e.domain_code
+            if dkey not in domains_dict:
                 domain = {}
                 domain['domain_code'] = e.domain_code
                 domain['domain'] = COMMON_CORE_DOMAINS[e.domain_code]
                 domain['standards'] = []
                 grade['domains'].append(domain)
+                domains_dict[dkey] = domain
             else:
-                domain = d[0]
+                domain = domains_dict[dkey]
 
-            s = [x for x in domain['standards'] if x['standard'] == e.standard]
-            if len(s) == 0:
+            if e.standard not in standards_dict:
                 standard = {}
                 standard['standard'] = e.standard
                 standard['cc_url'] = e.cc_url
@@ -184,11 +186,17 @@ class CommonCoreMap(db.Model):
                 standard['exercises'] = []
                 standard['videos'] = []
                 domain['standards'].append(standard)
+                standards_dict[e.standard] = standard
             else:
-                standard = s[0]
+                standard = standards_dict[e.standard]
 
             for key in e.exercises:
-                ex = db.get(key)
+                if key not in exercise_cache:
+                    ex = db.get(key)
+                    exercise_cache[key] = ex
+                else:
+                    ex = exercise_cache[key]
+
                 if lightweight:
                     standard['exercises'].append({
                         'display_name': ex.display_name,
@@ -198,7 +206,12 @@ class CommonCoreMap(db.Model):
                     standard['exercises'].append(ex)
 
             for key in e.videos:
-                v = db.get(key)
+                if key not in video_cache:
+                    v = db.get(key)
+                    video_cache[key] = v
+                else:
+                    v = video_cache[key]
+
                 if lightweight:
                     standard['videos'].append({
                         'title': v.title,
@@ -207,7 +220,6 @@ class CommonCoreMap(db.Model):
                 else:
                     standard['videos'].append(v)
 
-        all_entries = sorted(all_entries, key=lambda k: k['grade'])
         for x in all_entries:
             if x['grade'] == '0':
                 x['grade'] = 'K'
