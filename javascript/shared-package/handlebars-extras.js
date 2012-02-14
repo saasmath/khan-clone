@@ -45,12 +45,14 @@ Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
  * <a href="{{toBingoHref "/profile" "conversion_name" "other_conversion_name"}}>
  */
 Handlebars.registerHelper("toBingoHref", function(destination) {
-    var result = "/gae_bingo/redirect?continue=" + encodeURIComponent(destination);
+    var result = "/gae_bingo/redirect";
+    result += "?continue=" + encodeURIComponent(destination);
+
     // Ignore the first argument (the destination)
     // and the last argument (options object that always gets
     // passed to Handlebars helpers)
     for (var i = 1; i < arguments.length - 1; i++) {
-        result += "&cn_" + (i - 1) + "=" + arguments[i];
+        result += "&cn=" + encodeURIComponent(arguments[i]);
     }
 
     return result;
