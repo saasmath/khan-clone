@@ -247,7 +247,21 @@ Socrates.QuestionView = Backbone.View.extend({
 
 		// for now: do it myself.
 		data = {};
-		_.each(this.$("input"), function(el) {
+
+		// process all matrix-inputs
+		_.each(this.$("table.matrix-input"), function(el) {
+			var matrix = _.map($(el).find("tr"), function(tr) {
+				return _.map($(tr).find("input"), function(input) {
+					return parseFloat($(input).val());
+				});
+			});
+			var name = $(el).attr("name") || "answer";
+			data[name] = matrix;
+		});
+
+		// process the result of the inputs
+		var inputs = this.$("input").not(this.$(".matrix-input input"));
+		_.each(inputs, function(el) {
 			var $el = $(el);
 			var key = $el.attr("name");
 
@@ -543,7 +557,8 @@ $(function() {
 			time: "8m10s",
 			id: 6,
 			title: "Matrix addition",
-			slug: "matrix-addition"
+			slug: "matrix-addition",
+			correctData: { answer: [[80, 23], [13, 25]] }
 		}),
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
