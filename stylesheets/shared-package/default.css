@@ -1310,6 +1310,9 @@ a:link.google-analytics-link-track
                 -moz-border-radius: 5px;
                 border-radius: 5px;
             }
+            #library-content .subtopic-indent-line.content {
+                top: 4px;
+            }
 			#library-content .library-content-list p.topic-desc {
 				color: #555;
 				margin: 0 0 10px;
