@@ -542,7 +542,7 @@ $(function() {
 	window.Questions = new Socrates.QuestionCollection([
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
-			time: "2m5s",
+			time: "2m6s",
 			id: 1,
 			title: "Dimensions of a matrix",
 			slug: "dimensions-of-a-matrix",
