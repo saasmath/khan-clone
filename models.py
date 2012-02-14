@@ -3077,8 +3077,7 @@ class VideoLog(db.Model):
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
-            bingo(['struggling_videos_finished',
-                   'homepage_restructure_videos_finished'])
+            bingo(['struggling_videos_finished'])
         video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
