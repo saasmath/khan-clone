@@ -12,6 +12,7 @@ from models import StudentList, UserData
 import simplejson
 from avatars import util_avatars
 from badges import util_badges
+from gae_bingo.gae_bingo import bingo
 from experiments import SuggestedActivityExperiment
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
@@ -213,6 +214,8 @@ class ViewProfile(request_handler.RequestHandler):
 
         has_full_access = is_self or user_data.is_visible_to(current_user_data)
         tz_offset = self.request_int("tz_offset", default=0)
+
+        bingo('suggested_activity_visit_profile')
 
         template_values = {
             'show_intro': show_intro,
