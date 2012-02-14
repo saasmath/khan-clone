@@ -167,6 +167,13 @@ var Profile = {
 
     TabRouter: Backbone.Router.extend({
         showDefault: function() {
+            Profile.populateActivity().then(function() {
+                // Pre-fetch badges, after the activity has been loaded, since
+                // they're needed to edit the display-case.
+                if (Profile.profile.isEditable()) {
+                    Profile.populateAchievements();
+                }
+            });
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
             this.updateTitleBreadcrumbs();
@@ -236,6 +243,7 @@ var Profile = {
         },
 
         showAchievements: function() {
+            Profile.populateAchievements();
             $("#tab-content-achievements").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
@@ -244,6 +252,7 @@ var Profile = {
 
         showGoals: function(type) {
             type = type || "current";
+            Profile.populateGoals();
 
             GoalProfileViewsCollection.showGoalType(type);
 
@@ -607,9 +616,6 @@ var Profile = {
         $("#tab-content-user-profile").show().siblings().hide();
 
         Profile.populateUserCard();
-        Profile.populateAchievements();
-        Profile.populateGoals();
-        Profile.populateActivity();
 
         this.profile.bind("change:nickname", function(profile) {
             var nickname = profile.get("nickname") || "Profile";
@@ -621,21 +627,31 @@ var Profile = {
         });
     },
 
+    userCardPopulated_: false,
     populateUserCard: function() {
+        if (Profile.userCardPopulated_) {
+            return;
+        }
         var view = new UserCardView({model: this.profile});
         $(".user-info-container").html(view.render().el);
-    },
 
-    populateAchievements: function() {
-        // Render the public badge list, as that's ready immediately.
         var publicBadgeList = new Badges.BadgeList(
                 this.profile.get("publicBadges"));
         publicBadgeList.setSaveUrl("/api/v1/user/badges/public");
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
         $(".sticker-book").append(displayCase.render().el);
+        Profile.displayCase = displayCase;
 
+        Profile.userCardPopulated_ = true;
+    },
+
+    achievementsDeferred_: null,
+    populateAchievements: function() {
+        if (Profile.achievementsDeferred_) {
+            return Profile.achievementsDeferred_;
+        }
         // Asynchronously load the full badge information in the background.
-        $.ajax({
+        return Profile.achievementsDeferred_ = $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
             data: {
@@ -644,7 +660,6 @@ var Profile = {
               },
             dataType: "json",
             success: function(data) {
-
                 if (Profile.profile.isEditable()) {
                     // The display-case is only editable if you're viewing your
                     // own profile
@@ -658,7 +673,7 @@ var Profile = {
                             fullBadgeList.add(new Badges.UserBadge(json));
                         });
                     });
-                    displayCase.setFullBadgeList(fullBadgeList);
+                    Profile.displayCase.setFullBadgeList(fullBadgeList);
                 }
 
                 // TODO: make the rendering of the full badge page use the models above
@@ -841,12 +856,17 @@ var Profile = {
         });
     },
 
+    goalsDeferred_: null,
     populateGoals: function() {
+        if (Profile.goalsDeferred_) {
+            return Profile.goalsDeferred_;
+        }
+
         // TODO: Abstract away profile + actor privileges
         // Also in profile.handlebars
         var email = Profile.profile.get("email");
         if (email) {
-            $.ajax({
+            Profile.goalsDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/goals",
                 data: {email: email},
@@ -857,7 +877,10 @@ var Profile = {
             });
         } else {
             Profile.renderFakeGoals_();
+            Profile.goalsDeferred_ = new $.Deferred();
+            Profile.goalsDeferred_.resolve();
         }
+        return Profile.goalsDeferred_;
     },
 
     renderFakeGoals_: function() {
@@ -921,13 +944,17 @@ var Profile = {
             .find("span.timeago").timeago();
     },
 
+    activityDeferred_: null,
     populateActivity: function() {
+        if (Profile.activityDeferred_) {
+            Profile.activityDeferred_;
+        }
         $("#recent-activity-progress-bar").progressbar({value: 100});
 
         // TODO: Abstract away profile + actor privileges
         var email = Profile.profile.get("email");
         if (email) {
-            $.ajax({
+            Profile.activityDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/activity",
                 data: {
@@ -938,8 +965,13 @@ var Profile = {
                 success: function(data) {
                     Profile.populateSuggestedActivity(data.suggested);
                     Profile.populateRecentActivity(data.recent);
+                    Profile.activitiesPopulated_ = true;
                 }
             });
+        } else {
+            Profile.activityDeferred_ = new $.Deferred();
+            Profile.activityDeferred_.resolve();
         }
+        return Profile.activityDeferred_;
     }
 };
