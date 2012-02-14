@@ -232,7 +232,9 @@ class Exercise(db.Model):
         query.filter('exercise =', self.key()).order('exercise_order')
         return query
 
-    @layer_cache.cache_with_key_fxn(lambda self: "related_videos_%s" % self.key(), layer=layer_cache.Layers.Memcache)
+    @layer_cache.cache_with_key_fxn(lambda self: "related_videos_%s_%s" % 
+        (self.key(), Setting.topic_tree_version()), 
+        layer=layer_cache.Layers.Memcache)
     def related_videos_fetch(self):
         exercise_videos = self.related_videos_query().fetch(10)
         for exercise_video in exercise_videos:
