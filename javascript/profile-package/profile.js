@@ -47,7 +47,6 @@ var Profile = {
         });
 
         Profile.showIntro_();
-        Profile.bindBingoClicks_();
 
         // Remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
@@ -942,35 +941,5 @@ var Profile = {
                 }
             });
         }
-    },
-
-    /**
-     * Bingo a click to a suggested activity.
-     * Expects type to be one of "exercise", "video", or "goal"
-     * for the following conversions:
-     *  suggested_activity_click_through_exercise
-     *  suggested_activity_click_through_video
-     *  suggested_activity_click_through_goal
-     */
-    bingoSuggestedClick_: function(type) {
-        var prefix = "suggested_activity_click_through_",
-            type = type || "exercise",
-            conversion = prefix + type;
-
-        gae_bingo.bingo(conversion);
-    },
-
-    bindBingoClicks_: function() {
-        if (!Profile.profile.get("showSuggestedActivity")) {
-            return;
-        }
-
-        $("#suggested-activity").on("click", ".activity-exercise", function() {
-            Profile.bingoSuggestedClick_("exercise");
-        }).on("click", ".activity-video", function() {
-            Profile.bingoSuggestedClick_("video")
-        }).on("click", ".activity-goal", function() {
-            Profile.bingoSuggestedClick_("goal");
-        });
     }
 };

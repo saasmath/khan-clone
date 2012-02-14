@@ -4,7 +4,7 @@
         <li class="activity-exercise clearfix">
             <span class="activity-image"></span>
             <div class="ach-text">
-                <a href="{{url}}">{{name}}</a>
+                <a href="{{toBingoHref url "suggested_activity_click_through_exercise"}}">{{name}}</a>
                 <div class="activity-controls">
                 {{#with streakBar}}{{> streak-bar}}{{/with}}
                 </div>
@@ -16,7 +16,7 @@
         <li class="activity-video clearfix">
             <span class="activity-image"></span>
             <div class="ach-text">
-                <a href="{{url}}">{{name}}</a>
+                <a href="{{toBingoHref url "suggested_activity_click_through_video"}}">{{name}}</a>
                 <div class="activity-controls">
                 </div>
             </div>
@@ -27,7 +27,7 @@
         <li class="activity-goal clearfix">
             <span class="activity-image"></span>
             <div class="ach-text">
-                <a href="{{url}}">{{description}}</a> in {{name}}
+                <a href="{{toBingoHref url "suggested_activity_click_through_goal"}}">{{description}}</a> in {{name}}
                 <div class="activity-controls">
                 </div>
             </div>

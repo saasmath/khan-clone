@@ -34,3 +34,25 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
 });
 
 Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
+
+/**
+ * Create a redirect url that scores the specified conversions server-side.
+ * Helpful for measuring click-through, since it is possible to navigate
+ * away before the client-side gae_bingo.bingo POST goes through.
+ * Try it in Safari if you don't believe me!
+ *
+ * Sample usage:
+ * <a href="{{toBingoHref "/profile" "conversion_name" "other_conversion_name"}}>
+ */
+Handlebars.registerHelper("toBingoHref", function(destination) {
+    var result = "/gae_bingo/redirect?continue=" + encodeURIComponent(destination);
+    // Ignore the first argument (the destination)
+    // and the last argument (options object that always gets
+    // passed to Handlebars helpers)
+    for (var i = 1; i < arguments.length - 1; i++) {
+        result += "&cn_" + (i - 1) + "=" + arguments[i];
+    }
+
+    return result;
+});
+

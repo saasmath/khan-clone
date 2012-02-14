@@ -5,7 +5,6 @@ POSTs allow you to score conversions for a given test
 
 """
 import os
-import logging
 
 from google.appengine.ext.webapp import RequestHandler
 
