@@ -26,19 +26,19 @@ def print_topics(topics):
             print " "
         print " "
 
-def flatten_tree(tree, super_title=None, depth=0):
+def flatten_tree(tree, super_topic=None, sub_topic=None, depth=0):
     homepage_topics=[]
     tree.content = []
     tree.subtopics = []
     
-    if super_title:
+    if super_topic:
         depth += 1
 
     tree.depth = depth
 
-    if super_title:
+    if super_topic:
         if depth == 1:
-            tree.homepage_title = super_title + ": " + tree.title
+            tree.homepage_title = super_topic.standalone_title + ": " + tree.title
         else:
             tree.homepage_title = tree.title
     else:
@@ -46,7 +46,7 @@ def flatten_tree(tree, super_title=None, depth=0):
 
     if tree.id in Topic._super_topic_ids:
         tree.is_super = True
-        super_title = tree.standalone_title
+        super_topic = tree
 
     for child in tree.children:
         if child.key().kind() == "Topic":
@@ -55,15 +55,22 @@ def flatten_tree(tree, super_title=None, depth=0):
             tree.content.append(child)
 
     del tree.children
+    tree.leaf_topics = []
 
     if tree.content:
         tree.height = math.ceil(len(tree.content)/3.0) * 18
 
     if hasattr(tree, "is_super") or tree.content or depth:
-        homepage_topics.append(tree)
+        if sub_topic:
+            sub_topic.leaf_topics.append(tree)
+        else:
+            homepage_topics.append(tree)
+
+    if super_topic and not hasattr(tree, "is_super") and not sub_topic:
+        sub_topic = tree
 
     for subtopic in tree.subtopics:
-        homepage_topics += flatten_tree(subtopic, super_title, depth)
+        homepage_topics += flatten_tree(subtopic, super_topic, sub_topic, depth)
 
     return homepage_topics
 
