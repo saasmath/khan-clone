@@ -197,6 +197,8 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
+            bingo('suggested_activity_visit_profile')
+
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
@@ -214,8 +216,6 @@ class ViewProfile(request_handler.RequestHandler):
 
         has_full_access = is_self or user_data.is_visible_to(current_user_data)
         tz_offset = self.request_int("tz_offset", default=0)
-
-        bingo('suggested_activity_visit_profile')
 
         template_values = {
             'show_intro': show_intro,
