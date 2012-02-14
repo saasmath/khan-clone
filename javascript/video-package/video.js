@@ -71,7 +71,8 @@ var Video = {
     renderPage: function(videoData) {
         var navTemplate = Templates.get("video.video-nav");
         var descTemplate = Templates.get("video.video-description");
-        var contentTemplate = Templates.get("video.video-content");
+        var headerTemplate = Templates.get("video.video-header");
+        var footerTemplate = Templates.get("video.video-footer");
 
         // Fix up data for templating
         if (videoData.related_exercises &&
@@ -83,11 +84,12 @@ var Video = {
         $("span.video-nav").html(navTemplate(videoData));
         $(".video-title").html(videoData.video.title);
         $("div.video-description").html(descTemplate(videoData));
-        $("span.video-content").html(contentTemplate(videoData));
+        $("span.video-header").html(headerTemplate(videoData));
+        $("span.video-footer").html(footerTemplate(videoData));
 
+        VideoControls.playVideo(videoData.video.youtube_id, videoData.video_key, false);
 
         // Start up various scripts
-        VideoStats.startLoggingProgress(videoData.video_key);
         Discussion.init();
         Moderation.init();
         Voting.init();
@@ -132,7 +134,7 @@ var Video = {
             });
         }
 
-        VideoControls.initContinuousPlayLinks($("span.video-content"));
+        VideoControls.initContinuousPlayLinks($("span.video-footer"));
 
         // Preload adjacent videos after 15 seconds
         setTimeout(function() {

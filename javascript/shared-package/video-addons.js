@@ -116,18 +116,28 @@ var VideoControls = {
         var youtubeId = jelParent.attr("data-youtube-id");
         if (VideoControls.player && youtubeId)
         {
-            $(VideoControls).trigger("beforeplay");
-
-            VideoControls.player.loadVideoById(youtubeId, 0, "default");
-            VideoControls.scrollToPlayer();
+            this.playVideo(youtubeId, jelParent.attr("data-key"), true);
 
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
 
-            VideoStats.startLoggingProgress(jelParent.attr("data-key"));
-
             return false;
         }
+    },
+
+    playVideo: function(youtubeId, videoKey, forcePlayBegin) {
+        if (VideoControls.player && youtubeId)
+        {
+            $(VideoControls).trigger("beforeplay");
+
+            if (forcePlayBegin || this.autoPlayEnabled) {
+                VideoControls.player.loadVideoById(youtubeId, 0, "default");
+            } else {
+                VideoControls.player.cueVideoById(youtubeId, 0, "default");
+            }
+            VideoControls.scrollToPlayer();
+        }
+        VideoStats.startLoggingProgress(videoKey);
     }
 };
 
@@ -146,8 +156,6 @@ var VideoStats = {
     sVideoKey: null,
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
-    lastVolume: 100,
-    lastMuted: false,
 
     getSecondsWatched: function() {
         if (!this.player) return 0;
@@ -255,17 +263,7 @@ var VideoStats = {
     playerStateChange: function(state) {
         var self = this;
         var playing = this.playing || this.fAlternativePlayer;
-        if (state == -1) { // Not started
-            if (VideoControls.autoPlayEnabled) {
-                this.player.setVolume(this.lastVolume);
-                if (this.lastMuted) {
-                    this.player.mute();
-                } else {
-                    this.player.unMute();
-                }
-                this.player.playVideo();
-            }
-        } else if (state == -2) { // playing normally
+        if (state == -2) { // playing normally
             var percent = this.getPercentWatched();
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity))
             {
@@ -310,9 +308,6 @@ var VideoStats = {
     },
 
     save: function() {
-
-        this.lastVolume = this.player.getVolume();
-        this.lastMuted = this.player.isMuted();
 
         if (this.fSaving) return;
 

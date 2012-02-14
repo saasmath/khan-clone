@@ -28,7 +28,22 @@
     <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
         <div id="description" class="video-description"></div>
         <div style="margin-top: -5px;"></div>
-        <span class="video-content"></span>
+
+        <span class="video-header"></span>
+        <div id="youtube_blocked" class="desktop-only">
+         {{ youtube.flv_player_embed(video_path) }}
+        </div>
+        <div class="youtube-video">
+            <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{ video.youtube_id }}/hqdefault.jpg">
+            {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host)  }}
+            <div class="subtitles-warning desktop-only">
+                &lArr; Use this menu to view and help create subtitles for this video in many different languages.
+                You'll probably want to hide YouTube's captions if using these subtitles.
+               <a href="#" class="subtitles-link">Close subtitles</a>
+            </div>
+        </div>
+        <span class="video-footer"></span>
+
         <div class="desktop-only video-discussion"></div>
     </div>
     </div>

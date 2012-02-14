@@ -1,18 +1,4 @@
 {% import 'macros/user.html' as user %}
-{% import 'macros/youtube.html' as youtube %}
-
-<div id="youtube_blocked" class="desktop-only">
- {{ youtube.flv_player_embed(video_path) }}
-</div>
-<div class="youtube-video">
-    <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{ video.youtube_id }}/hqdefault.jpg">
-    {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host)  }}
-    <div class="subtitles-warning desktop-only">
-        &lArr; Use this menu to view and help create subtitles for this video in many different languages.
-        You'll probably want to hide YouTube's captions if using these subtitles.
-       <a href="#" class="subtitles-link">Close subtitles</a>
-    </div>
-</div>
 
 <span class="video_extra_links desktop-only">
     <nobr>
