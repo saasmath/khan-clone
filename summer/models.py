@@ -48,6 +48,8 @@ class SummerStudent(db.Model):
     tuition = db.StringProperty()
     tuition_paid = db.BooleanProperty()
 
+    comment = db.StringProperty()
+
     scholarship_applied = db.BooleanProperty()
     scholarship_granted = db.BooleanProperty()
     scholarship_amount = db.StringProperty()

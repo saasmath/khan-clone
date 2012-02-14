@@ -260,19 +260,19 @@ class UpdateStudentStatus(RequestHandler):
         for line in reader:
             student_email = line[0]
             student_status = line[1]
+            student_comment = line[2]
 
             student = SummerStudent.all().filter('email =', student_email).get()
             if student is None:
                 logging.error("Student %s not found" % student_email)
                 continue
 
-            logging.info("SUNDAR: HERE....")
             student.application_status = student_status
+            student.comment = student_comment
             if student_status == "Accepted":
                 student.accepted = True
 
             student_list.append(student)
-            logging.info("SUNDAR: Student is %s status is %s accepted is %d" % (student.email, student.application_status, student.accepted))
 
         db.put(student_list)
 
