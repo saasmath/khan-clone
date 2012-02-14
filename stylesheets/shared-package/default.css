@@ -1980,60 +1980,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     display: block;
 }
 
-.achievement-badge.category-5 {
-    width: auto;
-    height: auto;
-    min-width: 190px;
-    text-align: center;
-    background: none;
-    border: none;
-    opacity: .5;
-    filter: alpha(opacity=50);
-}
-    .achievement-badge.category-5 #badge-icon {
-        width: 100px;
-        height: 100px;
-        margin: 0 auto;
-    }
-    .achievement-badge.category-5 .achievement-title {
-        position: static;
-        width: auto;
-    }
-    .achievement-badge.category-5 .energy-points-badge {
-        position: absolute;
-        left: auto;
-        top: 6px;
-        right: -10px;
-    }
-    .achievement-badge.category-5 .achievement-desc {
-        position: static;
-        width: auto;
-        margin-left: 0;
-    }
-    .achievement-badge.category-5 #outline-box {
-        border-top: none;
-    }
-.badge-award-container {width:302px;}
-.badge-award-container .achievement-badge.category-5, .achievement-badge.category-5.achievement-badge-owned {
-    border: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    box-shadow: none;
-    opacity: 1;
-    filter: alpha(opacity=100);
-}
-    .achievement-badge.category-5.achievement-badge-owned .achievement-title,
-    .achievement-badge.category-5.achievement-badge-owned .achievement-desc {
-        text-shadow: 1px 1px 1px #ccc;
-    }
-
-.badge-award-container .achievement-badge.category-5 {
-    min-width: 195px;
-}
-.badge-award-container .achievement-badge.category-5 .energy-points-badge {
-    right: -5px;
-}
-
 #container h3 {
     display: block;
     font-size: 14px;
