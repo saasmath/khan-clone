@@ -146,6 +146,8 @@ var VideoStats = {
     sVideoKey: null,
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
+    lastVolume: 100,
+    lastMuted: false,
 
     getSecondsWatched: function() {
         if (!this.player) return 0;
@@ -240,10 +242,11 @@ var VideoStats = {
     checkVideoComplete: function() {
         var state = this.player.getPlayerState();
         if (state === 0) {
-            if (VideoControls.autoPlayCallback)
+            if (VideoControls.autoPlayCallback) {
                 VideoControls.autoPlayCallback();
-            else
+            } else {
                 VideoControls.setAutoPlayEnabled(false);
+            }
         } else if (state === 2) {
             VideoControls.setAutoPlayEnabled(false);
         }
@@ -254,6 +257,12 @@ var VideoStats = {
         var playing = this.playing || this.fAlternativePlayer;
         if (state == -1) { // Not started
             if (VideoControls.autoPlayEnabled) {
+                this.player.setVolume(this.lastVolume);
+                if (this.lastMuted) {
+                    this.player.mute();
+                } else {
+                    this.player.unMute();
+                }
                 this.player.playVideo();
             }
         } else if (state == -2) { // playing normally
@@ -301,6 +310,9 @@ var VideoStats = {
     },
 
     save: function() {
+
+        this.lastVolume = this.player.getVolume();
+        this.lastMuted = this.player.isMuted();
 
         if (this.fSaving) return;
 
