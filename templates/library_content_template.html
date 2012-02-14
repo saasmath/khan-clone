@@ -18,11 +18,11 @@
                     {% endif %}
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
-                {% if topic.content %}
-                   {% if topic.depth == 1 %}
-                    <div class="subtopic-indent">
-                      <div class="subtopic-indent-line content"></div>
-                   {% endif %}
+                {% if topic.is_super or topic.content %}
+                {% if topic.depth == 1 %}
+                <div class="subtopic-indent">
+                  <div class="subtopic-indent-line content"></div>
+                {% endif %}
                 <div data-role="content" class="library-content-list">
                     {% if topic.description %}
                         <p class='topic-desc'>{{topic.description|escape}}</p>
@@ -36,33 +36,6 @@
                         {{ templatetags.column_major_sorted_videos(topic) }}
                     {% endif %}
     
-                    {% if topic.is_super %}
-                        <div id="{{ browser_id|escape }}" class="subtopic_browser pulled" {% if hidden %}style="display:none;"{% endif %}>
-                        <div id="topic-jump">
-                        <span class="topic_browser_title desktop-only">Jump to subtopic in {{ topic.homepage_title }}:</span>
-                        <nav class="css-menu" id="page_main_nav">
-                        <ul data-role="listview" data-inset="true">
-                        {% for subtopic in topic.subtopics recursive%}
-                            <li class='{% if loop.first %}topline{% endif %}{% if subtopic.content and subtopic.depth == 1 %} solo{% endif %}{% if subtopic.depth > 1 and not subtopic.content %} sub{% endif %}'>
-                            {% if subtopic.content %}
-                                <a href='{{subtopic.relative_url}}' class='menulink'>{{subtopic.title}}</a>
-                            {% else %}
-                                {{subtopic.title}}
-                            {% endif %}
-                                
-                            {% if subtopic.subtopics %}
-                                <ul>{{loop(subtopic.subtopics)}}</ul>
-                            {% endif %}
-                            </li>
-                        {% endfor %}
-                        </ul>
-                        </nav>
-                        </div>
-                        <div class="clear"></div>
-                        </div>
-
-                    {% endif %}
-
                     <div class="clear desktop-only">
                     {% if topic.next %}
                         <a name="{{ topic.next.id|slugify|escape }}" id="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
@@ -72,11 +45,16 @@
                    {% if topic.depth == 1 %}
                     </div>
                    {% endif %}
-                {% else %}
+                {% endif %}
+                {% if topic.subtopics %}
+                   {% if topic.depth == 1 %}
                     <div class="subtopic-indent">
                       <div class="subtopic-indent-line"></div>
-                    {{loop(topic.leaf_topics)}}
+                   {% endif %}
+                    {{loop(topic.subtopics)}}
+                   {% if topic.depth == 1 %}
                     </div>
+                   {% endif %}
                 {% endif %}
             </div>
 
