@@ -41,13 +41,14 @@ from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
 import re
 
-class Backup(db.Model):
+class BackupModel(db.Model):
     """Back up this model
 
     This is used for automatic daily backups of all models. If you would like
-    your model to be backed up (off of App Engine), just inherit from Backup.
+    your model to be backed up (off of App Engine), just inherit from
+    BackupModel.
     """
-    timestamp = db.DateTimeProperty(auto_now_add=True)
+    backup_timestamp = db.DateTimeProperty(auto_now=True)
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -307,7 +308,7 @@ class Exercise(db.Model):
         return exercise_dict
 
 
-class UserExercise(Backup, db.Model):
+class UserExercise(db.Model):
 
     user = db.UserProperty()
     exercise = db.StringProperty()
@@ -883,7 +884,7 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
-class UserData(Backup, GAEBingoIdentityModel, db.Model):
+class UserData(GAEBingoIdentityModel, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
     # user_id can be used as a unique identifier instead.
@@ -2889,7 +2890,7 @@ class UserPlaylist(db.Model):
         else:
             return UserPlaylist.get_by_key_name(key)
 
-class UserVideo(Backup, db.Model):
+class UserVideo(db.Model):
 
     @staticmethod
     def get_key_name(video, user_data):
@@ -2964,7 +2965,7 @@ class UserVideo(Backup, db.Model):
             completed=bool(json['completed'])
         )
 
-class VideoLog(Backup, db.Model):
+class VideoLog(BackupModel):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
     video_title = db.StringProperty(indexed=False)
@@ -3318,7 +3319,7 @@ def commit_log_summary_coaches(activity_log, coaches):
     for coach in coaches:
         LogSummary.add_or_update_entry(UserData.get_from_db_key_email(coach), activity_log, ClassDailyActivitySummary, LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
 
-class ProblemLog(Backup, db.Model):
+class ProblemLog(BackupModel):
 
     user = db.UserProperty()
     exercise = db.StringProperty()

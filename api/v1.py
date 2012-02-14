@@ -2126,21 +2126,13 @@ def autocomplete():
             "exercises": exercise_results
     }
 
-@route("/api/v1/dev/getbackupmodels", methods=["GET"])
+@route("/api/v1/dev/backupmodels", methods=["GET"])
 @oauth_required
 @developer_required
 @jsonify
-def getbackupmodels():
-    """Return the names of all models that inherit from models.Backup."""
-
-    # I'm not thrilled about using db._kind_map, but I don't know how to do
-    # this any other way
-    namesandclasses = filter(
-        lambda x: issubclass(x[1], models.Backup) and x[1] != models.Backup,
-        db._kind_map.iteritems()
-        )
-    names = map(lambda x: x[0], namesandclasses)
-    return names
+def backupmodels():
+    """Return the names of all models that inherit from models.BackupModel."""
+    return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
 
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
 @oauth_required()
@@ -2149,7 +2141,7 @@ def getbackupmodels():
 def protobuf_entities(entity):
     """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
 
-    Notes: 'entity' must be a subclass of 'models.Backup'
+    Notes: 'entity' must be a subclass of 'models.BackupModel'
            'dt{start,end}' must be in ISO 8601 format
            'max' defaults to 500
     Example:
@@ -2157,12 +2149,12 @@ def protobuf_entities(entity):
         Returns up to 500 problem_logs from between 'dt_start' and 'dt_end'
     """
     entity_class = db.class_for_kind(entity)
-    if not (entity_class and issubclass(entity_class, models.Backup)):
+    if not (entity_class and issubclass(entity_class, models.BackupModel)):
         return api_error_response(ValueError("Invalid class '%s' (must be a \
-                subclass of models.Backup)" % entity))
+                subclass of models.BackupModel)" % entity))
     query = entity_class.all()
-    filter_query_by_request_dates(query, "timestamp")
-    query.order("timestamp")
+    filter_query_by_request_dates(query, "backup_timestamp")
+    query.order("backup_timestamp")
 
     return map(lambda entity: db.model_to_protobuf(entity).Encode(),
                query.fetch(request.request_int("max", default=500)))
