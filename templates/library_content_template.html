@@ -19,6 +19,10 @@
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
                 {% if topic.content %}
+                   {% if topic.depth == 1 %}
+                    <div class="subtopic-indent">
+                      <div class="subtopic-indent-line content"></div>
+                   {% endif %}
                 <div data-role="content" class="library-content-list">
                     {% if topic.description %}
                         <p class='topic-desc'>{{topic.description|escape}}</p>
@@ -65,6 +69,9 @@
                     {% endif %}
                     </div>
                 </div>
+                   {% if topic.depth == 1 %}
+                    </div>
+                   {% endif %}
                 {% else %}
                     <div class="subtopic-indent">
                       <div class="subtopic-indent-line"></div>
