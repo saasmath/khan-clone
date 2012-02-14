@@ -233,15 +233,6 @@ var VideoStats = {
             this.playing = true;
             this.dtLastSaved = new Date();
             this.dPercentLastSaved = this.getPercentWatched();
-
-            if (!VideoControls.videoBingoSent &&
-                    (typeof Homepage != "undefined")) {
-                gae_bingo.bingo([
-                        "homepage_restructure_homepage_video_played",
-                        "homepage_restructure_homepage_video_played_binary"
-                        ]);
-                VideoControls.videoBingoSent = true;
-            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
