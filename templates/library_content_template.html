@@ -9,7 +9,7 @@
                 <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
             <div data-role="page" id="{{ topic.id }}" data-theme="b">
-                <div data-role="header">
+                <div data-role="header" class="library-content-header">
                     <a href="#" data-rel="back" data-icon="arrow-l" class="mobile-only">Back</a>
                     {% if topic.depth %}
                         <h2 class='subtopic-{{ topic.depth }}-heading {% if loop.first %}topic-heading-first{% endif %}'>{{topic.homepage_title|escape}}</h2>
@@ -19,7 +19,7 @@
                     <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="mobile-only"></a>
                 </div>
                 {% if topic.content %}
-                <div data-role="content">
+                <div data-role="content" class="library-content-list">
                     {% if topic.description %}
                         <p class='topic-desc'>{{topic.description|escape}}</p>
                     {% endif %}
@@ -33,7 +33,7 @@
                     {% endif %}
     
                     {% if topic.is_super %}
-                        <div id="{{ browser_id|escape }}" class="topic_browser pulled" {% if hidden %}style="display:none;"{% endif %}>
+                        <div id="{{ browser_id|escape }}" class="subtopic_browser pulled" {% if hidden %}style="display:none;"{% endif %}>
                         <div id="topic-jump">
                         <span class="topic_browser_title desktop-only">Jump to subtopic in {{ topic.homepage_title }}:</span>
                         <nav class="css-menu" id="page_main_nav">
