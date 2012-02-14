@@ -1294,6 +1294,22 @@ a:link.google-analytics-link-track
                 line-height: 16px;
                 font-style: italic;
 			}
+            #library-content .subtopic-indent {
+                position: relative;
+                margin-left: 24px;
+            }
+            #library-content .subtopic-indent-line {
+                width: 5px;
+                top: 8px;
+                bottom: 6px;
+                left: -22px;
+                background-color: #DDD;
+                position: absolute;
+
+                -webkit-border-radius: 5px;
+                -moz-border-radius: 5px;
+                border-radius: 5px;
+            }
 			#library-content .library-content-list p.topic-desc {
 				color: #555;
 				margin: 0 0 10px;

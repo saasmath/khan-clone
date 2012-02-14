@@ -4,7 +4,7 @@
         <div id="library-content" >
             {{ library.column_major_order_styles() }}
             <div id="library-content-main">
-            {% for topic in topics %}
+            {% for topic in topics recursive %}
             {% if loop.first %}
                 <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
@@ -65,6 +65,11 @@
                     {% endif %}
                     </div>
                 </div>
+                {% else %}
+                    <div class="subtopic-indent">
+                      <div class="subtopic-indent-line"></div>
+                    {{loop(topic.leaf_topics)}}
+                    </div>
                 {% endif %}
             </div>
 
