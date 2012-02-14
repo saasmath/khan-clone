@@ -88,6 +88,7 @@ def library_content_html(ajax=False, version_number=None):
 
     tree = Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
     topics = flatten_tree(tree)
+    topics.sort(key = lambda topic: topic.standalone_title)
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
     topics = [topic for topic in topics 
