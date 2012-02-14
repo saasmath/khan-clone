@@ -1038,7 +1038,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
         username_or_email = None
 
         if segment:
-            segment = urllib.unquote(segment)
+            segment = urllib.unquote(segment).decode('utf-8').strip()
             if segment.startswith("_fb"):
                 username_or_email = segment.replace("_fb", FACEBOOK_ID_PREFIX)
             elif segment.startswith("_em"):
