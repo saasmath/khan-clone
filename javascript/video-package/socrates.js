@@ -427,6 +427,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		this.questions = options.questions;
 		this.masterView = options.masterView;
 		this.videoControls = options.videoControls;
+		this.beep = new Audio("/socrates/starcraft_chat_sound.mp3");
 	},
 
 	show: function(slug) {
@@ -445,8 +446,9 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		}
 
 		// todo: parse as a time, and seek to that time in the video
-		if (/\d+m\d+s/.test(slug)) {
+		if (slug.length > 0 && /(\d+m)?(\d+s)?/.test(slug)) {
 			var seconds = Socrates.Question.timeToSeconds(slug);
+			this.hide();
 			this.videoControls.onPlayerReady(_.bind(function() {
 				this.videoControls.player.seekTo(seconds);
 			}, this));
@@ -457,18 +459,22 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		this.navigate("", {replace: true, trigger: true});
 	},
 
-	navigateToQuestion: function(question) {
+	navigateToQuestion: function(question, options) {
 		this.navigate(question.get('slug'));
-		this.showQuestion(question);
+		this.showQuestion(question, options);
 	},
 
-	showQuestion: function(view) {
+	showQuestion: function(view, options) {
+		options = _.extend({}, options);
 		this.hide();
 		this.videoControls.pause();
 
 		view = this.masterView.questionToView(view);
 		this.currentView = view;
 
+		if (options.beep) {
+			this.beep.play();
+		}
 		this.currentView.show();
 		return this;
 	},
@@ -497,7 +503,7 @@ var Poppler = (function() {
 
 	Poppler.prototype.add = function(time, fn) {
 		fn.time = time;
-		var i = _.sortedIndex(this.events, Poppler.timeFn);
+		var i = _.sortedIndex(this.events, fn, Poppler.timeFn);
 		this.events.splice(i, 0, fn);
 	};
 
@@ -537,69 +543,78 @@ var Poppler = (function() {
 	return Poppler;
 })();
 
+Socrates.Skippable = (function() {
+	var Skippable = function(options) {
+		_.extend(this, options);
+	};
+
+	Skippable.prototype.seconds = function() {
+		return _.map(this.span, Socrates.Question.timeToSeconds);
+	};
+
+	Skippable.prototype.trigger = function() {
+		var pos = this.seconds()[1];
+		this.videoControls.player.seekTo(pos, true);
+	};
+
+	return Skippable;
+})();
+
 $(function() {
 	// todo: move this somewhere else, it's data not code
-	window.Questions = new Socrates.QuestionCollection([
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			time: "2m6s",
-			id: 1,
-			title: "Dimensions of a matrix",
-			slug: "dimensions-of-a-matrix",
-			correctData: { rows: "4", cols: "5" }
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			time: "3m20s",
-			id: 2,
-			title: "Elements in a matrix",
-			slug: "elements-in-a-matrix",
-			correctData: { answer: "2" }
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			time: "4m23.9s",
-			id: 3,
-			title: "What are matrices used for?",
-			slug: "what-are-matrices-used-for",
-			correctData: { answer: [true, true, true, true, true, true] }
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			time: "6m31s",
-			id: 4,
-			title: "Defining matrix addition",
-			slug: "defining-matrix-addition"
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			time: "8m9s",
-			id: 5,
-			title: "Defining matrix addition (part 2)",
-			slug: "defining-matrix-addition-part-2"
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			time: "8m10s",
-			id: 6,
-			title: "Matrix addition",
-			slug: "matrix-addition",
-			correctData: { answer: [[80, 23], [13, 25]] }
-		}),
-		new Socrates.Question({
-			youtubeId: "xyAuNHPsq-g",
-			time: "8m10s",
-			id: 7,
-			title: "Matrix terminology",
-			slug: "matrix-terminology",
-			correctData: {
-				"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
-				"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
-				"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
-				"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
-			}
-		})
-	]);
+	window.Questions = new Socrates.QuestionCollection([{
+		youtubeId: "xyAuNHPsq-g",
+		time: "2m5.7s",
+		id: 1,
+		title: "Dimensions of a matrix",
+		slug: "dimensions-of-a-matrix",
+		correctData: { rows: "4", cols: "5" }
+	}, {
+		youtubeId: "xyAuNHPsq-g",
+		time: "3m20s",
+		id: 2,
+		title: "Elements in a matrix",
+		slug: "elements-in-a-matrix",
+		correctData: { answer: "2" }
+	}, {
+		youtubeId: "xyAuNHPsq-g",
+		time: "4m23.9s",
+		id: 3,
+		title: "What are matrices used for?",
+		slug: "what-are-matrices-used-for",
+		correctData: { answer: [true, true, true, true, true, true] }
+	}, {
+		youtubeId: "xyAuNHPsq-g",
+		time: "6m31s",
+		id: 4,
+		title: "Defining matrix addition",
+		slug: "defining-matrix-addition"
+	}, {
+		youtubeId: "xyAuNHPsq-g",
+		time: "8m9s",
+		id: 5,
+		title: "Defining matrix addition (part 2)",
+		slug: "defining-matrix-addition-part-2"
+	}, {
+		youtubeId: "xyAuNHPsq-g",
+		time: "8m10s",
+		id: 6,
+		title: "Matrix addition",
+		slug: "matrix-addition",
+		correctData: { answer: [[80, 23], [13, 25]] }
+	}, {
+		youtubeId: "xyAuNHPsq-g",
+		time: "8m10s",
+		id: 7,
+		title: "Matrix terminology",
+		slug: "matrix-terminology",
+		correctData: {
+			"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
+			"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
+			"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
+			"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
+		}
+	}]);
 
 	window.masterView = new Socrates.MasterView({
 		el: $(".video-overlay"),
@@ -622,7 +637,18 @@ $(function() {
 
 	window.poppler = new Poppler();
 	window.Questions.each(function(q) {
-		poppler.add(q.seconds(), _.bind(Router.navigateToQuestion, Router, q));
+		poppler.add(q.seconds(), _.bind(Router.navigateToQuestion, Router, q, {beep: true}));
+	});
+
+	window.skippable = [
+		{span: ["25.5s", "42s"]},
+		{span: ["1m40s", "2m2s"]}
+	];
+	skippable = _.map(skippable, function(item) {
+		return new Socrates.Skippable(_.extend(item, {videoControls: window.VideoControls}));
+	});
+	_.each(skippable, function(item) {
+		poppler.add(item.seconds()[0], _.bind(item.trigger, item));
 	});
 
 	// watch video time every 100 ms
