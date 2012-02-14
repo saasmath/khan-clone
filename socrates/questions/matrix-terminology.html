@@ -1,31 +1,22 @@
 <div class="layer backdrop whiteout"></div>
 <div class="layer controls">
-	<div class="ontop">
+	<div class="ontop" style="margin-top: 5px">
 		<h2>Matrix terminology</h2>
 		<p>Sal introduced us to some new terms during this video. Let's see if you can remember them!</p>
-		<p>Fill in the grid below. Place a check mark if the object in the row matches the term in the column.</p>
+		<p>Fill in the grid below. Check the box if the object in the first row matches the term in the column header.</p>
 
-		<table class="table centered">
+		<table class="table centered checkbox-grid">
 			<thead>
 				<tr>
-					<td></td>
-					<td>Scalar</td>
-					<td>Row vector</td>
-					<td>Column vector</td>
-					<td>Matrix</td>
+					<th></th>
+					<th name="scalar">Scalar</th>
+					<th name="row-vector">Row vector</th>
+					<th name="column-vector">Column vector</th>
+					<th name="matrix">Matrix</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr>
-					<td>
-						\(1\)
-					</td>
-					<td><input type="checkbox"></td>
-					<td><input type="checkbox"></td>
-					<td><input type="checkbox"></td>
-					<td><input type="checkbox"></td>
-				</tr>
-				<tr>
+				<tr name="column-vector">
 					<td>
 						\(
 							\begin{bmatrix}
@@ -38,7 +29,16 @@
 					<td><input type="checkbox"></td>
 					<td><input type="checkbox"></td>
 				</tr>
-				<tr>
+				<tr name="scalar">
+					<td>
+						\(1\)
+					</td>
+					<td><input type="checkbox"></td>
+					<td><input type="checkbox"></td>
+					<td><input type="checkbox"></td>
+					<td><input type="checkbox"></td>
+				</tr>
+				<tr name="row-vector">
 					<td>
 						\(
 							\begin{bmatrix}
@@ -51,7 +51,7 @@
 					<td><input type="checkbox"></td>
 					<td><input type="checkbox"></td>
 				</tr>
-				<tr>
+				<tr name="matrix">
 					<td>
 						\(
 							\begin{bmatrix}

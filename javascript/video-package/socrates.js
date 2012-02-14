@@ -249,24 +249,49 @@ Socrates.QuestionView = Backbone.View.extend({
 		data = {};
 
 		// process all matrix-inputs
-		_.each(this.$("table.matrix-input"), function(el) {
-			var matrix = _.map($(el).find("tr"), function(tr) {
+		var matrixInputs = this.$("table.matrix-input");
+		_.each(matrixInputs, function(table) {
+			var matrix = _.map($(table).find("tr"), function(tr) {
 				return _.map($(tr).find("input"), function(input) {
 					return parseFloat($(input).val());
 				});
 			});
-			var name = $(el).attr("name") || "answer";
+
+			var name = $(table).attr("name") || "answer";
 			data[name] = matrix;
 		});
 
+		// process all checkbox-grids
+		var checkboxGrids = this.$("table.checkbox-grid");
+		_.each(checkboxGrids, function(grid) {
+			var headers = _.map($(grid).find("thead th"), function(td) {
+				return $(td).attr("name");
+			});
+			headers = _.rest(headers, 1);
+			var answer = {};
+			_.each($(grid).find("tbody tr"), function(tr) {
+				var row = {};
+				_.each($(tr).find("input"), function(input, i) {
+					row[headers[i]] = $(input).prop("checked");
+				});
+				answer[$(tr).attr("name")] = row;
+			});
+
+			var name = $(grid).attr("name") || "answer";
+			data[name] = answer;
+		});
+
 		// process the result of the inputs
-		var inputs = this.$("input").not(this.$(".matrix-input input"));
+		var inputs = this.$("input").
+			not(matrixInputs.find("input")).
+			not(checkboxGrids.find("input"));
+
 		_.each(inputs, function(el) {
 			var $el = $(el);
 			var key = $el.attr("name");
 
 			var val;
-			if (_.indexOf(["checkbox", "radio"], $el.attr("type")) >= 0) {
+			if (_.include(["checkbox", "radio"], $el.attr("type"))) {
 				val = $el.prop("checked");
 			} else {
 				val = $el.val();
@@ -513,6 +538,7 @@ var Poppler = (function() {
 })();
 
 $(function() {
+	// todo: move this somewhere else, it's data not code
 	window.Questions = new Socrates.QuestionCollection([
 		new Socrates.Question({
 			youtubeId: "xyAuNHPsq-g",
@@ -565,7 +591,13 @@ $(function() {
 			time: "8m10s",
 			id: 7,
 			title: "Matrix terminology",
-			slug: "matrix-terminology"
+			slug: "matrix-terminology",
+			correctData: {
+				"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
+				"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
+				"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
+				"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
+			}
 		})
 	]);
 
