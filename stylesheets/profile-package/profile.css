@@ -484,7 +484,7 @@
     margin-left: 3%;
     width: 39%;
     height: 500px;
-    background: #eee;
+    /* background: #eee; */
     float: left;
 }
 .activity-list {
@@ -492,7 +492,6 @@
 }
 .activity-list > ul {
     margin: 0;
-    padding: 15px 0;
     list-style: none;
 }
 .activity-list > ul > li {
@@ -512,6 +511,7 @@
         padding: 10px 15px;
         border-radius: 5px;
         position: relative;
+        width: 80%;
 
         box-sizing: border-box;
     }
@@ -658,10 +658,6 @@ div.profile-notification.uncover-nav {
 
 #student-list table td {
     padding-right: 10px;
-    margin: 0;
-}
-
-#recent-activity h2 {
     margin: 0;
 }
 
