@@ -2554,6 +2554,91 @@ class Topic(Searchable, db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
+        "topic.get_rolled_up_top_level_topics_%s_%s" % (
+            (str(version.number)+str(version.updated_on))  if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Memcache) 
+    def get_rolled_up_top_level_topics(version=None, include_hidden=False):
+        topics = Topic.get_all_topics(version, include_hidden)
+
+        super_topics = Topic.get_super_topics()
+        super_topic_keys = [t.key() for t in super_topics]
+
+        rolled_up_topics = super_topics[:]
+        for topic in topics:
+            # if the topic is a subtopic of a super topic
+            if set(super_topic_keys) & set(topic.ancestor_keys):
+                continue
+                
+            for child_key in topic.child_keys:
+                 if child_key.kind() != "Topic":
+                    rolled_up_topics.append(topic)
+                    break
+
+        return rolled_up_topics
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda types=None, version=None, include_hidden = False: 
+        "topic.get_filled_rolled_up_top_level_topics_%s_%s" % (
+            (str(version.number)+str(version.updated_on))  if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Blobstore) 
+    def get_filled_rolled_up_top_level_topics(types=None, version=None, include_hidden=False):
+        if types is None:
+            types = []
+
+        topics = Topic.get_all_topics(version, include_hidden)
+        topic_dict = dict((t.key(), t) for t in topics)
+
+        super_topics = Topic.get_super_topics()
+
+        def rolled_up_child_content_keys(topic):
+            child_keys = []
+            for key in topic.child_keys:
+                if key.kind() == "Topic":
+                    child_keys += rolled_up_child_content_keys(topic_dict[key])
+                elif (len(types) == 0) or key.kind() in types:
+                    child_keys.append(key)
+
+            return child_keys
+
+        for topic in super_topics:
+            topic.child_keys = rolled_up_child_content_keys(topic)
+
+        super_topic_keys = [t.key() for t in super_topics]
+
+        rolled_up_topics = super_topics[:]
+        for topic in topics:
+            # if the topic is a subtopic of a super topic
+            if set(super_topic_keys) & set(topic.ancestor_keys):
+                continue
+                
+            for child_key in topic.child_keys:
+                 if child_key.kind() != "Topic":
+                    rolled_up_topics.append(topic)
+                    break
+        
+
+        child_dict = {}
+        for topic in rolled_up_topics:
+            child_dict.update(dict((key, True) for key in topic.child_keys 
+                                   if key.kind() in types or 
+                                   (len(types) == 0 and key.kind() != "Topic")))
+        
+        child_dict.update(dict((e.key(), e) for e in db.get(child_dict.keys())))
+
+        for topic in rolled_up_topics:
+            topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]
+        
+        return rolled_up_topics
+
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
         "topic.get_content_topics_%s_%s" % (
             (str(version.number)+str(version.updated_on))  if version 
             else Setting.topic_tree_version(),
