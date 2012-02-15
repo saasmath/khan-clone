@@ -73,7 +73,7 @@
             arg = argv[cursor];
             for (k = 0; k < match[2].length; k++) {
               if (!arg.hasOwnProperty(match[2][k])) {
-                throw(sprintf('[_.sprintf] property "%s" does not exist', match[2][k]));
+                throw new Error(sprintf('[_.sprintf] property "%s" does not exist', match[2][k]));
               }
               arg = arg[match[2][k]];
             }
@@ -85,7 +85,7 @@
           }
 
           if (/[^s]/.test(match[8]) && (get_type(arg) != 'number')) {
-            throw(sprintf('[_.sprintf] expecting number but found %s', get_type(arg)));
+            throw new Error(sprintf('[_.sprintf] expecting number but found %s', get_type(arg)));
           }
           switch (match[8]) {
             case 'b': arg = arg.toString(2); break;
@@ -167,7 +167,7 @@
   // Defining underscore.string
 
   var _s = {
-              
+
     VERSION: '2.0.0',
 
     isBlank: sArgs(function(str){
@@ -327,21 +327,23 @@
      * @author github.com/sergiokas
      */
     prune: sArgs(function(str, length, pruneStr){
-      // Function to check word/digit chars including non-ASCII encodings. 
+      // Function to check word/digit chars including non-ASCII encodings.
       var isWordChar = function(c) { return ((c.toUpperCase() != c.toLowerCase()) || /[-_\d]/.test(c)); }
-      
+
       var template = '';
       var pruned = '';
       var i = 0;
-      
+      var chars = []; // IE8 fix
+
       // Set default values
       pruneStr = pruneStr || '...';
       length = parseNumber(length);
-      
+
       // Convert to an ASCII string to avoid problems with unicode chars.
-      for (i in str) {
-        template += (isWordChar(str[i]))?'A':' ';
-      } 
+      chars = _s.chars(str);  // IE8 fix to allow iteration over the source string
+      for (i in chars) {
+        template += (isWordChar(chars[i]))?'A':' ';
+      }
 
       // Check if we're in the middle of a word
       if( template.substring(length-1, length+1).search(/^\w\w$/) === 0 )
@@ -432,6 +434,36 @@
       return (pos != -1) ? sourceStr.slice(0, pos) : sourceStr;
     }),
 
+    toSentence: function(array, separator, lastSeparator) {
+        separator || (separator = ', ');
+        lastSeparator || (lastSeparator = ' and ');
+        var length = array.length, str = '';
+
+        for (var i = 0; i < length; i++) {
+            str += array[i];
+            if (i === (length - 2)) { str += lastSeparator; }
+            else if (i < (length - 1)) { str += separator; }
+        }
+
+        return str;
+    },
+
+    slugify: function(str) {
+      var from = "àáäâèéëêìíïîòóöôùúüûñç·/_:;",
+          to   = "aaaaeeeeiiiioooouuuunc-----";
+      str = _s.trim(str).toLowerCase();
+
+      for (var i = 0, l = str.length ; i < l ; i++) {
+        var index = from.indexOf(str[i]);
+        if(index != -1) {
+            str = str.substr(0, i) + to[index] + str.substr(i + 1);
+        }
+      }
+      return str.replace(/[^a-z0-9 -]/g, '')
+                .replace(/\s+|\-+/g, '-')
+                .replace(/^\-+|\-+$/g, '');
+    },
+
     exports: function() {
       var result = {};
 
@@ -462,6 +494,12 @@
       module.exports = _s;
     }
     exports._s = _s;
+
+  } else if (typeof define === 'function' && define.amd) {
+    // Register as a named module with AMD.
+    define('underscore.string', function() {
+      return _s;
+    });
 
   // Integrate with Underscore.js
   } else if (typeof root._ !== 'undefined') {
