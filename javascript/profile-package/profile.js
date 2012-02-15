@@ -965,7 +965,6 @@ var Profile = {
                 success: function(data) {
                     Profile.populateSuggestedActivity(data.suggested);
                     Profile.populateRecentActivity(data.recent);
-                    Profile.activitiesPopulated_ = true;
                 }
             });
         } else {
