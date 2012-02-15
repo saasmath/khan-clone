@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import os
 import logging
 import bisect
+import layer_cache
 
 from google.appengine.ext import db
 
@@ -150,6 +151,7 @@ class CommonCoreMap(db.Model):
         return all_entries
 
     @staticmethod
+    @layer_cache.cache_with_key_fxn(key_fxn=lambda lightweight: "structured_cc:%s" % lightweight, layer=layer_cache.Layers.Blobstore)
     def get_all_structured(lightweight=False):
         all_entries = [
                 { 'grade': 'K', 'domains': [] }, { 'grade': '1', 'domains': [] }, { 'grade': '2', 'domains': [] },

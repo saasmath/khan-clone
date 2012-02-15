@@ -15,6 +15,7 @@ class SummerStudent(db.Model):
     applier_email = db.StringProperty()
     application_year = db.StringProperty()
     application_status = db.StringProperty()
+    accepted = db.BooleanProperty(default=False)
 
     first_name = db.StringProperty()
     last_name = db.StringProperty()
@@ -46,6 +47,8 @@ class SummerStudent(db.Model):
     
     tuition = db.StringProperty()
     tuition_paid = db.BooleanProperty()
+
+    comment = db.StringProperty()
 
     scholarship_applied = db.BooleanProperty()
     scholarship_granted = db.BooleanProperty()

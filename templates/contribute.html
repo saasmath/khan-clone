@@ -36,6 +36,7 @@
             var subtitled = []
             var subtitled_last_week = []
             var bar_color = []
+            var bar_color = []
 
             var sort_language_list = function(selectId) {
                 $(selectId).html($(selectId + " option").sort(function(a, b) {
@@ -64,6 +65,15 @@
 
                     sort_language_list("#language-id")
                     $("#language-id").val('Spanish')
+
+                    var tmp_color = bar_color
+                    bar_color = []
+                    for (var i = 0; i< tmp_color.length; i++) {
+                        bar_color.push("#FFFFFF")
+                    }
+                    for (var i = 0; i< tmp_color.length; i++) {
+                        bar_color.push(tmp_color[i])
+                    }
 
                     Highcharts.setOptions({
                         colors: bar_color,
@@ -96,9 +106,10 @@
                                     y: 5,
                                     formatter: function() {
                                         var dlabel = ""
-                                        if (this.series.name == 'Most subtitles added in the last week') {
-                                            if (this.y > 1) {
-                                                dlabel = '+' + this.y
+                                        if (this.series.name == 'Subtitled videos') {
+                                            incremental = this.total - this.y
+                                            if (incremental > 1) {
+                                                dlabel = '+' + incremental
                                             }
                                             else {
                                                 dlabel = ''

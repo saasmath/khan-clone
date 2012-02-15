@@ -63,14 +63,52 @@ class PaypalIPN(RequestHandler):
                 logging.error("Student not found in DB for email <%s>" % student_email)
             else:
                 if 'mc_gross' in parameters:
-                    student.processing_fee = parameters['mc_gross']
+                    total_amount = int(parameters['mc_gross'])
+                    if total_amount >= 1000:
+                        # This is tuition
+                        parent = SummerParentData.all().filter('email =', student.parent_email).get()
+                        number_of_students = 0
+                        students = []
+                        for skey in parent.students:
+                            s = SummerStudent.get(skey)
+                            if s.accepted and not s.tuition_paid:
+                               students.append(s)
+                               number_of_students += 1
 
-                if paypal_txn.status == "Completed":
-                    student.processing_fee_paid = True
-                else:
-                    student.processing_fee_paid = False
+                        fee_per_student = int(total_amount/number_of_students)
+                        if fee_per_student < 1000:
+                            # Tuition is paid using the student's account
+                            student.tuition = parameters['mc_gross']
 
-                student.put()
+                            if paypal_txn.status == "Completed":
+                                student.tuition_paid = True
+                            else:
+                                student.tuition_paid = False
+
+                            student.put()
+
+                        else:
+                            # Tuition paid using parent's account. This works because
+                            # if paying via parent, then tuition for all students have
+                            # to be paid together
+                            for student in students:
+                                student.tuition = str(fee_per_student)
+
+                                if paypal_txn.status == "Completed":
+                                    student.tuition_paid = True
+                                else:
+                                    student.tuition_paid = False
+
+                                student.put()
+                    else:
+                        student.processing_fee = parameters['mc_gross']
+
+                        if paypal_txn.status == "Completed":
+                            student.processing_fee_paid = True
+                        else:
+                            student.processing_fee_paid = False
+
+                        student.put()
 
             paypal_txn.put()
         else:
@@ -125,20 +163,62 @@ class PaypalAutoReturn(RequestHandler):
                         nvp = output[i].split('=')
                         paypal_attr[nvp[0]] = nvp[1]
 
-                    paypal_txn.status = paypal_attr['payment_status']
-                    student.processing_fee = paypal_attr['mc_gross']
+                    if 'payment_status' in paypal_attr:
+                        paypal_txn.status = paypal_attr['payment_status']
 
-                    if paypal_txn.status == "Completed":
-                        student.processing_fee_paid = True
-                    else:
-                        student.processing_fee_paid = False
+                    if 'mc_gross' in paypal_attr:
+                        total_amount = int(paypal_attr['mc_gross'])
+                        if total_amount >= 1000:
+                            # This is tuition
+                            parent = SummerParentData.all().filter('email =', student.parent_email).get()
+
+                            number_of_students = 0
+                            students = []
+                            for skey in parent.students:
+                                s = SummerStudent.get(skey)
+                                if s.accepted and not s.tuition_paid:
+                                    students.append(s)
+                                    number_of_students += 1
+
+                            fee_per_student = int(total_amount/number_of_students)
+                            if fee_per_student < 1000:
+                                # Tuition is paid using student's account
+                                student.tuition = paypal_attr['mc_gross']
+
+                                if paypal_txn.status == "Completed":
+                                    student.tuition_paid = True
+                                else:
+                                    student.tuition_paid = False
+
+                                student.put()
+
+                            else:
+                                # Tuition paid using parent's account. This works because
+                                # if paying via parent, then tuition for all students have
+                                # to be paid together
+                                for student in students:
+                                    student.tuition = str(fee_per_student)
+
+                                    if paypal_txn.status == "Completed":
+                                        student.tuition_paid = True
+                                    else:
+                                        student.tuition_paid = False
+
+                                    student.put()
+                        else:
+                            student.processing_fee = paypal_attr['mc_gross']
+
+                            if paypal_txn.status == "Completed":
+                                student.processing_fee_paid = True
+                            else:
+                                student.processing_fee_paid = False
+
+                            student.put()
+
+                    paypal_txn.put()
                 else:
                     logging.error("Transaction %s for %s didn't succeed" % (txn_id, student_email))
                     student.processing_fee_paid = False
-
-                student.put()
-
-        paypal_txn.put()
 
         self.redirect("/summer/application-status")
 
@@ -162,6 +242,43 @@ class GetStudent(RequestHandler):
             self.response.out.write(output_str)
 
         return
+
+class UpdateStudentStatus(RequestHandler):
+    @developer_only
+    def get(self):
+        template_values = {}
+        self.render_jinja2_template('summer/uploadstatusfile.html', template_values)
+
+    @developer_only
+    def post(self):
+        template_values = {}
+        user_data = UserData.current()
+
+        status_file = StringIO.StringIO(self.request_string('status_file'))
+        reader = csv.reader(status_file)
+        student_list = []
+        for line in reader:
+            student_email = line[0]
+            student_status = line[1]
+            student_comment = line[2]
+
+            student = SummerStudent.all().filter('email =', student_email).get()
+            if student is None:
+                logging.error("Student %s not found" % student_email)
+                continue
+
+            student.application_status = student_status
+            student.comment = student_comment
+            if student_status == "Accepted":
+                student.accepted = True
+
+            student_list.append(student)
+
+        db.put(student_list)
+
+        self.response.out.write("OK")
+        self.response.set_status(200)
+
 
 class Download(RequestHandler):
     def authenticated_response(self):
@@ -243,6 +360,117 @@ class Download(RequestHandler):
 
         self.add_global_template_values(template_values)
         self.render_jinja2_template('summer/summer_process.html', template_values)
+
+class Tuition(RequestHandler):
+    def authenticated_response(self):
+        user_data = UserData.current()
+        user_email = user_data.user_email
+        nickname = ""
+        if facebook_util.is_facebook_user_id(user_email):
+            nickname = facebook_util.get_facebook_nickname(user_email)
+
+        query = SummerStudent.all()
+        query.filter('email = ', user_email)
+        student = query.get()
+
+        students = []
+        is_parent = False
+
+        if student is None:
+            query = SummerParentData.all()
+            query.filter('email = ', user_email)
+            parent = query.get()
+            if parent is None:
+                return None
+
+            is_parent = True
+            number_of_students = 0
+            for student_key in parent.students:
+                student = SummerStudent.get(student_key)
+                students.append(student)
+                if student.accepted and not student.tuition_paid:
+                    number_of_students += 1
+
+        else:
+            number_of_students = 1
+            students.append(student)
+
+        template_values = {
+            "authenticated" : True,
+            "is_parent" : is_parent,
+            "students" : students,
+            "number_of_students": json.dumps(number_of_students),
+            "student" : students[0],
+            "user_email" : user_email,
+            "nickname" : nickname,
+        }
+
+        return template_values
+
+    def post(self):
+        self.get()
+
+    def get(self):
+        template_values = {}
+        user_data = UserData.current()
+
+        if user_data is not None:
+            user_email = user_data.user_email
+            template_values = self.authenticated_response()
+            if template_values is None:
+                nickname = user_email
+                if facebook_util.is_facebook_user_id(user_email):
+                    nickname = facebook_util.get_facebook_nickname(user_email)
+
+                response = "User " + nickname + " not registered for Discovery Lab. Please login to Khan Academy as another user"
+                self.response.out.write(response)
+                return
+
+            make_payment = self.request.get('make_payment')
+            if make_payment:
+                total_payment = self.request.get('total_payment')
+                for student in template_values['students']:
+                    email_in_request = self.request.get(student.email)
+                    if email_in_request != student.email:
+                        logging.error("Email <%s> expected in requst but not found" % student.email)
+
+                    student.tuition = str(int(total_payment)/int(template_values['number_of_students']))
+                    student.extended_care = False
+                    if self.request.get('extended_care'):
+                        student.extended_care = True
+
+                    student.put()
+
+                if template_values['is_parent']:
+                    parent = SummerParentData.all().filter('email =', user_email).get()
+                else:
+                    parent = SummerParentData.all().filter('email =', template_values['student'].parent_email).get()
+
+                payee_phone_a = ""
+                payee_phone_b = ""
+                payee_phone_c = ""
+                phone_parts = parent.phone.split("-")
+                if phone_parts is not None:
+                    payee_phone_a = phone_parts[0]
+                    payee_phone_b = phone_parts[1]
+                    payee_phone_c = phone_parts[2]
+
+                template_values['total_payment'] = total_payment
+                template_values['authenticated'] = True
+                template_values['make_payment'] = True
+                template_values['parent'] = parent
+                template_values['payee'] = parent
+                template_values['payee_phone_a'] = payee_phone_a
+                template_values['payee_phone_b'] = payee_phone_b
+                template_values['payee_phone_c'] = payee_phone_c
+
+        else:
+            template_values = {
+                "authenticated" : False,
+            }
+
+        self.add_global_template_values(template_values)
+        self.render_jinja2_template('summer/summer_tuition.html', template_values)
 
 
 class Status(RequestHandler):
