@@ -96,7 +96,6 @@ class SuggestedActivityExperiment(object):
         # Clicks on suggested activities on the profile page
         ('suggested_activity_click_through_exercise', ConversionTypes.Counting),
         ('suggested_activity_click_through_video', ConversionTypes.Counting),
-        ('suggested_activity_click_through_goal', ConversionTypes.Counting),
     ]
 
     _conversion_names, _conversion_types = [
