@@ -226,6 +226,7 @@ class ViewVideo(request_handler.RequestHandler):
         bingo([
             'struggling_videos_landing',
             'suggested_activity_videos_landing',
+            'suggested_activity_videos_landing_binary',
         ])
         self.render_jinja2_template('viewvideo.html', template_values)
 
