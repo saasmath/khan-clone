@@ -89,7 +89,12 @@ def feedback_answers_for_user_data(user_data):
 
     for notification in notifications:
 
-        feedback = notification.feedback
+        feedback = None
+
+        try:
+            feedback = notification.feedback
+        except db.ReferencePropertyResolveError:
+            pass
 
         if feedback == None or feedback.deleted or feedback.is_hidden_by_flags or not feedback.is_type(models_discussion.FeedbackType.Answer):
             # If we ever run into notification for a deleted or non-FeedbackType.Answer piece of feedback,
