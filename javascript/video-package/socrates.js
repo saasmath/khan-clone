@@ -158,6 +158,16 @@ Socrates.Question = Backbone.Model.extend({
 
 	key: function() {
 		return this.get('youtubeId') + "-" + this.get('time');
+	},
+
+	slug: function() {
+		return _.str.slugify(this.get('title'));
+	},
+
+	toJSON: function() {
+		var json = Backbone.Model.prototype.toJSON.call(this);
+		json.slug = this.slug();
+		return json;
 	}
 }, {
 	timeToSeconds: function(time) {
@@ -222,7 +232,7 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	htmlUrl: function() {
-		return "/socrates/questions/" + this.model.get('slug') + ".html";
+		return "/socrates/questions/" + this.model.slug() + ".html";
 	},
 
 	imageUrl: function() {
@@ -438,7 +448,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 
 		// slug for navigating to a particular question
 		var question = this.questions.find(function(q) {
-			return q.get('slug') == slug;
+			return q.slug() == slug;
 		});
 		if (question) {
 			this.showQuestion(question);
@@ -460,7 +470,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 	},
 
 	navigateToQuestion: function(question, options) {
-		this.navigate(question.get('slug'));
+		this.navigate(question.slug());
 		this.showQuestion(question, options);
 	},
 
@@ -567,47 +577,40 @@ $(function() {
 		time: "2m5.7s",
 		id: 1,
 		title: "Dimensions of a matrix",
-		slug: "dimensions-of-a-matrix",
 		correctData: { rows: "4", cols: "5" }
 	}, {
 		youtubeId: "xyAuNHPsq-g",
 		time: "3m20s",
 		id: 2,
 		title: "Elements in a matrix",
-		slug: "elements-in-a-matrix",
 		correctData: { answer: "2" }
 	}, {
 		youtubeId: "xyAuNHPsq-g",
 		time: "4m23.9s",
 		id: 3,
 		title: "What are matrices used for?",
-		slug: "what-are-matrices-used-for",
 		correctData: { answer: [true, true, true, true, true, true] }
 	}, {
 		youtubeId: "xyAuNHPsq-g",
 		time: "6m31s",
 		id: 4,
-		title: "Defining matrix addition",
-		slug: "defining-matrix-addition"
+		title: "Defining matrix addition"
 	}, {
 		youtubeId: "xyAuNHPsq-g",
 		time: "8m9s",
 		id: 5,
-		title: "Defining matrix addition (part 2)",
-		slug: "defining-matrix-addition-part-2"
+		title: "Defining matrix addition (part 2)"
 	}, {
 		youtubeId: "xyAuNHPsq-g",
 		time: "8m10s",
 		id: 6,
 		title: "Matrix addition",
-		slug: "matrix-addition",
 		correctData: { answer: [[80, 23], [13, 25]] }
 	}, {
 		youtubeId: "xyAuNHPsq-g",
 		time: "8m10s",
 		id: 7,
 		title: "Matrix terminology",
-		slug: "matrix-terminology",
 		correctData: {
 			"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
 			"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
