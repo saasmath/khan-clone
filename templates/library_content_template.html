@@ -28,12 +28,14 @@
                         <p class='topic-desc'>{{topic.description|escape}}</p>
                     {% endif %}
 
-                    {% if ajax %}
-                        <ol style="height:{{topic.height}}px;" data-role="listview" data-inset="true">
-                        <span style="padding-left: 16px;">Loading videos...</span>
-                        </ol>
-                    {% else %}
-                        {{ templatetags.column_major_sorted_videos(topic) }}
+                    {% if topic.content %}
+                        {% if ajax %}
+                            <ol style="height:{{topic.height}}px;" data-role="listview" data-inset="true">
+                            <span style="padding-left: 16px;">Loading videos...</span>
+                            </ol>
+                        {% else %}
+                            {{ templatetags.column_major_sorted_videos(topic) }}
+                        {% endif %}
                     {% endif %}
     
                     <div class="clear desktop-only">
