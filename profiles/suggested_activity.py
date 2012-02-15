@@ -38,6 +38,23 @@ class SuggestedActivity(object):
 	                     and entry.seconds_watched > 90),
 	            recent_activities)
 
+        # BEGIN TEMP LOOKUPS {
+        # Feb14, 2012 - This is a temporary lookup to the db since
+        # RecentVideoActivity data prior to Feb9 will not have the
+        # is_video_completed flag properly set, and the "recent activity window"
+        # can include those older log entries. Delete this code when the window
+        # slides off of those entries.
+        real_list = []
+        for candidate in recent_incomplete_videos:
+            key_name = models.UserVideo.get_key_name(candidate.youtube_id,
+                                                     user_data)
+            user_video = models.UserVideo.get_by_key_name(key_name)
+            if not user_video.completed:
+                real_list.append(candidate)
+
+        recent_incomplete_videos = real_list
+        # } END TEMP LOOKUPS
+
         max_activities = 2
         suggestions = [SuggestedActivity.from_video_activity(va)
                        for va in recent_incomplete_videos[:max_activities]]

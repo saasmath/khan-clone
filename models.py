@@ -2885,8 +2885,11 @@ class UserPlaylist(db.Model):
 class UserVideo(db.Model):
 
     @staticmethod
-    def get_key_name(video, user_data):
-        return user_data.key_email + ":" + video.youtube_id
+    def get_key_name(video_or_youtube_id, user_data):
+        id = video_or_youtube_id
+        if type(id) not in [str, unicode]:
+            id = video_or_youtube_id.youtube_id
+        return user_data.key_email + ":" + id
 
     @staticmethod
     def get_for_video_and_user_data(video, user_data, insert_if_missing=False):
