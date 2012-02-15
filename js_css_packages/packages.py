@@ -73,6 +73,7 @@ javascript = {
             "modalvideo.js",
 
             # socrates stuff
+            "underscore.string.js",
             "../topicsadmin-package/jquery.ui.draggable.js",
             "jquery.ui.resizable.js",
             "inputtext.handlebars",
