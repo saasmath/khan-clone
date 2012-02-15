@@ -682,7 +682,7 @@ var globalPopupDialog = {
 
     hideGenericMessageBox = function() {
         if (messageBox) {
-            $(messageBox).modal('hide').remove();
+            $(messageBox).modal('hide');
         }
         messageBox = null;
     }
