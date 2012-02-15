@@ -74,6 +74,7 @@ javascript = {
 
             # socrates stuff
             "underscore.string.js",
+            "poppler.js",
             "../topicsadmin-package/jquery.ui.draggable.js",
             "jquery.ui.resizable.js",
             "inputtext.handlebars",
