@@ -947,7 +947,7 @@ var Profile = {
     activityDeferred_: null,
     populateActivity: function() {
         if (Profile.activityDeferred_) {
-            Profile.activityDeferred_;
+            return Profile.activityDeferred_;
         }
         $("#recent-activity-progress-bar").progressbar({value: 100});
 

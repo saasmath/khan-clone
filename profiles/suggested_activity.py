@@ -20,15 +20,17 @@ class SuggestedActivity(object):
             recent_activities - a list of recent activities so that suggestions
                 can be based on them.
         """
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
         return {
-            "exercises": SuggestedActivity.get_exercises_for(user_data),
-            "videos": SuggestedActivity.get_videos_for(user_data,
-                                                       recent_activities),
+            "exercises": SuggestedActivity.get_exercises_for(
+                    user_data, user_exercise_graph),
+            "videos": SuggestedActivity.get_videos_for(
+                    user_data, recent_activities, user_exercise_graph),
             "goals": SuggestedActivity.get_goals_for(user_data),
         }
 
     @staticmethod
-    def get_videos_for(user_data, recent_activities):
+    def get_videos_for(user_data, recent_activities, user_exercise_graph):
         recent_completed_ids = set([v.youtube_id for v in filter(
 	            lambda entry:
 	                    (entry.__class__ == recent_activity.RecentVideoActivity
@@ -49,8 +51,6 @@ class SuggestedActivity(object):
                        for va in recent_incomplete_videos[:max_activities]]
 
         if len(suggestions) < max_activities:
-            # STOPSHIP: consolidate this with the call in get_exercises_for
-            user_exercise_graph = models.UserExerciseGraph.get(user_data)
             exercise_graph_dicts = user_exercise_graph.suggested_graph_dicts()
 
             completed = set([
@@ -88,8 +88,7 @@ class SuggestedActivity(object):
                 for g in goals[0:max_activities]]
 
     @staticmethod
-    def get_exercises_for(user_data):
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+    def get_exercises_for(user_data, user_exercise_graph):
         exercise_graph_dicts = user_exercise_graph.suggested_graph_dicts()
 
         max_activities = 3
