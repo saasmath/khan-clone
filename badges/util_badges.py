@@ -398,7 +398,7 @@ def update_with_user_exercise(user_data, user_exercise, include_other_badges = F
 
 # Award this user any earned Topic-context badges for the provided UserTopic.
 def update_with_user_topic(user_data, user_topic, include_other_badges = False, action_cache = None):
-    possible_badges = badges_with_context_type(badges.BadgeContextType.PLAYLIST)
+    possible_badges = badges_with_context_type(badges.BadgeContextType.TOPIC)
     action_cache = action_cache or last_action_cache.LastActionCache.get_for_user_data(user_data)
 
     awarded = False
