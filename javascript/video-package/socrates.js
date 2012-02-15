@@ -151,13 +151,9 @@ Socrates.InputText = Backbone.View.extend({
 
 $(Socrates.ControlPanel.onReady);
 
-Socrates.Question = Backbone.Model.extend({
+Socrates.Bookmark = Backbone.Model.extend({
 	seconds: function() {
 		return Socrates.Question.timeToSeconds(this.get("time"));
-	},
-
-	key: function() {
-		return this.get('youtubeId') + "-" + this.get('time');
 	},
 
 	slug: function() {
@@ -189,6 +185,12 @@ Socrates.Question = Backbone.Model.extend({
 			i++;
 		}
 		return result;
+	}
+});
+
+Socrates.Question = Socrates.Bookmark.extend({
+	key: function() {
+		return this.get('youtubeId') + "-" + this.get('time');
 	}
 });
 
@@ -387,10 +389,14 @@ Socrates.MasterView = Backbone.View.extend({
 	className: "video-overlay",
 
 	initialize: function() {
-		// wrap each model in a view
-		this.views = this.model.map(function(question) {
-			return new Socrates.QuestionView({model: question});
-		});
+		// wrap each question in a view
+		this.views = this.model.
+			filter(function(bookmark) {
+				return bookmark.__proto__ == Socrates.Question;
+			}).
+			map(function(question) {
+				return new Socrates.QuestionView({model: question});
+			});
 	},
 
 	questionToView: function(view) {
@@ -430,7 +436,7 @@ Socrates.Nav = Backbone.View.extend({
 
 Socrates.QuestionRouter = Backbone.Router.extend({
 	routes: {
-		":slug": "show"
+		":slug": "reactToNewFragment"
 	},
 
 	initialize: function(options) {
@@ -440,7 +446,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		this.beep = new Audio("/socrates/starcraft_chat_sound.mp3");
 	},
 
-	show: function(slug) {
+	reactToNewFragment: function(slug) {
 		// blank fragment for current state of video
 		if (slug === "") {
 			this.hide();
@@ -451,7 +457,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 			return q.slug() == slug;
 		});
 		if (question) {
-			this.showQuestion(question);
+			this.enterState(question);
 			return;
 		}
 
@@ -469,29 +475,36 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		this.navigate("", {replace: true, trigger: true});
 	},
 
-	navigateToQuestion: function(question, options) {
+	navigateToState: function(question, options) {
 		this.navigate(question.slug());
-		this.showQuestion(question, options);
+		this.enterState(question, options);
 	},
 
-	showQuestion: function(view, options) {
+	enterState: function(view, options) {
 		options = _.extend({}, options);
-		this.hide();
-		this.videoControls.pause();
 
-		view = this.masterView.questionToView(view);
-		this.currentView = view;
+		this.leaveCurrentState();
+		// this.videoControls.pause();
 
 		if (options.beep) {
 			this.beep.play();
 		}
-		this.currentView.show();
+
+		nextView = this.masterView.questionToView(view);
+		if (nextView) {
+			this.currentView = nextView;
+			if (this.currentView.show) {
+				this.currentView.show();
+			}
+		}
+
 		return this;
 	},
 
-	hide: function() {
+	leaveCurrentState: function() {
 		if (this.currentView) {
-			this.currentView.hide();
+			if (this.currentView.hide)
+				this.currentView.hide();
 			this.currentView = null;
 		}
 		return this;
@@ -572,82 +585,98 @@ Socrates.Skippable = (function() {
 
 $(function() {
 	// todo: move this somewhere else, it's data not code
-	window.Questions = new Socrates.QuestionCollection([{
-		time: "0m0s",
-		title: "What is a matrix?"
-	}, {
-		time: "0m59s",
-		title: "Dimensions of a matrix"
-	}, {
-		time: "2m5.7s",
-		title: "Dimensions of a matrix",
-		youtubeId: "xyAuNHPsq-g",
-		id: 1,
-		correctData: { rows: "4", cols: "5" }
-	}, {
-		time: "2m6s",
-		title: "Referencing elements in a matrix"
-	}, {
-		time: "3m20s",
-		title: "Referencing elements in a matrix",
-		youtubeId: "xyAuNHPsq-g",
-		id: 2,
-		correctData: { answer: "2" }
-	}, {
-		time: "3m28s",
-		title: "What are matrices used for?"
-	}, {
-		time: "4m23.9s",
-		title: "What are matrices used for?",
-		youtubeId: "xyAuNHPsq-g",
-		id: 3,
-		correctData: { answer: [true, true, true, true, true, true] }
-	}, {
-		time: "4m42s",
-		title: "Defining matrix addition"
-	}, {
-		time: "6m31s",
-		title: "Defining matrix addition",
-		youtubeId: "xyAuNHPsq-g",
-		id: 4
-	}, {
-		time: "6m31s",
-		title: "Matrix addition"
-	}, {
+	window.Questions = new Socrates.QuestionCollection([
+		new Socrates.Bookmark({
+			time: "0m0s",
+			title: "What is a matrix?"
+		}),
+		new Socrates.Bookmark({
+			time: "0m59s",
+			title: "Dimensions of a matrix"
+		}),
+		//{
+	// 	time: "2m5.7s",
+	// 	title: "Dimensions of a matrix",
+	// 	youtubeId: "xyAuNHPsq-g",
+	// 	id: 1,
+	// 	correctData: { rows: "4", cols: "5" }
+	// },
+		new Socrates.Bookmark({
+			time: "2m6s",
+			title: "Referencing elements in a matrix"
+		}),
+		//{
+	// 	time: "3m20s",
+	// 	title: "Referencing elements in a matrix",
+	// 	youtubeId: "xyAuNHPsq-g",
+	// 	id: 2,
+	// 	correctData: { answer: "2" }
+	// },
+		new Socrates.Bookmark({
+			time: "3m28s",
+			title: "What are matrices used for?"
+		}),
+		//{
+	// 	time: "4m23.9s",
+	// 	title: "What are matrices used for?",
+	// 	youtubeId: "xyAuNHPsq-g",
+	// 	id: 3,
+	// 	correctData: { answer: [true, true, true, true, true, true] }
+	// },
+		new Socrates.Bookmark({
+			time: "4m42s",
+			title: "Defining matrix addition"
+		}),
+		//{
+	// 	time: "6m31s",
+	// 	title: "Defining matrix addition",
+	// 	youtubeId: "xyAuNHPsq-g",
+	// 	id: 4
+	// },
+		new Socrates.Bookmark({
+			time: "6m31s",
+			title: "Matrix addition"
+		}),
+		new Socrates.Bookmark({
 		time: "7m39s",
 		title: "Commutativity of matrix addition"
-	}, {
-		time: "8m9s",
-		title: "Commutativity of matrix addition",
-		youtubeId: "xyAuNHPsq-g",
-		id: 5
-	}, {
-		time: "8m10.5s",
-		title: "Matrix addition",
-		youtubeId: "xyAuNHPsq-g",
-		id: 6,
-		correctData: { answer: [[80, 23], [13, 25]] }
-	}, {
-		time: "8m10s",
-		title: "Matrix subtraction"
-	}, {
-		time: "9m44s",
-		title: "Matrices that can be added"
-	}, {
-		time: "11m50s",
-		title: "Matrix terminology"
-	}, {
-		time: "11m50s",
-		title: "Matrix terminology",
-		youtubeId: "xyAuNHPsq-g",
-		id: 7,
-		correctData: {
-			"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
-			"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
-			"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
-			"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
-		}
-	}]);
+		}),
+		//{
+	// 	time: "8m9s",
+	// 	title: "Commutativity of matrix addition",
+	// 	youtubeId: "xyAuNHPsq-g",
+	// 	id: 5
+	// }, {
+	// 	time: "8m10.5s",
+	// 	title: "Matrix addition",
+	// 	youtubeId: "xyAuNHPsq-g",
+	// 	id: 6,
+	// 	correctData: { answer: [[80, 23], [13, 25]] }
+	// },
+		new Socrates.Bookmark({
+			time: "8m10s",
+			title: "Matrix subtraction"
+		}),
+		new Socrates.Bookmark({
+			time: "9m44s",
+			title: "Matrices that can be added"
+		}),
+		new Socrates.Bookmark({
+			time: "11m50s",
+			title: "Matrix terminology"
+		})
+	//{
+	// 	time: "11m50s",
+	// 	title: "Matrix terminology",
+	// 	youtubeId: "xyAuNHPsq-g",
+	// 	id: 7,
+	// 	correctData: {
+	// 		"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
+	// 		"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
+	// 		"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
+	// 		"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
+
+	]);
 
 	window.masterView = new Socrates.MasterView({
 		el: $(".video-overlay"),
@@ -670,19 +699,19 @@ $(function() {
 
 	window.poppler = new Poppler();
 	window.Questions.each(function(q) {
-		poppler.add(q.seconds(), _.bind(Router.navigateToQuestion, Router, q, {beep: true}));
+		poppler.add(q.seconds(), _.bind(Router.navigateToState, Router, q, {beep: true}));
 	});
 
-	window.skippable = [
-		{span: ["25.5s", "42s"]},
-		{span: ["1m40s", "2m2s"]}
-	];
-	skippable = _.map(skippable, function(item) {
-		return new Socrates.Skippable(_.extend(item, {videoControls: window.VideoControls}));
-	});
-	_.each(skippable, function(item) {
-		poppler.add(item.seconds()[0], _.bind(item.trigger, item));
-	});
+	// window.skippable = [
+	// 	{span: ["25.5s", "42s"]},
+	// 	{span: ["1m40s", "2m2s"]}
+	// ];
+	// skippable = _.map(skippable, function(item) {
+	// 	return new Socrates.Skippable(_.extend(item, {videoControls: window.VideoControls}));
+	// });
+	// _.each(skippable, function(item) {
+	// 	poppler.add(item.seconds()[0], _.bind(item.trigger, item));
+	// });
 
 	// watch video time every 100 ms
 	recursiveTrigger(_.bind(poppler.trigger, poppler));
