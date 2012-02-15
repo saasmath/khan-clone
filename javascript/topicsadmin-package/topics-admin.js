@@ -564,6 +564,27 @@ var TopicTreeEditor = {
                 error: TopicTreeEditor.handleError
             });
         });
+    },
+
+    ungroupTopic: function(node, topic) {
+        var children = topic.get("children");
+        var new_parent = TopicTreeEditor.topicTree.fetchByID(node.parent.data.id, function(model) {
+            var child_list = model.get("children").slice(0);
+            var child_index = _.indexOf(child_list, _.find(child_list, function(child) { return child.id === topic.id; }));
+
+            splice_args = [child_index, 1].concat(children);
+            [].splice.apply(child_list, splice_args);
+
+            model.set({"children": child_list});
+
+            $.ajaxq("topics-admin", {
+                url: "/api/v1/topic/" + topic.id + "/ungroup",
+                type: "POST",
+                success: function() {
+                },
+                error: TopicTreeEditor.handleError
+            });
+        });
     }
 };
 
@@ -874,6 +895,17 @@ function stringArraysEqual(ar1, ar2) {
         } else if (action == "import_topic") {
             this.importView = this.importView || new TopicTreeEditor.ImportExportView({ import: true });
             this.importView.show(this.model.id);
+
+        } else if (action == "ungroup_topic") {
+            var self = this;
+            popupGenericMessageBox({
+                title: "Confirm ungroup topic",
+                message: "Ungrouping this topic will delete it and move all its children to the parent topic. Are you sure?",
+                buttons: [
+                    { title: "Yes", action: function() { TopicTreeEditor.ungroupTopic(self.node, self.model); hideGenericMessageBox(); } },
+                    { title: "No", action: hideGenericMessageBox }
+                ]
+            });
 
         } else if (action == "paste_item") {
 

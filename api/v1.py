@@ -668,8 +668,8 @@ def topic_move_child(old_parent_id, version_id = "edit"):
 
     return True    
 
-@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/movechild", methods=["POST"])  
-@route("/api/v1/topic/<topic_id>/ungroup")
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/ungroup", methods=["POST"])  
+@route("/api/v1/topic/<topic_id>/ungroup", methods=["POST"])
 @developer_required
 @jsonp
 @jsonify
