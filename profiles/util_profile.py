@@ -197,7 +197,10 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
-            bingo('suggested_activity_visit_profile')
+            bingo([
+                'suggested_activity_visit_profile',
+                'suggested_activity_visit_profile_binary',
+            ])
 
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)

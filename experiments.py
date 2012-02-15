@@ -86,12 +86,14 @@ class SuggestedActivityExperiment(object):
         ('suggested_activity_gained_proficiency_all', ConversionTypes.Counting),
 
         ('suggested_activity_videos_landing', ConversionTypes.Counting),
+        ('suggested_activity_videos_landing_binary', ConversionTypes.Binary),
         ('suggested_activity_videos_finished', ConversionTypes.Counting),
 
         ('suggested_activity_exercises_landing', ConversionTypes.Counting),
         ('suggested_activity_visit_suggested_exercise', ConversionTypes.Counting),
 
         ('suggested_activity_visit_profile', ConversionTypes.Counting),
+        ('suggested_activity_visit_profile_binary', ConversionTypes.Binary),
 
         # Clicks on suggested activities on the profile page
         ('suggested_activity_click_through_exercise', ConversionTypes.Counting),
