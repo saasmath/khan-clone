@@ -523,8 +523,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo(['hints_gained_proficiency_all',
-                           'struggling_gained_proficiency_all',
-                           'homepage_restructure_gained_proficiency_all'])
+                           'struggling_gained_proficiency_all'])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
 
@@ -549,7 +548,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             bingo([
                 'hints_problems_done',
                 'struggling_problems_done',
-                'homepage_restructure_problems_done',
             ])
 
         else:

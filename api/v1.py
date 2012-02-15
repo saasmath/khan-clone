@@ -800,7 +800,7 @@ def playlists_library():
     return convert_tree(tree)
 
 # We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values. - since with topics now, the library is garunteed
+# that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
 # not to change until we have a new version, the cached version is good enough
 @route("/api/v1/playlists/library/list/fresh", methods=["GET"]) 
 @route("/api/v1/playlists/library/list", methods=["GET"])

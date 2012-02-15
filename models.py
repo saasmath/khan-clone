@@ -1038,7 +1038,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
         username_or_email = None
 
         if segment:
-            segment = urllib.unquote(segment)
+            segment = urllib.unquote(segment).decode('utf-8').strip()
             if segment.startswith("_fb"):
                 username_or_email = segment.replace("_fb", FACEBOOK_ID_PREFIX)
             elif segment.startswith("_em"):
@@ -3077,8 +3077,7 @@ class VideoLog(db.Model):
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
-            bingo(['struggling_videos_finished',
-                   'homepage_restructure_videos_finished'])
+            bingo(['struggling_videos_finished'])
         video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
