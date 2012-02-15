@@ -1,15 +1,8 @@
 from profiles import recent_activity
-from goals.models import GoalList
 import models
 
 class SuggestedActivity(object):
-    """ Suggested activity for a user...?
-
-        Haiku for you:
-
-        Now, exercises.
-        Soon, video, goal, and yes,
-        perhaps badges! Help!
+    """ Suggested exercises and videos for a student.
     """
 
     @staticmethod
@@ -26,7 +19,6 @@ class SuggestedActivity(object):
                     user_data, user_exercise_graph),
             "videos": SuggestedActivity.get_videos_for(
                     user_data, recent_activities, user_exercise_graph),
-            "goals": SuggestedActivity.get_goals_for(user_data),
         }
 
     @staticmethod
@@ -46,7 +38,7 @@ class SuggestedActivity(object):
 	                     and entry.seconds_watched > 90),
 	            recent_activities)
 
-        max_activities = 3
+        max_activities = 2
         suggestions = [SuggestedActivity.from_video_activity(va)
                        for va in recent_incomplete_videos[:max_activities]]
 
@@ -74,18 +66,6 @@ class SuggestedActivity(object):
                         return suggestions
 
         return suggestions
-
-    @staticmethod
-    def get_goals_for(user_data):
-        # TODO: Consider suggesting exercises for
-        # when the student has nearly completed the requirements
-        # for one of Marcos's badge-goal hybrids
-
-        goals = GoalList.get_current_goals(user_data)
-
-        max_activities = 3
-        return [SuggestedActivity.from_goal(g)
-                for g in goals[0:max_activities]]
 
     @staticmethod
     def get_exercises_for(user_data, user_exercise_graph):
@@ -122,27 +102,3 @@ class SuggestedActivity(object):
         activity.url = video.relative_url
         return activity
 
-    @staticmethod
-    def from_goal(goal):
-        """ Build a SuggestedActivity dict from a goals.models.Goal.
-
-        TODO: Currently, we suggest the objective that is closest to
-        completion (but not yet completed). We could also consider recency.
-        """
-        activity = SuggestedActivity()
-        goal_data = goal.get_visible_data()
-
-        activity.name = goal_data["title"]
-        suggested_objective = {
-            "progress": -1
-        }
-
-        for objective in goal_data["objectives"]:
-            progress = objective["progress"]
-            if progress < 1 and progress > suggested_objective["progress"]:
-                suggested_objective = objective
-
-        activity.url = suggested_objective["url"]
-        activity.description = suggested_objective["description"]
-
-        return activity
