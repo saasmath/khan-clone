@@ -10,6 +10,16 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     profile: null,
+
+    /**
+     * The root segment of the URL for the profile page for this user.
+     * Will be of the form "/profile/<identifier>" where identifier
+     * can be a username, or other identifier sent by the server.
+     *
+     * Note that this does not correspond to Backbone.History.root, since
+     * that must be a common root ("/profile") which cannot be changed,
+     * even if the profileRoot changes.
+     */
     profileRoot: "",
 
     /**
@@ -43,7 +53,7 @@ var Profile = {
 
         Backbone.history.start({
             pushState: true,
-            root: ""
+            root: "/profile"
         });
 
         Profile.showIntro_();
@@ -128,11 +138,19 @@ var Profile = {
     getRoutes_: function() {
         var routes = {};
 
+        // Resolve the routes relative to the real Backbone.History.root
+        var identifier = decodeURIComponent(
+                Profile.profileRoot.substring("/profile".length));
+
         _.each(this.subRoutes, function(fxn, subRoute) {
             // Internally, backbone expects these routes to be decoded.
-            var key = decodeURIComponent(Profile.profileRoot) + subRoute;
+            var key = identifier + subRoute;
             routes[key] = fxn;
         });
+
+        // Also route "/profile" to the default page, as the above logic will
+        // always require "/profile/identifier" otherwise
+        routes[""] = "showDefault";
 
         return routes;
     },
@@ -177,6 +195,19 @@ var Profile = {
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
             this.updateTitleBreadcrumbs();
+        },
+
+        /**
+         * Override the base navigate method so that the profile root may be
+         * specified, and fragments will automatically be resolved relative to
+         * the real Backbone.History.root.
+         */
+        navigate: function(fragment, triggerRoute) {
+            if (fragment.indexOf("/profile") === 0) {
+                fragment = fragment.substring("/profile".length);
+            }
+            Backbone.Router.prototype.navigate.call(
+                    this, fragment, triggerRoute);
         },
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
