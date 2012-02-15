@@ -913,16 +913,11 @@ var Profile = {
     },
 
     populateRecentActivity: function(activities) {
-        $("#recent-activity-progress-bar").slideUp("fast", function() {
-            $(this).hide();
-        });
-
         var listTemplate = Templates.get("profile.recent-activity-list"),
             exerciseTemplate = Templates.get("profile.recent-activity-exercise"),
             badgeTemplate = Templates.get("profile.recent-activity-badge"),
             videoTemplate = Templates.get("profile.recent-activity-video"),
             goalTemplate = Templates.get("profile.recent-activity-goal");
-
 
         Handlebars.registerHelper("renderActivity", function(activity) {
             _.extend(activity, {profileRoot: Profile.profileRoot});
@@ -963,8 +958,13 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
+                    $("#activity-loading-placeholder").fadeOut(
+                            "slow", function() {
+                                $(this).hide();
+                            });
                     Profile.populateSuggestedActivity(data.suggested);
                     Profile.populateRecentActivity(data.recent);
+                    $("#activity-contents").show();
                 }
             });
         } else {

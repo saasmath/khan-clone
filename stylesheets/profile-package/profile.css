@@ -479,6 +479,7 @@
 .activity-column {
     width: 58%;
     float: left;
+    position: relative;
 }
 .mini-stats-column {
     margin-left: 3%;
@@ -615,10 +616,18 @@ div.profile-notification {
 div.profile-notification.uncover-nav {
     top: 105px;
 }
+#activity-loading-placeholder {
+    position: absolute;
+    background: white;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: 20; /* must be above all of the recent/suggested activity */
+}
 #recent-activity-progress-bar {
     width: 400px;
     height: 22px;
-    margin-top: 15px;
+    margin: 15px 0;
 }
 #graph-progress-bar {
     width: 400px;
