@@ -17,6 +17,9 @@ class RecentActivity(object):
     def combine_with(self, recent_activity):
         return False
 
+    def is_complete(self):
+        return False
+
     _serialize_blacklist = ['user_data']
 
 class RecentBadgeActivity(RecentActivity):
@@ -26,6 +29,9 @@ class RecentBadgeActivity(RecentActivity):
         self.badge = badge
         self.dt = user_badge.date
 
+    def is_complete(self):
+        return True
+
 class RecentExerciseActivity(RecentActivity):
     def __init__(self, problem_log):
         self.s_type = "Exercise"
@@ -34,6 +40,9 @@ class RecentExerciseActivity(RecentActivity):
         self.c_problems = 1
         self.earned_proficiency = problem_log.earned_proficiency
         self.exercise_display_name = models.Exercise.to_display_name(problem_log.exercise)
+
+    def is_complete(self):
+        return self.earned_proficiency
 
     def combine_with(self, recent_activity):
         if self.__class__ == recent_activity.__class__:
@@ -57,6 +66,9 @@ class RecentVideoActivity(RecentActivity):
         self.user_data = user_data
         self.is_video_completed = video_log.is_video_completed
 
+    def is_complete(self):
+        return self.is_video_completed
+
     def combine_with(self, recent_activity):
         if self.__class__ == recent_activity.__class__:
             if self.video_title == recent_activity.video_title:
@@ -74,6 +86,9 @@ class RecentGoalActivity(RecentActivity):
         self.s_type = "Goal"
         self.goal = goal
         self.dt = goal.completed_on
+
+    def is_complete(self):
+        return self.dt is not None and self.dt <= datetime.datetime.now()
 
 def recent_badge_activity(user_badges):
     badges_dict = util_badges.all_badges_dict()
@@ -97,10 +112,12 @@ def recent_goal_activity(goals):
         if g.completed and not g.abandoned]
 
 def recent_activity_for(user_data, dt_start, dt_end):
-
-    query_user_badges = models_badges.UserBadge.get_for_user_data_between_dts(user_data, dt_start, dt_end)
-    query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
-    query_video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
+    query_user_badges = models_badges.UserBadge.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end)
+    query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end)
+    query_video_logs = models.VideoLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end)
     query_goals = GoalList.get_updated_between_dts(user_data, dt_start, dt_end)
 
     results = util.async_queries([query_user_badges, query_problem_logs,
@@ -116,7 +133,8 @@ def recent_activity_for(user_data, dt_start, dt_end):
                             for sublist in list_recent_activity_types
                             for activity in sublist]
 
-    return _collapse_recent_activity(list_recent_activity)
+    return filter(lambda activity: activity.is_complete(),
+                  _collapse_recent_activity(list_recent_activity))
 
 def _collapse_recent_activity(list_recent_activity):
     last_recent_activity = None
