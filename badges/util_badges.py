@@ -56,11 +56,11 @@ def all_badges():
         streak_badges.RidiculousStreakBadge(),
         streak_badges.LudicrousStreakBadge(),
 
-        topic_time_badges.NicePlaylistTimeBadge(),
-        topic_time_badges.GreatPlaylistTimeBadge(),
-        topic_time_badges.AwesomePlaylistTimeBadge(),
-        topic_time_badges.RidiculousPlaylistTimeBadge(),
-        topic_time_badges.LudicrousPlaylistTimeBadge(),
+        topic_time_badges.NiceTopicTimeBadge(),
+        topic_time_badges.GreatTopicTimeBadge(),
+        topic_time_badges.AwesomeTopicTimeBadge(),
+        topic_time_badges.RidiculousTopicTimeBadge(),
+        topic_time_badges.LudicrousTopicTimeBadge(),
 
         timed_problem_badges.NiceTimedProblemBadge(),
         timed_problem_badges.GreatTimedProblemBadge(),
@@ -396,7 +396,7 @@ def update_with_user_exercise(user_data, user_exercise, include_other_badges = F
 
     return awarded
 
-# Award this user any earned Playlist-context badges for the provided UserPlaylist.
+# Award this user any earned Topic-context badges for the provided UserTopic.
 def update_with_user_topic(user_data, user_topic, include_other_badges = False, action_cache = None):
     possible_badges = badges_with_context_type(badges.BadgeContextType.PLAYLIST)
     action_cache = action_cache or last_action_cache.LastActionCache.get_for_user_data(user_data)
