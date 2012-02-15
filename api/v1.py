@@ -1638,6 +1638,7 @@ def user_followup_exercises(exercise_name):
 def api_user_followups(exercise_name):
     return user_followup_exercises(exercise_name)
 
+@route("/api/v1/user/topics", methods=["GET"])
 @route("/api/v1/user/playlists", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -1649,25 +1650,27 @@ def user_playlists_all():
         user_data_student = get_visible_user_data_from_request()
 
         if user_data_student:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user)
+            user_playlists = models.UserTopic.all().filter("user =", user_data_student.user)
             return user_playlists.fetch(10000)
 
     return None
 
-@route("/api/v1/user/playlists/<playlist_title>", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>", methods=["GET"])
+@route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
-def user_playlists_specific(playlist_title):
+def user_playlists_specific(topic_id):
     user_data = models.UserData.current()
 
     if user_data and playlist_title:
         user_data_student = get_visible_user_data_from_request()
-        playlist = models.Playlist.all().filter("title =", playlist_title).get()
+        topic = models.Topic.get_by_id(topic_id)
+        if topic is None:
+            topic = models.Topic.all().filter("standalone_title =", topic_id).get()
 
-        if user_data_student and playlist:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user).filter("playlist =", playlist)
-            return user_playlists.get()
+        if user_data_student and topic:
+            return models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
 
     return None
 

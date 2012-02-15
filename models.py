@@ -3205,9 +3205,9 @@ class Playlist(Searchable, db.Model):
         video_playlist_query.filter('live_association =', True)
         return video_playlist_query.count()
 
-# No longer depends on the Playlist model; currently used only with Topics
 class UserPlaylist(db.Model):
     user = db.UserProperty()
+    playlist = db.ReferenceProperty(Playlist)
     seconds_watched = db.IntegerProperty(default = 0)
     last_watched = db.DateTimeProperty(auto_now_add = True)
     title = db.StringProperty(indexed=False)
@@ -3219,22 +3219,58 @@ class UserPlaylist(db.Model):
         return query
 
     @staticmethod
+    def get_key_name(playlist, user_data):
+        return user_data.key_email + ":" + playlist.youtube_id
+
+    @staticmethod
+    def get_for_playlist_and_user_data(playlist, user_data, insert_if_missing=False):
+        if not user_data:
+            return None
+
+        key = UserPlaylist.get_key_name(playlist, user_data)
+
+        if insert_if_missing:
+            return UserPlaylist.get_or_insert(
+                        key_name = key,
+                        user = user_data.user,
+                        playlist = playlist)
+        else:
+            return UserPlaylist.get_by_key_name(key)
+
+# No longer depends on the Playlist model; currently used only with Topics
+class UserTopic(db.Model):
+    user = db.UserProperty()
+    seconds_watched = db.IntegerProperty(default = 0)
+    seconds_migrated = db.IntegerProperty(default = 0) # can remove after migration
+    last_watched = db.DateTimeProperty(auto_now_add = True)
+    topic_key_name = db.StringProperty()
+    title = db.StringProperty(indexed=False)
+
+    @staticmethod
+    def get_for_user_data(user_data):
+        query = UserPlaylist.all()
+        query.filter('user =', user_data.user)
+        return query
+
+    @staticmethod
     def get_key_name(topic, user_data):
-        return user_data.key_email + ":" + topic.id
+        return user_data.key_email + ":" + topic.key().name()
 
     @staticmethod
     def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
         if not user_data:
             return None
 
-        key = UserPlaylist.get_key_name(topic, user_data)
+        key = UserTopic.get_key_name(topic, user_data)
 
         if insert_if_missing:
-            return UserPlaylist.get_or_insert(
+            return UserTopic.get_or_insert(
                         key_name = key,
+                        title = topic.standalone_title,
+                        topic_key_name = topic.key().name(),
                         user = user_data.user)
         else:
-            return UserPlaylist.get_by_key_name(key)
+            return UserTopic.get_by_key_name(key)
 
 class UserVideo(db.Model):
 
@@ -3392,20 +3428,20 @@ class VideoLog(db.Model):
 
             first_topic = True
             for topic in video_topics:
-                user_playlist = UserPlaylist.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
-                user_playlist.title = topic.standalone_title
-                user_playlist.seconds_watched += seconds_watched
-                user_playlist.last_watched = datetime.datetime.now()
-                user_playlist.put()
+                user_topic = UserTopic.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
+                user_topic.title = topic.standalone_title
+                user_topic.seconds_watched += seconds_watched
+                user_topic.last_watched = datetime.datetime.now()
+                user_topic.put()
 
-                video_log.playlist_titles.append(user_playlist.title)
+                video_log.playlist_titles.append(user_topic.title)
 
                 if first_topic:
                     action_cache.push_video_log(video_log)
 
-                util_badges.update_with_user_playlist(
+                util_badges.update_with_user_topic(
                         user_data,
-                        user_playlist,
+                        user_topic,
                         include_other_badges=first_topic,
                         action_cache=action_cache)
 
