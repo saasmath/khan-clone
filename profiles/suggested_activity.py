@@ -36,7 +36,7 @@ class SuggestedActivity(object):
 	                     and entry.seconds_watched > 90),
 	            recent_activities)
 
-        max_activities = 3
+        max_activities = 2
         suggestions = [SuggestedActivity.from_video_activity(va)
                        for va in recent_incomplete_videos[:max_activities]]
 
