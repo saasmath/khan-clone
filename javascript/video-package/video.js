@@ -19,6 +19,27 @@ var Video = {
 
         });
 
+    },
+
+    renderPage: function(videoData) {
+        var navTemplate = Templates.get("video.video-nav");
+        var descTemplate = Templates.get("video.video-description");
+        var headerTemplate = Templates.get("video.video-header");
+        var footerTemplate = Templates.get("video.video-footer");
+
+        // Fix up data for templating
+        if (videoData.related_exercises &&
+            videoData.related_exercises.length) {
+            videoData.related_exercises[videoData.related_exercises.length - 1].last = true;
+        }
+
+        // Render HTML
+        $("span.video-nav").html(navTemplate(videoData));
+        $(".video-title").html(videoData.video.title);
+        $("div.video-description").html(descTemplate(videoData));
+        $("span.video-header").html(headerTemplate(videoData));
+        $("span.video-footer").html(footerTemplate(videoData));
+
         var jVideoDropdown = $('#video_dropdown');
         if ( jVideoDropdown.length ) {
             jVideoDropdown.css('display', 'inline-block');
@@ -27,7 +48,8 @@ var Video = {
             // Set the width explicitly before positioning it absolutely to satisfy IE7.
             menu.width(menu.width()).hide().css('position', 'absolute');
             menu.bind("menuselect", function(e, ui){
-                window.location.href = ui.item.children('a').attr('href');
+                var fragment = ui.item.children('a').attr('href').substr('/video/'.length);
+                Video.router.navigate(fragment, {trigger: true});
             });
             $(document).bind("click focusin", function(e){
                 if ($(e.target).closest("#video_dropdown").length == 0) {
@@ -66,26 +88,10 @@ var Video = {
             return false;
         });
 
-    },
-
-    renderPage: function(videoData) {
-        var navTemplate = Templates.get("video.video-nav");
-        var descTemplate = Templates.get("video.video-description");
-        var headerTemplate = Templates.get("video.video-header");
-        var footerTemplate = Templates.get("video.video-footer");
-
-        // Fix up data for templating
-        if (videoData.related_exercises &&
-            videoData.related_exercises.length) {
-            videoData.related_exercises[videoData.related_exercises.length - 1].last = true;
-        }
-
-        // Render HTML
-        $("span.video-nav").html(navTemplate(videoData));
-        $(".video-title").html(videoData.video.title);
-        $("div.video-description").html(descTemplate(videoData));
-        $("span.video-header").html(headerTemplate(videoData));
-        $("span.video-footer").html(footerTemplate(videoData));
+        // If the user starts writing feedback, disable autoplay.
+        $("span.video-footer").on("focus keydown", "input,textarea", function(event) {
+            VideoControls.setAutoPlayEnabled(false);
+        });
 
         VideoControls.playVideo(videoData.video.youtube_id, videoData.video_key, false);
 

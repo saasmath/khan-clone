@@ -3226,9 +3226,12 @@ class Video(Searchable, db.Model):
             awarded_points = user_video.points
 
         import shared_jinja
-        player_html = shared_jinja.get().render_template('videoplayer.html', video_path=video_path, video=video, awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
+        player_html = shared_jinja.get().render_template('videoplayer.html',
+            user_data=UserData.current(), video_path=video_path, video=video,
+            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
 
-        discussion_html = shared_jinja.get().render_template('videodiscussion.html', video=video, topic=topic, **discussion_options)
+        discussion_html = shared_jinja.get().render_template('videodiscussion.html',
+            user_data=UserData.current(), video=video, topic=topic, **discussion_options)
 
         return {
             'topic': topic,

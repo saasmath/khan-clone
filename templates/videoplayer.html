@@ -1,4 +1,5 @@
 {% import 'macros/user.html' as user %}
+{% set logged_in = user_data and not user_data.is_phantom %}
 
 <span class="video_extra_links desktop-only">
     <nobr>
