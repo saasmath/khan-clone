@@ -926,7 +926,7 @@ var Profile = {
     populateSuggestedActivity: function(activities) {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
 
-        _.each(activities["exercises"] || [], function(activity) {
+        var attachProgress = function(activity) {
             var progress = activity["progress"] || 0;
             var formattedProgress = progress ?
                     (100 * progress).toPrecision(4) + "%" :
@@ -939,7 +939,9 @@ var Profile = {
                 "maxWidth": 228,
                 "width": activity["progress"] * 228
             };
-        });
+        };
+        _.each(activities["exercises"] || [], attachProgress);
+        _.each(activities["videos"] || [], attachProgress);
         $("#suggested-activity").append(suggestedTemplate(activities));
     },
 
