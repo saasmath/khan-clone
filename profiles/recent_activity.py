@@ -64,6 +64,7 @@ class RecentVideoActivity(RecentActivity):
         self.dt = video_log.time_watched
         self.points_earned = video_log.points_earned
         self.user_data = user_data
+        self.last_second_watched = video_log.last_second_watched
         self.is_video_completed = video_log.is_video_completed
 
     def is_complete(self):
@@ -76,6 +77,9 @@ class RecentVideoActivity(RecentActivity):
                     self.dt = recent_activity.dt
                     self.seconds_watched += recent_activity.seconds_watched
                     self.points_earned += recent_activity.points_earned
+                    self.last_second_watched = max(
+                            recent_activity.last_second_watched,
+                            self.last_second_watched)
                     self.is_video_completed = (self.is_video_completed
                             or recent_activity.is_video_completed)
                     return True

@@ -1,5 +1,6 @@
 from profiles import recent_activity
 import models
+import points
 
 class SuggestedActivity(object):
     """ Suggested exercises and videos for a student.
@@ -35,7 +36,7 @@ class SuggestedActivity(object):
 	            lambda entry:
 	                    (entry.__class__ == recent_activity.RecentVideoActivity
 	                     and entry.youtube_id not in recent_completed_ids
-	                     and entry.seconds_watched > 90),
+	                     and entry.seconds_watched > 60),
 	            recent_activities)
 
         # BEGIN TEMP LOOKUPS {
@@ -109,6 +110,9 @@ class SuggestedActivity(object):
         activity = SuggestedActivity()
         activity.name = recent_video_activity.video_title
         activity.url = "/video?v=%s" % recent_video_activity.youtube_id
+        activity.progress = points.video_progress_from_points(
+                recent_video_activity.points_earned)
+        activity.last_second_watched = recent_video_activity.last_second_watched
         return activity
 
     @staticmethod
@@ -117,5 +121,7 @@ class SuggestedActivity(object):
         activity = SuggestedActivity()
         activity.name = video.title
         activity.url = video.relative_url
+        activity.progress = 0
+        activity.last_second_watched = 0
         return activity
 
