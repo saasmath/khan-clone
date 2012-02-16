@@ -91,10 +91,11 @@ def user_topic_migration(user_playlist):
         raise Exception("User Topic Migration could not find topic for %s" % user_playlist.title)
 
     user_data = models.UserData.get_from_db_key_email(user_playlist.user.email())
-    user_topic = models.UserTopic.get_for_topic_and_user_data(topic, user_data, True)
-    user_topic.seconds_watched += user_playlist.seconds_watched - user_topic.seconds_migrated
-    user_topic.seconds_migrated = user_playlist.seconds_watched
-    user_topic.last_watched = user_playlist.last_watched
-    yield op.db.Put(user_topic)
+    if user_data:
+        user_topic = models.UserTopic.get_for_topic_and_user_data(topic, user_data, True)
+        user_topic.seconds_watched += user_playlist.seconds_watched - user_topic.seconds_migrated
+        user_topic.seconds_migrated = user_playlist.seconds_watched
+        user_topic.last_watched = user_playlist.last_watched
+        yield op.db.Put(user_topic)
 
 
