@@ -254,8 +254,7 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
-        bingo(['struggling_videos_landing',
-               'homepage_restructure_videos_landing'])
+        bingo(['struggling_videos_landing'])
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
@@ -809,10 +808,9 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
     ('/commoncore', common_core.CommonCore),
+    ('/staging/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
-
-
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
@@ -917,11 +915,13 @@ application = webapp2.WSGIApplication([
 
     # Summer Discovery Camp application/registration
     ('/summer/application', summer.Application),
+    ('/summer/tuition', summer.Tuition),
     ('/summer/application-status', summer.Status),
     ('/summer/getstudent', summer.GetStudent),
     ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
+    ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 

@@ -46,7 +46,12 @@ class FlaggedFeedback(request_handler.RequestHandler):
         feedback_query = models_discussion.Feedback.all().filter("is_flagged = ", True).filter("deleted = ", False)
 
         feedback_count = feedback_query.count()
-        feedbacks = feedback_query.fetch(50)
+
+        # Grab a bunch of flagged pieces of feedback and point moderators at the 50 w/ lowest votes first.
+        # ...can easily do this w/ an order on the above query and a new index, but avoiding the index for now
+        # since it's only marginally helpful.
+        feedbacks = feedback_query.fetch(250)
+        feedbacks = sorted(feedbacks, key=lambda feedback: feedback.sum_votes)[:50]
 
         template_content = {
                 "feedbacks": feedbacks, 
