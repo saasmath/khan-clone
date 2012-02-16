@@ -26,10 +26,15 @@ class VotingSortOrder:
         if not sort_order in (VotingSortOrder.HighestPointsFirst, VotingSortOrder.NewestFirst):
             sort_order = VotingSortOrder.HighestPointsFirst
 
+        key_fxn = None
+
         if sort_order == VotingSortOrder.NewestFirst:
-            return sorted(entities, key=lambda entity: entity.date, reverse=True)
+            key_fxn = lambda entity: entity.date
         else:
-            return sorted(entities, key=lambda entity: entity.inner_score, reverse=True)
+            key_fxn = lambda entity: entity.inner_score
+
+        # Sort by desired sort order, then put hidden entities at end
+        return sorted(sorted(entities, key=key_fxn, reverse=True), key=lambda entity: entity.is_visible_to_public(), reverse=True)
 
 class UpdateQASort(request_handler.RequestHandler):
     def get(self):

@@ -2890,6 +2890,59 @@ class UserPlaylist(db.Model):
         else:
             return UserPlaylist.get_by_key_name(key)
 
+# No longer depends on the Playlist model; currently used only with Topics
+class UserTopic(db.Model):
+    user = db.UserProperty()
+    seconds_watched = db.IntegerProperty(default = 0)
+    seconds_migrated = db.IntegerProperty(default = 0) # can remove after migration
+    last_watched = db.DateTimeProperty(auto_now_add = True)
+    topic_key_name = db.StringProperty()
+    title = db.StringProperty(indexed=False)
+
+    @staticmethod
+    def get_for_user_data(user_data):
+        query = UserPlaylist.all()
+        query.filter('user =', user_data.user)
+        return query
+
+    @staticmethod
+    def get_key_name(topic, user_data):
+        return user_data.key_email + ":" + topic.key().name()
+
+    @staticmethod
+    def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
+        if not user_data:
+            return None
+
+        key = UserTopic.get_key_name(topic, user_data)
+
+        if insert_if_missing:
+            return UserTopic.get_or_insert(
+                        key_name = key,
+                        title = topic.standalone_title,
+                        topic_key_name = topic.key().name(),
+                        user = user_data.user)
+        else:
+            return UserTopic.get_by_key_name(key)
+
+    # temporary function used for backfill
+    @staticmethod
+    def get_for_topic_and_user(topic, user, insert_if_missing=False):
+        if not user:
+            return None
+
+        key = user.email() + ":" + topic.key().name()
+
+        if insert_if_missing:
+            return UserTopic.get_or_insert(
+                        key_name = key,
+                        title = topic.standalone_title,
+                        topic_key_name = topic.key().name(),
+                        user = user)
+        else:
+            return UserTopic.get_by_key_name(key)
+
+
 class UserVideo(db.Model):
 
     @staticmethod

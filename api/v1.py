@@ -1,3 +1,4 @@
+import os
 import datetime
 import logging
 from itertools import izip
@@ -2446,3 +2447,10 @@ def get_avatars():
             for avatar in category['avatars']:
                 avatar.is_available = avatar.is_satisfied_by(user_data)
     return result
+
+@route("/api/v1/dev/version", methods=["GET"])
+@jsonp
+@jsonify
+def get_version_id():
+    return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None } 
+
