@@ -871,30 +871,15 @@ footer {
         border-bottom: 0;
     }
 
-    #top-header a.notification_link span.notification_bubble {
-        width: 16px;
-        height: 16px;
+    #top-header #top-header-links a.notification_link span.notification_bubble {
+        float: none;
+
         position: relative;
         top: 9px;
         left: -9px;
-        background: #DD6900;
-        text-align: center;
-        font-size: 11px;
-
-        -webkit-border-radius: 5px;
-        -moz-border-radius: 5px;
-        border-radius: 5px;
 
         opacity: 0.75;
         filter:alpha(opacity=75);
-
-        /* X-browser inline-block support */
-        display:-moz-inline-stack;
-        display:inline-block;
-        zoom:1;
-    }
-    .lte7 #top-header a.notification_link span.notification_bubble {
-        display:inline;
     }
 
     #login-menu .fb_button, #login-menu .fb_button_rtl {
@@ -2433,6 +2418,7 @@ a.proficient-badge.disabled {
         .video_extra_links .video-energy-points,
         #user-info .energy-points-badge,
         #profile-header #high-level-stats .energy-points-badge,
+        #top-header a.notification_link span.notification_bubble,
         .energy-points-badge {
             background: #005987;
             float: right;

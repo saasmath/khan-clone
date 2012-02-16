@@ -3400,6 +3400,23 @@ class UserTopic(db.Model):
         else:
             return UserTopic.get_by_key_name(key)
 
+    # temporary function used for backfill
+    @staticmethod
+    def get_for_topic_and_user(topic, user, insert_if_missing=False):
+        if not user:
+            return None
+
+        key = user.email() + ":" + topic.key().name()
+
+        if insert_if_missing:
+            return UserTopic.get_or_insert(
+                        key_name = key,
+                        title = topic.standalone_title,
+                        topic_key_name = topic.key().name(),
+                        user = user)
+        else:
+            return UserTopic.get_by_key_name(key)
+
 class UserVideo(db.Model):
 
     @staticmethod
