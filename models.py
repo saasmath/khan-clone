@@ -2413,12 +2413,11 @@ class Topic(Searchable, db.Model):
             return self
 
     @layer_cache.cache_with_key_fxn(
-    lambda self, types=[], include_hidden=False, version=None:
-            "topic.make_tree_%s_%s_%s_%s" % (
-            (version.number + version.updated_on) if version else Setting.topic_tree_version(),
-            self.id, types, include_hidden),
+    lambda self, types=[], include_hidden=False:
+            "topic.make_tree_%s_%s_%s" % (
+            self.key(), types, include_hidden),
             layer=layer_cache.Layers.Blobstore)
-    def make_tree(self, types=[], include_hidden=False, version=None):
+    def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
         else:
