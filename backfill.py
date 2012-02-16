@@ -2,6 +2,7 @@ import logging
 from mapreduce import operation as op
 import facebook_util
 from google.appengine.ext import db
+import models
 
 def check_user_properties(user_data):
     if not user_data or not user_data.user:
@@ -83,3 +84,17 @@ def fix_has_current_goal(goal):
         if user_data and not user_data.has_current_goals:
             user_data.has_current_goals = True
             yield op.db.Put(user_data)
+
+def user_topic_migration(user_playlist):
+    topic = models.Topic.all().filter("standalone_title =", user_playlist.title).get()
+    if topic is None:
+        raise Exception("User Topic Migration could not find topic for %s" % user_playlist.title)
+
+    user_data = models.UserData.get_from_db_key_email(user_playlist.user.email())
+    user_topic = models.UserTopic.get_for_topic_and_user_data(topic, user_data, True)
+    user_topic.seconds_watched += user_playlist.seconds_watched - user_topic.seconds_migrated
+    user_topic.seconds_migrated = user_playlist.seconds_watched
+    user_topic.last_watched = user_playlist.last_watched
+    yield op.db.Put(user_topic)
+
+
