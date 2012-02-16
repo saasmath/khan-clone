@@ -26,27 +26,28 @@ def print_topics(topics):
             print " "
         print " "
 
-def flatten_tree(tree, super_topic=None, sub_topic=None, depth=0):
+def flatten_tree(tree, parent_topics=[]):
     homepage_topics=[]
     tree.content = []
     tree.subtopics = []
-    
-    if super_topic:
-        depth += 1
 
-    tree.depth = depth
+    tree.depth = len(parent_topics)
 
-    if super_topic:
-        if depth == 1:
-            tree.homepage_title = super_topic.standalone_title + ": " + tree.title
+    if parent_topics:
+        if tree.depth == 1:
+            tree.homepage_title = parent_topics[0].standalone_title + ": " + tree.title
         else:
             tree.homepage_title = tree.title
     else:
         tree.homepage_title = tree.standalone_title
 
+    child_parent_topics = parent_topics[:]
+
     if tree.id in Topic._super_topic_ids:
         tree.is_super = True
-        super_topic = tree
+        child_parent_topics.append(tree)
+    elif parent_topics:
+        child_parent_topics.append(tree)
 
     for child in tree.children:
         if child.key().kind() == "Topic":
@@ -55,22 +56,15 @@ def flatten_tree(tree, super_topic=None, sub_topic=None, depth=0):
             tree.content.append(child)
 
     del tree.children
-    tree.leaf_topics = []
 
     if tree.content:
         tree.height = math.ceil(len(tree.content)/3.0) * 18
 
-    if hasattr(tree, "is_super") or tree.content or depth:
-        if sub_topic:
-            sub_topic.leaf_topics.append(tree)
-        else:
-            homepage_topics.append(tree)
-
-    if super_topic and not hasattr(tree, "is_super") and not sub_topic:
-        sub_topic = tree
+    if hasattr(tree, "is_super") or (not parent_topics and tree.content):
+        homepage_topics.append(tree)
 
     for subtopic in tree.subtopics:
-        homepage_topics += flatten_tree(subtopic, super_topic, sub_topic, depth)
+        homepage_topics += flatten_tree(subtopic, child_parent_topics)
 
     return homepage_topics
 
@@ -94,6 +88,7 @@ def library_content_html(ajax=False, version_number=None):
 
     tree = Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
     topics = flatten_tree(tree)
+    topics.sort(key = lambda topic: topic.standalone_title)
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
     topics = [topic for topic in topics 

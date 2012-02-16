@@ -16,7 +16,7 @@ import streak_badges
 import timed_problem_badges
 import exercise_completion_badges
 import exercise_completion_count_badges
-import playlist_time_badges
+import topic_time_badges
 import power_time_badges
 import profile_badges
 import recovery_problem_badges
@@ -57,11 +57,11 @@ def all_badges():
         streak_badges.RidiculousStreakBadge(),
         streak_badges.LudicrousStreakBadge(),
 
-        playlist_time_badges.NicePlaylistTimeBadge(),
-        playlist_time_badges.GreatPlaylistTimeBadge(),
-        playlist_time_badges.AwesomePlaylistTimeBadge(),
-        playlist_time_badges.RidiculousPlaylistTimeBadge(),
-        playlist_time_badges.LudicrousPlaylistTimeBadge(),
+        topic_time_badges.NiceTopicTimeBadge(),
+        topic_time_badges.GreatTopicTimeBadge(),
+        topic_time_badges.AwesomeTopicTimeBadge(),
+        topic_time_badges.RidiculousTopicTimeBadge(),
+        topic_time_badges.LudicrousTopicTimeBadge(),
 
         timed_problem_badges.NiceTimedProblemBadge(),
         timed_problem_badges.GreatTimedProblemBadge(),
@@ -354,9 +354,9 @@ def badge_update_map(user_data):
     for user_exercise in models.UserExercise.get_for_user_data(user_data):
         update_with_user_exercise(user_data, user_exercise, action_cache=action_cache)
 
-    # Update all playlist-context badges
-    for user_playlist in models.UserPlaylist.get_for_user_data(user_data):
-        update_with_user_playlist(user_data, user_playlist, action_cache=action_cache)
+    # Update all topic-context badges
+    for user_topic in models.UserTopic.get_for_user_data(user_data):
+        update_with_user_topic(user_data, user_topic, action_cache=action_cache)
 
     user_data.last_badge_review = datetime.datetime.now()
     user_data.put()
@@ -397,19 +397,19 @@ def update_with_user_exercise(user_data, user_exercise, include_other_badges = F
 
     return awarded
 
-# Award this user any earned Playlist-context badges for the provided UserPlaylist.
-def update_with_user_playlist(user_data, user_playlist, include_other_badges = False, action_cache = None):
-    possible_badges = badges_with_context_type(badges.BadgeContextType.PLAYLIST)
+# Award this user any earned Topic-context badges for the provided UserTopic.
+def update_with_user_topic(user_data, user_topic, include_other_badges = False, action_cache = None):
+    possible_badges = badges_with_context_type(badges.BadgeContextType.TOPIC)
     action_cache = action_cache or last_action_cache.LastActionCache.get_for_user_data(user_data)
 
     awarded = False
     for badge in possible_badges:
         if badge.is_manually_awarded():
             continue
-        # Pass in pre-retrieved user_playlist data so each badge check doesn't have to talk to the datastore
-        if not badge.is_already_owned_by(user_data=user_data, user_playlist=user_playlist):
-            if badge.is_satisfied_by(user_data=user_data, user_playlist=user_playlist, action_cache=action_cache):
-                badge.award_to(user_data=user_data, user_playlist=user_playlist)
+        # Pass in pre-retrieved user_topic data so each badge check doesn't have to talk to the datastore
+        if not badge.is_already_owned_by(user_data=user_data, user_topic=user_topic):
+            if badge.is_satisfied_by(user_data=user_data, user_topic=user_topic, action_cache=action_cache):
+                badge.award_to(user_data=user_data, user_topic=user_topic)
                 awarded = True
 
     if include_other_badges:

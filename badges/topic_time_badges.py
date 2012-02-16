@@ -1,56 +1,56 @@
 from badges import BadgeCategory
-from playlist_badges import PlaylistBadge
+from topic_badges import TopicBadge
 from templatefilters import seconds_to_time_string
 
-# All badges awarded for watching a specific amount of playlist time inherit from PlaylistTimeBadge
-class PlaylistTimeBadge(PlaylistBadge):
+# All badges awarded for watching a specific amount of topic time inherit from TopicTimeBadge
+class TopicTimeBadge(TopicBadge):
 
     def is_satisfied_by(self, *args, **kwargs):
-        user_playlist = kwargs.get("user_playlist", None)
+        user_topic = kwargs.get("user_topic", None)
 
-        if user_playlist is None:
+        if user_topic is None:
             return False
 
-        return user_playlist.seconds_watched >= self.seconds_required
+        return user_topic.seconds_watched >= self.seconds_required
 
     def extended_description(self):
-        return "Watch %s of video in a single playlist" % seconds_to_time_string(self.seconds_required)
+        return "Watch %s of video in a single topic" % seconds_to_time_string(self.seconds_required)
 
-class NicePlaylistTimeBadge(PlaylistTimeBadge):
+class NiceTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
-        PlaylistTimeBadge.__init__(self)
+        TopicTimeBadge.__init__(self)
         self.seconds_required = 60 * 15
         self.description = "Nice Listener"
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
-class GreatPlaylistTimeBadge(PlaylistTimeBadge):
+class GreatTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
-        PlaylistTimeBadge.__init__(self)
+        TopicTimeBadge.__init__(self)
         self.seconds_required = 60 * 30
         self.description = "Great Listener"
         self.badge_category = BadgeCategory.BRONZE
         self.points = 0
 
-class AwesomePlaylistTimeBadge(PlaylistTimeBadge):
+class AwesomeTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
-        PlaylistTimeBadge.__init__(self)
+        TopicTimeBadge.__init__(self)
         self.seconds_required = 60 * 60
         self.description = "Awesome Listener"
         self.badge_category = BadgeCategory.SILVER
         self.points = 0
 
-class RidiculousPlaylistTimeBadge(PlaylistTimeBadge):
+class RidiculousTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
-        PlaylistTimeBadge.__init__(self)
+        TopicTimeBadge.__init__(self)
         self.seconds_required = 60 * 60 * 4
         self.description = "Ridiculous Listener"
         self.badge_category = BadgeCategory.GOLD
         self.points = 0
 
-class LudicrousPlaylistTimeBadge(PlaylistTimeBadge):
+class LudicrousTopicTimeBadge(TopicTimeBadge):
     def __init__(self):
-        PlaylistTimeBadge.__init__(self)
+        TopicTimeBadge.__init__(self)
         self.seconds_required = 60 * 60 * 10
         self.description = "Ludicrous Listener"
         self.badge_category = BadgeCategory.PLATINUM
