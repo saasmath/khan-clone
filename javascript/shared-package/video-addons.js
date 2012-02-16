@@ -6,6 +6,8 @@ var VideoControls = {
 
     player: null,
 
+    readyDeferred_: new $.Deferred(),
+
     initJumpLinks: function() {
         $("span.youTube").addClass("playYouTube").removeClass("youTube").click(VideoControls.clickYouTubeJump);
     },
@@ -102,6 +104,19 @@ var VideoControls = {
 
             return false;
         }
+    },
+
+    /**
+     * Invokes a function (typically on the player) and ensures that the invoke
+     * is done only after the player is ready.
+     */
+    invokeWhenReady: function(func) {
+        this.readyDeferred_.then(func);
+    },
+
+    setPlayer: function(player) {
+        this.player = player;
+        this.readyDeferred_.resolve();
     }
 };
 
@@ -404,7 +419,7 @@ function onYouTubePlayerAPIReady() {
 
 function connectYouTubePlayer(player) {
 
-    VideoControls.player = player;
+    VideoControls.setPlayer(player);
     VideoStats.player = player;
 
     // The UniSub (aka mirosubs) widget replaces the YouTube player with a copy
