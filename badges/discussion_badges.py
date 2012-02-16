@@ -41,3 +41,20 @@ class FirstDownVoteBadge(Badge):
 
     def is_manually_awarded(self):
         return True
+
+class ModeratorBadge(Badge):
+
+    def __init__(self):
+        Badge.__init__(self)
+        self.description = "Moderator"
+        self.badge_category = BadgeCategory.SILVER
+        self.points = 0
+
+        # Hidden badge
+        self.is_hidden_if_unknown = True
+
+    def extended_description(self):
+        return "Become a moderator of questions, answers, and comments beneath videos"
+
+    def is_manually_awarded(self):
+        return True
