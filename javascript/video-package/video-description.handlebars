@@ -1,0 +1,27 @@
+<link itemprop="url" href="/video/{{ video.readable_id }}?topic={{ topic.id }}">
+{{#if button_top_exercise }}
+<a href="{{ button_top_exercise.url }}" class="practice simple-button action-gradient green desktop-only" title="Test your understanding with an exercise">Practice this concept</a>
+{{/if}}
+<h1 class="title-header">
+    <span itemprop="name" class="title desktop-only">{{ video.title }}</span>
+{{#if video.description }}
+    <span class="long-description"><span class="desktop-only">: </span><span itemprop="description">{{ video.description }}</span></span>
+{{/if}}
+</h1>
+
+{{#if related_exercises }}
+<div class="related-content visited-no-recolor">
+  <span class="related-content-title">Related exercises:</span>
+  <ul class="related-exercise-list">
+    {{#each related_exercises }}
+    <li>
+      <a href="{{ url }}" title="{{ name }}">{{ name }}</a>
+      {{#unless last}}
+      <span class="separator">, </span>
+      {{/unless}}
+    </li>
+    {{/each}}
+  </ul>
+</div>
+{{/if}}
+

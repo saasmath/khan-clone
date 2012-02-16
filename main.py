@@ -51,6 +51,7 @@ import stories
 import summer
 import common_core
 import unisubs
+import api.jsonify
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -154,74 +155,18 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
-        # If we got here, we have a readable_id and a topic, so we can display
-        # the topic and the video in it that has the readable_id.  Note that we don't
-        # query the Video entities for one with the requested readable_id because in some
-        # cases there are multiple Video objects in the datastore with the same readable_id
-        # (e.g. there are 2 "Order of Operations" videos).
-        videos = Topic.get_cached_videos_for_topic(topic)
-        previous_video = None
-        next_video = None
-        for v in videos:
-            if v.readable_id == readable_id:
-                v.selected = 'selected'
-                video = v
-            elif video is None:
-                previous_video = v
-            else:
-                next_video = v
-                break
+        discussion_options = qa.add_template_values({}, self.request)
+        play_data = Video.get_play_data(readable_id, topic, discussion_options)
 
-        if video is None:
+        if play_data is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
-        if App.offline_mode:
-            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
-        else:
-            video_path = video.download_video_url()
-
-        if video.description == video.title:
-            video.description = None
-
-        related_exercises = video.related_exercises()
-        button_top_exercise = None
-        if related_exercises:
-            def ex_to_dict(exercise):
-                return {
-                    'name': exercise.display_name,
-                    'url': exercise.relative_url,
-                }
-            button_top_exercise = ex_to_dict(related_exercises[0])
-
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
-
-        awarded_points = 0
-        if user_video:
-            awarded_points = user_video.points
-
-        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
-        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
-        subtitles_json = None
-        if subtitles:
-            subtitles_json = subtitles.load_json()
-
         template_values = {
-                            'topic': topic,
-                            'video': video,
-                            'videos': videos,
-                            'video_path': video_path,
-                            'video_points_base': consts.VIDEO_POINTS_BASE,
-                            'subtitles_json': subtitles_json,
-                            'button_top_exercise': button_top_exercise,
-                            'related_exercises': [], # disabled for now
-                            'previous_video': previous_video,
-                            'next_video': next_video,
-                            'selected_nav_link': 'watch',
-                            'awarded_points': awarded_points,
-                            'issue_labels': ('Component-Videos,Video-%s' % readable_id),
-                            'author_profile': 'https://plus.google.com/103970106103092409324'
-                        }
-        template_values = qa.add_template_values(template_values, self.request)
+            "video": play_data["video"],
+            "topic": play_data["topic"],
+            "video_data_json": api.jsonify.jsonify(play_data),
+            "selected_nav_link": 'watch'
+        }
 
         bingo(['struggling_videos_landing'])
         self.render_jinja2_template('viewvideo.html', template_values)
