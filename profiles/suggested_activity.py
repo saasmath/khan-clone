@@ -109,10 +109,12 @@ class SuggestedActivity(object):
         """ Build a SuggestedActivity dict from a RecentVideoActivity object. """
         activity = SuggestedActivity()
         activity.name = recent_video_activity.video_title
-        activity.url = "/video?v=%s" % recent_video_activity.youtube_id
+        activity.last_second_watched = recent_video_activity.last_second_watched
         activity.progress = points.video_progress_from_points(
                 recent_video_activity.points_earned)
-        activity.last_second_watched = recent_video_activity.last_second_watched
+        activity.url = "/video?v=%s#seek=%s" % (
+                recent_video_activity.youtube_id,
+                max(0, activity.last_second_watched - 5)) # 5 second rewind
         return activity
 
     @staticmethod
