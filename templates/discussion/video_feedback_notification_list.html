@@ -6,13 +6,14 @@
     {{ js_css_packages.css_package("video") }}
 {% endblock pagescript %}
 
-{% block pagetitle %}
-    New answers to your questions 
-    <a href="/discussion/videofeedbacknotificationfeed?email={{ email }}"><img src="{{ "/images/feed.gif"|static_url }}" class="icon" />RSS</a>
-{% endblock pagetitle %}
+{% block pagesubmenu %}
+    <span class="breadcrumbs_nav">
+        <a href="/discussion/videofeedbacknotificationlist" class="selected">Unread Answers</a>
+        <a href="/discussion/videofeedbacknotificationfeed?email={{ email }}">RSS</a>
+    </span>
+{% endblock pagesubmenu %}
 
 {% block pagecontent %}
-    <br/>
     <article class="video">
 
     {% if videos %}
@@ -23,7 +24,7 @@
             </div>
         {% endfor %}
     {% else %}
-        No new answers to any of your questions.  Go watch more videos and ask more questions!
+        <p>No new answers to any of your questions.  Go watch more videos and ask more questions!</p>
     {% endif %}
 
     </article>
