@@ -20,8 +20,17 @@ UsernamePickerView = Backbone.View.extend({
     events: {
         "keyup .nickname": "onNicknameKeyup_",
         "keyup .username": "onUsernameKeyup_",
+        "click :input": "onInputClick_",
         "click #save-profile-info": "onSaveClick_",
         "click #cancel-profile-info": "onCancelClicked_"
+    },
+
+    onInputClick_: function(e) {
+        // Force focus on the input after a click. This is to work around
+        // the fact that in IE, the input can sometimes not get focus,
+        // even though the user is properly typing in it. Since only
+        // events with focus fire keyup events, we would otherwise miss them.
+        $(e.target).focus();
     },
 
     initialize: function() {
