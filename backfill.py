@@ -2,7 +2,8 @@ import logging
 from mapreduce import operation as op
 import facebook_util
 from google.appengine.ext import db
-import models
+import models 
+
 
 def check_user_properties(user_data):
     if not user_data or not user_data.user:
@@ -90,13 +91,12 @@ def user_topic_migration(user_playlist):
         topic = models.Topic.all().filter("standalone_title =", user_playlist.title).get()
     else:
         topic = models.Topic.all().filter("standalone_title =", user_playlist.playlist.title).get()
-    if topic is None:
-        raise Exception("User Topic Migration could not find topic for %s" % user_playlist.title)
 
-    user_topic = models.UserTopic.get_for_topic_and_user(topic, user_playlist.user, True)
-    user_topic.seconds_watched += user_playlist.seconds_watched - user_topic.seconds_migrated
-    user_topic.seconds_migrated = user_playlist.seconds_watched
-    user_topic.last_watched = user_playlist.last_watched
-    yield op.db.Put(user_topic)
-
+    # since backfill ran fine first time, in case a topic disappeared we will ignore copying it over this time and not throw an error
+    if topic:
+        user_topic = models.UserTopic.get_for_topic_and_user(topic, user_playlist.user, True)
+        user_topic.seconds_watched += user_playlist.seconds_watched - user_topic.seconds_migrated
+        user_topic.seconds_migrated = user_playlist.seconds_watched
+        user_topic.last_watched = user_playlist.last_watched
+        yield op.db.Put(user_topic)
 
