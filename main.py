@@ -888,11 +888,13 @@ application = webapp2.WSGIApplication([
 
     # Summer Discovery Camp application/registration
     ('/summer/application', summer.Application),
+    ('/summer/tuition', summer.Tuition),
     ('/summer/application-status', summer.Status),
     ('/summer/getstudent', summer.GetStudent),
     ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
+    ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 

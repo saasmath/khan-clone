@@ -126,6 +126,7 @@ def all_badges():
         discussion_badges.FirstFlagBadge(),
         discussion_badges.FirstUpVoteBadge(),
         discussion_badges.FirstDownVoteBadge(),
+        discussion_badges.ModeratorBadge(),
 
     ]
 

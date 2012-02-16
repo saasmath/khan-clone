@@ -5,6 +5,7 @@ import request_handler
 import models
 import models_discussion
 from user_util import admin_only, moderator_only
+from badges.discussion_badges import ModeratorBadge
 
 class RedirectToModPanel(request_handler.RequestHandler):
     def get(self):
@@ -33,6 +34,11 @@ class ModeratorList(request_handler.RequestHandler):
 
         if user_data:
             user_data.moderator = self.request_bool("mod")
+
+            if user_data.moderator:
+                if not ModeratorBadge().is_already_owned_by(user_data):
+                    ModeratorBadge().award_to(user_data)
+
             db.put(user_data)
 
         self.redirect("/discussion/mod/moderatorlist")
