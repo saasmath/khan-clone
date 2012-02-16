@@ -86,7 +86,10 @@ def fix_has_current_goal(goal):
             yield op.db.Put(user_data)
 
 def user_topic_migration(user_playlist):
-    topic = models.Topic.all().filter("standalone_title =", user_playlist.title).get()
+    if user_playlist.title:
+        topic = models.Topic.all().filter("standalone_title =", user_playlist.title).get()
+    else:
+        topic = models.Topic.all().filter("standalone_title =", user_playlist.playlist.title).get()
     if topic is None:
         raise Exception("User Topic Migration could not find topic for %s" % user_playlist.title)
 
