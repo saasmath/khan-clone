@@ -2007,11 +2007,14 @@ def get_activity():
             student = user_override
 
     recent_activities = recent_activity.recent_activity_list(student)
+    recent_completions = filter(
+            lambda activity: activity.is_complete(),
+            recent_activities)
 
     return {
         "suggested": suggested_activity.SuggestedActivity.get_for(
                 student, recent_activities),
-        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+        "recent": recent_completions[:recent_activity.MOST_RECENT_ITEMS],
     }
 
 # TODO in v2: imbue with restfulness

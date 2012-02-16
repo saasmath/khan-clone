@@ -133,8 +133,7 @@ def recent_activity_for(user_data, dt_start, dt_end):
                             for sublist in list_recent_activity_types
                             for activity in sublist]
 
-    return filter(lambda activity: activity.is_complete(),
-                  _collapse_recent_activity(list_recent_activity))
+    return _collapse_recent_activity(list_recent_activity)
 
 def _collapse_recent_activity(list_recent_activity):
     last_recent_activity = None
