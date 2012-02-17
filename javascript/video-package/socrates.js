@@ -209,6 +209,9 @@ Socrates.QuestionView = Backbone.View.extend({
 		'click .submit-area a.skip': 'skip'
 	},
 
+	timeDisplayed: 0,
+	startTime: null,
+
 	initialize: function() {
 		_.extend(this, this.options);
 		this.version = 1;
@@ -227,11 +230,23 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	hide: function() {
+		this.finishRecordingTime();
 		$(this.el).hide();
 		return this;
 	},
 
+	finishRecordingTime: function () {
+		if (this.startTime) {
+			this.timeDisplayed += (+new Date() - this.startTime);
+			this.startTime = null;
+		} else {
+			this.timeDisplayed = 0;
+		}
+		return this.timeDisplayed;
+	},
+
 	show: function() {
+		this.startTime = +new Date();
 		$(this.el).show();
 		return this;
 	},
@@ -330,14 +345,21 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	getResponse: function() {
+		// get response data
 		var data = this.getData();
+
+		// find how long it took to answer, then reset the countera
+		var timeDisplayed = this.finishRecordingTime();
+		this.timeDisplayed = 0;
+
 		return {
 			time: this.model.get('time'),
 			youtubeId: this.model.get('youtubeId'),
 			id: this.model.get('id'),
 			version: this.version,
 			correct: this.isCorrect(data),
-			data: data
+			data: data,
+			timeDisplayed: timeDisplayed
 		};
 	},
 
