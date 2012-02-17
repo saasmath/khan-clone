@@ -6,7 +6,7 @@
 {% import 'macros/analytics.html' as analytics %}
 {% import 'macros/discussion.html' as discussion %}
 
-{% block meta_page_title %}{{video.title|escape}} | {{topic.title|escape}} | {% endblock %}
+{% block meta_page_title %}{{video.title|escape}} | {{topic_data.title|escape}} | {% endblock %}
 {% block meta_keywords %}{{video.keywords}}{% endblock %}
 {% block meta_description %}{{video.description}}{% endblock %}
 
@@ -56,7 +56,12 @@
     {{ js_css_packages.js_package("video") }}
     <script>
       window.videoLibrary = {
-        "{{ video.readable_id }}?topic={{ topic.id }}": {{ video_data_json }}
+        "{{ topic_data.id }}": {
+            topic: {{ topic_data_json }},
+            videos: {
+                "{{ video.readable_id }}": {{ video_data_json }}
+            }
+        }
       };
       window.loginURL = "{{ login_url|escape }}";
 

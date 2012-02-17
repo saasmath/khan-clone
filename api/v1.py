@@ -1003,14 +1003,22 @@ def video_play_data(topic_id, video_id):
     if topic is None: 
         raise ValueError("Invalid topic readable_id.")
 
+    get_topic_data = request.request_bool('topic', default=False);
+
     discussion_options = {
         "comments_page": 0,
         "qa_page": 0,
         "qa_expand_key": "",
         "sort": -1
     }
-    play_data = models.Video.get_play_data(video_id, topic, discussion_options)
-    return play_data
+    ret = {
+        "video": models.Video.get_play_data(video_id, topic, discussion_options)
+    }
+
+    if get_topic_data:
+        ret["topic"] = topic.get_play_data()
+
+    return ret
 
 @route("/api/v1/commoncore", methods=["GET"])
 @jsonp

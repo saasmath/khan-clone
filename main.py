@@ -91,39 +91,9 @@ def get_mangled_topic_name(topic_name):
 
 class ViewVideo(request_handler.RequestHandler):
 
-    @ensure_xsrf_cookie
-    def get(self, readable_id=""):
-
-        # This method displays a video in the context of a particular topic.
-        # To do that we first need to find the appropriate topic.  If we aren't
-        # given the topic title in a query param, we need to find a topic that
-        # the video is a part of.  That requires finding the video, given it readable_id
-        # or, to support old URLs, it's youtube_id.
-        video = None
+    @staticmethod
+    def show_video(handler, readable_id, topic_id, redirect_to_canonical_url=False):
         topic = None
-        video_id = self.request.get('v')
-        topic_id = self.request_string('topic', default="")
-        readable_id = urllib.unquote(readable_id)
-        readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
-
-        # If either the readable_id or topic title is missing,
-        # redirect to the canonical URL that contains them
-        redirect_to_canonical_url = False
-        if video_id: # Support for old links
-            query = Video.all()
-            query.filter('youtube_id =', video_id)
-            video = query.get()
-
-            if not video:
-                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
-
-            readable_id = video.readable_id
-            topic = video.first_topic()
-
-            if not topic:
-                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
-
-            redirect_to_canonical_url = True
 
         if topic_id is not None and len(topic_id) > 0:
             topic = Topic.get_by_id(topic_id)
@@ -143,33 +113,62 @@ class ViewVideo(request_handler.RequestHandler):
 
             redirect_to_canonical_url = True
 
-        exid = self.request_string('exid', default=None)
-
         if redirect_to_canonical_url:
-            qs = {'topic': topic.id}
-            if exid:
-                qs['exid'] = exid
-
-            urlpath = "/video/%s" % urllib.quote(readable_id)
-            url = urlparse.urlunparse(('', '', urlpath, '', urllib.urlencode(qs), ''))
-            self.redirect(url, True)
+            url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
+            handler.redirect(url, True)
             return
 
-        discussion_options = qa.add_template_values({}, self.request)
-        play_data = Video.get_play_data(readable_id, topic, discussion_options)
+        topic_data = topic.get_play_data()
 
-        if play_data is None:
+        discussion_options = qa.add_template_values({}, handler.request)
+        video_data = Video.get_play_data(readable_id, topic, discussion_options)
+        if video_data is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
         template_values = {
-            "video": play_data["video"],
-            "topic": play_data["topic"],
-            "video_data_json": api.jsonify.jsonify(play_data),
+            "topic_data": topic_data,
+            "topic_data_json": api.jsonify.jsonify(topic_data),
+            "video": video_data,
+            "video_data_json": api.jsonify.jsonify(video_data),
             "selected_nav_link": 'watch'
         }
 
         bingo(['struggling_videos_landing'])
-        self.render_jinja2_template('viewvideo.html', template_values)
+        handler.render_jinja2_template('viewvideo.html', template_values)
+
+    # The handler itself is deprecated. The ViewContent handler is the canonical
+    # handler now.
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
+
+        # This method displays a video in the context of a particular topic.
+        # To do that we first need to find the appropriate topic.  If we aren't
+        # given the topic title in a query param, we need to find a topic that
+        # the video is a part of.  That requires finding the video, given it readable_id
+        # or, to support old URLs, it's youtube_id.
+        video = None
+        video_id = self.request.get('v')
+        topic_id = self.request_string('topic', default="")
+        readable_id = urllib.unquote(readable_id)
+        readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
+
+        # If either the readable_id or topic title is missing,
+        # redirect to the canonical URL that contains them
+        if video_id: # Support for old links
+            query = Video.all()
+            query.filter('youtube_id =', video_id)
+            video = query.get()
+
+            if not video:
+                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
+
+            readable_id = video.readable_id
+            topic = video.first_topic()
+
+            if not topic:
+                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
+
+        ViewVideo.show_video(self, readable_id, topic_id, True)
 
 class ReportIssue(request_handler.RequestHandler):
 
@@ -607,6 +606,22 @@ class PermanentRedirectToHome(request_handler.RequestHandler):
 
         self.redirect(redirect_target, True)
 
+class ShowContent(request_handler.RequestHandler):
+    def get(self, path=None):
+        self.response.headers['Content-Type'] = 'text/html'
+
+        if path:
+            path_list = path.split('/')
+            if len(path_list) >= 3:
+                topic_id = path_list[-3]
+                content_type = path_list[-2]
+                content_id = path_list[-1]
+
+                if content_type in ["v", "video"]:
+                    ViewVideo.show_video(self, content_id, topic_id)
+                else:
+                    self.response.out.write("Content of type %s: %s in %s" % (content_type, content_id, topic_id))
+
 class ServeUserVideoCss(request_handler.RequestHandler):
     def get(self):
         user_data = UserData.current()
@@ -851,6 +866,9 @@ application = webapp2.WSGIApplication([
     ('/index\.html', PermanentRedirectToHome),
 
     ('/_ah/warmup.*', warmup.Warmup),
+
+    # Content glob comes in dead last so it doesn't conflict with any other routes
+    ('/(.*)', ShowContent),
 
     ], debug=True)
 

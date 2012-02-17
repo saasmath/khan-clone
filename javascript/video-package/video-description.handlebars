@@ -9,11 +9,11 @@
 {{/if}}
 </h1>
 
-{{#if related_exercises }}
+{{#if video.related_exercises }}
 <div class="related-content visited-no-recolor">
   <span class="related-content-title">Related exercises:</span>
   <ul class="related-exercise-list">
-    {{#each related_exercises }}
+    {{#each video.related_exercises }}
     <li>
       <a href="{{ url }}" title="{{ name }}">{{ name }}</a>
       {{#unless last}}
