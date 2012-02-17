@@ -27,7 +27,7 @@ from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag,\
+from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
@@ -1955,6 +1955,38 @@ def autocomplete():
             "exercises": exercise_results
     }
 
+@route("/api/v1/dev/backupmodels", methods=["GET"])
+@oauth_required
+@developer_required
+@jsonify
+def backupmodels():
+    """Return the names of all models that inherit from models.BackupModel."""
+    return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
+
+@route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
+@oauth_required
+@developer_required
+@pickle
+def protobuf_entities(entity):
+    """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
+
+    Notes: 'entity' must be a subclass of 'models.BackupModel'
+           'dt{start,end}' must be in ISO 8601 format
+           'max' defaults to 500
+    Example:
+        /api/v1/dev/protobuf/ProblemLog?dt_start=2012-02-11T20%3A07%3A49Z&dt_end=2012-02-11T21%3A07%3A49Z
+        Returns up to 500 problem_logs from between 'dt_start' and 'dt_end'
+    """
+    entity_class = db.class_for_kind(entity)
+    if not (entity_class and issubclass(entity_class, models.BackupModel)):
+        return api_error_response(ValueError("Invalid class '%s' (must be a \
+                subclass of models.BackupModel)" % entity))
+    query = entity_class.all()
+    filter_query_by_request_dates(query, "backup_timestamp")
+    query.order("backup_timestamp")
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               query.fetch(request.request_int("max", default=500)))
 
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
