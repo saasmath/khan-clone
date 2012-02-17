@@ -96,33 +96,31 @@ var Profile = {
      * All the tabs that you could encounter on the profile page.
      */
     subRoutes: {
-        "": "showDefault",
         "/achievements": "showAchievements",
         "/goals/:type": "showGoals",
         "/goals": "showGoals",
         "/vital-statistics": "showVitalStatistics",
         "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
-        "/vital-statistics/:graph": "showVitalStatistics"
+        "/vital-statistics/:graph": "showVitalStatistics",
+
+        "": "showDefault",
+        // If the user types /profile/username/ with a trailing slash
+        // it should work, too
+        "/": "showDefault",
+
+        // A minor hack to ensure that if the user navigates to /profile without
+        // her username, it still shows the default profile screen. Note that
+        // these routes aren't relative to the root URL, but will still work.
+        "/profile": "showDefault",
+        "/profile/": "showDefault"
     },
 
     /**
      * Generate routes hash to be used by Profile.router
      */
     getRoutes_: function() {
-        var routes = {};
-
-        _.each(this.subRoutes, function(fxn, subRoute) {
-            // Internally, backbone expects these routes to be decoded.
-            var key = subRoute;
-            routes[key] = fxn;
-        });
-
-        // Also route "/profile" to the default page, as the above logic will
-        // always require "/profile/identifier" otherwise
-        routes["/profile"] = "showDefault";
-
-        return routes;
+        return this.subRoutes;
     },
 
     /**
