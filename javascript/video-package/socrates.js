@@ -167,6 +167,9 @@ Socrates.Bookmark = Backbone.Model.extend({
 	}
 }, {
 	timeToSeconds: function(time) {
+		if (time == null || time.length === 0) {
+			throw "Invalid argument";
+		}
 		// convert a string like "4m21s" into just the number of seconds
 		result = 0;
 		var i = 0;
@@ -358,12 +361,12 @@ Socrates.QuestionView = Backbone.View.extend({
 
 		if (response.correct) {
 			console.log("correct");
-			// todo: fancy correct animation
-			// todo: skip explanation on correct
-			$(this.el).hide();
-			window.VideoControls.play();
+			this.trigger("submitted");
+			// todo: resume video, skipping explanation (seek)
 		} else {
 			console.log("incorrect!");
+			// todo: rewind back to explanation
+			// todo: rewind back to introduction
 		}
 	},
 
@@ -371,13 +374,7 @@ Socrates.QuestionView = Backbone.View.extend({
 		var response = this.getResponse();
 		this.validateResponse(response);
 		this.log('skip', response);
-
-		// clear the fragment
-		Router.navigate("", false);
-
-		window.VideoControls.player.seekTo(this.model.seconds(), true);
-		this.hide();
-		window.VideoControls.play();
+		this.trigger('skipped');
 	},
 
 	log: function(kind, response) {
@@ -388,40 +385,14 @@ Socrates.QuestionView = Backbone.View.extend({
 Socrates.MasterView = Backbone.View.extend({
 	className: "video-overlay",
 
-	initialize: function() {
-		// wrap each question in a view
-		this.views = this.model.
-			filter(function(bookmark) {
-				return bookmark.__proto__ == Socrates.Question;
-			}).
-			map(function(question) {
-				return new Socrates.QuestionView({model: question});
-			});
-	},
-
-	questionToView: function(view) {
-		if (view.__proto__ == Socrates.Question.prototype) {
-			// recieved a question, find the corresponding view
-			view = _.find(this.views, function(v) { return v.model == view; });
-		}
-		return view;
+	initialize: function(options) {
+		this.views = options.views;
 	},
 
 	render: function() {
 		$(this.el).append(_.pluck(this.views, 'el'));
 	}
 });
-
-var recursiveTrigger = function recursiveTrigger(triggerFn) {
-	var t = VideoStats.getSecondsWatched();
-
-	triggerFn(t);
-
-	// schedule another call when the duration is probably ticking over to
-	// the next tenth of a second
-	t = VideoStats.getSecondsWatched();
-	_.delay(recursiveTrigger, (Poppler.nextPeriod(t, 0.1) - t)*1000, triggerFn);
-};
 
 Socrates.Nav = Backbone.View.extend({
 	template: Templates.get("video.socrates-nav"),
@@ -434,68 +405,162 @@ Socrates.Nav = Backbone.View.extend({
 	}
 });
 
+var recursiveTrigger = function recursiveTrigger(triggerFn) {
+	var t = window.VideoStats.getSecondsWatched();
+
+	triggerFn(t);
+
+	// schedule another call when the duration is probably ticking over to
+	// the next tenth of a second
+	t = window.VideoStats.getSecondsWatched();
+	_.delay(recursiveTrigger, (Poppler.nextPeriod(t, 0.1) - t)*1000, triggerFn);
+};
+
 Socrates.QuestionRouter = Backbone.Router.extend({
 	routes: {
 		":slug": "reactToNewFragment"
 	},
 
+	beep: new Audio("/socrates/starcraft_chat_sound.mp3"),
+
 	initialize: function(options) {
-		this.questions = options.questions;
-		this.masterView = options.masterView;
 		this.videoControls = options.videoControls;
-		this.beep = new Audio("/socrates/starcraft_chat_sound.mp3");
+
+		// listen to player state changes
+		$(this.videoControls).on("playerStateChange",
+			_.bind(this.playerStateChange, this));
+
+		// wrap each question in a view
+		this.questions = options.questions;
+		this.questionViews = this.questions.
+			filter(function(bookmark) {
+				return bookmark.__proto__ == Socrates.Question.prototype;
+			}).
+			map(function(question) {
+				return new Socrates.QuestionView({model: question});
+			});
+
+		// subscribe to submit and skip
+		_.each(this.questionViews, function(view) {
+			view.bind("skipped", this.skipped, this);
+			view.bind("submitted", this.submitted, this);
+		}, this);
+
+		// hookup question display to video timelime
+		this.poppler = new Poppler();
+		this.questions.each(function(q) {
+			this.poppler.add(q.seconds(), _.bind(this.videoTriggeredQuestion, this, q));
+		}, this);
+
+		// trigger poppler every tenth of a second
+		recursiveTrigger(_.bind(this.poppler.trigger, this.poppler));
+	},
+
+	playerStateChange: function(evt, state) {
+		if (state === 1) { // playing
+			if (this.ignoreNextPlay) {
+				this.ignoreNextPlay = false;
+				return;
+			}
+			var t = VideoStats.getSecondsWatched();
+			// console.log("seek due to statechange");
+			this.poppler.seek(t);
+		} else if (state === 3) { // buffering
+			// buffering is always followed by a play event. We only care about
+			// play events caused by the user scrubbing, so ignore it
+			this.ignoreNextPlay = true;
+		}
+	},
+
+	// recieved a question or view, find the corresponding view
+	questionToView: function(view) {
+		if (view.__proto__ == Socrates.Question.prototype) {
+			view = _.find(this.questionViews, function(v) { return v.model == view; });
+		}
+		return view;
 	},
 
 	reactToNewFragment: function(slug) {
 		// blank fragment for current state of video
 		if (slug === "") {
-			this.hide();
+			this.leaveCurrentState();
 		}
 
 		// slug for navigating to a particular question
 		var question = this.questions.find(function(q) {
-			return q.slug() == slug;
+			return q.slug() === slug;
 		});
 		if (question) {
-			this.enterState(question);
+			this.linkTriggeredQuestion(question);
 			return;
 		}
 
-		// todo: parse as a time, and seek to that time in the video
-		if (slug.length > 0 && /(\d+m)?(\d+s)?/.test(slug)) {
+		// seek to time, e.g. 4m32s
+		try {
 			var seconds = Socrates.Question.timeToSeconds(slug);
-			this.hide();
-			this.videoControls.onPlayerReady(_.bind(function() {
-				this.videoControls.player.seekTo(seconds);
-			}, this));
+			this.fragmentTriggeredSeek(seconds);
 			return;
+		} catch(e) {
+			// ignore
 		}
 
 		// invalid fragment, replace it with nothing
-		this.navigate("", {replace: true, trigger: true});
+
+		// todo(dmnd) replace playing with something that makes more sense
+		this.navigate("playing", {replace: true, trigger: true});
 	},
 
-	navigateToState: function(question, options) {
+	// called when video was playing and caused a question to trigger
+	videoTriggeredQuestion: function(question) {
+		// pause the video
+		this.videoControls.pause();
+		this.beep.play();
+
+		// update the fragment in the URL
 		this.navigate(question.slug());
-		this.enterState(question, options);
+
+		this.enterState(question);
+		return true; // block poppler
 	},
 
-	enterState: function(view, options) {
-		options = _.extend({}, options);
+	// called when question has been triggered manually via clicking a link
+	linkTriggeredQuestion: function(question) {
+		this.videoControls.onPlayerReady(_.bind(function() {
+			// notify poppler
+			this.poppler.blocked = true;
+			this.poppler.seek(question.seconds());
+			this.poppler.eventIndex++; // make poppler only listen to events after the current one
 
+			// put video in correct position
+			this.videoControls.pause();
+			if (this.videoControls.player.getPlayerState() === 2) {
+				// only seek to the correct spot if we are actually paused
+				this.videoControls.player.seekTo(question.seconds(), true);
+			}
+
+			this.enterState(question);
+		}, this));
+	},
+
+	fragmentTriggeredSeek: function(seconds) {
 		this.leaveCurrentState();
-		// this.videoControls.pause();
+		this.videoControls.onPlayerReady(_.bind(function() {
+			this.poppler.blocked = true;
+			this.poppler.seek(seconds);
+			this.videoControls.player.seekTo(seconds, true);
+			this.poppler.blocked = false;
+		}, this));
+	},
 
-		if (options.beep) {
-			this.beep.play();
-		}
+	enterState: function(view) {
+		this.leaveCurrentState();
 
-		nextView = this.masterView.questionToView(view);
+		var nextView = this.questionToView(view);
 		if (nextView) {
 			this.currentView = nextView;
-			if (this.currentView.show) {
-				this.currentView.show();
-			}
+			this.currentView.show();
+		} else {
+			console.log("no view, wtf");
 		}
 
 		return this;
@@ -508,6 +573,34 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 			this.currentView = null;
 		}
 		return this;
+	},
+
+	skipped: function() {
+		var seconds = this.currentView.model.seconds();
+		this.currentView.hide();
+
+		this.navigate("playing");
+		this.poppler.resumeEvents();
+
+		if (this.poppler.blocked) {
+			// another blocking event was present. Do nothing.
+		} else {
+			// no more events left, play video
+
+			// prevent seek() from being called
+			this.ignoreNextPlay = true;
+
+			if (this.videoControls.player.getPlayerState() == 2) {
+				this.videoControls.play();
+			}
+			else {
+				this.videoControls.player.seekTo(seconds);
+			}
+		}
+	},
+
+	submitted: function() {
+		this.skipped();
 	}
 });
 
@@ -529,8 +622,7 @@ Socrates.Skippable = (function() {
 })();
 
 $(function() {
-	// todo: move this somewhere else, it's data not code
-	window.Questions = new Socrates.QuestionCollection([
+	var data = [
 		new Socrates.Bookmark({
 			time: "0m0s",
 			title: "What is a matrix?"
@@ -539,65 +631,66 @@ $(function() {
 			time: "0m59s",
 			title: "Dimensions of a matrix"
 		}),
-		//{
-	// 	time: "2m5.7s",
-	// 	title: "Dimensions of a matrix",
-	// 	youtubeId: "xyAuNHPsq-g",
-	// 	id: 1,
-	// 	correctData: { rows: "4", cols: "5" }
-	// },
+		new Socrates.Question({
+			time: "2m5.7s",
+			title: "Dimensions of a matrix",
+			youtubeId: "xyAuNHPsq-g",
+			id: 1,
+			correctData: { rows: "4", cols: "5" }
+		}),
 		new Socrates.Bookmark({
 			time: "2m6s",
 			title: "Referencing elements in a matrix"
 		}),
-		//{
-	// 	time: "3m20s",
-	// 	title: "Referencing elements in a matrix",
-	// 	youtubeId: "xyAuNHPsq-g",
-	// 	id: 2,
-	// 	correctData: { answer: "2" }
-	// },
+		new Socrates.Question({
+			time: "3m20s",
+			title: "Referencing elements in a matrix",
+			youtubeId: "xyAuNHPsq-g",
+			id: 2,
+			correctData: { answer: "2" }
+		}),
 		new Socrates.Bookmark({
 			time: "3m28s",
 			title: "What are matrices used for?"
 		}),
-		//{
-	// 	time: "4m23.9s",
-	// 	title: "What are matrices used for?",
-	// 	youtubeId: "xyAuNHPsq-g",
-	// 	id: 3,
-	// 	correctData: { answer: [true, true, true, true, true, true] }
-	// },
+		new Socrates.Question({
+			time: "4m23.9s",
+			title: "What are matrices used for?",
+			youtubeId: "xyAuNHPsq-g",
+			id: 3,
+			correctData: { answer: [true, true, true, true, true, true] }
+		}),
 		new Socrates.Bookmark({
 			time: "4m42s",
 			title: "Defining matrix addition"
 		}),
-		//{
-	// 	time: "6m31s",
-	// 	title: "Defining matrix addition",
-	// 	youtubeId: "xyAuNHPsq-g",
-	// 	id: 4
-	// },
+		new Socrates.Question({
+			time: "6m31s",
+			title: "Defining matrix addition",
+			youtubeId: "xyAuNHPsq-g",
+			id: 4
+		}),
 		new Socrates.Bookmark({
 			time: "6m31s",
 			title: "Matrix addition"
 		}),
 		new Socrates.Bookmark({
-		time: "7m39s",
-		title: "Commutativity of matrix addition"
+			time: "7m39s",
+			title: "Commutativity of matrix addition"
 		}),
-		//{
-	// 	time: "8m9s",
-	// 	title: "Commutativity of matrix addition",
-	// 	youtubeId: "xyAuNHPsq-g",
-	// 	id: 5
-	// }, {
-	// 	time: "8m10.5s",
-	// 	title: "Matrix addition",
-	// 	youtubeId: "xyAuNHPsq-g",
-	// 	id: 6,
-	// 	correctData: { answer: [[80, 23], [13, 25]] }
-	// },
+		new Socrates.Question({
+			time: "8m9s",
+			title: "Commutativity of matrix addition",
+			youtubeId: "xyAuNHPsq-g",
+			id: 5
+		}),
+		new Socrates.Question({
+			time: "8m10.5s",
+			title: "Matrix addition",
+			youtubeId: "xyAuNHPsq-g",
+			id: 6,
+			correctData: { answer: [[80, 23], [13, 25]] }
+		}),
 		new Socrates.Bookmark({
 			time: "8m10s",
 			title: "Matrix subtraction"
@@ -609,26 +702,24 @@ $(function() {
 		new Socrates.Bookmark({
 			time: "11m50s",
 			title: "Matrix terminology"
+		}),
+		new Socrates.Question({
+			time: "11m50s",
+			title: "Matrix terminology",
+			youtubeId: "xyAuNHPsq-g",
+			id: 7,
+			correctData: {
+				"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
+				"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
+				"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
+				"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
+			}
 		})
-	//{
-	// 	time: "11m50s",
-	// 	title: "Matrix terminology",
-	// 	youtubeId: "xyAuNHPsq-g",
-	// 	id: 7,
-	// 	correctData: {
-	// 		"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
-	// 		"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
-	// 		"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
-	// 		"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
+	];
 
-	]);
-
-	window.masterView = new Socrates.MasterView({
-		el: $(".video-overlay"),
-		videoControls: window.VideoControls,
-		model: Questions
-	});
-	masterView.render();
+	window.Questions = new Socrates.QuestionCollection(_.filter(data, function(el) {
+		return el.__proto__ === Socrates.Question.prototype;
+	}));
 
 	window.nav = new Socrates.Nav({
 		el: ".socrates-nav",
@@ -642,10 +733,11 @@ $(function() {
 		videoControls: window.VideoControls
 	});
 
-	window.poppler = new Poppler();
-	window.Questions.each(function(q) {
-		poppler.add(q.seconds(), _.bind(Router.navigateToState, Router, q, {beep: true}));
+	window.masterView = new Socrates.MasterView({
+		el: $(".video-overlay"),
+		views: Router.questionViews
 	});
+	masterView.render();
 
 	// window.skippable = [
 	// 	{span: ["25.5s", "42s"]},
@@ -657,9 +749,6 @@ $(function() {
 	// _.each(skippable, function(item) {
 	// 	poppler.add(item.seconds()[0], _.bind(item.trigger, item));
 	// });
-
-	// watch video time every 100 ms
-	recursiveTrigger(_.bind(poppler.trigger, poppler));
 
 	Backbone.history.start({
 		root: "video/introduction-to-matrices?topic=linear-algebra-1#elements-in-a-matrix"

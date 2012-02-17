@@ -1,5 +1,5 @@
 function onYouTubePlayerStateChange(state) {
-    VideoStats.playerStateChange(state);
+    $(VideoControls).trigger("playerStateChange", state);
 }
 
 var VideoControls = {
@@ -174,10 +174,11 @@ var VideoStats = {
         if (this.player) this.listenToPlayerStateChange();
         // If the player isn't ready yet or if it is replaced in the future,
         // listen to the state changes once it is ready/replaced.
-        var me = this;
-        $(this).bind("playerready.videostats", function() {
-            me.listenToPlayerStateChange();
-        });
+        $(this).on("playerready.videostats",
+            _.bind(this.listenToPlayerStateChange, this));
+
+        $(VideoControls).on("playerStateChange.videostats",
+            _.bind(this.playerStateChange, this));
 
         if (this.intervalId === null)
         {
@@ -194,6 +195,7 @@ var VideoStats = {
     stopLoggingProgress: function() {
         // unhook event handler initializer
         $(this).unbind("playerready.videostats");
+        $(VideoControls).off("playerStateChange.videostats");
 
         // send a final pause event
         this.playerStateChange(2);
@@ -220,7 +222,7 @@ var VideoStats = {
         }
     },
 
-    playerStateChange: function(state) {
+    playerStateChange: function(evt, state) {
         var playing = this.playing || this.fAlternativePlayer;
         if (state == -2) { // playing normally
             var percent = this.getPercentWatched();

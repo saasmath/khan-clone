@@ -27,13 +27,18 @@ var Poppler = (function() {
 	Poppler.prototype.trigger = function trigger(time) {
 		if (this.blocked) return;
 
-		var epsilon = 0.001;
+		var delta = time - this.duration;
+
 		// ignore duplicate triggers
-		if (Math.abs(time - this.duration) < epsilon) return;
+		var epsilon = 0.001;
+		if (Math.abs(delta) < epsilon) return;
+
+		// ignore any huge jumps
+		var maxJumpSize = 1;
+		if (Math.abs(delta) > maxJumpSize) return;
 
 		// get a new duration
 		this.duration = time;
-
 		this.triggerEvents();
 	};
 
