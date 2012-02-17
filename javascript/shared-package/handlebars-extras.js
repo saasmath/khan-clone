@@ -44,6 +44,6 @@ Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
 Handlebars.registerHelper("toBingoHref", function(destination) {
     var conversionNames = _.toArray(arguments).slice(1, arguments.length - 1);
 
-    return gae_bingo.construct_redirect_url.call(null, destination, conversionNames);
+    return gae_bingo.create_redirect_url.call(null, destination, conversionNames);
 });
 
