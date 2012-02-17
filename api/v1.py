@@ -177,7 +177,7 @@ def topics_library_compact():
     topic_dict = {}
     for topic in topics:
         # special cases
-        if ((topic.standalone_title == "California Standards Test: Algebra I" and topic.id != "algebra-i") or 
+        if ((topic.id == "new-and-noteworthy") or 
             (topic.standalone_title == "California Standards Test: Geometry" and topic.id != "geometry-2")):
             continue
 
