@@ -2171,7 +2171,7 @@ def autocomplete():
     }
 
 @route("/api/v1/dev/backupmodels", methods=["GET"])
-@oauth_required
+@oauth_required()
 @developer_required
 @jsonify
 def backupmodels():
@@ -2179,7 +2179,7 @@ def backupmodels():
     return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
 
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
-@oauth_required
+@oauth_required()
 @developer_required
 @pickle
 def protobuf_entities(entity):
