@@ -1,8 +1,8 @@
-<a href="/#browse">All content</a>
 {{#each topic.parent_titles }}
-<span class="breadcrumb-separator">&#187;</span>
 <a href="#">{{ this }}</a>
+<span class="breadcrumb-separator">&#187;</span>
 {{/each}}
+<a href="#">{{ topic.title }}</a>
 <span class="breadcrumb-separator">&#187;</span>
 <span id="video_dropdown" style="display:none;" class="selected">
   <a href="/{{ topic.extended_slug }}/v/{{ video.readable_id }}">{{ video.title }}</a>

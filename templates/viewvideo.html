@@ -6,7 +6,8 @@
 {% import 'macros/analytics.html' as analytics %}
 {% import 'macros/discussion.html' as discussion %}
 
-{% block meta_page_title %}{{video.title|escape}} | {{topic_data.title|escape}} | {% endblock %}
+{% block meta_page_title %}
+{% if topic_data %}{{video.title|escape}} | {{topic_data.title|escape}}{% endif %} | {% endblock %}
 {% block meta_keywords %}{{video.keywords}}{% endblock %}
 {% block meta_description %}{{video.description}}{% endblock %}
 
@@ -55,6 +56,8 @@
 
     {{ js_css_packages.js_package("video") }}
     <script>
+      {% if topic_data_json and video_data_json %}
+      window.videoTopLevelTopic = "{{ topic_data.top_level_topic }}";
       window.videoLibrary = {
         "{{ topic_data.id }}": {
             topic: {{ topic_data_json }},
@@ -63,6 +66,11 @@
             }
         }
       };
+      {% else %}
+      window.videoTopLevelTopic = "{{ top_level_topic }}";
+      window.videoLibrary = { };
+      {% endif %}
+
       window.loginURL = "{{ login_url|escape }}";
 
       $(function() {

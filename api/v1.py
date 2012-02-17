@@ -167,7 +167,7 @@ def topics_library_compact():
     def trimmed_item(item, topic):
         trimmed_item_dict = {}
         if item.kind() == "Video":
-            trimmed_item_dict['url'] = "/video/%s?topic=%s" %(item.readable_id, topic.id)
+            trimmed_item_dict['url'] = "/%s/v/%s" % (topic.get_extended_slug(), item.readable_id)
             trimmed_item_dict['key_id'] = item.key().id()
         elif item.kind() == "Url":
             trimmed_item_dict['url'] = item.url

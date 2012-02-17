@@ -9,7 +9,9 @@ var Video = {
 
         this.router = new VideoRouter();
 
-        Backbone.history.start({pushState: true});
+        Backbone.history.start({pushState: true, root: "/" + videoTopLevelTopic});
+
+        this.rootLength = 1 + videoTopLevelTopic.length;
 
         VideoControls.onYouTubeBlocked(function() {
 
@@ -22,6 +24,7 @@ var Video = {
     },
 
     renderPage: function(topicData, videoData) {
+        var self = this;
         var navTemplate = Templates.get("video.video-nav");
         var descTemplate = Templates.get("video.video-description");
         var headerTemplate = Templates.get("video.video-header");
@@ -34,11 +37,14 @@ var Video = {
         }
 
         // Render HTML
+        $("div.video").show();
         $("span.video-nav").html(navTemplate({topic: topicData.topic, video: videoData}));
         $(".video-title").html(videoData.title);
         $("div.video-description").html(descTemplate({topic: topicData.topic, video: videoData}));
         $("span.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
         $("span.video-footer").html(footerTemplate({topic: topicData.topic, video: videoData}));
+
+        document.title = videoData.title + " | " + topicData.topic.title + " | Khan Academy";
 
         var jVideoDropdown = $('#video_dropdown');
         if ( jVideoDropdown.length ) {
@@ -48,7 +54,7 @@ var Video = {
             // Set the width explicitly before positioning it absolutely to satisfy IE7.
             menu.width(menu.width()).hide().css('position', 'absolute');
             menu.bind("menuselect", function(e, ui){
-                var fragment = ui.item.children('a').attr('href').substr(1);
+                var fragment = ui.item.children('a').attr('href').substr(self.rootLength);
                 Video.router.navigate(fragment, {trigger: true});
             });
             $(document).bind("click focusin", function(e){
@@ -115,7 +121,7 @@ var Video = {
 
         // Set up next/previous links
         $("a.previous-video,a.next-video").click(function(event) {
-            var fragment = $(this).attr("href").substr(1);
+            var fragment = $(this).attr("href").substr(self.rootLength);
             Video.router.navigate(fragment, {trigger: true});
             event.stopPropagation();
             return false;
@@ -123,7 +129,7 @@ var Video = {
 
         if (videoData.next_video) {
             // Autoplay to the next video
-            var nextVideoFragment = $("a.next-video").attr("href").substr(1);
+            var nextVideoFragment = $("a.next-video").attr("href").substr(self.rootLength);
             VideoControls.setAutoPlayCallback(function() {
                 Video.router.navigate(nextVideoFragment, {trigger: true});
             });
@@ -233,13 +239,18 @@ window.VideoRouter = Backbone.Router.extend({
     },
 
     video: function(path) {
-        pathList = path.split("/");
+        if (path.charAt(0) == "/") {
+            path = path.substr(1);
+        }
+        pathList = [videoTopLevelTopic].concat(path.split("/"));
         if (pathList.length >= 3) {
             var video = pathList[pathList.length-1];
             var topic = pathList[pathList.length-3];
 
             Video.waitingForVideo = { topic: topic, video: video };
             Video.loadVideo(topic, video);
+        } else {
+            $("div.video").hide();
         }
     }
 });

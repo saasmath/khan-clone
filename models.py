@@ -1994,22 +1994,26 @@ class Topic(Searchable, db.Model):
 
         # Find last video in the previous topic
         previous_video = None
+        previous_video_topic = None
         previous_topic = self
 
         while not previous_video:
             previous_topic = previous_topic.get_previous_topic()
-            if previous_topic:
+            # Don't iterate past the end of the current top-level topic
+            if previous_topic and len(previous_topic.ancestor_keys) > 1:
                 (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
             else:
                 break
 
         # Find first video in the next topic
         next_video = None
+        next_video_topic = None
         next_topic = self
 
         while not next_video:
             next_topic = next_topic.get_next_topic()
-            if next_topic:
+            # Don't iterate past the end of the current top-level topic
+            if next_topic and len(next_topic.ancestor_keys) > 1:
                 (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
             else:
                 break
@@ -2029,6 +2033,7 @@ class Topic(Searchable, db.Model):
             'title': self.title,
             'extended_slug': self.get_extended_slug(),
             'parent_titles': parent_titles,
+            'top_level_topic': db.get(self.ancestor_keys[-2]).id,
             'videos': videos_dict,
             'previous_topic_title': previous_topic.standalone_title if previous_topic else None,
             'previous_topic_video': previous_video.readable_id if previous_video else None,

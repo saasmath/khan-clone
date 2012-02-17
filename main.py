@@ -95,6 +95,18 @@ class ViewVideo(request_handler.RequestHandler):
     def show_video(handler, readable_id, topic_id, redirect_to_canonical_url=False):
         topic = None
 
+        if not readable_id:
+            # Need to show some video here temporarily, using introductory algebra video
+            template_values = {
+                "video": { "youtube_id": "kpCJyQ2usJ4" },
+                "top_level_topic": topic_id,
+                "selected_nav_link": 'watch'
+            }
+
+            bingo(['struggling_videos_landing'])
+            handler.render_jinja2_template('viewvideo.html', template_values)
+            return
+
         if topic_id is not None and len(topic_id) > 0:
             topic = Topic.get_by_id(topic_id)
             key_id = 0 if not topic else topic.key().id()
@@ -136,7 +148,7 @@ class ViewVideo(request_handler.RequestHandler):
         bingo(['struggling_videos_landing'])
         handler.render_jinja2_template('viewvideo.html', template_values)
 
-    # The handler itself is deprecated. The ViewContent handler is the canonical
+    # The handler itself is deprecated. The ShowContent handler is the canonical
     # handler now.
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
@@ -617,10 +629,12 @@ class ShowContent(request_handler.RequestHandler):
                 content_type = path_list[-2]
                 content_id = path_list[-1]
 
-                if content_type in ["v", "video"]:
+                if content_type == "v":
                     ViewVideo.show_video(self, content_id, topic_id)
-                else:
-                    self.response.out.write("Content of type %s: %s in %s" % (content_type, content_id, topic_id))
+                    return
+
+            if len(path_list) > 0:
+                ViewVideo.show_video(self, None, path_list[0])
 
 class ServeUserVideoCss(request_handler.RequestHandler):
     def get(self):
