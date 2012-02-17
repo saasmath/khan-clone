@@ -112,6 +112,10 @@ handlers:
   script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
   login: admin
 
+- url: /_ah/queue/deferred_import
+  script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
+  login: admin
+
 - url: /admin/.*
   script: main.py
   login: admin
