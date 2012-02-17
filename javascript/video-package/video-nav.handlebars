@@ -1,13 +1,15 @@
-<a href="/#browse">All videos</a>
+{{#each topic.parent_titles }}
+<a href="#">{{ this }}</a>
 <span class="breadcrumb-separator">&#187;</span>
-<a href="/?video={{ video.readable_id }}#{{ topic.id }}">{{ topic.title }}</a>
+{{/each}}
+<a href="#">{{ topic.title }}</a>
 <span class="breadcrumb-separator">&#187;</span>
 <span id="video_dropdown" style="display:none;" class="selected">
-  <a href="/video/{{ video.readable_id }}?topic={{ topic.id }}">{{ video.title }}</a>
+  <a href="/{{ topic.extended_slug }}/v/{{ video.readable_id }}">{{ video.title }}</a>
   <div id="video_menu">
     <ol>
-      {{#each videos }}
-      <li data-selected='{{ selected }}'><a href="/video/{{ readable_id }}?topic={{ ../topic.id }}"><span class='vid-progress v{{ key_id }}'>{{ title }}</span></a></li>
+      {{#each topic.videos }}
+      <li data-selected='{{ selected }}'><a href="/{{ ../topic.extended_slug }}/v/{{ readable_id }}"><span class='vid-progress v{{ key_id }}'>{{ title }}</span></a></li>
       {{/each}}
     </ol>
   </div>

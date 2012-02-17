@@ -9,7 +9,9 @@ var Video = {
 
         this.router = new VideoRouter();
 
-        Backbone.history.start({pushState: true, root: "/video/"});
+        Backbone.history.start({pushState: true, root: "/" + videoTopLevelTopic});
+
+        this.rootLength = 1 + videoTopLevelTopic.length;
 
         VideoControls.onYouTubeBlocked(function() {
 
@@ -21,7 +23,8 @@ var Video = {
 
     },
 
-    renderPage: function(videoData) {
+    renderPage: function(topicData, videoData) {
+        var self = this;
         var navTemplate = Templates.get("video.video-nav");
         var descTemplate = Templates.get("video.video-description");
         var headerTemplate = Templates.get("video.video-header");
@@ -34,11 +37,14 @@ var Video = {
         }
 
         // Render HTML
-        $("span.video-nav").html(navTemplate(videoData));
-        $(".video-title").html(videoData.video.title);
-        $("div.video-description").html(descTemplate(videoData));
-        $("span.video-header").html(headerTemplate(videoData));
-        $("span.video-footer").html(footerTemplate(videoData));
+        $("div.video").show();
+        $("span.video-nav").html(navTemplate({topic: topicData.topic, video: videoData}));
+        $(".video-title").html(videoData.title);
+        $("div.video-description").html(descTemplate({topic: topicData.topic, video: videoData}));
+        $("span.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
+        $("span.video-footer").html(footerTemplate({topic: topicData.topic, video: videoData}));
+
+        document.title = videoData.title + " | " + topicData.topic.title + " | Khan Academy";
 
         var jVideoDropdown = $('#video_dropdown');
         if ( jVideoDropdown.length ) {
@@ -48,7 +54,7 @@ var Video = {
             // Set the width explicitly before positioning it absolutely to satisfy IE7.
             menu.width(menu.width()).hide().css('position', 'absolute');
             menu.bind("menuselect", function(e, ui){
-                var fragment = ui.item.children('a').attr('href').substr('/video/'.length);
+                var fragment = ui.item.children('a').attr('href').substr(self.rootLength);
                 Video.router.navigate(fragment, {trigger: true});
             });
             $(document).bind("click focusin", function(e){
@@ -93,7 +99,7 @@ var Video = {
             VideoControls.setAutoPlayEnabled(false);
         });
 
-        VideoControls.playVideo(videoData.video.youtube_id, videoData.video_key, false);
+        VideoControls.playVideo(videoData.youtube_id, videoData.key, false);
 
         // Start up various scripts
         Discussion.init();
@@ -113,61 +119,63 @@ var Video = {
 
         VideoStats.tooltip("#points-badge-hover", $points.data("title"));
 
-        var previousVideoTopic = (videoData.previous_video_topic ? videoData.previous_video_topic.id : videoData.topic.id);
-        var previousVideoFragment = videoData.previous_video.readable_id + "?topic=" + previousVideoTopic;
-
-        var nextVideoTopic = (videoData.next_video_topic ? videoData.next_video_topic.id : videoData.topic.id);
-        var nextVideoFragment = videoData.next_video.readable_id + "?topic=" + nextVideoTopic;
-
         // Set up next/previous links
-        $("a.previous-video").click(function(event) {
-            Video.router.navigate(previousVideoFragment, {trigger: true});
-            event.stopPropagation();
-            return false;
-        });
-        $("a.next-video").click(function(event) {
-            Video.router.navigate(nextVideoFragment, {trigger: true});
+        $("a.previous-video,a.next-video").click(function(event) {
+            var fragment = $(this).attr("href").substr(self.rootLength);
+            Video.router.navigate(fragment, {trigger: true});
             event.stopPropagation();
             return false;
         });
 
-        if (videoData.next_video_topic) {
-            // Don't autoplay to next video
-            VideoControls.setAutoPlayCallback(null);
-        } else {
+        if (videoData.next_video) {
+            // Autoplay to the next video
+            var nextVideoFragment = $("a.next-video").attr("href").substr(self.rootLength);
             VideoControls.setAutoPlayCallback(function() {
                 Video.router.navigate(nextVideoFragment, {trigger: true});
             });
+        } else {
+            // Don't autoplay to next video
+            VideoControls.setAutoPlayCallback(null);
         }
 
         VideoControls.initContinuousPlayLinks($("span.video-footer"));
 
         // Preload adjacent videos after 15 seconds
         setTimeout(function() {
-            Video.loadVideo(previousVideoTopic, videoData.previous_video.readable_id);
-            Video.loadVideo(nextVideoTopic, videoData.next_video.readable_id);
+            if (videoData.previous_video) {
+                Video.loadVideo(topicData.topic.id, videoData.previous_video.readable_id);
+            }
+            if (videoData.next_video) {
+                Video.loadVideo(topicData.topic.id, videoData.next_video.readable_id);
+            }
         }, 15000);
 
         this.waitingForVideo = null;
     },
 
     loadVideo: function(topic, video) {
-        var fragment = video + "?topic=" + topic;
-        if (videoLibrary[fragment]) {
-            if (Video.waitingForVideo == fragment) {
-                KAConsole.log("Switching to video: " + fragment);
-                Video.renderPage(videoLibrary[fragment]);
+        if (videoLibrary[topic] && videoLibrary[topic].videos[video]) {
+            if (Video.waitingForVideo && 
+                Video.waitingForVideo.topic == topic &&
+                Video.waitingForVideo.video == video) {
+                KAConsole.log("Switching to video: " + video + " in topic " + topic);
+                Video.renderPage(videoLibrary[topic], videoLibrary[topic].videos[video]);
             }
         } else {
-            KAConsole.log("Loading video: " + fragment);
-            url = "/api/v1/videos/" + topic + "/" + video + "/play";
+            KAConsole.log("Loading video: " + video + " in topic " + topic);
+            url = "/api/v1/videos/" + topic + "/" + video + "/play" + (videoLibrary[topic] ? "" : "?topic=1");
             $.ajax({
                 url: url,
                 success: function(json) {
-                    videoLibrary[fragment] = json;
-                    if (Video.waitingForVideo == fragment) {
-                        KAConsole.log("Switching to video: " + fragment);
-                        Video.renderPage(json);
+                    videoLibrary[topic] = videoLibrary[topic] || { videos: [] };
+                    if (json.topic)
+                        videoLibrary[topic].topic = json.topic;
+                    videoLibrary[topic].videos[video] = json.video;
+                    if (Video.waitingForVideo &&
+                        Video.waitingForVideo.topic == topic &&
+                        Video.waitingForVideo.video == video) {
+                        KAConsole.log("Switching to video: " + video + " in topic " + topic);
+                        Video.renderPage(videoLibrary[topic], json.video);
                     }
                 }
             });
@@ -227,13 +235,23 @@ var Video = {
 
 window.VideoRouter = Backbone.Router.extend({
     routes: {
-        ":video?topic=:topic": "video"
+        "*path": "video"
     },
 
-    video: function(video, topic) {
-        var fragment = video + "?topic=" + topic;
-        Video.waitingForVideo = fragment;
-        Video.loadVideo(topic, video);
+    video: function(path) {
+        if (path.charAt(0) == "/") {
+            path = path.substr(1);
+        }
+        pathList = [videoTopLevelTopic].concat(path.split("/"));
+        if (pathList.length >= 3) {
+            var video = pathList[pathList.length-1];
+            var topic = pathList[pathList.length-3];
+
+            Video.waitingForVideo = { topic: topic, video: video };
+            Video.loadVideo(topic, video);
+        } else {
+            $("div.video").hide();
+        }
     }
 });
 

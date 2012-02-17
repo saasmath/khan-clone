@@ -1977,6 +1977,72 @@ class Topic(Searchable, db.Model):
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
+    # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_extended_slug_%s" % self.key(),
+        layer=layer_cache.Layers.Memcache)
+    def get_extended_slug(self):
+        parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
+        parent_ids.reverse()
+        return "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
+
+    # Gets the data we need for the video player
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_play_data_%s" % self.key(),
+        layer=layer_cache.Layers.Memcache)
+    def get_play_data(self):
+
+        # Find last video in the previous topic
+        previous_video = None
+        previous_video_topic = None
+        previous_topic = self
+
+        while not previous_video:
+            previous_topic = previous_topic.get_previous_topic()
+            # Don't iterate past the end of the current top-level topic
+            if previous_topic and len(previous_topic.ancestor_keys) > 1:
+                (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+            else:
+                break
+
+        # Find first video in the next topic
+        next_video = None
+        next_video_topic = None
+        next_topic = self
+
+        while not next_video:
+            next_topic = next_topic.get_next_topic()
+            # Don't iterate past the end of the current top-level topic
+            if next_topic and len(next_topic.ancestor_keys) > 1:
+                (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+            else:
+                break
+
+        # List all the videos in this topic
+        videos_dict = [{
+            "readable_id": v.readable_id,
+            "key_id": v.key().id(),
+            "title": v.title
+        } for v in Topic.get_cached_videos_for_topic(self)]
+
+        parent_titles = [topic.title for topic in db.get(self.ancestor_keys)][0:-1]
+        parent_titles.reverse()
+
+        return {
+            'id': self.id,
+            'title': self.title,
+            'extended_slug': self.get_extended_slug(),
+            'parent_titles': parent_titles,
+            'top_level_topic': db.get(self.ancestor_keys[-2]).id,
+            'videos': videos_dict,
+            'previous_topic_title': previous_topic.standalone_title if previous_topic else None,
+            'previous_topic_video': previous_video.readable_id if previous_video else None,
+            'previous_topic_subtopic_slug': previous_video_topic.get_extended_slug() if previous_video_topic else None,
+            'next_topic_title': next_topic.standalone_title if next_topic else None,
+            'next_topic_video': next_video.readable_id if next_video else None,
+            'next_topic_subtopic_slug': next_video_topic.get_extended_slug() if next_video_topic else None
+        }
+
     # get the topic by the url slug/readable_id
     @staticmethod
     def get_by_id(id, version=None):
@@ -3125,6 +3191,7 @@ class Video(Searchable, db.Model):
     def approx_count():
         return int(Setting.count_videos()) / 100 * 100
 
+    # Gets the data we need for the video player
     @staticmethod
     def get_play_data(readable_id, topic, discussion_options):
         video = None
@@ -3147,58 +3214,20 @@ class Video(Searchable, db.Model):
                 next_video = v
                 break
 
-        videos_dict = [{
-            "selected": v.readable_id == readable_id,
-            "readable_id": v.readable_id,
-            "key_id": v.key().id(),
-            "title": v.title
-        } for v in videos]
-
         if video is None:
             return None
 
-        # If we're at the beginning or end of a topic, show the adjacent topic.
-        # previous_topic/next_topic are the topic to display.
-        # previous_video_topic/next_video_topic are the subtopics the videos
-        # are actually in.
-        previous_topic = None
-        previous_video_topic = None
-        previous_video_dict = None
-        next_topic = None
-        next_video_topic = None
-        next_video_dict = None
+        previous_video_dict = {
+            "readable_id": previous_video.readable_id,
+            "key_id": previous_video.key().id(),
+            "title": previous_video.title
+        } if previous_video else None
 
-        if not previous_video:
-            previous_topic = topic
-            while not previous_video:
-                previous_topic = previous_topic.get_previous_topic()
-                if previous_topic:
-                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
-                else:
-                    break
-
-        if previous_video:
-            previous_video_dict = {
-                "readable_id": previous_video.readable_id,
-                "key_id": previous_video.key().id(),
-                "title": previous_video.title
-            }
-
-        if not next_video:
-            next_topic = topic
-            while not next_video:
-                next_topic = next_topic.get_next_topic()
-                if next_topic:
-                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
-                else:
-                    break
-
-        if next_video:
-            next_video_dict = {
-                "readable_id": next_video.readable_id,
-                "key_id": next_video.key().id(),
-                "title": next_video.title
-            }
+        next_video_dict = {
+            "readable_id": next_video.readable_id,
+            "key_id": next_video.key().id(),
+            "title": next_video.title
+        } if next_video else None
 
         if App.offline_mode:
             video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
@@ -3233,19 +3262,16 @@ class Video(Searchable, db.Model):
             user_data=UserData.current(), video=video, topic=topic, **discussion_options)
 
         return {
-            'topic': topic,
-            'video': video,
-            'video_key': video.key(),
-            'videos': videos_dict,
+            'title': video.title,
+            'description': video.description,
+            'youtube_id': video.youtube_id,
+            'readable_id': video.readable_id,
+            'key': video.key(),
             'video_path': video_path,
             'button_top_exercise': button_top_exercise,
             'related_exercises': [], # disabled for now
-            'previous_topic': previous_topic,
             'previous_video': previous_video_dict,
-            'previous_video_topic': previous_video_topic,
-            'next_topic': next_topic,
             'next_video': next_video_dict,
-            'next_video_topic': next_video_topic,
             'selected_nav_link': 'watch',
             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
             'author_profile': 'https://plus.google.com/103970106103092409324',
