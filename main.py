@@ -619,6 +619,7 @@ class PermanentRedirectToHome(request_handler.RequestHandler):
         self.redirect(redirect_target, True)
 
 class ShowContent(request_handler.RequestHandler):
+    @ensure_xsrf_cookie
     def get(self, path=None):
         self.response.headers['Content-Type'] = 'text/html'
 
