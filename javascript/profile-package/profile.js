@@ -40,7 +40,7 @@ var Profile = {
      */
     init: function(json) {
         this.profile = new ProfileModel(json.profileData);
-        this.profile.bind("change:username", Profile.onUsernameChange_);
+        this.profile.bind("savesuccess", this.onProfileUpdated_, this);
 
         this.profileRoot = json.profileRoot;
         this.isDataCollectible = json.isDataCollectible;
@@ -132,32 +132,16 @@ var Profile = {
         return routes;
     },
 
-    /*
-     * Update Profile.router, address bar, and links on the page
+    /**
+     * Handle a change to the profile root.
      */
-    onUsernameChange_: function(model) {
-        var oldRoot = Profile.profileRoot;
-        Profile.profileRoot = "/profile/" + model.get("username");
-
-        // Clear routes with old root
-        Backbone.history.handlers = [];
-
-        // Create a new router
-        Profile.router = new Profile.TabRouter({routes: Profile.getRoutes_()});
-
-        // Update address bar so user can see new url
-        // Note: assumes that user is on the main tab, which has no subroute
-        Profile.router.navigate(Profile.profileRoot, true);
-
-        // Change all links on the page...
-        $("a").each(function(index, elem) {
-            var jel = $(elem),
-                href = jel.attr("href");
-            if (href.indexOf(oldRoot) === 0) {
-                var updatedHref = href.replace(oldRoot, Profile.profileRoot);
-                jel.attr("href", updatedHref);
-            }
-        });
+    onProfileUpdated_: function() {
+        var username = this.profile.get("username");
+        if (username && Profile.profileRoot != ("/profile/" + username)) {
+            // Profile root changed - we need to reload the page since
+            // Backbone.router isn't happy when the root changes.
+            window.location.replace("/profile/" + username);
+        }
     },
 
     TabRouter: Backbone.Router.extend({

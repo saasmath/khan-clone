@@ -4,6 +4,7 @@
 UsernamePickerView = Backbone.View.extend({
     id: "username-picker-container",
     setPublicAfterSave_: false,
+    savePending_: false,
 
     /**
      * Whether or not the nickname is acceptable/valid to try and save.
@@ -37,10 +38,10 @@ UsernamePickerView = Backbone.View.extend({
         this.template = Templates.get("profile.username-picker");
         this.shouldShowUsernameWarning_ = false;
         this.keyupTimeout = null;
-        this.model.bind("validate:nickname",
-            _.bind(this.onValidateNickname_, this));
-        this.model.bind("validate:username",
-            _.bind(this.onValidateUsername_, this));
+        this.model.bind("validate:nickname", this.onValidateNickname_, this);
+        this.model.bind("validate:username", this.onValidateUsername_, this);
+        this.model.bind("savesuccess", this.onSaveSuccess_, this);
+        this.model.bind("error", this.onSaveRejected_, this);
     },
 
     render: function() {
@@ -244,9 +245,28 @@ UsernamePickerView = Backbone.View.extend({
             attrs.isPublic = true;
         }
 
+        var usernameChange = username != this.model.get("username");
         this.model.save(attrs);
 
         $("#save-profile-info").prop("disabled", true);
-        this.toggle();
+        if (usernameChange) {
+            // Keep the modal open and wait for a save success, since this
+            // is an important, ocean-boiling operation.
+            $("#save-profile-info").val("Saving...");
+            this.savePending_ = true;
+        } else {
+            this.toggle();
+        }
+    },
+
+    onSaveSuccess_: function() {
+        if (this.savePending_) {
+            $(this.el).modal("hide");
+            this.savePending_ = false;
+        }
+    },
+    onSaveRejected_: function() {
+        // No difference in behavior right now.
+        this.onSaveSuccess_();
     }
 });
