@@ -870,7 +870,7 @@ footer {
     #top-header #user-info .username_and_notification .user-avatar {
         width: 16px;
         height: 16px;
-        margin: 0 4px;
+        padding: 0 4px;
     }
 
     #top-header #top-header-links .page_links a.notification_link {
