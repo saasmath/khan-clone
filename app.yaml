@@ -20,6 +20,7 @@ skip_files:
 - ^(.*/)?presskit/.*
 - ^(.*/)?deploy/.*
 - ^(.*/)?javascript/testbase\.js
+- ^(.*/)?javascript/test/.*
 - ^(.*/)?.*_test\.html
 - ^requirements\.txt
 - ^agar
