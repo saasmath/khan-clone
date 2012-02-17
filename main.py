@@ -172,6 +172,33 @@ class ViewVideo(request_handler.RequestHandler):
                 next_video = v
                 break
 
+        # If we're at the beginning or end of a topic, show the adjacent topic.
+        # previous_topic/next_topic are the topic to display.
+        # previous_video_topic/next_video_topic are the subtopics the videos
+        # are actually in.
+        previous_topic = None
+        previous_video_topic = None
+        next_topic = None
+        next_video_topic = None
+
+        if not previous_video:
+            previous_topic = topic
+            while not previous_video:
+                previous_topic = previous_topic.get_previous_topic()
+                if previous_topic:
+                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+                else:
+                    break
+
+        if not next_video:
+            next_topic = topic
+            while not next_video:
+                next_topic = next_topic.get_next_topic()
+                if next_topic:
+                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+                else:
+                    break
+
         if video is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
@@ -214,8 +241,12 @@ class ViewVideo(request_handler.RequestHandler):
                             'subtitles_json': subtitles_json,
                             'button_top_exercise': button_top_exercise,
                             'related_exercises': [], # disabled for now
+                            'previous_topic': previous_topic,
                             'previous_video': previous_video,
+                            'previous_video_topic': previous_video_topic,
+                            'next_topic': next_topic,
                             'next_video': next_video,
+                            'next_video_topic': next_video_topic,
                             'selected_nav_link': 'watch',
                             'awarded_points': awarded_points,
                             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
@@ -223,8 +254,7 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
-        bingo(['struggling_videos_landing',
-               'homepage_restructure_videos_landing'])
+        bingo(['struggling_videos_landing'])
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
@@ -778,10 +808,9 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
     ('/commoncore', common_core.CommonCore),
+    ('/staging/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
-
-
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
@@ -886,11 +915,13 @@ application = webapp2.WSGIApplication([
 
     # Summer Discovery Camp application/registration
     ('/summer/application', summer.Application),
+    ('/summer/tuition', summer.Tuition),
     ('/summer/application-status', summer.Status),
     ('/summer/getstudent', summer.GetStudent),
     ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
+    ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 

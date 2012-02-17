@@ -5,6 +5,7 @@ import request_handler
 import models
 import models_discussion
 from user_util import admin_only, moderator_only
+from badges.discussion_badges import ModeratorBadge
 
 class RedirectToModPanel(request_handler.RequestHandler):
     def get(self):
@@ -33,6 +34,11 @@ class ModeratorList(request_handler.RequestHandler):
 
         if user_data:
             user_data.moderator = self.request_bool("mod")
+
+            if user_data.moderator:
+                if not ModeratorBadge().is_already_owned_by(user_data):
+                    ModeratorBadge().award_to(user_data)
+
             db.put(user_data)
 
         self.redirect("/discussion/mod/moderatorlist")
@@ -46,7 +52,12 @@ class FlaggedFeedback(request_handler.RequestHandler):
         feedback_query = models_discussion.Feedback.all().filter("is_flagged = ", True).filter("deleted = ", False)
 
         feedback_count = feedback_query.count()
-        feedbacks = feedback_query.fetch(50)
+
+        # Grab a bunch of flagged pieces of feedback and point moderators at the 50 w/ lowest votes first.
+        # ...can easily do this w/ an order on the above query and a new index, but avoiding the index for now
+        # since it's only marginally helpful.
+        feedbacks = feedback_query.fetch(250)
+        feedbacks = sorted(feedbacks, key=lambda feedback: feedback.sum_votes)[:50]
 
         template_content = {
                 "feedbacks": feedbacks, 

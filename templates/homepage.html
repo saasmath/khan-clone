@@ -129,8 +129,8 @@
         </ul>
         {% else %}
         <div id="browse-control-anchor"></div>
-        {{ templatetags.topic_browser("browse") }}
-        {{ templatetags.topic_browser("browse-fixed") }}
+        {{ templatetags.topic_browser("browse", version_number) }}
+        {{ templatetags.topic_browser("browse-fixed", version_number) }}
 
         {% endif %}
         <a href="/mobilefullsite" class="mobile-only" data-role="button" data-ajax="false">View standard site</a>
