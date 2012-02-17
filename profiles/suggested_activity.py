@@ -78,8 +78,9 @@ class SuggestedActivity(object):
                             .get_value_for_datastore(exercise_video)
                             in completed):
                         continue
-                    suggestions.append(SuggestedActivity.from_video(
-                            exercise_video.video))
+                    video = SuggestedActivity.from_video(exercise_video.video)
+                    if video is not None:
+                        suggestions.append(video)
                     if len(suggestions) >= max_activities:
                         return suggestions
 
@@ -121,6 +122,10 @@ class SuggestedActivity(object):
     @staticmethod
     def from_video(video):
         """ Build a SuggestedActivity dict from a models.Video object. """
+        # TODO(benkomalo): remove this check when there are sanity checks at
+        # higher levels. Right now we have to guard against orphaned vids.
+        if len(video.topic_string_keys or []) == 0:
+            return None
         activity = SuggestedActivity()
         activity.name = video.title
         activity.url = video.relative_url
