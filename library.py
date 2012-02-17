@@ -73,12 +73,15 @@ def add_next_topic(topics, next_topic=None):
     for i, topic in enumerate(topics):
         if topic.subtopics:
             topic.next = topic.subtopics[0]
+            topic.next_is_subtopic = True
             for subtopic in topic.subtopics:
                 add_next_topic(topic.subtopics, next_topic=topics[i+1])
         else:
             if i+1 == len(topics):
                 topic.next = next_topic
             else:
+                if next_topic:
+                    topic.next_is_subtopic = True
                 topic.next = topics[i+1]
 
 @layer_cache.cache_with_key_fxn(

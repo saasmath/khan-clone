@@ -1281,7 +1281,13 @@ a:link.google-analytics-link-track
             #library-content .library-content-header h2.subtopic-1-heading.topic-heading-first {
                 margin-top: 4px;
 			}
-
+            #library-content div.subtopic-jump-fix {
+                position: relative;
+                top: -20px;
+            }
+            #library-content div.subtopic-jump-fix.first {
+                top: -35px;
+            }
 			#library-content .library-content-header h2.subtopic-2-heading {
                 font-size: 14px;
                 margin-top: 6px;

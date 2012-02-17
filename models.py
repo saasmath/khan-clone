@@ -41,6 +41,14 @@ from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
 import re
 
+class BackupModel(db.Model):
+    """Back up this model
+
+    This is used for automatic daily backups of all models. If you would like
+    your model to be backed up (off of App Engine), just inherit from
+    BackupModel.
+    """
+    backup_timestamp = db.DateTimeProperty(auto_now=True)
 
 # Setting stores per-application key-value pairs
 # for app-wide settings that must be synchronized
@@ -3363,7 +3371,7 @@ class UserVideo(db.Model):
             completed=bool(json['completed'])
         )
 
-class VideoLog(db.Model):
+class VideoLog(BackupModel):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
     video_title = db.StringProperty(indexed=False)
@@ -3714,7 +3722,7 @@ def commit_log_summary_coaches(activity_log, coaches):
     for coach in coaches:
         LogSummary.add_or_update_entry(UserData.get_from_db_key_email(coach), activity_log, ClassDailyActivitySummary, LogSummaryTypes.CLASS_DAILY_ACTIVITY, 1440)
 
-class ProblemLog(db.Model):
+class ProblemLog(BackupModel):
 
     user = db.UserProperty()
     exercise = db.StringProperty()
