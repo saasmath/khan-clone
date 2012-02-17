@@ -1191,6 +1191,7 @@ a:link.google-analytics-link-track
 
 .right { text-align: right; }
 .left { text-align: left; }
+.center { text-align: center; }
 .justify { text-align: justify; }
 
 
@@ -1283,6 +1284,16 @@ a:link.google-analytics-link-track
                 margin-bottom: 10px;
                 line-height: 16px;
 			}
+            #library-content .library-content-header h2.subtopic-1-heading.topic-heading-first {
+                margin-top: 4px;
+			}
+            #library-content div.subtopic-jump-fix {
+                position: relative;
+                top: -20px;
+            }
+            #library-content div.subtopic-jump-fix.first {
+                top: -35px;
+            }
 			#library-content .library-content-header h2.subtopic-2-heading {
                 font-size: 14px;
                 margin-top: 6px;

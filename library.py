@@ -68,6 +68,22 @@ def flatten_tree(tree, parent_topics=[]):
 
     return homepage_topics
 
+def add_next_topic(topics, next_topic=None):
+    topic_prev = None
+    for i, topic in enumerate(topics):
+        if topic.subtopics:
+            topic.next = topic.subtopics[0]
+            topic.next_is_subtopic = True
+            for subtopic in topic.subtopics:
+                add_next_topic(topic.subtopics, next_topic=topics[i+1])
+        else:
+            if i+1 == len(topics):
+                topic.next = next_topic
+            else:
+                if next_topic:
+                    topic.next_is_subtopic = True
+                topic.next = topics[i+1]
+
 @layer_cache.cache_with_key_fxn(
         lambda ajax=False, version_number=None: 
         "library_content_by_topic_%s_v%s" % (
@@ -92,19 +108,13 @@ def library_content_html(ajax=False, version_number=None):
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
     topics = [topic for topic in topics 
-              if not 
-              (topic.standalone_title == "California Standards Test: Algebra I" 
-              and not topic.id == "algebra-i") and not 
+              if not topic.id == "new-and-noteworthy" and not
               (topic.standalone_title == "California Standards Test: Geometry" 
               and not topic.id == "geometry-2")] 
 
     # print_topics(topics)
 
-    topic_prev = None
-    for topic in topics:
-        if topic_prev:
-            topic_prev.next = topic
-        topic_prev = topic
+    add_next_topic(topics)
 
     timestamp = time.time()
 
