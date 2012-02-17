@@ -932,17 +932,18 @@ li.profile-tab {
 .user-deets {
     float:left;
     margin-left: 10px;
+    max-width: 240px;
 }
 .user-deets .nickname {
     font-size: 150%;
     padding: 0;
     margin: 0;
-    width: 220px;
 }
 .user-deets .add-remove-coach {
     display: inline;
 }
 .user-deets .basic-stats {
+    min-width: 180px;
     margin-top: 14px;
 }
 
