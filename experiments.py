@@ -93,7 +93,6 @@ class SuggestedActivityExperiment(object):
         ('suggested_activity_visit_suggested_exercise', ConversionTypes.Counting),
 
         ('suggested_activity_visit_profile', ConversionTypes.Counting),
-        ('suggested_activity_visit_profile_binary', ConversionTypes.Binary),
 
         # Clicks on suggested activities on the profile page
         ('suggested_activity_click_through_exercise', ConversionTypes.Counting),

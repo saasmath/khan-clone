@@ -199,7 +199,6 @@ class ViewProfile(request_handler.RequestHandler):
         if is_self:
             bingo([
                 'suggested_activity_visit_profile',
-                'suggested_activity_visit_profile_binary',
             ])
 
             promo_record = models.PromoRecord.get_for_values(
