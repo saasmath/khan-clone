@@ -5,5 +5,5 @@
 class BadgeContextType:
     NONE = 0
     EXERCISE = 1
-    PLAYLIST = 2
+    TOPIC = 2
     FEEDBACK = 3

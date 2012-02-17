@@ -1255,34 +1255,66 @@ a:link.google-analytics-link-track
 				color: #999;
 			}
 
-	#library #library-content {
+	#library-content {
 		background-color: #fff;
 		border-top: 0;
 	}
-		#library #library-content #library-content-main {
+		#library-content #library-content-main {
 			padding: 0 0 38px;
 		}
-			#library #library-content #library-content-main h2 {
+			#library-content .library-content-header h2 {
 				margin-top: 0;
 				margin-bottom: .9em;
 				color: #333;
 			}
-			#library #library-content #library-content-main h2.topic-heading {
+			#library-content .library-content-header h2.topic-heading {
                 margin-top: 38px;
 				margin-bottom: 5px;
 				font-size: 18px
 			}
-			#library #library-content #library-content-main p.topic-desc {
+			#library-content .library-content-header h2.subtopic-1-heading {
+                font-size: 16px;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                line-height: 16px;
+			}
+			#library-content .library-content-header h2.subtopic-2-heading {
+                font-size: 14px;
+                margin-top: 6px;
+                margin-bottom: 0;
+                line-height: 16px;
+                font-style: italic;
+			}
+            #library-content .subtopic-indent {
+                position: relative;
+                margin-left: 24px;
+            }
+            #library-content .subtopic-indent-line {
+                width: 5px;
+                top: 8px;
+                bottom: 6px;
+                left: -22px;
+                background-color: #DDD;
+                position: absolute;
+
+                -webkit-border-radius: 5px;
+                -moz-border-radius: 5px;
+                border-radius: 5px;
+            }
+            #library-content .subtopic-indent-line.content {
+                top: 4px;
+            }
+			#library-content .library-content-list p.topic-desc {
 				color: #555;
 				margin: 0 0 10px;
 				font-size: 13px;
 			}
-            #library #library-content #library-content-main ol {
+            #library-content .library-content-list ol {
                 list-style: none none;
                 margin-left: -15px;
                 padding-left: 0;
             }
-            #library #library-content #library-content-main li {
+            #library-content .library-content-list li {
                 display: list-item;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -1290,13 +1322,13 @@ a:link.google-analytics-link-track
                 color: #666666;
                 line-height: 18px;
             }
-			#library #library-content #library-content-main a.vl {
+			#library-content .library-content-list a.vl {
 				font-weight: normal;
 				padding: 0 2px 0 2px;
 				line-height: 18px;
                 text-decoration: none;
 			}
-			#library #library-content #library-content-main a.vl:hover {
+			#library-content .library-content-list a.vl:hover {
                 color: black;
 			}
 
@@ -3075,6 +3107,18 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     background: #E9EFDD;
     border: 1px solid #C6D1AD;
     margin-bottom: 0;
+}
+#homepage .subtopic_browser {
+    padding: 4px 10px;
+    background: #F4F7EE;
+    border: 1px solid #C6D1AD;
+    margin-bottom: 0;
+}
+#homepage .subtopic_browser .css-menu {
+    z-index: 0;
+}
+#homepage .subtopic_browser li {
+    overflow: visible;
 }
 #homepage .topic_browser_title {
     display: inline-block;
