@@ -100,13 +100,13 @@ def fill_realtime_recent_daily_activity_summaries(daily_activity_logs, user_data
     if user_data.last_daily_summary and dt_end <= user_data.last_daily_summary:
         return daily_activity_logs
 
-    # We're willing to fill the last 2 days with realtime data if summary logs haven't
+    # We're willing to fill the last 4 days with realtime data if summary logs haven't
     # been compiled for some reason.
     dt_end = min(dt_end, datetime.datetime.now())
-    dt_start = dt_end - datetime.timedelta(days=2)
+    dt_start = dt_end - datetime.timedelta(days=4)
 
     if user_data.last_daily_summary:
-        dt_start = max(dt_end - datetime.timedelta(days=2), user_data.last_daily_summary)
+        dt_start = max(dt_start, user_data.last_daily_summary)
 
     query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
     query_video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)

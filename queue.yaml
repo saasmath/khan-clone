@@ -38,3 +38,6 @@ queue:
 
 - name: subtitles-fetch-queue
   rate: 1/s
+
+- name: import-queue
+  rate: 60/s

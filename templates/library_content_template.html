@@ -5,7 +5,7 @@
             {{ library.column_major_order_styles() }}
             <div id="library-content-main">
             {% for topic in topics recursive %}
-            {% if loop.first %}
+            {% if loop.first and topic.depth == 0%}
                 <div class="clear desktop-only"><a name="{{ topic.standalone_title|slugify|escape }}" id="{{ topic.standalone_title|slugify|escape }}">&nbsp;</a></div>
             {% endif %}
             <div data-role="page" id="{{ topic.id }}" data-theme="b">
@@ -34,7 +34,7 @@
                         {% endif %}
                     {% endif %}
     
-                    <div class="clear desktop-only">
+                    <div class="clear desktop-only{% if topic.next_is_subtopic %} subtopic-jump-fix{% endif %}{% if topic.subtopics %} first{% endif %}">
                     {% if topic.next %}
                         <a name="{{ topic.next.id|slugify|escape }}" id="{{ topic.next.id|slugify|escape }}">&nbsp;</a>
                     {% endif %}

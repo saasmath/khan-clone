@@ -5,6 +5,13 @@ from templatefilters import seconds_to_time_string
 # All badges awarded for watching a specific amount of topic time inherit from TopicTimeBadge
 class TopicTimeBadge(TopicBadge):
 
+    def __init__(self):
+        TopicBadge.__init__(self)
+
+        # Backwards compatibility with old playlist badges requires that the badge
+        # name isn't changed (which currently relies on __class__.__name__ not changing)
+        self.name = self.name.replace("topictimebadge", "playlisttimebadge")
+
     def is_satisfied_by(self, *args, **kwargs):
         user_topic = kwargs.get("user_topic", None)
 
