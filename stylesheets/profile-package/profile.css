@@ -511,7 +511,7 @@
         padding: 10px 15px;
         border-radius: 5px;
         position: relative;
-        width: 80%;
+        width: 100%;
 
         box-sizing: border-box;
     }
@@ -520,8 +520,6 @@
         margin-right: 8px;
         width: 40px;
         height: 40px;
-        /* TODO(marcia): not happy in IE8 */
-        background-size: 40px;
         background-color: #ccc;
         display: inline-block;
         -webkit-border-radius: 5px;
@@ -529,25 +527,25 @@
         border-radius: 5px;
     }
     .activity-list .activity-badge .activity-image {
-        background: #005987 url(/images/activity-badge-icon.png) no-repeat 50% 50%;
+        background: #005987 url(/images/activity-badge-icon-small.png) no-repeat 50% 50%;
     }
     .activity-list .activity-exercise .activity-image {
-        background: #ccc url(/images/activity-exercise-icon-incomplete.png) no-repeat 50% 50%;
+        background: #ccc url(/images/activity-exercise-icon-incomplete-small.png) no-repeat 50% 50%;
     }
     .activity-list .activity-exercise.proficient .activity-image {
-        background: #005987 url(/images/activity-exercise-icon-proficient.png) no-repeat 50% 50%;
+        background: #005987 url(/images/activity-exercise-icon-proficient-small.png) no-repeat 50% 50%;
     }
     .activity-list .activity-goal .activity-image {
-        background: #ccc url(/images/activity-icon-goal-inset.png) no-repeat 50% 50%;
+        background: #ccc url(/images/activity-icon-goal-inset-small.png) no-repeat 50% 50%;
     }
     .activity-list .activity-goal.completed .activity-image {
-        background: #005987 url(/images/activity-icon-goal-complete.png) no-repeat 50% 50%;
+        background: #005987 url(/images/activity-icon-goal-complete-small.png) no-repeat 50% 50%;
     }
     .activity-list .activity-video .activity-image {
-        background: #ccc url(/images/activity-video-icon-inset.png) no-repeat 50% 50%;
+        background: #ccc url(/images/activity-video-icon-inset-small.png) no-repeat 50% 50%;
     }
     .activity-list .activity-video.completed .activity-image {
-        background: #005987 url(/images/activity-video-icon-complete.png) no-repeat 50% 50%;
+        background: #005987 url(/images/activity-video-icon-complete-small.png) no-repeat 50% 50%;
     }
     .activity-list .activity-image img {
         max-width: 60px;
@@ -565,16 +563,19 @@
     }
     .suggested-activity-controls {
         position: absolute;
-        right: 5px;
-        bottom: 15px;
+        right: 10px;
+        top: 20px;
         font-size: 15px;
+    }
+    .suggested-activity-controls .simple-button {
+        padding: 10px 5px 10px 5px;
     }
     .foreground-link {
         position: relative;
         z-index: 2;
     }
     .foreground-link.ellipsis {
-        width: 250px;
+        width: 365px;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
@@ -608,7 +609,7 @@
     }
     .description {
         float: left;
-        width: 340px;
+        width: 420px;
     }
 a.graph-link {
     color: #006699;
