@@ -2,6 +2,7 @@ import hashlib
 import os
 import cgi
 import time
+import urllib
 
 from google.appengine.api import memcache
 
@@ -272,3 +273,17 @@ def modulo_choose(experiment_hashable_name, alternatives, identity):
         if index_weight >= current_weight:
             return alternative
 
+def construct_redirect_url(destination, conversion_names):
+    """ Construct a URL that redirects to destination after scoring conversions
+    in all listed conversion names
+    """
+
+    result = "/gae_bingo/redirect?continue=%s" % urllib.quote(destination)
+
+    if type(conversion_names) != list:
+        conversion_names = [conversion_names]
+
+    for conversion_name in conversion_names:
+        result += "&conversion_name=%s" % urllib.quote(conversion_name)
+
+    return result

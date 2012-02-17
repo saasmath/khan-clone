@@ -127,7 +127,7 @@ var gae_bingo = (function() {
 
   // construct_redirect_url constructs a redirect url as expected in gae_bingo/redirect.py
   // **destination** (string) the destination url to redirect to
-  // **conversion_names** (Array) the conversion name(s) to score
+  // **conversion_names** (string or Array) the conversion name(s) to score
   //
   // This is helpful for measuring click-through, since it is possible to navigate
   // away before the client-side gae_bingo.bingo POST goes through.
@@ -136,6 +136,10 @@ var gae_bingo = (function() {
       var result = "/gae_bingo/redirect";
 
       result += "?continue=" + encodeURIComponent(destination);
+
+      if (!$.isArray(conversion_names)) {
+          conversion_names = [conversion_names];
+      }
 
       _.each(conversion_names, function(name) {
           result += "&conversion_name=" + encodeURIComponent(name);
