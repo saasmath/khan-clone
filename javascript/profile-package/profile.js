@@ -93,29 +93,6 @@ var Profile = {
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
         });
-
-        // Bind event handlers for sharing controls on recent activity
-        $(".share-link").hide();
-        $(".sharepop").hide();
-
-        $(".achievement,.exercise,.video").hover(
-            function() {
-                $(this).find(".share-link").show();
-                },
-            function() {
-                $(this).find(".share-link").hide();
-                $(this).find(".sharepop").hide();
-              });
-
-        $(".share-link").click(function() {
-            if ($.browser.msie && (parseInt($.browser.version, 10) < 8)) {
-                $(this).next(".sharepop").toggle();
-            } else {
-                $(this).next(".sharepop").toggle(
-                        "drop", { direction: "up" }, "fast");
-            }
-            return false;
-        });
     },
 
     /**

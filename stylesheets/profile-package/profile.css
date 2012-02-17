@@ -594,14 +594,6 @@
         color: #999;
         font-style: italic;
     }
-    .activity-controls .activity-share {
-        float: right;
-        display: none;
-    }
-    .ach-text:hover .activity-share {
-        display: block;
-    }
-
     .activity-list .streak-bar {
         height: 10px;
         margin-left: 48px;
