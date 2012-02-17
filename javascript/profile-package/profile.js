@@ -15,10 +15,6 @@ var Profile = {
      * The root segment of the URL for the profile page for this user.
      * Will be of the form "/profile/<identifier>" where identifier
      * can be a username, or other identifier sent by the server.
-     *
-     * Note that this does not correspond to Backbone.History.root, since
-     * that must be a common root ("/profile") which cannot be changed,
-     * even if the profileRoot changes.
      */
     profileRoot: "",
 
@@ -53,7 +49,7 @@ var Profile = {
 
         Backbone.history.start({
             pushState: true,
-            root: "/profile"
+            root: this.profileRoot
         });
 
         Profile.showIntro_();
@@ -74,22 +70,23 @@ var Profile = {
             }
         });
 
+        var navElementHandler = _.bind(this.onNavigationElementClicked_, this);
         // Delegate clicks for tab navigation
         $(".profile-navigation .vertical-tab-list").delegate("a",
-                "click", this.onNavigationElementClicked_);
+                "click", navElementHandler);
 
         // Delegate clicks for vital statistics time period navigation
         $("#tab-content-vital-statistics").delegate(".graph-date-picker a",
-                "click", this.onNavigationElementClicked_);
+                "click", navElementHandler);
 
         $("#tab-content-goals").delegate(".graph-picker .type a",
-                "click", this.onNavigationElementClicked_);
+                "click", navElementHandler);
 
         // Delegate clicks for recent badge-related activity
         $(".achievement .ach-text").delegate("a", "click", function(event) {
             if (!event.metaKey) {
                 event.preventDefault();
-                Profile.router.navigate(Profile.profileRoot + "/achievements", true);
+                Profile.router.navigate("/achievements", true);
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
         });
@@ -115,19 +112,15 @@ var Profile = {
     getRoutes_: function() {
         var routes = {};
 
-        // Resolve the routes relative to the real Backbone.History.root
-        var identifier = decodeURIComponent(
-                Profile.profileRoot.substring("/profile".length));
-
         _.each(this.subRoutes, function(fxn, subRoute) {
             // Internally, backbone expects these routes to be decoded.
-            var key = identifier + subRoute;
+            var key = subRoute;
             routes[key] = fxn;
         });
 
         // Also route "/profile" to the default page, as the above logic will
         // always require "/profile/identifier" otherwise
-        routes[""] = "showDefault";
+        routes["/profile"] = "showDefault";
 
         return routes;
     },
@@ -156,19 +149,6 @@ var Profile = {
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
             this.updateTitleBreadcrumbs();
-        },
-
-        /**
-         * Override the base navigate method so that the profile root may be
-         * specified, and fragments will automatically be resolved relative to
-         * the real Backbone.History.root.
-         */
-        navigate: function(fragment, triggerRoute) {
-            if (fragment.indexOf("/profile") === 0) {
-                fragment = fragment.substring("/profile".length);
-            }
-            Backbone.Router.prototype.navigate.call(
-                    this, fragment, triggerRoute);
         },
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
@@ -288,12 +268,17 @@ var Profile = {
      * Navigate the router appropriately,
      * either to change profile sheets or vital-stats time periods.
      */
-    onNavigationElementClicked_: function(event) {
+    onNavigationElementClicked_: function(e) {
         // TODO: Make sure middle-click + windows control-click Do The Right Thing
         // in a reusable way
-        if (!event.metaKey) {
-            event.preventDefault();
-            var route = $(this).attr("href");
+        if (!e.metaKey) {
+            e.preventDefault();
+            var route = $(e.currentTarget).attr("href");
+            // The navigation elements have the profileRoot in the href, but
+            // Router.navigate should be relative to the root.
+            if (route.indexOf(this.profileRoot) === 0) {
+                route = route.substring(this.profileRoot.length);
+            }
             Profile.router.navigate(route, true);
         }
     },
@@ -504,7 +489,7 @@ var Profile = {
                 $("#info-hover-container").hide();
                 // Extract the name from the ID, which has been prefixed.
                 var exerciseName = this.id.substring("exercise-".length);
-                Profile.router.navigate(Profile.profileRoot + "/vital-statistics/exercise-problems/" + exerciseName, true);
+                Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
             });
         }
     },
