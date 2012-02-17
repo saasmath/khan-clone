@@ -654,7 +654,9 @@ var Profile = {
             $("#top-header-links .user-name a").text(nickname);
         });
         this.profile.bind("change:avatarSrc", function(profile) {
-            $(".profile-tab-avatar").attr("src", profile.get("avatarSrc"));
+            var src = profile.get("avatarSrc");
+            $(".profile-tab-avatar").attr("src", src);
+            $("#top-header #user-info .user-avatar").attr("src", src);
         });
     },
 

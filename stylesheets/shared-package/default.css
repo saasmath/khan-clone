@@ -867,6 +867,12 @@ footer {
     #top-header #top-header-links span.username_and_notification_shift { left: 12px; }
     #top-header #user-info img { position:relative; top:-1px; }
 
+    #top-header #user-info .username_and_notification .user-avatar {
+        width: 16px;
+        height: 16px;
+        margin: 0 4px;
+    }
+
     #top-header #top-header-links .page_links a.notification_link {
         border-bottom: 0;
     }
@@ -3982,3 +3988,4 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     width: 60px;
     text-align: center;
 }
+
