@@ -1,8 +1,12 @@
 <li class="activity-video clearfix {{#if isVideoCompleted}}completed{{/if}}">
-    <span class="activity-image"></span>
     <div class="ach-text">
-        Watched <span class="video-minutes">{{secondsToTime secondsWatched}}</span> of <a href="/video?v={{youtubeId}}">{{videoTitle}}</a>
-        <div class="activity-controls">
+        <div class="clearfix">
+            <span class="activity-image"></span>
+            <div class="description">
+                Watched <span class="video-minutes">{{secondsToTime secondsWatched}}</span> of <a href="/video?v={{youtubeId}}">{{videoTitle}}</a>
+            </div>
+        </div>
+        <div class="activity-controls clearfix">
 	        <span class="time timeago" title="{{dt}}">{{dt}}</span>
 	        {{#unless mobileView}}
 	            <a href="#" class="activity-share simple-button action-gradient">Share</a>
