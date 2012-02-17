@@ -3,7 +3,8 @@
 var Poppler = (function() {
 	function Poppler() {
 		this.events = [];
-		this.duration = 0;
+		this.duration = -1;
+		this.eventIndex = 0;
 		_.bindAll(this);
 	}
 
@@ -16,40 +17,45 @@ var Poppler = (function() {
 	Poppler.prototype.add = function(time, fn) {
 		fn.time = time;
 		var i = _.sortedIndex(this.events, fn, Poppler.timeFn);
+
+		// if there are existing elements with the same time, insert afterwards
+		while(this.events[i] && this.events[i].time == time) i++;
+
 		this.events.splice(i, 0, fn);
 	};
 
 	Poppler.prototype.trigger = function trigger(time) {
+		if (this.blocked) return;
+
 		var epsilon = 0.001;
 		// ignore duplicate triggers
-		if (time == this.duration) return;
-
-		if (time < this.duration) {
-			// out of order, just treat as a seek
-			this.seek(time);
-			return;
-		}
-
-		// find the index for which all events prior to duration are to the left
-		var i = _.sortedIndex(this.events, {time: this.duration}, Poppler.timeFn);
-
-		// skip any events with times equal to the prior duration, as they were
-		// executed in the last call
-		while (this.events[i] && Math.abs(this.events[i].time - this.duration) < epsilon) {
-			i++;
-		}
+		if (Math.abs(time - this.duration) < epsilon) return;
 
 		// get a new duration
-		this.seek(time);
+		this.duration = time;
 
-		// trigger events
-		for (var j = i; this.events[j] && this.events[j].time <= this.duration; j++) {
-			this.events[j]();
+		this.triggerEvents();
+	};
+
+	Poppler.prototype.triggerEvents = function() {
+		while (this.events[this.eventIndex] && this.events[this.eventIndex].time <= this.duration) {
+			var blocking = this.events[this.eventIndex]();
+			this.eventIndex++;
+			if (blocking) {
+				this.blocked = true;
+				break;
+			}
 		}
+	};
+
+	Poppler.prototype.resumeEvents = function() {
+		this.blocked = false;
+		this.triggerEvents();
 	};
 
 	Poppler.prototype.seek = function(time) {
 		this.duration = time;
+		this.eventIndex = _.sortedIndex(this.events, {time: this.duration}, Poppler.timeFn);
 	};
 
 	return Poppler;
