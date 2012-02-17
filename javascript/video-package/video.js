@@ -60,27 +60,6 @@ var Video = {
             $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
             return false;
         });
-
-        // Read out the initial seek position, designated by a "seek=<seconds>"
-        // in the hash fragment of the URL.
-        var hash = window.location.hash;
-        var initialSeek;
-        if (hash) {
-            hash = hash.substring(1);
-            var parts = hash.split("&");
-            for (var i = 0, len = parts.length; i < len; i++) {
-                if (parts[i].indexOf("seek=") === 0) {
-                    initialSeek = parts[i].split("=")[1];
-                    break;
-                }
-            }
-        }
-        if (initialSeek) {
-            VideoControls.invokeWhenReady(function() {
-                VideoControls.player.seekTo(
-                        initialSeek, true /* allowSeekAhead */);
-            });
-        }
     },
 
     toggleSubtitles: function() {

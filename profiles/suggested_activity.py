@@ -112,9 +112,10 @@ class SuggestedActivity(object):
         activity.last_second_watched = recent_video_activity.last_second_watched
         activity.progress = points.video_progress_from_points(
                 recent_video_activity.points_earned)
-        activity.url = "/video?v=%s#seek=%s" % (
-                recent_video_activity.youtube_id,
-                max(0, activity.last_second_watched - 5)) # 5 second rewind
+
+        # TODO(benkomalo): append a seektime so that the video starts at the
+        # last position (minus some rewind constant or something...)
+        activity.url = "/video?v=%s" % (recent_video_activity.youtube_id)
         return activity
 
     @staticmethod
