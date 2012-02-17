@@ -103,7 +103,7 @@ var gae_bingo = (function() {
     });
   };
 
-  // convert triggers a bingo. 
+  // convert triggers a bingo.
   // **conversion** may be either the ab_test name or a specific conversion that was
   //   created when the ab_test was initialized
   // on success, no data is returned but `successCallback` is fired anyway
@@ -125,11 +125,31 @@ var gae_bingo = (function() {
     });
   };
 
+  // construct_redirect_url constructs a redirect url as expected in gae_bingo/redirect.py
+  // **destination** (string) the destination url to redirect to
+  // **conversion_names** (Array) the conversion name(s) to score
+  //
+  // This is helpful for measuring click-through, since it is possible to navigate
+  // away before the client-side gae_bingo.bingo POST goes through.
+  // (Try it in Safari if you don't believe me!)
+  var construct_redirect_url = function(destination, conversion_names) {
+      var result = "/gae_bingo/redirect";
+
+      result += "?continue=" + encodeURIComponent(destination);
+
+      _.each(conversion_names, function(name) {
+          result += "&conversion_name=" + encodeURIComponent(name);
+      });
+
+      return result;
+  };
+
   return {
     init : init,
     ab_test : window.JSON ? ab_test : $.noop,
     bingo : convert,
-    tests : tests
+    tests : tests,
+    construct_redirect_url: construct_redirect_url
   };
   
 })();
