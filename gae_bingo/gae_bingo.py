@@ -273,8 +273,8 @@ def modulo_choose(experiment_hashable_name, alternatives, identity):
         if index_weight >= current_weight:
             return alternative
 
-def construct_redirect_url(destination, conversion_names):
-    """ Construct a URL that redirects to destination after scoring conversions
+def create_redirect_url(destination, conversion_names):
+    """ Create a URL that redirects to destination after scoring conversions
     in all listed conversion names
     """
 

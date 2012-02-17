@@ -125,14 +125,14 @@ var gae_bingo = (function() {
     });
   };
 
-  // construct_redirect_url constructs a redirect url as expected in gae_bingo/redirect.py
+  // create_redirect_url creates a redirect url as expected in gae_bingo/redirect.py
   // **destination** (string) the destination url to redirect to
   // **conversion_names** (string or Array) the conversion name(s) to score
   //
   // This is helpful for measuring click-through, since it is possible to navigate
   // away before the client-side gae_bingo.bingo POST goes through.
   // (Try it in Safari if you don't believe me!)
-  var construct_redirect_url = function(destination, conversion_names) {
+  var create_redirect_url = function(destination, conversion_names) {
       var result = "/gae_bingo/redirect";
 
       result += "?continue=" + encodeURIComponent(destination);
@@ -153,7 +153,7 @@ var gae_bingo = (function() {
     ab_test : window.JSON ? ab_test : $.noop,
     bingo : convert,
     tests : tests,
-    construct_redirect_url: construct_redirect_url
+    create_redirect_url: create_redirect_url
   };
   
 })();
