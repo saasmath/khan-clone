@@ -154,31 +154,50 @@ var Video = {
     },
 
     loadVideo: function(topic, video) {
+        var descTemplate = Templates.get("video.video-description");
+        var waitingForVideo = (Video.waitingForVideo && 
+            Video.waitingForVideo.topic == topic &&
+            Video.waitingForVideo.video == video);
+
         if (videoLibrary[topic] && videoLibrary[topic].videos[video]) {
-            if (Video.waitingForVideo && 
-                Video.waitingForVideo.topic == topic &&
-                Video.waitingForVideo.video == video) {
-                KAConsole.log("Switching to video: " + video + " in topic " + topic);
-                Video.renderPage(videoLibrary[topic], videoLibrary[topic].videos[video]);
+            if (waitingForVideo) {
+                if (videoLibrary[topic].videos[video] !== "LOADING") {
+                    KAConsole.log("Switching to video: " + video + " in topic " + topic);
+                    Video.renderPage(videoLibrary[topic], videoLibrary[topic].videos[video]);
+                    return; // No longer waiting
+                }
+            } else {
+                return; // Nothing to do
             }
         } else {
             KAConsole.log("Loading video: " + video + " in topic " + topic);
             url = "/api/v1/videos/" + topic + "/" + video + "/play" + (videoLibrary[topic] ? "" : "?topic=1");
+
+            videoLibrary[topic] = videoLibrary[topic] || { videos: [] };
+            videoLibrary[topic].videos[video] = "LOADING";
+
             $.ajax({
                 url: url,
                 success: function(json) {
-                    videoLibrary[topic] = videoLibrary[topic] || { videos: [] };
+                    var waitingForVideo = (Video.waitingForVideo && 
+                        Video.waitingForVideo.topic == topic &&
+                        Video.waitingForVideo.video == video);
                     if (json.topic)
                         videoLibrary[topic].topic = json.topic;
                     videoLibrary[topic].videos[video] = json.video;
-                    if (Video.waitingForVideo &&
-                        Video.waitingForVideo.topic == topic &&
-                        Video.waitingForVideo.video == video) {
+                    if (waitingForVideo) {
                         KAConsole.log("Switching to video: " + video + " in topic " + topic);
                         Video.renderPage(videoLibrary[topic], json.video);
                     }
                 }
             });
+        }
+        
+        if (waitingForVideo) {
+            $("span.video-nav").html("");
+            $("div.video-description").html(descTemplate({video: { title: "Loading..." }, loading: true }));
+            $("span.video-header").html("");
+            $("span.video-footer").html("");
         }
     },
 
