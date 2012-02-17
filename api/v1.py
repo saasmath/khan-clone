@@ -148,7 +148,7 @@ def get_user_data_from_json(json, key):
 @jsonify
 def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.Topic.get_content_topics(version)
+    return models.Topic.get_rolled_up_top_level_topics(version)
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
@@ -177,7 +177,7 @@ def topics_library_compact():
     topic_dict = {}
     for topic in topics:
         # special cases
-        if ((topic.standalone_title == "California Standards Test: Algebra I" and topic.id != "algebra-i") or 
+        if ((topic.id == "new-and-noteworthy") or 
             (topic.standalone_title == "California Standards Test: Geometry" and topic.id != "geometry-2")):
             continue
 
@@ -242,6 +242,21 @@ def topic_exercises(topic_id, version_id = None):
     
     exercises = topic.get_exercises()
     return exercises
+
+@route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def topic_progress(topic_id):
+    user_data = models.UserData.current()
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        raise ValueError("Invalid topic id.")
+
+    return topic.get_user_progress(user_data)
 
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
@@ -314,6 +329,10 @@ def topictree_import(version_id = "edit", topic_id="root"):
     else:
         put_change = True
 
+    # delete all subtopics of node we are copying over the same topic
+    if tree_json["id"] == parent.id:
+        parent.delete_descendants() 
+
     # adds key to each entity in json tree, if the node is not in the tree then add it
     def add_keys_json_tree(tree, parent):
 
@@ -334,7 +353,7 @@ def topictree_import(version_id = "edit", topic_id="root"):
                 tree["key"] = topic.key()
                 topic_dict[tree["id"]]=topic
 
-            # if this topic is not the parent topic (ie. its root, or the 
+            # if this topic is not the parent topic (ie. its not root, nor the 
             # topic_id you are updating)
             if (parent.key() != topic.key() and
                 # and this topic is not in the new parent
@@ -593,7 +612,6 @@ def topic_find_child(parent_id, version_id, kind, id):
 @jsonp
 @jsonify
 def topic_add_child(parent_id, version_id = "edit"):
-    
     kind = request.request_string("kind")        
     id = request.request_string("id")
 
@@ -649,6 +667,22 @@ def topic_move_child(old_parent_id, version_id = "edit"):
     old_parent_topic.move_child(child, new_parent, new_parent_pos)
 
     return True    
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/ungroup", methods=["POST"])  
+@route("/api/v1/topic/<topic_id>/ungroup", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_ungroup(topic_id, version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    topic = models.Topic.get_by_id(topic_id, version)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+
+    topic.ungroup()
+
+    return True
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])   
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
@@ -814,7 +848,7 @@ def playlists_library():
 @compress
 @jsonify
 def playlists_library_list():
-    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
+    topics = models.Topic.get_filled_rolled_up_top_level_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
         (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
@@ -1605,6 +1639,7 @@ def user_followup_exercises(exercise_name):
 def api_user_followups(exercise_name):
     return user_followup_exercises(exercise_name)
 
+@route("/api/v1/user/topics", methods=["GET"])
 @route("/api/v1/user/playlists", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -1616,25 +1651,27 @@ def user_playlists_all():
         user_data_student = get_visible_user_data_from_request()
 
         if user_data_student:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user)
+            user_playlists = models.UserTopic.all().filter("user =", user_data_student.user)
             return user_playlists.fetch(10000)
 
     return None
 
-@route("/api/v1/user/playlists/<playlist_title>", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>", methods=["GET"])
+@route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
-def user_playlists_specific(playlist_title):
+def user_playlists_specific(topic_id):
     user_data = models.UserData.current()
 
     if user_data and playlist_title:
         user_data_student = get_visible_user_data_from_request()
-        playlist = models.Playlist.all().filter("title =", playlist_title).get()
+        topic = models.Topic.get_by_id(topic_id)
+        if topic is None:
+            topic = models.Topic.all().filter("standalone_title =", topic_id).get()
 
-        if user_data_student and playlist:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user).filter("playlist =", playlist)
-            return user_playlists.get()
+        if user_data_student and topic:
+            return models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
 
     return None
 
@@ -2106,6 +2143,12 @@ def autocomplete():
         topic_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
                 topic_title_dicts())
+        topic_results.extend(map(lambda topic: {
+                "title": topic.standalone_title,
+                "key": str(topic.key()),
+                "relative_url": topic.relative_url,
+                "id": topic.id
+            }, filter(lambda topic: query in topic.title.lower(), models.Topic.get_super_topics())))
         url_results = filter(
                 lambda url_dict: query in url_dict["title"].lower(),
                 url_title_dicts())

@@ -240,7 +240,9 @@ class Exercise(db.Model):
         query.filter('exercise =', self.key()).order('exercise_order')
         return query
 
-    @layer_cache.cache_with_key_fxn(lambda self: "related_videos_%s" % self.key(), layer=layer_cache.Layers.Memcache)
+    @layer_cache.cache_with_key_fxn(lambda self: "related_videos_%s_%s" % 
+        (self.key(), Setting.topic_tree_version()), 
+        layer=layer_cache.Layers.Memcache)
     def related_videos_fetch(self):
         exercise_videos = self.related_videos_query().fetch(10)
         for exercise_video in exercise_videos:
@@ -1946,6 +1948,9 @@ class Topic(Searchable, db.Model):
     INDEX_USES_MULTI_ENTITIES = False
 
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
+    # the ids of the topic on the homepage in which we will display their first
+    # level child topics
+    _super_topic_ids = ["algebra", "arithmetic"] 
 
     @property
     def relative_url(self):
@@ -2036,6 +2041,84 @@ class Topic(Searchable, db.Model):
     def get_new_key_name():
         return base64.urlsafe_b64encode(os.urandom(30))
 
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_previous_topic_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
+    def get_previous_topic(self):
+        if self.parent_keys:
+            parent_topic = db.get(self.parent_keys[0])
+            prev_index = parent_topic.child_keys.index(self.key()) - 1
+
+            while prev_index >= 0:
+                prev_topic = db.get(parent_topic.child_keys[prev_index])
+                if not prev_topic.hide:
+                    return prev_topic
+
+                prev_index -= 1
+
+            return parent_topic.get_previous_topic()
+
+        return None
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_next_topic_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
+    def get_next_topic(self):
+        if self.parent_keys:
+            parent_topic = db.get(self.parent_keys[0])
+            next_index = parent_topic.child_keys.index(self.key()) + 1
+
+            while next_index < len(parent_topic.child_keys):
+                next_topic = db.get(parent_topic.child_keys[next_index])
+                if not next_topic.hide:
+                    return next_topic
+
+                next_index += 1
+
+            return parent_topic.get_next_topic()
+
+        return None
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_first_video_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
+    def get_first_video_and_topic(self):
+        videos = Topic.get_cached_videos_for_topic(self)
+        if videos:
+            return (videos[0], self)
+
+        for key in self.child_keys:
+            if key.kind() == 'Topic':
+                topic = db.get(key)
+                if not topic.hide:
+                    ret = topic.get_first_video_and_topic()
+                    if ret != (None, None):
+                        return ret
+
+        return (None, None)
+
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_last_video_%s_v%s" % (
+            self.key(), Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Memcache)
+    def get_last_video_and_topic(self):
+        videos = Topic.get_cached_videos_for_topic(self)
+        if videos:
+            return (videos[-1], self)
+
+        for key in reversed(self.child_keys):
+            if key.kind() == 'Topic':
+                topic = db.get(key)
+                if not topic.hide:
+                    ret = topic.get_last_video_and_topic()
+                    if ret != (None, None):
+                        return ret
+
+        return (None, None)
+
     def update_ancestor_keys(self, topic_dict=None):
         """ Update the ancestor_keys by using the parents' ancestor_keys.
 
@@ -2112,6 +2195,16 @@ class Topic(Searchable, db.Model):
 
         self.version.update()
         return db.run_in_transaction(move_txn)
+
+    # Ungroup takes all of a topics children, moves them up a level, then 
+    # deletes the topic
+    def ungroup(self):
+        parent = db.get(self.parent_keys[0])
+        pos = parent.child_keys.index(self.key())
+        children = db.get(self.child_keys)
+        for i, child in enumerate(children):
+            self.move_child(child, parent, pos+i)
+        parent.delete_child(self)
 
     def copy(self, title, parent=None, **kwargs):
         if not kwargs.has_key("version") and parent is not None:
@@ -2327,10 +2420,11 @@ class Topic(Searchable, db.Model):
                 self.version.update()   
             return self
 
-    # too big for memcache ... either add a layer_cache.Layers.Datastore ... or compress it
-    # @layer_cache.cache_with_key_fxn(
-    #    lambda self, types=[], include_hidden = False: "Topic.make_tree_%s_%s_%s" % (self.version.number, include_hidden, TopicVersion.get_date_updated(self.version)),
-    #    layer=layer_cache.Layers.Memcache)
+    @layer_cache.cache_with_key_fxn(
+    lambda self, types=[], include_hidden=False:
+            "topic.make_tree_%s_%s_%s" % (
+            self.key(), types, include_hidden),
+            layer=layer_cache.Layers.Blobstore)
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
@@ -2426,8 +2520,9 @@ class Topic(Searchable, db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(
         lambda version=None, include_hidden = False: 
-        "topic.get_content_topic_%s_%s" % (
-            version.updated_on if version else Setting.topic_tree_version(), 
+        "topic.get_all_topic_%s_%s" % (
+            (str(version.number)+str(version.updated_on)) if version 
+            else Setting.topic_tree_version(), 
             include_hidden),
         layer=layer_cache.Layers.Memcache)    
     def get_all_topics(version=None, include_hidden=False):
@@ -2442,11 +2537,120 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False:
-        "topic.get_content_topic_%s_%s" % (
-            version.updated_on if version else Setting.topic_tree_version(),
-            include_hidden),
+        lambda version=None: 
+        "topic.get_visible_topics_%s" % (
+            version.key() if version else Setting.topic_tree_version()),
         layer=layer_cache.Layers.Memcache)
+    def get_visible_topics(version = None):
+        topics = Topic.get_all_topics(version, False)
+        return [t for t in topics]
+
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
+        "topic.get_super_topics_%s_%s" % (
+            (str(version.number)+str(version.updated_on))  if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Memcache) 
+    def get_super_topics(version=None):
+        topics = Topic.get_visible_topics()
+        return [t for t in topics if t.id in Topic._super_topic_ids]
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
+        "topic.get_rolled_up_top_level_topics_%s_%s" % (
+            (str(version.number)+str(version.updated_on))  if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Memcache) 
+    def get_rolled_up_top_level_topics(version=None, include_hidden=False):
+        topics = Topic.get_all_topics(version, include_hidden)
+
+        super_topics = Topic.get_super_topics()
+        super_topic_keys = [t.key() for t in super_topics]
+
+        rolled_up_topics = super_topics[:]
+        for topic in topics:
+            # if the topic is a subtopic of a super topic
+            if set(super_topic_keys) & set(topic.ancestor_keys):
+                continue
+                
+            for child_key in topic.child_keys:
+                 if child_key.kind() != "Topic":
+                    rolled_up_topics.append(topic)
+                    break
+
+        return rolled_up_topics
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda types=None, version=None, include_hidden = False: 
+        "topic.get_filled_rolled_up_top_level_topics_%s_%s" % (
+            (str(version.number)+str(version.updated_on))  if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Blobstore) 
+    def get_filled_rolled_up_top_level_topics(types=None, version=None, include_hidden=False):
+        if types is None:
+            types = []
+
+        topics = Topic.get_all_topics(version, include_hidden)
+        topic_dict = dict((t.key(), t) for t in topics)
+
+        super_topics = Topic.get_super_topics()
+
+        def rolled_up_child_content_keys(topic):
+            child_keys = []
+            for key in topic.child_keys:
+                if key.kind() == "Topic":
+                    child_keys += rolled_up_child_content_keys(topic_dict[key])
+                elif (len(types) == 0) or key.kind() in types:
+                    child_keys.append(key)
+
+            return child_keys
+
+        for topic in super_topics:
+            topic.child_keys = rolled_up_child_content_keys(topic)
+
+        super_topic_keys = [t.key() for t in super_topics]
+
+        rolled_up_topics = super_topics[:]
+        for topic in topics:
+            # if the topic is a subtopic of a super topic
+            if set(super_topic_keys) & set(topic.ancestor_keys):
+                continue
+                
+            for child_key in topic.child_keys:
+                 if child_key.kind() != "Topic":
+                    rolled_up_topics.append(topic)
+                    break
+        
+
+        child_dict = {}
+        for topic in rolled_up_topics:
+            child_dict.update(dict((key, True) for key in topic.child_keys 
+                                   if key.kind() in types or 
+                                   (len(types) == 0 and key.kind() != "Topic")))
+        
+        child_dict.update(dict((e.key(), e) for e in db.get(child_dict.keys())))
+
+        for topic in rolled_up_topics:
+            topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]
+        
+        return rolled_up_topics
+
+
+    @staticmethod
+    @layer_cache.cache_with_key_fxn(
+        lambda version=None, include_hidden = False: 
+        "topic.get_content_topics_%s_%s" % (
+            (str(version.number)+str(version.updated_on))  if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Memcache) 
     def get_content_topics(version = None, include_hidden = False):
         topics = Topic.get_all_topics(version, include_hidden)
 
@@ -2456,13 +2660,24 @@ class Topic(Searchable, db.Model):
                 if child_key.kind() != "Topic":
                     content_topics.append(topic)
                     break
-
+        
         content_topics.sort(key = lambda topic: topic.standalone_title)
         return content_topics
 
     @staticmethod
-    def get_filled_content_topics(types=[], version=None, include_hidden=False):
+    @layer_cache.cache_with_key_fxn(
+        lambda types=None, version=None, include_hidden = False: 
+        "topic.get_filled_content_topics_%s_%s" % (
+            (str(version.number)+str(version.updated_on)) if version 
+            else Setting.topic_tree_version(),
+            include_hidden),
+        layer=layer_cache.Layers.Blobstore) 
+    def get_filled_content_topics(types=None, version=None, include_hidden=False):
+        if types is None:
+            types = []
+
         topics = Topic.get_content_topics(version)
+        
         child_dict = {}
         for topic in topics:
             child_dict.update(dict((key, True) for key in topic.child_keys if key.kind() in types or (len(types) == 0 and key.kind() != "Topic")))
@@ -2474,27 +2689,52 @@ class Topic(Searchable, db.Model):
         return topics
 
     @staticmethod
+    def get_homepage_topics(version=None):
+        return list(set(Topic.get_content_topics()+Topic.get_super_topics()))
+
+    @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
-        keys = [child_key for child_key in topic.child_keys if child_key.kind() == kind]
+        keys = [child_key for child_key in topic.child_keys if not kind or child_key.kind() == kind]  
         if include_descendants:
             keys = []
+
             subtopics = Topic.all().filter("ancestor_keys =", topic.key())
             if not include_hidden:
                 subtopics.filter("hide =", False)
             subtopics.run()
-            for subtopic in subtopics:
-                keys.extend([key for key in subtopic.child_keys if key.kind() == kind])
 
-        return db.get(keys)
+            for subtopic in subtopics:
+                keys.extend([key for key in subtopic.child_keys if not kind or key.kind() == kind])
+              
+        nodes = db.get(keys) 
+
+        if not kind:
+            nodes.extend(subtopics)
+
+        return nodes
 
     def get_urls(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Url", include_descendants)
+        return Topic._get_children_of_kind(self, "Url", include_descendants, 
+                                           include_hidden)
 
     def get_exercises(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Exercise", include_descendants)
+        return Topic._get_children_of_kind(self, "Exercise", 
+                                           include_descendants, include_hidden)
 
     def get_videos(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Video", include_descendants)
+        return Topic._get_children_of_kind(self, "Video", include_descendants,
+                                           include_hidden)
+
+    def get_descendants(self, include_hidden=False):
+        subtopics = Topic.all().filter("ancestor_keys =", self.key())
+        if not include_hidden:
+            subtopics.filter("hide =", False)
+        return subtopics.fetch(10000)
+
+    def delete_descendants(self):
+        query = Topic.all(keys_only=True)
+        descendants = query.filter("ancestor_keys =", self.key()).fetch(10000)
+        db.delete(descendants)
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda
@@ -2519,37 +2759,151 @@ class Topic(Searchable, db.Model):
             topic.index()
             topic.indexed_title_changed()
 
-class UserTopicVideos(db.Model):
-    user = db.UserProperty()
-    topic_key_name = db.StringProperty() # used because key() will change if topic gets moved in the topic tree, or between versions
-    seconds_watched = db.IntegerProperty(indexed=False, default=0)
-    last_watched = db.DateTimeProperty(indexed=False, auto_now_add=True)
-    title = db.StringProperty(indexed=False) # wont be unique unlike with playlists, so this might have to change (or be removed as it can be gotten with a Datastore call to .topic)
+    def get_user_progress(self, user_data, flatten=True):
 
-    @staticmethod
-    def get_for_user_data(user_data):
-        query = UserTopicVideos.all()
-        query.filter('user =', user_data.user)
-        return query
+        def get_user_video_progress(video_id, user_video_dict):
+            status_flags = {}
 
-    @staticmethod
-    def get_key_name(topic, user_data):
-        return user_data.key_email + ":" + topic.key().name()
+            id = '.v%d' % video_id
 
-    @staticmethod
-    def get_for_topic_and_user_data(topic, user_data, insert_if_missing=False):
-        if not user_data:
+            if id in user_video_dict['completed']:
+                status_flags["VideoCompleted"] = 1
+                status_flags["VideoStarted"] = 1
+
+            if id in user_video_dict['started']:
+                status_flags["VideoStarted"] = 1
+
+            if status_flags != {}:
+                return {
+                    "kind": "Video",
+                    "id": video_id,
+                    "status_flags": status_flags
+                }
+
             return None
 
-        key = UserTopicVideos.get_key_name(topic, user_data)
+        def get_user_exercise_progress(exercise_id, user_exercise_dict):
+            status_flags = {}
 
-        if insert_if_missing:
-            return UserTopicVideos.get_or_insert(
-                        key_name = key,
-                        user = user_data.user,
-                        topic = topic)
+            if exercise_id in user_exercise_dict:
+                exercise_dict = user_exercise_dict[exercise_id]
+
+                if exercise_dict["proficient"]:
+                    status_flags["ExerciseProficient"] = 1
+
+                if exercise_dict["struggling"]:
+                    status_flags["ExerciseStruggling"] = 1
+
+                if exercise_dict["total_done"] > 0:
+                    status_flags["ExerciseStarted"] = 1
+
+            if status_flags != {}:
+                return {
+                    "kind": "Exercise",
+                    "id": exercise_id,
+                    "status_flags": status_flags
+                }
+
+            return None
+
+        def get_user_progress_recurse(flat_output, topic, topics_dict, user_video_dict, user_exercise_dict):
+
+            children = []
+            status_flags = {}
+            aggregates = {
+                "video": {},
+                "exercise": {},
+                "topic": {}
+            }
+            counts = {
+                "video": 0,
+                "exercise": 0,
+                "topic": 0
+            }
+
+            for child_key in topic.child_keys:
+                if child_key.kind() == "Topic":
+                    if child_key in topics_dict:
+                        child_topic = topics_dict[child_key]
+                        progress = get_user_progress_recurse(flat_output, child_topic, topics_dict, user_video_dict, user_exercise_dict)
+                        if progress:
+                            children.append(progress)
+                            if flat_output:
+                                flat_output["topic"][child_topic.id] = progress
+                        counts["topic"] += 1
+
+                elif child_key.kind() == "Video":
+                    video_id = child_key.id()
+                    progress = get_user_video_progress(video_id, user_video_dict)
+                    if progress:
+                        children.append(progress)
+                        if flat_output:
+                            flat_output["video"][video_id] = progress
+                    counts["video"] += 1
+
+                elif child_key.kind() == "Exercise":
+                    exercise_id = child_key.id()
+                    progress = get_user_exercise_progress(exercise_id, user_exercise_dict)
+                    if progress:
+                        children.append(progress)
+                        if flat_output:
+                            flat_output["exercise"][exercise_id] = progress
+                    counts["exercise"] += 1
+                    pass
+
+            for child_stat in children:
+                kind = child_stat["kind"].lower()
+                for flag, value in child_stat["status_flags"].iteritems():
+                    if flag not in aggregates[kind]:
+                        aggregates[kind][flag] = 0
+                    aggregates[kind][flag] += value
+
+            for kind, aggregate in aggregates.iteritems():
+                for flag, value in aggregate.iteritems():
+                    if value >= counts[kind]:
+                        status_flags[flag] = 1
+
+            if children != [] or status_flags != {}:
+                stats = {
+                    "kind": "Topic",
+                    "id": topic.id,
+                    "status_flags": status_flags,
+                    "aggregates": aggregates,
+                    "counts": counts
+                }
+                if not flat_output:
+                    stats["children"] = children
+                return stats
+            else:
+                return None
+
+        user_video_css = UserVideoCss.get_for_user_data(user_data)
+        if user_video_css:
+            user_video_dict = pickle.loads(user_video_css.pickled_dict)
         else:
-            return UserTopicVideos.get_by_key_name(key)
+            user_video_dict = {}
+
+        user_exercise_graph = UserExerciseGraph.get(user_data)
+        user_exercise_dict = dict((exdict["id"], exdict) for name, exdict in user_exercise_graph.graph.iteritems())
+
+        topics = Topic.get_visible_topics()
+        topics_dict = dict((topic.key(), topic) for topic in topics)
+
+        flat_output = None
+        if flatten:
+            flat_output = {
+                "topic": {},
+                "video": {},
+                "exercise": {}
+            }
+
+        progress_tree = get_user_progress_recurse(flat_output, self, topics_dict, user_video_dict, user_exercise_dict)
+
+        if flat_output:
+            flat_output["topic"][self.id] = progress_tree
+            return flat_output
+        else:
+            return progress_tree
 
 class Url(db.Model):
     url = db.StringProperty()
@@ -2942,7 +3296,6 @@ class UserTopic(db.Model):
         else:
             return UserTopic.get_by_key_name(key)
 
-
 class UserVideo(db.Model):
 
     @staticmethod
@@ -3094,31 +3447,29 @@ class VideoLog(BackupModel):
             user_video.seconds_watched += seconds_watched
             user_data.total_seconds_watched += seconds_watched
 
-            # Update seconds_watched of all associated UserPlaylists
-            query = VideoPlaylist.all()
-            query.filter('video =', video)
-            query.filter('live_association = ', True)
+            # Update seconds_watched of all associated topics
+            video_topics = db.get(video.topic_string_keys)
 
-            first_video_playlist = True
-            for video_playlist in query:
-                user_playlist = UserPlaylist.get_for_playlist_and_user_data(video_playlist.playlist, user_data, insert_if_missing=True)
-                user_playlist.title = video_playlist.playlist.title
-                user_playlist.seconds_watched += seconds_watched
-                user_playlist.last_watched = datetime.datetime.now()
-                user_playlist.put()
+            first_topic = True
+            for topic in video_topics:
+                user_topic = UserTopic.get_for_topic_and_user_data(topic, user_data, insert_if_missing=True)
+                user_topic.title = topic.standalone_title
+                user_topic.seconds_watched += seconds_watched
+                user_topic.last_watched = datetime.datetime.now()
+                user_topic.put()
 
-                video_log.playlist_titles.append(user_playlist.title)
+                video_log.playlist_titles.append(user_topic.title)
 
-                if first_video_playlist:
+                if first_topic:
                     action_cache.push_video_log(video_log)
 
-                util_badges.update_with_user_playlist(
+                util_badges.update_with_user_topic(
                         user_data,
-                        user_playlist,
-                        include_other_badges = first_video_playlist,
-                        action_cache = action_cache)
+                        user_topic,
+                        include_other_badges=first_topic,
+                        action_cache=action_cache)
 
-                first_video_playlist = False
+                first_topic = False
 
         user_video.last_second_watched = last_second_watched
         user_video.last_watched = datetime.datetime.now()
@@ -3986,6 +4337,7 @@ class UserExerciseGraph(object):
     @staticmethod
     def dict_from_exercise(exercise):
         return {
+                "id": exercise.key().id(),
                 "name": exercise.name,
                 "display_name": exercise.display_name,
                 "h_position": exercise.h_position,

@@ -15,7 +15,7 @@ def user_info(username, user_data):
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
 def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, font_size=12):
-    content = topic.children
+    content = topic.content
     items_in_column = len(content) / num_cols
     remainder = len(content) % num_cols
     link_height = font_size * 1.5
@@ -134,7 +134,7 @@ def topic_browser_tree(tree, level=0):
     s = ""
     class_name = "topline"
     for child in tree.children:
-        if not child.children:
+        if not child.children or child.id in models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
                 continue
