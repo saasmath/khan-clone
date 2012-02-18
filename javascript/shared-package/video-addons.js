@@ -126,8 +126,7 @@ var VideoControls = {
     },
 
     playVideo: function(youtubeId, videoKey, forcePlayBegin) {
-        if (VideoControls.player && youtubeId)
-        {
+        if (VideoControls.player && youtubeId) {
             $(VideoControls).trigger("beforeplay");
 
             if (forcePlayBegin || this.autoPlayEnabled) {
