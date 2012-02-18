@@ -1181,7 +1181,8 @@ def log_user_video(youtube_id):
         video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if not video:
-        return api_error_response("Could not find video")
+        logging.error("Could not find video for %s" % youtube_id)
+        return api_invalid_param_response("Could not find video for %s" % youtube_id)
 
     seconds_watched = int(request.request_float("seconds_watched", default=0))
     last_second = int(request.request_float("last_second_watched", default=0))
