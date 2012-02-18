@@ -194,6 +194,12 @@ Socrates.Bookmark = Backbone.Model.extend({
 Socrates.Question = Socrates.Bookmark.extend({
 	key: function() {
 		return this.get('youtubeId') + "-" + this.get('time');
+	},
+
+	htmlFile: Socrates.Bookmark.prototype.slug,
+
+	slug: function() {
+		return this.htmlFile() + "/q" + this.get('id');
 	}
 });
 
@@ -252,7 +258,7 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	htmlUrl: function() {
-		return "/socrates/questions/" + this.model.slug() + ".html";
+		return "/socrates/questions/" + this.model.htmlFile() + ".html";
 	},
 
 	imageUrl: function() {
@@ -405,8 +411,6 @@ Socrates.QuestionView = Backbone.View.extend({
 });
 
 Socrates.MasterView = Backbone.View.extend({
-	className: "video-overlay",
-
 	initialize: function(options) {
 		this.views = options.views;
 	},
@@ -420,8 +424,27 @@ Socrates.Nav = Backbone.View.extend({
 	template: Templates.get("video.socrates-nav"),
 
 	render: function() {
+		// want to render list of toplevel items only
+		var sections = [];
+		this.model.each(function(item) {
+			var json = {
+				title: item.get('title'),
+				time: item.get('time'),
+				slug: item.slug(),
+				nested: []
+			};
+
+			if (item.get('nested')) {
+				_.last(sections).nested.push(json);
+			} else {
+				sections.push(json);
+			}
+		});
+
+		console.log(sections);
+
 		$(this.el).html(this.template({
-			questions: this.model.toJSON()
+			sections: sections
 		}));
 		return this;
 	}
@@ -440,7 +463,8 @@ var recursiveTrigger = function recursiveTrigger(triggerFn) {
 
 Socrates.QuestionRouter = Backbone.Router.extend({
 	routes: {
-		":slug": "reactToNewFragment"
+		":segment": "reactToNewFragment",
+		":segment/:qid": "reactToNewFragment"
 	},
 
 	beep: new Audio("/socrates/starcraft_chat_sound.mp3"),
@@ -452,15 +476,16 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		$(this.videoControls).on("playerStateChange",
 			_.bind(this.playerStateChange, this));
 
+		this.bookmarks = options.bookmarks;
+
+		this.questions = this.bookmarks.filter(function(b) {
+			return b.constructor.prototype === Socrates.Question.prototype;
+		});
+
 		// wrap each question in a view
-		this.questions = options.questions;
-		this.questionViews = this.questions.
-			filter(function(bookmark) {
-				return bookmark.__proto__ == Socrates.Question.prototype;
-			}).
-			map(function(question) {
-				return new Socrates.QuestionView({model: question});
-			});
+		this.questionViews = this.questions.map(function(question) {
+			return new Socrates.QuestionView({model: question});
+		});
 
 		// subscribe to submit and skip
 		_.each(this.questionViews, function(view) {
@@ -470,7 +495,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 
 		// hookup question display to video timelime
 		this.poppler = new Poppler();
-		this.questions.each(function(q) {
+		_.each(this.questions, function(q) {
 			this.poppler.add(q.seconds(), _.bind(this.videoTriggeredQuestion, this, q));
 		}, this);
 
@@ -496,25 +521,37 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 
 	// recieved a question or view, find the corresponding view
 	questionToView: function(view) {
-		if (view.__proto__ == Socrates.Question.prototype) {
+		if (view.constructor.prototype == Socrates.Question.prototype) {
 			view = _.find(this.questionViews, function(v) { return v.model == view; });
 		}
 		return view;
 	},
 
-	reactToNewFragment: function(slug) {
+	reactToNewFragment: function(segment, qid) {
+		if (qid) {
+			segment = segment + "/" + qid;
+		}
+
 		// blank fragment for current state of video
-		if (slug === "") {
+		if (segment === "") {
 			this.leaveCurrentState();
 		}
 
+		// top level question
 		// slug for navigating to a particular question
-		var question = this.questions.find(function(q) {
-			return q.slug() === slug;
+		var question = this.bookmarks.find(function(b) {
+			return b.slug() === segment;
 		});
 		if (question) {
-			this.linkTriggeredQuestion(question);
-			return;
+			if (question.constructor.prototype === Socrates.Question.prototype) {
+				this.linkTriggeredQuestion(question);
+				return;
+			} else {
+				// was a bookmark
+				var seconds = question.seconds();
+				this.fragmentTriggeredSeek(seconds);
+				return;
+			}
 		}
 
 		// seek to time, e.g. 4m32s
@@ -656,6 +693,7 @@ $(function() {
 		new Socrates.Question({
 			time: "2m5.7s",
 			title: "Dimensions of a matrix",
+			nested: true,
 			youtubeId: "xyAuNHPsq-g",
 			id: 1,
 			correctData: { rows: "4", cols: "5" }
@@ -667,6 +705,7 @@ $(function() {
 		new Socrates.Question({
 			time: "3m20s",
 			title: "Referencing elements in a matrix",
+			nested: true,
 			youtubeId: "xyAuNHPsq-g",
 			id: 2,
 			correctData: { answer: "2" }
@@ -678,6 +717,7 @@ $(function() {
 		new Socrates.Question({
 			time: "4m23.9s",
 			title: "What are matrices used for?",
+			nested: true,
 			youtubeId: "xyAuNHPsq-g",
 			id: 3,
 			correctData: { answer: [true, true, true, true, true, true] }
@@ -689,6 +729,7 @@ $(function() {
 		new Socrates.Question({
 			time: "6m31s",
 			title: "Defining matrix addition",
+			nested: true,
 			youtubeId: "xyAuNHPsq-g",
 			id: 4
 		}),
@@ -703,6 +744,7 @@ $(function() {
 		new Socrates.Question({
 			time: "8m9s",
 			title: "Commutativity of matrix addition",
+			nested: true,
 			youtubeId: "xyAuNHPsq-g",
 			id: 5
 		}),
@@ -728,6 +770,7 @@ $(function() {
 		new Socrates.Question({
 			time: "11m50s",
 			title: "Matrix terminology",
+			nested: true,
 			youtubeId: "xyAuNHPsq-g",
 			id: 7,
 			correctData: {
@@ -739,24 +782,20 @@ $(function() {
 		})
 	];
 
-	window.Questions = new Socrates.QuestionCollection(_.filter(data, function(el) {
-		return el.__proto__ === Socrates.Question.prototype;
-	}));
-
+	window.Bookmarks = new Backbone.Collection(data);
 	window.nav = new Socrates.Nav({
 		el: ".socrates-nav",
-		model: Questions
+		model: Bookmarks
 	});
 	nav.render();
 
 	window.Router = new Socrates.QuestionRouter({
-		masterView: window.masterView,
-		questions: window.Questions,
+		bookmarks: window.Bookmarks,
 		videoControls: window.VideoControls
 	});
 
 	window.masterView = new Socrates.MasterView({
-		el: $(".video-overlay"),
+		el: ".video-overlay",
 		views: Router.questionViews
 	});
 	masterView.render();
