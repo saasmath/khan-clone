@@ -587,7 +587,6 @@ function KnowledgeMap(params) {
 
         this.filterSettings.set({"userShowAll": this.admin});
 
-        Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar")); // TomY TODO do this automatically?
         Handlebars.registerPartial("knowledgemap-exercise", Templates.get("shared.knowledgemap-exercise")); // TomY TODO do this automatically?
 
         // Initial setup of exercise list from embedded data

@@ -4,10 +4,36 @@
  */
 
 if (typeof Profile !== "undefined") {
-    // Some of the items highlighted in the intro flow are rendered on
-    // the client. Asynchronously start the intro flow so that those
-    // items can be rendered first.
-    window.setTimeout(function() {
+    Profile.showIntro_ = function() {
+        if (Profile.profile.isPhantom()) {
+            // For phantom users, don't show a tour flow, but a single dialog
+            // with clear call-to-action to login.
+            guiders.createGuider({
+                buttons: [
+                    {
+                        action: guiders.ButtonAction.CLOSE,
+                        text: "No thanks",
+                        classString: "simple-button action-gradient"
+                    },
+                    {
+                        action: guiders.ButtonAction.CLOSE,
+                        text: "Cool. Let me login now!",
+                        onclick: function() {
+                            var postLoginUrl = "/postlogin?continue=" +
+                                    encodeURIComponent(window.location.href);
+                            window.location.href = "/login?continue=" +
+                                    encodeURIComponent(postLoginUrl);
+                        },
+                        classString: "simple-button action-gradient green"
+                    }
+                ],
+                title: "Log in to save and customize your profile!",
+                description: "Your profile page shows you all the great progress you've made on Khan Academy. If you login, you can even customize and share your profile with your friends!",
+                overlay: true
+            }).show();
+            return;
+        }
+
         var isFullyEditable = Profile.profile.get("isDataCollectible");
         guiders.createGuider({
             id: "welcome",
@@ -125,6 +151,5 @@ if (typeof Profile !== "undefined") {
                 description: "The information in the box above can be made public. If you make your profile public, you'll get your own special space on Khan Academy. Other users will be able to visit your page. Don't worry! You can make your profile private at any time, in which case only you and your coaches can see your info."
             });
         }
-
-    }, 0);
+    }
 }

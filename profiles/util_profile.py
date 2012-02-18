@@ -12,6 +12,8 @@ from models import StudentList, UserData
 import simplejson
 from avatars import util_avatars
 from badges import util_badges
+from gae_bingo.gae_bingo import bingo
+from experiments import SuggestedActivityExperiment
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -195,6 +197,10 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
+            bingo([
+                'suggested_activity_visit_profile',
+            ])
+
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
@@ -212,7 +218,7 @@ class ViewProfile(request_handler.RequestHandler):
 
         has_full_access = is_self or user_data.is_visible_to(current_user_data)
         tz_offset = self.request_int("tz_offset", default=0)
-        
+
         template_values = {
             'show_intro': show_intro,
             'profile': profile,
@@ -316,6 +322,12 @@ class UserProfile(object):
 
         profile.is_self = is_self
         profile.is_coaching_logged_in_user = is_coaching_logged_in_user
+
+        suggested_alternative = SuggestedActivityExperiment.get_alternative_for_user(
+                user, is_self) or SuggestedActivityExperiment.NO_SHOW
+        show_suggested_activity = (suggested_alternative == SuggestedActivityExperiment.SHOW)
+
+        profile.show_suggested_activity = show_suggested_activity
 
         profile.is_public = user.has_public_profile()
         if full_projection:

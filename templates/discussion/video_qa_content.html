@@ -8,10 +8,10 @@
         {% endif %}
     ">
         <input type="hidden" name="entity_key" value="{{ question.key() }}" />
-        <div class="question" data-question_key="{{ question.key() }}">
+        <div class="question {% if question.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}" data-question_key="{{ question.key() }}">
             {{ discussion.vote_tools(question) }}
             {% if qa_expand_key != question.key().__str__() %}
-                <a class="question_link" href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_expand_key={{question.key()}}#q_{{question.key()}}" onclick="return false;">
+                <a class="question_link" href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_expand_key={{question.key()}}#q_{{question.key()}}" onclick="return false;">
                     <span>{{ question.content|escape|linebreaksbr_ellipsis|youtube_timestamp_links }}</span>
                 </a>
             {% endif %}
@@ -30,7 +30,7 @@
             ">
                 <table><tr>
                 <td style="vertical-align: middle;">
-                    <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_expand_key={{question.key()}}#q_{{question.key()}}" onclick="return false;">{{ question.children_cache|length }} answer{{ "s" if question.children_cache.__len__() != 1 else "" }}</a>
+                    <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_expand_key={{question.key()}}#q_{{question.key()}}" onclick="return false;">{{ question.children_cache|length }} answer{{ "s" if question.children_cache.__len__() != 1 else "" }}</a>
                 </td>
                 <td>
                     <span class="question_answer_count_add_yours">
@@ -81,11 +81,11 @@
 <div class="page_controls questions_page_controls">
     <span>
         {% if current_page_1_based != 1 %}
-        <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_page={{ prev_page_1_based }}#qa" class="button page questions_page" page="{{ prev_page_1_based }}"><img class="icon" src="{{ "/images/arrow-left.png"|static_url }}" /> {% if sort_order == 2 %}Newer questions{% else %}Q&A with higher votes{% endif %}</a>
+        <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_page={{ prev_page_1_based }}#qa" class="button page questions_page" page="{{ prev_page_1_based }}"><img class="icon" src="{{ "/images/arrow-left.png"|static_url }}" /> {% if sort_order == 2 %}Newer questions{% else %}Q&A with higher votes{% endif %}</a>
         {% endif %}
 
         {% if current_page_1_based != pages_total %}
-        <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_page={{ next_page_1_based }}#qa" class="button page questions_page" page="{{ next_page_1_based }}">{% if sort_order == 2 %}Older questions{% else %}Q&A with lower votes{% endif %} <img class="icon" src="{{ "/images/arrow-right.png"|static_url }}" /></a>
+        <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_page={{ next_page_1_based }}#qa" class="button page questions_page" page="{{ next_page_1_based }}">{% if sort_order == 2 %}Older questions{% else %}Q&A with lower votes{% endif %} <img class="icon" src="{{ "/images/arrow-right.png"|static_url }}" /></a>
         {% endif %}
     </span>
 </div>

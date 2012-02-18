@@ -1,6 +1,7 @@
-{% extends "page_template.html" %}
+{% extends "discussion/mod/mod_template.html" %}
 
-{% block pagescript %}
+{% block panelcontent %}
+
 <style>
 #feedback {
     padding: 0px 23px;
@@ -20,6 +21,11 @@
     background-color:#EFEFEF;
 }
 
+#feedback .content-container {
+    max-width: 200px;
+    max-height: 100px;
+    overflow:auto;
+}
 </style>
 
 <script>
@@ -36,13 +42,8 @@
         });
     });
 </script>
-{% endblock pagescript %}
 
-{% block pagetitle %}Flagged Feedback{% endblock pagetitle %}
-
-{% block pagecontent %}
-
-<article id="feedback">
+<div id="feedback">
 <p>
     Showing top <strong>{{feedbacks|length}}</strong> of <strong>{{ feedback_count|escape }}</strong> posts in need of moderator attention.
 </p>
@@ -52,10 +53,12 @@
         <tr>
             <th>&nbsp;</th>
             <th>Type</th>
-            <th>Video</th>
             <th>Content</th>
+            <th>Votes</th>
+            <th>Author</th>
             <th>Flags</th>
             <th>Flagged By</th>
+            <th>Video</th>
         </tr>
     {% for feedback in feedbacks %}
         {% if loop.index % 2 == 0 %}
@@ -87,10 +90,12 @@
                 {% endif %}
                 </nobr>
             </td>
-            <td class="center"><a href="/video/{{feedback.video.readable_id|escape}}">{{ feedback.video().title|escape }}</a></td>
-            <td>{{ feedback.content|escape|linebreaksbr }}</td>
+            <td><div class="content-container">{{ feedback.content|escape|linebreaksbr }}</div></td>
+            <td>{{ feedback.sum_votes_incremented }}</td>
+            <td>{{ feedback.author }}</td>
             <td>{% for flag in feedback.flags %}{{ flag|escape }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
             <td>{% for email in feedback.flagged_by %}{{ email|escape }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+            <td class="center"><a href="/video/{{feedback.video().readable_id|escape}}">{{ feedback.video().title|escape }}</a></td>
         </tr>
     {% endfor %}
     </table>
@@ -100,6 +105,8 @@
     <br/><a href="/discussion/flaggedfeedback">Reload this page</a> to see the next set of posts waiting for moderator attention.
 {% endif %}
 
-</article>
-{% endblock pagecontent %}
+</div>
+
+{% endblock panelcontent %}
+
 

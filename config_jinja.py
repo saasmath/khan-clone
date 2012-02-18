@@ -17,6 +17,7 @@ use_library('django', '0.96')
 from models import UserData
 import templatetags
 import templatefilters
+import avatars.templatetags
 import badges.templatetags
 import profiles.templatetags
 import social.templatetags
@@ -37,6 +38,7 @@ jinja2.default_config = {
         "templatetags": templatetags,
         "social": social.templatetags,
         "profiles": profiles.templatetags,
+        "avatars": avatars.templatetags,
         "badges": badges.templatetags,
         "phantom_users": phantom_users.templatetags,
         "js_css_packages": js_css_packages.templatetags,

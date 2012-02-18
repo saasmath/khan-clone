@@ -2,14 +2,7 @@ import util
 import models_badges
 import phantom_users.util_notify
 from notifications import UserNotifier
-
-# Badges can either be Exercise badges (can earn one for every Exercise),
-# Playlist badges (one for every Playlist),
-# or context-less which means they can only be earned once.
-class BadgeContextType:
-    NONE = 0
-    EXERCISE = 1
-    PLAYLIST = 2
+from badge_context import BadgeContextType
 
 class BadgeCategory(object):
     # Sorted by astronomical size...
@@ -243,6 +236,12 @@ class Badge(object):
     def is_hidden(self):
         return self.is_hidden_if_unknown and not self.is_owned
 
+    def hide_context(self):
+        """ Return true if badge shouldn't label the context
+        in which it was earned.
+        """
+        return False
+
     @property
     def safe_extended_description(self):
         desc = self.extended_description()
@@ -314,11 +313,11 @@ class Badge(object):
 
     def frequency(self):
         return models_badges.BadgeStat.count_by_badge_name(self.name)
-    
+
 class GroupedUserBadge(object):
     """ Represents a set of user badges for any particular type. For example,
     it can represent a streak badge that a user earned in multiple exercises.
-    
+
     This is a transient object that is programmatically computed; it is not
     persisted to the datastore.
     """
@@ -333,9 +332,9 @@ class GroupedUserBadge(object):
         # A list of name keys for contexts in which this badge was earned
         # (e.g. the name of the exercise the badge was earned in)
         self.target_context_names = []
-        
+
     _serialize_blacklist = ["user"]
-        
+
     @staticmethod
     def build(user, badge, user_badge):
         """ Builds an initial GroupedUserBadge from a single instance.
@@ -343,10 +342,12 @@ class GroupedUserBadge(object):
         result = GroupedUserBadge(user=user,
                                   badge=badge,
                                   last_earned_date=user_badge.date)
-        result.target_context_names.append(user_badge.target_context_name)
+
+        target_context_name = None if badge.hide_context() else user_badge.target_context_name
+
+        result.target_context_names.append(target_context_name)
         return result
 
     @property
     def count(self):
         return len(self.target_context_names)
-    

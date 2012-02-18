@@ -138,6 +138,12 @@ indexes:
     direction: desc
 
 - kind: Feedback
+  properties:
+  - name: targets
+  - name: date
+    direction: desc
+
+- kind: Feedback
   ancestor: yes
   properties:
   - name: deleted
@@ -153,6 +159,13 @@ indexes:
   - name: is_hidden_by_flags
   - name: targets
   - name: types
+  - name: date
+    direction: desc
+
+- kind: Feedback
+  ancestor: yes
+  properties:
+  - name: targets
   - name: date
     direction: desc
 

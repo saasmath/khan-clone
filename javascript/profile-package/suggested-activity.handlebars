@@ -1,0 +1,44 @@
+<!-- TODO(marcia): Clean up to involve less copy paste action, also ach-text's is more of a container and not achievement text.-->
+<div class="activity-list">
+    <ul>
+    {{#each exercises}}
+        <li class="activity-exercise clearfix">
+            <div class="ach-text">
+                <span class="activity-image"></span>
+                <a class="covering-link"  href="{{toBingoHref url "suggested_activity_click_through_exercise"}}">
+                    <span></span>
+                </a>
+                <a class="ellipsis foreground-link" title="{{name}}" href="{{toBingoHref url "suggested_activity_click_through_exercise"}}">
+                    {{name}}
+                </a>
+                {{#with streakBar}}{{> streak-bar}}{{/with}}
+                <div class="suggested-activity-controls">
+                    <a class="foreground-link" href="{{toBingoHref url "suggested_activity_click_through_exercise"}}">
+                        <span class="simple-button action-gradient">Rock out</span>
+                    </a>
+                </div>
+            </div>
+        </li>
+    {{/each}}
+
+    {{#each videos}}
+        <li class="activity-video clearfix">
+            <div class="ach-text">
+                <span class="activity-image"></span>
+                <a class="covering-link" href="{{toBingoHref url "suggested_activity_click_through_video"}}">
+                    <span></span>
+                </a>
+                <a class="ellipsis foreground-link" title="{{name}}" href="{{toBingoHref url "suggested_activity_click_through_video"}}">
+                    {{name}}
+                </a>
+                {{#with streakBar}}{{> streak-bar}}{{/with}}
+                <div class="suggested-activity-controls">
+                    <a class="foreground-link" href="{{toBingoHref url "suggested_activity_click_through_video"}}">
+                        <span class="simple-button action-gradient">Watch on</span>
+                    </a>
+                 </div>
+            </div>
+        </li>
+    {{/each}}
+    </ul>
+</div>

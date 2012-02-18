@@ -2,11 +2,13 @@
 
 import models
 import phantom_users.phantom_util
-import test_utils
+import testutil
+import unittest2
 
 from google.appengine.ext import db
+from mock import patch
 
-class UsernameTest(test_utils.GAEModelTestCase):
+class UsernameTest(testutil.GAEModelTestCase):
     def tearDown(self):
         # Clear all usernames just to be safe
         for u in models.UniqueUsername.all():
@@ -65,7 +67,7 @@ class UsernameTest(test_utils.GAEModelTestCase):
         self.assertEqual("sadbob", u2.username)
 
     def test_releasing_usernames(self):
-        clock = test_utils.MockDatetime()
+        clock = testutil.MockDatetime()
         u1 = self.make_user("bob")
         u2 = self.make_user("robert")
 
@@ -106,7 +108,7 @@ class UsernameTest(test_utils.GAEModelTestCase):
                 u2.user_id,
                 models.UserData.get_from_username("superbob").user_id)
 
-class ProfileSegmentTest(test_utils.GAEModelTestCase):
+class ProfileSegmentTest(testutil.GAEModelTestCase):
     def to_url(self, user):
         return user.prettified_user_email
     def from_url(self, segment):
@@ -142,7 +144,7 @@ class ProfileSegmentTest(test_utils.GAEModelTestCase):
                 self.from_url(self.to_url(sally)).user_id,
                 sally.user_id)
 
-class PromoRecordTest(test_utils.GAEModelTestCase):
+class PromoRecordTest(testutil.GAEModelTestCase):
     # Shorthand
     def r(self, promo_name, user_id):
         return models.PromoRecord.record_promo(promo_name, user_id)
@@ -164,3 +166,21 @@ class PromoRecordTest(test_utils.GAEModelTestCase):
         
         # Different promo
         self.assertTrue(self.r(p2, u1))
+
+class VideoSubtitlesTest(unittest2.TestCase):
+    def test_get_key_name(self):
+        kn = models.VideoSubtitles.get_key_name('en', 'YOUTUBEID')
+        self.assertEqual(kn, 'en:YOUTUBEID')
+
+    def test_load_valid_json(self):
+        subs = models.VideoSubtitles(json='[{"text":"subtitle"}]')
+        json = subs.load_json()
+        self.assertIsNotNone(json)
+        self.assertEqual([{u'text': u'subtitle'}], json)
+
+    @patch('models.logging.warn')
+    def test_log_warning_on_invalid_json(self, warn):
+        subs = models.VideoSubtitles(json='invalid json')
+        json = subs.load_json()
+        self.assertIsNone(json)
+        self.assertEqual(warn.call_count, 1, 'logging.warn() not called')

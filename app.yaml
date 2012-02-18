@@ -21,9 +21,9 @@ skip_files:
 - ^(.*/)?deploy/.*
 - ^(.*/)?javascript/testbase\.js
 - ^(.*/)?.*_test\.html
-- ^test_utils\.py
 - ^requirements\.txt
 - ^agar
+- ^testutil
 
 handlers:
 - url: /videos
@@ -109,6 +109,10 @@ handlers:
   login: admin
 
 - url: /_ah/queue/deferred_log_summary
+  script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
+  login: admin
+
+- url: /_ah/queue/deferred_import
   script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
   login: admin
 

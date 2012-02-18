@@ -50,10 +50,11 @@ import goals.handlers
 import stories
 import summer
 import common_core
+import unisubs
 
 import models
-from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, Topic
-from discussion import comments, notification, qa, voting
+from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
+from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from phantom_users import util_notify
 from badges import util_badges, custom_badges
@@ -171,6 +172,33 @@ class ViewVideo(request_handler.RequestHandler):
                 next_video = v
                 break
 
+        # If we're at the beginning or end of a topic, show the adjacent topic.
+        # previous_topic/next_topic are the topic to display.
+        # previous_video_topic/next_video_topic are the subtopics the videos
+        # are actually in.
+        previous_topic = None
+        previous_video_topic = None
+        next_topic = None
+        next_video_topic = None
+
+        if not previous_video:
+            previous_topic = topic
+            while not previous_video:
+                previous_topic = previous_topic.get_previous_topic()
+                if previous_topic:
+                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+                else:
+                    break
+
+        if not next_video:
+            next_topic = topic
+            while not next_video:
+                next_topic = next_topic.get_next_topic()
+                if next_topic:
+                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+                else:
+                    break
+
         if video is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
@@ -198,16 +226,27 @@ class ViewVideo(request_handler.RequestHandler):
         if user_video:
             awarded_points = user_video.points
 
+        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_json = None
+        if subtitles:
+            subtitles_json = subtitles.load_json()
+
         template_values = {
                             'topic': topic,
                             'video': video,
                             'videos': videos,
                             'video_path': video_path,
                             'video_points_base': consts.VIDEO_POINTS_BASE,
+                            'subtitles_json': subtitles_json,
                             'button_top_exercise': button_top_exercise,
                             'related_exercises': [], # disabled for now
+                            'previous_topic': previous_topic,
                             'previous_video': previous_video,
+                            'previous_video_topic': previous_video_topic,
+                            'next_topic': next_topic,
                             'next_video': next_video,
+                            'next_video_topic': next_video_topic,
                             'selected_nav_link': 'watch',
                             'awarded_points': awarded_points,
                             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
@@ -215,8 +254,11 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
-        bingo(['struggling_videos_landing',
-               'homepage_restructure_videos_landing'])
+        bingo([
+            'struggling_videos_landing',
+            'suggested_activity_videos_landing',
+            'suggested_activity_videos_landing_binary',
+        ])
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
@@ -761,6 +803,8 @@ application = webapp2.WSGIApplication([
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
     ('/admin/changeemail', ChangeEmail),
     ('/admin/realtimeentitycount', RealtimeEntityCount),
+    ('/admin/unisubs', unisubs.ReportHandler),
+    ('/admin/unisubs/import', unisubs.ImportHandler),
 
     ('/devadmin', devpanel.Panel),
     ('/devadmin/emailchange', devpanel.MergeUsers),
@@ -768,10 +812,9 @@ application = webapp2.WSGIApplication([
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
     ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
     ('/commoncore', common_core.CommonCore),
+    ('/staging/commoncore', common_core.CommonCore),
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
-
-
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
@@ -826,8 +869,13 @@ application = webapp2.WSGIApplication([
     ('/discussion/changeentitytype', qa.ChangeEntityType),
     ('/discussion/videofeedbacknotificationlist', notification.VideoFeedbackNotificationList),
     ('/discussion/videofeedbacknotificationfeed', notification.VideoFeedbackNotificationFeed),
-    ('/discussion/moderatorlist', qa.ModeratorList),
-    ('/discussion/flaggedfeedback', qa.FlaggedFeedback),
+
+    ('/discussion/mod', moderation.ModPanel),
+    ('/discussion/moderatorlist', moderation.RedirectToModPanel),
+    ('/discussion/flaggedfeedback', moderation.RedirectToModPanel),
+    ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
+    ('/discussion/mod/moderatorlist', moderation.ModeratorList),
+    ('/discussion/mod/bannedlist', moderation.BannedList),
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
@@ -871,11 +919,13 @@ application = webapp2.WSGIApplication([
 
     # Summer Discovery Camp application/registration
     ('/summer/application', summer.Application),
+    ('/summer/tuition', summer.Tuition),
     ('/summer/application-status', summer.Status),
     ('/summer/getstudent', summer.GetStudent),
     ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
+    ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 

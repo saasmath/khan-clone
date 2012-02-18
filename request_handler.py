@@ -130,7 +130,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
             # App Engine maintenance period
             title = "Shhh. We're studying."
-            message_html = "We're temporarily down for maintenance, and we expect this to last approximately one hour. In the meantime, you can watch all of our videos at the <a href='http://www.youtube.com/user/khanacademy'>Khan Academy YouTube channel</a>."
+            message_html = "We're temporarily down for maintenance, and we expect this to end shortly. In the meantime, you can watch all of our videos at the <a href='http://www.youtube.com/user/khanacademy'>Khan Academy YouTube channel</a>."
             sub_message_html = "We're really sorry for the inconvenience, and we're working to restore access as soon as possible."
 
         elif type(e) is MissingExerciseException:
@@ -317,7 +317,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         user_data = template_values['user_data']
 
         template_values['username'] = user_data.nickname if user_data else ""
-        template_values['viewer_profile_root'] = user_data.profile_root if user_data else ""
+        template_values['viewer_profile_root'] = user_data.profile_root if user_data else "/profile/nouser"
         template_values['points'] = user_data.points if user_data else 0
         template_values['logged_in'] = not user_data.is_phantom if user_data else False
         template_values['http_host'] = os.environ["HTTP_HOST"]

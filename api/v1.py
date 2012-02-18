@@ -1,3 +1,4 @@
+import os
 import datetime
 import logging
 from itertools import izip
@@ -20,18 +21,19 @@ from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
-from profiles import class_progress_report_graph, recent_activity
+from profiles import class_progress_report_graph, recent_activity, suggested_activity
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
+from app import App
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag,\
+from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
-from google.appengine.ext import db
+from google.appengine.ext import db, deferred
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -146,7 +148,7 @@ def get_user_data_from_json(json, key):
 @jsonify
 def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.Topic.get_content_topics(version)
+    return models.Topic.get_rolled_up_top_level_topics(version)
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
@@ -175,14 +177,14 @@ def topics_library_compact():
     topic_dict = {}
     for topic in topics:
         # special cases
-        if ((topic.standalone_title == "California Standards Test: Algebra I" and topic.id != "algebra-i") or 
+        if ((topic.id == "new-and-noteworthy") or 
             (topic.standalone_title == "California Standards Test: Geometry" and topic.id != "geometry-2")):
             continue
 
         trimmed_info = {}
         trimmed_info['id'] = topic.id
         trimmed_info['children'] = [trimmed_item(v, topic) for v in topic.children]
-        topic_dict[topic.standalone_title] = trimmed_info
+        topic_dict[topic.id] = trimmed_info
 
     return topic_dict
 
@@ -241,6 +243,21 @@ def topic_exercises(topic_id, version_id = None):
     exercises = topic.get_exercises()
     return exercises
 
+@route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def topic_progress(topic_id):
+    user_data = models.UserData.current()
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        raise ValueError("Invalid topic id.")
+
+    return topic.get_user_progress(user_data)
+
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
 @etag(lambda version_id = None: version_id) 
@@ -273,6 +290,18 @@ def topictree(version_id = None):
 def topictree_export(version_id = None, topic_id = "root"):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id(topic_id, version).make_tree(include_hidden=True)
+
+@route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topictree", methods=["PUT"])
+@developer_required
+@jsonp
+@jsonify
+def topictree_import(version_id = "edit", topic_id="root"):
+    logging.info("calling /_ah/queue/deferred_import")
+    deferred.defer(models.topictree_import_task, version_id, topic_id, request.json,
+                _queue = "import-queue",
+                _url = "/_ah/queue/deferred_import")
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
@@ -368,7 +397,6 @@ def topic_find_child(parent_id, version_id, kind, id):
 @jsonp
 @jsonify
 def topic_add_child(parent_id, version_id = "edit"):
-    
     kind = request.request_string("kind")        
     id = request.request_string("id")
 
@@ -424,6 +452,22 @@ def topic_move_child(old_parent_id, version_id = "edit"):
     old_parent_topic.move_child(child, new_parent, new_parent_pos)
 
     return True    
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/ungroup", methods=["POST"])  
+@route("/api/v1/topic/<topic_id>/ungroup", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_ungroup(topic_id, version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    topic = models.Topic.get_by_id(topic_id, version)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+
+    topic.ungroup()
+
+    return True
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])   
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
@@ -512,7 +556,6 @@ def get_url(url_id, version_id=None):
 @jsonify
 def save_url(url_id = None, version_id=None):
     version = models.TopicVersion.get_by_id(version_id)
-    url_json = request.json
     changeable_props = ["tags", "title", "url"]
 
     if url_id is None:
@@ -577,7 +620,7 @@ def playlists_library():
     return convert_tree(tree)
 
 # We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values. - since with topics now, the library is garunteed
+# that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
 # not to change until we have a new version, the cached version is good enough
 @route("/api/v1/playlists/library/list/fresh", methods=["GET"]) 
 @route("/api/v1/playlists/library/list", methods=["GET"])
@@ -590,7 +633,7 @@ def playlists_library():
 @compress
 @jsonify
 def playlists_library_list():
-    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
+    topics = models.Topic.get_filled_rolled_up_top_level_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
         (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
@@ -652,33 +695,35 @@ def exercise_videos(exercise_name):
 @jsonify
 def exercise_save(exercise_name = None, version_id = "edit"):
     request.json["name"] = exercise_name
-    request.json["live"] = request.json["live"] == "true" or request.json["live"] == True      
-    request.json["v_position"] = int(request.json["v_position"])
-    request.json["h_position"] = int(request.json["h_position"])
-    request.json["seconds_per_fast_problem"] = (
-        float(request.json["seconds_per_fast_problem"]))
-    logging.info(request.json["live"])
-
     version = models.TopicVersion.get_by_id(version_id)
-    # exercise = models.Exercise.get_for_readable_id(video_id, version)
     query = models.Exercise.all()
     query.filter('name =', exercise_name)
     exercise = query.get()
+    return exercise_save_data(version, request.json, exercise)
+
+def exercise_save_data(version, data, exercise=None, put_change=True):
+    if "name" not in data:
+        raise Exception("exercise 'name' missing")
+    data["live"] = data["live"] = data["live"] == "true" or data["live"] == True    
+    data["v_position"] = int(data["v_position"])
+    data["h_position"] = int(data["h_position"])
+    data["seconds_per_fast_problem"] = (
+        float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "summative", "prerequisites", "covers", 
-                        "related_videos", "short_display_name", "description",
-                        "tags"]
+                        "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise, 
             version, 
-            request.json,
+            data,
             changeable_props)
     else:
         return models.VersionContentChange.add_new_content(models.Exercise, 
                                                            version,
-                                                           request.json,
-                                                           changeable_props)
+                                                           data,
+                                                           changeable_props,
+                                                           put_change)
 
 @route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
 @route("/api/v1/videos/<video_id>", methods=["GET"])
@@ -816,8 +861,7 @@ def save_video(video_id="", version_id = "edit"):
         for key, content in changes.iteritems():
             if type(content) == models.Video and (video is None or 
                                                   key != video.key()): 
-                logging.info(key)
-                logging.info(video.key())
+
                 if content.readable_id == new_data["readable_id"]:
                     return api_invalid_param_response(
                         "Video with readable_id %s already exists" %
@@ -826,7 +870,7 @@ def save_video(video_id="", version_id = "edit"):
                 elif content.youtube_id == new_data["youtube_id"]:
                     return api_invalid_param_response(
                         "Video with youtube_id %s already appears with readable_id %s" %
-                        (new_data["youtube_id"], video.readable_id))  
+                        (new_data["youtube_id"], content.readable_id))  
 
     if video:
         error = check_duplicate(request.json, video)
@@ -1381,6 +1425,7 @@ def user_followup_exercises(exercise_name):
 def api_user_followups(exercise_name):
     return user_followup_exercises(exercise_name)
 
+@route("/api/v1/user/topics", methods=["GET"])
 @route("/api/v1/user/playlists", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -1392,25 +1437,27 @@ def user_playlists_all():
         user_data_student = get_visible_user_data_from_request()
 
         if user_data_student:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user)
+            user_playlists = models.UserTopic.all().filter("user =", user_data_student.user)
             return user_playlists.fetch(10000)
 
     return None
 
-@route("/api/v1/user/playlists/<playlist_title>", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>", methods=["GET"])
+@route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
-def user_playlists_specific(playlist_title):
+def user_playlists_specific(topic_id):
     user_data = models.UserData.current()
 
     if user_data and playlist_title:
         user_data_student = get_visible_user_data_from_request()
-        playlist = models.Playlist.all().filter("title =", playlist_title).get()
+        topic = models.Topic.get_by_id(topic_id)
+        if topic is None:
+            topic = models.Topic.all().filter("standalone_title =", topic_id).get()
 
-        if user_data_student and playlist:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user).filter("playlist =", playlist)
-            return user_playlists.get()
+        if user_data_student and topic:
+            return models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
 
     return None
 
@@ -1783,7 +1830,16 @@ def get_activity():
             # Allow access to this student's profile
             student = user_override
 
-    return recent_activity.recent_activity_context(student)
+    recent_activities = recent_activity.recent_activity_list(student)
+    recent_completions = filter(
+            lambda activity: activity.is_complete(),
+            recent_activities)
+
+    return {
+        "suggested": suggested_activity.SuggestedActivity.get_for(
+                student, recent_activities),
+        "recent": recent_completions[:recent_activity.MOST_RECENT_ITEMS],
+    }
 
 # TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
@@ -1860,7 +1916,6 @@ def remove_coworker():
 def autocomplete():
 
     video_results = []
-    playlist_results = []
 
     query = request.request_string("q", default="").strip().lower()
     if query:
@@ -1876,6 +1931,12 @@ def autocomplete():
         topic_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
                 topic_title_dicts())
+        topic_results.extend(map(lambda topic: {
+                "title": topic.standalone_title,
+                "key": str(topic.key()),
+                "relative_url": topic.relative_url,
+                "id": topic.id
+            }, filter(lambda topic: query in topic.title.lower(), models.Topic.get_super_topics())))
         url_results = filter(
                 lambda url_dict: query in url_dict["title"].lower(),
                 url_title_dicts())
@@ -1897,6 +1958,38 @@ def autocomplete():
             "exercises": exercise_results
     }
 
+@route("/api/v1/dev/backupmodels", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonify
+def backupmodels():
+    """Return the names of all models that inherit from models.BackupModel."""
+    return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
+
+@route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_entities(entity):
+    """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
+
+    Notes: 'entity' must be a subclass of 'models.BackupModel'
+           'dt{start,end}' must be in ISO 8601 format
+           'max' defaults to 500
+    Example:
+        /api/v1/dev/protobuf/ProblemLog?dt_start=2012-02-11T20%3A07%3A49Z&dt_end=2012-02-11T21%3A07%3A49Z
+        Returns up to 500 problem_logs from between 'dt_start' and 'dt_end'
+    """
+    entity_class = db.class_for_kind(entity)
+    if not (entity_class and issubclass(entity_class, models.BackupModel)):
+        return api_error_response(ValueError("Invalid class '%s' (must be a \
+                subclass of models.BackupModel)" % entity))
+    query = entity_class.all()
+    filter_query_by_request_dates(query, "backup_timestamp")
+    query.order("backup_timestamp")
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               query.fetch(request.request_int("max", default=500)))
 
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
@@ -2185,3 +2278,10 @@ def get_avatars():
             for avatar in category['avatars']:
                 avatar.is_available = avatar.is_satisfied_by(user_data)
     return result
+
+@route("/api/v1/dev/version", methods=["GET"])
+@jsonp
+@jsonify
+def get_version_id():
+    return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None } 
+

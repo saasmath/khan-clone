@@ -7,7 +7,6 @@
 
         <div class="comments_container"><em>Loading...</em> <img class="icon" src="{{ "/images/throbber.gif"|static_url }}"/></div>
         
-
         {% if logged_in %}
 
         <a href="#" class="control comment_add"><img class="icon" src="{{ "/images/balloon-plus.png"|static_url }}" />Add a comment</a>
@@ -16,7 +15,7 @@
         {% endif %}
 
         <span class="comments_show_more">
-            <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&comments_page=1" class="comment_show control uses_script"><img class="icon" src="{{ "/images/balloons.png"|static_url }}" />Show more</a>
+            <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&comments_page=1" class="comment_show control uses_script"><img class="icon" src="{{ "/images/balloons.png"|static_url }}" />Show more</a>
         </span>
 
         <div class="comment_form" style="display:none;">
@@ -67,13 +66,46 @@
 
         <div class="sticky_note" style="display:none;">
             <div class="sticky_note_content">
-                <h2>Ask a question about {{ video.title|lower|escape }}</h2>
-                <ul>
-                    <li><em>Be as specific as possible!</em></li>
-                    <li>Remember, you're asking <em>the entire Khan Academy community</em> for answers.</li>
-                    <li>Mention a time from the video, like "5:28", to help people understand what your question is about.</li>
-                    <li><strong>Please don't</strong> report problems or mistakes here.&nbsp; <strong><a href="/reportissue?type=Defect&issue_labels=Component-Videos">Send in a problem report</a></strong> instead.</li>
-                </ul>
+                <h2>Asking helpful questions about {{ video.title|lower|escape }}</h2>
+
+                <table class="tips-and-examples">
+                    <tr>
+                        <th class="cell left-cell">
+                            <strong>Helpful questions...</strong>
+                            <ul>
+                                <li>...are on-topic (about this video's content) and specific</li>
+                                <li>...refer to times in the video, like "5:28"</li>
+                                <li>...are upvoted and receive badges</li>
+                            </ul>
+                        </th>
+                        <th class="cell">
+                            <strong>Unhelpful questions...</strong>
+                            <ul>
+                                <li>...are off-topic or unspecific</li>
+                                <li>...don't help other users understand the video's content</li>
+                                <li>...are downvoted and flagged</li>
+                            </ul>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td class="cell left-cell">
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-up-gray.png"> "During the eclipse Sal talks about at 5:28, why is the moon the exact size of the sun, offering complete 1 for 1 coverage?"</li>
+                            </ul>
+                        </td>
+                        <td class="cell">
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-down-gray.png"> "I don't get it?" <span class="question-note">(Not specific)</span></li>
+                            </ul>
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-down-gray.png"> "Sal this is awesome!!!" <span class="question-note">(Off-topic, belongs in comments)</span></li>
+                            </ul>
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-down-gray.png"> "Why isn't this thing working?" <span class="question-note">(<a href="/reportissue?type=Defect&issue_labels=Component-Videos">Report problems here</a> instead)</span></li>
+                            </ul>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div>
 
@@ -226,7 +258,7 @@
 
 {% macro author_tools(target) -%}
     <span class="mod_tools">
-        <span class="mod_tools_hidden">
+        <span class="mod_tools_hidden tools_hidden">
             {% if not target.is_type("comment") %}
                 <a href="#" class="control mod_edit" data-key="{{ target.key() }}">edit</a>
                 | 
@@ -253,7 +285,11 @@
             {{ flag_tools(target) }}
 
             {% if UserData.current().moderator %}
-                {{ mod_tools(target) }}
+                {% if target and target.appears_as_deleted_to(UserData.current()) %}
+                    (deleted or hidden by flags)
+                {% else %}
+                    {{ mod_tools(target) }}
+                {% endif %}
             {% else %}
                 {% if target and target.authored_by(UserData.current()) %}
                     {{ author_tools(target) }}
@@ -269,10 +305,10 @@
     {% for answer in answers %}
         <div class="answer_container">
             <input type="hidden" name="entity_key" value="{{ answer.key() }}" />
-            <div class="answer">
+            <div class="answer {% if answer.appears_as_deleted_to(UserData.current()) %}deleted{% endif %}">
                 {{ vote_tools(answer) }}
                 {% if standalone %}
-                    <a href="/video/{{video.readable_id}}?topic={{topic.title|urlencode}}&qa_expand_key={{answer.question().key()}}#q_{{answer.question().key()}}">
+                    <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}&qa_expand_key={{answer.question().key()}}#q_{{answer.question().key()}}">
                         {{ answer.content|truncate(40)|escape|linebreaksbr }}
                     </a>
                 {% else %}
