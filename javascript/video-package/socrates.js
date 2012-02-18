@@ -441,8 +441,6 @@ Socrates.Nav = Backbone.View.extend({
 			}
 		});
 
-		console.log(sections);
-
 		$(this.el).html(this.template({
 			sections: sections
 		}));
