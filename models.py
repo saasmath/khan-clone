@@ -3319,6 +3319,9 @@ class Video(Searchable, db.Model):
         video_dict = dict((v.key(), v) for v in videos)
         return video_dict.values()
 
+    def has_topic(self):
+        return bool(self.topic_string_keys)
+
     # returns the first non-hidden topic
     def first_topic(self):
         if self.topic_string_keys:
