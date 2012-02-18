@@ -1,4 +1,5 @@
 from profiles import recent_activity
+import logging
 import models
 import points
 
@@ -50,6 +51,10 @@ class SuggestedActivity(object):
             key_name = models.UserVideo.get_key_name(candidate.youtube_id,
                                                      user_data)
             user_video = models.UserVideo.get_by_key_name(key_name)
+            if not user_video:
+                logging.warning("No UserVideo for recently watched vid [%s]" %
+                                candidate.video_title)
+                continue
             if not user_video.completed:
                 real_list.append(candidate)
 
