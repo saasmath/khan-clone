@@ -1225,7 +1225,8 @@ def log_user_video(youtube_id):
         video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if not video:
-        return api_error_response("Could not find video")
+        logging.error("Could not find video for %s" % (video_key_str or youtube_id))
+        return api_invalid_param_response("Could not find video for %s" % (video_key_str or youtube_id))
 
     seconds_watched = int(request.request_float("seconds_watched", default=0))
     last_second = int(request.request_float("last_second_watched", default=0))
@@ -1830,12 +1831,14 @@ def get_activity():
             student = user_override
 
     recent_activities = recent_activity.recent_activity_list(student)
+    recent_completions = filter(
+            lambda activity: activity.is_complete(),
+            recent_activities)
 
     return {
-        # TODO: re-enable this
-        #"suggested": suggested_activity.SuggestedActivity.get_for(
-                #student, recent_activities),
-        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+        "suggested": suggested_activity.SuggestedActivity.get_for(
+                student, recent_activities),
+        "recent": recent_completions[:recent_activity.MOST_RECENT_ITEMS],
     }
 
 # TODO in v2: imbue with restfulness

@@ -149,7 +149,7 @@
 
 .badge-display-case .badge-picker {
     position: absolute;
-    z-index: 1;
+    z-index: 5;
 
     background: #f7f7f7;
     border: 5px solid #999; /* must be the same as selected-indicator */

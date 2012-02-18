@@ -48,15 +48,29 @@
 
         {{/if}}
     </div>
-    <div>
+    <div class="clearfix">
         <div id="tab-content-user-profile" rel="profile">
             <div class="user-info-container"></div>
             <div style="clear: both; margin-bottom: 20px;"></div>
             {{#if profileData.email}}
-                <div id="recent-activity">
-                    <h2>Recent Activity</h2>
+            <div class="activity-column">
+                <div id="activity-loading-placeholder">
+                    <h2>Loading activity...</h2>
                     <div id="recent-activity-progress-bar"></div>
                 </div>
+                <div id="activity-contents" style="display:none">
+                    {{#if profileData.showSuggestedActivity}}
+                    <div id="suggested-activity">
+                        <h2>Suggested Activity</h2>
+                    </div>
+                    {{/if}}
+                    <div id="recent-activity">
+                        <h2>Recent Activity</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="mini-stats-column">
+            </div>
             {{/if}}
         </div>
 
