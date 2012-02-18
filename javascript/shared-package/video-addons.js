@@ -44,6 +44,7 @@ var VideoControls = {
     },
 
     setAutoPlayEnabled: function(enabled) {
+    /*
         this.autoPlayEnabled = enabled;
         $(this.continuousPlayButton).toggleClass("green", enabled);
         if (enabled) {
@@ -51,6 +52,7 @@ var VideoControls = {
         } else {
             $(this.continuousPlayButton).html("Continuous play is OFF");
         }
+        */
     },
 
     setAutoPlayCallback: function(callback) {
