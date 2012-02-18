@@ -4,8 +4,11 @@ var Video = {
     SHOW_SUBTITLES_COOKIE: 'show_subtitles',
 
     waitingForVideo: null,
+    currentVideoPath: null,
+    youtubeBlocked: false,
 
     init: function() {
+        var self = this;
 
         this.router = new VideoRouter();
 
@@ -15,10 +18,16 @@ var Video = {
 
         VideoControls.onYouTubeBlocked(function() {
 
-           $("#youtube_blocked").css("visibility", "visible").css("left", "0px").css("position", "relative");
+           var flvPlayerTemplate = Templates.get("video.video-flv-player");
+           $("#youtube_blocked")
+                .css("visibility", "visible")
+                .css("left", "0px")
+                .css("position", "relative")
+                .html(flvPlayerTemplate({ video_path: self.currentVideoPath }));
            $("#idOVideo").hide();
            VideoStats.prepareAlternativePlayer(); // If YouTube is hidden, use the flv player for statistics
 
+           self.youtubeBlocked = true;
         });
 
     },
@@ -45,6 +54,8 @@ var Video = {
         $("span.video-footer").html(footerTemplate({topic: topicData.topic, video: videoData}));
 
         document.title = videoData.title + " | " + topicData.topic.title + " | Khan Academy";
+
+        this.currentVideoPath = videoData.video_path;
 
         var jVideoDropdown = $('#video_dropdown');
         if ( jVideoDropdown.length ) {
@@ -99,7 +110,13 @@ var Video = {
             VideoControls.setAutoPlayEnabled(false);
         });
 
-        VideoControls.playVideo(videoData.youtube_id, videoData.key, false);
+        if (this.youtubeBlocked) {
+           var flvPlayerTemplate = Templates.get("video.video-flv-player");
+           $("#youtube_blocked").html(flvPlayerTemplate({ video_path: this.currentVideoPath }));
+           VideoStats.prepareAlternativePlayer(); // If YouTube is hidden, use the flv player for statistics
+        } else {
+            VideoControls.playVideo(videoData.youtube_id, videoData.key, false);
+        }
 
         // Start up various scripts
         Discussion.init();
@@ -154,31 +171,50 @@ var Video = {
     },
 
     loadVideo: function(topic, video) {
+        var descTemplate = Templates.get("video.video-description");
+        var waitingForVideo = (Video.waitingForVideo && 
+            Video.waitingForVideo.topic == topic &&
+            Video.waitingForVideo.video == video);
+
         if (videoLibrary[topic] && videoLibrary[topic].videos[video]) {
-            if (Video.waitingForVideo && 
-                Video.waitingForVideo.topic == topic &&
-                Video.waitingForVideo.video == video) {
-                KAConsole.log("Switching to video: " + video + " in topic " + topic);
-                Video.renderPage(videoLibrary[topic], videoLibrary[topic].videos[video]);
+            if (waitingForVideo) {
+                if (videoLibrary[topic].videos[video] !== "LOADING") {
+                    KAConsole.log("Switching to video: " + video + " in topic " + topic);
+                    Video.renderPage(videoLibrary[topic], videoLibrary[topic].videos[video]);
+                    return; // No longer waiting
+                }
+            } else {
+                return; // Nothing to do
             }
         } else {
             KAConsole.log("Loading video: " + video + " in topic " + topic);
             url = "/api/v1/videos/" + topic + "/" + video + "/play" + (videoLibrary[topic] ? "" : "?topic=1");
+
+            videoLibrary[topic] = videoLibrary[topic] || { videos: [] };
+            videoLibrary[topic].videos[video] = "LOADING";
+
             $.ajax({
                 url: url,
                 success: function(json) {
-                    videoLibrary[topic] = videoLibrary[topic] || { videos: [] };
+                    var waitingForVideo = (Video.waitingForVideo && 
+                        Video.waitingForVideo.topic == topic &&
+                        Video.waitingForVideo.video == video);
                     if (json.topic)
                         videoLibrary[topic].topic = json.topic;
                     videoLibrary[topic].videos[video] = json.video;
-                    if (Video.waitingForVideo &&
-                        Video.waitingForVideo.topic == topic &&
-                        Video.waitingForVideo.video == video) {
+                    if (waitingForVideo) {
                         KAConsole.log("Switching to video: " + video + " in topic " + topic);
                         Video.renderPage(videoLibrary[topic], json.video);
                     }
                 }
             });
+        }
+        
+        if (waitingForVideo) {
+            $("span.video-nav").html("");
+            $("div.video-description").html(descTemplate({video: { title: "Loading..." }, loading: true }));
+            $("span.video-header").html("");
+            $("span.video-footer").html("");
         }
     },
 

@@ -44,6 +44,7 @@ var VideoControls = {
     },
 
     setAutoPlayEnabled: function(enabled) {
+    /*
         this.autoPlayEnabled = enabled;
         $(this.continuousPlayButton).toggleClass("green", enabled);
         if (enabled) {
@@ -51,6 +52,7 @@ var VideoControls = {
         } else {
             $(this.continuousPlayButton).html("Continuous play is OFF");
         }
+        */
     },
 
     setAutoPlayCallback: function(callback) {
@@ -126,8 +128,7 @@ var VideoControls = {
     },
 
     playVideo: function(youtubeId, videoKey, forcePlayBegin) {
-        if (VideoControls.player && youtubeId)
-        {
+        if (VideoControls.player && youtubeId) {
             $(VideoControls).trigger("beforeplay");
 
             if (forcePlayBegin || this.autoPlayEnabled) {

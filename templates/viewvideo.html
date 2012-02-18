@@ -31,9 +31,7 @@
         <div style="margin-top: -5px;"></div>
 
         <span class="video-header"></span>
-        <div id="youtube_blocked" class="desktop-only">
-         {{ youtube.flv_player_embed(video_path) }}
-        </div>
+        <div id="youtube_blocked" class="desktop-only"></div>
         <div class="youtube-video">
             <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{ video.youtube_id }}/hqdefault.jpg">
             {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host)  }}

@@ -74,6 +74,7 @@ javascript = {
             "video-description.handlebars",
             "video-header.handlebars",
             "video-footer.handlebars",
+            "video-flv-player.handlebars",
             "modalvideo.js",
         ]
     },
