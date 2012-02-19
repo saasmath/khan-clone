@@ -60,16 +60,17 @@ class RecentVideoActivity(RecentActivity):
         self.s_type = "Video"
         self.video_title = video_log.video_title
 
-        # VideoLog data prior to ?? will not have either the
+        # VideoLog data prior to ?? will not have set either the
         # youtube_id or readable_id fields,
         # and the "recent activity window" can include such older log entries.
         # Delete prying into video_log.video
         # when the window slides off of those entries.
-        if hasattr(video_log, 'youtube_id'):
+        if video_log.youtube_id:
             self.youtube_id = video_log.youtube_id
         else:
             self.youtube_id = video_log.video.youtube_id
-        if hasattr(video_log, 'readable_id'):
+
+        if video_log.readable_id:
             readable_id = video_log.readable_id
             self.relative_url = models.Video.get_relative_url(readable_id)
         else:
