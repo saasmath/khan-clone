@@ -349,7 +349,7 @@ class RawExercise(request_handler.RequestHandler):
 
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def exercise_template():
-    path = os.path.join(os.path.dirname(__file__), "khan-exercises/exercises/khan-exercise.html")
+    path = os.path.join(os.path.dirname(__file__), "../khan-exercises/exercises/khan-exercise.html")
 
     contents = ""
     f = open(path)
@@ -402,10 +402,10 @@ def exercise_contents(exercise):
 @layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
 def raw_exercise_contents(exercise_file):
     if templatetags.use_compressed_packages():
-        exercises_dir = "khan-exercises/exercises-packed"
+        exercises_dir = "../khan-exercises/exercises-packed"
         safe_to_cache = True
     else:
-        exercises_dir = "khan-exercises/exercises"
+        exercises_dir = "../khan-exercises/exercises"
         safe_to_cache = False
 
     path = os.path.join(os.path.dirname(__file__), "%s/%s" % (exercises_dir, exercise_file))
