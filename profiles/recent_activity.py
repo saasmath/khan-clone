@@ -65,16 +65,8 @@ class RecentVideoActivity(RecentActivity):
         # and the "recent activity window" can include such older log entries.
         # Delete prying into video_log.video
         # when the window slides off of those entries.
-        if video_log.youtube_id:
-            self.youtube_id = video_log.youtube_id
-        else:
-            self.youtube_id = video_log.video.youtube_id
-
-        if video_log.readable_id:
-            readable_id = video_log.readable_id
-            self.relative_url = models.Video.get_relative_url(readable_id)
-        else:
-            self.relative_url = video_log.video.relative_url
+        self.youtube_id = video_log.youtube_id or video_log.video.youtube_id
+        self.relative_url = '/video?v=%s' % (self.youtube_id)
 
         self.seconds_watched = video_log.seconds_watched
         self.dt = video_log.time_watched
