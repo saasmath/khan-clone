@@ -148,7 +148,7 @@ def get_user_data_from_json(json, key):
 @jsonify
 def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.Topic.get_rolled_up_top_level_topics(version)
+    return models.Topic.get_content_topics(version)
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
@@ -633,7 +633,7 @@ def playlists_library():
 @compress
 @jsonify
 def playlists_library_list():
-    topics = models.Topic.get_filled_rolled_up_top_level_topics(types = ["Video", "Url"])
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
         (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
