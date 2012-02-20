@@ -874,7 +874,7 @@ class NicknameIndex(db.Model):
 
         q = NicknameIndex.all()
         q.filter("index_value =", nicknames.build_search_query(raw_query))
-        return list(set([entry.parent_key() for entry in q]))
+        return list(set(entry.parent_key() for entry in q))
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
