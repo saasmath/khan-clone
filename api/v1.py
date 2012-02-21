@@ -289,7 +289,8 @@ def topic_tree_problems(version_id = None):
     changes = models.VersionContentChange.get_updated_content_dict(version)
     exercise_dict.update(changes)
     
-    for exercise in [e for e in exercise_dict.values() if e.live]:
+    for exercise in [e for e in exercise_dict.values() 
+                     if e.live and not e.summative]:
                
         if exercise.h_position not in location_dict:
             location_dict[exercise.h_position] = {}

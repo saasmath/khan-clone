@@ -4329,7 +4329,8 @@ class ExerciseVideo(db.Model):
                             del ev_key_dict[ev_key]
 
                     # add new related_videos
-                    for i, video_readable_id in enumerate(content.related_videos):
+                    for i, video_readable_id in enumerate(content.related_videos
+                        if hasattr(content, "related_videos") else []):
                         
                         if video_readable_id not in video_readable_dict:
                             video = video.get_for_readable_id(video_readable_id)
