@@ -1966,6 +1966,34 @@ def backupmodels():
     """Return the names of all models that inherit from models.BackupModel."""
     return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
 
+@route("/api/v1/dev/protobufquery", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_query():
+    """Return the results of a GQL query as pickled protocol buffer objects
+
+    Example python code:
+    import urllib as u
+    import urllib2 as u2
+
+    # make sure to quote the query
+    q = u.quote("SELECT * FROM VideoLog ORDER BY time_watched LIMIT 50")
+
+    # get the entities selected by the query
+    p = u2.urlopen("http://localhost:8080/api/v1/dev/protobufquery?query=%s" % q)
+
+    # It's a little more complicated in practice because oauth must be used but
+    # that's the idea
+    """
+
+    query = request.request_string("query")
+    if not query:
+        return api_error_response(ValueError("Query required"))
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               db.GqlQuery(query))
+
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
 @oauth_required()
 @developer_required
