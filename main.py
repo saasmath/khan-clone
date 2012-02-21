@@ -618,10 +618,13 @@ class PermanentRedirectToHome(request_handler.RequestHandler):
 
         self.redirect(redirect_target, True)
 
+# This handler is used for the video player currently. In the future it will show
+# topic pages and exercises as well.
+# The URI format is a topic path followed by a type and resource identifier, i.e.:
+#   /math/algebra/introduction-to-algebra/v/origins-of-algebra  (A video in topic "introduction-to-algebra" with ID "origins-of-algebra"
 class ShowContent(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self, path=None):
-        self.response.headers['Content-Type'] = 'text/html'
 
         if path:
             path_list = path.split('/')
@@ -882,7 +885,7 @@ application = webapp2.WSGIApplication([
 
     ('/_ah/warmup.*', warmup.Warmup),
 
-    # Content glob comes in dead last so it doesn't conflict with any other routes
+    # Content glob comes in dead last so it doesn't conflict with any other routes (See ShowContent)
     ('/(.*)', ShowContent),
 
     ], debug=True)
