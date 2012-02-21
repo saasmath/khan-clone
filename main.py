@@ -103,7 +103,7 @@ class ViewVideo(request_handler.RequestHandler):
                 "selected_nav_link": 'watch'
             }
 
-            bingo(['struggling_videos_landing'])
+#            bingo(['struggling_videos_landing'])
             handler.render_jinja2_template('viewvideo.html', template_values)
             return
 
@@ -145,7 +145,11 @@ class ViewVideo(request_handler.RequestHandler):
             "selected_nav_link": 'watch'
         }
 
-        bingo(['struggling_videos_landing'])
+        bingo([
+            'struggling_videos_landing',
+            'suggested_activity_videos_landing',
+            'suggested_activity_videos_landing_binary',
+        ])
         handler.render_jinja2_template('viewvideo.html', template_values)
 
     # The handler itself is deprecated. The ShowContent handler is the canonical

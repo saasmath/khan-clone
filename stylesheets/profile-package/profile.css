@@ -64,7 +64,7 @@
 .profile-sheet-title, .profile-graph-title {
     display: none;
     background: #EEE;
-    margin: 0 -19px 18px -20px;
+    margin: 0 -19px 0 -20px;
     padding: 5px 20px;
     border-top: 1px solid #CCC;
     border-bottom: 1px solid #CCC;
@@ -476,62 +476,133 @@
             z-index: 5;
         }
 
-.activity-list {
-padding-left: 3px;
+#activity-contents h2 {
+    margin-bottom: 10px;
+}
+.activity-column {
+    width: 530px;
+    float: left;
+    position: relative;
+}
+.mini-stats-column {
+    margin-left: 3%;
+    width: 39%;
+    height: 500px;
+    /* background: #eee; */
+    float: left;
 }
 .activity-list > ul {
     margin: 0;
-    padding: 15px 0;
     list-style: none;
 }
 .activity-list > ul > li {
     font-size: 18px;
     color: #555;
-    padding: 10px 0;
+    padding: 0px 0px 10px 0px;
 }
-     .activity-list .activity-image {
+    #recent-activity .simple-button {
+        padding: 0 10px;
+        line-height: 20px;
+    }
+    .ach-text {
+        display: block;
         float: left;
-        width: 60px;
-        height: 60px;
+        background: #EEE;
+        padding: 10px 15px;
+        border-radius: 5px;
+        position: relative;
+        width: 100%;
+
+        box-sizing: border-box;
+    }
+    .activity-list .activity-image {
+        float: left;
+        margin-right: 8px;
+        width: 40px;
+        height: 40px;
         background-color: #ccc;
         display: inline-block;
         -webkit-border-radius: 5px;
         -moz-border-radius: 5px;
         border-radius: 5px;
-     }
-     .activity-list .activity-badge .activity-image {
-         background: #005987 url(/images/activity-badge-icon.png) no-repeat 50% 50%;
-     }
-     .activity-list .activity-exercise .activity-image {
-         background: #ccc url(/images/activity-exercise-icon-incomplete.png) no-repeat 50% 50%;
-     }
-     .activity-list .activity-exercise.proficient .activity-image {
-         background: #005987 url(/images/activity-exercise-icon-proficient.png) no-repeat 50% 50%;
-     }
-     .activity-list .activity-goal .activity-image {
-         background: #ccc url(/images/activity-icon-goal-inset.png) no-repeat 50% 50%;
-     }
-     .activity-list .activity-goal.completed .activity-image {
-         background: #005987 url(/images/activity-icon-goal-complete.png) no-repeat 50% 50%;
-     }
-     .activity-list .activity-video .activity-image {
-         background: #ccc url(/images/activity-video-icon-inset.png) no-repeat 50% 50%;
-     }
-     .activity-list .activity-video.completed .activity-image {
-         background: #005987 url(/images/activity-video-icon-complete.png) no-repeat 50% 50%;
-     }
+    }
+    .activity-list .activity-badge .activity-image {
+        background: #005987 url(/images/activity-badge-icon-small.png) no-repeat 50% 50%;
+    }
+    .activity-list .activity-exercise .activity-image {
+        background: #ccc url(/images/activity-exercise-icon-incomplete-small.png) no-repeat 50% 50%;
+    }
+    .activity-list .activity-exercise.proficient .activity-image {
+        background: #005987 url(/images/activity-exercise-icon-proficient-small.png) no-repeat 50% 50%;
+    }
+    .activity-list .activity-goal .activity-image {
+        background: #ccc url(/images/activity-icon-goal-inset-small.png) no-repeat 50% 50%;
+    }
+    .activity-list .activity-goal.completed .activity-image {
+        background: #005987 url(/images/activity-icon-goal-complete-small.png) no-repeat 50% 50%;
+    }
+    .activity-list .activity-video .activity-image {
+        background: #ccc url(/images/activity-video-icon-inset-small.png) no-repeat 50% 50%;
+    }
+    .activity-list .activity-video.completed .activity-image {
+        background: #005987 url(/images/activity-video-icon-complete-small.png) no-repeat 50% 50%;
+    }
     .activity-list .activity-image img {
         max-width: 60px;
         max-height: 60px;
         vertical-align: middle;
-		position:absolute;
+        position:absolute;
     }
-    .activity-list .time {
+    .covering-link {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 1;
+    }
+    .suggested-activity-controls {
+        position: absolute;
+        right: 10px;
+        top: 20px;
+        font-size: 15px;
+    }
+    .suggested-activity-controls .simple-button {
+        padding: 10px 5px 10px 5px;
+    }
+    .foreground-link {
+        position: relative;
+        z-index: 2;
+    }
+    .foreground-link.ellipsis {
+        width: 365px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        display: inline-block;
+    }
+    .suggested-activity-controls .foreground-link:hover {
+        text-decoration: none;
+    }
+    .activity-controls {
         font-size: 75%;
+        margin: 10px 0 -5px 0;
+        padding-top: 5px;
+        border-top: 1px dotted #ddd;
+    }
+    .activity-controls .time {
         color: #999;
         font-style: italic;
     }
-
+    .activity-list .streak-bar {
+        height: 10px;
+        margin-left: 48px;
+        margin-top: 4px;
+    }
+    .description {
+        float: left;
+        width: 420px;
+    }
 a.graph-link {
     color: #006699;
 }
@@ -564,10 +635,18 @@ div.profile-notification {
 div.profile-notification.uncover-nav {
     top: 105px;
 }
+#activity-loading-placeholder {
+    position: absolute;
+    background: white;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    z-index: 20; /* must be above all of the recent/suggested activity */
+}
 #recent-activity-progress-bar {
     width: 400px;
     height: 22px;
-    margin-top: 15px;
+    margin: 15px 0;
 }
 #graph-progress-bar {
     width: 400px;
@@ -609,46 +688,6 @@ div.profile-notification.uncover-nav {
     padding-right: 10px;
     margin: 0;
 }
-
-#recent-activity h2 {
-    margin: 0;
-}
-#recent-activity .share-link {
-    display: none;
-    z-index:5;
-    position:absolute;
-    left:-76px;
-    top:20px;
-    font-size:12px;
-}
-#recent-activity .simple-button {
-    padding-top: 2px;
-    padding-bottom: 2px;
-}
-#recent-activity .simple-button:hover {
-    top: 20px;
-}
-.ach-text {
-    padding-left: 10px;
-	display: block;
-    float: left;
-}
-
-#recent-activity .sharepop {
-    z-index: 3;
-    position: absolute;
-    left: -75px;
-    font-size: 12px;
-    top: 53px;
-}
-#recent-activity .triangle-isosceles.top:after {
-    right: 61px;
-}
-
-.badge-share-container {position:absolute;bottom:25px;left:5px;width:250px;}
-
-
-.sharebar {z-index:0; position:absolute;padding-left:100px;}
 
 #individual_report #vital-statistics #stats-charts.coach-view {
   height:auto !important;
@@ -903,7 +942,7 @@ li.profile-tab {
 }
 .tab-content {
     margin-left: 150px; /* must be the same as width of profile-navigation */
-    padding: 20px 0 0 20px;
+    padding: 20px 0 20px 20px;
     min-height: 500px;
     border-left: 1px solid #ccc;
     position: relative;
@@ -912,17 +951,18 @@ li.profile-tab {
 .user-deets {
     float:left;
     margin-left: 10px;
+    max-width: 240px;
 }
 .user-deets .nickname {
     font-size: 150%;
     padding: 0;
     margin: 0;
-    width: 220px;
 }
 .user-deets .add-remove-coach {
     display: inline;
 }
 .user-deets .basic-stats {
+    min-width: 180px;
     margin-top: 14px;
 }
 
@@ -1130,4 +1170,5 @@ li.profile-tab {
     text-align: center;
     text-decoration: none;
 }
+
 

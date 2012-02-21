@@ -42,8 +42,12 @@ class DailyActivitySummary:
         summary.date = datetime.datetime(date.year, date.month, date.day)
 
         date_next = date + datetime.timedelta(days=1)
-        problem_logs_filtered = filter(lambda problem_log: date <= problem_log.time_done < date_next, problem_logs)
-        video_logs_filtered = filter(lambda video_log: date <= video_log.time_watched < date_next, video_logs)
+        problem_logs_filtered = filter(
+                lambda problem_log: date <= problem_log.time_done < date_next,
+                problem_logs)
+        video_logs_filtered = filter(
+                lambda video_log: date <= video_log.time_watched < date_next,
+                video_logs)
 
         for problem_log in problem_logs_filtered:
             hour = problem_log.time_done.hour
@@ -181,8 +185,10 @@ def daily_activity_summary_map(user_data):
     dt = dt_start
     list_entities_to_put = []
 
-    problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end).fetch(100000)
-    video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end).fetch(100000)
+    problem_logs = models.ProblemLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end).fetch(100000)
+    video_logs = models.VideoLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end).fetch(100000)
 
     while dt <= dt_end:
         summary = DailyActivitySummary.build(user_data, dt, problem_logs, video_logs)
@@ -207,7 +213,10 @@ class StartNewDailyActivityLogMapReduce(request_handler.RequestHandler):
                 name = "DailyActivityLog",
                 handler_spec = "activity_summary.daily_activity_summary_map",
                 reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "models.UserData", "processing_rate": 250},
+                reader_parameters = {
+                     "entity_kind": "models.UserData",
+                     "processing_rate": 250,
+                },
                 mapreduce_parameters = {},
                 shard_count = 64,
                 queue_name = fast_slow_queue.QUEUE_NAME,)

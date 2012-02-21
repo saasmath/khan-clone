@@ -10,6 +10,12 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     profile: null,
+
+    /**
+     * The root segment of the URL for the profile page for this user.
+     * Will be of the form "/profile/<identifier>" where identifier
+     * can be a username, or other identifier sent by the server.
+     */
     profileRoot: "",
 
     /**
@@ -18,12 +24,6 @@ var Profile = {
      * to enter data.
      */
     isDataCollectible: false,
-
-    /**
-     * A flag indicating whether or not we should use the "legacy" layout
-     * of the page, which hides any notions of public-profiles.
-     */
-    useLegacy: false,
 
     /**
      * Overridden w profile-intro.js if necessary
@@ -36,7 +36,7 @@ var Profile = {
      */
     init: function(json) {
         this.profile = new ProfileModel(json.profileData);
-        this.profile.bind("change:username", Profile.onUsernameChange_);
+        this.profile.bind("savesuccess", this.onProfileUpdated_, this);
 
         this.profileRoot = json.profileRoot;
         this.isDataCollectible = json.isDataCollectible;
@@ -49,7 +49,7 @@ var Profile = {
 
         Backbone.history.start({
             pushState: true,
-            root: ""
+            root: this.profileRoot
         });
 
         Profile.showIntro_();
@@ -70,125 +70,25 @@ var Profile = {
             }
         });
 
-        // Delegate clicks for badge navigation
-        $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
-            var category = $(this).attr("id");
-            var clickedBadge = $(this);
-
-            $("#badge-container").css("display", "");
-            clickedBadge.siblings().removeClass("selected");
-
-            if ($("#badge-container > #" + category).is(":visible")) {
-               if (clickedBadge.parents().hasClass("standard-view")) {
-                   $("#badge-container > #" + category).slideUp(300, function() {
-                           $("#badge-container").css("display", "none");
-                           clickedBadge.removeClass("selected");
-                       });
-               }
-               else {
-                   $("#badge-container > #" + category).hide();
-                   $("#badge-container").css("display", "none");
-                   clickedBadge.removeClass("selected");
-               }
-            }
-            else {
-               var jelContainer = $("#badge-container");
-               var oldHeight = jelContainer.height();
-               $(jelContainer).children().hide();
-               if (clickedBadge.parents().hasClass("standard-view")) {
-                   $(jelContainer).css("min-height", oldHeight);
-                   $("#" + category, jelContainer).slideDown(300, function() {
-                       $(jelContainer).animate({"min-height": 0}, 200);
-                   });
-               } else {
-                   $("#" + category, jelContainer).show();
-               }
-               clickedBadge.addClass("selected");
-            }
-        });
-
-        var currentGoals = window.GoalBook.map(function(g) { return g.get("title"); });
-        $(".add-goal").each(function(i, elt) {
-            var button = $(elt);
-            var badge = button.closest(".achievement-badge");
-            var goalTitle = badge.find(".achievement-title").text();
-
-            // remove +goal button if present in list of active goals
-            if (_.indexOf(currentGoals, goalTitle) > -1) {
-
-                button.remove();
-
-            // add +goal behavior to button, once.
-            } else {
-
-                button.one("click", function() {
-                    var goalObjectives = _(badge.data("objectives"))
-                            .map(Goal.GoalObjectiveExerciseProficiency);
-
-                    var goal = new Goal({
-                        title: goalTitle,
-                        objectives: goalObjectives
-                    });
-
-                    window.GoalBook.add(goal);
-
-                    goal.save()
-                        .fail(function(err) {
-                            var error = err.responseText;
-                            button.addClass("failure")
-                                .text("oh no!").attr("title", "This goal could not be saved.");
-                            KAConsole.log("Error while saving new badge goal", goal);
-                            window.GoalBook.remove(goal);
-                        })
-                        .success(function() {
-                            button.text("Goal Added!").addClass("success");
-                            badge.find(".energy-points-badge").addClass("goal-added");
-                        });
-                });
-            }
-        });
-
+        var navElementHandler = _.bind(this.onNavigationElementClicked_, this);
         // Delegate clicks for tab navigation
         $(".profile-navigation .vertical-tab-list").delegate("a",
-                "click", this.onNavigationElementClicked_);
+                "click", navElementHandler);
 
         // Delegate clicks for vital statistics time period navigation
         $("#tab-content-vital-statistics").delegate(".graph-date-picker a",
-                "click", this.onNavigationElementClicked_);
+                "click", navElementHandler);
 
         $("#tab-content-goals").delegate(".graph-picker .type a",
-                "click", this.onNavigationElementClicked_);
+                "click", navElementHandler);
 
         // Delegate clicks for recent badge-related activity
         $(".achievement .ach-text").delegate("a", "click", function(event) {
             if (!event.metaKey) {
                 event.preventDefault();
-                Profile.router.navigate(Profile.profileRoot + "/achievements", true);
+                Profile.router.navigate("/achievements", true);
                 $("#achievement-list ul li#category-" + $(this).data("category")).click();
             }
-        });
-
-        // Bind event handlers for sharing controls on recent activity
-        $(".share-link").hide();
-        $(".sharepop").hide();
-
-        $(".achievement,.exercise,.video").hover(
-            function() {
-                $(this).find(".share-link").show();
-                },
-            function() {
-                $(this).find(".share-link").hide();
-                $(this).find(".sharepop").hide();
-              });
-
-        $(".share-link").click(function() {
-            if ($.browser.msie && (parseInt($.browser.version, 10) < 8)) {
-                $(this).next(".sharepop").toggle();
-            } else {
-                $(this).next(".sharepop").toggle(
-                        "drop", { direction: "up" }, "fast");
-            }
-            return false;
         });
     },
 
@@ -196,61 +96,54 @@ var Profile = {
      * All the tabs that you could encounter on the profile page.
      */
     subRoutes: {
-        "": "showDefault",
         "/achievements": "showAchievements",
         "/goals/:type": "showGoals",
         "/goals": "showGoals",
         "/vital-statistics": "showVitalStatistics",
         "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
-        "/vital-statistics/:graph": "showVitalStatistics"
+        "/vital-statistics/:graph": "showVitalStatistics",
+
+        "": "showDefault",
+        // If the user types /profile/username/ with a trailing slash
+        // it should work, too
+        "/": "showDefault",
+
+        // A minor hack to ensure that if the user navigates to /profile without
+        // her username, it still shows the default profile screen. Note that
+        // these routes aren't relative to the root URL, but will still work.
+        "/profile": "showDefault",
+        "/profile/": "showDefault"
     },
 
     /**
      * Generate routes hash to be used by Profile.router
      */
     getRoutes_: function() {
-        var routes = {};
-
-        _.each(this.subRoutes, function(fxn, subRoute) {
-            // Internally, backbone expects these routes to be decoded.
-            var key = decodeURIComponent(Profile.profileRoot) + subRoute;
-            routes[key] = fxn;
-        });
-
-        return routes;
+        return this.subRoutes;
     },
 
-    /*
-     * Update Profile.router, address bar, and links on the page
+    /**
+     * Handle a change to the profile root.
      */
-    onUsernameChange_: function(model) {
-        var oldRoot = Profile.profileRoot;
-        Profile.profileRoot = "/profile/" + model.get("username");
-
-        // Clear routes with old root
-        Backbone.history.handlers = [];
-
-        // Create a new router
-        Profile.router = new Profile.TabRouter({routes: Profile.getRoutes_()});
-
-        // Update address bar so user can see new url
-        // Note: assumes that user is on the main tab, which has no subroute
-        Profile.router.navigate(Profile.profileRoot, true);
-
-        // Change all links on the page...
-        $("a").each(function(index, elem) {
-            var jel = $(elem),
-                href = jel.attr("href");
-            if (href.indexOf(oldRoot) === 0) {
-                var updatedHref = href.replace(oldRoot, Profile.profileRoot);
-                jel.attr("href", updatedHref);
-            }
-        });
+    onProfileUpdated_: function() {
+        var username = this.profile.get("username");
+        if (username && Profile.profileRoot != ("/profile/" + username)) {
+            // Profile root changed - we need to reload the page since
+            // Backbone.router isn't happy when the root changes.
+            window.location.replace("/profile/" + username);
+        }
     },
 
     TabRouter: Backbone.Router.extend({
         showDefault: function() {
+            Profile.populateActivity().then(function() {
+                // Pre-fetch badges, after the activity has been loaded, since
+                // they're needed to edit the display-case.
+                if (Profile.profile.isEditable()) {
+                    Profile.populateAchievements();
+                }
+            });
             $("#tab-content-user-profile").show().siblings().hide();
             this.activateRelatedTab($("#tab-content-user-profile").attr("rel"));
             this.updateTitleBreadcrumbs();
@@ -320,6 +213,7 @@ var Profile = {
         },
 
         showAchievements: function() {
+            Profile.populateAchievements();
             $("#tab-content-achievements").show()
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-achievements").attr("rel"));
@@ -328,6 +222,7 @@ var Profile = {
 
         showGoals: function(type) {
             type = type || "current";
+            Profile.populateGoals();
 
             GoalProfileViewsCollection.showGoalType(type);
 
@@ -371,12 +266,17 @@ var Profile = {
      * Navigate the router appropriately,
      * either to change profile sheets or vital-stats time periods.
      */
-    onNavigationElementClicked_: function(event) {
+    onNavigationElementClicked_: function(e) {
         // TODO: Make sure middle-click + windows control-click Do The Right Thing
         // in a reusable way
-        if (!event.metaKey) {
-            event.preventDefault();
-            var route = $(this).attr("href");
+        if (!e.metaKey) {
+            e.preventDefault();
+            var route = $(e.currentTarget).attr("href");
+            // The navigation elements have the profileRoot in the href, but
+            // Router.navigate should be relative to the root.
+            if (route.indexOf(this.profileRoot) === 0) {
+                route = route.substring(this.profileRoot.length);
+            }
             Profile.router.navigate(route, true);
         }
     },
@@ -587,7 +487,7 @@ var Profile = {
                 $("#info-hover-container").hide();
                 // Extract the name from the ID, which has been prefixed.
                 var exerciseName = this.id.substring("exercise-".length);
-                Profile.router.navigate(Profile.profileRoot + "/vital-statistics/exercise-problems/" + exerciseName, true);
+                Profile.router.navigate("/vital-statistics/exercise-problems/" + exerciseName, true);
             });
         }
     },
@@ -670,8 +570,7 @@ var Profile = {
     },
 
     render: function() {
-        var profileTemplate = Templates.get(
-                this.useLegacy ? "profile.profile-legacy" : "profile.profile");
+        var profileTemplate = Templates.get("profile.profile");
         Handlebars.registerHelper("graph-date-picker-wrapper", function(block) {
             this.graph = block.hash.graph;
             return block(this);
@@ -686,19 +585,12 @@ var Profile = {
             countExercises: UserCardView.countExercises
         }));
 
-        if (this.useLegacy) {
-            $("#profile-content").addClass("legacy");
-        }
-
         // Show only the user card tab,
         // since the Backbone default route isn't triggered
         // when visiting khanacademy.org/profile
         $("#tab-content-user-profile").show().siblings().hide();
 
         Profile.populateUserCard();
-        Profile.populateAchievements();
-        Profile.populateGoals();
-        Profile.populateActivity();
 
         this.profile.bind("change:nickname", function(profile) {
             var nickname = profile.get("nickname") || "Profile";
@@ -706,25 +598,37 @@ var Profile = {
             $("#top-header-links .user-name a").text(nickname);
         });
         this.profile.bind("change:avatarSrc", function(profile) {
-            $(".profile-tab-avatar").attr("src", profile.get("avatarSrc"));
+            var src = profile.get("avatarSrc");
+            $(".profile-tab-avatar").attr("src", src);
+            $("#top-header #user-info .user-avatar").attr("src", src);
         });
     },
 
+    userCardPopulated_: false,
     populateUserCard: function() {
+        if (Profile.userCardPopulated_) {
+            return;
+        }
         var view = new UserCardView({model: this.profile});
         $(".user-info-container").html(view.render().el);
-    },
 
-    populateAchievements: function() {
-        // Render the public badge list, as that's ready immediately.
         var publicBadgeList = new Badges.BadgeList(
                 this.profile.get("publicBadges"));
         publicBadgeList.setSaveUrl("/api/v1/user/badges/public");
         var displayCase = new Badges.DisplayCase({ model: publicBadgeList });
         $(".sticker-book").append(displayCase.render().el);
+        Profile.displayCase = displayCase;
 
+        Profile.userCardPopulated_ = true;
+    },
+
+    achievementsDeferred_: null,
+    populateAchievements: function() {
+        if (Profile.achievementsDeferred_) {
+            return Profile.achievementsDeferred_;
+        }
         // Asynchronously load the full badge information in the background.
-        $.ajax({
+        return Profile.achievementsDeferred_ = $.ajax({
             type: "GET",
             url: "/api/v1/user/badges",
             data: {
@@ -733,7 +637,6 @@ var Profile = {
               },
             dataType: "json",
             success: function(data) {
-
                 if (Profile.profile.isEditable()) {
                     // The display-case is only editable if you're viewing your
                     // own profile
@@ -747,7 +650,7 @@ var Profile = {
                             fullBadgeList.add(new Badges.UserBadge(json));
                         });
                     });
-                    displayCase.setFullBadgeList(fullBadgeList);
+                    Profile.displayCase.setFullBadgeList(fullBadgeList);
                 }
 
                 // TODO: make the rendering of the full badge page use the models above
@@ -785,16 +688,6 @@ var Profile = {
                             label: "Challenge"
                         }
                     ];
-
-                // Because we show the badges in reverse order,
-                // from challenge/master/category-5 to meteorite/bronze/category-0
-                Handlebars.registerHelper("reverseEach", function(context, block) {
-                    var result = "";
-                    for (var i = context.length - 1; i >= 0; i--) {
-                        result += block(context[i]);
-                    }
-                    return result;
-                });
 
                 Handlebars.registerHelper("toMediumIconSrc", function(category) {
                     return badgeInfo[category].icon;
@@ -889,13 +782,8 @@ var Profile = {
 
                 $("abbr.timeago").timeago();
 
-                if (!Profile.useLegacy) {
-                    // Start with meteorite badges displayed, but only in
-                    // the new layout
-                    $("#category-0").click();
-                } else {
-                    $(".member-for").css({"visibility": ""});
-                }
+                // Start with meteorite badges displayed
+                $("#category-0").click();
 
                 // TODO: move into profile-goals.js?
                 var currentGoals = window.GoalBook.map(function(g) { return g.get("title"); });
@@ -945,12 +833,17 @@ var Profile = {
         });
     },
 
+    goalsDeferred_: null,
     populateGoals: function() {
+        if (Profile.goalsDeferred_) {
+            return Profile.goalsDeferred_;
+        }
+
         // TODO: Abstract away profile + actor privileges
         // Also in profile.handlebars
         var email = Profile.profile.get("email");
         if (email) {
-            $.ajax({
+            Profile.goalsDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/goals",
                 data: {email: email},
@@ -961,7 +854,10 @@ var Profile = {
             });
         } else {
             Profile.renderFakeGoals_();
+            Profile.goalsDeferred_ = new $.Deferred();
+            Profile.goalsDeferred_.resolve();
         }
+        return Profile.goalsDeferred_;
     },
 
     renderFakeGoals_: function() {
@@ -975,20 +871,32 @@ var Profile = {
 
     populateSuggestedActivity: function(activities) {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
+
+        var attachProgress = function(activity) {
+            var progress = activity["progress"] || 0;
+            var formattedProgress = progress ?
+                    (100 * progress).toPrecision(4) + "%" :
+                    "not started";
+            activity["streakBar"] = {
+                "proficient": false,
+                "suggested": true,
+                "progressDisplay": formattedProgress,
+                // TODO: is this the right width?
+                "maxWidth": 228,
+                "width": activity["progress"] * 228
+            };
+        };
+        _.each(activities["exercises"] || [], attachProgress);
+        _.each(activities["videos"] || [], attachProgress);
         $("#suggested-activity").append(suggestedTemplate(activities));
     },
 
     populateRecentActivity: function(activities) {
-        $("#recent-activity-progress-bar").slideUp("fast", function() {
-            $(this).hide();
-        });
-
         var listTemplate = Templates.get("profile.recent-activity-list"),
             exerciseTemplate = Templates.get("profile.recent-activity-exercise"),
             badgeTemplate = Templates.get("profile.recent-activity-badge"),
             videoTemplate = Templates.get("profile.recent-activity-video"),
             goalTemplate = Templates.get("profile.recent-activity-goal");
-
 
         Handlebars.registerHelper("renderActivity", function(activity) {
             _.extend(activity, {profileRoot: Profile.profileRoot});
@@ -1010,13 +918,17 @@ var Profile = {
             .find("span.timeago").timeago();
     },
 
+    activityDeferred_: null,
     populateActivity: function() {
+        if (Profile.activityDeferred_) {
+            return Profile.activityDeferred_;
+        }
         $("#recent-activity-progress-bar").progressbar({value: 100});
 
         // TODO: Abstract away profile + actor privileges
         var email = Profile.profile.get("email");
         if (email) {
-            $.ajax({
+            Profile.activityDeferred_ = $.ajax({
                 type: "GET",
                 url: "/api/v1/user/activity",
                 data: {
@@ -1025,10 +937,19 @@ var Profile = {
                 },
                 dataType: "json",
                 success: function(data) {
-                    //Profile.populateSuggestedActivity(data.suggested);
+                    $("#activity-loading-placeholder").fadeOut(
+                            "slow", function() {
+                                $(this).hide();
+                            });
+                    Profile.populateSuggestedActivity(data.suggested);
                     Profile.populateRecentActivity(data.recent);
+                    $("#activity-contents").show();
                 }
             });
+        } else {
+            Profile.activityDeferred_ = new $.Deferred();
+            Profile.activityDeferred_.resolve();
         }
+        return Profile.activityDeferred_;
     }
 };

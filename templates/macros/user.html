@@ -33,7 +33,7 @@
         <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
     </span>
     {% endif %}
-    <span class="user-name"><a href="{{profile_root}}">{{username|escape}}</a></span>
+    <a href="{{profile_root}}"><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
 </span>
 {%- endmacro %}
 
