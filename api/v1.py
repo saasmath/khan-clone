@@ -274,6 +274,41 @@ def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
+@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
+# TODO(james) add @developer_required once Tom creates interface
+@jsonp
+@jsonify
+def topic_tree_problems(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    
+    exercises = models.Exercise.all()
+    exercise_dict = dict((e.key(),e) for e in exercises)
+
+    location_dict = {}
+    duplicate_positions = list()
+    changes = models.VersionContentChange.get_updated_content_dict(version)
+    exercise_dict.update(changes)
+    
+    for exercise in [e for e in exercise_dict.values() if e.live]:
+               
+        if exercise.h_position not in location_dict:
+            location_dict[exercise.h_position] = {}
+
+        if exercise.v_position in location_dict[exercise.h_position]:
+            # duplicate_positions.add(exercise)
+            location_dict[exercise.h_position][exercise.v_position].append(exercise)
+            duplicate_positions.append(
+                location_dict[exercise.h_position][exercise.v_position])
+        else:
+            location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+    problems = {
+        "ExerciseVideos with topicless videos" : 
+            models.ExerciseVideo.get_all_with_topicless_videos(version),
+        "Exercises with colliding positions" : list(duplicate_positions)}
+
+    return problems
+
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topictree", methods=["GET"])
@@ -704,7 +739,7 @@ def exercise_save(exercise_name = None, version_id = "edit"):
 def exercise_save_data(version, data, exercise=None, put_change=True):
     if "name" not in data:
         raise Exception("exercise 'name' missing")
-    data["live"] = data["live"] = data["live"] == "true" or data["live"] == True    
+    data["live"] = data["live"] == "true" or data["live"] == True 
     data["v_position"] = int(data["v_position"])
     data["h_position"] = int(data["h_position"])
     data["seconds_per_fast_problem"] = (
