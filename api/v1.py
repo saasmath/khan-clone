@@ -148,7 +148,7 @@ def get_user_data_from_json(json, key):
 @jsonify
 def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.Topic.get_rolled_up_top_level_topics(version)
+    return models.Topic.get_content_topics(version)
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
@@ -668,7 +668,7 @@ def playlists_library():
 @compress
 @jsonify
 def playlists_library_list():
-    topics = models.Topic.get_filled_rolled_up_top_level_topics(types = ["Video", "Url"])
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
         (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
@@ -1260,7 +1260,8 @@ def log_user_video(youtube_id):
         video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if not video:
-        return api_error_response("Could not find video")
+        logging.error("Could not find video for %s" % (video_key_str or youtube_id))
+        return api_invalid_param_response("Could not find video for %s" % (video_key_str or youtube_id))
 
     seconds_watched = int(request.request_float("seconds_watched", default=0))
     last_second = int(request.request_float("last_second_watched", default=0))
@@ -1865,12 +1866,14 @@ def get_activity():
             student = user_override
 
     recent_activities = recent_activity.recent_activity_list(student)
+    recent_completions = filter(
+            lambda activity: activity.is_complete(),
+            recent_activities)
 
     return {
-        # TODO: re-enable this
-        #"suggested": suggested_activity.SuggestedActivity.get_for(
-                #student, recent_activities),
-        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+        "suggested": suggested_activity.SuggestedActivity.get_for(
+                student, recent_activities),
+        "recent": recent_completions[:recent_activity.MOST_RECENT_ITEMS],
     }
 
 # TODO in v2: imbue with restfulness
@@ -1991,15 +1994,43 @@ def autocomplete():
     }
 
 @route("/api/v1/dev/backupmodels", methods=["GET"])
-@oauth_required
+@oauth_required()
 @developer_required
 @jsonify
 def backupmodels():
     """Return the names of all models that inherit from models.BackupModel."""
     return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
 
+@route("/api/v1/dev/protobufquery", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_query():
+    """Return the results of a GQL query as pickled protocol buffer objects
+
+    Example python code:
+    import urllib as u
+    import urllib2 as u2
+
+    # make sure to quote the query
+    q = u.quote("SELECT * FROM VideoLog ORDER BY time_watched LIMIT 50")
+
+    # get the entities selected by the query
+    p = u2.urlopen("http://localhost:8080/api/v1/dev/protobufquery?query=%s" % q)
+
+    # It's a little more complicated in practice because oauth must be used but
+    # that's the idea
+    """
+
+    query = request.request_string("query")
+    if not query:
+        return api_error_response(ValueError("Query required"))
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               db.GqlQuery(query))
+
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
-@oauth_required
+@oauth_required()
 @developer_required
 @pickle
 def protobuf_entities(entity):

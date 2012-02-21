@@ -124,7 +124,9 @@ class Feedback(db.Model):
     def video(self):
         video_key = self.video_key()
         if video_key:
-            return db.get(video_key)
+            video = db.get(video_key)
+            if video and video.has_topic():
+                return video
         return None
 
     def add_vote_by(self, vote_type, user_data):
