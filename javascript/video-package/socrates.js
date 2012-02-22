@@ -616,6 +616,10 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 			this.poppler.blocked = true;
 			this.poppler.seek(seconds);
 			this.videoControls.player.seekTo(seconds, true);
+			if (this.videoControls.player.getPlayerState() === 2) {
+				// if paused, resume
+				this.videoControls.play();
+			}
 			this.poppler.blocked = false;
 		}, this));
 	},
