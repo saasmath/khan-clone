@@ -36,6 +36,7 @@ class ViewExercise(request_handler.RequestHandler):
         user_exercise.summative = exercise.summative
 
         # Temporarily work around in-app memory caching bug
+        # TODO(kamens): does this bug still exist? Here's hoping we don't hang user_exercise off of exercise any more, but we might.
         exercise.user_exercise = None
 
         template_values = {
