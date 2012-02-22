@@ -1,12 +1,12 @@
 <strong>Video sections:</strong>
 <ol>
-	{{#each sections}}
+    {{#each sections}}
     <li>
-    	<span>{{time}}</span>
-    	<a href="#{{slug}}">{{title}}</a>
-    	{{#each nested}}
-    		<a class="question-link" href="#{{slug}}" title="{{time}}">?</a>
-    	{{/each}}
+        <span>{{time}}</span>
+        <a href="#{{slug}}">{{title}}</a>
+        {{#each nested}}
+            <a class="question-link" href="#{{slug}}" title="{{time}}">?</a>
+        {{/each}}
     </li>
     {{/each}}
 </ol>
