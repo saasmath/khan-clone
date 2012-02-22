@@ -3492,6 +3492,7 @@ class Video(Searchable, db.Model):
         if user_video:
             awarded_points = user_video.points
 
+        # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
         import shared_jinja
         player_html = shared_jinja.get().render_template('videoplayer.html',
             user_data=UserData.current(), video_path=video_path, video=video,
