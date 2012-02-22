@@ -149,8 +149,6 @@ Socrates.InputText = Backbone.View.extend({
 	}
 });
 
-$(Socrates.ControlPanel.onReady);
-
 Socrates.Bookmark = Backbone.Model.extend({
 	seconds: function() {
 		return Socrates.Question.timeToSeconds(this.get("time"));
@@ -872,3 +870,6 @@ Socrates.initSkips = function(youtubeId) {
 Socrates.Data = {};
 
 Handlebars.registerPartial("submit-area", Templates.get("video.submit-area"));
+
+// todo(dmnd) only run this in edit mode
+$(Socrates.ControlPanel.onReady);
