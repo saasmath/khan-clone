@@ -612,8 +612,10 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 	},
 
 	initialize: function(options) {
-		this.beep = new Audio("/sounds/72126__kizilsungur__sweetalertsound2.wav");
-		this.beep.volume = 0.3;
+		_.defaults(options, this.constructor.defaults);
+
+		this.beep = new Audio(options.beepUrl);
+		this.beep.volume = options.beepVolume;
 
 		this.videoControls = options.videoControls;
 
@@ -809,6 +811,11 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 
 	submitted: function() {
 		this.skipped();
+	}
+}, {
+	defaults: {
+		beepUrl: "/sounds/72126__kizilsungur__sweetalertsound2.wav",
+		beepVolume: 0.3
 	}
 });
 
