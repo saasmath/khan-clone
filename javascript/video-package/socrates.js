@@ -269,7 +269,7 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	htmlUrl: function() {
-		return "/socrates/questions/" + this.model.htmlFile() + ".html";
+		return "/socrates/questions/" + this.model.htmlFile() + ".handlebars";
 	},
 
 	imageUrl: function() {
