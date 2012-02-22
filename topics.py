@@ -6,9 +6,11 @@ import urllib
 import logging
 import layer_cache
 import urllib2
-import re
+import simplejson
+
 from api.auth.xsrf import ensure_xsrf_cookie
 from google.appengine.ext import deferred
+
 
 
 from api.jsonify import jsonify
@@ -281,17 +283,15 @@ def removePlaylistIndex():
 
 @layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
 def getSmartHistoryContent():
-    request = urllib2.Request("http://smarthistory.org/khan-home.html")
+    request = urllib2.Request("http://khan.smarthistory.org/video-urls-for-khan-academy.html")
     try:
-        response = urllib2.urlopen(request)
-        smart_history = response.read()
-        smart_history = re.search(re.compile("<body>(.*)</body>", re.S), smart_history).group(1).decode("utf-8")
-        smart_history.replace("script", "")
+        opener = urllib2.build_opener()
+        f = opener.open(request)
+        smart_history = simplejson.load(f)
     except urllib2.URLError, e:
         logging.exception("Failed fetching smarthistory video list")
         smart_history = None
     return smart_history
-
 
 class ImportSmartHistory(request_handler.RequestHandler):
 
@@ -299,9 +299,28 @@ class ImportSmartHistory(request_handler.RequestHandler):
         """update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)"""
         default = models.TopicVersion.get_default_version()
         edit = models.TopicVersion.get_edit_version()
-        ImportSmartHistory.importIntoVersion(default)
-        ImportSmartHistory.importIntoVersion(edit)
-    
+        
+        logging.info("importing into edit version")
+        # if there are any changes to the edit version
+        if ImportSmartHistory.importIntoVersion(edit):
+
+            # make a copy of the default version, 
+            # update the copy and then mark it default
+            logging.info("creating new default version")
+            new_version = default.copy_version()
+            new_version.title = "SmartHistory Update"
+            new_version.put()
+
+            logging.info("importing into new version")
+            ImportSmartHistory.importIntoVersion(new_version)
+                
+            logging.info("setting version default")
+            new_version.set_default_version()
+            logging.info("done setting version default")
+
+        logging.info("done importing smart history")
+
+                        
     @staticmethod
     def importIntoVersion(version):
         logging.info("comparing to version number %i" % version.number)
@@ -315,41 +334,79 @@ class ImportSmartHistory(request_handler.RequestHandler):
                                  parent=parent,
                                  id="art-history",
                                  standalone_title="Art History",
-                                 description="Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by <b>Dr. Beth Harris and Dr. Steven Zucker along with other contributors.</b>")
+                                 description="Spontaneous conversations about works of art where the speakers are not afraid to disagree with each other or art history orthodoxy. Videos are made by Dr. Beth Harris and Dr. Steven Zucker along with other contributors.")
         
-        urls = topic.get_urls()
+        urls = topic.get_urls(include_descendants=True)
         href_to_key_dict = dict((url.url, url.key()) for url in urls)
         hrefs = [url.url for url in urls]
         content = getSmartHistoryContent()
+        if content is None:
+            raise Exception("Aborting import, could not read from smarthistory")
+
+        subtopics = topic.get_child_topics()
+        subtopic_dict = dict((t.title, t) for t in subtopics)
+        subtopic_child_keys = {}
+        
+        new_subtopic_keys = []
+
         child_keys = []
         i = 0
-        for link in re.finditer(re.compile('<a.*href="(.*?)"><span.*?>(.*)</span></a>', re.M), content):
-            href = link.group(1)
-            title = link.group(2)
+        for link in content:
+            href = link["href"]
+            title = link["title"]
+            parent_title = link["parent"]
+
+            if parent_title not in subtopic_dict:
+                subtopic = Topic.insert(title=parent_title,
+                                 parent=topic,
+                                 standalone_title="Art History: %s" % parent_title,
+                                 description="")
+                subtopic_dict[parent_title] = subtopic
+            else:
+                subtopic = subtopic_dict[parent_title]
+           
+            if subtopic.key() not in new_subtopic_keys:
+                new_subtopic_keys.append(subtopic.key())
+
+            if parent_title not in subtopic_child_keys:
+                 subtopic_child_keys[parent_title] = []
+
             if href not in hrefs:
-                logging.info("adding %i %s %s to art-history" % (i, href, title))
+                logging.info("adding %i %s %s to %s" % (i, href, title, parent_title))
+                models.VersionContentChange.add_new_content(
+                    models.Url, 
+                    version,
+                    {"title": title,
+                     "url": href
+                    },
+                    ["title", "url"])
+
                 url = Url(url=href,
                           title=title,
                           id=id)
                 url.put()
-                child_keys.append(url.key())
-                i += 1
+                subtopic_child_keys[parent_title].append(url.key())
+
             else:
-                child_keys.append(href_to_key_dict[href])
+                subtopic_child_keys[parent_title].append(href_to_key_dict[href])
+
+            i += 1
 
         logging.info("updating child_keys")
-        if topic.child_keys != child_keys:
-            if version.default:
-                logging.info("creating new default version")
-                new_version = version.copy_version()
-                new_version.description = "SmartHistory Update"
-                new_version.put()
-                new_topic = Topic.get_by_id("art-history", new_version)
-                new_topic.update(child_keys=child_keys)
-                new_version.set_default_version()
-            else:
-                topic.update(child_keys=child_keys)
+        change = False
+        for parent_title, child_keys in subtopic_child_keys.iteritems():
+            subtopic = subtopic_dict[parent_title]
+            if subtopic.child_keys != subtopic_child_keys[parent_title]:
+                change = True
+                subtopic.update(child_keys=subtopic_child_keys[parent_title])
+        
+        if topic.child_keys != new_subtopic_keys:    
+            change = True
+            topic.update(child_keys=new_subtopic_keys)
+        
+        if change:
             logging.info("finished updating version number %i" % version.number)
         else:
             logging.info("nothing changed")
 
+        return change

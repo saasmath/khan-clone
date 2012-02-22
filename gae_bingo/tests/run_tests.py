@@ -5,11 +5,11 @@ import urllib2
 import cookielib
 import json
 
-TEST_GAE_URL = "http://localhost:8080/gae_bingo/tests/run_step"
+TEST_GAE_HOST = "http://localhost:8100"
 
 last_opener = None
 
-def test_response(step, data={}, use_last_cookies=False, bot=False):
+def test_response(step="", data={}, use_last_cookies=False, bot=False, url=None):
     global last_opener
 
     if not use_last_cookies or last_opener is None:
@@ -19,25 +19,58 @@ def test_response(step, data={}, use_last_cookies=False, bot=False):
         if bot:
             last_opener.addheaders = [('User-agent', 'monkeysmonkeys Googlebot monkeysmonkeys')]
 
-    data["step"] = step
+    if url is None:
+        data["step"] = step
+        url = "/gae_bingo/tests/run_step?%s" % urllib.urlencode(data)
 
-    req = last_opener.open("%s?%s" % (TEST_GAE_URL, urllib.urlencode(data)))
+    req = last_opener.open("%s%s" % (TEST_GAE_HOST, url))
 
     try:
         response = req.read()
     finally:
         req.close()
 
-    return json.loads(response)
+    try:
+        return json.loads(response)
+    except ValueError:
+        return None
 
 def run_tests():
 
     # Delete all experiments (response should be count of experiments left)
     assert(test_response("delete_all") == 0)
 
+    # Test constructing a redirect URL that converts in monkey and chimps
+    redirect_url_monkeys = test_response("construct_monkeys_redirect_url")
+    assert(redirect_url_monkeys == "/gae_bingo/redirect?continue=http%3A//www.google.com&conversion_name=monkeys")
+
+    redirect_url_chimps = test_response("construct_chimps_redirect_url")
+    assert(redirect_url_chimps == "/gae_bingo/redirect?continue=http%3A//www.google.com&conversion_name=chimps_conversion_1&conversion_name=chimps_conversion_2")
+
+    # Test participating in monkeys and chimps once, and use previously constructed redirect URLs to convert
+    assert(test_response("participate_in_monkeys") in [True, False])
+    test_response(use_last_cookies=True, url=redirect_url_monkeys)
+    assert(test_response("participate_in_chimpanzees") in [True, False])
+    test_response(use_last_cookies=True, url=redirect_url_chimps)
+
+    # Make sure there's a single participant and conversion in monkeys
+    assert(test_response("count_participants_in", {"experiment_name": "monkeys"}) == 1)
+    dict_conversions_server = test_response("count_conversions_in", {"experiment_name": "monkeys"})
+    assert(sum(dict_conversions_server.values()) == 1)
+
+    # Make sure there's a single participant and two conversions in chimps
+    assert(test_response("count_participants_in", {"experiment_name": "chimpanzees"}) == 1)
+    dict_conversions_server = test_response("count_conversions_in", {"experiment_name": "chimpanzees"})
+    assert(sum(dict_conversions_server.values()) == 1)
+    dict_conversions_server = test_response("count_conversions_in", {"experiment_name": "chimpanzees (2)"})
+    assert(sum(dict_conversions_server.values()) == 1)
+ 
+    # Delete all experiments for next round of tests (response should be count of experiments left)
+    assert(test_response("delete_all") == 0)
+
     # Refresh bot's identity record so it doesn't pollute tests
     assert(test_response("refresh_identity_record", bot=True) == True)
-    
+   
     # Participate in experiment A, check for correct alternative values being returned,
     for i in range(0, 20):
         assert(test_response("participate_in_monkeys") in [True, False])

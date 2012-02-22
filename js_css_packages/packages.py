@@ -36,6 +36,7 @@ javascript = {
             "../../gae_bingo/static/js/gae_bingo.js",
 
             # application code & templates:
+            "streak-bar.handlebars",
             "handlebars-extras.js",
             "cookies.js",
             "pageutil.js",
@@ -46,7 +47,6 @@ javascript = {
             "promos.js",
             "youtube-player.handlebars",
             "api-version-mismatch.handlebars",
-            "streak-bar.handlebars",
             "generic-dialog.handlebars",
             "knowledgemap-exercise.handlebars",
             "knowledgemap-admin-exercise.handlebars",
@@ -102,7 +102,6 @@ javascript = {
             "username-picker.js",
             "user-card.handlebars",
             "user-card.js",
-            "profile-legacy.handlebars",
             "profile.handlebars",
             "suggested-activity.handlebars",
             "recent-activity-list.handlebars",

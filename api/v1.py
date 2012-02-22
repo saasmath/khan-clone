@@ -27,13 +27,13 @@ from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag,\
+from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
 from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
-from google.appengine.ext import db
+from google.appengine.ext import db, deferred
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -148,7 +148,7 @@ def get_user_data_from_json(json, key):
 @jsonify
 def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.Topic.get_rolled_up_top_level_topics(version)
+    return models.Topic.get_content_topics(version)
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
@@ -177,7 +177,7 @@ def topics_library_compact():
     topic_dict = {}
     for topic in topics:
         # special cases
-        if ((topic.standalone_title == "California Standards Test: Algebra I" and topic.id != "algebra-i") or 
+        if ((topic.id == "new-and-noteworthy") or 
             (topic.standalone_title == "California Standards Test: Geometry" and topic.id != "geometry-2")):
             continue
 
@@ -274,6 +274,43 @@ def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
+@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
+@route("/api/v1/dev/topictree/problems", methods=["GET"])
+# TODO(james) add @developer_required once Tom creates interface
+@jsonp
+@jsonify
+def topic_tree_problems(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    
+    exercises = models.Exercise.all()
+    exercise_dict = dict((e.key(),e) for e in exercises)
+
+    location_dict = {}
+    duplicate_positions = list()
+    changes = models.VersionContentChange.get_updated_content_dict(version)
+    exercise_dict.update(changes)
+    
+    for exercise in [e for e in exercise_dict.values() 
+                     if e.live and not e.summative]:
+               
+        if exercise.h_position not in location_dict:
+            location_dict[exercise.h_position] = {}
+
+        if exercise.v_position in location_dict[exercise.h_position]:
+            # duplicate_positions.add(exercise)
+            location_dict[exercise.h_position][exercise.v_position].append(exercise)
+            duplicate_positions.append(
+                location_dict[exercise.h_position][exercise.v_position])
+        else:
+            location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+    problems = {
+        "ExerciseVideos with topicless videos" : 
+            models.ExerciseVideo.get_all_with_topicless_videos(version),
+        "Exercises with colliding positions" : list(duplicate_positions)}
+
+    return problems
+
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topictree", methods=["GET"])
@@ -298,225 +335,15 @@ def topictree_export(version_id = None, topic_id = "root"):
 @jsonp
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root"):
-    logging.info("starting import")
-    version = models.TopicVersion.get_by_id(version_id)
-    parent = models.Topic.get_by_id(topic_id, version)
+    import zlib
+    import pickle
+    logging.info("calling /_ah/queue/deferred_import")
 
-    tree_json = request.json
-    topics = models.Topic.get_all_topics(version, True)
-    logging.info("got all topics")
-
-    topic_dict = dict((topic.id, topic) for topic in topics)
-    topic_keys_dict = dict((topic.key(), topic) for topic in topics)
-    videos = models.Video.get_all()
-    logging.info("got all videos")
-
-    video_dict = dict((video.youtube_id, video) for video in videos)
-    exercises = models.Exercise.get_all_use_cache()
-    logging.info("got all exercises")
-
-    exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
-    urls = models.Url.all()
-    url_dict = dict((url.id, url) for url in urls)
-    logging.info("got all urls")
-
-    all_entities_dict = {}
-    new_content_keys = []
-
-    # on dev server dont record new items in ContentVersionChanges
-    if App.is_dev_server:
-        put_change = False
-    else:
-        put_change = True
-
-    # delete all subtopics of node we are copying over the same topic
-    if tree_json["id"] == parent.id:
-        parent.delete_descendants() 
-
-    # adds key to each entity in json tree, if the node is not in the tree then add it
-    def add_keys_json_tree(tree, parent):
-
-        if tree["kind"] == "Topic":
-            if tree["id"] in topic_dict:
-                topic = topic_dict[tree["id"]]
-                tree["key"] = topic.key()
-            else:
-                kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
-                kwargs["version"] = version
-                topic = models.Topic.insert(title = tree['title'], parent = None, **kwargs)
-                logging.info("added topic %s" % topic.title)
-                # since this is a new topic, put it in its correct parent
-                # the order does not matter as we are over-writing the 
-                # child_keys later.  This add_child is done to just make sure
-                # the parent and ancestors will all match
-                parent.add_child(topic, 0)
-                tree["key"] = topic.key()
-                topic_dict[tree["id"]]=topic
-
-            # if this topic is not the parent topic (ie. its not root, nor the 
-            # topic_id you are updating)
-            if (parent.key() != topic.key() and
-                # and this topic is not in the new parent
-                topic.key() not in parent.child_keys and
-                # if it already exists in a topic
-                len(topic.parent_keys) and 
-                # and that topic is not the parent topic
-                topic.parent_keys[0] != parent.key()):
-    
-                # move it from that old parent topic, its position in the new
-                # parent does not matter as child_keys will get written over 
-                # later.  move_child is needed only to make sure that the 
-                # parent_keys and ancestor_keys will all match up correctly
-                old_parent = topic_keys_dict[topic.parent_keys[0]]
-                logging.info("moving topic %s from %s to %s" % (topic.id, 
-                    old_parent.id, parent.id))
-                old_parent.move_child(topic, parent, 0)
-
-            all_entities_dict[tree["key"]] = topic
-        
-        elif tree["kind"] == "Video":
-            if tree["youtube_id"] in video_dict:
-                video = video_dict[tree["youtube_id"]]
-                tree["key"] = video.key()
-            else:                    
-                changeable_props = ["youtube_id", "url", "title", "description",
-                                    "keywords", "duration", "readable_id", 
-                                    "views"]
-                video = models.VersionContentChange.add_new_content(models.Video, 
-                                                                version,
-                                                                tree, 
-                                                                changeable_props,
-                                                                put_change)
-                logging.info("added video %s" % video.title)
-                new_content_keys.append(video.key())
-                tree["key"] = video.key()
-                video_dict[tree["youtube_id"]] = video
-          
-            all_entities_dict[tree["key"]] = video
-
-        elif tree["kind"] == "Exercise":
-            if tree["name"] in exercise_dict:
-                tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
-            else:
-                exercise = exercise_save_data(version, tree, None, put_change)
-                logging.info("added Exercise %s" % exercise.name)
-                new_content_keys.append(exercise.key())
-                tree["key"] = exercise.key()
-                exercise_dict[tree["name"]] = exercise
-            
-            all_entities_dict[tree["key"]] = exercise_dict[tree["name"]]
-            
-        elif tree["kind"] == "Url":
-            if tree["id"] in url_dict:
-                url = url_dict[tree["id"]]
-                tree["key"] = url.key() 
-            else:    
-                changeable_props = ["tags", "title", "url"]
-                url = models.VersionContentChange.add_new_content(models.Url, 
-                                                           version,
-                                                           tree,
-                                                           changeable_props,
-                                                           put_change)
-                logging.info("added Url %s" % url.title)
-                new_content_keys.append(url.key())
-                tree["key"] = url.key()
-                url_dict[tree["id"]] = url
-
-            all_entities_dict[tree["key"]] = url
-
-        # recurse through the tree's children
-        if "children" in tree:
-            for child in tree["children"]:
-                add_keys_json_tree(child, topic_dict[tree["id"]])
-   
-    add_keys_json_tree(tree_json, parent)
-    logging.info("added keys to nodes")
-
-    def add_child_keys_json_tree(tree):
-        if tree["kind"] == "Topic":
-            tree["child_keys"]=[]
-            if "children" in tree:
-                for child in tree["children"]:
-                    '''
-                    if child["kind"] == "Video":
-                        logging.info(child["title"])
-                    else:
-                        logging.info(child["name"])
-                    '''
-                    tree["child_keys"].append(child["key"])
-                    add_child_keys_json_tree(child)
-
-    add_child_keys_json_tree(tree_json)
-    logging.info("added children keys")
-
-    def extract_nodes(tree, nodes):
-        if "children" in tree:
-            for child in tree["children"]:
-                nodes.update(extract_nodes(child, nodes))
-            del(tree["children"])
-        nodes[tree["key"]]=tree
-        return nodes
-    
-    nodes = extract_nodes(tree_json, {})
-    logging.info("extracted %i nodes" % len(nodes))
-    changed_nodes = []
-
-    i = 0
-    # now loop through all the nodes 
-    for key, node in nodes.iteritems():
-        if node["kind"] == "Topic":
-            topic = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any change to Topic %s" % (i, len(nodes), topic.title))
-
-            kwargs = (dict((str(key), value) for key, value in node.iteritems() 
-                    if key in ['id', 'title', 'standalone_title', 'description',
-                    'tags', 'hide', 'child_keys']))
-            kwargs["version"] = version
-            kwargs["put"] = False
-            if topic.update(**kwargs):
-                changed_nodes.append(topic)
-        
-        elif node["kind"] == "Video" and node["key"] not in new_content_keys:
-            video = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any change to Video %s" % (i, len(nodes), video.title))
-            
-            change = models.VersionContentChange.add_content_change(video, 
-                version, 
-                node, 
-                ["readable_id", "title", "youtube_id", "description", "keywords"])
-            if change:
-                logging.info("changed")
-        
-        elif node["kind"] == "Exercise" and node["key"] not in new_content_keys:
-            exercise = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
-
-            change = exercise_save_data(version, node, exercise)
-            if change:
-                logging.info("changed")
-
-        elif node["kind"] == "Url" and node["key"] not in new_content_keys:
-            url = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any changes to Url %s" % (i, len(nodes), url.title))
-
-            changeable_props = ["tags", "title", "url"]
-
-            change = models.VersionContentChange.add_content_change(
-                url, 
-                version, 
-                node,
-                changeable_props)
-
-            if change:
-                logging.info("changed")
-
-
-        i += 1
-
-    logging.info("about to put %i topic nodes" % len(changed_nodes))
-    db.put(changed_nodes)
-    logging.info("done with import")
-    return True
+    # importing the full topic tree can be too large so pickling and compressing
+    deferred.defer(models.topictree_import_task, version_id, topic_id, 
+                zlib.compress(pickle.dumps(request.json)),
+                _queue = "import-queue",
+                _url = "/_ah/queue/deferred_import")
 
 @route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
 @jsonp
@@ -848,7 +675,7 @@ def playlists_library():
 @compress
 @jsonify
 def playlists_library_list():
-    topics = models.Topic.get_filled_rolled_up_top_level_topics(types = ["Video", "Url"])
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
         (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
@@ -919,7 +746,7 @@ def exercise_save(exercise_name = None, version_id = "edit"):
 def exercise_save_data(version, data, exercise=None, put_change=True):
     if "name" not in data:
         raise Exception("exercise 'name' missing")
-    data["live"] = data["live"] = data["live"] == "true" or data["live"] == True    
+    data["live"] = data["live"] == "true" or data["live"] == True 
     data["v_position"] = int(data["v_position"])
     data["h_position"] = int(data["h_position"])
     data["seconds_per_fast_problem"] = (
@@ -1440,7 +1267,8 @@ def log_user_video(youtube_id):
         video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if not video:
-        return api_error_response("Could not find video")
+        logging.error("Could not find video for %s" % (video_key_str or youtube_id))
+        return api_invalid_param_response("Could not find video for %s" % (video_key_str or youtube_id))
 
     seconds_watched = int(request.request_float("seconds_watched", default=0))
     last_second = int(request.request_float("last_second_watched", default=0))
@@ -2045,12 +1873,14 @@ def get_activity():
             student = user_override
 
     recent_activities = recent_activity.recent_activity_list(student)
+    recent_completions = filter(
+            lambda activity: activity.is_complete(),
+            recent_activities)
 
     return {
-        # TODO: re-enable this
-        #"suggested": suggested_activity.SuggestedActivity.get_for(
-                #student, recent_activities),
-        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+        "suggested": suggested_activity.SuggestedActivity.get_for(
+                student, recent_activities),
+        "recent": recent_completions[:recent_activity.MOST_RECENT_ITEMS],
     }
 
 # TODO in v2: imbue with restfulness
@@ -2170,6 +2000,66 @@ def autocomplete():
             "exercises": exercise_results
     }
 
+@route("/api/v1/dev/backupmodels", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonify
+def backupmodels():
+    """Return the names of all models that inherit from models.BackupModel."""
+    return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
+
+@route("/api/v1/dev/protobufquery", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_query():
+    """Return the results of a GQL query as pickled protocol buffer objects
+
+    Example python code:
+    import urllib as u
+    import urllib2 as u2
+
+    # make sure to quote the query
+    q = u.quote("SELECT * FROM VideoLog ORDER BY time_watched LIMIT 50")
+
+    # get the entities selected by the query
+    p = u2.urlopen("http://localhost:8080/api/v1/dev/protobufquery?query=%s" % q)
+
+    # It's a little more complicated in practice because oauth must be used but
+    # that's the idea
+    """
+
+    query = request.request_string("query")
+    if not query:
+        return api_error_response(ValueError("Query required"))
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               db.GqlQuery(query))
+
+@route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_entities(entity):
+    """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
+
+    Notes: 'entity' must be a subclass of 'models.BackupModel'
+           'dt{start,end}' must be in ISO 8601 format
+           'max' defaults to 500
+    Example:
+        /api/v1/dev/protobuf/ProblemLog?dt_start=2012-02-11T20%3A07%3A49Z&dt_end=2012-02-11T21%3A07%3A49Z
+        Returns up to 500 problem_logs from between 'dt_start' and 'dt_end'
+    """
+    entity_class = db.class_for_kind(entity)
+    if not (entity_class and issubclass(entity_class, models.BackupModel)):
+        return api_error_response(ValueError("Invalid class '%s' (must be a \
+                subclass of models.BackupModel)" % entity))
+    query = entity_class.all()
+    filter_query_by_request_dates(query, "backup_timestamp")
+    query.order("backup_timestamp")
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               query.fetch(request.request_int("max", default=500)))
 
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
