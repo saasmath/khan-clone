@@ -8,15 +8,20 @@
 {% endblock pagecss %}
 
 {% block pagecontent %}
-<div id="container" class="single-exercise visited-no-recolor" style="overflow: hidden">
-
-    {{ exercise_body_html }}
-    {{ exercise_template_html }}
+<div id="container" class="exercises-content-container visited-no-recolor" style="overflow: hidden">
 
 </div>
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
-<!-- TODO(kamens) -->
-{% endblock bottompagescript %}
+{{ super() }}
 
+{{ js_css_packages.js_package("exercises") }}
+
+<script>
+    $(function() {
+        Exercises.init({ /* TODO(kamens): useful init data here like crazzyyyyyyy */ });
+    });
+</script>
+
+{% endblock bottompagescript %}

@@ -175,6 +175,7 @@ javascript = {
     },
     "exercises": {
         "files": [
+            "exercise.handlebars",
             "exercises.js",
         ]
     },
