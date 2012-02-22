@@ -56,6 +56,9 @@ handlers:
 - url: /javascript
   static_dir: javascript
 
+- url: /sounds
+  static_dir: sounds
+
 # Begin GTV integration
 - url: /gtv/css
   static_dir: gtv/css

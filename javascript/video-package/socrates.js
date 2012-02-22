@@ -505,7 +505,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		":segment/:qid": "reactToNewFragment"
 	},
 
-	beep: new Audio("/socrates/starcraft_chat_sound.mp3"),
+	beep: new Audio("/socrates/sounds/31801__malexmedia__malexmedia-lazymanphone-hangupbeep.wav"),
 
 	initialize: function(options) {
 		this.videoControls = options.videoControls;
