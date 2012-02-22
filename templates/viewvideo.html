@@ -158,8 +158,8 @@
 
         <div class="desktop-only">
             <div class="socrates-nav"></div>
-            {# discussion.comments(user_data, video, topic, comments_page) #}
-            {# discussion.qa(user_data, video, topic, qa_page, qa_expand_key, sort) #}
+            {{ discussion.comments(user_data, video, topic, comments_page) }}
+            {{ discussion.qa(user_data, video, topic, qa_page, qa_expand_key, sort) }}
         </div>
     </div>
     </div>
@@ -178,11 +178,14 @@
         Video.init();
         VideoStats.startLoggingProgress("{{ video.key()|escapejs }}");
 
+        {% if has_socrates %}
+        Socrates.init("{{video.youtube_id}}");
+        {% endif %}
         Discussion.init();
         Moderation.init();
         Voting.init();
-        // Comments.init();
-        // QA.init();
+        Comments.init();
+        QA.init();
       });
 
       // We take the message in the title of the energy points box and place it

@@ -94,6 +94,7 @@ javascript = {
             "matrix-terminology.handlebars",
             "referencing-elements-in-a-matrix.handlebars",
             "what-are-matrices-used-for.handlebars",
+            "data.js",
         ]
     },
     "homepage": {
