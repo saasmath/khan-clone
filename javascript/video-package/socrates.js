@@ -193,16 +193,18 @@ Socrates.Bookmark = Backbone.Model.extend({
 
 // todo(dmnd): need to make this less confusing
 Socrates.Question = Socrates.Bookmark.extend({
-	key: function() {
+	baseSlug:  Socrates.Bookmark.prototype.slug,
+
+	slug: function() {
+		return this.baseSlug() + "/q";
+	},
+
+	imageUrl: function() {
 		return this.get('youtubeId') + "-" + this.get('time');
 	},
 
-	htmlFile: function() {
-		return this.get('youtubeId') + "/" + Socrates.Bookmark.prototype.slug.call(this);
-	},
-
-	slug: function() {
-		return Socrates.Bookmark.prototype.slug.call(this) + "/q";
+	templateName: function() {
+		return this.get('youtubeId') + "." + this.baseSlug();
 	}
 });
 
@@ -225,32 +227,29 @@ Socrates.QuestionView = Backbone.View.extend({
 		_.extend(this, this.options);
 		this.version = 1;
 		this.loaded = false;
+		this.template = Templates.get(this.model.templateName());
+
 		this.render();
 	},
 
 	render: function() {
-		// preload html
-		$.get(this.htmlUrl()).success(_.bind(function(html) {
-			this.template = Handlebars.compile(html);
+		$(this.el).html(this.template({
+			title: this.model.get('title'),
+			explainUrl: this.model.get('nested')
+		}));
 
-			$(this.el).html(this.template({
-				title: this.model.get('title'),
-				explainUrl: this.model.get('nested')
-			}));
+		// add in a backdrop if necessary
+		var $screenshot = this.$(".layer.backdrop.videoframe");
+		if ($screenshot.length > 0) {
+			$screenshot.append($("<img>", {src: this.imageUrl()}));
+		}
 
-			// add in a backdrop if necessary
-			var $screenshot = this.$(".layer.backdrop.videoframe");
-			if ($screenshot.length > 0) {
-				$screenshot.append($("<img>", {src: this.imageUrl()}));
-			}
-
-			// linkify the explain button
-			var parent = this.model.get('nested');
-			if (parent) {
-				this.$(".simple-button.explain").attr("href", "#" + parent);
-			}
-			this.loaded = true;
-		}, this));
+		// linkify the explain button
+		var parent = this.model.get('nested');
+		if (parent) {
+			this.$(".simple-button.explain").attr("href", "#" + parent);
+		}
+		this.loaded = true;
 
 		return this;
 	},
@@ -277,12 +276,8 @@ Socrates.QuestionView = Backbone.View.extend({
 		return this;
 	},
 
-	htmlUrl: function() {
-		return "/socrates/questions/" + this.model.htmlFile() + ".handlebars";
-	},
-
 	imageUrl: function() {
-		return "/images/videoframes/" + this.model.key() + ".jpeg";
+		return "/images/videoframes/" + this.model.imageUrl() + ".jpeg";
 	},
 
 	isCorrect: function(data) {

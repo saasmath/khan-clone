@@ -83,6 +83,19 @@ javascript = {
             "socrates.js",
         ]
     },
+    # socrates questions
+    # todo(dmnd) autogenerate this based on contents of directory
+    "xyAuNHPsq-g": {
+        "files": [
+            "commutativity-of-matrix-addition.handlebars",
+            "defining-matrix-addition.handlebars",
+            "dimensions-of-a-matrix.handlebars",
+            "matrix-addition.handlebars",
+            "matrix-terminology.handlebars",
+            "referencing-elements-in-a-matrix.handlebars",
+            "what-are-matrices-used-for.handlebars",
+        ]
+    },
     "homepage": {
         "files": [
             "jquery.easing.1.3.js",

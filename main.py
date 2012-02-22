@@ -232,6 +232,9 @@ class ViewVideo(request_handler.RequestHandler):
         if subtitles:
             subtitles_json = subtitles.load_json()
 
+        # todo(dmnd) unhardcode this
+        has_socrates = video.youtube_id == "xyAuNHPsq-g"
+
         template_values = {
                             'topic': topic,
                             'video': video,
@@ -250,7 +253,8 @@ class ViewVideo(request_handler.RequestHandler):
                             'selected_nav_link': 'watch',
                             'awarded_points': awarded_points,
                             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
-                            'author_profile': 'https://plus.google.com/103970106103092409324'
+                            'author_profile': 'https://plus.google.com/103970106103092409324',
+                            'has_socrates': has_socrates
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
@@ -664,7 +668,7 @@ class Search(request_handler.RequestHandler):
                            'video_count': video_count,
                            'topic_count': topic_count,
                            })
-        
+
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):

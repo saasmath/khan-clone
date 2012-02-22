@@ -170,6 +170,9 @@
 {% block bottompagescript %}
 
     {{ js_css_packages.js_package("video") }}
+    {% if has_socrates %}
+    {{ js_css_packages.js_package(video.youtube_id) }}
+    {% endif %}
     <script>
       $(function() {
         Video.init();
