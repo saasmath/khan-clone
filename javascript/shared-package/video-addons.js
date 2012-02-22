@@ -260,13 +260,13 @@ var VideoStats = {
 
     checkVideoComplete: function() {
         var state = this.player.getPlayerState();
-        if (state === 0) {
+        if (state === 0) { // ended
             if (VideoControls.autoPlayCallback) {
                 VideoControls.autoPlayCallback();
             } else {
                 VideoControls.setAutoPlayEnabled(false);
             }
-        } else if (state === 2) {
+        } else if (state === 2) { // paused
             VideoControls.setAutoPlayEnabled(false);
         }
     },
