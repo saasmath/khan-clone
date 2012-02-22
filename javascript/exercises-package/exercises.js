@@ -1,4 +1,4 @@
-/*
+/**
  * Views and logic for exercise/stack/card interactions
  * TODO(kamens): don't love the name "Exercises" for this namespace
  */
@@ -71,7 +71,7 @@ var Exercises = {
 
 };
 
-/*
+/**
  * View of a stack of cards
  */
 Exercises.Stack = Backbone.View.extend({
@@ -102,7 +102,7 @@ Exercises.Stack = Backbone.View.extend({
 
 });
 
-/*
+/**
  * View of the single, currently-visible card
  */
 Exercises.CurrentCard = Backbone.View.extend({
