@@ -1906,6 +1906,11 @@ class VersionContentChange(db.Model):
             change.content_changes = {}
 
         if content and content.is_saved():
+            
+            if previous_changes:
+                content = change.updated_content(content)
+                change.content_changes = {}
+
             for prop in changeable_props:
                 if (prop in new_props and
                     new_props[prop] is not None and (
@@ -1950,7 +1955,7 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic"] 
+    _super_topic_ids = ["algebra", "arithmetic", "art-history"] 
 
     @property
     def relative_url(self):
@@ -2019,11 +2024,14 @@ class Topic(Searchable, db.Model):
         return Topic.all().filter('id =', 'root').filter('version =', version).get()
 
     @staticmethod
-    def get_new_id(parent, title, version):
+    def get_new_id(parent, title, version):       
         potential_id = title.lower()
         potential_id = re.sub('[^a-z0-9]', '-', potential_id);
         potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
         potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)
+
+        if potential_id[0].isdigit():
+            potential_id = parent.id + "-" + potential_id
 
         number_to_add = 0
         current_id = potential_id
@@ -2696,7 +2704,6 @@ class Topic(Searchable, db.Model):
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
         keys = [child_key for child_key in topic.child_keys if not kind or child_key.kind() == kind]  
         if include_descendants:
-            keys = []
 
             subtopics = Topic.all().filter("ancestor_keys =", topic.key())
             if not include_hidden:
@@ -2707,7 +2714,6 @@ class Topic(Searchable, db.Model):
                 keys.extend([key for key in subtopic.child_keys if not kind or key.kind() == kind])
               
         nodes = db.get(keys) 
-
         if not kind:
             nodes.extend(subtopics)
 
@@ -2723,6 +2729,10 @@ class Topic(Searchable, db.Model):
 
     def get_videos(self, include_descendants=False, include_hidden=False):
         return Topic._get_children_of_kind(self, "Video", include_descendants,
+                                           include_hidden)
+
+    def get_child_topics(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Topic", include_descendants,
                                            include_hidden)
 
     def get_descendants(self, include_hidden=False):
@@ -3318,6 +3328,9 @@ class Video(Searchable, db.Model):
         # return only unique videos
         video_dict = dict((v.key(), v) for v in videos)
         return video_dict.values()
+
+    def has_topic(self):
+        return bool(self.topic_string_keys)
 
     # returns the first non-hidden topic
     def first_topic(self):
@@ -4265,6 +4278,92 @@ class ExerciseVideo(db.Model):
             exercise_video_key_dict[video_key][ExerciseVideo.exercise.get_value_for_datastore(exercise_video)] = exercise_video
 
         return exercise_video_key_dict
+
+    # returns all ExerciseVideo objects whose Video has no topic
+    @staticmethod
+    def get_all_with_topicless_videos(version=None):
+        videos = Video.get_all_live(version)
+        video_keys = [v.key() for v in videos]
+        evs = ExerciseVideo.all().fetch(100000)
+               
+        if version is None or version.default:
+            return [ev for ev in evs 
+                    if ExerciseVideo.video.get_value_for_datastore(ev) 
+                    not in video_keys]
+       
+        # if there is a version check to see if there are any updates to the exercise videos
+        else:
+            video_dict = dict((v.key(), v.readable_id) for v in videos)
+            video_readable_dict = dict((v.readable_id, v) for v in videos)
+            ev_key_dict = dict((ev.key(), ev) for ev in evs)
+
+            # create ev_dict so we can access the ev in constant time from the exercise_key and the video_readable_id
+            ev_dict = {}
+
+            for ev in evs:
+                exercise_key = ExerciseVideo.exercise.get_value_for_datastore(ev)
+                video_key = ExerciseVideo.video.get_value_for_datastore(ev)
+                
+                # if the video is not live get it (it will be a topicless video)
+                # there shouldnt be too many of these, hence not bothering to do
+                # things efficiently in one get
+                if video_key not in video_dict:
+                    video = db.get(video_key)
+                    video_readable_id = video.readable_id
+                    video_readable_dict[video.readable_id] = video
+                else:
+                    video_readable_id = video_dict[video_key]
+                    video = video_readable_dict[video_readable_id]
+
+                # the following line is needed otherwise the list comprehension
+                # by the return statement will fail on the un put EVs with:
+                # Key' object has no attribute '_video' if 
+                # ExerciseVideo.video.get_value_for_datastore(ev) is used
+                ev.video = video
+
+                if exercise_key not in ev_dict:
+                    ev_dict[exercise_key] = {}
+                
+                ev_dict[exercise_key][video_readable_id] = ev.key() 
+
+            # cycle through all the version changes to see if an exercise has been updated
+            changes = VersionContentChange.get_updated_content_dict(version)
+            new_evs=[]
+            
+            for key, content in changes.iteritems():
+                
+                if (type(content) == Exercise):
+                    
+                    # remove the existing Exercise_Videos if there are any
+                    if key in ev_dict:
+                        for video_readable_id, ev_key in ev_dict[key].iteritems():
+                            del ev_key_dict[ev_key]
+
+                    # add new related_videos
+                    for i, video_readable_id in enumerate(content.related_videos
+                        if hasattr(content, "related_videos") else []):
+                        
+                        if video_readable_id not in video_readable_dict:
+                            video = video.get_for_readable_id(video_readable_id)
+                            video_readable_dict[video_readable_id] = (
+                                video.readable_id)
+                        else:
+                            video = video_readable_dict[video_readable_id]
+
+                        new_ev = ExerciseVideo(
+                            video = video,
+                            exercise = content,
+                            exercise_order= i
+                            )
+                        new_evs.append(new_ev)  
+                
+            evs = [ev for ev in ev_key_dict.values()]
+            evs += new_evs
+
+            # ExerciseVideo.video.get_value_for_datastore(ev) is not needed 
+            # because we populated ev.video
+            return [ev for ev in evs if ev.video.key() not in video_keys]
+
 
 class UserExerciseCache(db.Model):
     """ UserExerciseCache is an optimized-for-read-and-deserialization cache of
