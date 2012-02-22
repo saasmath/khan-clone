@@ -43,10 +43,10 @@
 	-moz-opacity: 0.9;
 	filter:alpha(opacity=9);
 }
-.video-overlay .layer.backdrop.screenshot {
+.video-overlay .layer.backdrop.videoframe {
 	background: #000;
 }
-.video-overlay .layer.backdrop.screenshot img {
+.video-overlay .layer.backdrop.videoframe img {
 	display: block;
 	height: 450px;
 	margin: 0 auto 0 auto;

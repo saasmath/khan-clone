@@ -239,7 +239,7 @@ Socrates.QuestionView = Backbone.View.extend({
 			}));
 
 			// add in a backdrop if necessary
-			var $screenshot = this.$(".layer.backdrop.screenshot");
+			var $screenshot = this.$(".layer.backdrop.videoframe");
 			if ($screenshot.length > 0) {
 				$screenshot.append($("<img>", {src: this.imageUrl()}));
 			}
