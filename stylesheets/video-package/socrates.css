@@ -87,6 +87,9 @@
 .video-overlay .simple-button {
 	margin: 0 10px;
 }
+.video-overlay .submit-area .simple-button {
+	display: inline-block;
+}
 
 .video-overlay .submit-area .skip {
 	float: right;
@@ -246,4 +249,15 @@ table.matrix-input td {
 .interactive-video-controls {
 	position: absolute;
 	float: left;
+}
+
+.submit-area .alert {
+	display: none;
+	background: none !important;
+	border: none;
+}
+
+img.face {
+	vertical-align: -6px;
+	height: 24px;
 }

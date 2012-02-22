@@ -393,19 +393,44 @@ Socrates.QuestionView = Backbone.View.extend({
 		return true;
 	},
 
-	submit: function() {
+	alreadyFiredAnswered: false,
+	fireAnswered: function() {
+		if (!this.alreadyFiredAnswered) {
+			this.alreadyFiredAnswered = true;
+
+			// notify router that the question was answered correctly
+			this.trigger("answered");
+		}
+	},
+
+	submit: function(evt) {
+		var $button = $(evt.currentTarget);
+
+		// when question has been answered correctly, the submit button
+		// says continue.
+		if ($button.text() === "Continue") {
+			this.fireAnswered();
+			return;
+		}
+
+		// otherwise, get the answer
 		var response = this.getResponse();
 		this.validateResponse(response);
+
+		// log it on the server side
 		this.log('submit', response);
 
+		// tell the user if they got it right or wrong
 		if (response.correct) {
-			console.log("correct");
-			this.trigger("submitted");
-			// todo: resume video, skipping explanation (seek)
+			this.$('.submit-area .alert-error').hide();
+			this.$('.submit-area .alert-success').show();
+			$button.html("Continue");
+
+			// in 3s, resume the video
+			_.delay(_.bind(this.fireAnswered, this), 3000);
 		} else {
-			console.log("incorrect!");
-			// todo: rewind back to explanation
-			// todo: rewind back to introduction
+			this.$('.submit-area .alert-success').hide();
+			this.$('.submit-area .alert-error').show();
 		}
 	},
 
@@ -499,7 +524,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 		// subscribe to submit and skip
 		_.each(this.questionViews, function(view) {
 			view.bind("skipped", this.skipped, this);
-			view.bind("submitted", this.submitted, this);
+			view.bind("answered", this.submitted, this);
 		}, this);
 
 		// hookup question display to video timelime

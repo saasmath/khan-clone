@@ -275,6 +275,9 @@ stylesheets = {
             "video.css",
             "discussion.css",
             "modalvideo.css",
+
+            # socrates stuff
+            "bootstrap-alerts.css",
             "socrates.css",
         ]
     },
