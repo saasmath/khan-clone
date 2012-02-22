@@ -39,8 +39,15 @@ var Exercises = {
             userTopic: this.userTopic,
         }));
 
-        this.incompleteStack = new Exercises.Stack({ model: this.userTopic.incompleteStack, el: $(".incomplete-stack") }); 
-        this.completeStack = new Exercises.Stack({ model: this.userTopic.completeStack, el: $(".complete-stack") }); 
+        this.incompleteStack = new Exercises.Stack({
+            model: this.userTopic.incompleteStack,
+            el: $(".incomplete-stack")
+        }); 
+
+        this.completeStack = new Exercises.Stack({
+            model: this.userTopic.completeStack,
+            el: $(".complete-stack")
+        }); 
 
         this.currentCard = new Exercises.CurrentCard({ el: $(".current-card") });
         this.currentCard.render();
