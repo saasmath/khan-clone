@@ -92,12 +92,12 @@ Socrates.Data['xyAuNHPsq-g'].Events = [
 		nested: "matrix-terminology",
 		youtubeId: "xyAuNHPsq-g",
 		id: 7,
-		correctData: {
+		correctData: {"answer": {
 			"scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
 			"column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
 			"row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
 			"matrix": {"scalar": false, "row-vector": false, "column-vector": false, "matrix": true}
-		}
+		}}
 	})
 ];
 
