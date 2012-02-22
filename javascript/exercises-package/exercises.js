@@ -78,7 +78,7 @@ Exercises.Stack = Backbone.View.extend({
 
     template: Templates.get("exercises.stack"),
 
-    render: function(ix) {
+    render: function() {
         this.el.html(this.template(this.model));
         return this;
     },
