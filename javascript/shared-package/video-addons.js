@@ -16,8 +16,8 @@ var VideoControls = {
     },
 
     initContinuousPlayLinks: function(parentEl) {
-        this.continuousPlayButton = $("a.continuous-play", parentEl).get(0);
-        $(this.continuousPlayButton).click(function() {
+        this.continuousPlayButton = $("a.continuous-play", parentEl);
+        this.continuousPlayButton.click(function() {
             VideoControls.setAutoPlayEnabled(!VideoControls.autoPlayEnabled);
         });
         this.setAutoPlayEnabled(VideoControls.autoPlayEnabled);
@@ -47,11 +47,11 @@ var VideoControls = {
     setAutoPlayEnabled: function(enabled) {
     /*
         this.autoPlayEnabled = enabled;
-        $(this.continuousPlayButton).toggleClass("green", enabled);
+        this.continuousPlayButton.toggleClass("green", enabled);
         if (enabled) {
-            $(this.continuousPlayButton).html("Continuous play is ON");
+            this.continuousPlayButton.html("Continuous play is ON");
         } else {
-            $(this.continuousPlayButton).html("Continuous play is OFF");
+            this.continuousPlayButton.html("Continuous play is OFF");
         }
         */
     },
