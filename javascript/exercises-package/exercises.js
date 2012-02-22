@@ -3,11 +3,18 @@
  */
 var Exercises = {
 
+    exercise: null,
+    userTopic: null,
+
+    /**
+     * Called to initialize the exercise page. Passed in with JSON information
+     * rendered from the server. See templates/exercises/power_template.html for details.
+     */
     init: function(json) {
 
         this.exercise = json.exercise;
 
-        // TODO(kamens) figure out the persistance model and hook 'er up via
+        // TODO(kamens) figure out the persistance model and hook 'er up
         // this.userTopicModel = new UserTopicModel(json.userTopic);
         this.userTopic = json.userTopic;
 
