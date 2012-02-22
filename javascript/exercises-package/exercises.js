@@ -1,10 +1,14 @@
 /*
  * Views and logic for exercise/stack/card interactions
+ * TODO(kamens): don't love the name "Exercises" for this namespace
  */
 var Exercises = {
 
     exercise: null,
     userTopic: null,
+    currentCard: null,
+    incompleteStack: null,
+    completeStack: null,
 
     /**
      * Called to initialize the exercise page. Passed in with JSON information
@@ -18,6 +22,8 @@ var Exercises = {
         // this.userTopicModel = new UserTopicModel(json.userTopic);
         this.userTopic = json.userTopic;
 
+        $(Khan).bind( "newProblem", function() { Exercises.nextCard(); });
+
         Exercises.render();
     },
 
@@ -26,13 +32,6 @@ var Exercises = {
         var profileExercise = Templates.get("exercises.exercise");
 
         Handlebars.registerPartial("exercise-header", Templates.get("exercises.exercise-header"));
-        Handlebars.registerPartial("current-card", Templates.get("exercises.current-card"));
-        Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
-
-        Handlebars.registerHelper("renderStack", function(stack) {
-            var currentStackContext = _.extend({}, this, { stack: stack });
-            return Templates.get("exercises.stack")(currentStackContext);
-        });
 
         $(".exercises-content-container").html(profileExercise({
             // TODO(kamens): Useful dict data here like crazzzyyyyyyyy
@@ -40,6 +39,76 @@ var Exercises = {
             userTopic: this.userTopic,
         }));
 
+        this.incompleteStack = new Exercises.Stack({ model: this.userTopic.incompleteStack, el: $(".incomplete-stack") }); 
+        this.completeStack = new Exercises.Stack({ model: this.userTopic.completeStack, el: $(".complete-stack") }); 
+
+        this.currentCard = new Exercises.CurrentCard({ el: $(".current-card") });
+        this.currentCard.render();
+
+    },
+
+    nextCard: function() {
+
+        if (this.currentCard) {
+            this.completeStack.pushCurrent();
+        }
+
+        this.incompleteStack.popToCurrent();
+
+        // TODO(kamens): this rendering pattern probably isn't gonna work for
+        // required pretty animations
+        this.incompleteStack.render();
+        this.completeStack.render();
+
     }
 
-}
+};
+
+/*
+ * View of a stack of cards
+ */
+Exercises.Stack = Backbone.View.extend({
+
+    template: Templates.get("exercises.stack"),
+
+    render: function(ix) {
+        this.el.html(this.template(this.model));
+        return this;
+    },
+
+    /**
+     * Pop next card off of Stack and hook it up to the CurrentCard model
+     */
+    popToCurrent: function() {
+
+        Exercises.currentCard.model = _.head(this.model.cards);
+        this.model.cards = _.tail(this.model.cards);
+
+    },
+
+    /**
+     * Push CurrentCard model to Stack
+     */
+    pushCurrent: function() {
+        this.model.cards.push(Exercises.currentCard.model);
+    }
+
+});
+
+/*
+ * View of the single, currently-visible card
+ */
+Exercises.CurrentCard = Backbone.View.extend({
+
+    template: Templates.get("exercises.current-card"),
+
+    render: function(ix) {
+
+        Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
+        this.el.html(this.template(this.model));
+
+        return this;
+
+    }
+
+});
