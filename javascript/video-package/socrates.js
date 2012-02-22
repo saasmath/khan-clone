@@ -7,8 +7,8 @@ Socrates.ControlPanel = Backbone.View.extend({
     controls: [],
 
     events: {
-        'click button#label': 'addLabel',
-        'click button#inputtext': 'addInputText'
+        "click button#label": "addLabel",
+        "click button#inputtext": "addInputText"
     },
 
     addLabel: function() {
@@ -50,11 +50,11 @@ Socrates.Label = Backbone.View.extend({
     className: "label",
 
     events: {
-        'dblclick': 'promptForContents'
+        "dblclick": "promptForContents"
     },
 
     render: function() {
-        $(this.el).text('Default label contents');
+        $(this.el).text("Default label contents");
         this.moveable(true);
         return this;
     },
@@ -69,14 +69,14 @@ Socrates.Label = Backbone.View.extend({
 
         if (this.isMoveable) {
             $(this.el)
-                .addClass('moveable')
+                .addClass("moveable")
                 .resizable()
                 .draggable();
         } else {
             $(this.el)
-                .removeClass('moveable')
-                .resizable('destroy')
-                .draggable('destroy');
+                .removeClass("moveable")
+                .resizable("destroy")
+                .draggable("destroy");
         }
 
         return this;
@@ -102,12 +102,12 @@ Socrates.InputText = Backbone.View.extend({
     template: Templates.get("video.inputtext"),
 
     events: {
-        'dblclick': 'promptForContents'
+        "dblclick": "promptForContents"
     },
 
     render: function() {
         var contents = this.template({
-            placeholder: '?'
+            placeholder: "?"
         });
         $(this.el).html(contents);
         this.moveable(true);
@@ -124,28 +124,28 @@ Socrates.InputText = Backbone.View.extend({
 
         if (this.isMoveable) {
             $(this.el)
-                .addClass('moveable')
+                .addClass("moveable")
                 .resizable()
                 .draggable();
         } else {
             $(this.el)
-                .removeClass('moveable')
-                .resizable('destroy')
-                .draggable('destroy');
+                .removeClass("moveable")
+                .resizable("destroy")
+                .draggable("destroy");
         }
 
         return this;
     },
 
     promptForContents: function(evt) {
-        var $input = this.$('input');
+        var $input = this.$("input");
         var contents = prompt("Enter placeholder contents",
-            $input.attr('placeholder'));
-        $input.attr('placeholder', contents);
+            $input.attr("placeholder"));
+        $input.attr("placeholder", contents);
     },
 
     serializedForm: function() {
-        this.$('input').prop("disabled", false);
+        this.$("input").prop("disabled", false);
     }
 });
 
@@ -155,7 +155,7 @@ Socrates.Bookmark = Backbone.Model.extend({
     },
 
     slug: function() {
-        return _.str.slugify(this.get('title'));
+        return _.str.slugify(this.get("title"));
     },
 
     toJSON: function() {
@@ -171,9 +171,9 @@ Socrates.Bookmark = Backbone.Model.extend({
         // convert a string like "4m21s" into just the number of seconds
         result = 0;
         var i = 0;
-        while(time[i]) {
+        while (time[i]) {
             var start = i;
-            while(time[i] && /[\d\.,]/.test(time[i])) i++;
+            while (time[i] && /[\d\.,]/.test(time[i])) i++;
             var n = parseFloat(time.slice(start, i));
             var unit = time[i] || "s"; // assume seconds if reached end
             if (unit == "m") {
@@ -191,18 +191,18 @@ Socrates.Bookmark = Backbone.Model.extend({
 
 // todo(dmnd): need to make this less confusing
 Socrates.Question = Socrates.Bookmark.extend({
-    baseSlug:  Socrates.Bookmark.prototype.slug,
+    baseSlug: Socrates.Bookmark.prototype.slug,
 
     slug: function() {
         return this.baseSlug() + "/q";
     },
 
     imageUrl: function() {
-        return this.get('youtubeId') + "-" + this.get('time');
+        return this.get("youtubeId") + "-" + this.get("time");
     },
 
     templateName: function() {
-        return this.get('youtubeId') + "." + this.baseSlug();
+        return this.get("youtubeId") + "." + this.baseSlug();
     }
 });
 
@@ -214,9 +214,9 @@ Socrates.QuestionView = Backbone.View.extend({
     className: "question",
 
     events: {
-        'click .submit-area .submit': 'submit',
-        'click .submit-area a.skip': 'skip',
-        'click .submit-area a.see-answer': 'seeAnswerClicked'
+        "click .submit-area .submit": "submit",
+        "click .submit-area a.skip": "skip",
+        "click .submit-area a.see-answer": "seeAnswerClicked"
     },
 
     timeDisplayed: 0,
@@ -233,8 +233,8 @@ Socrates.QuestionView = Backbone.View.extend({
 
     render: function() {
         $(this.el).html(this.template({
-            title: this.model.get('title'),
-            explainUrl: this.model.get('nested')
+            title: this.model.get("title"),
+            explainUrl: this.model.get("nested")
         }));
 
         // add in a backdrop if necessary
@@ -244,7 +244,7 @@ Socrates.QuestionView = Backbone.View.extend({
         }
 
         // linkify the explain button
-        var parent = this.model.get('nested');
+        var parent = this.model.get("nested");
         if (parent) {
             this.$(".simple-button.explain").attr("href", "#" + parent);
         }
@@ -259,7 +259,7 @@ Socrates.QuestionView = Backbone.View.extend({
         return this;
     },
 
-    finishRecordingTime: function () {
+    finishRecordingTime: function() {
         if (this.startTime) {
             this.timeDisplayed += (+new Date() - this.startTime);
             this.startTime = null;
@@ -280,7 +280,7 @@ Socrates.QuestionView = Backbone.View.extend({
     },
 
     isCorrect: function(data) {
-        var correctAnswer = this.model.get('correctData');
+        var correctAnswer = this.model.get("correctData");
 
         // if no answer is specified, any answer is correct
         if (correctAnswer == null) {
@@ -385,7 +385,7 @@ Socrates.QuestionView = Backbone.View.extend({
     },
 
     loadAnswer: function() {
-        var data = $.extend(true, {}, this.model.get('correctData'));
+        var data = $.extend(true, {}, this.model.get("correctData"));
 
         // process all matrix-inputs
         var matrixInputs = this.$("table.matrix-input");
@@ -478,9 +478,9 @@ Socrates.QuestionView = Backbone.View.extend({
         this.timeDisplayed = 0;
 
         return {
-            time: this.model.get('time'),
-            youtubeId: this.model.get('youtubeId'),
-            id: this.model.get('id'),
+            time: this.model.get("time"),
+            youtubeId: this.model.get("youtubeId"),
+            id: this.model.get("id"),
             version: this.version,
             correct: this.isCorrect(data),
             data: data,
@@ -489,8 +489,8 @@ Socrates.QuestionView = Backbone.View.extend({
     },
 
     validateResponse: function(response) {
-        requiredProps = ['id', 'version', 'correct', 'data', 'youtubeId',
-            'time'];
+        requiredProps = ["id", "version", "correct", "data", "youtubeId",
+            "time"];
         var hasAllProps = _.all(requiredProps, function(prop) {
             return response[prop] != null;
         });
@@ -526,27 +526,27 @@ Socrates.QuestionView = Backbone.View.extend({
         this.validateResponse(response);
 
         // log it on the server side
-        this.log('submit', response);
+        this.log("submit", response);
 
         // tell the user if they got it right or wrong
         if (response.correct) {
-            this.$('.submit-area .alert-error').hide();
-            this.$('.submit-area .alert-success').show();
+            this.$(".submit-area .alert-error").hide();
+            this.$(".submit-area .alert-success").show();
             $button.html("Continue");
 
             // in 3s, resume the video
             _.delay(_.bind(this.fireAnswered, this), 3000);
         } else {
-            this.$('.submit-area .alert-success').hide();
-            this.$('.submit-area .alert-error').show();
+            this.$(".submit-area .alert-success").hide();
+            this.$(".submit-area .alert-error").show();
         }
     },
 
     skip: function() {
         var response = this.getResponse();
         this.validateResponse(response);
-        this.log('skip', response);
-        this.trigger('skipped');
+        this.log("skip", response);
+        this.trigger("skipped");
     },
 
     log: function(kind, response) {
@@ -560,7 +560,7 @@ Socrates.MasterView = Backbone.View.extend({
     },
 
     render: function() {
-        $(this.el).append(_.pluck(this.views, 'el'));
+        $(this.el).append(_.pluck(this.views, "el"));
     }
 });
 
@@ -572,13 +572,13 @@ Socrates.Nav = Backbone.View.extend({
         var sections = [];
         this.model.each(function(item) {
             var json = {
-                title: item.get('title'),
-                time: item.get('time'),
+                title: item.get("title"),
+                time: item.get("time"),
                 slug: item.slug(),
                 nested: []
             };
 
-            if (item.get('nested')) {
+            if (item.get("nested")) {
                 _.last(sections).nested.push(json);
             } else {
                 sections.push(json);
@@ -600,7 +600,8 @@ var recursiveTrigger = function recursiveTrigger(triggerFn) {
     // schedule another call when the duration is probably ticking over to
     // the next tenth of a second
     t = window.VideoStats.getSecondsWatched();
-    _.delay(recursiveTrigger, (Poppler.nextPeriod(t, 0.1) - t)*1000, triggerFn);
+    var delay = (Poppler.nextPeriod(t, 0.1) - t) * 1000;
+    _.delay(recursiveTrigger, delay, triggerFn);
 };
 
 Socrates.QuestionRouter = Backbone.Router.extend({
@@ -704,7 +705,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
             var seconds = Socrates.Question.timeToSeconds(slug);
             this.fragmentTriggeredSeek(seconds);
             return;
-        } catch(e) {
+        } catch (e) {
             // ignore
         }
 

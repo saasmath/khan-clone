@@ -11,7 +11,7 @@ var Poppler = (function() {
     Poppler.timeFn = function(e) { return e.time; };
 
     Poppler.nextPeriod = function(n, period) {
-        return Math.round(Math.floor(n/period + 1)) * period;
+        return Math.round(Math.floor(n / period + 1)) * period;
     };
 
     Poppler.prototype.add = function(time, fn) {
@@ -19,7 +19,7 @@ var Poppler = (function() {
         var i = _.sortedIndex(this.events, fn, Poppler.timeFn);
 
         // if there are existing elements with the same time, insert afterwards
-        while(this.events[i] && this.events[i].time == time) i++;
+        while (this.events[i] && this.events[i].time == time) i++;
 
         this.events.splice(i, 0, fn);
     };
