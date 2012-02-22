@@ -210,6 +210,8 @@ input.simple-button {
 }
 .simple-button:disabled, .simple-button.disabled {
     color: #ddd !important;
+    cursor: not-allowed !important;
+    top: 0 !important;
 }
 .simple-button.seethrough {
     color: #444 !important;
