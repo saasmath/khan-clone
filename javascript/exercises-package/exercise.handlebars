@@ -4,9 +4,20 @@
 
     <div class="exercises-body">
     
-        <div class="exercises-left-stack exercises-stack">{{{ renderStack userTopic.incompleteStack }}}</div>
-        <div class="exercises-card">{{> current-card}}</div>
-        <div class="exercises-right-stack exercises-stack">{{{ renderStack userTopic.completeStack }}}</div>
+        <!-- TODO(jason): ben poops tables -->
+        <table width="100%">
+            <tr>
+                <td>
+                    <div class="exercises-left-stack exercises-stack">{{{ renderStack userTopic.incompleteStack }}}</div>
+                </td>
+                <td>
+                    <div class="exercises-card" style="border:1px solid black;-webkit-border-radius:10px;">{{> current-card}}</div>
+                </td>
+                <td>
+                    <div class="exercises-right-stack exercises-stack">{{{ renderStack userTopic.completeStack }}}</div>
+                </td>
+            </tr>
+        </table>
 
     </div>
 
