@@ -1,8 +1,6 @@
 import re
 import os
-import datetime
 import math
-import logging
 
 import util
 from app import App
@@ -72,7 +70,7 @@ def youtube_jump_link(content, seconds):
     return "<span class='youTube' seconds='%s'>%s</span>" % (seconds, content)
 
 def phantom_login_link(login_notifications, continue_url):
-    return login_notifications.replace("[login]", "<a href='/login?k&continue="+continue_url+"' class='simple-button action-gradient green'>Log in to save your progress</a>")
+    return login_notifications.replace("[login]", "<a href='/login?continue="+continue_url+"' class='simple-button action-gradient green'>Log in to save your progress</a>")
 
 def append_ago(s_time):
     if not s_time:
@@ -100,7 +98,7 @@ def slugify(value):
     value = re.sub('[^\w\s-]', '', value).strip().lower()
     return re.sub('[-\s]+', '-', value)
 
-def mygetattr(obj, name): 
+def mygetattr(obj, name):
     return getattr(obj, name)
 
 _base_js_escapes = (
@@ -140,6 +138,9 @@ def static_url(relative_url):
 
 def linebreaksbr(s):
     return unicode(s).replace('\n', '<br />')
+
+def linebreaksbr_js(s):
+    return unicode(s).replace('\\u000A', '<br />')
 
 def linebreaksbr_ellipsis(content, ellipsis_content = "&hellip;"):
 

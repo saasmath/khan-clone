@@ -1,6 +1,5 @@
 import pickle
 import datetime
-import logging
 
 from google.appengine.ext import db
 from google.appengine.api import memcache
@@ -16,7 +15,10 @@ class GAEBingoIdentityModel(db.Model):
     gae_bingo_identity = db.StringProperty()
 
 class ConversionTypes():
+    # Binary conversions are counted at most once per user
     Binary = "binary"
+
+    # Counting conversions increment each time
     Counting = "counting"
 
     @staticmethod

@@ -3,6 +3,7 @@ import datetime
 from google.appengine.ext import db
 from google.appengine.ext.db import stats
 
+from counters import user_counter
 from itertools import groupby
 
 class DailyStatisticLog(db.Model):
@@ -99,3 +100,11 @@ class EntityStatistic(DailyStatistic):
                 dt=dt
             ))
         db.put(logs)
+
+class RegisteredUserCount(DailyStatistic):
+    """ A statistic computed daily that uses user_counter to determine
+        the number of registered users in the system.
+    """
+    def calc(self):
+        return user_counter.get_count()
+

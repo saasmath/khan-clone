@@ -1,19 +1,8 @@
-from google.appengine.api import memcache
-
 import util
-import models
 import models_badges
-import logging
 import phantom_users.util_notify
 from notifications import UserNotifier
-
-# Badges can either be Exercise badges (can earn one for every Exercise),
-# Playlist badges (one for every Playlist),
-# or context-less which means they can only be earned once.
-class BadgeContextType:
-    NONE = 0
-    EXERCISE = 1
-    PLAYLIST = 2
+from badge_context import BadgeContextType
 
 class BadgeCategory(object):
     # Sorted by astronomical size...
@@ -41,7 +30,8 @@ class BadgeCategory(object):
 
     @staticmethod
     def all():
-        return map(lambda category: BadgeCategory(category), BadgeCategory.list_categories())
+        return map(lambda category: BadgeCategory(category),
+                   BadgeCategory.list_categories())
 
     @staticmethod
     def list_categories():
@@ -74,28 +64,42 @@ class BadgeCategory(object):
             return "Challenge Patches are special awards for completing challenge exercises."
         return ""
 
+    @staticmethod
+    def get_icon_filename(category):
+
+        name = "half-moon"
+
+        if category == BadgeCategory.BRONZE:
+            name = "meteorite"
+        elif category == BadgeCategory.SILVER:
+            name = "moon"
+        elif category == BadgeCategory.GOLD:
+            name = "earth"
+        elif category == BadgeCategory.PLATINUM:
+            name = "sun"
+        elif category == BadgeCategory.DIAMOND:
+            name = "eclipse"
+        elif category == BadgeCategory.MASTER:
+            name = "master-challenge-blue"
+        
+        return name
+
     @property
     def icon_src(self):
         return BadgeCategory.get_icon_src(self.category)
 
     @staticmethod
-    def get_icon_src(category):
-        src = "/images/badges/half-moon-small.png"
+    def get_icon_src(category, suffix="-small"):
+        name = BadgeCategory.get_icon_filename(category)
+        return util.static_url("/images/badges/%s%s.png" % (name, suffix))
 
-        if category == BadgeCategory.BRONZE:
-            src = "/images/badges/meteorite-small.png"
-        elif category == BadgeCategory.SILVER:
-            src = "/images/badges/moon-small.png"
-        elif category == BadgeCategory.GOLD:
-            src = "/images/badges/earth-small.png"
-        elif category == BadgeCategory.PLATINUM:
-            src = "/images/badges/sun-small.png"
-        elif category == BadgeCategory.DIAMOND:
-            src = "/images/badges/eclipse-small.png"
-        elif category == BadgeCategory.MASTER:
-            src = "/images/badges/master-challenge-blue-small.png"
+    @property
+    def compact_icon_src(self):
+        return BadgeCategory.get_compact_icon_src(self.category)
 
-        return util.static_url(src)
+    @staticmethod
+    def get_compact_icon_src(category):
+        return BadgeCategory.get_icon_src(category, "-60x60")
 
     @property
     def large_icon_src(self):
@@ -103,22 +107,15 @@ class BadgeCategory(object):
 
     @staticmethod
     def get_large_icon_src(category):
-        src = "/images/badges/half-moon.png"
+        return BadgeCategory.get_icon_src(category, "")
 
-        if category == BadgeCategory.BRONZE:
-            src = "/images/badges/meteorite.png"
-        elif category == BadgeCategory.SILVER:
-            src = "/images/badges/moon.png"
-        elif category == BadgeCategory.GOLD:
-            src = "/images/badges/earth.png"
-        elif category == BadgeCategory.PLATINUM:
-            src = "/images/badges/sun.png"
-        elif category == BadgeCategory.DIAMOND:
-            src = "/images/badges/eclipse.png"
-        elif category == BadgeCategory.MASTER:
-            src = "/images/badges/master-challenge-blue.png"
+    @property
+    def medium_icon_src(self):
+        return BadgeCategory.get_medium_icon_src(self.category)
 
-        return util.static_url(src)
+    @staticmethod
+    def get_medium_icon_src(category):
+        return BadgeCategory.get_icon_src(category, "-medium")
 
     @property
     def chart_icon_src(self):
@@ -126,22 +123,7 @@ class BadgeCategory(object):
 
     @staticmethod
     def get_chart_icon_src(category):
-        src = "/images/badges/meteorite-small-chart.png"
-
-        if category == BadgeCategory.BRONZE:
-            src = "/images/badges/meteorite-small-chart.png"
-        elif category == BadgeCategory.SILVER:
-            src = "/images/badges/moon-small-chart.png"
-        elif category == BadgeCategory.GOLD:
-            src = "/images/badges/earth-small-chart.png"
-        elif category == BadgeCategory.PLATINUM:
-            src = "/images/badges/sun-small-chart.png"
-        elif category == BadgeCategory.DIAMOND:
-            src = "/images/badges/eclipse-small-chart.png"
-        elif category == BadgeCategory.MASTER:
-            src = "/images/badges/master-challenge-blue-chart.png"
-
-        return util.static_url(src)
+        return BadgeCategory.get_icon_src(category, "-small-chart")
 
     @property
     def type_label(self):
@@ -177,7 +159,8 @@ class Badge(object):
 
     _serialize_whitelist = [
             "points", "badge_category", "description",
-            "safe_extended_description", "name", "user_badges"
+            "safe_extended_description", "name", "user_badges", "icon_src",
+            "is_owned", "objectives", "can_become_goal", "icons",
             ]
 
     def __init__(self):
@@ -200,6 +183,9 @@ class Badge(object):
 
         self.is_owned = False
         
+        # A badge may have an associated goal
+        self.is_goal = False
+
     @staticmethod
     def add_target_context_name(name, target_context_name):
         return "%s[%s]" % (name, target_context_name)
@@ -215,8 +201,25 @@ class Badge(object):
     def category_description(self):
         return BadgeCategory.get_description(self.badge_category)
 
+    @property
     def icon_src(self):
         return BadgeCategory.get_icon_src(self.badge_category)
+
+    @property
+    def compact_icon_src(self):
+        return BadgeCategory.get_compact_icon_src(self.badge_category)
+
+    @property
+    def medium_icon_src(self):
+        return BadgeCategory.get_medium_icon_src(self.badge_category)
+
+    @property
+    def icons(self):
+        return {
+                "small": self.icon_src,
+                "compact": self.compact_icon_src,
+                "medium": self.medium_icon_src,
+        }
 
     def chart_icon_src(self):
         return BadgeCategory.get_chart_icon_src(self.badge_category)
@@ -233,6 +236,12 @@ class Badge(object):
     def is_hidden(self):
         return self.is_hidden_if_unknown and not self.is_owned
 
+    def hide_context(self):
+        """ Return true if badge shouldn't label the context
+        in which it was earned.
+        """
+        return False
+
     @property
     def safe_extended_description(self):
         desc = self.extended_description()
@@ -245,16 +254,26 @@ class Badge(object):
         return ""
 
     # Overridden by individual badge implementations which each grab various parameters from args and kwargs.
-    # *args and **kwargs should contain all the data necessary for is_satisfied_by's logic, and implementations of is_satisfied_by 
-    # should never talk to the datastore or memcache, etc.
+    # *args and **kwargs should contain all the data necessary for is_satisfied_by's logic, and implementations
+    # should never talk to the datastore or memcache, unless
+    # is_manually_awarded returns True
     def is_satisfied_by(self, *args, **kwargs):
         return False
 
     # Overridden by individual badge implementations which each grab various parameters from args and kwargs
-    # *args and **kwargs should contain all the data necessary for is_already_owned_by's logic, and implementations of is_already_owned_by
-    # should never talk to the datastore or memcache, etc.
+    # *args and **kwargs should contain all the data necessary for is_already_owned_by's logic, and implementations
+    # should never talk to the datastore or memcache, unless
+    # is_manually_awarded returns True
     def is_already_owned_by(self, user_data, *args, **kwargs):
         return self.name in user_data.badges
+
+    # Overridden by individual badge implementations to indicate whether or
+    # not this badge should be awarded through some custom flow that may be
+    # potentially expensive, and therefore excluded from checks related to
+    # exercise problem attempts or video watching.
+    # This should never talk to the datastore or memcache.
+    def is_manually_awarded(self):
+        return False
 
     # Calculates target_context and target_context_name from data passed in and calls complete_award_to appropriately.
     #
@@ -294,3 +313,41 @@ class Badge(object):
 
     def frequency(self):
         return models_badges.BadgeStat.count_by_badge_name(self.name)
+
+class GroupedUserBadge(object):
+    """ Represents a set of user badges for any particular type. For example,
+    it can represent a streak badge that a user earned in multiple exercises.
+
+    This is a transient object that is programmatically computed; it is not
+    persisted to the datastore.
+    """
+    def __init__(self,
+                 user=None,
+                 badge=None,
+                 last_earned_date=None):
+        self.user = user
+        # The template for the badge type.
+        self.badge = badge
+        self.last_earned_date = last_earned_date
+        # A list of name keys for contexts in which this badge was earned
+        # (e.g. the name of the exercise the badge was earned in)
+        self.target_context_names = []
+
+    _serialize_blacklist = ["user"]
+
+    @staticmethod
+    def build(user, badge, user_badge):
+        """ Builds an initial GroupedUserBadge from a single instance.
+        Useful to seed building of the group. """
+        result = GroupedUserBadge(user=user,
+                                  badge=badge,
+                                  last_earned_date=user_badge.date)
+
+        target_context_name = None if badge.hide_context() else user_badge.target_context_name
+
+        result.target_context_names.append(target_context_name)
+        return result
+
+    @property
+    def count(self):
+        return len(self.target_context_names)

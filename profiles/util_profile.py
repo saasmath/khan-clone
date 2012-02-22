@@ -7,10 +7,13 @@ import util
 import models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
-from badges import util_badges
 from phantom_users.phantom_util import disallow_phantoms
 from models import StudentList, UserData
 import simplejson
+from avatars import util_avatars
+from badges import util_badges
+from gae_bingo.gae_bingo import bingo
+from experiments import SuggestedActivityExperiment
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -50,30 +53,44 @@ def get_last_student_list(request_handler, student_lists, use_cookie=True):
     return list_id, current_list
 
 def get_student(coach, request_handler):
-    student = request_handler.request_user_data('student_email')
+    student = request_handler.request_student_user_data(legacy=True)
     if student is None:
-        raise Exception("No student found with email='%s'." % request_handler.request_string('student_email'))
+        raise Exception("No student found with email='%s'."
+            % request_handler.request_student_email_legacy())
     if not student.is_coached_by(coach):
         raise Exception("Not your student!")
     return student
 
-def get_list(coach, request_handler):
-    list_id = request_handler.request_string('list_id')
-    student_list = StudentList.get(list_id)
+def get_student_list(coach, list_key):
+    student_list = StudentList.get(list_key)
     if student_list is None:
-        raise Exception("No list found with list_id='%s'." % list_id)
+        raise Exception("No list found with list_key='%s'." % list_key)
     if coach.key() not in student_list.coaches:
         raise Exception("Not your list!")
     return student_list
 
+# Return a list of students, either from the list or from the user data,
+# dependent on the contents of a querystring parameter.
+def get_students_data(user_data, list_key=None):
+    student_list = None
+    if list_key and list_key != 'allstudents':
+        student_list = get_student_list(user_data, list_key)
+
+    if student_list:
+        return student_list.get_students_data()
+    else:
+        return user_data.get_students_data()
+
 def get_coach_student_and_student_list(request_handler):
     coach = UserData.current()
-    student_list = get_list(coach, request_handler)
+    student_list = get_student_list(coach,
+        request_handler.request_string("list_id"))
     student = get_student(coach, request_handler)
     return (coach, student, student_list)
 
 class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
+    @ensure_xsrf_cookie
     def get(self):
         coach = UserData.current()
 
@@ -104,7 +121,10 @@ class ViewClassProfile(request_handler.RequestHandler):
                     current_list = student_list
 
             selected_graph_type = self.request_string("selected_graph_type") or ClassProgressReportGraph.GRAPH_TYPE
-            initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+            if selected_graph_type == 'progressreport' or selected_graph_type == 'goals': # TomY This is temporary until all the graphs are API calls
+                initial_graph_url = "/api/v1/user/students/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
+            else:
+                initial_graph_url = "/profile/graph/%s?coach_email=%s&%s" % (selected_graph_type, urllib.quote(coach.email), urllib.unquote(self.request_string("graph_query_params", default="")))
             initial_graph_url += 'list_id=%s' % list_id
 
             template_values = {
@@ -121,62 +141,201 @@ class ViewClassProfile(request_handler.RequestHandler):
                     'is_profile_empty': not coach.has_students(),
                     'selected_nav_link': 'coach',
                     "view": self.request_string("view", default=""),
+                    'stats_charts_class': 'coach-view',
                     }
             self.render_jinja2_template('viewclassprofile.html', template_values)
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
-
     @ensure_xsrf_cookie
-    def get(self):
-        student = UserData.current() or UserData.pre_phantom()
+    def get(self, email_or_username=None, subpath=None):
+        """Render a student profile.
 
-        user_override = self.request_user_data("student_email")
-        if user_override and user_override.key_email != student.key_email:
-            if not user_override.is_visible_to(student):
-                # If current user isn't an admin or student's coach, they can't
-                # look at anything other than their own profile.
-                self.redirect("/profile?k")
+        Keyword arguments:
+        email_or_username -- matches the first grouping in /profile/(.+?)/(.*)
+        subpath -- matches the second grouping, and is ignored server-side,
+        but is used to route client-side
+
+        """
+        current_user_data = UserData.current() or UserData.pre_phantom()
+
+        if current_user_data.is_pre_phantom and email_or_username is None:
+            # Pre-phantom users don't have any profiles - just redirect them
+            # to the homepage if they try to view their own.
+            self.redirect(util.create_login_url(self.request.uri))
+            return
+
+        if not email_or_username:
+            user_data = current_user_data
+        elif email_or_username == 'nouser' and current_user_data.is_phantom:
+            user_data = current_user_data
+        else:
+            user_data = UserData.get_from_url_segment(email_or_username)
+            if (models.UniqueUsername.is_valid_username(email_or_username)
+                    and user_data
+                    and user_data.username
+                    and user_data.username != email_or_username):
+                # The path segment is a username and resolved to the user,
+                # but is not actually their canonical name. Redirect to the
+                # canonical version.
+                if subpath:
+                    self.redirect("/profile/%s/%s" % (user_data.username,
+                                                      subpath))
+                else:
+                    self.redirect("/profile/%s" % user_data.username)
                 return
-            else:
-                # Allow access to this student's profile
-                student = user_override
-        user_badges = util_badges.get_user_badges(student)
-        selected_graph_type = (self.request_string("selected_graph_type") or
-                               ActivityGraph.GRAPH_TYPE)
-        initial_graph_url = "/profile/graph/%s?student_email=%s&%s" % (
-                selected_graph_type,
-                urllib.quote(student.email),
-                urllib.unquote(self.request_string("graph_query_params",
-                                                   default="")))
+
+
+        profile = UserProfile.from_user(user_data, current_user_data)
+
+        if profile is None:
+            self.render_jinja2_template('noprofile.html', {})
+            return
+
+        is_self = user_data.user_id == current_user_data.user_id
+        show_intro = False
+
+        if is_self:
+            bingo([
+                'suggested_activity_visit_profile',
+            ])
+
+            promo_record = models.PromoRecord.get_for_values(
+                    "New Profile Promo", user_data.user_id)
+
+            if promo_record is None:
+                # The user has never seen the new profile page! Show a tour.
+                if subpath:
+                    # But if they're not on the root profile page, force them.
+                    self.redirect("/profile")
+                    return
+
+                show_intro = True
+                models.PromoRecord.record_promo("New Profile Promo",
+                                                user_data.user_id,
+                                                skip_check=True)
+
+        has_full_access = is_self or user_data.is_visible_to(current_user_data)
         tz_offset = self.request_int("tz_offset", default=0)
 
         template_values = {
-            'student_email': student.email,
-            'student_nickname': student.nickname,
-            'selected_graph_type': selected_graph_type,
-            'initial_graph_url': initial_graph_url,
+            'show_intro': show_intro,
+            'profile': profile,
             'tz_offset': tz_offset,
-            'student_points': student.points,
             'count_videos': models.Setting.count_videos(),
-            'count_videos_completed': student.get_videos_completed(),
             'count_exercises': models.Exercise.get_count(),
-            'count_exercises_proficient': len(student.all_proficient_exercises),
-            'badge_collections': user_badges['badge_collections'],
-            'user_badges_bronze': user_badges['bronze_badges'],
-            'user_badges_silver': user_badges['silver_badges'],
-            'user_badges_gold': user_badges['gold_badges'],
-            'user_badges_platinum': user_badges['platinum_badges'],
-            'user_badges_diamond': user_badges['diamond_badges'],
-            'user_badges_master': user_badges['user_badges_master'],
-            'user_badges': [user_badges['bronze_badges'], user_badges['silver_badges'], user_badges['gold_badges'], user_badges['platinum_badges'], user_badges['diamond_badges'],user_badges['user_badges_master']],
-            'user_data_student': student,
-            "show_badge_frequencies": self.request_bool("show_badge_frequencies", default=False),
+            'user_data_student': user_data if has_full_access else None,
+            'profile_root': user_data.profile_root,
             "view": self.request_string("view", default=""),
         }
-
         self.render_jinja2_template('viewprofile.html', template_values)
+
+
+class UserProfile(object):
+    """ Profile information about a user.
+
+    This is a transient object and derived from the information in UserData,
+    and formatted/tailored for use as an object about a user's public profile.
+    """
+
+    def __init__(self):
+        self.username = None
+        self.email = ""
+        
+        # Indicates whether or not the profile has been marked public. Not
+        # necessarily indicative of what fields are currently filled in this
+        # current instance, as different projections may differ on actor
+        # privileges
+        self.is_public = False
+
+        # Whether or not the app is able to collect data about the user.
+        # Note users under 13 without parental consent cannot give private data.
+        self.is_data_collectible = False
+        
+        self.is_coaching_logged_in_user = False
+        self.nickname = ""
+        self.date_joined = ""
+        self.points = 0
+        self.count_videos_completed = 0
+        self.count_exercises_proficient = 0
+        self.public_badges = []
+
+        default_avatar = util_avatars.avatar_for_name()
+        self.avatar_name = default_avatar.name
+        self.avatar_src = default_avatar.image_src
+
+    @staticmethod
+    def from_user(user, actor):
+        """ Retrieve profile information about a user for the specified actor.
+
+        This will do the appropriate ACL checks and return the greatest amount
+        of profile data that the actor has access to, or None if no access
+        is allowed.
+
+        user - models.UserData object to retrieve information from
+        actor - models.UserData object corresponding to who is requesting
+                the data
+        """
+        
+        if user is None:
+            return None
+
+        is_self = user.user_id == actor.user_id
+        user_is_visible_to_actor = user.is_visible_to(actor)
+        actor_is_visible_to_user = actor.is_visible_to(user)
+
+        if is_self or user_is_visible_to_actor:
+            # Full data about the user
+            return UserProfile._from_user_internal(
+                    user,
+                    full_projection=True,
+                    is_coaching_logged_in_user=actor_is_visible_to_user,
+                    is_self=is_self)
+        elif user.has_public_profile():
+            # Return only public data
+            return UserProfile._from_user_internal(
+                    user,
+                    full_projection=False,
+                    is_coaching_logged_in_user=actor_is_visible_to_user)
+        else:
+            return None
+
+    @staticmethod
+    def _from_user_internal(user,
+                            full_projection=False,
+                            is_coaching_logged_in_user=False,
+                            is_self=False):
+
+        profile = UserProfile()
+
+        profile.username = user.username
+        profile.nickname = user.nickname
+        profile.date_joined = user.joined
+        avatar = util_avatars.avatar_for_name(user.avatar_name)
+        profile.avatar_name = avatar.name
+        profile.avatar_src = avatar.image_src
+        profile.public_badges = util_badges.get_public_user_badges(user)
+        profile.points = user.points
+        profile.count_videos_completed = user.get_videos_completed()
+        profile.count_exercises_proficient = len(user.all_proficient_exercises)
+
+        profile.is_self = is_self
+        profile.is_coaching_logged_in_user = is_coaching_logged_in_user
+
+        suggested_alternative = SuggestedActivityExperiment.get_alternative_for_user(
+                user, is_self) or SuggestedActivityExperiment.NO_SHOW
+        show_suggested_activity = (suggested_alternative == SuggestedActivityExperiment.SHOW)
+
+        profile.show_suggested_activity = show_suggested_activity
+
+        profile.is_public = user.has_public_profile()
+        if full_projection:
+            profile.email = user.email
+            profile.is_data_collectible = user.is_certain_to_be_thirteen()
+
+        return profile
+
 
 class ProfileGraph(request_handler.RequestHandler):
 
@@ -186,7 +345,6 @@ class ProfileGraph(request_handler.RequestHandler):
 
         user_data_target = self.get_profile_target_user_data()
         if user_data_target:
-
             if self.redirect_if_not_ajax(user_data_target):
                 return
 
@@ -208,24 +366,14 @@ class ProfileGraph(request_handler.RequestHandler):
             self.response.out.write(html)
 
     def get_profile_target_user_data(self):
-        student = UserData.current() or UserData.pre_phantom()
-
-        if student:
-            user_override = self.request_user_data("student_email")
-            if user_override and user_override.key_email != student.key_email:
-                if not user_override.is_visible_to(student):
-                    # If current user isn't an admin or student's coach, they can't look at anything other than their own profile.
-                    student = None
-                else:
-                    # Allow access to this student's profile
-                    student = user_override
-
-        return student
+        email = self.request_student_email_legacy()
+        # TODO: ACL
+        return UserData.get_possibly_current_user(email)
 
     def redirect_if_not_ajax(self, student):
         if not self.is_ajax_request():
             # If it's not an ajax request, redirect to the appropriate /profile URL
-            self.redirect("/profile?k&selected_graph_type=%s&student_email=%s&graph_query_params=%s" %
+            self.redirect("/profile?selected_graph_type=%s&student_email=%s&graph_query_params=%s" %
                     (self.GRAPH_TYPE, urllib.quote(student.email), urllib.quote(urllib.quote(self.request.query_string))))
             return True
         return False
@@ -371,11 +519,6 @@ class ExerciseProblemsGraph(ProfileGraph):
     def graph_html_and_context(self, student):
         return templatetags.profile_exercise_problems_graph(student, self.request_string("exercise_name"))
 
-class ExerciseProgressGraph(ProfileGraph):
-    GRAPH_TYPE = "exerciseprogress"
-    def graph_html_and_context(self, student):
-        return templatetags.profile_exercise_progress_graph(student)
-
 class ClassExercisesOverTimeGraph(ClassProfileGraph):
     GRAPH_TYPE = "classexercisesovertime"
     def graph_html_and_context(self, coach):
@@ -383,10 +526,7 @@ class ClassExercisesOverTimeGraph(ClassProfileGraph):
         return templatetags.class_profile_exercises_over_time_graph(coach, student_list)
 
 class ClassProgressReportGraph(ClassProfileGraph):
-    GRAPH_TYPE = "classprogressreport"
-    def graph_html_and_context(self, coach):
-        student_list = self.get_student_list(coach)
-        return templatetags.class_profile_progress_report_graph(coach, student_list)
+    GRAPH_TYPE = "progressreport"
 
 class ClassTimeGraph(ClassProfileDateGraph):
     GRAPH_TYPE = "classtime"

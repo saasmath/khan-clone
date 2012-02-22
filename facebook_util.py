@@ -49,7 +49,7 @@ def get_facebook_user_id_from_oauth_map(oauth_map):
 
 def get_user_id_from_profile(profile):
 
-    if profile is not None:
+    if profile is not None and "name" in profile and "id" in profile:
         # Workaround http://code.google.com/p/googleappengine/issues/detail?id=573
         name = unicodedata.normalize('NFKD', profile["name"]).encode('utf-8', 'ignore')
 
@@ -76,15 +76,32 @@ def get_profile_from_cookies():
     if cookies is None:
         return None
 
-    morsel_key = "fbs_" + App.facebook_app_id
+    morsel_key = "fbsr_" + App.facebook_app_id
     morsel = cookies.get(morsel_key)
     if morsel:
-        fb_user_dict = facebook.get_user_from_cookie(
-            {morsel_key: morsel.value}, App.facebook_app_id, App.facebook_app_secret)
-        if fb_user_dict:
-            return get_profile_from_fb_token(fb_user_dict["access_token"])
+        return get_profile_from_cookie_key_value(morsel_key, morsel.value)
     
     return None
+
+@layer_cache.cache_with_key_fxn(
+        key_fxn = lambda cookie_key, cookie_value: "facebook:profile_from_cookie:%s" % cookie_value,
+        layer = layer_cache.Layers.Memcache,
+        persist_across_app_versions=True)
+def get_profile_from_cookie_key_value(cookie_key, cookie_value):
+
+    fb_auth_dict = facebook.get_user_from_cookie_patched(
+            { cookie_key: cookie_value },
+            App.facebook_app_id, 
+            App.facebook_app_secret)
+
+    if fb_auth_dict:
+        profile = get_profile_from_fb_token(fb_auth_dict["access_token"])
+
+        if profile:
+            return profile
+
+    # Don't cache any missing results
+    return layer_cache.UncachedResult(None)
 
 def get_profile_from_fb_token(access_token):
 
@@ -95,10 +112,7 @@ def get_profile_from_fb_token(access_token):
         logging.debug("Empty access token")
         return None
 
-    memcache_key = "facebook_profile_for_%s" % access_token
-    profile = memcache.get(memcache_key)
-    if profile is not None:
-        return profile
+    profile = None
 
     c_facebook_tries_left = 3
     while not profile and c_facebook_tries_left > 0:
@@ -112,12 +126,6 @@ def get_profile_from_fb_token(access_token):
             else:
                 c_facebook_tries_left -= 1
                 logging.debug("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
-
-    if profile:
-        try:
-            memcache.set(memcache_key, profile)
-        except Exception, error:
-            logging.warning("Facebook profile memcache set failed: %s", error)
 
     return profile
 

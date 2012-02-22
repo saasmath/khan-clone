@@ -1,8 +1,5 @@
-import models
-import datetime
 import util
-import logging
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import Badge, BadgeCategory
 from templatefilters import seconds_to_time_string
 
 # All badges awarded for completing being a member of the Khan Academy for various periods of time

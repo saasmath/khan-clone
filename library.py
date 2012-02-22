@@ -1,120 +1,133 @@
-import datetime
-import os
-import logging
-
-import shared_jinja
-
-from app import App
 import layer_cache
-from models import Video, Playlist, VideoPlaylist, Setting
-from topics_list import topics_list
+from models import Setting, Topic, TopicVersion
 import request_handler
-import util
-import urllib2
-import re
+import shared_jinja
+import time
+import math
 
-@layer_cache.cache(layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore, expiration=86400)
-def getSmartHistoryContent():
-    request = urllib2.Request("http://smarthistory.org/khan-home.html")
-    try:
-        response = urllib2.urlopen(request)
-        smart_history = response.read()
-        smart_history = re.search(re.compile("<body>(.*)</body>", re.S), smart_history).group(1).decode("utf-8")
-        smart_history.replace("script", "")
-    except Exception, e:
-        logging.exception("Failed fetching smarthistory playlist")
-        smart_history = None
-        pass
-    return smart_history
+# helpful function to see topic structure from the console.  In the console:
+# import library
+# library.library_content_html(bust_cache=True)
+#
+# Within library_content_html: print_topics(topics)
+def print_topics(topics):
+    for topic in topics:
+        print topic.homepage_title
+        print topic.depth
+        if topic.subtopics:
+            print "subtopics:"
+            for subtopic in topic.subtopics:
+                print subtopic.homepage_title
+                if subtopic.subtopics:
+                    print "subsubtopics:"
+                    for subsubtopic in subtopic.subtopics:
+                        print subsubtopic.homepage_title
+                    print " "
+            print " "
+        print " "
+
+def flatten_tree(tree, parent_topics=[]):
+    homepage_topics=[]
+    tree.content = []
+    tree.subtopics = []
+
+    tree.depth = len(parent_topics)
+
+    if parent_topics:
+        if tree.depth == 1:
+            tree.homepage_title = parent_topics[0].standalone_title + ": " + tree.title
+        else:
+            tree.homepage_title = tree.title
+    else:
+        tree.homepage_title = tree.standalone_title
+
+    child_parent_topics = parent_topics[:]
+
+    if tree.id in Topic._super_topic_ids:
+        tree.is_super = True
+        child_parent_topics.append(tree)
+    elif parent_topics:
+        child_parent_topics.append(tree)
+
+    for child in tree.children:
+        if child.key().kind() == "Topic":
+            tree.subtopics.append(child)
+        else:
+            tree.content.append(child)
+
+    del tree.children
+
+    if tree.content:
+        tree.height = math.ceil(len(tree.content)/3.0) * 18
+
+    if hasattr(tree, "is_super") or (not parent_topics and tree.content):
+        homepage_topics.append(tree)
+
+    for subtopic in tree.subtopics:
+        homepage_topics += flatten_tree(subtopic, child_parent_topics)
+
+    return homepage_topics
+
+def add_next_topic(topics, next_topic=None):
+    topic_prev = None
+    for i, topic in enumerate(topics):
+        if topic.subtopics:
+            topic.next = topic.subtopics[0]
+            topic.next_is_subtopic = True
+            for subtopic in topic.subtopics:
+                add_next_topic(topic.subtopics, next_topic=topics[i+1])
+        else:
+            if i+1 == len(topics):
+                topic.next = next_topic
+            else:
+                if next_topic:
+                    topic.next_is_subtopic = True
+                topic.next = topics[i+1]
 
 @layer_cache.cache_with_key_fxn(
-        lambda *args, **kwargs: "library_content_html_%s" % Setting.cached_library_content_date()
+        lambda ajax=False, version_number=None: 
+        "library_content_by_topic_%s_v%s" % (
+        "ajax" if ajax else "inline", 
+        version_number if version_number else Setting.topic_tree_version()),
+        layer=layer_cache.Layers.Blobstore
         )
-def library_content_html():
-    # No cache found -- regenerate HTML
-    smart_history = getSmartHistoryContent()
+def library_content_html(ajax=False, version_number=None):
+    """" Returns the HTML for the structure of the topics as they will be
+    populated ont he homepage. Does not actually contain the list of video
+    names as those are filled in later asynchronously via the cache.
+    """
+    if version_number:
+        version = TopicVersion.get_by_number(version_number)
+    else:
+        version = TopicVersion.get_default_version()
 
-    all_playlists = []
 
-    dict_videos = {}
-    dict_videos_counted = {}
-    dict_playlists = {}
-    dict_playlists_by_title = {}
-    dict_video_playlists = {}
+    tree = Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
+    topics = flatten_tree(tree)
+    topics.sort(key = lambda topic: topic.standalone_title)
 
-    async_queries = [
-        Video.all(),
-        Playlist.all(),
-        VideoPlaylist.all().filter('live_association = ', True).order('video_position'),
-    ]
+    # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage
+    topics = [topic for topic in topics 
+              if not topic.id == "new-and-noteworthy" and not
+              (topic.standalone_title == "California Standards Test: Geometry" 
+              and not topic.id == "geometry-2")] 
 
-    results = util.async_queries(async_queries)
+    # print_topics(topics)
 
-    for video in results[0].get_result():
-        dict_videos[video.key()] = video
+    add_next_topic(topics)
 
-    for playlist in results[1].get_result():
-        dict_playlists[playlist.key()] = playlist
-        if playlist.title in topics_list:
-            dict_playlists_by_title[playlist.title] = playlist
+    timestamp = time.time()
 
-    for video_playlist in results[2].get_result():
-        playlist_key = VideoPlaylist.playlist.get_value_for_datastore(video_playlist)
-        video_key = VideoPlaylist.video.get_value_for_datastore(video_playlist)
-
-        if dict_videos.has_key(video_key) and dict_playlists.has_key(playlist_key):
-            video = dict_videos[video_key]
-            playlist = dict_playlists[playlist_key]
-            fast_video_playlist_dict = {"video":video, "playlist":playlist}
-
-            if dict_video_playlists.has_key(playlist_key):
-                dict_video_playlists[playlist_key].append(fast_video_playlist_dict)
-            else:
-                dict_video_playlists[playlist_key] = [fast_video_playlist_dict]
-
-            if dict_playlists_by_title.has_key(playlist.title):
-                # Only count videos in topics_list
-                dict_videos_counted[video.youtube_id] = True
-
-    # Update count of all distinct videos associated w/ a live playlist
-    Setting.count_videos(len(dict_videos_counted.keys()))
-
-    for topic in topics_list:
-        if topic in dict_playlists_by_title:
-            playlist = dict_playlists_by_title[topic]
-            playlist_key = playlist.key()
-            playlist_videos = dict_video_playlists.get(playlist_key) or []
-
-            if not playlist_videos:
-                logging.error('Playlist %s has no videos!', playlist.title)
-
-            playlist_data = {
-                     'title': topic,
-                     'topic': topic,
-                     'playlist': playlist,
-                     'videos': playlist_videos,
-                     'next': None
-                     }
-
-            all_playlists.append(playlist_data)
-
-    playlist_data_prev = None
-    for playlist_data in all_playlists:
-        if playlist_data_prev:
-            playlist_data_prev['next'] = playlist_data
-        playlist_data_prev = playlist_data
-
-    # Separating out the columns because the formatting is a little different on each column
     template_values = {
-        'App' : App,
-        'all_playlists': all_playlists,
-        'smart_history': smart_history,
-        }
+        'topics': topics,
+        'ajax' : ajax,
+        # convert timestamp to a nice integer for the JS
+        'timestamp': int(round(timestamp * 1000)),
+        'version_date': str(version.made_default_on),
+        'version_id': version.number
+    }
 
     html = shared_jinja.get().render_template("library_content_template.html", **template_values)
-
-    # Set shared date of last generated content
-    Setting.cached_library_content_date(str(datetime.datetime.now()))
 
     return html
 
@@ -125,7 +138,7 @@ class GenerateLibraryContent(request_handler.RequestHandler):
         self.get(from_task_queue = True)
 
     def get(self, from_task_queue = False):
-        library_content_html(bust_cache=True)
+        library_content_html(ajax=True, version_number=None, bust_cache=True)
 
         if not from_task_queue:
             self.redirect("/")

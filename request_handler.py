@@ -1,7 +1,6 @@
 import os
 import logging
 import datetime
-import urllib
 import simplejson
 import sys
 import re
@@ -13,9 +12,11 @@ from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 import webapp2
 import shared_jinja
 
-from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException
+from custom_exceptions import MissingVideoException, MissingExerciseException, SmartHistoryLoadException, QuietException
 from app import App
 import cookie_util
+
+from api.jsonify import jsonify
 
 class RequestInputHandler(object):
 
@@ -58,17 +59,33 @@ class RequestInputHandler(object):
 
     def request_user_data(self, key):
         email = self.request_string(key)
+        return UserData.get_possibly_current_user(email)
+
+    # get the UserData instance based on the querystring. The precedence is:
+    # 1. email
+    # 2. student_email
+    # the precendence is reversed when legacy is True. A warning will be logged
+    # if a legacy parameter is encountered when not expected.
+    def request_student_user_data(self, legacy=False):
+        if legacy:
+            email = self.request_student_email_legacy()
+        else:
+            email = self.request_student_email()
+        return UserData.get_possibly_current_user(email)
+
+    def request_student_email_legacy(self):
+        email = self.request_string("email")
+        email = self.request_string("student_email", email)
+        # no warning is logged here as we should aim to completely move to
+        # email, but no effort has been made to update old calls yet.
+        return email
+
+    def request_student_email(self):
+        email = self.request_string("student_email")
         if email:
-
-            user_data_current = UserData.current()
-            if user_data_current and user_data_current.user_email == email:
-                # Avoid an extra DB call in the (fairly often) case that the requested email
-                # is the email of the currently logged-in user
-                return user_data_current
-
-            return UserData.get_from_user_input_email(email) or UserData.get_from_user_id(email)
-
-        return None
+            logging.warning("API called with legacy student_email parameter")
+        email = self.request_string("email", email)
+        return email
 
     def request_float(self, key, default = None):
         try:
@@ -105,8 +122,6 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
     def handle_exception(self, e, *args):
 
-        silence_report = False
-
         title = "Oops. We broke our streak."
         message_html = "We ran into a problem. It's our fault, and we're working on it."
         sub_message_html = "This has been reported to us, and we'll be looking for a fix. If the problem continues, feel free to <a href='/reportissue?type=Defect'>send us a report directly</a>."
@@ -115,31 +130,32 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
             # App Engine maintenance period
             title = "Shhh. We're studying."
-            message_html = "We're temporarily down for maintenance, and we expect this to last approximately one hour. In the meantime, you can watch all of our videos at the <a href='http://www.youtube.com/user/khanacademy'>Khan Academy YouTube channel</a>."
+            message_html = "We're temporarily down for maintenance, and we expect this to end shortly. In the meantime, you can watch all of our videos at the <a href='http://www.youtube.com/user/khanacademy'>Khan Academy YouTube channel</a>."
             sub_message_html = "We're really sorry for the inconvenience, and we're working to restore access as soon as possible."
 
         elif type(e) is MissingExerciseException:
 
             title = "This exercise isn't here right now."
-            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard?k'>head back to our other exercises</a>."
+            message_html = "Either this exercise doesn't exist or it's temporarily hiding. You should <a href='/exercisedashboard'>head back to our other exercises</a>."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is MissingVideoException:
 
             # We don't log missing videos as errors because they're so common due to malformed URLs or renamed videos.
             # Ask users to report any significant problems, and log as info in case we need to research.
-            silence_report = True
-            logging.info(e)
             title = "This video is no longer around."
             message_html = "You're looking for a video that either never existed or wandered away. <a href='/'>Head to our video library</a> to find it."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
         elif type(e) is SmartHistoryLoadException:
+            # 404s are very common with Smarthistory as bots have gotten hold of bad urls, silencing these reports and log as info instead
             title = "This page of the Smarthistory section of Khan Academy does not exist"
             message_html = "Go to <a href='/'>our Smarthistory homepage</a> to find more art history content."
             sub_message_html = "If this problem continues and you think something is wrong, please <a href='/reportissue?type=Defect'>let us know by sending a report</a>."
 
-        if not silence_report:
+        if isinstance(e, QuietException):
+            logging.info(e)
+        else:
             self.error(500)
             logging.exception(e)
 
@@ -249,6 +265,10 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return user_agent_lower.find("webos") > -1 or \
                 user_agent_lower.find("hp-tablet") > -1
 
+    def is_ipad(self):
+        user_agent_lower = self.user_agent().lower()
+        return user_agent_lower.find("ipad") > -1
+
     def is_mobile(self):
         if self.is_mobile_capable():
             return not self.has_mobile_full_site_cookie()
@@ -274,6 +294,15 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         header_value = cookie_util.set_cookie_value(key, value, max_age, path, domain, secure, httponly, version, comment)
         self.response.headerlist.append(('Set-Cookie', header_value))
 
+    def delete_cookie_including_dot_domain(self, key, path='/', domain=None):
+
+        self.delete_cookie(key, path, domain)
+
+        if domain is None:
+            domain = os.environ["SERVER_NAME"]
+
+        self.delete_cookie(key, path, "." + domain)
+
     def delete_cookie(self, key, path='/', domain=None):
         self.set_cookie(key, '', path=path, domain=domain, max_age=0)
 
@@ -288,8 +317,10 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         user_data = template_values['user_data']
 
         template_values['username'] = user_data.nickname if user_data else ""
+        template_values['viewer_profile_root'] = user_data.profile_root if user_data else "/profile/nouser"
         template_values['points'] = user_data.points if user_data else 0
         template_values['logged_in'] = not user_data.is_phantom if user_data else False
+        template_values['http_host'] = os.environ["HTTP_HOST"]
 
         # Always insert a post-login request before our continue url
         template_values['continue'] = util.create_post_login_url(template_values.get('continue') or self.request.uri)
@@ -298,17 +329,28 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         template_values['is_mobile'] = False
         template_values['is_mobile_capable'] = False
+        template_values['is_ipad'] = False
 
         if self.is_mobile_capable():
             template_values['is_mobile_capable'] = True
+            template_values['is_ipad'] = self.is_ipad()
+
             if 'is_mobile_allowed' in template_values and template_values['is_mobile_allowed']:
                 template_values['is_mobile'] = self.is_mobile()
 
         # overridable hide_analytics querystring that defaults to true in dev
         # mode but false for prod.
-        hide_analytics = os.environ.get('SERVER_SOFTWARE').startswith('Devel')
-        hide_analytics = self.request_bool("hide_analytics", hide_analytics)
+        hide_analytics = self.request_bool("hide_analytics", App.is_dev_server)
         template_values['hide_analytics'] = hide_analytics
+
+        # client-side error logging
+        template_values['include_errorception'] = gandalf('errorception')
+
+        if user_data:
+            goals = GoalList.get_current_goals(user_data)
+            goals_data = [g.get_visible_data() for g in goals]
+            if goals_data:
+                template_values['global_goals'] = jsonify(goals_data)
 
         return template_values
 
@@ -324,7 +366,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         self.response.out.write(json)
 
     def render_jsonp(self, obj):
-        json = obj if type(obj) == str else simplejson.dumps(obj, ensure_ascii=False, indent=4)
+        json = obj if isinstance(obj, basestring) else simplejson.dumps(obj, ensure_ascii=False, indent=4)
         callback = self.request_string("callback")
         if callback:
             self.response.out.write("%s(%s)" % (callback, json))
@@ -333,3 +375,5 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
 from models import UserData
 import util
+from goals.models import GoalList
+from gandalf import gandalf

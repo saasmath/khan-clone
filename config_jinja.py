@@ -17,6 +17,7 @@ use_library('django', '0.96')
 from models import UserData
 import templatetags
 import templatefilters
+import avatars.templatetags
 import badges.templatetags
 import profiles.templatetags
 import social.templatetags
@@ -37,6 +38,7 @@ jinja2.default_config = {
         "templatetags": templatetags,
         "social": social.templatetags,
         "profiles": profiles.templatetags,
+        "avatars": avatars.templatetags,
         "badges": badges.templatetags,
         "phantom_users": phantom_users.templatetags,
         "js_css_packages": js_css_packages.templatetags,
@@ -48,11 +50,13 @@ jinja2.default_config = {
     }, 
     "filters": {
         "urlencode": lambda s: quote_plus(s or ""),
+        "strip": lambda s: (s or "").strip(),
         "escapejs": templatefilters.escapejs,
         "phantom_login_link": templatefilters.phantom_login_link,
         "slugify": templatefilters.slugify,
         "pluralize": templatefilters.pluralize,
         "linebreaksbr": templatefilters.linebreaksbr,
+        "linebreaksbr_js": templatefilters.linebreaksbr_js,
         "linebreaksbr_ellipsis": templatefilters.linebreaksbr_ellipsis,
         "youtube_timestamp_links": templatefilters.youtube_timestamp_links,
         "timesince_ago": templatefilters.timesince_ago,

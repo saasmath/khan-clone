@@ -71,7 +71,7 @@ var Voting = {
         var votesNext = votes + (fAbstain ? 0 : vote_type);
 
         if (jelParent.is(".comment"))
-            jelVotes.html(votesNext + " point" + (votesNext == 1 ? "" : "s") + ", ");
+            jelVotes.html(votesNext + " vote" + (votesNext == 1 ? "" : "s") + ", ");
         else
             jelVotes.html(votesNext);
 
@@ -212,7 +212,7 @@ var QA = {
         var jQuestionText = $(".question_text");
         jQuestionText.focus(QA.focusQuestion);
         jQuestionText.change(QA.updateRemainingQuestion).keyup(QA.updateRemainingQuestion);
-        jQuestionText.watermark(jQuestionText.attr("watermark"));
+        jQuestionText.placeholder();
 
         $("form.questions").submit(function(){return false;});
 
@@ -234,7 +234,7 @@ var QA = {
         $("form.answers").submit(function(){return false;});
         $("a.questions_page").click(function(){ QA.loadPage($(this).attr("page")); return false; });
         $(".add_yours").click(QA.expandAndFocus);
-        $(".answer_text").focus(QA.focusAnswer).watermark($(".answer_text").attr("watermark"));
+        $(".answer_text").focus(QA.focusAnswer).placeholder();
     },
 
    submit: function() {
@@ -247,7 +247,7 @@ var QA = {
         var jText = $("." + type + "_text", parent);
 
         if (!$.trim(jText.val()).length) return;
-        if (jText.val() == jText.attr("watermark")) return;
+        if (jText.val() == jText.attr("placeholder")) return;
 
         var data_suffix = "&page=" + QA.page;
 
@@ -260,7 +260,7 @@ var QA = {
         {
             sUrl = "/discussion/editentity";
             jData = $("textarea:first, input[name=entity_key]:first", parent);
-            var jPlaylist = $("#playlist_key:first");
+            var jPlaylist = $("#topic_key:first");
             jData = jData.add(jPlaylist);
         }
 
@@ -303,7 +303,7 @@ var QA = {
         $.get("/discussion/pagequestions",
                 {
                     video_key: $("#video_key").val(),
-                    playlist_key: $("#playlist_key").val(),
+                    topic_key: $("#topic_key").val(),
                     sort: $("#sort").val(),
                     qa_expand_key: qa_expand_key,
                     page: page
@@ -455,7 +455,7 @@ var QA = {
 
         var type = $(parent).is(".answer_container") ? "answer" : "question";
 
-        $("." + type + "_text", parent).val("").watermark($("." + type + "_text").attr("watermark"));
+        $("." + type + "_text", parent).val("").placeholder();
 
         if (type == "question") QA.hideStickyNote();
 
@@ -579,7 +579,7 @@ var Comments = {
         $.get("/discussion/pagecomments",
                 {
                     video_key: $("#video_key").val(),
-                    playlist_key: $("#playlist_key").val(),
+                    topic_key: $("#topic_key").val(),
                     page: page
                 },
                 function(data) { Comments.finishLoadPage(data, fInitialLoad); });

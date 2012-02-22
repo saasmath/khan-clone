@@ -1,3 +1,8 @@
+# the following 3 imports are needed for blobcache
+from __future__ import with_statement
+from google.appengine.api import files
+from google.appengine.ext import blobstore
+
 import datetime
 import logging
 import pickle
@@ -6,6 +11,7 @@ from google.appengine.api import memcache
 from google.appengine.ext import db
 
 from app import App
+import request_cache
 
 if App.is_dev_server:
     # cachepy disables itself during development presumably to avoid confusion.
@@ -80,7 +86,14 @@ else:
 #
 # If key has expired or is no longer in the current cache and throws an error when trying to be recomputed, then try getting resource from permanent key that is not set to expire
 # @layer_cache.cache(... expiration=60, permanent_cache_key = lambda object: "permanent_layer_cache_key_for_object_%s" % object.id())
-
+#
+# _____Disabling:_____
+#
+# You can disable layer_cache for the rest of the request by calling:
+# layer_cache.disable()
+# 
+# Re-enable it with
+# layer_cache.enable()
 
 
 DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 25 # Expire after 25 days by default
@@ -89,6 +102,16 @@ class Layers:
     Datastore = 1
     Memcache = 2
     InAppMemory = 4
+    Blobstore = 8
+
+def disable():
+    request_cache.set("layer_cache_disabled", True)
+
+def enable():
+    request_cache.set("layer_cache_disabled", False)
+
+def is_disabled():
+    return request_cache.get("layer_cache_disabled") or False
 
 def cache(
         expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
@@ -147,6 +170,12 @@ def layer_cache_check_set_return(
                 if layer & Layers.Memcache:
                     memcache.set(key, result, time=expiration, namespace=namespace)
                 return result
+        
+        if layer & Layers.Blobstore:
+            result = BlobCache.get(key, namespace=namespace)
+            # TODO: fill upward layers if size of dumped result is going to be less than 1MB (might be too costly to figure that out
+            return result
+
 
     def set_cached_result(key, namespace, expiration, layer, result):
         # Cache the result
@@ -160,6 +189,8 @@ def layer_cache_check_set_return(
         if layer & Layers.Datastore:
             KeyValueCache.set(key, result, time=expiration, namespace=namespace)
 
+        if layer & Layers.Blobstore:
+            BlobCache.set(key, result, time=expiration, namespace=namespace)
 
     bust_cache = False
     if "bust_cache" in kwargs:
@@ -168,6 +199,12 @@ def layer_cache_check_set_return(
         del kwargs["bust_cache"]
 
     key = key_fxn(*args, **kwargs)
+
+    # if key is None, or layer_cache is disabled don't bother trying to get it 
+    # from the cache, just execute the function and return it
+    if key is None or request_cache.get("layer_cache_disabled"):
+        return target(*args, **kwargs)
+
     namespace = App.version
 
     if persist_across_app_versions:
@@ -292,4 +329,89 @@ class KeyValueCache(db.Model):
 
         if key_value:
             db.delete(key_value)
+
+class BlobCache():
+
+    @staticmethod
+    def get_filename(key, namespace=""):
+        return "blobcache-%s-%s" % (namespace, key)
+
+    @staticmethod
+    def get_blob_infos(key, namespace=""):
+        filename = BlobCache.get_filename(key, namespace)
+        return blobstore.BlobInfo.all().filter("filename =", filename).fetch(100)
+        
+    @staticmethod
+    def get_first_blob_info(key, namespace=""):
+        infos = BlobCache.get_blob_infos(key, namespace)
+
+        if infos:
+            infos = sorted(infos, key=lambda info: info.creation)
+            return infos[-1]
+        else:
+            return None
+
+    @staticmethod
+    def get(key, namespace=""):
+        from datetime import datetime
+        start = datetime.now()
+        blob_info = BlobCache.get_first_blob_info(key, namespace)
+        end = datetime.now()
+        logging.info("time to get blob info %s", (end-start))
+
+        if blob_info:
+            start = datetime.now()
+            blob_reader = blob_info.open()
+            value = blob_reader.read()
+            end = datetime.now()
+            logging.info("time to read blob into mem %s", (end-start))
+
+            start = datetime.now()
+            obj = pickle.loads(value)
+            end = datetime.now()
+            logging.info("time to depickle %s", (end-start))
+
+            return obj
+       
+    @staticmethod
+    def set(key, result, time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, namespace=""):
+        old_blob_infos = BlobCache.get_blob_infos(key, namespace)
+      
+        value = pickle.dumps(result)
+        
+        # Create the file
+        file_name = files.blobstore.create(mime_type='application/octet-stream', _blobinfo_uploaded_filename=BlobCache.get_filename(key, namespace))
+ 
+        # might need to wrap it in an object to handle expiration time here
+        
+        # write the pickled result to the file
+        pos = 0
+        chunkSize = 65536
+        with files.open(file_name, 'a') as f:
+            while pos < len(value):
+                chunk = value[pos:pos+chunkSize]
+                pos += chunkSize
+                f.write(chunk)
+
+        # Finalize the file. Do this before attempting to read it.
+        files.finalize(file_name)
+
+        # Get the file's blob key
+        blob_key = files.blobstore.get_blob_key(file_name)
+
+        for info in old_blob_infos:
+            try:
+                info.delete()
+            except Exception, e:
+                # If deleting blob times out, don't crash the request. Just log the error.
+                logging.error("Failed to delete old blob from layer_cache: %s" % e)
+
+    @staticmethod
+    def delete(key, namespace=""):
+        for info in BlobCache.get_blob_infos(key, namespace):
+            try:
+                info.delete()
+            except Exception, e:
+                # If deleting blob times out, don't crash the request. Just log the error.
+                logging.error("Failed to delete old blob from layer_cache: %s" % e)
 

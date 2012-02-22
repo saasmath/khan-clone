@@ -12,9 +12,9 @@ MIN_STREAK_TILL_PROFICIENCY = AccuracyModel.min_streak_till_threshold(consts.PRO
 def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
 
     points = 0
-    
+
     required_streak = MIN_STREAK_TILL_PROFICIENCY
-    degrade_threshold = required_streak + consts.DEGRADING_EXERCISES_AFTER_STREAK
+    degrade_threshold = required_streak + consts.DEGRADING_EXERCISES_AFTER_PROFICIENCY
 
     if user_exercise.longest_streak + offset <= required_streak:
         # Have never hit a streak, higher base than normal
@@ -26,7 +26,7 @@ def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
     if (points < consts.EXERCISE_POINTS_BASE):
         # Never award less than a few points
         points = consts.EXERCISE_POINTS_BASE
-    
+
     if user_exercise.summative:
         # Slightly higher rewards for summative exercises
         points = points * consts.SUMMATIVE_EXERCISE_MULTIPLIER
@@ -49,7 +49,7 @@ def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
 def VideoPointCalculator(user_video):
     if user_video.duration is None or user_video.duration <= 0:
         return 0
-    
+
     seconds_credit = min(user_video.seconds_watched, user_video.duration)
 
     credit_multiplier = float(seconds_credit) / float(user_video.duration)
@@ -59,3 +59,7 @@ def VideoPointCalculator(user_video):
     points = consts.VIDEO_POINTS_BASE * credit_multiplier
 
     return int(math.ceil(points))
+
+def video_progress_from_points(value):
+    fraction = float(value) / consts.VIDEO_POINTS_BASE
+    return min(1.0, fraction)

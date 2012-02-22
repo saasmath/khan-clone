@@ -5,12 +5,14 @@ import urllib
 import urlparse
 import logging
 import re
-import simplejson
 
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
 from google.appengine.api import users
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
+from google.appengine.api import memcache
+
+from api.auth.decorators import developer_required
 
 import webapp2
 
@@ -35,7 +37,6 @@ from app import App
 import util
 import user_util
 import exercise_statistics
-import backfill
 import activity_summary
 import exercises
 import dashboard
@@ -44,25 +45,34 @@ import exercisestats.report_json
 import github
 import paypal
 import smarthistory
+import topics
+import goals.handlers
+import stories
+import summer
+import common_core
+import unisubs
 
 import models
-from models import UserData, Video, Playlist, VideoPlaylist, ExerciseVideo, UserVideo, VideoLog
-from discussion import comments, notification, qa, voting
+from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
+from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from phantom_users import util_notify
 from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
 from custom_exceptions import MissingVideoException
-from templatetags import user_points
 from oauth_provider import apps as oauth_apps
-from phantom_users.phantom_util import create_phantom, get_phantom_user_id_from_cookies
+from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
 from counters import user_counter
 from notifications import UserNotifier
-from nicknames import get_nickname_for
+from nicknames import get_default_nickname_for
+from image_cache import ImageCache
+from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
+from importer.handlers import ImportHandler
+from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -73,51 +83,29 @@ class VideoDataTest(request_handler.RequestHandler):
         for video in videos:
             self.response.out.write('<P>Title: ' + video.title)
 
-
-class DeleteVideoPlaylists(request_handler.RequestHandler):
-# Deletes at most 200 Video-Playlist associations that are no longer live.  Should be run every-now-and-then to make sure the table doesn't get too big
-    @user_util.developer_only
-    def get(self):
-        query = VideoPlaylist.all()
-        all_video_playlists = query.fetch(200)
-        video_playlists_to_delete = []
-        for video_playlist in all_video_playlists:
-            if video_playlist.live_association != True:
-                video_playlists_to_delete.append(video_playlist)
-        db.delete(video_playlists_to_delete)
-
-
-class KillLiveAssociations(request_handler.RequestHandler):
-    @user_util.developer_only
-    def get(self):
-        query = VideoPlaylist.all()
-        all_video_playlists = query.fetch(100000)
-        for video_playlist in all_video_playlists:
-            video_playlist.live_association = False
-        db.put(all_video_playlists)
-
-def get_mangled_playlist_name(playlist_name):
+def get_mangled_topic_name(topic_name):
     for char in " :()":
-        playlist_name = playlist_name.replace(char, "")
-    return playlist_name
+        topic_name = topic_name.replace(char, "")
+    return topic_name
 
 class ViewVideo(request_handler.RequestHandler):
-    def get(self):
 
-        # This method displays a video in the context of a particular playlist.
-        # To do that we first need to find the appropriate playlist.  If we aren't
-        # given the playlist title in a query param, we need to find a playlist that
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
+
+        # This method displays a video in the context of a particular topic.
+        # To do that we first need to find the appropriate topic.  If we aren't
+        # given the topic title in a query param, we need to find a topic that
         # the video is a part of.  That requires finding the video, given it readable_id
         # or, to support old URLs, it's youtube_id.
         video = None
-        playlist = None
+        topic = None
         video_id = self.request.get('v')
-        playlist_title = self.request_string('playlist', default="") or self.request_string('p', default="")
-        path = self.request.path
-        readable_id  = urllib.unquote(path.rpartition('/')[2])
+        topic_id = self.request_string('topic', default="")
+        readable_id = urllib.unquote(readable_id)
         readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
 
-        # If either the readable_id or playlist title is missing,
+        # If either the readable_id or topic title is missing,
         # redirect to the canonical URL that contains them
         redirect_to_canonical_url = False
         if video_id: # Support for old links
@@ -129,39 +117,35 @@ class ViewVideo(request_handler.RequestHandler):
                 raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
 
             readable_id = video.readable_id
-            playlist = video.first_playlist()
+            topic = video.first_topic()
 
-            if not playlist:
-                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
+            if not topic:
+                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
 
             redirect_to_canonical_url = True
 
-        if playlist_title is not None and len(playlist_title) > 0:
-            query = Playlist.all().filter('title =', playlist_title)
-            key_id = 0
-            for p in query:
-                if p.key().id() > key_id and not p.youtube_id.endswith('_player'):
-                    playlist = p
-                    key_id = p.key().id()
+        if topic_id is not None and len(topic_id) > 0:
+            topic = Topic.get_by_id(topic_id)
+            key_id = 0 if not topic else topic.key().id()
 
-        # If a playlist_title wasn't specified or the specified playlist wasn't found
-        # use the first playlist for the requested video.
-        if playlist is None:
-            # Get video by readable_id just to get the first playlist for the video
+        # If a topic_id wasn't specified or the specified topic wasn't found
+        # use the first topic for the requested video.
+        if topic is None:
+            # Get video by readable_id just to get the first topic for the video
             video = Video.get_for_readable_id(readable_id)
             if video is None:
                 raise MissingVideoException("Missing video '%s'" % readable_id)
 
-            playlist = video.first_playlist()
-            if not playlist:
-                raise MissingVideoException("Missing video '%s'" % readable_id)
+            topic = video.first_topic()
+            if not topic:
+                raise MissingVideoException("No topic has video '%s'" % readable_id)
 
             redirect_to_canonical_url = True
 
         exid = self.request_string('exid', default=None)
 
         if redirect_to_canonical_url:
-            qs = {'playlist': playlist.title}
+            qs = {'topic': topic.id}
             if exid:
                 qs['exid'] = exid
 
@@ -170,13 +154,12 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
-        # If we got here, we have a readable_id and a playlist_title, so we can display
-        # the playlist and the video in it that has the readable_id.  Note that we don't
+        # If we got here, we have a readable_id and a topic, so we can display
+        # the topic and the video in it that has the readable_id.  Note that we don't
         # query the Video entities for one with the requested readable_id because in some
         # cases there are multiple Video objects in the datastore with the same readable_id
         # (e.g. there are 2 "Order of Operations" videos).
-
-        videos = VideoPlaylist.get_cached_videos_for_playlist(playlist)
+        videos = Topic.get_cached_videos_for_topic(topic)
         previous_video = None
         next_video = None
         for v in videos:
@@ -185,14 +168,42 @@ class ViewVideo(request_handler.RequestHandler):
                 video = v
             elif video is None:
                 previous_video = v
-            elif next_video is None:
+            else:
                 next_video = v
+                break
+
+        # If we're at the beginning or end of a topic, show the adjacent topic.
+        # previous_topic/next_topic are the topic to display.
+        # previous_video_topic/next_video_topic are the subtopics the videos
+        # are actually in.
+        previous_topic = None
+        previous_video_topic = None
+        next_topic = None
+        next_video_topic = None
+
+        if not previous_video:
+            previous_topic = topic
+            while not previous_video:
+                previous_topic = previous_topic.get_previous_topic()
+                if previous_topic:
+                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+                else:
+                    break
+
+        if not next_video:
+            next_topic = topic
+            while not next_video:
+                next_topic = next_topic.get_next_topic()
+                if next_topic:
+                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+                else:
+                    break
 
         if video is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
         if App.offline_mode:
-            video_path = "/videos/" + get_mangled_playlist_name(playlist_title) + "/" + video.readable_id + ".flv"
+            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
         else:
             video_path = video.download_video_url()
 
@@ -215,24 +226,28 @@ class ViewVideo(request_handler.RequestHandler):
         if user_video:
             awarded_points = user_video.points
 
-        if not video.subtitles: # and video.subtitles_updated - time.now() > 1.day:
-            logging.critical("subtitles not present. loading!")
-            logging.critical(video.subtitles)
-            video.update_subtitles()
-            video.put()
-            VideoPlaylist.get_cached_videos_for_playlist_bust(playlist)
+        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_json = None
+        if subtitles:
+            subtitles_json = subtitles.load_json()
 
         template_values = {
-                            'playlist': playlist,
+                            'topic': topic,
                             'video': video,
-                            'transcript': video.parsed_subtitles(),
+                            'transcript': subtitles_json,
                             'videos': videos,
                             'video_path': video_path,
                             'video_points_base': consts.VIDEO_POINTS_BASE,
+                            'subtitles_json': subtitles_json,
                             'button_top_exercise': button_top_exercise,
                             'related_exercises': [], # disabled for now
+                            'previous_topic': previous_topic,
                             'previous_video': previous_video,
+                            'previous_video_topic': previous_video_topic,
+                            'next_topic': next_topic,
                             'next_video': next_video,
+                            'next_video_topic': next_video_topic,
                             'selected_nav_link': 'watch',
                             'awarded_points': awarded_points,
                             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
@@ -240,57 +255,12 @@ class ViewVideo(request_handler.RequestHandler):
                         }
         template_values = qa.add_template_values(template_values, self.request)
 
+        bingo([
+            'struggling_videos_landing',
+            'suggested_activity_videos_landing',
+            'suggested_activity_videos_landing_binary',
+        ])
         self.render_jinja2_template('viewvideo.html', template_values)
-
-class LogVideoProgress(request_handler.RequestHandler):
-
-    # LogVideoProgress uses a GET request to solve the IE-behind-firewall
-    # issue with occasionally stripped POST data.
-    # See http://code.google.com/p/khanacademy/issues/detail?id=3098
-    # and http://stackoverflow.com/questions/328281/why-content-length-0-in-post-requests
-    def post(self):
-        self.get()
-
-    @create_phantom
-    def get(self):
-        user_data = UserData.current()
-        video_points_total = 0
-
-        if user_data:
-
-            video = None
-
-            key_str = self.request_string("video_key")
-            if key_str:
-                key = db.Key(key_str)
-                app_id = os.environ['APPLICATION_ID']
-                if key.app() != app_id:
-                    new_key = db.Key.from_path(
-                        key.kind(),
-                        key.id() or key.name(),
-                        _app=app_id)
-                    logging.warning("Key '%s' had invalid app_id '%s'. Changed to new key '%s'", str(key), key.app(), str(new_key))
-                    key = new_key
-                video = db.get(key)
-            else:
-                youtube_id = self.request_string("youtube_id")
-                if youtube_id:
-                    video = Video.all().filter('youtube_id =', youtube_id).get()
-
-            if video:
-
-                # Seconds watched is restricted by both the scrubber's position
-                # and the amount of time spent on the video page
-                # so we know how *much* of each video each student has watched
-                seconds_watched = int(self.request_float("seconds_watched", default=0))
-                last_second_watched = int(self.request_float("last_second_watched", default=0))
-
-                user_video, video_log, video_points_total = VideoLog.add_entry(user_data, video, seconds_watched, last_second_watched)
-
-        user_points_html = self.render_jinja2_template_to_string("user_points_only.html", user_points(user_data))
-
-        json = simplejson.dumps({"user_points_html": user_points_html, "video_points": video_points_total}, ensure_ascii=False)
-        self.response.out.write(json)
 
 class ReportIssue(request_handler.RequestHandler):
 
@@ -378,6 +348,10 @@ class ViewTOS(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('tos.html', {"selected_nav_link": "tos"})
 
+class ViewAPITOS(request_handler.RequestHandler):
+    def get(self):
+        self.render_jinja2_template('api-tos.html', {"selected_nav_link": "api-tos"})
+
 class ViewPrivacyPolicy(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('privacy-policy.html', {"selected_nav_link": "privacy-policy"})
@@ -385,38 +359,6 @@ class ViewPrivacyPolicy(request_handler.RequestHandler):
 class ViewDMCA(request_handler.RequestHandler):
     def get(self):
         self.render_jinja2_template('dmca.html', {"selected_nav_link": "dmca"})
-
-class ViewSAT(request_handler.RequestHandler):
-
-    def get(self):
-        playlist_title = "SAT Preparation"
-        query = Playlist.all()
-        query.filter('title =', playlist_title)
-        playlist = query.get()
-        query = VideoPlaylist.all()
-        query.filter('playlist =', playlist)
-        query.filter('live_association = ', True) #need to change this to true once I'm done with all of my hacks
-        query.order('video_position')
-        playlist_videos = query.fetch(500)
-
-        template_values = {
-                'videos': playlist_videos,
-        }
-
-        self.render_jinja2_template('sat.html', template_values)
-
-class ViewGMAT(request_handler.RequestHandler):
-
-    def get(self):
-        problem_solving = VideoPlaylist.get_query_for_playlist_title("GMAT: Problem Solving")
-        data_sufficiency = VideoPlaylist.get_query_for_playlist_title("GMAT Data Sufficiency")
-        template_values = {
-                            'data_sufficiency': data_sufficiency,
-                            'problem_solving': problem_solving,
-        }
-
-        self.render_jinja2_template('gmat.html', template_values)
-
 
 class RetargetFeedback(bulk_update.handler.UpdateKind):
     def get_keys_query(self, kind):
@@ -547,11 +489,10 @@ class PostLogin(request_handler.RequestHandler):
                 user_data.user_email = current_google_user.email()
                 user_data.put()
 
-            # Update nickname if it has changed
-            current_nickname = get_nickname_for(user_data)
-            if user_data.user_nickname != current_nickname:
-                user_data.user_nickname = current_nickname
-                user_data.put()
+            # If the user has a public profile, we stop "syncing" their username
+            # from Facebook, as they now have an opportunity to set it themself
+            if not user_data.username:
+                user_data.update_nickname()
 
             # Set developer and moderator to True if user is admin
             if (not user_data.developer or not user_data.moderator) and users.is_current_user_admin():
@@ -588,7 +529,9 @@ class PostLogin(request_handler.RequestHandler):
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            self.delete_cookie("fbs_" + App.facebook_app_id)
+            if App.facebook_app_id:
+                self.delete_cookie("fbsr_" + App.facebook_app_id)
+                self.delete_cookie("fbs_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
@@ -603,6 +546,12 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+
+        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
+        if App.facebook_app_id:
+            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 class Search(request_handler.RequestHandler):
@@ -625,50 +574,59 @@ class Search(request_handler.RequestHandler):
         exvids_future = util.async_queries([exvids_query])
 
         # One full (non-partial) search, then sort by kind
-        all_text_keys = Playlist.full_text_search(
+        all_text_keys = Topic.full_text_search(
                 query, limit=50, kind=None,
-                stemming=Playlist.INDEX_STEMMING,
-                multi_word_literal=Playlist.INDEX_MULTI_WORD,
+                stemming=Topic.INDEX_STEMMING,
+                multi_word_literal=Topic.INDEX_MULTI_WORD,
                 searched_phrases_out=searched_phrases)
 
-
         # Quick title-only partial search
-        playlist_partial_results = filter(
-                lambda playlist_dict: query in playlist_dict["title"].lower(),
-                autocomplete.playlist_title_dicts())
+        topic_partial_results = filter(
+                lambda topic_dict: query in topic_dict["title"].lower(),
+                autocomplete.topic_title_dicts())
         video_partial_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 autocomplete.video_title_dicts())
+        url_partial_results = filter(
+                lambda url_dict: query in url_dict["title"].lower(),
+                autocomplete.url_title_dicts())
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        all_key_list.extend([result["key"] for result in playlist_partial_results])
+        # all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
+        all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
+
+        # Filter out anything that isn't a Topic, Url or Video
+        all_key_list = [key for key in all_key_list if db.Key(key).kind() in ["Topic", "Url", "Video"]]
+
+        # Get all the entities
         all_entities = db.get(all_key_list)
 
-        # Filter results by type
-        playlists = []
+        # Group results by type
+        topics = []
         videos = []
         for entity in all_entities:
-            if isinstance(entity, Playlist):
-                playlists.append(entity)
+            if isinstance(entity, Topic):
+                topics.append(entity)
             elif isinstance(entity, Video):
                 videos.append(entity)
-            elif entity is not None:
-                logging.error("Unhandled kind in search results: " +
-                              str(type(entity)))
-                
-        playlist_count = len(playlists)
+            elif isinstance(entity, Url):
+                videos.append(entity)
+            elif entity:
+                logging.info("Found unknown object " + repr(entity))
 
-        # Get playlists for videos not in matching playlists
+        topic_count = len(topics)
+
+        # Get topics for videos not in matching topics
         filtered_videos = []
         filtered_videos_by_key = {}
         for video in videos:
-            if [(playlist.title in video.playlists) for playlist in playlists].count(True) == 0:
-                video_playlist = video.first_playlist()
-                if video_playlist != None:
-                    playlists.append(video_playlist)
+            if [(str(topic.key()) in video.topic_string_keys) for topic in topics].count(True) == 0:
+                video_topic = video.first_topic()
+                if video_topic != None:
+                    topics.append(video_topic)
                     filtered_videos.append(video)
                     filtered_videos_by_key[str(video.key())] = []
             else:
@@ -692,23 +650,26 @@ class Search(request_handler.RequestHandler):
         video_exercises = {}
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
-                
-        # Count number of videos in each playlist and sort descending
-        for playlist in playlists:
+
+        # Count number of videos in each topic and sort descending
+        if topics:
             if len(filtered_videos) > 0:
-                playlist.match_count = [(playlist.title in video.playlists) for video in filtered_videos].count(True)
+                for topic in topics:
+                    topic.match_count = [(str(topic.key()) in video.topic_string_keys) for video in filtered_videos].count(True)
+                topics = sorted(topics, key=lambda topic: -topic.match_count)
             else:
-                playlist.match_count = 0
-        playlists = sorted(playlists, key=lambda playlist: -playlist.match_count)
+                for topic in topics:
+                    topic.match_count = 0
 
         template_values.update({
-                           'playlists': playlists,
+                           'topics': topics,
                            'videos': filtered_videos,
                            'video_exercises': video_exercises,
                            'search_string': query,
                            'video_count': video_count,
-                           'playlist_count': playlist_count,
+                           'topic_count': topic_count,
                            })
+        
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
@@ -762,6 +723,19 @@ class RealtimeEntityCount(request_handler.RequestHandler):
             count = getattr(models, kind).all().count(10000)
             self.response.out.write("%s: %d<br>" % (kind, count))
 
+class MemcacheViewer(request_handler.RequestHandler):
+    @developer_required
+    def get(self):
+        key = self.request_string("key", "__layer_cache_models._get_settings_dict__")
+        namespace = self.request_string("namespace", App.version)
+        values =  memcache.get(key, namespace=namespace)
+        self.response.out.write("Memcache key %s = %s.<br>\n" % (key, values))
+        if type(values) is dict:
+            for k, value in values.iteritems():
+                self.response.out.write("<p><b>%s</b>%s</p>" % (k, dict((key, getattr(value, key)) for key in dir(value))))
+        if self.request_bool("clear", False):
+            memcache.delete(key, namespace=namespace)
+
 applicationSmartHistory = webapp2.WSGIApplication([
     ('/.*', smarthistory.SmartHistoryProxy)
 ])
@@ -773,7 +747,9 @@ application = webapp2.WSGIApplication([
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
+    ('/about/discovery-lab', util_about.ViewDiscoveryLab ),
     ('/about/tos', ViewTOS ),
+    ('/about/api-tos', ViewAPITOS),
     ('/about/privacy-policy', ViewPrivacyPolicy ),
     ('/about/dmca', ViewDMCA ),
     ('/contribute', ViewContribute ),
@@ -785,47 +761,61 @@ application = webapp2.WSGIApplication([
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
     ('/exercisedashboard', exercises.ViewAllExercises),
+
+    ('/stories/submit', stories.SubmitStory),
+    ('/stories/?.*', stories.ViewStories),
+
+    # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
-    ('/exercises', exercises.ViewExercise),
+
+    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
+    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
+    ('/review', exercises.ViewExercise),
+
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/.*', ViewVideo),
-    ('/v/.*', ViewVideo),
+    ('/video/(.*)', ViewVideo),
+    ('/v/(.*)', ViewVideo),
     ('/video', ViewVideo), # Backwards URL compatibility
-    ('/logvideoprogress', LogVideoProgress),
-    ('/sat', ViewSAT),
-    ('/gmat', ViewGMAT),
     ('/reportissue', ReportIssue),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.SaveMapCoords),
     ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
     ('/crash', Crash),
 
+    ('/image_cache/(.+)', ImageCache),
+
     ('/mobilefullsite', MobileFullSite),
     ('/mobilesite', MobileSite),
 
+    ('/admin/import_smarthistory', topics.ImportSmartHistory),
     ('/admin/reput', bulk_update.handler.UpdateKind),
     ('/admin/retargetfeedback', RetargetFeedback),
     ('/admin/startnewbadgemapreduce', util_badges.StartNewBadgeMapReduce),
     ('/admin/badgestatistics', util_badges.BadgeStatistics),
     ('/admin/startnewexercisestatisticsmapreduce', exercise_statistics.StartNewExerciseStatisticsMapReduce),
     ('/admin/startnewvotemapreduce', voting.StartNewVoteMapReduce),
-    ('/admin/backfill', backfill.StartNewBackfillMapReduce),
-    ('/admin/backfill_entity', backfill.BackfillEntity),
     ('/admin/feedbackflagupdate', qa.StartNewFlagUpdateMapReduce),
     ('/admin/dailyactivitylog', activity_summary.StartNewDailyActivityLogMapReduce),
     ('/admin/youtubesync.*', youtube_sync.YouTubeSync),
     ('/admin/changeemail', ChangeEmail),
     ('/admin/realtimeentitycount', RealtimeEntityCount),
+    ('/admin/unisubs', unisubs.ReportHandler),
+    ('/admin/unisubs/import', unisubs.ImportHandler),
 
-    ('/devadmin/emailchange', devpanel.Email),
+    ('/devadmin', devpanel.Panel),
+    ('/devadmin/emailchange', devpanel.MergeUsers),
     ('/devadmin/managedevs', devpanel.Manage),
     ('/devadmin/managecoworkers', devpanel.ManageCoworkers),
-    ('/devadmin/commoncore', devpanel.CommonCore),
+    ('/devadmin/managecommoncore', devpanel.ManageCommonCore),
+    ('/commoncore', common_core.CommonCore),
+    ('/staging/commoncore', common_core.CommonCore),
+    ('/devadmin/content', topics.EditContent),
+    ('/devadmin/memcacheviewer', MemcacheViewer),
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
@@ -835,17 +825,8 @@ application = webapp2.WSGIApplication([
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
 
-    ('/createstudentlist', coaches.CreateStudentList),
-    ('/deletestudentlist', coaches.DeleteStudentList),
     ('/removestudentfromlist', coaches.RemoveStudentFromList),
     ('/addstudenttolist', coaches.AddStudentToList),
-
-    ('/individualreport', coaches.ViewIndividualReport),
-    ('/progresschart', coaches.ViewProgressChart),
-    ('/sharedpoints', coaches.ViewSharedPoints),
-    ('/classreport', coaches.ViewClassReport),
-    ('/classtime', coaches.ViewClassTime),
-    ('/charts', coaches.ViewCharts),
 
     ('/mailing-lists/subscribe', util_mailing_lists.Subscribe),
 
@@ -853,13 +834,14 @@ application = webapp2.WSGIApplication([
     ('/profile/graph/focus', util_profile.FocusGraph),
     ('/profile/graph/exercisesovertime', util_profile.ExercisesOverTimeGraph),
     ('/profile/graph/exerciseproblems', util_profile.ExerciseProblemsGraph),
-    ('/profile/graph/exerciseprogress', util_profile.ExerciseProgressGraph),
-    ('/profile', util_profile.ViewProfile),
+
 
     ('/profile/graph/classexercisesovertime', util_profile.ClassExercisesOverTimeGraph),
-    ('/profile/graph/classprogressreport', util_profile.ClassProgressReportGraph),
     ('/profile/graph/classenergypointsperminute', util_profile.ClassEnergyPointsPerMinuteGraph),
     ('/profile/graph/classtime', util_profile.ClassTimeGraph),
+    ('/profile/(.+?)/(.*)', util_profile.ViewProfile),
+    ('/profile/(.*)', util_profile.ViewProfile),
+    ('/profile', util_profile.ViewProfile),
     ('/class_profile', util_profile.ViewClassProfile),
 
     ('/login', Login),
@@ -868,11 +850,6 @@ application = webapp2.WSGIApplication([
     ('/logout', Logout),
 
     ('/api-apps/register', oauth_apps.Register),
-
-    # These are dangerous, should be able to clean things manually from the remote python shell
-
-    ('/deletevideoplaylists', DeleteVideoPlaylists),
-    ('/killliveassociations', KillLiveAssociations),
 
     # Below are all discussion related pages
     ('/discussion/addcomment', comments.AddComment),
@@ -893,14 +870,20 @@ application = webapp2.WSGIApplication([
     ('/discussion/changeentitytype', qa.ChangeEntityType),
     ('/discussion/videofeedbacknotificationlist', notification.VideoFeedbackNotificationList),
     ('/discussion/videofeedbacknotificationfeed', notification.VideoFeedbackNotificationFeed),
-    ('/discussion/moderatorlist', qa.ModeratorList),
-    ('/discussion/flaggedfeedback', qa.FlaggedFeedback),
+
+    ('/discussion/mod', moderation.ModPanel),
+    ('/discussion/moderatorlist', moderation.RedirectToModPanel),
+    ('/discussion/flaggedfeedback', moderation.RedirectToModPanel),
+    ('/discussion/mod/flaggedfeedback', moderation.FlaggedFeedback),
+    ('/discussion/mod/moderatorlist', moderation.ModeratorList),
+    ('/discussion/mod/bannedlist', moderation.BannedList),
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
 
     ('/toolkit', RedirectToToolkit),
 
+    ('/paypal/autoreturn', paypal.AutoReturn),
     ('/paypal/ipn', paypal.IPN),
 
     ('/badges/view', util_badges.ViewBadges),
@@ -932,12 +915,27 @@ application = webapp2.WSGIApplication([
     ('/exercisestats/userlocationsmap', exercisestats.report_json.UserLocationsMap),
     ('/exercisestats/exercisescreatedhistogram', exercisestats.report_json.ExercisesCreatedHistogram),
 
+    ('/goals/new', goals.handlers.CreateNewGoal),
+    ('/goals/admincreaterandom', goals.handlers.CreateRandomGoalData),
+
+    # Summer Discovery Camp application/registration
+    ('/summer/application', summer.Application),
+    ('/summer/tuition', summer.Tuition),
+    ('/summer/application-status', summer.Status),
+    ('/summer/getstudent', summer.GetStudent),
+    ('/summer/paypal-autoreturn', summer.PaypalAutoReturn),
+    ('/summer/paypal-ipn', summer.PaypalIPN),
+    ('/summer/admin/download', summer.Download),
+    ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
+
     ('/robots.txt', robots.RobotsTxt),
 
     ('/r/.*', redirects.Redirect),
     ('/redirects', redirects.List),
     ('/redirects/add', redirects.Add),
     ('/redirects/remove', redirects.Remove),
+
+    ('/importer', ImportHandler),
 
     # Redirect any links to old JSP version
     ('/.*\.jsp', PermanentRedirectToHome),

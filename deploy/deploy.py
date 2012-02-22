@@ -1,18 +1,16 @@
 import sys
-import re
 import subprocess
 import os
 import optparse
 import datetime
 import urllib2
 import webbrowser
-import re
 import getpass
+import re
 
 sys.path.append(os.path.abspath("."))
 import compress
-import glob
-import tempfile
+import npm
 
 try:
     import secrets
@@ -23,7 +21,7 @@ except Exception, e:
     hipchat_deploy_token = None
 
 try:
-    from secrets import app_engine_username, app_engine_password
+    from secrets_dev import app_engine_username, app_engine_password
 except Exception, e:
     (app_engine_username, app_engine_password) = (None, None)
 
@@ -86,7 +84,7 @@ def send_hipchat_deploy_message(version, includes_local_changes, email):
             }
     public_message = "Just deployed %s" % message_tmpl
     private_message = "%s just deployed %s" % (email, message_tmpl)
-    
+
     hipchat_message(public_message, ["Exercises"])
     hipchat_message(private_message, ["1s and 0s"])
 
@@ -170,32 +168,14 @@ def check_secrets():
     regex = re.compile("^facebook_app_secret = '050c.+'$", re.MULTILINE)
     return regex.search(content)
 
-def tidy_up():
-    """moves all pycs and compressed js/css to a rubbish folder alongside the project"""
-    trashdir = tempfile.mkdtemp(dir="../", prefix="rubbish-")
-    
-    print "Moving old files to %s." % trashdir
-    
-    junkfiles = open(".hgignore","r")
-    please_tidy = [filename.strip() for filename in junkfiles 
-                      if not filename.strip().startswith("#")]
-    but_ignore = ["secrets.py", "", "syntax: glob"]
-    [please_tidy.remove(path) for path in but_ignore]
-    
-    for root, dirs, files in os.walk("."):
-        if ".git" in dirs:
-            dirs.remove(".git")
-        if ".hg" in dirs:
-            dirs.remove(".hg")
-        
-        for dirname in dirs:
-            removables = [glob.glob( os.path.join(root, dirname, rubbish) ) for rubbish in please_tidy
-                          if len( glob.glob( os.path.join(root, dirname, rubbish) ) ) > 0]
-            # flatten sublists of removable filse
-            please_remove = [filename for sublist in removables for filename in sublist]
-            if please_remove:
-                [ os.renames(stuff, os.path.join(trashdir,stuff)) for stuff in please_remove ]
-    
+def check_deps():
+    """Check if npm and friends are installed"""
+    return npm.check_dependencies()
+
+def compile_handlebar_templates():
+    print "Compiling handlebar templates"
+    return 0 == popen_return_code([sys.executable,
+                                   'deploy/compile_handlebar_templates.py'])
 
 def compress_js():
     print "Compressing javascript"
@@ -205,17 +185,23 @@ def compress_css():
     print "Compressing stylesheets"
     compress.compress_all_stylesheets()
 
-def compile_templates():
-    print "Compiling all templates"
-    return 0 == popen_return_code(['python', 'deploy/compile_templates.py'])
+def compress_exercises():
+    print "Compressing exercises"
+    subprocess.check_call(["ruby", "khan-exercises/build/pack.rb"])
 
-def prime_autocomplete_cache(version):
+def compile_templates():
+    print "Compiling jinja templates"
+    return 0 == popen_return_code([sys.executable, 'deploy/compile_templates.py'])
+
+def prime_cache(version):
     try:
         resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/autocomplete?q=calc" % (version, get_app_id()))
         resp.read()
-        print "Primed autocomplete cache"
+        resp = urllib2.urlopen("http://%s.%s.appspot.com/api/v1/topics/library/compact" % (version, get_app_id()))
+        resp.read()
+        print "Primed cache"
     except:
-        print "Error when priming autocomplete cache"
+        print "Error when priming cache"
 
 def open_browser_to_ka_version(version):
     webbrowser.open("http://%s.%s.appspot.com" % (version, get_app_id()))
@@ -250,18 +236,29 @@ def main():
         action="store_true", dest="dryrun",
         help="Dry run without the final deploy-to-App-Engine step", default=False)
 
-    parser.add_option('-c', '--clean',
-        action="store_true", dest="clean",
-        help="Clean the old packages and generate them again. If used with -d,the app is not compiled at all and is only cleaned.", default=False)
+    parser.add_option('-r', '--report',
+        action="store_true", dest="report",
+        help="Generate a report that displays minified, gzipped file size for each package element",
+            default=False)
+
+    parser.add_option('-n', '--no-npm',
+        action="store_false", dest="node",
+        help="Don't check for local npm modules and don't install/update them",
+        default=True)
 
     options, args = parser.parse_args()
 
-    if(options.clean):
-        print "Cleaning previously generated files"
-        tidy_up()
-        if options.dryrun:
+    if options.node:
+        print "Checking for node and dependencies"
+        if not check_deps():
             return
-        
+
+    if options.report:
+        print "Generating file size report"
+        compile_handlebar_templates()
+        compress.file_size_report()
+        return
+
     includes_local_changes = hg_st()
     if not options.force and includes_local_changes:
         print "Local changes found in this directory, canceling deploy."
@@ -269,7 +266,7 @@ def main():
 
     version = -1
 
-    if not options.noup or len(options.version) == 0:
+    if not options.noup:
         version = hg_pull_up()
         if version <= 0:
             print "Could not find version after 'hg pull', 'hg up', 'hg tip'."
@@ -280,30 +277,33 @@ def main():
             print "Stopping deploy. It doesn't look like you're deploying from a directory with the appropriate secrets.py."
             return
 
-    if len(options.version) > 0:
-        version = options.version
-
-    if options.clean:
-        compress.hashes = {}
-
-    print "Deploying version " + str(version)
-    compress.revert_js_css_hashes()
-
     if not compile_templates():
-        print "Failed to compile templates, bailing."
+        print "Failed to compile jinja templates, bailing."
+        return
+
+    if not compile_handlebar_templates():
+        print "Failed to compile handlebars templates, bailing."
         return
 
     compress_js()
     compress_css()
+    compress_exercises()
 
     if not options.dryrun:
+        if options.version:
+            version = options.version
+        elif options.noup:
+            print 'You must supply a version when deploying with --no-up'
+            return
+
+        print "Deploying version " + str(version)
+
         (email, password) = get_app_engine_credentials()
         success = deploy(version, email, password)
-        compress.revert_js_css_hashes()
         if success:
             send_hipchat_deploy_message(version, includes_local_changes, email)
             open_browser_to_ka_version(version)
-            prime_autocomplete_cache(version)
+            prime_cache(version)
 
     end = datetime.datetime.now()
     print "Done. Duration: %s" % (end - start)

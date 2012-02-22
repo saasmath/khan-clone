@@ -6,33 +6,34 @@
 
 {% macro user_points(user_data, points=0) -%}
     {% if user_data %}
-        {% set points = user_data.points if user_data else 0 %}
+        {% set profile_root = user_data.profile_root %}
+        {% set points = user_data.points %}
+    {% else %}
+        {% set profile_root = '/profile' %}
+        {% set points = 0 %}
     {% endif %}
-    <span id="user-points-container">{{ user_points_content(points) }}</span>
+    <span id="user-points-container">{{ user_points_content(profile_root, points) }}</span>
 {%- endmacro %}
 
-{% macro user_points_content(points=0) -%}
-<span title="{{ points|thousands_separated }} energy points" class="energy-points-badge" onclick="location.href='/profile?k'" {% if not points %} style="display: none" {% endif %}>{{ points|thousands_separated }}</span>
+{% macro user_points_content(profile_root, points) -%}
+<span title="{{ points|thousands_separated }} energy points" class="energy-points-badge" onclick="location.href='{{profile_root}}'" {% if not points %} style="display: none" {% endif %}>{{ points|thousands_separated }}</span>
 {%- endmacro %}
 
 {% macro username_and_notification(username, user_data) -%}
-{% set count = user_data.feedback_notification_count() if user_data else 0 %}
-<span class="username_and_notification "{% if count %}username_and_notification_shift{% endif %}">
+{% if user_data %}
+    {% set profile_root = user_data.profile_root %}
+    {% set count = user_data.feedback_notification_count() %}
+{% else %}
+    {% set profile_root = '/profile' %}
+    {% set count = 0 %}
+{% endif %}
+<span class="username_and_notification">
+    {% if count %}
     <span class="user-notification">
-        <a class="notification_link" href="/discussion/videofeedbacknotificationlist"
-            {% if count %}
-                title="{{ count }} new answers to your questions"
-            {% else %}
-                title="No new answers to your questions"
-            {% endif %}
-        >
-            {% if count %}
-            <img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
-            {% else %}
-            <img src="{{ "/images/email-gray.png"|static_url }}" class="icon" style="width:16px;height:11px;"/></a>
-            {% endif %}
+        <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
     </span>
-    <span class="user-name"><a href="/profile?k">{{username|escape}}</a></span>
+    {% endif %}
+    <a href="{{profile_root}}"><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
 </span>
 {%- endmacro %}
 
@@ -44,10 +45,4 @@
 
 {% macro possible_points_badge(points, possible_points, logged_in=True) -%}
 <div class="video-energy-points"{% if logged_in %} title="{{ points }} Energy Points earned for watching this video"{% else %} title="You're earning points for watching this video. Sign in to keep them"{% endif %}><span class="video-energy-points-current">{{ points }}</span> of {{ possible_points }}</div>
-{%- endmacro %}
-
-{% macro simple_student_info(user_data_student) -%}
-<div id="simple-student-info">
-    <nobr><span class="member-for">Member for: {{ user_data_student.seconds_since_joined|seconds_to_time_string() }}</span></nobr>
-</div>
 {%- endmacro %}

@@ -22,20 +22,28 @@
 <!-- poor man's templating - maybe change this to jQuery.tmpl -->
 <div id="video-sug-templates" style="display: none">
     <span class="suggestion" id="unstarted-video-sug" data-weight="4">
-        Why don't you watch <span></span>.
-        You haven't seen it yet, and it might be helpful!
+        Let's take a break and watch <span></span>.
+        It's only a few minutes long and we thought it would be helpful when we made this exercise.
     </span>
 
     <span class="suggestion" id="started-video-sug" data-weight="3">
-        Why don't you finish watching <span></span>.
-        You haven't seen the entire video yet - maybe it will help.
+        We know it's easy to get excited and jump into an exercise before finishing a video.
+        There's no rush, let's finish watching <span></span>. These questions will still be waiting for you.
     </span>
 
     <span class="suggestion" id="complete-video-sug" data-weight="2">
-        Why don't you watch <span></span> again.
-        Perhaps you've forgotten something important!
+        I know you won't get any more energy points, but let's watch <span></span> again.
+        It's easy to miss something the first time and our video player loves going over things again and again. Seriously!
     </span>
 </div>
+
+<div id="prereq-sug-templates" style="display: none">
+    <span class="suggestion" id="prereq-sug" data-weight="4">
+        Looks like you're having some trouble.
+        Let's try some <span></span> problems first.
+    </span>
+</div>
+
 
 <script type="text/javascript">
 (function() {
@@ -46,9 +54,11 @@
 //   - rewatch a video
 //   - talk to a coach
 //   - talk to anyone
-// Not yet implemented suggestions:
 //   - do a prereq exercise
+// Not yet implemented suggestions:
 //   - review an already completed prereq exercise
+
+var prereqs = {{ suggested_prereqs }};
 
 var randomElement = function(array, weights) {
     var sum = array.length;
@@ -73,6 +83,7 @@ var randomElement = function(array, weights) {
 
 $('.exercise_message .close-button').click(function(ev) {
     ev.preventDefault();
+	gae_bingo.bingo('struggling_message_dismissed');
     $('#exercise-message-container').slideUp();
 });
 
@@ -112,8 +123,8 @@ var getCssVideo = function() {
 };
 
 var setupSuggestedVideos = function() {
-    var allVideos = userExercise.exercise_model.related_videos;
-    if (allVideos.length == 0) {
+    var allVideos = Khan.relatedVideos && Khan.relatedVideos.videos;
+    if (!(allVideos && allVideos.length > 0)) {
         return;
     }
 
@@ -143,31 +154,58 @@ var setupSuggestedVideos = function() {
     var jel = $('#' + videoState[bestState] + '-video-sug').clone();
 
     // weight by number of videos remaining
-    var weight = parseInt(jel.attr('data-weight')) * suggestions.length;
+    var weight = parseInt(jel.attr('data-weight'), 10) * suggestions.length;
     jel.attr('data-weight', weight);
 
     // make it link to the correct video
-    var exid = userExercise.exercise_model.name;
-    jel.removeAttr('id').find('span').html( buildLink(suggestion, exid) ).end().hide();
+    jel.removeAttr('id').find('span').html(buildVideoLink(suggestion)).end().hide();
 
     $('.exercise_message').append(jel);
+	$(jel).find('#video-suggest-link').one("click", function(e) {
+		gae_bingo.bingo('struggling_videos_clicked_post_struggling');
+	});
 };
 
-var buildLink = function(video, exid) {
-    var exid_param = exid ? "?exid=" + exid : "";
-    return $('<a></a>')
-        .attr('href', video.ka_url + exid_param)
+var buildVideoLink = function(video) {
+    return $('<a id="video-suggest-link"></a>')
+        .attr('href', Khan.relatedVideos.makeHref(video))
         .addClass("related-video")
         .data('video', video)
         .text(video.title);
 };
 
+var setupSuggestedPrereqs = function() {
+    if (!prereqs || !prereqs.length) {
+        return;
+    }
+    var prereq = randomElement(prereqs);
+    var jel = $('#prereq-sug-templates .suggestion').clone();
+
+    // Weight by number of prereqs remaining
+    var weight = parseInt(jel.attr('data-weight'), 10) * prereqs.length;
+    jel.attr('data-weight', weight);
+
+    // Render appropriate link and insert
+    jel.removeAttr('id').find('span').html( buildExerciseLink(prereq) ).end().hide();
+    $('.exercise_message').append(jel);
+	$(jel).find('#prereq-suggest-link').one("click", function(e) {
+		gae_bingo.bingo('struggling_prereq_clicked_post_struggling');
+	});
+};
+
+var buildExerciseLink = function(model) {
+    return $('<a id="prereq-suggest-link"></a>')
+        .attr('href', model.ka_url)
+        .text(model.display_name);
+};
+
 var showSuggestion = function() {
     setupSuggestedVideos();
+    setupSuggestedPrereqs();
     // pick a random suggestion by weight, display it
     var els = $( '.exercise_message .suggestion' );
     var weights = els.map( function( i,el ) {
-        return parseInt( $(el).attr('data-weight') || 1 );
+        return parseInt($(el).attr('data-weight') || 1, 10);
     });
     var r = randomElement( els, weights );
     $(r).show();

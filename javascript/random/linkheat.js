@@ -18,13 +18,17 @@ $(function() {
 
                     var views = video.views;
 
-                    rgMax[rgMax.length] = views;
-                    rgMax.sort(function sortNumber( a,b ) { return a - b; });
-                    rgMax = rgMax.slice(1, outliers + 1);
+                    if (typeof views !== "undefined") {
 
-                    min = Math.min(min, views);
+                        rgMax[rgMax.length] = views;
+                        rgMax.sort(function sortNumber( a,b ) { return a - b; });
+                        rgMax = rgMax.slice(1, outliers + 1);
 
-                    dictViews[video.title] = views;
+                        min = Math.min(min, views);
+
+                        dictViews[video.title] = views;
+
+                    }
 
                 });
             });

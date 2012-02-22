@@ -3,6 +3,10 @@
 {% import 'macros/profiles.html' as profile_macros %}
 {% import 'macros/analytics.html' as analytics %}
 
+{% block pagecss %}
+    {{ js_css_packages.css_package("profile") }}
+{% endblock pagecss %}
+
 {% block pagescript %}
 {% if view == "mobile" %}
 	<style>
@@ -20,7 +24,7 @@
 		    border: none;
 		    background: transparent;
 		    background-image: none;
-		    
+
 		    -moz-box-shadow: none;
 		    -webkit-box-shadow: none;
 		    box-shadow: none;
@@ -33,7 +37,7 @@
 		    background-image: -webkit-gradient(linear, left top, left bottom,  from(#eee), to(#ccc));
 		    background-image: -moz-linear-gradient( top, #eee, #ccc );
 		    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeee', endColorstr='#cccccc');
-		    
+
 		    -moz-box-shadow: 0 1px 1px #ccc;
 		    -webkit-box-shadow: 0 1px 1px #ccc;
 		    box-shadow: 0 1px 1px #ccc;
@@ -63,32 +67,30 @@
         {% block profile_is_empty %}{% endblock profile_is_empty %}
 
     {% else %}
-
-        <div id="vital-statistics">
+        {% if stats_charts_class=="coach-view" %}
+        <div id="vital-statistics" class="{{ stats_charts_class }}">
             <div id="stats-nav">
                 <h2>{% block statistics_title %}Vital Statistics{% endblock statistics_title %}</h2>
                 {% block graph_accordion %}{% endblock graph_accordion %}
             </div>
-            <div id="stats-charts" class="fancy-scrollbar -ce-capture">
+            <div id="stats-filters">
+              {% block stats_filters %}{% endblock stats_filters %}
+            </div>
+            <div id="stats-charts" class="fancy-scrollbar -ce-capture {{ stats_charts_class }}">
                 {{ profile_macros.graph_control() }}
             </div>
+            <div class="clearfix"></div>
         </div>
-
+        {% endif %}
         {% block profile_extended_sections %}{% endblock profile_extended_sections %}
-
     {% endif %}
 
     </article>
-    <div id="info-hover-container" style="display:none;"></div>
 
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
     {{ js_css_packages.js_package("profile") }}
-    <script type="text/javascript">
-		Profile.initialGraphUrl = '{{ initial_graph_url|escapejs }}';
-		Profile.email = '{{ student_email|escapejs }}';
-	</script>
     {{ analytics.crazyegg_tracker(False) }}
 {% endblock bottompagescript %}
 

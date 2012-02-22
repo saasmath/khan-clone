@@ -67,7 +67,7 @@
     #prev_video a .vid-progress {
         margin-left: 5px;
     }
-#playlists {
+#topics {
     display: block;
     float: left;
 }
@@ -95,14 +95,14 @@
 .video #description {
     padding-top: 18px;
 }
-    .video #description h3 {
+    .video #description .title-header {
         display: block;
         font-size: 15px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
-    .video #description h3 span.long-description {
+    .video #description .title-header .long-description {
         color: #555;
         font-weight: normal;
         position: relative;
@@ -122,6 +122,9 @@
 }
 .youtube-video {
     position: relative;
+}
+.subtitles {
+    display: none;
 }
 .subtitles-warning {
     display: none;
@@ -161,6 +164,41 @@
 	top: 1px;
 }
 .video_extra_links {float:right;}
+
+.sticky_note_content h2 {
+    margin-bottom: 18px;
+}
+
+.sticky_note_content .question-note {
+    font-style: normal;
+}
+
+.sticky_note_content th.cell {
+    padding-bottom: 18px;
+}
+
+.sticky_note_content .cell {
+    width: 46%;
+    text-align: left;
+}
+
+.sticky_note_content .left-cell {
+    padding-right: 8%;
+}
+
+.sticky_note_content .question-example {
+    font-style: italic;
+}
+
+.sticky_note_content img.vote-example {
+    opacity: 0.5;
+    filter:alpha(opacity=50);
+    vertical-align: middle;
+}
+
+.sticky_note_content table.tips-and-examples {
+    width: 100%;
+}
 
 #transcript {
     clear: both;

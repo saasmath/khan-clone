@@ -14,6 +14,21 @@ class TestSequenceFunctions(unittest.TestCase):
     def to_bool_generator(str_sequence):
         return ((l == '1') for l in str_sequence)
 
+    @staticmethod
+    def model_from_str(str_sequence):
+        model = AccuracyModel()
+        model.update(TestSequenceFunctions.to_bool_generator(str_sequence))
+        return model
+
+    def is_struggling(self,
+                      str_sequence,
+                      minimum_accuracy=0.94,
+                      minimum_attempts=5):
+        return TestSequenceFunctions.model_from_str(str_sequence).is_struggling(
+                param=1.8,
+                minimum_accuracy=minimum_accuracy,
+                minimum_attempts=minimum_attempts)
+
     def setUp(self):
         self.sim = lambda str_sequence: AccuracyModel.simulate(TestSequenceFunctions.to_bool_generator(str_sequence))
         self.lt = lambda seq_smaller, seq_larger: self.assertTrue(self.sim(seq_smaller) < self.sim(seq_larger))
@@ -51,6 +66,37 @@ class TestSequenceFunctions(unittest.TestCase):
         self.lt('0000', '00001')
         self.lt('0', '01')
         self.lt('10', '1')
+
+    def test_struggling_minimum_questions(self):
+        self.assertFalse(self.is_struggling('0', minimum_attempts=5))
+        self.assertFalse(self.is_struggling('0' * 4, minimum_attempts=5))
+        self.assertFalse(self.is_struggling('0' * 99, minimum_attempts=100))
+
+    def test_struggling_minimum_accuracy(self):
+        def assert_minimum_accuracy_met(s):
+            self.assertFalse(self.is_struggling(s,
+                                                minimum_accuracy=self.sim(s)))
+
+        assert_minimum_accuracy_met('01011')
+        assert_minimum_accuracy_met('0101010111')
+        assert_minimum_accuracy_met('101010100110')
+        assert_minimum_accuracy_met('11010001001100')
+        assert_minimum_accuracy_met('101011ll000101001100')
+
+    def test_struggling_sanity(self):
+        # all correct -> not struggling
+        for i in range(50): self.assertFalse(self.is_struggling('1' * i))
+
+        # a heck of a lot incorrect -> struggling
+        for i in range(20, 50): self.assertTrue(self.is_struggling('0' * i))
+
+        # a heck of a lot of no progress -> struggling
+        for i in range(10, 20):
+            self.assertTrue(self.is_struggling('10' * i),
+                            msg="Should be struggling on %s" % ('10' * i))
+        for i in range(5, 10):
+            self.assertTrue(self.is_struggling('110' * i),
+                            msg="Should be struggling on %s" % ('110' * i))
 
 if __name__ == '__main__':
     unittest.main()

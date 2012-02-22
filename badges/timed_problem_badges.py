@@ -1,6 +1,5 @@
-from badges import Badge, BadgeContextType, BadgeCategory
+from badges import BadgeCategory
 from exercise_badges import ExerciseBadge
-import logging
 
 # All badges awarded for completing a certain number of correct problems
 # within a specific amount of time inherit from TimedProblemBadge

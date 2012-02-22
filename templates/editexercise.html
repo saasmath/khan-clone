@@ -138,7 +138,7 @@
                     <tr>
                         <td style="font-weight:bold;">View</td>
                         <td style="padding-bottom:9px;">
-                            <a href="/exercises?exid={{ main_exercise.name|escape }}" target="_blank">Open {{ main_exercise.display_name|escape }} in new tab</a>
+                            <a href="{{ main_exercise.relative_url|escape }}" target="_blank">Open {{ main_exercise.display_name|escape }} in new tab</a>
                         </td>
                     </tr>
 
@@ -222,6 +222,27 @@
                         </td>
                     </tr>
                     {% endif %}
+
+
+                    <tr>
+                        <td style="font-weight:bold;">Description</td>
+                        <td style="padding-bottom:9px;">
+                        <input type="text" name="description" value="{{ main_exercise.description }}" maxlength="256"/><br/>
+                        <em>Description text visible in topic listings</em>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="font-weight:bold;">Tags</td>
+                        <td style="padding-bottom:9px;">
+                            <div class="tags-list"></div>
+
+                            <input class="add-tag" type="text" value="" maxlength="32" placeholder="- Add tag" class="placeholder short" /> 
+                            <a href="javascript:" data-id="add-tag" class="item-action simple-button action-gradient">Add</a>
+                        </td>
+                    </tr>
+
+
 
                 </table>
 

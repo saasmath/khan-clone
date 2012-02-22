@@ -25,6 +25,11 @@ class VideoFeedbackNotificationList(request_handler.RequestHandler):
 
         answers = feedback_answers_for_user_data(user_data)
 
+        # Whenever looking at this page, make sure the feedback count is recalculated
+        # in case the user was notified about deleted or flagged posts.
+        user_data.count_feedback_notification = -1
+        user_data.put()
+
         dict_videos = {}
         dict_answers = {}
 
@@ -45,8 +50,8 @@ class VideoFeedbackNotificationList(request_handler.RequestHandler):
                 dict_answers[video_key].append(answer)
             else:
                 dict_answers[video_key] = [answer]
-
-        videos = sorted(dict_videos.values(), key=lambda video: video.playlists[0] + video.title)
+        
+        videos = sorted(dict_videos.values(), key=lambda video: video.first_topic().title + video.title)
 
         context = {
                     "email": user_data.email,
@@ -84,13 +89,17 @@ def feedback_answers_for_user_data(user_data):
 
     for notification in notifications:
 
-        feedback = notification.feedback
+        feedback = None
 
-        if feedback == None or feedback.deleted or feedback.is_hidden_by_flags or not feedback.is_type(models_discussion.FeedbackType.Answer):
+        try:
+            feedback = notification.feedback
+        except db.ReferencePropertyResolveError:
+            pass
+
+        if not feedback or not feedback.video() or not feedback.is_visible_to_public() or not feedback.is_type(models_discussion.FeedbackType.Answer):
             # If we ever run into notification for a deleted or non-FeedbackType.Answer piece of feedback,
             # go ahead and clear the notification so we keep the DB clean.
-            if feedback:
-                db.delete(notification)
+            db.delete(notification)
             continue
 
         feedbacks.append(feedback)

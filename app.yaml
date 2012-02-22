@@ -14,10 +14,16 @@ skip_files:
 - ^(.*/)?.*\.py[co]
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
+- ^(.*/)?.*_test\.py
 - ^(.*/)?sample_data/.*
 - ^(.*/)?khan-exercises/test/.*
 - ^(.*/)?presskit/.*
 - ^(.*/)?deploy/.*
+- ^(.*/)?javascript/testbase\.js
+- ^(.*/)?.*_test\.html
+- ^requirements\.txt
+- ^agar
+- ^testutil
 
 handlers:
 - url: /videos
@@ -106,6 +112,10 @@ handlers:
   script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
   login: admin
 
+- url: /_ah/queue/deferred_import
+  script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
+  login: admin
+
 - url: /admin/.*
   script: main.py
   login: admin
@@ -133,6 +143,16 @@ handlers:
 
 - url: /gae_bingo/.*
   script: gae_bingo/main.py
+
+- url: /gandalf/static
+  static_dir: gandalf/static
+  expiration: "300s"
+
+- url: /gandalf/tests/.*
+  script: gandalf/tests/main.py
+
+- url: /gandalf?.*
+  script: gandalf/main.py
 
 - url: /backends/.*
   script: backends/videoprogress.py

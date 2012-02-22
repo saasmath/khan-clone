@@ -1,0 +1,7 @@
+{{#each children}}
+<li class="m{{col}}"{{#if firstInCol}} style="margin-top:-{{../../colHeight}}px"{{/if}}>
+<a href="{{url}}" class="vl">
+<span class="vid-progress{{#if key_id}} v{{key_id}}{{/if}}">{{title}}</span>
+</a>
+</li>
+{{/each}}
