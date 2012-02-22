@@ -51,6 +51,7 @@ import stories
 import summer
 import common_core
 import unisubs
+import labs
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -930,6 +931,9 @@ application = webapp2.WSGIApplication([
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
+
+    # Labs
+    ('/labs', labs.LabsRequestHandler),
 
     ('/robots.txt', robots.RobotsTxt),
 

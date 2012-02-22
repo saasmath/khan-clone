@@ -332,4 +332,10 @@ stylesheets = {
             "topics-admin.css"
         ]
     },
+    "labs": {
+        "files": [
+            "bootstrap.css",
+            "labs.css",
+        ]
+    }
 }
