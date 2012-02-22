@@ -292,6 +292,7 @@ stylesheets = {
 
             # socrates stuff
             "bootstrap-alerts.css",
+            "bootstrap-tables.css",
             "socrates.css",
         ]
     },
