@@ -4,17 +4,40 @@
 {% block meta_description %}<!-- TODO(kamens) -->{% endblock %}
 
 {% block pagecss %}
-<!-- TODO(kamens) -->
+
+<style>#page_sub_nav {display: none;}</style>
+
+{{ js_css_packages.css_package("exercise-content") }}
+{{ js_css_packages.css_package("video") }}
+
 {% endblock pagecss %}
 
+{% block pagescript %}
+
+<script>
+    // TODO(kamens): userExercise should be handled differently now
+    var userExercise = {{ user_exercise_json }};
+    var userExerciseName = '{{ exercise.name|escapejs }}';
+</script>
+
+{% endblock pagescript %}
+
 {% block pagecontent %}
-<div id="container" class="exercises-content-container visited-no-recolor" style="overflow: hidden"></div>
+
+<div id="container" class="exercises-content-container visited-no-recolor" style="overflow:hidden"></div>
+
+<!-- TODO(kamens): this is not how we are gonna load exercises... -->
+<div class="exercise" data-name="{{ exercise.name|escape }}">&nbsp;</div>
+
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
+
 {{ super() }}
 
 {{ js_css_packages.js_package("exercises") }}
+{{ js_css_packages.js_package("exercise-content") }}
+{{ js_css_packages.js_package("video") }}
 
 <script>
     $(function() {

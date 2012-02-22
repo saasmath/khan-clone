@@ -27,6 +27,7 @@ var Exercises = {
 
         Handlebars.registerPartial("exercise-header", Templates.get("exercises.exercise-header"));
         Handlebars.registerPartial("current-card", Templates.get("exercises.current-card"));
+        Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
 
         Handlebars.registerHelper("renderStack", function(stack) {
             var currentStackContext = _.extend({}, this, { stack: stack });
