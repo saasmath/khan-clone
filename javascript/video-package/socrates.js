@@ -191,15 +191,18 @@ Socrates.Bookmark = Backbone.Model.extend({
 	}
 });
 
+// todo(dmnd): need to make this less confusing
 Socrates.Question = Socrates.Bookmark.extend({
 	key: function() {
 		return this.get('youtubeId') + "-" + this.get('time');
 	},
 
-	htmlFile: Socrates.Bookmark.prototype.slug,
+	htmlFile: function() {
+		return this.get('youtubeId') + "/" + Socrates.Bookmark.prototype.slug.call(this);
+	},
 
 	slug: function() {
-		return this.htmlFile() + "/q" + this.get('id');
+		return Socrates.Bookmark.prototype.slug.call(this) + "/q";
 	}
 });
 
@@ -234,6 +237,12 @@ Socrates.QuestionView = Backbone.View.extend({
 				title: this.model.get('title'),
 				explainUrl: this.model.get('nested')
 			}));
+
+			// add in a backdrop if necessary
+			var $screenshot = this.$(".layer.backdrop.screenshot");
+			if ($screenshot.length > 0) {
+				$screenshot.append($("<img>", {src: this.imageUrl()}));
+			}
 
 			// linkify the explain button
 			var parent = this.model.get('nested');
@@ -273,7 +282,7 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	imageUrl: function() {
-		return "/socrates/questions/" + this.model.key() + ".jpeg";
+		return "/images/videoframes/" + this.model.key() + ".jpeg";
 	},
 
 	isCorrect: function(data) {
