@@ -8,9 +8,7 @@
 {% endblock pagecss %}
 
 {% block pagecontent %}
-<div id="container" class="exercises-content-container visited-no-recolor" style="overflow: hidden">
-
-</div>
+<div id="container" class="exercises-content-container visited-no-recolor" style="overflow: hidden"></div>
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
@@ -20,7 +18,10 @@
 
 <script>
     $(function() {
-        Exercises.init({ /* TODO(kamens): useful init data here like crazzyyyyyyy */ });
+        Exercises.init({
+            /* TODO(kamens): useful init data here like crazzyyyyyyy */
+            exercise: {{ exercise_json }}
+        });
     });
 </script>
 

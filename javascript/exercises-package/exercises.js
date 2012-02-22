@@ -9,6 +9,8 @@ var Exercises = {
         // backbone
         // this.userTopicModel = new UserTopicModel(json.somethingInteresting);
 
+        this.exercise = json.exercise;
+
         Exercises.render();
     },
 
@@ -25,9 +27,9 @@ var Exercises = {
 
         $(".exercises-content-container").html(profileExercise({
             // TODO(kamens): Useful dict data here like crazzzyyyyyyyy
-            "name": "addition_1",
-            "incompleteStack": { cards: ["a", "b", "c"]},
-            "completeStack": { cards: ["monkey"]},
+            exercise: this.exercise,
+            incompleteStack: { cards: ["a", "b", "c"]},
+            completeStack: { cards: ["monkey"]},
         }));
 
     }
