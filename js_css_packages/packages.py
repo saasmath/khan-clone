@@ -178,6 +178,7 @@ javascript = {
             "exercise.handlebars",
             "exercise-header.handlebars",
             "stack.handlebars",
+            "current-card.handlebars",
             "exercises.js",
         ]
     },
