@@ -2,6 +2,7 @@ import logging
 
 import request_handler
 import models
+from exercises.stacks import get_problem_stack
 from api.jsonify import jsonify
 from api.auth.xsrf import ensure_xsrf_cookie
 
@@ -39,9 +40,12 @@ class ViewExercise(request_handler.RequestHandler):
         # TODO(kamens): does this bug still exist? Here's hoping we don't hang user_exercise off of exercise any more, but we might.
         exercise.user_exercise = None
 
+        stack = get_problem_stack(exercise)
+
         template_values = {
             "exercise": exercise,
             "user_exercise": user_exercise,
+            "stack_json": jsonify(stack),
             "exercise_json": jsonify(exercise, camel_cased=True),
             "user_exercise_json": jsonify(user_exercise), # TODO(kamens): need camelCase agreement here
         }
