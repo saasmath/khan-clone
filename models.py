@@ -1955,7 +1955,7 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic"] 
+    _super_topic_ids = ["algebra", "arithmetic", "art-history"] 
 
     @property
     def relative_url(self):
@@ -2024,11 +2024,14 @@ class Topic(Searchable, db.Model):
         return Topic.all().filter('id =', 'root').filter('version =', version).get()
 
     @staticmethod
-    def get_new_id(parent, title, version):
+    def get_new_id(parent, title, version):       
         potential_id = title.lower()
         potential_id = re.sub('[^a-z0-9]', '-', potential_id);
         potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
         potential_id = re.sub('^-+', '', potential_id)  # remove any leading dashes (see issue 1526)
+
+        if potential_id[0].isdigit():
+            potential_id = parent.id + "-" + potential_id
 
         number_to_add = 0
         current_id = potential_id
@@ -2701,7 +2704,6 @@ class Topic(Searchable, db.Model):
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
         keys = [child_key for child_key in topic.child_keys if not kind or child_key.kind() == kind]  
         if include_descendants:
-            keys = []
 
             subtopics = Topic.all().filter("ancestor_keys =", topic.key())
             if not include_hidden:
@@ -2712,7 +2714,6 @@ class Topic(Searchable, db.Model):
                 keys.extend([key for key in subtopic.child_keys if not kind or key.kind() == kind])
               
         nodes = db.get(keys) 
-
         if not kind:
             nodes.extend(subtopics)
 
@@ -2728,6 +2729,10 @@ class Topic(Searchable, db.Model):
 
     def get_videos(self, include_descendants=False, include_hidden=False):
         return Topic._get_children_of_kind(self, "Video", include_descendants,
+                                           include_hidden)
+
+    def get_child_topics(self, include_descendants=False, include_hidden=False):
+        return Topic._get_children_of_kind(self, "Topic", include_descendants,
                                            include_hidden)
 
     def get_descendants(self, include_hidden=False):
