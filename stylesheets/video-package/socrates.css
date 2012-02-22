@@ -63,6 +63,10 @@
 	font-size: 100%;
 }
 
+.video-overlay .submit-area button {
+	font-size: 100%;
+}
+
 /* default form styles */
 .video-overlay label {
 	display: block;

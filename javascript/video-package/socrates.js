@@ -216,7 +216,7 @@ Socrates.QuestionView = Backbone.View.extend({
 	className: "question",
 
 	events: {
-		'click .submit-area a.submit': 'submit',
+		'click .submit-area .submit': 'submit',
 		'click .submit-area a.skip': 'skip'
 	},
 
