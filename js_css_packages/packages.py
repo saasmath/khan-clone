@@ -176,6 +176,8 @@ javascript = {
     "exercises": {
         "files": [
             "exercise.handlebars",
+            "exercise-header.handlebars",
+            "stack.handlebars",
             "exercises.js",
         ]
     },

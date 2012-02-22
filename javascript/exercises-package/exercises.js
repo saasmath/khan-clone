@@ -5,8 +5,9 @@ var Exercises = {
 
     init: function(json) {
         // TODO(kamens) pass in some useful starting json
-        // this.incomingStack = new StackModel(json.somethingInteresting);
-        // this.outgoingStack = new StackModel(json.somethingInteresting);
+        // TODO(kamens) figure out the persistance model and hook 'er up via
+        // backbone
+        // this.userTopicModel = new UserTopicModel(json.somethingInteresting);
 
         Exercises.render();
     },
@@ -15,10 +16,18 @@ var Exercises = {
 
         var profileExercise = Templates.get("exercises.exercise");
 
-        // TODO(kamens) partials and helpers here like crazzzzyyyyy
+        Handlebars.registerPartial("exercise-header", Templates.get("exercises.exercise-header"));
+
+        Handlebars.registerHelper("renderStack", function(stack) {
+            var currentStackContext = _.extend({}, this, { stack: stack });
+            return Templates.get("exercises.stack")(currentStackContext);
+        });
 
         $(".exercises-content-container").html(profileExercise({
             // TODO(kamens): Useful dict data here like crazzzyyyyyyyy
+            "name": "addition_1",
+            "incompleteStack": { cards: ["a", "b", "c"]},
+            "completeStack": { cards: ["monkey"]},
         }));
 
     }
