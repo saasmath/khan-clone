@@ -4,12 +4,12 @@
 var Exercises = {
 
     init: function(json) {
-        // TODO(kamens) pass in some useful starting json
-        // TODO(kamens) figure out the persistance model and hook 'er up via
-        // backbone
-        // this.userTopicModel = new UserTopicModel(json.somethingInteresting);
 
         this.exercise = json.exercise;
+
+        // TODO(kamens) figure out the persistance model and hook 'er up via
+        // this.userTopicModel = new UserTopicModel(json.userTopic);
+        this.userTopic = json.userTopic;
 
         Exercises.render();
     },
@@ -28,8 +28,7 @@ var Exercises = {
         $(".exercises-content-container").html(profileExercise({
             // TODO(kamens): Useful dict data here like crazzzyyyyyyyy
             exercise: this.exercise,
-            incompleteStack: { cards: ["a", "b", "c"]},
-            completeStack: { cards: ["monkey"]},
+            userTopic: this.userTopic,
         }));
 
     }

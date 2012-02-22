@@ -16,7 +16,8 @@ class ViewExercise(request_handler.RequestHandler):
             raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
 
         template_values = {
-            'exercise_json': jsonify(exercise, camel_cased=True)
+            "exercise": exercise,
+            "exercise_json": jsonify(exercise, camel_cased=True)
         }
 
         self.render_jinja2_template("exercises/power_template.html", template_values)

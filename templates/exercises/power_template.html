@@ -19,8 +19,29 @@
 <script>
     $(function() {
         Exercises.init({
-            /* TODO(kamens): useful init data here like crazzyyyyyyy */
-            exercise: {{ exercise_json }}
+            exercise: {{ exercise_json }},
+            userTopic: {
+                /* TODO(kamens): this init data is faked -- need real data model here like crazzyyyyyyy */
+                incompleteStack: {
+                    cards: [
+                        // TODO(kamens): card structure will need all sorts of other data (leaves, type:"problem", type:"unknown", etc)
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" }
+                    ]
+                },
+                completeStack: {
+                    cards: [
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" },
+                        { exid: "exercise.name|escapejs" }
+                    ]
+                }
+            }
         });
     });
 </script>
