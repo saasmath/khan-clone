@@ -217,7 +217,8 @@ Socrates.QuestionView = Backbone.View.extend({
 
 	events: {
 		'click .submit-area .submit': 'submit',
-		'click .submit-area a.skip': 'skip'
+		'click .submit-area a.skip': 'skip',
+		'click .submit-area a.see-answer': 'seeAnswerClicked'
 	},
 
 	timeDisplayed: 0,
@@ -294,13 +295,27 @@ Socrates.QuestionView = Backbone.View.extend({
 	},
 
 	getData: function() {
-		// possible ideal impl: ask editing controls for info?
-
-		// for now: do it myself.
 		data = {};
 
 		// process all matrix-inputs
 		var matrixInputs = this.$("table.matrix-input");
+		data = _.extend(data, this.matrixInputToAnswer(matrixInputs));
+
+		// process all checkbox-grids
+		var checkboxGrids = this.$("table.checkbox-grid");
+		data = _.extend(data, this.checkBoxGridToAnswer(checkboxGrids));
+
+		// process the result of the inputs
+		var inputs = this.$("input").
+			not(matrixInputs.find("input")).
+			not(checkboxGrids.find("input"));
+
+		data = _.extend(data, this.freeInputsToAnswer(inputs));
+		return data;
+	},
+
+	matrixInputToAnswer: function(matrixInputs) {
+		var data = {};
 		_.each(matrixInputs, function(table) {
 			var matrix = _.map($(table).find("tr"), function(tr) {
 				return _.map($(tr).find("input"), function(input) {
@@ -311,9 +326,11 @@ Socrates.QuestionView = Backbone.View.extend({
 			var name = $(table).attr("name") || "answer";
 			data[name] = matrix;
 		});
+		return data;
+	},
 
-		// process all checkbox-grids
-		var checkboxGrids = this.$("table.checkbox-grid");
+	checkBoxGridToAnswer: function(checkboxGrids) {
+		var data = {};
 		_.each(checkboxGrids, function(grid) {
 			var headers = _.map($(grid).find("thead th"), function(td) {
 				return $(td).attr("name");
@@ -331,12 +348,11 @@ Socrates.QuestionView = Backbone.View.extend({
 			var name = $(grid).attr("name") || "answer";
 			data[name] = answer;
 		});
+		return data;
+	},
 
-		// process the result of the inputs
-		var inputs = this.$("input").
-			not(matrixInputs.find("input")).
-			not(checkboxGrids.find("input"));
-
+	freeInputsToAnswer: function(inputs) {
+		var data = {};
 		_.each(inputs, function(el) {
 			var $el = $(el);
 			var key = $el.attr("name");
@@ -362,6 +378,96 @@ Socrates.QuestionView = Backbone.View.extend({
 				data[key] = val;
 			}
 		});
+		return data;
+	},
+
+	seeAnswerClicked: function() {
+		this.$(".submit-area .submit").prop("disabled", true);
+		this.loadAnswer();
+	},
+
+	loadAnswer: function() {
+		var data = $.extend(true, {}, this.model.get('correctData'));
+
+		// process all matrix-inputs
+		var matrixInputs = this.$("table.matrix-input");
+		data = this.answerToMatrixInputs(matrixInputs, data);
+
+		// process all checkbox-grids
+		var checkboxGrids = this.$("table.checkbox-grid");
+		data = this.answerToCheckboxGrids(checkboxGrids, data);
+
+		// process the result of the inputs
+		var inputs = this.$("input").
+			not(matrixInputs.find("input")).
+			not(checkboxGrids.find("input"));
+
+		data = this.answerToFreeInputs(inputs, data);
+
+		// by now data should be empty
+		if (!_.isEmpty(data)) {
+			console.log("failed to load answer correctly");
+		}
+	},
+
+	answerToMatrixInputs: function(matrixInputs, data) {
+		_.each(matrixInputs, function(table) {
+			var name = $(table).attr("name") || "answer";
+			var matrix = data[name];
+
+			_.each($(table).find("tr"), function(tr, i) {
+				return _.each($(tr).find("input"), function(input, j) {
+					$(input).val(matrix[i][j]);
+				});
+			});
+
+			delete data[name];
+		});
+		return data;
+	},
+
+	answerToCheckboxGrids: function(checkboxGrids, data) {
+		_.each(checkboxGrids, function(grid) {
+			var name = $(grid).attr("name") || "answer";
+			var answer = data[name];
+
+			var headers = _.map($(grid).find("thead th"), function(td) {
+				return $(td).attr("name");
+			});
+			headers = _.rest(headers, 1);
+			_.each($(grid).find("tbody tr"), function(tr) {
+				var rowName = $(tr).attr("name");
+				_.each($(tr).find("input"), function(input, i) {
+					$(input).prop("checked", answer[rowName][headers[i]]);
+				});
+			});
+
+		});
+		return data;
+	},
+
+	answerToFreeInputs: function(inputs, data) {
+		_.each(inputs, function(el) {
+			var $el = $(el);
+			var key = $el.attr("name");
+
+			var val = data[key];
+			var isArray = _.isArray(data[key]);
+			if (isArray) {
+				val = data[key].pop();
+			}
+			// delete the item unless it's a nonempty array
+			if (!(isArray && !_.isEmpty(data[key]))) {
+				delete data[key];
+			}
+
+			if (_.include(["checkbox", "radio"], $el.attr("type"))) {
+				$el.prop("checked", val);
+			} else {
+				$el.val(val);
+			}
+		});
+
 		return data;
 	},
 
