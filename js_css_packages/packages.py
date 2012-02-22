@@ -174,6 +174,11 @@ javascript = {
         ]
     },
     "exercises": {
+        "files": [
+            "exercises.js",
+        ]
+    },
+    "exercise-content": {
         "base_path": "../khan-exercises",
         "base_url": "/khan-exercises",
         "files": [
@@ -289,7 +294,7 @@ stylesheets = {
             "stories.css",
         ]
     },
-    "exercises": {
+    "exercise-content": {
         "base_path": "../khan-exercises/css",
         "base_url": "/khan-exercises/css",
         "files": [

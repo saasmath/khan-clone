@@ -6,7 +6,7 @@
 {% block meta_description %}Practice {{ exercise.display_name|escape }} with Khan Academy's free online exercises.{% endblock %}
 
 {% block pagecss %}
-    {{ js_css_packages.css_package("exercises") }}
+    {{ js_css_packages.css_package("exercise-content") }}
     {% if renderable %}
         {{ js_css_packages.css_package("video") }}
     {% endif %}
@@ -24,7 +24,7 @@
       var initialReviewsLeftCount = {{ reviews_left_count }};
     </script>
 
-    {{ js_css_packages.js_package("exercises") }}
+    {{ js_css_packages.js_package("exercise-content") }}
 
     <script>{{ exercise_inline_script }}</script>
     <style id="exercise-inline-style">{{exercise_inline_style}}</style>

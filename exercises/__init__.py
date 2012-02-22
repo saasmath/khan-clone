@@ -68,6 +68,7 @@ class ViewExercise(request_handler.RequestHandler):
     _hints_conversion_names, _hints_conversion_types = [
         list(x) for x in zip(*_hints_conversion_tests)]
 
+    # TODO(kamens): this should be the only spot handling old exercise URLS ("?exid=monkey"). Redirect appropriately
     @ensure_xsrf_cookie
     def get(self, exid=None):
 
