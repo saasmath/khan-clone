@@ -6,13 +6,18 @@ var Video = {
     waitingForVideo: null,
     currentVideoPath: null,
     youtubeBlocked: false,
+    pushStateDisabled: false,
 
     init: function() {
         var self = this;
 
-        this.router = new VideoRouter();
-
-        Backbone.history.start({pushState: true, root: "/" + videoTopLevelTopic});
+        if (window.history && window.history.pushState) {
+            this.router = new VideoRouter();
+            Backbone.history.start({pushState: true, root: "/" + videoTopLevelTopic});
+        } else {
+            this.pushStateDisabled = true;
+            Video.navigateToVideo(window.location.pathname);
+        }
 
         this.rootLength = 1 + videoTopLevelTopic.length;
 
@@ -65,8 +70,12 @@ var Video = {
             // Set the width explicitly before positioning it absolutely to satisfy IE7.
             menu.width(menu.width()).hide().css('position', 'absolute');
             menu.bind("menuselect", function(e, ui){
-                var fragment = ui.item.children("a").attr("href").substr(self.rootLength);
-                Video.router.navigate(fragment, {trigger: true});
+                if (self.pushStateDisabled) {
+                    window.location.replace(ui.item.children("a").attr("href"));
+                } else {
+                    var fragment = ui.item.children("a").attr("href").substr(self.rootLength);
+                    Video.router.navigate(fragment, {trigger: true});
+                }
             });
             $(document).bind("click focusin", function(e) {
                 if ($(e.target).closest("#video_dropdown").length === 0) {
@@ -140,21 +149,26 @@ var Video = {
         VideoStats.tooltip("#points-badge-hover", $points.data("title"));
 
         // Set up next/previous links
-        $("a.previous-video,a.next-video").click(function(event) {
-            var fragment = $(this).attr("href").substr(self.rootLength);
-            Video.router.navigate(fragment, {trigger: true});
-            event.stopPropagation();
-            return false;
-        });
-
-        if (videoData.next_video) {
-            // Autoplay to the next video
-            var nextVideoFragment = $("a.next-video").attr("href").substr(self.rootLength);
-            VideoControls.setAutoPlayCallback(function() {
-                Video.router.navigate(nextVideoFragment, {trigger: true});
+        if (!this.pushStateDisabled) {
+            $("a.previous-video,a.next-video").click(function(event) {
+                var fragment = $(this).attr("href").substr(self.rootLength);
+                Video.router.navigate(fragment, {trigger: true});
+                event.stopPropagation();
+                return false;
             });
+
+            if (videoData.next_video) {
+                // Autoplay to the next video
+                var nextVideoFragment = $("a.next-video").attr("href").substr(self.rootLength);
+                VideoControls.setAutoPlayCallback(function() {
+                    Video.router.navigate(nextVideoFragment, {trigger: true});
+                });
+            } else {
+                // Don't autoplay to next video
+                VideoControls.setAutoPlayCallback(null);
+            }
         } else {
-            // Don't autoplay to next video
+            // Autoplay is disabled if there is no pushState support
             VideoControls.setAutoPlayCallback(null);
         }
 
@@ -171,6 +185,22 @@ var Video = {
         }, 15000);
 
         this.waitingForVideo = null;
+    },
+
+    navigateToVideo: function(path) {
+        if (path.charAt(0) == "/") {
+            path = path.substr(1);
+        }
+        pathList = [videoTopLevelTopic].concat(path.split("/"));
+        if (pathList.length >= 3) {
+            var video = pathList[pathList.length-1];
+            var topic = pathList[pathList.length-3];
+
+            this.waitingForVideo = { topic: topic, video: video };
+            this.loadVideo(topic, video);
+        } else {
+            $("div.video").hide();
+        }
     },
 
     loadVideo: function(topic, video) {
@@ -278,19 +308,7 @@ window.VideoRouter = Backbone.Router.extend({
     },
 
     video: function(path) {
-        if (path.charAt(0) == "/") {
-            path = path.substr(1);
-        }
-        pathList = [videoTopLevelTopic].concat(path.split("/"));
-        if (pathList.length >= 3) {
-            var video = pathList[pathList.length-1];
-            var topic = pathList[pathList.length-3];
-
-            Video.waitingForVideo = { topic: topic, video: video };
-            Video.loadVideo(topic, video);
-        } else {
-            $("div.video").hide();
-        }
+        Video.navigateToVideo(path);
     }
 });
 

@@ -89,23 +89,14 @@ def get_mangled_topic_name(topic_name):
         topic_name = topic_name.replace(char, "")
     return topic_name
 
+# New video view handler.
+# The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
+#   /math/algebra/introduction-to-algebra/v/origins-of-algebra
 class ViewVideo(request_handler.RequestHandler):
 
     @staticmethod
     def show_video(handler, readable_id, topic_id, redirect_to_canonical_url=False):
         topic = None
-
-        if not readable_id:
-            # Need to show some video here temporarily, using introductory algebra video
-            template_values = {
-                "video": { "youtube_id": "kpCJyQ2usJ4" },
-                "top_level_topic": topic_id,
-                "selected_nav_link": 'watch'
-            }
-
-#            bingo(['struggling_videos_landing'])
-            handler.render_jinja2_template('viewvideo.html', template_values)
-            return
 
         if topic_id is not None and len(topic_id) > 0:
             topic = Topic.get_by_id(topic_id)
@@ -152,7 +143,19 @@ class ViewVideo(request_handler.RequestHandler):
         ])
         handler.render_jinja2_template('viewvideo.html', template_values)
 
-    # The handler itself is deprecated. The ShowContent handler is the canonical
+    @ensure_xsrf_cookie
+    def get(self, path, video_id):
+        if path:
+            path_list = path.split('/')
+
+            if len(path_list) > 0:
+                topic_id = path_list[-1]
+                ViewVideo.show_video(self, video_id, topic_id)
+                return
+
+class ViewVideoDeprecated(request_handler.RequestHandler):
+
+    # The handler itself is deprecated. The ViewVideo handler is the canonical
     # handler now.
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
@@ -622,28 +625,6 @@ class PermanentRedirectToHome(request_handler.RequestHandler):
 
         self.redirect(redirect_target, True)
 
-# This handler is used for the video player currently. In the future it will show
-# topic pages and exercises as well.
-# The URI format is a topic path followed by a type and resource identifier, i.e.:
-#   /math/algebra/introduction-to-algebra/v/origins-of-algebra  (A video in topic "introduction-to-algebra" with ID "origins-of-algebra"
-class ShowContent(request_handler.RequestHandler):
-    @ensure_xsrf_cookie
-    def get(self, path=None):
-
-        if path:
-            path_list = path.split('/')
-            if len(path_list) >= 3:
-                topic_id = path_list[-3]
-                content_type = path_list[-2]
-                content_id = path_list[-1]
-
-                if content_type == "v":
-                    ViewVideo.show_video(self, content_id, topic_id)
-                    return
-
-            if len(path_list) > 0:
-                ViewVideo.show_video(self, None, path_list[0])
-
 class ServeUserVideoCss(request_handler.RequestHandler):
     def get(self):
         user_data = UserData.current()
@@ -724,9 +705,10 @@ application = webapp2.WSGIApplication([
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/(.*)', ViewVideo),
-    ('/v/(.*)', ViewVideo),
-    ('/video', ViewVideo), # Backwards URL compatibility
+    ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/video', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.SaveMapCoords),
@@ -889,8 +871,6 @@ application = webapp2.WSGIApplication([
 
     ('/_ah/warmup.*', warmup.Warmup),
 
-    # Content glob comes in dead last so it doesn't conflict with any other routes (See ShowContent)
-    ('/(.*)', ShowContent),
 
     ], debug=True)
 
