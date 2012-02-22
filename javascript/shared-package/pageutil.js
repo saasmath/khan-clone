@@ -803,6 +803,7 @@ $.fx.step.reviewExplode = function(fx) {
         "0 0 " + val + " " + val + " " + "rgba(227, 93, 4, 0.2)");
 };
 
+// TODO(kamens): this should be moved to an exercise-specific package
 var Review = {
     REVIEW_DONE_HTML: "Review&nbsp;Done!",
 
