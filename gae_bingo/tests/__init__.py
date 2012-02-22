@@ -5,7 +5,7 @@ import simplejson
 from google.appengine.ext.webapp import RequestHandler
 from google.appengine.api import memcache
 
-from gae_bingo.gae_bingo import ab_test, bingo, choose_alternative
+from gae_bingo.gae_bingo import ab_test, bingo, choose_alternative, create_redirect_url
 from gae_bingo.cache import BingoCache, BingoIdentityCache
 from gae_bingo.config import can_control_experiments
 from gae_bingo.api import ControlExperiment
@@ -55,6 +55,10 @@ class RunStep(RequestHandler):
             v = self.flush_bingo_memcache()
         elif step == "flush_all_memcache":
             v = self.flush_all_memcache()
+        elif step == "create_monkeys_redirect_url":
+            v = self.create_monkeys_redirect_url()
+        elif step == "create_chimps_redirect_url":
+            v = self.create_chimps_redirect_url()
 
         self.response.out.write(simplejson.dumps(v))
 
@@ -91,6 +95,12 @@ class RunStep(RequestHandler):
     def convert_in(self):
         bingo(self.request.get("conversion_name"))
         return True
+
+    def create_monkeys_redirect_url(self):
+        return create_redirect_url("http://www.google.com", "monkeys")
+
+    def create_chimps_redirect_url(self):
+        return create_redirect_url("http://www.google.com", ["chimps_conversion_1", "chimps_conversion_2"])
 
     def end_and_choose(self):
         bingo_cache = BingoCache.get()

@@ -6,14 +6,15 @@ var VideoControls = {
 
     player: null,
 
+    readyDeferred_: new $.Deferred(),
+
     initJumpLinks: function() {
         $("span.youTube").addClass("playYouTube").removeClass("youTube").click(VideoControls.clickYouTubeJump);
     },
 
     clickYouTubeJump: function() {
         var seconds = $(this).attr("seconds");
-        if (VideoControls.player && seconds)
-        {
+        if (VideoControls.player && seconds) {
             VideoControls.player.seekTo(Math.max(0, seconds - 2), true);
             VideoControls.scrollToPlayer();
         }
@@ -36,7 +37,9 @@ var VideoControls = {
         // If user has scrolled below the youtube video, scroll to top of video
         // when a play link is clicked.
         var yTop = $(VideoControls.player).offset().top - 2;
-        if ($(window).scrollTop() > yTop) $(window).scrollTop(yTop);
+        if ($(window).scrollTop() > yTop) {
+            $(window).scrollTop(yTop);
+        }
     },
 
     onYouTubeBlocked: function(callback) {
@@ -47,7 +50,6 @@ var VideoControls = {
     },
 
     initThumbnails: function() {
-
         // Queue:false to make sure all of these run at the same time
         var animationOptions = {duration: 150, queue: false};
 
@@ -89,8 +91,7 @@ var VideoControls = {
     thumbnailClick: function() {
         var jelParent = $(this).parents("td").first();
         var youtubeId = jelParent.attr("data-youtube-id");
-        if (VideoControls.player && youtubeId)
-        {
+        if (VideoControls.player && youtubeId) {
             $(VideoControls).trigger("beforeplay");
 
             VideoControls.player.loadVideoById(youtubeId, 0, "default");
@@ -105,12 +106,17 @@ var VideoControls = {
         }
     },
 
-    onPlayerReady: function(cb) {
-        if (VideoControls.playerreadyFired) {
-            return cb();
-        } else {
-            $(VideoControls).one("playerready", cb);
-        }
+    /**
+     * Invokes a function (typically on the player) and ensures that the invoke
+     * is done only after the player is ready.
+     */
+    invokeWhenReady: function(func) {
+        this.readyDeferred_.then(func);
+    },
+
+    setPlayer: function(player) {
+        this.player = player;
+        this.readyDeferred_.resolve();
     }
 };
 
@@ -154,12 +160,10 @@ var VideoStats = {
         if (sYoutubeId) {
             this.sYoutubeId = sYoutubeId;
             this.sVideoKey = null;
-        }
-        else if (sVideoKey) {
+        } else if (sVideoKey) {
             this.sVideoKey = sVideoKey;
             this.sYoutubeId = null;
-        }
-        else {
+        } else {
             return; // no key given, can't log anything.
         }
 
@@ -180,8 +184,7 @@ var VideoStats = {
         $(VideoControls).on("playerStateChange.videostats",
             _.bind(this.playerStateChange, this));
 
-        if (this.intervalId === null)
-        {
+        if (this.intervalId === null) {
             // Every 10 seconds check to see if we've crossed over our percent
             // granularity logging boundary
             this.intervalId = setInterval(function() {
@@ -212,8 +215,7 @@ var VideoStats = {
     },
 
     listenToPlayerStateChange: function() {
-        if (!this.fAlternativePlayer && !this.player.fStateChangeHookAttached)
-        {
+        if (!this.fAlternativePlayer && !this.player.fStateChangeHookAttached) {
             // YouTube player is ready, add event listener
             this.player.addEventListener("onStateChange", "onYouTubePlayerStateChange");
 
@@ -224,22 +226,21 @@ var VideoStats = {
 
     playerStateChange: function(evt, state) {
         var playing = this.playing || this.fAlternativePlayer;
-        if (state == -2) { // playing normally
+        if (state === -2) { // playing normally
             var percent = this.getPercentWatched();
-            if (percent > (this.dPercentLastSaved + this.dPercentGranularity))
-            {
+            if (percent > (this.dPercentLastSaved + this.dPercentGranularity)) {
                 // Another 10% has been watched
                 this.save();
             }
         } else if (state === 0 && playing) { // ended
             this.playing = false;
             this.save();
-        } else if (state == 2 && playing) { // paused
+        } else if (state === 2 && playing) { // paused
             this.playing = false;
             if (this.getSecondsWatchedSinceSave() > 1) {
               this.save();
             }
-        } else if (state == 1) { // play
+        } else if (state === 1) { // play
             this.playing = true;
             this.dtLastSaved = new Date();
             this.dPercentLastSaved = this.getPercentWatched();
@@ -249,7 +250,9 @@ var VideoStats = {
 
     save: function() {
 
-        if (this.fSaving) return;
+        if (this.fSaving) {
+            return;
+        }
 
         // Make sure cookies are enabled, otherwise this totally won't work
         if (!areCookiesEnabled()) {
@@ -351,7 +354,9 @@ var VideoStats = {
         // Only update current time if it exists, not if video finished
         // and scrubber went back to 0.
         var currentTime = parseFloat(time);
-        if (currentTime) this.cachedCurrentTime = currentTime;
+        if (currentTime) {
+            this.cachedCurrentTime = currentTime;
+        }
 
         this.cachedDuration = parseFloat(duration);
     }
@@ -370,7 +375,7 @@ function onYouTubePlayerReady(playerID) {
     if (!player || !player.playVideo) throw new Error("YouTube player not found");
 
     // Ensure UniSub widget will know about ready players if/when it loads.
-    (window.unisubs_readyAPIIDs = window.unisubs_readyAPIIDs || []).push((playerID == "undefined" || !playerID) ? "" : playerID);
+    (window.unisubs_readyAPIIDs = window.unisubs_readyAPIIDs || []).push((playerID === "undefined" || !playerID) ? "" : playerID);
 
     connectYouTubePlayer(player);
 }
@@ -380,7 +385,7 @@ function onYouTubePlayerReady(playerID) {
 // See http://code.google.com/apis/youtube/iframe_api_reference.html
 function onYouTubePlayerAPIReady() {
 
-    if (typeof YT === "undefined" || $("#iframePlayer").length == 0) {
+    if (typeof YT === "undefined" || $("#iframePlayer").length === 0) {
         return;
     }
 
@@ -407,7 +412,7 @@ function onYouTubePlayerAPIReady() {
 
     // Whenever showing a new video page, making sure onYouTubePlayerAPIReady
     // gets called, even if it's been called previously.
-    $("#page-container-inner").on("pageshow", "div.video", function(){
+    $("#page-container-inner").on("pageshow", "div.video", function() {
         onYouTubePlayerAPIReady();
     });
 
@@ -416,7 +421,7 @@ function onYouTubePlayerAPIReady() {
 
 function connectYouTubePlayer(player) {
 
-    VideoControls.player = player;
+    VideoControls.setPlayer(player);
     VideoStats.player = player;
 
     // The UniSub (aka mirosubs) widget replaces the YouTube player with a copy
@@ -424,8 +429,6 @@ function connectYouTubePlayer(player) {
     // 'playerready' events on any objects that are using the player so that they can
     // take appropriate action to use the new player.
     $(VideoControls).trigger("playerready");
-    VideoControls.playerreadyFired = true;
     $(VideoStats).trigger("playerready");
-
 }
 

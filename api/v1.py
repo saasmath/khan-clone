@@ -148,7 +148,7 @@ def get_user_data_from_json(json, key):
 @jsonify
 def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.Topic.get_rolled_up_top_level_topics(version)
+    return models.Topic.get_content_topics(version)
 
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
@@ -273,6 +273,43 @@ def topic_progress(topic_id):
 def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
+
+@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
+@route("/api/v1/dev/topictree/problems", methods=["GET"])
+# TODO(james) add @developer_required once Tom creates interface
+@jsonp
+@jsonify
+def topic_tree_problems(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    
+    exercises = models.Exercise.all()
+    exercise_dict = dict((e.key(),e) for e in exercises)
+
+    location_dict = {}
+    duplicate_positions = list()
+    changes = models.VersionContentChange.get_updated_content_dict(version)
+    exercise_dict.update(changes)
+    
+    for exercise in [e for e in exercise_dict.values() 
+                     if e.live and not e.summative]:
+               
+        if exercise.h_position not in location_dict:
+            location_dict[exercise.h_position] = {}
+
+        if exercise.v_position in location_dict[exercise.h_position]:
+            # duplicate_positions.add(exercise)
+            location_dict[exercise.h_position][exercise.v_position].append(exercise)
+            duplicate_positions.append(
+                location_dict[exercise.h_position][exercise.v_position])
+        else:
+            location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+    problems = {
+        "ExerciseVideos with topicless videos" : 
+            models.ExerciseVideo.get_all_with_topicless_videos(version),
+        "Exercises with colliding positions" : list(duplicate_positions)}
+
+    return problems
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
@@ -633,7 +670,7 @@ def playlists_library():
 @compress
 @jsonify
 def playlists_library_list():
-    topics = models.Topic.get_filled_rolled_up_top_level_topics(types = ["Video", "Url"])
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
         (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
@@ -704,7 +741,7 @@ def exercise_save(exercise_name = None, version_id = "edit"):
 def exercise_save_data(version, data, exercise=None, put_change=True):
     if "name" not in data:
         raise Exception("exercise 'name' missing")
-    data["live"] = data["live"] = data["live"] == "true" or data["live"] == True    
+    data["live"] = data["live"] == "true" or data["live"] == True 
     data["v_position"] = int(data["v_position"])
     data["h_position"] = int(data["h_position"])
     data["seconds_per_fast_problem"] = (
@@ -1225,7 +1262,8 @@ def log_user_video(youtube_id):
         video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if not video:
-        return api_error_response("Could not find video")
+        logging.error("Could not find video for %s" % (video_key_str or youtube_id))
+        return api_invalid_param_response("Could not find video for %s" % (video_key_str or youtube_id))
 
     seconds_watched = int(request.request_float("seconds_watched", default=0))
     last_second = int(request.request_float("last_second_watched", default=0))
@@ -1830,12 +1868,14 @@ def get_activity():
             student = user_override
 
     recent_activities = recent_activity.recent_activity_list(student)
+    recent_completions = filter(
+            lambda activity: activity.is_complete(),
+            recent_activities)
 
     return {
-        # TODO: re-enable this
-        #"suggested": suggested_activity.SuggestedActivity.get_for(
-                #student, recent_activities),
-        "recent": recent_activities[:recent_activity.MOST_RECENT_ITEMS],
+        "suggested": suggested_activity.SuggestedActivity.get_for(
+                student, recent_activities),
+        "recent": recent_completions[:recent_activity.MOST_RECENT_ITEMS],
     }
 
 # TODO in v2: imbue with restfulness
@@ -1962,6 +2002,34 @@ def autocomplete():
 def backupmodels():
     """Return the names of all models that inherit from models.BackupModel."""
     return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
+
+@route("/api/v1/dev/protobufquery", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_query():
+    """Return the results of a GQL query as pickled protocol buffer objects
+
+    Example python code:
+    import urllib as u
+    import urllib2 as u2
+
+    # make sure to quote the query
+    q = u.quote("SELECT * FROM VideoLog ORDER BY time_watched LIMIT 50")
+
+    # get the entities selected by the query
+    p = u2.urlopen("http://localhost:8080/api/v1/dev/protobufquery?query=%s" % q)
+
+    # It's a little more complicated in practice because oauth must be used but
+    # that's the idea
+    """
+
+    query = request.request_string("query")
+    if not query:
+        return api_error_response(ValueError("Query required"))
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               db.GqlQuery(query))
 
 @route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
 @oauth_required()

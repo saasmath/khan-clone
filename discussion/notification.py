@@ -96,7 +96,7 @@ def feedback_answers_for_user_data(user_data):
         except db.ReferencePropertyResolveError:
             pass
 
-        if feedback == None or feedback.deleted or feedback.is_hidden_by_flags or not feedback.is_type(models_discussion.FeedbackType.Answer):
+        if not feedback or not feedback.video() or not feedback.is_visible_to_public() or not feedback.is_type(models_discussion.FeedbackType.Answer):
             # If we ever run into notification for a deleted or non-FeedbackType.Answer piece of feedback,
             # go ahead and clear the notification so we keep the DB clean.
             db.delete(notification)

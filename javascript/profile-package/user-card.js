@@ -80,6 +80,15 @@ var ProfileModel = Backbone.Model.extend({
             "isPublic": this.getIfUndefined(attrs, "isPublic")
         });
 
+        // Trigger a custom "savesuccess" event, since it's useful for clients
+        // to know when certain operations succeeded on the server.
+        var success = options.success;
+        options.success = function(model, resp) {
+            model.trigger("savesuccess");
+            if (success) {
+                success(model, resp);
+            }
+        };
         Backbone.Model.prototype.save.call(this, attrs, options);
     },
 

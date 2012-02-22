@@ -729,7 +729,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 
 	// called when question has been triggered manually via clicking a link
 	linkTriggeredQuestion: function(question) {
-		this.videoControls.onPlayerReady(_.bind(function() {
+		this.videoControls.invokeWhenReady(_.bind(function() {
 			// notify poppler
 			this.poppler.blocked = true;
 			this.poppler.seek(question.seconds());
@@ -748,7 +748,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
 
 	fragmentTriggeredSeek: function(seconds) {
 		this.leaveCurrentState();
-		this.videoControls.onPlayerReady(_.bind(function() {
+		this.videoControls.invokeWhenReady(_.bind(function() {
 			this.poppler.blocked = true;
 			this.poppler.seek(seconds);
 			this.videoControls.player.seekTo(seconds, true);

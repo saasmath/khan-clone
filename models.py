@@ -1906,6 +1906,11 @@ class VersionContentChange(db.Model):
             change.content_changes = {}
 
         if content and content.is_saved():
+            
+            if previous_changes:
+                content = change.updated_content(content)
+                change.content_changes = {}
+
             for prop in changeable_props:
                 if (prop in new_props and
                     new_props[prop] is not None and (
@@ -3319,6 +3324,9 @@ class Video(Searchable, db.Model):
         video_dict = dict((v.key(), v) for v in videos)
         return video_dict.values()
 
+    def has_topic(self):
+        return bool(self.topic_string_keys)
+
     # returns the first non-hidden topic
     def first_topic(self):
         if self.topic_string_keys:
@@ -3522,8 +3530,11 @@ class UserTopic(db.Model):
 class UserVideo(db.Model):
 
     @staticmethod
-    def get_key_name(video, user_data):
-        return user_data.key_email + ":" + video.youtube_id
+    def get_key_name(video_or_youtube_id, user_data):
+        id = video_or_youtube_id
+        if type(id) not in [str, unicode]:
+            id = video_or_youtube_id.youtube_id
+        return user_data.key_email + ":" + id
 
     @staticmethod
     def get_for_video_and_user_data(video, user_data, insert_if_missing=False):
@@ -3542,10 +3553,14 @@ class UserVideo(db.Model):
 
     @staticmethod
     def count_completed_for_user_data(user_data):
+        return UserVideo.get_completed_user_videos(user_data).count(limit=10000)
+
+    @staticmethod
+    def get_completed_user_videos(user_data):
         query = UserVideo.all()
-        query.filter("user = ", user_data.user)
-        query.filter("completed = ", True)
-        return query.count(limit=10000)
+        query.filter("user =", user_data.user)
+        query.filter("completed =", True)
+        return query
 
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
@@ -3598,8 +3613,11 @@ class VideoLog(BackupModel):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
     video_title = db.StringProperty(indexed=False)
+    # The timestamp corresponding to when this entry was created.
     time_watched = db.DateTimeProperty(auto_now_add = True)
     seconds_watched = db.IntegerProperty(default = 0, indexed=False)
+
+    # Most recently watched second in video (playhead state)
     last_second_watched = db.IntegerProperty(indexed=False)
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     playlist_titles = db.StringListProperty(indexed=False)
@@ -3712,7 +3730,10 @@ class VideoLog(BackupModel):
             user_data.uservideocss_version += 1
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
-            bingo(['struggling_videos_finished'])
+            bingo([
+                'struggling_videos_finished',
+                'suggested_activity_videos_finished'
+            ])
         video_log.is_video_completed = user_video.completed
 
         goals_updated = GoalList.update_goals(user_data,
@@ -4247,6 +4268,92 @@ class ExerciseVideo(db.Model):
 
         return exercise_video_key_dict
 
+    # returns all ExerciseVideo objects whose Video has no topic
+    @staticmethod
+    def get_all_with_topicless_videos(version=None):
+        videos = Video.get_all_live(version)
+        video_keys = [v.key() for v in videos]
+        evs = ExerciseVideo.all().fetch(100000)
+               
+        if version is None or version.default:
+            return [ev for ev in evs 
+                    if ExerciseVideo.video.get_value_for_datastore(ev) 
+                    not in video_keys]
+       
+        # if there is a version check to see if there are any updates to the exercise videos
+        else:
+            video_dict = dict((v.key(), v.readable_id) for v in videos)
+            video_readable_dict = dict((v.readable_id, v) for v in videos)
+            ev_key_dict = dict((ev.key(), ev) for ev in evs)
+
+            # create ev_dict so we can access the ev in constant time from the exercise_key and the video_readable_id
+            ev_dict = {}
+
+            for ev in evs:
+                exercise_key = ExerciseVideo.exercise.get_value_for_datastore(ev)
+                video_key = ExerciseVideo.video.get_value_for_datastore(ev)
+                
+                # if the video is not live get it (it will be a topicless video)
+                # there shouldnt be too many of these, hence not bothering to do
+                # things efficiently in one get
+                if video_key not in video_dict:
+                    video = db.get(video_key)
+                    video_readable_id = video.readable_id
+                    video_readable_dict[video.readable_id] = video
+                else:
+                    video_readable_id = video_dict[video_key]
+                    video = video_readable_dict[video_readable_id]
+
+                # the following line is needed otherwise the list comprehension
+                # by the return statement will fail on the un put EVs with:
+                # Key' object has no attribute '_video' if 
+                # ExerciseVideo.video.get_value_for_datastore(ev) is used
+                ev.video = video
+
+                if exercise_key not in ev_dict:
+                    ev_dict[exercise_key] = {}
+                
+                ev_dict[exercise_key][video_readable_id] = ev.key() 
+
+            # cycle through all the version changes to see if an exercise has been updated
+            changes = VersionContentChange.get_updated_content_dict(version)
+            new_evs=[]
+            
+            for key, content in changes.iteritems():
+                
+                if (type(content) == Exercise):
+                    
+                    # remove the existing Exercise_Videos if there are any
+                    if key in ev_dict:
+                        for video_readable_id, ev_key in ev_dict[key].iteritems():
+                            del ev_key_dict[ev_key]
+
+                    # add new related_videos
+                    for i, video_readable_id in enumerate(content.related_videos
+                        if hasattr(content, "related_videos") else []):
+                        
+                        if video_readable_id not in video_readable_dict:
+                            video = video.get_for_readable_id(video_readable_id)
+                            video_readable_dict[video_readable_id] = (
+                                video.readable_id)
+                        else:
+                            video = video_readable_dict[video_readable_id]
+
+                        new_ev = ExerciseVideo(
+                            video = video,
+                            exercise = content,
+                            exercise_order= i
+                            )
+                        new_evs.append(new_ev)  
+                
+            evs = [ev for ev in ev_key_dict.values()]
+            evs += new_evs
+
+            # ExerciseVideo.video.get_value_for_datastore(ev) is not needed 
+            # because we populated ev.video
+            return [ev for ev in evs if ev.video.key() not in video_keys]
+
+
 class UserExerciseCache(db.Model):
     """ UserExerciseCache is an optimized-for-read-and-deserialization cache of
     user-specific exercise states.
@@ -4585,6 +4692,103 @@ class UserExerciseGraph(object):
         return UserExerciseGraph.generate(user_data, user_exercise_cache, UserExerciseGraph.exercise_dicts())
 
     @staticmethod
+    def get_boundary_names(graph):
+        """ Return the names of the exercises that succeed
+        the student's proficient exercises.
+        """
+        all_exercises_dict = {}
+
+        def is_boundary(graph_dict):
+            name = graph_dict["name"]
+
+            if name in all_exercises_dict:
+                return all_exercises_dict[name]
+
+            # Don't suggest already-proficient exercises
+            if graph_dict["proficient"]:
+                all_exercises_dict.update({name: False})
+                return False
+
+            # First, assume we're suggesting this exercise
+            is_suggested = True
+
+            # Don't suggest exercises that are covered by other suggested exercises
+            for covering_graph_dict in graph_dict["coverer_dicts"]:
+                if is_boundary(covering_graph_dict):
+                    all_exercises_dict.update({name: False})
+                    return False
+
+            # Don't suggest exercises if the user isn't proficient in all prerequisites
+            for prerequisite_graph_dict in graph_dict["prerequisite_dicts"]:
+                if not prerequisite_graph_dict["proficient"]:
+                    all_exercises_dict.update({name: False})
+                    return False
+
+            all_exercises_dict.update({name: True})
+            return True
+
+        boundary_graph_dicts = []
+        for exercise_name in graph:
+            graph_dict = graph[exercise_name]
+            if is_boundary(graph_dict):
+                boundary_graph_dicts.append(graph_dict)
+
+        boundary_graph_dicts = sorted(sorted(boundary_graph_dicts,
+                             key=lambda graph_dict: graph_dict["v_position"]),
+                             key=lambda graph_dict: graph_dict["h_position"])
+
+        return [graph_dict["name"]
+                    for graph_dict in boundary_graph_dicts]
+
+    @staticmethod
+    def get_attempted_names(graph):
+        """ Return the names of the exercises that the student has attempted.
+        
+        Exact details, such as the threshold that marks a real attempt
+        or the relevance rankings of attempted exercises, TBD.
+        """
+        progress_threshold = 0.5
+
+        attempted_graph_dicts = filter(
+                                    lambda graph_dict:
+                                        (graph_dict["progress"] > progress_threshold
+                                            and not graph_dict["proficient"]),
+                                    graph.values())
+
+        attempted_graph_dicts = sorted(attempted_graph_dicts,
+                            reverse=True,
+                            key=lambda graph_dict: graph_dict["progress"])
+
+        return [graph_dict["name"] for graph_dict in attempted_graph_dicts]
+
+    @staticmethod
+    def mark_suggested(graph):
+        """ Mark 5 exercises as suggested, which are used by the knowledge map
+        and the profile page.
+        
+        Attempted but not proficient exercises are suggested first,
+        then padded with exercises just beyond the proficiency boundary.
+        
+        TODO: Although exercises might be marked in a particular order,
+        they will always be returned by suggested_graph_dicts()
+        sorted by knowledge map position. We might want to change that.
+        """
+        num_to_suggest = 5
+        suggested_names = UserExerciseGraph.get_attempted_names(graph)
+
+        if len(suggested_names) < num_to_suggest:
+            boundary_names = UserExerciseGraph.get_boundary_names(graph)
+            suggested_names.extend(boundary_names)
+
+        suggested_names = suggested_names[:num_to_suggest]
+
+        for exercise_name in graph:
+            is_suggested = exercise_name in suggested_names
+            graph[exercise_name]["suggested"] = is_suggested
+
+        return graph
+
+    @staticmethod
     def generate(user_data, user_exercise_cache, exercise_dicts):
 
         graph = {}
@@ -4649,36 +4853,7 @@ class UserExerciseGraph(object):
             set_implicit_proficiency(graph[exercise_name])
 
         # Calculate suggested
-        # TODO(marcia): Additionally incorporate whether student has attempted exercise,
-        # perhaps also accuracy and when it was last attempted. Details TBD.
-        def set_suggested(graph_dict):
-            if graph_dict["suggested"] is not None:
-                return graph_dict["suggested"]
-
-            # Don't suggest already-proficient exercises
-            if graph_dict["proficient"]:
-                graph_dict["suggested"] = False
-                return graph_dict["suggested"]
-
-            # First, assume we're suggesting this exercise
-            graph_dict["suggested"] = True
-
-            # Don't suggest exercises that are covered by other suggested exercises
-            for covering_graph_dict in graph_dict["coverer_dicts"]:
-                if set_suggested(covering_graph_dict):
-                    graph_dict["suggested"] = False
-                    return graph_dict["suggested"]
-
-            # Don't suggest exercises if the user isn't proficient in all prerequisites
-            for prerequisite_graph_dict in graph_dict["prerequisite_dicts"]:
-                if not prerequisite_graph_dict["proficient"]:
-                    graph_dict["suggested"] = False
-                    return graph_dict["suggested"]
-
-            return graph_dict["suggested"]
-
-        for exercise_name in graph:
-            set_suggested(graph[exercise_name])
+        graph = UserExerciseGraph.mark_suggested(graph)
 
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
