@@ -228,7 +228,18 @@ Socrates.QuestionView = Backbone.View.extend({
 	render: function() {
 		// preload html
 		$.get(this.htmlUrl()).success(_.bind(function(html) {
-			$(this.el).html(html);
+			this.template = Handlebars.compile(html);
+
+			$(this.el).html(this.template({
+				title: this.model.get('title'),
+				explainUrl: this.model.get('nested')
+			}));
+
+			// linkify the explain button
+			var parent = this.model.get('nested');
+			if (parent) {
+				this.$(".simple-button.explain").attr("href", "#" + parent);
+			}
 			this.loaded = true;
 		}, this));
 
@@ -691,7 +702,7 @@ $(function() {
 		new Socrates.Question({
 			time: "2m5.7s",
 			title: "Dimensions of a matrix",
-			nested: true,
+			nested: "dimensions-of-a-matrix",
 			youtubeId: "xyAuNHPsq-g",
 			id: 1,
 			correctData: { rows: "4", cols: "5" }
@@ -703,7 +714,7 @@ $(function() {
 		new Socrates.Question({
 			time: "3m20s",
 			title: "Referencing elements in a matrix",
-			nested: true,
+			nested: "referencing-elements-in-a-matrix",
 			youtubeId: "xyAuNHPsq-g",
 			id: 2,
 			correctData: { answer: "2" }
@@ -715,7 +726,7 @@ $(function() {
 		new Socrates.Question({
 			time: "4m23.9s",
 			title: "What are matrices used for?",
-			nested: true,
+			nested: "what-are-matrices-used-for",
 			youtubeId: "xyAuNHPsq-g",
 			id: 3,
 			correctData: { answer: [true, true, true, true, true, true] }
@@ -727,7 +738,7 @@ $(function() {
 		new Socrates.Question({
 			time: "6m31s",
 			title: "Defining matrix addition",
-			nested: true,
+			nested: "defining-matrix-addition",
 			youtubeId: "xyAuNHPsq-g",
 			id: 4
 		}),
@@ -742,7 +753,7 @@ $(function() {
 		new Socrates.Question({
 			time: "8m9s",
 			title: "Commutativity of matrix addition",
-			nested: true,
+			nested: "commutativity-of-matrix-addition",
 			youtubeId: "xyAuNHPsq-g",
 			id: 5
 		}),
@@ -768,7 +779,7 @@ $(function() {
 		new Socrates.Question({
 			time: "11m50s",
 			title: "Matrix terminology",
-			nested: true,
+			nested: "matrix-terminology",
 			youtubeId: "xyAuNHPsq-g",
 			id: 7,
 			correctData: {
@@ -813,3 +824,5 @@ $(function() {
 		root: "video/introduction-to-matrices?topic=linear-algebra-1#elements-in-a-matrix"
 	});
 });
+
+Handlebars.registerPartial("submit-area", Templates.get("video.submit-area"));

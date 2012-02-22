@@ -79,6 +79,7 @@ javascript = {
             "jquery.ui.resizable.js",
             "inputtext.handlebars",
             "socrates-nav.handlebars",
+            "submit-area.handlebars",
             "socrates.js",
         ]
     },
