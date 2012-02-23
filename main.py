@@ -235,7 +235,6 @@ class ViewVideo(request_handler.RequestHandler):
         template_values = {
                             'topic': topic,
                             'video': video,
-                            'transcript': subtitles_json,
                             'videos': videos,
                             'video_path': video_path,
                             'video_points_base': consts.VIDEO_POINTS_BASE,

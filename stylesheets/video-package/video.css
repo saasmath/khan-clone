@@ -123,9 +123,6 @@
 .youtube-video {
     position: relative;
 }
-.subtitles {
-    display: none;
-}
 .subtitles-warning {
     display: none;
     margin-left: 256px;
@@ -200,40 +197,49 @@
     width: 100%;
 }
 
-#transcript {
+/* Interactive transcript widget */
+
+.subtitles {
+    display: none;
     clear: both;
-    max-height: 300px;
+    margin: 10px 0;
+    border: 1px solid #898989;
+    border-radius: 10px;
+    background-color: #fff;
+    max-height: 200px;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
-    margin-top: 10px;
-    margin-bottom: 10px;
 
-    /* needed so that child elements offsetTop is relative to #transcript */
+    /* JavaScript needs the child element's offsetTop relative to .subtitles */
     position: relative;
 }
 
-#transcript .subtitle {
-    padding: 0px;
-    border: 1px solid transparent;
-    margin-right: 15px;
-    overflow: hidden;
-}
-
-#transcript .subtitle.active {
-    background: #EEE;
-    border: 1px solid #CCC;
-    border-radius: 5px;
-}
-
-#transcript .subtitle span.time {
-    color: #777;
-    margin-right: 10px;
+.subtitles a {
+    color: #000;
     display: block;
-    float: left;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height:1.6em;
+    margin: 0 10px;
+    padding: 0 5px;
 }
 
-#transcript .subtitle a {
+.subtitles a:before {
+    content: attr(data-fmttime);
+    color: #777;
+    display: inline-block;
+    width: 35px;
+}
+
+.subtitles .active a {
+    background-color: #d3ddb6;
+    font-weight: bold;
+}
+
+.subtitles a:hover {
+    background-color: #9db63b;
     color: #000;
     text-decoration: none;
-    display: block;
 }

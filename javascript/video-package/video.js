@@ -57,15 +57,14 @@ var Video = {
 
         $(".transcript-link").toggle(function(ev) {
             ev.preventDefault();
-            InteractiveTranscript.stop();
-            $("#transcript").slideUp("fast");
+            $("#transcript").slideDown("fast", $.proxy(InteractiveTranscript.start, InteractiveTranscript));
         }, function(ev) {
             ev.preventDefault();
-            $("#transcript").slideDown("fast", $.proxy(InteractiveTranscript.start, InteractiveTranscript));
+            InteractiveTranscript.stop();
+            $("#transcript").slideUp("fast");
         });
 
         InteractiveTranscript.init();
-        InteractiveTranscript.start();
 
         $(".sharepop").hide();
         $(".share-link").click(function() {
@@ -175,7 +174,7 @@ var InteractiveTranscript = {
         }, this));
 
         // Get the subtitles and highlight the first one
-        var lines = this.subtitles.find(".subtitle");
+        var lines = this.subtitles.find("li");
         this.currentSubtitle = lines.eq(0)
         this.currentSubtitle.addClass("active")[0];
 
@@ -217,7 +216,7 @@ var InteractiveTranscript = {
         var player = VideoStats.player;
         if(!player) return;
 
-        var lines = this.subtitles.find(".subtitle");
+        var lines = this.subtitles.find("li");
         // Get the seek position or the current time
         // (allowing the user to see the transcript while loading)
         // We need to round the number to fix floating point issues

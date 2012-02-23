@@ -104,19 +104,12 @@
                <a href="#" class="subtitles-link">Close subtitles</a>
             </div>
         </div>
-        {% if subtitles_json %}
-        <div itemprop="transcript" class="subtitles">
-            {% for entry in subtitles_json: %}
-            <p>{{ entry.text|e }}</p>
-            {% endfor %}
-        </div>
-        {% endif %}
         <span class="video_extra_links desktop-only">
             <nobr>
 
             <div class="extra-link-bar">
 
-                {% if transcript %}
+                {% if subtitles_json %}
                 <a href="#" title="Interactive transcript" style="z-index:101;" class="simple-button action-gradient with-icon transcript-link">
                 <img src="/images/subtitles-icon-small.png" />
                         Transcript
@@ -144,15 +137,15 @@
             </nobr>
          </span>
 
-        {% if transcript %}
-        <div id="transcript">
-            {% for sub in transcript %}
-            <div class="subtitle" data-time="{{ sub.start_time }}">
-                <span class="time">{{ (sub.start_time // 60) | int }}:{{ "%02d"|format(sub.start_time % 60) }}</span>
-                <a href="">{{ sub.text }}</a>
-            </div>
+        {% if subtitles_json %}
+        {# TODO: this should be an ol but conflicts badly with style from default.css #}
+        <ul id="transcript" itemprop="transcript" class="subtitles">
+            {% for sub in subtitles_json %}
+            <li data-time="{{ sub.start_time }}">
+                <a href="javascript:void(0)" data-fmttime="{{ (sub.start_time // 60) | int }}:{{ "%02d"|format(sub.start_time % 60) }}">{{ sub.text|e }}</a>
+            </li>
             {% endfor %}
-        </div>
+        </ul>
         {% endif %}
 
         <div class="desktop-only">
