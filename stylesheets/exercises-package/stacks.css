@@ -4,14 +4,14 @@
  */
 
 .stack {
-    width: 30px;
-}
 
+}
 .stack .card {
-    width: 100%;
-    height: 100%;
-    opacity: 0.2;
-    border: 1px solid black;
+    width: 25px;
+    height: 40px;
+    border: 1px solid #bbb;
+    margin: 0 auto;
+
 
     -webkit-transform-style: preserve-3d;
     -webkit-transition: all 0.3s linear;
@@ -19,13 +19,13 @@
     -moz-transform-style: preserve-3d;
     -moz-transition: all 0.3s linear;
     -moz-border-radius: 3px;
+
+    box-shadow: 0 0 3px #ccc;
 }
 
 .stack .card_container {
     position: relative;
-    width: 25px;
-    height: 25px;
-    padding: 4px;
+    margin-bottom: -5px;
     z-index: 1;
 
     -webkit-perspective: 1000;
@@ -47,7 +47,10 @@
 }
 
 .stack .card_face.card_front {
-    background-color: green;
+    box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #cfcfcf;
+    background-color: #ccc;
+
+    border-radius: 3px;
 }
 
 .stack .card_face.card_back {
@@ -65,4 +68,49 @@
     -webkit-transform: rotateY(180deg);
     -moz-box-sizing: border-box;
     -moz-transform: rotateY(180deg);
+}
+
+.exercises-stack,
+.exercises-card {
+    float: left;
+    width: 5%;
+    
+    margin-bottom: -9999px;
+    padding-bottom: 9999px;
+
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+.exercises-card {
+    width: 90%;
+}
+
+.current-card {
+    border: 1px solid #ccc;
+    -webkit-border-radius: 5px;
+    background: #f7f7f7;
+    position: relative;
+}
+
+.current-card #answer_area_wrap {
+    margin-right: -8px;
+}
+
+.current-card #answer_area .info-box {
+    overflow: visible;
+}
+.current-card #answer_area .info-box:before {
+    content: " ";
+    display: block;
+
+    border-right: 7px solid transparent;
+    border-bottom: 8px solid #ccc;
+
+    width: 0;
+    height: 15px;
+
+    position: absolute;
+    right: -1px;
+    top: -24px;
 }
