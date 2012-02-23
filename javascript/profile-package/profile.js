@@ -893,11 +893,22 @@ var Profile = {
         if (Profile.coachesDeferred_) {
             return Profile.coachesDeferred_;
         }
+
         Profile.coachesDeferred_ = "temp";
-        var template = Templates.get("profile.coaches"),
-            data = {"foo": "moo"};
+
+        var template = Templates.get("profile.coaches");
+
+        // Dummy data
+        var requests = [{email: "ooglyboogly"}, {email: "blahblah"}],
+            coaches = [{email: "mooooooo"}, {email: "fooooooooo"}, {email: "boooooooo"}],
+            data = {
+                "requests": requests,
+                "coaches": coaches,
+                "invalidCoach": false
+            };
 
         $("#tab-content-coaches").html(template(data));
+
         return Profile.coachesDeferred_;
     },
 

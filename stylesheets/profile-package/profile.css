@@ -1175,4 +1175,16 @@ li.profile-tab {
     text-decoration: none;
 }
 
+#coaches {
+    margin-top: 22px;
+}
+#coaches td {
+    padding: 9px;
+}
+#coaches tr.even-row td {
+    background-color: #EFEFEF;
+}
+#coaches tr.odd-row td {
+    background-color: #FFFFFF;
+}
 
