@@ -2915,9 +2915,13 @@ class Topic(Searchable, db.Model):
         else:
             return progress_tree
 
-def topictree_import_task(version_id, topic_id, tree_json):
+def topictree_import_task(version_id, topic_id, tree_json_compressed):
     from api.v1 import exercise_save_data 
+    import zlib
+    import pickle
 
+    tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
+ 
     logging.info("starting import")
     version = TopicVersion.get_by_id(version_id)
     parent = Topic.get_by_id(topic_id, version)
@@ -2953,7 +2957,8 @@ def topictree_import_task(version_id, topic_id, tree_json):
         parent.delete_descendants() 
 
     # adds key to each entity in json tree, if the node is not in the tree then add it
-    def add_keys_json_tree(tree, parent):
+    def add_keys_json_tree(tree, parent, i=0, prefix="0"):
+        pos = prefix + "." + str(i)
 
         if tree["kind"] == "Topic":
             if tree["id"] in topic_dict:
@@ -2962,13 +2967,8 @@ def topictree_import_task(version_id, topic_id, tree_json):
             else:
                 kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
                 kwargs["version"] = version
-                topic = Topic.insert(title = tree['title'], parent = None, **kwargs)
-                logging.info("added topic %s" % topic.title)
-                # since this is a new topic, put it in its correct parent
-                # the order does not matter as we are over-writing the 
-                # child_keys later.  This add_child is done to just make sure
-                # the parent and ancestors will all match
-                parent.add_child(topic, 0)
+                topic = Topic.insert(title = tree['title'], parent = parent, **kwargs)
+                logging.info("%s: added topic %s" % (pos, topic.title))
                 tree["key"] = topic.key()
                 topic_dict[tree["id"]]=topic
 
@@ -3006,7 +3006,7 @@ def topictree_import_task(version_id, topic_id, tree_json):
                                                                 tree, 
                                                                 changeable_props,
                                                                 put_change)
-                logging.info("added video %s" % video.title)
+                logging.info("%s: added video %s" % (pos, video.title))
                 new_content_keys.append(video.key())
                 tree["key"] = video.key()
                 video_dict[tree["youtube_id"]] = video
@@ -3018,7 +3018,7 @@ def topictree_import_task(version_id, topic_id, tree_json):
                 tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
             else:
                 exercise = exercise_save_data(version, tree, None, put_change)
-                logging.info("added Exercise %s" % exercise.name)
+                logging.info("%s: added Exercise %s" % (pos, exercise.name))
                 new_content_keys.append(exercise.key())
                 tree["key"] = exercise.key()
                 exercise_dict[tree["name"]] = exercise
@@ -3036,17 +3036,19 @@ def topictree_import_task(version_id, topic_id, tree_json):
                                                            tree,
                                                            changeable_props,
                                                            put_change)
-                logging.info("added Url %s" % url.title)
+                logging.info("%s: added Url %s" % (pos, url.title))
                 new_content_keys.append(url.key())
                 tree["key"] = url.key()
                 url_dict[tree["id"]] = url
 
             all_entities_dict[tree["key"]] = url
 
+        i = 0
         # recurse through the tree's children
         if "children" in tree:
             for child in tree["children"]:
-                add_keys_json_tree(child, topic_dict[tree["id"]])
+                add_keys_json_tree(child, topic_dict[tree["id"]], i, pos)
+                i += 1
    
     add_keys_json_tree(tree_json, parent)
     logging.info("added keys to nodes")
