@@ -57,7 +57,7 @@ var Exercises = {
 
     nextCard: function() {
 
-        if (this.currentCard) {
+        if (this.currentCard.model) {
             this.completeStack.pushCurrent();
         }
 
