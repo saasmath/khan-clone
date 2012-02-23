@@ -1,5 +1,5 @@
 
-DEFAULT_CARDS_PER_STACK = 14
+DEFAULT_CARDS_PER_STACK = 8
 
 # TODO(kamens): this will probably be persisted to the datastore in the form of a double-pickled 
 # list of cards attached to UserTopics or something of the sort.
