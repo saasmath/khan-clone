@@ -6,9 +6,15 @@ var Exercises = {
 
     exercise: null,
     userTopic: null,
+
     currentCard: null,
-    incompleteStack: null,
-    completeStack: null,
+    currentCardView: null,
+
+    incompleteStackCollection: null,
+    incompleteStackView: null,
+
+    completeStackCollection: null,
+    completeStackView: null,
 
     /**
      * Called to initialize the exercise page. Passed in with JSON information
@@ -22,10 +28,12 @@ var Exercises = {
         // this.userTopicModel = new UserTopicModel(json.userTopic);
         this.userTopic = json.userTopic;
 
-        $(Khan).bind("newProblem", function() { Exercises.nextCard(); });
-        $(Khan).bind("stackComplete", function() { Exercises.endOfStack(); });
+        this.incompleteStack = new Exercises.StackCollection(this.userTopic.incompleteStack); 
+        this.completeStack = new Exercises.StackCollection(this.userTopic.completeStack); 
 
         Exercises.render();
+
+        this.listenForEvents();
     },
 
     render: function() {
@@ -42,34 +50,54 @@ var Exercises = {
             userTopic: this.userTopic,
         }));
 
-        this.incompleteStack = new Exercises.Stack({
-            model: this.userTopic.incompleteStack,
+        this.incompleteStackView = new Exercises.StackView({
+            collection: this.incompleteStack,
             el: $(".incomplete-stack")
         }); 
 
-        this.completeStack = new Exercises.Stack({
-            model: this.userTopic.completeStack,
+        this.completeStackView = new Exercises.StackView({
+            collection: this.completeStack,
             el: $(".complete-stack")
         }); 
 
-        this.currentCard = new Exercises.CurrentCard({ el: $(".current-card") });
+        this.currentCardView = new Exercises.CurrentCardView({
+            el: $(".current-card") }
+        );
 
-        this.currentCard.render();
-        this.incompleteStack.render();
-        this.completeStack.render();
+        this.currentCardView.render();
+        this.incompleteStackView.render();
+        this.completeStackView.render();
+
+    },
+
+    listenForEvents: function() {
+
+        $(Khan).bind("newProblem", function() { Exercises.nextCard(); });
+
+        this.completeStack.bind("add", function() { Exercises.completeStackView.animateToHead(); });
+
+        this.incompleteStack
+            .bind("remove", function() { Exercises.incompleteStackView.animateToCurrent(); })
+            .bind("stackComplete", function() { Exercises.endOfStack(); });
 
     },
 
     nextCard: function() {
 
-        if (this.currentCard.model) {
-            this.completeStack.pushCurrent();
+        if (this.currentCard) {
+
+            // Pop off of incomplete and move current to complete
+            this.incompleteStack.pop();
+            this.completeStack.add(this.currentCard);
+            this.currentCard = null;
+
         }
 
-        this.incompleteStack.popToCurrent();
-
-        if (this.currentCard.empty() && this.incompleteStack.empty()) {
-            $(Khan).trigger("stackComplete");
+        if (!this.currentCard && this.incompleteStack.length === 0) {
+            this.incompleteStack.trigger("stackComplete");
+        }
+        else {
+            this.currentCard = this.incompleteStack.peek();
         }
 
     },
@@ -85,29 +113,38 @@ var Exercises = {
 };
 
 /**
+ * Collection model of a stack of cards
+ */
+Exercises.StackCollection = Backbone.Collection.extend({
+
+    model: Exercises.Card,
+
+    peek: function() {
+        return _.head(this.models);
+    },
+
+    pop: function() {
+        this.remove(this.peek());
+    }
+
+});
+
+/**
  * View of a stack of cards
  */
-Exercises.Stack = Backbone.View.extend({
+Exercises.StackView = Backbone.View.extend({
 
     template: Templates.get("exercises.stack"),
 
-    empty: function() {
-        return this.model.cards.length === 0;
-    },
-
     render: function() {
-        this.el.html(this.template(this.model));
+        this.el.html(this.template({cards: this.collection}));
         return this;
     },
 
     /**
-     * Pop next card off of Stack, hook it up to the CurrentCard model,
-     * and animate the transition.
+     * Animate popping card off of stack and moving it to current card slot
      */
-    popToCurrent: function() {
-
-        Exercises.currentCard.model = _.head(this.model.cards);
-        this.model.cards = _.tail(this.model.cards);
+    animateToCurrent: function() {
 
         this.el
             .find(".card-container")
@@ -121,10 +158,9 @@ Exercises.Stack = Backbone.View.extend({
     },
 
     /**
-     * Push CurrentCard model to Stack
+     * Animate pushing current card slot onto head of stack
      */
-    pushCurrent: function() {
-        this.model.cards.push(Exercises.currentCard.model);
+    animateToHead: function() {
 
         this.el
             .find(".stack")
@@ -135,16 +171,23 @@ Exercises.Stack = Backbone.View.extend({
                 .find(".card-container")
                     .first()
                         .slideDown();
+
     }
 
 });
 
 /**
+ * Model of any (current or in-stack) card
+ */
+Exercises.Card = Backbone.Model.extend({});
+
+/**
  * View of the single, currently-visible card
  */
-Exercises.CurrentCard = Backbone.View.extend({
+Exercises.CurrentCardView = Backbone.View.extend({
 
     template: Templates.get("exercises.current-card"),
+
     model: null,
 
     empty: function() {
