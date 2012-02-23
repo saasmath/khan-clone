@@ -85,7 +85,10 @@ javascript = {
             "socrates.js",
         ]
     },
-    # socrates questions
+
+    # Socrates questions. For now, they're here.
+    # todo(dmnd) In the long run they should move somewhere else, perhaps
+    # to another repository.
     "xyAuNHPsq-g": {"allfiles": True},
 
     "homepage": {

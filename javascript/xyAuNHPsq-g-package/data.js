@@ -17,7 +17,7 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
         nested: "dimensions-of-a-matrix",
         youtubeId: "xyAuNHPsq-g",
         id: 1,
-        correctData: { rows: "4", cols: "5" }
+        correctData: {rows: "4", cols: "5"}
     }),
     new Socrates.Bookmark({
         time: "2m6s",
@@ -29,7 +29,7 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
         nested: "referencing-elements-in-a-matrix",
         youtubeId: "xyAuNHPsq-g",
         id: 2,
-        correctData: { answer: "2" }
+        correctData: {answer: "2"}
     }),
     new Socrates.Bookmark({
         time: "3m28s",
@@ -41,7 +41,7 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
         nested: "what-are-matrices-used-for",
         youtubeId: "xyAuNHPsq-g",
         id: 3,
-        correctData: { answer: [true, true, true, true, true, true] }
+        correctData: {answer: [true, true, true, true, true, true]}
     }),
     new Socrates.Bookmark({
         time: "4m42s",
@@ -74,7 +74,7 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
         title: "Matrix addition",
         youtubeId: "xyAuNHPsq-g",
         id: 6,
-        correctData: { answer: [[80, 23], [13, 25]] }
+        correctData: {answer: [[80, 23], [13, 25]]}
     }),
     new Socrates.Bookmark({
         time: "8m11s",
@@ -83,6 +83,14 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
     new Socrates.Bookmark({
         time: "9m44s",
         title: "Matrices that can be added"
+    }),
+    new Socrates.Question({
+        time: "11m17s",
+        title: "Matrices that can be added",
+        nested: "matrices-that-can-be-added",
+        youtubeId: "xyAuNHPsq-g",
+        id: 8,
+        correctData: {answer: [false, false, true, true, false]}
     }),
     new Socrates.Bookmark({
         time: "11m17s",
@@ -93,8 +101,8 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
         title: "Matrix terminology",
         nested: "matrix-terminology",
         youtubeId: "xyAuNHPsq-g",
-        id: 7,
-        correctData: {"answer": {
+        id: 9,
+        correctData: {answer: {
             "scalar": {"scalar": true, "row-vector": false, "column-vector": false, "matrix": false},
             "column-vector": {"scalar": false, "row-vector": false, "column-vector": true, "matrix": true},
             "row-vector": {"scalar": false, "row-vector": true, "column-vector": false, "matrix": true},
