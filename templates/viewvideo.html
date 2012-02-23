@@ -14,11 +14,6 @@
     {{ js_css_packages.css_package("video") }}
 {% endblock pagecss %}
 
-{% block pagescript %}
-<!-- todo: replace this with the same mathjax used in khan-exercises.js -->
-<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-{% endblock pagescript %}
-
 {% block pagesubmenu %}
 <span class="breadcrumbs_nav video-nav">
         <a href="/#browse">All videos</a>
@@ -39,17 +34,6 @@
 {% endblock pagesubmenu %}
 {% block pagecontent %}
 <article id="video-page">
-<div class="interactive-video-controls" style="display: none">
-    <h3>Controls</h3>
-    <ul>
-        <li><button id="label">Label</button></li>
-        <li><button id="inputtext">InputText</button></li>
-        <li><button id="toggle">Toggle</button></li>
-    </ul>
-    <ul>
-        <li><button id="trigger">Trigger</button></li>
-    </ul>
-</div>
 <div class="video" data-role="page" data-theme="b">
     <div data-role="header" class="mobile-only">
         <a href="#" data-rel="back" data-icon="arrow-l">Back</a>
@@ -108,19 +92,16 @@
             <div class="clear"></div>
         </nav>
 
-        <div class="video-container" style="position: relative">
-            <div class="video-overlay"></div>
-            <div id="youtube_blocked" class="desktop-only">
-                {{ youtube.flv_player_embed(video_path) }}
-            </div>
-            <div class="youtube-video">
-                <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
-                {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host) }}
-                <div class="subtitles-warning desktop-only">
-                    &lArr; Use this menu to view and help create subtitles for this video in many different languages.
-                    You'll probably want to hide YouTube's captions if using these subtitles.
-                   <a href="#" class="subtitles-link">Close subtitles</a>
-                </div>
+        <div id="youtube_blocked" class="desktop-only">
+            {{ youtube.flv_player_embed(video_path) }}
+        </div>
+        <div class="youtube-video">
+            <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
+            {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host) }}
+            <div class="subtitles-warning desktop-only">
+                &lArr; Use this menu to view and help create subtitles for this video in many different languages.
+                You'll probably want to hide YouTube's captions if using these subtitles.
+               <a href="#" class="subtitles-link">Close subtitles</a>
             </div>
         </div>
         {% if subtitles_json %}
@@ -157,7 +138,6 @@
          </span>
 
         <div class="desktop-only">
-            <div class="socrates-nav"></div>
             {{ discussion.comments(user_data, video, topic, comments_page) }}
             {{ discussion.qa(user_data, video, topic, qa_page, qa_expand_key, sort) }}
         </div>
@@ -170,17 +150,11 @@
 {% block bottompagescript %}
 
     {{ js_css_packages.js_package("video") }}
-    {% if has_socrates %}
-    {{ js_css_packages.js_package(video.youtube_id) }}
-    {% endif %}
     <script>
       $(function() {
         Video.init();
         VideoStats.startLoggingProgress("{{ video.key()|escapejs }}");
 
-        {% if has_socrates %}
-        Socrates.init("{{video.youtube_id}}");
-        {% endif %}
         Discussion.init();
         Moderation.init();
         Voting.init();
