@@ -110,7 +110,7 @@ Exercises.Stack = Backbone.View.extend({
         this.model.cards = _.tail(this.model.cards);
 
         this.el
-            .find(".card_container")
+            .find(".card-container")
                 .first()
                     .addClass("flipped")
                     .delay(600)
@@ -131,13 +131,10 @@ Exercises.Stack = Backbone.View.extend({
                 .prepend(
                     $(Templates.get("exercises.card")())
                         .css("display", "none")
-                        .addClass("flipped")
                 )
-                .find(".card_container")
+                .find(".card-container")
                     .first()
-                        .slideDown(function() {
-                            $(this).removeClass("flipped");
-                        });
+                        .slideDown();
     }
 
 });

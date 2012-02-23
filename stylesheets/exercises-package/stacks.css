@@ -21,8 +21,7 @@
     -moz-border-radius: 3px;
 }
 
-.stack .card_container {
-    position: relative;
+.stack .card-container {
     width: 25px;
     height: 25px;
     padding: 4px;
@@ -31,14 +30,14 @@
     -webkit-perspective: 1000;
 }
 
-.stack .card_container.flipped .card {
-    -webkit-transform: rotateY(-180deg);
+.stack .card-container.flipped .card {
+    -webkit-transform: rotateY(-180deg) scale(4.0);
     -webkit-box-shadow: -5px 5px 5px #aaa;
     -moz-transform: rotateY(-180deg);
     -moz-box-shadow: -5px 5px 5px #aaa;
 }
 
-.stack .card .card_face {
+.stack .card .card-face {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -46,15 +45,15 @@
     -moz-backface-visibility: hidden;
 }
 
-.stack .card_face.card_front {
+.stack .card-face.card-front {
     background-color: green;
 }
 
-.stack .card_face.card_back {
+.stack .card-face.card-back {
     display: none;
 }
 
-.stack .card_face.card_back {
+.stack .card-face.card-back {
     display: block;
     padding: 10px;
     color: white;
