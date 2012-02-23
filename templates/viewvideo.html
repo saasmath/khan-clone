@@ -110,7 +110,7 @@
             <div class="extra-link-bar">
 
                 {% if subtitles_json %}
-                <a href="#" title="Interactive transcript" style="z-index:101;" class="simple-button action-gradient with-icon transcript-link">
+                <a href="javascript:void(0)" title="Interactive transcript" style="z-index:101;" class="simple-button action-gradient with-icon transcript-link">
                 <img src="/images/subtitles-icon-small.png" />
                         Transcript
                 </a>
@@ -139,13 +139,15 @@
 
         {% if subtitles_json %}
         {# TODO: this should be an ol but conflicts badly with style from default.css #}
-        <ul id="transcript" itemprop="transcript" class="subtitles">
-            {% for sub in subtitles_json %}
-            <li data-time="{{ sub.start_time }}">
-                <a href="javascript:void(0)" data-fmttime="{{ (sub.start_time // 60) | int }}:{{ "%02d"|format(sub.start_time % 60) }}">{{ sub.text|e }}</a>
-            </li>
-            {% endfor %}
-        </ul>
+        <div class="subtitles-container desktop-only">
+            <ul itemprop="transcript" class="subtitles">
+                {% for sub in subtitles_json %}
+                <li data-time="{{ sub.start_time }}">
+                    <a href="javascript:void(0)" data-fmttime="{{ (sub.start_time // 60) | int }}:{{ "%02d"|format(sub.start_time % 60) }}">{{ sub.text|e }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
         {% endif %}
 
         <div class="desktop-only">

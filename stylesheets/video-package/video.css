@@ -199,13 +199,16 @@
 
 /* Interactive transcript widget */
 
-.subtitles {
+.subtitles-container {
     display: none;
     clear: both;
     margin: 10px 0;
+    padding: 10px;
     border: 1px solid #898989;
     border-radius: 10px;
-    background-color: #fff;
+}
+
+.subtitles {
     max-height: 200px;
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
@@ -222,7 +225,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     line-height:1.6em;
-    margin: 0 10px;
     padding: 0 5px;
 }
 
