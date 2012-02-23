@@ -1331,7 +1331,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
         students_data = [s for s in query.fetch(1000)]
 
         if coach_email.lower() != coach_email:
-            students_set = set(s.key().id_or_name() for s in students_data)
+            students_set = set([s.key().id_or_name() for s in students_data])
             query = UserData.all().filter('coaches =', coach_email.lower())
             for student_data in query:
                 if student_data.key().id_or_name() not in students_set:
