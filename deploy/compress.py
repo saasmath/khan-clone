@@ -62,27 +62,36 @@ def resolve_files(default_path, packages, suffix):
     for package_name in packages:
         package = packages[package_name]
 
-        if 'files' in package:
-            package_path = package.get("base_path")
-            if not package_path:
-                dir_name = "%s-package" % package_name
-                package_path = os.path.join(default_path, dir_name)
+        package_path = package.get("base_path")
+        if not package_path:
+            dir_name = "%s-package" % package_name
+            package_path = os.path.join(default_path, dir_name)
 
-            package_path = os.path.join(os.path.dirname(__file__), package_path)
-            package_path = os.path.normpath(package_path)
+        package_path = os.path.join(os.path.dirname(__file__), package_path)
+        package_path = os.path.normpath(package_path)
 
-            # Assume any files that do not have the correct suffix are already
-            # compiled by some earlier process.
-            # For example, a file called template.handlebars will be compiled
-            # to template.handlebars.js
-            files = []
-            for f in package["files"]:
-                if f.split('.')[-1] == suffix[1:]:
-                    files.append(f)
-                else:
-                    files.append(f + suffix)
+        # get a list of file in this package
+        raw_files = []
+        if "files" in package:
+            raw_files = package["files"]
+        elif package.get("allfiles", False):
+            raw_files = os.listdir(package_path)
+        else:
+            raise "No files found in package %s" % package_name
 
-            yield (package_name, package_path, files)
+        # Assume any files that do not have the correct suffix are already
+        # compiled by some earlier process.
+        # For example, a file called template.handlebars will be compiled
+        # to template.handlebars.js
+        files = []
+        for f in raw_files:
+            if f.split('.')[-1] == suffix[1:]:
+                files.append(f)
+            else:
+                files.append(f + suffix)
+
+        yield (package_name, package_path, files)
+
 
 def file_size_report():
     # only works on js for now
