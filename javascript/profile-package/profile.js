@@ -899,15 +899,30 @@ var Profile = {
         var template = Templates.get("profile.coaches");
 
         // Dummy data
-        var requests = [{email: "ooglyboogly"}, {email: "blahblah"}],
-            coaches = [{email: "mooooooo"}, {email: "fooooooooo"}, {email: "boooooooo"}],
+        var requests = [{email: "ooglyboogly", isRequesting: true}, {email: "blahblah", isRequesting: true}],
+            coaches = [{email: "mooooooo", isCoach: true},
+                {email: "fooooooooo", isCoach: true},
+                {email: "boooooooo", isCoach: true}],
             data = {
                 "requests": requests,
-                "coaches": coaches,
                 "invalidCoach": false
             };
 
         $("#tab-content-coaches").html(template(data));
+
+        var requestList = new Coaches.CoachList(requests),
+            requestListView = new Coaches.CoachListView({
+                collection: requestList,
+                el: "#request-list-container"
+            });
+        requestListView.render();
+
+        var coachList = new Coaches.CoachList(coaches),
+            coachListView = new Coaches.CoachListView({
+                collection: coachList,
+                el: "#coach-list-container"
+            });
+        coachListView.render();
 
         return Profile.coachesDeferred_;
     },

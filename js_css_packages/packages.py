@@ -111,6 +111,8 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
+            "coaches.js",
+            "coach.handlebars",
             "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",

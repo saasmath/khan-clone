@@ -33,21 +33,6 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
     return result;
 });
 
-Handlebars.registerHelper("zebra", function(items, evenClassName, oddClassName, block) {
-    var result = "";
-
-    _.each(items, function(item, index) {
-        if (index % 2 === 0) {
-            item.zebraClassName = evenClassName;
-        } else {
-            item.zebraClassName = oddClassName;
-        }
-        result += block(item);
-    });
-
-    return result;
-});
-
 Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
 
 /**

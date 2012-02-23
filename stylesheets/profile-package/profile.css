@@ -1178,13 +1178,18 @@ li.profile-tab {
 #coaches {
     margin-top: 22px;
 }
-#coaches td {
-    padding: 9px;
+
+.coach-row {
+    padding: 10px;
 }
-#coaches tr.even-row td {
+.coach-row:nth-child(2n+1) {
     background-color: #EFEFEF;
 }
-#coaches tr.odd-row td {
-    background-color: #FFFFFF;
+.coach-row span.email {
+    display: inline-block;
+    width: 200px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    margin-right: 30px;
 }
 

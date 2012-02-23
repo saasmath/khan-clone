@@ -3,16 +3,7 @@
 <h2>New coaches are waiting</h2>
 
 <p>These coaches have requested you as their student. <strong>If you accept them as your coach, they will have access to your Khan Academy data</strong>.</p>
-
-<table>
-{{#zebra requests "even-row" "odd-row"}}
-    <tr class="{{zebraClassName}}">
-        <td>{{email}}</td>
-        <td><a href="" class="simple-button action-gradient">Accept coach</a></td>
-        <td><a href="" class="simple-button action-gradient">Deny coach</a></td>
-    </tr>
-{{/zebra}}
-</table>
+<div id="request-list-container"></div>
 {{/if}}
 
 <h2 {{#if requests}}class="section-headline"{{/if}}>Add a coach</h2>
@@ -32,18 +23,8 @@
     </p>
 </div>
 
-{{#if coaches}}
 <h2 class="section-headline">Your coaches</h2>
-
-<table>
-{{#zebra coaches "even-row" "odd-row"}}
-    <tr class="{{zebraClassName}}">
-        <td>{{email}}</td>
-        <td><a href="" class="simple-button action-gradient">Remove coach</a></td>
-    </tr>
-{{/zebra}}
-</table>
-{{/if}}
+<div id="coach-list-container"></div>
 
 <h2 class="section-headline">Your Student ID</h2>
 <p>If your coach asks for your student id, it is: asdfasdfasdf</p>
