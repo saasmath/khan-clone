@@ -1,10 +1,37 @@
 
 /* TODO(Jason/kamens): this transition animation is just a placeholder, CSS is
- * totally hacked together, needs vendor prefixes, etc
+ * totally hacked together, needs matching vendor prefixes everywhere, etc
  */
 
 .stack {
     width: 30px;
+}
+
+.current-card-container-inner {
+    border: 1px solid silver;
+    background-color: #F8F8F8;
+
+    -webkit-border-radius: 9px;
+    -moz-border-radius: 9px;
+}
+
+.current-card-container,
+.current-card-container-inner {
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transition: all 0.3s ease-in-out;
+}
+
+.current-card-container.shrinkLeft {
+    -webkit-transform: translate(-500px, -200px);
+}
+.current-card-container.shrinkRight {
+    -webkit-transform: translate(500px, -200px);
+}
+
+.current-card-container.shrinkLeft .current-card-container-inner,
+.current-card-container.shrinkRight .current-card-container-inner {
+    -webkit-transform: scale(0.1);
+    opacity: 0.0;
 }
 
 .stack .card {
@@ -13,12 +40,13 @@
     opacity: 0.2;
     border: 1px solid black;
 
-    -webkit-transform-style: preserve-3d;
-    -webkit-transition: all 0.3s linear;
     -webkit-border-radius: 3px;
-    -moz-transform-style: preserve-3d;
-    -moz-transition: all 0.3s linear;
     -moz-border-radius: 3px;
+
+    -webkit-transform-style: preserve-3d;
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transform-style: preserve-3d;
+    -moz-transition: all 0.3s ease-in-out;
 }
 
 .stack .card-container {
