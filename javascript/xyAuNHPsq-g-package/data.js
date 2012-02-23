@@ -63,21 +63,21 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
         title: "Commutativity of matrix addition"
     }),
     new Socrates.Question({
-        time: "8m9s",
+        time: "8m11s",
         title: "Commutativity of matrix addition",
         nested: "commutativity-of-matrix-addition",
         youtubeId: "xyAuNHPsq-g",
         id: 5
     }),
     new Socrates.Question({
-        time: "8m10.5s",
+        time: "8m11s",
         title: "Matrix addition",
         youtubeId: "xyAuNHPsq-g",
         id: 6,
         correctData: { answer: [[80, 23], [13, 25]] }
     }),
     new Socrates.Bookmark({
-        time: "8m10s",
+        time: "8m11s",
         title: "Matrix subtraction"
     }),
     new Socrates.Bookmark({
@@ -85,7 +85,7 @@ Socrates.Data["xyAuNHPsq-g"].Events = [
         title: "Matrices that can be added"
     }),
     new Socrates.Bookmark({
-        time: "11m50s",
+        time: "11m17s",
         title: "Matrix terminology"
     }),
     new Socrates.Question({
