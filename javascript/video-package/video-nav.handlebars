@@ -1,0 +1,17 @@
+{{#each topic.parent_titles }}
+<a href="#">{{ this }}</a>
+<span class="breadcrumb-separator">&#187;</span>
+{{/each}}
+<a href="#">{{ topic.title }}</a>
+<span class="breadcrumb-separator">&#187;</span>
+<span id="video_dropdown" style="display:none;" class="selected">
+  <a href="/{{ topic.extended_slug }}/v/{{ video.readable_id }}">{{ video.title }}</a>
+  <div id="video_menu">
+    <ol>
+      {{#each topic.videos }}
+      <li data-selected='{{ selected }}'><a href="/{{ ../topic.extended_slug }}/v/{{ readable_id }}"><span class='vid-progress v{{ key_id }}'>{{ title }}</span></a></li>
+      {{/each}}
+    </ol>
+  </div>
+</span>
+
