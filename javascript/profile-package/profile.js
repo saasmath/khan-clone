@@ -38,7 +38,17 @@ var Profile = {
         this.profile = new ProfileModel(json.profileData);
         this.profile.bind("savesuccess", this.onProfileUpdated_, this);
 
-        this.profileRoot = json.profileRoot;
+        var root = json.profileRoot;
+        if (window.location.pathname.indexOf("@") > -1) {
+            // Note the path should be encoded so that @ turns to %40. However,
+            // there is a bug (https://bugs.webkit.org/show_bug.cgi?id=30225)
+            // that makes Safari always return the decoded part. Also, if
+            // the user manually types in an @ sign, it will be returned
+            // decoded. So we need to be robust to this.
+            root = decodeURIComponent(root);
+        }
+
+        this.profileRoot = root;
         this.isDataCollectible = json.isDataCollectible;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;

@@ -26,19 +26,19 @@ class SuggestedActivity(object):
     @staticmethod
     def get_videos_for(user_data, recent_activities, user_exercise_graph):
         recent_completed_ids = set([v.youtube_id for v in filter(
-	            lambda entry:
-	                    (entry.__class__ == recent_activity.RecentVideoActivity
-	                     and entry.is_video_completed),
-	            recent_activities)])
+                lambda entry:
+                        (entry.__class__ == recent_activity.RecentVideoActivity
+                         and entry.is_video_completed),
+                recent_activities)])
 
         # Note that we can't just look for entries with is_video_completed false
         # since the user may have completed it in a later entry after a break.
         recent_incomplete_videos = filter(
-	            lambda entry:
-	                    (entry.__class__ == recent_activity.RecentVideoActivity
-	                     and entry.youtube_id not in recent_completed_ids
-	                     and entry.seconds_watched > 60),
-	            recent_activities)
+                lambda entry:
+                        (entry.__class__ == recent_activity.RecentVideoActivity
+                        and entry.youtube_id not in recent_completed_ids
+                        and entry.seconds_watched > 60),
+                recent_activities)
 
         # BEGIN TEMP LOOKUPS {
         # Feb14, 2012 - This is a temporary lookup to the db since
@@ -121,7 +121,7 @@ class SuggestedActivity(object):
 
         # TODO(benkomalo): append a seektime so that the video starts at the
         # last position (minus some rewind constant or something...)
-        activity.url = "/video?v=%s" % (recent_video_activity.youtube_id)
+        activity.url = recent_video_activity.relative_url
         return activity
 
     @staticmethod
