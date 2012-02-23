@@ -5,6 +5,7 @@ var Video = {
 
     waitingForVideo: null,
     currentVideoPath: null,
+    rendered: false,
     youtubeBlocked: false,
     pushStateDisabled: false,
 
@@ -43,6 +44,16 @@ var Video = {
         var descTemplate = Templates.get("video.video-description");
         var headerTemplate = Templates.get("video.video-header");
         var footerTemplate = Templates.get("video.video-footer");
+
+        if (!this.rendered) {
+            // Initial page load
+            this.rendered = true;
+        } else {
+            // Subsequent page load; send Google Analytics data
+            if (window._gaq) {
+                _gaq.push(['_trackPageview', window.location.pathname]);
+            }
+        }
 
         // Fix up data for templating
         if (videoData.related_exercises &&
