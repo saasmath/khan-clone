@@ -306,6 +306,11 @@ stylesheets = {
             "khan-exercise.css",
         ]
     },
+    "exercises": {
+        "files": [
+            "stacks.css",
+        ]
+    },
     "topicsadmin": {
         "files": [
             "ui_dynatree.css",
