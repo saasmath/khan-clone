@@ -76,7 +76,7 @@ class RecentVideoActivity(RecentActivity):
                     video_cache[vkey] = video
             else:
                 video = video_log.video
-            self.youtube_id = video_log.video.youtube_id
+            self.youtube_id = video.youtube_id
 
         self.relative_url = '/video?v=%s' % (self.youtube_id)
 
