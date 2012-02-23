@@ -154,28 +154,28 @@ var InteractiveTranscript = {
     init: function() {
         this.subtitles = $("#transcript");
 
-        this.subtitles.find("a").bind("click", $.proxy(function( e ) {
+        this.subtitles.find("a").bind("click", $.proxy(function(e) {
             var player = VideoStats.player;
 
             // Stop from visiting the link
             e.preventDefault();
 
             // Grab the time to jump to from the subtitle
-            this.pendingSeek = parseFloat( $(e.target).parent().data( "time" ) );
+            this.pendingSeek = parseFloat($(e.target).parent().data("time"));
 
             // Jump to that portion of the video
-            this.seek( player );
+            this.seek(player);
 
             // resume autoscrolling from this point
             this.autoScroll = true;
-            clearInterval( this.resumeScrollIvl );
+            clearInterval(this.resumeScrollIvl);
             this.resumeScrollIvl = null;
 
         }, this));
 
         // Get the subtitles and highlight the first one
         var lines = this.subtitles.find("li");
-        this.currentSubtitle = lines.eq(0)
+        this.currentSubtitle = lines.eq(0);
         this.currentSubtitle.addClass("active")[0];
 
         this.subtitles.scroll($.proxy(function(ev) {
@@ -187,9 +187,9 @@ var InteractiveTranscript = {
             var disableScroll = (!scrollingProgrammatically &&
                 Math.abs(currentScrollTop - this.lastScrollTop) >= tolerance);
 
-            if(disableScroll) {
+            if (disableScroll) {
                 this.autoScroll = false;
-                clearInterval( this.resumeScrollIvl );
+                clearInterval(this.resumeScrollIvl);
                 this.resumeScrollIvl = setTimeout($.proxy(function() {
                     this.autoScroll = true;
                 }, this), 20000);
@@ -214,7 +214,7 @@ var InteractiveTranscript = {
 
     tick: function() {
         var player = VideoStats.player;
-        if(!player) return;
+        if (!player) return;
 
         var lines = this.subtitles.find("li");
         // Get the seek position or the current time
@@ -222,42 +222,42 @@ var InteractiveTranscript = {
         // We need to round the number to fix floating point issues
         var curTime = (this.pendingSeek || player.getCurrentTime()).toFixed(2);
 
-        for ( var i = 0, l = lines.length; i < l; i++ ) {
+        for (var i = 0, l = lines.length; i < l; i++) {
             var lineTime = $(lines[i]).data("time");
 
             // We're looking for the next highest element before backtracking
-            if ( lineTime > curTime && lineTime !== curTime ) {
-                var nextSubtitle = lines[ i - 1 ];
+            if (lineTime > curTime && lineTime !== curTime) {
+                var nextSubtitle = lines[i - 1];
 
-                if ( nextSubtitle ) {
-                    this.subtitleJump( nextSubtitle );
+                if (nextSubtitle) {
+                    this.subtitleJump(nextSubtitle);
                     return;
                 }
             }
         }
 
         // We've reached the end so make the last one active
-        this.subtitleJump( lines[ i - 1 ] );
+        this.subtitleJump(lines[i - 1]);
     },
 
     // Jump to a specific subtitle (either via click or automatically)
-    subtitleJump: function( nextSubtitle ) {
-        if ( nextSubtitle == this.currentSubtitle ) {
+    subtitleJump: function(nextSubtitle) {
+        if (nextSubtitle == this.currentSubtitle) {
             return;
         }
         $(this.currentSubtitle).removeClass("active");
         $(nextSubtitle).addClass("active");
         this.currentSubtitle = nextSubtitle;
 
-        if ( !this.autoScroll ) {
+        if (!this.autoScroll) {
             // Resume scrolling if the subtitle view is positioned over the active subtitle
             var subtitleTop = this.currentSubtitle.offsetTop;
-            var visibleTop = this.subtitles.scrollTop()
+            var visibleTop = this.subtitles.scrollTop();
             var visibleBottom = visibleTop + this.subtitles[0].offsetHeight;
-            var subtitleVisible =   subtitleTop >= visibleTop &&
+            var subtitleVisible = subtitleTop >= visibleTop &&
                                     subtitleTop <= visibleBottom;
 
-            if ( subtitleVisible ) {
+            if (subtitleVisible) {
                 // resume autoscrolling in 5 s
                 if (!this.visibleResume) {
                     this.visibleResume = true;
@@ -269,10 +269,10 @@ var InteractiveTranscript = {
             }
         }
 
-        if ( this.autoScroll ) {
+        if (this.autoScroll) {
             // Adjust the viewport to animate to the new position
             var pos = this.desiredPos($("#transcript"), this.currentSubtitle);
-            this.subtitles.scrollTo( pos );
+            this.subtitles.scrollTo(pos);
         }
     },
 
@@ -285,17 +285,17 @@ var InteractiveTranscript = {
         var containerHeight = container.height();
         var elHeight = $(el).height();
         var aboveEl = (containerHeight - elHeight) / 2;
-        var pos = Math.max( top - aboveEl, 0 );
+        var pos = Math.max(top - aboveEl, 0);
 
         // Make sure that we don't end with whitespace at the bottom
-        pos = Math.min( container[0].scrollHeight - containerHeight, pos );
+        pos = Math.min(container[0].scrollHeight - containerHeight, pos);
 
         return pos;
     },
 
     // Seek to a specific part of a video
-    seek: function( video ) {
-        if ( this.pendingSeek !== null ) {
+    seek: function(video) {
+        if (this.pendingSeek !== null) {
             video.seekTo(this.pendingSeek, true);
             this.pendingSeek = null;
         }
@@ -303,27 +303,27 @@ var InteractiveTranscript = {
 };
 
 var scrollingProgrammatically = true;
-jQuery.fn.scrollTo = function( pos ) {
-    if ( top == null ) {
+jQuery.fn.scrollTo = function(pos) {
+    if (window.top === null) {
         return this;
     }
 
     // Adjust the viewport to animate to the new position
-    if ( jQuery.support.touch && this.hasClass("ui-scrollview-clip") ) {
-        this.scrollview( "scrollTo", 0, pos, 200 );
+    if (jQuery.support.touch && this.hasClass("ui-scrollview-clip")) {
+        this.scrollview("scrollTo", 0, pos, 200);
 
     } else {
         scrollingProgrammatically = true;
-        this.stop().animate( { scrollTop: pos }, {
+        this.stop().animate({ scrollTop: pos }, {
             duration: 200,
             complete: function() {
                 // We seem to get one "scroll" event after complete is called
                 // Use a timeout in hopes that this gets run after that happens
-                setTimeout( function() {
+                setTimeout(function() {
                     scrollingProgrammatically = false;
-                }, 1 );
+                }, 1);
             }
-        } );
+        });
     }
 
     return this;
