@@ -30,9 +30,11 @@ var Exercises = {
 
     render: function() {
 
-        var profileExercise = Templates.get("exercises.exercise");
-
         Handlebars.registerPartial("exercise-header", Templates.get("exercises.exercise-header"));
+        Handlebars.registerPartial("card", Templates.get("exercises.card"));
+        Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
+
+        var profileExercise = Templates.get("exercises.exercise");
 
         $(".exercises-content-container").html(profileExercise({
             // TODO(kamens): Useful dict data here like crazzzyyyyyyyy
@@ -51,7 +53,10 @@ var Exercises = {
         }); 
 
         this.currentCard = new Exercises.CurrentCard({ el: $(".current-card") });
+
         this.currentCard.render();
+        this.incompleteStack.render();
+        this.completeStack.render();
 
     },
 
@@ -63,10 +68,9 @@ var Exercises = {
 
         this.incompleteStack.popToCurrent();
 
-        // TODO(kamens): this rendering pattern probably isn't gonna work for
-        // required pretty animations
-        this.incompleteStack.render();
-        this.completeStack.render();
+        if (this.currentCard.empty() && this.incompleteStack.empty()) {
+            $(Khan).trigger("stackComplete");
+        }
 
     },
 
@@ -87,22 +91,32 @@ Exercises.Stack = Backbone.View.extend({
 
     template: Templates.get("exercises.stack"),
 
+    empty: function() {
+        return this.model.cards.length === 0;
+    },
+
     render: function() {
         this.el.html(this.template(this.model));
         return this;
     },
 
     /**
-     * Pop next card off of Stack and hook it up to the CurrentCard model
+     * Pop next card off of Stack, hook it up to the CurrentCard model,
+     * and animate the transition.
      */
     popToCurrent: function() {
 
         Exercises.currentCard.model = _.head(this.model.cards);
         this.model.cards = _.tail(this.model.cards);
 
-        if (!this.model.cards.length) {
-            $(Khan).trigger("stackComplete");
-        }
+        this.el
+            .find(".card_container")
+                .first()
+                    .addClass("flipped")
+                    .delay(600)
+                    .slideUp(
+                        function() { $(this).remove(); }
+                    );
 
     },
 
@@ -111,6 +125,19 @@ Exercises.Stack = Backbone.View.extend({
      */
     pushCurrent: function() {
         this.model.cards.push(Exercises.currentCard.model);
+
+        this.el
+            .find(".stack")
+                .prepend(
+                    $(Templates.get("exercises.card")())
+                        .css("display", "none")
+                        .addClass("flipped")
+                )
+                .find(".card_container")
+                    .first()
+                        .slideDown(function() {
+                            $(this).removeClass("flipped");
+                        });
     }
 
 });
@@ -121,14 +148,15 @@ Exercises.Stack = Backbone.View.extend({
 Exercises.CurrentCard = Backbone.View.extend({
 
     template: Templates.get("exercises.current-card"),
+    model: null,
+
+    empty: function() {
+        return !this.model;
+    },
 
     render: function(ix) {
-
-        Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
         this.el.html(this.template(this.model));
-
         return this;
-
     }
 
 });

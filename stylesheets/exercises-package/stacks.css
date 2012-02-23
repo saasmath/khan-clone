@@ -1,4 +1,68 @@
 
+/* TODO(Jason/kamens): this transition animation is just a placeholder, CSS is
+ * totally hacked together, needs vendor prefixes, etc
+ */
+
+.stack {
+    width: 30px;
+}
+
 .stack .card {
+    width: 100%;
+    height: 100%;
+    opacity: 0.2;
+    border: 1px solid black;
+
+    -webkit-transform-style: preserve-3d;
+    -webkit-transition: all 0.3s linear;
+    -webkit-border-radius: 3px;
+    -moz-transform-style: preserve-3d;
+    -moz-transition: all 0.3s linear;
+    -moz-border-radius: 3px;
+}
+
+.stack .card_container {
+    position: relative;
+    width: 25px;
+    height: 25px;
+    padding: 4px;
+    z-index: 1;
+
+    -webkit-perspective: 1000;
+}
+
+.stack .card_container.flipped .card {
+    -webkit-transform: rotateY(-180deg);
+    -webkit-box-shadow: -5px 5px 5px #aaa;
+    -moz-transform: rotateY(-180deg);
+    -moz-box-shadow: -5px 5px 5px #aaa;
+}
+
+.stack .card .card_face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+}
+
+.stack .card_face.card_front {
     background-color: green;
+}
+
+.stack .card_face.card_back {
+    display: none;
+}
+
+.stack .card_face.card_back {
+    display: block;
+    padding: 10px;
+    color: white;
+    text-align: center;
+    background-color: #aaa;
+
+    -webkit-box-sizing: border-box;
+    -webkit-transform: rotateY(180deg);
+    -moz-box-sizing: border-box;
+    -moz-transform: rotateY(180deg);
 }
