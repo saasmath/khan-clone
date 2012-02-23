@@ -99,7 +99,7 @@ Socrates.Label = Backbone.View.extend({
 
 Socrates.InputText = Backbone.View.extend({
     className: "inputtext",
-    template: Templates.get("video.inputtext"),
+    template: Templates.get("socrates.inputtext"),
 
     events: {
         "dblclick": "promptForContents"
@@ -565,7 +565,7 @@ Socrates.MasterView = Backbone.View.extend({
 });
 
 Socrates.Nav = Backbone.View.extend({
-    template: Templates.get("video.socrates-nav"),
+    template: Templates.get("socrates.socrates-nav"),
 
     render: function() {
         // want to render list of toplevel items only
@@ -870,7 +870,7 @@ Socrates.initSkips = function(youtubeId) {
 
 Socrates.Data = {};
 
-Handlebars.registerPartial("submit-area", Templates.get("video.submit-area"));
+Handlebars.registerPartial("submit-area", Templates.get("socrates.submit-area"));
 
 // todo(dmnd) only run this in edit mode
 $(Socrates.ControlPanel.onReady);

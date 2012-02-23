@@ -71,8 +71,10 @@ javascript = {
             "related-video-link.handlebars",
             "modal-video.handlebars",
             "modalvideo.js",
-
-            # socrates stuff
+        ]
+    },
+    "socrates": {
+        "files": [
             "underscore.string.js",
             "poppler.js",
             "../topicsadmin-package/jquery.ui.draggable.js",
@@ -288,8 +290,10 @@ stylesheets = {
             "video.css",
             "discussion.css",
             "modalvideo.css",
-
-            # socrates stuff
+        ]
+    },
+    "socrates": {
+        "files": [
             "bootstrap-alerts.css",
             "bootstrap-tables.css",
             "socrates.css",
