@@ -653,13 +653,16 @@ Socrates.QuestionRouter = Backbone.Router.extend({
         if (state === 1) { // playing
             if (this.ignoreNextPlay) {
                 this.ignoreNextPlay = false;
-                return;
+            } else {
+                var t = VideoStats.getSecondsWatched();
+                this.poppler.seek(t);
             }
-            var t = VideoStats.getSecondsWatched();
-            // console.log("seek due to statechange");
-            this.poppler.seek(t);
+        } else if (state === 2) { // paused
+            // sometimes the video buffers then pauses. When this happens, allow
+            // the next play event to cause a seek
+            this.ignoreNextPlay = false;
         } else if (state === 3) { // buffering
-            // buffering is always followed by a play event. We only care about
+            // buffering is usually followed by a play event. We only care about
             // play events caused by the user scrubbing, so ignore it
             this.ignoreNextPlay = true;
         }
