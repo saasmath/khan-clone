@@ -52,6 +52,7 @@ import summer
 import common_core
 import unisubs
 import labs
+import socrates
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -90,10 +91,8 @@ def get_mangled_topic_name(topic_name):
     return topic_name
 
 class ViewVideo(request_handler.RequestHandler):
-
-    @ensure_xsrf_cookie
-    def get(self, readable_id=""):
-
+    @classmethod
+    def get_template_data(cls, self, readable_id="", redirect_allowed=True):
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
         # given the topic title in a query param, we need to find a topic that
@@ -145,7 +144,7 @@ class ViewVideo(request_handler.RequestHandler):
 
         exid = self.request_string('exid', default=None)
 
-        if redirect_to_canonical_url:
+        if redirect_allowed and redirect_to_canonical_url:
             qs = {'topic': topic.id}
             if exid:
                 qs['exid'] = exid
@@ -258,12 +257,16 @@ class ViewVideo(request_handler.RequestHandler):
                             'has_socrates': has_socrates
                         }
         template_values = qa.add_template_values(template_values, self.request)
+        return template_values
 
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
         bingo([
             'struggling_videos_landing',
             'suggested_activity_videos_landing',
             'suggested_activity_videos_landing_binary',
         ])
+        template_values = ViewVideo.get_template_data(self, readable_id)
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
@@ -934,6 +937,7 @@ application = webapp2.WSGIApplication([
 
     # Labs
     ('/labs', labs.LabsRequestHandler),
+    ('/labs/socrates/(.*)', socrates.SocratesHandler),
 
     ('/robots.txt', robots.RobotsTxt),
 

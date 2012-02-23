@@ -334,7 +334,6 @@ stylesheets = {
     },
     "labs": {
         "files": [
-            "bootstrap.css",
             "labs.css",
         ]
     }
