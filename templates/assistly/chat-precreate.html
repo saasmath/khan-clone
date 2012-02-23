@@ -1,0 +1,176 @@
+
+<div id='breadcrumbs'>
+  <a href='{{home_link}}'>Home</a> &rsaquo; Live Chat!
+</div>
+<div id='support-main'>
+  <div id="modal-screen">&nbsp;</div>
+  <div id="modal">
+    <div class="inner articles">
+      <div class="main">
+        {% if number_search_results > 0 %}
+          <h1>We have not started your chat yet</h1>
+          <p class="subheader">Perhaps one of these articles will help you get your answer...</p>
+          <ul id='search-results' class='condensed'>
+            {% for result in search_results limit:3 %}
+              <li class='{% if result.class_name == "Question" and result.featured? == false %}question{% elsif result.class_name == "Question" and result.featured? %}question featured{% elsif result.class_name == "Article" %}article{% endif %}'>
+                <h4>
+                  <a href='{{ result.public_url }}' target='_blank'>
+                    {{ result.subject_plain | clip:70 }}
+                  </a>
+                </h4>
+                <p>
+                  {{ result.body_plain | clip:105 }}
+                </p>
+              </li>
+            {% endfor %}
+            <li class="note">
+              (Clicking these links will open a new window)
+            </li>
+          </ul>
+          <div id='form'>
+            {{form_begin}}
+              <div class='input-button'>
+                THESE DIDN'T HELP
+                <input id='chat_submit' name='commit' type='submit' value='Start Your Chat' />
+                <img alt='Ajax-loader-small' id='chat_submit_spinner' src='{{ "/images/ajax-loader-small.gif" | portal_image_url: image_asset_host }}' style='display: none; margin: 7px 0 0 5px; position: absolute;' />
+              </div>
+            {{form_end}}
+            <script type='text/javascript'>
+              //<![CDATA[
+              jQuery(document).ready(function() {
+                $('#chat_submit').click(function(){
+                  $(this).addClass('disabled');
+                  setTimeout(function(){ window.location = "/"; }, 5000);
+                })
+                highlightSearchTerms('{{ search_term }}');
+              });
+              function openChatWindow(){ window.open('','newChatWin','width=500,height=500,toolbar=0');}
+              //]]>
+            </script>
+          </div>
+        {% else %}
+          <h1>A chat room is ready for you.</h1>
+          <p class="subheader">Click the button below to launch your chat session.</p>
+          <div id='form'>
+            {{form_begin}}
+              <div class='input-button'>
+                <input id='chat_submit' name='commit' type='submit' value='Start Your Chat' />
+              </div>
+            {{form_end}}
+            <script type='text/javascript'>
+              //<![CDATA[
+              jQuery(document).ready(function() {
+                $('#chat_submit').click(function(){
+                  $(this).addClass('disabled');  
+                  setTimeout(function(){ window.location = "/"; }, 5000);                
+                })
+              });
+              function openChatWindow(){ window.open('','newChatWin','width=500,height=500,toolbar=0');}
+              //]]>
+            </script>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class='support-body'>
+    <div class='content'>
+      <h3>Live Chat!</h3>
+      <div id='form'>
+        {{form_begin}}
+          {% if current_user == nil or current_user.is_guest %}
+            <div class='input-block'>
+              <span class='label'>
+                Your name <span>(required)</span>
+              </span>
+              <div>
+                <input value='{{ interaction.name }}' id='interaction_name' maxlength='100' name='interaction[name]' type='text' />
+              </div>
+            </div>
+            <div class='input-block'>
+              <span class='label'>
+                Your email address <span>(required)</span>
+              </span>
+              <div>
+                <input value='{{ interaction.email }}' id='interaction_email' maxlength='100' name='interaction[email]' type='text' />
+              </div>
+            </div>
+          {% endif %}
+          <div class='input-block'>
+            <span class='label'>
+              Question <span>(required)</span>
+            </span>
+            <div>
+              <textarea id='chat_subject' name='chat[subject]'>{% if search_term and search_term != '' %}{{search_term}}{% else %}{{chat.subject}}{%endif%}</textarea>
+            </div>
+          </div>
+          <div class='input-button'>
+            <input id='chat_submit' name='commit' type='submit' value='Go Chat' />
+          </div>
+        {{form_end}}
+        <script type='text/javascript'>
+          //<![CDATA[
+          $("#modal-screen").css({
+            "opacity":"0.7"
+          });
+          if($.browser.msie && $.browser.version < 7) {
+            $("#modal-screen").css({
+              "width": $(window).width() + "px",
+              "height": $(window).height() + "px"
+            });
+          }
+          $('#chat_subject').textarea_maxlength();
+          $('#new_chat').validate({
+            submitHandler: function(form) {
+              $('#chat_submit').attr('disabled',true);
+              $('#chat_submit').addClass('disabled');
+              $('#chat_submit_spinner').show();
+              form.submit();
+            },
+            messages:{
+              'interaction[name]':{
+                'required':'Name is required.'
+              },
+              'interaction[email]':{
+                'required':'Email address is required.',
+                'email':'Invalid email address.'
+              },
+              'chat[subject]':{
+                'required':'Question is required.',
+                'maxlength':'Exceeding max length of 5KB'
+              }
+            },
+            rules:{
+              'interaction[name]':{
+                'required':true
+              },
+              'interaction[email]':{
+                'required':true,
+                'email':true
+              },
+              'chat[subject]':{
+                'required':true,
+                'maxlength':5000,
+                'invalidchars':'<>'
+              }
+            },
+            errorClass:'invalid'
+          });
+          //]]>
+        </script>
+      </div>
+    </div>
+  </div>
+  <!--
+  ***************
+  The following attribution needs to remain as is in terms of wording with the appropriate link back to Assistly as per our terms of service: http://www.assistly.com/terms
+  If you would like, you may change the location or the styling to better match your site, but the content and the link must remain in the template and visible to end users.
+  ****************
+  -->
+  <div id='footer'>
+    {{ footer_content }}
+    <br/>
+    <a href='http://www.assistly.com'>Customer service software</a> powered by Assistly Inc.
+  </div>
+</div>
+    

@@ -1,0 +1,114 @@
+<div id='company-support-portal'>
+  <div id='company-header'>
+    <div class='wrapper'>
+      {{ header_content }}
+      {% if site.portal_authentication_enabled_config %}
+        <div id='customer-account'>
+          {% if current_user and current_user.is_guest == false %}
+            <span>
+              Welcome, {{ current_user.customer.name }}
+            </span>
+            {% if site.portal_logout_enabled_config %}
+              <a href='{{ site.authentication_logout_url }}'>Logout</a>
+            {% endif %}
+          {% else %}
+            <span>
+              Welcome, Guest
+            </span>
+            <a href='{{ site.authentication_login_url }}'>Login</a>
+          {% endif %}
+        </div>
+      {% endif %}
+      <div style="clear:both"></div>
+    </div>
+  </div>
+  <div id='support-header'>
+    <div class='wrapper'>
+      <h2>Support Center</h2>
+      {% if page != 'page_index' %}
+        <form action='/customer/portal/articles/search' method='get' id='support-search' class='support-search-small'>
+          <div>
+            <input id='q' maxlength='100' name='q' type='text' value='{{ search_term }}' />
+            {{template_form_params}}
+            <div id='question-mask' class='question-small'>Enter a search term here.</div>
+            <input id='support-search-submit' type='submit' value='Search' />
+          </div>
+        </form>
+        <script type='text/javascript'>
+        //<![CDATA[
+        jQuery(document).ready(function() {
+          if ($("#q").val().length > 0) $("#question-mask").hide();
+          $("#q").bind("autocompleteopen", function(event, ui) {
+            $('.ui-autocomplete').css('width','230px');
+          });
+        });
+        //]]>
+        </script>
+      {% endif %}
+    </div>
+  </div>
+  <div class='wrapper'>
+    {{assistly:body}}
+    <div id='support-side'>
+      <div class='content'>
+        <h3>Contact Us</h3>
+        <ul>
+          {% if site.questions_enabled_config %}
+            <li>
+              <a href='{{qna_link}}'>Post a Public Question</a>
+            </li>
+          {% endif %}
+          
+          <!-- GS -->
+          {% if enable_gs %}
+          <li>
+            <a id='gs_link' target='_blank'>Ask the Community</a>
+            <script type="text/javascript">
+              var params = ( "{{search_term}}".length > 0 ) ? "&topic[query]=" + escape("{{search_term}}") : ""
+              $('#gs_link').attr('href', gsurl + "/topics/new?from=company&product=&commit=Nope.+Finish+posting+my+question" + params);
+            </script>
+          </li>
+          {% endif %}
+          <!-- GS -->
+          
+          {% if site.email_enabled_config %}
+            <li>
+              <a href='{{email_link}}'>Email Us</a>
+            </li>
+          {% endif %}
+          {% if site.chat_enabled_config %}
+            <li>
+              <a href='{{chat_link}}'>Live Chat!</a>
+            </li>
+          {% endif %}
+          {% if site.phone_enabled_config %}
+            <li>
+              {{ contact_us_content }}
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+      
+      <!-- GS -->
+      {% if gs_sidebar %}
+      <div class='content'>
+        <h3>Recent Discussions</h3>
+        <div id='gs_Sidebar_Results'>
+          <img alt='Ajax-loader-small' id='question_submit_spinner' src='{{ "/images/ajax-loader-small.gif" | portal_image_url: image_asset_host }}' style='display:block;margin:auto;' />
+        </div>
+        <script>RecentGSActivity();</script>
+      </div>
+      {% endif %}
+      <!-- GS -->
+      
+      <div class='content'>
+        {% if twitter_enabled == true %}
+        <h3>Follow Our Tweets</h3>
+        <div id='tweets'></div>
+        {% endif %}
+      </div>
+      
+    </div>
+  </div>
+</div>
+

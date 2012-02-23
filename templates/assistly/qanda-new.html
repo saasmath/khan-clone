@@ -1,0 +1,126 @@
+
+<div id='breadcrumbs'>
+  <a href='{{home_link}}'>Home</a> &rsaquo; Post a Public Question
+</div>
+<div id='support-main'>
+  <div class='support-body'>
+    <div class='content'>
+      <h3>Post a Public Question</h3>
+      <div id='form'>
+        {{form_begin}}
+          <div class='input-block'>
+            <span class='label'>Topic</span>
+            <div>
+              <select id='qna_kb_topic_id' name='qna[kb_topic_id]'>
+                {% for topic in topics %}
+                <option value='{{ topic.id }}'>{{ topic.name | clip:30 }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          {% if current_user == nil or current_user.is_guest %}
+            <div class='input-block'>
+              <span class='label'>
+                Your name <span>(required)</span>
+              </span>
+              <div>
+                <input id='interaction_name' value='{{ interaction.name }}' maxlength='100' name='interaction[name]' type='text' />
+              </div>
+            </div>
+            <div class='input-block'>
+              <span class='label'>
+                Your email address <span>(required)</span>
+              </span>
+              <div>
+                <input id='interaction_email' value='{{ interaction.email }}' maxlength='100' name='interaction[email]' type='text' />
+              </div>
+            </div>
+          {% endif %}
+          <div class='input-block'>
+            <span class='label'>
+              Subject <span>(required)</span>
+            </span>
+            <div>
+              <input id='qna_subject' maxlength='100' name='qna[subject]' type='text' value='{% if search_term and search_term != '' %}{{search_term}}{% else %}{{qna.subject}}{%endif%}' />
+            </div>
+          </div>
+          <div class='input-block'>
+            <span class='label'>
+              What is your question? <span>(required)</span>
+            </span>
+            <div>
+              <textarea id='qna_body' name='qna[body]'>{{qna.body}}</textarea>
+            </div>
+          </div>
+          <div class='input-button'>
+            <input id='question_submit' name='commit' type='submit' value='Ask Question' />
+            <img alt='Ajax-loader-small' id='question_submit_spinner' src='{{ "/images/ajax-loader-small.gif" | portal_image_url: image_asset_host }}' style='display: none; margin: 7px 0 0 5px; position: absolute;' />
+          </div>
+        {{form_end}}
+      </div>
+    </div>
+  </div>
+  <!--
+  ***************
+  The following attribution needs to remain as is in terms of wording with the appropriate link back to Assistly as per our terms of service: http://www.assistly.com/terms
+  If you would like, you may change the location or the styling to better match your site, but the content and the link must remain in the template and visible to end users.
+  ****************
+  -->
+  <div id='footer'>
+    {{ footer_content }}
+    <br/>
+    <a href='http://www.assistly.com'>Customer service software</a> powered by Assistly Inc.
+  </div>
+</div>
+<script type='text/javascript'>
+  //<![CDATA[
+  $('#qna_body').textarea_maxlength();
+  $('#new_question').validate({
+    submitHandler: function(form) {
+      $('#question_submit').attr('disabled',true);
+      $('#question_submit').addClass('disabled');
+      $('#question_submit_spinner').show();
+      form.submit();
+    },
+    messages:{
+      'interaction[name]':{
+        'required':'Name is required.'
+      },
+      'interaction[email]':{
+        'required':'Email address is required.',
+        'email':'Invalid email address'
+      },
+      'qna[subject]':{
+        'required':'Subject is required.'
+      },
+      'qna[body]':{
+        'required':'Question is required.',
+        'maxlength':'Exceeding max length of 5KB'
+      }
+    },
+    rules:{
+      'interaction[name]':{
+        'required':true
+      },
+      'interaction[email]':{
+        'required':true,
+        'email':true
+      },
+      'qna[subject]':{
+        'required':true,
+        'invalidchars':'<>'
+      },
+      'qna[body]':{
+        'required':true,
+        'maxlength':5000,
+        'invalidchars':'<>'
+      }
+    },
+    errorClass:'invalid'
+  });
+  {% if qna.kb_topic_id != '' %}
+    $('#qna_kb_topic_id').val('{{qna.kb_topic_id}}');
+  {% endif %}
+  //]]>
+</script>
+    

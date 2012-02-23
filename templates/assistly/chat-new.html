@@ -1,0 +1,98 @@
+
+<div id='breadcrumbs'>
+  <a href='{{home_link}}'>Home</a> &rsaquo; Live Chat!
+</div>
+<div id='support-main'>
+  <div class='support-body'>
+    <div class='content'>
+      <h3>Live Chat!</h3>
+      <div id='form'>
+        {{form_begin}}
+          {% if current_user == nil or current_user.is_guest %}
+            <div class='input-block'>
+              <span class='label'>
+                Your name <span>(required)</span>
+              </span>
+              <div>
+                <input value='{{ interaction.name }}' id='interaction_name' maxlength='100' name='interaction[name]' type='text' />
+              </div>
+            </div>
+            <div class='input-block'>
+              <span class='label'>
+                Your email address <span>(required)</span>
+              </span>
+              <div>
+                <input value='{{ interaction.email }}' id='interaction_email' maxlength='100' name='interaction[email]' type='text' />
+              </div>
+            </div>
+          {% endif %}
+          <div class='input-block'>
+            <span class='label'>
+              Question <span>(required)</span>
+            </span>
+            <div>
+              <textarea id='chat_subject' name='chat[subject]'>{% if search_term and search_term != '' %}{{search_term}}{% else %}{{chat.subject}}{%endif%}</textarea>
+            </div>
+          </div>
+          <div class='input-button'>
+            <input id='chat_submit' name='commit' type='submit' value='Go Chat' />
+            <img alt='Ajax-loader-small' id='chat_submit_spinner' src='{{ "/images/ajax-loader-small.gif" | portal_image_url: image_asset_host }}' style='display: none; margin: 7px 0 0 5px; position: absolute;' />
+          </div>
+        {{form_end}}
+        <script type='text/javascript'>
+          //<![CDATA[
+          $('#chat_subject').textarea_maxlength();
+          $('#new_chat').validate({
+            submitHandler: function(form) {
+              $('#chat_submit').attr('disabled',true);
+              $('#chat_submit').addClass('disabled');
+              $('#chat_submit_spinner').show();
+              form.submit();
+            },
+            messages:{
+              'interaction[name]':{
+                'required':'Name is required.'
+              },
+              'interaction[email]':{
+                'required':'Email address is required.',
+                'email':'Invalid email address.'
+              },
+              'chat[subject]':{
+                'required':'Question is required.',
+                'maxlength':'Exceeding max length of 5KB'
+              }
+            },
+            rules:{
+              'interaction[name]':{
+                'required':true
+              },
+              'interaction[email]':{
+                'required':true,
+                'email':true
+              },
+              'chat[subject]':{
+                'required':true,
+                'maxlength':5000,
+                'invalidchars':'<>'
+              }
+            },
+            errorClass:'invalid'
+          });
+          //]]>
+        </script>
+      </div>
+    </div>
+  </div>
+  <!--
+  ***************
+  The following attribution needs to remain as is in terms of wording with the appropriate link back to Assistly as per our terms of service: http://www.assistly.com/terms
+  If you would like, you may change the location or the styling to better match your site, but the content and the link must remain in the template and visible to end users.
+  ****************
+  -->
+  <div id='footer'>
+    {{ footer_content }}
+    <br/>
+    <a href='http://www.assistly.com'>Customer service software</a> powered by Assistly Inc.
+  </div>
+</div>
+    
