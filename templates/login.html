@@ -2,82 +2,97 @@
 {% block meta_page_title %}Sign In | {% endblock meta_page_title %}
 {% block pagetitle %}{% endblock pagetitle %}
 
-{% block pagescript %}
-        <link rel="stylesheet" type="text/css" media="screen" href="/javascript/jQueryOpenIdPlugin/openid.css?{{App.version}}" />
+{% block pagecss %}
+<style>
+#page_sub_nav { display: none; }
 
-        <script type="text/javascript" src="/javascript/jQueryOpenIdPlugin/jquery.openid.js?{{App.version}}"></script>
-        <script type="text/javascript">
-        $(function () {
-           $("form.openid:eq(0)").openid();
-        });
-        </script>
-        <style>
-            #page_sub_nav { display: none; }
-        </style>
-{% endblock pagescript %}
+#login-page {
+    padding-top: 18px;
+}
+#login-page h3 {
+    color: #555;
+}
+#login-page a:visited {
+    color: #0075b1;
+}
+#login-page .providers-sign-up li {
+    float: left;
+    padding-right: 20px;
+    font-size: 15px;
+}
+#login-page .providers li {
+    float: left;
+    border: 1px solid #ccc;
+    border-bottom-color: #aaa;
+    border-right-color: #bbb;
+    text-align: left;
+    padding: 0 10px;
+    margin-right: 20px;
+    min-height: 80px;
+    position: relative;
+
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+
+    -moz-box-shadow: 2px 2px 5px #ccc;
+    -webkit-box-shadow: 2px 2px 5px #ccc;
+    box-shadow: 2px 2px 5px #ccc;
+
+    cursor: pointer;
+}
+#login-page .providers li:hover,
+#login-page .providers li:active {
+    border-color: #aaa;
+    left: 2px;
+    top: 2px;
+
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+#login-page .providers li .sign-in-text {
+    color: #777;
+}
+#login-page #feature-list {
+    width: 100%;
+}
+#login-page #feature-list div.feature {
+    width: 33%;
+    float: left;
+    text-align: center;
+}
+#login-page #feature-list div.feature img {
+    border: 1px solid #AAA;
+    -webkit-box-shadow: 1px  2px 2px #CCC;
+    -moz-box-shadow: 1px 2px 2px #CCC;
+    box-shadow: 1px 2px 2px #CCC;
+}
+</style>
+{% endblock pagecss %}
 
 {% block pagecontent %}
 <article id="login-page">
     <h2 class="pulls">{% if direct %}Login{% else %}You need to login to access this part of the site.{% endif %}</h2>
     <h3>Already have an account with one of these sites? Click the logo to use your account to login here:</h3>
-    <form class="openid" method="post" action="/login?continue={{continue|urlencode}}">
-      <div><ul class="providers">
-      <li class="direct action-gradient" title="Google">
-            <div class="sign-in-text">Login with:</div>
-            <img width="205" height="70" src="/images/google-logo-large.png" /><span>https://www.google.com/accounts/o8/id</span>
-      </li>
 
-      {% if App.facebook_app_secret %}
-      <li title="Facebook" onclick="javascript:$('#real_fb_button a').click();" class="action-gradient">
-            <div class="sign-in-text">Login with:</div>
-            <img width="205" height="70" src="/images/facebook-logo-large.png" />
-      </li>
-      {% endif %}
-
-      {% if App.accepts_openid %}
-      <li class="domainname" title="Google Apps domain name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/googleappsW.png" alt="icon" /><span>https://www.google.com/accounts/o8/site-xrds?hd=<strong>domainname</strong></span></li>
-      <li class="direct" title="Yahoo">
-            <img src="/javascript/jQueryOpenIdPlugin/images/yahooW.png" alt="icon" /><span>http://yahoo.com/</span></li>
-      <li class="username" title="AOL screen name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/aolW.png" alt="icon" /><span>http://openid.aol.com/<strong>username</strong></span></li>
-      <li class="username" title="MyOpenID user name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/myopenid.png" alt="icon" /><span>http://<strong>username</strong>.myopenid.com/</span></li>
-      <li class="username" title="Flickr user name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/flickr.png" alt="icon" /><span>http://flickr.com/<strong>username</strong>/</span></li>
-      <li class="username" title="Technorati user name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/technorati.png" alt="icon" /><span>http://technorati.com/people/technorati/<strong>username</strong>/</span></li>
-      <li class="username" title="Wordpress blog name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/wordpress.png" alt="icon" /><span>http://<strong>username</strong>.wordpress.com</span></li>
-      <li class="username" title="Blogger blog name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/blogger.png" alt="icon" /><span>http://<strong>username</strong>.blogspot.com/</span></li>
-      <li class="username" title="LiveJournal blog name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/livejournal.png" alt="icon" /><span>http://<strong>username</strong>.livejournal.com</span></li>
-      <li class="username" title="ClaimID user name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/claimid.png" alt="icon" /><span>http://claimid.com/<strong>username</strong></span></li>
-      <li class="username" title="Vidoop user name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/vidoop.png" alt="icon" /><span>http://<strong>username</strong>.myvidoop.com/</span></li>
-      <li class="username" title="Verisign user name">
-            <img src="/javascript/jQueryOpenIdPlugin/images/verisign.png" alt="icon" /><span>http://<strong>username</strong>.pip.verisignlabs.com/</span></li>
-      <li class="openid" title="OpenID"><img src="/javascript/jQueryOpenIdPlugin/images/openidW.png" alt="icon" /><span><strong>http://{your-openid-url}</strong></span></li>
-      {% endif %}
-      </ul></div>
-      <fieldset id="username_fields">
-      <label for="openid_username">Enter your <span>Provider user name</span></label>
-      <div><span></span><input type="text" name="openid_username" /><span></span>
-      <input type="submit" value="Login" /></div>
-      </fieldset>
-      <fieldset id="domainname_fields">
-      <label for="openid_domainname">Enter your <span>Provider domain name</span></label>
-      <div><span></span><input type="text" name="openid_domainname" /><span></span>
-      <input type="submit" value="Login" /></div>
-      </fieldset>
-      <fieldset  id="identifier_fields">
-      <label for="openid_identifier">Enter your <a class="openid_logo" href="http://openid.net">OpenID</a></label>
-      <div><input type="text" name="openid_identifier" />
-      <input type="submit" value="Login" /></div>
-      </fieldset>
+    <form method="POST" id="login-form" action="/login?continue={{continue|urlencode}}">
     </form>
+
+    <div><ul class="providers">
+    <li class="direct action-gradient" id="login-google">
+          <div class="sign-in-text">Login with:</div>
+          <img width="205" height="70" src="/images/google-logo-large.png" />
+    </li>
+
+    {% if App.facebook_app_secret %}
+    <li id="login-facebook" class="action-gradient">
+          <div class="sign-in-text">Login with:</div>
+          <img width="205" height="70" src="/images/facebook-logo-large.png" />
+    </li>
+    {% endif %}
+
+    </ul></div>
     <div class="clear"></div>
 
     <div id="real_fb_button" style="display: none;"><fb:login-button></fb:login-button></div>
@@ -100,3 +115,15 @@
     </div>
 </article>
 {% endblock pagecontent %}
+
+{% block bottompagescript %}
+<script>
+$("#login-google").click(function(e) {
+    $("#login-form").submit();
+});
+$("#login-facebook").click(function(e) {
+    $("#real_fb_button a").click();
+});
+</script>
+{% endblock bottompagescript %}
+
