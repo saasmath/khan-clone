@@ -18,11 +18,12 @@ var Exercises = {
 
         this.exercise = json.exercise;
 
-        // TODO(kamens) figure out the persistance model and hook 'er up
+        // TODO(kamens): figure out the persistance model and hook 'er up
         // this.userTopicModel = new UserTopicModel(json.userTopic);
         this.userTopic = json.userTopic;
 
-        $(Khan).bind( "newProblem", function() { Exercises.nextCard(); });
+        $(Khan).bind("newProblem", function() { Exercises.nextCard(); });
+        $(Khan).bind("stackComplete", function() { Exercises.endOfStack(); });
 
         Exercises.render();
     },
@@ -67,6 +68,14 @@ var Exercises = {
         this.incompleteStack.render();
         this.completeStack.render();
 
+    },
+
+    endOfStack: function() {
+
+        // TODO(kamens): something else.
+        KAConsole.debugEnabled = true;
+        KAConsole.log("Ended the stack!");
+
     }
 
 };
@@ -90,6 +99,10 @@ Exercises.Stack = Backbone.View.extend({
 
         Exercises.currentCard.model = _.head(this.model.cards);
         this.model.cards = _.tail(this.model.cards);
+
+        if (!this.model.cards.length) {
+            $(Khan).trigger("stackComplete");
+        }
 
     },
 
