@@ -3623,6 +3623,11 @@ class VideoLog(BackupModel):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
     video_title = db.StringProperty(indexed=False)
+
+    # Use youtube_id since readable_id may have changed
+    # by the time this VideoLog is retrieved
+    youtube_id = db.StringProperty(indexed=False)
+
     # The timestamp corresponding to when this entry was created.
     time_watched = db.DateTimeProperty(auto_now_add = True)
     seconds_watched = db.IntegerProperty(default = 0, indexed=False)
@@ -3687,6 +3692,7 @@ class VideoLog(BackupModel):
         video_log.user = user_data.user
         video_log.video = video
         video_log.video_title = video.title
+        video_log.youtube_id = video.youtube_id
         video_log.seconds_watched = seconds_watched
         video_log.last_second_watched = last_second_watched
 

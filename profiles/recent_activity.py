@@ -56,10 +56,30 @@ class RecentExerciseActivity(RecentActivity):
         return False
 
 class RecentVideoActivity(RecentActivity):
-    def __init__(self, video_log, user_data):
+    def __init__(self, video_log, user_data, video_cache=None):
         self.s_type = "Video"
-        self.youtube_id = video_log.video.youtube_id
         self.video_title = video_log.video_title
+
+        # VideoLog data prior to ?? will not have set the
+        # youtube_id and the "recent activity window" can include
+        # such older log entries.
+        # Delete prying into video_log.video when the window slides off of
+        # those entries. For now - use a cache so we don't do too many lookups
+        if video_log.youtube_id is not None:
+            self.youtube_id = video_log.youtube_id
+        else:
+            if video_cache is not None:
+                vkey = models.VideoLog.video.get_value_for_datastore(video_log)
+                video = video_cache.get(vkey)
+                if not video:
+                    video = video_log.video
+                    video_cache[vkey] = video
+            else:
+                video = video_log.video
+            self.youtube_id = video.youtube_id
+
+        self.relative_url = '/video?v=%s' % (self.youtube_id)
+
         self.seconds_watched = video_log.seconds_watched
         self.dt = video_log.time_watched
         self.points_earned = video_log.points_earned
@@ -109,7 +129,8 @@ def recent_exercise_activity(problem_logs):
     return [RecentExerciseActivity(p) for p in problem_logs]
 
 def recent_video_activity(video_logs, user_data):
-    return [RecentVideoActivity(v, user_data) for v in video_logs]
+    video_cache = {}
+    return [RecentVideoActivity(v, user_data, video_cache) for v in video_logs]
 
 def recent_goal_activity(goals):
     return [RecentGoalActivity(g) for g in goals
