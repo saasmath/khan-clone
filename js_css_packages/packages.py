@@ -90,6 +90,7 @@ javascript = {
     # todo(dmnd) In the long run they should move somewhere else, perhaps
     # to another repository.
     "xyAuNHPsq-g": {"allfiles": True},
+    "-a_w0_VAo6U": {"allfiles": True},
 
     "homepage": {
         "files": [

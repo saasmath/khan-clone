@@ -189,3 +189,28 @@ img.face {
 	vertical-align: -6px;
 	height: 24px;
 }
+
+
+/* fraction input */
+.fraction-input {
+	display: inline-block;
+	vertical-align: middle;
+}
+.fraction-input input[type=text] {
+	display: block;
+	width: 75%;
+	margin: auto;
+}
+.fraction-input hr {
+	margin: 5px 0;
+	padding: 0;
+	color: #000;
+	background: #555;
+	height: 2px;
+	border: none;
+	box-shadow: none;
+}
+
+.qtip-question {
+	display: none;
+}

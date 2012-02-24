@@ -253,6 +253,31 @@ Socrates.QuestionView = Backbone.View.extend({
         return this;
     },
 
+    qtip: function() {
+        var qtipq = this.$(".qtip-question");
+        if (qtipq.length > 0) {
+            var $controls = this.$('.controls');
+            $controls.qtip({
+                content: {
+                    text: qtipq,
+                    title: this.model.get('title')
+                },
+                position: $.extend({
+                    container: $controls,
+                    at: [0, 0]
+                }, this.model.get('qtip-position')),
+                style: {
+                    classes: "ui-tooltip ui-tooltip-rounded ui-tooltip-shadow"
+                },
+                show: {
+                    event: false,
+                    ready: true
+                },
+                hide: false
+            });
+        }
+    },
+
     hide: function() {
         this.finishRecordingTime();
         $(this.el).hide();
@@ -272,6 +297,7 @@ Socrates.QuestionView = Backbone.View.extend({
     show: function() {
         this.startTime = +new Date();
         $(this.el).show();
+        this.qtip();
         return this;
     },
 
