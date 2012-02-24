@@ -70,25 +70,25 @@ def resolve_files(default_path, packages, suffix):
         package_path = os.path.join(os.path.dirname(__file__), package_path)
         package_path = os.path.normpath(package_path)
 
-        # get a list of file in this package
-        raw_files = []
-        if "files" in package:
-            raw_files = package["files"]
-        elif package.get("allfiles", False):
-            raw_files = os.listdir(package_path)
-        else:
-            raise "No files found in package %s" % package_name
-
-        # Assume any files that do not have the correct suffix are already
+        # Get a list of all files in the package.
+        # Assumes any files that do not have the correct suffix are already
         # compiled by some earlier process.
         # For example, a file called template.handlebars will be compiled
         # to template.handlebars.js
         files = []
-        for f in raw_files:
-            if f.split('.')[-1] == suffix[1:]:
-                files.append(f)
-            else:
-                files.append(f + suffix)
+        if "files" in package:
+            # Put the correct suffix on every file name mentioned in packages
+            for f in package["files"]:
+                if f.split('.')[-1] == suffix[1:]:
+                    files.append(f)
+                else:
+                    files.append(f + suffix)
+        elif package.get("allfiles", False):
+            # Add all files that have the correct suffix
+            files = [f for f in os.listdir(package_path)
+                if f.split('.')[-1] == suffix[1:]]
+        else:
+            raise "No files found in package %s" % package_name
 
         yield (package_name, package_path, files)
 
