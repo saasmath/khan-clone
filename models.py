@@ -1759,7 +1759,7 @@ def change_default_version(version):
     vids = Video.get_all_live()
     urls = Url.get_all_live()
     Setting.count_videos(len(vids) + len(urls))
-    models.Video.approx_count(bust_cache=True)
+    Video.approx_count(bust_cache=True)
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
