@@ -180,7 +180,7 @@ Exercises.StackView = Backbone.View.extend({
 
                 return result;
             }
-        }
+        };
 
         this.collection
             .bind("add", deferAnimation(function() {
