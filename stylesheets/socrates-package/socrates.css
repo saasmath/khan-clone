@@ -1,216 +1,216 @@
 .video-overlay .question {
-	display: none;
+    display: none;
 }
 
 /* a layer is used to display form controls over a backdrop */
 .video-overlay .layer {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 480px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 480px;
 }
 
 .ontop {
-	margin: 30px -30px auto -30px;
-	padding: 19px;
+    margin: 30px -30px auto -30px;
+    padding: 19px;
 
-	background-color: white;
-	border: 1px solid #999;
-	border: 1px solid rgba(0, 0, 0, 0.5);
-	-webkit-border-radius: 6px;
-	-moz-border-radius: 6px;
-	border-radius: 6px;
-	-webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.4);
-	-moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.4);
-	box-shadow: 0 3px 7px rgba(0, 0, 0, 0.4);
-	-webkit-background-clip: padding-box;
-	-moz-background-clip: padding-box;
-	background-clip: padding-box;
+    background-color: white;
+    border: 1px solid #999;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 0 3px 7px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.4);
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding-box;
+    background-clip: padding-box;
 }
 
 .video-overlay {
-	font-size: 150%;
+    font-size: 150%;
 }
 
 /* backdrop layer */
 .video-overlay .layer.backdrop {
-	z-index: 1;
+    z-index: 1;
 }
 .video-overlay .layer.backdrop.whiteout {
-	background: #fff;
-	opacity: 0.9;
-	-moz-opacity: 0.9;
-	filter:alpha(opacity=9);
+    background: #fff;
+    opacity: 0.9;
+    -moz-opacity: 0.9;
+    filter:alpha(opacity=9);
 }
 .video-overlay .layer.backdrop.videoframe {
-	background: #000;
+    background: #000;
 }
 .video-overlay .layer.backdrop.videoframe img {
-	display: block;
-	height: 450px;
-	margin: 0 auto 0 auto;
+    display: block;
+    height: 450px;
+    margin: 0 auto 0 auto;
 }
 
 
 /* controls layer */
 .video-overlay .layer.controls {
-	z-index: 2;
+    z-index: 2;
 }
 
 .video-overlay .layer.controls p {
-	margin: 0 0 13px;
-	font-size: 100%;
+    margin: 0 0 13px;
+    font-size: 100%;
 }
 
 .video-overlay .submit-area button {
-	font-size: 100%;
+    font-size: 100%;
 }
 
 /* default form styles */
 .video-overlay label {
-	display: block;
-	margin-bottom: 5px;
+    display: block;
+    margin-bottom: 5px;
 }
 
 .video-overlay .checkbox, .video-overlay .radio {
-	padding-left: 18px;
+    padding-left: 18px;
 }
 
 .video-overlay .radio.inline, .checkbox.inline {
-	display: inline-block;
-	margin-bottom: 0;
-	vertical-align: middle;
+    display: inline-block;
+    margin-bottom: 0;
+    vertical-align: middle;
 }
 
 .video-overlay input[type=text] {
-	font-size: 100%;
+    font-size: 100%;
 }
 
 /* buttons */
 .video-overlay .simple-button {
-	margin: 0 10px;
+    margin: 0 10px;
 }
 .video-overlay .submit-area .simple-button {
-	display: inline-block;
+    display: inline-block;
 }
 
 .video-overlay .submit-area .skip {
-	float: right;
+    float: right;
 }
 
 /* default submit area */
 .video-overlay .submit-area {
-	margin: 30px 0 0;
+    margin: 30px 0 0;
 }
 .video-overlay .watermark-blocker {
-	position: absolute;
-	width: 800px;
-	height: 65px;
-	bottom: 0;
-	background-color: #000;
+    position: absolute;
+    width: 800px;
+    height: 65px;
+    bottom: 0;
+    background-color: #000;
 }
 .video-overlay .watermark-blocker .submit-area {
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	padding-bottom: 10px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding-bottom: 10px;
 }
 
 
 /* matrix input tables. Should use bootstrap css, but override as follows */
 table.matrix-input {
-	display: inline-block;
-	position: relative;
-	top: 1em
+    display: inline-block;
+    position: relative;
+    top: 1em
 }
 
 table.matrix-input td {
-	border: none;
-	padding: 2px;
+    border: none;
+    padding: 2px;
 }
 
 
 /* inputtext */
 .video-overlay .layer.controls .inputtext {
-	position: absolute;
-	width: 40px;
-	height: 25px;
-	padding: 3px 20px 10px 3px;
+    position: absolute;
+    width: 40px;
+    height: 25px;
+    padding: 3px 20px 10px 3px;
 }
 .video-overlay .layer.controls .inputtext.moveable {
-	background-color: red;
+    background-color: red;
 }
 .video-overlay .layer.controls .inputtext.ui-draggable {
-	cursor: move;
+    cursor: move;
 }
 .video-overlay .layer.controls .inputtext input {
-	width: 100%;
-	height: 100%;
+    width: 100%;
+    height: 100%;
 }
 .video-overlay .layer.controls .inputtext input {
-	background-color: #444;
-	border: 1px solid #444;
-	color: #ddd;
+    background-color: #444;
+    border: 1px solid #444;
+    color: #ddd;
 }
 .video-overlay .layer.controls .inputtext input:focus {
-	background-color: #555;
-	color: #fff;
+    background-color: #555;
+    color: #fff;
 }
 
 /* label */
 .video-overlay .layer.controls .label {
-	position: absolute;
-	top: 0;
-	left: 0;
-	display: inline-block;
-	padding: 5px;
-	color: #f60;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: inline-block;
+    padding: 5px;
+    color: #f60;
 }
 .video-overlay .layer.controls.edit .label {
-	border: 1px solid #fff;
+    border: 1px solid #fff;
 }
 
 /* other stuff */
 .interactive-video-controls {
-	position: absolute;
-	float: left;
+    position: absolute;
+    float: left;
 }
 
 /* (in)correct notifications */
 .submit-area .alert {
-	display: none;
-	background: none !important;
-	border: none;
+    display: none;
+    background: none !important;
+    border: none;
 }
 
 img.face {
-	vertical-align: -6px;
-	height: 24px;
+    vertical-align: -6px;
+    height: 24px;
 }
 
 
 /* fraction input */
 .fraction-input {
-	display: inline-block;
-	vertical-align: middle;
+    display: inline-block;
+    vertical-align: middle;
 }
 .fraction-input input[type=text] {
-	display: block;
-	width: 75%;
-	margin: auto;
+    display: block;
+    width: 75%;
+    margin: auto;
 }
 .fraction-input hr {
-	margin: 5px 0;
-	padding: 0;
-	color: #000;
-	background: #555;
-	height: 2px;
-	border: none;
-	box-shadow: none;
+    margin: 5px 0;
+    padding: 0;
+    color: #000;
+    background: #555;
+    height: 2px;
+    border: none;
+    box-shadow: none;
 }
 
 .qtip-question {
-	display: none;
+    display: none;
 }
