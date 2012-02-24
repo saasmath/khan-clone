@@ -1,1 +1,1 @@
-khan-exercises = [git]http://github.com/Khan/khan-exercises.git
+khan-exercises = [git]git://github.com/Khan/khan-exercises.git
