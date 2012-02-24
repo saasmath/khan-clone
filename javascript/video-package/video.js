@@ -58,15 +58,8 @@ var Video = {
         var transcript = $(".subtitles-container");
         if (transcript.length) {
             InteractiveTranscript.init(transcript);
-
-            $(".transcript-link").toggle(function(ev) {
-                transcript.slideDown("fast", function() {
-                    InteractiveTranscript.start();
-                });
-            }, function(ev) {
-                InteractiveTranscript.stop();
-                transcript.slideUp("fast");
-            });
+            $(".transcript-link").click($.proxy(this._ontranscriptclick,
+                this, transcript));
         }
 
         $(".sharepop").hide();
@@ -74,6 +67,20 @@ var Video = {
             $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
             return false;
         });
+    },
+
+    _ontranscriptclick: function(transcript, e) {
+        var button = $(e.target);
+        if (transcript.is(":visible")) {
+            button.removeClass("toggled");
+            InteractiveTranscript.stop();
+            transcript.slideUp("fast");
+        } else {
+            button.addClass("toggled");
+            transcript.slideDown("fast", function() {
+                InteractiveTranscript.start();
+            });
+        }
     },
 
     toggleSubtitles: function() {
@@ -91,6 +98,7 @@ var Video = {
     },
 
     hideSubtitleElements: function() {
+        $(".subtitles-link").removeClass("toggled");
         $(".unisubs-videoTab").hide();
         $(".subtitles-warning").hide();
         $(".youtube-video").css("marginBottom", "0px");
@@ -98,6 +106,7 @@ var Video = {
     },
 
     showSubtitleElements: function() {
+        $(".subtitles-link").addClass("toggled");
         $(".youtube-video").css("marginBottom", "32px");
         $(".subtitles-warning").show();
         $(".unisubs-videoTab").show();
@@ -211,6 +220,7 @@ var InteractiveTranscript = {
 
         if (!isNaN(time)) {
             VideoStats.player.seekTo(time, true);
+            VideoStats.player.playVideo();
         }
     },
 
