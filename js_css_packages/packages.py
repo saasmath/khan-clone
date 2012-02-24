@@ -272,6 +272,11 @@ stylesheets = {
             "viewclassprofile.css",
         ]
     },
+    "login": {
+        "files": [
+            "login.css",
+        ]
+    },
     "profile": {
         "files": [
             "profile.css",
