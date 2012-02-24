@@ -1755,8 +1755,11 @@ def change_default_version(version):
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
 
+    # update the new number of videos on the homepage
     vids = Video.get_all_live()
-    Setting.count_videos(len(vids))
+    urls = Url.get_all_live()
+    Setting.count_videos(len(vids) + len(urls))
+    Video.approx_count(bust_cache=True)
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
