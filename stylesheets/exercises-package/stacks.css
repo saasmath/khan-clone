@@ -37,8 +37,8 @@
  * webkit-only atm */
 @-webkit-keyframes translate-center-to-ur {
     0% { -webkit-transform: translate(0px, 0px); }
-    85% { -webkit-transform: translate(500px, -240px); }
-    100% { -webkit-transform: translate(500px, -240px); }
+    85% { -webkit-transform: translate(500px, -200px); }
+    100% { -webkit-transform: translate(500px, -200px); }
 }
 
 @-webkit-keyframes shrink-right-and-fade {
@@ -171,4 +171,8 @@
     position: absolute;
     right: -1px;
     top: -24px;
+}
+
+.current-card .exercise_message {
+    display: none; /* TODO(kamens/jason): currently hiding all proficient/struggling/review messages */
 }
