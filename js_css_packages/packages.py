@@ -182,6 +182,7 @@ javascript = {
             "current-card.handlebars",
             "problem-template.handlebars",
             "exercises.js",
+            "review.js",
         ]
     },
     "exercise-content": {

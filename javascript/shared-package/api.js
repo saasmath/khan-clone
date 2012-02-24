@@ -107,9 +107,3 @@ $(function() {
 
     APIActionResults.register("points_earned", updatePointDisplay);
 });
-
-// Update the "reviewing X exercises" heading counter and also change the
-// heading to indicate reviews are done when appropriate
-if (typeof Review !== "undefined") {
-    $(function() { APIActionResults.register("reviews_left", Review.updateCounter); });
-}
