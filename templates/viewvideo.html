@@ -143,7 +143,7 @@
             <ul itemprop="transcript" class="subtitles">
                 {% for sub in subtitles_json %}
                 <li data-time="{{ sub.start_time }}">
-                    <a href="javascript:void(0)" data-fmttime="{{ (sub.start_time // 60) | int }}:{{ "%02d"|format(sub.start_time % 60) }}">{{ sub.text|e }}</a>
+                    <a href="javascript:void(0)" data-fmttime="{{ (sub.start_time // 60) | int }}:{{ "%02d"|format(sub.start_time % 60) }}">{{ sub.text|trim|e }}</a>
                 </li>
                 {% endfor %}
             </ul>

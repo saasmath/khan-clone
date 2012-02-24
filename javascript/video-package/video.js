@@ -56,16 +56,18 @@ var Video = {
         }
 
         var transcript = $(".subtitles-container");
-        $(".transcript-link").toggle(function(ev) {
-            transcript.slideDown("fast", function() {
-                InteractiveTranscript.start();
-            });
-        }, function(ev) {
-            InteractiveTranscript.stop();
-            transcript.slideUp("fast");
-        });
+        if (transcript.length) {
+            InteractiveTranscript.init(transcript);
 
-        InteractiveTranscript.init(transcript);
+            $(".transcript-link").toggle(function(ev) {
+                transcript.slideDown("fast", function() {
+                    InteractiveTranscript.start();
+                });
+            }, function(ev) {
+                InteractiveTranscript.stop();
+                transcript.slideUp("fast");
+            });
+        }
 
         $(".sharepop").hide();
         $(".share-link").click(function() {
@@ -140,11 +142,6 @@ var InteractiveTranscript = {
     POLL_MILLIS: 333,
 
     /*
-     * The "active" subtitle.
-     */
-    activeSubtitle: null,
-
-    /*
      * Whether automatic scrolling is enabled. Turned off when the user is
      * interacting with the transcript.
      */
@@ -153,7 +150,7 @@ var InteractiveTranscript = {
     /*
      * The polling interval ID returned by window.setInterval().
      */
-    pollInterval: null,
+    pollIntervalId: null,
 
     /*
      * The scrollable area containing subtitles.
@@ -164,6 +161,8 @@ var InteractiveTranscript = {
      * Initialize with the interactive transcript root element. Call only once.
      */
     init: function(root) {
+        //TODO: convert to some type of logging that allows for leaving the log
+        //lines in for development and auto-stripping them for production.
         //console.log("InteractiveTranscript.init()");
         var viewport = root.find(".subtitles");
         viewport.delegate("a", "click", $.proxy(this._onsubtitleclick, this));
@@ -178,7 +177,7 @@ var InteractiveTranscript = {
         //console.log("InteractiveTranscript.start()");
         this.stop();
         this._pollPlayer();
-        this.pollInterval = setInterval(
+        this.pollIntervalId = setInterval(
             $.proxy(this._pollPlayer, this), this.POLL_MILLIS);
     },
 
@@ -187,8 +186,8 @@ var InteractiveTranscript = {
      */
     stop: function() {
         //console.log("InteractiveTranscript.stop()");
-        clearInterval(this.pollInterval);
-        this.pollInterval = null;
+        clearInterval(this.pollIntervalId);
+        this.pollIntervalId = null;
     },
 
     /*
@@ -241,7 +240,7 @@ var InteractiveTranscript = {
             }
         }
 
-        if (currSub !== this.activeSubtitle) {
+        if (!$(currSub).is(".active")) {
             this._setActiveSubtitle(currSub || lines[len - 1]);
         }
     },
@@ -252,15 +251,11 @@ var InteractiveTranscript = {
     _setActiveSubtitle: function(subtitle) {
         //console.log("InteractiveTranscript._setActiveSubtitle()");
 
-        var activeSubtitle = this.activeSubtitle,
-            offsetTop,
+        var offsetTop,
             height;
 
-        if (activeSubtitle) {
-            $(activeSubtitle).removeClass("active");
-        }
+        this.viewport.find(".active").removeClass("active");
         $(subtitle).addClass("active");
-        this.activeSubtitle = subtitle;
 
         if (this.autoscroll) {
             offsetTop = subtitle.offsetTop;

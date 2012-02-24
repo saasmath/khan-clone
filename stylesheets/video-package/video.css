@@ -218,7 +218,7 @@
 }
 
 .subtitles a {
-    color: #000;
+    color: #333;
     display: block;
     text-decoration: none;
     white-space: nowrap;
@@ -230,9 +230,13 @@
 
 .subtitles a:before {
     content: attr(data-fmttime);
-    color: #777;
+    color: #759243;
     display: inline-block;
     width: 35px;
+}
+
+.subtitles a:hover:before {
+    color: #fafafa;
 }
 
 .subtitles .active a {
@@ -242,6 +246,6 @@
 
 .subtitles a:hover {
     background-color: #9db63b;
-    color: #000;
+    color: #fafafa;
     text-decoration: none;
 }
