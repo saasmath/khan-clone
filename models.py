@@ -2452,15 +2452,61 @@ class Topic(Searchable, db.Model):
 
         # get all content that belongs in this tree
         contentItems = db.get(contentKeys)
-        # add the content to the node dict
-        for content in contentItems:
-            node_dict[content.key()]=content
+        content_dict = dict((content.key(), content) for content in contentItems)
+
+        if "Exercise" in types or len(types) == 0:
+            video_dict =  dict((k,v) for k,v in content_dict.iteritems() if 
+                          (k.kind() == "Video"))
+ 
+            evs = ExerciseVideo.all().fetch(10000)
+            evs = [ev for ev in evs 
+                   if ExerciseVideo.exercise.get_value_for_datastore(ev) 
+                   in content_dict.keys()]
+
+            # some videos referenced by exercise videos might be in another part
+            # of the tree so we need to get them too
+            extra_video_keys = [ExerciseVideo.video.get_value_for_datastore(ev)
+                for ev in evs if ExerciseVideo.video.get_value_for_datastore(ev)
+                not in content_dict.keys()]
+            extra_videos = db.get(extra_video_keys)
+            extra_video_dict = dict((v.key(), v) for v in extra_videos)
+            video_dict.update(extra_video_dict)
+
+            # buid a ev_dict in the form ev_dict[exercise_key][video_readable_id] = ev.exercise_order
+            ev_dict = {} 
+            for ev in evs:
+                exercise_key = ExerciseVideo.exercise.get_value_for_datastore(ev)
+                video_key = ExerciseVideo.video.get_value_for_datastore(ev)
+                video_readable_id = video_dict[video_key].readable_id
+
+                if exercise_key not in ev_dict:
+                    ev_dict[exercise_key] = {}
+                
+                ev_dict[exercise_key][video_readable_id] = ev.exercise_order
+
+            # update all exercises to include the related_videos
+            exercises = [e for e in content_dict.values() if type(e) == Exercise]
+            for exercise in exercises:
+                related_videos = (ev_dict[exercise.key()] 
+                                  if exercise.key() in ev_dict else {})
+                related_videos = sorted(related_videos.items(),
+                                        key=lambda i:i[1])
+                related_videos = map(lambda i: i[0], related_videos)
+                exercise.related_videos = related_videos
+
+        # make any content changes for this version
+        changes = VersionContentChange.get_updated_content_dict(self.version)
+        type_changes = dict((k,c) for k,c in changes.iteritems() if 
+                       (k.kind() in types or len(types) == 0))
+        content_dict.update(type_changes)
+        
+        node_dict.update(content_dict)
 
         # cycle through the nodes adding each to its parent's children list
         for key, descendant in node_dict.iteritems():
             if hasattr(descendant, "child_keys"):
                 descendant.children = [node_dict[c] for c in descendant.child_keys if node_dict.has_key(c)]
-
+        
         # return the entity that was passed in, now with its children, and its descendants children all added
         return node_dict[self.key()]
 
