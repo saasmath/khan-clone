@@ -9,4 +9,5 @@ class SocratesHandler(request_handler.RequestHandler):
         import main
         template_values = main.ViewVideo.get_template_data(self, readable_id,
             redirect_allowed=False)
+        template_values['has_socrates'] = True
         self.render_jinja2_template('socrates/viewvideo.html', template_values)
