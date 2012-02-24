@@ -18,8 +18,8 @@
 
 .current-card-container,
 .current-card-container-inner {
-    -webkit-transition: all 0.3s ease-in-out;
-    -moz-transition: all 0.3s ease-in-out;
+    -webkit-transition: all 0.18s ease-in-out;
+    -moz-transition: all 0.18s ease-in-out;
 }
 
 .current-card.notransition .current-card-container,

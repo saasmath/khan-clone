@@ -205,11 +205,7 @@ Exercises.StackView = Backbone.View.extend({
         return this.el
             .find(".card-container")
                 .first()
-                    .slideUp(
-                        function() {
-                            $(this).remove();
-                        }
-                    );
+                    .slideUp(140, function() { $(this).remove(); });
 
     },
 
@@ -226,8 +222,8 @@ Exercises.StackView = Backbone.View.extend({
                 )
                 .find(".card-container")
                     .first()
-                        .delay(100)
-                        .slideDown();
+                        .delay(40)
+                        .slideDown(140);
 
     }
 
