@@ -1,13 +1,5 @@
 var Coaches = {};
 
-Coaches.Coach = Backbone.Model.extend({
-    defaults: {
-        "email": "foo",
-        "isCoach": false,
-        "isRequesting": false
-    }
-});
-
 Coaches.CoachView = Backbone.View.extend({
     className: "coach-row",
     template_: null,
@@ -26,7 +18,7 @@ Coaches.CoachView = Backbone.View.extend({
 });
 
 Coaches.CoachList = Backbone.Collection.extend({
-    model: Coaches.Coach
+    model: ProfileModel
 });
 
 Coaches.CoachListView = Backbone.View.extend({
@@ -49,14 +41,9 @@ Coaches.CoachListView = Backbone.View.extend({
     },
 
     remove: function(model) {
-        var viewToRemove = null,
-            filtered = _.filter(this.coachViews_, function(view) {
+        var viewToRemove = _.find(this.coachViews_, function(view) {
                 return view.model === model;
             });
-
-        if (filtered.length > 0) {
-            viewToRemove = filtered[0];
-        }
 
         if (viewToRemove) {
             this.coachViews_ = _.without(this.coachViews_, viewToRemove);
@@ -67,7 +54,7 @@ Coaches.CoachListView = Backbone.View.extend({
     render: function() {
         $(this.el).empty();
 
-        if (this.collection.length === 0) {
+        if (this.collection.isEmpty()) {
             $(this.el).append("You have no coaches. Why not add a coach?")
         } else {
             _.each(this.coachViews_, function(view) {
