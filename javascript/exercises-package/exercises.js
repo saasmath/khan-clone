@@ -171,8 +171,8 @@ Exercises.StackView = Backbone.View.extend({
         // list of deferreds. This lets you chain complex
         // animations (see Exercises.nextCard).
         var deferAnimation = function(fxn) {
-            return function(a, b, options) {
-                var result = fxn(a, b, options);
+            return function(model, collection, options) {
+                var result = fxn(model, collection, options);
 
                 if (options && options.deferreds) {
                     options.deferreds.push(result);
