@@ -22,15 +22,26 @@
     -moz-transition: all 0.3s ease-in-out;
 }
 
-.current-card-container.shrinkLeft {
+.current-card.notransition .current-card-container,
+.current-card.notransition .current-card-container-inner {
+    /* For temporarily disabling transitions.
+     * See http://stackoverflow.com/questions/6634470/disable-turn-off-inherited-css3-transitions
+     */
+    -webkit-transition: none;
+    -moz-transition: none;
+    -o-transition: color 0 ease-in;
+    transition: none;
+}
+
+.current-card.shrinkLeft .current-card-container {
     -webkit-transform: translate(-500px, -200px);
 }
-.current-card-container.shrinkRight {
+.current-card.shrinkRight .current-card-container {
     -webkit-transform: translate(500px, -200px);
 }
 
-.current-card-container.shrinkLeft .current-card-container-inner,
-.current-card-container.shrinkRight .current-card-container-inner {
+.current-card.shrinkLeft .current-card-container-inner,
+.current-card.shrinkRight .current-card-container-inner {
     -webkit-transform: scale(0.1);
     opacity: 0.0;
 }
