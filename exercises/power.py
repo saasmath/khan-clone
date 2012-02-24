@@ -31,10 +31,15 @@ class ViewExercise(request_handler.RequestHandler):
 
         # Cache these so we don't have to worry about future lookups
         user_exercise.exercise_model = exercise
-        user_exercise.exercise_model.sha1 = "TODO(kamens) seriously, SHA1s have been broken in reviews for a long time."
         user_exercise._user_data = user_data
         user_exercise._user_exercise_graph = user_exercise_graph
         user_exercise.summative = exercise.summative
+
+        user_exercise.exercise_model.sha1 = "TODO(kamens) seriously, SHA1s have been broken in reviews for a long time."
+
+        user_exercise.exercise_model.related_videos = [exercise_video.video for exercise_video in exercise.related_videos_fetch()]
+        for video in user_exercise.exercise_model.related_videos:
+            video.id = video.key().id()
 
         # Temporarily work around in-app memory caching bug
         # TODO(kamens): does this bug still exist? Here's hoping we don't hang user_exercise off of exercise any more, but we might.
