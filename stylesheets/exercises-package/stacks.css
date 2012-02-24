@@ -33,15 +33,31 @@
     transition: none;
 }
 
-.current-card.shrinkLeft .current-card-container {
-    -webkit-transform: translate(-500px, -200px);
-}
-.current-card.shrinkRight .current-card-container {
-    -webkit-transform: translate(500px, -200px);
+/* TODO(kamens/jason): all of these animation bits are experimental and
+ * webkit-only atm */
+@-webkit-keyframes translate-center-to-ur {
+    0% { -webkit-transform: translate(0px, 0px); }
+    85% { -webkit-transform: translate(500px, -240px); }
+    100% { -webkit-transform: translate(500px, -240px); }
 }
 
-.current-card.shrinkLeft .current-card-container-inner,
+@-webkit-keyframes shrink-right-and-fade {
+    0% { -webkit-transform: scale(1.0); }
+    85% { opacity: 1.0; -webkit-transform: scale(0.1); }
+    100% { opacity: 0.0; -webkit-transform: scale(0.1); }
+}
+
+.current-card.shrinkRight .current-card-container {
+    -webkit-animation: translate-center-to-ur 0.18s ease-in-out 0s 1 forwards normal;
+}
 .current-card.shrinkRight .current-card-container-inner {
+    -webkit-animation: shrink-right-and-fade 0.18s ease-in-out 0s 1 forwards normal;
+}
+
+.current-card.shrinkLeft .current-card-container {
+    -webkit-transform: translate(-500px, -240px);
+}
+.current-card.shrinkLeft .current-card-container-inner {
     -webkit-transform: scale(0.1);
     opacity: 0.0;
 }
