@@ -43,12 +43,12 @@ var Exercises = {
 
         // Add a {{#each_with_index cards}} helper for iterating and keeping
         // track of the iteration index
-        Handlebars.registerHelper("each_with_index", function(collection, fxn) {
+        Handlebars.registerHelper("each_with_index", function(list, fxn) {
 
             var buffer = "";
             var ix = 0;
 
-            collection.each(function(context) {
+            _.each(list, function(context) {
                 context.index = ix++;
                 buffer += fxn(context);
             });
@@ -118,6 +118,9 @@ var Exercises = {
         var animationOptions = { deferreds: [] };
 
         if (this.currentCard) {
+
+            // TODO(kamens): currently randomly setting leaf value
+            this.currentCard.set({leaves_earned: KhanUtil.randRange(0, 5)});
 
             // Move current to complete
             this.completeStack.add(this.currentCard, animationOptions);
@@ -215,8 +218,8 @@ Exercises.StackView = Backbone.View.extend({
         };
 
         this.collection
-            .bind("add", deferAnimation(function() {
-                return self.animatePush();
+            .bind("add", deferAnimation(function(card) {
+                return self.animatePush(card);
             }))
             .bind("remove", deferAnimation(function() {
                 return self.animatePop();
@@ -225,7 +228,8 @@ Exercises.StackView = Backbone.View.extend({
     },
 
     render: function() {
-        this.el.html(this.template({cards: this.collection}));
+        var modelAttributes = _.pluck(this.collection.models, "attributes");
+        this.el.html(this.template({cards: modelAttributes}));
         return this;
     },
 
@@ -244,12 +248,14 @@ Exercises.StackView = Backbone.View.extend({
     /**
      * Animate pushing card onto head of stack
      */
-    animatePush: function() {
+    animatePush: function(card) {
+
+        var context = _.extend({}, card.attributes, { index: this.collection.length });
 
         return this.el
             .find(".stack")
                 .prepend(
-                    $(Templates.get("exercises.card")({ index: this.collection.length }))
+                    $(Templates.get("exercises.card")(context))
                         .css("display", "none")
                 )
                 .find(".card-container")
