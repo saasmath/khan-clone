@@ -353,33 +353,50 @@ function KnowledgeMapInitGlobals() {
 
                 // If keydown is an arrow key
                 $(document).keydown(function(e) {
-                    var delta_v = 0, delta_h = 0;
+                    var delta_v = 0, delta_v_fine = 0, delta_h = 0, delta_h_fine = 0;
 
-                    if (e.keyCode == 37) {
-                        delta_v = -1; // Left
-                    }
-                    if (e.keyCode == 38) {
-                        delta_h = -1; // Up
-                    }
-                    if (e.keyCode == 39) {
-                        delta_v = 1; // Right
-                    }
-                    if (e.keyCode == 40) {
-                        delta_h = 1; // Down
+                    if (e.altKey === true) {
+                        if (e.keyCode == 37) {
+                            delta_v_fine = -10; // Left
+                        }
+                        if (e.keyCode == 38) {
+                            delta_h_fine = -10; // Up
+                        }
+                        if (e.keyCode == 39) {
+                            delta_v_fine = 10; // Right
+                        }
+                        if (e.keyCode == 40) {
+                            delta_h_fine = 10; // Down
+                        }
+                    } else {
+                        if (e.keyCode == 37) {
+                            delta_v = -1; // Left
+                        }
+                        if (e.keyCode == 38) {
+                            delta_h = -1; // Up
+                        }
+                        if (e.keyCode == 39) {
+                            delta_v = 1; // Right
+                        }
+                        if (e.keyCode == 40) {
+                            delta_h = 1; // Down
+                        }
                     }
 
-                    if (delta_v != 0 || delta_h != 0) {
+                    if (delta_v !== 0 || delta_v_fine !== 0 || delta_h !== 0 || delta_h_fine !== 0) {
                         var id_array = [];
 
                         $.each(self.parent.selectedNodes, function(node_name) {
                             var actual_node = self.parent.dictNodes[node_name];
 
                             actual_node.v_position = parseInt(actual_node.v_position) + delta_v;
+                            actual_node.v_position_fine = parseInt(actual_node.v_position_fine) + delta_v_fine;
                             actual_node.h_position = parseInt(actual_node.h_position) + delta_h;
+                            actual_node.h_position_fine = parseInt(actual_node.h_position_fine) + delta_h_fine;
 
                             id_array.push(node_name);
                         });
-                        $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v });
+                        $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_h_fine: delta_h_fine, delta_v: delta_v, delta_v_fine: delta_v_fine });
 
                         var zoom = self.parent.map.getZoom();
                         self.parent.markers = [];
@@ -974,8 +991,8 @@ function KnowledgeMap(params) {
 
     this.drawMarker = function(node, zoom) {
 
-        var lat = -1 * (node.h_position - 1) * KnowledgeMapGlobals.nodeSpacing.lat;
-        var lng = (node.v_position - 1) * KnowledgeMapGlobals.nodeSpacing.lng;
+        var lat = -1 * (node.h_position - 1 + (node.h_position_fine / 100)) * KnowledgeMapGlobals.nodeSpacing.lat;
+        var lng = (node.v_position - 1 + (node.v_position_fine / 100)) * KnowledgeMapGlobals.nodeSpacing.lng;
 
         node.latLng = new google.maps.LatLng(lat, lng);
 

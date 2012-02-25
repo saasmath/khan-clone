@@ -127,7 +127,9 @@ class Exercise(db.Model):
     prerequisites = db.StringListProperty()
     covers = db.StringListProperty()
     v_position = db.IntegerProperty() # actually horizontal position on knowledge map
+    v_position_fine = db.IntegerProperty(default=0) # hundredths
     h_position = db.IntegerProperty() # actually vertical position on knowledge map
+    h_position_fine = db.IntegerProperty(default=0) # hundredths
     seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM) # Seconds expected to finish a problem 'quickly' for badge calculation
 
     # True if this exercise is live and visible to all users.
@@ -3366,7 +3368,9 @@ class Video(Searchable, db.Model):
         exvids.filter('video =', self.key())
         exercises = [ev.exercise for ev in exvids]
         exercises.sort(key=lambda e: e.h_position)
+        exercises.sort(key=lambda e: e.h_position_fine)
         exercises.sort(key=lambda e: e.v_position)
+        exercises.sort(key=lambda e: e.v_position_fine)
         return exercises
 
     @staticmethod
@@ -4528,9 +4532,11 @@ class UserExerciseGraph(object):
         return self.graph.get(exercise_name)
 
     def graph_dicts(self):
-        return sorted(sorted(self.graph.values(),
+        return sorted(sorted(sorted(sorted(self.graph.values(),
                              key=lambda graph_dict: graph_dict["v_position"]),
-                             key=lambda graph_dict: graph_dict["h_position"])
+                             key=lambda graph_dict: graph_dict["v_position_fine"]),
+                             key=lambda graph_dict: graph_dict["h_position"]),
+                             key=lambda graph_dict: graph_dict["h_position_fine"])
 
     def proficient_exercise_names(self):
         return [graph_dict["name"] for graph_dict in self.proficient_graph_dicts()]
@@ -4687,7 +4693,9 @@ class UserExerciseGraph(object):
                 "name": exercise.name,
                 "display_name": exercise.display_name,
                 "h_position": exercise.h_position,
+                "h_position_fine": exercise.h_position_fine,
                 "v_position": exercise.v_position,
+                "v_position_fine": exercise.v_position_fine,
                 "summative": exercise.summative,
                 "num_milestones": exercise.num_milestones,
                 "proficient": None,
@@ -4749,9 +4757,11 @@ class UserExerciseGraph(object):
             if is_boundary(graph_dict):
                 boundary_graph_dicts.append(graph_dict)
 
-        boundary_graph_dicts = sorted(sorted(boundary_graph_dicts,
+        boundary_graph_dicts = sorted(sorted(sorted(sorted(boundary_graph_dicts,
                              key=lambda graph_dict: graph_dict["v_position"]),
-                             key=lambda graph_dict: graph_dict["h_position"])
+                             key=lambda graph_dict: graph_dict["v_position_fine"]),
+                             key=lambda graph_dict: graph_dict["h_position"]),
+                             key=lambda graph_dict: graph_dict["h_position_fine"])
 
         return [graph_dict["name"]
                     for graph_dict in boundary_graph_dicts]

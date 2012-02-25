@@ -34,13 +34,17 @@ class MoveMapNodes(request_handler.RequestHandler):
     def get(self):
         node_list = string.split(self.request_string('exercises'), ',')
         delta_h = self.request_int('delta_h')
+        delta_h_fine = self.request_int('delta_h_fine')
         delta_v = self.request_int('delta_v')
+        delta_v_fine = self.request_int('delta_v_fine')
 
         for node_id in node_list:
             exercise = models.Exercise.get_by_name(node_id)
 
             exercise.h_position += delta_h
+            exercise.h_position_fine += delta_h_fine
             exercise.v_position += delta_v
+            exercise.v_position_fine += delta_v_fine
 
             exercise.put()
 
@@ -299,7 +303,9 @@ def exercise_graph_dict_json(user_data, admin=False):
             'progress_display': models.UserExercise.to_progress_display(graph_dict["progress"]),
             'longest_streak': graph_dict["longest_streak"],
             'h_position': graph_dict["h_position"],
+            'h_position_fine': graph_dict["h_position_fine"],
             'v_position': graph_dict["v_position"],
+            'v_position_fine': graph_dict["v_position_fine"],
             'summative': graph_dict["summative"],
             'num_milestones': graph_dict.get("num_milestones", 0),
             'goal_req': (graph_dict["name"] in goal_exercises),
@@ -677,8 +683,14 @@ class UpdateExercise(request_handler.RequestHandler):
         if "v_position" in dict:
             exercise.v_position = int(dict["v_position"])
 
+        if "v_position_fine" in dict:
+            exercise.v_position_fine = int(dict["v_position_fine"])
+
         if "h_position" in dict:
             exercise.h_position = int(dict["h_position"])
+
+        if "h_position_fine" in dict:
+            exercise.h_position_fine = int(dict["h_position_fine"])
 
         if "short_display_name" in dict:
             exercise.short_display_name = dict["short_display_name"]
@@ -773,7 +785,9 @@ class UpdateExercise(request_handler.RequestHandler):
 
         dict["summative"] = self.request_bool('summative', default=False)
         dict["v_position"] = self.request.get('v_position')
+        dict["v_position_fine"] = self.request.get('v_position_fine')
         dict["h_position"] = self.request.get('h_position')
+        dict["h_position_fine"] = self.request.get('h_position_fine')
         dict["short_display_name"] = self.request.get('short_display_name')
         dict["live"] = self.request_bool("live", default=False)
 
