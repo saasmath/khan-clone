@@ -12,6 +12,7 @@
 }
 
 .ontop {
+    display: block;
     margin: 30px -30px auto -30px;
     padding: 19px;
 

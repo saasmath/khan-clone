@@ -214,7 +214,7 @@ Socrates.QuestionView = Backbone.View.extend({
     className: "question",
 
     events: {
-        "click .submit-area .submit": "submit",
+        "submit form": "submit",
         "click .submit-area a.skip": "skip",
         "click .submit-area a.see-answer": "seeAnswerClicked"
     },
@@ -538,7 +538,9 @@ Socrates.QuestionView = Backbone.View.extend({
     },
 
     submit: function(evt) {
-        var $button = $(evt.currentTarget);
+        evt.preventDefault();
+        var $form = $(evt.currentTarget);
+        var $button = $form.find(".submit");
 
         // when question has been answered correctly, the submit button
         // says continue.
