@@ -41,6 +41,22 @@ var Exercises = {
         Handlebars.registerPartial("card", Templates.get("exercises.card"));
         Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
 
+        // Add a {{#each_with_index cards}} helper for iterating and keeping
+        // track of the iteration index
+        Handlebars.registerHelper("each_with_index", function(collection, fxn) {
+
+            var buffer = "";
+            var ix = 0;
+
+            collection.each(function(context) {
+                context.index = ix++;
+                buffer += fxn(context);
+            });
+
+            return buffer;
+
+        });
+
         var profileExercise = Templates.get("exercises.exercise");
 
         $(".exercises-content-container").html(profileExercise({
@@ -233,7 +249,7 @@ Exercises.StackView = Backbone.View.extend({
         return this.el
             .find(".stack")
                 .prepend(
-                    $(Templates.get("exercises.card")())
+                    $(Templates.get("exercises.card")({ index: this.collection.length }))
                         .css("display", "none")
                 )
                 .find(".card-container")
