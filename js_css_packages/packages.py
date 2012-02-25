@@ -76,12 +76,12 @@ javascript = {
     "socrates": {
         "files": [
             "underscore.string.js",
-            "poppler.js",
             "../topicsadmin-package/jquery.ui.draggable.js",
             "jquery.ui.resizable.js",
             "inputtext.handlebars",
             "socrates-nav.handlebars",
             "submit-area.handlebars",
+            "poppler.js",
             "socrates.js",
         ]
     },
@@ -91,6 +91,7 @@ javascript = {
     # to another repository.
     "xyAuNHPsq-g": {"allfiles": True},
     "-a_w0_VAo6U": {"allfiles": True},
+    "3XOt1fjWKi8": {"allfiles": True},
 
     "homepage": {
         "files": [

@@ -2,6 +2,11 @@
     display: none;
 }
 
+.video-overlay .question.visible {
+    display: block;
+}
+
+
 /* a layer is used to display form controls over a backdrop */
 .video-overlay .layer {
     position: absolute;
@@ -213,5 +218,9 @@ img.face {
 }
 
 .qtip-question {
+    display: none;
+}
+
+.mem {
     display: none;
 }

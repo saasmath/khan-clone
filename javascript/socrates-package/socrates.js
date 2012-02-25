@@ -280,7 +280,7 @@ Socrates.QuestionView = Backbone.View.extend({
 
     hide: function() {
         this.finishRecordingTime();
-        $(this.el).hide();
+        $(this.el).removeClass("visible");
         return this;
     },
 
@@ -296,7 +296,7 @@ Socrates.QuestionView = Backbone.View.extend({
 
     show: function() {
         this.startTime = +new Date();
-        $(this.el).show();
+        $(this.el).addClass("visible");
         this.qtip();
         return this;
     },
@@ -414,6 +414,7 @@ Socrates.QuestionView = Backbone.View.extend({
 
     seeAnswerClicked: function() {
         this.$(".submit-area .submit").prop("disabled", true);
+        this.showMem();
         this.loadAnswer();
     },
 
@@ -472,7 +473,6 @@ Socrates.QuestionView = Backbone.View.extend({
                     $(input).prop("checked", answer[rowName][headers[i]]);
                 });
             });
-
         });
         return data;
     },
@@ -576,14 +576,29 @@ Socrates.QuestionView = Backbone.View.extend({
         if (response.correct) {
             this.$(".submit-area .alert-error").hide();
             this.$(".submit-area .alert-success").show();
-            $button.html("Continue");
 
-            // in 3s, resume the video
-            _.delay(_.bind(this.fireAnswered, this), 3000);
+            if ($button) {
+                $button.html("Continue");
+            }
+
+            if (this.hasMem()) {
+                this.showMem();
+            } else {
+                // otherwise resume the video in 3s
+                _.delay(_.bind(this.fireAnswered, this), 3000);
+            }
         } else {
             this.$(".submit-area .alert-success").hide();
             this.$(".submit-area .alert-error").show();
         }
+    },
+
+    hasMem: function() {
+        return !!this.$(".mem").length;
+    },
+
+    showMem: function() {
+        this.$(".mem").slideDown();
     },
 
     skip: function() {
