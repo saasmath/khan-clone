@@ -32,6 +32,7 @@ var Exercises = {
         this.completeStack = new Exercises.StackCollection(this.userTopic.completeStack); 
 
         Exercises.render();
+        Exercises.nextCard();
     },
 
     render: function() {
