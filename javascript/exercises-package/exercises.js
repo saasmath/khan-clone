@@ -79,7 +79,15 @@ var Exercises = {
         // instead of khan-exercises so we have better control of when to
         // render the results of khan-exercises or, alternatively, other
         // content inside of each card.
-        $(Khan).bind("newProblem", function() { Exercises.nextCard(); });
+        $(Khan).bind("problemDone", function() {
+
+            // Start the next card process
+            Exercises.nextCard();
+
+            // Return false so we take control of when nextProblem is triggered
+            return false;
+
+        });
 
         // At the end of the stack we show the user all sorts of goodies
         this.incompleteStack.bind("stackComplete", function() { Exercises.endOfStack(); });
@@ -112,6 +120,8 @@ var Exercises = {
 
             // Wait for push-to-right animations to finish
             $.when.apply(null, animationOptions.deferreds).done(function() {
+
+                $(Khan).trigger("renderNextProblem");
 
                 // Pop from left
                 Exercises.currentCard = Exercises.incompleteStack.pop(animationOptions);
