@@ -92,6 +92,7 @@ javascript = {
     "xyAuNHPsq-g": {"allfiles": True},
     "-a_w0_VAo6U": {"allfiles": True},
     "3XOt1fjWKi8": {"allfiles": True},
+    "U2ovEuEUxXQ": {"allfiles": True},
 
     "homepage": {
         "files": [
