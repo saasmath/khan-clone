@@ -675,6 +675,7 @@ Socrates.QuestionRouter = Backbone.Router.extend({
         recursiveTrigger(_.bind(this.poppler.trigger, this.poppler));
     },
 
+    // todo(dmnd) remove magic numbers, use named constants
     playerStateChange: function(evt, state) {
         if (state === 1) { // playing
             if (this.ignoreNextPlay) {
