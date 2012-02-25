@@ -322,25 +322,25 @@ Socrates.QuestionView = Backbone.View.extend({
         data = {};
 
         // process all matrix-inputs
-        var matrixInputs = this.$("table.matrix-input");
-        data = _.extend(data, this.matrixInputToAnswer(matrixInputs));
+        var $matrixInputs = this.$("table.matrix-input");
+        data = _.extend(data, this.matrixInputToAnswer($matrixInputs));
 
         // process all checkbox-grids
-        var checkboxGrids = this.$("table.checkbox-grid");
-        data = _.extend(data, this.checkBoxGridToAnswer(checkboxGrids));
+        var $checkboxGrids = this.$("table.checkbox-grid");
+        data = _.extend(data, this.checkBoxGridToAnswer($checkboxGrids));
 
         // process the result of the inputs
-        var inputs = this.$("input").
-            not(matrixInputs.find("input")).
-            not(checkboxGrids.find("input"));
+        var $inputs = this.$("input").
+            not($matrixInputs.find("input")).
+            not($checkboxGrids.find("input"));
 
-        data = _.extend(data, this.freeInputsToAnswer(inputs));
+        data = _.extend(data, this.freeInputsToAnswer($inputs));
         return data;
     },
 
-    matrixInputToAnswer: function(matrixInputs) {
+    matrixInputToAnswer: function($matrixInputs) {
         var data = {};
-        _.each(matrixInputs, function(table) {
+        _.each($matrixInputs, function(table) {
             var matrix = _.map($(table).find("tr"), function(tr) {
                 return _.map($(tr).find("input"), function(input) {
                     return parseFloat($(input).val());
@@ -353,9 +353,9 @@ Socrates.QuestionView = Backbone.View.extend({
         return data;
     },
 
-    checkBoxGridToAnswer: function(checkboxGrids) {
+    checkBoxGridToAnswer: function($checkboxGrids) {
         var data = {};
-        _.each(checkboxGrids, function(grid) {
+        _.each($checkboxGrids, function(grid) {
             var headers = _.map($(grid).find("thead th"), function(td) {
                 return $(td).attr("name");
             });
@@ -375,15 +375,22 @@ Socrates.QuestionView = Backbone.View.extend({
         return data;
     },
 
-    freeInputsToAnswer: function(inputs) {
+    freeInputsToAnswer: function($inputs) {
         var data = {};
-        _.each(inputs, function(el) {
+        $inputs.each(function(i, el) {
             var $el = $(el);
             var key = $el.attr("name");
 
             var val;
-            if (_.include(["checkbox", "radio"], $el.attr("type"))) {
+            if ($el.attr("type") === "checkbox") {
                 val = $el.prop("checked");
+            } else if ($el.attr("type") === "radio") {
+                if ($el.prop("checked")) {
+                    val = $el.val();
+                } else {
+                    // ignore if it's an unchecked radio button
+                    return true; // continue
+                }
             } else {
                 val = $el.val();
             }
@@ -414,19 +421,19 @@ Socrates.QuestionView = Backbone.View.extend({
         var data = $.extend(true, {}, this.model.get("correctData"));
 
         // process all matrix-inputs
-        var matrixInputs = this.$("table.matrix-input");
-        data = this.answerToMatrixInputs(matrixInputs, data);
+        var $matrixInputs = this.$("table.matrix-input");
+        data = this.answerToMatrixInputs($matrixInputs, data);
 
         // process all checkbox-grids
-        var checkboxGrids = this.$("table.checkbox-grid");
-        data = this.answerToCheckboxGrids(checkboxGrids, data);
+        var $checkboxGrids = this.$("table.checkbox-grid");
+        data = this.answerToCheckboxGrids($checkboxGrids, data);
 
         // process the result of the inputs
-        var inputs = this.$("input").
-            not(matrixInputs.find("input")).
-            not(checkboxGrids.find("input"));
+        var $inputs = this.$("input").
+            not($matrixInputs.find("input")).
+            not($checkboxGrids.find("input"));
 
-        data = this.answerToFreeInputs(inputs, data);
+        data = this.answerToFreeInputs($inputs, data);
 
         // by now data should be empty
         if (!_.isEmpty(data)) {
@@ -434,8 +441,8 @@ Socrates.QuestionView = Backbone.View.extend({
         }
     },
 
-    answerToMatrixInputs: function(matrixInputs, data) {
-        _.each(matrixInputs, function(table) {
+    answerToMatrixInputs: function($matrixInputs, data) {
+        _.each($matrixInputs, function(table) {
             var name = $(table).attr("name") || "answer";
             var matrix = data[name];
 
@@ -450,8 +457,8 @@ Socrates.QuestionView = Backbone.View.extend({
         return data;
     },
 
-    answerToCheckboxGrids: function(checkboxGrids, data) {
-        _.each(checkboxGrids, function(grid) {
+    answerToCheckboxGrids: function($checkboxGrids, data) {
+        _.each($checkboxGrids, function(grid) {
             var name = $(grid).attr("name") || "answer";
             var answer = data[name];
 
@@ -470,8 +477,8 @@ Socrates.QuestionView = Backbone.View.extend({
         return data;
     },
 
-    answerToFreeInputs: function(inputs, data) {
-        _.each(inputs, function(el) {
+    answerToFreeInputs: function($inputs, data) {
+        $inputs.each(function(i, el) {
             var $el = $(el);
             var key = $el.attr("name");
 
@@ -485,8 +492,17 @@ Socrates.QuestionView = Backbone.View.extend({
                 delete data[key];
             }
 
-            if (_.include(["checkbox", "radio"], $el.attr("type"))) {
+            if ($el.attr("type") === "checkbox") {
                 $el.prop("checked", val);
+            } if ($el.attr("type") === "radio") {
+                if ($el.val() === val) {
+                    $el.prop("checked", true);
+                }
+                else {
+                    // put the item back since we can't use it
+                    data[key] = val;
+                    return true; // continue
+                }
             } else {
                 $el.val(val);
             }
