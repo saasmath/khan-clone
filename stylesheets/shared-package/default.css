@@ -49,27 +49,9 @@ table {
 
 /* End Reset */
 
-.clearfix:after {
-   content: ".";
-   display: block;
-   clear: both;
-   visibility: hidden;
-   line-height: 0;
-   height: 0;
-}
-
-.clearfix {
-   display: inline-block;
-}
-
-html[xmlns] .clearfix {
-   display: block;
-}
-
-* html .clearfix {
-   height: 1%;
-   overflow: visible;
-}
+.clearfix:before, .clearfix:after { content: ""; display: table; }
+.clearfix:after { clear: both; }
+.clearfix { *zoom: 1; }
 
 html, body {
     height: 100%;
@@ -226,7 +208,7 @@ input.simple-button {
 	border-bottom-color: #803503 !important;
 	text-shadow:  0 -1px 0 #a64403;
 }
-.simple-button.disabled {
+.simple-button:disabled, .simple-button.disabled {
     color: #ddd !important;
 }
 .simple-button.seethrough {
@@ -286,6 +268,7 @@ input.simple-button {
     background: #eee;
     background-image: -webkit-gradient(linear, left top, left bottom,  from(#f7f7f7), to(#ddd));
     background-image: -moz-linear-gradient( top, #f7f7f7, #ddd );
+    background-image: -o-linear-gradient( top, #f7f7f7, #ddd );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f7f7f7', endColorstr='#dddddd');
 }
 
@@ -294,6 +277,7 @@ input.simple-button {
     background: #3a4759;
     background-image: -webkit-gradient(linear, left top, left bottom,  from(#3a4759), to(#222e3e));
     background-image: -moz-linear-gradient( top, #3a4759, #222e3e );
+    background-image: -o-linear-gradient( top, #3a4759, #222e3e );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#3a4759', endColorstr='#222e3e');
 }
 /* green button gradient */
@@ -301,6 +285,7 @@ input.simple-button {
     background: #89b908;
     background-image: -webkit-gradient(linear, left top, left bottom,  from(#8aba08), to(#6e9700));
     background-image: -moz-linear-gradient( top, #8aba08, #6e9700 );
+    background-image: -o-linear-gradient( top, #8aba08, #6e9700 );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#8aba08', endColorstr='#6e9700');
 }
 /* orange button gradient */
@@ -308,11 +293,13 @@ input.simple-button {
     background: #e35d04;
     background-image: -webkit-gradient(linear, left top, left bottom,  from(#e35d04), to(#bf4f04));
     background-image: -moz-linear-gradient( top, #e35d04, #bf4f04 );
+    background-image: -o-linear-gradient( top, #e35d04, #bf4f04 );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e35d04', endColorstr='#bf4f04');
 }
 .action-gradient.seethrough {
     background-image: -webkit-gradient(linear, left top, left bottom,  from(rgba(255,255,255, .5)), to(rgba(255,255,255, .0)));
     background-image: -moz-linear-gradient( top, rgba(255,255,255, .5), rgba(255,255,255, 0) );
+    background-image: -o-linear-gradient( top, rgba(255,255,255, .5), rgba(255,255,255, 0) );
 }
 
 .mobile-only { display: none; }
@@ -733,43 +720,43 @@ footer {
 
 /* End of visual indicator styles */
 
-#playlist-jump > span {
+#topic-jump > span {
     float: left;
     font-size: 15px;
     color: #555;
     text-shadow: 0 1px 0 rgba(255, 255, 255, .9);
     font-weight: bold;
 }
-#playlist-jump nav ul {
+#topic-jump nav ul {
     margin: 0;
     padding: 0;
 }
-#playlist-jump nav > ul > li {
+#topic-jump nav > ul > li {
     font-size: 15px;
     color: #333;
     text-shadow: 0 1px 0 rgba(255, 255, 255, .9);
 }
-#playlist-jump nav > ul > li.solo > a:visited {
+#topic-jump nav > ul > li.solo > a:visited {
     color: #333;
 }
-#playlist-jump nav > ul > li.solo > a:hover {
+#topic-jump nav > ul > li.solo > a:hover {
     color: #00659E;
 }
-#playlist-jump nav > ul > li:hover {
+#topic-jump nav > ul > li:hover {
     color: #00659E;
     text-shadow: 0 0 5px #fff;
 }
-#playlist-jump nav > ul > li > ul > li.sub {
+#topic-jump nav > ul > li > ul > li.sub {
     background: transparent;
     color: #aaa;
     text-shadow: 0 1px 0 rgba(255, 255, 255, .9);
     font-style: italic;
     padding-left: 2px;
 }
-#playlist-jump nav > ul > li > ul > li.sub li {
+#topic-jump nav > ul > li > ul > li.sub li {
     font-style: normal;
 }
-#playlist-jump nav > ul > li ul {
+#topic-jump nav > ul > li ul {
     font-size: 12px;
 }
 #social-actions #fb-like-badge {
@@ -880,34 +867,25 @@ footer {
     #top-header #top-header-links span.username_and_notification_shift { left: 12px; }
     #top-header #user-info img { position:relative; top:-1px; }
 
+    #top-header #user-info .username_and_notification .user-avatar {
+        width: 16px;
+        height: 16px;
+        padding: 0 4px;
+    }
+
     #top-header #top-header-links .page_links a.notification_link {
         border-bottom: 0;
     }
 
-    #top-header a.notification_link span.notification_bubble {
-        width: 16px;
-        height: 16px;
+    #top-header #top-header-links a.notification_link span.notification_bubble {
+        float: none;
+
         position: relative;
         top: 9px;
         left: -9px;
-        background: #DD6900;
-        text-align: center;
-        font-size: 11px;
-
-        -webkit-border-radius: 5px;
-        -moz-border-radius: 5px;
-        border-radius: 5px;
 
         opacity: 0.75;
         filter:alpha(opacity=75);
-
-        /* X-browser inline-block support */
-        display:-moz-inline-stack;
-        display:inline-block;
-        zoom:1;
-    }
-    .lte7 #top-header a.notification_link span.notification_bubble {
-        display:inline;
     }
 
     #login-menu .fb_button, #login-menu .fb_button_rtl {
@@ -1127,17 +1105,17 @@ div.video summary {
     font-weight: bold;
 }
 
-div.video label.video_playlist_prev {
+div.video label.video_topic_prev {
     float: left;
     border-right: solid 1px white;
 }
 
-div.video label.video_playlist_next {
+div.video label.video_topic_next {
     float: right;
     border-left: solid 1px white;
 }
 
-div.video div.video_playlist_container {
+div.video div.video_topic_container {
     clear: both;
     border-top: 1px solid grey;
     overflow: hidden;
@@ -1149,7 +1127,7 @@ div.video ol li {
     vertical-align: top;
 }
 
-div.video ol li, div.video summary, div.video label.video_playlist_prev, div.video label.video_playlist_next {
+div.video ol li, div.video summary, div.video label.video_topic_prev, div.video label.video_topic_next {
     padding: .5ex 3px .5ex 3px;
 }
 
@@ -1213,6 +1191,7 @@ a:link.google-analytics-link-track
 
 .right { text-align: right; }
 .left { text-align: left; }
+.center { text-align: center; }
 .justify { text-align: justify; }
 
 
@@ -1282,34 +1261,76 @@ a:link.google-analytics-link-track
 				color: #999;
 			}
 
-	#library #library-content {
+	#library-content {
 		background-color: #fff;
 		border-top: 0;
 	}
-		#library #library-content #library-content-main {
+		#library-content #library-content-main {
 			padding: 0 0 38px;
 		}
-			#library #library-content #library-content-main h2 {
+			#library-content .library-content-header h2 {
 				margin-top: 0;
 				margin-bottom: .9em;
 				color: #333;
 			}
-			#library #library-content #library-content-main h2.playlist-heading {
+			#library-content .library-content-header h2.topic-heading {
                 margin-top: 38px;
 				margin-bottom: 5px;
 				font-size: 18px
 			}
-			#library #library-content #library-content-main p.playlist-desc {
+			#library-content .library-content-header h2.subtopic-1-heading {
+                font-size: 16px;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                line-height: 16px;
+			}
+            #library-content .library-content-header h2.subtopic-1-heading.topic-heading-first {
+                margin-top: 4px;
+			}
+            #library-content div.subtopic-jump-fix {
+                position: relative;
+                top: -20px;
+            }
+            #library-content div.subtopic-jump-fix.first {
+                top: -35px;
+            }
+			#library-content .library-content-header h2.subtopic-2-heading {
+                font-size: 14px;
+                margin-top: 6px;
+                margin-bottom: 0;
+                line-height: 16px;
+                font-style: italic;
+			}
+            #library-content .subtopic-indent {
+                position: relative;
+                margin-left: 24px;
+            }
+            #library-content .subtopic-indent-line {
+                width: 5px;
+                top: 8px;
+                bottom: 6px;
+                left: -22px;
+                background-color: #DDD;
+                position: absolute;
+
+                -webkit-border-radius: 5px;
+                -moz-border-radius: 5px;
+                border-radius: 5px;
+            }
+            #library-content .subtopic-indent-line.content {
+                top: 4px;
+            }
+			#library-content .library-content-list p.topic-desc {
 				color: #555;
 				margin: 0 0 10px;
 				font-size: 13px;
 			}
-            #library #library-content #library-content-main ol {
+            #library-content .library-content-list ol {
                 list-style: none none;
                 margin-left: -15px;
                 padding-left: 0;
             }
-            #library #library-content #library-content-main li {
+            #library-content .library-content-list li {
                 display: list-item;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -1317,13 +1338,13 @@ a:link.google-analytics-link-track
                 color: #666666;
                 line-height: 18px;
             }
-			#library #library-content #library-content-main a.vl {
+			#library-content .library-content-list a.vl {
 				font-weight: normal;
 				padding: 0 2px 0 2px;
 				line-height: 18px;
                 text-decoration: none;
 			}
-			#library #library-content #library-content-main a.vl:hover {
+			#library-content .library-content-list a.vl:hover {
                 color: black;
 			}
 
@@ -1335,8 +1356,18 @@ ul.ui-autocomplete .ui-menu-item a {
     cursor: pointer;
 }
 
-ul.ui-autocomplete .ui-menu-item a span.playlist {
+ul.ui-autocomplete .ui-menu-item a span.autocomplete-topic {
     color: #898989;
+    font-style: italic;
+}
+
+ul.ui-autocomplete .ui-menu-item a span.autocomplete-video {
+    color: #598959;
+    font-style: italic;
+}
+
+ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
+    color: #595989;
     font-style: italic;
 }
 
@@ -1600,10 +1631,10 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     }
 
     /* Specifically for videos (i.e. in New Goal view) */
-    #container .dashboard-header .dashboard-nav .playlist_browser {
+    #container .dashboard-header .dashboard-nav .topic_browser {
         margin: 0px;
     }
-    #container .dashboard-header .dashboard-nav .playlist_browser_title {
+    #container .dashboard-header .dashboard-nav .topic_browser_title {
         margin-top: 2px;
     }
 
@@ -1862,6 +1893,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeee', endColorstr='#dddddd');
     background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#EEE), to(#ddd));
     background: -moz-linear-gradient( top, #eee, #ddd );
+    background: -o-linear-gradient( top, #eee, #ddd );
 
     -moz-box-shadow: 0 1px 1px #ccc;
     -webkit-box-shadow: 0 1px 1px #ccc;
@@ -1879,6 +1911,7 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .badge-award-container .achievement-badge {
         cursor: pointer;
         margin: 10px 0;
+        width: 300px;
     }
     .achievement-badge .energy-points-badge {
         padding: 1px 0 0;
@@ -1889,13 +1922,13 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
         right: 5px;
         top: 7px;
     }
+    .achievement-badge .achievement-text {
+        margin: 0 15px 0 47px;
+        padding: 7px 0;
+    }
     .achievement-badge .achievement-title {
         font-weight: bold;
-        position: absolute;
-        left: 47px;
-        top: 8px;
         font-size: larger;
-        width: 170px;
     }
     .achievement-badge .achievement-title .frequency {
         font-size: 12px;
@@ -1904,27 +1937,32 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     .achievement-badge .achievement-count {
         font-size: 16px;
         font-weight: bold;
-        position: absolute;
-        width: 40px;
         text-align: center;
+        float: left;
+        clear: left;
+        width: 45px;
     }
     .achievement-badge .achievement-desc {
-        position: relative;
-        left: 47px;
-        width: 250px;
         font-size: 11px;
-        margin-top: 4px;
+        line-height: 13px;
+        margin: 8px 0 0;
+        max-height: 39px;
         font-style: italic;
-        line-height: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
     }
-    .achievement-badge .achievement-desc-no-count {
-        left: 5px;
-        width: 290px;
+    .achievement-badge .achievement-desc.expanded {
+        max-height: 494px;
+        -webkit-line-clamp: 38;
     }
     .achievement-badge #badge-icon {
         width: 40px;
         height: 40px;
         margin: 5px 0 0 5px;
+        float: left;
     }
     .achievement-badge.category-0 #badge-icon {
         margin-top: 1px;
@@ -1980,59 +2018,6 @@ ul.ui-autocomplete .ui-menu-item a span.playlist {
     font-size: 15px;
     color: #333;
     display: block;
-}
-
-.achievement-badge.category-5 {
-    width: auto;
-    height: auto;
-    min-width: 190px;
-    text-align: center;
-    background: none;
-    border: none;
-    opacity: .5;
-    filter: alpha(opacity=50);
-}
-    .achievement-badge.category-5 #badge-icon {
-        width: 100px;
-        height: 100px;
-        margin: 0 auto;
-    }
-    .achievement-badge.category-5 .achievement-title {
-        position: static;
-        width: auto;
-    }
-    .achievement-badge.category-5 .energy-points-badge {
-        position: absolute;
-        left: auto;
-        top: 6px;
-        right: -10px;
-    }
-    .achievement-badge.category-5 .achievement-desc {
-        position: static;
-        width: auto;
-    }
-    .achievement-badge.category-5 #outline-box {
-        border-top: none;
-    }
-.badge-award-container {width:302px;}
-.badge-award-container .achievement-badge.category-5, .achievement-badge.category-5.achievement-badge-owned {
-    border: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    box-shadow: none;
-    opacity: 1;
-    filter: alpha(opacity=100);
-}
-    .achievement-badge.category-5.achievement-badge-owned .achievement-title,
-    .achievement-badge.category-5.achievement-badge-owned .achievement-desc {
-        text-shadow: 1px 1px 1px #ccc;
-    }
-
-.badge-award-container .achievement-badge.category-5 {
-    min-width: 195px;
-}
-.badge-award-container .achievement-badge.category-5 .energy-points-badge {
-    right: -5px;
 }
 
 #container h3 {
@@ -2095,6 +2080,10 @@ a.proficient-badge {
     z-index:10;
 }
 
+a.proficient-badge.disabled {
+    cursor: not-allowed;
+}
+
 .exercise-badge.single-exercise .energy-points-badge {
     left: auto;
     right: 5px;
@@ -2121,6 +2110,7 @@ a.proficient-badge {
     width:325px;
     background-image:-webkit-gradient(linear, left top, right top, from(#eee), to(#ccc));
     background-image: -moz-linear-gradient( left, #eee, #ccc );
+    background-image: -o-linear-gradient( left, #eee, #ccc );
     filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#eeeeee', endColorstr='#cccccc');
     background-position:0 0;
     border:1px solid rgb(204,204,204);
@@ -2445,6 +2435,7 @@ a.proficient-badge {
         .video_extra_links .video-energy-points,
         #user-info .energy-points-badge,
         #profile-header #high-level-stats .energy-points-badge,
+        #top-header a.notification_link span.notification_bubble,
         .energy-points-badge {
             background: #005987;
             float: right;
@@ -2727,6 +2718,10 @@ a.proficient-badge {
     max-width: 63%;
 }
 
+.spinealign .col1 { text-align:right; }
+.spinealign .col2 { text-align:left; }
+
+
 /* End One-off page styles */
 /* Download page styles */
 #downloads {
@@ -2846,6 +2841,10 @@ a.proficient-badge {
         #the-team .team-card .card-info .contact-blog {
             background: url(/images/contact-blog.png) no-repeat left center;
             /*! data-uri(/images/contact-blog.png) */
+        }
+        #the-team .team-card .card-info .contact-ka {
+            background: url(/images/contact-ka.png) no-repeat left center;
+            /*! data-uri(/images/contact-blog.ka) */
         }
 /* end of team styles */
 /* Blog styles */
@@ -3119,13 +3118,25 @@ div.arrow-right-shadow, div.arrow-left-shadow {
         right: 6px;
     }
 
-#homepage .playlist_browser {
+#homepage .topic_browser {
     padding: 4px 10px;
     background: #E9EFDD;
     border: 1px solid #C6D1AD;
     margin-bottom: 0;
 }
-#homepage .playlist_browser_title {
+#homepage .subtopic_browser {
+    padding: 4px 10px;
+    background: #F4F7EE;
+    border: 1px solid #C6D1AD;
+    margin-bottom: 0;
+}
+#homepage .subtopic_browser .css-menu {
+    z-index: 0;
+}
+#homepage .subtopic_browser li {
+    overflow: visible;
+}
+#homepage .topic_browser_title {
     display: inline-block;
     float: left;
 }
@@ -3207,71 +3218,6 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     width: 125px;
 }
 /* End about the site */
-
-/* Login Page Styles */
-
-#login-page {
-    padding-top: 18px;
-}
-#login-page h3 {
-    color: #555;
-}
-#login-page a:visited {
-    color: #0075b1;
-}
-#login-page .providers-sign-up li {
-    float: left;
-    padding-right: 20px;
-    font-size: 15px;
-}
-#login-page .providers li {
-    float: left;
-    border: 1px solid #ccc;
-    border-bottom-color: #aaa;
-    border-right-color: #bbb;
-    text-align: left;
-    padding: 10px;
-    margin-right: 20px;
-    min-height: 80px;
-    position: relative;
-
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-
-    -moz-box-shadow: 2px 2px 5px #ccc;
-    -webkit-box-shadow: 2px 2px 5px #ccc;
-    box-shadow: 2px 2px 5px #ccc;
-}
-#login-page .providers li:hover,
-#login-page .providers li:active {
-    border-color: #aaa;
-    left: 2px;
-    top: 2px;
-
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-}
-#login-page .providers li .sign-in-text {
-    color: #777;
-    margin-bottom: 10px;
-}
-#login-page #feature-list {
-    width: 100%;
-}
-#login-page #feature-list div.feature {
-    width: 33%;
-    float: left;
-    text-align: center;
-}
-#login-page #feature-list div.feature img {
-    border: 1px solid #AAA;
-    -webkit-box-shadow: 1px  2px 2px #CCC;
-    -moz-box-shadow: 1px 2px 2px #CCC;
-    box-shadow: 1px 2px 2px #CCC;
-}
-/* End login page style */
 
 /* Report a problem styles */
 #report-problem ol {
@@ -3398,6 +3344,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#eeeeee', endColorstr='#cccccc');
     background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#EEE), to(#CCC));
     background: -moz-linear-gradient( top, #eee, #ccc );
+    background: -o-linear-gradient( top, #eee, #ccc );
     border-top: 1px solid #f7f7f7;
     border-bottom: 1px solid #BBB;
     display: block;
@@ -3461,9 +3408,8 @@ a.nodeLabel:hover {
 .nodeLabelHidden {
     display: none;
 }
-.nodeLabelFiltered {
-    opacity: 0.3;
-    filter:alpha(opacity=30);
+.nodeLabelFiltered div {
+    color: #444;
 }
 .nodeLabelProficient div {
 }
@@ -3785,7 +3731,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 /* There are 5 places where video completion icons are shown:
  * 1. Homepage
  * 2. Previous and next videos on video page
- * 3. Playlist dropdown on video page
+ * 3. Topic dropdown on video page
  * 4. Related videos in top left of exercises page
  * 5. Related videos in sidebar of exercises page
  *
@@ -3811,6 +3757,11 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 #devpanel {
    margin: 9px auto;
    width:500px;
+}
+
+#modpanel {
+   margin: 9px auto;
+   width:1000px;
 }
 
 .images-email-gray {
@@ -3861,50 +3812,50 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: url(/images/email-button-24.png) no-repeat;
 }
 
-#search-playlists span.highlighted {
+#search-topics span.highlighted {
     font-weight: bold;
 }
-#search-playlists .playlist {
+#search-topics .topic {
     margin-top: 38px;
     margin-bottom: 5px;
     font-size: 18px
 }
-#search-playlists .videos {
+#search-topics .videos {
     margin-left: 0px;
 }
-#search-playlists .video-result {
+#search-topics .video-result {
     font-size: 14px;
 }
-#search-playlists .description {
+#search-topics .description {
     margin: 2px 0px 0px 0px;
     font-size: 11px;
     line-height: 18px;
 }
-#search-playlists li {
+#search-topics li {
     margin-top: 40px;
     margin-bottom: 40px;
 }
-#search-playlists .match_count {
+#search-topics .match_count {
     font-size: 14px;
 }
-#search-playlists .column {
+#search-topics .column {
     float: left;
     width: 200px;
     padding-right: 20px;
 }
-#search-playlists .column:first-child {
+#search-topics .column:first-child {
     width: 360px;
 }
-#search-playlists .column-heading {
+#search-topics .column-heading {
     width: 180px;
     border-bottom: 2px solid black;
     margin: 0px;
 }
-#search-playlists .column li {
+#search-topics .column li {
     margin: 5px 0px 0px 0px;
     line-height: 14px;
 }
-#search-playlists br {
+#search-topics br {
     clear: left;
 }
 
@@ -3939,3 +3890,48 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     -moz-opacity: 0.2;
     opacity: 0.2;
 }
+
+#popup-dialog .close-button {
+    margin-top: 7px;
+}
+
+#popup-dialog .generic-message-wrapper {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+}
+
+#popup-dialog .dialog-progress-bar {
+    width: 400px;
+    height: 22px;
+    text-align: center;
+    position: relative;
+    top: 20px;
+    margin-left: -200px;
+    z-index: 1;
+}
+#popup-dialog .dialog-progress-bar .ui-progressbar-value {
+    background-image: url('/images/progress-animated.gif');
+}
+
+.modal.generic-dialog {
+  position: fixed;
+  /* set the point on which top and left operate to the middle top edge*/
+  width: 450px;
+  margin: 0 0 0 -225px;
+  top: 90px;
+  left: 50%;
+}
+
+.modal .generic-message {
+    margin: 10px 0;
+}
+
+.modal .generic-button {
+    float: right;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    width: 60px;
+    text-align: center;
+}
+

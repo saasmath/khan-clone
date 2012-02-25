@@ -260,9 +260,9 @@ span.mod_tools_hidden, span.flag_tools_hidden {
 .video_questions .sticky_note_content {
     background-color: rgb(255, 240, 70);
     padding: 5px;
-    -webkit-box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
-    -moz-box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
-    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.5);
+    -webkit-box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.3);
+    -moz-box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.3);
 }
 
 .video_questions .note {
@@ -405,4 +405,10 @@ div.vote_tools {
 
 div.feedback_flag:hover {
     background: #fff url(/images/flag.png) no-repeat 0 0;
+}
+
+.question.deleted span, 
+.answer.deleted span,
+.comment.deleted {
+    text-decoration: line-through;
 }

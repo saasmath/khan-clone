@@ -46,7 +46,7 @@ class TsvProperty(db.UnindexedProperty):
 
     def get_value_for_datastore(self, model_instance):
         value = super(TsvProperty, self).get_value_for_datastore(model_instance)
-        return db.Text("\t".join(value))
+        return db.Text("\t".join(value or []))
 
     def make_value_from_datastore(self, value):
         return self.str_to_tsv(value)

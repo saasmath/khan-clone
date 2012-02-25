@@ -1,15 +1,15 @@
-import copy
+import os
+import datetime
 import logging
 from itertools import izip
-import datetime
 
 from flask import request, current_app, Response
 
 import models
 import layer_cache
-import topics_list
 import templatetags # Must be imported to register template tags
-from badges import badges, util_badges, models_badges
+from avatars import util_avatars
+from badges import badges, util_badges, models_badges, profile_badges
 from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, make_wrong_attempt
@@ -17,21 +17,23 @@ from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
 from gae_bingo.gae_bingo import bingo
-from autocomplete import video_title_dicts, playlist_title_dicts
+from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
-from profiles import class_progress_report_graph
+from profiles import class_progress_report_graph, recent_activity, suggested_activity
+from common_core.models import CommonCoreMap
+from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
+from app import App
 
 from api import route
-from api.decorators import jsonify, jsonp, compress, decompress, etag,\
+from api.decorators import jsonify, jsonp, pickle, compress, decompress, etag,\
     cacheable, cache_with_key_fxn_and_param
 from api.auth.decorators import oauth_required, oauth_optional, admin_required, developer_required
 from api.auth.auth_util import unauthorized_response
-from api.api_util import api_error_response, api_invalid_param_response, api_created_response, api_unauthorized_response
+from api.api_util import api_error_response, api_invalid_param_response, api_unauthorized_response
 
-from google.appengine.ext import db
-from templatefilters import slugify
+from google.appengine.ext import db, deferred
 
 # add_action_results allows page-specific updatable info to be ferried along otherwise plain-jane responses
 # case in point: /api/v1/user/videos/<youtube_id>/log which adds in user-specific video progress info to the
@@ -79,7 +81,10 @@ def add_action_results(obj, dict_results):
         if len(login_notifications) > 0:
             dict_results["login_notifications_html"] = login_notifications_html(login_notifications, user_data)
 
-    obj.action_results = dict_results
+    if type(obj) == dict:
+        obj['action_results'] = dict_results
+    else:
+        obj.action_results = dict_results
 
 # Return specific user data requests from request
 # IFF currently logged in user has permission to view
@@ -116,136 +121,597 @@ def get_user_data_coach_from_request():
 
     return user_data_coach
 
-@route("/api/v1/playlists", methods=["GET"])
-@jsonp
-@cache_with_key_fxn_and_param(
-    "casing",
-    lambda: "api_playlists_%s" % models.Setting.cached_library_content_date(),
-    layer=layer_cache.Layers.Memcache)
-@jsonify
-def playlists():
-    return models.Playlist.get_for_all_topics()
+def get_user_data_from_json(json, key):
+    """ Return the user_data specified by a username or an email.
 
-@route("/api/v1/playlists/<playlist_title>/videos", methods=["GET"])
-@jsonp
-@cache_with_key_fxn_and_param(
-    "casing",
-    lambda playlist_title: "api_playlistvideos_%s_%s" % (playlist_title, models.Setting.cached_library_content_date()),
-    layer=layer_cache.Layers.Memcache)
-@jsonify
-def playlist_videos(playlist_title):
-    query = models.Playlist.all()
-    query.filter('title =', playlist_title)
-    playlist = query.get()
-
-    if not playlist:
+    Sample usage:
+        get_user_data_from_json(
+                {
+                    'coach': '<username or email>'
+                },
+                'coach'
+            )
+    """
+    if not json or not key or key not in json:
         return None
 
-    return playlist.get_videos()
+    return models.UserData.get_from_username_or_email(json[key])
 
-@route("/api/v1/playlists/<playlist_title>/exercises", methods=["GET"])
+@route("/api/v1/topicversion/<version_id>/topics/with_content", methods=["GET"])
+@route("/api/v1/topics/with_content", methods=["GET"])
+@route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda playlist_title: "api_playlistexercises_%s" % (playlist_title),
+    lambda version_id = None: "api_content_topics_%s_%s" % (version_id, models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @jsonify
-def playlist_exercises(playlist_title):
-    query = models.Playlist.all()
-    query.filter('title =', playlist_title)
-    playlist = query.get()
+def content_topics(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    return models.Topic.get_content_topics(version)
 
-    if not playlist:
-        return None
+# private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
+@route("/api/v1/topics/library/compact", methods=["GET"])
+@cacheable(caching_age=(60 * 60 * 24 * 60))
+@etag(lambda: models.Setting.topic_tree_version())
+@jsonp
+@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
+@layer_cache.cache_with_key_fxn(
+    lambda: "api_topics_library_compact_%s" % models.Setting.topic_tree_version(),
+    layer=layer_cache.Layers.Memcache)
+@compress
+@jsonify
+def topics_library_compact():
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
-    return playlist.get_exercises()
+    def trimmed_item(item, topic):
+        trimmed_item_dict = {}
+        if item.kind() == "Video":
+            trimmed_item_dict['url'] = "/video/%s?topic=%s" %(item.readable_id, topic.id)
+            trimmed_item_dict['key_id'] = item.key().id()
+        elif item.kind() == "Url":
+            trimmed_item_dict['url'] = item.url
+        trimmed_item_dict['title'] = item.title
+        return trimmed_item_dict
+
+    topic_dict = {}
+    for topic in topics:
+        # special cases
+        if ((topic.id == "new-and-noteworthy") or 
+            (topic.standalone_title == "California Standards Test: Geometry" and topic.id != "geometry-2")):
+            continue
+
+        trimmed_info = {}
+        trimmed_info['id'] = topic.id
+        trimmed_info['children'] = [trimmed_item(v, topic) for v in topic.children]
+        topic_dict[topic.id] = trimmed_info
+
+    return topic_dict
+
+@route("/api/v1/topicversion/<version_id>/changelist", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def topic_version_change_list(version_id):
+    version = models.TopicVersion.get_by_id(version_id)
+    return models.VersionContentChange.all().filter("version =", version).fetch(10000)
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
+@route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
+@route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
+@jsonp
+@cache_with_key_fxn_and_param(
+    "casing",
+    (lambda topic_id, version_id = None: "api_topic_videos_%s_%s_%s" % (topic_id, 
+        version_id, 
+        models.Setting.topic_tree_version())         
+        if version_id is None or version_id == "default" else None),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topic_videos(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    topic = models.Topic.get_by_id(topic_id, version)
+    if topic is None: 
+        topic = models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
+        if topic is None:
+            raise ValueError("Invalid topic readable_id.")
+    
+    videos = models.Topic.get_cached_videos_for_topic(topic, False, version)
+    for i, video in enumerate(videos):
+        video.position = i + 1
+    return videos
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/exercises", methods=["GET"])
+@route("/api/v1/topic/<topic_id>/exercises", methods=["GET"])
+@route("/api/v1/playlists/<topic_id>/exercises", methods=["GET"])
+@jsonp
+@cache_with_key_fxn_and_param(
+    "casing",
+    (lambda topic_id, version_id = None: "api_topic_exercises_%s_%s_%s" % (
+        topic_id, version_id, models.Setting.topic_tree_version()) 
+        if version_id is None or version_id == "default" else None),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topic_exercises(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    topic = models.Topic.get_by_id(topic_id, version)
+    if topic is None: 
+        topic = models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
+        if topic is None:
+            raise ValueError("Invalid topic readable_id.")
+    
+    exercises = topic.get_exercises()
+    return exercises
+
+@route("/api/v1/topic/<topic_id>/progress", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def topic_progress(topic_id):
+    user_data = models.UserData.current()
+    if not user_data:
+        user_data = models.UserData.pre_phantom()
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        raise ValueError("Invalid topic id.")
+
+    return topic.get_user_progress(user_data)
+
+@route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
+@route("/api/v1/topictree", methods=["GET"])
+@etag(lambda version_id = None: version_id) 
+@jsonp
+@decompress 
+@layer_cache.cache_with_key_fxn(
+    (lambda version_id = None: "api_topictree_%s_%s" % (version_id, 
+        models.Setting.topic_tree_version())        
+        if version_id is None or version_id == "default" else None),
+    layer=layer_cache.Layers.Memcache)
+@compress
+@jsonify
+def topictree(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    return models.Topic.get_by_id("root", version).make_tree()
+
+@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
+@route("/api/v1/dev/topictree/problems", methods=["GET"])
+# TODO(james) add @developer_required once Tom creates interface
+@jsonp
+@jsonify
+def topic_tree_problems(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    
+    exercises = models.Exercise.all()
+    exercise_dict = dict((e.key(),e) for e in exercises)
+
+    location_dict = {}
+    duplicate_positions = list()
+    changes = models.VersionContentChange.get_updated_content_dict(version)
+    exercise_dict.update(changes)
+    
+    for exercise in [e for e in exercise_dict.values() 
+                     if e.live and not e.summative]:
+               
+        if exercise.h_position not in location_dict:
+            location_dict[exercise.h_position] = {}
+
+        if exercise.v_position in location_dict[exercise.h_position]:
+            # duplicate_positions.add(exercise)
+            location_dict[exercise.h_position][exercise.v_position].append(exercise)
+            duplicate_positions.append(
+                location_dict[exercise.h_position][exercise.v_position])
+        else:
+            location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+    problems = {
+        "ExerciseVideos with topicless videos" : 
+            models.ExerciseVideo.get_all_with_topicless_videos(version),
+        "Exercises with colliding positions" : list(duplicate_positions)}
+
+    return problems
+
+@route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
+@route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
+@route("/api/v1/dev/topictree", methods=["GET"])
+@developer_required
+@jsonp
+@decompress
+@layer_cache.cache_with_key_fxn(
+    (lambda version_id = None, topic_id = "root": "api_topictree_export_%s_%s" % (version_id, 
+        models.Setting.topic_tree_version())        
+        if version_id is None or version_id == "default" else None),
+    layer=layer_cache.Layers.Memcache)
+@compress
+@jsonify
+def topictree_export(version_id = None, topic_id = "root"):
+    version = models.TopicVersion.get_by_id(version_id)
+    return models.Topic.get_by_id(topic_id, version).make_tree(include_hidden=True)
+
+@route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topictree", methods=["PUT"])
+@developer_required
+@jsonp
+@jsonify
+def topictree_import(version_id = "edit", topic_id="root"):
+    import zlib
+    import pickle
+    logging.info("calling /_ah/queue/deferred_import")
+
+    # importing the full topic tree can be too large so pickling and compressing
+    deferred.defer(models.topictree_import_task, version_id, topic_id, 
+                zlib.compress(pickle.dumps(request.json)),
+                _queue = "import-queue",
+                _url = "/_ah/queue/deferred_import")
+
+@route("/api/v1/topicversion/<version_id>/search/<query>", methods=["GET"])
+@jsonp
+@jsonify
+def topictreesearch(version_id, query):
+    version = models.TopicVersion.get_by_id(version_id)
+    return models.Topic.get_by_id("root", version).search_tree(query)
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["GET"])
+@route("/api/v1/topic/<topic_id>", methods=["GET"])
+@jsonp
+@layer_cache.cache_with_key_fxn(
+    (lambda topic_id, version_id = None: ("api_topic_%s_%s_%s" % (
+        topic_id, 
+        version_id, 
+        models.Setting.topic_tree_version())
+        if version_id is None or version_id == "default" else None)),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topic(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    topic = models.Topic.get_by_id(topic_id, version)
+    
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+
+    return topic.get_visible_data()
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["PUT"])    
+@route("/api/v1/topic/<topic_id>", methods=["PUT"])
+@developer_required
+@oauth_optional()
+@jsonp
+@jsonify
+def put_topic(topic_id, version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    topic_json = request.json
+
+    topic = models.Topic.get_by_id(topic_id, version)
+
+    if not topic:
+        kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['standalone_title', 'description', 'tags'])
+        kwargs["version"] = version
+        topic = models.Topic.insert(title = topic_json['title'], parent = None, **kwargs)
+    else:
+        kwargs = dict((str(key), value) for key, value in topic_json.iteritems() if key in ['id', 'title', 'standalone_title', 'description', 'tags', 'hide'])
+        kwargs["version"]=version
+        topic.update(**kwargs)
+
+    return {
+        "id": topic.id
+    }
+
+@route("/api/v1/topicversion/default/id", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_default_topic_version_id():
+    default_version = models.TopicVersion.get_default_version()
+    return default_version.number
+
+def topic_find_child(parent_id, version_id, kind, id):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    parent_topic = models.Topic.get_by_id(parent_id, version)
+    if not parent_topic:
+        return ["Could not find topic with ID %s" % str(parent_id), None, None, None]
+
+    if kind == "Topic":
+        child = models.Topic.get_by_id(id, version)
+    elif kind == "Exercise":
+        child = models.Exercise.get_by_name(id, version)
+    elif kind == "Video":
+        child = models.Video.get_for_readable_id(id, version)
+    elif kind == "Url":
+        child = models.Url.get_by_id_for_version(int(id), version)
+    else:
+        return ["Invalid kind: %s" % kind, None, None, None]
+
+    if not child:
+        return ["Could not find a %s with ID %s " % (kind, id), None, None, None]
+
+    return [None, child, parent_topic, version]
+
+@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/addchild", methods=["POST"])   
+@route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_add_child(parent_id, version_id = "edit"):
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+
+    [error, child, parent_topic, version] = topic_find_child(parent_id, version_id, kind, id)
+    if error:
+        return api_invalid_param_response(error)
+
+    pos = request.request_int("pos", default=0)
+
+    parent_topic.add_child(child, pos)
+
+    return parent_topic.get_visible_data()
+
+@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/deletechild", methods=["POST"])   
+@route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_delete_child(parent_id, version_id = "edit"):
+    
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+
+    [error, child, parent_topic, version] = topic_find_child(parent_id, version_id, kind, id)
+    if error:
+        return api_invalid_param_response(error)
+
+    parent_topic.delete_child(child)
+
+    return parent_topic.get_visible_data()
+  
+@route("/api/v1/topicversion/<version_id>/topic/<old_parent_id>/movechild", methods=["POST"])   
+@route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_move_child(old_parent_id, version_id = "edit"):
+    
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+
+    [error, child, old_parent_topic, version] = topic_find_child(old_parent_id, version_id, kind, id)
+    if error:
+        return api_invalid_param_response(error)
+
+    new_parent_id = request.request_string("new_parent_id")
+    new_parent =  models.Topic.get_by_id(new_parent_id, version)
+    if not old_parent_topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(old_parent_id))
+           
+    new_parent_pos = request.request_string("new_parent_pos")
+
+    old_parent_topic.move_child(child, new_parent, new_parent_pos)
+
+    return True    
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/ungroup", methods=["POST"])  
+@route("/api/v1/topic/<topic_id>/ungroup", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_ungroup(topic_id, version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    topic = models.Topic.get_by_id(topic_id, version)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+
+    topic.ungroup()
+
+    return True
+
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])   
+@route("/api/v1/topic/<topic_id>/children", methods=["GET"])
+@jsonp
+@layer_cache.cache_with_key_fxn(
+    (lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (
+        topic_id, version_id, models.Setting.topic_tree_version()) 
+        if version_id is None or version_id=="default" else None),
+    layer=layer_cache.Layers.Memcache)
+@jsonify
+def topic_children(topic_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    topic = models.Topic.get_by_id(topic_id, version)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
+
+    return db.get(topic.child_keys)
+
+@route("/api/v1/topicversion/<version_id>/setdefault", methods=["GET"])   
+@developer_required
+@jsonp
+@jsonify
+def topic_children(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    version.set_default_version()
+    models.TopicVersion.get_edit_version() # creates a new edit version if one does not already exists
+    return version
+    
+@route("/api/v1/topicversion/<version_id>", methods=["GET"])   
+@developer_required
+@jsonp
+@jsonify
+def topic_version(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    return version
+
+@route("/api/v1/topicversion/<version_id>", methods=["PUT"])
+@developer_required
+@jsonp
+@jsonify
+def topic_version(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    
+    version_json = request.json
+
+    changed = False
+    for key in ["title", "description"]: 
+        if getattr(version, key) != version_json[key]:
+            setattr(version, key, version_json[key])
+            changed = True
+
+    if changed:
+        version.put()
+
+    return {}
+
+@route("/api/v1/topicversions/", methods=["GET"])   
+@jsonp
+@jsonify
+def topic_versions():
+    versions = models.TopicVersion.all().order("-number").fetch(10000)
+    return versions
+
+@route("/api/v1/topicversion/<version_id>/unused_content", methods=["GET"])   
+@jsonp
+@jsonify
+def topic_version_unused_content(version_id = None):
+    version = models.TopicVersion.get_by_id(version_id)
+    return version.get_unused_content()
+
+@route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["GET"])
+@route("/api/v1/url/<int:url_id>", methods=["GET"])   
+@jsonp
+@jsonify
+def get_url(url_id, version_id=None):
+    version = models.TopicVersion.get_by_id(version_id) if version_id else None
+    return models.Url.get_by_id_for_version(url_id, version)
+
+@route("/api/v1/topicversion/<version_id>/url/", methods=["PUT"])
+@route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["PUT"])
+@route("/api/v1/url/", methods=["PUT"])
+@route("/api/v1/url/<int:url_id>", methods=["PUT"]) 
+@developer_required  
+@jsonp
+@jsonify
+def save_url(url_id = None, version_id=None):
+    version = models.TopicVersion.get_by_id(version_id)
+    changeable_props = ["tags", "title", "url"]
+
+    if url_id is None:
+        return models.VersionContentChange.add_new_content(models.Url, 
+                                                           version,
+                                                           request.json,
+                                                           changeable_props)
+    else:
+        url = models.Url.get_by_id_for_version(url_id, version)
+        if url is None:
+            return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
+        return models.VersionContentChange.add_content_change(
+            url, 
+            version, 
+            request.json,
+            changeable_props)
 
 @route("/api/v1/playlists/library", methods=["GET"])
-@etag(lambda: models.Setting.cached_library_content_date())
+@etag(lambda: models.Setting.topic_tree_version())
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_%s" % models.Setting.cached_library_content_date(),
+    lambda: "api_library_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
 def playlists_library():
-    playlists = fully_populated_playlists()
+    tree = models.Topic.get_by_id("root").make_tree()
+    def convert_tree(tree):
+        topics = []
+        for child in tree.children:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
 
-    playlist_dict = {}
-    for playlist in playlists:
-        playlist_dict[playlist.title] = playlist
+            if child.kind() == "Topic":
+                topic = {}
+                topic["name"] = child.title
+                videos = [] 
+                
+                for grandchild in child.children:
+                    if grandchild.kind() == "Video" or grandchild.kind() == "Url":
+                        videos.append(grandchild)
 
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
-    replace_playlist_values(playlist_structure, playlist_dict)
+                if len(videos):
+                    child.videos = videos
+                    child.url = ""
+                    child.youtube_id = ""
+                    del child.children
+                    topic["playlist"] = child
+                else:
+                    topic["items"] = convert_tree(child)
+                
+                topics.append(topic)
+        return topics            
 
-    return playlist_structure
+    return convert_tree(tree)
 
-@route("/api/v1/playlists/library/compact", methods=["GET"])
-@cacheable(caching_age=(60 * 60 * 24 * 60))
-@etag(lambda: models.Setting.cached_library_content_date())
-@jsonp
-@decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
-@layer_cache.cache_with_key_fxn(
-    lambda: "api_compact_library_%s" % models.Setting.cached_library_content_date(),
-    layer=layer_cache.Layers.Memcache)
-@compress
-@jsonify
-def playlists_library_compact():
-    playlists = fully_populated_playlists()
-
-    def trimmed_video(video):
-        trimmed_video_dict = {}
-        trimmed_video_dict['readable_id'] = video.readable_id
-        trimmed_video_dict['title'] = video.title
-        trimmed_video_dict['key_id'] = video.key().id()
-        return trimmed_video_dict
-
-    playlist_dict = {}
-    for playlist in playlists:
-        trimmed_info = {}
-        trimmed_info['title'] = playlist.title
-        trimmed_info['slugged_title'] = slugify(playlist.title)
-        trimmed_info['videos'] = [trimmed_video(v) for v in playlist.videos]
-        playlist_dict[playlist.title] = trimmed_info
-
-    playlist_structure = copy.deepcopy(topics_list.PLAYLIST_STRUCTURE_WITH_UNCATEGORIZED)
-    replace_playlist_values(playlist_structure, playlist_dict)
-
-    return playlist_structure
-
+# We expose the following "fresh" route but don't publish the URL for internal services
+# that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
+# not to change until we have a new version, the cached version is good enough
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"]) 
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_list_%s" % models.Setting.cached_library_content_date(),
+    lambda: "api_library_list_%s" % models.Setting.topic_tree_version(),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
 def playlists_library_list():
-    return fully_populated_playlists()
+    topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
-# We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values.
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"])
-@jsonp
-@jsonify
-def playlists_library_list_fresh():
-    return fully_populated_playlists()
+    topics_list = [t for t in topics if not (
+        (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
+        (t.standalone_title == "California Standards Test: Geometry" and t.id != "geometry-2"))    
+        ]
 
+    for topic in topics_list:
+        topic.videos = topic.children
+        topic.title = topic.standalone_title
+        del topic.children
+
+    return topics_list
+    
 @route("/api/v1/exercises", methods=["GET"])
 @jsonp
 @jsonify
 def get_exercises():
     return models.Exercise.get_all_use_cache()
 
+@route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["GET"])
 @route("/api/v1/exercises/<exercise_name>", methods=["GET"])
 @jsonp
 @jsonify
-def get_exercise(exercise_name):
-    return models.Exercise.get_by_name(exercise_name)
+def get_exercise(exercise_name, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id) if version_id else None
+    exercise = models.Exercise.get_by_name(exercise_name, version)
+    if exercise and not hasattr(exercise, "related_videos"):
+        exercise_videos = exercise.related_videos_query()
+        exercise.related_videos = map(lambda exercise_video: exercise_video.video.readable_id, exercise_videos)
+    return exercise
+
+@route("/api/v1/exercises/recent", methods=["GET"])
+@jsonp
+@jsonify
+def exercise_recent_list():
+    return models.Exercise.all().order('-creation_date').fetch(20)
 
 @route("/api/v1/exercises/<exercise_name>/followup_exercises", methods=["GET"])
 @jsonp
@@ -264,11 +730,62 @@ def exercise_videos(exercise_name):
         return map(lambda exercise_video: exercise_video.video, exercise_videos)
     return []
 
+@route("/api/v1/topicversion/<version_id>/exercises/<exercise_name>", methods=["POST", "PUT"])
+@route("/api/v1/exercises/<exercise_name>", methods=["PUT","POST"])
+@developer_required
+@jsonp
+@jsonify
+def exercise_save(exercise_name = None, version_id = "edit"):
+    request.json["name"] = exercise_name
+    version = models.TopicVersion.get_by_id(version_id)
+    query = models.Exercise.all()
+    query.filter('name =', exercise_name)
+    exercise = query.get()
+    return exercise_save_data(version, request.json, exercise)
+
+def exercise_save_data(version, data, exercise=None, put_change=True):
+    if "name" not in data:
+        raise Exception("exercise 'name' missing")
+    data["live"] = data["live"] == "true" or data["live"] == True 
+    data["v_position"] = int(data["v_position"])
+    data["h_position"] = int(data["h_position"])
+    data["seconds_per_fast_problem"] = (
+        float(data["seconds_per_fast_problem"]))
+
+    changeable_props = ["name", "covers", "h_position", "v_position", "live",
+                        "summative", "prerequisites", "covers", 
+                        "related_videos", "short_display_name"]
+    if exercise:
+        return models.VersionContentChange.add_content_change(exercise, 
+            version, 
+            data,
+            changeable_props)
+    else:
+        return models.VersionContentChange.add_new_content(models.Exercise, 
+                                                           version,
+                                                           data,
+                                                           changeable_props,
+                                                           put_change)
+
+@route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["GET"])
 @route("/api/v1/videos/<video_id>", methods=["GET"])
 @jsonp
 @jsonify
-def video(video_id):
-    return models.Video.all().filter("youtube_id =", video_id).get()
+def video(video_id, version_id = None):
+    version = models.TopicVersion.get_by_id(version_id) if version_id else None
+    video = models.Video.get_for_readable_id(video_id, version)
+
+    if video is None:
+        video = models.Video.all().filter("youtube_id =", video_id).get()
+    
+    return video
+
+
+@route("/api/v1/videos/recent", methods=["GET"])
+@jsonp
+@jsonify
+def video_recent_list():
+    return models.Video.all().order('-date_added').fetch(20)
 
 @route("/api/v1/videos/<video_id>/download_available", methods=["POST"])
 @oauth_required(require_anointed_consumer=True)
@@ -305,6 +822,14 @@ def video_exercises(video_id):
         return video.related_exercises(bust_cache=True)
     return []
 
+@route("/api/v1/commoncore", methods=["GET"])
+@jsonp
+@jsonify
+def get_cc_map():
+    lightweight = request.request_bool('lightweight', default=False)
+    structured = request.request_bool('structured', default=False)
+    return CommonCoreMap.get_all(lightweight, structured)
+
 def fully_populated_playlists():
     playlists = models.Playlist.get_for_all_topics()
     video_key_dict = models.Video.get_dict(models.Video.all(), lambda video: video.key())
@@ -323,6 +848,95 @@ def fully_populated_playlists():
 
     return playlists
 
+# Fetches data from YouTube if we don't have it already in the datastore
+@route("/api/v1/videos/<youtube_id>/youtubeinfo", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def get_youtube_info(youtube_id):
+    video_data = models.Video.all().filter("youtube_id =", youtube_id).get()
+    if video_data:
+        setattr(video_data, "existing", True)
+        return video_data
+
+    video_data = models.Video(youtube_id = youtube_id)
+    return youtube_get_video_data(video_data)
+
+@route("/api/v1/topicversion/<version_id>/videos/", methods=["POST", "PUT"])
+@route("/api/v1/topicversion/<version_id>/videos/<video_id>", methods=["POST", "PUT"])
+@route("/api/v1/videos/", methods=["POST","PUT"])
+@route("/api/v1/videos/<video_id>", methods=["POST","PUT"])
+@developer_required
+@jsonp
+@jsonify
+def save_video(video_id="", version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    video = models.Video.get_for_readable_id(video_id, version)
+
+    def check_duplicate(new_data, video=None):
+        # make sure we are not changing the video's readable_id to another one's
+        query = models.Video.all()
+        query = query.filter("readable_id =", new_data["readable_id"])
+        if video:
+            query = query.filter("__key__ !=", video.key())
+        other_video = query.get()
+                
+        if other_video:
+            return api_invalid_param_response(
+                "Video with readable_id %s already exists" %
+                (new_data["readable_id"]))        
+        
+        # make sure we are not changing the video's youtube_id to another one's
+        query = models.Video.all()
+        query = query.filter("youtube_id =", new_data["youtube_id"])
+        if video:
+            query = query.filter("__key__ !=", video.key())
+        other_video = query.get()
+        
+        if other_video:
+            return api_invalid_param_response(
+                "Video with youtube_id %s already appears with readable_id %s" %
+                (new_data["youtube_id"], video.readable_id)) 
+
+        # make sure we are not changing the video's readable_id to an updated one in the Version's Content Changes
+        changes = models.VersionContentChange.get_updated_content_dict(version)
+        for key, content in changes.iteritems():
+            if type(content) == models.Video and (video is None or 
+                                                  key != video.key()): 
+
+                if content.readable_id == new_data["readable_id"]:
+                    return api_invalid_param_response(
+                        "Video with readable_id %s already exists" %
+                        (new_data["readable_id"]))
+                       
+                elif content.youtube_id == new_data["youtube_id"]:
+                    return api_invalid_param_response(
+                        "Video with youtube_id %s already appears with readable_id %s" %
+                        (new_data["youtube_id"], content.readable_id))  
+
+    if video:
+        error = check_duplicate(request.json, video)
+        if error:
+            return error
+        return models.VersionContentChange.add_content_change(video, 
+            version, 
+            request.json, 
+            ["readable_id", "title", "youtube_id", "description", "keywords"])
+
+    # handle making a new video
+    else:
+        # make sure video doesn't already exist
+        error = check_duplicate(request.json)
+        if error:
+            return error
+
+        video_data = youtube_get_video_data_dict(request.json["youtube_id"])
+        if video_data is None:
+            return None
+        return models.VersionContentChange.add_new_content(models.Video, 
+                                                           version,
+                                                           video_data)
+    
 def replace_playlist_values(structure, playlist_dict):
     if type(structure) == list:
         for sub_structure in structure:
@@ -354,6 +968,144 @@ def user_data_other():
             return user_data_student
 
     return None
+
+@route("/api/v1/user/username_available", methods=["GET"])
+@jsonp
+@jsonify
+def is_username_available():
+    """ Return whether username is available.
+    """
+    username = request.request_string('username')
+    if not username:
+        return False
+    else:
+        return models.UniqueUsername.is_available_username(username)
+
+@route("/api/v1/user/promo/<promo_name>", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def has_seen_promo(promo_name):
+    user_data = models.UserData.current()
+    return models.PromoRecord.has_user_seen_promo(promo_name, user_data.user_id)
+
+@route("/api/v1/user/promo/<promo_name>", methods=["POST"])
+@oauth_required()
+@jsonp
+@jsonify
+def mark_promo_as_seen(promo_name):
+    user_data = models.UserData.current()
+    return models.PromoRecord.record_promo(promo_name, user_data.user_id)
+
+# TODO: the "GET" version of this.
+@route("/api/v1/user/profile", methods=["POST", "PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def update_user_profile():
+    """ Update public information about a user.
+    
+    The posted data should be JSON, with fields representing the values that
+    needs to be changed. Supports "user_nickname", "avatar_name",
+    "username", and "isPublic".
+    """
+    user_data = models.UserData.current()
+
+    profile_json = request.json
+    if not profile_json:
+        return api_invalid_param_response("Profile data expected")
+    
+    if profile_json['nickname'] is not None:
+        user_data.update_nickname(profile_json['nickname'])
+
+    badge_awarded = False
+    if profile_json['avatarName'] is not None:
+        avatar_name = profile_json['avatarName']
+        name_dict = util_avatars.avatars_by_name()
+
+        # Ensure that the avatar is actually valid and that the user can
+        # indeed earn it.
+        if (avatar_name in name_dict
+                and user_data.avatar_name != avatar_name
+                and name_dict[avatar_name].is_satisfied_by(user_data)):
+            user_data.avatar_name = avatar_name
+            if profile_badges.ProfileCustomizationBadge.mark_avatar_changed(user_data):
+                profile_badges.ProfileCustomizationBadge().award_to(user_data)
+                badge_awarded = True
+
+    if profile_json['isPublic'] is not None:
+        user_data.is_profile_public = profile_json['isPublic']
+
+    if profile_json['username']:
+        username = profile_json['username']
+        if ((username != user_data.username) and
+                not user_data.claim_username(username)):
+            # TODO: How much do we want to communicate to the user?
+            return api_invalid_param_response("Error!")
+
+    user_data.put()
+
+    result = util_profile.UserProfile.from_user(user_data, user_data)
+    if badge_awarded:
+        result = {
+            'payload': result,
+            'action_results': None,
+        }
+        add_action_results(result, {})
+    return result
+
+@route("/api/v1/user/coaches", methods=["PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def add_coach():
+    """ Add a coach for the currently logged in user.
+
+    Expects JSON with a "username" or "email" field that specifies the coach.
+    """
+    # TODO: Remove redundant path/logic in coaches.py
+    coach_user_data = get_user_data_from_json(request.json, 'coach')
+
+    if not coach_user_data:
+        return api_invalid_param_response("Invalid coach email or username.")
+
+    current_user_data = models.UserData.current()
+    if not current_user_data.is_coached_by(coach_user_data):
+        current_user_data.coaches.append(coach_user_data.key_email)
+        current_user_data.put()
+
+@route("/api/v1/user/coaches", methods=["DELETE"])
+@oauth_required()
+@jsonp
+@jsonify
+def remove_coach():
+    """ Remove a coach for the currently logged in user.
+
+    Expects JSON with a "username" or "email" field that specifies the coach.
+    """
+    # TODO: Remove redundant path/logic in coaches.py
+    coach_user_data = get_user_data_from_json(request.json, 'coach')
+
+    if not coach_user_data:
+        return api_invalid_param_response("Invalid coach email or username.")
+
+    current_user_data = models.UserData.current()
+
+    if current_user_data.student_lists:
+        actual_lists = StudentList.get(current_user_data.student_lists)
+        current_user_data.student_lists = [l.key() for l in actual_lists if coach_user_data.key() not in l.coaches]
+
+    try:
+        current_user_data.coaches.remove(coach_user_data.key_email)
+    except ValueError:
+        pass
+
+    try:
+        current_user_data.coaches.remove(coach_user_data.key_email.lower())
+    except ValueError:
+        pass
+
+    current_user_data.put()
 
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()
@@ -508,7 +1260,6 @@ def log_user_video(youtube_id):
     if not youtube_id and not video_key_str:
         return api_invalid_param_response("Must supply youtube_id or video_key")
 
-    video_log = None
     if video_key_str:
         key = db.Key(video_key_str)
         video = db.get(key)
@@ -516,7 +1267,8 @@ def log_user_video(youtube_id):
         video = models.Video.all().filter("youtube_id =", youtube_id).get()
 
     if not video:
-        return api_error_response("Could not find video")
+        logging.error("Could not find video for %s" % (video_key_str or youtube_id))
+        return api_invalid_param_response("Could not find video for %s" % (video_key_str or youtube_id))
 
     seconds_watched = int(request.request_float("seconds_watched", default=0))
     last_second = int(request.request_float("last_second_watched", default=0))
@@ -633,6 +1385,7 @@ def get_students_progress_summary():
             progress_buckets[status].append({
                     'nickname': student.nickname,
                     'email': student.email,
+                    'profile_root': student.profile_root,
             })
 
         progress = [dict([('status', status),
@@ -714,6 +1467,7 @@ def user_followup_exercises(exercise_name):
 def api_user_followups(exercise_name):
     return user_followup_exercises(exercise_name)
 
+@route("/api/v1/user/topics", methods=["GET"])
 @route("/api/v1/user/playlists", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -725,25 +1479,27 @@ def user_playlists_all():
         user_data_student = get_visible_user_data_from_request()
 
         if user_data_student:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user)
+            user_playlists = models.UserTopic.all().filter("user =", user_data_student.user)
             return user_playlists.fetch(10000)
 
     return None
 
-@route("/api/v1/user/playlists/<playlist_title>", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>", methods=["GET"])
+@route("/api/v1/user/playlists/<topic_id>", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
-def user_playlists_specific(playlist_title):
+def user_playlists_specific(topic_id):
     user_data = models.UserData.current()
 
     if user_data and playlist_title:
         user_data_student = get_visible_user_data_from_request()
-        playlist = models.Playlist.all().filter("title =", playlist_title).get()
+        topic = models.Topic.get_by_id(topic_id)
+        if topic is None:
+            topic = models.Topic.all().filter("standalone_title =", topic_id).get()
 
-        if user_data_student and playlist:
-            user_playlists = models.UserPlaylist.all().filter("user =", user_data_student.user).filter("playlist =", playlist)
-            return user_playlists.get()
+        if user_data_student and topic:
+            return models.UserTopic.get_for_topic_and_user_data(topic, user_data_student)
 
     return None
 
@@ -981,6 +1737,7 @@ def user_video_logs(youtube_id):
 
     return None
 
+# TODO: this should probably not return user data in it.
 @route("/api/v1/badges", methods=["GET"])
 @oauth_optional()
 @jsonp
@@ -1020,6 +1777,113 @@ def badge_categories():
 def badge_category(category):
     return filter(lambda badge_category: str(badge_category.category) == category, badges.BadgeCategory.all())
 
+# TODO: the "GET" version of this.
+@route("/api/v1/user/badges/public", methods=["POST", "PUT"])
+@oauth_required()
+@jsonp
+@jsonify
+def update_public_user_badges():
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    owned_badges = set([badges.Badge.remove_target_context(name_with_context)
+                        for name_with_context in user_data.badges])
+    badges_dict = util_badges.all_badges_dict()
+    updated_badge_list = []
+    empty_name = util_badges.EMPTY_BADGE_NAME
+    for name in request.json or []:
+        if name in owned_badges:
+            updated_badge_list.append(badges_dict[name])
+        elif name == empty_name:
+            updated_badge_list.append(None)
+    
+    badge_awarded = False
+    if (len(updated_badge_list) == util_badges.NUM_PUBLIC_BADGE_SLOTS
+            and not any([badge is None for badge in updated_badge_list])):
+        if profile_badges.ProfileCustomizationBadge.mark_display_case_filled(user_data):
+            profile_badges.ProfileCustomizationBadge().award_to(user_data)
+            badge_awarded = True
+
+    user_data.public_badges = [(badge.name if badge else empty_name)
+                               for badge in updated_badge_list]
+    user_data.put()
+    
+    result = updated_badge_list
+    if badge_awarded:
+        result = {
+            'payload': result,
+            'api_action_results': None
+        }
+        add_action_results(result, {})
+    return result
+
+@route("/api/v1/user/badges", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_user_badges():
+    user_data = get_visible_user_data_from_request() or models.UserData.pre_phantom()
+    grouped_badges = util_badges.get_grouped_user_badges(user_data)
+
+    user_badges_by_category = {
+        badges.BadgeCategory.BRONZE: grouped_badges["bronze_badges"],
+        badges.BadgeCategory.SILVER: grouped_badges["silver_badges"],
+        badges.BadgeCategory.GOLD: grouped_badges["gold_badges"],
+        badges.BadgeCategory.PLATINUM: grouped_badges["platinum_badges"],
+        badges.BadgeCategory.DIAMOND: grouped_badges["diamond_badges"],
+        badges.BadgeCategory.MASTER: grouped_badges["user_badges_master"],
+    }
+
+    user_badge_dicts_by_category = {}
+
+    for category, user_badge_bucket in user_badges_by_category.iteritems():
+        user_badge_dicts_by_category[category] = user_badge_bucket
+
+    badge_collections = []
+
+    # Iterate over the set of all possible badges.
+    for collection in grouped_badges["badge_collections"]:
+        if len(collection):
+            first_badge = collection[0]
+            badge_collections.append({
+                "category": first_badge.badge_category,
+                "category_description": first_badge.category_description(),
+                "badges": collection,
+                "user_badges": user_badge_dicts_by_category[first_badge.badge_category],
+            })
+
+    return {
+            "badge_collections": badge_collections,
+        }
+
+@route("/api/v1/user/activity", methods=["GET"])
+@oauth_required()
+@jsonp
+@jsonify
+def get_activity():
+    student = models.UserData.current() or models.UserData.pre_phantom()
+    user_override = request.request_user_data("email")
+    if user_override and user_override.key_email != student.key_email:
+        # TODO: Clarify "visibility"
+        if not user_override.is_visible_to(student):
+            return api_unauthorized_response("Cannot view this profile")
+        else:
+            # Allow access to this student's profile
+            student = user_override
+
+    recent_activities = recent_activity.recent_activity_list(student)
+    recent_completions = filter(
+            lambda activity: activity.is_complete(),
+            recent_activities)
+
+    return {
+        "suggested": suggested_activity.SuggestedActivity.get_for(
+                student, recent_activities),
+        "recent": recent_completions[:recent_activity.MOST_RECENT_ITEMS],
+    }
+
+# TODO in v2: imbue with restfulness
 @route("/api/v1/developers/add", methods=["POST"])
 @admin_required
 @jsonp
@@ -1094,32 +1958,108 @@ def remove_coworker():
 def autocomplete():
 
     video_results = []
-    playlist_results = []
 
     query = request.request_string("q", default="").strip().lower()
     if query:
 
         max_results_per_type = 10
 
+        exercise_results = filter(
+                lambda exercise: query in exercise.display_name.lower(),
+                models.Exercise.get_all_use_cache())
         video_results = filter(
                 lambda video_dict: query in video_dict["title"].lower(),
                 video_title_dicts())
-        playlist_results = filter(
-                lambda playlist_dict: query in playlist_dict["title"].lower(),
-                playlist_title_dicts())
+        topic_results = filter(
+                lambda topic_dict: query in topic_dict["title"].lower(),
+                topic_title_dicts())
+        topic_results.extend(map(lambda topic: {
+                "title": topic.standalone_title,
+                "key": str(topic.key()),
+                "relative_url": topic.relative_url,
+                "id": topic.id
+            }, filter(lambda topic: query in topic.title.lower(), models.Topic.get_super_topics())))
+        url_results = filter(
+                lambda url_dict: query in url_dict["title"].lower(),
+                url_title_dicts())
 
+        exercise_results = sorted(
+                exercise_results,
+                key=lambda v: v.display_name.lower().index(query))[:max_results_per_type]
         video_results = sorted(
-                video_results,
+                video_results + url_results,
                 key=lambda v: v["title"].lower().index(query))[:max_results_per_type]
-        playlist_results = sorted(
-                playlist_results,
-                key=lambda p: p["title"].lower().index(query))[:max_results_per_type]
+        topic_results = sorted(
+                topic_results,
+                key=lambda t: t["title"].lower().index(query))[:max_results_per_type]
 
     return {
             "query": query,
             "videos": video_results,
-            "playlists": playlist_results
+            "topics": topic_results,
+            "exercises": exercise_results
     }
+
+@route("/api/v1/dev/backupmodels", methods=["GET"])
+@oauth_required()
+@developer_required
+@jsonify
+def backupmodels():
+    """Return the names of all models that inherit from models.BackupModel."""
+    return map(lambda x: x.__name__, models.BackupModel.__subclasses__())
+
+@route("/api/v1/dev/protobufquery", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_query():
+    """Return the results of a GQL query as pickled protocol buffer objects
+
+    Example python code:
+    import urllib as u
+    import urllib2 as u2
+
+    # make sure to quote the query
+    q = u.quote("SELECT * FROM VideoLog ORDER BY time_watched LIMIT 50")
+
+    # get the entities selected by the query
+    p = u2.urlopen("http://localhost:8080/api/v1/dev/protobufquery?query=%s" % q)
+
+    # It's a little more complicated in practice because oauth must be used but
+    # that's the idea
+    """
+
+    query = request.request_string("query")
+    if not query:
+        return api_error_response(ValueError("Query required"))
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               db.GqlQuery(query))
+
+@route("/api/v1/dev/protobuf/<entity>", methods=["GET"])
+@oauth_required()
+@developer_required
+@pickle
+def protobuf_entities(entity):
+    """Return up to 'max' entities last altered between 'dt_start' and 'dt_end'.
+
+    Notes: 'entity' must be a subclass of 'models.BackupModel'
+           'dt{start,end}' must be in ISO 8601 format
+           'max' defaults to 500
+    Example:
+        /api/v1/dev/protobuf/ProblemLog?dt_start=2012-02-11T20%3A07%3A49Z&dt_end=2012-02-11T21%3A07%3A49Z
+        Returns up to 500 problem_logs from between 'dt_start' and 'dt_end'
+    """
+    entity_class = db.class_for_kind(entity)
+    if not (entity_class and issubclass(entity_class, models.BackupModel)):
+        return api_error_response(ValueError("Invalid class '%s' (must be a \
+                subclass of models.BackupModel)" % entity))
+    query = entity_class.all()
+    filter_query_by_request_dates(query, "backup_timestamp")
+    query.order("backup_timestamp")
+
+    return map(lambda entity: db.model_to_protobuf(entity).Encode(),
+               query.fetch(request.request_int("max", default=500)))
 
 @route("/api/v1/dev/problems", methods=["GET"])
 @oauth_required()
@@ -1233,8 +2173,9 @@ def get_student_goals():
 
         return_data.append({
             'email': student.email,
+            'profile_root': student.profile_root,
+            'goals': goals,
             'nickname': student.nickname,
-            'goals': goals
         })
 
     return return_data
@@ -1390,3 +2331,27 @@ def delete_user_goals():
     GoalList.delete_all_goals(user_data)
 
     return "Goals deleted"
+
+@route("/api/v1/avatars", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_avatars():
+    """ Returns the list of all avatars bucketed by categories.
+    If this is an authenticated request and user-info is available, the
+    avatars will be annotated with whether or not they're available.
+    """
+    user_data = models.UserData.current()
+    result = util_avatars.avatars_by_category()
+    if user_data:
+        for category in result:
+            for avatar in category['avatars']:
+                avatar.is_available = avatar.is_satisfied_by(user_data)
+    return result
+
+@route("/api/v1/dev/version", methods=["GET"])
+@jsonp
+@jsonify
+def get_version_id():
+    return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None } 
+

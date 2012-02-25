@@ -10,17 +10,23 @@
         <script>
         var _errs=["4efc1674aa8bc407591e0ad6"];(function(a,b){a.onerror=function(){_errs.push(arguments)};
         var d=function(){var a=b.createElement("script"),c=b.getElementsByTagName("script")[0];
-        a.src=b.location.protocol+"//errorception.com/projects/"+_errs[0]+"/beacon.js";
+        a.src="//d15qhc0lu1ghnk.cloudfront.net/beacon.js";a.async=!0;
         c.parentNode.insertBefore(a,c)};a.addEventListener?a.addEventListener("load",d,!1):
         a.attachEvent("onload",d)})(window,document);
         </script>
         {%- endif %}
         <!--[if lte IE 6]><script src="/javascript/ie-warning.js"></script><script>window.onload=function(){e("/images/ie-warning/")}</script><![endif]-->
         <script type="text/javascript">
+            // TODO: Sweep below into KA
+            // TODO: Change USERNAME var since it is actually the user's nickname
             var KA_VERSION = '{{ App.version }}';
             var FB_APP_ID = '{{ App.facebook_app_id }}';
             var URL_CONTINUE = '{{ continue|escapejs }}';
             var USERNAME = '{{ username|escapejs }}';
+
+            var KA = {
+                "profileRoot": "{{ viewer_profile_root }}"
+            };
         </script>
 
         <title>{% block meta_page_title %}{% endblock meta_page_title %}Khan Academy</title>
@@ -55,7 +61,6 @@
 
         {% if is_mobile %}
             {{ js_css_packages.css_package("mobile") }}
-            {{ user.user_video_css(user_data) }}
             {{ js_css_packages.js_package("mobile") }}
         {% else %}
             {{ js_css_packages.css_package("shared") }}
@@ -138,7 +143,7 @@
                             </div>
                             <div id="search-box">
                                 <form id="page_search" action="/search">
-                                    <input id="search-input" type="text" placeholder="Search for a video or playlist" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " id="search-submit" />
+                                    <input id="search-input" type="text" placeholder="Search for a video or topic" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " id="search-submit" />
                                 </form>
                             </div>
                             <div class="clear"></div>

@@ -1,5 +1,3 @@
-import os
-
 import shared_jinja
 from notifications import UserNotifier
 
@@ -34,6 +32,7 @@ def badge_info(user_data):
             "platinum": counts_dict[badges.BadgeCategory.PLATINUM],
             "diamond": counts_dict[badges.BadgeCategory.DIAMOND],
             "master": counts_dict[badges.BadgeCategory.MASTER],
+            "user": user_data,
     }
     return shared_jinja.get().render_template("phantom_users/badge_counts.html", **context)
     

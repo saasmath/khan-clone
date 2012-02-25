@@ -14,11 +14,16 @@ skip_files:
 - ^(.*/)?.*\.py[co]
 - ^(.*/)?.*/RCS/.*
 - ^(.*/)?\..*
-- ^(.*/)?.*_test.py
+- ^(.*/)?.*_test\.py
 - ^(.*/)?sample_data/.*
 - ^(.*/)?khan-exercises/test/.*
 - ^(.*/)?presskit/.*
 - ^(.*/)?deploy/.*
+- ^(.*/)?javascript/testbase\.js
+- ^(.*/)?.*_test\.html
+- ^requirements\.txt
+- ^agar
+- ^testutil
 
 handlers:
 - url: /videos
@@ -104,6 +109,10 @@ handlers:
   login: admin
 
 - url: /_ah/queue/deferred_log_summary
+  script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
+  login: admin
+
+- url: /_ah/queue/deferred_import
   script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
   login: admin
 

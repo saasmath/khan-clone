@@ -24,3 +24,26 @@ Handlebars.registerHelper("repeat", function(n, options) {
 
     return ret;
 });
+
+Handlebars.registerHelper("reverseEach", function(context, block) {
+    var result = "";
+    for (var i = context.length - 1; i >= 0; i--) {
+        result += block(context[i]);
+    }
+    return result;
+});
+
+Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
+
+/**
+ * Return a bingo redirect url
+ *
+ * Sample usage:
+ * <a href="{{toBingoHref "/profile" "conversion_name" "other_conversion_name"}}>
+ */
+Handlebars.registerHelper("toBingoHref", function(destination) {
+    var conversionNames = _.toArray(arguments).slice(1, arguments.length - 1);
+
+    return gae_bingo.create_redirect_url.call(null, destination, conversionNames);
+});
+

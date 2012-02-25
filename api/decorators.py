@@ -4,21 +4,30 @@ from base64 import b64encode, b64decode
 from pickle import dumps, loads
 from functools import wraps
 
+import flask
 from flask import request
 from flask import current_app
-import api.jsonify as apijsonify
+from google.appengine.ext import db
+from google.appengine.datastore import entity_pb
 
+import api.jsonify as apijsonify
 from app import App
 import datetime
 from layer_cache import layer_cache_check_set_return, Layers,\
     DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS
+    
+
+def has_flask_request_context():
+    # HACK - peek into private variables since the current version of Flask
+    # being used does not expose a helper for this (later versions do, and
+    # the implementation is the same).
+    return flask._request_ctx_stack.top is not None
 
 def etag(func_tag_content):
     def etag_wrapper(func):
         @wraps(func)
         def etag_enabled(*args, **kwargs):
-
-            etag_inner_content = "%s:%s" % (func_tag_content(), App.version)
+            etag_inner_content = "%s:%s" % (func_tag_content(*args, **kwargs), App.version)
             etag_server = "\"%s\"" % hashlib.md5(etag_inner_content).hexdigest()
 
             etag_client = request.headers.get("If-None-Match")
@@ -79,7 +88,9 @@ def jsonify(func):
         if isinstance(obj, current_app.response_class):
             return obj
 
-        return obj if type(obj) == str else apijsonify.jsonify(obj)
+        camel_cased= (has_flask_request_context() and
+                      flask.request.values.get("casing") == "camel")
+        return obj if type(obj) == str else apijsonify.jsonify(obj, camel_cased=camel_cased)
     return jsonified
 
 def jsonp(func):
@@ -93,8 +104,23 @@ def jsonp(func):
         callback = request.values.get("callback")
         if callback:
             val = "%s(%s)" % (callback, val)
-        return current_app.response_class(val, mimetype="application/json")
+        return current_app.response_class(val, mimetype="application/json; charset=utf-8")
     return jsonp_enabled
+
+def utf8(func):
+    @wraps(func)
+    def utf8_headed(*args, **kwargs):
+        val = func(*args, **kwargs)
+
+        if isinstance(val, current_app.response_class):
+            return val
+
+        callback = request.values.get("callback")
+        if callback:
+            val = "%s(%s)" % (callback, val)
+        return current_app.response_class(val, contentencoding="utf8")
+    return utf8_headed
+
 
 def compress(func):
     @wraps(func)
@@ -119,6 +145,28 @@ def unpickle(func):
     def unpickled(*args, **kwargs):
         return loads(func(*args, **kwargs))
     return unpickled
+
+def protobuf_encode(func):
+    @wraps(func)
+    def protobuf_encoded(*args, **kwargs):
+        v = func(*args, **kwargs)
+        if type(v) == list:
+            return map(lambda entity: db.model_to_protobuf(entity).Encode(), v)
+        else:
+            return db.model_to_protobuf(v).Encode()
+
+    return protobuf_encoded
+
+def protobuf_decode(func):
+    @wraps(func)
+    def protobuf_decoded(*args, **kwargs):
+        v = func(*args, **kwargs)
+        if type(v) == list:
+            return map(lambda pb: db.model_from_protobuf(entity_pb.EntityProto(pb)), v)
+        else:
+            return db.model_from_protobuf(entity_pb.EntityProto(v))
+
+    return protobuf_decoded
 
 def base64_encode(func):
     @wraps(func)

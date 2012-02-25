@@ -1,6 +1,5 @@
 import re
 import os
-import itertools
 import hashlib
 import urllib
 
@@ -18,7 +17,7 @@ import string
 import simplejson as json
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from custom_exceptions import MissingExerciseException
+from custom_exceptions import MissingExerciseException, QuietException
 from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
@@ -210,6 +209,11 @@ class ViewExercise(request_handler.RequestHandler):
                     user_exercise.count_hints = problem_log.count_hints
 
                 user_exercise.current = problem_log.sha1 == sha1
+        else:
+            # Not read_only
+            suggested_exercise_names = user_exercise_graph.suggested_exercise_names()
+            if exercise.name in suggested_exercise_names:
+                bingo('suggested_activity_visit_suggested_exercise')
 
         is_webos = self.is_webos()
         browser_disabled = is_webos or self.is_older_ie()
@@ -331,6 +335,8 @@ class ViewAllExercises(request_handler.RequestHandler):
         if show_review_drawer:
             template_values['review_statement'] = 'Attain mastery'
             template_values['review_call_to_action'] = "I'll do it"
+
+        bingo('suggested_activity_exercises_landing')
 
         self.render_jinja2_template('viewexercises.html', template_values)
 
@@ -454,7 +460,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         # If a non-admin tries to answer a problem out-of-order, just ignore it
         if problem_number != user_exercise.total_done + 1 and not user_util.is_current_user_developer():
             # Only admins can answer problems out of order.
-            raise Exception("Problem number out of order (%s vs %s) for user_id: %s submitting attempt content: %s with seed: %s" % (problem_number, user_exercise.total_done + 1, user_data.user_id, attempt_content, seed))
+            raise QuietException("Problem number out of order (%s vs %s) for user_id: %s submitting attempt content: %s with seed: %s" % (problem_number, user_exercise.total_done + 1, user_data.user_id, attempt_content, seed))
 
         if len(sha1) <= 0:
             raise Exception("Missing sha1 hash of problem content.")
@@ -520,12 +526,17 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 user_exercise.update_proficiency_model(correct=True)
 
-                bingo('struggling_problems_correct')
+                bingo([
+                    'struggling_problems_correct',
+                    'suggested_activity_problems_correct',
+                ])
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
-                    bingo(['hints_gained_proficiency_all',
-                           'struggling_gained_proficiency_all',
-                           'homepage_restructure_gained_proficiency_all'])
+                    bingo([
+                        'hints_gained_proficiency_all',
+                        'struggling_gained_proficiency_all',
+                        'suggested_activity_gained_proficiency_all',
+                    ])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
 
@@ -550,14 +561,18 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             bingo([
                 'hints_problems_done',
                 'struggling_problems_done',
-                'homepage_restructure_problems_done',
+                'suggested_activity_problems_done',
             ])
 
         else:
             # Only count wrong answer at most once per problem
             if first_response:
                 user_exercise.update_proficiency_model(correct=False)
-                bingo(['hints_wrong_problems', 'struggling_problems_wrong'])
+                bingo([
+                    'hints_wrong_problems',
+                    'struggling_problems_wrong',
+                    'suggested_activity_problems_wrong',
+                ])
 
             if user_exercise.is_struggling(struggling_model):
                 bingo('struggling_struggled_binary')
@@ -626,9 +641,8 @@ class EditExercise(request_handler.RequestHandler):
                 if exercise.name == exercise_name:
                     main_exercise = exercise
 
-            query = models.ExerciseVideo.all()
-            query.filter('exercise =', main_exercise.key())
-            exercise_videos = query.fetch(50)
+
+            exercise_videos = main_exercise.related_videos_query().fetch(50)
 
             template_values = {
                 'exercises': exercises,
@@ -640,18 +654,12 @@ class EditExercise(request_handler.RequestHandler):
             self.render_jinja2_template("editexercise.html", template_values)
 
 class UpdateExercise(request_handler.RequestHandler):
-
-    def post(self):
-        self.get()
-
-    @user_util.developer_only
-    def get(self):
+    
+    @staticmethod
+    def do_update(dict):
         user = models.UserData.current().user
 
-        exercise_name = self.request.get('name')
-        if not exercise_name:
-            self.response.out.write("No exercise submitted, please resubmit if you just logged in.")
-            return
+        exercise_name = dict["name"]
 
         query = models.Exercise.all()
         query.filter('name =', exercise_name)
@@ -661,51 +669,47 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise.prerequisites = []
             exercise.covers = []
             exercise.author = user
-            exercise.summative = self.request_bool("summative", default=False)
+            exercise.summative = dict["summative"]
 
-        v_position = self.request.get('v_position')
-        h_position = self.request.get('h_position')
-        short_display_name = self.request.get('short_display_name')
+        exercise.prerequisites = dict["prerequisites"] 
+        exercise.covers = dict["covers"]
 
-        exercise.prerequisites = []
-        for c_check_prereq in range(0, 1000):
-            prereq_append = self.request_string("prereq-%s" % c_check_prereq, default="")
-            if prereq_append and not prereq_append in exercise.prerequisites:
-                exercise.prerequisites.append(prereq_append)
+        if "v_position" in dict:
+            exercise.v_position = int(dict["v_position"])
 
-        exercise.covers = []
-        for c_check_cover in range(0, 1000):
-            cover_append = self.request_string("cover-%s" % c_check_cover, default="")
-            if cover_append and not cover_append in exercise.covers:
-                exercise.covers.append(cover_append)
+        if "h_position" in dict:
+            exercise.h_position = int(dict["h_position"])
 
-        if v_position:
-            exercise.v_position = int(v_position)
+        if "short_display_name" in dict:
+            exercise.short_display_name = dict["short_display_name"]
 
-        if h_position:
-            exercise.h_position = int(h_position)
+        exercise.live = dict["live"]
 
-        if short_display_name:
-            exercise.short_display_name = short_display_name
+        exercise.put()
 
-        exercise.live = self.request_bool("live", default=False)
+        if "related_videos" in dict:
+            UpdateExercise.do_update_related_videos(exercise, 
+                                                    dict["related_videos"])
+        elif "related_video_keys" in dict:
+            UpdateExercise.do_update_related_video_keys(exercise, 
+                                                    dict["related_video_keys"])
+        else:
+            UpdateExercise.do_update_related_video_keys(exercise, [])
 
-        if not exercise.is_saved():
-            # Exercise needs to be saved before checking related videos.
-            exercise.put()
+        return exercise
 
+    @staticmethod
+    def do_update_related_videos(exercise, related_videos):
         video_keys = []
-        for c_check_video in range(0, 1000):
-            video_name_append = self.request_string("video-%s-readable" % c_check_video, default="")
-            if video_name_append:
-                video = models.Video.get_for_readable_id(video_name_append)
-                if not video.key() in video_keys:
-                    video_keys.append(str(video.key()))
+        for video_name in related_videos:
+            video = models.Video.get_for_readable_id(video_name)
+            if video and not video.key() in video_keys:
+                video_keys.append(str(video.key()))
 
-            video_append = self.request_string("video-%s" % c_check_video, default="")
-            if video_append and not video_append in video_keys:
-                video_keys.append(video_append)
+        UpdateExercise.do_update_related_video_keys(exercise, video_keys)
 
+    @staticmethod
+    def do_update_related_video_keys(exercise, video_keys):
         query = models.ExerciseVideo.all()
         query.filter('exercise =', exercise.key())
         existing_exercise_videos = query.fetch(1000)
@@ -721,48 +725,81 @@ class UpdateExercise(request_handler.RequestHandler):
                 exercise_video = models.ExerciseVideo()
                 exercise_video.exercise = exercise
                 exercise_video.video = db.Key(video_key)
-                exercise_video.exercise_order = models.VideoPlaylist.all().filter('video =', exercise_video.video).get().video_position
-                exercise_video.put()
+                exercise_video.exercise_order = 0 #reordering below
+                exercise_video.put() 
 
-        exercise.put()
+        # Start ordering
+        exercise_videos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
+        
+        # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
+        topics = {}
+        for exercise_video in exercise_videos:
+            video_topics = db.get(exercise_video.video.topic_string_keys)
+            for topic in video_topics:
+                if not topics.has_key(topic.key()):
+                    topics[topic.key()] = {}
 
-        #Start ordering
-        ExerciseVideos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).fetch(1000)
-        playlists = []
-        for exercise_video in ExerciseVideos:
-            playlists.append(models.VideoPlaylist.get_cached_playlists_for_video(exercise_video.video))
+                topics[topic.key()][exercise_video] = topic.get_child_order(exercise_video.video.key())
 
-        if playlists:
+        # sort the list by topics that have the most exercises in them
+        topic_list = sorted(topics.keys(), key = lambda k: len(topics[k]), reverse = True)  
+        
+        orders = {}
+        i=0
+        for topic_key in topic_list:
+            # sort the exercise_videos in topic by their correct order
+            exercise_video_list = sorted(topics[topic_key], key = lambda k: topics[topic_key][k])
+            for exercise_video in exercise_video_list:
+                # as long as the video hasn't already appeared in an earlier topic, it should appear next in the exercise's video list
+                if not orders.has_key(exercise_video):
+                    orders[exercise_video] = i
+                    i += 1
 
-            playlists = list(itertools.chain(*playlists))
-            titles = map(lambda pl: pl.title, playlists)
-            playlist_sorted = []
-            for p in playlists:
-                playlist_sorted.append([p, titles.count(p.title)])
-            playlist_sorted.sort(key=lambda p: p[1])
-            playlist_sorted.reverse()
+        for exercise_video, i in orders.iteritems():
+            exercise_video.exercise_order = i
+        
+        db.put(exercise_videos)
 
-            playlists = []
-            for p in playlist_sorted:
-                playlists.append(p[0])
-            playlist_dict = {}
-            exercise_list = []
-            playlists = list(set(playlists))
-            for p in playlists:
-                playlist_dict[p.title] = []
-                for exercise_video in ExerciseVideos:
-                    if p.title  in map(lambda pl: pl.title, models.VideoPlaylist.get_cached_playlists_for_video(exercise_video.video)):
-                        playlist_dict[p.title].append(exercise_video)
-                        # ExerciseVideos.remove(exercise_video)
+    def post(self):
+        self.get()
 
-                if playlist_dict[p.title]:
-                    playlist_dict[p.title].sort(key=lambda e: models.VideoPlaylist.all().filter('video =', e.video).filter('playlist =', p).get().video_position)
-                    exercise_list.append(playlist_dict[p.title])
+    @user_util.developer_only
+    def get(self):
+        dict = {}
+        dict["name"] = self.request.get('name')
+        if not dict["name"]:
+            self.response.out.write("No exercise submitted, please resubmit if you just logged in.")
+            return
 
-            if exercise_list:
-                exercise_list = list(itertools.chain(*exercise_list))
-                for e in exercise_list:
-                    e.exercise_order = exercise_list.index(e)
-                    e.put()
+        dict["summative"] = self.request_bool('summative', default=False)
+        dict["v_position"] = self.request.get('v_position')
+        dict["h_position"] = self.request.get('h_position')
+        dict["short_display_name"] = self.request.get('short_display_name')
+        dict["live"] = self.request_bool("live", default=False)
 
-        self.redirect('/editexercise?saved=1&name=' + exercise_name)
+        dict["prerequisites"] = []
+        for c_check_prereq in range(0, 1000):
+            prereq_append = self.request_string("prereq-%s" % c_check_prereq, default="")
+            if prereq_append and not prereq_append in dict["prerequisites"]:
+                dict["prerequisites"].append(prereq_append)
+
+        dict["covers"] = []
+        for c_check_cover in range(0, 1000):
+            cover_append = self.request_string("cover-%s" % c_check_cover, default="")
+            if cover_append and not cover_append in dict["covers"]:
+                dict["covers"].append(cover_append)
+
+        dict["related_video_keys"] = []
+        dict["related_videos"] = []
+        for c_check_video in range(0, 1000):
+            video_name_append = self.request_string("video-%s-readable" % c_check_video, default="")
+            if video_name_append and not video_name_append in dict["related_videos"]:
+                dict["related_videos"].append(video_name_append)
+
+            video_append = self.request_string("video-%s" % c_check_video, default="")
+            if video_append and not video_append in dict["related_video_keys"]:
+                dict["related_video_keys"].append(video_append)
+
+        self.do_update(dict)
+
+        self.redirect('/editexercise?saved=1&name=' + dict["name"])

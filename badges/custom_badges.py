@@ -26,16 +26,23 @@ class CustomBadge(Badge):
         self.badge_category = custom_badge_type.category
         self.custom_icon_src = custom_badge_type.icon_src
 
-    def is_satisfied_by(self, *args, **kwargs):
-        return False # Custom badges are only handed out manually
+    def is_manually_awarded(self):
+        return True
 
     def extended_description(self):
         return self.full_description
 
+    @property
+    def compact_icon_src(self):
+        if self.custom_icon_src:
+            return self.custom_icon_src
+        return super(CustomBadge, self).compact_icon_src
+
+    @property
     def icon_src(self):
         if self.custom_icon_src:
             return self.custom_icon_src
-        return Badge.icon_src(self)
+        return super(CustomBadge, self).icon_src
 
 class CreateCustomBadge(request_handler.RequestHandler):
     @user_util.developer_only

@@ -13,6 +13,10 @@ from models_discussion import FeedbackVote
 import request_handler
 import util
 
+from badges.badge_context import BadgeContextType
+from badges.util_badges import badges_with_context_type
+from badges.discussion_badges import FirstUpVoteBadge, FirstDownVoteBadge
+
 class VotingSortOrder:
     HighestPointsFirst = 1
     NewestFirst = 2
@@ -22,10 +26,15 @@ class VotingSortOrder:
         if not sort_order in (VotingSortOrder.HighestPointsFirst, VotingSortOrder.NewestFirst):
             sort_order = VotingSortOrder.HighestPointsFirst
 
+        key_fxn = None
+
         if sort_order == VotingSortOrder.NewestFirst:
-            return sorted(entities, key=lambda entity: entity.date, reverse=True)
+            key_fxn = lambda entity: entity.date
         else:
-            return sorted(entities, key=lambda entity: entity.inner_score, reverse=True)
+            key_fxn = lambda entity: entity.inner_score
+
+        # Sort by desired sort order, then put hidden entities at end
+        return sorted(sorted(entities, key=key_fxn, reverse=True), key=lambda entity: entity.is_visible_to_public(), reverse=True)
 
 class UpdateQASort(request_handler.RequestHandler):
     def get(self):
@@ -37,10 +46,10 @@ class UpdateQASort(request_handler.RequestHandler):
             user_data.put()
 
         readable_id = self.request_string("readable_id", default="")
-        playlist_title = self.request_string("playlist_title", default="")
+        topic_title = self.request_string("topic_title", default="")
 
-        if readable_id and playlist_title:
-            self.redirect("/video/%s?playlist=%s&sort=%s" % (urllib.quote(readable_id), urllib.quote(playlist_title), sort))
+        if readable_id and topic_title:
+            self.redirect("/video/%s?topic=%s&sort=%s" % (urllib.quote(readable_id), urllib.quote(topic_title), sort))
         else:
             self.redirect("/")
 
@@ -97,6 +106,44 @@ class FinishVoteEntity(request_handler.RequestHandler):
             entity = db.get(key)
             if entity:
                 entity.add_vote_by(vote_type, user_data)
+
+                self.award_voter_badges(vote_type, user_data)
+                self.award_author_badges(entity)
+
+    def award_voter_badges(self, vote_type, user_data):
+
+        awarded = False
+
+        if vote_type == FeedbackVote.UP:
+            if not FirstUpVoteBadge().is_already_owned_by(user_data):
+                FirstUpVoteBadge().award_to(user_data)
+                awarded = True
+        elif vote_type == FeedbackVote.DOWN:
+            if not FirstDownVoteBadge().is_already_owned_by(user_data):
+                FirstDownVoteBadge().award_to(user_data)
+                awarded = True
+
+        if awarded:
+            user_data.put()
+
+    def award_author_badges(self, entity):
+
+        user_data_author = UserData.get_from_db_key_email(entity.author.email())
+
+        if not user_data_author:
+            return
+
+        possible_badges = badges_with_context_type(BadgeContextType.FEEDBACK)
+
+        awarded = False
+        for badge in possible_badges:
+            if not badge.is_already_owned_by(user_data=user_data_author, feedback=entity):
+                if badge.is_satisfied_by(user_data=user_data_author, feedback=entity):
+                    badge.award_to(user_data=user_data_author, feedback=entity)
+                    awarded = True
+
+        if awarded:
+            user_data_author.put()
 
 class StartNewVoteMapReduce(request_handler.RequestHandler):
 

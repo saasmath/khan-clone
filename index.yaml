@@ -44,6 +44,11 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: ConceptTreeNode
+  properties:
+  - name: topic_parent
+  - name: order
+
 - kind: DailyActivityLog
   properties:
   - name: user
@@ -133,6 +138,12 @@ indexes:
     direction: desc
 
 - kind: Feedback
+  properties:
+  - name: targets
+  - name: date
+    direction: desc
+
+- kind: Feedback
   ancestor: yes
   properties:
   - name: deleted
@@ -148,6 +159,13 @@ indexes:
   - name: is_hidden_by_flags
   - name: targets
   - name: types
+  - name: date
+    direction: desc
+
+- kind: Feedback
+  ancestor: yes
+  properties:
+  - name: targets
   - name: date
     direction: desc
 

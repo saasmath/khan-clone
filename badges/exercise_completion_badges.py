@@ -59,6 +59,10 @@ class ChallengeCompletionBadge(ExerciseCompletionBadge):
             s_exercises += models.Exercise.to_display_name(exercise_name)
         return "Complete the %s" % s_exercises
 
+    @property
+    def compact_icon_src(self):
+        return self.icon_src
+
 class LevelOneArithmeticianBadge(ExerciseCompletionBadge):
     def __init__(self):
         ExerciseCompletionBadge.__init__(self)
@@ -91,6 +95,7 @@ class TopLevelArithmeticianBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Arithmetic.png"
 
@@ -126,6 +131,7 @@ class TopLevelTrigonometricianBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Geometry-Trig.png"
 
@@ -161,6 +167,7 @@ class TopLevelPrealgebraistBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Pre-Algebra.png"
 
@@ -212,5 +219,6 @@ class TopLevelAlgebraistBadge(ChallengeCompletionBadge):
         self.badge_category = BadgeCategory.MASTER
         self.points = 10000
     
+    @property
     def icon_src(self):
         return "/images/badges/Algebra.png"

@@ -24,8 +24,14 @@ def class_exercises_over_time_graph_context(user_data, student_list):
     user_exercise_cache_list = models.UserExerciseCache.get(students_data)
     for i, user_data_student in enumerate(students_data):
         student_nickname = user_data_student.nickname
-        dict_student_exercises[student_nickname] = { "nickname": student_nickname, "email": user_data_student.email, "exercises": [] }
-            
+
+        dict_student_exercises[student_nickname] = {
+                "nickname": student_nickname,
+                "email": user_data_student.email,
+                "profile_root": user_data_student.profile_root,
+                "exercises": [],
+            }
+
         for exercise, user_exercise in user_exercise_cache_list[i].dicts.iteritems():
             if user_exercise["proficient_date"]:
                 joined = min(user_data_student.joined, user_exercise["proficient_date"])
@@ -42,4 +48,5 @@ def class_exercises_over_time_graph_context(user_data, student_list):
             "user_data_students": students_data,
             "c_points": reduce(lambda a, b: a + b, map(lambda s: s.points, students_data), 0)
             }
+
 

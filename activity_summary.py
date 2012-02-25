@@ -1,5 +1,4 @@
 import datetime
-import logging
 
 from mapreduce import control
 from google.appengine.ext import db
@@ -7,8 +6,6 @@ from google.appengine.ext import db
 import util
 import request_handler
 import models
-import consts
-import points
 import fast_slow_queue
 
 class ActivitySummaryExerciseItem:
@@ -45,8 +42,12 @@ class DailyActivitySummary:
         summary.date = datetime.datetime(date.year, date.month, date.day)
 
         date_next = date + datetime.timedelta(days=1)
-        problem_logs_filtered = filter(lambda problem_log: date <= problem_log.time_done < date_next, problem_logs)
-        video_logs_filtered = filter(lambda video_log: date <= video_log.time_watched < date_next, video_logs)
+        problem_logs_filtered = filter(
+                lambda problem_log: date <= problem_log.time_done < date_next,
+                problem_logs)
+        video_logs_filtered = filter(
+                lambda video_log: date <= video_log.time_watched < date_next,
+                video_logs)
 
         for problem_log in problem_logs_filtered:
             hour = problem_log.time_done.hour
@@ -103,13 +104,13 @@ def fill_realtime_recent_daily_activity_summaries(daily_activity_logs, user_data
     if user_data.last_daily_summary and dt_end <= user_data.last_daily_summary:
         return daily_activity_logs
 
-    # We're willing to fill the last 2 days with realtime data if summary logs haven't
+    # We're willing to fill the last 4 days with realtime data if summary logs haven't
     # been compiled for some reason.
     dt_end = min(dt_end, datetime.datetime.now())
-    dt_start = dt_end - datetime.timedelta(days=2)
+    dt_start = dt_end - datetime.timedelta(days=4)
 
     if user_data.last_daily_summary:
-        dt_start = max(dt_end - datetime.timedelta(days=2), user_data.last_daily_summary)
+        dt_start = max(dt_start, user_data.last_daily_summary)
 
     query_problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
     query_video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end)
@@ -184,8 +185,10 @@ def daily_activity_summary_map(user_data):
     dt = dt_start
     list_entities_to_put = []
 
-    problem_logs = models.ProblemLog.get_for_user_data_between_dts(user_data, dt_start, dt_end).fetch(100000)
-    video_logs = models.VideoLog.get_for_user_data_between_dts(user_data, dt_start, dt_end).fetch(100000)
+    problem_logs = models.ProblemLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end).fetch(100000)
+    video_logs = models.VideoLog.get_for_user_data_between_dts(
+            user_data, dt_start, dt_end).fetch(100000)
 
     while dt <= dt_end:
         summary = DailyActivitySummary.build(user_data, dt, problem_logs, video_logs)
@@ -210,7 +213,10 @@ class StartNewDailyActivityLogMapReduce(request_handler.RequestHandler):
                 name = "DailyActivityLog",
                 handler_spec = "activity_summary.daily_activity_summary_map",
                 reader_spec = "mapreduce.input_readers.DatastoreInputReader",
-                reader_parameters = {"entity_kind": "models.UserData", "processing_rate": 250},
+                reader_parameters = {
+                     "entity_kind": "models.UserData",
+                     "processing_rate": 250,
+                },
                 mapreduce_parameters = {},
                 shard_count = 64,
                 queue_name = fast_slow_queue.QUEUE_NAME,)

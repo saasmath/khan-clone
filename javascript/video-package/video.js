@@ -1,72 +1,73 @@
 
 var Video = {
 
-    SHOW_SUBTITLES_COOKIE: 'show_subtitles',
+    SHOW_SUBTITLES_COOKIE: "show_subtitles",
 
     init: function() {
 
         VideoControls.onYouTubeBlocked(function() {
-
            $("#youtube_blocked").css("visibility", "visible").css("left", "0px").css("position", "relative");
            $("#idOVideo").hide();
            VideoStats.prepareAlternativePlayer(); // If YouTube is hidden, use the flv player for statistics
-
         });
 
-        var jVideoDropdown = $('#video_dropdown');
-        if ( jVideoDropdown.length ) {
-            jVideoDropdown.css('display', 'inline-block');
+        var jVideoDropdown = $("#video_dropdown");
+        if (jVideoDropdown.length) {
+            jVideoDropdown.css("display", "inline-block");
 
-            var menu = $('#video_dropdown ol').menu();
+            var menu = $("#video_dropdown ol").menu();
             // Set the width explicitly before positioning it absolutely to satisfy IE7.
-            menu.width(menu.width()).hide().css('position', 'absolute');
-            menu.bind("menuselect", function(e, ui){
-                window.location.href = ui.item.children('a').attr('href');
+            menu.width(menu.width()).hide().css("position", "absolute");
+            menu.bind("menuselect", function(e, ui) {
+                window.location.href = ui.item.children("a").attr("href");
             });
-            $(document).bind("click focusin", function(e){
-                if ($(e.target).closest("#video_dropdown").length == 0) {
+            $(document).bind("click focusin", function(e) {
+                if ($(e.target).closest("#video_dropdown").length === 0) {
                     menu.hide();
                 }
             });
 
-            var button = $('#video_dropdown > a').button({
+            var button = $("#video_dropdown > a").button({
                 icons: {
-                    secondary: 'ui-icon-triangle-1-s'
+                    secondary: "ui-icon-triangle-1-s"
                 }
-            }).show().click(function(e){
-                if (menu.css('display') == 'none')
-                    menu.show().menu("activate", e, $('#video_dropdown li[data-selected=selected]')).focus();
-                else
+            }).show().click(function(e) {
+                if (menu.css("display") === "none") {
+                    menu.show().menu(
+                        "activate", e,
+                        $("#video_dropdown li[data-selected=selected]")
+                    ).focus();
+                } else {
                     menu.hide();
+                }
                 e.preventDefault();
             });
         }
 
-        $('.and-more').click(function(){
+        $(".and-more").click(function() {
             $(this).hide();
-            $('.more-content').show();
+            $(".more-content").show();
             return false;
         });
 
-        $('.subtitles-link').click(function() { Video.toggleSubtitles(); return false; });
-        if (readCookie(this.SHOW_SUBTITLES_COOKIE))
+        $(".subtitles-link").click(function() { Video.toggleSubtitles(); return false; });
+        if (readCookie(this.SHOW_SUBTITLES_COOKIE)) {
             this.showSubtitles();
+        }
 
-
-        $('.sharepop').hide();
-
-        $('.share-link').click(function() {
-            $(this).next(".sharepop").toggle("drop",{direction:'up'},"fast");
+        $(".sharepop").hide();
+        $(".share-link").click(function() {
+            $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
             return false;
         });
-
     },
 
     toggleSubtitles: function() {
-        if ($('.subtitles-warning').is(":visible"))
+        if ($(".subtitles-warning").is(":visible")) {
             this.hideSubtitles();
-        else
+        } else {
             this.showSubtitles();
+        }
     },
 
 
@@ -76,34 +77,35 @@ var Video = {
     },
 
     hideSubtitleElements: function() {
-        $('.unisubs-videoTab').hide();
-        $('.subtitles-warning').hide();
-        $('.youtube-video').css('marginBottom', '0px');
+        $(".unisubs-videoTab").css("display", "none !important");
+        $(".subtitles-warning").hide();
+        $(".youtube-video").css("marginBottom", "0px");
         Throbber.hide();
     },
 
     showSubtitleElements: function() {
-        $('.youtube-video').css('marginBottom', '32px');
-        $('.subtitles-warning').show();
-        $('.unisubs-videoTab').show();
+        $(".youtube-video").css("marginBottom", "32px");
+        $(".subtitles-warning").show();
+        // 2012-02-23: unisubs uses !important in their styles, forcing us to
+        // follow along when showing and hiding their tab.
+        $(".unisubs-videoTab").css("display", "block !important");
     },
 
     showSubtitles: function() {
         createCookie(this.SHOW_SUBTITLES_COOKIE, true, 365);
         Video.showSubtitleElements();
 
-        if ($('.unisubs-videoTab').length == 0)
-        {
-            setTimeout(function() {
+        if ($(".unisubs-videoTab").length === 0) {
+            window.setTimeout(function() {
                 Throbber.show($(".subtitles-warning"), true);
             }, 1);
 
-            $.getScript('http://s3.www.universalsubtitles.org/js/mirosubs-widgetizer.js', function() {
+            $.getScript("http://s3.www.universalsubtitles.org/js/mirosubs-widgetizer.js", function() {
                 // Workaround bug where subtitles are not displayed if video was already playing until
                 // video is paused and restarted.  We wait 3 secs to give subtitles a chance to load.
-                setTimeout(function() {
-                    if (VideoControls.player && VideoControls.player.getPlayerState() == 1 /* playing */)
-                    {
+                window.setTimeout(function() {
+                    if (VideoControls.player &&
+                            VideoControls.player.getPlayerState() === 1 /* playing */) {
                         VideoControls.pause();
                         VideoControls.play();
                     }
@@ -111,4 +113,4 @@ var Video = {
             });
         }
     }
-}
+};

@@ -254,6 +254,10 @@ ul.inline-list, ul.inline-list li {
     width: 95%;
     margin: 0 auto;
 }
+#profile-goals-content .student-goals {
+    width: auto;
+    margin: auto;
+}
 #goals-nav-container {
     position: fixed;
     top: 0;
@@ -403,7 +407,7 @@ input.goal-title:focus {
     margin-top: 18px;
 }
 
-.create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #playlist-jump > span {
+.create-goal-page .dashboard .css-menu > ul > li, .create-goal-page .dashboard #topic-jump > span {
     font-weight: normal;
 }
 
@@ -467,6 +471,7 @@ a.goal-history {
 
 .goalNodeInvalid {
     text-decoration: line-through;
+    cursor: not-allowed;
 }
 .goalNodeInvalid div {
     color: #777;
