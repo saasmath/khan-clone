@@ -966,6 +966,12 @@ class UserData(GAEBingoIdentityModel, db.Model):
     # profile (and can be searched, etc)
     is_profile_public = db.BooleanProperty(default=False, indexed=False)
 
+    # Randomly generated string representing a "credential version". This
+    # is used to mint cookies and authenticate the user. A new value is
+    # re-generated when the user changes his/her password, and all cookies
+    # get invalidated
+    credential_version = db.StringProperty(indexed=False)
+
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",

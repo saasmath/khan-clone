@@ -32,6 +32,7 @@ for attr in [
     'dashboard_secret',
     'khanbugz_passwd',
     'paypal_token_id',
+    'cookie_recipe_key',
 ]:
     # These secrets are optional in development but not in production
     if App.is_dev_server and not hasattr(secrets, attr):
