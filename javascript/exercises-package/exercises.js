@@ -41,22 +41,6 @@ var Exercises = {
         Handlebars.registerPartial("card", Templates.get("exercises.card"));
         Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
 
-        // Add a {{#each_with_index cards}} helper for iterating and keeping
-        // track of the iteration index
-        Handlebars.registerHelper("each_with_index", function(list, fxn) {
-
-            var buffer = "";
-            var ix = 0;
-
-            _.each(list, function(context) {
-                context.index = ix++;
-                buffer += fxn(context);
-            });
-
-            return buffer;
-
-        });
-
         var profileExercise = Templates.get("exercises.exercise");
 
         $(".exercises-content-container").html(profileExercise({
