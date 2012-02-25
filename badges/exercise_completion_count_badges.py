@@ -69,14 +69,6 @@ class CopernicusBadge(ExerciseCompletionCountBadge):
         self.badge_category = BadgeCategory.PLATINUM
         self.points = 80000
 
-class KeplerBadge(ExerciseCompletionCountBadge):
-    def __init__(self):
-        ExerciseCompletionCountBadge.__init__(self)
-        self.required_exercises = 300
-        self.description = "Kepler"
-        self.badge_category = BadgeCategory.PLATINUM
-        self.points = 125000
-
 class AtlasBadge(ExerciseCompletionCountBadge):
     def __init__(self):
         ExerciseCompletionCountBadge.__init__(self)

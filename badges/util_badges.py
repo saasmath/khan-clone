@@ -40,7 +40,6 @@ def all_badges():
         exercise_completion_count_badges.WorkHorseBadge(),
         exercise_completion_count_badges.MagellanBadge(),
         exercise_completion_count_badges.CopernicusBadge(),
-        exercise_completion_count_badges.KeplerBadge(),
         exercise_completion_count_badges.AtlasBadge(),
 
         points_badges.TenThousandaireBadge(),
