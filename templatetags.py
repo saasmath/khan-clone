@@ -124,6 +124,19 @@ def topic_browser(browser_id, version_number=None):
         version = None
 
     tree = models.Topic.get_root(version).make_tree(types = ["Topics"])
+
+    # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
+    if not version:
+        version = models.TopicVersion.get_default_version()
+    developmental_math = models.Topic(
+        id="developmental-math",
+        version=version,
+        title="Developmental Math",
+        standalone_title="Developmental Math"
+    )
+    developmental_math.children = []
+    [topic for topic in tree.children if topic.id == "math"][0].children.append(developmental_math)
+
     template_values = {
        'browser_id': browser_id, 'topic_tree': tree 
     }

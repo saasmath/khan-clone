@@ -447,19 +447,9 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
 
 class Login(request_handler.RequestHandler):
     def get(self):
-        return self.post()
-
-    def post(self):
-        cont = self.request_string('continue', default = "/")
-        direct = self.request_bool('direct', default = False)
-
-        openid_identifier = self.request.get('openid_identifier')
-        if openid_identifier is not None and len(openid_identifier) > 0:
-            if App.accepts_openid:
-                self.redirect(users.create_login_url(cont, federated_identity = openid_identifier))
-                return
-            self.redirect(users.create_login_url(cont))
-            return
+        """ Renders the login page. """
+        cont = self.request_string('continue', default="/")
+        direct = self.request_bool('direct', default=False)
 
         if App.facebook_app_secret is None:
             self.redirect(users.create_login_url(cont))
@@ -469,6 +459,14 @@ class Login(request_handler.RequestHandler):
                            'direct': direct
                            }
         self.render_jinja2_template('login.html', template_values)
+
+    def post(self):
+        """ Handles a POST from the login page.
+        Right now this basically means the user opted to login via Google,
+        so redirect them to the appropriate Google Login page.
+        """
+        cont = self.request_string('continue', default="/")
+        self.redirect(users.create_login_url(cont))
 
 class MobileOAuthLogin(request_handler.RequestHandler):
     def get(self):

@@ -508,7 +508,7 @@
         display: block;
         float: left;
         background: #EEE;
-        padding: 10px 15px;
+        padding: 10px 0 10px 10px;
         border-radius: 5px;
         position: relative;
         width: 100%;
