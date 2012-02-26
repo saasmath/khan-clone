@@ -117,6 +117,13 @@ var Exercises = {
 
         });
 
+        $(Khan).bind("checkAnswer", function(ev, pass) {
+            // Incorrect answer drops leaves possibility to 2
+            if (pass === false && Exercises.currentCard) {
+                Exercises.currentCard.set({leavesAvailable: 2});
+            }
+        });
+
         $(Khan).bind("hintUsed", function() {
             // Using a hint drops leaves possibility to 2.
             if (Exercises.currentCard) {
