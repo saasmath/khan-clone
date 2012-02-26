@@ -97,14 +97,12 @@ var Exercises = {
 
         });
 
-        // Triggered when a problem is done (answered) but before Next Question
+        // Triggered when a problem is done (correct answer received,
+        // regardless of hints/attempts) but before Next Question
         // has been clicked
         $(Khan).bind("problemDone", function() {
 
             if (Exercises.currentCard) {
-
-                // TODO(kamens): distinguish b/w leaves 3, 4, and 5
-                Exercises.currentCard.set({leavesAvailable: 3});
 
                 // Current card is done, lock in available leaves
                 Exercises.currentCard.set({
@@ -116,10 +114,19 @@ var Exercises = {
 
         });
 
+        // Triggered when a user attempts an answer
         $(Khan).bind("checkAnswer", function(ev, pass) {
-            // Incorrect answer drops leaves possibility to 2
-            if (pass === false && Exercises.currentCard) {
-                Exercises.currentCard.set({leavesAvailable: 2});
+            if (Exercises.currentCard) {
+
+                if (pass === true) {
+                    // TODO(kamens): distinguish b/w leaves 3, 4, and 5
+                    Exercises.currentCard.set({leavesAvailable: 3});
+                }
+                else if (pass === false) {
+                    // Incorrect answer drops leaves possibility to 2
+                    Exercises.currentCard.set({leavesAvailable: 2});
+                }
+
             }
         });
 
