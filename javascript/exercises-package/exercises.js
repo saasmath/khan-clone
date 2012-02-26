@@ -32,7 +32,7 @@ var Exercises = {
         this.completeStack = new Exercises.StackCollection(this.userTopic.completeStack); 
 
         // Start w/ the first card ready to go
-        this.setCurrentCard(this.incompleteStack.pop());
+        this.currentCard = this.incompleteStack.pop();
 
         this.render();
     },
@@ -42,7 +42,6 @@ var Exercises = {
         Handlebars.registerPartial("exercise-header", Templates.get("exercises.exercise-header"));
         Handlebars.registerPartial("card", Templates.get("exercises.card"));
         Handlebars.registerPartial("current-card-leaves", Templates.get("exercises.current-card-leaves"));
-        Handlebars.registerPartial("problem-template", Templates.get("exercises.problem-template"));
 
         var profileExercise = Templates.get("exercises.exercise");
 
@@ -138,17 +137,6 @@ var Exercises = {
             }
         });
 
-        // At the end of the stack we show the user all sorts of goodies
-        this.incompleteStack.bind("stackComplete", function() { Exercises.endOfStack(); });
-
-    },
-
-    setCurrentCard: function(currentCard) {
-        this.currentCard = currentCard;
-
-        if (this.currentCardView) {
-            this.currentCardView.setModel(this.currentCard);
-        }
     },
 
     nextCard: function() {
@@ -163,40 +151,35 @@ var Exercises = {
             this.completeStack.add(this.currentCard, animationOptions);
 
             // Empty current card
-            this.setCurrentCard(null);
+            this.currentCard = null;
 
             animationOptions.deferreds.push(this.currentCardView.animateToRight());
 
         }
 
-        if (!this.currentCard && this.incompleteStack.length === 0) {
+        // Wait for push-to-right animations to finish
+        $.when.apply(null, animationOptions.deferreds).done(function() {
 
-            // Stack's done and no card left!
-            this.incompleteStack.trigger("stackComplete");
+            // Pop from left
+            Exercises.currentCard = Exercises.incompleteStack.pop(animationOptions);
 
-        }
-        else {
+            // Render next card
+            Exercises.currentCardView = new Exercises.CurrentCardView({
+                model: Exercises.currentCard,
+                el: $(".current-card") }
+            );
+            Exercises.currentCardView.render();
 
-            // Wait for push-to-right animations to finish
-            $.when.apply(null, animationOptions.deferreds).done(function() {
+            // Finish animating from left
+            $.when(Exercises.currentCardView.moveLeft()).done(function() {
 
-                $(Khan).trigger("renderNextProblem");
-
-                // Pop from left
-                Exercises.setCurrentCard(Exercises.incompleteStack.pop(animationOptions));
-
-                // Finish animating from left
-                $.when(Exercises.currentCardView.moveLeft()).done(function() {
-
-                    setTimeout(function() {
-                        Exercises.currentCardView.animateFromLeft();
-                    }, 1);
-
-                });
+                setTimeout(function() {
+                    Exercises.currentCardView.animateFromLeft();
+                }, 1);
 
             });
 
-        }
+        });
 
     },
 
@@ -351,40 +334,91 @@ Exercises.CurrentCardView = Backbone.View.extend({
     model: null,
 
     initialize: function() {
-        this.setModel(this.model);
-    },
-
-    /**
-     * Update the view's model and reconnect events appropriately.
-     * The current card view doesn't get completely re-initialized/rendered
-     * when its model changes right now due to its reliance on khan-exercises
-     * for rendering.
-     */
-    setModel: function(model) {
 
         var self = this;
         var leafEvents = ["change:done", "change:leavesEarned", "change:leavesAvailable"];
 
-        if (this.model) {
-            _.each(leafEvents, function(leafEvent) { self.model.unbind(leafEvent); });
-        }
-
-        this.model = model;
-
-        if (this.model) {
-
-            _.each(leafEvents, function(leafEvent) {
-                self.model.bind(leafEvent, function() { self.updateLeaves(); });
-            });
-
-            this.updateLeaves();
-        }
+        _.each(leafEvents, function(leafEvent) {
+            self.model.bind(leafEvent, function() { self.updateLeaves(); });
+        });
 
     },
 
-    render: function(ix) {
-        this.el.html(this.template(this.model.toJSON()));
+    /**
+     * Renders the current card appropriately by card type.
+     */
+    render: function() {
+
+        switch (this.model.get("cardType")) {
+
+            case "problem":
+                this.renderProblemCard();
+                break;
+
+            case "endofstack":
+                this.renderEndOfStackCard();
+                break;
+
+            default:
+                throw "Trying to render unknown card type";
+
+        }
+
         return this;
+    },
+
+    /**
+     * Renders the base card's structure, including leaves
+     */
+    renderCardContainer: function() {
+        this.el.html(this.template(this.model.toJSON()));
+    },
+
+    /**
+     * Renders the card's type-specific contents into contents container
+     */
+    renderCardContents: function(templateName) {
+        this.el
+            .find(".current-card-contents")
+                .html(
+                    $(Templates.get(templateName)(this.model.toJSON()))
+                );
+    },
+
+    /**
+     * Renders a new card showing an exercise problem via khan-exercises
+     */
+    renderProblemCard: function() {
+
+        // khan-exercises currently both generates content and hooks up
+        // events to the exercise interface. This means, for now, we don't want 
+        // to regenerate a brand new card when transitioning between exercise
+        // problems.
+        //
+        // TODO: in the future, if khan-exercises's problem generation is
+        // separated from its UI events a little more, we can just rerender
+        // the whole card for every problem.
+        if (!$("#problemarea").length) {
+            this.renderCardContainer();
+            this.renderCardContents("exercises.problem-template");
+        }
+
+        // Tell khan-exercises to fill the card w/ new problem contents
+        $(Khan).trigger("renderNextProblem");
+
+        // Update leaves since we may have not generated a brand new card
+        this.updateLeaves();
+
+    },
+
+    /**
+     * Renders a new card showing end-of-stack statistics
+     */
+    renderEndOfStackCard: function() {
+
+        this.renderCardContainer();
+        this.renderCardContents("exercises.end-of-stack");
+
     },
 
     /**
@@ -395,7 +429,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
             .find(".leaves-container")
                 .html(
                     $(Templates.get("exercises.current-card-leaves")(this.model.toJSON()))
-                ) 
+                ); 
     },
 
     /**
