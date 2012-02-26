@@ -267,7 +267,7 @@ Exercises.StackView = Backbone.View.extend({
     },
 
     cardViewContext: function(card, index) {
-        return _.extend({}, card.attributes, {index: index, frontVisible: this.options.frontVisible});
+        return _.extend(card.toJSON(), {index: index, frontVisible: this.options.frontVisible});
     },
 
     /**
