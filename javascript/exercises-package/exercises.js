@@ -51,12 +51,14 @@ var Exercises = {
 
         this.incompleteStackView = new Exercises.StackView({
             collection: this.incompleteStack,
-            el: $(".incomplete-stack")
+            el: $(".incomplete-stack"),
+            frontVisible: false
         }); 
 
         this.completeStackView = new Exercises.StackView({
             collection: this.completeStack,
-            el: $(".complete-stack")
+            el: $(".complete-stack"),
+            frontVisible: true
         }); 
 
         this.currentCardView = new Exercises.CurrentCardView({
@@ -251,9 +253,21 @@ Exercises.StackView = Backbone.View.extend({
     },
 
     render: function() {
-        var modelAttributes = _.pluck(this.collection.models, "attributes");
-        this.el.html(this.template({cards: modelAttributes}));
+
+        var self = this;
+
+        var collectionContext = _.map(this.collection.models, function(card, index) {
+            return self.cardViewContext(card, index);
+        });
+
+        this.el.html(this.template({cards: collectionContext}));
+
         return this;
+
+    },
+
+    cardViewContext: function(card, index) {
+        return _.extend({}, card.attributes, {index: index, frontVisible: this.options.frontVisible});
     },
 
     /**
@@ -273,7 +287,7 @@ Exercises.StackView = Backbone.View.extend({
      */
     animatePush: function(card) {
 
-        var context = _.extend({}, card.attributes, { index: this.collection.length });
+        var context = this.cardViewContext(card, this.collection.length);
 
         return this.el
             .find(".stack")

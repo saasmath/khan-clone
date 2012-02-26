@@ -46,24 +46,3 @@ Handlebars.registerHelper("toBingoHref", function(destination) {
 
     return gae_bingo.create_redirect_url.call(null, destination, conversionNames);
 });
-
-/**
- * Add a {{#each_with_index some_iterable}} helper for iterating and keeping
- * track of the current iteration index, which will be exposed in the
- * context as $index.
- */
-Handlebars.registerHelper("each_with_index", function(list, fxn) {
-
-    var buffer = "";
-    var ix = 0;
-
-    _.each(list, function(context) {
-        context.$index = ix++;
-        buffer += fxn(context);
-    });
-
-    return buffer;
-
-});
-
-
