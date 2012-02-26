@@ -50,7 +50,7 @@ class ViewExercise(request_handler.RequestHandler):
         template_values = {
             "exercise": exercise,
             "user_exercise": user_exercise,
-            "stack_json": jsonify(stack),
+            "stack_json": jsonify(stack, camel_cased=True),
             "exercise_json": jsonify(exercise, camel_cased=True),
             "user_exercise_json": jsonify(user_exercise), # TODO(kamens): need camelCase agreement here
         }

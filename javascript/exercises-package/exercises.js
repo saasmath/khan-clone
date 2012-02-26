@@ -82,12 +82,31 @@ var Exercises = {
         // content inside of each card.
         $(Khan).bind("problemDone", function() {
 
+            // TODO(kamens): leaves 3-5
+            if (Exercises.currentCard) {
+                Exercises.currentCard.setLeaves(3);
+            }
+
             // Start the next card process
             Exercises.nextCard();
 
             // Return false so we take control of when nextProblem is triggered
             return false;
 
+        });
+
+        $(Khan).bind("hintUsed", function() {
+            // Using a hint drops leaves possibility to 2.
+            if (Exercises.currentCard) {
+                Exercises.currentCard.setLeaves(2);
+            }
+        });
+
+        $(Khan).bind("allHintsUsed", function() {
+            // Using all hints drops leaves possibility to 1.
+            if (Exercises.currentCard) {
+                Exercises.currentCard.setLeaves(1);
+            }
         });
 
         // At the end of the stack we show the user all sorts of goodies
@@ -102,9 +121,6 @@ var Exercises = {
         var animationOptions = { deferreds: [] };
 
         if (this.currentCard) {
-
-            // TODO(kamens): currently randomly setting leaf value
-            this.currentCard.set({leaves_earned: KhanUtil.randRange(0, 5)});
 
             // Move current to complete
             this.completeStack.add(this.currentCard, animationOptions);
@@ -154,6 +170,26 @@ var Exercises = {
     }
 
 };
+
+/**
+ * Model of any (current or in-stack) card
+ */
+Exercises.Card = Backbone.Model.extend({
+
+    setLeaves: function(leavesEarned) {
+
+        var currentLeaves = this.get("leavesEarned");
+
+        if (currentLeaves !== 0) {
+            // Once it's been set, leaf count can only go down.
+            leavesEarned = Math.min(currentLeaves, leavesEarned);
+        }
+
+        this.set({leavesEarned: leavesEarned});
+
+    }
+
+});
 
 /**
  * Collection model of a stack of cards
@@ -250,11 +286,6 @@ Exercises.StackView = Backbone.View.extend({
     }
 
 });
-
-/**
- * Model of any (current or in-stack) card
- */
-Exercises.Card = Backbone.Model.extend({});
 
 /**
  * View of the single, currently-visible card
