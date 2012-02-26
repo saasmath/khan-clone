@@ -73,11 +73,11 @@ var Exercises = {
         this.incompleteStackView.render();
         this.completeStackView.render();
 
-        this.listenForEvents();
+        this.bindEvents();
 
     },
 
-    listenForEvents: function() {
+    bindEvents: function() {
 
         // Triggered when Next Question has been clicked.
         //
