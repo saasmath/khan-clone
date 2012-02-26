@@ -244,15 +244,13 @@ Exercises.StackView = Backbone.View.extend({
 
     initialize: function() {
 
-        var self = this;
-
         // deferAnimation is a wrapper function used to insert
         // any animations returned by fxn onto animationOption's
         // list of deferreds. This lets you chain complex
         // animations (see Exercises.nextCard).
         var deferAnimation = function(fxn) {
             return function(model, collection, options) {
-                var result = fxn(model, collection, options);
+                var result = fxn.call(this, model, collection, options);
 
                 if (options && options.deferreds) {
                     options.deferreds.push(result);
@@ -264,21 +262,19 @@ Exercises.StackView = Backbone.View.extend({
 
         this.collection
             .bind("add", deferAnimation(function(card) {
-                return self.animatePush(card);
-            }))
+                return this.animatePush(card);
+            }), this)
             .bind("remove", deferAnimation(function() {
-                return self.animatePop();
-            }));
+                return this.animatePop();
+            }), this);
 
     },
 
     render: function() {
 
-        var self = this;
-
         var collectionContext = _.map(this.collection.models, function(card, index) {
-            return self.cardViewContext(card, index);
-        });
+            return this.cardViewContext(card, index);
+        }, this);
 
         this.el.html(this.template({cards: collectionContext}));
 
@@ -335,12 +331,11 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     initialize: function() {
 
-        var self = this;
         var leafEvents = ["change:done", "change:leavesEarned", "change:leavesAvailable"];
 
         _.each(leafEvents, function(leafEvent) {
-            self.model.bind(leafEvent, function() { self.updateLeaves(); });
-        });
+            this.model.bind(leafEvent, function() { this.updateLeaves(); }, this);
+        }, this);
 
     },
 
