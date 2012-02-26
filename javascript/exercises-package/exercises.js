@@ -369,8 +369,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
             _.each(leafEvents, function(leafEvent) { self.model.unbind(leafEvent); });
         }
 
-        if (model) {
-            this.model = model;
+        this.model = model;
+
+        if (this.model) {
 
             _.each(leafEvents, function(leafEvent) {
                 self.model.bind(leafEvent, function() { self.updateLeaves(); });
