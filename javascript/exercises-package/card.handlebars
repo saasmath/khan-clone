@@ -2,13 +2,15 @@
     <div class="card">
         <div class="card-front card-face">
 
-            {{index}} ({{leavesEarned}})
+            <span style="font-size:8px;line-height:8px;">
+                {{index}} ({{leavesEarned}}) ({{cardType}})
 
-            {{#if frontVisible}}
-                (front)
-            {{else}}
-                (back)
-            {{/if}}
+                {{#if frontVisible}}
+                    (front)
+                {{else}}
+                    (back)
+                {{/if}}
+            </span>
 
         </div>
         <div class="card-back card-face">
