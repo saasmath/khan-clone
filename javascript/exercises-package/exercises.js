@@ -84,7 +84,7 @@ var Exercises = {
 
             // TODO(kamens): leaves 3-5
             if (Exercises.currentCard) {
-                Exercises.currentCard.setLeaves(3);
+                Exercises.currentCard.set({leavesEarned: 3});
             }
 
             // Start the next card process
@@ -98,14 +98,14 @@ var Exercises = {
         $(Khan).bind("hintUsed", function() {
             // Using a hint drops leaves possibility to 2.
             if (Exercises.currentCard) {
-                Exercises.currentCard.setLeaves(2);
+                Exercises.currentCard.set({leavesEarned: 2});
             }
         });
 
         $(Khan).bind("allHintsUsed", function() {
             // Using all hints drops leaves possibility to 1.
             if (Exercises.currentCard) {
-                Exercises.currentCard.setLeaves(1);
+                Exercises.currentCard.set({leavesEarned: 1});
             }
         });
 
@@ -176,16 +176,19 @@ var Exercises = {
  */
 Exercises.Card = Backbone.Model.extend({
 
-    setLeaves: function(leavesEarned) {
+    set: function(attributes, options) {
 
-        var currentLeaves = this.get("leavesEarned");
+        // Once it's been set, leavesEarned can only go down.
+        if (attributes["leavesEarned"] !== null) {
 
-        if (currentLeaves !== 0) {
-            // Once it's been set, leaf count can only go down.
-            leavesEarned = Math.min(currentLeaves, leavesEarned);
+            var currentLeaves = this.get("leavesEarned");
+            if (currentLeaves) {
+                attributes["leavesEarned"] = Math.min(currentLeaves, attributes["leavesEarned"]);
+            }
+
         }
 
-        this.set({leavesEarned: leavesEarned});
+        return Backbone.Model.prototype.set.call(this, attributes, options);
 
     }
 
