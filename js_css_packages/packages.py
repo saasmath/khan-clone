@@ -180,6 +180,7 @@ javascript = {
             "stack.handlebars",
             "card.handlebars",
             "current-card.handlebars",
+            "current-card-leaves.handlebars",
             "problem-template.handlebars",
             "exercises.js",
             "review.js",
