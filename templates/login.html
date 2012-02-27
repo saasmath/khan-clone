@@ -9,6 +9,7 @@
 {% block pagecontent %}
 <article id="login-page"><div id="login-page-content">
     <form method="POST" id="login-form" action="/login?continue={{continue|urlencode}}">
+    <input type="hidden" name="type" id="type-input">
 
     <ul class="providers">
     <h3>Login to Khan Academy using one of these services:</h3>

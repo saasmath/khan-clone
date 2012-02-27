@@ -9,6 +9,21 @@ import os
 import request_handler
 import util
 
+
+class LoginType():
+    """ Enum representing which types of logins a user can use
+    to authenticate """
+    UNKNOWN = 0
+    GOOGLE = 1
+    FACEBOOK = 2
+    PASSWORD = 3
+
+    @staticmethod
+    def is_valid(type_value):
+        return (isinstance(type_value, int)
+                and type_value >= 1
+                and type_value <= 3)
+
 class Login(request_handler.RequestHandler):
     def get(self):
         """ Renders the login page. """
@@ -25,12 +40,27 @@ class Login(request_handler.RequestHandler):
         self.render_jinja2_template('login.html', template_values)
 
     def post(self):
-        """ Handles a POST from the login page.
-        Right now this basically means the user opted to login via Google,
-        so redirect them to the appropriate Google Login page.
-        """
+        """ Handles a POST from the login page. """
         cont = self.request_string('continue', default="/")
-        self.redirect(users.create_login_url(cont))
+        login_type = self.request_int('type', default=LoginType.UNKNOWN)
+        if not LoginType.is_valid(login_type):
+            # Can't figure out what the user wants to do - just send them
+            # the login page.
+            self.get()
+            return
+
+        if login_type == LoginType.FACEBOOK:
+            # Unexpected - login through Facebook is done client side using
+            # Fb's JS SDK righ tnow.
+            logging.error("Unexpected login type of Facebook in Login form")
+            return
+
+        if login_type == LoginType.GOOGLE:
+            # Redirect to Google's login page
+            self.redirect(users.create_login_url(cont))
+        elif login_type == LoginType.PASSWORD:
+            self.response.write("We'll handle this soon!")
+            return
 
 class MobileOAuthLogin(request_handler.RequestHandler):
     def get(self):
