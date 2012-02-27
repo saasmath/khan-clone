@@ -1,4 +1,4 @@
-import auth
+import auth.passwords as passwords
 from google.appengine.ext import db
 # TODO(benkomalo): use a stronger crypto random?
 import random
@@ -17,7 +17,7 @@ class Credential(db.Model):
     def make_for_user(user_data, raw_password):
         salt = str(random.getrandbits(64))
         return Credential(parent=user_data,
-                          hashed_pass=auth.hash_password(raw_password, salt),
+                          hashed_pass=passwords.hash_password(raw_password, salt),
                           salt=salt)
 
     @staticmethod
@@ -27,4 +27,4 @@ class Credential(db.Model):
     def validate_password(self, raw_password):
         # TODO(benkomalo): shortcut this to check if raw_password isn't
         # even a valid password.
-        return auth.hash_password(raw_password, self.salt) == self.hashed_pass
+        return passwords.hash_password(raw_password, self.salt) == self.hashed_pass
