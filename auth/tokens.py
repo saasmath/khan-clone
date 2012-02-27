@@ -1,8 +1,9 @@
-import hmac
-import hashlib
-import datetime
-import base64
 from app import App
+import base64
+import datetime
+import hashlib
+import hmac
+import logging
 
 _FORMAT = "%Y%j%H%M%S"
 def _to_timestamp(dt):
@@ -15,7 +16,7 @@ def _from_timestamp(s):
     try:
         result = datetime.datetime.strptime(main, _FORMAT)
         result = result.replace(microsecond=int(ms))
-    except Exception, e:
+    except Exception:
         return None
     return result
 
@@ -61,15 +62,19 @@ def validate_token(user_data, token, time_to_expiry=None, clock=None):
         contents = base64.b64decode(token)
     except TypeError:
         # Not proper base64 encoded value.
+        logging.info("Tried to decode auth token that isn't base64 encoded")
         return False
 
     try:
         user_id, timestamp, signature = contents.split("\n")
     except Exception:
         # Wrong number of parts / malformed.
+        logging.info("Tried to decode malformed auth token")
         return False
 
     if user_id != user_data.user_id:
+        logging.info("Tried to decode auth token for different user." +
+                     " requestor[%s] token[%s]" % (user_data.user_id, user_id))
         return False
 
     if not time_to_expiry:
