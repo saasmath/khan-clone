@@ -9,7 +9,7 @@
 #login-page-content {
     /* TODO(benkomalo): vertically position this and make it flex. */
     position: relative;
-    margin-top: 100px;
+    margin-top: 6em;
 }
 
 .providers, .pw-login {
@@ -130,7 +130,7 @@ a:visited {
 }
 
 .signup-prompt-container {
-    margin-top: 10em;
+    margin: 8em 0;
 }
 
 .signup-prompt {
