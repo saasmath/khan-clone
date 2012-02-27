@@ -2918,7 +2918,7 @@ class Topic(Searchable, db.Model):
         else:
             return progress_tree
 
-def topictree_import_task(version_id, topic_id, tree_json_compressed):
+def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data 
     import zlib
     import pickle
@@ -3140,6 +3140,10 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
     logging.info("about to put %i topic nodes" % len(changed_nodes))
     db.put(changed_nodes)
     logging.info("done with import")
+
+    if publish:
+        version.set_default_version()
+
     return True
 
 
