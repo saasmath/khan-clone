@@ -10,10 +10,10 @@ var Exercises = {
     currentCard: null,
     currentCardView: null,
 
-    incompleteStackCollection: null,
+    incompleteStack: null,
     incompleteStackView: null,
 
-    completeStackCollection: null,
+    completeStack: null,
     completeStackView: null,
 
     /**
@@ -238,6 +238,56 @@ Exercises.StackCollection = Backbone.Collection.extend({
         var head = this.peek();
         this.remove(head, animationOptions);
         return head;
+    },
+
+    /**
+     * Return the longest streak of cards in this stack
+     * that satisfies the truth test fxn
+     */
+    longestStreak: function(fxn) {
+
+        var current = 0,
+            longest = 0;
+
+        this.each(function(card) {
+
+            if (fxn(card)) {
+                current += 1;
+            }
+            else {
+                current = 0;
+            }
+
+            longest = Math.max(current, longest);
+
+        });
+
+        return longest;
+
+    },
+
+    /**
+     * Return a dictionary of interesting, positive stats about this stack.
+     */
+    stats: function() {
+
+        var totalLeaves = this.reduce(function(sum, card) {
+            return card.get("leavesEarned") + sum;
+        }, 0);
+
+        var longestStreak = this.longestStreak(function(card) {
+            return card.get("leavesEarned") >= 3;
+        });
+
+        var longestSpeedStreak = this.longestStreak(function(card) {
+            return card.get("leavesEarned") >= 5;
+        });
+
+        return {
+            "longestStreak": longestStreak,
+            "longestSpeedStreak": longestSpeedStreak,
+            "totalLeaves": totalLeaves,
+        };
     }
 
 });
@@ -379,12 +429,16 @@ Exercises.CurrentCardView = Backbone.View.extend({
     /**
      * Renders the card's type-specific contents into contents container
      */
-    renderCardContents: function(templateName) {
+    renderCardContents: function(templateName, optionalContext) {
+
+        var context = _.extend({}, this.model.toJSON(), optionalContext);
+
         this.el
             .find(".current-card-contents")
                 .html(
-                    $(Templates.get(templateName)(this.model.toJSON()))
+                    $(Templates.get(templateName)(context))
                 );
+
     },
 
     /**
@@ -419,7 +473,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     renderEndOfStackCard: function() {
 
         this.renderCardContainer();
-        this.renderCardContents("exercises.end-of-stack");
+        this.renderCardContents("exercises.end-of-stack", Exercises.completeStack.stats());
 
     },
 
