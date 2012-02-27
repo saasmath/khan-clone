@@ -8,6 +8,9 @@ var Video = {
         VideoControls.onYouTubeBlocked(function() {
            $("#youtube_blocked").css("visibility", "visible").css("left", "0px").css("position", "relative");
            $("#idOVideo").hide();
+           $(".subtitles-link").hide();
+           $(".transcript-link").hide();
+           Video.hideSubtitles();
            VideoStats.prepareAlternativePlayer(); // If YouTube is hidden, use the flv player for statistics
         });
 
