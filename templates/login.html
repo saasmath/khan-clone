@@ -59,14 +59,9 @@
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
-<script>
-$("#login-google").click(function(e) {
-    $("#login-form").submit();
-});
-$("#login-facebook").click(function(e) {
-    $("#real_fb_button a").click();
-});
-$("#email").focus();
-</script>
+    {{ js_css_packages.js_package("login") }}
+    <script>
+    $(Login.init);
+    </script>
 {% endblock bottompagescript %}
 

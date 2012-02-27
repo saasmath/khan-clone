@@ -88,6 +88,11 @@ javascript = {
             "highcharts.js",
         ]
     },
+    "login": {
+        "files": [
+            "login.js",
+        ]
+    },
     "profile": {
         "files": [
             "jquery.address-1.4.min.js",
