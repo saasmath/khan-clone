@@ -35,8 +35,7 @@ import base64, os
 
 from image_cache import ImageCache
 
-import auth.tokens
-from auth.models import Credential
+from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
@@ -888,7 +887,7 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
-class UserData(GAEBingoIdentityModel, db.Model):
+class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
     # user_id can be used as a unique identifier instead.
@@ -968,12 +967,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     # profile (and can be searched, etc)
     is_profile_public = db.BooleanProperty(default=False, indexed=False)
 
-    # Randomly generated string representing a "credential version". This
-    # is used to mint cookies and authenticate the user. A new value is
-    # re-generated when the user changes his/her password, and all cookies
-    # get invalidated
-    credential_version = db.StringProperty(indexed=False)
-
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
@@ -1030,43 +1023,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 self.put()
             db.run_in_transaction(txn)
         return True
-
-    def set_password(self, raw_password):
-        """ Updates the password for this user and invalidates previoues ones.
-
-        This operation will update this UserData object as well, so any
-        outstanding changes on it will be persisted.
-
-        Authentication tokens distributed via auth/tokens.py will also be
-        invalidated as a result of this operation (e.g. the user's auth cookie)
-        """
-        new_cred_version = str(random.getrandbits(128))
-        def txn():
-            c = Credential.retrieve_for_user(self)
-            if c is not None:
-                c.delete()
-            new_cred = Credential.make_for_user(self, raw_password)
-            self.credential_version = new_cred_version
-            db.put([new_cred, self])
-        db.run_in_transaction(txn)
-
-    def validate_password(self, raw_password):
-        """ Tests the specified password for this user.
-
-        Does not do throttling if the attempt fails - this is expected
-        to be done in higher layers.
-        """
-        if not self.credential_version:
-            # Haven't ever set a password
-            return False
-
-        c = Credential.retrieve_for_user(self)
-        if c is None:
-            logging.error("Can't retrieve password info for user_id %s" %
-                    self.user_id)
-            return False
-
-        return c.validate_password(raw_password)
 
     @property
     def email(self):
