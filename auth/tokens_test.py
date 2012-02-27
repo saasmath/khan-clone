@@ -5,11 +5,14 @@ from agar.test import BaseTest
 import auth.tokens as tokens
 import datetime
 import models
-import random
 import testutil
-import unittest2
 
-class TimestampTests(unittest2.TestCase):
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+class TimestampTests(unittest.TestCase):
     def test_timestamp_creation(self):
         clock = testutil.MockDatetime()
 

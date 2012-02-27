@@ -1,8 +1,12 @@
 from auth.passwords import *
 import random
-import unittest2
 
-class HashingTests(unittest2.TestCase):
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+class HashingTests(unittest.TestCase):
     def test_hashing_is_unique(self):
         passwords = ['password',
                      'password1',
