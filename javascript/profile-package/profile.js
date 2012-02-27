@@ -113,6 +113,7 @@ var Profile = {
         "/vital-statistics/exercise-problems/:exercise": "showExerciseProblems",
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "/vital-statistics/:graph": "showVitalStatistics",
+        "/coaches": "showCoaches",
 
         "": "showDefault",
         // If the user types /profile/username/ with a trailing slash
@@ -240,6 +241,14 @@ var Profile = {
                 .siblings().hide();
             this.activateRelatedTab($("#tab-content-goals").attr("rel"));
             this.updateTitleBreadcrumbs(["Goals"]);
+        },
+
+        showCoaches: function() {
+            Profile.populateCoaches();
+            $("#tab-content-coaches").show()
+                .siblings().hide();
+            this.activateRelatedTab("people coaches");
+            this.updateTitleBreadcrumbs(["Coaches"]);
         },
 
         activateRelatedTab: function(rel) {
@@ -877,6 +886,17 @@ var Profile = {
             fakeView = new GoalProfileView({model: fakeGoalBook});
 
         $("#profile-goals-content").append(fakeView.show().addClass("empty-chart"));
+    },
+
+    coachesDeferred_: null,
+    populateCoaches: function() {
+        if (Profile.coachesDeferred_) {
+            return Profile.coachesDeferred_;
+        }
+
+        Profile.coachesDeferred_ = Coaches.init();
+
+        return Profile.coachesDeferred_;
     },
 
     populateSuggestedActivity: function(activities) {

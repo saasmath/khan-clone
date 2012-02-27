@@ -931,6 +931,10 @@ a[rel="achievements"] {
 a[rel="goals"] {
     background: transparent url(/images/profile-icons/tick-circle.png) no-repeat 4px 50%;
 }
+/* TODO(marcia): Replace with a real icon. */
+a[rel="people coaches"] {
+    background: transparent url(/images/profile-icons/chart.png) no-repeat 4px 50%;
+}
 li.profile-tab {
     margin-bottom: 10px;
 }
@@ -1171,4 +1175,26 @@ li.profile-tab {
     text-decoration: none;
 }
 
+#tab-content-coaches {
+    margin-top: 22px;
+}
+#requests {
+    display: none;
+}
+.coaches-section {
+    margin-bottom: 22px;
+}
+.coach-row {
+    padding: 10px;
+}
+.coach-row:nth-child(2n+1) {
+    background-color: #EFEFEF;
+}
+.coach-row span.email {
+    display: inline-block;
+    width: 200px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    margin-right: 30px;
+}
 

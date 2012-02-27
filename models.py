@@ -1226,6 +1226,21 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return user_data
 
+    @staticmethod
+    def get_visible_user(user, actor=None):
+        """ Retrieve user for actor, in the style of O-Town, all or nothing.
+
+        TODO(marcia): Sort out UserData and UserProfile visibility turf war
+        """
+        if actor is None:
+            actor = UserData.current() or UserData.pre_phantom()
+
+        if user and user.is_visible_to(actor):
+            # Allow access to user's profile
+            return user
+
+        return None
+
     def delete(self):
         logging.info("Deleting user data for %s with points %s" % (self.key_email, self.points))
         logging.info("Dumping user data for %s: %s" % (self.user_id, jsonify(self)))
