@@ -121,8 +121,7 @@ var Exercises = {
                 if (pass === true) {
                     // TODO(kamens): distinguish b/w leaves 3, 4, and 5
                     Exercises.currentCard.decreaseLeavesAvailable(3);
-                }
-                else if (pass === false) {
+                } else if (pass === false) {
                     // Incorrect answer drops leaves possibility to 2
                     Exercises.currentCard.decreaseLeavesAvailable(2);
                 }
@@ -252,8 +251,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
 
             if (fxn(card)) {
                 current += 1;
-            }
-            else {
+            } else {
                 current = 0;
             }
 
