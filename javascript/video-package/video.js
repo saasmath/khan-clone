@@ -55,6 +55,11 @@ var Video = {
             }
         }
 
+        // Bingo conversions for watching a video video
+        gae_bingo.bingo(["struggling_videos_landing",
+            "suggested_activity_videos_landing",
+            "suggested_activity_videos_landing_binary"]);
+
         // Fix up data for templating
         if (videoData.related_exercises &&
             videoData.related_exercises.length) {
