@@ -1,8 +1,7 @@
 import auth.passwords as passwords
 from google.appengine.ext import db
 import logging
-# TODO(benkomalo): use a stronger crypto random?
-import random
+import os
 
 class Credential(db.Model):
     """ An abstraction around a password for a given user.
@@ -16,7 +15,7 @@ class Credential(db.Model):
 
     @staticmethod
     def make_for_user(user_data, raw_password):
-        salt = str(random.getrandbits(64))
+        salt = os.urandom(8)
         return Credential(parent=user_data,
                           hashed_pass=passwords.hash_password(raw_password, salt),
                           salt=salt)
@@ -49,7 +48,7 @@ class CredentialedUser(db.Model):
         Authentication tokens distributed via auth/tokens.py will also be
         invalidated as a result of this operation (e.g. the user's auth cookie)
         """
-        new_cred_version = str(random.getrandbits(128))
+        new_cred_version = os.urandom(16)
         def txn():
             c = Credential.retrieve_for_user(self)
             if c is not None:
