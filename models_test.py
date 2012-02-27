@@ -187,7 +187,3 @@ class VideoSubtitlesTest(unittest2.TestCase):
         json = subs.load_json()
         self.assertIsNone(json)
         self.assertEqual(warn.call_count, 1, 'logging.warn() not called')
-
-        # The old token should be invalidated
-        self.assertFalse(auth.tokens.validate_token(u, token))
-

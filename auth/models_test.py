@@ -41,3 +41,6 @@ class CredentialTest(BaseTest):
         self.assertFalse(u.validate_password('Password1'))
         self.assertTrue(u.validate_password('NewS3cr3t!'))
 
+        # The old token should be invalidated
+        self.assertFalse(auth.tokens.validate_token(u, token))
+

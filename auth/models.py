@@ -15,7 +15,7 @@ class Credential(db.Model):
 
     @staticmethod
     def make_for_user(user_data, raw_password):
-        salt = os.urandom(8)
+        salt = os.urandom(8).encode('hex')
         return Credential(parent=user_data,
                           hashed_pass=passwords.hash_password(raw_password, salt),
                           salt=salt)
@@ -48,7 +48,7 @@ class CredentialedUser(db.Model):
         Authentication tokens distributed via auth/tokens.py will also be
         invalidated as a result of this operation (e.g. the user's auth cookie)
         """
-        new_cred_version = os.urandom(16)
+        new_cred_version = os.urandom(16).encode('hex')
         def txn():
             c = Credential.retrieve_for_user(self)
             if c is not None:
