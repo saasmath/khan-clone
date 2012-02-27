@@ -1175,10 +1175,15 @@ li.profile-tab {
     text-decoration: none;
 }
 
-#coaches {
+#tab-content-coaches {
     margin-top: 22px;
 }
-
+#requests {
+    display: none;
+}
+.coaches-section {
+    margin-bottom: 22px;
+}
 .coach-row {
     padding: 10px;
 }

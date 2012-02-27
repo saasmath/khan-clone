@@ -894,35 +894,7 @@ var Profile = {
             return Profile.coachesDeferred_;
         }
 
-        Profile.coachesDeferred_ = "temp";
-
-        var template = Templates.get("profile.coaches");
-
-        // Dummy data
-        var requests = [{email: "ooglyboogly", isRequesting: true}, {email: "blahblah", isRequesting: true}],
-            coaches = [{email: "mooooooo", isCoach: true},
-                {email: "fooooooooo", isCoach: true},
-                {email: "boooooooo", isCoach: true}],
-            data = {
-                "requests": requests,
-                "invalidCoach": false
-            };
-
-        $("#tab-content-coaches").html(template(data));
-
-        var requestList = new Coaches.CoachList(requests),
-            requestListView = new Coaches.CoachListView({
-                collection: requestList,
-                el: "#request-list-container"
-            });
-        requestListView.render();
-
-        var coachList = new Coaches.CoachList(coaches),
-            coachListView = new Coaches.CoachListView({
-                collection: coachList,
-                el: "#coach-list-container"
-            });
-        coachListView.render();
+        Profile.coachesDeferred_ = Coaches.init();
 
         return Profile.coachesDeferred_;
     },

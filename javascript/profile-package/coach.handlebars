@@ -1,9 +1,9 @@
 <span class="email">{{email}}</span>
-{{#if isCoach}}
-    <a href="" class="simple-button action-gradient">Remove coach</a>
+<span class="controls">
+{{#if isCoachingLoggedInUser}}
+    <span class="remove simple-button action-gradient">Remove coach</span>
 {{else}}
-    {{#if isRequesting}}
-        <a href="" class="simple-button action-gradient">Accept request</a>
-        <a href="" class="simple-button action-gradient">Deny request</a>
-    {{/if}}
+    <span class="accept simple-button action-gradient">Accept request</span>
+    <span class="deny simple-button action-gradient">Deny request</span>
 {{/if}}
+</span>

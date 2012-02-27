@@ -121,22 +121,6 @@ def get_user_data_coach_from_request():
 
     return user_data_coach
 
-def get_user_data_from_json(json, key):
-    """ Return the user_data specified by a username or an email.
-
-    Sample usage:
-        get_user_data_from_json(
-                {
-                    'coach': '<username or email>'
-                },
-                'coach'
-            )
-    """
-    if not json or not key or key not in json:
-        return None
-
-    return models.UserData.get_from_username_or_email(json[key])
-
 @route("/api/v1/topicversion/<version_id>/topics/with_content", methods=["GET"])
 @route("/api/v1/topics/with_content", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
@@ -1054,58 +1038,71 @@ def update_user_profile():
         add_action_results(result, {})
     return result
 
-@route("/api/v1/user/coaches", methods=["PUT"])
+@route("/api/v1/user/coaches", methods=["GET"])
 @oauth_required()
 @jsonp
 @jsonify
-def add_coach():
-    """ Add a coach for the currently logged in user.
-
-    Expects JSON with a "username" or "email" field that specifies the coach.
+def get_coaches_and_requesters():
+    """ Return list of UserProfiles corresponding to the student's
+        coaches and coach requesters
     """
-    # TODO: Remove redundant path/logic in coaches.py
-    coach_user_data = get_user_data_from_json(request.json, 'coach')
+    user_data = request.request_visible_student_user_data()
+    return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
-    if not coach_user_data:
-        return api_invalid_param_response("Invalid coach email or username.")
-
-    current_user_data = models.UserData.current()
-    if not current_user_data.is_coached_by(coach_user_data):
-        current_user_data.coaches.append(coach_user_data.key_email)
-        current_user_data.put()
-
-@route("/api/v1/user/coaches", methods=["DELETE"])
+@route("/api/v1/user/coaches", methods=["POST", "PUT"])
 @oauth_required()
 @jsonp
 @jsonify
-def remove_coach():
-    """ Remove a coach for the currently logged in user.
-
-    Expects JSON with a "username" or "email" field that specifies the coach.
+def update_coaches_and_requesters():
+    """ Update the student's list of coaches and coach requesters
     """
-    # TODO: Remove redundant path/logic in coaches.py
-    coach_user_data = get_user_data_from_json(request.json, 'coach')
+    # TODO(marcia): what is the deal with coach_email.lower() in coaches.py
+    user_data = models.UserData.current()
 
-    if not coach_user_data:
-        return api_invalid_param_response("Invalid coach email or username.")
+    coaches_json = request.json
+    updated_coach_emails = []
+    outstanding_coach_emails = user_data.coaches
+    requester_emails = []
+    current_requests = models.CoachRequest.get_for_student(user_data).fetch(1000)
 
-    current_user_data = models.UserData.current()
+    for coach_json in coaches_json:
+        email = coach_json['email']
+        # TODO(marcia): underscore-ify is_coaching_logged_in_user
+        is_coaching_logged_in_user = coach_json['isCoachingLoggedInUser']
+        if is_coaching_logged_in_user:
+            if email in outstanding_coach_emails:
+                outstanding_coach_emails.remove(email)
+                updated_coach_emails.append(email)
+            else:
+                coach_user_data = models.UserData.get_from_username_or_email(email)
+                if coach_user_data is not None:
+                    updated_coach_emails.append(email)
+                else:
+                    # TODO(marcia): what to do what to do
+                    logging.critical("invalid email!")
+        else:
+            requester_emails.append(email)
 
-    if current_user_data.student_lists:
-        actual_lists = StudentList.get(current_user_data.student_lists)
-        current_user_data.student_lists = [l.key() for l in actual_lists if coach_user_data.key() not in l.coaches]
+    if len(outstanding_coach_emails):
+        removed_coach_keys = frozenset([
+                models.UserData.get_from_username_or_email(email).key()
+                for email in outstanding_coach_emails])
 
-    try:
-        current_user_data.coaches.remove(coach_user_data.key_email)
-    except ValueError:
-        pass
+        actual_lists = StudentList.get(user_data.student_lists)
 
-    try:
-        current_user_data.coaches.remove(coach_user_data.key_email.lower())
-    except ValueError:
-        pass
+        user_data.student_lists = [l.key() for l in actual_lists
+                if (len(frozenset(l.coaches) & removed_coach_keys) == 0)]
 
-    current_user_data.put()
+    user_data.coaches = updated_coach_emails
+    user_data.put()
+
+    for current_request in current_requests:
+        coach_email = current_request.coach_requesting_data.key_email
+        if coach_email not in requester_emails:
+            current_request.delete()
+
+    # TODO(marcia): figure out the Right Thing to Return
+    return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()
@@ -1862,15 +1859,7 @@ def get_user_badges():
 @jsonp
 @jsonify
 def get_activity():
-    student = models.UserData.current() or models.UserData.pre_phantom()
-    user_override = request.request_user_data("email")
-    if user_override and user_override.key_email != student.key_email:
-        # TODO: Clarify "visibility"
-        if not user_override.is_visible_to(student):
-            return api_unauthorized_response("Cannot view this profile")
-        else:
-            # Allow access to this student's profile
-            student = user_override
+    student = request.request_visible_student_user_data()
 
     recent_activities = recent_activity.recent_activity_list(student)
     recent_completions = filter(
@@ -2117,14 +2106,7 @@ def get_student_progress_report():
 @jsonp
 @jsonify
 def get_user_goals():
-    student = models.UserData.current() or models.UserData.pre_phantom()
-    user_override = request.request_user_data("email")
-    if user_override and user_override.key_email != student.key_email:
-        if not user_override.is_visible_to(student):
-            return api_unauthorized_response("Cannot view this profile")
-        else:
-            # Allow access to this student's profile
-            student = user_override
+    student = request.request_visible_student_user_data()
 
     goals = GoalList.get_all_goals(student)
     return [g.get_visible_data() for g in goals]
@@ -2134,15 +2116,7 @@ def get_user_goals():
 @jsonp
 @jsonify
 def get_user_current_goals():
-    student = models.UserData.current() or models.UserData.pre_phantom()
-
-    user_override = request.request_user_data("email")
-    if user_override and user_override.key_email != student.key_email:
-        if not user_override.is_visible_to(student):
-            return api_unauthorized_response("Cannot view this profile")
-        else:
-            # Allow access to this student's profile
-            student = user_override
+    student = request.request_visible_student_user_data()
 
     goals = GoalList.get_current_goals(student)
     return [g.get_visible_data() for g in goals]

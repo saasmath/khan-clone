@@ -1,31 +1,36 @@
-<div id="coaches">
-{{#if requests}}
-<h2>New coaches are waiting</h2>
+<div id="tab-content-coaches">
 
-<p>These coaches have requested you as their student. <strong>If you accept them as your coach, they will have access to your Khan Academy data</strong>.</p>
-<div id="request-list-container"></div>
-{{/if}}
+<div id="requests" class="coaches-section">
+    <h2>New coaches are waiting</h2>
 
-<h2 {{#if requests}}class="section-headline"{{/if}}>Add a coach</h2>
-<p>
-    Your coach will give you their coach id. Enter it here to give them access to your Khan Academy data.
-</p>
-
-<form action="/registercoach" method="post">
-<input type="text" name="coach" class="blur-on-esc">
-<input type="submit" value="Add coach" class="simple-button action-gradient">
-</form>
-
-<div{{#unless invalidCoach}} style="display: none;"{{/unless}}>
-    <p><span style="color:red;font-weight:bold;">We can't find this coach.</span></p>
-    <p style="padding-left:18px;">
-        Make sure you're entering your full coach's full id, which is <em>case sensitive</em>. The coach id looks like <strong>teacher@gmail.com</strong> or <strong>http://facebookid.khanacademy.org/1067499349</strong>. If you're entering your coach id correctly and still having trouble, make sure your coach has logged in to the Khan Academy at least once.
-    </p>
+    <p>These coaches have requested you as their student. <strong>If you accept them as your coach, they will have access to your Khan Academy data</strong>.</p>
+    <div id="request-list-container"></div>
 </div>
 
-<h2 class="section-headline">Your coaches</h2>
-<div id="coach-list-container"></div>
+<div class="coaches-section">
+    <h2>Add a coach</h2>
+    <p>
+        Your coach will give you their coach id. Enter it here to give them access to your Khan Academy data.
+    </p>
+    <input type="text" id="coach-email" class="blur-on-esc">
+    <span id="add-coach" class="simple-button action-gradient">Add coach</span>
 
-<h2 class="section-headline">Your Student ID</h2>
-<p>If your coach asks for your student id, it is: asdfasdfasdf</p>
+    <div style="display: none;">
+        <p><span style="color:red;font-weight:bold;">We can't find this coach.</span></p>
+        <p style="padding-left:18px;">
+            Make sure you're entering your full coach's full id, which is <em>case sensitive</em>. The coach id looks like <strong>teacher@gmail.com</strong> or <strong>http://facebookid.khanacademy.org/1067499349</strong>. If you're entering your coach id correctly and still having trouble, make sure your coach has logged in to the Khan Academy at least once.
+        </p>
+    </div>
+</div>
+
+<div class="coaches-section">
+    <h2>Your coaches</h2>
+    <div id="coach-list-container"></div>
+</div>
+
+<div class="coaches-section">
+    <h2>Your student id</h2>
+    <p>If your coach asks for your student id, it is: {{email}}</p>
+</div>
+
 </div>
