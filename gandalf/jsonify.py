@@ -1,7 +1,5 @@
-
 # Based on http://appengine-cookbook.appspot.com/recipe/extended-jsonify-function-for-dbmodel,
 # with modifications for performance.
-import logging
 
 import simplejson
 from google.appengine.ext import db
@@ -55,8 +53,8 @@ def is_visible_property(property):
 
 def is_visible_class_name(class_name):
     return not(
-                ('function' in class_name) or 
-                ('built' in class_name) or 
+                ('function' in class_name) or
+                ('built' in class_name) or
                 ('method' in class_name) or
                 ('db.Query' in class_name)
             )
@@ -70,8 +68,6 @@ def jsonify(data, **kwargs):
     """jsonify data in a standard (human friendly) way. If a db.Model
     entity is passed in it will be encoded as a dict.
     """
-    return simplejson.dumps(data, skipkeys=True, sort_keys=True, 
-            ensure_ascii=False, indent=4, 
+    return simplejson.dumps(data, skipkeys=True, sort_keys=True,
+            ensure_ascii=False, indent=4,
             cls=JSONModelEncoder)
-
-
