@@ -136,11 +136,8 @@ class ViewVideo(request_handler.RequestHandler):
             "selected_nav_link": 'watch'
         }
 
-        bingo([
-            'struggling_videos_landing',
-            'suggested_activity_videos_landing',
-            'suggested_activity_videos_landing_binary',
-        ])
+        # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
+
         handler.render_jinja2_template('viewvideo.html', template_values)
 
     @ensure_xsrf_cookie
