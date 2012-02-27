@@ -9,7 +9,11 @@
 {% block bottompagescript %}
 <script type="text/javascript">
 
+window.minutesWaited = 0;
+
 function checkAutoUpdateComplete() {
+    minutesWaited += 5;
+
     $.ajax({
         url: "/api/v1/topicversion/default/id",
         timeout: 15*1000, // 15 second timeout
@@ -20,7 +24,7 @@ function checkAutoUpdateComplete() {
             }
         },
         error: function() {
-            $("#autoupdate-status").html("Waiting 5 minutes...");
+            $("#autoupdate-status").html("Waited " + minutesWaited + " minutes...");
             window.setTimeout(checkAutoUpdateComplete, 5*60*1000); // Wait 5 minutes between queries
         }
     });
@@ -30,8 +34,8 @@ $(function() {
     $.ajax({
         url: "/devadmin/content?autoupdate_begin=1",
         success: function() {
-            $("#autoupdate-status").html("Process started. Waiting 10 minutes...");
-            window.setTimeout(checkAutoUpdateComplete, 10*60*1000); // Initial wait of 10 minutes
+            $("#autoupdate-status").html("Process started. Waiting for process to complete...");
+            window.setTimeout(checkAutoUpdateComplete, 5*60*1000); // Initial wait of 5 minutes
         },
         error: function() {
             $("#autoupdate-status").html("Process failed to start. Reload to try again.");
