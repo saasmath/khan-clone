@@ -8,6 +8,7 @@ import request_handler
 import models
 import layer_cache
 import templatetags
+from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
 
@@ -129,6 +130,7 @@ class ViewHomePage(request_handler.RequestHandler):
     def get(self):
 
         version_number = None
+
         if models.UserData.current() and models.UserData.current().developer:
             version_number = self.request_string('version', default=None)
 
@@ -168,7 +170,11 @@ class ViewHomePage(request_handler.RequestHandler):
             thumbnail_link_sets = thumbnail_link_sets[current_link_set_offset:] + thumbnail_link_sets[:current_link_set_offset]
 
         # Only running ajax version of homepage for non-mobile clients
-        if version_number:
+
+        default = models.TopicVersion.get_default_version()
+        if App.is_dev_server and default is None:
+            library_content = "<h1>Content not initialized. <a href=\"/devadmin/content?autoupdate=1\">Click here</a> to autoupdate from the khanacademy.org."
+        elif version_number:
             layer_cache.disable()
             library_content = library.library_content_html(version_number=int(version_number))
         elif not self.is_mobile_capable():

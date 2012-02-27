@@ -1,0 +1,42 @@
+{% extends "page_template.html" %}
+
+{% block pagecontent %}
+<h1>Autoupdating content from KhanAcademy.org...</h1>
+<img src="/images/throbber.gif">
+<p>Status: <span id="autoupdate-status" style="font-weight: bold">Starting import process...</span>
+{% endblock %}
+
+{% block bottompagescript %}
+<script type="text/javascript">
+
+function checkAutoUpdateComplete() {
+    $.ajax({
+        url: "/api/v1/topicversion/default/id",
+        timeout: 15*1000, // 15 second timeout
+        success: function(id) {
+            if (id == {{ edit_version.number }}) {
+                // Success!
+                window.location.assign("/");
+            }
+        },
+        error: function() {
+            $("#autoupdate-status").html("Waiting 5 minutes...");
+            window.setTimeout(checkAutoUpdateComplete, 5*60*1000); // Wait 5 minutes between queries
+        }
+    });
+}
+
+$(function() {
+    $.ajax({
+        url: "/devadmin/content?autoupdate_begin=1",
+        success: function() {
+            $("#autoupdate-status").html("Process started. Waiting 10 minutes...");
+            window.setTimeout(checkAutoUpdateComplete, 10*60*1000); // Initial wait of 10 minutes
+        },
+        error: function() {
+            $("#autoupdate-status").html("Process failed to start. Reload to try again.");
+        }
+    });
+});
+</script>
+{% endblock %}
