@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# TODO(benkomalo): move away form using testutil.GAEModelTestCase to agar.test.BaseTest
+from app import App
+import auth.tokens
 import models
 import phantom_users.phantom_util
 import testutil
@@ -148,7 +151,7 @@ class PromoRecordTest(testutil.GAEModelTestCase):
     # Shorthand
     def r(self, promo_name, user_id):
         return models.PromoRecord.record_promo(promo_name, user_id)
-    
+
     def test_promo_record(self):
         u1 = "http://facebookid.khanacademy.org/1234"
         u2 = "http://googleid.khanacademy.org/5678"
@@ -160,10 +163,10 @@ class PromoRecordTest(testutil.GAEModelTestCase):
         # Second time and onwards
         for i in range(10):
             self.assertFalse(self.r(p1, u1))
-            
+
         # Different user
         self.assertTrue(self.r(p1, u2))
-        
+
         # Different promo
         self.assertTrue(self.r(p2, u1))
 
@@ -184,3 +187,43 @@ class VideoSubtitlesTest(unittest2.TestCase):
         json = subs.load_json()
         self.assertIsNone(json)
         self.assertEqual(warn.call_count, 1, 'logging.warn() not called')
+
+class CredentialTest(testutil.GAEModelTestCase):
+    def setUp(self):
+        super(CredentialTest, self).setUp()
+        self.orig_recipe_key = App.token_recipe_key
+        App.token_recipe_key = 'secret recipe'
+
+    def tearDown(self):
+        App.token_recipe_key = self.orig_recipe_key
+        super(CredentialTest, self).tearDown()
+
+    def make_user(self, email):
+        u = models.UserData.insert_for(email, email)
+        u.put()
+        return u
+
+    def test_password_validation(self):
+        u = self.make_user('bob@example.com')
+
+        # No pw yet. Nothing should pass
+        self.assertFalse(u.validate_password('password'))
+
+        u.set_password('Password1')
+        self.assertFalse(u.validate_password('password'))
+        self.assertTrue(u.validate_password('Password1'))
+
+    def test_updating_password(self):
+        u = self.make_user('bob@example.com')
+
+        u.set_password('Password1')
+        token = auth.tokens.mint_token_for_user(u)
+        self.assertTrue(auth.tokens.validate_token(u, token))
+
+        u.set_password('NewS3cr3t!')
+        self.assertFalse(u.validate_password('Password1'))
+        self.assertTrue(u.validate_password('NewS3cr3t!'))
+
+        # The old token should be invalidated
+        self.assertFalse(auth.tokens.validate_token(u, token))
+

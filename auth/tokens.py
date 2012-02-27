@@ -32,7 +32,7 @@ def _make_token_signature(user_id,
 
     payload = "\n".join([user_id, credential_version, timestamp])
     secret = key or App.token_recipe_key
-    return hmac.new(secret, payload, hashlib.sha256).digest()
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
 def mint_token_for_user(user_data, clock=None):
     """ Generates a base64 encoded value to be used as an authentication token
@@ -44,6 +44,9 @@ def mint_token_for_user(user_data, clock=None):
     user_id = user_data.user_id
     timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
     credential_version = user_data.credential_version
+    if not credential_version:
+        raise Exception("Cannot mint an auth token for user [%s] " +
+                        " - no credential version" % user_id)
     signature = _make_token_signature(user_id, timestamp, credential_version)
     return base64.b64encode("\n".join([user_id, timestamp, signature]))
 
@@ -60,7 +63,12 @@ def validate_token(user_data, token, time_to_expiry=None, clock=None):
         # Not proper base64 encoded value.
         return False
 
-    user_id, timestamp, signature = contents.split("\n")
+    try:
+        user_id, timestamp, signature = contents.split("\n")
+    except Exception:
+        # Wrong number of parts / malformed.
+        return False
+
     if user_id != user_data.user_id:
         return False
 
