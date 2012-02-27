@@ -5,7 +5,7 @@ import random
 
 class Credential(db.Model):
     """ An abstraction around a password for a given user.
-    
+
     All Credential instances must have a UserData object as an ancestor to show
     association, and does not store actual username / email information itself.
     """
