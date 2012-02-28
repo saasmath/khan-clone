@@ -3508,6 +3508,12 @@ class Video(Searchable, db.Model):
         if user_video:
             awarded_points = user_video.points
 
+        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_json = None
+        if subtitles:
+            subtitles_json = subtitles.load_json()
+
         # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
         import shared_jinja
         player_html = shared_jinja.get().render_template('videoplayer.html',
@@ -3524,6 +3530,7 @@ class Video(Searchable, db.Model):
             'readable_id': video.readable_id,
             'key': video.key(),
             'video_path': video_path,
+            'subtitles_json': subtitles_json,
             'button_top_exercise': button_top_exercise,
             'related_exercises': [], # disabled for now
             'previous_video': previous_video_dict,

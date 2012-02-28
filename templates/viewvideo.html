@@ -43,6 +43,15 @@
             </div>
         </div>
         <div>
+
+          <div itemprop="transcript" class="subtitles">
+          {% if video.subtitles_json %}
+              {% for entry in video.subtitles_json: %}
+              <p>{{ entry.text|e }}</p>
+              {% endfor %}
+          {% endif %}
+          </div>
+
           <span class="video-footer"></span>
         </div>
 
