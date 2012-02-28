@@ -221,7 +221,10 @@
     position: relative;
 }
 
-.subtitles a {
+.subtitles a,
+/* to override a:link/visited:focus styles from default.css */
+.subtitles a:visited:focus,
+.subtitles a:link:focus {
     color: #333;
     display: block;
     text-decoration: none;
@@ -248,7 +251,10 @@
     font-weight: bold;
 }
 
-.subtitles a:hover {
+.subtitles a:hover,
+/* to override a:link/visited:hover styles from default.css */
+.subtitles a:visited:hover,
+.subtitles a:link:hover {
     background-color: #9db63b;
     color: #fafafa;
     text-decoration: none;
