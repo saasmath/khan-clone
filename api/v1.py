@@ -16,6 +16,7 @@ from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
 from phantom_users.phantom_util import api_create_phantom
 import notifications
+import coaches
 from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
@@ -1059,7 +1060,7 @@ def update_coaches_and_requesters():
     # TODO(marcia): what is the deal with coach_email.lower() in coaches.py
     user_data = models.UserData.current()
 
-    user_data.update_coaches_and_requests(request.json)
+    coaches.update_coaches_and_requests(user_data, request.json)
 
     # TODO(marcia): figure out the Right Thing to Return
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
