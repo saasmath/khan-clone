@@ -227,8 +227,11 @@ Exercises.Card = Backbone.Model.extend({
             leavesEarned = Math.max(currentLeaves, leavesEarned);
         }
 
-        // When updating leavesEarned, the card must be done, so we may as well
-        // update leavesAvailable to keep data consistent.
+        // leavesEarned takes precedence over leavesAvailable because
+        // leavesEarned is only set when the card is done, and leavesAvailable
+        // no longer matters at this point.
+        // 
+        // We update leavesAvailable here just to keep the card's data consistent.
         return this.set({ leavesEarned: leavesEarned, leavesAvailable: leavesEarned });
 
     },
