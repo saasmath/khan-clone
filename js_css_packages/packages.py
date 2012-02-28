@@ -207,6 +207,7 @@ javascript = {
             "utils/graphie-helpers.js",
             "utils/graphie-polygon.js",
             "utils/graphie.js",
+            "utils/hints.js",
             "utils/interactive.js",
             "utils/jquery.adhesion.js",
             "utils/jquery.mobile.vmouse.js",
