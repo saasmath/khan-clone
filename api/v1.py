@@ -330,17 +330,18 @@ def topictree_export(version_id = None, topic_id = "root"):
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topictree/init/<publish>", methods=["PUT"])
 @route("/api/v1/dev/topictree", methods=["PUT"])
 @developer_required
 @jsonp
 @jsonify
-def topictree_import(version_id = "edit", topic_id="root"):
+def topictree_import(version_id = "edit", topic_id="root", publish=False):
     import zlib
     import pickle
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing
-    deferred.defer(models.topictree_import_task, version_id, topic_id, 
+    deferred.defer(models.topictree_import_task, version_id, topic_id, publish,
                 zlib.compress(pickle.dumps(request.json)),
                 _queue = "import-queue",
                 _url = "/_ah/queue/deferred_import")
