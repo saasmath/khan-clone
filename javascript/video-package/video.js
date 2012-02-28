@@ -279,7 +279,7 @@ var Video = {
     },
 
     hideSubtitleElements: function() {
-        $(".unisubs-videoTab").hide();
+        $(".unisubs-videoTab").css("display", "none !important");
         $(".subtitles-warning").hide();
         $(".youtube-video").css("marginBottom", "0px");
         Throbber.hide();
@@ -288,7 +288,9 @@ var Video = {
     showSubtitleElements: function() {
         $(".youtube-video").css("marginBottom", "32px");
         $(".subtitles-warning").show();
-        $(".unisubs-videoTab").show();
+        // 2012-02-23: unisubs uses !important in their styles, forcing us to
+        // follow along when showing and hiding their tab.
+        $(".unisubs-videoTab").css("display", "block !important");
     },
 
     showSubtitles: function() {

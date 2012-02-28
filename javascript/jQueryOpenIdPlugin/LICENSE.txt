@@ -1,4 +1,0 @@
-According to http://jvance.com/pages/JQueryOpenIDPlugin.xhtml,
-"You may freely use the code in accordance with the 
-Creative Commons Attribution License 
-(http://creativecommons.org/licenses/by/3.0/)."

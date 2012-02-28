@@ -7,7 +7,7 @@ import pickle
 class ObjectProperty(db.BlobProperty):
     def validate(self, value):
         try:
-            result = pickle.dumps(value)
+            dummy = pickle.dumps(value)
             return value
         except pickle.PicklingError, e:
             return super(ObjectProperty, self).validate(value)
