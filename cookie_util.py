@@ -5,7 +5,7 @@ import os
 def get_cookie_value(key):
     cookies = None
     try:
-        cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE',''))
+        cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE', ''))
     except Cookie.CookieError, error:
         logging.debug("Ignoring Cookie Error, skipping get cookie: '%s'" % error)
 
@@ -36,8 +36,8 @@ def set_cookie_value(key, value='', max_age=None,
         ]:
         if var_value is not None and var_value is not False:
             cookies[key][var_name] = str(var_value)
-        if max_age is not None:
-            cookies[key]['expires'] = max_age
+    if max_age is not None:
+        cookies[key]['expires'] = max_age
 
     cookies_header = cookies[key].output(header='').lstrip()
 
@@ -56,7 +56,7 @@ def set_request_cookie(key, value):
     set on their computer.
     '''
     try:
-        allcookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE',''))
+        allcookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE', ''))
     except Cookie.CookieError, error:
         logging.critical("Ignoring Cookie Error: '%s'" % error)
 
