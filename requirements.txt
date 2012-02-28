@@ -8,3 +8,6 @@ mock==0.7.2
 simplejson==2.3.2
 unittest2==0.5.1
 wsgiref==0.1.2
+
+# Required by khan-linter
+python-gflags==2.0
