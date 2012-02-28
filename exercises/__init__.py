@@ -25,7 +25,7 @@ from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
-from exercises.power import ViewExercise
+from exercises.handlers import ViewExercise
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -46,7 +46,7 @@ class MoveMapNodes(request_handler.RequestHandler):
             exercise.put()
 
 # TODO(kamens): once all edge-case logic is moved out of OldViewExercise piece-by-piece into 
-# exercises.exercises.ViewExercise, this should be removed.
+# exercises.handlers.ViewExercise, this should be removed.
 class OldViewExercise(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie

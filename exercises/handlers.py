@@ -59,4 +59,4 @@ class ViewExercise(request_handler.RequestHandler):
             "user_exercise_json": jsonify(user_exercise), # TODO(kamens): need camelCase agreement here
         }
 
-        self.render_jinja2_template("exercises/power_template.html", template_values)
+        self.render_jinja2_template("exercises/exercise_template.html", template_values)
