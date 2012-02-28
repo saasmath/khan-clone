@@ -39,3 +39,8 @@ for attr in [
         setattr(App, attr, None)
     else:
         setattr(App, attr, getattr(secrets, attr))
+
+if App.is_dev_server and App.token_recipe_key is None:
+    # Set to random keymash
+    App.token_recipe_key = 'lkj9Hg7823afpEOI3nmlkfl3jfnklsfQQ'
+
