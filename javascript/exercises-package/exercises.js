@@ -201,6 +201,21 @@ Exercises.Card = Backbone.Model.extend({
         return this.get("leavesEarned") >= 3;
     },
 
+    leaves: function(card) {
+
+        return _.map(_.range(5), function(index) {
+            
+            return {
+                index: index,
+                state: (this.get("leavesEarned") > index ? "earned" : 
+                            this.get("leavesAvailable") > index ? "available" :
+                                "unavailable")
+            };
+
+        }, this);
+
+    },
+
     /**
      * Decreases leaves available -- if leaves available is already at this
      * level or lower, noop
@@ -347,7 +362,7 @@ Exercises.StackView = Backbone.View.extend({
     render: function() {
 
         var collectionContext = _.map(this.collection.models, function(card, index) {
-            return this.cardViewContext(card, index);
+            return this.viewContext(card, index);
         }, this);
 
         this.el.html(this.template({cards: collectionContext}));
@@ -358,7 +373,7 @@ Exercises.StackView = Backbone.View.extend({
 
     updateSingleCard: function(card) {
 
-        var context = this.cardViewContext(card, _.indexOf(this.collection.models, card));
+        var context = this.viewContext(card, _.indexOf(this.collection.models, card));
 
         $("#card-cid-" + card.cid)
             .replaceWith(
@@ -367,8 +382,13 @@ Exercises.StackView = Backbone.View.extend({
 
     },
 
-    cardViewContext: function(card, index) {
-        return _.extend(card.toJSON(), {index: index, frontVisible: this.options.frontVisible, cid: card.cid});
+    viewContext: function(card, index) {
+        return _.extend( card.toJSON(), {
+            index: index,
+            frontVisible: this.options.frontVisible, 
+            cid: card.cid,
+            leaves: card.leaves()
+        });
     },
 
     /**
@@ -388,7 +408,7 @@ Exercises.StackView = Backbone.View.extend({
      */
     animatePush: function(card) {
 
-        var context = this.cardViewContext(card, this.collection.length);
+        var context = this.viewContext(card, this.collection.length);
 
         return this.el
             .find(".stack")
@@ -455,11 +475,17 @@ Exercises.CurrentCardView = Backbone.View.extend({
         return this;
     },
 
+    viewContext: function() {
+        return _.extend( this.model.toJSON(), {
+            leaves: this.model.leaves()
+        });
+    },
+
     /**
      * Renders the base card's structure, including leaves
      */
     renderCardContainer: function() {
-        this.el.html(this.template(this.model.toJSON()));
+        this.el.html(this.template(this.viewContext()));
     },
 
     /**
@@ -467,7 +493,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     renderCardContents: function(templateName, optionalContext) {
 
-        var context = _.extend({}, this.model.toJSON(), optionalContext);
+        var context = _.extend({}, this.viewContext(), optionalContext);
 
         this.el
             .find(".current-card-contents")
@@ -520,7 +546,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         this.el
             .find(".leaves-container")
                 .html(
-                    $(Templates.get("exercises.current-card-leaves")(this.model.toJSON()))
+                    $(Templates.get("exercises.current-card-leaves")(this.viewContext()))
                 ); 
     },
 
