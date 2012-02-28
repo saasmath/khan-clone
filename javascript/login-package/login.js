@@ -27,7 +27,14 @@ Login.init = function() {
     $("#login-facebook").click(function(e) {
         $("#real_fb_button a").click();
     });
-    $("#email").focus();
+
+    if ($("#email").val()) {
+        // Email filled in from previous attempt.
+        $("#password").focus();
+    } else {
+        $("#email").focus();
+    }
+
     $("#submit-button").click(function(e) {
         Login.loginWithPassword();
     });
