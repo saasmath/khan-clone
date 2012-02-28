@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import models
+import coaches
 import phantom_users.phantom_util
 import testutil
 import unittest2
@@ -26,7 +27,7 @@ class UserDataCoachTest(BaseTest):
         coach = self.make_user('coach@gmail.com')
 
         coaches_json = [self.make_user_json(coach, True)]
-        student.update_coaches(coaches_json)
+        coaches.update_coaches(student, coaches_json)
 
         self.assertEqual(1, len(student.coaches))
         self.assertTrue(student.is_visible_to(coach))
@@ -38,7 +39,7 @@ class UserDataCoachTest(BaseTest):
         edward = self.make_user('edward@gmail.com')
 
         coaches_json = [self.make_user_json(coach, True) for coach in [jacob, edward]]
-        bella.update_coaches(coaches_json)
+        coaches.update_coaches(bella, coaches_json)
 
         self.assertEqual(2, len(bella.coaches))
 
@@ -48,7 +49,7 @@ class UserDataCoachTest(BaseTest):
         self.assertTrue(bella.is_visible_to(edward))
         self.assertTrue(edward.has_students())
 
-    @patch('models.logging.critical')
+    @patch('coaches.logging.critical')
     def test_log_critical_on_add_nonexistent_coach(self, critical):
         # TODO(marcia): Temp test, not sure on right error behavior yet
         bella = self.make_user('bella@gmail.com')
@@ -56,7 +57,7 @@ class UserDataCoachTest(BaseTest):
             'email': 'legolas@gmail.com',
             'isCoachingLoggedInUser': True,
         }]
-        bella.update_coaches(coaches_json)
+        coaches.update_coaches(bella, coaches_json)
         self.assertEqual(1, critical.call_count)
 
     def test_remove_coach(self):
@@ -64,8 +65,8 @@ class UserDataCoachTest(BaseTest):
         jacob = self.make_user('jacob@gmail.com')
 
         jacob_json = [self.make_user_json(jacob, True)]
-        bella.update_coaches(jacob_json)
-        bella.update_coaches([])
+        coaches.update_coaches(bella, jacob_json)
+        coaches.update_coaches(bella, [])
 
         self.assertEqual(0, len(bella.coaches))
         self.assertFalse(bella.is_visible_to(jacob))
@@ -76,7 +77,7 @@ class UserDataCoachTest(BaseTest):
         jacob = self.make_user('jacob@gmail.com')
 
         jacob_json = [self.make_user_json(jacob, True)]
-        requester_emails = bella.update_coaches(jacob_json)
+        requester_emails = coaches.update_coaches(bella, jacob_json)
 
         self.assertEqual([], requester_emails)
 
@@ -85,7 +86,7 @@ class UserDataCoachTest(BaseTest):
         jacob = self.make_user('jacob@gmail.com')
 
         jacob_json = [self.make_user_json(jacob, False)]
-        requester_emails = bella.update_coaches(jacob_json)
+        requester_emails = coaches.update_coaches(bella, jacob_json)
 
         self.assertEqual([jacob.key_email], requester_emails)
 
@@ -95,7 +96,7 @@ class UserDataCoachTest(BaseTest):
 
         models.CoachRequest.get_or_insert_for(jacob, bella)
 
-        bella.update_requests([jacob.key_email])
+        coaches.update_requests(bella, [jacob.key_email])
 
         requests_for_bella = models.CoachRequest.get_for_student(bella).fetch(1000)
         self.assertEqual(1, len(requests_for_bella))
@@ -108,7 +109,7 @@ class UserDataCoachTest(BaseTest):
         edward = self.make_user('edward@gmail.com')
         models.CoachRequest.get_or_insert_for(edward, bella)
 
-        bella.update_requests([])
+        coaches.update_requests(bella, [])
 
         requests_for_bella = models.CoachRequest.get_for_student(bella).fetch(1000)
         self.assertEqual(0, len(requests_for_bella))
@@ -126,7 +127,7 @@ class UserDataCoachTest(BaseTest):
         self.assertEqual(1, len(requests_for_renesmee))
 
         coaches_json = [self.make_user_json(jacob, False)]
-        renesmee.update_coaches_and_requests(coaches_json)
+        coaches.update_coaches_and_requests(renesmee, coaches_json)
 
         self.assertFalse(renesmee.is_visible_to(jacob))
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
@@ -138,7 +139,7 @@ class UserDataCoachTest(BaseTest):
         models.CoachRequest.get_or_insert_for(jacob, renesmee)
 
         coaches_json = [self.make_user_json(jacob, True)]
-        renesmee.update_coaches_and_requests(coaches_json)
+        coaches.update_coaches_and_requests(renesmee, coaches_json)
 
         self.assertTrue(renesmee.is_visible_to(jacob))
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
@@ -153,7 +154,7 @@ class UserDataCoachTest(BaseTest):
             'email': 'legolas@gmail.com',
             'isCoachingLoggedInUser': False,
         }]
-        renesmee.update_requests(coaches_json)
+        coaches.update_requests(renesmee, coaches_json)
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
         self.assertEqual(0, len(requests_for_renesmee))
 

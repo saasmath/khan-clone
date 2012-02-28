@@ -1,3 +1,4 @@
+import logging
 from app import App
 import app
 import facebook_util
