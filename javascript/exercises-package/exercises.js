@@ -101,45 +101,35 @@ var Exercises = {
         // has been clicked
         $(Khan).bind("problemDone", function() {
 
-            if (Exercises.currentCard) {
-
-                // Current card is done, lock in available leaves
-                Exercises.currentCard.set({
-                    done: true, 
-                    leavesEarned: Exercises.currentCard.get("leavesAvailable")
-                });
-
-            }
+            // Current card is done, lock in available leaves
+            Exercises.currentCard.set({
+                done: true, 
+                leavesEarned: Exercises.currentCard.get("leavesAvailable")
+            });
 
         });
 
         // Triggered when a user attempts an answer
         $(Khan).bind("checkAnswer", function(ev, pass) {
-            if (Exercises.currentCard) {
 
-                if (pass === true) {
-                    // TODO(kamens): distinguish b/w leaves 3, 4, and 5
-                    Exercises.currentCard.decreaseLeavesAvailable(3);
-                } else if (pass === false) {
-                    // Incorrect answer drops leaves possibility to 2
-                    Exercises.currentCard.decreaseLeavesAvailable(2);
-                }
-
+            if (pass === true) {
+                // TODO(kamens): distinguish b/w leaves 3, 4, and 5
+                Exercises.currentCard.decreaseLeavesAvailable(3);
+            } else if (pass === false) {
+                // Incorrect answer drops leaves possibility to 2
+                Exercises.currentCard.decreaseLeavesAvailable(2);
             }
+
         });
 
         $(Khan).bind("hintUsed", function() {
             // Using a hint drops leaves possibility to 2.
-            if (Exercises.currentCard) {
-                Exercises.currentCard.decreaseLeavesAvailable(2);
-            }
+            Exercises.currentCard.decreaseLeavesAvailable(2);
         });
 
         $(Khan).bind("allHintsUsed", function() {
             // Using all hints drops leaves possibility to 1.
-            if (Exercises.currentCard) {
-                Exercises.currentCard.decreaseLeavesAvailable(1);
-            }
+            Exercises.currentCard.decreaseLeavesAvailable(1);
         });
 
     },
