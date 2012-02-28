@@ -300,7 +300,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
         return {
             "longestStreak": longestStreak,
             "longestSpeedStreak": longestSpeedStreak,
-            "totalLeaves": totalLeaves,
+            "totalLeaves": totalLeaves
         };
     }
 
