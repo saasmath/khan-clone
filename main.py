@@ -897,6 +897,7 @@ application = webapp2.WSGIApplication([
     ('/contentdash', dashboard.ContentDashboard),
     ('/admin/dashboard/record_statistics', dashboard.RecordStatistics),
     ('/admin/entitycounts', dashboard.EntityCounts),
+    ('/admin/contentcounts', dashboard.ContentCountsCSV),
 
     ('/sendtolog', SendToLog),
 
