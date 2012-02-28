@@ -119,12 +119,12 @@ var Exercises = {
         });
 
         // Triggered when a user attempts an answer
-        $(Khan).bind("checkAnswer", function(ev, pass) {
+        $(Khan).bind("checkAnswer", function(ev, data) {
 
-            if (pass === true) {
+            if (data.pass === true) {
                 // TODO(kamens): distinguish b/w leaves 3, 4, and 5
                 Exercises.currentCard.decreaseLeavesAvailable(3);
-            } else if (pass === false) {
+            } else if (data.pass === false) {
                 // Incorrect answer drops leaves possibility to 2
                 Exercises.currentCard.decreaseLeavesAvailable(2);
             }
