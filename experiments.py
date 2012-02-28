@@ -127,9 +127,6 @@ class SuggestedActivityExperiment(object):
 class HintsExperiment(object):
     # These conversion tests are left available for anyone else to pass into
     # a call to gae_bingo.ab_test as useful hints AB signals.
-    #
-    # TODO: these should be moved to a central source of all common
-    # AB conversion events.
     _hints_conversion_tests = [
         ('hints_free_hint', ConversionTypes.Counting),
         ('hints_free_hint_binary', ConversionTypes.Binary),
