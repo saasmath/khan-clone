@@ -9,10 +9,14 @@ from api.auth.xsrf import ensure_xsrf_cookie
 class ViewExercise(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
-    def get(self, exid):
+    def get(self, exid=None):
 
         # TODO(kamens): review mode in this handler, error handling, past problem viewing
         # ...all of exercises/__init__.py's ViewExercise edge cases
+
+        if not exid:
+            self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
+            return
 
         exercise = models.Exercise.get_by_name(exid)
 

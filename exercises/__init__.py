@@ -25,6 +25,7 @@ from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
+from exercises.power import ViewExercise
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -44,30 +45,10 @@ class MoveMapNodes(request_handler.RequestHandler):
 
             exercise.put()
 
-class ViewExercise(request_handler.RequestHandler):
+# TODO(kamens): once all edge-case logic is moved out of OldViewExercise piece-by-piece into 
+# exercises.exercises.ViewExercise, this should be removed.
+class OldViewExercise(request_handler.RequestHandler):
 
-    # These conversion tests are left available for anyone else to pass into
-    # a call to gae_bingo.ab_test as useful hints AB signals.
-    #
-    # TODO: these should be moved to a central source of all common
-    # AB conversion events.
-    _hints_conversion_tests = [
-        ('hints_free_hint', ConversionTypes.Counting),
-        ('hints_free_hint_binary', ConversionTypes.Binary),
-        ('hints_costly_hint', ConversionTypes.Counting),
-        ('hints_costly_hint_binary', ConversionTypes.Binary),
-        ('hints_problems_done', ConversionTypes.Counting),
-        ('hints_gained_proficiency_all', ConversionTypes.Counting),
-        ('hints_gained_new_proficiency', ConversionTypes.Counting),
-        ('hints_gained_proficiency_easy_binary', ConversionTypes.Binary),
-        ('hints_gained_proficiency_hard_binary', ConversionTypes.Binary),
-        ('hints_wrong_problems', ConversionTypes.Counting),
-        ('hints_keep_going_after_wrong', ConversionTypes.Counting),
-    ]
-    _hints_conversion_names, _hints_conversion_types = [
-        list(x) for x in zip(*_hints_conversion_tests)]
-
-    # TODO(kamens): this should be the only spot handling old exercise URLS ("?exid=monkey"). Redirect appropriately
     @ensure_xsrf_cookie
     def get(self, exid=None):
 

@@ -39,7 +39,6 @@ import user_util
 import exercise_statistics
 import activity_summary
 import exercises
-import exercises.power
 import dashboard
 import exercisestats.report
 import exercisestats.report_json
@@ -768,8 +767,6 @@ application = webapp2.WSGIApplication([
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
-    # TODO(kamens) clean up these URLs
-    ('/exercise/power/(.+)', exercises.power.ViewExercise), # /exercises/addition_1
     ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
     ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
     ('/review', exercises.ViewExercise),
