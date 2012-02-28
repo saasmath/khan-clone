@@ -10,10 +10,6 @@
 .current-card-container-inner {
     border: 1px solid silver;
     background-color: #F8F8F8;
-
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
 }
 
 .current-card-container,
@@ -67,9 +63,6 @@
     height: 40px;
     border: 1px solid #bbb;
     margin: 0 auto;
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px;
 
     -webkit-transform-style: preserve-3d;
     -webkit-transition: all 0.3s ease-in-out;
@@ -108,10 +101,6 @@
     box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #cfcfcf;
 
     background-color: #ccc;
-    
-    -webkit-border-radius: 3px;
-    -moz-border-radius: 3px;
-    border-radius: 3px;
 }
 
 .stack .card-face.card-back {
