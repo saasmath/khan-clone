@@ -107,6 +107,15 @@ var Exercises = {
                 leavesEarned: Exercises.currentCard.get("leavesAvailable")
             });
 
+            // If on a streak, update current and previous card's leaves.
+            var lastCard = Exercises.completeStack.last();
+            if (lastCard && lastCard.streakEligible() && Exercises.currentCard.streakEligible()) {
+
+                lastCard.increaseLeavesEarned(4);
+                Exercises.currentCard.increaseLeavesEarned(4);
+
+            }
+
         });
 
         // Triggered when a user attempts an answer
@@ -155,6 +164,9 @@ var Exercises = {
         // Wait for push-to-right animations to finish
         $.when.apply(null, animationOptions.deferreds).done(function() {
 
+            // Detach events from old view
+            Exercises.currentCardView.detachEvents();
+
             // Pop from left
             Exercises.currentCard = Exercises.incompleteStack.pop(animationOptions);
 
@@ -185,6 +197,10 @@ var Exercises = {
  */
 Exercises.Card = Backbone.Model.extend({
 
+    streakEligible: function() {
+        return this.get("leavesEarned") >= 3;
+    },
+
     /**
      * Decreases leaves available -- if leaves available is already at this
      * level or lower, noop
@@ -198,7 +214,24 @@ Exercises.Card = Backbone.Model.extend({
 
         return this.set({ leavesAvailable: leavesAvailable });
 
-    }
+    },
+
+    /**
+     * Increases leaves earned for this card -- if leaves earned is already
+     * at this level or higher, noop
+     */
+    increaseLeavesEarned: function(leavesEarned) {
+
+        var currentLeaves = this.get("leavesEarned");
+        if (currentLeaves) {
+            leavesEarned = Math.max(currentLeaves, leavesEarned);
+        }
+
+        // When updating leavesEarned, the card must be done, so we may as well
+        // update leavesAvailable to keep data consistent.
+        return this.set({ leavesEarned: leavesEarned, leavesAvailable: leavesEarned });
+
+    },
 
 });
 
@@ -301,7 +334,10 @@ Exercises.StackView = Backbone.View.extend({
             }), this)
             .bind("remove", deferAnimation(function() {
                 return this.animatePop();
-            }), this);
+            }), this)
+            .bind("change:leavesEarned", function(card) {
+                this.updateSingleCard(card);
+            }, this);
 
     },
 
@@ -317,8 +353,19 @@ Exercises.StackView = Backbone.View.extend({
 
     },
 
+    updateSingleCard: function(card) {
+
+        var context = this.cardViewContext(card, _.indexOf(this.collection.models, card));
+
+        $("#card-cid-" + card.cid)
+            .replaceWith(
+                $(Templates.get("exercises.card")(context))
+            );
+
+    },
+
     cardViewContext: function(card, index) {
-        return _.extend(card.toJSON(), {index: index, frontVisible: this.options.frontVisible});
+        return _.extend(card.toJSON(), {index: index, frontVisible: this.options.frontVisible, cid: card.cid});
     },
 
     /**
@@ -364,14 +411,22 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     model: null,
 
+    leafEvents: ["change:done", "change:leavesEarned", "change:leavesAvailable"],
+
     initialize: function() {
+        this.attachEvents();
+    },
 
-        var leafEvents = ["change:done", "change:leavesEarned", "change:leavesAvailable"];
-
-        _.each(leafEvents, function(leafEvent) {
+    attachEvents: function() {
+        _.each(this.leafEvents, function(leafEvent) {
             this.model.bind(leafEvent, function() { this.updateLeaves(); }, this);
         }, this);
+    },
 
+    detachEvents: function() {
+        _.each(this.leafEvents, function(leafEvent) {
+            this.model.unbind(leafEvent);
+        }, this);
     },
 
     /**
