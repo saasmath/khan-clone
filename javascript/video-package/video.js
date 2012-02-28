@@ -67,7 +67,6 @@ var Video = {
         }
 
         // Render HTML
-        $("div.video").show();
         $("span.video-nav").html(navTemplate({topic: topicData.topic, video: videoData}));
         $(".video-title").html(videoData.title);
         $("div.video-description").html(descTemplate({topic: topicData.topic, video: videoData}));
@@ -214,8 +213,6 @@ var Video = {
 
             this.waitingForVideo = { topic: topic, video: video };
             this.loadVideo(topic, video);
-        } else {
-            $("div.video").hide();
         }
     },
 
