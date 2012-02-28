@@ -23,6 +23,7 @@ Socrates.Data["U2ovEuEUxXQ"] = {
         new Socrates.Question({
             time: "3m41s",
             title: "Multiplication by unity",
+            nested: "multiplication-by-unity",
             youtubeId: "U2ovEuEUxXQ",
             id: 2,
             correctData: {numerator: "21", denominator: "35"},
@@ -31,6 +32,7 @@ Socrates.Data["U2ovEuEUxXQ"] = {
                 adjust: { x: 330, y: 70 }
             }
         }),
+        // todo(dmnd) replace the following questions with the equivalent fractions exercise
         new Socrates.Question({
             time: "5m09s",
             title: "Solving for the numerator",
