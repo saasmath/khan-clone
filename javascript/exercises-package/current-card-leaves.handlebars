@@ -1,14 +1,17 @@
-<div class="leaves">
-    {{#if done}}
-        Earned {{leavesEarned}} leaves
-    {{else}}
-        Possible to earn {{leavesAvailable}} leaves
-    {{/if}}
-
-    LEAF 1: {{leaves.0.state}}
-    LEAF 2: {{leaves.1.state}}
-    LEAF 3: {{leaves.2.state}}
-    LEAF 4: {{leaves.3.state}}
-    LEAF 5: {{leaves.4.state}}
-
+<div class="leaves clearfix">
+    <div class="leaf {{leaves.0.state}}">
+    	1
+    </div>
+    <div class="leaf {{leaves.1.state}}">
+    	2
+    </div>
+    <div class="leaf {{leaves.2.state}}">
+    	3
+    </div>
+    <div class="leaf {{leaves.3.state}}">
+    	4
+    </div>
+    <div class="leaf {{leaves.4.state}}">
+    	5
+    </div>
 </div>

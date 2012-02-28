@@ -141,7 +141,7 @@
 }
 
 .current-card #answer_area_wrap {
-    margin-right: -8px;
+    margin: 15px -8px 0 0;
 }
 
 .current-card #answer_area .info-box {
@@ -164,4 +164,30 @@
 
 .current-card .exercise_message {
     display: none; /* TODO(kamens/jason): currently hiding all proficient/struggling/review messages */
+}
+
+.current-card .leaves .leaf {
+    width: 25px;
+    height: 25px;
+    float: left;
+    background: #fff;
+    border: 1px solid #ccc;
+
+    border-radius: 25px;
+    line-height: 25px;
+    text-align: center;
+
+    box-sizing: border-box;
+}
+.current-card .leaves .leaf.available {
+    
+}
+.current-card .leaves .leaf.unavailable {
+    opacity: 0.5;
+    -moz-opacity: 0.5;
+    filter:alpha(opacity=50);
+}
+.current-card .leaves .leaf.earned {
+    background-color: green;
+    color: #fff;
 }
