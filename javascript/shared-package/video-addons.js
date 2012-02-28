@@ -1,4 +1,5 @@
 function onYouTubePlayerStateChange(state) {
+    VideoStats.playerStateChange(state);
     $(VideoControls).trigger("playerStateChange", state);
 }
 
@@ -181,9 +182,6 @@ var VideoStats = {
         $(this).on("playerready.videostats",
             _.bind(this.listenToPlayerStateChange, this));
 
-        $(VideoControls).on("playerStateChange.videostats",
-            _.bind(this.playerStateChange, this));
-
         if (this.intervalId === null) {
             // Every 10 seconds check to see if we've crossed over our percent
             // granularity logging boundary
@@ -198,7 +196,6 @@ var VideoStats = {
     stopLoggingProgress: function() {
         // unhook event handler initializer
         $(this).unbind("playerready.videostats");
-        $(VideoControls).off("playerStateChange.videostats");
 
         // send a final pause event
         this.playerStateChange(2);
@@ -224,7 +221,7 @@ var VideoStats = {
         }
     },
 
-    playerStateChange: function(evt, state) {
+    playerStateChange: function(state) {
         var playing = this.playing || this.fAlternativePlayer;
         if (state === -2) { // playing normally
             var percent = this.getPercentWatched();
