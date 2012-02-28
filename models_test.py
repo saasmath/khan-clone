@@ -9,7 +9,7 @@ from google.appengine.ext import db
 from mock import patch
 from agar.test.base_test import BaseTest
 
-class CoachTest(BaseTest):
+class UserDataCoachTest(BaseTest):
     def make_user(self, email):
         u = models.UserData.insert_for(email, email)
         u.put()
@@ -25,14 +25,12 @@ class CoachTest(BaseTest):
         student = self.make_user('student@gmail.com')
         coach = self.make_user('coach@gmail.com')
 
-        self.assertEqual(0, len(student.coaches))
-        self.assertFalse(coach.has_students())
-
         coaches_json = [self.make_user_json(coach, True)]
         student.update_coaches(coaches_json)
 
         self.assertEqual(1, len(student.coaches))
         self.assertTrue(student.is_visible_to(coach))
+        self.assertTrue(coach.has_students())
 
     def test_add_multiple_coaches(self):
         bella = self.make_user('bella@gmail.com')
@@ -43,8 +41,23 @@ class CoachTest(BaseTest):
         bella.update_coaches(coaches_json)
 
         self.assertEqual(2, len(bella.coaches))
+
         self.assertTrue(bella.is_visible_to(jacob))
+        self.assertTrue(jacob.has_students())
+
         self.assertTrue(bella.is_visible_to(edward))
+        self.assertTrue(edward.has_students())
+
+    @patch('models.logging.critical')
+    def test_log_critical_on_add_nonexistent_coach(self, critical):
+        # TODO(marcia): Temp test, not sure on right error behavior yet
+        bella = self.make_user('bella@gmail.com')
+        coaches_json = [{
+            'email': 'legolas@gmail.com',
+            'isCoachingLoggedInUser': True,
+        }]
+        bella.update_coaches(coaches_json)
+        self.assertEqual(1, critical.call_count)
 
     def test_remove_coach(self):
         bella = self.make_user('bella@gmail.com')
@@ -52,51 +65,95 @@ class CoachTest(BaseTest):
 
         jacob_json = [self.make_user_json(jacob, True)]
         bella.update_coaches(jacob_json)
-        self.assertTrue(bella.is_visible_to(jacob))
-
         bella.update_coaches([])
-        self.assertFalse(bella.is_visible_to(jacob))
-        self.assertEqual(0, len(bella.coaches))
 
-    def test_update_requests(self):
+        self.assertEqual(0, len(bella.coaches))
+        self.assertFalse(bella.is_visible_to(jacob))
+        self.assertFalse(jacob.has_students())
+
+    def test_return_no_requester_emails_on_update_coaches_when_coaching_logged_in_user(self):
         bella = self.make_user('bella@gmail.com')
         jacob = self.make_user('jacob@gmail.com')
-        edward = self.make_user('edward@gmail.com')
 
-        requests = models.CoachRequest.get_for_student(bella).fetch(1000)
-        self.assertEqual(0, len(requests))
+        jacob_json = [self.make_user_json(jacob, True)]
+        requester_emails = bella.update_coaches(jacob_json)
+
+        self.assertEqual([], requester_emails)
+
+    def test_return_requester_email_on_update_coaches_when_not_coaching_logged_in_user(self):
+        bella = self.make_user('bella@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
+
+        jacob_json = [self.make_user_json(jacob, False)]
+        requester_emails = bella.update_coaches(jacob_json)
+
+        self.assertEqual([jacob.key_email], requester_emails)
+
+    def test_noop_on_update_requests_with_email(self):
+        bella = self.make_user('bella@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
 
         models.CoachRequest.get_or_insert_for(jacob, bella)
-        models.CoachRequest.get_or_insert_for(edward, bella)
 
         bella.update_requests([jacob.key_email])
-        requests = models.CoachRequest.get_for_student(bella).fetch(1000)
+
+        requests_for_bella = models.CoachRequest.get_for_student(bella).fetch(1000)
+        self.assertEqual(1, len(requests_for_bella))
 
         requests_by_jacob = models.CoachRequest.get_for_coach(jacob).fetch(1000)
         self.assertEqual(1, len(requests_by_jacob))
 
+    def test_clear_request_on_update_requests_with_no_email(self):
+        bella = self.make_user('bella@gmail.com')
+        edward = self.make_user('edward@gmail.com')
+        models.CoachRequest.get_or_insert_for(edward, bella)
+
+        bella.update_requests([])
+
+        requests_for_bella = models.CoachRequest.get_for_student(bella).fetch(1000)
+        self.assertEqual(0, len(requests_for_bella))
+
         requests_by_edward = models.CoachRequest.get_for_coach(edward).fetch(1000)
         self.assertEqual(0, len(requests_by_edward))
 
-    def test_update_coaches_and_requests(self):
-        # Bella + Edward's daughter, 
+    def test_noop_on_update_when_not_coaching_logged_in_user(self):
+        # Bella + Edward's daughter,
         # (Spoiler Alert!) who Jacob falls in love with in Book 4
         renesmee = self.make_user('renesmee@gmail.com')
         jacob = self.make_user('jacob@gmail.com')
         models.CoachRequest.get_or_insert_for(jacob, renesmee)
-
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
         self.assertEqual(1, len(requests_for_renesmee))
 
         coaches_json = [self.make_user_json(jacob, False)]
         renesmee.update_coaches_and_requests(coaches_json)
+
         self.assertFalse(renesmee.is_visible_to(jacob))
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
         self.assertEqual(1, len(requests_for_renesmee))
 
+    def test_accept_request_on_update_when_coaching_logged_in_user(self):
+        renesmee = self.make_user('renesmee@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
+        models.CoachRequest.get_or_insert_for(jacob, renesmee)
+
         coaches_json = [self.make_user_json(jacob, True)]
         renesmee.update_coaches_and_requests(coaches_json)
+
         self.assertTrue(renesmee.is_visible_to(jacob))
+        requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
+        self.assertEqual(0, len(requests_for_renesmee))
+
+    def test_ignore_nonexistent_requester_email_on_update_requests(self):
+        renesmee = self.make_user('renesmee@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
+        models.CoachRequest.get_or_insert_for(jacob, renesmee)
+
+        coaches_json = [{
+            'email': 'legolas@gmail.com',
+            'isCoachingLoggedInUser': False,
+        }]
+        renesmee.update_requests(coaches_json)
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
         self.assertEqual(0, len(requests_for_renesmee))
 
