@@ -118,6 +118,7 @@ class ViewVideo(request_handler.RequestHandler):
 
         if redirect_to_canonical_url:
             url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
+            logging.info("Redirecting to %s" % url)
             handler.redirect(url, True)
             return
 
