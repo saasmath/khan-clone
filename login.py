@@ -4,12 +4,17 @@ from google.appengine.api import users
 from models import UserData
 from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
+
+import auth.tokens
 import logging
+import models
 import os
 import request_handler
 import util
-import models
 
+# The cookie name for the unsecure (http) authentication cookie for password-
+# based logins.
+AUTH_COOKIE_NAME = 'KAID'
 
 class LoginType():
     """ Enum representing which types of logins a user can use
@@ -87,9 +92,20 @@ class Login(request_handler.RequestHandler):
                 self.render_login(identifier, errors)
                 return
 
+            auth_token = auth.tokens.mint_token_for_user(u)
+            max_age = auth.tokens.DEFAULT_TOKEN_EXPIRY_SECONDS
+
             # Success! log them in
-            # TODO(benkomalo): actually handle dishing out the cookie and stuff
-            self.response.write("We'll handle this soon!")
+            self.set_cookie(AUTH_COOKIE_NAME,
+                            value=auth_token,
+                            max_age=max_age,
+                            path='/',
+                            domain=None,
+                            secure=False,
+                            # TODO(benkomalo): make this httponly!
+                            # STOPSHIP - this is just easier for testing for now
+                            httponly=False)
+            self.redirect(cont)
             return
 
 class MobileOAuthLogin(request_handler.RequestHandler):
@@ -171,6 +187,7 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+        self.delete_cookie(AUTH_COOKIE_NAME)
 
         # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
         if App.facebook_app_id:

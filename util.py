@@ -1,3 +1,4 @@
+import auth.tokens
 import os
 import datetime
 import urllib
@@ -18,6 +19,7 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
 
 from api.auth.google_util import get_google_user_id_and_email_from_oauth_map
 from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
+import Cookie
 
 @request_cache.cache()
 def get_current_user_id():
@@ -47,15 +49,40 @@ def get_current_user_id_from_oauth_map(oauth_map):
 def get_current_user_id_from_cookies_unsafe():
     user = users.get_current_user()
 
+    user_id = None
     if user: # if we have a google account
         user_id = "http://googleid.khanacademy.org/" + user.user_id()
-    else: # if not a google account, try facebook
+
+    if not user_id:
+        user_id = get_user_from_khan_cookies()
+
+    if not user_id:
         user_id = facebook_util.get_current_facebook_user_id_from_cookies()
 
     if not user_id: # if we don't have a user_id, then it's not facebook or google
         user_id = get_phantom_user_id_from_cookies()
 
     return user_id
+
+def get_user_from_khan_cookies():
+    cookies = None
+    try:
+        cookies = Cookie.BaseCookie(os.environ.get('HTTP_COOKIE', ''))
+    except Cookie.CookieError, error:
+        logging.critical("Ignoring Cookie Error: '%s'" % error)
+        return None
+
+    import login
+    morsel = cookies.get(login.AUTH_COOKIE_NAME)
+    if morsel and morsel.value:
+        token = morsel.value
+        user_id = auth.tokens.user_id_from_token(token)
+        if user_id:
+            import models
+            user_data = models.UserData.get_from_user_id(user_id)
+            if user_data and auth.tokens.validate_token(user_data, token):
+                return user_id
+    return None
 
 def is_phantom_user(user_id):
     return user_id and is_phantom_id(user_id)

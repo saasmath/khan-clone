@@ -35,6 +35,9 @@ def _make_token_signature(user_id,
     secret = key or App.token_recipe_key
     return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
+DEFAULT_TOKEN_EXPIRY = datetime.timedelta(days=14)
+DEFAULT_TOKEN_EXPIRY_SECONDS = DEFAULT_TOKEN_EXPIRY.days * 86400
+
 def mint_token_for_user(user_data, clock=None):
     """ Generates a base64 encoded value to be used as an authentication token
     for a user, that can be used in things like cookies.
@@ -51,34 +54,41 @@ def mint_token_for_user(user_data, clock=None):
     signature = _make_token_signature(user_id, timestamp, credential_version)
     return base64.b64encode("\n".join([user_id, timestamp, signature]))
 
-def validate_token(user_data, token, time_to_expiry=None, clock=None):
-    """ Determines whether or not the token is a valid authentication token
-    for the specified user.
-
-    If time_to_expiry is unspecified, a default of 30 days is used.
-    """
-
+def _parse_token(token):
+    """ Returns a triple of (user_id, timestamp, signature) for the token. """
     try:
         contents = base64.b64decode(token)
     except TypeError:
         # Not proper base64 encoded value.
         logging.info("Tried to decode auth token that isn't base64 encoded")
-        return False
+        return None
 
     try:
-        user_id, timestamp, signature = contents.split("\n")
+        return contents.split("\n")
     except Exception:
         # Wrong number of parts / malformed.
         logging.info("Tried to decode malformed auth token")
+        return None
+
+def validate_token(user_data,
+                   token,
+                   time_to_expiry=DEFAULT_TOKEN_EXPIRY,
+                   clock=None):
+    """ Determines whether or not the token is a valid authentication token
+    for the specified user.
+
+    """
+
+    parts = _parse_token(token)
+    if not parts:
         return False
+    user_id, timestamp, signature = parts
 
     if user_id != user_data.user_id:
         logging.info("Tried to decode auth token for different user." +
                      " requestor[%s] token[%s]" % (user_data.user_id, user_id))
         return False
 
-    if not time_to_expiry:
-        time_to_expiry = datetime.timedelta(days=30)
     dt = _from_timestamp(timestamp)
     now = (clock or datetime.datetime).utcnow()
     if not dt or (now - dt) > time_to_expiry:
@@ -86,7 +96,23 @@ def validate_token(user_data, token, time_to_expiry=None, clock=None):
 
     # Contents look good - now make sure it validates against the sig.
     expected = _make_token_signature(user_data.user_id,
-                                      timestamp,
-                                      user_data.credential_version)
+                                     timestamp,
+                                     user_data.credential_version)
     return expected == signature
+
+
+def user_id_from_token(token):
+    """ Given an auth token, determine the user_id that it's supposed to belong
+    to.
+    
+    Does not actually validate authenticity of the token - only well - formedness.
+    Clients are expected to call validate_token when the CredentialedUser has
+    been retrieved from the id.
+    
+    """
+
+    parts = _parse_token(token)
+    if not parts:
+        return None
+    return parts[0]
 
