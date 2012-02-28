@@ -91,8 +91,10 @@ def get_mangled_topic_name(topic_name):
     return topic_name
 
 class ViewVideo(request_handler.RequestHandler):
-    @classmethod
-    def get_template_data(cls, self, readable_id="", redirect_allowed=True):
+
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
+
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
         # given the topic title in a query param, we need to find a topic that
@@ -144,7 +146,7 @@ class ViewVideo(request_handler.RequestHandler):
 
         exid = self.request_string('exid', default=None)
 
-        if redirect_allowed and redirect_to_canonical_url:
+        if redirect_to_canonical_url:
             qs = {'topic': topic.id}
             if exid:
                 qs['exid'] = exid
@@ -154,6 +156,11 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
+        template_values = ViewVideo.get_template_data(self, readable_id, video, topic)
+        return self.finish_get(template_values)
+
+    @classmethod
+    def get_template_data(cls, self, readable_id, video, topic):
         # If we got here, we have a readable_id and a topic, so we can display
         # the topic and the video in it that has the readable_id.  Note that we don't
         # query the Video entities for one with the requested readable_id because in some
@@ -250,19 +257,17 @@ class ViewVideo(request_handler.RequestHandler):
                             'selected_nav_link': 'watch',
                             'awarded_points': awarded_points,
                             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
-                            'author_profile': 'https://plus.google.com/103970106103092409324',
+                            'author_profile': 'https://plus.google.com/103970106103092409324'
                         }
         template_values = qa.add_template_values(template_values, self.request)
         return template_values
 
-    @ensure_xsrf_cookie
-    def get(self, readable_id=""):
+    def finish_get(self, template_values):
         bingo([
             'struggling_videos_landing',
             'suggested_activity_videos_landing',
             'suggested_activity_videos_landing_binary',
         ])
-        template_values = ViewVideo.get_template_data(self, readable_id)
         self.render_jinja2_template('viewvideo.html', template_values)
 
 class ReportIssue(request_handler.RequestHandler):
