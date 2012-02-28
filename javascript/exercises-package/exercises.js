@@ -46,7 +46,6 @@ var Exercises = {
         var profileExercise = Templates.get("exercises.exercise");
 
         $(".exercises-content-container").html(profileExercise({
-            // TODO(kamens): Useful dict data here like crazzzyyyyyyyy
             exercise: this.exercise,
             userTopic: this.userTopic,
         }));
@@ -186,14 +185,6 @@ var Exercises = {
             });
 
         });
-
-    },
-
-    endOfStack: function() {
-
-        // TODO(kamens): something else.
-        KAConsole.debugEnabled = true;
-        KAConsole.log("Ended the stack!");
 
     }
 
