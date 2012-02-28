@@ -29,7 +29,7 @@ class Login(request_handler.RequestHandler):
     def get(self):
         self.render_login()
 
-    def render_login(self, email=None, errors=None):
+    def render_login(self, identifier=None, errors=None):
         """ Renders the login page.
         
         errors - a dictionary of possible errors from a previous login that
@@ -44,7 +44,7 @@ class Login(request_handler.RequestHandler):
         template_values = {
                            'continue': cont,
                            'direct': direct,
-                           'email': email or "",
+                           'identifier': identifier or "",
                            'errors': errors or {},
                            }
         self.render_jinja2_template('login.html', template_values)
@@ -69,22 +69,22 @@ class Login(request_handler.RequestHandler):
             # Redirect to Google's login page
             self.redirect(users.create_login_url(cont))
         elif login_type == LoginType.PASSWORD:
-            # TODO(benkomalo): handle arbitrary identifiers like username, too
-            email = self.request_string('email')
+            # Authenticate via username or email + password
+            identifier = self.request_string('identifier')
             password = self.request_string('password')
-            if not email or not password:
+            if not identifier or not password:
                 errors = {}
-                if not email: errors['noemail'] = True
+                if not identifier: errors['noemail'] = True
                 if not password: errors['nopassword'] = True
-                self.render_login(email, errors)
+                self.render_login(identifier, errors)
                 return
 
-            u = models.UserData.get_from_username_or_email(email.strip())
+            u = models.UserData.get_from_username_or_email(identifier.strip())
             if not u or not u.validate_password(password):
                 errors = {}
                 errors['badlogin'] = True
                 # TODO(benkomalo): IP-based throttling of failed logins?
-                self.render_login(email, errors)
+                self.render_login(identifier, errors)
                 return
 
             # Success! log them in

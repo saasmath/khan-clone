@@ -28,11 +28,11 @@ Login.init = function() {
         $("#real_fb_button a").click();
     });
 
-    if ($("#email").val()) {
-        // Email filled in from previous attempt.
+    if ($("#identifier").val()) {
+        // Email/username filled in from previous attempt.
         $("#password").focus();
     } else {
-        $("#email").focus();
+        $("#identifier").focus();
     }
 
     $("#submit-button").click(function(e) {
@@ -54,16 +54,16 @@ Login.connectWithGoogle = function() {
 Login.loginWithPassword = function() {
     // Pre-validate.
     var valid = true;
-    var identifier = $.trim($("#email").val());
+    var identifier = $.trim($("#identifier").val());
 
     // Hide any previous failed login notification after any other attempt.
     $("#login-fail-message").hide();
 
     if (!identifier) {
-        $("#email-error").text("Email or username required");
+        $("#identifier-error").text("Email or username required");
         valid = false;
     } else {
-        $("#email-error").text("");
+        $("#identifier-error").text("");
     }
     var password = $("#password").val();
     if (!password) {

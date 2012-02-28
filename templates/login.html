@@ -36,9 +36,9 @@
         <div class="login-field-error" id="login-fail-message">{% if errors["badlogin"] %}Username and password doesn't match{% endif %}</div>
 
         <div class="login-field-set">
-            <label class="login-label" for="email">Email</label><br>
-            <input tabindex=1 id="email" name="email" class="simple-input ui-corner-all login-input" value="{{ email|escape }}">
-            <div class="login-field-error" id="email-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
+            <label class="login-label" for="identifier">Email or username</label><br>
+            <input tabindex=1 id="identifier" name="identifier" class="simple-input ui-corner-all login-input" value="{{ identifier|escape }}">
+            <div class="login-field-error" id="identifier-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
         </div>
 
         <div class="login-field-set">
