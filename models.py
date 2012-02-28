@@ -1414,20 +1414,34 @@ class UserData(GAEBingoIdentityModel, db.Model):
             else:
                 requester_emails.append(email)
 
-        if len(outstanding_coach_emails):
-            removed_coach_keys = frozenset([
-                    UserData.get_from_username_or_email(email).key()
-                    for email in outstanding_coach_emails])
-
-            actual_lists = StudentList.get(self.student_lists)
-
-            self.student_lists = [l.key() for l in actual_lists
-                    if (len(frozenset(l.coaches) & removed_coach_keys) == 0)]
+        self.remove_student_lists(outstanding_coach_emails)
 
         self.coaches = updated_coach_emails
         self.put()
 
         return requester_emails
+
+    def remove_student_lists(removed_coach_emails):
+        """ Remove student lists associated with removed coaches.
+        """
+        if len(removed_coach_emails):
+            # Get the removed coaches' keys
+            removed_coach_keys = frozenset([
+                    UserData.get_from_username_or_email(coach_email).key()
+                    for coach_email in removed_coach_emails])
+
+            # Get the StudentLists from our list of StudentList keys
+            student_lists = StudentList.get(self.student_lists)
+
+            # Theoretically, a StudentList allows for multiple coaches,
+            # but in practice there is exactly one coach per StudentList.
+            # If/when we support multiple coaches per list, we would need to change
+            # how this works... How *does* it work? Well, let me tell you.
+
+            # Set our student_lists to all the keys of StudentLists
+            # whose coaches do not include any removed coaches.
+            self.student_lists = [l.key() for l in student_lists
+                    if (len(frozenset(l.coaches) & removed_coach_keys) == 0)]
 
     def update_requests(self, requester_emails):
         """ Remove all CoachRequests not represented by requester_emails.

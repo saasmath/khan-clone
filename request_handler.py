@@ -62,6 +62,9 @@ class RequestInputHandler(object):
         return UserData.get_possibly_current_user(email)
 
     def request_visible_student_user_data(self):
+        """ Return overridden user data allowed. Otherwise, return the
+        currently logged in user.
+        """
         override_user_data = self.request_student_user_data()
         return UserData.get_visible_user(override_user_data)
 

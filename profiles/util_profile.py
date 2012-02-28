@@ -347,7 +347,7 @@ class UserProfile(object):
             profile = UserProfile._from_coach(coach_user_data, student_user_data)
             coach_profiles.append(profile)
 
-        requests = CoachRequest.get_for_student(student_user_data).fetch(1000)
+        requests = CoachRequest.get_for_student(student_user_data)
         for request in requests:
             coach_user_data = request.coach_requesting_data
             profile = UserProfile._from_coach(coach_user_data, student_user_data)
