@@ -1,20 +1,18 @@
 <div id="card-cid-{{cid}}" class="card-container">
     <div class="card">
+        {{#if frontVisible}}
         <div class="card-front card-face">
-
+            
             <span style="font-size:8px;line-height:8px;">
-                {{index}} ({{leavesEarned}}) ({{cardType}})
-
-                {{#if frontVisible}}
-                    (front)
-                {{else}}
-                    (back)
-                {{/if}}
+                <!--{{index}} ({{leavesEarned}}) ({{cardType}})-->
+                {{> card-leaves}}
             </span>
-
+            
         </div>
+        {{else}}
         <div class="card-back card-face">
             &nbsp;
         </div>
+        {{/if}}
     </div>
 </div>

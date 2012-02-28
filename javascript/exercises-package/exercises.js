@@ -41,7 +41,7 @@ var Exercises = {
 
         Handlebars.registerPartial("exercise-header", Templates.get("exercises.exercise-header"));
         Handlebars.registerPartial("card", Templates.get("exercises.card"));
-        Handlebars.registerPartial("current-card-leaves", Templates.get("exercises.current-card-leaves"));
+        Handlebars.registerPartial("card-leaves", Templates.get("exercises.current-card-leaves"));
 
         var profileExercise = Templates.get("exercises.exercise");
 
