@@ -27,9 +27,11 @@
         <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse"></a>
     </div>
     <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
-        <div id="description" class="video-description"></div>
+        <div style="min-height: 88px">
+          <div id="description" class="video-description"></div>
+          <span class="video-header"></span>
+        </div>
 
-        <span class="video-header"></span>
         <div id="youtube_blocked" class="desktop-only"></div>
         <div class="youtube-video">
             <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{ video.youtube_id }}/hqdefault.jpg">
@@ -40,7 +42,9 @@
                <a href="#" class="subtitles-link">Close subtitles</a>
             </div>
         </div>
-        <span class="video-footer"></span>
+        <div>
+          <span class="video-footer"></span>
+        </div>
 
         <div class="desktop-only video-discussion"></div>
     </div>
