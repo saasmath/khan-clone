@@ -110,7 +110,7 @@ class ContentCountsCSV(request_handler.RequestHandler):
                     topic_stats["exercise_keys"].update(subtopic_stats["exercise_keys"])
                     topic_stats["subtopics"].append(subtopic_stats)
 
-                elif type(child) == models.Exercise:
+                elif type(child) == models.Exercise and child.live:
                     topic_stats["exercise_keys"].add(child.key())
                     topic_stats["exercise_count"] += 1
 
