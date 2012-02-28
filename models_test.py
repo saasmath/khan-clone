@@ -7,6 +7,98 @@ import unittest2
 
 from google.appengine.ext import db
 from mock import patch
+from agar.test.base_test import BaseTest
+
+class CoachTest(BaseTest):
+    def make_user(self, email):
+        u = models.UserData.insert_for(email, email)
+        u.put()
+        return u
+
+    def make_user_json(self, user, is_coaching):
+        return {
+            'email': user.key_email,
+            'isCoachingLoggedInUser': is_coaching
+        }
+
+    def test_add_a_coach(self):
+        student = self.make_user('student@gmail.com')
+        coach = self.make_user('coach@gmail.com')
+
+        self.assertEqual(0, len(student.coaches))
+        self.assertFalse(coach.has_students())
+
+        coaches_json = [self.make_user_json(coach, True)]
+        student.update_coaches(coaches_json)
+
+        self.assertEqual(1, len(student.coaches))
+        self.assertTrue(student.is_visible_to(coach))
+
+    def test_add_multiple_coaches(self):
+        bella = self.make_user('bella@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
+        edward = self.make_user('edward@gmail.com')
+
+        coaches_json = [self.make_user_json(coach, True) for coach in [jacob, edward]]
+        bella.update_coaches(coaches_json)
+
+        self.assertEqual(2, len(bella.coaches))
+        self.assertTrue(bella.is_visible_to(jacob))
+        self.assertTrue(bella.is_visible_to(edward))
+
+    def test_remove_coach(self):
+        bella = self.make_user('bella@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
+
+        jacob_json = [self.make_user_json(jacob, True)]
+        bella.update_coaches(jacob_json)
+        self.assertTrue(bella.is_visible_to(jacob))
+
+        bella.update_coaches([])
+        self.assertFalse(bella.is_visible_to(jacob))
+        self.assertEqual(0, len(bella.coaches))
+
+    def test_update_requests(self):
+        bella = self.make_user('bella@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
+        edward = self.make_user('edward@gmail.com')
+
+        requests = models.CoachRequest.get_for_student(bella).fetch(1000)
+        self.assertEqual(0, len(requests))
+
+        models.CoachRequest.get_or_insert_for(jacob, bella)
+        models.CoachRequest.get_or_insert_for(edward, bella)
+
+        bella.update_requests([jacob.key_email])
+        requests = models.CoachRequest.get_for_student(bella).fetch(1000)
+
+        requests_by_jacob = models.CoachRequest.get_for_coach(jacob).fetch(1000)
+        self.assertEqual(1, len(requests_by_jacob))
+
+        requests_by_edward = models.CoachRequest.get_for_coach(edward).fetch(1000)
+        self.assertEqual(0, len(requests_by_edward))
+
+    def test_update_coaches_and_requests(self):
+        # Bella + Edward's daughter, 
+        # (Spoiler Alert!) who Jacob falls in love with in Book 4
+        renesmee = self.make_user('renesmee@gmail.com')
+        jacob = self.make_user('jacob@gmail.com')
+        models.CoachRequest.get_or_insert_for(jacob, renesmee)
+
+        requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
+        self.assertEqual(1, len(requests_for_renesmee))
+
+        coaches_json = [self.make_user_json(jacob, False)]
+        renesmee.update_coaches_and_requests(coaches_json)
+        self.assertFalse(renesmee.is_visible_to(jacob))
+        requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
+        self.assertEqual(1, len(requests_for_renesmee))
+
+        coaches_json = [self.make_user_json(jacob, True)]
+        renesmee.update_coaches_and_requests(coaches_json)
+        self.assertTrue(renesmee.is_visible_to(jacob))
+        requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
+        self.assertEqual(0, len(requests_for_renesmee))
 
 class UsernameTest(testutil.GAEModelTestCase):
     def tearDown(self):

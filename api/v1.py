@@ -1059,47 +1059,7 @@ def update_coaches_and_requesters():
     # TODO(marcia): what is the deal with coach_email.lower() in coaches.py
     user_data = models.UserData.current()
 
-    coaches_json = request.json
-    updated_coach_emails = []
-    outstanding_coach_emails = user_data.coaches
-    requester_emails = []
-    current_requests = models.CoachRequest.get_for_student(user_data).fetch(1000)
-
-    for coach_json in coaches_json:
-        email = coach_json['email']
-        # TODO(marcia): underscore-ify is_coaching_logged_in_user
-        is_coaching_logged_in_user = coach_json['isCoachingLoggedInUser']
-        if is_coaching_logged_in_user:
-            if email in outstanding_coach_emails:
-                outstanding_coach_emails.remove(email)
-                updated_coach_emails.append(email)
-            else:
-                coach_user_data = models.UserData.get_from_username_or_email(email)
-                if coach_user_data is not None:
-                    updated_coach_emails.append(email)
-                else:
-                    # TODO(marcia): what to do what to do
-                    logging.critical("invalid email!")
-        else:
-            requester_emails.append(email)
-
-    if len(outstanding_coach_emails):
-        removed_coach_keys = frozenset([
-                models.UserData.get_from_username_or_email(email).key()
-                for email in outstanding_coach_emails])
-
-        actual_lists = StudentList.get(user_data.student_lists)
-
-        user_data.student_lists = [l.key() for l in actual_lists
-                if (len(frozenset(l.coaches) & removed_coach_keys) == 0)]
-
-    user_data.coaches = updated_coach_emails
-    user_data.put()
-
-    for current_request in current_requests:
-        coach_email = current_request.coach_requesting_data.key_email
-        if coach_email not in requester_emails:
-            current_request.delete()
+    user_data.update_coaches_and_requests(request.json)
 
     # TODO(marcia): figure out the Right Thing to Return
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
