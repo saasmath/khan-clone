@@ -94,8 +94,12 @@ a:visited {
 }
 
 .login-field-set {
-    margin: 0.2em 0.5em;
+    margin: 0.5em;
     display: inline-block;
+}
+
+#login-fail-message {
+    margin: 0 0.5em; /* same as horizontal margins of login-field-set */
 }
 
 .login-label {
@@ -104,8 +108,11 @@ a:visited {
     font-size: 14px;
 }
 
+.login-field-error {
+    color: red;
+}
+
 .login-input {
-    display: block;
     font-size: 14px;
     padding: 0.1em 0.3em;
     margin: 0.1em 0;
@@ -123,6 +130,12 @@ a:visited {
     float: right;
     font-size: 90%;
     color: #678d00;
+
+    /* HACK: the login button is on the same row as the password field, making the
+     * parent container wider, but we want to align the forgot hint with
+     * the password field, so we put a right margin equivalent to the width
+     * of the login button+margin */
+    margin-right: 70px;
 }
 
 .login-button {

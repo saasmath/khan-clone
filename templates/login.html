@@ -33,20 +33,28 @@
 
     <div class="pw-login">
         <h3>Login with a Khan Academy account:</h3>
+        <div class="login-field-error" id="login-fail-message">{% if errors["badlogin"] %}Username and password doesn't match{% endif %}</div>
+
         <div class="login-field-set">
-            <label class="login-label" for="email">Email</label>
-            <input tabindex=1 id="email" name="email" class="simple-input ui-corner-all login-input">
+            <label class="login-label" for="email">Email</label><br>
+            <input tabindex=1 id="email" name="email" class="simple-input ui-corner-all login-input" value="{{ email|escape }}">
+            <div class="login-field-error" id="email-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
         </div>
 
         <div class="login-field-set">
             <label class="login-label" for="password">Password</label>
             <!-- TODO(benkomalo): wire up forgot password logic. -->
-            <a id="forgot-hint" href="javascript:void(0);">Forgot password?</a>
+            <a id="forgot-hint" href="javascript:void(0);">Forgot password?</a><br>
+
             <input tabindex=2 id="password" name="password" type="password" class="simple-input ui-corner-all login-input">
+
+            <!-- TODO(benkomalo): handle "enter" key -->
+            <!-- HACK: put login button in same fieldset/same row as password button for easy lining up -->
+            <input tabindex=3 id="submit-button" class="login-button simple-button action-gradient green" value="Login" type="button">
+
+            <div class="login-field-error" id="password-error">{% if errors["nopassword"] %}Password required{% endif %}</div>
         </div>
 
-        <!-- TODO(benkomalo): actually make login do something -->
-        <input tabindex=3 id="submit-button" class="login-button simple-button action-gradient green" value="Login" type="button">
     </div>
 
     </form>

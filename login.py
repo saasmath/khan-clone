@@ -8,6 +8,7 @@ import logging
 import os
 import request_handler
 import util
+import models
 
 
 class LoginType():
@@ -26,7 +27,14 @@ class LoginType():
 
 class Login(request_handler.RequestHandler):
     def get(self):
-        """ Renders the login page. """
+        self.render_login()
+
+    def render_login(self, email=None, errors=None):
+        """ Renders the login page.
+        
+        errors - a dictionary of possible errors from a previous login that
+                 can be highlighted in the UI of the login page
+        """
         cont = self.request_string('continue', default="/")
         direct = self.request_bool('direct', default=False)
 
@@ -35,7 +43,9 @@ class Login(request_handler.RequestHandler):
             return
         template_values = {
                            'continue': cont,
-                           'direct': direct
+                           'direct': direct,
+                           'email': email or "",
+                           'errors': errors or {},
                            }
         self.render_jinja2_template('login.html', template_values)
 
@@ -59,6 +69,26 @@ class Login(request_handler.RequestHandler):
             # Redirect to Google's login page
             self.redirect(users.create_login_url(cont))
         elif login_type == LoginType.PASSWORD:
+            # TODO(benkomalo): handle arbitrary identifiers like username, too
+            email = self.request_string('email')
+            password = self.request_string('password')
+            if not email or not password:
+                errors = {}
+                if not email: errors['noemail'] = True
+                if not password: errors['nopassword'] = True
+                self.render_login(email, errors)
+                return
+
+            u = models.UserData.get_from_username_or_email(email.strip())
+            if not u or not u.validate_password(password):
+                errors = {}
+                errors['badlogin'] = True
+                # TODO(benkomalo): IP-based throttling of failed logins?
+                self.render_login(email, errors)
+                return
+
+            # Success! log them in
+            # TODO(benkomalo): actually handle dishing out the cookie and stuff
             self.response.write("We'll handle this soon!")
             return
 

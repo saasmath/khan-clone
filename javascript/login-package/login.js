@@ -45,7 +45,29 @@ Login.connectWithGoogle = function() {
  * Login with a username and password.
  */
 Login.loginWithPassword = function() {
-    $("#type-input").val(Login.LoginType.PASSWORD);
-    $("#login-form").submit();
+    // Pre-validate.
+    var valid = true;
+    var identifier = $.trim($("#email").val());
+
+    // Hide any previous failed login notification after any other attempt.
+    $("#login-fail-message").hide();
+
+    if (!identifier) {
+        $("#email-error").text("Email or username required");
+        valid = false;
+    } else {
+        $("#email-error").text("");
+    }
+    var password = $("#password").val();
+    if (!password) {
+        $("#password-error").text("Password required");
+        valid = false;
+    } else {
+        $("#password-error").text("");
+    }
+    if (valid) {
+        $("#type-input").val(Login.LoginType.PASSWORD);
+        $("#login-form").submit();
+    }
 };
 
