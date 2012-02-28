@@ -46,7 +46,6 @@ var Exercises = {
         var profileExercise = Templates.get("exercises.exercise");
 
         $(".exercises-content-container").html(profileExercise({
-            // TODO(kamens): Useful dict data here like crazzzyyyyyyyy
             exercise: this.exercise,
             userTopic: this.userTopic,
         }));
@@ -120,11 +119,10 @@ var Exercises = {
 
                 if (pass === true) {
                     // TODO(kamens): distinguish b/w leaves 3, 4, and 5
-                    Exercises.currentCard.set({leavesAvailable: 3});
-                }
-                else if (pass === false) {
+                    Exercises.currentCard.decreaseLeavesAvailable(3);
+                } else if (pass === false) {
                     // Incorrect answer drops leaves possibility to 2
-                    Exercises.currentCard.set({leavesAvailable: 2});
+                    Exercises.currentCard.decreaseLeavesAvailable(2);
                 }
 
             }
@@ -133,14 +131,14 @@ var Exercises = {
         $(Khan).bind("hintUsed", function() {
             // Using a hint drops leaves possibility to 2.
             if (Exercises.currentCard) {
-                Exercises.currentCard.set({leavesAvailable: 2});
+                Exercises.currentCard.decreaseLeavesAvailable(2);
             }
         });
 
         $(Khan).bind("allHintsUsed", function() {
             // Using all hints drops leaves possibility to 1.
             if (Exercises.currentCard) {
-                Exercises.currentCard.set({leavesAvailable: 1});
+                Exercises.currentCard.decreaseLeavesAvailable(1);
             }
         });
 
@@ -188,14 +186,6 @@ var Exercises = {
 
         });
 
-    },
-
-    endOfStack: function() {
-
-        // TODO(kamens): something else.
-        KAConsole.debugEnabled = true;
-        KAConsole.log("Ended the stack!");
-
     }
 
 };
@@ -205,19 +195,18 @@ var Exercises = {
  */
 Exercises.Card = Backbone.Model.extend({
 
-    set: function(attributes, options) {
+    /**
+     * Decreases leaves available -- if leaves available is already at this
+     * level or lower, noop
+     */
+    decreaseLeavesAvailable: function(leavesAvailable) {
 
-        // Once it's been set, leavesAvailable can only go down.
-        if (attributes["leavesAvailable"]) {
-
-            var currentLeaves = this.get("leavesAvailable");
-            if (currentLeaves) {
-                attributes["leavesAvailable"] = Math.min(currentLeaves, attributes["leavesAvailable"]);
-            }
-
+        var currentLeaves = this.get("leavesAvailable");
+        if (currentLeaves) {
+            leavesAvailable = Math.min(currentLeaves, leavesAvailable);
         }
 
-        return Backbone.Model.prototype.set.call(this, attributes, options);
+        return this.set({ leavesAvailable: leavesAvailable });
 
     }
 
@@ -253,8 +242,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
 
             if (fxn(card)) {
                 current += 1;
-            }
-            else {
+            } else {
                 current = 0;
             }
 

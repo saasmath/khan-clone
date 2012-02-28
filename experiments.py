@@ -123,3 +123,22 @@ class SuggestedActivityExperiment(object):
                            SuggestedActivityExperiment._conversion_types)
 
         return find_alternative_for_user(exp_name, user_data)
+
+class HintsExperiment(object):
+    # These conversion tests are left available for anyone else to pass into
+    # a call to gae_bingo.ab_test as useful hints AB signals.
+    _hints_conversion_tests = [
+        ('hints_free_hint', ConversionTypes.Counting),
+        ('hints_free_hint_binary', ConversionTypes.Binary),
+        ('hints_costly_hint', ConversionTypes.Counting),
+        ('hints_costly_hint_binary', ConversionTypes.Binary),
+        ('hints_problems_done', ConversionTypes.Counting),
+        ('hints_gained_proficiency_all', ConversionTypes.Counting),
+        ('hints_gained_new_proficiency', ConversionTypes.Counting),
+        ('hints_gained_proficiency_easy_binary', ConversionTypes.Binary),
+        ('hints_gained_proficiency_hard_binary', ConversionTypes.Binary),
+        ('hints_wrong_problems', ConversionTypes.Counting),
+        ('hints_keep_going_after_wrong', ConversionTypes.Counting),
+    ]
+    _hints_conversion_names, _hints_conversion_types = [
+        list(x) for x in zip(*_hints_conversion_tests)]

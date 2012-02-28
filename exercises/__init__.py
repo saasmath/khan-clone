@@ -25,6 +25,7 @@ from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
+from exercises.handlers import ViewExercise
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -44,31 +45,10 @@ class MoveMapNodes(request_handler.RequestHandler):
 
             exercise.put()
 
-class ViewExercise(request_handler.RequestHandler):
+# TODO(kamens): once all edge-case logic is moved out of OldViewExercise piece-by-piece into 
+# exercises.handlers.ViewExercise, this should be removed.
+class OldViewExercise(request_handler.RequestHandler):
 
-    _hints_ab_test_alternatives = {
-        'old': 7,  # The original, where it was unclear if a hint was costly after an attempt
-        'more_visible': 1,  # Jace's shaking and pulsating emphasis on free hints after an attempt
-        'solution_button': 1,  # David's show solution button in lieu of hint button after an attempt
-        'full_solution': 1,  # Jason's just show the complete solution after an incorrect answer
-    }
-    _hints_conversion_tests = [
-        ('hints_free_hint', ConversionTypes.Counting),
-        ('hints_free_hint_binary', ConversionTypes.Binary),
-        ('hints_costly_hint', ConversionTypes.Counting),
-        ('hints_costly_hint_binary', ConversionTypes.Binary),
-        ('hints_problems_done', ConversionTypes.Counting),
-        ('hints_gained_proficiency_all', ConversionTypes.Counting),
-        ('hints_gained_new_proficiency', ConversionTypes.Counting),
-        ('hints_gained_proficiency_easy_binary', ConversionTypes.Binary),
-        ('hints_gained_proficiency_hard_binary', ConversionTypes.Binary),
-        ('hints_wrong_problems', ConversionTypes.Counting),
-        ('hints_keep_going_after_wrong', ConversionTypes.Counting),
-    ]
-    _hints_conversion_names, _hints_conversion_types = [
-        list(x) for x in zip(*_hints_conversion_tests)]
-
-    # TODO(kamens): this should be the only spot handling old exercise URLS ("?exid=monkey"). Redirect appropriately
     @ensure_xsrf_cookie
     def get(self, exid=None):
 
@@ -242,11 +222,6 @@ class ViewExercise(request_handler.RequestHandler):
             'is_webos': is_webos,
             'renderable': renderable,
             'issue_labels': ('Component-Code,Exercise-%s,Problem-%s' % (exid, problem_number)),
-            'alternate_hints_treatment': ab_test('Hints or Show Solution Dec 10',
-                ViewExercise._hints_ab_test_alternatives,
-                ViewExercise._hints_conversion_names,
-                ViewExercise._hints_conversion_types,
-                'Hints or Show Solution Nov 5'),
             'reviews_left_count': reviews_left_count if review_mode else "null",
         }
 
