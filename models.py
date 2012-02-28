@@ -1992,12 +1992,14 @@ class Topic(Searchable, db.Model):
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
     @layer_cache.cache_with_key_fxn(lambda self:
-        "topic_get_extended_slug_%s" % self.key(),
+        "topic_extended_slug_%s" % self.key(),
         layer=layer_cache.Layers.Memcache)
     def get_extended_slug(self):
         parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
         parent_ids.reverse()
-        return "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
+        if len(parent_ids) > 1:
+            return "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
+        return self.id
 
     # Gets the data we need for the video player
     @layer_cache.cache_with_key_fxn(lambda self:
@@ -2046,7 +2048,7 @@ class Topic(Searchable, db.Model):
             'title': self.title,
             'extended_slug': self.get_extended_slug(),
             'parent_titles': parent_titles,
-            'top_level_topic': db.get(self.ancestor_keys[-2]).id,
+            'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,
             'videos': videos_dict,
             'previous_topic_title': previous_topic.standalone_title if previous_topic else None,
             'previous_topic_video': previous_video.readable_id if previous_video else None,
