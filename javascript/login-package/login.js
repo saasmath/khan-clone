@@ -52,26 +52,14 @@ Login.connectWithGoogle = function() {
  * Login with a username and password.
  */
 Login.loginWithPassword = function() {
-    // Pre-validate.
-    var valid = true;
-    var identifier = $.trim($("#identifier").val());
 
     // Hide any previous failed login notification after any other attempt.
     $("#login-fail-message").hide();
 
-    if (!identifier) {
-        $("#identifier-error").text("Email or username required");
-        valid = false;
-    } else {
-        $("#identifier-error").text("");
-    }
-    var password = $("#password").val();
-    if (!password) {
-        $("#password-error").text("Password required");
-        valid = false;
-    } else {
-        $("#password-error").text("");
-    }
+    // Pre-validate.
+    var valid = Login.ensureValid_("#identifier", "Email or username required");
+    valid = Login.ensureValid_("#password", "Password required") && valid;
+
     if (valid) {
         $("#type-input").val(Login.LoginType.PASSWORD);
         $("#login-form").submit();
@@ -79,17 +67,71 @@ Login.loginWithPassword = function() {
 };
 
 /**
+ *
+ */
+Login.ensureValid_ = function(selector, errorText, checkFunc) {
+    // By default - check that it's not just empty whitespace.
+    checkFunc = checkFunc || function() {
+        var value = $(selector).val();
+        return !!$.trim(value);
+    };
+    if (!checkFunc()) {
+        $(selector + "-error").text(errorText);
+        return false;
+    }
+
+    $(selector + "-error").text("");
+    return true;
+};
+
+/**
  * Entry point for registration page setup.
  */
 Login.initRegistrationPage = function() {
+    var dateData = $("#birthday-picker").attr("data");
+    var defaultDate;
+    if (dateData) {
+        var parts = dateData.split("-");
+        if (parts.length === 3) {
+            var year = parseInt(parts[0], 10);
+            var month = parseInt(parts[1], 10) - 1;
+            var date = parseInt(parts[2], 10);
+            if (!isNaN(year + month + date)) {
+                defaultDate = new Date(year, month, date);
+            }
+        }
+    }
+    if (!defaultDate) {
+        // Jan 1, 13 years ago
+        defaultDate = new Date(new Date().getFullYear() - 13, 0, 1);
+    }
+
     $("#birthday-picker").birthdaypicker({
         placeholder: false,
         classes: "simple-input ui-corner-all login-input",
-
-        // Jan 1, 13 years ago
-        defaultDate: new Date(new Date().getFullYear() - 13, 0, 1)
+        defaultDate: defaultDate
     });
 
     $("#nickname").focus();
+
+    $("#submit-button").click(function() {
+        Login.submitRegistration();
+    });
+};
+
+/**
+ * Submits the registration attempt if passes pre-checks.
+ */
+Login.submitRegistration = function() {
+    var valid = Login.ensureValid_("#nickname", "Name required");
+    valid = Login.ensureValid_("#username", "Username required") && valid;
+    valid = Login.ensureValid_("#email", "Email required") && valid;
+    valid = Login.ensureValid_("#password", "Password required") && valid;
+
+    // Success!
+    if (valid) {
+        // TODO(benkomalo): STOPSHIP! send this over https!
+        $("#registration-form").submit();
+    }
 };
 

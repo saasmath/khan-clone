@@ -15,8 +15,8 @@
         <h3>Signup for a Khan Academy account</h3>
         <div class="field-container">
             <label class="field-label" for="nickname">Real Name</label><br>
-            <input id="nickname" name="nickname" class="simple-input ui-corner-all">
-            <div class="field-error" id="nickname-error"> </div>
+            <input id="nickname" name="nickname" class="simple-input ui-corner-all" value="{{ values['nickname']|escape}}">
+            <div class="field-error" id="nickname-error">{{ errors['nickname']|escape }}</div>
         </div>
 
         <br>
@@ -24,9 +24,9 @@
         <div class="field-container">
             <label class="field-label" for="gender">Gender (optional)</label><br>
             <select id="gender" name="gender" class="simple-input ui-corner-all">
-                <option value="unspecified"> </option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
+                <option value="unspecified" {% if values['gender'] == 'unspecified' %}selected{% endif %}> </option>
+                <option value="male" {% if values['gender'] == 'male' %}selected{% endif %}>Male</option>
+                <option value="female" {% if values['gender'] == female %}selected{% endif %}>Female</option>
             </select>
         </div>
 
@@ -34,27 +34,27 @@
 
         <div class="field-container">
             <label class="field-label" for="birthday">Birthday</label><br>
-            <div id="birthday-picker">{# contents filled by JS #}</div>
+            <div id="birthday-picker" data="{{ values['birthdate']|escape }}">{# contents filled by JS #}</div>
         </div>
 
         <br>
 
         <div class="field-container">
             <label class="field-label" for="username">Username</label><br>
-            <input id="username" name="username" class="simple-input ui-corner-all">
-            <div class="field-error" id="username-error"> </div>
+            <input id="username" name="username" class="simple-input ui-corner-all" value="{{ values['username']|escape }}">
+            <div class="field-error" id="username-error">{{ errors['username']|escape }}</div>
         </div>
 
         <div class="field-container">
             <label class="field-label" for="email">Email</label><br>
-            <input id="email" name="email" type="email" class="simple-input ui-corner-all">
-            <div class="field-error" id="email-error"> </div>
+            <input id="email" name="email" type="email" class="simple-input ui-corner-all" value="{{ values['email']|escape }}">
+            <div class="field-error" id="email-error">{{ errors['email']|escape }}</div>
         </div>
 
         <div class="field-container">
             <label class="field-label" for="password">Password</label><br>
             <input id="password" name="password" type="password" class="simple-input ui-corner-all">
-            <div class="field-error" id="password-error"> </div>
+            <div class="field-error" id="password-error">{{ errors['password']|escape }}</div>
         </div>
 
         <br>
@@ -65,8 +65,7 @@
         </div>
         <br>
         <div class="field-container" style="margin-top: 2em">
-            <!-- TODO(benkomalo): actually wire this up properly -->
-            <input type="button" name="submit" value="Signup" class="simple-button action-gradient green">
+            <input type="button" id="submit-button" name="register" value="Signup" class="simple-button action-gradient green">
         </div>
 
     </div>

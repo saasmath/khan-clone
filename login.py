@@ -6,7 +6,7 @@ from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
 import auth.cookies
-import auth.tokens
+import django.core.validators
 import logging
 import models
 import os
@@ -185,7 +185,6 @@ class Logout(request_handler.RequestHandler):
 
 
 class Register(request_handler.RequestHandler):
-    # TODO(benkomalo): actually handle the POST of the registration page
     def get(self):
         """ Renders the register for new user page.  """
         cont = self.request_string('continue', default="/")
@@ -193,7 +192,73 @@ class Register(request_handler.RequestHandler):
         template_values = {
             'continue': cont,
             'errors': {},
+            'values': {},
         }
         self.render_jinja2_template('register.html', template_values)
 
+    def post(self):
+        """ Handles registration request on our site.
+        
+        Note that new users can still be created via PostLogin if the user
+        signs in via Google/FB for the first time - this is for the
+        explicit registration via our own services.
+        """
 
+        cont = self.request_string('continue', default="/")
+
+        # Store values in a dict so we can iterate for monotonous checks.
+        values = {}
+        values['nickname'] = self.request_string('nickname', default=None)
+        values['gender'] = self.request_string('gender', default="unspecified")
+        values['birthdate'] = self.request_string('birthdate', default=None)
+
+        values['username'] = self.request_string('username', default=None)
+        values['email'] = self.request_string('email', default=None)
+        values['password'] = self.request_string('password', default=None)
+
+        # Simple existence validations
+        errors = {}
+        for field, error in [('nickname', "Name required"),
+                             ('birthdate', "Birthday required"),
+                             ('username', "Username required"),
+                             ('email', "Email required"),
+                             ('password', "Password required")]:
+            if not field:
+                errors[field] = error
+
+        # Check validity of auth credentials
+        if values['email']:
+            email = values['email']
+
+            # Perform loose validation - we can't actually know if this is
+            # valid until we send an e-mail.
+            if not django.core.validators.email_re.search(email):
+                errors['email'] = "Email appears to be invalid"
+
+        if values['username']:
+            username = values['username']
+            # TODO(benkomalo): ask for advice on text
+            if not models.UniqueUsername.is_valid_username(username):
+                errors['username'] = "Must start with a letter, be alphanumeric, and at least 3 characters"
+            elif not models.UniqueUsername.is_available_username(username):
+                errors['username'] = "Username is not available"
+
+        if values['password']:
+            # TODO(benkomalo): enforce a minimum password quality/length
+            pass
+
+        if len(errors) > 0:
+            # Never send back down the password.
+            del values['password']
+
+            template_values = {
+	            'cont': cont,
+	            'errors': errors,
+	            'values': values,
+	        }
+
+            self.render_jinja2_template('register.html', template_values)
+            return
+
+        # TODO(benkomalo): actually handle registration
+        self.response.write("Not handled yet!")
