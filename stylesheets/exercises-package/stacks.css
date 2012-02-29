@@ -175,6 +175,10 @@
     width: 25%;
     overflow: visible;
 }
+    .card-type-endofstack .leaves-container {
+        display: none;
+    }
+    
 .current-card .leaves .leaf,
 .stack .leaves .leaf {
     width: 25px;
