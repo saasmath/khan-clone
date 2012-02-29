@@ -135,7 +135,7 @@ def topic_browser(browser_id, version_number=None):
         standalone_title="Developmental Math"
     )
     developmental_math.children = []
-    [topic for topic in tree.children if topic.id == "math"][0].children.append(developmental_math)
+    #[topic for topic in tree.children if topic.id == "math"][0].children.append(developmental_math)
 
     template_values = {
        'browser_id': browser_id, 'topic_tree': tree 

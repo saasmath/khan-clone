@@ -194,7 +194,16 @@ def topics_library_compact():
 @jsonify
 def topic_version_change_list(version_id):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.VersionContentChange.all().filter("version =", version).fetch(10000)
+    changes = models.VersionContentChange.all().filter("version =", version).fetch(10000)
+    
+    # add the related_videos of ExerciseVideos of the change.content
+    exercise_dict = dict((change.content.key(), change.content) 
+                         for change in changes 
+                         if type(change.content) == models.Exercise)
+
+    models.Exercise.add_related_videos_prop(exercise_dict)
+    return changes
+
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
@@ -754,7 +763,8 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "summative", "prerequisites", "covers", 
-                        "related_videos", "short_display_name"]
+                        "related_videos", "related_video_keys", 
+                        "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise, 
             version, 
