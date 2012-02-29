@@ -19,11 +19,20 @@ UsernamePickerView = Backbone.View.extend({
     usernameFieldAcceptable_: true,
 
     events: {
-        "keyup .nickname": "onNicknameKeyup_",
-        "keyup .username": "onUsernameKeyup_",
+        "keypress .nickname": "onNicknameKeypress_",
+        "keypress .username": "onUsernameKeypress_",
         "click :input": "onInputClick_",
         "click #save-profile-info": "onSaveClick_",
         "click #cancel-profile-info": "onCancelClicked_"
+    },
+
+    delegateEvents: function(events) {
+        var jelRoot = $(this.el);
+        Keys.delegateInputChange(jelRoot, ".nickname",
+                this.onNicknameInput_, this);
+        Keys.delegateInputChange(jelRoot, ".username",
+                this.onUsernameInput_, this);
+        UsernamePickerView.__super__.delegateEvents.call(this, events);
     },
 
     onInputClick_: function(e) {
@@ -99,30 +108,27 @@ UsernamePickerView = Backbone.View.extend({
         }, this);
     },
 
-    onNicknameKeyup_: function(e) {
-        if (!Keys.isTextModifyingKeyEvent_(e)) {
-            return;
-        }
+    onNicknameInput_: function(e) {
         this.model.validateNickname(this.getFormValue_(".nickname"));
+    },
+
+    onNicknameKeypress_: function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             // Treat enter as "tab" to the next field.
             this.$(".username").focus();
         }
     },
 
-    onUsernameKeyup_: function(e) {
-        if (!Keys.isTextModifyingKeyEvent_(e)) {
-            return;
-        }
+    onUsernameKeypress_: function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             if (!this.$("#save-profile-info").prop("disabled")) {
                 this.$("#save-profile-info").click();
-                return;
             }
-
             this.onTimeout_();
         }
+    },
 
+    onUsernameInput_: function(e) {
         this.$("#save-profile-info").prop("disabled", true);
         if (this.shouldShowUsernameWarning_ && this.model.get("username")) {
             $(".notification.error").show();
