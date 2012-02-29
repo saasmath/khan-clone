@@ -7,6 +7,12 @@ import re
 import StringIO
 import base64
 import copy
+import sys
+
+pwd = os.path.abspath(".")
+if pwd not in sys.path:
+    sys.path.append(pwd)
+
 from js_css_packages import packages
 import npm
 
@@ -85,8 +91,13 @@ def resolve_files(default_path, packages, suffix):
                     files.append(f + suffix)
         elif package.get("allfiles", False):
             # Add all files that have the correct suffix
-            files = [f for f in os.listdir(package_path)
-                if f.split('.')[-1] == suffix[1:]]
+            files = []
+            for f in os.listdir(package_path):
+                fname, ftype = os.path.basename(f).rsplit('.', 1)
+                invalid_names = ["combined", "compressed", "hashed-.*"]
+                invalid_file = any([re.match(p, fname) for p in invalid_names])
+                if (ftype == suffix[1:] and not invalid_file):
+                    files.append(f)
         else:
             raise "No files found in package %s" % package_name
 
@@ -348,3 +359,18 @@ def check_deps():
     else:
         print "uglify and cssmin not found :("
         return False
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit("Must supply js or css as first argument")
+
+    kind = sys.argv[1]
+    if kind == "js":
+        compress_all_javascript()
+    elif kind == "css":
+        compress_all_stylesheets()
+    else:
+        sys.exit("Invalid kind %s, must supply js or css" % kind)
+
+if __name__ == "__main__":
+    main()
