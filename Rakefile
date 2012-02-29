@@ -26,3 +26,13 @@ desc "Pack exercise files"
 task :exercises do
     system "ruby", "khan-exercises/build/pack.rb"
 end
+
+desc "Compress javascript"
+task :js do
+    system "python", "deploy/compress.py", "js"
+end
+
+desc "Compress css"
+task :css do
+    system "python", "deploy/compress.py", "css"
+end
