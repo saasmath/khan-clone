@@ -52,6 +52,8 @@ import summer
 import common_core
 import unisubs
 import api.jsonify
+import labs
+import socrates
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -122,6 +124,20 @@ class ViewVideo(request_handler.RequestHandler):
             handler.redirect(url, True)
             return
 
+        # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
+
+        template_values = ViewVideo.get_template_data(handler, readable_id, topic)
+
+        handler.render_jinja2_template('viewvideo.html', template_values)
+
+    @classmethod
+    def get_template_data(cls, handler, readable_id, topic):
+        # If we got here, we have a readable_id and a topic, so we can display
+        # the topic and the video in it that has the readable_id.  Note that we don't
+        # query the Video entities for one with the requested readable_id because in some
+        # cases there are multiple Video objects in the datastore with the same readable_id
+        # (e.g. there are 2 "Order of Operations" videos).
+
         topic_data = topic.get_play_data()
 
         discussion_options = qa.add_template_values({}, handler.request)
@@ -137,9 +153,7 @@ class ViewVideo(request_handler.RequestHandler):
             "selected_nav_link": 'watch'
         }
 
-        # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
-
-        handler.render_jinja2_template('viewvideo.html', template_values)
+        return template_values
 
     @ensure_xsrf_cookie
     def get(self, path, video_id):
@@ -592,7 +606,7 @@ class Search(request_handler.RequestHandler):
                            'video_count': video_count,
                            'topic_count': topic_count,
                            })
-        
+
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
@@ -852,6 +866,10 @@ application = webapp2.WSGIApplication([
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
+
+    # Labs
+    ('/labs', labs.LabsRequestHandler),
+    ('/labs/socrates/(.*)', socrates.SocratesHandler),
 
     ('/robots.txt', robots.RobotsTxt),
 

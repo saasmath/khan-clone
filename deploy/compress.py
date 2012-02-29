@@ -62,27 +62,36 @@ def resolve_files(default_path, packages, suffix):
     for package_name in packages:
         package = packages[package_name]
 
-        if 'files' in package:
-            package_path = package.get("base_path")
-            if not package_path:
-                dir_name = "%s-package" % package_name
-                package_path = os.path.join(default_path, dir_name)
+        package_path = package.get("base_path")
+        if not package_path:
+            dir_name = "%s-package" % package_name
+            package_path = os.path.join(default_path, dir_name)
 
-            package_path = os.path.join(os.path.dirname(__file__), package_path)
-            package_path = os.path.normpath(package_path)
+        package_path = os.path.join(os.path.dirname(__file__), package_path)
+        package_path = os.path.normpath(package_path)
 
-            # Assume any files that do not have the correct suffix are already
-            # compiled by some earlier process.
-            # For example, a file called template.handlebars will be compiled
-            # to template.handlebars.js
-            files = []
+        # Get a list of all files in the package.
+        # Assumes any files that do not have the correct suffix are already
+        # compiled by some earlier process.
+        # For example, a file called template.handlebars will be compiled
+        # to template.handlebars.js
+        files = []
+        if "files" in package:
+            # Put the correct suffix on every file name mentioned in packages
             for f in package["files"]:
                 if f.split('.')[-1] == suffix[1:]:
                     files.append(f)
                 else:
                     files.append(f + suffix)
+        elif package.get("allfiles", False):
+            # Add all files that have the correct suffix
+            files = [f for f in os.listdir(package_path)
+                if f.split('.')[-1] == suffix[1:]]
+        else:
+            raise "No files found in package %s" % package_name
 
-            yield (package_name, package_path, files)
+        yield (package_name, package_path, files)
+
 
 def file_size_report():
     # only works on js for now
