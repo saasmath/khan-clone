@@ -27,6 +27,7 @@ javascript = {
             "jquery.placeholder.js",
             "jquery.hoverflow.js",
             "jquery.qtip.js",
+            "jquery.ba-throttle-debounce.js",
             "../../khan-exercises/utils/underscore.js",
             "underscore-extras.js",
             "keyhandling.js",

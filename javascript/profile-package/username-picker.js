@@ -46,7 +46,6 @@ UsernamePickerView = Backbone.View.extend({
     initialize: function() {
         this.template = Templates.get("profile.username-picker");
         this.shouldShowUsernameWarning_ = false;
-        this.keyupTimeout = null;
         this.model.bind("validate:nickname", this.onValidateNickname_, this);
         this.model.bind("validate:username", this.onValidateUsername_, this);
         this.model.bind("savesuccess", this.onSaveSuccess_, this);
@@ -137,17 +136,13 @@ UsernamePickerView = Backbone.View.extend({
         }
         this.$(".example-username").text(this.getFormValue_(".username"));
 
-        if (this.keyupTimeout) {
-            window.clearTimeout(this.keyupTimeout);
-        }
         this.showSidenote_(".username-row", "Checking...");
-        this.keyupTimeout = window.setTimeout(_.bind(this.onTimeout_, this), 1000);
+        this.debouncedValidateUsername_();
     },
 
-    onTimeout_: function() {
+    debouncedValidateUsername_: $.debounce(1000, function() {
         this.model.validateUsername(this.getFormValue_(".username"));
-        this.keyupTimeout = null;
-    },
+    }),
 
     syncSaveButtonState_: function() {
         this.$("#save-profile-info").prop(
