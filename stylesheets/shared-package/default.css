@@ -2364,7 +2364,7 @@ a.proficient-badge.disabled {
     width: 27%;
     margin-right: 10px;
 }
-    #answer_area .info-box {
+    .info-box {
         background: #eee;
         border: 1px solid #ccc;
         border-bottom: 1px solid #aaa;
@@ -2379,10 +2379,10 @@ a.proficient-badge.disabled {
         -moz-box-shadow: 0 1px 2px #ccc;
         -webkit-box-shadow: 0 1px 2px #ccc;
     }
-    #answer_area .info-box table {
+    .info-box table {
         border-collapse: collapse;
     }
-    #answer_area .info-box .info-box-header, #answer_area .info-box .info-box-subheader {
+    .info-box .info-box-header, .info-box .info-box-subheader {
         color: #777;
         display: block;
         font-size: 18px;
@@ -2390,24 +2390,24 @@ a.proficient-badge.disabled {
         font-weight: bold;
         text-shadow: 0 1px 0 #fff;
     }
-    #answer_area .info-box .info-box-subheader {
+    .info-box .info-box-subheader {
         line-height: 200%;
         font-size: 14px;
         color: #333;
     }
-    #answer_area .info-box .related-content-title {
+    .info-box .related-content-title {
         display: none;
     }
-    #answer_area .info-box #related-video-list {
+    .info-box #related-video-list {
         padding: 0;
         margin: 0;
         list-style: none;
     }
-        #answer_area .info-box #related-video-list li {
+        .info-box #related-video-list li {
             display: block;
             margin: 0 0 5px 0;
         }
-        #answer_area .info-box #related-video-list a {
+        .info-box #related-video-list a {
             display: block;
             float: left;
             margin: 0;
@@ -2415,22 +2415,22 @@ a.proficient-badge.disabled {
             overflow: hidden;
             text-overflow: ellipsis;
         }
-            #answer_area .info-box #related-video-list a .video-title {
+            .info-box #related-video-list a .video-title {
                 white-space: nowrap;
             }
-        #answer_area .info-box #related-video-list .separator {
+        .info-box #related-video-list .separator {
             display: none;
         }
-        #answer_area .info-box #related-video-list .related-videos-more {
+        .info-box #related-video-list .related-videos-more {
             float: none;
             clear:both;
         }
-            #answer_area .info-box #related-video-list .related-videos-more a {
+            .info-box #related-video-list .related-videos-more a {
                 float: none;
                 display: inline;
             }
         /* Energy points badge look. Should be used wherever we display energy points */
-        #answer_area .info-box #related-video-list .video-energy-points,
+        .info-box #related-video-list .video-energy-points,
         .video_extra_links .video-energy-points,
         #user-info .energy-points-badge,
         #profile-header #high-level-stats .energy-points-badge,
@@ -2455,19 +2455,19 @@ a.proficient-badge.disabled {
             font-size: 11px;
             cursor: pointer;
         }
-    #answer_area .info-box .info-box-sub-description {
+    .info-box .info-box-sub-description {
         display: block;
         color: #777;
         margin-bottom: 10px;
     }
-        #answer_area .info-box .info-box-sub-description strong {
+        .info-box .info-box-sub-description strong {
             color: #444;
             font-style: italic;
         }
-    #answer_area .info-box #check-answer-results #feedback {
+    .info-box #check-answer-results #feedback {
         padding: 10px 0 5px;
     }
-    #answer_area .info-box input#answer {
+    .info-box input#answer {
         width: 100px;
     }
     .exercise.button, #answer_area input.button {

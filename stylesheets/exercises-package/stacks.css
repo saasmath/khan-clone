@@ -141,13 +141,13 @@
 }
 
 .current-card #answer_area_wrap {
-    margin: 15px -8px 0 0;
+    margin: 10px -8px 0 0;
 }
 
 .current-card #answer_area .info-box {
     overflow: visible;
 }
-.current-card #answer_area .info-box:before {
+.current-card .info-box:before {
     content: " ";
     display: block;
 
@@ -166,6 +166,12 @@
     display: none; /* TODO(kamens/jason): currently hiding all proficient/struggling/review messages */
 }
 
+.leaves-container {
+    margin: 15px -8px 0 0;
+    float: right;
+    width: 25%;
+    overflow: visible;
+}
 .current-card .leaves .leaf,
 .stack .leaves .leaf {
     width: 25px;
