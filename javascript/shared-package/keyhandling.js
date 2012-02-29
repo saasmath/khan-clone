@@ -52,26 +52,22 @@ Keys.isTextModifyingKeyEvent_ = function(e) {
  * A space-separated list of event names appropriate for indication for
  * when a text-change event occured.
  *
- * Note that the HTML5 "input" event is the best way to do this, but it is
- * not supported in IE, so it's approximated by similar events (though isn't
- * perfect. e.g. it doesn't handle holding down a button and having a repeated
- * character fire repeated events)
- * @type {string}
+ * This is "input" in browsers that support it, but approximated by
+ * similar events in IE, with some loss in accuracy. (e.g. it doesn't
+ * handle holding down a button and having a repeated character fire
+ * repeated events)
  */
 Keys.textChangeEvents = $.browser.msie ? "keyup paste cut drop" : "input";
 
 
 /**
- * Delegate input events.
- * Uses 'input' events, when availabe, but approximates it in browsers with
- * no full support for it (see Keys.textChangeEvents).
- * @param {jQuery} jel The jQuery element to delegate events for.
- * @param {string} selector The selector that the events apply to.
- * @param {Function} handler The event handler.
- * @param {Object} context An optional context to call the handler for.
+ * Delegate input change events for the specied jQuery element.
+ * See Keys.textChangeEvents for details.
  */
 Keys.delegateInputChange = function(jel, selector, handler, context) {
     var wrapped = function(e) {
+        // When the "input" event is simulated, we have to supress benign
+        // key presses.
         if (!Keys.isTextModifyingKeyEvent_(e)) {
             return;
         }
