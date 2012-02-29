@@ -18,7 +18,6 @@
 <script>
     // TODO(kamens): userExercise should be handled differently now
     var userExercise = {{ user_exercise_json }};
-    var userExerciseName = '{{ exercise.name|escapejs }}';
 </script>
 
 {% endblock pagescript %}
@@ -41,15 +40,17 @@
 {{ js_css_packages.js_package("video") }}
 
 <script>
+    Exercises.init({
+        exercise: {{ exercise_json }},
+        userTopic: {
+            /* TODO(kamens): this init data is faked -- need real data model here like crazzzyyyyyyy */
+            incompleteStack: {{ stack_json }},
+            completeStack: []
+        }
+    });
+
     $(function() {
-        Exercises.init({
-            exercise: {{ exercise_json }},
-            userTopic: {
-                /* TODO(kamens): this init data is faked -- need real data model here like crazzzyyyyyyy */
-                incompleteStack: {{ stack_json }},
-                completeStack: []
-            }
-        });
+        Exercises.render();
     });
 </script>
 
