@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import Cookie
-import auth
+import auth.tokens
 import logging
 import models
 import os
