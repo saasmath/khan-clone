@@ -127,45 +127,35 @@ class SuggestedActivityExperiment(object):
 
 class InteractiveTranscriptExperiment(object):
 
+    NAME = 'Interactive transcript on video page'
+
     NO_SHOW = 'no_show'
     SHOW = 'show'
 
-    _ab_test_alternatives = {
-        NO_SHOW: 5, # Don't show interactive transcript
-        SHOW: 5, # Show interactive transcript
-    }
+    _ab_test_alternatives = [
+        NO_SHOW,  # Don't show interactive transcript
+        SHOW,  # Show interactive transcript
+    ]
 
     _conversion_tests = [
         # server-side conversions
-        ('interactive_transcript_videos_landing', ConversionTypes.Counting),
-        ('interactive_transcript_videos_finished', ConversionTypes.Counting),
+        ('videos_landing', ConversionTypes.Counting),
+        ('videos_finished', ConversionTypes.Counting),
 
         # client-side conversions to gauge interaction with the transcript
         ('interactive_transcript_shown', ConversionTypes.Counting),
+        ('interactive_transcript_shown_binary', ConversionTypes.Binary),
         ('interactive_transcript_subtitle_click', ConversionTypes.Counting),
+        ('interactive_transcript_subtitle_click_binary', ConversionTypes.Binary),
     ]
 
     _conversion_names, _conversion_types = [
         list(x) for x in zip(*_conversion_tests)]
 
-
     @staticmethod
-    def get_alternative_for_user(user_data, current_user=False):
-        """ Returns the experiment alternative for the specified user, or
-        the current logged in user. If the user is the logged in user, will
-        opt in for an experiment, as well. Will not affect experiments if
-        not the current user.
-
-        """
-        exp_name = "Interactive transcript on video page"
-
-        # If it's not the current user, then it must be an admin or coach
-        # viewing a dashboard. Don't affect the actual experiment as only the
-        # actions of the user affect her participation in the experiment.
-        if current_user:
-            return ab_test(exp_name,
-                           InteractiveTranscriptExperiment._ab_test_alternatives,
-                           InteractiveTranscriptExperiment._conversion_names,
-                           InteractiveTranscriptExperiment._conversion_types)
-
-        return find_alternative_for_user(exp_name, user_data)
+    def ab_test():
+        """gaebingo.ab_test() wrapper"""
+        return ab_test(InteractiveTranscriptExperiment.NAME,
+                       InteractiveTranscriptExperiment._ab_test_alternatives,
+                       InteractiveTranscriptExperiment._conversion_names,
+                       InteractiveTranscriptExperiment._conversion_types)

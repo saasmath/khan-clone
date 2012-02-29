@@ -84,7 +84,8 @@ var Video = {
             transcript.slideDown("fast", function() {
                 InteractiveTranscript.start();
                 if (window.gae_bingo) {
-                    gae_bingo.bingo("interactive_transcript_shown");
+                    gae_bingo.bingo(["interactive_transcript_shown",
+                        "interactive_transcript_shown_binary"]);
                 }
             });
         }
@@ -231,7 +232,8 @@ var InteractiveTranscript = {
         }
 
         if (window.gae_bingo) {
-            gae_bingo.bingo("interactive_transcript_subtitle_click");
+            gae_bingo.bingo(["interactive_transcript_subtitle_click",
+                "interactive_transcript_subtitle_click_binary"])
         }
     },
 

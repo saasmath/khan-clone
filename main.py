@@ -221,8 +221,7 @@ class ViewVideo(request_handler.RequestHandler):
                 }
             button_top_exercise = ex_to_dict(related_exercises[0])
 
-        user_data = UserData.current()
-        user_video = UserVideo.get_for_video_and_user_data(video, user_data, insert_if_missing=True)
+        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
 
         awarded_points = 0
         if user_video:
@@ -231,12 +230,11 @@ class ViewVideo(request_handler.RequestHandler):
         subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
         subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
         subtitles_json = None
+        show_interactive_transcript = False
         if subtitles:
             subtitles_json = subtitles.load_json()
-
-        transcript_alternative = InteractiveTranscriptExperiment.get_alternative_for_user(
-                user_data, True) or InteractiveTranscriptExperiment.NO_SHOW
-        show_interactive_transcript = (transcript_alternative == InteractiveTranscriptExperiment.SHOW)
+            transcript_alternative = InteractiveTranscriptExperiment.ab_test()
+            show_interactive_transcript = (transcript_alternative == InteractiveTranscriptExperiment.SHOW)
 
         template_values = {
                             'topic': topic,
@@ -262,10 +260,10 @@ class ViewVideo(request_handler.RequestHandler):
         template_values = qa.add_template_values(template_values, self.request)
 
         bingo([
+            'videos_landing',
             'struggling_videos_landing',
             'suggested_activity_videos_landing',
             'suggested_activity_videos_landing_binary',
-            'interactive_transcript_videos_landing',
         ])
         self.render_jinja2_template('viewvideo.html', template_values)
 
