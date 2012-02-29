@@ -29,6 +29,7 @@ Keys.isTextModifyingKeyEvent_ = function(e) {
         case $.ui.keyCode.CONTROL:
         case $.ui.keyCode.DOWN:
         case $.ui.keyCode.END:
+        case $.ui.keyCode.ENTER:
         case $.ui.keyCode.ESCAPE:
         case $.ui.keyCode.HOME:
         case $.ui.keyCode.INSERT:
