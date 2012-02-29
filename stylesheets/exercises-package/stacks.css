@@ -94,8 +94,6 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    /*-webkit-backface-visibility: hidden;
-    -moz-backface-visibility: hidden;*/
 }
 .stack .card-face.card-front {
     background: #f7f7f7;
@@ -178,7 +176,7 @@
     .card-type-endofstack .leaves-container {
         display: none;
     }
-    
+
 .current-card .leaves .leaf,
 .stack .leaves .leaf {
     width: 25px;
