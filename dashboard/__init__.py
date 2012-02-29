@@ -112,7 +112,7 @@ class ContentCountsCSV(request_handler.RequestHandler):
                     topic_stats["exercise_keys"].update(subtopic_stats["exercise_keys"])
                     topic_stats["subtopics"].append(subtopic_stats)
                     topic_stats["descendant_video_count"] += subtopic_stats["descendant_video_count"] 
-                    topic_stats["descendant_exercise_count"] += subtopic_stats["descendant_exercise_count"]
+                    topic_stats["descendant_exercise_count"] += subtopic_stats["descendant_exercise_count"]               
                                     
                 elif type(child) == models.Exercise and child.live:
                     topic_stats["exercise_keys"].add(child.key())
@@ -120,12 +120,21 @@ class ContentCountsCSV(request_handler.RequestHandler):
                     topic_stats["descendant_exercise_count"] += 1
 
                 elif type(child) == models.Video or type(child) == models.Url:
-                    topic_stats["video_keys"].add(child.key())
+                    topic_stats["video_keys"].add((
+                        child.key(), 
+                        child.views if hasattr(child, "views") else 0))
                     topic_stats["video_count"] += 1
                     topic_stats["descendant_video_count"] += 1
 
-            topic_stats["unique_video_count"] = len(topic_stats["video_keys"])
-            topic_stats["unique_exercise_count"] = len(topic_stats["exercise_keys"])
+            topic_stats["unique_video_count"] = ( 
+                len(topic_stats["video_keys"]))
+
+            topic_stats["view_count"] = (
+                sum(map(lambda i: i[1], topic_stats["video_keys"])))
+
+            topic_stats["unique_exercise_count"] = (
+                len(topic_stats["exercise_keys"]))
+
             return topic_stats
 
         def flatten_stats(stats, topics=None):
@@ -142,22 +151,24 @@ class ContentCountsCSV(request_handler.RequestHandler):
         stats = stats(tree, tree)
 
         self.response.headers['Content-Type'] = "text/csv"
-        self.response.out.write("%s, %s, %s, %s, %s, %s, %s\n" % (
+        self.response.out.write("%s, %s, %s, %s, %s, %s, %s, %s\n" % (
             "Title",
             "Videos in or under Topics",
             "Unique Videos in or under Topic",
             "Videos in Topic",
+            "Number of Video Views in or under Topic",
             "Exercises in or under Topic",
             "Unique Exercises in or under Topic",
             "Exercises in Topic"
         ))
         
         for stats in flatten_stats(stats):
-            self.response.out.write("%s, %i, %i, %i, %i, %i, %i\n" % (
+            self.response.out.write("%s, %i, %i, %i, %i, %i, %i, %i\n" % (
                 stats["title"],
                 stats["descendant_video_count"],
                 stats["unique_video_count"],
-                stats["video_count"],  
+                stats["video_count"], 
+                stats["view_count"], 
                 stats["descendant_exercise_count"], 
                 stats["unique_exercise_count"],
                 stats["exercise_count"]
