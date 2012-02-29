@@ -156,7 +156,7 @@ class YouTubeSync(request_handler.RequestHandler):
         for video in Video.all():
             try:
                 entry = yt_service.GetYouTubeVideoEntry(video_id=video.youtube_id)
-            except Exception as e:
+            except Exception, e:
                 logging.info("Error trying to get %s: %s" % 
                             (video.youtube_id, e))
             count = int(entry.statistics.view_count)
