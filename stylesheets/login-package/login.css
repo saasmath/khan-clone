@@ -1,24 +1,25 @@
 #page_sub_nav { display: none; }
 
-#login-page {
+#page-root {
     text-align: center;
     position: relative;
 
 }
 
-#login-page-content {
+form.auth-form {
     /* TODO(benkomalo): vertically position this and make it flex. */
     position: relative;
     margin-top: 6em;
+    display: block;
 }
 
-.providers, .pw-login {
+.providers, .pw-login, .registration-contents {
     display: inline-block;
     text-align: left;
     width: 500px;
 }
 
-#login-page .separator {
+#page-root .separator {
     margin: 2em auto;
     width: 800px;
     text-align: center;
@@ -93,37 +94,56 @@ a:visited {
     box-shadow: none;
 }
 
-.login-field-set {
+.field-container {
     margin: 0.5em;
     display: inline-block;
 }
 
 #login-fail-message {
-    margin: 0 0.5em; /* same as horizontal margins of login-field-set */
+    margin: 0 0.5em; /* same as horizontal margins of field-container */
 }
 
-.login-label {
+.field-label {
     color: #666;
     font-family: "MuseoSans500", sans-serif;
     font-size: 14px;
 }
 
-.login-field-error {
+.field-error {
     color: red;
 }
 
-.login-input {
+.auth-form .simple-input {
     font-size: 14px;
     padding: 0.1em 0.3em;
     margin: 0.1em 0;
     width: 18em;
 }
 
-.login-input:focus {
-    -webkit-box-shadow: 0 0 5px rgba(115, 152, 44, .5);
-    -moz-box-shadow: 0 0 5px rgba(115, 152, 44, .5);
-    box-shadow: 0 0 5px rgba(115, 152, 44, .5);
+.auth-form .simple-input:focus {
+    -webkit-box-shadow: 0 0 8px rgba(115, 152, 44, .5);
+    -moz-box-shadow: 0 0 8px rgba(115, 152, 44, .5);
+    box-shadow: 0 0 8px rgba(115, 152, 44, .5);
     outline: none;
+}
+
+.auth-form select.simple-input {
+    /* Work around a webkit "bug" where box shadows don't work unless you
+     * disable webkit-appearance. That removes the dropdown icon though. */
+    -webkit-appearance: none;
+
+    /* TODO(benkomalo): replace with a real asset that isn't ugly */
+    background: url("/images/pulldown-blue.png") no-repeat right center;
+}
+
+.auth-form .simple-input#gender {
+    width: 8em;
+}
+
+.auth-form .simple-input.birth-month,
+.auth-form .simple-input.birth-day,
+.auth-form .simple-input.birth-year {
+    width: 5em;
 }
 
 #forgot-hint {
@@ -136,10 +156,6 @@ a:visited {
      * the password field, so we put a right margin equivalent to the width
      * of the login button+margin */
     margin-right: 70px;
-}
-
-.login-button {
-    margin-left: 1em;
 }
 
 .signup-prompt-container {

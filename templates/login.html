@@ -7,8 +7,8 @@
 {% endblock pagecss %}
 
 {% block pagecontent %}
-<article id="login-page"><div id="login-page-content">
-    <form method="POST" id="login-form" action="/login?continue={{continue|urlencode}}">
+<article id="page-root">
+    <form method="POST" class="auth-form" id="login-form" action="/login?continue={{continue|urlencode}}">
     <input type="hidden" name="type" id="type-input">
 
     <ul class="providers">
@@ -33,44 +33,45 @@
 
     <div class="pw-login">
         <h3>Login with a Khan Academy account:</h3>
-        <div class="login-field-error" id="login-fail-message">{% if errors["badlogin"] %}Username and password doesn't match{% endif %}</div>
+        <div class="field-error" id="login-fail-message">{% if errors["badlogin"] %}Username and password doesn't match{% endif %}</div>
 
-        <div class="login-field-set">
-            <label class="login-label" for="identifier">Email or username</label><br>
-            <input tabindex=1 id="identifier" name="identifier" class="simple-input ui-corner-all login-input" value="{{ identifier|escape }}">
-            <div class="login-field-error" id="identifier-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
+        <div class="field-container">
+            <label class="field-label" for="identifier">Email or username</label><br>
+            <input tabindex=1 id="identifier" name="identifier" class="simple-input ui-corner-all" value="{{ identifier|escape }}">
+            <div class="field-error" id="identifier-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
         </div>
 
-        <div class="login-field-set">
-            <label class="login-label" for="password">Password</label>
+        <div class="field-container">
+            <label class="field-label" for="password">Password</label>
             <!-- TODO(benkomalo): wire up forgot password logic. -->
             <a id="forgot-hint" href="javascript:void(0);">Forgot password?</a><br>
 
-            <input tabindex=2 id="password" name="password" type="password" class="simple-input ui-corner-all login-input">
+            <input tabindex=2 id="password" name="password" type="password" class="simple-input ui-corner-all">
 
             <!-- TODO(benkomalo): handle "enter" key -->
             <!-- HACK: put login button in same fieldset/same row as password button for easy lining up -->
-            <input tabindex=3 id="submit-button" class="login-button simple-button action-gradient green" value="Login" type="button">
+            <input tabindex=3 id="submit-button" class="simple-button action-gradient green" value="Login" type="button" style="margin-left:1em;">
 
-            <div class="login-field-error" id="password-error">{% if errors["nopassword"] %}Password required{% endif %}</div>
+            <div class="field-error" id="password-error">{% if errors["nopassword"] %}Password required{% endif %}</div>
         </div>
 
     </div>
 
-    </form>
 
     <div class="signup-prompt-container">
         <span class="signup-prompt">Don't have an account, yet?</span>
         <!-- TODO(benkomalo): actually wire up signup process. -->
         <a class="signup-link" href="javascript:void(0);">Sign up</a>
     </div>
-</div></article>
+
+    </form>
+</article>
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
     {{ js_css_packages.js_package("login") }}
     <script>
-    $(Login.init);
+    $(Login.initLoginPage);
     </script>
 {% endblock bottompagescript %}
 

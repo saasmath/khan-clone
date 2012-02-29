@@ -20,7 +20,7 @@ Login.LoginType = {
 /**
  * Entry point - usually called on DOMready.
  */
-Login.init = function() {
+Login.initLoginPage = function() {
     $("#login-google").click(function(e) {
         Login.connectWithGoogle();
     });
@@ -76,5 +76,20 @@ Login.loginWithPassword = function() {
         $("#type-input").val(Login.LoginType.PASSWORD);
         $("#login-form").submit();
     }
+};
+
+/**
+ * Entry point for registration page setup.
+ */
+Login.initRegistrationPage = function() {
+    $("#birthday-picker").birthdaypicker({
+        placeholder: false,
+        classes: "simple-input ui-corner-all login-input",
+
+        // Jan 1, 13 years ago
+        defaultDate: new Date(new Date().getFullYear() - 13, 0, 1)
+    });
+
+    $("#nickname").focus();
 };
 

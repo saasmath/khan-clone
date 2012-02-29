@@ -736,6 +736,7 @@ application = webapp2.WSGIApplication([
     ('/login/mobileoauth', login.MobileOAuthLogin),
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
+    ('/register', login.Register),
 
     ('/api-apps/register', oauth_apps.Register),
 

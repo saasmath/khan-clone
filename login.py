@@ -36,7 +36,7 @@ class Login(request_handler.RequestHandler):
 
     def render_login(self, identifier=None, errors=None):
         """ Renders the login page.
-        
+
         errors - a dictionary of possible errors from a previous login that
                  can be highlighted in the UI of the login page
         """
@@ -195,4 +195,18 @@ class Logout(request_handler.RequestHandler):
             self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
 
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
+
+
+class Register(request_handler.RequestHandler):
+    # TODO(benkomalo): actually handle the POST of the registration page
+    def get(self):
+        """ Renders the register for new user page.  """
+        cont = self.request_string('continue', default="/")
+
+        template_values = {
+            'continue': cont,
+            'errors': {},
+        }
+        self.render_jinja2_template('register.html', template_values)
+
 
