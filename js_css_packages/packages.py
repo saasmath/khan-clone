@@ -90,6 +90,7 @@ javascript = {
     },
     "login": {
         "files": [
+            "bday-picker.js",
             "login.js",
         ]
     },
