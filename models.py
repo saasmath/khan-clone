@@ -3732,7 +3732,8 @@ class VideoLog(BackupModel):
 
             bingo([
                 'struggling_videos_finished',
-                'suggested_activity_videos_finished'
+                'suggested_activity_videos_finished',
+                'interactive_transcript_videos_finished',
             ])
         video_log.is_video_completed = user_video.completed
 

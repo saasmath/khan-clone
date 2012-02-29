@@ -59,10 +59,11 @@ var Video = {
         }
 
         var transcript = $(".subtitles-container");
-        if (transcript.length) {
+        var transcriptLink = $(".transcript-link");
+        if (transcript.length && transcriptLink.length) {
             InteractiveTranscript.init(transcript);
-            $(".transcript-link").click($.proxy(this._ontranscriptclick,
-                this, transcript));
+            transcriptLink.click($.proxy(this._ontranscriptclick, this,
+                transcript));
         }
 
         $(".sharepop").hide();
@@ -82,6 +83,9 @@ var Video = {
             button.addClass("toggled");
             transcript.slideDown("fast", function() {
                 InteractiveTranscript.start();
+                if (window.gae_bingo) {
+                    gae_bingo.bingo("interactive_transcript_shown");
+                }
             });
         }
     },
@@ -224,6 +228,10 @@ var InteractiveTranscript = {
         if (!isNaN(time)) {
             VideoStats.player.seekTo(time, true);
             VideoStats.player.playVideo();
+        }
+
+        if (window.gae_bingo) {
+            gae_bingo.bingo("interactive_transcript_subtitle_click");
         }
     },
 

@@ -55,6 +55,7 @@ import unisubs
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
 from discussion import comments, notification, qa, voting, moderation
+from experiments import InteractiveTranscriptExperiment
 from about import blog, util_about
 from phantom_users import util_notify
 from badges import util_badges, custom_badges
@@ -220,7 +221,8 @@ class ViewVideo(request_handler.RequestHandler):
                 }
             button_top_exercise = ex_to_dict(related_exercises[0])
 
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
+        user_data = UserData.current()
+        user_video = UserVideo.get_for_video_and_user_data(video, user_data, insert_if_missing=True)
 
         awarded_points = 0
         if user_video:
@@ -232,6 +234,10 @@ class ViewVideo(request_handler.RequestHandler):
         if subtitles:
             subtitles_json = subtitles.load_json()
 
+        transcript_alternative = InteractiveTranscriptExperiment.get_alternative_for_user(
+                user_data, True) or InteractiveTranscriptExperiment.NO_SHOW
+        show_interactive_transcript = (transcript_alternative == InteractiveTranscriptExperiment.SHOW)
+
         template_values = {
                             'topic': topic,
                             'video': video,
@@ -239,6 +245,7 @@ class ViewVideo(request_handler.RequestHandler):
                             'video_path': video_path,
                             'video_points_base': consts.VIDEO_POINTS_BASE,
                             'subtitles_json': subtitles_json,
+                            'show_interactive_transcript': show_interactive_transcript,
                             'button_top_exercise': button_top_exercise,
                             'related_exercises': [], # disabled for now
                             'previous_topic': previous_topic,
@@ -258,6 +265,7 @@ class ViewVideo(request_handler.RequestHandler):
             'struggling_videos_landing',
             'suggested_activity_videos_landing',
             'suggested_activity_videos_landing_binary',
+            'interactive_transcript_videos_landing',
         ])
         self.render_jinja2_template('viewvideo.html', template_values)
 
