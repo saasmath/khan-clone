@@ -5,6 +5,7 @@ from itertools import izip
 
 from flask import request, current_app, Response
 
+import custom_exceptions
 import models
 import layer_cache
 import templatetags # Must be imported to register template tags
@@ -1060,9 +1061,9 @@ def update_coaches_and_requesters():
     # TODO(marcia): what is the deal with coach_email.lower() in coaches.py
     user_data = models.UserData.current()
 
-    profiles = coaches.update_coaches_and_requests(user_data, request.json)
-
-    if profiles is None:
+    try:
+        profiles = coaches.update_coaches_and_requests(user_data, request.json)
+    except custom_exceptions.InvalidEmailException:
         return api_invalid_param_response("Received an invalid email.")
 
     return profiles

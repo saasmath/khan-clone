@@ -203,11 +203,9 @@ Coaches.CoachCollection = Backbone.Collection.extend({
     },
 
     isNewCoachEmail: function(email) {
-        var found = this.find(function(model) {
+        return !this.any(function(model) {
             return model.get("email") === email;
         });
-
-        return (found === undefined);
     },
 
     /**
@@ -225,7 +223,7 @@ Coaches.CoachCollection = Backbone.Collection.extend({
     removeUnsavedCoaches: function() {
         var modelsToRemove = this.filter(function(model) {
             return model.isNew();
-        }, this);
+        });
 
         this.remove(modelsToRemove);
     }

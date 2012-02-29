@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import models
+import custom_exceptions
 import coaches
 import phantom_users.phantom_util
 import testutil
@@ -10,7 +11,9 @@ from google.appengine.ext import db
 from mock import patch
 from agar.test.base_test import BaseTest
 
+
 class UserDataCoachTest(BaseTest):
+
     def make_user(self, email):
         u = models.UserData.insert_for(email, email)
         u.put()
@@ -19,7 +22,7 @@ class UserDataCoachTest(BaseTest):
     def make_user_json(self, user, is_coaching):
         return {
             'email': user.key_email,
-            'isCoachingLoggedInUser': is_coaching
+            'isCoachingLoggedInUser': is_coaching,
         }
 
     def test_add_a_coach(self):
@@ -38,7 +41,8 @@ class UserDataCoachTest(BaseTest):
         jacob = self.make_user('jacob@gmail.com')
         edward = self.make_user('edward@gmail.com')
 
-        coaches_json = [self.make_user_json(coach, True) for coach in [jacob, edward]]
+        coaches_json = [self.make_user_json(coach, True) for coach in
+                [jacob, edward]]
         coaches.update_coaches(bella, coaches_json)
 
         self.assertEqual(2, len(bella.coaches))
@@ -79,15 +83,17 @@ class UserDataCoachTest(BaseTest):
 
         self.assertEqual([jacob.key_email], requester_emails)
 
-    def test_return_none_on_add_nonexistent_coach(self):
+    def test_raises_exception_on_add_nonexistent_coach(self):
         # TODO(marcia): Temp test, not sure on right error behavior yet
         bella = self.make_user('bella@gmail.com')
         coaches_json = [{
             'email': 'legolas@gmail.com',
             'isCoachingLoggedInUser': True,
         }]
-        result = coaches.update_coaches(bella, coaches_json)
-        self.assertEqual(None, result)
+        self.assertRaises(custom_exceptions.InvalidEmailException,
+            coaches.update_coaches,
+            bella,
+            coaches_json)
 
     def test_noop_on_update_requests_with_email(self):
         bella = self.make_user('bella@gmail.com')

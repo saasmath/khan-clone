@@ -1,5 +1,6 @@
 from app import App
 import app
+import custom_exceptions
 import facebook_util
 import util
 import user_util
@@ -27,9 +28,6 @@ def update_coaches_and_requests(user_data, coaches_json):
     coaches_json will be deleted.
     """
     requester_emails = update_coaches(user_data, coaches_json)
-    if requester_emails is None:
-        return None
-
     update_requests(user_data, requester_emails)
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
@@ -55,8 +53,7 @@ def update_coaches(user_data, coaches_json):
                 if coach_user_data is not None:
                     updated_coach_emails.append(email)
                 else:
-                    return None
-
+                    raise custom_exceptions.InvalidEmailException()
         else:
             requester_emails.append(email)
 
