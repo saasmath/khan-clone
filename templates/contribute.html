@@ -149,7 +149,7 @@
                             enabled: true,
                             formatter: function() {
                                 var s
-                                if (this.series.name == 'Most subtitles added in the last week') {
+                                if (this.series.name == 'Subtitles added in the last week') {
                                     return false
                                 }
                                 s = '<b>' + this.x + '</b>'
@@ -165,7 +165,7 @@
                         },
                         series: [{
                             data: subtitled_last_week,
-                            name: 'Most subtitles added in the last week',
+                            name: 'Subtitles added in the last week',
                             color: '#3E7F57'
                         }, {
                             data: subtitled,

@@ -250,6 +250,59 @@ class Exercise(db.Model):
             exercise_video.video # Pre-cache video entity
         return exercise_videos
 
+    @staticmethod
+    def add_related_videos_prop(exercise_dict, evs=None, video_dict=None):
+        if video_dict is None:
+            video_dict = {}
+
+        # if no pregotten evs were passed in asynchrnously get them for all 
+        # exercises in exercise_dict
+        if evs is None:
+            queries =[]
+            for exercise in exercise_dict.values():
+                queries.append(exercise.related_videos_query()) 
+            
+            tasks= util.async_queries(queries, limit=10000) 
+            evs = [ev for task in tasks for ev in task.get_result()]
+
+        # if too many evs were passed in filter out exercise_videos which are 
+        # not looking at one of the exercises in exercise_dict
+        evs = [ev for ev in evs 
+               if ExerciseVideo.exercise.get_value_for_datastore(ev) 
+               in exercise_dict.keys()]
+
+        # add any videos to video_dict that we need and are not already in
+        # the video_dict passed in
+        extra_video_keys = [ExerciseVideo.video.get_value_for_datastore(ev)
+            for ev in evs if ExerciseVideo.video.get_value_for_datastore(ev)
+            not in video_dict.keys()]
+        extra_videos = db.get(extra_video_keys)
+        extra_video_dict = dict((v.key(), v) for v in extra_videos)
+        video_dict.update(extra_video_dict)
+
+        # buid a ev_dict in the form 
+        # ev_dict[exercise_key][video_key] = (video_readable_id, ev.exercise_order)
+        ev_dict = {} 
+        for ev in evs:
+            exercise_key = ExerciseVideo.exercise.get_value_for_datastore(ev)
+            video_key = ExerciseVideo.video.get_value_for_datastore(ev)
+            video_readable_id = video_dict[video_key].readable_id
+
+            if exercise_key not in ev_dict:
+                ev_dict[exercise_key] = {}
+            
+            ev_dict[exercise_key][video_key] = (video_readable_id, ev.exercise_order)
+
+        # update all exercises to include the related_videos in their right 
+        # orders
+        for exercise in exercise_dict.values():
+            related_videos = (ev_dict[exercise.key()] 
+                              if exercise.key() in ev_dict else {})
+            related_videos = sorted(related_videos.items(),
+                                    key=lambda i:i[1][1])
+            exercise.related_video_keys = map(lambda i: i[0], related_videos)
+            exercise.related_videos  = map(lambda i: i[1][0], related_videos)
+
     # followup_exercises reverse walks the prerequisites to give you
     # the exercises that list the current exercise as its prerequisite.
     # i.e. follow this exercise up with these other exercises
@@ -1885,12 +1938,35 @@ class VersionContentChange(db.Model):
                          if changeable_props is None or k in changeable_props)
         content = klass(**new_props)
         content.put()
+
+        if (type(content) == Exercise and "related_videos" in new_props):
+            # exercises imports from request_handler which imports from models,
+            # meaning putting this import at the top creates a import loop
+            from exercises import UpdateExercise
+
+            if "related_video_keys" in new_props:
+                related_video_keys = new_props["related_video_keys"]
+                logging.info("related video keys already added")
+            else:
+                related_video_keys = []
+                for readable_id in new_props["related_videos"]:
+                    video = Video.get_for_readable_id(readable_id, version)
+                    logging.info("doing get for readable_id")
+                    related_video_keys.append(video.key())
+            
+            for i, video_key in enumerate(related_video_keys):
+                ExerciseVideo(
+                    exercise = content,
+                    video = video_key,
+                    exercise_order = i
+                    ).put()    
+
         if put_change:
             change = VersionContentChange(parent = version)
             change.version = version
             change.content_changes = new_props
-            Setting.cached_content_add_date(datetime.datetime.now())
             change.content = content
+            Setting.cached_content_add_date(datetime.datetime.now())
             change.put()
         return content
 
@@ -1908,14 +1984,11 @@ class VersionContentChange(db.Model):
             change = VersionContentChange(parent = version)
             change.version = version
             change.content = content
-            change.content_changes = {}
-
+        
+        change.content_changes = {}
+        
         if content and content.is_saved():
             
-            if previous_changes:
-                content = change.updated_content(content)
-                change.content_changes = {}
-
             for prop in changeable_props:
                 if (prop in new_props and
                     new_props[prop] is not None and (
@@ -1994,6 +2067,74 @@ class Topic(Searchable, db.Model):
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
+
+    # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_extended_slug_%s" % self.key(),
+        layer=layer_cache.Layers.Memcache)
+    def get_extended_slug(self):
+        parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
+        parent_ids.reverse()
+        if len(parent_ids) > 1:
+            return "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
+        return self.id
+
+    # Gets the data we need for the video player
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_play_data_%s" % self.key(),
+        layer=layer_cache.Layers.Memcache)
+    def get_play_data(self):
+
+        # Find last video in the previous topic
+        previous_video = None
+        previous_video_topic = None
+        previous_topic = self
+
+        while not previous_video:
+            previous_topic = previous_topic.get_previous_topic()
+            # Don't iterate past the end of the current top-level topic
+            if previous_topic and len(previous_topic.ancestor_keys) > 1:
+                (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+            else:
+                break
+
+        # Find first video in the next topic
+        next_video = None
+        next_video_topic = None
+        next_topic = self
+
+        while not next_video:
+            next_topic = next_topic.get_next_topic()
+            # Don't iterate past the end of the current top-level topic
+            if next_topic and len(next_topic.ancestor_keys) > 1:
+                (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+            else:
+                break
+
+        # List all the videos in this topic
+        videos_dict = [{
+            "readable_id": v.readable_id,
+            "key_id": v.key().id(),
+            "title": v.title
+        } for v in Topic.get_cached_videos_for_topic(self)]
+
+        parent_titles = [topic.title for topic in db.get(self.ancestor_keys)][0:-1]
+        parent_titles.reverse()
+
+        return {
+            'id': self.id,
+            'title': self.title,
+            'extended_slug': self.get_extended_slug(),
+            'parent_titles': parent_titles,
+            'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,
+            'videos': videos_dict,
+            'previous_topic_title': previous_topic.standalone_title if previous_topic else None,
+            'previous_topic_video': previous_video.readable_id if previous_video else None,
+            'previous_topic_subtopic_slug': previous_video_topic.get_extended_slug() if previous_video_topic else None,
+            'next_topic_title': next_topic.standalone_title if next_topic else None,
+            'next_topic_video': next_video.readable_id if next_video else None,
+            'next_topic_subtopic_slug': next_video_topic.get_extended_slug() if next_video_topic else None
+        }
 
     # get the topic by the url slug/readable_id
     @staticmethod
@@ -2454,15 +2595,30 @@ class Topic(Searchable, db.Model):
 
         # get all content that belongs in this tree
         contentItems = db.get(contentKeys)
-        # add the content to the node dict
-        for content in contentItems:
-            node_dict[content.key()]=content
+        content_dict = dict((content.key(), content) for content in contentItems)
+
+        if "Exercise" in types or len(types) == 0:
+            evs = ExerciseVideo.all().fetch(10000)
+            exercise_dict = dict((k,v) for k,v in content_dict.iteritems() if 
+                          (k.kind() == "Exercise"))
+            video_dict =  dict((k,v) for k,v in content_dict.iteritems() if 
+                          (k.kind() == "Video"))
+            
+            Exercise.add_related_videos_prop(exercise_dict, evs, video_dict)
+            
+        # make any content changes for this version
+        changes = VersionContentChange.get_updated_content_dict(self.version)
+        type_changes = dict((k,c) for k,c in changes.iteritems() if 
+                       (k.kind() in types or len(types) == 0))
+        content_dict.update(type_changes)
+        
+        node_dict.update(content_dict)
 
         # cycle through the nodes adding each to its parent's children list
         for key, descendant in node_dict.iteritems():
             if hasattr(descendant, "child_keys"):
                 descendant.children = [node_dict[c] for c in descendant.child_keys if node_dict.has_key(c)]
-
+        
         # return the entity that was passed in, now with its children, and its descendants children all added
         return node_dict[self.key()]
 
@@ -2920,7 +3076,7 @@ class Topic(Searchable, db.Model):
         else:
             return progress_tree
 
-def topictree_import_task(version_id, topic_id, tree_json_compressed):
+def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data 
     import zlib
     import pickle
@@ -2933,17 +3089,17 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
 
     topics = Topic.get_all_topics(version, True)
     logging.info("got all topics")
-
     topic_dict = dict((topic.id, topic) for topic in topics)
     topic_keys_dict = dict((topic.key(), topic) for topic in topics)
+    
     videos = Video.get_all()
     logging.info("got all videos")
-
-    video_dict = dict((video.youtube_id, video) for video in videos)
+    video_dict = dict((video.readable_id, video) for video in videos)
+    
     exercises = Exercise.get_all_use_cache()
     logging.info("got all exercises")
-
     exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
+
     urls = Url.all()
     url_dict = dict((url.id, url) for url in urls)
     logging.info("got all urls")
@@ -2962,10 +3118,10 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
         parent.delete_descendants() 
 
     # adds key to each entity in json tree, if the node is not in the tree then add it
-    def add_keys_json_tree(tree, parent, i=0, prefix="0"):
-        pos = prefix + "." + str(i)
+    def add_keys_json_tree(tree, parent, do_exercises, i=0, prefix=None):
+        pos = ((prefix + ".") if prefix else "") + str(i)
 
-        if tree["kind"] == "Topic":
+        if not do_exercises and tree["kind"] == "Topic":
             if tree["id"] in topic_dict:
                 topic = topic_dict[tree["id"]]
                 tree["key"] = topic.key()
@@ -2998,9 +3154,9 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
 
             all_entities_dict[tree["key"]] = topic
         
-        elif tree["kind"] == "Video":
-            if tree["youtube_id"] in video_dict:
-                video = video_dict[tree["youtube_id"]]
+        elif not do_exercises and tree["kind"] == "Video":
+            if tree["readable_id"] in video_dict:
+                video = video_dict[tree["readable_id"]]
                 tree["key"] = video.key()
             else:                    
                 changeable_props = ["youtube_id", "url", "title", "description",
@@ -3014,14 +3170,21 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
                 logging.info("%s: added video %s" % (pos, video.title))
                 new_content_keys.append(video.key())
                 tree["key"] = video.key()
-                video_dict[tree["youtube_id"]] = video
+                video_dict[tree["readable_id"]] = video
           
             all_entities_dict[tree["key"]] = video
 
-        elif tree["kind"] == "Exercise":
+        elif do_exercises and tree["kind"] == "Exercise":
             if tree["name"] in exercise_dict:
                 tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
             else:
+                if "related_videos" in tree:
+                    # adding keys to entity tree so we don't need to look it up 
+                    # again when creating the video in add_new_content
+                    tree["related_video_keys"] = []
+                    for readable_id in tree["related_videos"]:
+                        video = video_dict[readable_id]
+                        tree["related_video_keys"].append(video.key())
                 exercise = exercise_save_data(version, tree, None, put_change)
                 logging.info("%s: added Exercise %s" % (pos, exercise.name))
                 new_content_keys.append(exercise.key())
@@ -3030,7 +3193,7 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
             
             all_entities_dict[tree["key"]] = exercise_dict[tree["name"]]
             
-        elif tree["kind"] == "Url":
+        elif not do_exercises and tree["kind"] == "Url":
             if tree["id"] in url_dict:
                 url = url_dict[tree["id"]]
                 tree["key"] = url.key() 
@@ -3052,10 +3215,21 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
         # recurse through the tree's children
         if "children" in tree:
             for child in tree["children"]:
-                add_keys_json_tree(child, topic_dict[tree["id"]], i, pos)
+                add_keys_json_tree(child, topic_dict[tree["id"]], do_exercises, i, pos)
                 i += 1
    
-    add_keys_json_tree(tree_json, parent)
+    add_keys_json_tree(tree_json, parent, do_exercises=False)
+
+    # add related_videos prop to exercises
+    evs = ExerciseVideo.all().fetch(10000)
+    exercise_key_dict = dict((e.key(), e) for e in exercises)
+    video_key_dict = dict((v.key(), v) for v in video_dict.values())
+    Exercise.add_related_videos_prop(exercise_key_dict, evs, video_key_dict)
+
+    # exercises need to be done after, because if they reference ExerciseVideos
+    # those Videos have to already exist
+    add_keys_json_tree(tree_json, parent, do_exercises=True)
+    
     logging.info("added keys to nodes")
 
     def add_child_keys_json_tree(tree):
@@ -3140,8 +3314,13 @@ def topictree_import_task(version_id, topic_id, tree_json_compressed):
         i += 1
 
     logging.info("about to put %i topic nodes" % len(changed_nodes))
+    Setting.cached_content_add_date(datetime.datetime.now()) 
     db.put(changed_nodes)
     logging.info("done with import")
+
+    if publish:
+        version.set_default_version()
+
     return True
 
 
@@ -3376,6 +3555,102 @@ class Video(Searchable, db.Model):
     def approx_count():
         return int(Setting.count_videos()) / 100 * 100
 
+    # Gets the data we need for the video player
+    @staticmethod
+    def get_play_data(readable_id, topic, discussion_options):
+        video = None
+
+        # If we got here, we have a readable_id and a topic, so we can display
+        # the topic and the video in it that has the readable_id.  Note that we don't
+        # query the Video entities for one with the requested readable_id because in some
+        # cases there are multiple Video objects in the datastore with the same readable_id
+        # (e.g. there are 2 "Order of Operations" videos).
+        videos = Topic.get_cached_videos_for_topic(topic)
+        previous_video = None
+        next_video = None
+        for v in videos:
+            if v.readable_id == readable_id:
+                v.selected = 'selected'
+                video = v
+            elif video is None:
+                previous_video = v
+            else:
+                next_video = v
+                break
+
+        if video is None:
+            return None
+
+        previous_video_dict = {
+            "readable_id": previous_video.readable_id,
+            "key_id": previous_video.key().id(),
+            "title": previous_video.title
+        } if previous_video else None
+
+        next_video_dict = {
+            "readable_id": next_video.readable_id,
+            "key_id": next_video.key().id(),
+            "title": next_video.title
+        } if next_video else None
+
+        if App.offline_mode:
+            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
+        else:
+            video_path = video.download_video_url()
+
+        if video.description == video.title:
+            video.description = None
+
+        related_exercises = video.related_exercises()
+        button_top_exercise = None
+        if related_exercises:
+            def ex_to_dict(exercise):
+                return {
+                    'name': exercise.display_name,
+                    'url': exercise.relative_url,
+                }
+            button_top_exercise = ex_to_dict(related_exercises[0])
+
+        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
+
+        awarded_points = 0
+        if user_video:
+            awarded_points = user_video.points
+
+        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_json = None
+        if subtitles:
+            subtitles_json = subtitles.load_json()
+
+        # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
+        import shared_jinja
+        player_html = shared_jinja.get().render_template('videoplayer.html',
+            user_data=UserData.current(), video_path=video_path, video=video,
+            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
+
+        discussion_html = shared_jinja.get().render_template('videodiscussion.html',
+            user_data=UserData.current(), video=video, topic=topic, **discussion_options)
+
+        return {
+            'title': video.title,
+            'description': video.description,
+            'youtube_id': video.youtube_id,
+            'readable_id': video.readable_id,
+            'key': video.key(),
+            'video_path': video_path,
+            'subtitles_json': subtitles_json,
+            'button_top_exercise': button_top_exercise,
+            'related_exercises': [], # disabled for now
+            'previous_video': previous_video_dict,
+            'next_video': next_video_dict,
+            'selected_nav_link': 'watch',
+            'issue_labels': ('Component-Videos,Video-%s' % readable_id),
+            'author_profile': 'https://plus.google.com/103970106103092409324',
+            'player_html': player_html,
+            'discussion_html': discussion_html
+        }
+
 class Playlist(Searchable, db.Model):
 
     youtube_id = db.StringProperty()
@@ -3597,6 +3872,9 @@ class UserVideo(db.Model):
     def progress(self):
         if self.completed:
             return 1.0
+        elif self.duration <= 0:
+            logging.error("UserVideo.duration has invalid value %r, key: %s" % (self.duration, str(self.key())))
+            return 0.0
         else:
             return min(1.0, float(self.seconds_watched) / self.duration)
 

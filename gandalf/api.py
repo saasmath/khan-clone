@@ -1,13 +1,11 @@
 from google.appengine.ext.webapp import RequestHandler
-from google.appengine.ext import db
-from google.appengine.api.datastore_errors import BadValueError
 
 from gandalf.jsonify import jsonify
 from gandalf.config import can_control_gandalf
 from gandalf.models import GandalfBridge, GandalfFilter
 from gandalf.filters import BridgeFilter
 
-class Bridges(RequestHandler): 
+class Bridges(RequestHandler):
     def get(self):
 
         if not can_control_gandalf():
@@ -52,7 +50,7 @@ class Filters(RequestHandler):
 
         filters = whitelist_filters + blacklist_filters
 
-        context = { 
+        context = {
             'filters': filters,
             'filter_types': BridgeFilter.get_filter_types(),
             'bridge': bridge,
@@ -79,7 +77,7 @@ class UpdateBridge(RequestHandler):
         if action == 'delete':
             bridge.delete()
 
-        context = { 
+        context = {
             "success": True,
         }
 
@@ -120,7 +118,7 @@ class UpdateFilter(RequestHandler):
         else:
 
             filter_key = self.request.get('filter_key')
-            
+
             if not filter_key:
                 raise Exception("Must include 'filter_key' parameter")
 
@@ -148,7 +146,7 @@ class UpdateFilter(RequestHandler):
 
                 filter.put()
 
-        context = { 
+        context = {
             "success": True,
         }
 
