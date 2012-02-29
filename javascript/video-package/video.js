@@ -79,7 +79,7 @@ var Video = {
         $("span.video-nav").html(navTemplate({topic: topicData.topic, video: videoData}));
         $(".video-title").html(videoData.title);
         $("div.video-description").html(descTemplate({topic: topicData.topic, video: videoData}));
-        $("span.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
+        $("div.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
         $("span.video-footer").html(footerTemplate({topic: topicData.topic, video: videoData}));
 
         document.title = videoData.title + " | " + topicData.topic.title + " | Khan Academy";
@@ -282,7 +282,7 @@ var Video = {
         if (waitingForVideo) {
             $("span.video-nav").html("");
             $("div.video-description").html(descTemplate({video: { title: "Loading..." }, loading: true }));
-            $("span.video-header").html("");
+            $("div.video-header").html("");
             $("span.video-footer").html("");
         }
     },
