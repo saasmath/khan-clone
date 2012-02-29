@@ -123,7 +123,7 @@ UsernamePickerView = Backbone.View.extend({
             if (!this.$("#save-profile-info").prop("disabled")) {
                 this.$("#save-profile-info").click();
             }
-            this.onTimeout_();
+            this.model.validateUsername(this.getFormValue_(".username"));
         }
     },
 
@@ -140,9 +140,9 @@ UsernamePickerView = Backbone.View.extend({
         this.debouncedValidateUsername_();
     },
 
-    debouncedValidateUsername_: $.debounce(1000, function() {
+    debouncedValidateUsername_: _.debounce(function() {
         this.model.validateUsername(this.getFormValue_(".username"));
-    }),
+    }, 1000),
 
     syncSaveButtonState_: function() {
         this.$("#save-profile-info").prop(
