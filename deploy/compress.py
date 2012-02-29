@@ -7,6 +7,12 @@ import re
 import StringIO
 import base64
 import copy
+import sys
+
+pwd = os.path.abspath(".")
+if pwd not in sys.path:
+    sys.path.append(pwd)
+
 from js_css_packages import packages
 import npm
 
@@ -348,3 +354,18 @@ def check_deps():
     else:
         print "uglify and cssmin not found :("
         return False
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit("Must supply js or css as first argument")
+
+    kind = sys.argv[1]
+    if kind == "js":
+        compress_all_javascript()
+    elif kind == "css":
+        compress_all_stylesheets()
+    else:
+        sys.exit("Invalid kind %s, must supply js or css" % kind)
+
+if __name__ == "__main__":
+    main()
