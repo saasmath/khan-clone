@@ -57,12 +57,24 @@ def js_package(package_name):
         package = packages.javascript[package_name]
         base_url = package.get("base_url") or "/javascript/%s-package" % package_name
         list_js = []
-        for file_name in package["files"]:
+
+        filenames = []
+        if "files" in package:
+            # read from whitelist in packages.py
+            filenames = package["files"]
+        elif package.get("allfiles", False):
+            # just add all files in the directory
+            filenames = os.listdir("clienttemplates/%s-package/" % package_name)
+        else:
+            raise "No files found in package %s" % package_name
+
+        for file_name in filenames:
             if file_name.split('.')[-1] == 'handlebars':
                 # In debug mode, templates are served as inline <script> tags.
                 list_js.append(get_inline_template(package_name, file_name))
             else:
                 list_js.append("<script type='text/javascript' src='%s/%s'></script>" % (base_url, file_name))
+
         list_js.append(loaded_script)
         return "\n".join(list_js)
     else:

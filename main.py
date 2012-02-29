@@ -51,6 +51,8 @@ import stories
 import summer
 import common_core
 import unisubs
+import labs
+import socrates
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -154,6 +156,11 @@ class ViewVideo(request_handler.RequestHandler):
             self.redirect(url, True)
             return
 
+        template_values = ViewVideo.get_template_data(self, readable_id, video, topic)
+        return self.finish_get(template_values)
+
+    @classmethod
+    def get_template_data(cls, self, readable_id, video, topic):
         # If we got here, we have a readable_id and a topic, so we can display
         # the topic and the video in it that has the readable_id.  Note that we don't
         # query the Video entities for one with the requested readable_id because in some
@@ -253,7 +260,9 @@ class ViewVideo(request_handler.RequestHandler):
                             'author_profile': 'https://plus.google.com/103970106103092409324'
                         }
         template_values = qa.add_template_values(template_values, self.request)
+        return template_values
 
+    def finish_get(self, template_values):
         bingo([
             'struggling_videos_landing',
             'suggested_activity_videos_landing',
@@ -666,7 +675,7 @@ class Search(request_handler.RequestHandler):
                            'video_count': video_count,
                            'topic_count': topic_count,
                            })
-        
+
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
@@ -925,6 +934,10 @@ application = webapp2.WSGIApplication([
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
+
+    # Labs
+    ('/labs', labs.LabsRequestHandler),
+    ('/labs/socrates/(.*)', socrates.SocratesHandler),
 
     ('/robots.txt', robots.RobotsTxt),
 

@@ -1,5 +1,6 @@
 function onYouTubePlayerStateChange(state) {
     VideoStats.playerStateChange(state);
+    $(VideoControls).trigger("playerStateChange", state);
 }
 
 var VideoControls = {
@@ -178,10 +179,8 @@ var VideoStats = {
         if (this.player) this.listenToPlayerStateChange();
         // If the player isn't ready yet or if it is replaced in the future,
         // listen to the state changes once it is ready/replaced.
-        var me = this;
-        $(this).bind("playerready.videostats", function() {
-            me.listenToPlayerStateChange();
-        });
+        $(this).on("playerready.videostats",
+            _.bind(this.listenToPlayerStateChange, this));
 
         if (this.intervalId === null) {
             // Every 10 seconds check to see if we've crossed over our percent
