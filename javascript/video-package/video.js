@@ -9,18 +9,27 @@ var Video = {
     youtubeBlocked: false,
     pushStateDisabled: false,
 
-    init: function() {
+    init: function(params) {
         var self = this;
 
-        if (window.history && window.history.pushState) {
-            this.router = new VideoRouter();
-            Backbone.history.start({pushState: true, root: "/" + videoTopLevelTopic});
-        } else {
-            this.pushStateDisabled = true;
-            Video.navigateToVideo(window.location.pathname);
-        }
+        this.videoLibrary = params.videoLibrary || {};
+        this.loginURL = params.loginURL;
 
-        this.rootLength = 1 + videoTopLevelTopic.length;
+        if (params.videoTopLevelTopic) {
+            this.videoTopLevelTopic = params.videoTopLevelTopic;
+            this.rootLength = 1 + params.videoTopLevelTopic.length;
+
+            if (window.history && window.history.pushState && params.videoTopLevelTopic) {
+                this.router = new VideoRouter();
+                Backbone.history.start({pushState: true, root: "/" + params.videoTopLevelTopic});
+            } else {
+                this.pushStateDisabled = true;
+                Video.navigateToVideo(window.location.pathname);
+            }
+        } else {
+            // Used for modal video player
+            this.initEventHandlers();
+        }
 
         VideoControls.onYouTubeBlocked(function() {
 
@@ -115,23 +124,6 @@ var Video = {
             });
         }
 
-        $(".and-more").click(function() {
-            $(this).hide();
-            $(".more-content").show();
-            return false;
-        });
-
-        $(".subtitles-link").click(function() { Video.toggleSubtitles(); return false; });
-        if (readCookie(this.SHOW_SUBTITLES_COOKIE)) {
-            this.showSubtitles();
-        }
-
-        $(".sharepop").hide();
-        $(".share-link").click(function() {
-            $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
-            return false;
-        });
-
         // If the user starts writing feedback, disable autoplay.
         $("span.video-footer").on("focus keydown", "input,textarea", function(event) {
             VideoControls.setAutoPlayEnabled(false);
@@ -152,16 +144,7 @@ var Video = {
         Comments.init();
         QA.init();
 
-        // We take the message in the title of the energy points box and place it
-        // in a tooltip, and if it's the message with a link to the login we
-        // replace it with a nicer link (we don't want to have to pass the url to
-        // the templatetag).
-        var $points = $(".video-energy-points");
-        $points.data("title", $points.attr("title").replace(/Sign in/,
-                   "<a href=\"" + loginURL + "\">Sign in</a>"))
-               .removeAttr("title");
-
-        VideoStats.tooltip("#points-badge-hover", $points.data("title"));
+        this.initEventHandlers();
 
         // Set up next/previous links
         if (!this.pushStateDisabled) {
@@ -202,31 +185,63 @@ var Video = {
         this.waitingForVideo = null;
     },
 
+    initEventHandlers: function() {
+
+        $(".and-more").click(function() {
+            $(this).hide();
+            $(".more-content").show();
+            return false;
+        });
+
+        $(".subtitles-link").click(function() { Video.toggleSubtitles(); return false; });
+        if (readCookie(this.SHOW_SUBTITLES_COOKIE)) {
+            this.showSubtitles();
+        }
+
+        $(".sharepop").hide();
+        $(".share-link").click(function() {
+            $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
+            return false;
+        });
+
+        // We take the message in the title of the energy points box and place it
+        // in a tooltip, and if it's the message with a link to the login we
+        // replace it with a nicer link (we don't want to have to pass the url to
+        // the templatetag).
+        var $points = $(".video-energy-points");
+        $points.data("title", $points.attr("title").replace(/Sign in/,
+                   "<a href=\"" + this.loginURL + "\">Sign in</a>"))
+               .removeAttr("title");
+
+        VideoStats.tooltip("#points-badge-hover", $points.data("title"));
+    },
+
     navigateToVideo: function(path) {
         if (path.charAt(0) == "/") {
             path = path.substr(1);
         }
-        pathList = [videoTopLevelTopic].concat(path.split("/"));
+        pathList = [this.videoTopLevelTopic].concat(path.split("/"));
         if (pathList.length >= 3) {
             var video = pathList[pathList.length-1];
             var topic = pathList[pathList.length-3];
 
-            this.waitingForVideo = { topic: topic, video: video, url: "/" + videoTopLevelTopic + "/" + path };
+            this.waitingForVideo = { topic: topic, video: video, url: "/" + this.videoTopLevelTopic + "/" + path };
             this.loadVideo(topic, video);
         }
     },
 
     loadVideo: function(topic, video) {
+        var self = this;
         var descTemplate = Templates.get("video.video-description");
         var waitingForVideo = (Video.waitingForVideo && 
             Video.waitingForVideo.topic == topic &&
             Video.waitingForVideo.video == video);
 
-        if (videoLibrary[topic] && videoLibrary[topic].videos[video]) {
+        if (this.videoLibrary[topic] && this.videoLibrary[topic].videos[video]) {
             if (waitingForVideo) {
-                if (videoLibrary[topic].videos[video] !== "LOADING") {
+                if (this.videoLibrary[topic].videos[video] !== "LOADING") {
                     KAConsole.log("Switching to video: " + video + " in topic " + topic);
-                    Video.renderPage(videoLibrary[topic], videoLibrary[topic].videos[video]);
+                    Video.renderPage(this.videoLibrary[topic], this.videoLibrary[topic].videos[video]);
                     return; // No longer waiting
                 }
             } else {
@@ -234,10 +249,10 @@ var Video = {
             }
         } else {
             KAConsole.log("Loading video: " + video + " in topic " + topic);
-            url = "/api/v1/videos/" + topic + "/" + video + "/play" + (videoLibrary[topic] ? "" : "?topic=1");
+            url = "/api/v1/videos/" + topic + "/" + video + "/play" + (this.videoLibrary[topic] ? "" : "?topic=1");
 
-            videoLibrary[topic] = videoLibrary[topic] || { videos: [] };
-            videoLibrary[topic].videos[video] = "LOADING";
+            this.videoLibrary[topic] = this.videoLibrary[topic] || { videos: [] };
+            this.videoLibrary[topic].videos[video] = "LOADING";
 
             $.ajax({
                 url: url,
@@ -246,11 +261,11 @@ var Video = {
                         Video.waitingForVideo.topic == topic &&
                         Video.waitingForVideo.video == video);
                     if (json.topic)
-                        videoLibrary[topic].topic = json.topic;
-                    videoLibrary[topic].videos[video] = json.video;
+                        self.videoLibrary[topic].topic = json.topic;
+                    self.videoLibrary[topic].videos[video] = json.video;
                     if (waitingForVideo) {
                         KAConsole.log("Switching to video: " + video + " in topic " + topic);
-                        Video.renderPage(videoLibrary[topic], json.video);
+                        Video.renderPage(self.videoLibrary[topic], json.video);
                     }
                 },
                 error: function() {
