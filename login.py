@@ -5,16 +5,13 @@ from models import UserData
 from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
+import auth.cookies
 import auth.tokens
 import logging
 import models
 import os
 import request_handler
 import util
-
-# The cookie name for the unsecure (http) authentication cookie for password-
-# based logins.
-AUTH_COOKIE_NAME = 'KAID'
 
 class LoginType():
     """ Enum representing which types of logins a user can use
@@ -73,6 +70,8 @@ class Login(request_handler.RequestHandler):
         if login_type == LoginType.GOOGLE:
             # Redirect to Google's login page
             self.redirect(users.create_login_url(cont))
+            return
+
         elif login_type == LoginType.PASSWORD:
             # Authenticate via username or email + password
             identifier = self.request_string('identifier')
@@ -92,19 +91,7 @@ class Login(request_handler.RequestHandler):
                 self.render_login(identifier, errors)
                 return
 
-            auth_token = auth.tokens.mint_token_for_user(u)
-            max_age = auth.tokens.DEFAULT_TOKEN_EXPIRY_SECONDS
-
-            # Success! log them in
-            self.set_cookie(AUTH_COOKIE_NAME,
-                            value=auth_token,
-                            max_age=max_age,
-                            path='/',
-                            domain=None,
-                            secure=False,
-                            # TODO(benkomalo): make this httponly!
-                            # STOPSHIP - this is just easier for testing for now
-                            httponly=False)
+            auth.cookies.set_auth_cookie(self, u)
             self.redirect(cont)
             return
 
@@ -187,7 +174,7 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
-        self.delete_cookie(AUTH_COOKIE_NAME)
+        self.delete_cookie(auth.cookies.AUTH_COOKIE_NAME)
 
         # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
         if App.facebook_app_id:

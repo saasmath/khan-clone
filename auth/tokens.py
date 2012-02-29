@@ -63,12 +63,12 @@ def _parse_token(token):
         logging.info("Tried to decode auth token that isn't base64 encoded")
         return None
 
-    try:
-        return contents.split("\n")
-    except Exception:
+    parts = contents.split("\n")
+    if len(parts) != 3:
         # Wrong number of parts / malformed.
         logging.info("Tried to decode malformed auth token")
         return None
+    return parts
 
 def validate_token(user_data,
                    token,
