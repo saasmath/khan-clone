@@ -396,7 +396,7 @@ Socrates.QuestionView = Backbone.View.extend({
             }
 
             var isArray = false;
-            if (data[key]) {
+            if (data[key] != null) {
                 if (!_.isArray(data[key])) {
                     data[key] = [data[key]];
                 }
