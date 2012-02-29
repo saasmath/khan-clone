@@ -16,7 +16,7 @@
     height: 480px;
 }
 
-.ontop {
+.video-overlay .popout {
     display: block;
     margin: 30px -30px auto -30px;
     padding: 19px;
