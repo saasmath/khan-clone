@@ -91,8 +91,13 @@ def resolve_files(default_path, packages, suffix):
                     files.append(f + suffix)
         elif package.get("allfiles", False):
             # Add all files that have the correct suffix
-            files = [f for f in os.listdir(package_path)
-                if f.split('.')[-1] == suffix[1:]]
+            files = []
+            for f in os.listdir(package_path):
+                fname, ftype = os.path.basename(f).rsplit('.', 1)
+                invalid_names = ["combined", "compressed", "hashed-.*"]
+                invalid_file = any([re.match(p, fname) for p in invalid_names])
+                if (ftype == suffix[1:] and not invalid_file):
+                    files.append(f)
         else:
             raise "No files found in package %s" % package_name
 
