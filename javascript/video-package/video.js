@@ -211,7 +211,7 @@ var Video = {
             var video = pathList[pathList.length-1];
             var topic = pathList[pathList.length-3];
 
-            this.waitingForVideo = { topic: topic, video: video };
+            this.waitingForVideo = { topic: topic, video: video, url: "/" + videoTopLevelTopic + "/" + path };
             this.loadVideo(topic, video);
         }
     },
@@ -251,6 +251,14 @@ var Video = {
                     if (waitingForVideo) {
                         KAConsole.log("Switching to video: " + video + " in topic " + topic);
                         Video.renderPage(videoLibrary[topic], json.video);
+                    }
+                },
+                error: function() {
+                    var waitingForVideo = (Video.waitingForVideo && 
+                        Video.waitingForVideo.topic == topic &&
+                        Video.waitingForVideo.video == video);
+                    if (waitingForVideo) {
+                        window.location.assign(Video.waitingForVideo.url);
                     }
                 }
             });
