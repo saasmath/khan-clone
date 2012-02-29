@@ -1,4 +1,3 @@
-import logging
 from app import App
 import app
 import facebook_util
@@ -28,7 +27,11 @@ def update_coaches_and_requests(user_data, coaches_json):
     coaches_json will be deleted.
     """
     requester_emails = update_coaches(user_data, coaches_json)
+    if requester_emails is None:
+        return None
+
     update_requests(user_data, requester_emails)
+    return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
 def update_coaches(user_data, coaches_json):
     """ Add as coaches those in coaches_json with isCoachingLoggedInUser
@@ -39,6 +42,7 @@ def update_coaches(user_data, coaches_json):
     updated_coach_emails = []
     outstanding_coach_emails = user_data.coaches
     requester_emails = []
+
     for coach_json in coaches_json:
         email = coach_json['email']
         is_coaching_logged_in_user = coach_json['isCoachingLoggedInUser']
@@ -51,8 +55,8 @@ def update_coaches(user_data, coaches_json):
                 if coach_user_data is not None:
                     updated_coach_emails.append(email)
                 else:
-                    # TODO(marcia): what to do what to do
-                    logging.critical("invalid email!")
+                    return None
+
         else:
             requester_emails.append(email)
 

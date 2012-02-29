@@ -1050,7 +1050,7 @@ def get_coaches_and_requesters():
     user_data = request.request_visible_student_user_data()
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
-@route("/api/v1/user/coaches", methods=["POST", "PUT"])
+@route("/api/v1/user/coaches", methods=["PUT"])
 @oauth_required()
 @jsonp
 @jsonify
@@ -1060,10 +1060,12 @@ def update_coaches_and_requesters():
     # TODO(marcia): what is the deal with coach_email.lower() in coaches.py
     user_data = models.UserData.current()
 
-    coaches.update_coaches_and_requests(user_data, request.json)
+    profiles = coaches.update_coaches_and_requests(user_data, request.json)
 
-    # TODO(marcia): figure out the Right Thing to Return
-    return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
+    if profiles is None:
+        return api_invalid_param_response("Received an invalid email.")
+
+    return profiles
 
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()

@@ -49,17 +49,6 @@ class UserDataCoachTest(BaseTest):
         self.assertTrue(bella.is_visible_to(edward))
         self.assertTrue(edward.has_students())
 
-    @patch('coaches.logging.critical')
-    def test_log_critical_on_add_nonexistent_coach(self, critical):
-        # TODO(marcia): Temp test, not sure on right error behavior yet
-        bella = self.make_user('bella@gmail.com')
-        coaches_json = [{
-            'email': 'legolas@gmail.com',
-            'isCoachingLoggedInUser': True,
-        }]
-        coaches.update_coaches(bella, coaches_json)
-        self.assertEqual(1, critical.call_count)
-
     def test_remove_coach(self):
         bella = self.make_user('bella@gmail.com')
         jacob = self.make_user('jacob@gmail.com')
@@ -89,6 +78,16 @@ class UserDataCoachTest(BaseTest):
         requester_emails = coaches.update_coaches(bella, jacob_json)
 
         self.assertEqual([jacob.key_email], requester_emails)
+
+    def test_return_none_on_add_nonexistent_coach(self):
+        # TODO(marcia): Temp test, not sure on right error behavior yet
+        bella = self.make_user('bella@gmail.com')
+        coaches_json = [{
+            'email': 'legolas@gmail.com',
+            'isCoachingLoggedInUser': True,
+        }]
+        result = coaches.update_coaches(bella, coaches_json)
+        self.assertEqual(None, result)
 
     def test_noop_on_update_requests_with_email(self):
         bella = self.make_user('bella@gmail.com')

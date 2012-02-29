@@ -1012,7 +1012,8 @@ li.profile-tab {
     top: 60px;
     left: 50%;
 }
-#username-picker-container .notification {
+#username-picker-container .notification,
+.coaches-section .notification {
     padding: 5px 5px 5px 10px;
     margin: -10px 0 15px 0;
 
@@ -1024,7 +1025,8 @@ li.profile-tab {
     background-color: #DDF4FB;
     border-color: #C6EDF9;
 }
-#username-picker-container .notification.error {
+#username-picker-container .notification.error,
+.coaches-section .notification.error {
     background-color: #FDDFDE;
     border-color: #FBC7C6;
 }
