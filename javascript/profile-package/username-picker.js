@@ -99,47 +99,8 @@ UsernamePickerView = Backbone.View.extend({
         }, this);
     },
 
-    // TODO: move elsewhere
-    /**
-     * A conservative check to see if a key event is text-modifying.
-     * This leans towards the side of truthiness - that is if a key is
-     * unknown, it is deemed to be text modifying.
-     */
-    isTextModifyingKeyEvent_: function(e) {
-        if ((e.altKey && !e.ctrlKey) || e.metaKey ||
-                // Function keys don't generate text
-                e.keyCode >= 112 && e.keyCode <= 123) {
-            return false;
-        }
-
-        switch (e.keyCode) {
-            case $.ui.keyCode.ALT:
-            case $.ui.keyCode.CAPS_LOCK:
-            case $.ui.keyCode.COMMAND:
-            case $.ui.keyCode.COMMAND_LEFT:
-            case $.ui.keyCode.COMMAND_RIGHT:
-            case $.ui.keyCode.CONTROL:
-            case $.ui.keyCode.DOWN:
-            case $.ui.keyCode.END:
-            case $.ui.keyCode.ESCAPE:
-            case $.ui.keyCode.HOME:
-            case $.ui.keyCode.INSERT:
-            case $.ui.keyCode.LEFT:
-            case $.ui.keyCode.MENU:
-            case $.ui.keyCode.PAGE_DOWN:
-            case $.ui.keyCode.PAGE_UP:
-            case $.ui.keyCode.RIGHT:
-            case $.ui.keyCode.SHIFT:
-            case $.ui.keyCode.UP:
-            case $.ui.keyCode.WINDOWS:
-                return false;
-            default:
-                return true;
-        }
-    },
-
     onNicknameKeyup_: function(e) {
-        if (!this.isTextModifyingKeyEvent_(e)) {
+        if (!Keys.isTextModifyingKeyEvent_(e)) {
             return;
         }
         this.model.validateNickname(this.getFormValue_(".nickname"));
@@ -150,7 +111,7 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     onUsernameKeyup_: function(e) {
-        if (!this.isTextModifyingKeyEvent_(e)) {
+        if (!Keys.isTextModifyingKeyEvent_(e)) {
             return;
         }
         if (e.keyCode === $.ui.keyCode.ENTER) {
@@ -173,11 +134,11 @@ UsernamePickerView = Backbone.View.extend({
         if (this.keyupTimeout) {
             window.clearTimeout(this.keyupTimeout);
         }
+        this.showSidenote_(".username-row", "Checking...");
         this.keyupTimeout = window.setTimeout(_.bind(this.onTimeout_, this), 1000);
     },
 
     onTimeout_: function() {
-        this.showSidenote_(".username-row", "Checking...");
         this.model.validateUsername(this.getFormValue_(".username"));
         this.keyupTimeout = null;
     },
