@@ -34,7 +34,6 @@ var Exercises = {
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
 
-        this.render();
     },
 
     render: function() {
