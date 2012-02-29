@@ -27,11 +27,13 @@ UsernamePickerView = Backbone.View.extend({
     },
 
     delegateEvents: function(events) {
-        var jelRoot = $(this.el);
-        Keys.delegateInputChange(jelRoot, ".nickname",
-                this.onNicknameInput_, this);
-        Keys.delegateInputChange(jelRoot, ".username",
-                this.onUsernameInput_, this);
+        $(this.el)
+                .on(Keys.textChangeEvents,
+                    ".nickname",
+                    Keys.wrapTextChangeHandler(this.onNicknameInput_, this))
+                .on(Keys.textChangeEvents,
+                    ".username",
+                    Keys.wrapTextChangeHandler(this.onUsernameInput_, this));
         UsernamePickerView.__super__.delegateEvents.call(this, events);
     },
 

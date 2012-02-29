@@ -61,17 +61,17 @@ Keys.textChangeEvents = $.browser.msie ? "keyup paste cut drop" : "input";
 
 
 /**
- * Delegate input change events for the specied jQuery element.
- * See Keys.textChangeEvents for details.
+ * Wrap an event handler intended for Keys.textChangeEvents. This will
+ * pre-process and filter out any events not corresponding to a proper
+ * text change event on an input.
  */
-Keys.delegateInputChange = function(jel, selector, handler, context) {
-    var wrapped = function(e) {
+Keys.wrapTextChangeHandler = function(handler, context) {
+    return function(e) {
         // When the "input" event is simulated, we have to supress benign
         // key presses.
         if (!Keys.isTextModifyingKeyEvent_(e)) {
             return;
         }
-        handler.call(context || this, e);
+        return handler.call(context || this, e);
     };
-    jel.on(Keys.textChangeEvents, selector, undefined, wrapped);
 };
