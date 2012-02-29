@@ -106,23 +106,21 @@ var Exercises = {
                 leavesEarned: Exercises.currentCard.get("leavesAvailable")
             });
 
-            // If on a streak, update current and previous card's leaves.
-            var lastCard = Exercises.completeStack.last();
-            if (lastCard && lastCard.streakEligible() && Exercises.currentCard.streakEligible()) {
-
-                lastCard.increaseLeavesEarned(4);
-                Exercises.currentCard.increaseLeavesEarned(4);
-
-            }
-
         });
 
         // Triggered when a user attempts an answer
         $(Khan).bind("checkAnswer", function(ev, data) {
 
             if (data.pass === true) {
-                // TODO(kamens): distinguish b/w leaves 3, 4, and 5
-                Exercises.currentCard.decreaseLeavesAvailable(3);
+
+                if (data.fast === true) {
+                    // Speed completion earns 4 leaves right now
+                    Exercises.currentCard.decreaseLeavesAvailable(4);
+                } else {
+                    // Ordinary problem completion earns 3
+                    Exercises.currentCard.decreaseLeavesAvailable(3);
+                }
+
             } else if (data.pass === false) {
                 // Incorrect answer drops leaves possibility to 2
                 Exercises.currentCard.decreaseLeavesAvailable(2);
@@ -196,13 +194,9 @@ var Exercises = {
  */
 Exercises.Card = Backbone.Model.extend({
 
-    streakEligible: function() {
-        return this.get("leavesEarned") >= 3;
-    },
-
     leaves: function(card) {
 
-        return _.map(_.range(5), function(index) {
+        return _.map(_.range(4), function(index) {
             
             return {
                 index: index,
@@ -308,7 +302,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
         });
 
         var longestSpeedStreak = this.longestStreak(function(card) {
-            return card.get("leavesEarned") >= 5;
+            return card.get("leavesEarned") >= 4;
         });
 
         return {

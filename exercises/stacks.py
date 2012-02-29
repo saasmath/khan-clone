@@ -10,7 +10,7 @@ class Card(object):
 
     def __init__(self):
         self.card_type = "unknown"
-        self.leaves_available = 5
+        self.leaves_available = 4
         self.leaves_earned = 0
         self.done = False
 
