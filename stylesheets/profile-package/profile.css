@@ -1013,13 +1013,17 @@ li.profile-tab {
     left: 50%;
 }
 #username-picker-container .notification,
-.coaches-section .notification {
+#tab-content-coaches .notification {
     padding: 5px 5px 5px 10px;
     margin: -10px 0 15px 0;
 
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
+}
+
+#tab-content-coaches .notification {
+    margin: 10px 0 15px 0;
 }
 #username-picker-container .notification.info {
     background-color: #DDF4FB;
@@ -1179,12 +1183,26 @@ li.profile-tab {
 
 #tab-content-coaches {
     margin-top: 22px;
+    min-width: 835px;
 }
-#requests {
+#tab-content-coaches .coaches-section {
+    margin-bottom: 22px;
+}
+#tab-content-coaches .left-column {
+    float: left;
+    width: 370px;
+}
+#tab-content-coaches .right-column {
+    float: left;
+    margin-left: 30px;
+    min-width: 350px;
+    width: 45%;
+}
+#tab-content-coaches #requests {
     display: none;
 }
-.coaches-section {
-    margin-bottom: 22px;
+#tab-content-coaches #coach-email{
+    width: 200px;
 }
 .coach-row {
     padding: 10px;
@@ -1194,9 +1212,10 @@ li.profile-tab {
 }
 .coach-row span.email {
     display: inline-block;
-    width: 200px;
+    width: 220px;
     text-overflow: ellipsis;
     overflow: hidden;
-    margin-right: 30px;
 }
-
+.coach-row .controls {
+    float: right;
+}

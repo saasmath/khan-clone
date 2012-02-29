@@ -1,30 +1,29 @@
-<div id="tab-content-coaches">
+<div class="graph-picker">
+    Coaches have access to all of your Khan Academy data.
+    <ul class="tabrow">
+        <li>
+            Your student id is {{email}}
+        </li>
+    </ul>
+</div>
+<div class="left-column">
+    <div id="requests" class="coaches-section">
+        <h2>New coaches are waiting</h2>
+        <div id="request-list-container"></div>
+    </div>
 
-<div id="requests" class="coaches-section">
-    <h2>New coaches are waiting</h2>
+    <div class="coaches-section">
+        <h2>Add a coach</h2>
+        <input id="coach-email" class="blur-on-esc" placeholder="Coach id" type="text">
+        <span id="add-coach" class="simple-button action-gradient">Add coach</span>
 
-    <p>These coaches have requested you as their student. <strong>If you accept them as your coach, they will have access to your Khan Academy data</strong>.</p>
-    <div id="request-list-container"></div>
+        <div class="notification error" style="display: none;"></div>
+    </div>
 </div>
 
-<div class="coaches-section">
-    <h2>Add a coach</h2>
-    <p>
-        Your coach will give you their coach id. Enter it here to give them access to your Khan Academy data.
-    </p>
-    <input type="text" id="coach-email" class="blur-on-esc">
-    <span id="add-coach" class="simple-button action-gradient">Add coach</span>
-    <span class="notification error" style="display: none;"></span>
-</div>
-
-<div class="coaches-section">
-    <h2>Your coaches</h2>
-    <div id="coach-list-container"></div>
-</div>
-
-<div class="coaches-section">
-    <h2>Your student id</h2>
-    <p>If your coach asks for your student id, it is: {{email}}</p>
-</div>
-
+<div class="right-column">
+    <div class="coaches-section">
+        <h2>Your coaches</h2>
+        <div id="coach-list-container"></div>
+    </div>
 </div>
