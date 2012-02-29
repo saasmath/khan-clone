@@ -60,8 +60,9 @@
 
     <div class="signup-prompt-container">
         <span class="signup-prompt">Don't have an account, yet?</span>
-        <!-- TODO(benkomalo): actually wire up signup process. -->
-        <a class="signup-link" href="javascript:void(0);">Sign up</a>
+        <!-- TODO(benkomalo): do a nice animation and use Backbone.Router to animate in
+             new contents on browsers that can support it. -->
+        <a class="signup-link" href="/register?cont={{continue|urlencode}}">Sign up</a>
     </div>
 
     </form>
