@@ -112,12 +112,15 @@ var Coaches = {
             };
 
         if (email) {
-            if (this.coachCollection.isNewCoachEmail(email)) {
-                this.coachCollection.add(attrs);
-                this.save();
-            } else {
+            var model = null;
+            if (this.coachCollection.findByEmail(email)) {
                 var message = email + " is already your coach.";
                 this.showError_(message);
+            } else if (model = this.requestCollection.findByEmail(email)){
+                this.acceptCoachRequest(model);
+            } else {
+                this.coachCollection.add(attrs);
+                this.save();
             }
         }
     },
@@ -129,6 +132,17 @@ var Coaches = {
             .fadeOut(function() {
                 $(this).text("");
             });
+    },
+
+    acceptCoachRequest: function(model) {
+        this.requestCollection.remove(model);
+        model.set({
+            isCoachingLoggedInUser: true,
+            isRequestingToCoachLoggedInUser: false
+        });
+
+        Coaches.coachCollection.add(model);
+        Coaches.save();
     }
 };
 
@@ -166,14 +180,7 @@ Coaches.CoachView = Backbone.View.extend({
     },
 
     onAcceptCoach_: function() {
-        this.collection_.remove(this.model);
-        this.model.set({
-            isCoachingLoggedInUser: true,
-            isRequestingToCoachLoggedInUser: false
-        });
-
-        Coaches.coachCollection.add(this.model);
-        Coaches.save();
+        Coaches.acceptCoachRequest(this.model);
     },
 
     onDenyCoach_: function() {
@@ -202,8 +209,8 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         this.markCoachesAsSaved();
     },
 
-    isNewCoachEmail: function(email) {
-        return !this.any(function(model) {
+    findByEmail: function(email) {
+        return this.find(function(model) {
             return model.get("email") === email;
         });
     },
