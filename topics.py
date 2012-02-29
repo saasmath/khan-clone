@@ -7,6 +7,8 @@ import logging
 import layer_cache
 import urllib2
 import simplejson
+import zlib
+import pickle
 
 from api.auth.xsrf import ensure_xsrf_cookie
 from google.appengine.ext import deferred
@@ -28,14 +30,9 @@ class EditContent(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     @user_util.developer_only
     def get(self):
-        if self.request.get('migrate', False):
-            return self.topic_migration()
-        if self.request.get('fixdupes', False):
-            return self.fix_duplicates()
 
         version_name = self.request.get('version', 'edit')
 
-        tree_nodes = []
         edit_version = TopicVersion.get_by_id(version_name)
         if edit_version is None:
             default_version = TopicVersion.get_default_version()
@@ -48,10 +45,19 @@ class EditContent(request_handler.RequestHandler):
             else:
                 raise Exception("Wait for setting default version to finish making an edit version.")
 
-        
+        if self.request.get('autoupdate', False):
+            self.render_jinja2_template('autoupdate_in_progress.html', {"edit_version": edit_version})
+            return
+        if self.request.get('autoupdate_begin', False):
+            return self.topic_update_from_live(edit_version)
+        if self.request.get('migrate', False):
+            return self.topic_migration()
+        if self.request.get('fixdupes', False):
+            return self.fix_duplicates()
+
         root = Topic.get_root(edit_version)
         data = root.get_visible_data()
-        tree_nodes.append(data)
+        tree_nodes = [data]
         
         template_values = {
             'edit_version': jsonify(edit_version),
@@ -60,6 +66,24 @@ class EditContent(request_handler.RequestHandler):
  
         self.render_jinja2_template('topics-admin.html', template_values)
         return
+
+    def topic_update_from_live(self, edit_version):
+        request = urllib2.Request("http://www.khanacademy.org/api/v1/topictree")
+        try:
+            opener = urllib2.build_opener()
+            f = opener.open(request)
+            topictree = simplejson.load(f)
+
+            logging.info("calling /_ah/queue/deferred_import")
+
+            # importing the full topic tree can be too large so pickling and compressing
+            deferred.defer(models.topictree_import_task, "edit", "root", True,
+                        zlib.compress(pickle.dumps(topictree)),
+                        _queue="import-queue",
+                        _url="/_ah/queue/deferred_import")
+
+        except urllib2.URLError, e:
+            logging.exception("Failed to fetch content from khanacademy.org")
 
     def topic_migration(self):
         logging.info("deleting all existing topics")

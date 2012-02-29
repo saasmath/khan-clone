@@ -210,6 +210,8 @@ input.simple-button {
 }
 .simple-button:disabled, .simple-button.disabled {
     color: #ddd !important;
+    cursor: not-allowed !important;
+    top: 0 !important;
 }
 .simple-button.seethrough {
     color: #444 !important;
@@ -1089,60 +1091,6 @@ div.video {
 
 div.video > div {
     width: 800px;
-}
-
-div.video details {
-    display: block;
-    width: 798px;
-    background-color: #d2dded;
-}
-
-div.video summary {
-    display: block;
-    background-color: #E6F8DD;
-    border-top: 1px solid #80C65A;
-    border-bottom: 1px solid white;
-    font-weight: bold;
-}
-
-div.video label.video_topic_prev {
-    float: left;
-    border-right: solid 1px white;
-}
-
-div.video label.video_topic_next {
-    float: right;
-    border-left: solid 1px white;
-}
-
-div.video div.video_topic_container {
-    clear: both;
-    border-top: 1px solid grey;
-    overflow: hidden;
-}
-
-div.video ol li {
-    display: inline-block;
-    width: 260px;
-    vertical-align: top;
-}
-
-div.video ol li, div.video summary, div.video label.video_topic_prev, div.video label.video_topic_next {
-    padding: .5ex 3px .5ex 3px;
-}
-
-div.video ol li:before {
-    content: counter(video) ".";
-    counter-increment: video;
-}
-
-div.video ol {
-    counter-reset: video;
-    padding: 0ex 0em 8ex 0em;
-    display: inline;
-    background: #eee;
-    background-break: continuous; /* CSS3 */
-    background-image: url(/images/798white_798grey.png); /*! data-uri(/images/798white_798grey.png) */
 }
 
 div.video p#keywords {
@@ -3218,71 +3166,6 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     width: 125px;
 }
 /* End about the site */
-
-/* Login Page Styles */
-
-#login-page {
-    padding-top: 18px;
-}
-#login-page h3 {
-    color: #555;
-}
-#login-page a:visited {
-    color: #0075b1;
-}
-#login-page .providers-sign-up li {
-    float: left;
-    padding-right: 20px;
-    font-size: 15px;
-}
-#login-page .providers li {
-    float: left;
-    border: 1px solid #ccc;
-    border-bottom-color: #aaa;
-    border-right-color: #bbb;
-    text-align: left;
-    padding: 10px;
-    margin-right: 20px;
-    min-height: 80px;
-    position: relative;
-
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-
-    -moz-box-shadow: 2px 2px 5px #ccc;
-    -webkit-box-shadow: 2px 2px 5px #ccc;
-    box-shadow: 2px 2px 5px #ccc;
-}
-#login-page .providers li:hover,
-#login-page .providers li:active {
-    border-color: #aaa;
-    left: 2px;
-    top: 2px;
-
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-}
-#login-page .providers li .sign-in-text {
-    color: #777;
-    margin-bottom: 10px;
-}
-#login-page #feature-list {
-    width: 100%;
-}
-#login-page #feature-list div.feature {
-    width: 33%;
-    float: left;
-    text-align: center;
-}
-#login-page #feature-list div.feature img {
-    border: 1px solid #AAA;
-    -webkit-box-shadow: 1px  2px 2px #CCC;
-    -moz-box-shadow: 1px 2px 2px #CCC;
-    box-shadow: 1px 2px 2px #CCC;
-}
-/* End login page style */
 
 /* Report a problem styles */
 #report-problem ol {

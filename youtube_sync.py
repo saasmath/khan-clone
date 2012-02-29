@@ -81,7 +81,8 @@ class YouTubeSyncStep:
 #    INDEX_VIDEO_DATA = 4
 #    INDEX_PLAYLIST_DATA = 5
 #    REGENERATE_LIBRARY_CONTENT = 6
-    UPDATE_FROM_TOPICS = 1
+    UPDATE_VIDEO_STATS = 1
+    UPDATE_FROM_TOPICS = 2
 
 class YouTubeSyncStepLog(db.Model):
     step = db.IntegerProperty()
@@ -123,6 +124,8 @@ class YouTubeSync(request_handler.RequestHandler):
 #            self.indexPlaylistData()
 #        elif step == YouTubeSyncStep.REGENERATE_LIBRARY_CONTENT:
 #            self.regenerateLibraryContent()
+        elif step == YouTubeSyncStep.UPDATE_VIDEO_STATS:
+            self.updateVideoStats()
         elif step == YouTubeSyncStep.UPDATE_FROM_TOPICS:
             self.copyTopicsToPlaylist()
 
@@ -140,6 +143,44 @@ class YouTubeSync(request_handler.RequestHandler):
     def startYouTubeSync(self):
         Setting.last_youtube_sync_generation_start(int(Setting.last_youtube_sync_generation_start()) + 1)
 
+    def updateVideoStats(self):
+        yt_service = gdata.youtube.service.YouTubeService()
+        # Now that we run these queries from the App Engine servers, we need to 
+        # explicitly specify our developer_key to avoid being lumped together w/ rest of GAE and
+        # throttled by YouTube's "Too many request" quota
+        yt_service.developer_key = "AI39si6ctKTnSR_Vx7o7GpkpeSZAKa6xjbZz6WySzTvKVYRDAO7NHBVwofphk82oP-OSUwIZd0pOJyNuWK8bbOlqzJc9OFozrQ"
+        yt_service.client_id = "n/a"
+
+        videos_to_put = set()
+
+        for video in Video.all().filter("duration =", 0):
+            entry = None
+            # truncating youtubeid at 11 to handle _DUP_X's
+            youtube_id = video.youtube_id[0:11]
+            try:
+                entry = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
+
+            except Exception, e:
+                logging.info("Error trying to get %s: %s" % 
+                            (video.youtube_id, e))
+            
+            if entry:
+                count = int(entry.statistics.view_count)
+                if count != video.views:
+                    logging.info("Updating %s from %i to %i views" % 
+                                (video.title, video.views, count)) 
+                    video.views = count
+                    videos_to_put.add(video)
+                
+                duration = int(entry.media.duration.seconds)
+                if duration != video.duration:
+                    video.duration = duration
+                    videos_to_put.add(video)
+
+                logging.info(video.readable_id)
+
+        db.put(list(videos_to_put))
+            
     def updateVideoAndPlaylistData(self):
         self.response.out.write('<html>')
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from google.appengine.api import users
@@ -8,6 +9,7 @@ import user_util
 from dashboard.models import DailyStatistic, EntityStatistic
 from google.appengine.ext.db import stats
 from itertools import groupby
+import models
 
 class Dashboard(request_handler.RequestHandler):
     """
@@ -81,6 +83,96 @@ class EntityCounts(request_handler.RequestHandler):
 
         self.render_jinja2_template("dashboard/entitycounts.html", {'counts':counts})
         
+class ContentCountsCSV(request_handler.RequestHandler):
+
+    def get(self):
+        root = models.Topic.get_root()
+        tree = root.make_tree()
+
+        def stats(tree, parent):
+            title = (tree.title 
+                     if parent.id not in models.Topic._super_topic_ids 
+                     else parent.title + " : " + tree.title)
+
+            topic_stats = {"title" : title,                           
+                           "descendant_video_count" : 0,
+                           "descendant_exercise_count" : 0,
+                           "unique_video_count" : 0,
+                           "unique_exercise_count" : 0, 
+                           "video_count": 0,
+                           "exercise_count" : 0,
+                           "video_keys": set(),
+                           "exercise_keys": set(),
+                           "subtopics": []}
+
+            for child in tree.children:
+                if type(child) == models.Topic:
+                    subtopic_stats = stats(child, tree)
+                    topic_stats["video_keys"].update(subtopic_stats["video_keys"])
+                    topic_stats["exercise_keys"].update(subtopic_stats["exercise_keys"])
+                    topic_stats["subtopics"].append(subtopic_stats)
+                    topic_stats["descendant_video_count"] += subtopic_stats["descendant_video_count"] 
+                    topic_stats["descendant_exercise_count"] += subtopic_stats["descendant_exercise_count"]               
+                                    
+                elif type(child) == models.Exercise and child.live:
+                    topic_stats["exercise_keys"].add(child.key())
+                    topic_stats["exercise_count"] += 1
+                    topic_stats["descendant_exercise_count"] += 1
+
+                elif type(child) == models.Video or type(child) == models.Url:
+                    topic_stats["video_keys"].add((
+                        child.key(), 
+                        child.views if hasattr(child, "views") else 0))
+                    topic_stats["video_count"] += 1
+                    topic_stats["descendant_video_count"] += 1
+
+            topic_stats["unique_video_count"] = ( 
+                len(topic_stats["video_keys"]))
+
+            topic_stats["view_count"] = (
+                sum(map(lambda i: i[1], topic_stats["video_keys"])))
+
+            topic_stats["unique_exercise_count"] = (
+                len(topic_stats["exercise_keys"]))
+
+            return topic_stats
+
+        def flatten_stats(stats, topics=None):
+            if topics == None:
+                topics = []
+
+            topics.append(stats)
+            for child in stats["subtopics"]:
+                topics += flatten_stats(child)
+
+            del stats["subtopics"]
+            return topics
+
+        stats = stats(tree, tree)
+
+        self.response.headers['Content-Type'] = "text/csv"
+        self.response.out.write("%s, %s, %s, %s, %s, %s, %s, %s\n" % (
+            "Title",
+            "Videos in or under Topics",
+            "Unique Videos in or under Topic",
+            "Videos in Topic",
+            "Number of Video Views in or under Topic",
+            "Exercises in or under Topic",
+            "Unique Exercises in or under Topic",
+            "Exercises in Topic"
+        ))
+        
+        for stats in flatten_stats(stats):
+            self.response.out.write("%s, %i, %i, %i, %i, %i, %i, %i\n" % (
+                stats["title"],
+                stats["descendant_video_count"],
+                stats["unique_video_count"],
+                stats["video_count"], 
+                stats["view_count"], 
+                stats["descendant_exercise_count"], 
+                stats["unique_exercise_count"],
+                stats["exercise_count"]
+                ))
 
 class ContentDashboard(request_handler.RequestHandler):
     """

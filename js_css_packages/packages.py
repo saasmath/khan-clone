@@ -70,9 +70,35 @@ javascript = {
             "thumbnail.handlebars",
             "related-video-link.handlebars",
             "modal-video.handlebars",
+            "video-nav.handlebars",
+            "video-description.handlebars",
+            "video-header.handlebars",
+            "video-footer.handlebars",
+            "video-flv-player.handlebars",
             "modalvideo.js",
         ]
     },
+    "socrates": {
+        "files": [
+            "underscore.string.js",
+            "../topicsadmin-package/jquery.ui.draggable.js",
+            "jquery.ui.resizable.js",
+            "inputtext.handlebars",
+            "socrates-nav.handlebars",
+            "submit-area.handlebars",
+            "poppler.js",
+            "socrates.js",
+        ]
+    },
+
+    # Socrates questions. For now, they're here.
+    # todo(dmnd) In the long run they should move somewhere else, perhaps
+    # to another repository.
+    "xyAuNHPsq-g": {"allfiles": True},
+    "-a_w0_VAo6U": {"allfiles": True},
+    "3XOt1fjWKi8": {"allfiles": True},
+    "U2ovEuEUxXQ": {"allfiles": True},
+
     "homepage": {
         "files": [
             "jquery.easing.1.3.js",
@@ -266,10 +292,22 @@ stylesheets = {
             "modalvideo.css",
         ]
     },
+    "socrates": {
+        "files": [
+            "bootstrap-alerts.css",
+            "bootstrap-tables.css",
+            "socrates.css",
+        ]
+    },
     "studentlists": {
         "files": [
             "viewstudentlists.css",
             "viewclassprofile.css",
+        ]
+    },
+    "login": {
+        "files": [
+            "login.css",
         ]
     },
     "profile": {
@@ -303,4 +341,9 @@ stylesheets = {
             "topics-admin.css"
         ]
     },
+    "labs": {
+        "files": [
+            "labs.css",
+        ]
+    }
 }
