@@ -598,7 +598,7 @@ Socrates.QuestionView = Backbone.View.extend({
     },
 
     showMem: function() {
-        this.$(".mem").slideDown();
+        this.$(".mem").slideDown(350, 'easeInOutCubic');
     },
 
     skip: function() {
