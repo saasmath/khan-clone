@@ -153,7 +153,7 @@ class YouTubeSync(request_handler.RequestHandler):
 
         videos_to_put = set()
 
-        for video in Video.all().filter("duration =", 0):
+        for video in Video.all():
             entry = None
             # truncating youtubeid at 11 to handle _DUP_X's
             youtube_id = video.youtube_id[0:11]
