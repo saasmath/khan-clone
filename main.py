@@ -51,6 +51,9 @@ import stories
 import summer
 import common_core
 import unisubs
+import api.jsonify
+import labs
+import socrates
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -88,41 +91,14 @@ def get_mangled_topic_name(topic_name):
         topic_name = topic_name.replace(char, "")
     return topic_name
 
+# New video view handler.
+# The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
+#   /math/algebra/introduction-to-algebra/v/origins-of-algebra
 class ViewVideo(request_handler.RequestHandler):
 
-    @ensure_xsrf_cookie
-    def get(self, readable_id=""):
-
-        # This method displays a video in the context of a particular topic.
-        # To do that we first need to find the appropriate topic.  If we aren't
-        # given the topic title in a query param, we need to find a topic that
-        # the video is a part of.  That requires finding the video, given it readable_id
-        # or, to support old URLs, it's youtube_id.
-        video = None
+    @staticmethod
+    def show_video(handler, readable_id, topic_id, redirect_to_canonical_url=False):
         topic = None
-        video_id = self.request.get('v')
-        topic_id = self.request_string('topic', default="")
-        readable_id = urllib.unquote(readable_id)
-        readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
-
-        # If either the readable_id or topic title is missing,
-        # redirect to the canonical URL that contains them
-        redirect_to_canonical_url = False
-        if video_id: # Support for old links
-            query = Video.all()
-            query.filter('youtube_id =', video_id)
-            video = query.get()
-
-            if not video:
-                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
-
-            readable_id = video.readable_id
-            topic = video.first_topic()
-
-            if not topic:
-                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
-
-            redirect_to_canonical_url = True
 
         if topic_id is not None and len(topic_id) > 0:
             topic = Topic.get_by_id(topic_id)
@@ -142,18 +118,34 @@ class ViewVideo(request_handler.RequestHandler):
 
             redirect_to_canonical_url = True
 
-        exid = self.request_string('exid', default=None)
-
         if redirect_to_canonical_url:
-            qs = {'topic': topic.id}
-            if exid:
-                qs['exid'] = exid
-
-            urlpath = "/video/%s" % urllib.quote(readable_id)
-            url = urlparse.urlunparse(('', '', urlpath, '', urllib.urlencode(qs), ''))
-            self.redirect(url, True)
+            url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
+            logging.info("Redirecting to %s" % url)
+            handler.redirect(url, True)
             return
 
+        # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
+
+        topic_data = topic.get_play_data()
+
+        discussion_options = qa.add_template_values({}, handler.request)
+        video_data = Video.get_play_data(readable_id, topic, discussion_options)
+        if video_data is None:
+            raise MissingVideoException("Missing video '%s'" % readable_id)
+
+        template_values = {
+            "topic_data": topic_data,
+            "topic_data_json": api.jsonify.jsonify(topic_data),
+            "video": video_data,
+            "video_data_json": api.jsonify.jsonify(video_data),
+            "selected_nav_link": 'watch'
+        }
+
+        handler.render_jinja2_template('viewvideo.html', template_values)
+
+    # This is also deprecated; only keep around while Socrates is in development /labs
+    @classmethod
+    def get_template_data(cls, self, readable_id, video, topic):
         # If we got here, we have a readable_id and a topic, so we can display
         # the topic and the video in it that has the readable_id.  Note that we don't
         # query the Video entities for one with the requested readable_id because in some
@@ -253,13 +245,53 @@ class ViewVideo(request_handler.RequestHandler):
                             'author_profile': 'https://plus.google.com/103970106103092409324'
                         }
         template_values = qa.add_template_values(template_values, self.request)
+        return template_values
 
-        bingo([
-            'struggling_videos_landing',
-            'suggested_activity_videos_landing',
-            'suggested_activity_videos_landing_binary',
-        ])
-        self.render_jinja2_template('viewvideo.html', template_values)
+    @ensure_xsrf_cookie
+    def get(self, path, video_id):
+        if path:
+            path_list = path.split('/')
+
+            if len(path_list) > 0:
+                topic_id = path_list[-1]
+                ViewVideo.show_video(self, video_id, topic_id)
+                return
+
+class ViewVideoDeprecated(request_handler.RequestHandler):
+
+    # The handler itself is deprecated. The ViewVideo handler is the canonical
+    # handler now.
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
+
+        # This method displays a video in the context of a particular topic.
+        # To do that we first need to find the appropriate topic.  If we aren't
+        # given the topic title in a query param, we need to find a topic that
+        # the video is a part of.  That requires finding the video, given it readable_id
+        # or, to support old URLs, it's youtube_id.
+        video = None
+        video_id = self.request.get('v')
+        topic_id = self.request_string('topic', default="")
+        readable_id = urllib.unquote(readable_id)
+        readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
+
+        # If either the readable_id or topic title is missing,
+        # redirect to the canonical URL that contains them
+        if video_id: # Support for old links
+            query = Video.all()
+            query.filter('youtube_id =', video_id)
+            video = query.get()
+
+            if not video:
+                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
+
+            readable_id = video.readable_id
+            topic = video.first_topic()
+
+            if not topic:
+                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
+
+        ViewVideo.show_video(self, readable_id, topic_id, True)
 
 class ReportIssue(request_handler.RequestHandler):
 
@@ -443,19 +475,9 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
 
 class Login(request_handler.RequestHandler):
     def get(self):
-        return self.post()
-
-    def post(self):
-        cont = self.request_string('continue', default = "/")
-        direct = self.request_bool('direct', default = False)
-
-        openid_identifier = self.request.get('openid_identifier')
-        if openid_identifier is not None and len(openid_identifier) > 0:
-            if App.accepts_openid:
-                self.redirect(users.create_login_url(cont, federated_identity = openid_identifier))
-                return
-            self.redirect(users.create_login_url(cont))
-            return
+        """ Renders the login page. """
+        cont = self.request_string('continue', default="/")
+        direct = self.request_bool('direct', default=False)
 
         if App.facebook_app_secret is None:
             self.redirect(users.create_login_url(cont))
@@ -465,6 +487,14 @@ class Login(request_handler.RequestHandler):
                            'direct': direct
                            }
         self.render_jinja2_template('login.html', template_values)
+
+    def post(self):
+        """ Handles a POST from the login page.
+        Right now this basically means the user opted to login via Google,
+        so redirect them to the appropriate Google Login page.
+        """
+        cont = self.request_string('continue', default="/")
+        self.redirect(users.create_login_url(cont))
 
 class MobileOAuthLogin(request_handler.RequestHandler):
     def get(self):
@@ -668,7 +698,7 @@ class Search(request_handler.RequestHandler):
                            'video_count': video_count,
                            'topic_count': topic_count,
                            })
-        
+
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
@@ -777,9 +807,10 @@ application = webapp2.WSGIApplication([
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/(.*)', ViewVideo),
-    ('/v/(.*)', ViewVideo),
-    ('/video', ViewVideo), # Backwards URL compatibility
+    ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/video', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.SaveMapCoords),
@@ -899,6 +930,7 @@ application = webapp2.WSGIApplication([
     ('/contentdash', dashboard.ContentDashboard),
     ('/admin/dashboard/record_statistics', dashboard.RecordStatistics),
     ('/admin/entitycounts', dashboard.EntityCounts),
+    ('/devadmin/contentcounts', dashboard.ContentCountsCSV),
 
     ('/sendtolog', SendToLog),
 
@@ -927,6 +959,10 @@ application = webapp2.WSGIApplication([
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
+    # Labs
+    ('/labs', labs.LabsRequestHandler),
+    ('/labs/socrates/(.*)', socrates.SocratesHandler),
+
     ('/robots.txt', robots.RobotsTxt),
 
     ('/r/.*', redirects.Redirect),
@@ -941,6 +977,7 @@ application = webapp2.WSGIApplication([
     ('/index\.html', PermanentRedirectToHome),
 
     ('/_ah/warmup.*', warmup.Warmup),
+
 
     ], debug=True)
 

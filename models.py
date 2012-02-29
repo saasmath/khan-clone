@@ -1755,8 +1755,11 @@ def change_default_version(version):
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
 
+    # update the new number of videos on the homepage
     vids = Video.get_all_live()
-    Setting.count_videos(len(vids))
+    urls = Url.get_all_live()
+    Setting.count_videos(len(vids) + len(urls))
+    Video.approx_count(bust_cache=True)
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
@@ -1989,6 +1992,74 @@ class Topic(Searchable, db.Model):
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
+
+    # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_extended_slug_%s" % self.key(),
+        layer=layer_cache.Layers.Memcache)
+    def get_extended_slug(self):
+        parent_ids = [topic.id for topic in db.get(self.ancestor_keys)]
+        parent_ids.reverse()
+        if len(parent_ids) > 1:
+            return "%s/%s" % ('/'.join(parent_ids[1:]), self.id)
+        return self.id
+
+    # Gets the data we need for the video player
+    @layer_cache.cache_with_key_fxn(lambda self:
+        "topic_get_play_data_%s" % self.key(),
+        layer=layer_cache.Layers.Memcache)
+    def get_play_data(self):
+
+        # Find last video in the previous topic
+        previous_video = None
+        previous_video_topic = None
+        previous_topic = self
+
+        while not previous_video:
+            previous_topic = previous_topic.get_previous_topic()
+            # Don't iterate past the end of the current top-level topic
+            if previous_topic and len(previous_topic.ancestor_keys) > 1:
+                (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
+            else:
+                break
+
+        # Find first video in the next topic
+        next_video = None
+        next_video_topic = None
+        next_topic = self
+
+        while not next_video:
+            next_topic = next_topic.get_next_topic()
+            # Don't iterate past the end of the current top-level topic
+            if next_topic and len(next_topic.ancestor_keys) > 1:
+                (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
+            else:
+                break
+
+        # List all the videos in this topic
+        videos_dict = [{
+            "readable_id": v.readable_id,
+            "key_id": v.key().id(),
+            "title": v.title
+        } for v in Topic.get_cached_videos_for_topic(self)]
+
+        parent_titles = [topic.title for topic in db.get(self.ancestor_keys)][0:-1]
+        parent_titles.reverse()
+
+        return {
+            'id': self.id,
+            'title': self.title,
+            'extended_slug': self.get_extended_slug(),
+            'parent_titles': parent_titles,
+            'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,
+            'videos': videos_dict,
+            'previous_topic_title': previous_topic.standalone_title if previous_topic else None,
+            'previous_topic_video': previous_video.readable_id if previous_video else None,
+            'previous_topic_subtopic_slug': previous_video_topic.get_extended_slug() if previous_video_topic else None,
+            'next_topic_title': next_topic.standalone_title if next_topic else None,
+            'next_topic_video': next_video.readable_id if next_video else None,
+            'next_topic_subtopic_slug': next_video_topic.get_extended_slug() if next_video_topic else None
+        }
 
     # get the topic by the url slug/readable_id
     @staticmethod
@@ -2915,9 +2986,13 @@ class Topic(Searchable, db.Model):
         else:
             return progress_tree
 
-def topictree_import_task(version_id, topic_id, tree_json):
+def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data 
+    import zlib
+    import pickle
 
+    tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
+ 
     logging.info("starting import")
     version = TopicVersion.get_by_id(version_id)
     parent = Topic.get_by_id(topic_id, version)
@@ -2953,7 +3028,8 @@ def topictree_import_task(version_id, topic_id, tree_json):
         parent.delete_descendants() 
 
     # adds key to each entity in json tree, if the node is not in the tree then add it
-    def add_keys_json_tree(tree, parent):
+    def add_keys_json_tree(tree, parent, i=0, prefix="0"):
+        pos = prefix + "." + str(i)
 
         if tree["kind"] == "Topic":
             if tree["id"] in topic_dict:
@@ -2962,13 +3038,8 @@ def topictree_import_task(version_id, topic_id, tree_json):
             else:
                 kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
                 kwargs["version"] = version
-                topic = Topic.insert(title = tree['title'], parent = None, **kwargs)
-                logging.info("added topic %s" % topic.title)
-                # since this is a new topic, put it in its correct parent
-                # the order does not matter as we are over-writing the 
-                # child_keys later.  This add_child is done to just make sure
-                # the parent and ancestors will all match
-                parent.add_child(topic, 0)
+                topic = Topic.insert(title = tree['title'], parent = parent, **kwargs)
+                logging.info("%s: added topic %s" % (pos, topic.title))
                 tree["key"] = topic.key()
                 topic_dict[tree["id"]]=topic
 
@@ -3006,7 +3077,7 @@ def topictree_import_task(version_id, topic_id, tree_json):
                                                                 tree, 
                                                                 changeable_props,
                                                                 put_change)
-                logging.info("added video %s" % video.title)
+                logging.info("%s: added video %s" % (pos, video.title))
                 new_content_keys.append(video.key())
                 tree["key"] = video.key()
                 video_dict[tree["youtube_id"]] = video
@@ -3018,7 +3089,7 @@ def topictree_import_task(version_id, topic_id, tree_json):
                 tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
             else:
                 exercise = exercise_save_data(version, tree, None, put_change)
-                logging.info("added Exercise %s" % exercise.name)
+                logging.info("%s: added Exercise %s" % (pos, exercise.name))
                 new_content_keys.append(exercise.key())
                 tree["key"] = exercise.key()
                 exercise_dict[tree["name"]] = exercise
@@ -3036,17 +3107,19 @@ def topictree_import_task(version_id, topic_id, tree_json):
                                                            tree,
                                                            changeable_props,
                                                            put_change)
-                logging.info("added Url %s" % url.title)
+                logging.info("%s: added Url %s" % (pos, url.title))
                 new_content_keys.append(url.key())
                 tree["key"] = url.key()
                 url_dict[tree["id"]] = url
 
             all_entities_dict[tree["key"]] = url
 
+        i = 0
         # recurse through the tree's children
         if "children" in tree:
             for child in tree["children"]:
-                add_keys_json_tree(child, topic_dict[tree["id"]])
+                add_keys_json_tree(child, topic_dict[tree["id"]], i, pos)
+                i += 1
    
     add_keys_json_tree(tree_json, parent)
     logging.info("added keys to nodes")
@@ -3135,6 +3208,10 @@ def topictree_import_task(version_id, topic_id, tree_json):
     logging.info("about to put %i topic nodes" % len(changed_nodes))
     db.put(changed_nodes)
     logging.info("done with import")
+
+    if publish:
+        version.set_default_version()
+
     return True
 
 
@@ -3368,6 +3445,102 @@ class Video(Searchable, db.Model):
     @layer_cache.cache(expiration=3600)
     def approx_count():
         return int(Setting.count_videos()) / 100 * 100
+
+    # Gets the data we need for the video player
+    @staticmethod
+    def get_play_data(readable_id, topic, discussion_options):
+        video = None
+
+        # If we got here, we have a readable_id and a topic, so we can display
+        # the topic and the video in it that has the readable_id.  Note that we don't
+        # query the Video entities for one with the requested readable_id because in some
+        # cases there are multiple Video objects in the datastore with the same readable_id
+        # (e.g. there are 2 "Order of Operations" videos).
+        videos = Topic.get_cached_videos_for_topic(topic)
+        previous_video = None
+        next_video = None
+        for v in videos:
+            if v.readable_id == readable_id:
+                v.selected = 'selected'
+                video = v
+            elif video is None:
+                previous_video = v
+            else:
+                next_video = v
+                break
+
+        if video is None:
+            return None
+
+        previous_video_dict = {
+            "readable_id": previous_video.readable_id,
+            "key_id": previous_video.key().id(),
+            "title": previous_video.title
+        } if previous_video else None
+
+        next_video_dict = {
+            "readable_id": next_video.readable_id,
+            "key_id": next_video.key().id(),
+            "title": next_video.title
+        } if next_video else None
+
+        if App.offline_mode:
+            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
+        else:
+            video_path = video.download_video_url()
+
+        if video.description == video.title:
+            video.description = None
+
+        related_exercises = video.related_exercises()
+        button_top_exercise = None
+        if related_exercises:
+            def ex_to_dict(exercise):
+                return {
+                    'name': exercise.display_name,
+                    'url': exercise.relative_url,
+                }
+            button_top_exercise = ex_to_dict(related_exercises[0])
+
+        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
+
+        awarded_points = 0
+        if user_video:
+            awarded_points = user_video.points
+
+        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
+        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
+        subtitles_json = None
+        if subtitles:
+            subtitles_json = subtitles.load_json()
+
+        # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
+        import shared_jinja
+        player_html = shared_jinja.get().render_template('videoplayer.html',
+            user_data=UserData.current(), video_path=video_path, video=video,
+            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
+
+        discussion_html = shared_jinja.get().render_template('videodiscussion.html',
+            user_data=UserData.current(), video=video, topic=topic, **discussion_options)
+
+        return {
+            'title': video.title,
+            'description': video.description,
+            'youtube_id': video.youtube_id,
+            'readable_id': video.readable_id,
+            'key': video.key(),
+            'video_path': video_path,
+            'subtitles_json': subtitles_json,
+            'button_top_exercise': button_top_exercise,
+            'related_exercises': [], # disabled for now
+            'previous_video': previous_video_dict,
+            'next_video': next_video_dict,
+            'selected_nav_link': 'watch',
+            'issue_labels': ('Component-Videos,Video-%s' % readable_id),
+            'author_profile': 'https://plus.google.com/103970106103092409324',
+            'player_html': player_html,
+            'discussion_html': discussion_html
+        }
 
 class Playlist(Searchable, db.Model):
 
@@ -3618,6 +3791,11 @@ class VideoLog(BackupModel):
     user = db.UserProperty()
     video = db.ReferenceProperty(Video)
     video_title = db.StringProperty(indexed=False)
+
+    # Use youtube_id since readable_id may have changed
+    # by the time this VideoLog is retrieved
+    youtube_id = db.StringProperty(indexed=False)
+
     # The timestamp corresponding to when this entry was created.
     time_watched = db.DateTimeProperty(auto_now_add = True)
     seconds_watched = db.IntegerProperty(default = 0, indexed=False)
@@ -3682,6 +3860,7 @@ class VideoLog(BackupModel):
         video_log.user = user_data.user
         video_log.video = video
         video_log.video_title = video.title
+        video_log.youtube_id = video.youtube_id
         video_log.seconds_watched = seconds_watched
         video_log.last_second_watched = last_second_watched
 

@@ -101,9 +101,22 @@ def library_content_html(ajax=False, version_number=None):
     else:
         version = TopicVersion.get_default_version()
 
-
     tree = Topic.get_root(version).make_tree(types = ["Topics", "Video", "Url"])
     topics = flatten_tree(tree)
+
+    # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
+    developmental_math = Topic(
+        id="developmental-math",
+        version=version,
+        title="Developmental Math",
+        standalone_title="Developmental Math",
+        description="The Developmental Math playlist has been reorganized. The videos which used to be in the Developmental Math playlist can now be found under <a href=\"#algebra\">Algebra</a>."
+    )
+    developmental_math.is_super = True
+    developmental_math.subtopics = []
+    developmental_math.homepage_title = "Developmental Math"
+    topics.append(developmental_math)
+
     topics.sort(key = lambda topic: topic.standalone_title)
 
     # special case the duplicate topics for now, eventually we need to either make use of multiple parent functionality (with a hack for a different title), or just wait until we rework homepage

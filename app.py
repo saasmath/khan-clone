@@ -17,7 +17,6 @@ class App(object):
     root = os.path.dirname(__file__)
     is_dev_server = os.environ["SERVER_SOFTWARE"].startswith('Development')
 
-    accepts_openid = False
     offline_mode = False
 
 for attr in [
