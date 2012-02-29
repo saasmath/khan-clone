@@ -206,7 +206,7 @@ javascript = {
             "stack.handlebars",
             "card.handlebars",
             "current-card.handlebars",
-            "current-card-leaves.handlebars",
+            "card-leaves.handlebars",
             "problem-template.handlebars",
             "end-of-stack.handlebars",
             "exercises.js",

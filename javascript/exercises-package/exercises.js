@@ -40,7 +40,7 @@ var Exercises = {
 
         Handlebars.registerPartial("exercise-header", Templates.get("exercises.exercise-header"));
         Handlebars.registerPartial("card", Templates.get("exercises.card"));
-        Handlebars.registerPartial("card-leaves", Templates.get("exercises.current-card-leaves"));
+        Handlebars.registerPartial("card-leaves", Templates.get("exercises.card-leaves"));
 
         var profileExercise = Templates.get("exercises.exercise");
 
@@ -545,7 +545,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         this.el
             .find(".leaves-container")
                 .html(
-                    $(Templates.get("exercises.current-card-leaves")(this.viewContext()))
+                    $(Templates.get("exercises.card-leaves")(this.viewContext()))
                 ); 
     },
 
