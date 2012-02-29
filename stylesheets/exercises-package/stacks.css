@@ -95,7 +95,7 @@
     -moz-backface-visibility: hidden;*/
 }
 .stack .card-face.card-front {
-    background: #fff;
+    background: #f7f7f7;
 }
 .stack .card-face.card-back {
     display: none;
@@ -176,33 +176,48 @@
 .stack .leaves .leaf {
     width: 25px;
     height: 25px;
+    margin-right: 10px;
     float: left;
-    background: #fff;
-    border: 1px solid #ccc;
-
-    border-radius: 25px;
+    background: #83a600;
+    color: #fff;
+    border: 1px solid #a7b36b;
+    position: relative;
+    
     line-height: 25px;
     text-align: center;
 
+    border-top-left-radius: 10px;
+    border-top-right-radius: 50px;
+    border-bottom-left-radius: 50px;
+    border-bottom-right-radius: 15px;
     box-sizing: border-box;
+    box-shadow: inset 0 0 9px 1px rgba(0,0,0,.25);
 }
-.stack .leaves .leaf {
-    width: 5px;
-    height: 5px;
-    color: transparent;
-}
+    .stack .leaves {
+        margin-top: 2px;
+    }
+    .stack .leaves .leaf {
+        width: 5px;
+        height: 5px;
+        color: transparent;
+
+        margin: 0;
+    }
+
 .leaves .leaf.available {
-    
+    background: #cfd8a2;
 }
 .leaves .leaf.unavailable {
-    opacity: 0.5;
-    -moz-opacity: 0.5;
-    filter:alpha(opacity=50);
+    background-color: #fff;
+    opacity: 0.3;
+    -moz-opacity: 0.3;
+    filter:alpha(opacity=30);
 }
 .leaves .leaf.earned {
-    background-color: green;
-    color: #fff;
+    border-color: #5a7300;
+    box-shadow: 0 2px 1px rgba(0,0,0,.2);
 }
 .stack .leaves .leaf.earned {
     color: transparent;
+    box-shadow: none;
 }
