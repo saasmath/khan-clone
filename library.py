@@ -129,8 +129,6 @@ def library_content_html(ajax=False, version_number=None):
 
     add_next_topic(topics)
 
-    timestamp = time.time()
-
     template_values = {
         'topics': topics,
         'ajax' : ajax,
