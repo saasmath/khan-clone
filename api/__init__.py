@@ -51,7 +51,12 @@ def is_current_api_version(xsrf_token):
         return True # Only validate website users
 
     delims = xsrf_token.split("_")
-    if len(delims) != 3 or delims[0] != XSRF_API_VERSION:
+
+    # Make sure the very first piece of the XSRF token
+    # contains the current API version. The .split() above
+    # could return an undefined number of pieces depending
+    # on the random token's value.
+    if delims[0] != XSRF_API_VERSION:
         logging.warning("Out of date API version detected: %s" % (delims[0]))
         return False
 

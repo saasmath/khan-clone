@@ -21,7 +21,15 @@
                 {% if topic.is_super or topic.content %}
                 <div data-role="content" class="library-content-list">
                     {% if topic.description %}
-                        <p class='topic-desc'>{{topic.description|escape}}</p>
+                        <p class='topic-desc'>{{topic.description}}</p>
+                    {% endif %}
+
+                    {% if topic.is_super %}
+                      <ul data-role="listview" data-inset="true" class="mobile-only">
+                      {% for subtopic in topic.subtopics %}
+                        <li><a href="#{{ subtopic.standalone_title|slugify|escape }}">{{ subtopic.title }}</a></li>
+                      {% endfor %}
+                      </ul>
                     {% endif %}
 
                     {% if topic.content %}
@@ -41,11 +49,11 @@
                     </div>
                 </div>
                 {% endif %}
-                {% if topic.subtopics %}
-                    {{loop(topic.subtopics)}}
-                {% endif %}
             </div>
 
+            {% if topic.subtopics %}
+                {{loop(topic.subtopics)}}
+            {% endif %}
            
             {% endfor %}
             </div>
@@ -57,6 +65,6 @@
 {# Pass along the caching information to the JS so that
 	when it makes its request for content, it can use this token #}
 {% if ajax %}
-    <script>var Homepage_cacheToken = {{ timestamp }};</script>
+    <script>var Homepage_cacheToken = {{ version_id }};</script>
 {% endif %}
 

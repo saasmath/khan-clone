@@ -17,11 +17,11 @@ class GandalfBridge(db.Model):
         super(GandalfBridge, self).delete(**kwargs)
         from gandalf.cache import GandalfCache
         GandalfCache.delete_from_memcache()
-    
+
     @property
     def status(self):
         days_running = (datetime.datetime.now() - self.date_created).days
-        
+
         if days_running < 1:
             return "Running for less than a day"
         else:

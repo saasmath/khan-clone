@@ -167,7 +167,7 @@ def topics_library_compact():
     def trimmed_item(item, topic):
         trimmed_item_dict = {}
         if item.kind() == "Video":
-            trimmed_item_dict['url'] = "/video/%s?topic=%s" %(item.readable_id, topic.id)
+            trimmed_item_dict['url'] = "/%s/v/%s" % (topic.get_extended_slug(), item.readable_id)
             trimmed_item_dict['key_id'] = item.key().id()
         elif item.kind() == "Url":
             trimmed_item_dict['url'] = item.url
@@ -194,7 +194,16 @@ def topics_library_compact():
 @jsonify
 def topic_version_change_list(version_id):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.VersionContentChange.all().filter("version =", version).fetch(10000)
+    changes = models.VersionContentChange.all().filter("version =", version).fetch(10000)
+    
+    # add the related_videos of ExerciseVideos of the change.content
+    exercise_dict = dict((change.content.key(), change.content) 
+                         for change in changes 
+                         if type(change.content) == models.Exercise)
+
+    models.Exercise.add_related_videos_prop(exercise_dict)
+    return changes
+
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
@@ -330,13 +339,19 @@ def topictree_export(version_id = None, topic_id = "root"):
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topictree/init/<publish>", methods=["PUT"])
 @route("/api/v1/dev/topictree", methods=["PUT"])
 @developer_required
 @jsonp
 @jsonify
-def topictree_import(version_id = "edit", topic_id="root"):
+def topictree_import(version_id = "edit", topic_id="root", publish=False):
+    import zlib
+    import pickle
     logging.info("calling /_ah/queue/deferred_import")
-    deferred.defer(models.topictree_import_task, version_id, topic_id, request.json,
+
+    # importing the full topic tree can be too large so pickling and compressing
+    deferred.defer(models.topictree_import_task, version_id, topic_id, publish,
+                zlib.compress(pickle.dumps(request.json)),
                 _queue = "import-queue",
                 _url = "/_ah/queue/deferred_import")
 
@@ -749,7 +764,8 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "summative", "prerequisites", "covers", 
-                        "related_videos", "short_display_name"]
+                        "related_videos", "related_video_keys", 
+                        "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise, 
             version, 
@@ -816,6 +832,31 @@ def video_exercises(video_id):
     if video:
         return video.related_exercises(bust_cache=True)
     return []
+
+@route("/api/v1/videos/<topic_id>/<video_id>/play", methods=["GET"])
+@jsonp
+@jsonify
+def video_play_data(topic_id, video_id):
+    topic = models.Topic.get_by_id(topic_id)
+    if topic is None: 
+        raise ValueError("Invalid topic readable_id.")
+
+    get_topic_data = request.request_bool('topic', default=False);
+
+    discussion_options = {
+        "comments_page": 0,
+        "qa_page": 0,
+        "qa_expand_key": "",
+        "sort": -1
+    }
+    ret = {
+        "video": models.Video.get_play_data(video_id, topic, discussion_options)
+    }
+
+    if get_topic_data:
+        ret["topic"] = topic.get_play_data()
+
+    return ret
 
 @route("/api/v1/commoncore", methods=["GET"])
 @jsonp
