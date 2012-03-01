@@ -29,7 +29,7 @@
     <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
         <div style="min-height: 88px">
           <div id="description" class="video-description"></div>
-          <span class="video-header"></span>
+          <div class="video-header" style="min-height: 1px"></div>
         </div>
 
         <div id="youtube_blocked" class="desktop-only"></div>
@@ -66,25 +66,27 @@
 
     {{ js_css_packages.js_package("video") }}
     <script>
+      var videoParams = {
+
       {% if topic_data_json and video_data_json %}
-      window.videoTopLevelTopic = "{{ topic_data.top_level_topic }}";
-      window.videoLibrary = {
-        "{{ topic_data.id }}": {
-            topic: {{ topic_data_json }},
-            videos: {
-                "{{ video.readable_id }}": {{ video_data_json }}
-            }
-        }
-      };
+        videoTopLevelTopic: "{{ topic_data.top_level_topic }}",
+        videoLibrary: {
+          "{{ topic_data.id }}": {
+              topic: {{ topic_data_json }},
+              videos: {
+                  "{{ video.readable_id }}": {{ video_data_json }}
+              }
+          }
+        },
       {% else %}
-      window.videoTopLevelTopic = "{{ top_level_topic }}";
-      window.videoLibrary = { };
+        videoTopLevelTopic: "{{ top_level_topic }}",
       {% endif %}
 
-      window.loginURL = "{{ login_url|escape }}";
+        loginURL: "{{ login_url|escape }}",
+      }
 
       $(function() {
-        Video.init();
+        Video.init(videoParams);
       });
     </script>
     {{ analytics.crazyegg_tracker(False) }}
