@@ -1197,6 +1197,14 @@ li.profile-tab {
 .coach-row {
     padding: 10px;
 }
+/* Boring border for IE8, which doesn't understand nth-child
+ * zebra for zanier browsers */
+.coach-row {
+    border-top: 1px solid #EFEFEF;
+}
+.coach-row:nth-child(n) {
+    border: none;
+}
 .coach-row:nth-child(2n+1) {
     background-color: #EFEFEF;
 }
