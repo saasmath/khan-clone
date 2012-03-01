@@ -5,6 +5,7 @@
 {% import 'macros/library.html' as library %}
 {% import 'macros/analytics.html' as analytics %}
 {% import 'macros/discussion.html' as discussion %}
+{% import 'macros/subtitles.html' as subtitles %}
 
 {% block meta_page_title %}
 {% if topic_data %}{{video.title|escape}} | {{topic_data.title|escape}}{% endif %} | {% endblock %}
@@ -44,18 +45,7 @@
         </div>
         <div>
 
-          {% if video.subtitles_json %}
-          {# TODO: this should be an ol but conflicts badly with style from default.css #}
-          <div class="subtitles-container desktop-only">
-              <ul itemprop="transcript" class="subtitles">
-                  {% for sub in video.subtitles_json %}
-                  <li data-time="{{ sub.start_time }}">
-                      <a href="javascript:void(0)" data-fmttime="{{ (sub.start_time // 60) | int }}:{{ "%02d"|format(sub.start_time % 60) }}">{{ sub.text|trim|e }}</a>
-                  </li>
-                  {% endfor %}
-              </ul>
-          </div>
-          {% endif %}
+          {{ subtitles.interactive_transcript(video.subtitles_json) }}
 
           <span class="video-footer"></span>
         </div>

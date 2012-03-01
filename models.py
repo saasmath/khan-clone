@@ -25,6 +25,7 @@ from app import App
 import layer_cache
 import request_cache
 from discussion import models_discussion
+from experiments import InteractiveTranscriptExperiment
 from topics_list import all_topics_list
 import nicknames
 from counters import user_counter
@@ -3618,17 +3619,24 @@ class Video(Searchable, db.Model):
         subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
         subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
         subtitles_json = None
+        show_interactive_transcript = False
         if subtitles:
             subtitles_json = subtitles.load_json()
+            transcript_alternative = InteractiveTranscriptExperiment.ab_test()
+            show_interactive_transcript = (transcript_alternative == InteractiveTranscriptExperiment.SHOW)
 
         # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
         import shared_jinja
         player_html = shared_jinja.get().render_template('videoplayer.html',
             user_data=UserData.current(), video_path=video_path, video=video,
-            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
+            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE,
+            subtitles_json=subtitles_json, show_interactive_transcript=show_interactive_transcript)
 
         discussion_html = shared_jinja.get().render_template('videodiscussion.html',
             user_data=UserData.current(), video=video, topic=topic, **discussion_options)
+
+        subtitles_html = shared_jinja.get().render_template('videosubtitles.html',
+            subtitles_json=subtitles_json)
 
         return {
             'title': video.title,
@@ -3637,7 +3645,6 @@ class Video(Searchable, db.Model):
             'readable_id': video.readable_id,
             'key': video.key(),
             'video_path': video_path,
-            'subtitles_json': subtitles_json,
             'button_top_exercise': button_top_exercise,
             'related_exercises': [], # disabled for now
             'previous_video': previous_video_dict,
@@ -3646,7 +3653,8 @@ class Video(Searchable, db.Model):
             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
             'author_profile': 'https://plus.google.com/103970106103092409324',
             'player_html': player_html,
-            'discussion_html': discussion_html
+            'discussion_html': discussion_html,
+            'subtitles_html': subtitles_html,
         }
 
 class Playlist(Searchable, db.Model):

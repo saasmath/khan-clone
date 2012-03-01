@@ -68,7 +68,8 @@ var Video = {
         }
 
         // Bingo conversions for watching a video video
-        gae_bingo.bingo(["struggling_videos_landing",
+        gae_bingo.bingo(["videos_landing",
+            "struggling_videos_landing",
             "suggested_activity_videos_landing",
             "suggested_activity_videos_landing_binary"]);
 
