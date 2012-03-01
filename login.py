@@ -6,10 +6,10 @@ from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
 import auth.cookies
-import django.core.validators
 import logging
 import models
 import os
+import re
 import request_handler
 import util
 
@@ -183,6 +183,15 @@ class Logout(request_handler.RequestHandler):
 
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
+# TODO(benkomalo): move this to a more appropriate, generic spot
+# Loose regex for Email validation, copied from django.core.validators
+# Most regex or validation libraries are overly strict - this is intentionally
+# loose since the RFC is crazy and the only good way to know if an e-mail is
+# really valid is to send and see if it fails.
+_email_re = re.compile(
+    r"(^[-!#$%&'*+/=?^_`{}|~0-9A-Z]+(\.[-!#$%&'*+/=?^_`{}|~0-9A-Z]+)*"  # dot-atom
+    r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-011\013\014\016-\177])*"' # quoted-string
+    r')@(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$', re.IGNORECASE)  # domain
 
 class Register(request_handler.RequestHandler):
     def get(self):
@@ -207,14 +216,15 @@ class Register(request_handler.RequestHandler):
         cont = self.request_string('continue', default="/")
 
         # Store values in a dict so we can iterate for monotonous checks.
-        values = {}
-        values['nickname'] = self.request_string('nickname', default=None)
-        values['gender'] = self.request_string('gender', default="unspecified")
-        values['birthdate'] = self.request_string('birthdate', default=None)
+        values = {
+            'nickname': self.request_string('nickname', default=None),
+            'gender': self.request_string('gender', default="unspecified"),
+            'birthdate': self.request_string('birthdate', default=None),
 
-        values['username'] = self.request_string('username', default=None)
-        values['email'] = self.request_string('email', default=None)
-        values['password'] = self.request_string('password', default=None)
+            'username': self.request_string('username', default=None),
+            'email': self.request_string('email', default=None),
+            'password': self.request_string('password', default=None),
+        }
 
         # Simple existence validations
         errors = {}
@@ -232,7 +242,7 @@ class Register(request_handler.RequestHandler):
 
             # Perform loose validation - we can't actually know if this is
             # valid until we send an e-mail.
-            if not django.core.validators.email_re.search(email):
+            if not _email_re.search(email):
                 errors['email'] = "Email appears to be invalid"
 
         if values['username']:
