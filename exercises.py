@@ -687,10 +687,10 @@ class UpdateExercise(request_handler.RequestHandler):
 
         exercise.put()
 
-        if "related_videos" in dict:
+        if "related_videos" in dict and len(dict["related_videos"]):
             UpdateExercise.do_update_related_videos(exercise, 
                                                     dict["related_videos"])
-        elif "related_video_keys" in dict:
+        elif "related_video_keys" in dict and len(dict["related_video_keys"]):
             UpdateExercise.do_update_related_video_keys(exercise, 
                                                     dict["related_video_keys"])
         else:
