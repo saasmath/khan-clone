@@ -51,11 +51,14 @@ class ViewExercise(request_handler.RequestHandler):
 
         stack = get_problem_stack(exercise)
 
+        # TODO(kamens): eventually this will load an actual topic/usertopic
+        initial_exercises = models.UserTopic.get_next_exercises()
+
         template_values = {
             "exercise": exercise,
             "user_exercise": user_exercise,
             "stack_json": jsonify(stack, camel_cased=True),
-            "exercise_json": jsonify(exercise, camel_cased=True),
+            "initial_exercises_json": jsonify(initial_exercises, camel_cased=True),
             "user_exercise_json": jsonify(user_exercise), # TODO(kamens): need camelCase agreement here
         }
 

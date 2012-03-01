@@ -18,21 +18,19 @@ var Exercises = {
 
     /**
      * Called to initialize the exercise page. Passed in with JSON information
-     * rendered from the server. See templates/exercises/power_template.html for details.
+     * rendered from the server.
      */
     init: function(json) {
 
-        this.exercise = json.exercise;
+        this.userTopic = new Exercises.UserTopic(json.userTopic);
 
-        // TODO(kamens): figure out the persistance model and hook 'er up
-        // this.userTopicModel = new UserTopicModel(json.userTopic);
-        this.userTopic = json.userTopic;
-
-        this.incompleteStack = new Exercises.StackCollection(this.userTopic.incompleteStack); 
-        this.completeStack = new Exercises.StackCollection(this.userTopic.completeStack); 
+        this.incompleteStack = new Exercises.StackCollection(this.userTopic.get("incompleteStack")); 
+        this.completeStack = new Exercises.StackCollection(this.userTopic.get("completeStack")); 
 
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
+
+        Exercises.BottomlessQueue.init(json.initialExercises);
 
     },
 
@@ -45,8 +43,8 @@ var Exercises = {
         var profileExercise = Templates.get("exercises.exercise");
 
         $(".exercises-content-container").html(profileExercise({
-            exercise: this.exercise,
-            userTopic: this.userTopic,
+            // TODO(kamens): this data is faked
+            name: "Topic/Exercise Name"
         }));
 
         this.incompleteStackView = new Exercises.StackView({
@@ -501,25 +499,40 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     renderProblemCard: function() {
 
-        // khan-exercises currently both generates content and hooks up
-        // events to the exercise interface. This means, for now, we don't want 
-        // to regenerate a brand new card when transitioning between exercise
-        // problems.
-        //
-        // TODO: in the future, if khan-exercises's problem generation is
-        // separated from its UI events a little more, we can just rerender
-        // the whole card for every problem.
         if (!$("#problemarea").length) {
+
             this.renderCardContainer();
             this.renderCardContents("exercises.problem-template");
-        }
 
-        // Tell khan-exercises to fill the card w/ new problem contents
-        $(Khan).trigger("renderNextProblem");
+            // Wait until the exercises framework is initialized
+            // to render the first problem.
+            $(Khan).one("khanExercisesInitialized", function() {
+                Exercises.currentCardView.renderExerciseInProblemCard();
+            });
+
+        } else {
+
+            // khan-exercises currently both generates content and hooks up
+            // events to the exercise interface. This means, for now, we don't want 
+            // to regenerate a brand new card when transitioning between exercise
+            // problems.
+
+            // TODO: in the future, if khan-exercises's problem generation is
+            // separated from its UI events a little more, we can just rerender
+            // the whole card for every problem.
+
+            this.renderExerciseInProblemCard();
+
+        }
 
         // Update leaves since we may have not generated a brand new card
         this.updateLeaves();
 
+    },
+
+    renderExerciseInProblemCard: function() {
+        // Tell khan-exercises to fill the card w/ new problem contents
+        $(Khan).trigger("renderNextProblem", Exercises.BottomlessQueue.next());
     },
 
     /**
@@ -586,3 +599,87 @@ Exercises.CurrentCardView = Backbone.View.extend({
     }
 
 });
+
+Exercises.UserTopic = Backbone.Model.extend({
+
+    defaults: {
+        completeStack: [],
+        incompleteStack: []
+    },
+
+    initialize: function() {
+        // TODO(kamens): figure out the persistance model and hook 'er up
+    }
+
+});
+
+/**
+ * BottomlessQueue returns a never-ending sequence of
+ * Exercise and UserExercise objects once primed with
+ * some initial exercises.
+ *
+ * It'll talk to our API to try to find the best next
+ * exercises in the queue when possible.
+ */
+Exercises.BottomlessQueue = {
+
+    // # of exercises we keep around as "recycled"
+    // in case we need to re-use them if ajax requests
+    // have failed to refill our queue.
+    recycleQueueLength: 5,
+
+    // # of exercises in queue below which we will
+    // send off an ajax request for a refill
+    queueRefreshSize: 3,
+
+    currentQueue: [],
+    recycleQueue: [],
+
+    init: function(initialExercises) {
+        this.currentQueue = initialExercises;
+    },
+
+    next: function() {
+        
+        // If the queue is empty, use the recycle queue
+        // to fill up w/ old problems while we wait for
+        // an ajax request for more exercises to complete.
+        if (this.currentQueue.length == 0) {
+            this.currentQueue = this.recycleQueue;
+            this.recycleQueue = [];
+        }
+
+        // We don't ever expect to find an empty queue at
+        // this point. If we do, we've got a problem.
+        if (this.currentQueue.length == 0) {
+            throw "No exercises are in the queue";
+        }
+
+        // Pull off the next exercise
+        var next = _.head(this.currentQueue);
+
+        // Remove it from current queue...
+        this.currentQueue = _.rest(this.currentQueue);
+
+        // ...but put it on the end of our recycle queue
+        this.recycleQueue.push(next);
+
+        // ...and then chop the recycle queue down so it
+        // doesn't just constantly grow.
+        this.recycleQueue = _.last(this.recycleQueue, 5);
+
+        // Refill if we're running low
+        if (this.currentQueue.length < this.queueRefreshSize) {
+            this.refill();
+        }
+
+        return next;
+ 
+    },
+
+    refill: function() {
+        // TODO(kamens): refill the queue w/ the next N suggested exercises,
+        // handle queueing of multiple ajax calls, etc
+    }
+
+};

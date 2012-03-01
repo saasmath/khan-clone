@@ -3705,6 +3705,13 @@ class UserTopic(db.Model):
         else:
             return UserTopic.get_by_key_name(key)
 
+    # TODO(kamens) but really TODO(jace): Remove static. *This* is where the magic will happen.
+    @staticmethod
+    def get_next_exercises(n=3):
+        """ Returns the next n suggested exercises under this topic.
+        """
+        return [Exercise.get_by_name(exid) for exid in ["addition_1", "subtraction_1", "multiplication_0.5"]]
+
 class UserVideo(db.Model):
 
     @staticmethod
