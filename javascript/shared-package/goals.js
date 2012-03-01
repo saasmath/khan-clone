@@ -259,7 +259,7 @@ var GoalCollection = Backbone.Collection.extend({
     findActiveGoal: function() {
         var matchingGoal = null;
 
-        if (window.location.pathname.indexOf("/exercise") === 0 && Exercises.exercise) {
+        if (window.location.pathname.indexOf("/exercise") === 0 && typeof Exercises !== "undefined" && Exercises.exercise) {
             matchingGoal = this.findGoalWithObjective(Exercises.exercise.name,
                 "GoalObjectiveExerciseProficiency",
                 "GoalObjectiveAnyExerciseProficiency");
