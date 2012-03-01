@@ -1197,7 +1197,7 @@ li.profile-tab {
 .coach-row {
     padding: 10px;
 }
-.ie8 .coach-row {
+.lte8 .coach-row {
     border-top: 1px solid #EFEFEF;
 }
 .coach-row:nth-child(2n+1) {
