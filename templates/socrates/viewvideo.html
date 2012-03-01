@@ -16,6 +16,19 @@
     {% if has_socrates %}
     {{ js_css_packages.css_package("socrates") }}
     {% endif %}
+
+<style>
+.sidebar-section h3 {
+  margin: 30px 0 0 0;
+}
+.sidebar-section h4 {
+  margin: 15px 0 0 0;
+}
+.sidebar-section a, .sidebar-section a:visited {
+  color: #333;
+  text-decoration: none;
+}
+</style>
 {% endblock pagecss %}
 
 {% block pagescript %}
@@ -28,19 +41,23 @@
 {% endblock pagesubmenu %}
 
 {% block sidebarcontent %}
+<div class="sidebar-section">
+<h3>Interactive videos</h3>
+A new way to watch videos where you will be quizzed on the content as you watch.
 <div>
-    <strong>Linear Algebra</strong>
+    <h4>Linear Algebra</h4>
     <ul>
         <li><a href="/labs/socrates/linear-algebra/v/introduction-to-matrices">Introduction to Matrices</a></li>
     </ul>
 </div>
 <div>
-    <strong>Fractions</strong>
+    <h4>Fractions</h4>
     <ul>
         <li><a href="/labs/socrates/fractions/v/numerator-and-denominator-of-a-fraction">Numerator and Denominator of a Fraction</a></li>
         <li><a href="/labs/socrates/fractions/v/identifying-fraction-parts">Identifying Fraction Parts</a></li>
         <li><a href="/labs/socrates/fractions/v/equivalent-fractions">Equivalent fractions</a></li>
     </ul>
+</div>
 </div>
 {% endblock sidebarcontent %}
 
