@@ -914,6 +914,7 @@ Socrates.init = function(youtubeId) {
     // todo(dmnd) Integrate socrates & ajax video player routers. May need to
     // use hashChange from here: https://github.com/documentcloud/backbone/issues/803
     Video.videoLibrary = {};
+    Video.pushStateDisabled = true;
     Video.navigateToVideo(window.location.pathname);
     Backbone.history.start({
         pushState: false,
