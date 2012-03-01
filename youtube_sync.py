@@ -153,16 +153,21 @@ class YouTubeSync(request_handler.RequestHandler):
 
         videos_to_put = set()
 
-        for video in Video.all().filter("duration =", 0):
+        for video in Video.all():
             entry = None
+            youtube_id = video.youtube_id
+
             # truncating youtubeid at 11 to handle _DUP_X's
-            youtube_id = video.youtube_id[0:11]
+            # handling the _DUPs to make it easier to detect content problems when duration = 0
+            if re.search("_DUP_\d*$", youtube_id):
+                youtube_id = youtube_id[0:11]
+
             try:
                 entry = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
 
             except Exception, e:
                 logging.info("Error trying to get %s: %s" % 
-                            (video.youtube_id, e))
+                            (youtube_id, e))
             
             if entry:
                 count = int(entry.statistics.view_count)
