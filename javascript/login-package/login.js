@@ -88,7 +88,7 @@ Login.ensureValid_ = function(selector, errorText, checkFunc) {
  * Entry point for registration page setup.
  */
 Login.initRegistrationPage = function() {
-    var dateData = $("#birthday-picker").attr("data");
+    var dateData = $("#birthday-picker").data("date");
     var defaultDate;
     if (dateData) {
         var parts = dateData.split("-");
