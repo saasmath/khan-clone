@@ -224,3 +224,9 @@ img.face {
 .mem {
     display: none;
 }
+
+
+/* hide some elements on the video page */
+.video-footer, .video-header {
+    display: none;
+}
