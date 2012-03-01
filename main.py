@@ -51,6 +51,9 @@ import stories
 import summer
 import common_core
 import unisubs
+import api.jsonify
+import labs
+import socrates
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
@@ -88,41 +91,14 @@ def get_mangled_topic_name(topic_name):
         topic_name = topic_name.replace(char, "")
     return topic_name
 
+# New video view handler.
+# The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
+#   /math/algebra/introduction-to-algebra/v/origins-of-algebra
 class ViewVideo(request_handler.RequestHandler):
 
-    @ensure_xsrf_cookie
-    def get(self, readable_id=""):
-
-        # This method displays a video in the context of a particular topic.
-        # To do that we first need to find the appropriate topic.  If we aren't
-        # given the topic title in a query param, we need to find a topic that
-        # the video is a part of.  That requires finding the video, given it readable_id
-        # or, to support old URLs, it's youtube_id.
-        video = None
+    @staticmethod
+    def show_video(handler, readable_id, topic_id, redirect_to_canonical_url=False):
         topic = None
-        video_id = self.request.get('v')
-        topic_id = self.request_string('topic', default="")
-        readable_id = urllib.unquote(readable_id)
-        readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
-
-        # If either the readable_id or topic title is missing,
-        # redirect to the canonical URL that contains them
-        redirect_to_canonical_url = False
-        if video_id: # Support for old links
-            query = Video.all()
-            query.filter('youtube_id =', video_id)
-            video = query.get()
-
-            if not video:
-                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
-
-            readable_id = video.readable_id
-            topic = video.first_topic()
-
-            if not topic:
-                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
-
-            redirect_to_canonical_url = True
 
         if topic_id is not None and len(topic_id) > 0:
             topic = Topic.get_by_id(topic_id)
@@ -142,124 +118,77 @@ class ViewVideo(request_handler.RequestHandler):
 
             redirect_to_canonical_url = True
 
-        exid = self.request_string('exid', default=None)
-
         if redirect_to_canonical_url:
-            qs = {'topic': topic.id}
-            if exid:
-                qs['exid'] = exid
+            url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
+            logging.info("Redirecting to %s" % url)
+            handler.redirect(url, True)
+            return None
 
-            urlpath = "/video/%s" % urllib.quote(readable_id)
-            url = urlparse.urlunparse(('', '', urlpath, '', urllib.urlencode(qs), ''))
-            self.redirect(url, True)
-            return
+        # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
 
-        # If we got here, we have a readable_id and a topic, so we can display
-        # the topic and the video in it that has the readable_id.  Note that we don't
-        # query the Video entities for one with the requested readable_id because in some
-        # cases there are multiple Video objects in the datastore with the same readable_id
-        # (e.g. there are 2 "Order of Operations" videos).
-        videos = Topic.get_cached_videos_for_topic(topic)
-        previous_video = None
-        next_video = None
-        for v in videos:
-            if v.readable_id == readable_id:
-                v.selected = 'selected'
-                video = v
-            elif video is None:
-                previous_video = v
-            else:
-                next_video = v
-                break
+        topic_data = topic.get_play_data()
 
-        # If we're at the beginning or end of a topic, show the adjacent topic.
-        # previous_topic/next_topic are the topic to display.
-        # previous_video_topic/next_video_topic are the subtopics the videos
-        # are actually in.
-        previous_topic = None
-        previous_video_topic = None
-        next_topic = None
-        next_video_topic = None
-
-        if not previous_video:
-            previous_topic = topic
-            while not previous_video:
-                previous_topic = previous_topic.get_previous_topic()
-                if previous_topic:
-                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
-                else:
-                    break
-
-        if not next_video:
-            next_topic = topic
-            while not next_video:
-                next_topic = next_topic.get_next_topic()
-                if next_topic:
-                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
-                else:
-                    break
-
-        if video is None:
+        discussion_options = qa.add_template_values({}, handler.request)
+        video_data = Video.get_play_data(readable_id, topic, discussion_options)
+        if video_data is None:
             raise MissingVideoException("Missing video '%s'" % readable_id)
 
-        if App.offline_mode:
-            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
-        else:
-            video_path = video.download_video_url()
-
-        if video.description == video.title:
-            video.description = None
-
-        related_exercises = video.related_exercises()
-        button_top_exercise = None
-        if related_exercises:
-            def ex_to_dict(exercise):
-                return {
-                    'name': exercise.display_name,
-                    'url': exercise.relative_url,
-                }
-            button_top_exercise = ex_to_dict(related_exercises[0])
-
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
-
-        awarded_points = 0
-        if user_video:
-            awarded_points = user_video.points
-
-        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
-        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
-        subtitles_json = None
-        if subtitles:
-            subtitles_json = subtitles.load_json()
-
         template_values = {
-                            'topic': topic,
-                            'video': video,
-                            'videos': videos,
-                            'video_path': video_path,
-                            'video_points_base': consts.VIDEO_POINTS_BASE,
-                            'subtitles_json': subtitles_json,
-                            'button_top_exercise': button_top_exercise,
-                            'related_exercises': [], # disabled for now
-                            'previous_topic': previous_topic,
-                            'previous_video': previous_video,
-                            'previous_video_topic': previous_video_topic,
-                            'next_topic': next_topic,
-                            'next_video': next_video,
-                            'next_video_topic': next_video_topic,
-                            'selected_nav_link': 'watch',
-                            'awarded_points': awarded_points,
-                            'issue_labels': ('Component-Videos,Video-%s' % readable_id),
-                            'author_profile': 'https://plus.google.com/103970106103092409324'
-                        }
-        template_values = qa.add_template_values(template_values, self.request)
+            "topic_data": topic_data,
+            "topic_data_json": api.jsonify.jsonify(topic_data),
+            "video": video_data,
+            "video_data_json": api.jsonify.jsonify(video_data),
+            "selected_nav_link": 'watch'
+        }
 
-        bingo([
-            'struggling_videos_landing',
-            'suggested_activity_videos_landing',
-            'suggested_activity_videos_landing_binary',
-        ])
-        self.render_jinja2_template('viewvideo.html', template_values)
+        return template_values
+
+    @ensure_xsrf_cookie
+    def get(self, path, video_id):
+        if path:
+            path_list = path.split('/')
+
+            if len(path_list) > 0:
+                topic_id = path_list[-1]
+                template_values = ViewVideo.show_video(self, video_id, topic_id)
+                if template_values:
+                    self.render_jinja2_template('viewvideo.html', template_values)
+
+class ViewVideoDeprecated(request_handler.RequestHandler):
+
+    # The handler itself is deprecated. The ViewVideo handler is the canonical
+    # handler now.
+    @ensure_xsrf_cookie
+    def get(self, readable_id=""):
+
+        # This method displays a video in the context of a particular topic.
+        # To do that we first need to find the appropriate topic.  If we aren't
+        # given the topic title in a query param, we need to find a topic that
+        # the video is a part of.  That requires finding the video, given it readable_id
+        # or, to support old URLs, it's youtube_id.
+        video = None
+        video_id = self.request.get('v')
+        topic_id = self.request_string('topic', default="")
+        readable_id = urllib.unquote(readable_id)
+        readable_id = re.sub('-+$', '', readable_id)  # remove any trailing dashes (see issue 1140)
+
+        # If either the readable_id or topic title is missing,
+        # redirect to the canonical URL that contains them
+        if video_id: # Support for old links
+            query = Video.all()
+            query.filter('youtube_id =', video_id)
+            video = query.get()
+
+            if not video:
+                raise MissingVideoException("Missing video w/ youtube id '%s'" % video_id)
+
+            readable_id = video.readable_id
+            topic = video.first_topic()
+
+            if not topic:
+                raise MissingVideoException("No topic has video w/ youtube id '%s'" % video_id)
+
+        ViewVideo.show_video(self, readable_id, topic_id, True)
 
 class ReportIssue(request_handler.RequestHandler):
 
@@ -666,7 +595,7 @@ class Search(request_handler.RequestHandler):
                            'video_count': video_count,
                            'topic_count': topic_count,
                            })
-        
+
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
@@ -762,6 +691,10 @@ application = webapp2.WSGIApplication([
     ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
 
+    # Labs
+    ('/labs', labs.LabsRequestHandler),
+    ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
+
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
@@ -775,9 +708,10 @@ application = webapp2.WSGIApplication([
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
-    ('/video/(.*)', ViewVideo),
-    ('/v/(.*)', ViewVideo),
-    ('/video', ViewVideo), # Backwards URL compatibility
+    ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/video', ViewVideoDeprecated), # Backwards URL compatibility
+    ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.SaveMapCoords),
@@ -897,6 +831,7 @@ application = webapp2.WSGIApplication([
     ('/contentdash', dashboard.ContentDashboard),
     ('/admin/dashboard/record_statistics', dashboard.RecordStatistics),
     ('/admin/entitycounts', dashboard.EntityCounts),
+    ('/devadmin/contentcounts', dashboard.ContentCountsCSV),
 
     ('/sendtolog', SendToLog),
 
@@ -939,6 +874,7 @@ application = webapp2.WSGIApplication([
     ('/index\.html', PermanentRedirectToHome),
 
     ('/_ah/warmup.*', warmup.Warmup),
+
 
     ], debug=True)
 
