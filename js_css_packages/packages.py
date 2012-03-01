@@ -29,6 +29,7 @@ javascript = {
             "jquery.qtip.js",
             "../../khan-exercises/utils/underscore.js",
             "underscore-extras.js",
+            "keyhandling.js",
             "backbone.js",
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
