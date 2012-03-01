@@ -17,6 +17,9 @@
                 <img src="/images/coaches-nav.png" class="vertical-shadow rounded-background"/>
             </li>
             <li class="enter-email">
+                <!-- Are you a flying chimpanzee? Are you changing this element or anything inside?
+                If you answered yes to any of these questions, please update the positioning of the coach email.
+                Look in default.css for #empty-class ol li.enter-email div.coach-email -->
                 <p>Finally, they need to enter your Coach id and click the <em>Add coach</em> button.</p>
                 {% if UserData.current() %}
                     <p>Your Coach id is <strong>{{ coach_email|escape }}</strong>.</p>
