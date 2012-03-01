@@ -217,9 +217,17 @@ var Video = {
     },
 
     navigateToVideo: function(path) {
+        // Strip out any query string
+        var queryIndex = path.indexOf("?");
+        if (queryIndex > -1) {
+            path = path.substr(0, queryIndex);
+        }
+
+        // Strip out leading slash
         if (path.charAt(0) == "/") {
             path = path.substr(1);
         }
+
         pathList = [this.videoTopLevelTopic].concat(path.split("/"));
         if (pathList.length >= 3) {
             var video = pathList[pathList.length-1];

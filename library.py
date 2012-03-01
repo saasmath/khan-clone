@@ -150,6 +150,7 @@ class GenerateLibraryContent(request_handler.RequestHandler):
 
     def get(self, from_task_queue = False):
         library_content_html(ajax=True, version_number=None, bust_cache=True)
+        library_content_html(ajax=False, version_number=None, bust_cache=True)
 
         if not from_task_queue:
             self.redirect("/")

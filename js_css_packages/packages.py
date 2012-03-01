@@ -346,5 +346,10 @@ stylesheets = {
         "files": [
             "labs.css",
         ]
+    },
+    "bootstrap": {
+        "files": [
+            "bootstrap.css"
+        ]
     }
 }
