@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 import urllib
-import urlparse
 import logging
 import re
 
@@ -57,7 +56,7 @@ import labs
 import socrates
 
 import models
-from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
+from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoSubtitles, Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from phantom_users import util_notify
@@ -66,17 +65,12 @@ from mailing_lists import util_mailing_lists
 from profiles import util_profile
 from custom_exceptions import MissingVideoException
 from oauth_provider import apps as oauth_apps
-from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
-from counters import user_counter
-from notifications import UserNotifier
-from nicknames import get_default_nickname_for
 from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
-from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
