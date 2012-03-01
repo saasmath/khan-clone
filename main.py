@@ -705,6 +705,10 @@ class RedirectToJobvite(request_handler.RequestHandler):
     def get(self):
         self.redirect("http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7")
 
+class RedirectToSchoolImplementationsBlog(request_handler.RequestHandler):
+    def get(self):
+        self.redirect("http://ka-implementations.tumblr.com/")
+
 class RedirectToToolkit(request_handler.RequestHandler):
     def get(self):
         self.redirect("https://sites.google.com/a/khanacademy.org/schools/")
@@ -773,6 +777,7 @@ application = webapp2.WSGIApplication([
     ('/', homepage.ViewHomePage),
     ('/about', util_about.ViewAbout),
     ('/about/blog', blog.ViewBlog),
+    ('/about/blog/schools', RedirectToSchoolImplementationsBlog),
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
