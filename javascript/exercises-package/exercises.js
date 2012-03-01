@@ -499,31 +499,26 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     renderProblemCard: function() {
 
+        // khan-exercises currently both generates content and hooks up
+        // events to the exercise interface. This means, for now, we don't want 
+        // to regenerate a brand new card when transitioning between exercise
+        // problems.
+
+        // TODO: in the future, if khan-exercises's problem generation is
+        // separated from its UI events a little more, we can just rerender
+        // the whole card for every problem.
+
         if (!$("#problemarea").length) {
 
             this.renderCardContainer();
             this.renderCardContents("exercises.problem-template");
 
-            // Wait until the exercises framework is initialized
-            // to render the first problem.
-            $(Khan).one("khanExercisesInitialized", function() {
-                Exercises.currentCardView.renderExerciseInProblemCard();
-            });
-
-        } else {
-
-            // khan-exercises currently both generates content and hooks up
-            // events to the exercise interface. This means, for now, we don't want 
-            // to regenerate a brand new card when transitioning between exercise
-            // problems.
-
-            // TODO: in the future, if khan-exercises's problem generation is
-            // separated from its UI events a little more, we can just rerender
-            // the whole card for every problem.
-
-            this.renderExerciseInProblemCard();
+            // Tell khan-exercises to setup its DOM and event listeners
+            $(Khan).trigger("prepare");
 
         }
+
+        this.renderExerciseInProblemCard();
 
         // Update leaves since we may have not generated a brand new card
         this.updateLeaves();
@@ -644,14 +639,14 @@ Exercises.BottomlessQueue = {
         // If the queue is empty, use the recycle queue
         // to fill up w/ old problems while we wait for
         // an ajax request for more exercises to complete.
-        if (this.currentQueue.length == 0) {
+        if (!this.currentQueue.length) {
             this.currentQueue = this.recycleQueue;
             this.recycleQueue = [];
         }
 
         // We don't ever expect to find an empty queue at
         // this point. If we do, we've got a problem.
-        if (this.currentQueue.length == 0) {
+        if (!this.currentQueue.length) {
             throw "No exercises are in the queue";
         }
 

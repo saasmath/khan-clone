@@ -33,6 +33,7 @@ class ViewExercise(request_handler.RequestHandler):
 
         user_exercise = user_data.get_or_insert_exercise(exercise)
 
+        # TODO(kamens): this specific user_exercise stuff should all be going away
         # Cache these so we don't have to worry about future lookups
         user_exercise.exercise_model = exercise
         user_exercise._user_data = user_data

@@ -323,6 +323,7 @@ class RawExercise(request_handler.RequestHandler):
         self.response.headers["Content-Type"] = "text/html"
         self.response.out.write(raw_exercise_contents(exercise_file))
 
+# TODO(kamens): hoping this whole thing will go away due to power mode
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def exercise_template():
     path = os.path.join(os.path.dirname(__file__), "../khan-exercises/exercises/khan-exercise.html")
@@ -341,6 +342,7 @@ def exercise_template():
 
     return contents
 
+# TODO(kamens): hoping this whole thing will go away due to power mode
 @layer_cache.cache_with_key_fxn(lambda exercise: "exercise_contents_%s" % exercise.name, layer=layer_cache.Layers.InAppMemory)
 def exercise_contents(exercise):
     contents = raw_exercise_contents("%s.html" % exercise.name)
