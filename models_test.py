@@ -84,7 +84,6 @@ class UserDataCoachTest(BaseTest):
         self.assertEqual([jacob.key_email], requester_emails)
 
     def test_raises_exception_on_add_nonexistent_coach(self):
-        # TODO(marcia): Temp test, not sure on right error behavior yet
         bella = self.make_user('bella@gmail.com')
         coaches_json = [{
             'email': 'legolas@gmail.com',
