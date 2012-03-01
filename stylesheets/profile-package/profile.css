@@ -1188,16 +1188,6 @@ li.profile-tab {
 #tab-content-coaches .coaches-section {
     margin-bottom: 22px;
 }
-#tab-content-coaches .left-column {
-    float: left;
-    width: 370px;
-}
-#tab-content-coaches .right-column {
-    float: left;
-    margin-left: 30px;
-    min-width: 350px;
-    width: 45%;
-}
 #tab-content-coaches #requests {
     display: none;
 }
