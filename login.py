@@ -223,7 +223,7 @@ class Register(request_handler.RequestHandler):
                              ('username', "Username required"),
                              ('email', "Email required"),
                              ('password', "Password required")]:
-            if not field:
+            if not values[field]:
                 errors[field] = error
 
         # Check validity of auth credentials
