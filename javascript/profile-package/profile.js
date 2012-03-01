@@ -575,10 +575,6 @@ var Profile = {
         );
     },
 
-    AddObjectiveHover: function(element) {
-        Profile.hoverContent(element.find(".objective"), "#profile-goals-content");
-    },
-
     render: function() {
         var profileTemplate = Templates.get("profile.profile");
         Handlebars.registerHelper("graph-date-picker-wrapper", function(block) {

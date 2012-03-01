@@ -483,7 +483,7 @@ var ClassProfile = {
             goalViewModel.startTimeElement = $(this).find('.goal-start-time');
             goalViewModel.updateTimeElement = $(this).find('.goal-update-time');
 
-            ClassProfile.AddObjectiveHover($(this));
+            Profile.hoverContent($(this).find(".objective"));
 
             $(this).find("a.objective").each(function() {
                 var goalObjective = goalViewModel.goal.objectives[$(this).attr('data-id')];
@@ -768,48 +768,6 @@ var ClassProfile = {
                 qs.push(key + kvjoin + hash[key]);
         }
         return qs.join(eljoin);
-    },
-
-    // TODO: this is redundant with addobjectivehover in profile.js
-    AddObjectiveHover: function(element) {
-        var infoHover = $("#info-hover-container");
-        var lastHoverTime;
-        var mouseX;
-        var mouseY;
-        element.find(".objective").hover(
-            function(e) {
-                var hoverTime = +(new Date);
-                lastHoverTime = hoverTime;
-                mouseX = e.pageX;
-                mouseY = e.pageY;
-                var self = this;
-                setTimeout(function() {
-                    if (hoverTime != lastHoverTime) {
-                        return;
-                    }
-
-                    var hoverData = $(self).children(".hover-data");
-                    if ($.trim(hoverData.html())) {
-                        infoHover.html($.trim(hoverData.html()));
-
-                        var left = mouseX + 15;
-                        var jelGraph = $("#graph-content");
-                        var leftMax = jelGraph.offset().left +
-                                jelGraph.width() - 150;
-
-                        infoHover.css('left', Math.min(left, leftMax));
-                        infoHover.css('top', mouseY + 5);
-                        infoHover.css('cursor', 'pointer');
-                        infoHover.css('position', 'fixed');
-                        infoHover.show();
-                    }
-                }, 100);
-            },
-            function(e){
-                lastHoverTime = null;
-                $("#info-hover-container").hide();
-            }
-        );
     },
 
     getStudentListFromId: function (list_id) {
