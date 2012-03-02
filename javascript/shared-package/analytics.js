@@ -19,11 +19,22 @@
 
             // Detect an existing cookie, report it to GA and remove it
             var loadTag = readCookie("ka_event_tag");
+
             if (loadTag) {
                 var duration = readCookie("ka_event_duration") * 1;
                 _gaq.push(['_trackEvent', 'Page Load', 'Tag', loadTag, duration, true]);
+                mpq.track("Page Load", {
+                    "Path": window.location.pathname,
+                    "Link tag": loadTag,
+                    "Previous page time": duration
+                });
+
                 eraseCookie("ka_event_tag");
                 eraseCookie("ka_event_duration");
+            } else {
+                mpq.track("Page Load", {
+                    "Path": window.location.pathname
+                });
             }
 
             // Set an event handler to listen for clicks on anchor tags with a data-tag attribute
@@ -41,6 +52,12 @@
 
                     currentLinkTrackerTimeout = setTimeout(function() {
                         _gaq.push(['_trackEvent', 'Page Nav', 'Tag', tag, timeDeltaSeconds, true]);
+                        mpq.track("Page Navigate", {
+                            "Path": window.location.pathname,
+                            "Link tag": tag,
+                            "Previous page time": timeDeltaSeconds
+                        });
+
                         eraseCookie("ka_event_tag");
                         eraseCookie("ka_event_duration");
                     }, 1000);

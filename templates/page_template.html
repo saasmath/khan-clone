@@ -90,6 +90,15 @@
       _gaq.push(['ht._setAccount', 'UA-5033010-1']);
       _gaq.push(['ht._setDomainName', '.khanacademy.org']);
       _gaq.push(['ht._trackPageview']);
+ 
+      {# Mixpanel #}
+      var mpq = [];
+      mpq.push(["init","5f375bcfa7dc57184da63393e2af841c"]);
+      {% if logged_in %}
+      mpq.identify("{{ user_data.email }}");
+      mpq.name_tag("{{ username }}");
+      {% endif %}
+ 
     </script>
     {%- endif -%}
     </head>
@@ -197,6 +206,8 @@
             ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
+        {# Mixpanel #}
+        (function(){var b,a,e,d,c;b=document.createElement("script");b.type="text/javascript";b.async=true;b.src=(document.location.protocol==="https:"?"https:":"http:")+"//api.mixpanel.com/site_media/js/api/mixpanel.js";a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(b,a);e=function(f){return function(){mpq.push([f].concat(Array.prototype.slice.call(arguments,0)))}};d=["init","track","track_links","track_forms","register","register_once","identify","name_tag","set_config"];for(c=0;c<d.length;c++){mpq[d[c]]=e(d[c])}})();
     </script>
     {%- endif -%}
 
