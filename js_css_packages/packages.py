@@ -61,7 +61,8 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
-            "topics.js"
+            "topics.js",
+            "analytics.js"
         ]
     },
     "video": {
@@ -138,6 +139,11 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
+            "coaches.js",
+            "coach.handlebars",
+            "no-coaches.handlebars",
+            "no-requests.handlebars",
+            "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
             "user-badge.handlebars",

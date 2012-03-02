@@ -61,6 +61,13 @@ class RequestInputHandler(object):
         email = self.request_string(key)
         return UserData.get_possibly_current_user(email)
 
+    def request_visible_student_user_data(self):
+        """ Return overridden user data allowed. Otherwise, return the
+        currently logged in user.
+        """
+        override_user_data = self.request_student_user_data()
+        return UserData.get_visible_user(override_user_data)
+
     # get the UserData instance based on the querystring. The precedence is:
     # 1. email
     # 2. student_email
@@ -345,6 +352,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         # client-side error logging
         template_values['include_errorception'] = gandalf('errorception')
+
+        # Analytics
+        template_values['mixpanel_enabled'] = gandalf('mixpanel_enabled')
 
         if user_data:
             goals = GoalList.get_current_goals(user_data)
