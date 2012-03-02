@@ -335,7 +335,8 @@ class Register(request_handler.RequestHandler):
         
         # Set other properties we collected about the user (these are a little
         # more free and doesn't need to happen in the transaction above)
-        # TODO(benkomalo): save birthday
+        # Note update_nickname calls put()
+        created_user.birthdate = birthdate
         created_user.update_nickname(values['nickname'])
 
         # TODO(benkomalo): send welcome e-mail

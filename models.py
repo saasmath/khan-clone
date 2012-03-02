@@ -1016,6 +1016,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     # The name of the avatar the user has chosen. See avatar.util_avatar.py
     avatar_name = db.StringProperty(indexed=False)
+    
+    # The user's birthday was only relatively recently collected (Mar 2012)
+    # so older UserData may not have this information.
+    birthdate = db.DateProperty(indexed=False)
 
     # Whether or not the user has indicated she wishes to have a public
     # profile (and can be searched, etc)
