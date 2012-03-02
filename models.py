@@ -1079,10 +1079,21 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     @property
     def email(self):
+        """ Unlike key_email below, this email property
+        represents the user's current email address and
+        can be displayed to users.
+        """
         return self.user_email
 
     @property
     def key_email(self):
+        """ key_email is an unchanging key that's used
+        as a reference to this user in many old db entities.
+        It will never change, and it does not represent the user's
+        actual email. It is used as a key for db queries only. It
+        should not be displayed to users -- for that, use the 'email'
+        property.
+        """
         return self.user.email()
 
     @property
@@ -1281,6 +1292,21 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return user_data
 
+    @staticmethod
+    def get_visible_user(user, actor=None):
+        """ Retrieve user for actor, in the style of O-Town, all or nothing.
+
+        TODO(marcia): Sort out UserData and UserProfile visibility turf war
+        """
+        if actor is None:
+            actor = UserData.current() or UserData.pre_phantom()
+
+        if user and user.is_visible_to(actor):
+            # Allow access to user's profile
+            return user
+
+        return None
+
     def delete(self):
         logging.info("Deleting user data for %s with points %s" % (self.key_email, self.points))
         logging.info("Dumping user data for %s: %s" % (self.user_id, jsonify(self)))
@@ -1413,6 +1439,28 @@ class UserData(GAEBingoIdentityModel, db.Model):
             if user_data_coach:
                 emails.append(user_data_coach.email)
         return emails
+
+    def remove_student_lists(self, removed_coach_emails):
+        """ Remove student lists associated with removed coaches.
+        """
+        if len(removed_coach_emails):
+            # Get the removed coaches' keys
+            removed_coach_keys = frozenset([
+                    UserData.get_from_username_or_email(coach_email).key()
+                    for coach_email in removed_coach_emails])
+
+            # Get the StudentLists from our list of StudentList keys
+            student_lists = StudentList.get(self.student_lists)
+
+            # Theoretically, a StudentList allows for multiple coaches,
+            # but in practice there is exactly one coach per StudentList.
+            # If/when we support multiple coaches per list, we would need to change
+            # how this works... How *does* it work? Well, let me tell you.
+
+            # Set our student_lists to all the keys of StudentLists
+            # whose coaches do not include any removed coaches.
+            self.student_lists = [l.key() for l in student_lists
+                    if (len(frozenset(l.coaches) & removed_coach_keys) == 0)]
 
     def is_coached_by(self, user_data_coach):
         return user_data_coach.key_email in self.coaches or user_data_coach.key_email.lower() in self.coaches

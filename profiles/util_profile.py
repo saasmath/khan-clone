@@ -8,7 +8,7 @@ import models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms
-from models import StudentList, UserData
+from models import StudentList, UserData, CoachRequest
 import simplejson
 from avatars import util_avatars
 from badges import util_badges
@@ -254,6 +254,8 @@ class UserProfile(object):
         self.is_data_collectible = False
         
         self.is_coaching_logged_in_user = False
+        self.is_requesting_to_coach_logged_in_user = False
+
         self.nickname = ""
         self.date_joined = ""
         self.points = 0
@@ -336,6 +338,53 @@ class UserProfile(object):
 
         return profile
 
+    @staticmethod
+    def get_coach_and_requester_profiles_for_student(student_user_data):
+        coach_profiles = []
+
+        for email in student_user_data.coach_emails():
+            coach_user_data = UserData.get_from_username_or_email(email)
+            profile = UserProfile._from_coach(coach_user_data, student_user_data)
+            coach_profiles.append(profile)
+
+        requests = CoachRequest.get_for_student(student_user_data)
+        for request in requests:
+            coach_user_data = request.coach_requesting_data
+            profile = UserProfile._from_coach(coach_user_data, student_user_data)
+            coach_profiles.append(profile)
+
+        return coach_profiles
+
+    @staticmethod
+    def _from_coach(coach, actor):
+        """ Retrieve profile information about a coach for the specified actor.
+
+        At minimum, this will return a UserProfile with the following data:
+        -- email
+        -- is_coaching_logged_in_user
+        -- is_requesting_to_coach_logged_in_user
+        
+        If the coach has a public profile or if she is coached by the actor,
+        more information will be retrieved as allowed.
+        
+        coach - models.UserData object to retrieve information from
+        actor - models.UserData object corresponding to who is requesting
+                the data
+
+        TODO(marcia): Move away from using email to manage coaches, since
+        this breaks our notions of public/private profiles.
+        
+        """
+
+        profile = UserProfile.from_user(coach, actor) or UserProfile()
+
+        profile.email = coach.email
+
+        is_coach = actor.is_coached_by(coach)
+        profile.is_coaching_logged_in_user = is_coach
+        profile.is_requesting_to_coach_logged_in_user = not is_coach
+
+        return profile
 
 class ProfileGraph(request_handler.RequestHandler):
 

@@ -1,5 +1,6 @@
 from app import App
 import app
+import custom_exceptions
 import facebook_util
 import util
 import user_util
@@ -16,6 +17,61 @@ import profiles.util_profile as util_profile
 import simplejson as json
 from api.auth.xsrf import ensure_xsrf_cookie
 
+def update_coaches_and_requests(user_data, coaches_json):
+    """ Update the user's coaches and requests.
+    
+    Expects a list of jsonified UserProfiles, where an
+    isCoachingLoggedInUser value of True indicates a coach relationship,
+    and a value of False indicates a pending request.
+    
+    Any extant coach or request relationships not represented in
+    coaches_json will be deleted.
+    """
+    requester_emails = update_coaches(user_data, coaches_json)
+    update_requests(user_data, requester_emails)
+    return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
+
+def update_coaches(user_data, coaches_json):
+    """ Add as coaches those in coaches_json with isCoachingLoggedInUser
+    value True, and remove any old coaches not in coaches_json.
+    
+    Return a list of requesters' emails.
+    """
+    coach_key_emails = []
+    # These are the coaches' emails and not key_emails
+    outstanding_coach_emails = user_data.coach_emails()
+    requester_emails = []
+
+    for coach_json in coaches_json:
+        email = coach_json['email']
+        is_coaching_logged_in_user = coach_json['isCoachingLoggedInUser']
+        if is_coaching_logged_in_user:
+            if email in outstanding_coach_emails:
+                outstanding_coach_emails.remove(email)
+
+            coach_user_data = UserData.get_from_username_or_email(email)
+            if coach_user_data is not None:
+                coach_key_emails.append(coach_user_data.key_email)
+            else:
+                raise custom_exceptions.InvalidEmailException()
+        else:
+            requester_emails.append(email)
+
+    user_data.remove_student_lists(outstanding_coach_emails)
+    user_data.coaches = coach_key_emails
+    user_data.put()
+
+    return requester_emails
+
+def update_requests(user_data, requester_emails):
+    """ Remove all CoachRequests not represented by requester_emails.
+    """
+    current_requests = CoachRequest.get_for_student(user_data)
+
+    for current_request in current_requests:
+        coach_email = current_request.coach_requesting_data.email
+        if coach_email not in requester_emails:
+            current_request.delete()
 
 class ViewCoaches(RequestHandler):
     @disallow_phantoms
