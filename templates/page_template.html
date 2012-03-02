@@ -92,8 +92,10 @@
       _gaq.push(['ht._trackPageview']);
  
       {# Mixpanel #}
+      {% if mixpanel_enabled %}
       var mpq = [];
       mpq.push(["init","5f375bcfa7dc57184da63393e2af841c"]);
+      {% endif %}
  
     </script>
     {%- endif -%}
