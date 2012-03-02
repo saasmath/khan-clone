@@ -1077,10 +1077,21 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     @property
     def email(self):
+        """ Unlike key_email below, this email property
+        represents the user's current email address and
+        can be displayed to users.
+        """
         return self.user_email
 
     @property
     def key_email(self):
+        """ key_email is an unchanging key that's used
+        as a reference to this user in many old db entities.
+        It will never change, and it does not represent the user's
+        actual email. It is used as a key for db queries only. It
+        should not be displayed to users -- for that, use the 'email'
+        property.
+        """
         return self.user.email()
 
     @property

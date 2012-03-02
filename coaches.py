@@ -37,8 +37,9 @@ def update_coaches(user_data, coaches_json):
     
     Return a list of requesters' emails.
     """
-    updated_coach_emails = []
-    outstanding_coach_emails = user_data.coaches
+    coach_key_emails = []
+    # These are the coaches' emails and not key_emails
+    outstanding_coach_emails = user_data.coach_emails()
     requester_emails = []
 
     for coach_json in coaches_json:
@@ -47,18 +48,17 @@ def update_coaches(user_data, coaches_json):
         if is_coaching_logged_in_user:
             if email in outstanding_coach_emails:
                 outstanding_coach_emails.remove(email)
-                updated_coach_emails.append(email)
+
+            coach_user_data = UserData.get_from_username_or_email(email)
+            if coach_user_data is not None:
+                coach_key_emails.append(coach_user_data.key_email)
             else:
-                coach_user_data = UserData.get_from_username_or_email(email)
-                if coach_user_data is not None:
-                    updated_coach_emails.append(email)
-                else:
-                    raise custom_exceptions.InvalidEmailException()
+                raise custom_exceptions.InvalidEmailException()
         else:
             requester_emails.append(email)
 
     user_data.remove_student_lists(outstanding_coach_emails)
-    user_data.coaches = updated_coach_emails
+    user_data.coaches = coach_key_emails
     user_data.put()
 
     return requester_emails
@@ -69,7 +69,7 @@ def update_requests(user_data, requester_emails):
     current_requests = CoachRequest.get_for_student(user_data)
 
     for current_request in current_requests:
-        coach_email = current_request.coach_requesting_data.key_email
+        coach_email = current_request.coach_requesting_data.email
         if coach_email not in requester_emails:
             current_request.delete()
 
