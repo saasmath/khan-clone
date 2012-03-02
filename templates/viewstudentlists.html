@@ -5,21 +5,11 @@
 {% block meta_page_title %}Manage Students | {% endblock meta_page_title %}
 {% block pagecss %}
 {{ js_css_packages.css_package("studentlists") }}
-<style type="text/css" media="screen">
-#empty-class ol li.click-register div.coach-email {
-    top: 97px;
-    left: 110px;
-}
-#empty-class ol li.enter-email div.coach-email {
-    top: 98px;
-    left: 115px;
-}
-</style>
 {% endblock pagecss %}
 
 {% block pagesubmenu %}
 <span class="breadcrumbs_nav">
-    <a href="/coaches" id="manage-coaches">Manage Coaches</a>
+    <a href="{{viewer_profile_root}}/coaches">Manage Coaches</a>
     <a href="/students" id="manage-students" class="selected">Manage Students</a>
     <a href="/class_profile" id="class-stats">Class Stats</a>
 </span>
@@ -55,6 +45,7 @@
         </span>
         <h2 class="visited-no-recolor"><a href="/class_profile?student_list=allstudents" title="View the class statistics page for this set of students">All students</a></h2>
         <span id='nstudents'>0 students</span>
+        <span class="float-right">Your coach id is <strong>{{email|escape}}</strong></span>
     </div>
 
     <div id="textbox-container">
@@ -69,10 +60,6 @@
             <li>student@gmail.com</li>
             <li>http://facebookid.khanacademy.org/123456789</li>
         </ul>
-    </div>
-    <div class="alert note" id="notaccepted-note">
-        <span class="float-right close-button">(<a href="#">close</a>)</span>
-        The students below have not yet accepted your request to coach them. To start coaching them, have them click 'add a coach' at the bottom of any screen, then click the 'accept coach' button.
     </div>
 
     <div id="actual-students">
@@ -109,7 +96,7 @@
         {% endfor %}
     </div>
 
-    {{ coach.empty_class_instructions(True) }}
+    {{ coach.empty_class_instructions(students|length == 0) }}
 
     <div id="tmpl" style="display:none">
         <div class="student-row">

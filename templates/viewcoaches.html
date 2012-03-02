@@ -24,8 +24,9 @@
 {% endblock pagescript %}
 
 {% block pagesubmenu %}
+<!-- TODO(marcia): Remove this page, request handlers, etc -->
 <span class="breadcrumbs_nav">
-    <a href="/coaches" id="manage-coaches" class="selected">Manage Coaches</a>
+    <a href="{{viewer_profile_root}}/coaches">Manage Coaches</a>
     <a href="/students" id="manage-students">Manage Students</a>
     <a href="/class_profile" id="class-stats">Class Stats</a>
 </span>
