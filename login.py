@@ -112,8 +112,11 @@ def _merge_phantom_into(phantom_data, target_data):
     Will bail if any signs that the target user has previous activity.
     """
 
+    
     # First make sure user has 0 points and phantom user has some activity
-    if target_data.points == 0 and phantom_data and phantom_data.points > 0:
+    if (target_data.points == 0
+        and phantom_data
+        and phantom_data.points > 0):
 
         # Make sure user has no students
         if not target_data.has_students():
@@ -126,6 +129,8 @@ def _merge_phantom_into(phantom_data, target_data):
             phantom_data.current_user = target_data.current_user
             phantom_data.user_email = target_data.user_email
             phantom_data.user_nickname = target_data.user_nickname
+            phantom_data.birthdate = target_data.birthdate
+            phantom_data.set_password_from_user(target_data)
 
             if phantom_data.put():
                 # Phantom user was just transitioned to real user

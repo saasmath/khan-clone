@@ -1033,7 +1033,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             "expanded_all_exercises", "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
             "avatar_name", "username", "is_profile_public",
-            "credential_version"
+            "credential_version", "birthdate"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',

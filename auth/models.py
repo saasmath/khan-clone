@@ -29,7 +29,6 @@ class Credential(db.Model):
         # even a valid password.
         return passwords.hash_password(raw_password, self.salt) == self.hashed_pass
 
-
 class CredentialedUser(db.Model):
     # Randomly generated string representing a "credential version". This
     # is used to mint auth tokens and authenticate the user. A new value is
@@ -80,3 +79,27 @@ class CredentialedUser(db.Model):
             return False
 
         return c.validate_password(raw_password)
+
+    def set_password_from_user(self, other_user):
+        """ Sets the password for this user to be the same as that of
+        another user.
+        
+        To be used sparingly! This should only be done for user migrations
+        and other admin-related items.
+        
+        """
+        
+        def txn():
+            credential = Credential.retrieve_for_user(other_user)
+            if credential:
+                cred_copy = Credential(parent=self)
+                cred_copy.hashed_pass = credential.hashed_pass
+                cred_copy.salt = credential.salt
+            self.credential_version = other_user.credential_version
+            db.put([cred_copy, self])
+            
+        if db.is_in_transaction():
+            txn()
+        else:
+            xg_on = db.create_transaction_options(xg=True)
+            db.run_in_transaction_options(xg_on, txn)
