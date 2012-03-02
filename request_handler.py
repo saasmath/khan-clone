@@ -346,6 +346,9 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         # client-side error logging
         template_values['include_errorception'] = gandalf('errorception')
 
+        # Analytics
+        template_values['mixpanel_enabled'] = gandalf('mixpanel_enabled')
+
         if user_data:
             goals = GoalList.get_current_goals(user_data)
             goals_data = [g.get_visible_data() for g in goals]
