@@ -379,10 +379,10 @@ class UserProfile(object):
         profile = UserProfile.from_user(coach, actor) or UserProfile()
 
         profile.email = coach.email
-        actor_is_visible_to_coach = actor.is_visible_to(coach)
-        profile.is_coaching_logged_in_user = actor_is_visible_to_coach
 
-        profile.is_requesting_to_coach_logged_in_user = not actor_is_visible_to_coach
+        is_coach = actor.is_coached_by(coach)
+        profile.is_coaching_logged_in_user = is_coach
+        profile.is_requesting_to_coach_logged_in_user = not is_coach
 
         return profile
 
