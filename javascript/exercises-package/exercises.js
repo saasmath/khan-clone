@@ -653,15 +653,17 @@ Exercises.BottomlessQueue = {
 
     init: function(userExercises) {
 
+        // Fill up our queue and cache with initial exercises sent
+        // on first pageload
         _.each(userExercises, function(userExercise) {
-
-            // Fill up our queue and cache with initial exercises sent
-            // on first pageload
-            this.currentQueue.push(userExercise.exerciseModel.name);
-            this.userExerciseCache[userExercise.exerciseModel.name] = userExercise;
-
+            this.enqueue(userExercise);
         }, this);
 
+    },
+
+    enqueue: function(userExercise) {
+        this.currentQueue.push(userExercise.exerciseModel.name);
+        this.userExerciseCache[userExercise.exerciseModel.name] = userExercise;
     },
 
     next: function() {

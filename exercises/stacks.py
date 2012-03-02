@@ -36,8 +36,9 @@ class ProblemCard(Card):
 def get_problem_stack(next_user_exercises):
     problem_cards = [ProblemCard() for i in range(DEFAULT_CARDS_PER_STACK)]
 
-    # Initialize the first N cards w/ their suggested exercises.
-    # The rest will be filled in on the fly as the student works.
+    # Fill in the exercise_name properties for the first N cards
+    # w/ their suggested exercises. Rest will be filled in on the fly
+    # as the student works.
     for ix, user_exercise in enumerate(next_user_exercises):
         if len(problem_cards) > ix:
             problem_cards[ix].exercise_name = user_exercise.exercise

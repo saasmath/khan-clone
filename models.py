@@ -3710,7 +3710,7 @@ class UserTopic(db.Model):
     def next_user_exercises(n=3):
         """ Returns the next n suggested exercises under this topic.
         """
-        user_data = UserData.current()
+        user_data = UserData.current() or UserData.pre_phantom()
 
         exercises = [Exercise.get_by_name(exid) for exid in ["multiplication_1", "division_0.5"]]
 
