@@ -35,8 +35,6 @@ class ViewExercise(request_handler.RequestHandler):
         user_exercise._user_exercise_graph = user_exercise_graph
         user_exercise.summative = exercise.summative
 
-        user_exercise.exercise_model.sha1 = "TODO(kamens) seriously, SHA1s have been broken in reviews for a long time."
-
         user_exercise.exercise_model.related_videos = [exercise_video.video for exercise_video in exercise.related_videos_fetch()]
         for video in user_exercise.exercise_model.related_videos:
             video.id = video.key().id()
@@ -46,6 +44,8 @@ class ViewExercise(request_handler.RequestHandler):
         # TODO(kamens): get rid of the need to do this gross perf hack
         for next_user_exercise in next_user_exercises:
             next_exercise = models.Exercise.get_by_name(next_user_exercise.exercise)
+
+            next_exercise.sha1 = "TODO(kamens) seriously, SHA1s have been broken in reviews for a long time."
 
             next_exercise.related_videos = [exercise_video.video for exercise_video in next_exercise.related_videos_fetch()]
             for video in next_exercise.related_videos:
