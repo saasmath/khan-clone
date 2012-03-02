@@ -1406,6 +1406,16 @@ class UserData(GAEBingoIdentityModel, db.Model):
         self.reassess_if_necessary()
         return (exid in self.suggested_exercises)
 
+    def get_coaches_data(self):
+        """ Return list of coaches UserData.
+        """
+        coaches = []
+        for key_email in self.coaches:
+            user_data_coach = UserData.get_from_db_key_email(key_email)
+            if user_data_coach:
+                coaches.append(user_data_coach)
+        return coaches
+
     def get_students_data(self):
         coach_email = self.key_email
         query = UserData.all().filter('coaches =', coach_email)
@@ -1433,6 +1443,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return count > 0
 
     def coach_emails(self):
+        """ Return coaches' emails... but going to be removed imminently!
+        
+        Watch out!
+        """
         emails = []
         for key_email in self.coaches:
             user_data_coach = UserData.get_from_db_key_email(key_email)

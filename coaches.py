@@ -37,28 +37,32 @@ def update_coaches(user_data, coaches_json):
     
     Return a list of requesters' emails.
     """
-    coach_key_emails = []
-    # These are the coaches' emails and not key_emails
-    outstanding_coach_emails = user_data.coach_emails()
+    updated_coach_key_emails = []
+    current_coaches_data = user_data.get_coaches_data()
+    outstanding_coaches_dict = dict([(coach.email, coach.key_email)
+            for coach in current_coaches_data])
     requester_emails = []
 
     for coach_json in coaches_json:
         email = coach_json['email']
         is_coaching_logged_in_user = coach_json['isCoachingLoggedInUser']
         if is_coaching_logged_in_user:
-            if email in outstanding_coach_emails:
-                outstanding_coach_emails.remove(email)
-
-            coach_user_data = UserData.get_from_username_or_email(email)
-            if coach_user_data is not None:
-                coach_key_emails.append(coach_user_data.key_email)
+            if email in outstanding_coaches_dict:
+                # Email corresponds to a current coach
+                updated_coach_key_emails.append(outstanding_coaches_dict[email])
+                del outstanding_coaches_dict[email]
             else:
-                raise custom_exceptions.InvalidEmailException()
+                # Look up this new coach's key_email
+                coach_user_data = UserData.get_from_username_or_email(email)
+                if coach_user_data is not None:
+                    updated_coach_key_emails.append(coach_user_data.key_email)
+                else:
+                    raise custom_exceptions.InvalidEmailException()
         else:
             requester_emails.append(email)
 
-    user_data.remove_student_lists(outstanding_coach_emails)
-    user_data.coaches = coach_key_emails
+    user_data.remove_student_lists(outstanding_coaches_dict.keys())
+    user_data.coaches = updated_coach_key_emails
     user_data.put()
 
     return requester_emails

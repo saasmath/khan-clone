@@ -342,8 +342,7 @@ class UserProfile(object):
     def get_coach_and_requester_profiles_for_student(student_user_data):
         coach_profiles = []
 
-        for email in student_user_data.coach_emails():
-            coach_user_data = UserData.get_from_username_or_email(email)
+        for coach_user_data in student_user_data.get_coaches_data():
             profile = UserProfile._from_coach(coach_user_data, student_user_data)
             coach_profiles.append(profile)
 
