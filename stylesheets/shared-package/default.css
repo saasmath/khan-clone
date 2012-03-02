@@ -1742,10 +1742,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
             color: #006699;
         }
 
-        .exercise-badge .exercise-title #current-exercise {
-          position: relative;
-        }
-
         .exercise-badge .exercise-title #next-exercises {
             height: 42px;
             overflow: hidden;
