@@ -263,7 +263,7 @@ class Register(request_handler.RequestHandler):
 
         if values['password']:
             # TODO(benkomalo): enforce a minimum password quality/length
-            pass
+            password = values['password']
 
         if len(errors) > 0:
             # Never send back down the password.
@@ -278,5 +278,18 @@ class Register(request_handler.RequestHandler):
             self.render_jinja2_template('register.html', template_values)
             return
 
-        # TODO(benkomalo): actually handle registration
-        self.response.write("Not handled yet!")
+        # TODO(benkomalo): actually move out user id generation to a nice,
+        # centralized place and do a double check ID collisions
+        import uuid
+        user_id = "http://id.khanacademy.org/" + uuid.uuid4().hex
+        created_user = models.UserData.insert_for(user_id,
+                                                  email,
+                                                  username,
+                                                  password)
+        
+        # TODO(benkomalo): actually implement the post-signup flow properly
+        from api.jsonify import jsonify
+        if created_user:
+            self.response.write("created %s" % jsonify(created_user))
+        else:
+            self.response.write("creation failed for some reason")
