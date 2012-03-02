@@ -1280,8 +1280,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
                     user_data = UserData(**kwds)
                     if username and not user_data._claim_username_internal(username):
                         raise Rollback("username [%s] already taken" % username)
-                    if password and user_data.set_password(
-                            password, skip_transaction=True):
+                    if password and user_data.set_password(password):
                         raise Rollback("invalid password for user")
                 else:
                     logging.warning("Tried to re-make a user for key=[%s]" %

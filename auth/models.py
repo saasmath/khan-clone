@@ -39,7 +39,7 @@ class CredentialedUser(db.Model):
 
     _serialize_blacklist = ["credential_version"]
 
-    def set_password(self, raw_password, skip_transaction=False):
+    def set_password(self, raw_password):
         """ Updates the password for this user and invalidates previous ones.
 
         This operation will update this UserData object as well, so any
@@ -62,7 +62,7 @@ class CredentialedUser(db.Model):
             self.credential_version = new_cred_version
             db.put([new_cred, self])
             
-        if skip_transaction:
+        if db.is_in_transaction():
             txn()
         else:
             db.run_in_transaction(txn)
