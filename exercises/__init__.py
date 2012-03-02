@@ -83,9 +83,6 @@ class OldViewExercise(request_handler.RequestHandler):
         user_exercise._user_exercise_graph = user_exercise_graph
         user_exercise.summative = exercise.summative
 
-        # Temporarily work around in-app memory caching bug
-        exercise.user_exercise = None
-
         problem_number = self.request_int('problem_number', default=(user_exercise.total_done + 1))
 
         user_data_student = self.request_student_user_data(legacy=True) or user_data

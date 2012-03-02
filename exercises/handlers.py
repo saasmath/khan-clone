@@ -26,11 +26,6 @@ class ViewExercise(request_handler.RequestHandler):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-        exercise = models.Exercise.get_by_name(exid)
-
-        if not exercise:
-            raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
-
         user_exercise = user_data.get_or_insert_exercise(exercise)
 
         # TODO(kamens): this specific user_exercise stuff should all be going away
@@ -46,10 +41,6 @@ class ViewExercise(request_handler.RequestHandler):
         for video in user_exercise.exercise_model.related_videos:
             video.id = video.key().id()
 
-        # Temporarily work around in-app memory caching bug
-        # TODO(kamens): does this bug still exist? Here's hoping we don't hang user_exercise off of exercise any more, but we might.
-        exercise.user_exercise = None
-
         next_user_exercises = models.UserTopic.next_user_exercises()
 
         # TODO(kamens): get rid of the need to do this gross perf hack
@@ -59,7 +50,6 @@ class ViewExercise(request_handler.RequestHandler):
         stack = get_problem_stack(next_user_exercises)
 
         template_values = {
-            "exercise": exercise,
             "user_exercise": user_exercise,
             "stack_json": jsonify(stack, camel_cased=True),
             "user_exercises_json": jsonify(next_user_exercises, camel_cased=True),
