@@ -1,4 +1,5 @@
 from app import App
+from auth import age_util
 from counters import user_counter
 from google.appengine.api import users
 from models import UserData
@@ -6,12 +7,15 @@ from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
 import auth.cookies
+import cookie_util
+import datetime
 import logging
 import models
 import os
 import re
 import request_handler
 import util
+import urllib
 
 class LoginType():
     """ Enum representing which types of logins a user can use
@@ -180,15 +184,18 @@ class PostLogin(request_handler.RequestHandler):
         self.redirect(cont)
 
 class Logout(request_handler.RequestHandler):
-    def get(self):
-        self.delete_cookie('ureg_id')
-        self.delete_cookie(auth.cookies.AUTH_COOKIE_NAME)
+    @staticmethod
+    def delete_all_identifying_cookies(handler):
+        handler.delete_cookie('ureg_id')
+        handler.delete_cookie(auth.cookies.AUTH_COOKIE_NAME)
 
-        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
+        # Delete Facebook cookie, which sets ithandler both on "www.ka.org" and ".www.ka.org"
         if App.facebook_app_id:
-            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
-            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
-
+            handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
+            handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
+        
+    def get(self):
+        Logout.delete_all_identifying_cookies(self)
         self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 # TODO(benkomalo): move this to a more appropriate, generic spot
@@ -204,8 +211,15 @@ _email_re = re.compile(
 class Register(request_handler.RequestHandler):
     def get(self):
         """ Renders the register for new user page.  """
-        cont = self.request_string('continue', default="/")
+        
+        if (self.request_bool('under13', default=False)
+                or cookie_util.get_cookie_value(auth.cookies.U13_COOKIE_NAME)):
+            # User detected to be under13. Show them a sorry page.
+            name = self.request_string('name', default=None)
+            self.render_jinja2_template('under13.html', {'name': name})
+            return
 
+        cont = self.request_string('continue', default="/")
         template_values = {
             'continue': cont,
             'errors': {},
@@ -243,6 +257,26 @@ class Register(request_handler.RequestHandler):
                              ('password', "Password required")]:
             if not values[field]:
                 errors[field] = error
+                
+        # Under-13 check.
+        if values['birthdate']:
+            try:
+                birthdate = datetime.datetime.strptime(values['birthdate'],
+                                                       '%Y-%m-%d')
+                birthdate = birthdate.date()
+            except ValueError:
+                errors['birthdate'] = "Invalid birthdate"
+            
+        if birthdate and age_util.get_age(birthdate) < 13:
+            # We don't yet allow under13 users. We need to lock them out now,
+            # unfortunately. Set an under-13 cookie so they can't try again,
+            # and so they're denied all phantom-user activities.
+            Logout.delete_all_identifying_cookies(self)
+            auth.cookies.set_under13_cookie(self)
+            # TODO(benkomalo): do we care about wiping their phantom data?
+            self.redirect("/register?under13=1&name=%s" %
+                          urllib.quote(values['nickname'] or ""))
+            return
 
         # Check validity of auth credentials
         if values['email']:

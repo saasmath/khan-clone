@@ -441,6 +441,9 @@ var FacebookHook = {
 
             if (!USERNAME) {
                 FB.Event.subscribe("auth.login", function(response) {
+                    // TODO(benkomalo): this login detection is too aggressive!
+                    //     it means that the user will automatically auto-login
+                    //     if they have authorized KA to access FB before.
 
                     if (response.authResponse) {
                         FacebookHook.fixMissingCookie(response.authResponse);
