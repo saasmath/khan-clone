@@ -47,11 +47,7 @@ class CredentialedUser(db.Model):
 
         Authentication tokens distributed via auth/tokens.py will also be
         invalidated as a result of this operation (e.g. the user's auth cookie)
-        
-        raw_password -- the plaintext password to set
-        skip_transaction -- and optional parameter that should only be
-                            used internally. Useful in larger transactions
-                            (since nested transactions aren't possible)
+
         """
         new_cred_version = os.urandom(16).encode('hex')
         def txn():
