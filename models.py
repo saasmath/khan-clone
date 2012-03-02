@@ -11,6 +11,7 @@ import itertools
 from google.appengine.api import users
 from google.appengine.api import memcache
 from google.appengine.ext import deferred
+from google.appengine.api import taskqueue
 from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
 
