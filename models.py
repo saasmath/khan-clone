@@ -1319,7 +1319,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         if not self.is_phantom:
             user_counter.add(-1)
 
-        db.delete(self)
+        super(UserData, self).delete()
 
     def is_certain_to_be_thirteen(self):
         """ A conservative check that guarantees a user is at least 13 years

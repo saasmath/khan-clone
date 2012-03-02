@@ -103,3 +103,15 @@ class CredentialedUser(db.Model):
         else:
             xg_on = db.create_transaction_options(xg=True)
             db.run_in_transaction_options(xg_on, txn)
+
+    def delete(self):
+        def txn():
+            credential = Credential.retrieve_for_user(self)
+            if credential:
+                credential.delete()
+            super(CredentialedUser, self).delete()
+            
+        if db.is_in_transaction():
+            txn()
+        else:
+            db.run_in_transaction(txn)
