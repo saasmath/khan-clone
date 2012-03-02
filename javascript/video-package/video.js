@@ -207,7 +207,7 @@ var Video = {
         if (transcript.length && transcriptLink.length) {
             InteractiveTranscript.init(transcript);
             transcriptLink.click($.proxy(this._ontranscriptclick, this,
-                transcript));
+                transcript, transcriptLink));
         }
 
         $(".sharepop").hide();
@@ -307,14 +307,13 @@ var Video = {
         }
     },
 
-    _ontranscriptclick: function(transcript, e) {
-        var button = $(e.target);
+    _ontranscriptclick: function(transcript, transcriptLink, e) {
         if (transcript.is(":visible")) {
-            button.removeClass("toggled");
+            transcriptLink.removeClass("toggled");
             InteractiveTranscript.stop();
             transcript.slideUp("fast");
         } else {
-            button.addClass("toggled");
+            transcriptLink.addClass("toggled");
             transcript.slideDown("fast", function() {
                 InteractiveTranscript.start();
                 if (window.gae_bingo) {
