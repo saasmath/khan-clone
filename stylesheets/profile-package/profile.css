@@ -1204,9 +1204,8 @@ li.profile-tab {
 }
 .coach-row span.email {
     display: inline-block;
-    width: 220px;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    width: 260px;
+    word-wrap: break-word;
 }
 .coach-row .controls {
     float: right;
