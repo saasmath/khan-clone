@@ -5,22 +5,29 @@ var Coaches = {
 
     init: function() {
         var email = Profile.profile.get("email"),
-            template = Templates.get("profile.coaches");
+            deferred;
 
-        $("#tab-content-coaches").html(template(Profile.profile.toJSON()));
+        if (email) {
+            var template = Templates.get("profile.coaches");
+            $("#tab-content-coaches").html(template(Profile.profile.toJSON()));
 
-        this.delegateEvents_();
+            this.delegateEvents_();
 
-        return $.ajax({
-            type: "GET",
-            url: this.url,
-            data: {
-                email: email,
-                casing: "camel"
-            },
-            dataType: "json",
-            success: _.bind(this.onDataLoaded_, this)
-        });
+            deferred = $.ajax({
+                type: "GET",
+                url: this.url,
+                data: {
+                    email: email,
+                    casing: "camel"
+                },
+                dataType: "json",
+                success: _.bind(this.onDataLoaded_, this)
+            });
+        } else {
+            deferred = new $.Deferred().resolve();
+        }
+
+        return deferred;
     },
 
     onDataLoaded_: function(users) {
