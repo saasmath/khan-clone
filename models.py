@@ -1278,6 +1278,8 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
                 user_data = UserData.get_by_key_name(key_name)
                 if user_data is None:
                     user_data = UserData(**kwds)
+                    # Both claim_username and set_password updates user_data
+                    # and will call put() for us.
                     if username and not user_data._claim_username_internal(username):
                         raise Rollback("username [%s] already taken" % username)
                     if password and user_data.set_password(password):
