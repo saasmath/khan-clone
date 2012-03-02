@@ -95,7 +95,7 @@ var GoalProfileView = Backbone.View.extend({
             });
         }
 
-        Profile.AddObjectiveHover(jel);
+        Profile.hoverContent(jel.find(".objective"), "#profile-goals-content");
         return jel;
     },
 

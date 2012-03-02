@@ -171,12 +171,8 @@ var StudentLists = {
             $('#actual-students').hide();
             $('#requested-students').show();
             nstudents = $('#requested-students .student-row').length;
-            if(nstudents > 0) {
-                $('#notaccepted-note').show();
-            } else {
-                $('#request-note').show();
-            }
-            $('#empty-class').hide();
+
+            $('#empty-class').show();
 
             title = 'Requests';
             $('.students-header h2 a').removeAttr('href');
@@ -186,9 +182,6 @@ var StudentLists = {
         else {
             $('#requested-students').hide();
             $('#actual-students').show();
-
-            $('#notaccepted-note').hide();
-            $('#request-note').hide();
 
             if(StudentLists.currentList=='allstudents') {
                 var jelAll = $('#actual-students .student-row');
