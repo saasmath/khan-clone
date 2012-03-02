@@ -22,7 +22,8 @@
 
             if (loadTag) {
                 var duration = readCookie("ka_event_duration") * 1;
-                _gaq.push(['_trackEvent', 'Page Load', 'Tag', loadTag, duration, true]);
+                var referrer = readCookie("ka_event_referrer");
+                _gaq.push(['_trackEvent', 'Page Load', loadTag, referrer, duration, true]);
                 mpq.track("Page Load", {
                     "Path": window.location.pathname,
                     "Link tag": loadTag,
@@ -31,6 +32,7 @@
 
                 eraseCookie("ka_event_tag");
                 eraseCookie("ka_event_duration");
+                eraseCookie("ka_event_referrer");
             } else {
                 mpq.track("Page Load", {
                     "Path": window.location.pathname
@@ -49,17 +51,22 @@
                     var timeDeltaSeconds = Math.floor(timeDelta/1000);
                     createCookie("ka_event_tag", tag);
                     createCookie("ka_event_duration", timeDeltaSeconds);
+                    createCookie("ka_event_referrer", window.location.pathname);
 
                     currentLinkTrackerTimeout = setTimeout(function() {
-                        _gaq.push(['_trackEvent', 'Page Nav', 'Tag', tag, timeDeltaSeconds, true]);
+                        _gaq.push(['_trackEvent', 'Page Nav', tag, window.location.pathname, timeDeltaSeconds, true]);
                         mpq.track("Page Navigate", {
                             "Path": window.location.pathname,
                             "Link tag": tag,
                             "Previous page time": timeDeltaSeconds
                         });
 
+                        // Reset page load time
+                        pageLoadTime = (new Date()).getTime();
+
                         eraseCookie("ka_event_tag");
                         eraseCookie("ka_event_duration");
+                        eraseCookie("ka_event_referrer");
                     }, 1000);
                 }
             });
