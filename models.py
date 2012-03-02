@@ -10,6 +10,7 @@ import itertools
 
 from google.appengine.api import users
 from google.appengine.api import memcache
+from google.appengine.api.datastore_errors import Rollback
 from google.appengine.ext import deferred
 from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
@@ -1249,29 +1250,54 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         return UserData.get_from_username(username)
 
     @staticmethod
-    def insert_for(user_id, email):
+    def insert_for(user_id, email, username=None, password=None):
         if not user_id or not email:
             return None
 
         user = users.User(email)
+        key_name = UserData.key_for(user_id)
+        kwds = {
+	        'key_name': key_name,
+            'user': user,
+            'current_user': user,
+            'user_id': user_id,
+            'moderator': False,
+            'last_login': datetime.datetime.now(),
+            'proficient_exercises': [],
+            'suggested_exercises': [],
+            'need_to_reassess': True,
+            'points': 0,
+            'coaches': [],
+            'user_email': email,
+        }
 
-        user_data = UserData.get_or_insert(
-            key_name=UserData.key_for(user_id),
-            user=user,
-            current_user=user,
-            user_id=user_id,
-            moderator=False,
-            last_login=datetime.datetime.now(),
-            proficient_exercises=[],
-            suggested_exercises=[],
-            need_to_reassess=True,
-            points=0,
-            coaches=[],
-            user_email=email
+        if username or password:
+            # Username or passwords are separate entities.
+            # That means we have to do this in multiple steps - make a txn.
+            def create_txn():
+                user_data = UserData.get_by_key_name(key_name)
+                if user_data is None:
+                    user_data = UserData(**kwds)
+                    if username and not user_data._claim_username_internal(username):
+                        raise Rollback("username [%s] already taken" % username)
+                    if password and user_data.set_password(
+                            password, skip_transaction=True):
+                        raise Rollback("invalid password for user")
+                else:
+                    logging.warning("Tried to re-make a user for key=[%s]" %
+                                    key_name)
+                return user_data
 
-            )
+            xg_on = db.create_transaction_options(xg=True)
+            user_data = db.run_in_transaction_options(xg_on, create_txn)
 
-        if not user_data.is_phantom:
+        else:
+            # No username means we don't have to do manual transactions.
+            # Note that get_or_insert is a transaction itself, and it can't
+            # be nested in the above transaction.
+            user_data = UserData.get_or_insert(**kwds)
+
+        if user_data and not user_data.is_phantom:
             # Record that we now have one more registered user
             if (datetime.datetime.now() - user_data.joined).seconds < 60:
                 # Extra safety check against user_data.joined in case some
