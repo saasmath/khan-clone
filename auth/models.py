@@ -39,7 +39,7 @@ class CredentialedUser(db.Model):
 
     _serialize_blacklist = ["credential_version"]
 
-    def set_password(self, raw_password):
+    def set_password(self, raw_password, skip_transaction=False):
         """ Updates the password for this user and invalidates previous ones.
 
         This operation will update this UserData object as well, so any
@@ -47,6 +47,11 @@ class CredentialedUser(db.Model):
 
         Authentication tokens distributed via auth/tokens.py will also be
         invalidated as a result of this operation (e.g. the user's auth cookie)
+        
+        raw_password -- the plaintext password to set
+        skip_transaction -- and optional parameter that should only be
+                            used internally. Useful in larger transactions
+                            (since nested transactions aren't possible)
         """
         new_cred_version = os.urandom(16).encode('hex')
         def txn():
@@ -56,7 +61,11 @@ class CredentialedUser(db.Model):
             new_cred = Credential.make_for_user(self, raw_password)
             self.credential_version = new_cred_version
             db.put([new_cred, self])
-        db.run_in_transaction(txn)
+            
+        if skip_transaction:
+            txn()
+        else:
+            db.run_in_transaction(txn)
 
     def validate_password(self, raw_password):
         """ Tests the specified password for this user.
