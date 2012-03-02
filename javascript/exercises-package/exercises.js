@@ -630,10 +630,25 @@ Exercises.BottomlessQueue = {
     currentQueue: [],
     recycleQueue: [],
 
+    // STOPSHIP TODO(kamens): userExerciseCache needs to be hidden via
+    // closures to prevent simple cheating
+    //
+    // Nuke the global userExercise object to make
+    // it significantly harder to cheat:
+
+    /* try {
+        delete window.userExercise;
+    }
+    catch(e) {} // swallow exception from IE
+    finally {
+        if (window.userExercise) {
+            window.userExercise = undefined;
+        }
+    }
+    */
+
     // Cache of userExercise objects for
     // each exercise we encounter
-    // STOPSHIP TODO(kamens): this needs to be hidden via
-    // closures to prevent simple cheating
     userExerciseCache: {},
 
     init: function(userExercises) {

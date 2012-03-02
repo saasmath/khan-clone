@@ -45,7 +45,13 @@ class ViewExercise(request_handler.RequestHandler):
 
         # TODO(kamens): get rid of the need to do this gross perf hack
         for next_user_exercise in next_user_exercises:
-            next_user_exercise.exercise_model = models.Exercise.get_by_name(next_user_exercise.exercise)
+            next_exercise = models.Exercise.get_by_name(next_user_exercise.exercise)
+
+            next_exercise.related_videos = [exercise_video.video for exercise_video in next_exercise.related_videos_fetch()]
+            for video in next_exercise.related_videos:
+                video.id = video.key().id()
+
+            next_user_exercise.exercise_model = next_exercise
 
         stack = get_problem_stack(next_user_exercises)
 
