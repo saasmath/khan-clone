@@ -4,11 +4,11 @@ var Coaches = {
     url: "/api/v1/user/coaches",
 
     init: function() {
-        var email = Profile.profile.get("email"),
-            deferred;
+        var deferred;
 
-        if (email) {
-            var template = Templates.get("profile.coaches");
+        if (Profile.profile.get("isSelf")) {
+            var email = Profile.profile.get("email"),
+                template = Templates.get("profile.coaches");
             $("#tab-content-coaches").html(template(Profile.profile.toJSON()));
 
             this.delegateEvents_();
@@ -60,11 +60,6 @@ var Coaches = {
                 el: "#request-list-container",
                 emptyTemplateName: "profile.no-requests"
             }).render();
-        }
-
-        // Viewers of a student profile cannot take actions for the student.
-        if (!Profile.profile.get("isSelf")) {
-            $("#tab-content-coaches .controls").hide();
         }
     },
 
