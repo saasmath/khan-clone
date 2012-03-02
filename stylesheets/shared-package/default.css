@@ -3246,8 +3246,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     text-align: left;
 }
 #empty-class ol li.enter-email div.coach-email {
-    top: 282px;
-    left: 214px;
+    top: 272px;
+    left: 204px;
+    cursor: default; /* Don't show text cursor, because this isn't editable */
 }
 /* End No students page styles */
 
