@@ -3707,10 +3707,15 @@ class UserTopic(db.Model):
 
     # TODO(kamens) but really TODO(jace): Remove static. *This* is where the magic will happen.
     @staticmethod
-    def get_next_exercises(n=3):
+    def next_user_exercises(n=3):
         """ Returns the next n suggested exercises under this topic.
         """
-        return [Exercise.get_by_name(exid) for exid in ["addition_1", "subtraction_1", "multiplication_0.5"]]
+        user_data = UserData.current()
+
+        exercises = [Exercise.get_by_name(exid) for exid in ["multiplication_1", "division_0.5"]]
+
+        # TODO(kamens): parallelize
+        return [user_data.get_or_insert_exercise(ex) for ex in exercises]
 
 class UserVideo(db.Model):
 

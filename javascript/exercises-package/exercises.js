@@ -30,7 +30,7 @@ var Exercises = {
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
 
-        Exercises.BottomlessQueue.init(json.initialExercises);
+        Exercises.BottomlessQueue.init(json.userExercises);
 
     },
 
@@ -630,8 +630,23 @@ Exercises.BottomlessQueue = {
     currentQueue: [],
     recycleQueue: [],
 
-    init: function(initialExercises) {
-        this.currentQueue = initialExercises;
+    // Cache of userExercise objects for
+    // each exercise we encounter
+    // STOPSHIP TODO(kamens): this needs to be hidden via
+    // closures to prevent simple cheating
+    userExerciseCache: {},
+
+    init: function(userExercises) {
+
+        _.each(userExercises, function(userExercise) {
+
+            // Fill up our queue and cache with initial exercises sent
+            // on first pageload
+            this.currentQueue.push(userExercise.exerciseModel.name);
+            this.userExerciseCache[userExercise.exerciseModel.name] = userExercise;
+
+        }, this);
+
     },
 
     next: function() {
@@ -653,6 +668,12 @@ Exercises.BottomlessQueue = {
         // Pull off the next exercise
         var next = _.head(this.currentQueue);
 
+        // If we don't have a userExercise object for the next
+        // exercise, we've got a problem.
+        if (!this.userExerciseCache[next]) {
+            throw "Missing user exercise cache for next exercise";
+        }
+
         // Remove it from current queue...
         this.currentQueue = _.rest(this.currentQueue);
 
@@ -668,7 +689,7 @@ Exercises.BottomlessQueue = {
             this.refill();
         }
 
-        return next;
+        return this.userExerciseCache[next];
  
     },
 

@@ -25,16 +25,21 @@ class EndOfStackCard(Card):
 class ProblemCard(Card):
     """ Holds single Card's state specific to exercise problems. """
 
-    def __init__(self, exercise_name):
+    def __init__(self):
         Card.__init__(self)
 
         self.card_type = "problem"
-        self.exercise_name = exercise_name
-
-def append_end_of_stack(stack):
-    return stack + [EndOfStackCard()]
+        self.exercise_name = None
 
 # TODO(kamens): this will eventually be able to handle multiple exercises, 
 # topics, and probably eventually return other types of cards.
-def get_problem_stack(exercise):
-    return append_end_of_stack([ProblemCard(exercise.name) for i in range(DEFAULT_CARDS_PER_STACK)])
+def get_problem_stack(next_user_exercises):
+    problem_cards = [ProblemCard() for i in range(DEFAULT_CARDS_PER_STACK)]
+
+    # Initialize the first N cards w/ their suggested exercises.
+    # The rest will be filled in on the fly as the student works.
+    for ix, user_exercise in enumerate(next_user_exercises):
+        if len(problem_cards) > ix:
+            problem_cards[ix].exercise_name = user_exercise.exercise
+
+    return problem_cards + [EndOfStackCard()]

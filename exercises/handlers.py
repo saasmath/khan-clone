@@ -50,17 +50,21 @@ class ViewExercise(request_handler.RequestHandler):
         # TODO(kamens): does this bug still exist? Here's hoping we don't hang user_exercise off of exercise any more, but we might.
         exercise.user_exercise = None
 
-        stack = get_problem_stack(exercise)
+        next_user_exercises = models.UserTopic.next_user_exercises()
 
-        # TODO(kamens): eventually this will load an actual topic/usertopic
-        initial_exercises = models.UserTopic.get_next_exercises()
+        # TODO(kamens): get rid of the need to do this gross perf hack
+        for next_user_exercise in next_user_exercises:
+            next_user_exercise.exercise_model = models.Exercise.get_by_name(next_user_exercise.exercise)
+
+        stack = get_problem_stack(next_user_exercises)
 
         template_values = {
             "exercise": exercise,
             "user_exercise": user_exercise,
             "stack_json": jsonify(stack, camel_cased=True),
-            "initial_exercises_json": jsonify(initial_exercises, camel_cased=True),
-            "user_exercise_json": jsonify(user_exercise), # TODO(kamens): need camelCase agreement here
+            "user_exercises_json": jsonify(next_user_exercises, camel_cased=True),
+            # TODO(kamens): this is going away
+            "user_exercise_json": jsonify(user_exercise),
         }
 
         self.render_jinja2_template("exercises/exercise_template.html", template_values)
