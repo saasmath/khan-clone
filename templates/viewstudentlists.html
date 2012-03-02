@@ -45,6 +45,7 @@
         </span>
         <h2 class="visited-no-recolor"><a href="/class_profile?student_list=allstudents" title="View the class statistics page for this set of students">All students</a></h2>
         <span id='nstudents'>0 students</span>
+        <span class="float-right">Your coach id is <strong>{{email|escape}}</strong></span>
     </div>
 
     <div id="textbox-container">
@@ -59,10 +60,6 @@
             <li>student@gmail.com</li>
             <li>http://facebookid.khanacademy.org/123456789</li>
         </ul>
-    </div>
-    <div class="alert note" id="notaccepted-note">
-        <span class="float-right close-button">(<a href="#">close</a>)</span>
-        The students below have not yet accepted your requests to coach them. Ask them to visit the coaches tab on their profile, where your request can be accepted.
     </div>
 
     <div id="actual-students">
@@ -99,7 +96,7 @@
         {% endfor %}
     </div>
 
-    {{ coach.empty_class_instructions(True) }}
+    {{ coach.empty_class_instructions(students|length == 0) }}
 
     <div id="tmpl" style="display:none">
         <div class="student-row">

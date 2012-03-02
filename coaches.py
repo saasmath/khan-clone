@@ -132,14 +132,15 @@ class ViewStudents(RequestHandler):
             students.sort(key=lambda s: s['nickname'])
 
             template_values = {
-                "students": students,
-                "students_json": json.dumps(students),
-                "student_lists": student_lists_list,
-                "student_lists_json": json.dumps(student_lists_list),
-                "invalid_student": invalid_student,
-                "coach_requests": coach_requests,
-                "coach_requests_json": json.dumps(coach_requests),
-                'selected_nav_link': 'coach'
+                'students': students,
+                'students_json': json.dumps(students),
+                'student_lists': student_lists_list,
+                'student_lists_json': json.dumps(student_lists_list),
+                'invalid_student': invalid_student,
+                'coach_requests': coach_requests,
+                'coach_requests_json': json.dumps(coach_requests),
+                'selected_nav_link': 'coach',
+                'email': user_data.email,
             }
             self.render_jinja2_template('viewstudentlists.html', template_values)
         else:
