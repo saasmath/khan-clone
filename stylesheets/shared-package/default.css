@@ -184,8 +184,11 @@ input.simple-button {
     outline: 2px solid #333;
 }
 
-.simple-button:active {
-    top: 1px;
+.simple-button:active, 
+.simple-button.toggled {
+    -webkit-box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 /* A blue color scheme for the simple button */
 .simple-button.blue {
@@ -273,7 +276,10 @@ input.simple-button {
     background-image: -o-linear-gradient( top, #f7f7f7, #ddd );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f7f7f7', endColorstr='#dddddd');
 }
-
+.lte8 .action-gradient:active,
+.lte8 .action-gradient.toggled {
+    background-color: #c4c4c4; /* less: darken(#ddd, 10%) */
+}
 /* blue button gradient */
 .action-gradient.blue {
     background: #3a4759;
@@ -281,6 +287,10 @@ input.simple-button {
     background-image: -moz-linear-gradient( top, #3a4759, #222e3e );
     background-image: -o-linear-gradient( top, #3a4759, #222e3e );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#3a4759', endColorstr='#222e3e');
+}
+.lte8 .action-gradient.blue:active,
+.lte8 .action-gradient.blue.toggled {
+    background-color: #10161d; /* less: darken(#222e3e, 10%) */
 }
 /* green button gradient */
 .action-gradient.green {
@@ -290,6 +300,10 @@ input.simple-button {
     background-image: -o-linear-gradient( top, #8aba08, #6e9700 );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#8aba08', endColorstr='#6e9700');
 }
+.lte8 .action-gradient.green:active,
+.lte8 .action-gradient.green.toggled {
+    background-color: #496400; /* less: darken(#6e9700, 10%) */
+}
 /* orange button gradient */
 .action-gradient.orange {
     background: #e35d04;
@@ -297,6 +311,10 @@ input.simple-button {
     background-image: -moz-linear-gradient( top, #e35d04, #bf4f04 );
     background-image: -o-linear-gradient( top, #e35d04, #bf4f04 );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e35d04', endColorstr='#bf4f04');
+}
+.lte8 .action-gradient.orange:active,
+.lte8 .action-gradient.orange.toggled {
+    background-color: #8d3a03; /* less: darken(#bf4f04, 10%) */
 }
 .action-gradient.seethrough {
     background-image: -webkit-gradient(linear, left top, left bottom,  from(rgba(255,255,255, .5)), to(rgba(255,255,255, .0)));
@@ -1101,6 +1119,7 @@ span.video_extra_links {
     float: right;
     position: relative;
     z-index: 100;
+    margin-bottom: 10px;
 }
 span.video_extra_links div.video-energy-points {
     float: left;

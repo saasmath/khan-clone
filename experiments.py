@@ -123,3 +123,39 @@ class SuggestedActivityExperiment(object):
                            SuggestedActivityExperiment._conversion_types)
 
         return find_alternative_for_user(exp_name, user_data)
+
+
+class InteractiveTranscriptExperiment(object):
+
+    NAME = 'Interactive transcript on video page'
+
+    NO_SHOW = 'no_show'
+    SHOW = 'show'
+
+    _ab_test_alternatives = [
+        NO_SHOW,  # Don't show interactive transcript
+        SHOW,  # Show interactive transcript
+    ]
+
+    _conversion_tests = [
+        # server-side conversions
+        ('videos_landing', ConversionTypes.Counting),
+        ('videos_finished', ConversionTypes.Counting),
+
+        # client-side conversions to gauge interaction with the transcript
+        ('interactive_transcript_shown', ConversionTypes.Counting),
+        ('interactive_transcript_shown_binary', ConversionTypes.Binary),
+        ('interactive_transcript_subtitle_click', ConversionTypes.Counting),
+        ('interactive_transcript_subtitle_click_binary', ConversionTypes.Binary),
+    ]
+
+    _conversion_names, _conversion_types = [
+        list(x) for x in zip(*_conversion_tests)]
+
+    @staticmethod
+    def ab_test():
+        """gaebingo.ab_test() wrapper"""
+        return ab_test(InteractiveTranscriptExperiment.NAME,
+                       InteractiveTranscriptExperiment._ab_test_alternatives,
+                       InteractiveTranscriptExperiment._conversion_names,
+                       InteractiveTranscriptExperiment._conversion_types)

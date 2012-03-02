@@ -108,7 +108,7 @@ class Bingo(RequestHandler):
 
         self.response.headers['Content-Type'] = 'text/json'
 
-        found_experiments = all(
+        found_experiments = any(
                 bingo_cache.get_experiment_names_by_conversion_name(name)
                 for name in conversion_names)
 

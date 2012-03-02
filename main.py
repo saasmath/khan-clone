@@ -122,7 +122,7 @@ class ViewVideo(request_handler.RequestHandler):
             url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
             logging.info("Redirecting to %s" % url)
             handler.redirect(url, True)
-            return
+            return None
 
         # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
 
@@ -141,110 +141,6 @@ class ViewVideo(request_handler.RequestHandler):
             "selected_nav_link": 'watch'
         }
 
-        handler.render_jinja2_template('viewvideo.html', template_values)
-
-    # This is also deprecated; only keep around while Socrates is in development /labs
-    @classmethod
-    def get_template_data(cls, self, readable_id, video, topic):
-        # If we got here, we have a readable_id and a topic, so we can display
-        # the topic and the video in it that has the readable_id.  Note that we don't
-        # query the Video entities for one with the requested readable_id because in some
-        # cases there are multiple Video objects in the datastore with the same readable_id
-        # (e.g. there are 2 "Order of Operations" videos).
-        videos = Topic.get_cached_videos_for_topic(topic)
-        previous_video = None
-        next_video = None
-        for v in videos:
-            if v.readable_id == readable_id:
-                v.selected = 'selected'
-                video = v
-            elif video is None:
-                previous_video = v
-            else:
-                next_video = v
-                break
-
-        # If we're at the beginning or end of a topic, show the adjacent topic.
-        # previous_topic/next_topic are the topic to display.
-        # previous_video_topic/next_video_topic are the subtopics the videos
-        # are actually in.
-        previous_topic = None
-        previous_video_topic = None
-        next_topic = None
-        next_video_topic = None
-
-        if not previous_video:
-            previous_topic = topic
-            while not previous_video:
-                previous_topic = previous_topic.get_previous_topic()
-                if previous_topic:
-                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
-                else:
-                    break
-
-        if not next_video:
-            next_topic = topic
-            while not next_video:
-                next_topic = next_topic.get_next_topic()
-                if next_topic:
-                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
-                else:
-                    break
-
-        if video is None:
-            raise MissingVideoException("Missing video '%s'" % readable_id)
-
-        if App.offline_mode:
-            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
-        else:
-            video_path = video.download_video_url()
-
-        if video.description == video.title:
-            video.description = None
-
-        related_exercises = video.related_exercises()
-        button_top_exercise = None
-        if related_exercises:
-            def ex_to_dict(exercise):
-                return {
-                    'name': exercise.display_name,
-                    'url': exercise.relative_url,
-                }
-            button_top_exercise = ex_to_dict(related_exercises[0])
-
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
-
-        awarded_points = 0
-        if user_video:
-            awarded_points = user_video.points
-
-        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
-        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
-        subtitles_json = None
-        if subtitles:
-            subtitles_json = subtitles.load_json()
-
-        template_values = {
-                            'topic': topic,
-                            'video': video,
-                            'videos': videos,
-                            'video_path': video_path,
-                            'video_points_base': consts.VIDEO_POINTS_BASE,
-                            'subtitles_json': subtitles_json,
-                            'button_top_exercise': button_top_exercise,
-                            'related_exercises': [], # disabled for now
-                            'previous_topic': previous_topic,
-                            'previous_video': previous_video,
-                            'previous_video_topic': previous_video_topic,
-                            'next_topic': next_topic,
-                            'next_video': next_video,
-                            'next_video_topic': next_video_topic,
-                            'selected_nav_link': 'watch',
-                            'awarded_points': awarded_points,
-                            'issue_labels': ('Component-Videos,Video-%s' % readable_id),
-                            'author_profile': 'https://plus.google.com/103970106103092409324'
-                        }
-        template_values = qa.add_template_values(template_values, self.request)
         return template_values
 
     @ensure_xsrf_cookie
@@ -254,8 +150,9 @@ class ViewVideo(request_handler.RequestHandler):
 
             if len(path_list) > 0:
                 topic_id = path_list[-1]
-                ViewVideo.show_video(self, video_id, topic_id)
-                return
+                template_values = ViewVideo.show_video(self, video_id, topic_id)
+                if template_values:
+                    self.render_jinja2_template('viewvideo.html', template_values)
 
 class ViewVideoDeprecated(request_handler.RequestHandler):
 
@@ -799,6 +696,10 @@ application = webapp2.WSGIApplication([
     ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
 
+    # Labs
+    ('/labs', labs.LabsRequestHandler),
+    ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
+
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
@@ -963,10 +864,6 @@ application = webapp2.WSGIApplication([
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
-
-    # Labs
-    ('/labs', labs.LabsRequestHandler),
-    ('/labs/socrates/(.*)', socrates.SocratesHandler),
 
     ('/robots.txt', robots.RobotsTxt),
 
