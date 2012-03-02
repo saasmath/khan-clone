@@ -134,10 +134,13 @@ def _merge_phantom_into(phantom_data, target_data):
                 return True
     return False
 
+# TODO(benkomalo): get rid of PostLogin. This is logic that should just be
+# handled in the Login code itself, and needs to be duplicated in Registration.
+# It's also dangerous since the continue URL's can be modified for any reason
+# and skipping some stuff in PostLogin may be weird.
 class PostLogin(request_handler.RequestHandler):
-    def get(self):
-        cont = self.request_string('continue', default="/")
-
+    @staticmethod
+    def handle_postlogin(handler, continue_url=None):
         # Immediately after login we make sure this user has a UserData entity
         user_data = UserData.current()
         if user_data:
@@ -165,13 +168,13 @@ class PostLogin(request_handler.RequestHandler):
             if phantom_id:
                 phantom_data = UserData.get_from_db_key_email(phantom_id)
                 if _merge_phantom_into(phantom_data, user_data):
-                    cont = "/newaccount?continue=%s" % cont
+                    continue_url = "/newaccount?continue=%s" % continue_url
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
             if App.facebook_app_id:
-                self.delete_cookie("fbsr_" + App.facebook_app_id)
-                self.delete_cookie("fbs_" + App.facebook_app_id)
+                handler.delete_cookie("fbsr_" + App.facebook_app_id)
+                handler.delete_cookie("fbs_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
@@ -179,8 +182,12 @@ class PostLogin(request_handler.RequestHandler):
             )
 
         # Always delete phantom user cookies on login
-        self.delete_cookie('ureg_id')
+        handler.delete_cookie('ureg_id')
+        return continue_url
 
+    def get(self):
+        cont = self.request_string('continue', default="/")
+        cont = PostLogin.handle_postlogin(self, cont)
         self.redirect(cont)
 
 class Logout(request_handler.RequestHandler):
@@ -320,10 +327,19 @@ class Register(request_handler.RequestHandler):
                                                   email,
                                                   username,
                                                   password)
+        if not created_user:
+            # TODO(benkomalo): handle the low probability event that a username
+            # was taken just as this method was processing.
+            self.response.write("Oops. can't make user")
+            return
         
-        # TODO(benkomalo): actually implement the post-signup flow properly
-        from api.jsonify import jsonify
-        if created_user:
-            self.response.write("created %s" % jsonify(created_user))
-        else:
-            self.response.write("creation failed for some reason")
+        # Set other properties we collected about the user (these are a little
+        # more free and doesn't need to happen in the transaction above)
+        # TODO(benkomalo): save birthday
+        created_user.update_nickname(values['nickname'])
+
+        # TODO(benkomalo): send welcome e-mail
+        # TODO(benkomalo): do some kind of onboarding instead of taking them
+        #                  directly to a continue URL
+        auth.cookies.set_auth_cookie(self, created_user)
+        self.redirect(cont)
