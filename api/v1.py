@@ -1084,6 +1084,7 @@ def get_coaches_and_requesters():
     """ Return list of UserProfiles corresponding to the student's
         coaches and coach requesters
     """
+    # TODO(marcia): Only reveal coach information for self
     user_data = request.request_visible_student_user_data()
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
