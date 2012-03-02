@@ -65,6 +65,6 @@
 {# Pass along the caching information to the JS so that
 	when it makes its request for content, it can use this token #}
 {% if ajax %}
-    <script>var Homepage_cacheToken = {{ timestamp }};</script>
+    <script>var Homepage_cacheToken = {{ version_id }};</script>
 {% endif %}
 

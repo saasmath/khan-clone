@@ -207,6 +207,7 @@ javascript = {
             "khan-exercise.js",
             "utils/angles.js",
             "utils/answer-types.js",
+            "utils/ast.js",
             "utils/calculus.js",
             "utils/congruence.js",
             "utils/convert-values.js",
@@ -225,6 +226,7 @@ javascript = {
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/math-model.js",
             "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
@@ -233,6 +235,7 @@ javascript = {
             "utils/scratchpad.js",
             "utils/slice-clone.js",
             "utils/stat.js",
+            "utils/subhints.js",
             "utils/tmpl.js",
             "utils/word-problems.js",
             "utils/spin.js",
@@ -345,6 +348,11 @@ stylesheets = {
     "labs": {
         "files": [
             "labs.css",
+        ]
+    },
+    "bootstrap": {
+        "files": [
+            "bootstrap.css"
         ]
     }
 }

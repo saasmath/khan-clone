@@ -11,6 +11,7 @@ import itertools
 from google.appengine.api import users
 from google.appengine.api import memcache
 from google.appengine.ext import deferred
+from google.appengine.api import taskqueue
 from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
 
@@ -25,6 +26,7 @@ from app import App
 import layer_cache
 import request_cache
 from discussion import models_discussion
+from experiments import InteractiveTranscriptExperiment
 from topics_list import all_topics_list
 import nicknames
 from counters import user_counter
@@ -1744,18 +1746,33 @@ class TopicVersion(db.Model):
     def set_default_version(self):
         logging.info("starting set_default_version")
 
-        deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
+        deferred.defer(apply_version_content_changes, 
+                       self.number,
+                       _queue = "topics-set-default-queue",
+                       _name = "%i_apply_version_content_changes" % self.number, 
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
 
-def apply_version_content_changes(version):
+def apply_version_content_changes(version_number):
+    version = TopicVersion.get_by_id(version_number)
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
     for change in changes:
         change.apply_change()
     logging.info("applied content changes")
-    deferred.defer(preload_library, version, _queue="topics-set-default-queue")
+    taskname = "%i_preload_library" % version_number
+    try:
+        deferred.defer(preload_library, 
+                       version_number,
+                       _queue = "topics-set-default-queue",
+                       _name = taskname,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        logging.info("deferred task %s already exists" % taskname)
 
 
-def preload_library(version):
+def preload_library(version_number):
+    version = TopicVersion.get_by_id(version_number)
+
     # causes circular importing if put at the top
     from library import library_content_html
     import autocomplete
@@ -1773,9 +1790,19 @@ def preload_library(version):
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
-    deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
+    taskname =  "%i_change_default_version"  % version_number
+    try:
+        deferred.defer(change_default_version, 
+                       version_number,
+                       _queue = "topics-set-default-queue",
+                       _name = taskname,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        logging.info("deferred task %s already exists" % taskname)
     
-def change_default_version(version):
+def change_default_version(version_number):
+    version = TopicVersion.get_by_id(version_number)
+
     default_version = TopicVersion.get_default_version()
 
     def update_txn():
@@ -1814,10 +1841,18 @@ def change_default_version(version):
     Setting.count_videos(len(vids) + len(urls))
     Video.approx_count(bust_cache=True)
 
-    deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
+    taskname = "%i_rebuild_content_caches"  % version_number
+    try:
+        deferred.defer(rebuild_content_caches, 
+                       version_number,
+                       _queue = "topics-set-default-queue",
+                       _name = taskname,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        logging.info("deferred task %s already exists" % taskname)
 
-
-def rebuild_content_caches(version):
+def rebuild_content_caches(version_number):
+    version = TopicVersion.get_by_id(version_number)
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
@@ -3618,17 +3653,24 @@ class Video(Searchable, db.Model):
         subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
         subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
         subtitles_json = None
+        show_interactive_transcript = False
         if subtitles:
             subtitles_json = subtitles.load_json()
+            transcript_alternative = InteractiveTranscriptExperiment.ab_test()
+            show_interactive_transcript = (transcript_alternative == InteractiveTranscriptExperiment.SHOW)
 
         # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
         import shared_jinja
         player_html = shared_jinja.get().render_template('videoplayer.html',
             user_data=UserData.current(), video_path=video_path, video=video,
-            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
+            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE,
+            subtitles_json=subtitles_json, show_interactive_transcript=show_interactive_transcript)
 
         discussion_html = shared_jinja.get().render_template('videodiscussion.html',
             user_data=UserData.current(), video=video, topic=topic, **discussion_options)
+
+        subtitles_html = shared_jinja.get().render_template('videosubtitles.html',
+            subtitles_json=subtitles_json)
 
         return {
             'title': video.title,
@@ -3637,7 +3679,6 @@ class Video(Searchable, db.Model):
             'readable_id': video.readable_id,
             'key': video.key(),
             'video_path': video_path,
-            'subtitles_json': subtitles_json,
             'button_top_exercise': button_top_exercise,
             'related_exercises': [], # disabled for now
             'previous_video': previous_video_dict,
@@ -3646,7 +3687,8 @@ class Video(Searchable, db.Model):
             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
             'author_profile': 'https://plus.google.com/103970106103092409324',
             'player_html': player_html,
-            'discussion_html': discussion_html
+            'discussion_html': discussion_html,
+            'subtitles_html': subtitles_html,
         }
 
 class Playlist(Searchable, db.Model):
@@ -4025,8 +4067,9 @@ class VideoLog(BackupModel):
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
             bingo([
+                'videos_finished',
                 'struggling_videos_finished',
-                'suggested_activity_videos_finished'
+                'suggested_activity_videos_finished',
             ])
         video_log.is_video_completed = user_video.completed
 
