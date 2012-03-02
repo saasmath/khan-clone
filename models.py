@@ -1744,18 +1744,32 @@ class TopicVersion(db.Model):
     def set_default_version(self):
         logging.info("starting set_default_version")
 
-        deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
+        deferred.defer(apply_version_content_changes, 
+                       self.number,
+                       _queue = "topics-set-default-queue",
+                       _name = "%i_apply_version_content_changes" % self.number, 
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
 
-def apply_version_content_changes(version):
+def apply_version_content_changes(version_number):
+    version = TopicVersion.get_by_id(version_number)
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
     for change in changes:
         change.apply_change()
     logging.info("applied content changes")
-    deferred.defer(preload_library, version, _queue="topics-set-default-queue")
+    try:
+        deferred.defer(preload_library, 
+                       version_number,
+                       _queue = "topics-set-default-queue",
+                       _name = "%i_preload_library" % version_number,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        pass
 
 
-def preload_library(version):
+def preload_library(version_number):
+    version = TopicVersion.get_by_id(version_number)
+
     # causes circular importing if put at the top
     from library import library_content_html
     import autocomplete
@@ -1773,9 +1787,18 @@ def preload_library(version):
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
-    deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
+    try:
+        deferred.defer(change_default_version, 
+                       version_number,
+                       _queue = "topics-set-default-queue",
+                       _name = "%i_change_default_version"  % version_number,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        pass
     
-def change_default_version(version):
+def change_default_version(version_number):
+    version = TopicVersion.get_by_id(version_number)
+
     default_version = TopicVersion.get_default_version()
 
     def update_txn():
@@ -1814,10 +1837,17 @@ def change_default_version(version):
     Setting.count_videos(len(vids) + len(urls))
     Video.approx_count(bust_cache=True)
 
-    deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
+    try:
+        deferred.defer(change_default_version, 
+                       version_number,
+                       _queue = "topics-set-default-queue",
+                       _name = "%i_change_default_version"  % version_number,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        pass
 
-
-def rebuild_content_caches(version):
+def rebuild_content_caches(version_number):
+    version = TopicVersion.get_by_id(version_number)
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
