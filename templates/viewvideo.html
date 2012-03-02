@@ -5,6 +5,7 @@
 {% import 'macros/library.html' as library %}
 {% import 'macros/analytics.html' as analytics %}
 {% import 'macros/discussion.html' as discussion %}
+{% import 'macros/subtitles.html' as subtitles %}
 
 {% block meta_page_title %}
 {% if topic_data %}{{video.title|escape}} | {{topic_data.title|escape}}{% endif %} | {% endblock %}
@@ -44,13 +45,7 @@
         </div>
         <div>
 
-          <div itemprop="transcript" class="subtitles">
-          {% if video.subtitles_json %}
-              {% for entry in video.subtitles_json: %}
-              <p>{{ entry.text|e }}</p>
-              {% endfor %}
-          {% endif %}
-          </div>
+          {{ subtitles.interactive_transcript(video.subtitles_json) }}
 
           <span class="video-footer"></span>
         </div>
@@ -91,5 +86,4 @@
     </script>
     {{ analytics.crazyegg_tracker(False) }}
 {% endblock bottompagescript %}
-
 

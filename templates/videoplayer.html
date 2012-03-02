@@ -6,9 +6,16 @@
 
     <div class="extra-link-bar">
 
+        {% if subtitles_json and show_interactive_transcript %}
+        <a href="javascript:void(0)" title="Interactive transcript" style="z-index:101;" class="simple-button action-gradient with-icon transcript-link">
+        <img src="/images/interactive-transcript.png" />
+                Transcript
+        </a>
+        {% endif %}
+
         <a href="#" title="Toggle subtitles and translations" style="z-index:101;" class="simple-button action-gradient with-icon subtitles-link">
         <img src="/images/subtitles-icon-small.png" />
-                Subtitles
+                Video Subtitles
         </a>
 
         {% if video_path %}
