@@ -1759,14 +1759,15 @@ def apply_version_content_changes(version_number):
     for change in changes:
         change.apply_change()
     logging.info("applied content changes")
+    taskname = "%i_preload_library" % version_number
     try:
         deferred.defer(preload_library, 
                        version_number,
                        _queue = "topics-set-default-queue",
-                       _name = "%i_preload_library" % version_number,
+                       _name = taskname,
                        _url = "/_ah/queue/deferred_topics-set-default-queue")
     except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
-        pass
+        logging.info("deferred task %s already exists" % taskname)
 
 
 def preload_library(version_number):
@@ -1789,14 +1790,15 @@ def preload_library(version_number):
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
+    taskname =  "%i_change_default_version"  % version_number
     try:
         deferred.defer(change_default_version, 
                        version_number,
                        _queue = "topics-set-default-queue",
-                       _name = "%i_change_default_version"  % version_number,
+                       _name = taskname,
                        _url = "/_ah/queue/deferred_topics-set-default-queue")
     except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
-        pass
+        logging.info("deferred task %s already exists" % taskname)
     
 def change_default_version(version_number):
     version = TopicVersion.get_by_id(version_number)
@@ -1839,14 +1841,15 @@ def change_default_version(version_number):
     Setting.count_videos(len(vids) + len(urls))
     Video.approx_count(bust_cache=True)
 
+    taskname = "%i_rebuild_content_caches"  % version_number
     try:
-        deferred.defer(change_default_version, 
+        deferred.defer(rebuild_content_caches, 
                        version_number,
                        _queue = "topics-set-default-queue",
-                       _name = "%i_change_default_version"  % version_number,
+                       _name = taskname,
                        _url = "/_ah/queue/deferred_topics-set-default-queue")
     except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
-        pass
+        logging.info("deferred task %s already exists" % taskname)
 
 def rebuild_content_caches(version_number):
     version = TopicVersion.get_by_id(version_number)
