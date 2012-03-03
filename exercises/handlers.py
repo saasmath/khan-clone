@@ -26,19 +26,6 @@ class ViewExercise(request_handler.RequestHandler):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-        user_exercise = user_data.get_or_insert_exercise(exercise)
-
-        # TODO(kamens): this specific user_exercise stuff should all be going away
-        # Cache these so we don't have to worry about future lookups
-        user_exercise.exercise_model = exercise
-        user_exercise._user_data = user_data
-        user_exercise._user_exercise_graph = user_exercise_graph
-        user_exercise.summative = exercise.summative
-
-        user_exercise.exercise_model.related_videos = [exercise_video.video for exercise_video in exercise.related_videos_fetch()]
-        for video in user_exercise.exercise_model.related_videos:
-            video.id = video.key().id()
-
         next_user_exercises = models.UserTopic.next_user_exercises()
 
         # TODO(kamens): get rid of the need to do this gross perf hack
@@ -54,11 +41,8 @@ class ViewExercise(request_handler.RequestHandler):
         stack = get_problem_stack(next_user_exercises)
 
         template_values = {
-            "user_exercise": user_exercise,
             "stack_json": jsonify(stack, camel_cased=True),
             "user_exercises_json": jsonify(next_user_exercises, camel_cased=True),
-            # TODO(kamens): this is going away
-            "user_exercise_json": jsonify(user_exercise),
         }
 
         self.render_jinja2_template("exercises/exercise_template.html", template_values)

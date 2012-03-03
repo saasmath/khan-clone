@@ -13,15 +13,6 @@
 
 {% endblock pagecss %}
 
-{% block pagescript %}
-
-<script>
-    // TODO(kamens): userExercise should be handled differently now
-    var userExercise = {{ user_exercise_json }};
-</script>
-
-{% endblock pagescript %}
-
 {% block pagecontent %}
 <div id="container" class="exercises-content-container visited-no-recolor" style="overflow:hidden"></div>
 {% endblock pagecontent %}
