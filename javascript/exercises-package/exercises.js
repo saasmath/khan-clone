@@ -615,6 +615,11 @@ Exercises.UserTopic = Backbone.Model.extend({
  *
  * It'll talk to our API to try to find the best next
  * exercises in the queue when possible.
+ *
+ * BottomlessQueue is responsible for holding onto
+ * and updating all userExercise objects, and it
+ * passes them on to khan-exercises when khan-exercises
+ * needs 'em.
  */
 Exercises.BottomlessQueue = {
 
@@ -659,11 +664,37 @@ Exercises.BottomlessQueue = {
             this.enqueue(userExercise);
         }, this);
 
+        // Any time khan-exercises tells us it has new updateUserExercise
+        // data, update cache if it's more recent
+        $(Khan).bind("updateUserExercise", function(ev, userExercise) {
+            Exercises.BottomlessQueue.cacheLocally(userExercise);
+        });
+
     },
 
     enqueue: function(userExercise) {
-        this.currentQueue.push(userExercise.exerciseModel.name);
-        this.userExerciseCache[userExercise.exerciseModel.name] = userExercise;
+        this.currentQueue.push(userExercise.exercise);
+        this.userExerciseCache[userExercise.exercise] = userExercise;
+    },
+
+    cacheLocally: function(userExercise) {
+
+            if (!userExercise) {
+                return;
+            }
+
+            var oldUserExercise = this.userExerciseCache[userExercise.exercise];
+
+            // Update cache, if new data is more recent
+            if (!oldUserExercise || (userExercise.totalDone >= oldUserExercise.totalDone)) {
+                this.userExerciseCache[userExercise.exercise] = userExercise;
+            }
+
+            // TODO(kamens): persist this stuff to sessionStorage for back button
+            // handling
+            //
+            // window.sessionStorage[ key ] = JSON.stringify( typeof oldVal === "string" ?
+            //		jQuery.extend( /* deep */ true, JSON.parse(oldVal), data ) : data );
     },
 
     next: function() {
@@ -699,7 +730,7 @@ Exercises.BottomlessQueue = {
 
         // ...and then chop the recycle queue down so it
         // doesn't just constantly grow.
-        this.recycleQueue = _.last(this.recycleQueue, 5);
+        this.recycleQueue = _.last(this.recycleQueue, Math.min(5, this.recycleQueue.length));
 
         // Refill if we're running low
         if (this.currentQueue.length < this.queueRefreshSize) {

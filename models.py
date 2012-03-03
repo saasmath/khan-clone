@@ -148,6 +148,8 @@ class Exercise(db.Model):
     description = db.TextProperty()
     tags = db.StringListProperty()
 
+    sha1 = "TODO(kamens): sha1s should be cut or accessible (and cached) as properties"
+
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
             "coverers", "prerequisites_ex", "assigned",
@@ -3712,7 +3714,7 @@ class UserTopic(db.Model):
         """
         user_data = UserData.current() or UserData.pre_phantom()
 
-        exercises = [Exercise.get_by_name(exid) for exid in ["multiplication_1", "division_0.5"]]
+        exercises = [Exercise.get_by_name(exid) for exid in ["multiplication_1", "division_0.5", "addition_1", "subtraction_1"]]
 
         # TODO(kamens): parallelize
         return [user_data.get_or_insert_exercise(ex) for ex in exercises]
