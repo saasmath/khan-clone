@@ -10,7 +10,7 @@
  *   * readyForNextProblem -- when a card is ready for the next problem to
  *   be rendered by khan-exercises
  *
- *   * upcomingExercise -- when a new exercise has been placed in the upcoming
+ *   * upcomingExercise -- when a new exercise is approaching in the upcoming
  *   queue, this is triggered to give listeners a chance to preload any
  *   requirements
  *
@@ -653,6 +653,11 @@ Exercises.BottomlessQueue = {
     // send off an ajax request for a refill
     queueRefreshSize: 3,
 
+    // # of exercises in upcoming queue for which we
+    // trigger upcomingExercise events to give
+    // listeners a chance to preload resources
+    preloadUpcoming: 2,
+
     initDeferred: $.Deferred(),
 
     sessionStorageEnabled: null,
@@ -732,14 +737,42 @@ Exercises.BottomlessQueue = {
     },
 
     enqueue: function(userExercise) {
-        this.currentQueue.push(userExercise.exercise);
+
+        // Push onto current queue
+        this.currentQueue.push({
+            "exercise": userExercise.exercise,
+            // true if we've triggered an upcomingExercise event for this queue entry
+            "upcomingTriggered": false
+        });
+
+        // Cache userExercise
         this.userExerciseCache[userExercise.exercise] = userExercise;
 
-        // Tell khan-exercises to preload this upcoming exercise if it hasn't
-        // already
-        // TODO(kamens): probably want to limit the number of exercises we
-        // preload if we send down a large predetermined stack
-        $(Exercises).trigger("upcomingExercise", userExercise.exercise);
+        // Possibly new upcoming exercises
+        this.triggerUpcoming();
+
+    },
+
+    /**
+     * Make sure an upcomingExercise event has been triggered for the 
+     * first this.preloadUpcoming events in currentQueue.
+     */
+    triggerUpcoming: function() {
+
+        _.each(this.currentQueue, function(item, ix) {
+
+            if (!item.upcomingTriggered && ix < this.preloadUpcoming) {
+
+                // Tell khan-exercises to preload this upcoming exercise if it hasn't
+                // already
+                $(Exercises).trigger("upcomingExercise", item.exercise);
+
+                item.upcomingTriggered = true;
+
+            }
+
+        }, this);
+
     },
 
     cacheKey: function(userExercise) {
@@ -835,7 +868,7 @@ Exercises.BottomlessQueue = {
 
         // If we don't have a userExercise object for the next
         // exercise, we've got a problem.
-        if (!this.userExerciseCache[next]) {
+        if (!this.userExerciseCache[next.exercise]) {
             throw "Missing user exercise cache for next exercise";
         }
 
@@ -854,7 +887,10 @@ Exercises.BottomlessQueue = {
             this.refill();
         }
 
-        return this.userExerciseCache[next];
+        // Possibly new upcoming exercises
+        this.triggerUpcoming();
+
+        return this.userExerciseCache[next.exercise];
  
     },
 
