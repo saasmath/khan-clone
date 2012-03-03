@@ -12,11 +12,16 @@
         //
         // To use this, just add the following markup to your link anchor tag:
         // <a href="/mypage" data-tag="Footer Link">Go to my page</a>
-        LinkTracker: function(params) {
+        trackPageLoad: function(params) {
             window._gaq = window._gaq || [];
 
             // Get the page load timestamp (in milliseconds)
             pageLoadTime = (new Date()).getTime();
+
+            // If this is the homepage, save the arrival time in a cookie
+            if (window.location.pathname === "/" && !readCookie("ka_homepage_time")) {
+                createCookie("ka_homepage_time", pageLoadTime);
+            }
 
             mpqEnabled = params.mpqEnabled || false;
 
@@ -76,10 +81,30 @@
                         eraseCookie("ka_event_tag");
                         eraseCookie("ka_event_duration");
                         eraseCookie("ka_event_referrer");
-                    }, 1000);
+                    }, 3000);
                 }
             });
-        }
+        },
+
+        // Utility to track a user starting content (playing a video or starting an exercise)
+        trackContent: function(contentType) {
+            var homepageTime = readCookie("ka_homepage_time");
+            if (homepageTime) {
+                var timeSinceHomepage = ((new Date()).getTime() - homepageTime);
+                var timeSinceHomepageSeconds = Math.floor(timeSinceHomepage/1000);
+
+                _gaq.push(['_trackEvent', 'Found Content', contentType, window.location.pathname, timeSinceHomepageSeconds, true]);
+                if (mpqEnabled) {
+                    mpq.track("Found Content", {
+                        "Type": contentType,
+                        "Path": window.location.pathname,
+                        "Time Since Homepage": timeSinceHomepageSeconds
+                    });
+                }
+
+                eraseCookie("ka_homepage_time");
+            }
+        },
 
     };
 })();

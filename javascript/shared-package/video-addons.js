@@ -303,6 +303,8 @@ var VideoStats = {
             this.playing = true;
             this.dtLastSaved = new Date();
             this.dPercentLastSaved = this.getPercentWatched();
+
+            Analytics.trackContent("Video");
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },

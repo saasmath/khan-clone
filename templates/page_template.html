@@ -217,10 +217,9 @@
             mpq.name_tag("{{ username }}");
             {% endif %}
 
-            // Initialize the LinkTracker automatically on page load.
-            // This will set up the event handler and report an event
-            // if the cookie has been set.
-            Analytics.LinkTracker({
+            // Send page load event to analytics API's, and set up 
+            // event handler for decorated links.
+            Analytics.trackPageLoad({
             {% if mixpanel_enabled %}
                 mpqEnabled: true
             {% endif %}
