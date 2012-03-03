@@ -759,19 +759,20 @@ Exercises.BottomlessQueue = {
 
     cacheLocally: function(userExercise) {
 
-            if (!userExercise) {
-                return;
-            }
+        if (!userExercise) {
+            return;
+        }
 
-            var oldUserExercise = this.userExerciseCache[userExercise.exercise];
+        var oldUserExercise = this.userExerciseCache[userExercise.exercise];
 
-            // Update cache, if new data is more recent
-            if (!oldUserExercise || (userExercise.totalDone >= oldUserExercise.totalDone)) {
-                this.userExerciseCache[userExercise.exercise] = userExercise;
-            }
+        // Update cache, if new data is more recent
+        if (!oldUserExercise || (userExercise.totalDone >= oldUserExercise.totalDone)) {
+            this.userExerciseCache[userExercise.exercise] = userExercise;
+        }
 
-            // Persist to session storage so we get nice back button behavior
-            window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
+        // Persist to session storage so we get nice back button behavior
+        window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
+
     },
 
     clearCache: function(userExercise) {
