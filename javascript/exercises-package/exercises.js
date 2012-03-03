@@ -680,7 +680,7 @@ Exercises.BottomlessQueue = {
             // Fill up our queue and cache with initial exercises sent
             // on first pageload
             _.each(userExercises, function(userExercise) {
-                this.enqueue(userExercise);
+                this.enqueue(this.checkCacheForLatest(userExercise));
             }, Exercises.BottomlessQueue);
 
         });
@@ -722,6 +722,37 @@ Exercises.BottomlessQueue = {
         $( Khan ).trigger("upcomingExercise", userExercise.exercise);
     },
 
+    cacheKey: function(userExercise) {
+        return "userexercise:" + userExercise.user + ":" + userExercise.exercise;
+    },
+
+    /**
+     * checkCacheForLatest returns the userExercise passed in
+     * unless there is a locally cached version in sessionStorage
+     * that looks to be more up-to-date than userExercise.
+     * It's used to maintain nice back-button behavior
+     * when navigating around exercises so you don't lose your place.
+     */
+    checkCacheForLatest: function(userExercise) {
+
+        if (!userExercise) {
+            return null;
+        }
+
+        // Parse the JSON if it exists
+        var data = window.sessionStorage[this.cacheKey(userExercise)],
+            oldUserExercise = data ? JSON.parse(data) : null;
+
+        if (oldUserExercise && oldUserExercise.totalDone > userExercise.totalDone) {
+            // sessionStorage-cached data is newer than userExercise. Probably
+            // got here via browser history.
+            return oldUserExercise;
+        } else {
+            return userExercise;
+        }
+
+    },
+
     cacheLocally: function(userExercise) {
 
             if (!userExercise) {
@@ -735,11 +766,8 @@ Exercises.BottomlessQueue = {
                 this.userExerciseCache[userExercise.exercise] = userExercise;
             }
 
-            // TODO(kamens): persist this stuff to sessionStorage for back button
-            // handling
-            //
-            // window.sessionStorage[ key ] = JSON.stringify( typeof oldVal === "string" ?
-            //        jQuery.extend( /* deep */ true, JSON.parse(oldVal), data ) : data );
+            // Persist to session storage so we get nice back button behavior
+            window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
     },
 
     next: function() {
