@@ -682,6 +682,8 @@ Exercises.BottomlessQueue = {
 
         // Tell khan-exercises to preload this upcoming exercise if it hasn't
         // already
+        // TODO(kamens): probably want to limit the number of exercises we
+        // preload if we send down a large predetermined stack
         $( Khan ).trigger("upcomingExercise", userExercise.exercise);
     },
 
