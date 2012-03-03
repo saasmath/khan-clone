@@ -4,6 +4,10 @@ import subprocess
 import sys
 import shutil
 import npm
+import inspect
+import types
+
+from pybars import Compiler
 
 
 def validate_env():
@@ -60,6 +64,72 @@ def compile_template(root_path, rel_path, file_name):
         #sys.exit("Error compiling %s" % file_path)
         pass
 
+def compile_template_to_python(root_path, rel_path, file_name):
+    dir_path = os.path.join(root_path, rel_path)
+    input_path = os.path.join(dir_path, file_name)
+
+    package_name = rel_path.replace("-", "_")
+    function_name = (os.path.splitext(file_name)[0]).replace("-", "_")
+
+    out_dir_path = os.path.join("compiled_templates", package_name)
+    output_path = os.path.join(out_dir_path, function_name) + ".py"
+    init_path = os.path.join(out_dir_path, "__init__.py")
+
+    compiler = Compiler()
+
+    in_file = open(input_path, 'r')
+    source = unicode(in_file.read())
+    template = compiler.compile(source)
+
+    output_string = []
+    output_string.append("from pybars._compiler import strlist, _pybars_, Scope, escape, resolve, partial")
+    output_string.append("")
+
+    def write_fn(template, name, indent):
+
+        output_string.append("%sdef %s(context, helpers=None, partials=None):" % (indent, name))
+        output_string.append("%s    pybars = _pybars_" % indent);
+        output_string.append("");
+
+        output_string.append("%s    # Begin constants" % indent)
+
+        for name, val in template.func_globals.items():
+            if name.startswith("constant_"):
+                if isinstance(val, unicode):
+                    output_string.append("%s    %s = %s" % (indent, name, repr(val)))
+
+        output_string.append("")
+
+        for name, val in template.func_globals.items():
+            if name.startswith("constant_"):
+                if isinstance(val, types.FunctionType):
+                    write_fn(val, name, indent + "    ")
+
+        output_string.append("%s    # End constants" % indent)
+
+        compiled_fn = inspect.getsource(template)
+        fn_lines = compiled_fn.split("\n")
+
+        for line in fn_lines[1:]:
+            output_string.append("%s%s" % (indent, line))
+
+    write_fn(template, function_name, "")
+
+    if not os.path.exists(out_dir_path):
+        os.makedirs(out_dir_path)
+
+    out_file = open(os.path.join("compiled_templates", "__init__.py"), 'w')
+    out_file.close()
+
+    out_file = open(init_path, 'w')
+    out_file.close()
+
+    out_file = open(output_path, 'w')
+    out_file.write("\n".join(output_string))
+    out_file.close()
+
+    print "Compiled to %s" % output_path
+
 def compile_templates():
     root_path = "javascript"
     rel_path_index = len(root_path) + 1
@@ -70,6 +140,8 @@ def compile_templates():
                 compile_template(root_path,
                                  dir_path[rel_path_index:],
                                  file_name)
+
+                compile_template_to_python(root_path, dir_path[rel_path_index:], file_name)
 
 if __name__ == "__main__":
     validate_env()
