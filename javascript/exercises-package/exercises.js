@@ -526,8 +526,13 @@ Exercises.CurrentCardView = Backbone.View.extend({
     },
 
     renderExerciseInProblemCard: function() {
-        // Tell khan-exercises to fill the card w/ new problem contents
-        $(Khan).trigger("renderNextProblem", Exercises.BottomlessQueue.next());
+
+        var nextUserExercise = Exercises.BottomlessQueue.next();
+        if (nextUserExercise) {
+            // Tell khan-exercises to fill the card w/ new problem contents
+            $(Khan).trigger("renderNextProblem", nextUserExercise);
+        }
+
     },
 
     /**
@@ -634,6 +639,8 @@ Exercises.BottomlessQueue = {
 
     initDeferred: $.Deferred(),
 
+    sessionStorageEnabled: null,
+
     currentQueue: [],
     recycleQueue: [],
 
@@ -660,12 +667,22 @@ Exercises.BottomlessQueue = {
 
     init: function(userExercises) {
 
-        // Fill up our queue and cache with initial exercises sent
-        // on first pageload
+        this.sessionStorageEnabled = this.testSessionStorage();
+
+        // Delay some initialization until after khan-exercises
+        // is all set up
         this.initDeferred.done(function() {
+
+            if (!Exercises.BottomlessQueue.sessionStorageEnabled) {
+                Exercises.BottomlessQueue.warnSessionStorageDisabled();
+            }
+
+            // Fill up our queue and cache with initial exercises sent
+            // on first pageload
             _.each(userExercises, function(userExercise) {
                 this.enqueue(userExercise);
             }, Exercises.BottomlessQueue);
+
         });
 
         // Any time khan-exercises tells us it has new updateUserExercise
@@ -674,6 +691,24 @@ Exercises.BottomlessQueue = {
             Exercises.BottomlessQueue.cacheLocally(userExercise);
         });
 
+    },
+
+    testSessionStorage: function() {
+        // Adapted from a comment on http://mathiasbynens.be/notes/localstorage-pattern
+        var enabled, uid = +new Date;
+        try {
+            sessionStorage[ uid ] = uid;
+            enabled = ( sessionStorage[ uid ] == uid );
+            sessionStorage.removeItem( uid );
+            return enabled;
+        }
+        catch( e ) {
+            return false;
+        }
+    },
+
+    warnSessionStorageDisabled: function() {
+        $( Khan ).trigger("warning", ["You must enable DOM storage in your browser; see <a href='https://sites.google.com/a/khanacademy.org/forge/for-developers/how-to-enable-dom-storage'>here</a> for instructions.", false] );
     },
 
     enqueue: function(userExercise) {
@@ -704,13 +739,17 @@ Exercises.BottomlessQueue = {
             // handling
             //
             // window.sessionStorage[ key ] = JSON.stringify( typeof oldVal === "string" ?
-            //		jQuery.extend( /* deep */ true, JSON.parse(oldVal), data ) : data );
+            //        jQuery.extend( /* deep */ true, JSON.parse(oldVal), data ) : data );
     },
 
     next: function() {
 
         if (!this.initDeferred.isResolved()) {
             this.initDeferred.resolve();
+        }
+
+        if (!this.sessionStorageEnabled) {
+            return null;
         }
         
         // If the queue is empty, use the recycle queue
