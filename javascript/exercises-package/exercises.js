@@ -687,9 +687,13 @@ Exercises.BottomlessQueue = {
 
         // Any time khan-exercises tells us it has new updateUserExercise
         // data, update cache if it's more recent
-        $(Khan).bind("updateUserExercise", function(ev, userExercise) {
-            Exercises.BottomlessQueue.cacheLocally(userExercise);
-        });
+        $(Khan)
+            .bind("updateUserExercise", function(ev, userExercise) {
+                Exercises.BottomlessQueue.cacheLocally(userExercise);
+            })
+            .bind("attemptError", function(ev, userExercise) {
+                Exercises.BottomlessQueue.clearCache(userExercise);
+            });
 
     },
 
@@ -768,6 +772,21 @@ Exercises.BottomlessQueue = {
 
             // Persist to session storage so we get nice back button behavior
             window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
+    },
+
+    clearCache: function(userExercise) {
+
+        if (!userExercise) {
+            return;
+        }
+
+        // Before we reload after an error, clear out sessionStorage.
+        // If there' a discrepancy between server and sessionStorage such that
+        // problem numbers are out of order or anything else, we want
+        // to restart with whatever the server sends back on reload.
+        delete this.userExerciseCache[userExercise.exercise];
+        delete window.sessionStorage[this.cacheKey(userExercise)];
+
     },
 
     next: function() {
