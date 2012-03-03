@@ -61,7 +61,8 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
-            "topics.js"
+            "topics.js",
+            "analytics.js"
         ]
     },
     "video": {
@@ -144,6 +145,11 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
+            "coaches.js",
+            "coach.handlebars",
+            "no-coaches.handlebars",
+            "no-requests.handlebars",
+            "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
             "user-badge.handlebars",
@@ -213,6 +219,7 @@ javascript = {
             "khan-exercise.js",
             "utils/angles.js",
             "utils/answer-types.js",
+            "utils/ast.js",
             "utils/calculus.js",
             "utils/congruence.js",
             "utils/convert-values.js",
@@ -231,6 +238,7 @@ javascript = {
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/math-model.js",
             "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
@@ -239,6 +247,7 @@ javascript = {
             "utils/scratchpad.js",
             "utils/slice-clone.js",
             "utils/stat.js",
+            "utils/subhints.js",
             "utils/tmpl.js",
             "utils/word-problems.js",
             "utils/spin.js",
@@ -351,6 +360,11 @@ stylesheets = {
     "labs": {
         "files": [
             "labs.css",
+        ]
+    },
+    "bootstrap": {
+        "files": [
+            "bootstrap.css"
         ]
     }
 }

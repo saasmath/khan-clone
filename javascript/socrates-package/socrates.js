@@ -396,7 +396,7 @@ Socrates.QuestionView = Backbone.View.extend({
             }
 
             var isArray = false;
-            if (data[key]) {
+            if (data[key] != null) {
                 if (!_.isArray(data[key])) {
                     data[key] = [data[key]];
                 }
@@ -594,11 +594,11 @@ Socrates.QuestionView = Backbone.View.extend({
     },
 
     hasMem: function() {
-        return !!this.$(".mem").length;
+        return this.$(".mem").length > 0;
     },
 
     showMem: function() {
-        this.$(".mem").slideDown();
+        this.$(".mem").slideDown(350, 'easeInOutCubic');
     },
 
     skip: function() {
@@ -899,27 +899,41 @@ Socrates.Skippable = (function() {
 })();
 
 Socrates.init = function(youtubeId) {
-    if (!(youtubeId in Socrates.Data)) return;
-
+    // Create data
     window.Bookmarks = new Backbone.Collection(Socrates.Data[youtubeId].Events);
+
+
+    // Create router which will manage transitions between questions
+    window.Router = new Socrates.QuestionRouter({
+        bookmarks: window.Bookmarks,
+        videoControls: window.VideoControls
+    });
+
+    // For now, don't call Video.init() Just render the page then let our router
+    // take over.
+    // todo(dmnd) Integrate socrates & ajax video player routers. May need to
+    // use hashChange from here: https://github.com/documentcloud/backbone/issues/803
+    Video.videoLibrary = {};
+    Video.pushStateDisabled = true;
+    Video.navigateToVideo(window.location.pathname);
+    Backbone.history.start({
+        pushState: false,
+        root: window.location.pathname
+    });
+
+
+    // Render views
     window.nav = new Socrates.Nav({
         el: ".socrates-nav",
         model: Bookmarks
     });
     nav.render();
 
-    window.Router = new Socrates.QuestionRouter({
-        bookmarks: window.Bookmarks,
-        videoControls: window.VideoControls
-    });
-
     window.masterView = new Socrates.MasterView({
         el: ".video-overlay",
         views: Router.questionViews
     });
     masterView.render();
-
-    Backbone.history.start({root: window.location});
 };
 
 Socrates.initSkips = function(youtubeId) {
@@ -931,6 +945,7 @@ Socrates.initSkips = function(youtubeId) {
     });
 };
 
+// This will be populated by video-specific javascript.
 Socrates.Data = {};
 
 Handlebars.registerPartial("submit-area", Templates.get("socrates.submit-area"));

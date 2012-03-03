@@ -9,18 +9,27 @@ var Video = {
     youtubeBlocked: false,
     pushStateDisabled: false,
 
-    init: function() {
+    init: function(params) {
         var self = this;
 
-        if (window.history && window.history.pushState) {
-            this.router = new VideoRouter();
-            Backbone.history.start({pushState: true, root: "/" + videoTopLevelTopic});
-        } else {
-            this.pushStateDisabled = true;
-            Video.navigateToVideo(window.location.pathname);
-        }
+        this.videoLibrary = params.videoLibrary || {};
+        this.loginURL = params.loginURL;
 
-        this.rootLength = 1 + videoTopLevelTopic.length;
+        if (params.videoTopLevelTopic) {
+            this.videoTopLevelTopic = params.videoTopLevelTopic;
+            this.rootLength = 1 + params.videoTopLevelTopic.length;
+
+            if (window.history && window.history.pushState && params.videoTopLevelTopic) {
+                this.router = new VideoRouter();
+                Backbone.history.start({pushState: true, root: "/" + params.videoTopLevelTopic});
+            } else {
+                this.pushStateDisabled = true;
+                Video.navigateToVideo(window.location.pathname);
+            }
+        } else {
+            // Used for modal video player
+            this.initEventHandlers();
+        }
 
         VideoControls.onYouTubeBlocked(function() {
 
@@ -31,6 +40,9 @@ var Video = {
                 .css("position", "relative")
                 .html(flvPlayerTemplate({ video_path: self.currentVideoPath }));
            $("#idOVideo").hide();
+           $(".subtitles-link").hide();
+           $(".transcript-link").hide();
+           Video.hideSubtitles();
            VideoStats.prepareAlternativePlayer(); // If YouTube is hidden, use the flv player for statistics
 
            self.youtubeBlocked = true;
@@ -56,7 +68,8 @@ var Video = {
         }
 
         // Bingo conversions for watching a video video
-        gae_bingo.bingo(["struggling_videos_landing",
+        gae_bingo.bingo(["videos_landing",
+            "struggling_videos_landing",
             "suggested_activity_videos_landing",
             "suggested_activity_videos_landing_binary"]);
 
@@ -70,7 +83,7 @@ var Video = {
         $("span.video-nav").html(navTemplate({topic: topicData.topic, video: videoData}));
         $(".video-title").html(videoData.title);
         $("div.video-description").html(descTemplate({topic: topicData.topic, video: videoData}));
-        $("span.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
+        $("div.video-header").html(headerTemplate({topic: topicData.topic, video: videoData}));
         $("span.video-footer").html(footerTemplate({topic: topicData.topic, video: videoData}));
 
         document.title = videoData.title + " | " + topicData.topic.title + " | Khan Academy";
@@ -115,23 +128,6 @@ var Video = {
             });
         }
 
-        $(".and-more").click(function() {
-            $(this).hide();
-            $(".more-content").show();
-            return false;
-        });
-
-        $(".subtitles-link").click(function() { Video.toggleSubtitles(); return false; });
-        if (readCookie(this.SHOW_SUBTITLES_COOKIE)) {
-            this.showSubtitles();
-        }
-
-        $(".sharepop").hide();
-        $(".share-link").click(function() {
-            $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
-            return false;
-        });
-
         // If the user starts writing feedback, disable autoplay.
         $("span.video-footer").on("focus keydown", "input,textarea", function(event) {
             VideoControls.setAutoPlayEnabled(false);
@@ -152,16 +148,7 @@ var Video = {
         Comments.init();
         QA.init();
 
-        // We take the message in the title of the energy points box and place it
-        // in a tooltip, and if it's the message with a link to the login we
-        // replace it with a nicer link (we don't want to have to pass the url to
-        // the templatetag).
-        var $points = $(".video-energy-points");
-        $points.data("title", $points.attr("title").replace(/Sign in/,
-                   "<a href=\"" + loginURL + "\">Sign in</a>"))
-               .removeAttr("title");
-
-        VideoStats.tooltip("#points-badge-hover", $points.data("title"));
+        this.initEventHandlers();
 
         // Set up next/previous links
         if (!this.pushStateDisabled) {
@@ -202,31 +189,79 @@ var Video = {
         this.waitingForVideo = null;
     },
 
+    initEventHandlers: function() {
+
+        $(".and-more").click(function() {
+            $(this).hide();
+            $(".more-content").show();
+            return false;
+        });
+
+        $(".subtitles-link").click(function() { Video.toggleSubtitles(); return false; });
+        if (readCookie(this.SHOW_SUBTITLES_COOKIE)) {
+            this.showSubtitles();
+        }
+
+        var transcript = $(".subtitles-container");
+        var transcriptLink = $(".transcript-link");
+        if (transcript.length && transcriptLink.length) {
+            InteractiveTranscript.init(transcript);
+            transcriptLink.click($.proxy(this._ontranscriptclick, this,
+                transcript, transcriptLink));
+        }
+
+        $(".sharepop").hide();
+        $(".share-link").click(function() {
+            $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
+            return false;
+        });
+
+        // We take the message in the title of the energy points box and place it
+        // in a tooltip, and if it's the message with a link to the login we
+        // replace it with a nicer link (we don't want to have to pass the url to
+        // the templatetag).
+        var $points = $(".video-energy-points");
+        $points.data("title", $points.attr("title").replace(/Sign in/,
+                   "<a href=\"" + this.loginURL + "\">Sign in</a>"))
+               .removeAttr("title");
+
+        VideoStats.tooltip("#points-badge-hover", $points.data("title"));
+    },
+
     navigateToVideo: function(path) {
+        // Strip out any query string
+        var queryIndex = path.indexOf("?");
+        if (queryIndex > -1) {
+            path = path.substr(0, queryIndex);
+        }
+
+        // Strip out leading slash
         if (path.charAt(0) == "/") {
             path = path.substr(1);
         }
-        pathList = [videoTopLevelTopic].concat(path.split("/"));
+
+        pathList = [this.videoTopLevelTopic].concat(path.split("/"));
         if (pathList.length >= 3) {
             var video = pathList[pathList.length-1];
             var topic = pathList[pathList.length-3];
 
-            this.waitingForVideo = { topic: topic, video: video, url: "/" + videoTopLevelTopic + "/" + path };
+            this.waitingForVideo = { topic: topic, video: video, url: "/" + this.videoTopLevelTopic + "/" + path };
             this.loadVideo(topic, video);
         }
     },
 
     loadVideo: function(topic, video) {
+        var self = this;
         var descTemplate = Templates.get("video.video-description");
         var waitingForVideo = (Video.waitingForVideo && 
             Video.waitingForVideo.topic == topic &&
             Video.waitingForVideo.video == video);
 
-        if (videoLibrary[topic] && videoLibrary[topic].videos[video]) {
+        if (this.videoLibrary[topic] && this.videoLibrary[topic].videos[video]) {
             if (waitingForVideo) {
-                if (videoLibrary[topic].videos[video] !== "LOADING") {
+                if (this.videoLibrary[topic].videos[video] !== "LOADING") {
                     KAConsole.log("Switching to video: " + video + " in topic " + topic);
-                    Video.renderPage(videoLibrary[topic], videoLibrary[topic].videos[video]);
+                    Video.renderPage(this.videoLibrary[topic], this.videoLibrary[topic].videos[video]);
                     return; // No longer waiting
                 }
             } else {
@@ -234,10 +269,10 @@ var Video = {
             }
         } else {
             KAConsole.log("Loading video: " + video + " in topic " + topic);
-            url = "/api/v1/videos/" + topic + "/" + video + "/play" + (videoLibrary[topic] ? "" : "?topic=1");
+            url = "/api/v1/videos/" + topic + "/" + video + "/play" + (this.videoLibrary[topic] ? "" : "?topic=1");
 
-            videoLibrary[topic] = videoLibrary[topic] || { videos: [] };
-            videoLibrary[topic].videos[video] = "LOADING";
+            this.videoLibrary[topic] = this.videoLibrary[topic] || { videos: [] };
+            this.videoLibrary[topic].videos[video] = "LOADING";
 
             $.ajax({
                 url: url,
@@ -246,11 +281,11 @@ var Video = {
                         Video.waitingForVideo.topic == topic &&
                         Video.waitingForVideo.video == video);
                     if (json.topic)
-                        videoLibrary[topic].topic = json.topic;
-                    videoLibrary[topic].videos[video] = json.video;
+                        self.videoLibrary[topic].topic = json.topic;
+                    self.videoLibrary[topic].videos[video] = json.video;
                     if (waitingForVideo) {
                         KAConsole.log("Switching to video: " + video + " in topic " + topic);
-                        Video.renderPage(videoLibrary[topic], json.video);
+                        Video.renderPage(self.videoLibrary[topic], json.video);
                     }
                 },
                 error: function() {
@@ -267,8 +302,25 @@ var Video = {
         if (waitingForVideo) {
             $("span.video-nav").html("");
             $("div.video-description").html(descTemplate({video: { title: "Loading..." }, loading: true }));
-            $("span.video-header").html("");
+            $("div.video-header").html("");
             $("span.video-footer").html("");
+        }
+    },
+
+    _ontranscriptclick: function(transcript, transcriptLink, e) {
+        if (transcript.is(":visible")) {
+            transcriptLink.removeClass("toggled");
+            InteractiveTranscript.stop();
+            transcript.slideUp("fast");
+        } else {
+            transcriptLink.addClass("toggled");
+            transcript.slideDown("fast", function() {
+                InteractiveTranscript.start();
+                if (window.gae_bingo) {
+                    gae_bingo.bingo(["interactive_transcript_shown",
+                        "interactive_transcript_shown_binary"]);
+                }
+            });
         }
     },
 
@@ -287,6 +339,7 @@ var Video = {
     },
 
     hideSubtitleElements: function() {
+        $(".subtitles-link").removeClass("toggled");
         $(".unisubs-videoTab").css("display", "none !important");
         $(".subtitles-warning").hide();
         $(".youtube-video").css("marginBottom", "0px");
@@ -294,6 +347,7 @@ var Video = {
     },
 
     showSubtitleElements: function() {
+        $(".subtitles-link").addClass("toggled");
         $(".youtube-video").css("marginBottom", "32px");
         $(".subtitles-warning").show();
         // 2012-02-23: unisubs uses !important in their styles, forcing us to
@@ -334,4 +388,153 @@ window.VideoRouter = Backbone.Router.extend({
         Video.navigateToVideo(path);
     }
 });
+
+
+/*
+ * Widget for interactive video subtitles.
+ *
+ * The video transcript is displayed with the current subtitle "active".
+ * Clicking a subtitle jumps to that place in the video. The transcript
+ * viewport is scrolled to keep the current subtitle in view.
+ */
+var InteractiveTranscript = {
+
+    /*
+     * The frequency in milliseconds at which to check the visible subtitle.
+     */
+    POLL_MILLIS: 333,
+
+    /*
+     * Whether automatic scrolling is enabled. Turned off when the user is
+     * interacting with the transcript.
+     */
+    autoscroll: true,
+
+    /*
+     * The polling interval ID returned by window.setInterval().
+     */
+    pollIntervalId: null,
+
+    /*
+     * The scrollable area containing subtitles.
+     */
+    viewport: null,
+
+    /*
+     * Initialize with the interactive transcript root element. Call only once.
+     */
+    init: function(root) {
+        //TODO: convert to some type of logging that allows for leaving the log
+        //lines in for development and auto-stripping them for production.
+        //console.log("InteractiveTranscript.init()");
+        var viewport = root.find(".subtitles");
+        viewport.delegate("a", "click", $.proxy(this._onsubtitleclick, this));
+        viewport.hover($.proxy(this._onhover, this));
+        this.viewport = viewport;
+    },
+
+    /*
+     * Begin tracking the active subtitle in the video player.
+     */
+    start: function() {
+        //console.log("InteractiveTranscript.start()");
+        this.stop();
+        this._pollPlayer();
+        this.pollIntervalId = setInterval(
+            $.proxy(this._pollPlayer, this), this.POLL_MILLIS);
+    },
+
+    /*
+     * Stop tracking the active subtitle in the video player.
+     */
+    stop: function() {
+        //console.log("InteractiveTranscript.stop()");
+        clearInterval(this.pollIntervalId);
+        this.pollIntervalId = null;
+    },
+
+    /*
+     * Handle mouseenter and mouseleave on the transcript.
+     */
+    _onhover: function(e) {
+        //console.log("InteractiveTranscript._onhover(): type="+e.type);
+        this.autoscroll = (e.type === "mouseleave");
+    },
+
+    /*
+     * Handle click event on a subtitle.
+     */
+    _onsubtitleclick: function(e) {
+        //console.log("InteractiveTranscript._onsubtitleclick()");
+        if (!VideoStats.player) {
+            return;
+        }
+
+        var time = parseFloat($(e.target).parent().data("time"));
+
+        if (!isNaN(time)) {
+            VideoStats.player.seekTo(time, true);
+            VideoStats.player.playVideo();
+        }
+
+        if (window.gae_bingo) {
+            gae_bingo.bingo(["interactive_transcript_subtitle_click",
+                "interactive_transcript_subtitle_click_binary"])
+        }
+    },
+
+    /*
+     * Activate the subtitle corresponding to the current video position.
+     */
+    _pollPlayer: function() {
+        //console.log("InteractiveTranscript._pollPlayer()");
+        if (!VideoStats.player) {
+            return;
+        }
+
+        var currTime = VideoStats.player.getCurrentTime(),
+            lineTime,
+            currSub,
+            lines = this.viewport.find("li"),
+            len = lines.length,
+            i;
+
+        for (i = 0; i < len; i++) {
+            lineTime = parseFloat($(lines[i]).data("time"));
+
+            // find the next highest element before stepping back by 1
+            if (!isNaN(lineTime) && lineTime > currTime) {
+                currSub = (i === 0) ? lines[0] : lines[i - 1];
+                break;
+            }
+        }
+
+        if (!$(currSub).is(".active")) {
+            this._setActiveSubtitle(currSub || lines[len - 1]);
+        }
+    },
+
+    /*
+     * Activate the given subtitle.
+     */
+    _setActiveSubtitle: function(subtitle) {
+        //console.log("InteractiveTranscript._setActiveSubtitle()");
+
+        var offsetTop,
+            height;
+
+        this.viewport.find(".active").removeClass("active");
+        $(subtitle).addClass("active");
+
+        if (this.autoscroll) {
+            offsetTop = subtitle.offsetTop;
+            height = $(subtitle).height();
+
+            // show three lines above the active line
+            this.viewport.stop().animate({
+                scrollTop: offsetTop - (height * 3)
+            });
+        }
+    }
+};
 

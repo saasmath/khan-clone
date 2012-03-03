@@ -2,18 +2,24 @@ from __future__ import absolute_import
 
 import request_handler
 from api.auth.xsrf import ensure_xsrf_cookie
-from models import Topic, Video
 
 class SocratesHandler(request_handler.RequestHandler):
     @ensure_xsrf_cookie
-    def get(self, readable_id=""):
-        topic_id = self.request_string('topic')
-        topic = Topic.get_by_id(topic_id)
+    def get(self, path, video_id):
+        if not path:
+            return
 
-        video = Video.get_for_readable_id(readable_id)
+        path_list = path.split('/')
 
-        import main
-        template_values = main.ViewVideo.get_template_data(self, readable_id, video, topic)
+        if not path_list:
+            return
+
+        topic_id = path_list[-1]
+        from main import ViewVideo
+        template_values = ViewVideo.show_video(self, video_id, topic_id)
+        if not template_values:
+            return
+
         template_values['has_socrates'] = True
 
         self.render_jinja2_template('socrates/viewvideo.html', template_values)
