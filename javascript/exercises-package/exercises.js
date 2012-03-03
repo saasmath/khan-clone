@@ -1,6 +1,22 @@
 /**
  * Views and logic for exercise/stack/card interactions
  * TODO(kamens): don't love the name "Exercises" for this namespace
+ *
+ * Catalog of events triggered on Exercises:
+ *
+ *   * problemTemplateRendered -- when a problem template that is ready for
+ *   khan-exercises targetting is rendered
+ *
+ *   * readyForNextProblem -- when a card is ready for the next problem to
+ *   be rendered by khan-exercises
+ *
+ *   * upcomingExercise -- when a new exercise has been placed in the upcoming
+ *   queue, this is triggered to give listeners a chance to preload any
+ *   requirements
+ *
+ *   * warning -- when a warning about issues like disabled sessionStorage
+ *   has been fired
+ *
  */
 var Exercises = {
 
@@ -514,7 +530,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
             this.renderCardContents("exercises.problem-template");
 
             // Tell khan-exercises to setup its DOM and event listeners
-            $(Khan).trigger("prepare");
+            $(Exercises).trigger("problemTemplateRendered");
 
         }
 
@@ -529,8 +545,8 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
         var nextUserExercise = Exercises.BottomlessQueue.next();
         if (nextUserExercise) {
-            // Tell khan-exercises to fill the card w/ new problem contents
-            $(Khan).trigger("renderNextProblem", nextUserExercise);
+            // khan-exercises is listening and will fill the card w/ new problem contents
+            $(Exercises).trigger("readyForNextProblem", nextUserExercise);
         }
 
     },
@@ -712,7 +728,7 @@ Exercises.BottomlessQueue = {
     },
 
     warnSessionStorageDisabled: function() {
-        $( Khan ).trigger("warning", ["You must enable DOM storage in your browser; see <a href='https://sites.google.com/a/khanacademy.org/forge/for-developers/how-to-enable-dom-storage'>here</a> for instructions.", false] );
+        $(Exercises).trigger("warning", ["You must enable DOM storage in your browser; see <a href='https://sites.google.com/a/khanacademy.org/forge/for-developers/how-to-enable-dom-storage'>here</a> for instructions.", false] );
     },
 
     enqueue: function(userExercise) {
@@ -723,7 +739,7 @@ Exercises.BottomlessQueue = {
         // already
         // TODO(kamens): probably want to limit the number of exercises we
         // preload if we send down a large predetermined stack
-        $( Khan ).trigger("upcomingExercise", userExercise.exercise);
+        $(Exercises).trigger("upcomingExercise", userExercise.exercise);
     },
 
     cacheKey: function(userExercise) {
