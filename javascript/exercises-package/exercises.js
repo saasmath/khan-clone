@@ -632,6 +632,8 @@ Exercises.BottomlessQueue = {
     // send off an ajax request for a refill
     queueRefreshSize: 3,
 
+    initDeferred: $.Deferred(),
+
     currentQueue: [],
     recycleQueue: [],
 
@@ -660,9 +662,11 @@ Exercises.BottomlessQueue = {
 
         // Fill up our queue and cache with initial exercises sent
         // on first pageload
-        _.each(userExercises, function(userExercise) {
-            this.enqueue(userExercise);
-        }, this);
+        this.initDeferred.done(function() {
+            _.each(userExercises, function(userExercise) {
+                this.enqueue(userExercise);
+            }, Exercises.BottomlessQueue);
+        });
 
         // Any time khan-exercises tells us it has new updateUserExercise
         // data, update cache if it's more recent
@@ -675,6 +679,10 @@ Exercises.BottomlessQueue = {
     enqueue: function(userExercise) {
         this.currentQueue.push(userExercise.exercise);
         this.userExerciseCache[userExercise.exercise] = userExercise;
+
+        // Tell khan-exercises to preload this upcoming exercise if it hasn't
+        // already
+        $( Khan ).trigger("upcomingExercise", userExercise.exercise);
     },
 
     cacheLocally: function(userExercise) {
@@ -698,6 +706,10 @@ Exercises.BottomlessQueue = {
     },
 
     next: function() {
+
+        if (!this.initDeferred.isResolved()) {
+            this.initDeferred.resolve();
+        }
         
         // If the queue is empty, use the recycle queue
         // to fill up w/ old problems while we wait for
