@@ -584,7 +584,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         this.renderCardContents("exercises.end-of-stack-calculating");
 
         // ...and wait a bit for dramatic effect before trying to show stats.
-        setTimeout(tryRenderEndOfStackStats, 2000);
+        setTimeout(tryRenderEndOfStackStats, 2400);
 
     },
 
