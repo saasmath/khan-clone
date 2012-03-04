@@ -209,6 +209,7 @@ javascript = {
             "card-leaves.handlebars",
             "problem-template.handlebars",
             "end-of-stack.handlebars",
+            "end-of-stack-calculating.handlebars",
             "exercises.js",
             "bottomless-queue.js",
             "review.js",

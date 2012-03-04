@@ -31,6 +31,9 @@ var Exercises = {
     completeStack: null,
     completeStackView: null,
 
+    // Keeps track of # of pending API requests
+    pendingAPIRequests: 0,
+
     /**
      * Called to initialize the exercise page. Passed in with JSON information
      * rendered from the server.
@@ -150,6 +153,10 @@ var Exercises = {
             // Using all hints drops leaves possibility to 1.
             Exercises.currentCard.decreaseLeavesAvailable(1);
         });
+
+        $(Khan)
+            .bind("apiRequestStarted", function() { Exercises.pendingAPIRequests++; })
+            .bind("apiRequestEnded", function() { Exercises.pendingAPIRequests--; });
 
     },
 
@@ -555,8 +562,30 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     renderEndOfStackCard: function() {
 
+        function tryRenderEndOfStackStats() {
+
+            if (Exercises.pendingAPIRequests > 0) {
+
+                // Wait for any outbound API requests to finish.
+                setTimeout(tryRenderEndOfStackStats, 500);
+                console.log("delaying...");
+
+            } else {
+
+                // All API calls done and stats should be up-to-date
+                // for rendering.
+                Exercises.currentCardView.renderCardContents("exercises.end-of-stack", Exercises.completeStack.stats());
+
+            }
+
+        };
+
+        // Start off by showing the "calculations in progress" card...
         this.renderCardContainer();
-        this.renderCardContents("exercises.end-of-stack", Exercises.completeStack.stats());
+        this.renderCardContents("exercises.end-of-stack-calculating");
+
+        // ...and wait a bit for dramatic effect before trying to show stats.
+        setTimeout(tryRenderEndOfStackStats, 2000);
 
     },
 
