@@ -302,7 +302,9 @@ Exercises.BottomlessQueue = {
             type: "GET",
             dataType: "json",
             data: {
-                queued: [], // TODO(kamens): list of queued needs work
+                // Return a list of upcoming exercises so the server can decide
+                // whether or not to re-suggest them.
+                queued: _.pluck(this.currentQueue, "exercise"),
                 casing: "camel"
             },
             complete: function() {

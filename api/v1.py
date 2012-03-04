@@ -1535,7 +1535,7 @@ def user_playlists_specific(topic_id):
 @jsonify
 def user_topic_next_exercises(topic_id):
     # TODO(kamens): this needs to use topic_id to load the right topic
-    return models.UserTopic.next_user_exercises()
+    return models.UserTopic.next_user_exercises(queued=request.values.getlist("queued[]"))
 
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
 @oauth_required()

@@ -3709,12 +3709,20 @@ class UserTopic(db.Model):
 
     # TODO(kamens) but really TODO(jace): Remove static. *This* is where the magic will happen.
     @staticmethod
-    def next_user_exercises(n=3):
+    def next_user_exercises(n=3, queued=[]):
         """ Returns the next n suggested exercises under this topic.
         """
         user_data = UserData.current() or UserData.pre_phantom()
 
-        exids = random.sample(["multiplication_1", "division_0.5", "addition_1", "subtraction_1", "absolute_value"], 2)
+        # List suggested next exercises
+        exids_possible = ["multiplication_1", "division_0.5", "addition_1", "subtraction_1", "absolute_value"]
+
+        # Remove those that have already been queued up
+        exids_possible = [exid for exid in exids_possible if exid not in queued]
+
+        # For now, just grab a random sample
+        exids = random.sample(exids_possible, 2)
+
         exercises = [Exercise.get_by_name(exid) for exid in exids]
 
         # TODO(kamens): parallelize
