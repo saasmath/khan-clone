@@ -301,7 +301,7 @@ Exercises.BottomlessQueue = {
             type: "GET",
             dataType: "json",
             data: {
-                queued: [],
+                queued: [], // TODO(kamens): list of queued needs work
                 casing: "camel"
             },
             complete: function() {
