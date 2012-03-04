@@ -210,6 +210,7 @@ javascript = {
             "problem-template.handlebars",
             "end-of-stack.handlebars",
             "exercises.js",
+            "bottomless-queue.js",
             "review.js",
         ]
     },
