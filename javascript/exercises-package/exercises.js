@@ -568,7 +568,6 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
                 // Wait for any outbound API requests to finish.
                 setTimeout(tryRenderEndOfStackStats, 500);
-                console.log("delaying...");
 
             } else {
 
