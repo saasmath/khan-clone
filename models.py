@@ -3714,10 +3714,27 @@ class UserTopic(db.Model):
         """
         user_data = UserData.current() or UserData.pre_phantom()
 
-        exercises = [Exercise.get_by_name(exid) for exid in ["multiplication_1", "division_0.5", "addition_1", "subtraction_1"]]
+        exids = random.sample(["multiplication_1", "division_0.5", "addition_1", "subtraction_1", "absolute_value"], 2)
+        exercises = [Exercise.get_by_name(exid) for exid in exids]
 
         # TODO(kamens): parallelize
-        return [user_data.get_or_insert_exercise(ex) for ex in exercises]
+        user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
+
+        # TODO(kamens) try to get rid of these API property additions due to our
+        # lack of various API projections
+        for user_exercise in user_exercises:
+            exercise = user_exercise.exercise_model
+
+            # Attach related videos before sending down
+            exercise.related_videos = [exercise_video.video for exercise_video in exercise.related_videos_fetch()]
+
+            for video in exercise.related_videos:
+                # TODO: this property is used by khan-exercises to render the progress
+                # icon for related videos. If we decide to expose ids for all models via the API,
+                # this will go away.
+                video.id = video.key().id()
+
+        return user_exercises
 
 class UserVideo(db.Model):
 

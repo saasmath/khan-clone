@@ -1529,6 +1529,14 @@ def user_playlists_specific(topic_id):
 
     return None
 
+@route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def user_topic_next_exercises(topic_id):
+    # TODO(kamens): this needs to use topic_id to load the right topic
+    return models.UserTopic.next_user_exercises()
+
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
 @oauth_required()
 @jsonp

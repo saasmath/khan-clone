@@ -18,31 +18,18 @@ class ViewExercise(request_handler.RequestHandler):
             self.redirect("/exercise/%s" % self.request_string("exid", default="addition_1"))
             return
 
-        exercise = models.Exercise.get_by_name(exid)
-
-        if not exercise:
+        if not models.Exercise.get_by_name(exid):
             raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
 
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
-        next_user_exercises = models.UserTopic.next_user_exercises()
-
-        # TODO(kamens): get rid of the need to do this gross perf hack
-        for next_user_exercise in next_user_exercises:
-            next_exercise = models.Exercise.get_by_name(next_user_exercise.exercise)
-
-            next_exercise.related_videos = [exercise_video.video for exercise_video in next_exercise.related_videos_fetch()]
-            for video in next_exercise.related_videos:
-                video.id = video.key().id()
-
-            next_user_exercise.exercise_model = next_exercise
-
-        stack = get_problem_stack(next_user_exercises)
+        user_exercises = models.UserTopic.next_user_exercises()
+        stack = get_problem_stack(user_exercises)
 
         template_values = {
             "stack_json": jsonify(stack, camel_cased=True),
-            "user_exercises_json": jsonify(next_user_exercises, camel_cased=True),
+            "user_exercises_json": jsonify(user_exercises, camel_cased=True),
         }
 
         self.render_jinja2_template("exercises/exercise_template.html", template_values)

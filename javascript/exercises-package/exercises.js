@@ -651,12 +651,15 @@ Exercises.BottomlessQueue = {
 
     // # of exercises in queue below which we will
     // send off an ajax request for a refill
-    queueRefreshSize: 3,
+    queueRefillSize: 3,
 
     // # of exercises in upcoming queue for which we
     // trigger upcomingExercise events to give
     // listeners a chance to preload resources
     preloadUpcoming: 2,
+
+    // true if there's a refill request currently pending
+    refilling: false,
 
     initDeferred: $.Deferred(),
 
@@ -883,7 +886,7 @@ Exercises.BottomlessQueue = {
         this.recycleQueue = _.last(this.recycleQueue, Math.min(5, this.recycleQueue.length));
 
         // Refill if we're running low
-        if (this.currentQueue.length < this.queueRefreshSize) {
+        if (this.currentQueue.length < this.queueRefillSize) {
             this.refill();
         }
 
@@ -895,8 +898,34 @@ Exercises.BottomlessQueue = {
     },
 
     refill: function() {
-        // TODO(kamens): refill the queue w/ the next N suggested exercises,
-        // handle queueing of multiple ajax calls, etc
+
+        if (this.refilling) {
+            // Only one refill request at a time
+            return;
+        }
+
+        this.refilling = true;
+
+        $.ajax({
+            // TODO(kamens): this URL needs a real topic id
+            // TODO(kamens): this also probably needs a review URL toggle
+            url: "/api/v1/user/topic/<topic_id>/exercises/next",
+            type: "GET",
+            dataType: "json",
+            data: {
+                queued: [],
+                casing: "camel"
+            },
+            complete: function() {
+                Exercises.BottomlessQueue.refilling = false;
+            },
+            success: function(data) {
+                _.each(data, function(userExercise) {
+                    Exercises.BottomlessQueue.enqueue(userExercise);
+                });
+            }
+        });
+
     }
 
 };
