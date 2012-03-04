@@ -1573,8 +1573,6 @@ def user_problem_logs(exercise_name):
 @jsonp
 @jsonify
 def attempt_problem_number(exercise_name, problem_number):
-    import time
-    time.sleep(4)
     user_data = models.UserData.current()
 
     if user_data:
