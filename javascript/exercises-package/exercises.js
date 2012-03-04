@@ -1,6 +1,5 @@
 /**
  * Views and logic for exercise/stack/card interactions
- * TODO(kamens): don't love the name "Exercises" for this namespace
  *
  * Catalog of events triggered on Exercises:
  *
