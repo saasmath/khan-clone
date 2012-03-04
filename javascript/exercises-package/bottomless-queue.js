@@ -137,7 +137,7 @@ Exercises.BottomlessQueue = {
         });
 
         // Cache userExercise
-        this.userExerciseCache[userExercise.exercise] = userExercise;
+        this.cacheLocally(userExercise);
 
         // Possibly new upcoming exercises
         this.triggerUpcoming();
@@ -207,11 +207,12 @@ Exercises.BottomlessQueue = {
 
         // Update cache, if new data is more recent
         if (!oldUserExercise || (userExercise.totalDone >= oldUserExercise.totalDone)) {
-            this.userExerciseCache[userExercise.exercise] = userExercise;
-        }
 
-        // Persist to session storage so we get nice back button behavior
-        window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
+            this.userExerciseCache[userExercise.exercise] = userExercise;
+
+            // Persist to session storage so we get nice back button behavior
+            window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
+        }
 
     },
 
