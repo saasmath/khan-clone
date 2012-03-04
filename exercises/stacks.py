@@ -31,8 +31,7 @@ class ProblemCard(Card):
         self.card_type = "problem"
         self.exercise_name = None
 
-# TODO(kamens): this will eventually be able to handle multiple exercises, 
-# topics, and probably eventually return other types of cards.
+# This will eventually be able to return other types of cards, like Video cards, as well.
 def get_problem_stack(next_user_exercises):
     problem_cards = [ProblemCard() for i in range(DEFAULT_CARDS_PER_STACK)]
 
