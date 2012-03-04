@@ -668,6 +668,9 @@ Exercises.BottomlessQueue = {
     currentQueue: [],
     recycleQueue: [],
 
+    // current item that was most recently popped off the queue
+    current: null,
+
     // STOPSHIP TODO(kamens): userExerciseCache needs to be hidden via
     // closures to prevent simple cheating
     //
@@ -717,6 +720,22 @@ Exercises.BottomlessQueue = {
             })
             .bind("attemptError", function(ev, userExercise) {
                 Exercises.BottomlessQueue.clearCache(userExercise);
+            })
+            .bind("problemDone", function() {
+
+                // Whenever a problem is completed, we may be waiting for
+                // a while for the /attempt callback to finish and send us the
+                // server's updated userExercise data. So we cheat a bit and
+                // bump up the just-finished userExercises's totalDone count
+                // here in case we run into it again before the ajax call
+                // returns.
+                var currentExercise = Exercises.BottomlessQueue.current.exercise,
+                    userExercise = Exercises.BottomlessQueue.userExerciseCache[currentExercise];
+
+                if (userExercise) {
+                    userExercise.totalDone += 1;
+                }
+
             });
 
     },
@@ -867,11 +886,11 @@ Exercises.BottomlessQueue = {
         }
 
         // Pull off the next exercise
-        var next = _.head(this.currentQueue);
+        this.current = _.head(this.currentQueue);
 
         // If we don't have a userExercise object for the next
         // exercise, we've got a problem.
-        if (!this.userExerciseCache[next.exercise]) {
+        if (!this.userExerciseCache[this.current.exercise]) {
             throw "Missing user exercise cache for next exercise";
         }
 
@@ -879,7 +898,7 @@ Exercises.BottomlessQueue = {
         this.currentQueue = _.rest(this.currentQueue);
 
         // ...but put it on the end of our recycle queue
-        this.recycleQueue.push(next);
+        this.recycleQueue.push(this.current);
 
         // ...and then chop the recycle queue down so it
         // doesn't just constantly grow.
@@ -893,7 +912,7 @@ Exercises.BottomlessQueue = {
         // Possibly new upcoming exercises
         this.triggerUpcoming();
 
-        return this.userExerciseCache[next.exercise];
+        return this.userExerciseCache[this.current.exercise];
  
     },
 
