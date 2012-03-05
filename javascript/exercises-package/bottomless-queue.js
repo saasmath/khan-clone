@@ -89,6 +89,8 @@ Exercises.BottomlessQueue = {
                 Exercises.BottomlessQueue.cacheLocally(userExercise);
             })
             .bind("attemptError", function(ev, userExercise) {
+                // Something went wrong w/ the /attempt API request.
+                // Clear the cache so we get a fresh userExercise on reload.
                 Exercises.BottomlessQueue.clearCache(userExercise);
             })
             .bind("problemDone", function() {
@@ -112,14 +114,14 @@ Exercises.BottomlessQueue = {
 
     testSessionStorage: function() {
         // Adapted from a comment on http://mathiasbynens.be/notes/localstorage-pattern
-        var enabled, uid = +new Date;
+        var enabled, uid = Date.now();
         try {
-            sessionStorage[ uid ] = uid;
-            enabled = ( sessionStorage[ uid ] == uid );
-            sessionStorage.removeItem( uid );
+            sessionStorage[uid] = uid;
+            enabled = (sessionStorage[uid] == uid);
+            sessionStorage.removeItem(uid);
             return enabled;
         }
-        catch( e ) {
+        catch(e) {
             return false;
         }
     },
@@ -189,12 +191,12 @@ Exercises.BottomlessQueue = {
 
         // Parse the JSON if it exists
         var data = window.sessionStorage[this.cacheKey(userExercise)],
-            oldUserExercise = data ? JSON.parse(data) : null;
+            cachedUserExercise = data ? JSON.parse(data) : null;
 
-        if (oldUserExercise && oldUserExercise.totalDone > userExercise.totalDone) {
+        if (cachedUserExercise && cachedUserExercise.totalDone > userExercise.totalDone) {
             // sessionStorage-cached data is newer than userExercise. Probably
             // got here via browser history.
-            return oldUserExercise;
+            return cachedUserExercise;
         } else {
             return userExercise;
         }
@@ -207,10 +209,10 @@ Exercises.BottomlessQueue = {
             return;
         }
 
-        var oldUserExercise = this.userExerciseCache[userExercise.exercise];
+        var cachedUserExercise = this.userExerciseCache[userExercise.exercise];
 
         // Update cache, if new data is more recent
-        if (!oldUserExercise || (userExercise.totalDone >= oldUserExercise.totalDone)) {
+        if (!cachedUserExercise || (userExercise.totalDone >= cachedUserExercise.totalDone)) {
 
             this.userExerciseCache[userExercise.exercise] = userExercise;
 
