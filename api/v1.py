@@ -1747,29 +1747,6 @@ def _attempt_problem_wrong(exercise_name):
 
     return unauthorized_response()
 
-@route("/api/v1/user/exercises/review_problems", methods=["GET"])
-@oauth_optional()
-@jsonp
-@jsonify
-def get_ordered_review_problems():
-    """Retrieves an ordered list of a subset of the upcoming review problems."""
-
-    # TODO(david): This should probably be abstracted away in exercises.py or
-    # models.py (if/when there's more logic here) with a nice interface.
-
-    user_data = get_visible_user_data_from_request()
-
-    if not user_data:
-        return []
-
-    user_exercise_graph = models.UserExerciseGraph.get(user_data)
-    review_exercises = user_exercise_graph.review_exercise_names()
-
-    queued_exercises = request.request_string('queued', '').split(',')
-
-    # Only return those exercises that aren't already queued up
-    return filter(lambda ex: ex not in queued_exercises, review_exercises)
-
 @route("/api/v1/user/videos/<youtube_id>/log", methods=["GET"])
 @oauth_required()
 @jsonp

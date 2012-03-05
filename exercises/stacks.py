@@ -32,8 +32,17 @@ class ProblemCard(Card):
         self.exercise_name = None
 
 # This will eventually be able to return other types of cards, like Video cards, as well.
-def get_problem_stack(next_user_exercises):
-    problem_cards = [ProblemCard() for i in range(DEFAULT_CARDS_PER_STACK)]
+def get_problem_stack(next_user_exercises, no_extra_cards=False):
+    """ Return a stack of DEFAULT_CARDS_PER_STACK, prefilled with
+    information about the first len(next_user_exercises) cards according
+    to each next_user_exercise.
+
+    If no_extra_cards is set, don't return any extra cards beyond those
+    exercises supplied in next_user_exercises.
+    """
+
+    stack_size = len(next_user_exercises) if no_extra_cards else DEFAULT_CARDS_PER_STACK
+    problem_cards = [ProblemCard() for i in range(stack_size)]
 
     # Fill in the exercise_name properties for the first N cards
     # w/ their suggested exercises. Rest will be filled in on the fly

@@ -293,11 +293,8 @@ Exercises.BottomlessQueue = {
             return;
         }
 
-        this.refilling = true;
-
         $.ajax({
-            // TODO(kamens): this URL needs a real topic id
-            // TODO(kamens): this also probably needs a review URL toggle
+            // TODO(kamens): topic URL needs a real topic id
             url: "/api/v1/user/topic/<topic_id>/exercises/next",
             type: "GET",
             dataType: "json",
@@ -316,6 +313,8 @@ Exercises.BottomlessQueue = {
                 });
             }
         });
+
+        this.refilling = true;
 
     }
 

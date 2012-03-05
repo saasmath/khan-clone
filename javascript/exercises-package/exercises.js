@@ -31,6 +31,8 @@ var Exercises = {
     completeStack: null,
     completeStackView: null,
 
+    reviewMode: false,
+
     // Keeps track of # of pending API requests
     pendingAPIRequests: 0,
 
@@ -47,6 +49,8 @@ var Exercises = {
 
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
+
+        this.reviewMode = json.reviewMode;
 
         Exercises.BottomlessQueue.init(json.userExercises);
 

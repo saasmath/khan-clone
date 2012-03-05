@@ -3707,22 +3707,40 @@ class UserTopic(db.Model):
         else:
             return UserTopic.get_by_key_name(key)
 
-    # TODO(kamens) but really TODO(jace): Remove static. *This* is where the magic will happen.
+    # TODO(kamens): remove static
     @staticmethod
-    def next_user_exercises(n=3, queued=[]):
-        """ Returns the next n suggested exercises under this topic.
+    def next_exercise_names(user_data, n=3, queued=[], review_mode=False):
+        """ Returns the next n suggested exercise names for this topic
+        or for review mode.
+
+        TODO(kamens) but really TODO(jace): *This* is where the magic will happen.
+        """
+
+        if review_mode:
+
+            user_exercise_graph = UserExerciseGraph.get(user_data)
+            exids = user_exercise_graph.review_exercise_names()
+
+        else:
+
+            # List suggested next exercises
+            exids = ["multiplication_1", "division_0.5", "addition_1", "subtraction_1", "absolute_value"]
+
+            # For now, just grab a random sample
+            exids = random.sample(exids, n)
+
+        # Only return those that have not already been queued up
+        return [exid for exid in exids if exid not in queued]
+
+    # TODO(kamens): remove static
+    @staticmethod
+    def next_user_exercises(n=3, queued=[], review_mode=False):
+        """ Returns the next n suggested user exercises for this topic
+        or for review mode.
         """
         user_data = UserData.current() or UserData.pre_phantom()
 
-        # List suggested next exercises
-        exids_possible = ["multiplication_1", "division_0.5", "addition_1", "subtraction_1", "absolute_value"]
-
-        # Remove those that have already been queued up
-        exids_possible = [exid for exid in exids_possible if exid not in queued]
-
-        # For now, just grab a random sample
-        exids = random.sample(exids_possible, 2)
-
+        exids = UserTopic.next_exercise_names(user_data, n, queued, review_mode)
         exercises = [Exercise.get_by_name(exid) for exid in exids]
 
         # TODO(kamens): parallelize
