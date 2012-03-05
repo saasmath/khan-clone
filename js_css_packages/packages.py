@@ -41,6 +41,7 @@ javascript = {
             "handlebars-extras.js",
             "cookies.js",
             "pageutil.js",
+            "facebookutil.js",
             "video-addons.js",
             "api.js",
             "backbone-extensions.js",
