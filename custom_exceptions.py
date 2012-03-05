@@ -15,3 +15,6 @@ class TumblrException(Exception):
 
 class SmartHistoryLoadException(QuietException):
     pass
+
+class InvalidEmailException(QuietException):
+    pass

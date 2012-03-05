@@ -141,6 +141,8 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
         else if (item.kind == "exercise")
             jLink.prepend("<span class='autocomplete-exercise'>Exercise </span>");
 
+        jLink.attr("data-tag", "Autocomplete");
+
         return $("<li></li>")
             .data("item.autocomplete", item)
             .append(jLink)

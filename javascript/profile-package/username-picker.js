@@ -19,11 +19,22 @@ UsernamePickerView = Backbone.View.extend({
     usernameFieldAcceptable_: true,
 
     events: {
-        "keyup .nickname": "onNicknameKeyup_",
-        "keyup .username": "onUsernameKeyup_",
+        "keypress .nickname": "onNicknameKeypress_",
+        "keypress .username": "onUsernameKeypress_",
         "click :input": "onInputClick_",
         "click #save-profile-info": "onSaveClick_",
         "click #cancel-profile-info": "onCancelClicked_"
+    },
+
+    delegateEvents: function(events) {
+        $(this.el)
+                .on(Keys.textChangeEvents,
+                    ".nickname",
+                    Keys.wrapTextChangeHandler(this.onNicknameInput_, this))
+                .on(Keys.textChangeEvents,
+                    ".username",
+                    Keys.wrapTextChangeHandler(this.onUsernameInput_, this));
+        UsernamePickerView.__super__.delegateEvents.call(this, events);
     },
 
     onInputClick_: function(e) {
@@ -37,7 +48,6 @@ UsernamePickerView = Backbone.View.extend({
     initialize: function() {
         this.template = Templates.get("profile.username-picker");
         this.shouldShowUsernameWarning_ = false;
-        this.keyupTimeout = null;
         this.model.bind("validate:nickname", this.onValidateNickname_, this);
         this.model.bind("validate:username", this.onValidateUsername_, this);
         this.model.bind("savesuccess", this.onSaveSuccess_, this);
@@ -99,69 +109,27 @@ UsernamePickerView = Backbone.View.extend({
         }, this);
     },
 
-    // TODO: move elsewhere
-    /**
-     * A conservative check to see if a key event is text-modifying.
-     * This leans towards the side of truthiness - that is if a key is
-     * unknown, it is deemed to be text modifying.
-     */
-    isTextModifyingKeyEvent_: function(e) {
-        if ((e.altKey && !e.ctrlKey) || e.metaKey ||
-                // Function keys don't generate text
-                e.keyCode >= 112 && e.keyCode <= 123) {
-            return false;
-        }
-
-        switch (e.keyCode) {
-            case $.ui.keyCode.ALT:
-            case $.ui.keyCode.CAPS_LOCK:
-            case $.ui.keyCode.COMMAND:
-            case $.ui.keyCode.COMMAND_LEFT:
-            case $.ui.keyCode.COMMAND_RIGHT:
-            case $.ui.keyCode.CONTROL:
-            case $.ui.keyCode.DOWN:
-            case $.ui.keyCode.END:
-            case $.ui.keyCode.ESCAPE:
-            case $.ui.keyCode.HOME:
-            case $.ui.keyCode.INSERT:
-            case $.ui.keyCode.LEFT:
-            case $.ui.keyCode.MENU:
-            case $.ui.keyCode.PAGE_DOWN:
-            case $.ui.keyCode.PAGE_UP:
-            case $.ui.keyCode.RIGHT:
-            case $.ui.keyCode.SHIFT:
-            case $.ui.keyCode.UP:
-            case $.ui.keyCode.WINDOWS:
-                return false;
-            default:
-                return true;
-        }
+    onNicknameInput_: function(e) {
+        this.model.validateNickname(this.getFormValue_(".nickname"));
     },
 
-    onNicknameKeyup_: function(e) {
-        if (!this.isTextModifyingKeyEvent_(e)) {
-            return;
-        }
-        this.model.validateNickname(this.getFormValue_(".nickname"));
+    onNicknameKeypress_: function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             // Treat enter as "tab" to the next field.
             this.$(".username").focus();
         }
     },
 
-    onUsernameKeyup_: function(e) {
-        if (!this.isTextModifyingKeyEvent_(e)) {
-            return;
-        }
+    onUsernameKeypress_: function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             if (!this.$("#save-profile-info").prop("disabled")) {
                 this.$("#save-profile-info").click();
-                return;
             }
-
-            this.onTimeout_();
+            this.model.validateUsername(this.getFormValue_(".username"));
         }
+    },
 
+    onUsernameInput_: function(e) {
         this.$("#save-profile-info").prop("disabled", true);
         if (this.shouldShowUsernameWarning_ && this.model.get("username")) {
             $(".notification.error").show();
@@ -170,17 +138,13 @@ UsernamePickerView = Backbone.View.extend({
         }
         this.$(".example-username").text(this.getFormValue_(".username"));
 
-        if (this.keyupTimeout) {
-            window.clearTimeout(this.keyupTimeout);
-        }
-        this.keyupTimeout = window.setTimeout(_.bind(this.onTimeout_, this), 1000);
+        this.showSidenote_(".username-row", "Checking...");
+        this.debouncedValidateUsername_();
     },
 
-    onTimeout_: function() {
-        this.showSidenote_(".username-row", "Checking...");
+    debouncedValidateUsername_: _.debounce(function() {
         this.model.validateUsername(this.getFormValue_(".username"));
-        this.keyupTimeout = null;
-    },
+    }, 1000),
 
     syncSaveButtonState_: function() {
         this.$("#save-profile-info").prop(

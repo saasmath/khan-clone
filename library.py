@@ -129,13 +129,9 @@ def library_content_html(ajax=False, version_number=None):
 
     add_next_topic(topics)
 
-    timestamp = time.time()
-
     template_values = {
         'topics': topics,
         'ajax' : ajax,
-        # convert timestamp to a nice integer for the JS
-        'timestamp': int(round(timestamp * 1000)),
         'version_date': str(version.made_default_on),
         'version_id': version.number
     }
@@ -152,6 +148,7 @@ class GenerateLibraryContent(request_handler.RequestHandler):
 
     def get(self, from_task_queue = False):
         library_content_html(ajax=True, version_number=None, bust_cache=True)
+        library_content_html(ajax=False, version_number=None, bust_cache=True)
 
         if not from_task_queue:
             self.redirect("/")

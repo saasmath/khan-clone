@@ -184,8 +184,11 @@ input.simple-button {
     outline: 2px solid #333;
 }
 
-.simple-button:active {
-    top: 1px;
+.simple-button:active, 
+.simple-button.toggled {
+    -webkit-box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 /* A blue color scheme for the simple button */
 .simple-button.blue {
@@ -210,6 +213,8 @@ input.simple-button {
 }
 .simple-button:disabled, .simple-button.disabled {
     color: #ddd !important;
+    cursor: not-allowed !important;
+    top: 0 !important;
 }
 .simple-button.seethrough {
     color: #444 !important;
@@ -271,7 +276,10 @@ input.simple-button {
     background-image: -o-linear-gradient( top, #f7f7f7, #ddd );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f7f7f7', endColorstr='#dddddd');
 }
-
+.lte8 .action-gradient:active,
+.lte8 .action-gradient.toggled {
+    background-color: #c4c4c4; /* less: darken(#ddd, 10%) */
+}
 /* blue button gradient */
 .action-gradient.blue {
     background: #3a4759;
@@ -279,6 +287,10 @@ input.simple-button {
     background-image: -moz-linear-gradient( top, #3a4759, #222e3e );
     background-image: -o-linear-gradient( top, #3a4759, #222e3e );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#3a4759', endColorstr='#222e3e');
+}
+.lte8 .action-gradient.blue:active,
+.lte8 .action-gradient.blue.toggled {
+    background-color: #10161d; /* less: darken(#222e3e, 10%) */
 }
 /* green button gradient */
 .action-gradient.green {
@@ -288,6 +300,10 @@ input.simple-button {
     background-image: -o-linear-gradient( top, #8aba08, #6e9700 );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#8aba08', endColorstr='#6e9700');
 }
+.lte8 .action-gradient.green:active,
+.lte8 .action-gradient.green.toggled {
+    background-color: #496400; /* less: darken(#6e9700, 10%) */
+}
 /* orange button gradient */
 .action-gradient.orange {
     background: #e35d04;
@@ -295,6 +311,10 @@ input.simple-button {
     background-image: -moz-linear-gradient( top, #e35d04, #bf4f04 );
     background-image: -o-linear-gradient( top, #e35d04, #bf4f04 );
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e35d04', endColorstr='#bf4f04');
+}
+.lte8 .action-gradient.orange:active,
+.lte8 .action-gradient.orange.toggled {
+    background-color: #8d3a03; /* less: darken(#bf4f04, 10%) */
 }
 .action-gradient.seethrough {
     background-image: -webkit-gradient(linear, left top, left bottom,  from(rgba(255,255,255, .5)), to(rgba(255,255,255, .0)));
@@ -1091,60 +1111,6 @@ div.video > div {
     width: 800px;
 }
 
-div.video details {
-    display: block;
-    width: 798px;
-    background-color: #d2dded;
-}
-
-div.video summary {
-    display: block;
-    background-color: #E6F8DD;
-    border-top: 1px solid #80C65A;
-    border-bottom: 1px solid white;
-    font-weight: bold;
-}
-
-div.video label.video_topic_prev {
-    float: left;
-    border-right: solid 1px white;
-}
-
-div.video label.video_topic_next {
-    float: right;
-    border-left: solid 1px white;
-}
-
-div.video div.video_topic_container {
-    clear: both;
-    border-top: 1px solid grey;
-    overflow: hidden;
-}
-
-div.video ol li {
-    display: inline-block;
-    width: 260px;
-    vertical-align: top;
-}
-
-div.video ol li, div.video summary, div.video label.video_topic_prev, div.video label.video_topic_next {
-    padding: .5ex 3px .5ex 3px;
-}
-
-div.video ol li:before {
-    content: counter(video) ".";
-    counter-increment: video;
-}
-
-div.video ol {
-    counter-reset: video;
-    padding: 0ex 0em 8ex 0em;
-    display: inline;
-    background: #eee;
-    background-break: continuous; /* CSS3 */
-    background-image: url(/images/798white_798grey.png); /*! data-uri(/images/798white_798grey.png) */
-}
-
 div.video p#keywords {
     clear: both;
 }
@@ -1153,6 +1119,7 @@ span.video_extra_links {
     float: right;
     position: relative;
     z-index: 100;
+    margin-bottom: 10px;
 }
 span.video_extra_links div.video-energy-points {
     float: left;
@@ -3219,71 +3186,6 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 /* End about the site */
 
-/* Login Page Styles */
-
-#login-page {
-    padding-top: 18px;
-}
-#login-page h3 {
-    color: #555;
-}
-#login-page a:visited {
-    color: #0075b1;
-}
-#login-page .providers-sign-up li {
-    float: left;
-    padding-right: 20px;
-    font-size: 15px;
-}
-#login-page .providers li {
-    float: left;
-    border: 1px solid #ccc;
-    border-bottom-color: #aaa;
-    border-right-color: #bbb;
-    text-align: left;
-    padding: 10px;
-    margin-right: 20px;
-    min-height: 80px;
-    position: relative;
-
-    -moz-border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border-radius: 5px;
-
-    -moz-box-shadow: 2px 2px 5px #ccc;
-    -webkit-box-shadow: 2px 2px 5px #ccc;
-    box-shadow: 2px 2px 5px #ccc;
-}
-#login-page .providers li:hover,
-#login-page .providers li:active {
-    border-color: #aaa;
-    left: 2px;
-    top: 2px;
-
-    -moz-box-shadow: none;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-}
-#login-page .providers li .sign-in-text {
-    color: #777;
-    margin-bottom: 10px;
-}
-#login-page #feature-list {
-    width: 100%;
-}
-#login-page #feature-list div.feature {
-    width: 33%;
-    float: left;
-    text-align: center;
-}
-#login-page #feature-list div.feature img {
-    border: 1px solid #AAA;
-    -webkit-box-shadow: 1px  2px 2px #CCC;
-    -moz-box-shadow: 1px 2px 2px #CCC;
-    box-shadow: 1px 2px 2px #CCC;
-}
-/* End login page style */
-
 /* Report a problem styles */
 #report-problem ol {
     list-style: decimal outside;
@@ -3338,18 +3240,15 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 #empty-class ol li div.coach-email {
     position: absolute;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 13px;
     width: 195px;
     overflow: hidden;
     text-align: left;
 }
 #empty-class ol li.enter-email div.coach-email {
-    top: 106px;
-    left: 115px;
-}
-#empty-class ol li.click-register div.coach-email {
-    top: 107px;
-    left: 110px;
+    top: 272px;
+    left: 204px;
+    cursor: default; /* Don't show text cursor, because this isn't editable */
 }
 /* End No students page styles */
 
