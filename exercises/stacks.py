@@ -1,5 +1,6 @@
 
 DEFAULT_CARDS_PER_STACK = 8
+MAXIMUM_CARDS_PER_REVIEW_STACK = 8
 
 # TODO(kamens): this will probably be persisted to the datastore in the form of a double-pickled 
 # list of cards attached to UserTopics or something of the sort.
@@ -51,4 +52,8 @@ def get_problem_stack(next_user_exercises):
 
 def get_review_stack(next_user_exercises):
     review_cards = [ProblemCard(user_exercise.exercise) for user_exercise in next_user_exercises]
+
+    # Cap off review stack size so it doesn't get too crazy
+    review_cards = review_cards[:MAXIMUM_CARDS_PER_REVIEW_STACK]
+
     return review_cards + [EndOfReviewCard()]

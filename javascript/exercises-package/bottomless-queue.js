@@ -288,6 +288,12 @@ Exercises.BottomlessQueue = {
 
     refill: function() {
 
+        if (Exercises.reviewMode) {
+            // We don't refill in reviewMode, all stack
+            // data was sent down originally
+            return;
+        }
+
         if (this.refilling) {
             // Only one refill request at a time
             return;
