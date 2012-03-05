@@ -609,7 +609,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         var nextUserExercise = Exercises.BottomlessQueue.next();
         if (nextUserExercise) {
             // khan-exercises is listening and will fill the card w/ new problem contents
-            $(Exercises).trigger("readyForNextProblem", nextUserExercise);
+            $(Exercises).trigger("readyForNextProblem", {userExercise: nextUserExercise});
         }
 
     },

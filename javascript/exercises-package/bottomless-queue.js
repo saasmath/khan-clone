@@ -71,6 +71,7 @@ Exercises.BottomlessQueue = {
 
             if (!Exercises.BottomlessQueue.sessionStorageEnabled) {
                 Exercises.BottomlessQueue.warnSessionStorageDisabled();
+                return;
             }
 
             // Fill up our queue and cache with initial exercises sent
@@ -124,7 +125,10 @@ Exercises.BottomlessQueue = {
     },
 
     warnSessionStorageDisabled: function() {
-        $(Exercises).trigger("warning", ["You must enable DOM storage in your browser; see <a href='https://sites.google.com/a/khanacademy.org/forge/for-developers/how-to-enable-dom-storage'>here</a> for instructions.", false] );
+        $(Exercises).trigger("warning", {
+            text: "You must enable DOM storage in your browser; see <a href='https://sites.google.com/a/khanacademy.org/forge/for-developers/how-to-enable-dom-storage'>here</a> for instructions.", 
+            showClose: false
+        });
     },
 
     enqueue: function(userExercise) {
@@ -156,7 +160,7 @@ Exercises.BottomlessQueue = {
 
                 // Tell khan-exercises to preload this upcoming exercise if it hasn't
                 // already
-                $(Exercises).trigger("upcomingExercise", item.exercise);
+                $(Exercises).trigger("upcomingExercise", {exerciseName: item.exercise});
 
                 item.upcomingTriggered = true;
 
