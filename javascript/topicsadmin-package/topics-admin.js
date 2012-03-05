@@ -69,7 +69,12 @@ var TopicTreeEditor = {
                     });
                 }
                 if (_.include(["Video", "Exercise", "Url"], node.data.kind)) {
-                    $(span).contextMenu({menu: "item_context_menu"}, function(action, el, pos) {
+                    if (node.parent.data.key == "ChangedContent") {
+                        var menu_name = "content_change_context_menu"
+                    } else {
+                        var menu_name = "item_context_menu"
+                    }
+                    $(span).contextMenu({menu: menu_name}, function(action, el, pos) {
                         TopicTreeEditor.createEditor(node.data.kind)
                             .init(node)
                             .setParentModel(TopicTreeEditor.topicTree.get(node.parent.data.id))
@@ -128,7 +133,7 @@ var TopicTreeEditor = {
                                 });
                                 childWrapper.model.oldValues = oldValues;
                                 childWrapper.model.changeUser = item.last_edited_by;
-
+                            
                                 childNodes.push(TopicTreeEditor.createChild(childWrapper));
                             });
                             node.addChild(childNodes);
@@ -1027,7 +1032,20 @@ function stringArraysEqual(ar1, ar2) {
                 },
                 error: TopicTreeEditor.handleError
             });
-
+        } else if (action == "undo_changes") {
+            var deleteData = {
+                kind: this.node.data.kind,
+                id: this.node.data.id
+            };               
+            $.ajaxq("topics-admin", {
+                url: "/api/v1/topicversion/edit/deletechange",
+                type: "POST",
+                data: deleteData,
+                success: function(json) {
+                    self.node.parent.removeChild(self.node);
+                },
+                error: TopicTreeEditor.handleError
+            });
         } else {
             editor.NodeEditor.prototype.handleAction.call(this, action);
         }
