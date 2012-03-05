@@ -213,7 +213,6 @@ javascript = {
             "calculating-card.handlebars",
             "exercises.js",
             "bottomless-queue.js",
-            "review.js",
         ]
     },
     "exercise-content": {
