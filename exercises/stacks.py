@@ -19,36 +19,36 @@ class EndOfStackCard(Card):
 
     def __init__(self):
         Card.__init__(self)
-
         self.card_type = "endofstack"
+
+class EndOfReviewCard(Card):
+    """ Single Card at end of a review that shows info about review being done or not. """
+
+    def __init__(self):
+        Card.__init__(self)
+        self.card_type = "endofreview"
 
 class ProblemCard(Card):
     """ Holds single Card's state specific to exercise problems. """
 
-    def __init__(self):
+    def __init__(self, exercise_name=None):
         Card.__init__(self)
-
         self.card_type = "problem"
-        self.exercise_name = None
+        self.exercise_name = exercise_name
 
 # This will eventually be able to return other types of cards, like Video cards, as well.
-def get_problem_stack(next_user_exercises, no_extra_cards=False):
+def get_problem_stack(next_user_exercises):
     """ Return a stack of DEFAULT_CARDS_PER_STACK, prefilled with
     information about the first len(next_user_exercises) cards according
     to each next_user_exercise.
-
-    If no_extra_cards is set, don't return any extra cards beyond those
-    exercises supplied in next_user_exercises.
     """
+    problem_cards = [ProblemCard(user_exercise.exercise) for user_exercise in next_user_exercises]
 
-    stack_size = len(next_user_exercises) if no_extra_cards else DEFAULT_CARDS_PER_STACK
-    problem_cards = [ProblemCard() for i in range(stack_size)]
-
-    # Fill in the exercise_name properties for the first N cards
-    # w/ their suggested exercises. Rest will be filled in on the fly
-    # as the student works.
-    for ix, user_exercise in enumerate(next_user_exercises):
-        if len(problem_cards) > ix:
-            problem_cards[ix].exercise_name = user_exercise.exercise
+    while len(problem_cards) < DEFAULT_CARDS_PER_STACK:
+        problem_cards.append(ProblemCard())
 
     return problem_cards + [EndOfStackCard()]
+
+def get_review_stack(next_user_exercises):
+    review_cards = [ProblemCard(user_exercise.exercise) for user_exercise in next_user_exercises]
+    return review_cards + [EndOfReviewCard()]

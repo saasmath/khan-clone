@@ -2,7 +2,7 @@ import logging
 
 import request_handler
 import models
-from exercises.stacks import get_problem_stack
+from exercises.stacks import get_problem_stack, get_review_stack
 from api.jsonify import jsonify
 from api.auth.xsrf import ensure_xsrf_cookie
 
@@ -34,7 +34,7 @@ class ViewExercise(request_handler.RequestHandler):
             self.redirect("/exercisedashboard")
             return
 
-        stack = get_problem_stack(user_exercises, no_extra_cards=review_mode)
+        stack = get_review_stack(user_exercises) if review_mode else get_problem_stack(user_exercises)
 
         template_values = {
             "stack_json": jsonify(stack, camel_cased=True),

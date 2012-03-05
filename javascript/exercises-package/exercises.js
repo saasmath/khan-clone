@@ -484,6 +484,10 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 this.renderEndOfStackCard();
                 break;
 
+            case "endofreview":
+                this.renderEndOfReviewCard();
+                break;
+
             default:
                 throw "Trying to render unknown card type";
 
@@ -517,6 +521,41 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 .html(
                     $(Templates.get(templateName)(context))
                 );
+
+    },
+
+    /**
+     * Renders a "calculations in progress" card, waits for API requests
+     * to finish, and then renders the requested card template.
+     */
+    renderCardAfterAPIRequests: function(templateName, optionalContextFxn) {
+
+        function tryRender() {
+
+            if (Exercises.pendingAPIRequests > 0) {
+
+                // Wait for any outbound API requests to finish.
+                setTimeout(tryRender, 500);
+
+            } else {
+
+                // All API calls done and stats should be up-to-date
+                // for rendering.
+
+                optionalContextFxn = optionalContextFxn || function(){};
+                Exercises.currentCardView.renderCardContents(templateName, optionalContextFxn());
+
+            }
+
+        };
+
+        // Start off by showing the "calculations in progress" card...
+        this.renderCardContainer();
+        this.renderCardContents("exercises.calculating-card");
+
+        // ...and wait a bit for dramatic effect before trying to show the
+        // requested card.
+        setTimeout(tryRender, 2400);
 
     },
 
@@ -565,31 +604,18 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders a new card showing end-of-stack statistics
      */
     renderEndOfStackCard: function() {
+        this.renderCardAfterAPIRequests("exercises.end-of-stack", function() { 
+            Exercises.completeStack.stats()
+        });
+    },
 
-        function tryRenderEndOfStackStats() {
-
-            if (Exercises.pendingAPIRequests > 0) {
-
-                // Wait for any outbound API requests to finish.
-                setTimeout(tryRenderEndOfStackStats, 500);
-
-            } else {
-
-                // All API calls done and stats should be up-to-date
-                // for rendering.
-                Exercises.currentCardView.renderCardContents("exercises.end-of-stack", Exercises.completeStack.stats());
-
-            }
-
-        };
-
-        // Start off by showing the "calculations in progress" card...
-        this.renderCardContainer();
-        this.renderCardContents("exercises.end-of-stack-calculating");
-
-        // ...and wait a bit for dramatic effect before trying to show stats.
-        setTimeout(tryRenderEndOfStackStats, 2400);
-
+    /**
+     * Renders a new card showing end-of-review statistics
+     */
+    renderEndOfReviewCard: function() {
+        this.renderCardAfterAPIRequests("exercises.end-of-review", function() { 
+            Exercises.completeStack.stats()
+        });
     },
 
     /**
