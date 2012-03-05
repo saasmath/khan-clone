@@ -4,7 +4,8 @@
  */
 
 .stack {
-
+    min-height: 100px;
+    margin-bottom: 10px;
 }
 
 .current-card-container-inner {
@@ -46,7 +47,8 @@
 .current-card.shrinkRight .current-card-container {
     -webkit-animation: translate-center-to-ur 0.18s ease-in-out 0s 1 forwards normal;
 }
-.current-card.shrinkRight #extras {
+.current-card.shrinkRight #extras,
+.card-type-endofstack #extras {
     display: none;
 }
 .current-card.shrinkRight .current-card-container-inner {
@@ -177,14 +179,29 @@
         display: none;
     }
 
-.current-card .leaves .leaf,
+.current-card .leaves .leaf {
+    background: transparent url(/images/power-mode/card-leaf-empty-large.png) no-repeat;
+    background-size: 40px 40px;
+    float: left;
+    color: transparent;
+    width: 40px;
+    height: 40px;
+    margin-right: 15px;
+    -webkit-transform: scale(10);
+    opacity: 0;
+    -moz-opacity: 0;
+    filter:alpha(opacity=0);
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transition: all 0.3s ease-in-out;
+}
+
 .stack .leaves .leaf {
-    width: 25px;
-    height: 25px;
-    margin-right: 10px;
+    width: 5px;
+    height: 5px;
+    margin: 2px 0 0;
     float: left;
     background: #83a600;
-    color: #fff;
+    color: transparent;
     border: 1px solid #a7b36b;
     position: relative;
     
@@ -198,31 +215,34 @@
     box-sizing: border-box;
     box-shadow: inset 0 0 9px 1px rgba(0,0,0,.25);
 }
-    .stack .leaves {
-        margin-top: 2px;
-    }
-    .stack .leaves .leaf {
-        width: 5px;
-        height: 5px;
-        color: transparent;
-
-        margin: 0;
-    }
 
 .leaves .leaf.available {
-    background: #cfd8a2;
+    background-color: #cfd8a2;
 }
 .leaves .leaf.unavailable {
-    background-color: #fff;
-    opacity: 0.3;
-    -moz-opacity: 0.3;
-    filter:alpha(opacity=30);
+    background-color: transparent;
+    
 }
 .leaves .leaf.earned {
-    border-color: #5a7300;
-    box-shadow: 0 2px 1px rgba(0,0,0,.2);
+    background: url(/images/power-mode/card-leaf-full-large.png) no-repeat;
+    background-size: 40px 40px;
+    opacity: 1;
+    -moz-opacity: 1;
+    filter:alpha(opacity=100);
+    -webkit-transform: scale(1);
 }
 .stack .leaves .leaf.earned {
+    background: #83a600;
+    border-color: #5a7300;
     color: transparent;
     box-shadow: none;
+}
+.stack .leaves .leaf.unavailable {
+    opacity: 0.5;
+    -moz-opacity: 0.5;
+    filter:alpha(opacity=50);
+}
+
+.card-type-endofstack .current-card-contents {
+    padding: 20px;
 }
