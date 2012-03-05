@@ -78,6 +78,7 @@ def update_requests(user_data, requester_emails):
             current_request.delete()
 
 class ViewCoaches(RequestHandler):
+    @disallow_phantoms
     def get(self):
         """ Redirect legacy /coaches to profile page's coaches tab.
         """
