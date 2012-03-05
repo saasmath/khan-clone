@@ -78,24 +78,13 @@ def update_requests(user_data, requester_emails):
             current_request.delete()
 
 class ViewCoaches(RequestHandler):
-    @disallow_phantoms
     def get(self):
+        """ Redirect legacy /coaches to profile page's coaches tab.
+        """
         user_data = UserData.current()
 
         if user_data:
-            invalid_coach = self.request_bool("invalid_coach", default = False)
-
-            coach_requests = CoachRequest.get_for_student(user_data).fetch(1000)
-
-            template_values = {
-                        "coach_emails": user_data.coach_emails(),
-                        "invalid_coach": invalid_coach,
-                        "coach_requests": coach_requests,
-                        "student_id": user_data.email,
-                        'selected_nav_link': 'coach'
-                    }
-
-            self.render_jinja2_template('viewcoaches.html', template_values)
+            self.redirect(user_data.profile_root + "/coaches")
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
@@ -150,31 +139,6 @@ class ViewStudents(RequestHandler):
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
-
-class RegisterCoach(RequestHandler):
-    @disallow_phantoms
-    def post(self):
-        user_data = UserData.current()
-
-        if not user_data:
-            self.redirect(util.create_login_url(self.request.uri))
-            return
-
-        user_data_coach = self.request_user_data("coach")
-        if user_data_coach:
-            if not user_data.is_coached_by(user_data_coach):
-                user_data.coaches.append(user_data_coach.key_email)
-                user_data.put()
-
-            if not self.is_ajax_request():
-                self.redirect("/coaches")
-            return
-
-        if self.is_ajax_request():
-            self.response.set_status(400)
-        else:
-            self.redirect("/coaches?invalid_coach=1")
-
 class RequestStudent(RequestHandler):
     @disallow_phantoms
     def post(self):
@@ -197,11 +161,12 @@ class RequestStudent(RequestHandler):
         else:
             self.redirect("/students?invalid_student=1")
 
-
 class AcceptCoach(RequestHandler):
     @RequestHandler.exceptions_to_http(400)
     @disallow_phantoms
     def get(self):
+        """ Only used when a coach deletes a request in studentlists.js.
+        """
         user_data = UserData.current()
 
         if not user_data:
@@ -261,15 +226,6 @@ class UnregisterStudentCoach(RequestHandler):
 
         if not self.is_ajax_request():
             self.redirect(redirect_to)
-
-class UnregisterCoach(UnregisterStudentCoach):
-    @disallow_phantoms
-    def get(self):
-        return self.do_request(
-            UserData.current(),
-            self.request_user_data("coach"),
-            "/coaches"
-        )
 
 class UnregisterStudent(UnregisterStudentCoach):
     @disallow_phantoms

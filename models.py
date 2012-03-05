@@ -1442,18 +1442,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return count > 0
 
-    def coach_emails(self):
-        """ Return coaches' emails... but going to be removed imminently!
-        
-        Watch out!
-        """
-        emails = []
-        for key_email in self.coaches:
-            user_data_coach = UserData.get_from_db_key_email(key_email)
-            if user_data_coach:
-                emails.append(user_data_coach.email)
-        return emails
-
     def remove_student_lists(self, removed_coach_emails):
         """ Remove student lists associated with removed coaches.
         """

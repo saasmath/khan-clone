@@ -755,8 +755,6 @@ application = webapp2.WSGIApplication([
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
-    ('/registercoach', coaches.RegisterCoach),
-    ('/unregistercoach', coaches.UnregisterCoach),
     ('/unregisterstudent', coaches.UnregisterStudent),
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
