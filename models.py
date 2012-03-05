@@ -3170,11 +3170,6 @@ class Topic(Searchable, db.Model):
             return progress_tree
 
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
-    from api.v1 import exercise_save_data 
-    import zlib
-    import pickle
-
-    def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data
     import zlib
     import pickle
