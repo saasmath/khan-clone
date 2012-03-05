@@ -127,6 +127,8 @@ a.simple-link:hover { text-decoration: underline; }
         font-size: 19px;
     }
 
+/* End of basic typography */
+
 hr {
     background: #CCC;
     border: none;
@@ -342,7 +344,6 @@ input.simple-button {
   display: block;
   height: 50px;
 }
-/* End of basic typography */
 
 /* Links in the header and footer don't change color when visited. */
 a:link, header a:visited, footer a:visited, .visited-no-recolor a:visited {
