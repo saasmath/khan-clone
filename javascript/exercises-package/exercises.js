@@ -120,8 +120,6 @@ var Exercises = {
         // has been clicked
         $(Khan).bind("problemDone", function() {
 
-            // Current card is done, lock in available leaves
-            $(".leaves-container").show();
             Exercises.currentCard.set({
                 done: true, 
                 leavesEarned: Exercises.currentCard.get("leavesAvailable")
@@ -198,9 +196,6 @@ var Exercises = {
                 el: $(".current-card") }
             );
             Exercises.currentCardView.render();
-
-            //Make sure the leaves are hidden
-            $(".leaves-container").hide();
 
             // Finish animating from left
             $.when(Exercises.currentCardView.moveLeft()).done(function() {
@@ -671,6 +666,12 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 .html(
                     $(Templates.get("exercises.card-leaves")(this.viewContext()))
                 ); 
+
+        if (this.model.get("done")) {
+            $(".leaves-container").show();
+        } else {
+            $(".leaves-container").hide();
+        }
     },
 
     /**
