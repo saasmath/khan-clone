@@ -644,7 +644,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 success: function(data) { reviewsLeft = data; },
                 complete: function() { Exercises.pendingAPIRequests--; }
             });
-            Exercises.pendingAPIRequets++;
+            Exercises.pendingAPIRequests++;
 
             // And finally wait for the previous API call to finish before
             // rendering end of review card.
