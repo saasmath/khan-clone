@@ -5066,6 +5066,7 @@ class UserExerciseGraph(object):
                 "suggested": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
+                "live": exercise.live,
             }
 
     @staticmethod
@@ -5117,7 +5118,7 @@ class UserExerciseGraph(object):
         boundary_graph_dicts = []
         for exercise_name in graph:
             graph_dict = graph[exercise_name]
-            if is_boundary(graph_dict):
+            if graph_dict["live"] and is_boundary(graph_dict):
                 boundary_graph_dicts.append(graph_dict)
 
         boundary_graph_dicts = sorted(sorted(boundary_graph_dicts,
