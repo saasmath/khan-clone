@@ -1529,6 +1529,33 @@ def user_playlists_specific(topic_id):
 
     return None
 
+# STOPSHIP TODO(kamens): remove this. used for testing
+@route("/api/v1/user/exercises/reviews/reset", methods=["GET"])
+@oauth_optional()
+@developer_required
+@jsonp
+@jsonify
+def reset_reviews():
+
+    user_data = models.UserData.current()
+
+    if user_data:
+
+        import consts
+        logging.critical("Resetting all reviews for %s" % user_data.nickname)
+
+        user_exercise_cache = models.UserExerciseCache.get(user_data)
+        user_exercises = models.UserExercise.get_for_user_data(user_data)
+
+        for user_exercise in user_exercises:
+            user_exercise.last_review = datetime.datetime.min
+            user_exercise.review_interval_secs = 60 * 60 * 24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS
+
+            user_exercise_cache.update(user_exercise)
+
+        db.put(user_exercises)
+        db.put(user_exercise_cache)
+
 @route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
 @oauth_optional()
 @jsonp
