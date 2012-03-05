@@ -525,37 +525,52 @@ Exercises.CurrentCardView = Backbone.View.extend({
     },
 
     /**
+     * Waits for API requests to finish, then runs target fxn
+     */
+    runAfterAPIRequests: function(fxn) {
+
+        function tryRun() {
+            if (Exercises.pendingAPIRequests > 0) {
+
+                // Wait for any outbound API requests to finish.
+                setTimeout(tryRun, 500);
+
+            } else {
+
+                // All API calls done, run target fxn
+                fxn();
+
+            }
+        };
+
+        tryRun();
+
+    },
+
+    renderCalculationInProgressCard: function() {
+        this.renderCardContainer();
+        this.renderCardContents("exercises.calculating-card");
+    },
+
+    /**
      * Renders a "calculations in progress" card, waits for API requests
      * to finish, and then renders the requested card template.
      */
     renderCardAfterAPIRequests: function(templateName, optionalContextFxn) {
 
-        function tryRender() {
+        // Start off by showing the "calculations in progress" card...
+        this.renderCalculationInProgressCard();
 
-            if (Exercises.pendingAPIRequests > 0) {
-
-                // Wait for any outbound API requests to finish.
-                setTimeout(tryRender, 500);
-
-            } else {
-
-                // All API calls done and stats should be up-to-date
-                // for rendering.
+        // ...and wait a bit for dramatic effect before trying to show the
+        // requested card.
+        setTimeout(function() {
+            Exercises.currentCardView.runAfterAPIRequests(function() {
 
                 optionalContextFxn = optionalContextFxn || function(){};
                 Exercises.currentCardView.renderCardContents(templateName, optionalContextFxn());
 
-            }
-
-        };
-
-        // Start off by showing the "calculations in progress" card...
-        this.renderCardContainer();
-        this.renderCardContents("exercises.calculating-card");
-
-        // ...and wait a bit for dramatic effect before trying to show the
-        // requested card.
-        setTimeout(tryRender, 2400);
+            });
+        }, 2400);
 
     },
 
@@ -613,9 +628,34 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders a new card showing end-of-review statistics
      */
     renderEndOfReviewCard: function() {
-        this.renderCardAfterAPIRequests("exercises.end-of-review-card", function() { 
-            return Exercises.completeStack.stats()
+
+        this.renderCalculationInProgressCard();
+
+        // First wait for all API requests to finish
+        this.runAfterAPIRequests(function() {
+
+            var reviewsLeft = 0;
+
+            // Then send another API request to see how many reviews are left --
+            // and we'll change the end of review card's UI accordingly.
+            $.ajax({
+                url: "/api/v1/user/exercises/reviews/count",
+                type: "GET",
+                dataType: "json",
+                success: function(data) { reviewsLeft = data; },
+                complete: function() { Exercises.pendingAPIRequests--; }
+            });
+            Exercises.pendingAPIRequets++;
+
+            // And finally wait for the previous API call to finish before
+            // rendering end of review card.
+            Exercises.currentCardView.renderCardAfterAPIRequests("exercises.end-of-review-card", function() { 
+                // Pass reviews left info into end of review card
+                return _.extend({}, Exercises.completeStack.stats(), {reviewsLeft: reviewsLeft});
+            });
+
         });
+
     },
 
     /**

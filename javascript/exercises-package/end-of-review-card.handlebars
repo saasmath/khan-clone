@@ -4,4 +4,10 @@
     longest streak: {{longestStreak}}<br>
     longest speed streak: {{longestSpeedStreak}}<br>
     leaves: {{totalLeaves}}<br>
+    <br><br>
+    {{#if reviewsLeft }}
+    <strong>You still have some reviews left! <a href="/review">Do 'em up.</a></strong>
+    {{else}}
+    <strong>[Nifty review done animation goes here!]</strong>
+    {{/if}}
 </div>

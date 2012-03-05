@@ -1529,6 +1529,19 @@ def user_playlists_specific(topic_id):
 
     return None
 
+@route("/api/v1/user/exercises/reviews/count", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def reviews_count():
+    user_data = models.UserData.current()
+
+    if user_data:
+        user_exercise_graph = models.UserExerciseGraph.get(user_data)
+        return len(user_exercise_graph.review_exercise_names())
+
+    return 0
+
 # STOPSHIP TODO(kamens): remove this. used for testing
 @route("/api/v1/user/exercises/reviews/reset", methods=["GET"])
 @oauth_optional()
