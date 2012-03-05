@@ -207,8 +207,14 @@ class Logout(request_handler.RequestHandler):
             handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
         
     def get(self):
+        google_user = users.get_current_user()
         Logout.delete_all_identifying_cookies(self)
-        self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
+        
+        next_url = "/"
+        if google_user is not None:
+            next_url = users.create_logout_url(self.request_string("continue",
+                                                                   default="/"))
+        self.redirect(next_url)
 
 # TODO(benkomalo): move this to a more appropriate, generic spot
 # Loose regex for Email validation, copied from django.core.validators
