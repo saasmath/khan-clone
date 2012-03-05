@@ -604,7 +604,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders a new card showing end-of-stack statistics
      */
     renderEndOfStackCard: function() {
-        this.renderCardAfterAPIRequests("exercises.end-of-stack", function() { 
+        this.renderCardAfterAPIRequests("exercises.end-of-stack-card", function() { 
             Exercises.completeStack.stats()
         });
     },
@@ -613,7 +613,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders a new card showing end-of-review statistics
      */
     renderEndOfReviewCard: function() {
-        this.renderCardAfterAPIRequests("exercises.end-of-review", function() { 
+        this.renderCardAfterAPIRequests("exercises.end-of-review-card", function() { 
             Exercises.completeStack.stats()
         });
     },
