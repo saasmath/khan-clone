@@ -28,8 +28,9 @@
 <script>
     Exercises.init({
         userTopic: {
-            /* TODO(kamens): need to send down userTopic info */
-            name: "someUserTopicName",
+            /* TODO(kamens): need to send down real userTopic info
+            and figure out what's being sent for review mode */
+            name: "someUserTopicName" + {{ review_mode_json }},
             user: "someUser"
         },
         userExercises: {{ user_exercises_json }},
