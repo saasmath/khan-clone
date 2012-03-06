@@ -177,48 +177,27 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
     },
 
     loadFromCache: function() {
-        var data = window.localStorage[this.cacheKey()];
 
-        if (data) {
-            _.each(JSON.parse(data), function(dict) {
-                this.add(new Exercises.Card(dict), {at: 0})
+        var modelAttrs = LocalStore.get(this.cacheKey());
+        if (modelAttrs) {
+
+            _.each(modelAttrs, function(attrs) {
+                this.add(new Exercises.Card(attrs))
             }, this);
+
         }
+
     },
 
     cache: function() {
-
-        try {
-            window.localStorage[this.cacheKey()] = JSON.stringify(this.models);
-        } catch(e) {
-            // If we had trouble storing in localStorage, we may've run over
-            // the browser's 5MB limit. This should be rare, but when hit, clear
-            // everything out.
-            this.clearAllCache();
-        }
+        LocalStore.set(this.cacheKey(), this.models);
     },
 
     /**
      * Delete this stack from localStorage
      */
     clearCache: function() {
-        delete window.localStorage[this.cacheKey()];
-    },
-
-    /**
-     * Delete all cached stack objects from localStorage
-     */
-    clearAllCache: function() {
-        var i = 0;
-        while (i < localStorage.length) {
-            var key = localStorage.key(i);
-            if (key.indexOf('cachedstack:') === 0) {
-                delete localStorage[key];
-            }
-            else {
-                i++;
-            }
-        }
+        LocalStore.del(this.cacheKey());
     }
 
 });
