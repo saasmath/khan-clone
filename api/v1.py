@@ -1666,11 +1666,6 @@ def attempt_problem_number(exercise_name, problem_number):
             if goals_updated:
                 action_results['updateGoals'] = [g.get_visible_data(None) for g in goals_updated]
 
-            # TODO(kamens): staying or leaving?
-            if review_mode:
-                action_results['reviews_left'] = (
-                    user_exercise_graph.reviews_left_count() + (1 - correct))
-
             add_action_results(user_exercise, action_results)
             return user_exercise
 
