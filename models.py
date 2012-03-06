@@ -1806,8 +1806,69 @@ class TopicVersion(db.Model):
         self.last_edited_by = last_edited_by
         self.put()
 
+    def find_content_problems(self):
+        logging.info("checking for problems")
+        version = self
+                
+        # find exercises that are overlapping on the knowledge map
+        logging.info("checking for exercises that are overlapping on the knowledge map")
+        exercises = Exercise.all()
+        exercise_dict = dict((e.key(),e) for e in exercises)
+
+        location_dict = {}
+        duplicate_positions = list()
+        changes = VersionContentChange.get_updated_content_dict(version)
+        exercise_changes = dict((k,v) for k,v in changes.iteritems() 
+                                if v.key() in exercise_dict)
+        exercise_dict.update(exercise_changes)
+        
+        for exercise in [e for e in exercise_dict.values() 
+                         if e.live and not e.summative]:
+                   
+            if exercise.h_position not in location_dict:
+                location_dict[exercise.h_position] = {}
+
+            if exercise.v_position in location_dict[exercise.h_position]:
+                location_dict[exercise.h_position][exercise.v_position].append(exercise)
+                duplicate_positions.append(
+                    location_dict[exercise.h_position][exercise.v_position])
+            else:
+                location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+        # find videos whose duration is 0
+        logging.info("checking for videos with 0 duration")
+        zero_duration_videos = Video.all().filter("duration =", 0).fetch(10000)
+        zero_duration_dict = dict((v.key(),v) for v in zero_duration_videos)
+        video_changes = dict((k,v) for k,v in changes.iteritems() 
+                                if k in zero_duration_dict or (
+                                type(v) == Video and v.duration == 0))
+        zero_duration_dict.update(video_changes)
+        zero_duration_videos = [v for v in zero_duration_dict.values() 
+                                if v.duration == 0]
+
+        # find videos with invalid youtube_ids that would be marked live
+        logging.info("checking for videos with invalid youtube_ids")
+        root = Topic.get_root(version)
+        videos = root.get_videos(include_descendants = True)
+        bad_videos = []
+        for video in videos:
+            if re.search("_DUP_\d*$", video.youtube_id):
+                bad_videos.append(video) 
+
+        problems = {
+            "ExerciseVideos with topicless videos" : 
+                ExerciseVideo.get_all_with_topicless_videos(version),
+            "Exercises with colliding positions" : list(duplicate_positions),
+            "Zero duration videos": zero_duration_videos,
+            "Videos with bad youtube_ids": bad_videos}
+
+        return problems
+
     def set_default_version(self):
         logging.info("starting set_default_version")
+        content_problems = self.find_content_problems()
+        for problem_type, problems in content_problems.iteritems():
+            raise Exception("content problems found: <a target=_blank href='/api/v1/dev/topictree/%i/problems'>Click here to see problems.</a>" % self.number)
 
         do_set_default_deferred_step(apply_version_content_changes, 
                             self.number,

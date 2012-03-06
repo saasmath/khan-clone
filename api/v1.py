@@ -299,35 +299,7 @@ def topictree(version_id = None):
 @jsonify
 def topic_tree_problems(version_id = "edit"):
     version = models.TopicVersion.get_by_id(version_id)
-    
-    exercises = models.Exercise.all()
-    exercise_dict = dict((e.key(),e) for e in exercises)
-
-    location_dict = {}
-    duplicate_positions = list()
-    changes = models.VersionContentChange.get_updated_content_dict(version)
-    exercise_dict.update(changes)
-    
-    for exercise in [e for e in exercise_dict.values() 
-                     if e.live and not e.summative]:
-               
-        if exercise.h_position not in location_dict:
-            location_dict[exercise.h_position] = {}
-
-        if exercise.v_position in location_dict[exercise.h_position]:
-            # duplicate_positions.add(exercise)
-            location_dict[exercise.h_position][exercise.v_position].append(exercise)
-            duplicate_positions.append(
-                location_dict[exercise.h_position][exercise.v_position])
-        else:
-            location_dict[exercise.h_position][exercise.v_position] = [exercise]
-
-    problems = {
-        "ExerciseVideos with topicless videos" : 
-            models.ExerciseVideo.get_all_with_topicless_videos(version),
-        "Exercises with colliding positions" : list(duplicate_positions)}
-
-    return problems
+    return version.find_content_problems()
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])

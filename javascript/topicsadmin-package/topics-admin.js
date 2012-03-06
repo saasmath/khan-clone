@@ -507,7 +507,7 @@ var TopicTreeEditor = {
     handleError: function(xhr, queryObject) {
         popupGenericMessageBox({
             title: "Server error",
-            message: "There has been a server error:<br /><span style=\"color: #900;\">" + queryObject.responseText + "</span><br />The topic tree will now refresh.",
+            message: "There has been a server error:<br /><span style=\"color: #900;\">" + (queryObject.responseText? queryObject.responseText : xhr.responseText) + "</span><br />The topic tree will now refresh.",
             buttons: [
                 { title: "OK", action: function() { hideGenericMessageBox(); TopicTreeEditor.editVersion(TopicTreeEditor.currentVersion.get("number")); } }
             ]
