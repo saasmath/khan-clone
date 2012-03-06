@@ -472,7 +472,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     renderEndOfStackCard: function() {
         this.renderCardAfterAPIRequests("exercises.end-of-stack-card", function() { 
-            return Exercises.completeStack.stats()
+            return _.extend(Exercises.sessionStats.progressStats(), Exercises.completeStack.stats());
         });
     },
 
@@ -575,6 +575,93 @@ Exercises.CurrentCardView = Backbone.View.extend({
         // and may one day have deferrable animations (CSS3 animations aren't
         // deferred-friendly).
         return null;
+    }
+
+});
+
+/**
+ * SessionStats stores and caches a list of interesting statistics
+ * about each individual stack session.
+ */
+Exercises.SessionStats = Backbone.Model.extend({
+
+    userTopic: null,
+
+    initialize: function(attributes, options) {
+
+        this.userTopic = options ? options.userTopic : null;
+
+        if (!this.userTopic) {
+            throw "Must supply the userTopic of any stack stats being cached";
+        }
+
+        // Try to load stats from cache
+        this.loadFromCache();
+
+        // Update exercise stats any time new exercise data is cached locally
+        $(Exercises).bind("cachedLocally", $.proxy(function(ev, data) {
+            this.updateProgressStats(data.exerciseName);
+        }, this));
+
+        return Backbone.Model.prototype.initialize.call(this, attributes, options);
+    },
+
+    cacheKey: function() {
+        return [
+            "cachedsessionstats",
+            this.userTopic.get("user"),
+            this.userTopic.get("name")
+        ].join(":");
+    },
+
+    loadFromCache: function() {
+        var attrs = LocalStore.get(this.cacheKey());
+        if (attrs) {
+            this.set(attrs);
+        }
+    },
+
+    cache: function() {
+        LocalStore.set(this.cacheKey(), this.attributes);
+    },
+
+    clearCache: function() {
+        LocalStore.del(this.cacheKey());
+    },
+
+    /**
+     * Update the start/end/change progress for this specific exercise so we
+     * can summarize the user's session progress at the end of a stack.
+     */
+    updateProgressStats: function(exerciseName) {
+
+        var userExercise = Exercises.BottomlessQueue.userExerciseCache[exerciseName];
+
+        if (userExercise) {
+
+            var progressStats = this.get("progress") || {},
+
+                stat = progressStats[exerciseName] || {
+                    exerciseName: exerciseName,
+                    start: userExercise.progress
+                };
+
+            // For now, we're just keeping track of the change in progress per
+            // exercise
+            stat.end = userExercise.progress;
+            stat.change = stat.end - stat.start;
+
+            // Set and cache the latest
+            progressStats[exerciseName] = stat;
+            this.set({"progress": progressStats});
+            this.cache();
+
+        }
+
+    },
+
+    progressStats: function() {
+        return { progress: _.values(this.get("progress") || {}) };
     }
 
 });
