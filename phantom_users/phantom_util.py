@@ -5,6 +5,7 @@ import hashlib
 from functools import wraps
 
 import models
+from api import api_util
 from cookie_util import set_request_cookie
 
 # TODO: consolidate this with the constants in models.py:UserData
@@ -105,4 +106,17 @@ def disallow_phantoms(method, redirect_to='/login'):
             self.redirect(redirect_to)
         else:
             return method(self, *args, **kwargs)
+    return wrapper
+
+def api_disallow_phantoms(method):
+    """ Decorator used to disallow phantoms in api calls.
+    """
+    @wraps(method)
+    def wrapper(*args, **kwargs):
+        user_data = models.UserData.current()
+        if user_data and user_data.is_phantom:
+            return api_util.api_unauthorized_response("Phantom users are not allowed.")
+        else:
+            return method(*args, **kwargs)
+
     return wrapper

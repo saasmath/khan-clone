@@ -15,7 +15,7 @@ from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
-from phantom_users.phantom_util import api_create_phantom
+from phantom_users.phantom_util import api_create_phantom, api_disallow_phantoms
 import notifications
 import coaches
 from gae_bingo.gae_bingo import bingo
@@ -1078,6 +1078,7 @@ def update_user_profile():
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @oauth_required()
+@api_disallow_phantoms
 @jsonp
 @jsonify
 def get_coaches_and_requesters():
@@ -1090,6 +1091,7 @@ def get_coaches_and_requesters():
 
 @route("/api/v1/user/coaches", methods=["PUT"])
 @oauth_required()
+@api_disallow_phantoms
 @jsonp
 @jsonify
 def update_coaches_and_requesters():
