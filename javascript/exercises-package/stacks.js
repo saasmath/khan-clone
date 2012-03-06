@@ -149,7 +149,11 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
 
     initialize: function(models, options) {
 
-        this.userTopic = options.userTopic;
+        this.userTopic = options ? options.userTopic : null;
+
+        if (!this.userTopic) {
+            throw "Must supply the userTopic of any stack being cached";
+        }
 
         // Try to load models from cache
         if (!models) {
