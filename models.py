@@ -1341,12 +1341,15 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         return None
 
     def delete(self):
+        # Override delete(), so that we can log this severe event, and clean
+        # up some statistics.
         logging.info("Deleting user data for %s with points %s" % (self.key_email, self.points))
         logging.info("Dumping user data for %s: %s" % (self.user_id, jsonify(self)))
 
         if not self.is_phantom:
             user_counter.add(-1)
 
+        # Delegate to the normal implentation
         super(UserData, self).delete()
 
     def is_certain_to_be_thirteen(self):

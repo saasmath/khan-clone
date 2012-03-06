@@ -105,10 +105,15 @@ class CredentialedUser(db.Model):
             db.run_in_transaction_options(xg_on, txn)
 
     def delete(self):
+        # Override delete so that we can also delete associated Credential
+        # models in the same transaction.
         def txn():
             credential = Credential.retrieve_for_user(self)
             if credential:
                 credential.delete()
+                
+            # Delegate to the base class implementation of db.Model.delete
+            # to do the actual deletion of this class.
             super(CredentialedUser, self).delete()
             
         if db.is_in_transaction():
