@@ -48,5 +48,6 @@ Handlebars.registerHelper("toBingoHref", function(destination) {
 });
 
 Handlebars.registerHelper("toLoginRedirectHref", function(destination) {
-    return "/login?continue=/postlogin?continue=" + destination;
+    var redirectParam = "/postlogin?continue=" + destination;
+    return "/login?continue=" + encodeURIComponent(redirectParam);
 });
