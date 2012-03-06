@@ -11,6 +11,7 @@ class FeedbackBadge(Badge):
     def is_manually_awarded(self):
         return True
 
+    @property
     def hide_context(self):
         return True
 

@@ -164,9 +164,9 @@ def topic_browser_tree(tree, level=0):
             href = "#%s" % escape(slugify(child.id))
 
             if level == 0:
-                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(child.title))
+                s += "<li class='solo'><a href='%s' data-tag='TopicBrowser' class='menulink'>%s</a></li>" % (href, escape(child.title))
             else:
-                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(child.title))
+                s += "<li class='%s'><a href='%s' data-tag='TopicBrowser'>%s</a></li>" % (class_name, href, escape(child.title))
 
         else:
             if level > 0:
