@@ -9,6 +9,8 @@ function createCookie(name, value, days, domain) {
     }
     if (domain) {
         domain = "; domain=" + domain;
+    } else {
+        domain = "";
     }
     document.cookie = name + "=" + value + expires + domain + "; path=/";
 }
