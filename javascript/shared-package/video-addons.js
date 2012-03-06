@@ -384,15 +384,23 @@ var VideoStats = {
         if (dict_json && dict_json.action_results.user_video) {
             video = dict_json.action_results.user_video;
             // Update the energy points box with the new data.
-            var jelPoints = $(".video-energy-points");
-            if (jelPoints.length)
-            {
-                jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, video.points));
-                $(".video-energy-points-current", jelPoints).text(video.points);
+            this.updatePoints(video.points);
 
-                // Replace the old tooltip with an updated one.
-                VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
+            if (window.Video) {
+                Video.updateVideoPoints(video.points);
             }
+        }
+    },
+
+    updatePoints: function(points) {
+        var jelPoints = $(".video-energy-points");
+        if (jelPoints.length)
+        {
+            jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, points));
+            $(".video-energy-points-current", jelPoints).text(points);
+
+            // Replace the old tooltip with an updated one.
+            VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
         }
     },
 
