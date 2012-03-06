@@ -25,7 +25,7 @@ Login.initLoginPage = function() {
         Login.connectWithGoogle();
     });
     $("#login-facebook").click(function(e) {
-        $("#real_fb_button a").click();
+        Login.connectWithFacebook();
     });
 
     if ($("#identifier").val()) {
@@ -49,6 +49,35 @@ Login.connectWithGoogle = function() {
 };
 
 /**
+ * Use Facebook's JS SDK to connect with Facebook.
+ */
+Login.connectWithFacebook = function() {
+    FB.login(function(response) {
+        if (response) {
+            FacebookUtil.fixMissingCookie(response);
+        }
+
+        if (response["status"] === "connected") {
+            FacebookUtil.markUsingFbLogin();
+            var url = URL_CONTINUE || "/";
+            if (url.indexOf("?") > -1) {
+                url += "&fb=1";
+            } else {
+                url += "?fb=1";
+            }
+
+            var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
+            url += "&hc=" + (hasCookie ? "1" : "0");
+            url += "&hs=" + (response ? "1" : "0");
+
+            window.location = url;
+        } else {
+            // TODO(benkomalo): handle - the user didn't login properly in facebook.
+        }
+   });
+};
+
+/**
  * Login with a username and password.
  */
 Login.loginWithPassword = function() {
@@ -67,7 +96,7 @@ Login.loginWithPassword = function() {
 };
 
 /**
- *
+ * Validates a field in the login form and displays an error on failure.
  */
 Login.ensureValid_ = function(selector, errorText, checkFunc) {
     // By default - check that it's not just empty whitespace.

@@ -3,59 +3,54 @@
  * Utilities for interacting with Facebook and its JS SDK.
  */
 var FacebookUtil = {
+
     init: function() {
         if (!window.FB_APP_ID) return;
 
         window.fbAsyncInit = function() {
-            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
+            FB.init({
+                appId: FB_APP_ID,
+                status: false, // Fetch status conditionally below.
+                cookie: true,
+                xfbml: true,
+                oauth: true
+            });
 
-            if (!USERNAME) {
-                FB.Event.subscribe("auth.login", function(response) {
-                    // TODO(benkomalo): this login detection is too aggressive!
-                    //     it means that the user will automatically auto-login
-                    //     if they have authorized KA to access FB before.
-
+            if (FacebookUtil.isUsingFbLogin()) {
+                // Only retrieve the status if the user has opted to login
+                // with Facebook
+                FB.getLoginStatus(function(response) {
                     if (response.authResponse) {
                         FacebookUtil.fixMissingCookie(response.authResponse);
                     }
-
-                    var url = URL_CONTINUE || "/";
-                    if (url.indexOf("?") > -1)
-                        url += "&fb=1";
-                    else
-                        url += "?fb=1";
-
-                    var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
-                    url += "&hc=" + (hasCookie ? "1" : "0");
-
-                    url += "&hs=" + (response.authResponse ? "1" : "0");
-
-                    window.location = url;
-               });
+                });
             }
 
-            FB.getLoginStatus(function(response) {
+            $("#page_logout").click(function(e) {
+                var hostname = window.location.hostname;
 
-                if (response.authResponse) {
-                    FacebookUtil.fixMissingCookie(response.authResponse);
+                // By convention, dev servers lead with "local." in the address
+                // even though the domain registered with FB is without it.
+                if (hostname.indexOf("local.") === 0) {
+                    hostname = hostname.substring(6);
                 }
 
-                $("#page_logout").click(function(e) {
+                // The Facebook cookies are set on ".www.khanacademy.org",
+                // though older ones are not. Clear both to be safe.
+                eraseCookie("fbsr_" + FB_APP_ID);
+                eraseCookie("fbsr_" + FB_APP_ID, "." + hostname);
+                eraseCookie("fbm_" + FB_APP_ID);
+                eraseCookie("fbm_" + FB_APP_ID, "." + hostname);
+                eraseCookie("fbl");
 
-                    eraseCookie("fbsr_" + FB_APP_ID);
-
-                    if (response.authResponse) {
-
-                        FB.logout(function() {
-                            window.location = $("#page_logout").attr("href");
-                        });
-
-                        e.preventDefault();
-                        return false;
-                    }
-
-                });
-
+                if (FacebookUtil.isUsingFbLogin()) {
+                    // If the user used FB to login, log them out of FB, too.
+                    FB.logout(function() {
+                        window.location = $("#page_logout").attr("href");
+                    });
+                    e.preventDefault();
+                    return false;
+                }
             });
         };
 
@@ -66,20 +61,43 @@ var FacebookUtil = {
         });
     },
 
+    isUsingFbLoginCached_: undefined,
+
+    /**
+     * Whether or not the user has opted to sign in to Khan Academy
+     * using Facebook.
+     */
+    isUsingFbLogin: function() {
+        if (FacebookUtil.isUsingFbLoginCached_ === undefined) {
+            FacebookUtil.isUsingFbLoginCached_ = readCookie("fbl") || false;
+        }
+        return FacebookUtil.isUsingFbLoginCached_;
+    },
+
+    /**
+     * Indicates that the user has opted to sign in to Khan Academy
+     * using Facebook.
+     */
+    markUsingFbLogin: function() {
+        // Generously give 30 days to the fbl cookie, which indicates
+        // that the user is using FB to login.
+        createCookie("fbl", true, 30);
+    },
+
     fixMissingCookie: function(authResponse) {
         // In certain circumstances, Facebook's JS SDK fails to set their cookie
         // but still thinks users are logged in. To avoid continuous reloads, we
         // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
 
-        if (readCookie("fbsr_" + FB_APP_ID))
+        if (readCookie("fbsr_" + FB_APP_ID)) {
             return;
+        }
 
         if (authResponse && authResponse.signedRequest) {
             // Explicitly use a session cookie here for IE's sake.
             createCookie("fbsr_" + FB_APP_ID, authResponse.signedRequest);
         }
     }
-
 };
 FacebookUtil.init();
 
