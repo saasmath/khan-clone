@@ -1,12 +1,16 @@
-function createCookie(name, value, days) {
+function createCookie(name, value, days, domain) {
     var expires;
     if (days) {
         var date = new Date();
         date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
         expires = "; expires=" + date.toGMTString();
+    } else {
+        expires = "";
     }
-    else expires = "";
-    document.cookie = name + "=" + value + expires + "; path=/";
+    if (domain) {
+        domain = "; domain=" + domain;
+    }
+    document.cookie = name + "=" + value + expires + domain + "; path=/";
 }
 
 function readCookie(name) {
@@ -20,8 +24,8 @@ function readCookie(name) {
     return null;
 }
 
-function eraseCookie(name) {
-    createCookie(name, "", -1);
+function eraseCookie(name, domain) {
+    createCookie(name, "", -1, domain);
 }
 
 function areCookiesEnabled() {
