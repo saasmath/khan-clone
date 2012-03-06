@@ -244,10 +244,7 @@ Exercises.StackView = Backbone.View.extend({
             }), this)
             .bind("remove", deferAnimation(function() {
                 return this.animatePop();
-            }), this)
-            .bind("change:leavesEarned", function(card) {
-                this.updateSingleCard(card);
-            }, this);
+            }), this);
 
     },
 
@@ -260,17 +257,6 @@ Exercises.StackView = Backbone.View.extend({
         this.el.html(this.template({cards: collectionContext}));
 
         return this;
-
-    },
-
-    updateSingleCard: function(card) {
-
-        var context = this.viewContext(card, _.indexOf(this.collection.models, card));
-
-        $("#card-cid-" + card.cid)
-            .replaceWith(
-                $(Templates.get("exercises.card")(context))
-            );
 
     },
 
