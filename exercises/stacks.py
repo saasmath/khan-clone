@@ -3,7 +3,7 @@ DEFAULT_CARDS_PER_STACK = 8
 MAXIMUM_CARDS_PER_REVIEW_STACK = 8
 
 # TODO: this will probably eventually by persisted to the datastore in the form
-# of a double-pickled list of cards attached to UserTopics or something similer.
+# of a double-pickled list of cards attached to UserTopics or something similar.
 class Card(object):
     """ Holds single Card's state.
     Subclassed by ProblemCard and, in the future, stuff like VideoCard, SurveyCard, etc.
