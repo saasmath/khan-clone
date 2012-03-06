@@ -134,6 +134,8 @@
                             {% endif %}
                             <span class="separator"></span>
                             <a href="/contribute" id="donate-link" data-tag="Header">Donate</a>
+                            <span class="separator"></span>
+                            <a href="http://khanacademy.desk.com" id="faq-link" data-tag="Header">FAQ</a>
                         </span>
                         <div class="clear"></div>
                         <div id="nav-and-search">
@@ -205,7 +207,9 @@
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
         {# Mixpanel #}
+        {% if mixpanel_enabled %}
         (function(){var b,a,e,d,c;b=document.createElement("script");b.type="text/javascript";b.async=true;b.src=(document.location.protocol==="https:"?"https:":"http:")+"//api.mixpanel.com/site_media/js/api/mixpanel.js";a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(b,a);e=function(f){return function(){mpq.push([f].concat(Array.prototype.slice.call(arguments,0)))}};d=["init","track","track_links","track_forms","register","register_once","identify","name_tag","set_config"];for(c=0;c<d.length;c++){mpq[d[c]]=e(d[c])}})();
+        {% endif %}
 
         {# Analytics utility #}
         $(function() {
