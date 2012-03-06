@@ -22,6 +22,11 @@ var FacebookUtil = {
                 FB.getLoginStatus(function(response) {
                     if (response.authResponse) {
                         FacebookUtil.fixMissingCookie(response.authResponse);
+                    } else {
+                        // The user is no longer signed into Facebook - must
+                        // have logged out of FB in another window or disconnected
+                        // the service in their FB settings page.
+                        eraseCookie("fbl");
                     }
                 });
             }
