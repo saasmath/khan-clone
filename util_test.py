@@ -17,6 +17,8 @@ class TestUrl(unittest.TestCase):
     def stub_server_name(self, stubbed_name):
         if os.environ.has_key('HTTP_HOST'):
             self.orig_host = os.environ['HTTP_HOST']
+        else:
+            self.orig_host = None
         os.environ['HTTP_HOST'] = stubbed_name
 
     def restore_server_name(self):

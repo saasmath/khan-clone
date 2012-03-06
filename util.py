@@ -139,15 +139,17 @@ def _get_url_parts(url):
     scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
     if not netloc:
         # No server_name - must be a relative url.
-        if os.environ.has_key('HTTP_HOST'):
+        if 'HTTP_HOST' in os.environ:
             netloc = os.environ['HTTP_HOST'] # includes port string
         else:
             server_name = os.environ['SERVER_NAME']
 
             # Note that this is always a string
             port = os.environ['SERVER_PORT']
-            port_string = (":%s" % port) if port != "80" else ""
-            netloc = "%s%s" % (server_name, port_string)
+            if port == "80":
+                netloc = server_name
+            else:
+                netloc = "%s:%s" % (server_name, port)
     return (scheme, netloc, path, query, fragment)
 
 def secure_url(url):
