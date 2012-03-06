@@ -145,7 +145,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
  */
 Exercises.CachedStackCollection = Exercises.StackCollection.extend({
 
-    initialize: function(models) {
+    initialize: function(models, options) {
 
         // Try to load models from cache
         if (!models) {
@@ -155,6 +155,8 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
         this
             .bind("add", this.cache, this)
             .bind("remove", this.cache, this);
+
+        return Exercises.StackCollection.prototype.initialize.call(this, models, options);
 
     },
 
@@ -220,7 +222,7 @@ Exercises.StackView = Backbone.View.extend({
 
     template: Templates.get("exercises.stack"),
 
-    initialize: function() {
+    initialize: function(options) {
 
         // deferAnimation is a wrapper function used to insert
         // any animations returned by fxn onto animationOption's
@@ -246,6 +248,7 @@ Exercises.StackView = Backbone.View.extend({
                 return this.animatePop();
             }), this);
 
+        return Backbone.View.prototype.initialize.call(this, options);
     },
 
     render: function() {
@@ -314,8 +317,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     leafEvents: ["change:done", "change:leavesEarned", "change:leavesAvailable"],
 
-    initialize: function() {
+    initialize: function(options) {
         this.attachEvents();
+        return Backbone.View.prototype.initialize.call(this, options);
     },
 
     attachEvents: function() {
@@ -595,8 +599,9 @@ Exercises.UserTopic = Backbone.Model.extend({
         incompleteStack: []
     },
 
-    initialize: function() {
+    initialize: function(attributes, options) {
         // TODO(kamens): figure out the persistance model and hook 'er up
+        return Backbone.Model.prototype.initialize.call(this, attributes, options);
     }
 
 });
