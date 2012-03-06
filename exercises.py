@@ -209,11 +209,6 @@ class ViewExercise(request_handler.RequestHandler):
                     user_exercise.count_hints = problem_log.count_hints
 
                 user_exercise.current = problem_log.sha1 == sha1
-        else:
-            # Not read_only
-            suggested_exercise_names = user_exercise_graph.suggested_exercise_names()
-            if exercise.name in suggested_exercise_names:
-                bingo('suggested_activity_visit_suggested_exercise')
 
         is_webos = self.is_webos()
         browser_disabled = is_webos or self.is_older_ie()
@@ -335,8 +330,6 @@ class ViewAllExercises(request_handler.RequestHandler):
         if show_review_drawer:
             template_values['review_statement'] = 'Attain mastery'
             template_values['review_call_to_action'] = "I'll do it"
-
-        bingo('suggested_activity_exercises_landing')
 
         self.render_jinja2_template('viewexercises.html', template_values)
 
@@ -528,14 +521,12 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 bingo([
                     'struggling_problems_correct',
-                    'suggested_activity_problems_correct',
                 ])
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo([
                         'hints_gained_proficiency_all',
                         'struggling_gained_proficiency_all',
-                        'suggested_activity_gained_proficiency_all',
                     ])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
@@ -561,7 +552,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             bingo([
                 'hints_problems_done',
                 'struggling_problems_done',
-                'suggested_activity_problems_done',
             ])
 
         else:
@@ -571,7 +561,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 bingo([
                     'hints_wrong_problems',
                     'struggling_problems_wrong',
-                    'suggested_activity_problems_wrong',
                 ])
 
             if user_exercise.is_struggling(struggling_model):

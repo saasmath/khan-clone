@@ -82,9 +82,7 @@ var Video = {
 
         // Bingo conversions for watching a video video
         gae_bingo.bingo(["videos_landing",
-            "struggling_videos_landing",
-            "suggested_activity_videos_landing",
-            "suggested_activity_videos_landing_binary"]);
+            "struggling_videos_landing"]);
 
         // Fix up data for templating
         if (videoData.related_exercises &&
@@ -235,12 +233,6 @@ var Video = {
             transcriptLink.click($.proxy(this._ontranscriptclick, this,
                 transcript, transcriptLink));
         }
-
-        $(".sharepop").hide();
-        $(".share-link").click(function() {
-            $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
-            return false;
-        });
 
         // We take the message in the title of the energy points box and place it
         // in a tooltip, and if it's the message with a link to the login we
