@@ -7,6 +7,7 @@ from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
 import auth.cookies
+import auth.passwords
 import auth.tokens
 import cookie_util
 import datetime
@@ -17,7 +18,6 @@ import re
 import request_handler
 import util
 import urllib
-import urlparse
 
 class LoginType():
     """ Enum representing which types of logins a user can use
@@ -132,9 +132,9 @@ def _merge_phantom_into(phantom_data, target_data):
 
     
     # First make sure user has 0 points and phantom user has some activity
-    if (target_data.points == 0
-        and phantom_data
-        and phantom_data.points > 0):
+    if (target_data.points == 0 and
+            phantom_data and
+            phantom_data.points > 0):
 
         # Make sure user has no students
         if not target_data.has_students():
@@ -331,8 +331,12 @@ class Register(request_handler.RequestHandler):
                 errors['username'] = "Username is not available"
 
         if values['password']:
-            # TODO(benkomalo): enforce a minimum password quality/length
             password = values['password']
+            if not auth.passwords.is_sufficient_password(password,
+                                                         values['nickname'],
+                                                         values['username']):
+                errors['password'] = "Password is too weak"
+                
 
         if len(errors) > 0:
             # Never send back down the password.
@@ -356,8 +360,8 @@ class Register(request_handler.RequestHandler):
                                                   username,
                                                   password)
         if not created_user:
-            # TODO(benkomalo): handle the low probability event that a username
-            # was taken just as this method was processing.
+            # TODO(benkomalo): STOPSHIP handle the low probability event that a
+            # username was taken just as this method was processing.
             self.response.write("Oops. can't make user")
             return
         
@@ -371,4 +375,35 @@ class Register(request_handler.RequestHandler):
         # TODO(benkomalo): do some kind of onboarding instead of taking them
         #                  directly to a continue URL
         Login.redirect_with_auth_stamp(self, created_user, cont)
+
+class PasswordChange(request_handler.RequestHandler):
+    def post(self):
+        user_data = models.UserData.current()
+        if not user_data:
+            self.response.set_status(401)
+            return
+
+        existing = self.request_string("existing")
+        if not user_data.validate_password(existing):
+            self.response.set_status(401)
+            return
         
+        password1 = self.request_string("password1")
+        password2 = self.request_string("password2")
+        if not password1 or not password2:
+            self.response.set_status(400) # Bad request.
+            return
+        
+        # TODO(benkomalo): actually wire this up to a UI instead of just
+        # writing text like this.
+        if password1 != password2:
+            self.response.write("Passwords don't match.")
+        elif not auth.passwords.is_sufficient_password(password1,
+                                                       user_data.nickname,
+                                                       user_data.userame):
+            self.response.write("Password too weak.")
+        else:
+            # We're good!
+            user_data.set_password(password1)
+            self.response.write("OK")
+

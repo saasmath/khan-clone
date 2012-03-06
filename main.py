@@ -23,7 +23,6 @@ from gae_bingo.middleware import GAEBingoWSGIMiddleware
 import autocomplete
 import coaches
 import knowledgemap
-import consts
 import youtube_sync
 import warmup
 import library
@@ -56,7 +55,7 @@ import labs
 import socrates
 
 import models
-from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoSubtitles, Topic
+from models import UserData, Video, Url, ExerciseVideo, Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from phantom_users import util_notify
@@ -670,6 +669,7 @@ application = webapp2.WSGIApplication([
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
     ('/register', login.Register),
+    ('/pwchange', login.PasswordChange),
 
     ('/api-apps/register', oauth_apps.Register),
 
