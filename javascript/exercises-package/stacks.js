@@ -523,6 +523,8 @@ Exercises.CurrentCardView = Backbone.View.extend({
         if (this.model.get("done")) {
 
             $(".leaves-container").show();
+            //TODO: This probably doesn't belong here
+            $(".current-card").addClass("done");
 
             setTimeout(function() {
                 $(".leaves-container .earned .full-leaf").addClass("animated");
@@ -531,6 +533,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         } else {
 
             $(".leaves-container").hide();
+            $(".current-card").removeClass("done");
 
         }
     },
