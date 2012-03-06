@@ -208,12 +208,6 @@ var Video = {
                 transcript, transcriptLink));
         }
 
-        $(".sharepop").hide();
-        $(".share-link").click(function() {
-            $(this).next(".sharepop").toggle("drop", {direction: "up"},"fast");
-            return false;
-        });
-
         // We take the message in the title of the energy points box and place it
         // in a tooltip, and if it's the message with a link to the login we
         // replace it with a nicer link (we don't want to have to pass the url to
