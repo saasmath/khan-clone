@@ -20,7 +20,8 @@
 }
 
 .current-card.notransition .current-card-container,
-.current-card.notransition .current-card-container-inner {
+.current-card.notransition .current-card-container-inner,
+.current-card.shrinkRight .leaves .leaf.earned .full-leaf {
     /* For temporarily disabling transitions.
      * See http://stackoverflow.com/questions/6634470/disable-turn-off-inherited-css3-transitions
      */

@@ -544,11 +544,17 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 ); 
 
         if (this.model.get("done")) {
-            $(".leaves-container").show( "fast", function() {
-                $(this).find(".earned .full-leaf").addClass("animated");
-            });
+
+            $(".leaves-container").show();
+
+            setTimeout(function() {
+                $(".leaves-container .earned .full-leaf").addClass("animated");
+            }, 1);
+
         } else {
+
             $(".leaves-container").hide();
+
         }
     },
 
