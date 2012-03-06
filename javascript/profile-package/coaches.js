@@ -4,9 +4,11 @@ var Coaches = {
     url: "/api/v1/user/coaches",
 
     init: function() {
-        var deferred;
+        var isSelf = Profile.profile.get("isSelf"),
+            isPhantom = Profile.profile.get("isPhantom"),
+            deferred;
 
-        if (Profile.profile.get("isSelf")) {
+        if (isSelf && !isPhantom) {
             var email = Profile.profile.get("email"),
                 template = Templates.get("profile.coaches");
             $("#tab-content-coaches").html(template(Profile.profile.toJSON()));

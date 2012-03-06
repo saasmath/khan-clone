@@ -27,6 +27,12 @@ def update_coaches_and_requests(user_data, coaches_json):
     Any extant coach or request relationships not represented in
     coaches_json will be deleted.
     """
+    current_user_data = UserData.current()
+
+    if (not current_user_data or
+            (current_user_data.key_email != user_data.key_email)):
+        return []
+
     requester_emails = update_coaches(user_data, coaches_json)
     update_requests(user_data, requester_emails)
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
