@@ -441,6 +441,18 @@ var VideoStats = {
         }
     },
 
+    updatePoints: function(points) {
+        var jelPoints = $(".video-energy-points");
+        if (jelPoints.length)
+        {
+            jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, points));
+            $(".video-energy-points-current", jelPoints).text(points);
+
+            // Replace the old tooltip with an updated one.
+            VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
+        }
+    },
+
     prepareAlternativePlayer: function() {
 
         this.player = $("#flvPlayer").get(0);
