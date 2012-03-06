@@ -139,13 +139,10 @@ def _merge_phantom_into(phantom_data, target_data):
                 return True
     return False
 
-# TODO(benkomalo): get rid of PostLogin. This is logic that should just be
-# handled in the Login code itself, and needs to be duplicated in Registration.
-# It's also dangerous since the continue URL's can be modified for any reason
-# and skipping some stuff in PostLogin may be weird.
 class PostLogin(request_handler.RequestHandler):
-    @staticmethod
-    def handle_postlogin(handler, continue_url=None):
+    def get(self):
+        cont = self.request_string('continue', default="/")
+
         # Immediately after login we make sure this user has a UserData entity
         user_data = UserData.current()
         if user_data:
@@ -168,18 +165,21 @@ class PostLogin(request_handler.RequestHandler):
                 user_data.moderator = True
                 user_data.put()
 
-            # If user is brand new and has 0 points, migrate data
+            # If user is brand new and has 0 points, migrate data.
+            # This should only happen for Facebook/Google users right now,
+            # since users with username/password go through the /register
+            # code path, which does the merging there.
             phantom_id = get_phantom_user_id_from_cookies()
             if phantom_id:
                 phantom_data = UserData.get_from_db_key_email(phantom_id)
                 if _merge_phantom_into(phantom_data, user_data):
-                    continue_url = "/newaccount?continue=%s" % continue_url
+                    cont = "/newaccount?continue=%s" % cont
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
             if App.facebook_app_id:
-                handler.delete_cookie("fbsr_" + App.facebook_app_id)
-                handler.delete_cookie("fbm_" + App.facebook_app_id)
+                self.delete_cookie("fbsr_" + App.facebook_app_id)
+                self.delete_cookie("fbm_" + App.facebook_app_id)
 
             logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
@@ -187,12 +187,7 @@ class PostLogin(request_handler.RequestHandler):
             )
 
         # Always delete phantom user cookies on login
-        handler.delete_cookie('ureg_id')
-        return continue_url
-
-    def get(self):
-        cont = self.request_string('continue', default="/")
-        cont = PostLogin.handle_postlogin(self, cont)
+        self.delete_cookie('ureg_id')
         self.redirect(cont)
 
 class Logout(request_handler.RequestHandler):
