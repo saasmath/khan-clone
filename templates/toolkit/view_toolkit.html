@@ -1,0 +1,168 @@
+{% extends "page_template.html" %}
+
+{% import 'macros/analytics.html' as analytics %}
+
+{% block pagecss %}
+    {{ js_css_packages.css_package("profile") }}
+{% endblock pagecss %}
+
+{% block pagesubmenu %}
+<span class="breadcrumbs_nav">
+	<a href="/class_profile" id="back-to-class" style="float:left;">« Back to coach</a>    
+	<a href="/toolkit" class="selected">Toolkit</a>
+    <a href="/commoncore" id="manage-students">Common Core</a>
+    <a href="/class_profile" id="class-stats">Demo</a>
+    <a href="/about/blog/implementations" id="class-stats">Blog</a>
+</span>
+{% endblock pagesubmenu %}
+
+{% block meta_page_title %}Teacher Toolkit | {% endblock meta_page_title %}
+{% block pagescript %}
+    <style>
+        #public #container #form1 #header {
+			display: none; 
+		}
+		
+		.tab-link {p
+			adding-left:6px;
+		}
+		
+		ul.bullet {
+			list-style: disc;
+			margin-left: 1.5em;
+		}
+		
+		.lead {
+			font-size:18px;
+			line-height:23px;
+		}
+		
+		hr {
+			margin-bottom: 22px;
+		}
+		
+		.callout {
+			background: #F3F3F3;
+			padding: 19px;
+			margin: 24px 0 20px;
+			border: 1px solid #EEE;
+			border-top-color: #DDD;
+			border-radius: 6px;
+			-khtml-border-radius: 6px;
+			-moz-border-radius: 6px;
+			-webkit-border-radius: 6px;
+		}
+		
+		.callout > h3 {
+			margin-bottom:10px;
+		}
+		
+    </style>
+{% endblock pagescript %}
+
+{% block pagecontent %}
+<article id="toolkit">
+	<menu class="profile-navigation">
+	    <ul class="vertical-tab-list">
+	        <li class="profile-tab"><a href="#" class="tab-link no-recolor" rel="profile">
+	            <img src="/images/darth.png" class="profile-tab-avatar">
+	            <span id="profile-tab-link" class="profile-tab-text">Teacher Toolkit</span>
+	        </a></li>
+	        
+			<li>
+	            <span class="inactive link-section-header">Committing to KA</span>
+	            <ul class="vertical-tab-list second-tier">
+	                <li><a href="#" class="tab-link no-recolor" rel="section-1">Why Khan Academy?</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="section-2">Section 2</a></li>
+					<li><a href="#" class="tab-link no-recolor" rel="section-3">Section 3</a></li>
+	            </ul>
+	        </li>
+	        <li>
+	            <span class="inactive link-section-header">Getting Started</span>
+	            <ul class="vertical-tab-list second-tier">
+	                <li><a href="#" class="tab-link no-recolor active-tab" rel="getting-started accounts">Setting up accounts</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started documents">Release documents</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started technology">Technology</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started navigating">Navigating the Site</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started warming">1st week</a></li>
+	            </ul>
+	        </li>
+	        <li>
+	            <span class="inactive link-section-header">Class time</span>
+	            <ul class="vertical-tab-list second-tier">
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started accounts">Keys to success</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started documents">Teaching strategies</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started technology">Using data</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started navigating">Investing students</a></li>
+	            </ul>
+	        </li>
+	        <li>
+	            <span class="inactive link-section-header">Curriculum</span>
+	            <ul class="vertical-tab-list second-tier">
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started accounts">6-step process</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started documents">Sample unit plans</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started technology">Evaluation</a></li>
+	            </ul>
+	        </li>
+			
+	    </ul>
+	</menu>
+	
+	<section class="tab-content">
+		
+		<div class="col1 sixty-forty">
+		
+			<h1>Setting up accounts</h1>
+			<hr>
+			<p class="lead">In order to get the most out of Khan Academy, you'll need to set up student and teacher accounts. We've created a handy guide to make sure you'll be up and running in no time.</p>
+			<p>Your school will need to be set up with Google accounts to register classes in the Khan Academy. You can register accounts through Google Apps for Education.</p>
+			<ul class="bullet">
+				<li><a href="http://www.google.com/apps/intl/en/edu/k12.html">Google Apps for Education registration</a></li>
+				<li><a href="http://www.google.com/support/a/bin/answer.py?answer=139019">Google Apps for Education common questions</a></li>
+			</ul>
+			<p>In order to set up student accounts, follow the instructions below:</p>
+		    <div id="empty-class">
+		        <h3>Each of your students needs to sign in and follow these steps:</h3>
+		        <ol>
+		            <li>
+		                <p>First, they should click on the <a href="/coaches">Add a Coach</a> link at the bottom of the page.</p>
+		                <a href="/coaches"><img src="/images/add-a-coach.png" class="vertical-shadow rounded-background" /></a>
+		            </li>
+		            <li class="enter-email">
+		                <p>Then, they should enter your Coach ID in the form that looks like this:</p>
+		                <div class="coach-email">{{ coach_email|escape }}</div>
+		                <a href="/coaches"><img src="/images/enter-coach-email.png?{{App.version}}" class="vertical-shadow rounded-background"/></a>
+		                <p>
+		                    Your Coach ID is <strong>{{ coach_email|escape }}</strong>.
+		                </p>
+		            </li>
+		            <li class="click-register">
+		                <p>Finally, they need to click the <em>Register Coach</em> button. It looks like this:</p>
+		                <div class="coach-email">{{ coach_email|escape }}</div>
+		                <a href="/coaches"><img src="/images/click-register.png?{{App.version}}" class="vertical-shadow rounded-background"/></a>
+		            </li>
+		        </ol>
+		        <p>Once students make you their coach, you'll have access to all types of interesting data about their progress and achievements.</p>
+		        <p>You can access that data via the <a href="/class_profile">Class Report</a>.</p>
+		    </div>
+
+		</div>
+		
+		<div class="col2 sixty-forty">
+			<div class="callout">
+				<h3>Useful links</h3>
+				<ul class="bullet">
+					<li><a href="#">What type of computers should I get for my classroom?</a></li>
+					<li><a href="#">How fast does my internet connection need to be to run Khan Academy?</a></li>
+				</ul>	
+			</div>		
+		</div>	
+		
+	</section>	
+	
+</article>
+{% endblock pagecontent %}
+{% block bottompagescript %}
+    {{ js_css_packages.js_package("commoncore") }}
+	{{ analytics.crazyegg_tracker(False) }}
+{% endblock bottompagescript %}

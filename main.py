@@ -50,6 +50,7 @@ import goals.handlers
 import stories
 import summer
 import common_core
+import toolkit
 import unisubs
 import api.jsonify
 import labs
@@ -606,10 +607,6 @@ class RedirectToSchoolImplementationsBlog(request_handler.RequestHandler):
     def get(self):
         self.redirect("http://ka-implementations.tumblr.com/")
 
-class RedirectToToolkit(request_handler.RequestHandler):
-    def get(self):
-        self.redirect("https://sites.google.com/a/khanacademy.org/schools/")
-
 class PermanentRedirectToHome(request_handler.RequestHandler):
     def get(self):
 
@@ -815,7 +812,7 @@ application = webapp2.WSGIApplication([
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
 
-    ('/toolkit', RedirectToToolkit),
+    ('/toolkit', toolkit.Toolkit),
 
     ('/paypal/autoreturn', paypal.AutoReturn),
     ('/paypal/ipn', paypal.IPN),
