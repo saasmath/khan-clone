@@ -95,6 +95,7 @@
       {% if mixpanel_enabled %}
       var mpq = [];
       mpq.push(["init","5f375bcfa7dc57184da63393e2af841c"]);
+      window._initialPageTime = (new Date()).getTime(); // For page load time tracking
       {% endif %}
  
     </script>
@@ -212,21 +213,18 @@
         {% endif %}
 
         {# Analytics utility #}
+        {% if mixpanel_enabled %}
         $(function() {
+            {% if logged_in %}
             // Pass user data to MixPanel
-            {% if logged_in and mixpanel_enabled %}
             mpq.identify("{{ user_data.email }}");
             mpq.name_tag("{{ username }}");
             {% endif %}
 
-            // Send page load event to analytics API's, and set up 
-            // event handler for decorated links.
-            Analytics.trackPageLoad({
-            {% if mixpanel_enabled %}
-                mpqEnabled: true
-            {% endif %}
-            });
+            // Send the page load event & initialize MixPanel analytics
+            Analytics.trackPageLoad(_initialPageTime);
         });
+        {% endif %}
     </script>
     {%- endif -%}
 

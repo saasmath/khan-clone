@@ -288,6 +288,12 @@ var VideoStats = {
             } else {
                 VideoControls.setAutoPlayEnabled(false);
             }
+            
+            if (this.analyticsEvent) {
+                this.analyticsEvent.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackEventEnd(this.analyticsEvent);
+                this.analyticsEvent = null;
+            }
         } else if (state === 2 && playing) { // paused
             this.playing = false;
             if (this.getSecondsWatchedSinceSave() > 1) {
@@ -299,12 +305,29 @@ var VideoStats = {
             } else {
                 VideoControls.setAutoPlayEnabled(false);
             }
+            
+            if (this.analyticsEvent) {
+                this.analyticsEvent.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackEventEnd(this.analyticsEvent);
+                this.analyticsEvent = null;
+            }
         } else if (state === 1) { // play
             this.playing = true;
             this.dtLastSaved = new Date();
             this.dPercentLastSaved = this.getPercentWatched();
 
-            Analytics.trackContent("Video");
+            if (!this.analyticsEvent) {
+                var id = "";
+                if (this.sVideoKey !== null) {
+                    id = this.sVideoKey;
+                } else if (this.sYoutubeId !== null) {
+                    id = this.sYoutubeId;
+                }
+                this.analyticsEvent = Analytics.trackEventBegin("Video Play", {
+                    "Video ID": id,
+                    "Percent (begin)": this.dPercentLastSaved
+                });
+            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
@@ -390,6 +413,18 @@ var VideoStats = {
 
             if (window.Video) {
                 Video.updateVideoPoints(video.points);
+            }
+
+            if (video.completed) {
+                var id = "";
+                if (this.sVideoKey !== null) {
+                    id = this.sVideoKey;
+                } else if (this.sYoutubeId !== null) {
+                    id = this.sYoutubeId;
+                }
+                Analytics.trackSingleEvent("Video Complete", {
+                    "Video ID": id
+                });
             }
         }
     },
