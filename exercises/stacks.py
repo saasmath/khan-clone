@@ -2,8 +2,8 @@
 DEFAULT_CARDS_PER_STACK = 8
 MAXIMUM_CARDS_PER_REVIEW_STACK = 8
 
-# TODO(kamens): this will probably be persisted to the datastore in the form of a double-pickled 
-# list of cards attached to UserTopics or something of the sort.
+# TODO: this will probably eventually by persisted to the datastore in the form
+# of a double-pickled list of cards attached to UserTopics or something similer.
 class Card(object):
     """ Holds single Card's state.
     Subclassed by ProblemCard and, in the future, stuff like VideoCard, SurveyCard, etc.
@@ -37,7 +37,7 @@ class ProblemCard(Card):
         self.card_type = "problem"
         self.exercise_name = exercise_name
 
-# This will eventually be able to return other types of cards, like Video cards, as well.
+# The idea is that this will be able to return other types of cards, like Video cards.
 def get_problem_stack(next_user_exercises):
     """ Return a stack of DEFAULT_CARDS_PER_STACK, prefilled with
     information about the first len(next_user_exercises) cards according

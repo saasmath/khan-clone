@@ -25,11 +25,11 @@ var Exercises = {
     currentCard: null,
     currentCardView: null,
 
-    incompleteStack: null,
-    incompleteStackView: null,
-
     completeStack: null,
     completeStackView: null,
+
+    incompleteStack: null,
+    incompleteStackView: null,
 
     reviewMode: false,
 
@@ -44,8 +44,13 @@ var Exercises = {
 
         this.userTopic = new Exercises.UserTopic(json.userTopic);
 
-        this.incompleteStack = new Exercises.StackCollection(this.userTopic.get("incompleteStack")); 
-        this.completeStack = new Exercises.StackCollection(this.userTopic.get("completeStack")); 
+        // completeStack will be loaded from local cache if available
+        this.completeStack = new Exercises.CachedStackCollection(); 
+        this.incompleteStack = new Exercises.StackCollection(json.incompleteStack);
+
+        // If we loaded a partially complete stack from cache, reduce
+        // the size of the incomplete stack accordingly.
+        this.incompleteStack.shrinkBy(this.completeStack.length);
 
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
@@ -189,6 +194,12 @@ var Exercises = {
 
             // Pop from left
             Exercises.currentCard = Exercises.incompleteStack.pop(animationOptions);
+
+            // If this is the last card in the stack, clear
+            // our right-hand-stack cache
+            if (!Exercises.incompleteStack.length) {
+                Exercises.completeStack.clearCache();
+            }
 
             // Render next card
             Exercises.currentCardView = new Exercises.CurrentCardView({

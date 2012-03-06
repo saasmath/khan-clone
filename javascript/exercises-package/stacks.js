@@ -73,6 +73,22 @@ Exercises.StackCollection = Backbone.Collection.extend({
     },
 
     /**
+     * Shrink this stack by removing N cards up to but not including
+     * the first card in the stack and the last (end of stack) card.
+     */
+    shrinkBy: function(n) {
+
+        // Never shrink to less than two cards (first card, end of stack card).
+        var targetLength = Math.max(2, this.length - n);
+
+        while (this.length > targetLength) {
+            // Remove the second-to-last card until we're done.
+            this.remove(this.models[this.length - 2]);
+        }
+
+    },
+
+    /**
      * Return the longest streak of cards in this stack
      * that satisfies the truth test fxn
      */
@@ -119,6 +135,80 @@ Exercises.StackCollection = Backbone.Collection.extend({
             "longestSpeedStreak": longestSpeedStreak,
             "totalLeaves": totalLeaves
         };
+    }
+
+});
+
+/**
+ * StackCollection that is automatically cached in localStorage when modified
+ * and loads itself from cache on initialization.
+ */
+Exercises.CachedStackCollection = Exercises.StackCollection.extend({
+
+    initialize: function(models) {
+
+        // Try to load models from cache
+        if (!models) {
+            this.loadFromCache();
+        }
+
+        this
+            .bind("add", this.cache, this)
+            .bind("remove", this.cache, this);
+
+    },
+
+    cacheKey: function() {
+        return [
+            "cachedstack",
+            Exercises.userTopic.get("user"),
+            Exercises.userTopic.get("name")
+        ].join(":");
+    },
+
+    loadFromCache: function() {
+        var data = window.localStorage[this.cacheKey()];
+
+        if (data) {
+            _.each(JSON.parse(data), function(dict) {
+                this.add(new Exercises.Card(dict), {at: 0})
+            }, this);
+        }
+    },
+
+    cache: function() {
+
+        try {
+            window.localStorage[this.cacheKey()] = JSON.stringify(this.models);
+        } catch(e) {
+            // If we had trouble storing in localStorage, we may've run over
+            // the browser's 5MB limit. This should be rare, but when hit, clear
+            // everything out.
+            this.clearAllCache();
+        }
+    },
+
+    /**
+     * Delete this stack from localStorage
+     */
+    clearCache: function() {
+        delete window.localStorage[this.cacheKey()];
+    },
+
+    /**
+     * Delete all cached stack objects from localStorage
+     */
+    clearAllCache: function() {
+        var i = 0;
+        while (i < localStorage.length) {
+            var key = localStorage.key(i);
+            if (key.indexOf('cachedstack:') === 0) {
+                delete localStorage[key];
+            }
+            else {
+                i++;
+            }
+        }
     }
 
 });

@@ -27,12 +27,13 @@
 
 <script>
     Exercises.init({
-        userExercises: {{ user_exercises_json }},
         userTopic: {
-            /* TODO(kamens): this init data is faked -- need real data model here like crazzzyyyyyyy */
-            incompleteStack: {{ stack_json }},
-            completeStack: []
+            /* TODO(kamens): need to send down userTopic info */
+            name: "someUserTopicName",
+            user: "someUser"
         },
+        userExercises: {{ user_exercises_json }},
+        incompleteStack: {{ stack_json }},
         reviewMode: {{ review_mode_json }}
     });
 
