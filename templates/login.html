@@ -8,7 +8,7 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="login-form" action="/login?continue={{continue|urlencode}}">
+    <form method="POST" class="auth-form" id="login-form" action="{{templatetags.to_secure_url('/login')}}?continue={{continue|urlencode}}">
     <input type="hidden" name="type" id="type-input">
 
     <ul class="providers">

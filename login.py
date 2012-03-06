@@ -7,6 +7,7 @@ from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
 import auth.cookies
+import auth.tokens
 import cookie_util
 import datetime
 import logging
@@ -16,6 +17,7 @@ import re
 import request_handler
 import util
 import urllib
+import urlparse
 
 class LoginType():
     """ Enum representing which types of logins a user can use
@@ -95,9 +97,25 @@ class Login(request_handler.RequestHandler):
                 self.render_login(identifier, errors)
                 return
 
-            auth.cookies.set_auth_cookie(self, u)
-            self.redirect(cont)
-            return
+            Login.redirect_with_auth_stamp(self, u, cont)
+        
+    @staticmethod
+    def redirect_with_auth_stamp(handler, user_data, cont="/"):
+        """ Handles a successful login for a user by redirecting them
+        to the PostLogin URL with the auth token, which will ultimately set
+        the auth cookie for them.
+        
+        This level of indirection is needed since the Login/Register handlers
+        must accept requests with password strings over https, but the rest
+        of the site is not (yet) using https, and therefore must use a
+        non-https cookie.
+        
+        """
+
+        auth_token = auth.tokens.mint_token_for_user(user_data)
+        cont = util.create_post_login_url(cont) + ("&auth=%s" % auth_token)
+        cont = util.insecure_url(cont)
+        handler.redirect(cont)
 
 class MobileOAuthLogin(request_handler.RequestHandler):
     def get(self):
@@ -185,6 +203,10 @@ class PostLogin(request_handler.RequestHandler):
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
                 )
             )
+            
+        auth_stamp = self.request_string("auth")
+        if auth_stamp:
+            auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
 
         # Always delete phantom user cookies on login
         self.delete_cookie('ureg_id')
@@ -348,5 +370,5 @@ class Register(request_handler.RequestHandler):
         # TODO(benkomalo): send welcome e-mail
         # TODO(benkomalo): do some kind of onboarding instead of taking them
         #                  directly to a continue URL
-        auth.cookies.set_auth_cookie(self, created_user)
-        self.redirect(cont)
+        Login.redirect_with_auth_stamp(self, created_user, cont)
+        

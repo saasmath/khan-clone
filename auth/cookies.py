@@ -37,8 +37,11 @@ def get_user_from_khan_cookies():
     return None
 
 
-def set_auth_cookie(handler, user):
-    auth_token = auth.tokens.mint_token_for_user(user)
+def set_auth_cookie(handler, user, auth_token=None):
+    if auth_token is None:
+        auth_token = auth.tokens.mint_token_for_user(user)
+    else:
+        pass # TODO(benkomalo): do we want to validate the auth token if passed?
     max_age = auth.tokens.DEFAULT_TOKEN_EXPIRY_SECONDS
 
     handler.set_cookie(AUTH_COOKIE_NAME,

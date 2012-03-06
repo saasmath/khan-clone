@@ -8,7 +8,7 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="registration-form" action="/register?continue={{continue|urlencode}}">
+    <form method="POST" class="auth-form" id="registration-form" action="{{templatetags.to_secure_url('/register')}}?continue={{continue|urlencode}}">
     <input type="hidden" name="type" id="type-input">
 
     <div class="registration-contents">

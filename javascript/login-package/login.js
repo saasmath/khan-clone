@@ -159,7 +159,6 @@ Login.submitRegistration = function() {
 
     // Success!
     if (valid) {
-        // TODO(benkomalo): STOPSHIP! send this over https!
         $("#registration-form").submit();
     }
 };
