@@ -1442,18 +1442,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return count > 0
 
-    def coach_emails(self):
-        """ Return coaches' emails... but going to be removed imminently!
-        
-        Watch out!
-        """
-        emails = []
-        for key_email in self.coaches:
-            user_data_coach = UserData.get_from_db_key_email(key_email)
-            if user_data_coach:
-                emails.append(user_data_coach.email)
-        return emails
-
     def remove_student_lists(self, removed_coach_emails):
         """ Remove student lists associated with removed coaches.
         """
@@ -4123,7 +4111,6 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
-                'suggested_activity_videos_finished',
             ])
         video_log.is_video_completed = user_video.completed
 
@@ -5070,6 +5057,7 @@ class UserExerciseGraph(object):
                 "suggested": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
+                "live": exercise.live,
             }
 
     @staticmethod
@@ -5121,7 +5109,7 @@ class UserExerciseGraph(object):
         boundary_graph_dicts = []
         for exercise_name in graph:
             graph_dict = graph[exercise_name]
-            if is_boundary(graph_dict):
+            if graph_dict["live"] and is_boundary(graph_dict):
                 boundary_graph_dicts.append(graph_dict)
 
         boundary_graph_dicts = sorted(sorted(boundary_graph_dicts,
