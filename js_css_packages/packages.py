@@ -212,6 +212,7 @@ javascript = {
             "end-of-review-card.handlebars",
             "calculating-card.handlebars",
             "exercises.js",
+            "stacks.js",
             "bottomless-queue.js",
         ]
     },
