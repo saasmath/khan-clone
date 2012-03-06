@@ -45,11 +45,11 @@ var Exercises = {
         this.userTopic = new Exercises.UserTopic(json.userTopic);
 
         // completeStack will be loaded from local cache if available
-        this.completeStack = new Exercises.CachedStackCollection(); 
-        this.incompleteStack = new Exercises.StackCollection(json.incompleteStack);
+        this.completeStack = new Exercises.CachedStackCollection(/* models */ null, {userTopic: this.userTopic}); 
 
         // If we loaded a partially complete stack from cache, reduce
         // the size of the incomplete stack accordingly.
+        this.incompleteStack = new Exercises.StackCollection(json.incompleteStack);
         this.incompleteStack.shrinkBy(this.completeStack.length);
 
         // Start w/ the first card ready to go

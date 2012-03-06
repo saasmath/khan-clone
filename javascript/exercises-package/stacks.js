@@ -145,7 +145,11 @@ Exercises.StackCollection = Backbone.Collection.extend({
  */
 Exercises.CachedStackCollection = Exercises.StackCollection.extend({
 
+    userTopic: null,
+
     initialize: function(models, options) {
+
+        this.userTopic = options.userTopic;
 
         // Try to load models from cache
         if (!models) {
@@ -163,8 +167,8 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
     cacheKey: function() {
         return [
             "cachedstack",
-            Exercises.userTopic.get("user"),
-            Exercises.userTopic.get("name")
+            this.userTopic.get("user"),
+            this.userTopic.get("name")
         ].join(":");
     },
 
