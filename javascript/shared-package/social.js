@@ -3,7 +3,7 @@ var Social = {
 
     init: function(jelContainer) {
         /*--We're using a custom Twitter button, this code enables a popup--*/
-        $(".twitterShare", jelContainer).click(function(event) {
+        $("body").on("click", ".twitterShare", function(event) {
             var width = 550,
                 height = 370,
                 left = ($(window).width() - width) / 2,
