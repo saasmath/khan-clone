@@ -91,6 +91,7 @@ class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
     def get(self):
+        show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
         if coach:
@@ -100,6 +101,17 @@ class ViewClassProfile(request_handler.RequestHandler):
                 # Only allow looking at a student list other than your own
                 # if you are a dev, admin, or coworker.
                 coach = user_override
+
+            if not coach.has_students() and show_coach_resources:
+                template_values = {
+                        'user_data_coach': coach,
+                        'coach_email': coach.email,
+                        'selected_nav_link': 'coach',
+                        'selected_id': 'coach-resources',
+                        'is_profile_empty': not coach.has_students(),
+                }
+                self.render_jinja2_template('coach_resources/view_resources.html', template_values)
+                return
 
             student_lists = StudentList.get_for_coach(coach.key())
 
@@ -144,7 +156,14 @@ class ViewClassProfile(request_handler.RequestHandler):
                     }
             self.render_jinja2_template('viewclassprofile.html', template_values)
         else:
-            self.redirect(util.create_login_url(self.request.uri))
+            if show_coach_resources:
+                template_values = {
+                        'selected_nav_link': 'coach',
+                        'selected_id': 'coach-resources',
+                }
+                self.render_jinja2_template('coach_resources/view_resources.html', template_values)
+            else:
+                self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
     @ensure_xsrf_cookie

@@ -1,20 +1,10 @@
-{% extends "page_template.html" %}
+{% extends "coach_resources/coach_resources_template.html" %}
 
 {% import 'macros/analytics.html' as analytics %}
 
 {% block pagecss %}
     {{ js_css_packages.css_package("profile") }}
 {% endblock pagecss %}
-
-{% block pagesubmenu %}
-<span class="breadcrumbs_nav">
-	<a href="/class_profile" id="back-to-class" style="float:left;">« Back to coach</a>    
-	<a href="/toolkit" class="selected">Toolkit</a>
-    <a href="/commoncore" id="manage-students">Common Core</a>
-    <a href="/class_profile" id="class-stats">Demo</a>
-    <a href="/about/blog/implementations" id="class-stats">Blog</a>
-</span>
-{% endblock pagesubmenu %}
 
 {% block meta_page_title %}Teacher Toolkit | {% endblock meta_page_title %}
 {% block pagescript %}
@@ -60,7 +50,7 @@
     </style>
 {% endblock pagescript %}
 
-{% block pagecontent %}
+{% block resourcecontent %}
 <article id="toolkit">
 	<menu class="profile-navigation">
 	    <ul class="vertical-tab-list">
@@ -113,7 +103,6 @@
 		<div class="col1 sixty-forty">
 		
 			<h1>Setting up accounts</h1>
-			<hr>
 			<p class="lead">In order to get the most out of Khan Academy, you'll need to set up student and teacher accounts. We've created a handy guide to make sure you'll be up and running in no time.</p>
 			<p>Your school will need to be set up with Google accounts to register classes in the Khan Academy. You can register accounts through Google Apps for Education.</p>
 			<ul class="bullet">
@@ -161,7 +150,7 @@
 	</section>	
 	
 </article>
-{% endblock pagecontent %}
+{% endblock resourcecontent %}
 {% block bottompagescript %}
     {{ js_css_packages.js_package("commoncore") }}
 	{{ analytics.crazyegg_tracker(False) }}

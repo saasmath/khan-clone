@@ -1,15 +1,14 @@
-{% extends "page_template.html" %}
+{% extends "coach_resources/coach_resources_template.html" %}
 
 {% import 'macros/analytics.html' as analytics %}
 
 {% block meta_page_title %}Common Core Map | {% endblock meta_page_title %}
 {% block pagescript %}
     <style>
-        #page_sub_nav { display: none; }
         #public #container #form1 #header {display: none; }
     </style>
 {% endblock pagescript %}
-{% block pagecontent %}
+{% block resourcecontent %}
 <article id="commoncore">
 	
 	<style type="text/css">
@@ -198,12 +197,11 @@
 	
 	
 	<div id="cc-header">
-		<h1 class="section-headline" style="float:left;">Common Core Map</h1>
 		<!--a href="#" class="simple-button action-gradient" style="float:right; margin-top:22px;">Submit a Common Core Tag</a>
 		<div style="clear:both;"></div-->
 	</div>
 		
-	<hr>
+	<br>
 		
 	<div id="sidebar" class="col1" style="max-width:20%; min-width:20%;">
 		
@@ -347,7 +345,7 @@
 		{% endfor %}
 	</div>		
 </article>
-{% endblock pagecontent %}
+{% endblock resourcecontent %}
 {% block bottompagescript %}
     {{ js_css_packages.js_package("commoncore") }}
 	{{ analytics.crazyegg_tracker(False) }}

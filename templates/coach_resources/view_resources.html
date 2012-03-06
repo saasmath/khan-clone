@@ -1,0 +1,55 @@
+{% extends "coach_resources/coach_resources_template.html" %}
+
+{% import 'macros/mailing_lists.html' as mailing_lists %}
+
+{% block resourcecontent %}
+
+<div id="coach-resources">
+    <div class="col1 fifty-fifty" style="text-align: center; padding-top: 18px;">
+        <a href="/toolkit">
+            <img class="rounded-background" src="/images/large-tree-transparent.png" style="width:400px;" />
+        </a>
+        <br>
+        Get the most out of Khan Academy in your class
+        <br>
+        <a href="/toolkit">Learn More >></a>
+    </div>
+
+    <div class="col2 fifty-fifty" style="text-align: center; padding-top: 18px;">
+        <a href="http://khanacademy.desk.com">
+            <img class="rounded-background" src="/images/questionmark.gif" style="width:400px;height:243px" />
+        </a>
+        <br>
+        Want to use Khan Academy in your class?
+        <br>
+        <a href="http://khanacademy.desk.com">Get Answers >></a>
+    </div>
+    <div class="clear"></div>
+    <br><br>
+    <form action="/addcoach_to_mailing_list" name="coach_mailing_list_form">
+        {% if coach_email %}
+            <input type="email" size=105 name="email" value={{ coach_email }}>
+        {% else %}
+            <input type="email" size=105 name="email" placeholder="Enter your email" value="">
+        {% endif %}
+        <input type = "submit" value="Register your class" class="simple button action gradient">
+    </form>
+
+    {% if coach_email %}
+        {% if is_profile_empty %}
+            <div class="clear"></div>
+            <hr>
+            <div id="coach-resource-text">
+                <a href="{{login_url}}" class="call-to-action simple-button action-gradient green">Add students to your class</a>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="clear"></div>
+        <hr>
+        <div id="coach-resource-text">
+            <a href="{{login_url}}" class="call-to-action simple-button action-gradient green">Login to get a class going</a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock resourcecontent %}

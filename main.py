@@ -50,7 +50,6 @@ import goals.handlers
 import stories
 import summer
 import common_core
-import toolkit
 import unisubs
 import api.jsonify
 import labs
@@ -60,6 +59,7 @@ import models
 from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
+from coach_resources import util_coach, schools_blog
 from phantom_users import util_notify
 from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
@@ -750,6 +750,10 @@ application = webapp2.WSGIApplication([
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
 
+    ('/coach/resources', util_coach.ViewCoachResources),
+    ('/coach/schools-blog', schools_blog.ViewBlog),
+    ('/toolkit', util_coach.ViewToolkit),
+    ('/coaches', coaches.ViewCoaches),
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
     ('/unregisterstudent', coaches.UnregisterStudent),
@@ -811,8 +815,6 @@ application = webapp2.WSGIApplication([
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
-
-    ('/toolkit', toolkit.Toolkit),
 
     ('/paypal/autoreturn', paypal.AutoReturn),
     ('/paypal/ipn', paypal.IPN),

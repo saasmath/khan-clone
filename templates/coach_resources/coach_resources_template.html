@@ -1,0 +1,40 @@
+{% extends "page_template.html" %}
+
+{% import 'macros/analytics.html' as analytics %}
+
+{% block meta_page_title %}Coach Resources | {% endblock meta_page_title %}
+{% block pagescript %}
+    <style>
+        #credits dt {
+            font-weight: bold;
+            float: left;
+            margin-right: 1ex;
+        }
+        #credits dd:before {
+            content: "- ";
+        }
+    </style>
+{% endblock pagescript %}
+{% block pagesubmenu %}
+    <span class="breadcrumbs_accordion">
+        <a href="/class_profile?show_coach_resources=0" id="coach-resources" {% if "coach-resources" == selected_id %}class="selected"{% endif %}>Coach Resources >></a>
+    </span>
+    <span class="breadcrumbs_nav">
+        <a href="/toolkit" id="toolkit" {% if "toolkit" == selected_id %}class="selected"{% endif %}>Toolkit</a>
+        <a href="/commoncore" id="commoncore" {% if "commoncore" == selected_id %}class="selected"{% endif %}>Common Core</a>
+        <a href="/coach/schools-blog" id="schools-blog" {% if "schools-blog" == selected_id %}class="selected"{% endif %}>Schools Blog</a>
+        <a href="/demo" id="demo" {% if "demo" == selected_id %}class="selected"{% endif %}>Demo</a>
+        <a href="/about/faq" id="faq" {% if "faq" == selected_id %}class="selected"{% endif %}>FAQ</a>
+    </span>
+{% endblock pagesubmenu %}
+
+{% block pagecontent %}
+<article id="coach_resources">
+{% block resourcecontent %}
+{% endblock resourcecontent %}
+</article>
+{% endblock pagecontent %}
+
+{% block bottompagescript %}
+    {{ analytics.crazyegg_tracker(False) }}
+{% endblock bottompagescript %}

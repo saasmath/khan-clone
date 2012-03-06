@@ -641,6 +641,14 @@ footer {
                 color: #fff;
             }
 
+#page_sub_nav .breadcrumbs_accordion {
+        font-weight: normal;
+        font-size: 16px;
+        line-height: 18px;
+        width: auto;
+        float: left;
+    }
+
 #page_sub_nav .breadcrumbs_nav {
         font-weight: normal;
         font-size: 16px;
@@ -694,6 +702,9 @@ footer {
         #sitewide-navigation a.about-link.selected:before {left: 23px;}
         /*#page_sub_nav .breadcrumbs_nav a#faq.selected:before {left: 9px;}*/
         /*#page_sub_nav .breadcrumbs_nav a#getting-started.selected:before {left: 54px;}*/
+        #page_sub_nav .breadcrumbs_nav a#coach-resources.selected:before {left: 65px;}
+        #page_sub_nav .breadcrumbs_nav a#commoncore.selected:before {left: 55px;}
+        #page_sub_nav .breadcrumbs_nav a#schools-blog.selected:before {left: 45px;}
         #page_sub_nav .breadcrumbs_nav a#discovery-lab.selected:before {left: 50px;}
         #page_sub_nav .breadcrumbs_nav a#blog.selected:before {left: 14px;}
         #page_sub_nav .breadcrumbs_nav a#the-team.selected:before {left: 31px;}
@@ -730,6 +741,9 @@ footer {
     #sitewide-navigation a.about-link.selected:after {left: 24px;}
     /*#page_sub_nav .breadcrumbs_nav a#faq.selected:after {left: 10px;}*/
     /*#page_sub_nav .breadcrumbs_nav a#getting-started.selected:after {left: 55px;}*/
+    #page_sub_nav .breadcrumbs_nav a#coach-resources.selected:after {left: 66px;}
+    #page_sub_nav .breadcrumbs_nav a#commoncore.selected:after {left: 56px;}
+    #page_sub_nav .breadcrumbs_nav a#schools-blog.selected:after {left: 46px;}
     #page_sub_nav .breadcrumbs_nav a#discovery-lab.selected:after {left: 51px;}
     #page_sub_nav .breadcrumbs_nav a#blog.selected:after {left: 15px;}
     #page_sub_nav .breadcrumbs_nav a#the-team.selected:after {left: 32px;}
@@ -2686,6 +2700,42 @@ a.proficient-badge.disabled {
 .col2.forty-sixty {
     min-width: 63%;
     max-width: 63%;
+}
+
+.col1.fifty-fifty {
+    min-width: 48%;
+    max-width: 48%;
+}
+
+.col2.fifty-fifty {
+    min-width: 48%;
+    max-width: 48%;
+}
+
+#coach-resources {
+    margin-top: 100px;
+    margin-bottom: 5px;
+    font-size: 15px;
+    margin: 9px auto;
+    width:700px;
+    text-align:left;
+}
+
+#coach-resource-text {
+    max-width: 80%;
+    margin-left: 10%;
+    height: 435px;
+    font-size:  16px;
+    line-height: 24px;
+}
+#coach-resource-text a.call-to-action {
+    display: block;
+    font-size: 20px;
+    text-decoration: none;
+    text-align: center;
+    padding: 10px 0 12px;
+    margin-bottom: 15px;
+    font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
 }
 
 .spinealign .col1 { text-align:right; }
