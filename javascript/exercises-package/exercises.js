@@ -176,8 +176,8 @@ var Exercises = {
 
         if (this.currentCard) {
 
-            // Move current to complete
-            this.completeStack.add(this.currentCard, animationOptions);
+            // Move current to front of complete stack
+            this.completeStack.add(this.currentCard, _.extend(animationOptions, {at: 0}));
 
             // Empty current card
             this.currentCard = null;
