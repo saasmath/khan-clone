@@ -150,22 +150,22 @@
 }
 
 .leaves-container {
-    margin: 15px 0 0 15px;
+    margin: 15px 0 0 0;
     overflow: visible;
     position: absolute;
+    width: 70%;
 }
     .card-type-endofstack .leaves-container {
         display: none;
     }
 
 .current-card .leaves .leaf {
-    background: transparent url(/images/power-mode/card-leaf-empty-large.png) no-repeat;
+    background: transparent url(/images/power-mode/card-leaf-empty-large.png) no-repeat 50% 0;
     background-size: 40px 40px;
     float: left;
     color: transparent;
-    width: 40px;
+    width: 25%;
     height: 40px;
-    margin-right: 180px;
 }
 
 .stack .leaves .leaf {
@@ -208,6 +208,7 @@
 
     width: 40px;
     height: 40px;
+    margin: 0 auto;
 }
 .leaves .leaf.earned .full-leaf.animated {
     opacity: 1;
