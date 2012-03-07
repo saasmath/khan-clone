@@ -72,26 +72,10 @@
     window.Analytics = {
 
         // Called once on every page load (if MixPanel is enabled)
-        trackPageLoad: function(startTime) {
-            var currentTimeMS = (new Date()).getTime();
-            var loadTimeMS = (currentTimeMS - startTime);
+        trackInitialPageLoad: function(startTime) {
             var landingPage = (document.referrer.indexOf("khanacademy.org") > -1);
 
             analyticsStore.loadAndSendPersistData();
-
-            analyticsStore.addEvent({
-                id: "Page Load" + currentTimeMS,
-                name: "Page Load",
-                parameters: {
-                    "Page": window.location.pathname,
-                    "Load Time (ms)": loadTimeMS,
-                    "Landing Page": (landingPage ? "Yes" : "No")
-                }
-            });
-
-            currentPage = window.location.pathname;
-            currentPageLoadTime = currentTimeMS;
-            this.trackEventBegin("Page View", {});
 
             // Send the final event before unloading the page
             $(window).unload(function() {
@@ -109,6 +93,40 @@
                     });
                 }
             });
+
+            trackPageLoad(startTime, landingPage);
+        },
+
+        // Called once on arriving at a page (if MixPanel is enabled)
+        // Differs from trackInitialPageLoad because using a Backbone Router
+        // to navigate will trigger trackPageLoad.
+        trackPageLoad: function(startTime, landingPage) {
+            var currentTimeMS = (new Date()).getTime();
+            var loadTimeMS = (startTime > 0) ? (currentTimeMS - startTime) : 0;
+
+            analyticsStore.addEvent({
+                id: "Page Load" + currentTimeMS,
+                name: "Page Load",
+                parameters: {
+                    "Page": window.location.pathname,
+                    "Load Time (ms)": loadTimeMS,
+                    "Landing Page": (landingPage ? "Yes" : "No")
+                }
+            });
+
+            currentPage = window.location.pathname;
+            currentPageLoadTime = currentTimeMS;
+            this.trackEventBegin("Page View", {});
+        },
+
+        handleRouterNavigation: function() {
+            if (!currentPage) {
+                return;
+            }
+
+            if (window.location.pathname !== currentPage) {
+                Analytics.trackPageLoad(0, false);
+            }
         },
 
         // Call this function in response to a user starting an interaction.
@@ -140,6 +158,9 @@
             if (event == currentTrackingEvent) {
                 var currentTimeMS = (new Date()).getTime();
                 this._trackEventEnd(currentTimeMS);
+
+                // Go back to "Page View" mode because nothing else is active
+                this.trackEventBegin("Page View", {});
             }
         },
 

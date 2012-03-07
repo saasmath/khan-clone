@@ -94,7 +94,11 @@
       {# Mixpanel #}
       {% if mixpanel_enabled %}
       var mpq = [];
+      {% if mixpanel_test %}
+      mpq.push(["init","{{ mixpanel_test }}"]);
+      {% else %}
       mpq.push(["init","5f375bcfa7dc57184da63393e2af841c"]);
+      {% endif %}
       window._initialPageTime = (new Date()).getTime(); // For page load time tracking
       {% endif %}
  

@@ -356,6 +356,11 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         # Analytics
         template_values['mixpanel_enabled'] = gandalf('mixpanel_enabled')
 
+        if False: # Enable for testing only
+            template_values['mixpanel_test'] = "70acc4fce4511b89477ac005639cfee1"
+            template_values['mixpanel_enabled'] = True
+            template_values['hide_analytics'] = False
+
         if user_data:
             goals = GoalList.get_current_goals(user_data)
             goals_data = [g.get_visible_data() for g in goals]
