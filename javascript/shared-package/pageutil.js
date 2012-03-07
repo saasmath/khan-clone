@@ -1,11 +1,27 @@
 var KAConsole = {
     debugEnabled: false,
+    oldMessages: [],
+
     log: function() {
         if (window.console && KAConsole.debugEnabled) {
             if (console.log.apply)
                 console.log.apply(console, arguments);
             else
                 Function.prototype.apply.call(console.log, null, arguments);
+        } else {
+            this.oldMessages.push(arguments);
+        }
+    },
+
+    enableLog: function() {
+        if (window.console) {
+            this.debugEnabled = true;
+            _.each(this.oldMessages, function(arguments) {
+                if (console.log.apply)
+                    console.log.apply(console, arguments);
+                else
+                    Function.prototype.apply.call(console.log, null, arguments);
+            });
         }
     }
 };
