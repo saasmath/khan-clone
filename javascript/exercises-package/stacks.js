@@ -532,7 +532,6 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
         } else {
 
-            $(".leaves-container").hide();
             $(".current-card").removeClass("done");
 
         }

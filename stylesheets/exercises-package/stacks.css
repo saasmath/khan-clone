@@ -150,9 +150,10 @@
 }
 
 .leaves-container {
-    margin: 15px 0 0 15px;
+    margin: 8px 0 0 15px;
     overflow: visible;
     position: absolute;
+    right: 10px;
 }
     .card-type-endofstack .leaves-container {
         display: none;
@@ -165,7 +166,15 @@
     color: transparent;
     width: 40px;
     height: 40px;
-    margin-right: 180px;
+    margin-right: 20px;
+    opacity: 0.3;
+    -moz-opacity: 0.3;
+    filter:alpha(opacity=30);
+}
+.current-card .leaves .leaf.earned {
+    opacity: 1.0;
+    -moz-opacity: 1.0;
+    filter:alpha(opacity=100);
 }
 
 .stack .leaves .leaf {
@@ -190,7 +199,7 @@
 }
 
 .leaves .leaf.available {
-    background-color: #cfd8a2;
+    /* Nothing right now */
 }
 .leaves .leaf.unavailable {
     background-color: transparent;
@@ -234,6 +243,26 @@
     padding: 20px;
 }
 
-.current-card.done #problemarea {
-    margin-top: 50px;
+.current-card #problemarea {
+    margin-top: 35px;
+}
+.current-card #answer_area_wrap {
+    margin-top: 52px;
+}
+
+#footer {
+    /* 
+     * This crazy little sucker invokes a different rendering path
+     * for the entire page, even though it's only applied to the footer.
+     *
+     * This hints to webkit that GPU acceleration should be used where
+     * possible, which fixes this annoying bug: http://code.google.com/p/chromium/issues/detail?id=103198
+     * as well as any screen flicker on macs when switching to/from GPU
+     * rendering.
+     *
+     * If another fix for this bug is found, this can be removed.
+     * See "the magic CSS bullet" here: http://www.html5rocks.com/en/tutorials/speed/html5/#toc-hardware-accell
+     *
+     * */
+    -webkit-transform: translateZ(0);
 }
