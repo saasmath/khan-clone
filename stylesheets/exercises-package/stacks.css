@@ -171,6 +171,8 @@
     -moz-opacity: 0.3;
     filter:alpha(opacity=30);
 }
+
+.current-card .leaves .leaf:hover,
 .current-card .leaves .leaf.earned {
     opacity: 1.0;
     -moz-opacity: 1.0;

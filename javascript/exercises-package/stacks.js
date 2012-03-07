@@ -510,6 +510,30 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     },
 
+    attachLeafTooltip: function() {
+        $(this).qtip({
+            content: {
+                text: $(this).data("desc")
+            },
+            style: {
+                classes: "ui-tooltip-youtube"
+            },
+            position: {
+                my: "bottom center",
+                at: "top center"
+            },
+            show: {
+                delay: 0,
+                effect: {
+                    length: 0
+                }
+            },
+            hide: {
+                delay: 0
+            }
+        });
+    },
+
     /**
      * Update the currently available or earned leaves in current card's view
      */
@@ -518,7 +542,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
             .find(".leaves-container")
                 .html(
                     $(Templates.get("exercises.card-leaves")(this.viewContext()))
-                ); 
+                )
+                .find(".leaf")
+                    .each(this.attachLeafTooltip);
 
         if (this.model.get("done")) {
 
