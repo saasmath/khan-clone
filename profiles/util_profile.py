@@ -331,11 +331,6 @@ class UserProfile(object):
 
     @staticmethod
     def get_coach_and_requester_profiles_for_student(student_user_data):
-        current_user_data = models.UserData.current()
-        if (not current_user_data or
-                (current_user_data.key_email != student_user_data.key_email)):
-            return []
-
         coach_profiles = []
 
         for coach_user_data in student_user_data.get_coaches_data():
