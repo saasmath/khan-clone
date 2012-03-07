@@ -5,9 +5,11 @@ var Video = {
 
     waitingForVideo: null,
     currentVideoPath: null,
+    currentVideoData: null,
     rendered: false,
     youtubeBlocked: false,
     pushStateDisabled: false,
+    needsUserVideoCSSReload: false,
 
     init: function(params) {
         var self = this;
@@ -65,6 +67,17 @@ var Video = {
             if (window._gaq) {
                 _gaq.push(['_trackPageview', window.location.pathname]);
             }
+
+            // Reload user video CSS
+            if (this.needsUserVideoCSSReload) {
+                var queryString = '?reload=' + new Date().getTime();
+                $('link[rel="stylesheet"]').each(function () {
+                    if (this.href.indexOf("user_video_css") > -1) {
+                        this.href = this.href.replace(/\?.*|$/, queryString);
+                    }
+                });
+                this.needsUserVideoCSSReload = false;
+            }
         }
 
         // Bingo conversions for watching a video video
@@ -86,6 +99,7 @@ var Video = {
 
         document.title = videoData.title + " | " + topicData.topic.title + " | Khan Academy";
 
+        this.currentVideoData = videoData;
         this.currentVideoPath = videoData.video_path;
 
         var jVideoDropdown = $('#video_dropdown');
@@ -148,6 +162,11 @@ var Video = {
 
         this.initEventHandlers();
 
+        // Update the points display if we've made progress since the last page load
+        if (videoData.videoPoints) {
+            VideoStats.updatePoints(videoData.videoPoints);
+        }
+
         // Set up next/previous links
         if (!this.pushStateDisabled) {
             $("a.previous-video,a.next-video").click(function(event) {
@@ -185,6 +204,13 @@ var Video = {
         }, 15000);
 
         this.waitingForVideo = null;
+    },
+
+    updateVideoPoints: function(points) {
+        if (this.currentVideoData) {
+            this.currentVideoData.videoPoints = points;
+        }
+        this.needsUserVideoCSSReload = true;
     },
 
     initEventHandlers: function() {
