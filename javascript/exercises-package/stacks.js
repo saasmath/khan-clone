@@ -516,7 +516,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 text: $(this).data("desc")
             },
             style: {
-                classes: "ui-tooltip-youtube"
+                classes: "ui-tooltip-light leaf-tooltip"
             },
             position: {
                 my: "bottom center",

@@ -159,12 +159,16 @@
         display: none;
     }
 
+.qtip.ui-tooltip.leaf-tooltip {
+    max-width: 200px !important;
+}
+
 .current-card .leaves .leaf {
     background: transparent url(/images/power-mode/card-leaf-empty-large.png) no-repeat 50% 0;
     background-size: 40px 40px;
     float: left;
     color: transparent;
-    width: 25%;
+    width: 40px;
     height: 40px;
     margin-right: 20px;
     opacity: 0.3;
