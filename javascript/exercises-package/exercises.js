@@ -13,8 +13,8 @@
  *   queue, this is triggered to give listeners a chance to preload any
  *   requirements
  *
- *   * cachedLocalUserExercise -- when an updated userExercise has been cached
- *   in Exercises.BottomlessQueue
+ *   * newUserExerciseData -- when an updated userExercise has been received
+ *   and cached in Exercises.BottomlessQueue
  *
  *   * warning -- when a warning about issues like disabled sessionStorage
  *   has been fired

@@ -18,7 +18,8 @@ var LocalStore = {
     },
 
     /**
-     * Get whatever data was associated with key
+     * Get whatever data was associated with key. Returns null if no data is
+     * associated with the key, regardless of key's value (null, undefined, "monkey").
      */
     get: function(key) {
         var data = window.localStorage[LocalStore.cacheKey(key)];
@@ -34,8 +35,12 @@ var LocalStore = {
      * Store data associated with key in localStorage
      */
     set: function(key, data) {
+
+        var stringified = JSON.stringify(data),
+            cacheKey = LocalStore.cacheKey(key);
+
         try {
-            window.localStorage[LocalStore.cacheKey(key)] = JSON.stringify(data);
+            window.localStorage[cacheKey] = stringified;
         } catch(e) {
             // If we had trouble storing in localStorage, we may've run over
             // the browser's 5MB limit. This should be rare, but when hit, clear
@@ -60,8 +65,7 @@ var LocalStore = {
             var key = localStorage.key(i);
             if (key.indexOf(LocalStore.keyPrefix + ":") === 0) {
                 delete localStorage[key];
-            }
-            else {
+            } else {
                 i++;
             }
         }
