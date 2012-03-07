@@ -34,8 +34,12 @@ var LocalStore = {
      * Store data associated with key in localStorage
      */
     set: function(key, data) {
+
+        var stringified = JSON.stringify(data),
+            cacheKey = LocalStore.cacheKey(key);
+
         try {
-            window.localStorage[LocalStore.cacheKey(key)] = JSON.stringify(data);
+            window.localStorage[cacheKey] = stringified;
         } catch(e) {
             // If we had trouble storing in localStorage, we may've run over
             // the browser's 5MB limit. This should be rare, but when hit, clear
