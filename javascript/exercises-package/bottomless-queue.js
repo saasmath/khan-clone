@@ -1,6 +1,6 @@
 /**
  * BottomlessQueue returns a never-ending sequence of
- * Exercise and UserExercise objects once primed with
+ * UserExercise objects once primed with
  * some initial exercises.
  *
  * It'll talk to our API to try to find the best next
@@ -218,6 +218,8 @@ Exercises.BottomlessQueue = {
 
             // Persist to session storage so we get nice back button behavior
             window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
+
+            $(Exercises).trigger("cachedLocally", {exerciseName: userExercise.exercise});
         }
 
     },

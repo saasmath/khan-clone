@@ -13,6 +13,9 @@
  *   queue, this is triggered to give listeners a chance to preload any
  *   requirements
  *
+ *   * cachedLocalUserExercise -- when an updated userExercise has been cached
+ *   in Exercises.BottomlessQueue
+ *
  *   * warning -- when a warning about issues like disabled sessionStorage
  *   has been fired
  *
@@ -31,6 +34,8 @@ var Exercises = {
     incompleteStack: null,
     incompleteStackView: null,
 
+    sessionStats: null,
+
     reviewMode: false,
 
     // Keeps track of # of pending API requests
@@ -44,7 +49,8 @@ var Exercises = {
 
         this.userTopic = new Exercises.UserTopic(json.userTopic);
 
-        // completeStack will be loaded from local cache if available
+        // sessionStats and completeStack will be loaded from local cache if available
+        this.sessionStats = new Exercises.SessionStats(/* attrs */ null, {userTopic: this.userTopic});
         this.completeStack = new Exercises.CachedStackCollection(/* models */ null, {userTopic: this.userTopic}); 
 
         // If we loaded a partially complete stack from cache, reduce
@@ -199,6 +205,7 @@ var Exercises = {
             // our right-hand-stack cache
             if (!Exercises.incompleteStack.length) {
                 Exercises.completeStack.clearCache();
+                Exercises.sessionStats.clearCache();
             }
 
             // Render next card

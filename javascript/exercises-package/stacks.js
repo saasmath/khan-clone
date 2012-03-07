@@ -177,48 +177,27 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
     },
 
     loadFromCache: function() {
-        var data = window.localStorage[this.cacheKey()];
 
-        if (data) {
-            _.each(JSON.parse(data), function(dict) {
-                this.add(new Exercises.Card(dict), {at: 0})
+        var modelAttrs = LocalStore.get(this.cacheKey());
+        if (modelAttrs) {
+
+            _.each(modelAttrs, function(attrs) {
+                this.add(new Exercises.Card(attrs))
             }, this);
+
         }
+
     },
 
     cache: function() {
-
-        try {
-            window.localStorage[this.cacheKey()] = JSON.stringify(this.models);
-        } catch(e) {
-            // If we had trouble storing in localStorage, we may've run over
-            // the browser's 5MB limit. This should be rare, but when hit, clear
-            // everything out.
-            this.clearAllCache();
-        }
+        LocalStore.set(this.cacheKey(), this.models);
     },
 
     /**
      * Delete this stack from localStorage
      */
     clearCache: function() {
-        delete window.localStorage[this.cacheKey()];
-    },
-
-    /**
-     * Delete all cached stack objects from localStorage
-     */
-    clearAllCache: function() {
-        var i = 0;
-        while (i < localStorage.length) {
-            var key = localStorage.key(i);
-            if (key.indexOf('cachedstack:') === 0) {
-                delete localStorage[key];
-            }
-            else {
-                i++;
-            }
-        }
+        LocalStore.del(this.cacheKey());
     }
 
 });
@@ -493,7 +472,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
      */
     renderEndOfStackCard: function() {
         this.renderCardAfterAPIRequests("exercises.end-of-stack-card", function() { 
-            return Exercises.completeStack.stats()
+            return _.extend(Exercises.sessionStats.progressStats(), Exercises.completeStack.stats());
         });
     },
 
@@ -599,6 +578,93 @@ Exercises.CurrentCardView = Backbone.View.extend({
         // and may one day have deferrable animations (CSS3 animations aren't
         // deferred-friendly).
         return null;
+    }
+
+});
+
+/**
+ * SessionStats stores and caches a list of interesting statistics
+ * about each individual stack session.
+ */
+Exercises.SessionStats = Backbone.Model.extend({
+
+    userTopic: null,
+
+    initialize: function(attributes, options) {
+
+        this.userTopic = options ? options.userTopic : null;
+
+        if (!this.userTopic) {
+            throw "Must supply the userTopic of any stack stats being cached";
+        }
+
+        // Try to load stats from cache
+        this.loadFromCache();
+
+        // Update exercise stats any time new exercise data is cached locally
+        $(Exercises).bind("cachedLocally", $.proxy(function(ev, data) {
+            this.updateProgressStats(data.exerciseName);
+        }, this));
+
+        return Backbone.Model.prototype.initialize.call(this, attributes, options);
+    },
+
+    cacheKey: function() {
+        return [
+            "cachedsessionstats",
+            this.userTopic.get("user"),
+            this.userTopic.get("name")
+        ].join(":");
+    },
+
+    loadFromCache: function() {
+        var attrs = LocalStore.get(this.cacheKey());
+        if (attrs) {
+            this.set(attrs);
+        }
+    },
+
+    cache: function() {
+        LocalStore.set(this.cacheKey(), this.attributes);
+    },
+
+    clearCache: function() {
+        LocalStore.del(this.cacheKey());
+    },
+
+    /**
+     * Update the start/end/change progress for this specific exercise so we
+     * can summarize the user's session progress at the end of a stack.
+     */
+    updateProgressStats: function(exerciseName) {
+
+        var userExercise = Exercises.BottomlessQueue.userExerciseCache[exerciseName];
+
+        if (userExercise) {
+
+            var progressStats = this.get("progress") || {},
+
+                stat = progressStats[exerciseName] || {
+                    exerciseName: exerciseName,
+                    start: userExercise.progress
+                };
+
+            // For now, we're just keeping track of the change in progress per
+            // exercise
+            stat.end = userExercise.progress;
+            stat.change = stat.end - stat.start;
+
+            // Set and cache the latest
+            progressStats[exerciseName] = stat;
+            this.set({"progress": progressStats});
+            this.cache();
+
+        }
+
+    },
+
+    progressStats: function() {
+        return { progress: _.values(this.get("progress") || {}) };
     }
 
 });

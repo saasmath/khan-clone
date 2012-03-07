@@ -60,7 +60,8 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
-            "topics.js"
+            "topics.js",
+            "localStorage.js"
         ]
     },
     "video": {
