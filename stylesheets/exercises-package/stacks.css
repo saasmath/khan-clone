@@ -150,10 +150,10 @@
 }
 
 .leaves-container {
-    margin: 15px 0 0 0;
+    margin: 8px 0 0 15px;
     overflow: visible;
     position: absolute;
-    width: 70%;
+    right: 10px;
 }
     .card-type-endofstack .leaves-container {
         display: none;
@@ -166,12 +166,23 @@
     color: transparent;
     width: 25%;
     height: 40px;
+    margin-right: 20px;
+    opacity: 0.3;
+    -moz-opacity: 0.3;
+    filter:alpha(opacity=30);
+}
+
+.current-card .leaves .leaf:hover,
+.current-card .leaves .leaf.earned {
+    opacity: 1.0;
+    -moz-opacity: 1.0;
+    filter:alpha(opacity=100);
 }
 
 .stack .leaves .leaf {
     width: 5px;
     height: 5px;
-    margin: 2px 0 0;
+    margin: 2px 0 0 1px;
     float: left;
     background: #83a600;
     color: transparent;
@@ -190,7 +201,7 @@
 }
 
 .leaves .leaf.available {
-    background-color: #cfd8a2;
+    /* Nothing right now */
 }
 .leaves .leaf.unavailable {
     background-color: transparent;
@@ -210,12 +221,16 @@
     height: 40px;
     margin: 0 auto;
 }
-.leaves .leaf.earned .full-leaf.animated {
-    opacity: 1;
-    -moz-opacity: 1;
-    filter:alpha(opacity=100);
-    -webkit-transform: scale(1);
+
+@-webkit-keyframes fly-in-leaf {
+    0% { -webkit-transform: scale(10); opacity: 0; }
+    66% { -webkit-transform: scale(1); opacity: 0.3; }
+    100% { -webkit-transform: scale(1); opacity: 1.0; }
 }
+.leaves .leaf.earned .full-leaf.animated {
+    -webkit-animation: fly-in-leaf 0.3s ease-out 0s 1 forwards normal;
+}
+
 .stack .leaves .leaf.earned {
     background: #83a600;
     border-color: #5a7300;
@@ -235,31 +250,26 @@
     padding: 20px;
 }
 
-.current-card.done #problemarea {
-    margin-top: 50px;
+.current-card #problemarea {
+    margin-top: 35px;
+}
+.current-card #answer_area_wrap {
+    margin-top: 52px;
 }
 
-/* End of Stack Card Styling */
-
-.end-of-stack-info .stack-controls .simple-button {
-    display: inline-block;
-    font-size: 150%;
-    text-align: center;
-    width: 48%;
-    margin: 0 1%;
-
-    box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-}
-
-.end-of-stack-info .stack-stats p {
-    display: inline-block;
-    width: 33%;
-}
-
-.end-of-stack-info .progress-graph {
-    background: white;
-    padding: 20px;
-    border: 1px solid #CCC;
+#footer {
+    /* 
+     * This crazy little sucker invokes a different rendering path
+     * for the entire page, even though it's only applied to the footer.
+     *
+     * This hints to webkit that GPU acceleration should be used where
+     * possible, which fixes this annoying bug: http://code.google.com/p/chromium/issues/detail?id=103198
+     * as well as any screen flicker on macs when switching to/from GPU
+     * rendering.
+     *
+     * If another fix for this bug is found, this can be removed.
+     * See "the magic CSS bullet" here: http://www.html5rocks.com/en/tutorials/speed/html5/#toc-hardware-accell
+     *
+     * */
+    -webkit-transform: translateZ(0);
 }
