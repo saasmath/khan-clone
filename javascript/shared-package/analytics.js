@@ -1,11 +1,13 @@
-// A set of utilities to track user interactions on the website (using MixPanel).
-//
-// Events can be either instantaneous or have a duration, and only one
-// non-instantaneous event can be occurring at a time. If another event is begun,
-// the previous event is ended automatically.
-//
-// The utility also attempts to resend events that happen just before the page is
-// unloaded or on pages that are unloaded before the sending script is fully loaded.
+/**
+ * A set of utilities to track user interactions on the website (using MixPanel).
+ *
+ * Events can be either instantaneous or have a duration, and only one
+ * non-instantaneous event can be occurring at a time. If another event is begun,
+ * the previous event is ended automatically.
+ *
+ * The utility also attempts to resend events that happen just before the page is
+ * unloaded or on pages that are unloaded before the sending script is fully loaded.
+ */
 
 (function() {
 
@@ -24,7 +26,7 @@
         // that didn't get sent last time.
         loadAndSendPersistData: function() {
             var persistData = $.parseJSON(readCookie("ka_analytics"));
-            var currentTimeMS = (new Date()).getTime();
+            var currentTimeMS = Date.now();
             var self = this;
 
             // Time out persist data after a minute
@@ -62,7 +64,7 @@
 
         // Save the queue to a cookie
         storePersistData: function() {
-            this.persistData.timestamp = (new Date()).getTime();
+            this.persistData.timestamp = Date.now();
             var persistDataJSON = JSON.stringify(this.persistData);
 
             createCookie("ka_analytics", persistDataJSON);
@@ -73,13 +75,13 @@
 
         // Called once on every page load (if MixPanel is enabled)
         trackInitialPageLoad: function(startTime) {
-            var landingPage = (document.referrer.indexOf("khanacademy.org") > -1);
+            var landingPage = (document.referrer.split('/')[2] === "www.khanacademy.org");
 
             analyticsStore.loadAndSendPersistData();
 
             // Send the final event before unloading the page
             $(window).unload(function() {
-                Analytics._trackEventEnd((new Date()).getTime());
+                Analytics._trackEventEnd(Date.now());
             });
 
             // Add event handler for decorated links
@@ -101,7 +103,7 @@
         // Differs from trackInitialPageLoad because using a Backbone Router
         // to navigate will trigger trackPageLoad.
         trackPageLoad: function(startTime, landingPage) {
-            var currentTimeMS = (new Date()).getTime();
+            var currentTimeMS = Date.now();
             var loadTimeMS = (startTime > 0) ? (currentTimeMS - startTime) : 0;
 
             analyticsStore.addEvent({
@@ -137,7 +139,7 @@
                 return null;
             }
 
-            var currentTimeMS = (new Date()).getTime();
+            var currentTimeMS = Date.now();
 
             this._trackEventEnd(currentTimeMS);
 
@@ -156,7 +158,7 @@
         // Track the end of the event if it is the currently active event
         trackEventEnd: function(event) {
             if (event == currentTrackingEvent) {
-                var currentTimeMS = (new Date()).getTime();
+                var currentTimeMS = Date.now();
                 this._trackEventEnd(currentTimeMS);
 
                 // Go back to "Page View" mode because nothing else is active
@@ -187,7 +189,7 @@
                 return null;
             }
 
-            var currentTimeMS = (new Date()).getTime();
+            var currentTimeMS = Date.now();
 
             parameters["Page"] = currentPage;
             parameters["Page Time (ms)"] = currentTimeMS - currentPageLoadTime;
