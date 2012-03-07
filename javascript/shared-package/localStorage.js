@@ -18,7 +18,8 @@ var LocalStore = {
     },
 
     /**
-     * Get whatever data was associated with key
+     * Get whatever data was associated with key. Returns null if no data is
+     * associated with the key, regardless of key's value (null, undefined, "monkey").
      */
     get: function(key) {
         var data = window.localStorage[LocalStore.cacheKey(key)];
