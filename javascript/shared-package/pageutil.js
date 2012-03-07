@@ -16,11 +16,11 @@ var KAConsole = {
     enableLog: function() {
         if (window.console) {
             this.debugEnabled = true;
-            _.each(this.oldMessages, function(arguments) {
+            _.each(this.oldMessages, function(args) {
                 if (console.log.apply)
-                    console.log.apply(console, arguments);
+                    console.log.apply(console, args);
                 else
-                    Function.prototype.apply.call(console.log, null, arguments);
+                    Function.prototype.apply.call(console.log, null, args);
             });
         }
     }
