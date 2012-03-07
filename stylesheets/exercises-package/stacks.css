@@ -29,6 +29,8 @@
     -moz-transition: none;
     -o-transition: color 0 ease-in;
     transition: none;
+
+    -webkit-animation: none;
 }
 
 /* TODO(kamens/jason): all of these animation bits are experimental and
@@ -228,6 +230,10 @@
 }
 .leaves .leaf.earned .full-leaf.animated {
     -webkit-animation: fly-in-leaf 0.3s ease-out 0s 1 forwards normal;
+    -webkit-transform: scale(1);
+    opacity: 1.0;
+    -moz-opacity: 1.0;
+    filter:alpha(opacity=100);
 }
 
 .stack .leaves .leaf.earned {
