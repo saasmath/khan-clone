@@ -277,3 +277,29 @@
      * */
     -webkit-transform: translateZ(0);
 }
+
+/* End of Stack Card Styling */
+
+.end-of-stack-info .stack-controls .simple-button {
+    display: inline-block;
+    font-size: 150%;
+    text-align: center;
+    width: 48%;
+    margin: 0 1%;
+
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+.end-of-stack-info .stack-stats p {
+    display: inline-block;
+    width: 33%;
+}
+
+.end-of-stack-info .progress-graph {
+    background: white;
+    padding: 20px;
+    border: 1px solid #CCC;
+}
+
