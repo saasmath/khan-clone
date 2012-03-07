@@ -602,7 +602,7 @@ Exercises.SessionStats = Backbone.Model.extend({
         this.loadFromCache();
 
         // Update exercise stats any time new exercise data is cached locally
-        $(Exercises).bind("cachedLocally", $.proxy(function(ev, data) {
+        $(Exercises).bind("newUserExerciseData", $.proxy(function(ev, data) {
             this.updateProgressStats(data.exerciseName);
         }, this));
 

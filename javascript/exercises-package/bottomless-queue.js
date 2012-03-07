@@ -219,7 +219,7 @@ Exercises.BottomlessQueue = {
             // Persist to session storage so we get nice back button behavior
             window.sessionStorage[this.cacheKey(userExercise)] = JSON.stringify(userExercise);
 
-            $(Exercises).trigger("cachedLocally", {exerciseName: userExercise.exercise});
+            $(Exercises).trigger("newUserExerciseData", {exerciseName: userExercise.exercise});
         }
 
     },
