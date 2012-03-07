@@ -121,7 +121,10 @@
             this.trackEventBegin("Page View", {});
         },
 
-        handleRouterNavigation: function() {
+        handleRouterNavigation: function(eventName) {
+            if (eventName.indexOf("route:") != 0) {
+                return;
+            }
             if (!currentPage) {
                 return;
             }
