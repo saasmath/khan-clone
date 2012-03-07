@@ -211,6 +211,8 @@ def _log(this, context):
 
 
 def _unless(this, options, context):
+    if callable(context):
+        context = context(this)
     if not context:
         return options['fn'](this)
 
@@ -229,6 +231,11 @@ def _blockHelperMissing(this, options, context):
         callwith = context
     return options['fn'](callwith)
 
+def _helperMissing(this, options, context=None):
+    if not context:
+        return None
+    raise Exception("Could not find property '%s'" % options)
+
 
 def _with(this, options, context):
     return options['fn'](context)
@@ -237,6 +244,7 @@ def _with(this, options, context):
 _pybars_ = {
     'helpers': {
         'blockHelperMissing': _blockHelperMissing,
+        'helperMissing': _helperMissing,
         'each': _each,
         'if': _if,
         'log': _log,
