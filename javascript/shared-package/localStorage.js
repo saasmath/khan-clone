@@ -60,8 +60,7 @@ var LocalStore = {
             var key = localStorage.key(i);
             if (key.indexOf(LocalStore.keyPrefix + ":") === 0) {
                 delete localStorage[key];
-            }
-            else {
+            } else {
                 i++;
             }
         }
