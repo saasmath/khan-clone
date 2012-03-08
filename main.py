@@ -472,6 +472,7 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+        self.delete_cookie('session')
 
         # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
         if App.facebook_app_id:
