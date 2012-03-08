@@ -674,7 +674,7 @@ Exercises.SessionStats = Backbone.Model.extend({
 
             // For now, we're just keeping track of the change in progress per
             // exercise
-            stat.end = userExercise.progress;
+            stat.end = userExercise.progress * 100;
             stat.change = stat.end - stat.start;
 
             // Set and cache the latest

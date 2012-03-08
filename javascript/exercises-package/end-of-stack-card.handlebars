@@ -1,17 +1,23 @@
 <div class="end-of-stack-info">
     <h1>TOTAL STACK DOMINATION</h1>
     <div class="progress-graph">
-       Progress:
 	    {{#each progress}}
-	        * {{exerciseName}}: {{end}} (change: {{change}})<br>
+	    	<h2 class="skill-bar-title">{{exerciseName}}</h2>
+	    	<div class="skill-bar orange">
+	    		<div class="fill" style="width:{{end}}%;">
+	    			<div class="description">
+		    			{{end}} (change: {{change}})
+		    		</div>
+	    		</div>
+	        </div>
 	    {{/each}}
     </div>
     <div class="stack-stats">
-       <p>longest streak: {{longestStreak}}</p>
-       <p>longest speed streak: {{longestSpeedStreak}}</p>
-       <p>leaves: {{totalLeaves}}</p>
+       <p>{{longestStreak}} Streak!</p>
+       <p>{{longestSpeedStreak}} Speedy Answers</p>
+       <p>{{totalLeaves}} Leaves</p>
    </div>
    <div class="stack-controls">
-       <a href="/exercisedashboard" class="simple-button action-gradient">Take a Break</a><a href="/exercise/subtraction_2" class="simple-button action-gradient green">More Stacks!</a>
+       <a href="/exercisedashboard" class="simple-button action-gradient">Take a Break</a><a href="/math/arithmetic/addition-subtraction/e/" class="simple-button action-gradient green">More Stacks!</a>
    </div>
 </div>
