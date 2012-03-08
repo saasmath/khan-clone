@@ -25,7 +25,7 @@ from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
-from exercises.handlers import ViewExercise
+from exercises.handlers import ViewExercise, ViewExerciseDeprecated
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):

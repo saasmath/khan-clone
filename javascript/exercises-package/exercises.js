@@ -23,7 +23,8 @@
 var Exercises = {
 
     exercise: null,
-    userTopic: null,
+    topic: null,
+    userData: null,
 
     currentCard: null,
     currentCardView: null,
@@ -47,11 +48,13 @@ var Exercises = {
      */
     init: function(json) {
 
-        this.userTopic = new Exercises.UserTopic(json.userTopic);
+        this.userData = json.userData;
+        this.topic = new Topic(json.topic);
+        this.reviewMode = json.reviewMode;
 
         // sessionStats and completeStack will be loaded from local cache if available
-        this.sessionStats = new Exercises.SessionStats(/* attrs */ null, {userTopic: this.userTopic});
-        this.completeStack = new Exercises.CachedStackCollection(/* models */ null, {userTopic: this.userTopic}); 
+        this.sessionStats = new Exercises.SessionStats(/* attrs */ null, {sessionId: this.sessionId()});
+        this.completeStack = new Exercises.CachedStackCollection(/* models */ null, {sessionId: this.sessionId()});
 
         // If we loaded a partially complete stack from cache, reduce
         // the size of the incomplete stack accordingly.
@@ -61,10 +64,16 @@ var Exercises = {
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
 
-        this.reviewMode = json.reviewMode;
-
         Exercises.BottomlessQueue.init(json.userExercises);
 
+    },
+
+    sessionId: function() {
+        // TODO(kamens): test session id
+        return [
+            this.userData.keyEmail,
+            (this.reviewMode ? "review" : this.topic.id)
+        ].join(":")
     },
 
     render: function() {

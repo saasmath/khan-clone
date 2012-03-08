@@ -145,14 +145,14 @@ Exercises.StackCollection = Backbone.Collection.extend({
  */
 Exercises.CachedStackCollection = Exercises.StackCollection.extend({
 
-    userTopic: null,
+    sessionId: null,
 
     initialize: function(models, options) {
 
-        this.userTopic = options ? options.userTopic : null;
+        this.sessionId = options ? options.sessionId : null;
 
-        if (!this.userTopic) {
-            throw "Must supply the userTopic of any stack being cached";
+        if (!this.sessionId) {
+            throw "Must supply a unique sessionId for any stack being cached";
         }
 
         // Try to load models from cache
@@ -171,8 +171,7 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
     cacheKey: function() {
         return [
             "cachedstack",
-            this.userTopic.get("user"),
-            this.userTopic.get("name")
+            this.sessionId
         ].join(":");
     },
 
@@ -613,14 +612,14 @@ Exercises.CurrentCardView = Backbone.View.extend({
  */
 Exercises.SessionStats = Backbone.Model.extend({
 
-    userTopic: null,
+    sessionId: null,
 
     initialize: function(attributes, options) {
 
-        this.userTopic = options ? options.userTopic : null;
+        this.sessionId = options ? options.sessionId : null;
 
-        if (!this.userTopic) {
-            throw "Must supply the userTopic of any stack stats being cached";
+        if (!this.sessionId) {
+            throw "Must supply a unique sessionId for any stack stats being cached";
         }
 
         // Try to load stats from cache
@@ -637,8 +636,7 @@ Exercises.SessionStats = Backbone.Model.extend({
     cacheKey: function() {
         return [
             "cachedsessionstats",
-            this.userTopic.get("user"),
-            this.userTopic.get("name")
+            this.sessionId
         ].join(":");
     },
 
@@ -690,20 +688,6 @@ Exercises.SessionStats = Backbone.Model.extend({
 
     progressStats: function() {
         return { progress: _.values(this.get("progress") || {}) };
-    }
-
-});
-
-Exercises.UserTopic = Backbone.Model.extend({
-
-    defaults: {
-        completeStack: [],
-        incompleteStack: []
-    },
-
-    initialize: function(attributes, options) {
-        // TODO(kamens): figure out the persistance model and hook 'er up
-        return Backbone.Model.prototype.initialize.call(this, attributes, options);
     }
 
 });

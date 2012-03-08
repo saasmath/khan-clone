@@ -797,9 +797,11 @@ application = webapp2.WSGIApplication([
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
 
-    ('/exercise/(.+)', exercises.ViewExercise), # /exercises/addition_1
-    ('/exercises', exercises.ViewExercise), # This old /exercises?exid=addition_1 URL pattern is deprecated
-    ('/review', exercises.ViewExercise),
+    ('/(.*)/e', exercises.ViewExercise),
+    ('/(.*)/e/([^/]*)', exercises.ViewExercise),
+    ('/exercise/(.+)', exercises.ViewExerciseDeprecated), # /exercise/addition_1
+    ('/exercises', exercises.ViewExerciseDeprecated), # /exercises?exid=addition_1
+    ('/(review)', exercises.ViewExercise),
 
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
     ('/viewexercisesonmap', exercises.ViewAllExercises),
