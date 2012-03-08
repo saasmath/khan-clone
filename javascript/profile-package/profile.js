@@ -115,6 +115,9 @@ var Profile = {
         "/vital-statistics/:graph": "showVitalStatistics",
         "/coaches": "showCoaches",
 
+        // Not associated with any tab highlighting.
+        "/settings": "showSettings",
+
         "": "showDefault",
         // If the user types /profile/username/ with a trailing slash
         // it should work, too
@@ -249,6 +252,16 @@ var Profile = {
                 .siblings().hide();
             this.activateRelatedTab("people coaches");
             this.updateTitleBreadcrumbs(["Coaches"]);
+        },
+
+        showSettings: function() {
+            // Populate HTML/reset.
+            Settings.render($("#tab-content-settings"));
+
+            // Show.
+            $("#tab-content-settings").show().siblings().hide();
+            this.activateRelatedTab("");
+            this.updateTitleBreadcrumbs(["Settings"]);
         },
 
         activateRelatedTab: function(rel) {

@@ -1078,15 +1078,15 @@ li.profile-tab {
 .username-picker .example-username {
     color: #678D00;
 }
-.username-picker .sidenote {
+.sidenote {
     background-repeat: no-repeat;
     background-position: 0 30%;
     padding-left: 13px;
 }
-.username-picker .sidenote.success {
+.sidenote.success {
     background-image:url(/images/video-indicator-complete.png);
 }
-.username-picker .sidenote.error {
+.sidenote.error {
     background-image:url(/images/cross.png);
 }
 
@@ -1209,4 +1209,21 @@ li.profile-tab {
 }
 .coach-row .controls {
     float: right;
+}
+
+#pw-change-form .input-label-cell {
+    padding: 0.5em 2em 0.5em 0;
+}
+
+#pw-change-form .simple-input {
+    /* TODO(benkomalo): consolidate these input styles in forms across the site.
+       this is kind of copied from login-package/login.css */
+    font-size: 14px;
+    padding: 0.1em 0.3em;
+    margin: 0.1em 0;
+    width: 14em;
+}
+
+#pw-change-form .sidenote {
+    margin-left: 5px;
 }

@@ -2,6 +2,9 @@
  * Various utilities related to the login or registration page.
  */
 
+// TODO(benkomalo): do more on-the-fly client side validation of things like
+// valid usernames or passwords
+
 // Namespace
 var Login = Login || {};
 
