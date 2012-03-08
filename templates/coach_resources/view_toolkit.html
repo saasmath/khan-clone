@@ -99,55 +99,18 @@
 	</menu>
 	
 	<section class="tab-content">
-		
+				
 		<div class="col1 sixty-forty">
-		
-			<h1>Setting up accounts</h1>
-			<hr>
-			<p class="lead">In order to get the most out of Khan Academy, you'll need to set up student and teacher accounts. We've created a handy guide to make sure you'll be up and running in no time.</p>
-			<p>Your school will need to be set up with Google accounts to register classes in the Khan Academy. You can register accounts through Google Apps for Education.</p>
-			<ul class="bullet">
-				<li><a href="http://www.google.com/apps/intl/en/edu/k12.html">Google Apps for Education registration</a></li>
-				<li><a href="http://www.google.com/support/a/bin/answer.py?answer=139019">Google Apps for Education common questions</a></li>
-			</ul>
-			<p>In order to set up student accounts, follow the instructions below:</p>
-		    <div id="empty-class">
-		        <h3>Each of your students needs to sign in and follow these steps:</h3>
-		        <ol>
-		            <li>
-		                <p>First, they should click on the <a href="/coaches">Add a Coach</a> link at the bottom of the page.</p>
-		                <a href="/coaches"><img src="/images/add-a-coach.png" class="vertical-shadow rounded-background" /></a>
-		            </li>
-		            <li class="enter-email">
-		                <p>Then, they should enter your Coach ID in the form that looks like this:</p>
-		                <div class="coach-email">{{ coach_email|escape }}</div>
-		                <a href="/coaches"><img src="/images/enter-coach-email.png?{{App.version}}" class="vertical-shadow rounded-background"/></a>
-		                <p>
-		                    Your Coach ID is <strong>{{ coach_email|escape }}</strong>.
-		                </p>
-		            </li>
-		            <li class="click-register">
-		                <p>Finally, they need to click the <em>Register Coach</em> button. It looks like this:</p>
-		                <div class="coach-email">{{ coach_email|escape }}</div>
-		                <a href="/coaches"><img src="/images/click-register.png?{{App.version}}" class="vertical-shadow rounded-background"/></a>
-		            </li>
-		        </ol>
-		        <p>Once students make you their coach, you'll have access to all types of interesting data about their progress and achievements.</p>
-		        <p>You can access that data via the <a href="/class_profile">Class Report</a>.</p>
-		    </div>
-
+		{% block col1content %}
+		{% endblock col1content %}
 		</div>
-		
 		<div class="col2 sixty-forty">
 			<div class="callout">
-				<h3>Useful links</h3>
-				<ul class="bullet">
-					<li><a href="#">What type of computers should I get for my classroom?</a></li>
-					<li><a href="#">How fast does my internet connection need to be to run Khan Academy?</a></li>
-				</ul>	
-			</div>		
-		</div>	
-		
+			{% block col2content %}
+			{% endblock col2content %}
+			</div>
+		</div>
+				
 	</section>	
 	
 </article>
