@@ -181,8 +181,11 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         }
     },
 
-    // TODO(marcia): Throttle to avoid inconsistent state
     save: function() {
+        this.debouncedSave_();
+    },
+
+    debouncedSave_: _.debounce(function() {
         var options = {
             url: Coaches.url,
             contentType: "application/json",
@@ -193,7 +196,7 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         options["data"] = JSON.stringify(this.toJSON());
 
         Backbone.sync("update", null, options);
-    },
+    }, 300),
 
     onSaveSuccess_: function() {
         this.markCoachesAsSaved();
@@ -205,15 +208,13 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         this.trigger("saveError");
     },
 
+    increasingId: 0,
+
     /**
      * Mark which coach models have been saved to server,
      * which lets us remove un-saved / invalid coaches on error.
      */
     markCoachesAsSaved: function() {
-        if (this.increasingId === undefined) {
-            this.increasingId = 0;
-        }
-
         this.each(function(model) {
             // Backbone models without an id are considered
             // to be new, as in not yet saved to server.
