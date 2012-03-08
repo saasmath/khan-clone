@@ -1,12 +1,17 @@
-<div>
-    END OF STACK!!!
-    <br><br>
-    longest streak: {{longestStreak}}<br>
-    longest speed streak: {{longestSpeedStreak}}<br>
-    leaves: {{totalLeaves}}<br>
-
-    Progress:
-    {{#each progress}}
-        * {{exerciseName}}: {{end}} (change: {{change}})<br>
-    {{/each}}
+<div class="end-of-stack-info">
+    <h1>TOTAL STACK DOMINATION</h1>
+    <div class="progress-graph">
+       Progress:
+	    {{#each progress}}
+	        * {{exerciseName}}: {{end}} (change: {{change}})<br>
+	    {{/each}}
+    </div>
+    <div class="stack-stats">
+       <p>longest streak: {{longestStreak}}</p>
+       <p>longest speed streak: {{longestSpeedStreak}}</p>
+       <p>leaves: {{totalLeaves}}</p>
+   </div>
+   <div class="stack-controls">
+       <a href="/exercisedashboard" class="simple-button action-gradient">Take a Break</a><a href="/exercise/subtraction_2" class="simple-button action-gradient green">More Stacks!</a>
+   </div>
 </div>
