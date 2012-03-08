@@ -148,11 +148,15 @@ class Exercise(db.Model):
     description = db.TextProperty()
     tags = db.StringListProperty()
 
+    # List of parent topics
+    topic_string_keys = object_property.TsvProperty(indexed=False)
+
     sha1 = "TODO(kamens): sha1s should be cut or accessible (and cached) as properties"
 
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
             "coverers", "prerequisites_ex", "assigned",
+            "topic_string_keys"
             ]
 
     @staticmethod
@@ -236,6 +240,17 @@ class Exercise(db.Model):
             return exercise.non_summative_exercise(problem_number)
         else:
             return exercise
+
+    def has_topic(self):
+        return bool(self.topic_string_keys)
+
+    def first_topic(self):
+        """ Returns this Exercise's first non-hidden parent Topic """
+
+        if self.topic_string_keys:
+            return db.get(self.topic_string_keys[0])
+
+        return None
 
     def related_videos_query(self):
         query = ExerciseVideo.all()
@@ -1765,8 +1780,11 @@ def change_default_version(version):
 
     deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
 
-
 def rebuild_content_caches(version):
+    """ Uses existing Topic structure to rebuild and recache topic_string_keys
+    properties in Video, Url, and Exercise entities for easy parental Topic
+    lookups.
+    """
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
@@ -1782,33 +1800,54 @@ def rebuild_content_caches(version):
     for url in urls:
         url.topic_string_keys = []
 
+    # Grab all Exercise objects, even those that are hidden
+    exercises = list(Exercise.all_unsafe())
+    exercise_dict = dict((e.key(), e) for e in exercises)
+
+    for exercise in exercises:
+        exercise.topic_string_keys = []
+
     found_videos = 0
 
     for topic in topics:
+
         logging.info("Rebuilding content cache for topic " + topic.title)
         topic_key_str = str(topic.key())
+
         for child_key in topic.child_keys:
+
             if child_key.kind() == "Video":
+
                 if child_key in video_dict:
                     video_dict[child_key].topic_string_keys.append(topic_key_str)
                     found_videos += 1
                 else:
                     logging.info("Failed to find video " + str(child_key))
+
             elif child_key.kind() == "Url":
+
                 if child_key in url_dict:
                     url_dict[child_key].topic_string_keys.append(topic_key_str)
                     found_videos += 1
                 else:
                     logging.info("Failed to find URL " + str(child_key))
 
-    logging.info("About to put content caches for all videos")
-    db.put(videos)
-    logging.info("Finished putting videos. About to put urls")
-    db.put(urls)
+            elif child_key.kind() == "Exercise":
+
+                if child_key in exercise_dict:
+                    exercise_dict[child_key].topic_string_keys.append(topic_key_str)
+                else:
+                    logging.info("Failed to find exercise " + str(child_key))
+
+    logging.info("About to put content caches for all videos, urls, and exercises.")
+    db.put(list(videos) + list(urls) + list(exercises))
+    logging.info("Finished putting videos, urls, and exercises.")
+
+    # Wipe the Exercises cache key
+    Setting.cached_exercises_date(str(datetime.datetime.now()))
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
     logging.info("set_default_version complete")
-
 
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
