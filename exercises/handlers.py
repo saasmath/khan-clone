@@ -7,7 +7,7 @@ from exercises.stacks import get_problem_stack, get_review_stack
 from api.jsonify import jsonify
 from api.auth.xsrf import ensure_xsrf_cookie
 
-class ViewExerciseRedirect(request_handler.RequestHandler):
+class ViewExerciseDeprecated(request_handler.RequestHandler):
     """ Redirects old exercise URLs (/exercise?exid=monkeys, /exercises/monkeys)
     to their newer form (/earth/forests/e/monkeys).
     """
@@ -29,12 +29,12 @@ class ViewExerciseRedirect(request_handler.RequestHandler):
 class ViewExercise(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
-    def get(self, path, exid=None):
+    def get(self, topic_path, exid=None):
 
         # TODO(kamens): error/permission handling, past problem viewing,
         #  and the rest of exercises/__init__.py's ViewExercise edge cases
 
-        review_mode = "review" == path
+        review_mode = "review" == topic_path
         practice_mode = bool(exid)
 
         topic = None
@@ -48,8 +48,8 @@ class ViewExercise(request_handler.RequestHandler):
 
         else:
 
-            path_list = path.split('/')
-            topic_id = path_list[-1]
+            topic_path_list = topic_path.split('/')
+            topic_id = topic_path_list[-1]
 
             if len(topic_id) > 0:
                 topic = models.Topic.get_by_id(topic_id)
