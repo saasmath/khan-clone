@@ -72,6 +72,8 @@ class ViewExercise(request_handler.RequestHandler):
         if practice_mode:
             # Practice mode involves a single exercise only
             user_exercises = [user_data.get_or_insert_exercise(exercise)]
+        elif review_mode:
+            user_exercises = models.UserExercise.next_in_review(user_data)
         else:
             # Topics mode context switches between multiple exercises
             user_exercises = models.UserExercise.next_in_topic(user_data, topic)

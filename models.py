@@ -583,42 +583,53 @@ class UserExercise(db.Model):
             _accuracy_model=AccuracyModel()
         )
 
+    # TODO(kamens) unit test next_in_topic
     @staticmethod
-    def next_exercise_names_in_topic(user_data, topic, n=3, queued=[]):
-        """ Returns the next n suggested exercise names for this topic
-        or for review mode.
+    def next_in_topic(user_data, topic, n=3, queued=[]):
+        """ Returns the next n suggested user exercises for this topic,
+        all prepped and ready for JSONification
 
         TODO(kamens) but really TODO(jace): *This* is where the magic will happen.
         """
 
-        if topic:
-
-            # List suggested next exercises
-            exids = [ex.name for ex in topic.get_exercises(include_descendants=True) if ex.live]
-
-        else: # Review mode
-
-            user_exercise_graph = UserExerciseGraph.get(user_data)
-            exids = user_exercise_graph.review_exercise_names()
-
-        # Only return those that have not already been queued up
-        return [exid for exid in exids if exid not in queued][:n]
-
-    # TODO(kamens) unit test next_in_topic
-    @staticmethod
-    def next_in_topic(user_data, topic, n=3, queued=[]):
-        """ Returns the next n suggested user exercises for this topic
-        or for review mode.
-        """
-
-        exids = UserExercise.next_exercise_names_in_topic(user_data, topic, n, queued)
-        exercises = [Exercise.get_by_name(exid) for exid in exids]
-
-        # TODO(kamens): parallelize
+        # TODO(kamens): can we get away w/ not inserting UE's unnecessarily here???
+        exercises = [ex for ex in topic.get_exercises(include_descendants=True) if ex.live]
         user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
 
-        # TODO(kamens) try to get rid of these API property additions due to our
-        # lack of various API projections
+        # Sort the UserExercises with lowest progress first
+        # TODO(kamens): include prerequisites/covers/etc
+        user_exercises = sorted(user_exercises, key=lambda u_e: u_e.progress)
+
+        return UserExercise._prepare_for_stack_api(user_exercises)
+
+    @staticmethod
+    def next_in_review(user_data, n=3, queued=[]):
+        """ Returns the next n suggested user exercises for this user's
+        review mode, all prepped and ready for JSONification
+        """
+
+        # TODO(kamens): can we get away w/ not inserting UE's unnecessarily here???
+        user_exercise_graph = UserExerciseGraph.get(user_data)
+        exercises = [Exercise.get_by_name(exid) for exid in user_exercise_graph.review_exercise_names()]
+        user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
+
+        return UserExercise._prepare_for_stack_api(user_exercises)
+
+    @staticmethod
+    def _prepare_for_stack_api(user_exercises, n=3, queued=[]):
+        """ Returns the passed-in list of UserExercises, with additional properties
+        added in preparation for JSONification by our API.
+
+        Limits user_exercises returned to n, and filters out any user_exercises
+        that are already queued up in the stack.
+
+        TODO: when we eventually have support for various API projections, get rid
+        of this manual property additions.
+        """
+
+        # Filter out already queued exercises
+        user_exercises = [u_e for u_e in user_exercises if u_e.exercise not in queued][:n]
+
         for user_exercise in user_exercises:
             exercise = user_exercise.exercise_model
 
