@@ -22,8 +22,16 @@
  */
 var Exercises = {
 
-    exercise: null,
+    // practice mode uses a single exercise, not an entire topic
+    practiceMode: false,
+    reviewMode: false,
+
+    // topic will be populated if we're not in review or practice
+    // (single-exercise) mode
     topic: null,
+
+    // exercise will be populated if we're in practice mode
+    exercise: null,
     userData: null,
 
     currentCard: null,
@@ -37,8 +45,6 @@ var Exercises = {
 
     sessionStats: null,
 
-    reviewMode: false,
-
     // Keeps track of # of pending API requests
     pendingAPIRequests: 0,
 
@@ -48,8 +54,11 @@ var Exercises = {
      */
     init: function(json) {
 
-        this.userData = json.userData;
         this.topic = new Topic(json.topic);
+        this.exercise = new Exercise(json.exercise);
+
+        this.userData = json.userData;
+        this.practiceMode = json.practiceMode;
         this.reviewMode = json.reviewMode;
 
         // sessionStats and completeStack will be loaded from local cache if available
@@ -64,15 +73,39 @@ var Exercises = {
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
 
-        Exercises.BottomlessQueue.init(this.topic, json.userExercises);
+        Exercises.BottomlessQueue.init(
+                this.topic, 
+                json.userExercises, 
+                /* refillEnabled */ !this.reviewMode && !this.practiceMode
+        );
 
     },
 
+    /**
+     * Returns an identifier for the current user's session that can be
+     * used for various cache keys. This sessionId isn't meant to be globally
+     * unique, just an identifier for the current user and topic/exercise
+     * being tackled.
+     */
     sessionId: function() {
-        // TODO(kamens): test session id
+
+        var contextId = null;
+
+        if (this.reviewMode) {
+            contextId = "review";
+        } else if (this.practiceMode && !!this.exercise) {
+            contextId = "practice:" + this.exercise.get("name");
+        } else if (!!this.topic) {
+            contextId = "topic:" + this.topic.get("id");
+        }
+
+        if (!contextId) {
+            throw "Missing exercise or topic for current session";
+        }
+
         return [
             this.userData.keyEmail,
-            (this.reviewMode ? "review" : this.topic.id)
+            contextId
         ].join(":")
     },
 
@@ -86,6 +119,8 @@ var Exercises = {
 
         $(".exercises-content-container").html(profileExercise({
             topic: this.topic.toJSON(),
+            exercise: this.exercise.toJSON(),
+            practiceMode: this.practiceMode,
             reviewMode: this.reviewMode
         }));
 

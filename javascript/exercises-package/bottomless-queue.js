@@ -29,6 +29,10 @@ Exercises.BottomlessQueue = {
     // listeners a chance to preload resources
     preloadUpcoming: 2,
 
+    // true if this queue can talk to the server to refill itself with new
+    // exercises, otherwise it'll keep recycling its original exercises.
+    refillEnabled: true,
+
     // true if there's a refill request currently pending
     refilling: false,
 
@@ -63,10 +67,12 @@ Exercises.BottomlessQueue = {
     // each exercise we encounter
     userExerciseCache: {},
 
-    init: function(topic, userExercises) {
+    init: function(topic, userExercises, refillEnabled) {
+
+        this.sessionStorageEnabled = this.testSessionStorage();
 
         this.topic = topic;
-        this.sessionStorageEnabled = this.testSessionStorage();
+        this.refillEnabled = (refillEnabled !== false); /* default is true */
 
         // Delay some initialization until after khan-exercises
         // is all set up
@@ -299,8 +305,8 @@ Exercises.BottomlessQueue = {
 
     refill: function() {
 
-        if (!this.topic) {
-            // We don't refill in reviewMode, all stack
+        if (!this.refillEnabled) {
+            // We don't refill in reviewMode or practiceMode, all stack
             // data was sent down originally
             return;
         }
@@ -311,7 +317,6 @@ Exercises.BottomlessQueue = {
         }
 
         $.ajax({
-            // TODO(kamens): topic URL needs a real topic id
             url: "/api/v1/topic/" + encodeURIComponent(this.topic.get("id")) + "/exercises/next",
             type: "GET",
             dataType: "json",
