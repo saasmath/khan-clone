@@ -196,7 +196,7 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         options["data"] = JSON.stringify(this.toJSON());
 
         Backbone.sync("update", null, options);
-    }, 300),
+    }, 750),
 
     onSaveSuccess_: function() {
         this.markCoachesAsSaved();
