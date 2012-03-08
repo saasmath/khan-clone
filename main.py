@@ -755,6 +755,7 @@ application = webapp2.WSGIApplication([
     ('/coach/accessdemo', util_coach.AccessDemo),
     ('/coach/schools-blog', schools_blog.ViewBlog),
     ('/toolkit', util_coach.ViewToolkit),
+    ('/toolkit/(.*)', util_coach.ViewToolkit),
     ('/coaches', coaches.ViewCoaches),
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
