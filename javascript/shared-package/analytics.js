@@ -145,6 +145,7 @@
         // Call this function in response to a user starting an interaction.
         // Returns the event object to use if you want to modify the parameters
         // or track the end of the event.
+        // This will automatically preempt the previously active activity.
         trackActivityBegin: function(eventName, parameters) {
             if (!currentPage) {
                 return null;
@@ -166,7 +167,8 @@
             return currentTrackingActivity;
         },
 
-        // Track the end of the event if it is the currently active event
+        // Track the end of the event if it is the currently active event &
+        // restart the default Page View activity.
         trackActivityEnd: function(event) {
             if (event == currentTrackingActivity) {
                 var currentTimeMS = Date.now();
