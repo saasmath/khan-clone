@@ -1195,17 +1195,15 @@ li.profile-tab {
 }
 .coach-row {
     padding: 10px;
-}
-.lte8 .coach-row {
     border-top: 1px solid #EFEFEF;
-}
-.coach-row:nth-child(2n+1) {
-    background-color: #EFEFEF;
 }
 .coach-row span.email {
     display: inline-block;
     width: 260px;
     word-wrap: break-word;
+}
+.coach-row span.email .pending {
+    color: #BBB;
 }
 .coach-row .controls {
     float: right;

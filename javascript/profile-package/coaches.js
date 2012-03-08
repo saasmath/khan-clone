@@ -71,7 +71,9 @@ Coaches.CoachView = Backbone.View.extend({
     events: {
         "click .controls .remove": "onRemoveCoach_",
         "click .controls .accept": "onAcceptCoach_",
-        "click .controls .deny": "onDenyCoach_"
+        "click .controls .deny": "onDenyCoach_",
+        "mouseenter .controls .remove": "onMouseEnterRemove_",
+        "mouseleave .controls .remove": "onMouseLeaveRemove_"
     },
 
     initialize: function(options) {
@@ -103,6 +105,14 @@ Coaches.CoachView = Backbone.View.extend({
 
     onDenyCoach_: function() {
         this.collection_.remove(this.model);
+    },
+
+    onMouseEnterRemove_: function(evt) {
+        this.$(".controls .remove").addClass("orange");
+    },
+
+    onMouseLeaveRemove_: function(evt) {
+        this.$(".controls .remove").removeClass("orange");
     }
 
 });
