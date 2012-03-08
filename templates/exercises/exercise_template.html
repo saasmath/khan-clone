@@ -1,7 +1,7 @@
 {% extends "page_template.html" %}
 
-{% block meta_page_title %}<!-- TODO(kamens) -->{% endblock meta_page_title %}
-{% block meta_description %}<!-- TODO(kamens) -->{% endblock %}
+{% block meta_page_title %}{{ title|escape }} | {% endblock meta_page_title %}
+{% block meta_description %}Practice {{ title|lower|escape }} with Khan Academy's free online exercises.{% endblock %}
 
 {% block pagecss %}
 

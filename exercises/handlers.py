@@ -37,8 +37,13 @@ class ViewExercise(request_handler.RequestHandler):
         topic = None
         exercise = None
         user_exercises = None
+        title = None
 
-        if not review_mode:
+        if review_mode:
+
+            title = "Review"
+
+        else:
 
             path_list = path.split('/')
             topic_id = path_list[-1]
@@ -50,12 +55,16 @@ class ViewExercise(request_handler.RequestHandler):
             if not topic:
                 raise MissingExerciseException("Exercise '%s' is missing a topic" % exid)
 
+            title = topic.standalone_title
+
             if exid:
                 exercise = models.Exercise.get_by_name(exid)
 
                 # Exercises are not required but must be valid if supplied
                 if not exercise:
                     raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
+
+                title = exercise.display_name
 
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
@@ -77,6 +86,7 @@ class ViewExercise(request_handler.RequestHandler):
         stack = get_review_stack(user_exercises) if review_mode else get_problem_stack(user_exercises)
 
         template_values = {
+            "title": title,
             "stack_json": jsonify(stack, camel_cased=True),
             "user_exercises_json": jsonify(user_exercises, camel_cased=True),
             "review_mode_json": jsonify(review_mode, camel_cased=True),
