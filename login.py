@@ -380,18 +380,18 @@ class PasswordChange(request_handler.RequestHandler):
     def post(self):
         user_data = models.UserData.current()
         if not user_data:
-            self.response.set_status(401)
+            self.response.unauthorized()
             return
 
         existing = self.request_string("existing")
         if not user_data.validate_password(existing):
-            self.response.set_status(401)
+            self.response.unauthorized()
             return
         
         password1 = self.request_string("password1")
         password2 = self.request_string("password2")
         if not password1 or not password2:
-            self.response.set_status(400) # Bad request.
+            self.response.bad_request()
             return
         
         # TODO(benkomalo): actually wire this up to a UI instead of just
