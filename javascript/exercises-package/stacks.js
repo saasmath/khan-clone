@@ -672,8 +672,12 @@ Exercises.SessionStats = Backbone.Model.extend({
                     start: userExercise.progress
                 };
 
-            // For now, we're just keeping track of the change in progress per
-            // exercise
+            /** 
+             * For now, we're just keeping track of the change in progress per
+             * exercise
+             * Converting manually from decimal to % so it can be more easily used in
+             * HTML/CSS land. TODO Jason/Kamens: Decide on format for this and make it consistent.
+             */
             stat.end = userExercise.progress * 100;
             stat.change = stat.end - stat.start;
 

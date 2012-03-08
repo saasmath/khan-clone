@@ -410,6 +410,11 @@
     background-image: -o-linear-gradient(top, #f0a3a3, #f42323);
 }
 
+/** 
+ * Leaving out the "to" or 100% state in these keyframe animations 
+ * causes the fill to animate based on the inline width.
+ */
+
 @-webkit-keyframes progress-bar {
    0% { width: 0; }
 }
