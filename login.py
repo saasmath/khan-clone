@@ -400,7 +400,7 @@ class PasswordChange(request_handler.RequestHandler):
             self.response.write("Passwords don't match.")
         elif not auth.passwords.is_sufficient_password(password1,
                                                        user_data.nickname,
-                                                       user_data.userame):
+                                                       user_data.username):
             self.response.write("Password too weak.")
         else:
             # We're good!
