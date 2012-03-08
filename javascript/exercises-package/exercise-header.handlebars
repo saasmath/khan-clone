@@ -1,1 +1,7 @@
-<h2 class="section-headline">{{ name }}</h2>
+<h2 class="section-headline">
+{{#if reviewMode }}
+Review
+{{else}}
+{{ topic.standaloneTitle }}
+{{/if}}
+</h2>

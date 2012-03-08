@@ -27,12 +27,8 @@
 
 <script>
     Exercises.init({
-        userTopic: {
-            /* TODO(kamens): need to send down real userTopic info
-            and figure out what's being sent for review mode */
-            name: "someUserTopicName" + {{ review_mode_json }},
-            user: "someUser"
-        },
+        topic: {{ topic_json }},
+        userData: {{ user_data_json }},
         userExercises: {{ user_exercises_json }},
         incompleteStack: {{ stack_json }},
         reviewMode: {{ review_mode_json }}
