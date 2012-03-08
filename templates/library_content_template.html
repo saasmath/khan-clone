@@ -27,7 +27,7 @@
                     {% if topic.is_super %}
                       <ul data-role="listview" data-inset="true" class="mobile-only">
                       {% for subtopic in topic.subtopics %}
-                        <li><a href="#{{ subtopic.standalone_title|slugify|escape }}">{{ subtopic.title }}</a></li>
+                        <li><a href="#{{ subtopic.id|slugify|escape }}">{{ subtopic.title }}</a></li>
                       {% endfor %}
                       </ul>
                     {% endif %}

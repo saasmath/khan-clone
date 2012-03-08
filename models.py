@@ -3686,7 +3686,7 @@ class Video(Searchable, db.Model):
                 }
             button_top_exercise = ex_to_dict(related_exercises[0])
 
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
+        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current())
 
         awarded_points = 0
         if user_video:

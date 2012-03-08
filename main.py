@@ -751,6 +751,8 @@ application = webapp2.WSGIApplication([
     ('/devadmin/memcacheviewer', MemcacheViewer),
 
     ('/coach/resources', util_coach.ViewCoachResources),
+    ('/coach/demo', util_coach.ViewDemo),
+    ('/coach/accessdemo', util_coach.AccessDemo),
     ('/coach/schools-blog', schools_blog.ViewBlog),
     ('/toolkit', util_coach.ViewToolkit),
     ('/toolkit/(.*)', util_coach.ViewToolkit),
