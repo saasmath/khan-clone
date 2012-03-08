@@ -42,7 +42,8 @@ class ViewToolkit(CoachResourcesRequestHandler):
                 
         self.render_jinja2_template(template, {
             'selected_id': 'toolkit',
-            'base_url': base_url
+            'base_url': base_url,
+            'selected_id': toolkit_section,
         })
 
 class ViewBlog(CoachResourcesRequestHandler):
