@@ -289,10 +289,10 @@ var VideoStats = {
                 VideoControls.setAutoPlayEnabled(false);
             }
             
-            if (this.analyticsEvent) {
-                this.analyticsEvent.parameters["Percent (end)"] = this.dPercentLastSaved;
-                Analytics.trackEventEnd(this.analyticsEvent);
-                this.analyticsEvent = null;
+            if (this.analyticsActivity) {
+                this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackActivityEnd(this.analyticsActivity);
+                this.analyticsActivity = null;
             }
         } else if (state === 2 && playing) { // paused
             this.playing = false;
@@ -306,24 +306,24 @@ var VideoStats = {
                 VideoControls.setAutoPlayEnabled(false);
             }
             
-            if (this.analyticsEvent) {
-                this.analyticsEvent.parameters["Percent (end)"] = this.dPercentLastSaved;
-                Analytics.trackEventEnd(this.analyticsEvent);
-                this.analyticsEvent = null;
+            if (this.analyticsActivity) {
+                this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackActivityEnd(this.analyticsActivity);
+                this.analyticsActivity = null;
             }
         } else if (state === 1) { // play
             this.playing = true;
             this.dtLastSaved = new Date();
             this.dPercentLastSaved = this.getPercentWatched();
 
-            if (!this.analyticsEvent) {
+            if (!this.analyticsActivity) {
                 var id = "";
                 if (this.sVideoKey !== null) {
                     id = this.sVideoKey;
                 } else if (this.sYoutubeId !== null) {
                     id = this.sYoutubeId;
                 }
-                this.analyticsEvent = Analytics.trackEventBegin("Video Play", {
+                this.analyticsActivity = Analytics.trackActivityBegin("Video Play", {
                     "Video ID": id,
                     "Percent (begin)": this.dPercentLastSaved
                 });

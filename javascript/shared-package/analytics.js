@@ -13,7 +13,7 @@
 
     var currentPage = null;
     var currentPageLoadTime = 0;
-    var currentTrackingEvent = null;
+    var currentTrackingActivity = null;
 
     // Internal utility to make sure events get tracked even if the page is unloaded
     var analyticsStore = {
@@ -25,19 +25,25 @@
         // On page load, load the persist data from cookies and try to send any events
         // that didn't get sent last time.
         loadAndSendPersistData: function() {
-            var persistData = $.parseJSON(readCookie("ka_analytics"));
-            var currentTimeMS = Date.now();
-            var self = this;
+            if (window.sessionStorage) {
+                var persistData = null;
+                try {
+                    persistData = $.parseJSON(sessionStorage.getItem("ka_analytics"));
+                } catch (e) { }
 
-            // Time out persist data after a minute
-            if (persistData && (currentTimeMS - persistData.timestamp) < 60*1000) {
-                this.persistData = persistData;
+                var currentTimeMS = Date.now();
 
-                _.each(persistData.events, function(event) {
-                    mpq.track(event.name, event.parameters, function() {
-                        self.clearEvent(event);
+                // Time out persist data after a minute
+                if (persistData && (currentTimeMS - persistData.timestamp) < 60 * 1000) {
+                    var self = this;
+                    this.persistData = persistData;
+
+                    _.each(persistData.events, function(event) {
+                        mpq.track(event.name, event.parameters, function() {
+                            self.clearEvent(event);
+                        });
                     });
-                });
+                }
             }
         },
 
@@ -64,10 +70,12 @@
 
         // Save the queue to a cookie
         storePersistData: function() {
-            this.persistData.timestamp = Date.now();
-            var persistDataJSON = JSON.stringify(this.persistData);
+            if (window.sessionStorage) {
+                this.persistData.timestamp = Date.now();
+                var persistDataJSON = JSON.stringify(this.persistData);
 
-            createCookie("ka_analytics", persistDataJSON);
+                sessionStorage.setItem("ka_analytics", persistDataJSON);
+            }
         }
     };
 
@@ -81,7 +89,7 @@
 
             // Send the final event before unloading the page
             $(window).unload(function() {
-                Analytics._trackEventEnd(Date.now());
+                Analytics._trackActivityEnd(Date.now());
             });
 
             // Add event handler for decorated links
@@ -96,7 +104,7 @@
                 }
             });
 
-            trackPageLoad(startTime, landingPage);
+            this.trackPageLoad(startTime, landingPage);
         },
 
         // Called once on arriving at a page (if MixPanel is enabled)
@@ -118,7 +126,7 @@
 
             currentPage = window.location.pathname;
             currentPageLoadTime = currentTimeMS;
-            this.trackEventBegin("Page View", {});
+            this.trackActivityBegin("Page View", {});
         },
 
         handleRouterNavigation: function(eventName) {
@@ -137,52 +145,52 @@
         // Call this function in response to a user starting an interaction.
         // Returns the event object to use if you want to modify the parameters
         // or track the end of the event.
-        trackEventBegin: function(eventName, parameters) {
+        trackActivityBegin: function(eventName, parameters) {
             if (!currentPage) {
                 return null;
             }
 
             var currentTimeMS = Date.now();
 
-            this._trackEventEnd(currentTimeMS);
+            this._trackActivityEnd(currentTimeMS);
 
             parameters._startTime = currentTimeMS;
 
-            KAConsole.log("Started tracking event " + eventName + " (" + currentTimeMS + ")");
+            KAConsole.log("Started tracking activity " + eventName + " (" + currentTimeMS + ")");
 
-            currentTrackingEvent = {
+            currentTrackingActivity = {
                 id: eventName + currentTimeMS,
                 name: eventName,
                 parameters: parameters
             };
-            return currentTrackingEvent;
+            return currentTrackingActivity;
         },
 
         // Track the end of the event if it is the currently active event
-        trackEventEnd: function(event) {
-            if (event == currentTrackingEvent) {
+        trackActivityEnd: function(event) {
+            if (event == currentTrackingActivity) {
                 var currentTimeMS = Date.now();
-                this._trackEventEnd(currentTimeMS);
+                this._trackActivityEnd(currentTimeMS);
 
                 // Go back to "Page View" mode because nothing else is active
-                this.trackEventBegin("Page View", {});
+                this.trackActivityBegin("Page View", {});
             }
         },
 
         // Internal function to track the end of the current event
-        _trackEventEnd: function(endTime) {
-            if (currentTrackingEvent) {
+        _trackActivityEnd: function(endTime) {
+            if (currentTrackingActivity) {
                 // Calculate event duration
-                currentTrackingEvent.parameters["Page"] = currentPage;
-                currentTrackingEvent.parameters["Event Time (ms)"] = endTime - currentTrackingEvent.parameters._startTime;
-                currentTrackingEvent.parameters["Page Time (ms)"] = endTime - currentPageLoadTime;
-                delete currentTrackingEvent.parameters._startTime;
+                currentTrackingActivity.parameters["Page"] = currentPage;
+                currentTrackingActivity.parameters["Duration (ms)"] = endTime - currentTrackingActivity.parameters._startTime;
+                currentTrackingActivity.parameters["Page Time (ms)"] = endTime - currentPageLoadTime;
+                delete currentTrackingActivity.parameters._startTime;
 
-                KAConsole.log("Stopped tracking event " + currentTrackingEvent.name + " after " + currentTrackingEvent.parameters["Event Time (ms)"] + " ms.");
+                KAConsole.log("Stopped tracking activity " + currentTrackingActivity.name + " after " + currentTrackingActivity.parameters["Duration (ms)"] + " ms.");
 
-                analyticsStore.addEvent(currentTrackingEvent);
+                analyticsStore.addEvent(currentTrackingActivity);
 
-                currentTrackingEvent = null;
+                currentTrackingActivity = null;
             }
         },
 
