@@ -2,6 +2,10 @@
 {{#if reviewMode }}
 Review
 {{else}}
-{{ topic.standaloneTitle }}
+    {{#if practiceMode }}
+    {{ exercise.displayName }}
+    {{else}}
+    {{ topic.standaloneTitle }}
+    {{/if}}
 {{/if}}
 </h2>

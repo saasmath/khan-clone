@@ -32,7 +32,11 @@ class ViewExercise(request_handler.RequestHandler):
         #  and the rest of exercises/__init__.py's ViewExercise edge cases
 
         review_mode = "review" == path
+        practice_mode = bool(exid)
+
         topic = None
+        exercise = None
+        user_exercises = None
 
         if not review_mode:
 
@@ -46,13 +50,22 @@ class ViewExercise(request_handler.RequestHandler):
             if not topic:
                 raise MissingExerciseException("Exercise '%s' is missing a topic" % exid)
 
-            # Exercises are not required but must be valid if supplied
-            if exid and not models.Exercise.get_by_name(exid):
-                raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
+            if exid:
+                exercise = models.Exercise.get_by_name(exid)
+
+                # Exercises are not required but must be valid if supplied
+                if not exercise:
+                    raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
 
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
-        user_exercises = models.UserExercise.next_in_topic(user_data, topic)
+
+        if practice_mode:
+            # Practice mode involves a single exercise only
+            user_exercises = [user_data.get_or_insert_exercise(exercise)]
+        else:
+            # Topics mode context switches between multiple exercises
+            user_exercises = models.UserExercise.next_in_topic(user_data, topic)
 
         if len(user_exercises) == 0:
             # If something has gone wrong and we didn't get any UserExercises,
@@ -67,7 +80,9 @@ class ViewExercise(request_handler.RequestHandler):
             "stack_json": jsonify(stack, camel_cased=True),
             "user_exercises_json": jsonify(user_exercises, camel_cased=True),
             "review_mode_json": jsonify(review_mode, camel_cased=True),
+            "practice_mode_json": jsonify(practice_mode, camel_cased=True),
             "topic_json": jsonify(topic, camel_cased=True),
+            "exercise_json": jsonify(exercise, camel_cased=True),
             "user_data_json": jsonify(user_data, camel_cased=True),
         }
 

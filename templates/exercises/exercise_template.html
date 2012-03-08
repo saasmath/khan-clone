@@ -28,10 +28,12 @@
 <script>
     Exercises.init({
         topic: {{ topic_json }},
+        exercise: {{ exercise_json }},
         userData: {{ user_data_json }},
         userExercises: {{ user_exercises_json }},
         incompleteStack: {{ stack_json }},
-        reviewMode: {{ review_mode_json }}
+        reviewMode: {{ review_mode_json }},
+        practiceMode: {{ practice_mode_json }}
     });
 
     $(function() {
