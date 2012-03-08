@@ -38,9 +38,11 @@ class ViewToolkit(CoachResourcesRequestHandler):
             
         template += '/toolkit_content/' + toolkit_section + '.html'
         
+        base_url = '/toolkit'
                 
         self.render_jinja2_template(template, {
             'selected_id': 'toolkit',
+            'base_url': base_url
         })
 
 class ViewBlog(CoachResourcesRequestHandler):

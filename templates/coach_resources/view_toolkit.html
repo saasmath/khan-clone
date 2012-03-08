@@ -18,8 +18,14 @@
 		}
 		
 		ul.bullet {
+			font-size: 14px;
 			list-style: disc;
-			margin-left: 1.5em;
+			margin-left: 30px;
+		}
+		
+		ul.bullet > li {
+			line-height: 1.4em;
+			margin-bottom: .6em;
 		}
 		
 		.lead {
@@ -47,6 +53,22 @@
 			margin-bottom:10px;
 		}
 		
+		.callout > ul {
+			font-size:12px;
+		}
+		
+		ol {
+			line-height: 1.4em;
+			margin-bottom: .6em;
+			font-size: 14px;
+			margin-left: 30px;
+			list-style-type: decimal;
+		}
+		
+		h5 {
+			margin-top: 30px;
+		}
+		
     </style>
 {% endblock pagescript %}
 
@@ -54,23 +76,24 @@
 <article id="toolkit">
 	<menu class="profile-navigation">
 	    <ul class="vertical-tab-list">
-	        <li class="profile-tab"><a href="#" class="tab-link no-recolor" rel="profile">
-	            <img src="/images/darth.png" class="profile-tab-avatar">
+	        <!-- TODO(Matt): transpent-ify the hand-tree image -->
+			<li class="profile-tab"><a href="{{base_url}}/index" class="tab-link no-recolor active-tab" rel="profile">
+	            <img src="/images/hand-tree.png" class="profile-tab-avatar">
 	            <span id="profile-tab-link" class="profile-tab-text">Teacher Toolkit</span>
 	        </a></li>
 	        
 			<li>
 	            <span class="inactive link-section-header">Committing to KA</span>
 	            <ul class="vertical-tab-list second-tier">
-	                <li><a href="#" class="tab-link no-recolor" rel="section-1">Why Khan Academy?</a></li>
-	                <li><a href="#" class="tab-link no-recolor" rel="section-2">Section 2</a></li>
-					<li><a href="#" class="tab-link no-recolor" rel="section-3">Section 3</a></li>
+	                <li><a href="{{base_url}}/how-to-use-this-toolkit" class="tab-link no-recolor" rel="section-1">How to use this toolkit</a></li>
+	                <li><a href="{{base_url}}/toolkit-sections" class="tab-link no-recolor" rel="section-2">Toolkit sections</a></li>
+					<li><a href="{{base_url}}/common-questions" class="tab-link no-recolor" rel="section-3">Common Questions</a></li>
 	            </ul>
 	        </li>
 	        <li>
 	            <span class="inactive link-section-header">Getting Started</span>
 	            <ul class="vertical-tab-list second-tier">
-	                <li><a href="#" class="tab-link no-recolor active-tab" rel="getting-started accounts">Setting up accounts</a></li>
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started accounts">Setting up accounts</a></li>
 	                <li><a href="#" class="tab-link no-recolor" rel="getting-started documents">Release documents</a></li>
 	                <li><a href="#" class="tab-link no-recolor" rel="getting-started technology">Technology</a></li>
 	                <li><a href="#" class="tab-link no-recolor" rel="getting-started navigating">Navigating the Site</a></li>
@@ -80,10 +103,11 @@
 	        <li>
 	            <span class="inactive link-section-header">Class time</span>
 	            <ul class="vertical-tab-list second-tier">
-	                <li><a href="#" class="tab-link no-recolor" rel="getting-started accounts">Keys to success</a></li>
-	                <li><a href="#" class="tab-link no-recolor" rel="getting-started documents">Teaching strategies</a></li>
-	                <li><a href="#" class="tab-link no-recolor" rel="getting-started technology">Using data</a></li>
-	                <li><a href="#" class="tab-link no-recolor" rel="getting-started navigating">Investing students</a></li>
+	                <li><a href="{{base_url}}/classroom-culture" class="tab-link no-recolor" rel="getting-started accounts">Classroom culture</a></li>
+	                <li><a href="{{base_url}}/keys-to-success" class="tab-link no-recolor" rel="getting-started accounts">Keys to success</a></li>
+	                <li><a href="{{base_url}}/instructional-strategies" class="tab-link no-recolor" rel="getting-started documents">Instructional strategies</a></li>
+	                <li><a href="{{base_url}}/different-learners" class="tab-link no-recolor" rel="getting-started technology">Different learners</a></li>
+	                <li><a href="{{base_url}}/using-data" class="tab-link no-recolor" rel="getting-started technology">Using data</a></li>
 	            </ul>
 	        </li>
 	        <li>
@@ -91,9 +115,15 @@
 	            <ul class="vertical-tab-list second-tier">
 	                <li><a href="#" class="tab-link no-recolor" rel="getting-started accounts">6-step process</a></li>
 	                <li><a href="#" class="tab-link no-recolor" rel="getting-started documents">Sample unit plans</a></li>
-	                <li><a href="#" class="tab-link no-recolor" rel="getting-started technology">Evaluation</a></li>
 	            </ul>
 	        </li>
+	        <li>
+	            <span class="inactive link-section-header">FAQ</span>
+	            <ul class="vertical-tab-list second-tier">
+	                <li><a href="#" class="tab-link no-recolor" rel="getting-started accounts">Teacher FAQs</a></li>
+	            </ul>
+	        </li>
+			
 			
 	    </ul>
 	</menu>

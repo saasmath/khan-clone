@@ -212,7 +212,7 @@
 			<div id="grade-list" class="pull-down">
 				
 				{% for grade in cc_map %}
-					<h4 class="grade-link" href="#grade-{{grade["grade"]|escape}}"><a href="#grade-{{grade["grade"]|escape}}">Grade: {{grade["grade"]|escape}}</a></h4>
+					<h5 class="grade-link" href="#grade-{{grade["grade"]|escape}}"><a href="#grade-{{grade["grade"]|escape}}">Grade: {{grade["grade"]|escape}}</a></h5>
 					<div class="domain-link">
 						<ul>
 							{% for domain in grade["domains"] %}
