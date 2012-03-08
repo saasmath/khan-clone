@@ -127,13 +127,13 @@ a:visited {
     outline: none;
 }
 
+/* TODO(benkomalo): possibly make this a standard for the site. */
 .auth-form select.simple-input {
     /* Work around a webkit "bug" where box shadows don't work unless you
      * disable webkit-appearance. That removes the dropdown icon though. */
     -webkit-appearance: none;
 
-    /* TODO(benkomalo): replace with a real asset that isn't ugly */
-    background: url("/images/pulldown-blue.png") no-repeat right center;
+    background: url("/images/dropdown.png") no-repeat right center;
 }
 
 .auth-form .simple-input#gender {
