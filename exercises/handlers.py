@@ -7,7 +7,10 @@ from exercises.stacks import get_problem_stack, get_review_stack
 from api.jsonify import jsonify
 from api.auth.xsrf import ensure_xsrf_cookie
 
-class ViewExerciseDeprecated(request_handler.RequestHandler):
+class ViewExerciseRedirect(request_handler.RequestHandler):
+    """ Redirects old exercise URLs (/exercise?exid=monkeys, /exercises/monkeys)
+    to their newer form (/earth/forests/e/monkeys).
+    """
 
     def get(self, exid=None):
 
