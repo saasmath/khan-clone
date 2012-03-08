@@ -64,7 +64,7 @@ var Exercises = {
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
 
-        Exercises.BottomlessQueue.init(json.userExercises);
+        Exercises.BottomlessQueue.init(this.topic, json.userExercises);
 
     },
 
@@ -85,8 +85,8 @@ var Exercises = {
         var profileExercise = Templates.get("exercises.exercise");
 
         $(".exercises-content-container").html(profileExercise({
-            // TODO(kamens): this data is faked
-            name: "Topic/Exercise Name"
+            topic: this.topic.toJSON(),
+            reviewMode: this.reviewMode
         }));
 
         this.incompleteStackView = new Exercises.StackView({

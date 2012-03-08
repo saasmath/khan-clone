@@ -1569,13 +1569,21 @@ def reset_reviews():
         db.put(user_exercises)
         db.put(user_exercise_cache)
 
-@route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
+@route("/api/v1/topic/<topic_id>/exercises/next", methods=["GET"])
 @oauth_optional()
 @jsonp
 @jsonify
-def user_topic_next_exercises(topic_id):
-    # TODO(kamens): this needs to use topic_id to load the right topic
-    return models.UserTopic.next_user_exercises(queued=request.values.getlist("queued[]"))
+def topic_next_exercises(topic_id):
+
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        return api_invalid_param_response("Invalid topic id")
+
+    return models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
 
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
 @oauth_required()

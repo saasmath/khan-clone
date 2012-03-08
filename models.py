@@ -594,10 +594,7 @@ class UserExercise(db.Model):
         if topic:
 
             # List suggested next exercises
-            exids = ["multiplication_1", "division_0.5", "addition_1", "subtraction_1", "absolute_value"]
-
-            # For now, just grab a random sample
-            exids = random.sample(exids, n)
+            exids = [ex.name for ex in topic.get_exercises(include_descendants=True) if ex.live]
 
         else: # Review mode
 
@@ -605,8 +602,9 @@ class UserExercise(db.Model):
             exids = user_exercise_graph.review_exercise_names()
 
         # Only return those that have not already been queued up
-        return [exid for exid in exids if exid not in queued]
+        return [exid for exid in exids if exid not in queued][:n]
 
+    # TODO(kamens) unit test next_in_topic
     @staticmethod
     def next_in_topic(user_data, topic, n=3, queued=[]):
         """ Returns the next n suggested user exercises for this topic
