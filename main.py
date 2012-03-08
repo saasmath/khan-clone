@@ -472,6 +472,8 @@ class PostLogin(request_handler.RequestHandler):
 class Logout(request_handler.RequestHandler):
     def get(self):
         self.delete_cookie('ureg_id')
+
+        # Delete session cookie set by flask, one way to set this cookie is via /api/auth/token_to_session
         self.delete_cookie('session')
 
         # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
