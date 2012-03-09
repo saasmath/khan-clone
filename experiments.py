@@ -103,3 +103,33 @@ class InteractiveTranscriptExperiment(object):
                        InteractiveTranscriptExperiment._ab_test_alternatives,
                        InteractiveTranscriptExperiment._conversion_names,
                        InteractiveTranscriptExperiment._conversion_types)
+        
+        
+class MarqueeVideoExperiment(object):
+
+    NAME = 'Marquee Video Experiment'
+
+    _ab_test_alternatives = {
+        'rotating': 25,  # The original, just select daily from a rotating cast all marquee-eligible videos
+        'the-golden-ratio': 25,  # the rest of the alternatives set a specific video as the marquee for the duration of the experiment
+        'introduction-to-programs-data-types-and-variables': 25,  
+        'black-holes': 25,  
+    }
+    _conversion_tests = [
+        ('marquee_started_marquee_video', ConversionTypes.Binary),
+        ('marquee_started_any_video', ConversionTypes.Binary),
+        ('marquee_num_videos_completed', ConversionTypes.Counting),
+        ('marquee_num_exercises_started', ConversionTypes.Counting),
+    ]
+    _conversion_names, _conversion_types = [
+        list(x) for x in zip(*_conversion_tests)]
+
+    @staticmethod
+    def ab_test():
+        """gaebingo.ab_test() wrapper"""
+        return ab_test(MarqueeVideoExperiment.NAME,
+                       MarqueeVideoExperiment._ab_test_alternatives,
+                       MarqueeVideoExperiment._conversion_names,
+                       MarqueeVideoExperiment._conversion_types)
+
+

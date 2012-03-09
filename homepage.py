@@ -11,6 +11,9 @@ import templatetags
 from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
+from gae_bingo.gae_bingo import bingo, ab_test
+from gae_bingo.models import ConversionTypes
+from experiments import MarqueeVideoExperiment
 
 ITEMS_PER_SET = 4
 
@@ -159,7 +162,20 @@ class ViewHomePage(request_handler.RequestHandler):
                                          thumbnail_link_set)
 
             if marquee_videos:
+                # default to rotating behavior
                 marquee_video = marquee_videos[day % len(marquee_videos)]
+
+                # but if the AB test returns a specific video, allow an override
+                marquee_alternative = MarqueeVideoExperiment.ab_test()
+                if marquee_alternative != 'rotating':
+                    # set the marquee video as determined by the ab_test, if we can find it
+                    alt_videos = []
+                    for thumbnail_link_set in thumbnail_link_sets:
+                        alt_videos += filter(lambda item: item["marquee"] and marquee_alternative in item["href"], thumbnail_link_set)
+
+                    if len(alt_videos)==1:  # should be 1 and only 1
+                        marquee_video = alt_videos[0]
+                    
                 marquee_video["selected"] = True
 
             if len(thumbnail_link_sets[current_link_set_offset]) < ITEMS_PER_SET:

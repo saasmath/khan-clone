@@ -38,10 +38,11 @@ import base64, os
 from image_cache import ImageCache
 
 from templatefilters import slugify
-from gae_bingo.gae_bingo import bingo
+from gae_bingo.gae_bingo import ab_test, bingo
 from gae_bingo.models import GAEBingoIdentityModel
-from experiments import StrugglingExperiment
+from experiments import StrugglingExperiment, MarqueeVideoExperiment
 import re
+
 
 class BackupModel(db.Model):
     """Back up this model
@@ -1355,6 +1356,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 userExercise = UserExercise.get(str(key_user_exercise))
 
         if allow_insert and not userExercise:
+            bingo('marquee_num_exercises_started')
             userExercise = UserExercise.get_or_insert(
                 key_name=exid,
                 parent=self,
@@ -4059,6 +4061,11 @@ class VideoLog(BackupModel):
         video_log.last_second_watched = last_second_watched
 
         if seconds_watched > 0:
+
+            bingo('marquee_started_any_video')
+            if video.readable_id in MarqueeVideoExperiment.ab_test():
+                bingo('marquee_started_marquee_video')
+
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
                 UserVideoCss.set_started(user_data, user_video.video, user_data.uservideocss_version)
@@ -4111,6 +4118,7 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
+                'marquee_num_videos_completed',
             ])
         video_log.is_video_completed = user_video.completed
 
