@@ -68,7 +68,8 @@
             countVideos: {{count_videos}},
             countExercises: {{count_exercises}},
             profileRoot: "{{profile_root}}",
-            profileData: {{ templatetags.jsonify(profile, true) }}
+            profileData: {{ templatetags.jsonify(profile, true) }},
+            secureUrlBase: "{{secure_url_base}}"
         });
     });
     </script>

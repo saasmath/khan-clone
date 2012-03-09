@@ -404,6 +404,12 @@ class Response(webob.Response):
         else:
             self.status = code
 
+    def bad_request(self, message=None):
+        self.set_status(400, message)
+
+    def unauthorized(self, message=None):
+        self.set_status(401, message)
+
     def _get_status_message(self):
         """The response status message, as a string."""
         return self.status.split(' ', 1)[1]

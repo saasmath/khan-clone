@@ -7,58 +7,71 @@
 {% endblock pagecss %}
 
 {% block pagecontent %}
-<article id="login-page">
-    <h2 class="pulls">{% if direct %}Login{% else %}You need to login to access this part of the site.{% endif %}</h2>
-    <h3>Already have an account with one of these sites? Click the logo to use your account to login here:</h3>
+<article id="page-root">
+    <form method="POST" class="auth-form" id="login-form" action="{{templatetags.to_secure_url('/login')}}?continue={{continue|urlencode}}">
+    <input type="hidden" name="type" id="type-input">
 
-    <form method="POST" id="login-form" action="/login?continue={{continue|urlencode}}">
-    </form>
-
-    <div><ul class="providers">
-    <li class="direct action-gradient" id="login-google">
-          <div class="sign-in-text">Login with:</div>
-          <img width="205" height="70" src="/images/google-logo-large.png" />
+    <ul class="providers">
+    <h3>Login to Khan Academy using one of these services:</h3>
+    <li class="action-gradient" id="login-google">
+        <div class="img-container">
+            <img width="205" height="70" src="/images/google-logo-large.png" />
+        </div>
     </li>
 
     {% if App.facebook_app_secret %}
     <li id="login-facebook" class="action-gradient">
-          <div class="sign-in-text">Login with:</div>
-          <img width="205" height="70" src="/images/facebook-logo-large.png" />
+        <div class="img-container">
+        <img width="205" height="70" src="/images/facebook-logo-large.png" />
+        </div>
     </li>
     {% endif %}
+    </ul>
 
-    </ul></div>
-    <div class="clear"></div>
+    <div class="separator"><img class="separator-bg" src="/images/hr.gif"><span class="separator-text">OR</span></div>
 
-    <div id="real_fb_button" style="display: none;"><fb:login-button></fb:login-button></div>
+    <div class="pw-login">
+        <h3>Login with a Khan Academy account:</h3>
+        <div class="field-error" id="login-fail-message">{% if errors["badlogin"] %}Username and password doesn't match{% endif %}</div>
 
-    <h5 style="margin:18px 0 0 0;">Don't have an account yet?</h5>
-    <div>
-        <ul class="providers-sign-up">
-            <li><a href="https://www.google.com/accounts/NewAccount">Sign up for a Google account</a></li>
-            <li><a href="http://www.facebook.com/r.php">Sign up for a Facebook account</a></li>
-        </ul>
+        <div class="field-container">
+            <label class="field-label" for="identifier">Email or username</label><br>
+            <input tabindex=1 id="identifier" name="identifier" class="simple-input ui-corner-all" value="{{ identifier|escape }}">
+            <div class="field-error" id="identifier-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
+        </div>
+
+        <div class="field-container">
+            <label class="field-label" for="password">Password</label>
+            <!-- TODO(benkomalo): wire up forgot password logic. -->
+            <a id="forgot-hint" href="javascript:void(0);">Forgot password?</a><br>
+
+            <input tabindex=2 id="password" name="password" type="password" class="simple-input ui-corner-all">
+
+            <!-- TODO(benkomalo): handle "enter" key -->
+            <!-- HACK: put login button in same fieldset/same row as password button for easy lining up -->
+            <input tabindex=3 id="submit-button" class="simple-button action-gradient green" value="Login" type="button" style="margin-left:1em;">
+
+            <div class="field-error" id="password-error">{% if errors["nopassword"] %}Password required{% endif %}</div>
+        </div>
+
     </div>
-    <div class="clear">&nbsp;</div><br/><br/>
-    <h2 class="pulls">Why should you sign up?</h2>
-    <h3>When you login, we save all of your progress. Also, <a href="/about">students and coaches get access to some cool tools</a>:</h3>
-    <div id="feature-list">
-        <div class="feature"><a href="/about"><img src="/images/exercise-dashboard-medium.png" height="250" width="320" /></a><br />Students: <strong>navigate your knowledge map</strong> as you work through exercises.</div>
-    <div class="feature"><a href="/about"><img src="/images/student-profile-medium.png" height="250" width="320" /></a><br />Students: <strong>track your video and exercise progress</strong> in your profile.</div>
-    <div class="feature"><a href="/about"><img src="/images/class-report-medium.png" height="250" width="320" /></a><br />Coaches: <strong>Track all of your students</strong> with the class report.</div>
-        <div class="clear">&nbsp;</div>
+
+
+    <div class="signup-prompt-container">
+        <span class="signup-prompt">Don't have an account, yet?</span>
+        <!-- TODO(benkomalo): do a nice animation and use Backbone.Router to animate in
+             new contents on browsers that can support it. -->
+        <a class="signup-link" href="/register?continue={{continue|urlencode}}">Sign up</a>
     </div>
+
+    </form>
 </article>
 {% endblock pagecontent %}
 
 {% block bottompagescript %}
-<script>
-$("#login-google").click(function(e) {
-    $("#login-form").submit();
-});
-$("#login-facebook").click(function(e) {
-    $("#real_fb_button a").click();
-});
-</script>
+    {{ js_css_packages.js_package("login") }}
+    <script>
+    $(Login.initLoginPage);
+    </script>
 {% endblock bottompagescript %}
 
