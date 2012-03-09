@@ -4,6 +4,7 @@
   }
 </style>
 
+<!-- If you drastically change the below nav, try to update the screenshots in coach.html. -->
 <menu class="profile-navigation">
     <ul class="vertical-tab-list">
         <li class="profile-tab"><a href="{{profileRoot}}" class="tab-link no-recolor active-tab" rel="profile">
@@ -26,6 +27,14 @@
                 <li><a href="{{profileRoot}}/vital-statistics/exercise-progress-over-time" class="tab-link has-icon no-recolor" rel="vital-statistics exercise-progress-over-time">Progress Over Time</a></li>
             </ul>
         </li>
+        {{#if profileData.isSelf}}
+        <li>
+            <span class="inactive link-section-header">People</span>
+            <ul class="vertical-tab-list second-tier">
+                <li><a href="{{profileRoot}}/coaches" class="tab-link has-icon no-recolor" rel="people coaches">Coaches</a></li>
+            </ul>
+        </li>
+        {{/if}}
     </ul>
 </menu>
 
@@ -40,6 +49,10 @@
             <div class="error-graph">
                 <h2>It's our fault.</h2>
                 <p>Try again later, and please <a href='/reportissue?type=Defect'>let us know</a> if it continues.</p>
+            </div>
+            <div class="no-coaches-for-phantoms">
+                <h2><a href="{{toLoginRedirectHref "/profile"}}">Log in</a> to add a coach!</h2>
+                <p></p>
             </div>
         {{else}}
             <div class="public">
@@ -59,11 +72,9 @@
                     <div id="recent-activity-progress-bar"></div>
                 </div>
                 <div id="activity-contents" style="display:none">
-                    {{#if profileData.showSuggestedActivity}}
                     <div id="suggested-activity">
                         <h2>Suggested Activity</h2>
                     </div>
-                    {{/if}}
                     <div id="recent-activity">
                         <h2>Recently Completed Activity</h2>
                     </div>
@@ -100,6 +111,8 @@
                 </ul>
             </div>
             <div id="profile-goals-content"></div>
+        </div>
+        <div id="tab-content-coaches" rel="coaches">
         </div>
     </div>
 </section>

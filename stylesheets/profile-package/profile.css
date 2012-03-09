@@ -767,17 +767,12 @@ div.profile-notification.uncover-nav {
 /**
  * Edit Profile dropdown
  * from http://css-tricks.com/examples/SimplejQueryDropdowns/#
- * Waiting for Monsieur Jason!
  */
  .user-profile-controls {
      margin-top: 5px;
  }
 .user-profile-controls .dropdown {
     float: left;
-}
-.user-profile-controls .dropdown:hover .sub_menu {
-    position: absolute;
-    z-index: 10;
 }
 ul.dropdown li {
     float: left;
@@ -786,22 +781,11 @@ ul.dropdown li {
 ul.dropdown li a {
     display: block;
     padding: 4px 8px;
-    border-right: 1px solid #333;
     color: black;
     white-space: nowrap;
 }
-/* Doesn't work in IE */
-ul.dropdown li:last-child a {
-    border-right: none;
-}
-ul.dropdown li {
-    color: black;
-    position: relative;
-}
-ul.dropdown li a {
-    color: black;
-}
 ul.dropdown ul.sub_menu {
+    z-index: 10;
     display: none;
     background: #ccc;
     position: absolute;
@@ -931,6 +915,9 @@ a[rel="achievements"] {
 a[rel="goals"] {
     background: transparent url(/images/profile-icons/tick-circle.png) no-repeat 4px 50%;
 }
+a[rel="people coaches"] {
+    background: transparent url(/images/profile-icons/user-silhouette.png) no-repeat 4px 50%;
+}
 li.profile-tab {
     margin-bottom: 10px;
 }
@@ -1008,7 +995,8 @@ li.profile-tab {
     top: 60px;
     left: 50%;
 }
-#username-picker-container .notification {
+#username-picker-container .notification,
+#tab-content-coaches .notification {
     padding: 5px 5px 5px 10px;
     margin: -10px 0 15px 0;
 
@@ -1016,11 +1004,16 @@ li.profile-tab {
     -moz-border-radius: 5px;
     border-radius: 5px;
 }
+
+#tab-content-coaches .notification {
+    margin: 10px 0 15px 0;
+}
 #username-picker-container .notification.info {
     background-color: #DDF4FB;
     border-color: #C6EDF9;
 }
-#username-picker-container .notification.error {
+#username-picker-container .notification.error,
+.coaches-section .notification.error {
     background-color: #FDDFDE;
     border-color: #FBC7C6;
 }
@@ -1171,4 +1164,31 @@ li.profile-tab {
     text-decoration: none;
 }
 
-
+#tab-content-coaches {
+    margin-top: 22px;
+    min-width: 835px;
+}
+#tab-content-coaches .coaches-section {
+    margin-bottom: 22px;
+}
+#tab-content-coaches #requests {
+    display: none;
+}
+#tab-content-coaches #coach-email{
+    width: 200px;
+}
+.coach-row {
+    padding: 10px;
+    border-top: 1px solid #EFEFEF;
+}
+.coach-row span.email {
+    display: inline-block;
+    width: 260px;
+    word-wrap: break-word;
+}
+.coach-row span.email .pending {
+    color: #BBB;
+}
+.coach-row .controls {
+    float: right;
+}

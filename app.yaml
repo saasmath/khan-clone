@@ -20,6 +20,7 @@ skip_files:
 - ^(.*/)?presskit/.*
 - ^(.*/)?deploy/.*
 - ^(.*/)?javascript/testbase\.js
+- ^(.*/)?javascript/test/.*
 - ^(.*/)?.*_test\.html
 - ^requirements\.txt
 - ^agar
@@ -54,6 +55,9 @@ handlers:
 
 - url: /javascript
   static_dir: javascript
+
+- url: /sounds
+  static_dir: sounds
 
 # Begin GTV integration
 - url: /gtv/css
@@ -113,6 +117,10 @@ handlers:
   login: admin
 
 - url: /_ah/queue/deferred_import
+  script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
+  login: admin
+
+- url: /_ah/queue/deferred_topics-set-default-queue
   script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
   login: admin
 

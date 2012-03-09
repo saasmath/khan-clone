@@ -29,6 +29,7 @@ javascript = {
             "jquery.qtip.js",
             "../../khan-exercises/utils/underscore.js",
             "underscore-extras.js",
+            "keyhandling.js",
             "backbone.js",
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
@@ -60,7 +61,8 @@ javascript = {
             "goal-create.handlebars",
             "goals.js",
             "goal-new.js",
-            "topics.js"
+            "topics.js",
+            "analytics.js"
         ]
     },
     "video": {
@@ -70,9 +72,35 @@ javascript = {
             "thumbnail.handlebars",
             "related-video-link.handlebars",
             "modal-video.handlebars",
+            "video-nav.handlebars",
+            "video-description.handlebars",
+            "video-header.handlebars",
+            "video-footer.handlebars",
+            "video-flv-player.handlebars",
             "modalvideo.js",
         ]
     },
+    "socrates": {
+        "files": [
+            "underscore.string.js",
+            "../topicsadmin-package/jquery.ui.draggable.js",
+            "jquery.ui.resizable.js",
+            "inputtext.handlebars",
+            "socrates-nav.handlebars",
+            "submit-area.handlebars",
+            "poppler.js",
+            "socrates.js",
+        ]
+    },
+
+    # Socrates questions. For now, they're here.
+    # todo(dmnd) In the long run they should move somewhere else, perhaps
+    # to another repository.
+    "xyAuNHPsq-g": {"allfiles": True},
+    "-a_w0_VAo6U": {"allfiles": True},
+    "3XOt1fjWKi8": {"allfiles": True},
+    "U2ovEuEUxXQ": {"allfiles": True},
+
     "homepage": {
         "files": [
             "jquery.easing.1.3.js",
@@ -111,6 +139,10 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
+            "coaches.js",
+            "coach.handlebars",
+            "no-coaches.handlebars",
+            "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
             "user-badge.handlebars",
@@ -180,6 +212,7 @@ javascript = {
             "khan-exercise.js",
             "utils/angles.js",
             "utils/answer-types.js",
+            "utils/ast.js",
             "utils/calculus.js",
             "utils/congruence.js",
             "utils/convert-values.js",
@@ -198,6 +231,7 @@ javascript = {
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/math-model.js",
             "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
@@ -206,6 +240,7 @@ javascript = {
             "utils/scratchpad.js",
             "utils/slice-clone.js",
             "utils/stat.js",
+            "utils/subhints.js",
             "utils/tmpl.js",
             "utils/word-problems.js",
             "utils/spin.js",
@@ -266,10 +301,22 @@ stylesheets = {
             "modalvideo.css",
         ]
     },
+    "socrates": {
+        "files": [
+            "bootstrap-alerts.css",
+            "bootstrap-tables.css",
+            "socrates.css",
+        ]
+    },
     "studentlists": {
         "files": [
             "viewstudentlists.css",
             "viewclassprofile.css",
+        ]
+    },
+    "login": {
+        "files": [
+            "login.css",
         ]
     },
     "profile": {
@@ -303,4 +350,14 @@ stylesheets = {
             "topics-admin.css"
         ]
     },
+    "labs": {
+        "files": [
+            "labs.css",
+        ]
+    },
+    "bootstrap": {
+        "files": [
+            "bootstrap.css"
+        ]
+    }
 }

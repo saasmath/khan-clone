@@ -5,6 +5,7 @@ from itertools import izip
 
 from flask import request, current_app, Response
 
+import custom_exceptions
 import models
 import layer_cache
 import templatetags # Must be imported to register template tags
@@ -14,8 +15,10 @@ from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
-from phantom_users.phantom_util import api_create_phantom
+from phantom_users.phantom_util import api_create_phantom, api_disallow_phantoms
 import notifications
+import user_util
+import coaches
 from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
 from goals.models import (GoalList, Goal, GoalObjective,
@@ -121,22 +124,6 @@ def get_user_data_coach_from_request():
 
     return user_data_coach
 
-def get_user_data_from_json(json, key):
-    """ Return the user_data specified by a username or an email.
-
-    Sample usage:
-        get_user_data_from_json(
-                {
-                    'coach': '<username or email>'
-                },
-                'coach'
-            )
-    """
-    if not json or not key or key not in json:
-        return None
-
-    return models.UserData.get_from_username_or_email(json[key])
-
 @route("/api/v1/topicversion/<version_id>/topics/with_content", methods=["GET"])
 @route("/api/v1/topics/with_content", methods=["GET"])
 @route("/api/v1/playlists", methods=["GET"]) # missing "url" and "youtube_id" properties that they had before
@@ -167,7 +154,7 @@ def topics_library_compact():
     def trimmed_item(item, topic):
         trimmed_item_dict = {}
         if item.kind() == "Video":
-            trimmed_item_dict['url'] = "/video/%s?topic=%s" %(item.readable_id, topic.id)
+            trimmed_item_dict['url'] = "/%s/v/%s" % (topic.get_extended_slug(), item.readable_id)
             trimmed_item_dict['key_id'] = item.key().id()
         elif item.kind() == "Url":
             trimmed_item_dict['url'] = item.url
@@ -194,7 +181,16 @@ def topics_library_compact():
 @jsonify
 def topic_version_change_list(version_id):
     version = models.TopicVersion.get_by_id(version_id)
-    return models.VersionContentChange.all().filter("version =", version).fetch(10000)
+    changes = models.VersionContentChange.all().filter("version =", version).fetch(10000)
+    
+    # add the related_videos of ExerciseVideos of the change.content
+    exercise_dict = dict((change.content.key(), change.content) 
+                         for change in changes 
+                         if type(change.content) == models.Exercise)
+
+    models.Exercise.add_related_videos_prop(exercise_dict)
+    return changes
+
 
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
@@ -330,17 +326,18 @@ def topictree_export(version_id = None, topic_id = "root"):
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["PUT"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["PUT"])
+@route("/api/v1/dev/topictree/init/<publish>", methods=["PUT"])
 @route("/api/v1/dev/topictree", methods=["PUT"])
 @developer_required
 @jsonp
 @jsonify
-def topictree_import(version_id = "edit", topic_id="root"):
+def topictree_import(version_id = "edit", topic_id="root", publish=False):
     import zlib
     import pickle
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing
-    deferred.defer(models.topictree_import_task, version_id, topic_id, 
+    deferred.defer(models.topictree_import_task, version_id, topic_id, publish,
                 zlib.compress(pickle.dumps(request.json)),
                 _queue = "import-queue",
                 _url = "/_ah/queue/deferred_import")
@@ -754,7 +751,8 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
                         "summative", "prerequisites", "covers", 
-                        "related_videos", "short_display_name"]
+                        "related_videos", "related_video_keys", 
+                        "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise, 
             version, 
@@ -821,6 +819,31 @@ def video_exercises(video_id):
     if video:
         return video.related_exercises(bust_cache=True)
     return []
+
+@route("/api/v1/videos/<topic_id>/<video_id>/play", methods=["GET"])
+@jsonp
+@jsonify
+def video_play_data(topic_id, video_id):
+    topic = models.Topic.get_by_id(topic_id)
+    if topic is None: 
+        raise ValueError("Invalid topic readable_id.")
+
+    get_topic_data = request.request_bool('topic', default=False);
+
+    discussion_options = {
+        "comments_page": 0,
+        "qa_page": 0,
+        "qa_expand_key": "",
+        "sort": -1
+    }
+    ret = {
+        "video": models.Video.get_play_data(video_id, topic, discussion_options)
+    }
+
+    if get_topic_data:
+        ret["topic"] = topic.get_play_data()
+
+    return ret
 
 @route("/api/v1/commoncore", methods=["GET"])
 @jsonp
@@ -1054,58 +1077,38 @@ def update_user_profile():
         add_action_results(result, {})
     return result
 
+@route("/api/v1/user/coaches", methods=["GET"])
+@oauth_required()
+@api_disallow_phantoms
+@jsonp
+@jsonify
+def get_coaches_and_requesters():
+    """ Return list of UserProfiles corresponding to the student's
+        coaches and coach requesters
+    """
+    user_data = request.request_visible_student_user_data()
+    if not user_util.is_current_user(user_data):
+        return api_unauthorized_response("You can only see your own coaches.")
+
+    return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
+
 @route("/api/v1/user/coaches", methods=["PUT"])
 @oauth_required()
+@api_disallow_phantoms
 @jsonp
 @jsonify
-def add_coach():
-    """ Add a coach for the currently logged in user.
-
-    Expects JSON with a "username" or "email" field that specifies the coach.
+def update_coaches_and_requesters():
+    """ Update the student's list of coaches and coach requesters
     """
-    # TODO: Remove redundant path/logic in coaches.py
-    coach_user_data = get_user_data_from_json(request.json, 'coach')
-
-    if not coach_user_data:
-        return api_invalid_param_response("Invalid coach email or username.")
-
-    current_user_data = models.UserData.current()
-    if not current_user_data.is_coached_by(coach_user_data):
-        current_user_data.coaches.append(coach_user_data.key_email)
-        current_user_data.put()
-
-@route("/api/v1/user/coaches", methods=["DELETE"])
-@oauth_required()
-@jsonp
-@jsonify
-def remove_coach():
-    """ Remove a coach for the currently logged in user.
-
-    Expects JSON with a "username" or "email" field that specifies the coach.
-    """
-    # TODO: Remove redundant path/logic in coaches.py
-    coach_user_data = get_user_data_from_json(request.json, 'coach')
-
-    if not coach_user_data:
-        return api_invalid_param_response("Invalid coach email or username.")
-
-    current_user_data = models.UserData.current()
-
-    if current_user_data.student_lists:
-        actual_lists = StudentList.get(current_user_data.student_lists)
-        current_user_data.student_lists = [l.key() for l in actual_lists if coach_user_data.key() not in l.coaches]
+    # TODO(marcia): what is the deal with coach_email.lower() in coaches.py
+    user_data = models.UserData.current()
 
     try:
-        current_user_data.coaches.remove(coach_user_data.key_email)
-    except ValueError:
-        pass
+        profiles = coaches.update_coaches_and_requests(user_data, request.json)
+    except custom_exceptions.InvalidEmailException:
+        return api_invalid_param_response("Received an invalid email.")
 
-    try:
-        current_user_data.coaches.remove(coach_user_data.key_email.lower())
-    except ValueError:
-        pass
-
-    current_user_data.put()
+    return profiles
 
 @route("/api/v1/user/students", methods=["GET"])
 @oauth_required()
@@ -1862,15 +1865,7 @@ def get_user_badges():
 @jsonp
 @jsonify
 def get_activity():
-    student = models.UserData.current() or models.UserData.pre_phantom()
-    user_override = request.request_user_data("email")
-    if user_override and user_override.key_email != student.key_email:
-        # TODO: Clarify "visibility"
-        if not user_override.is_visible_to(student):
-            return api_unauthorized_response("Cannot view this profile")
-        else:
-            # Allow access to this student's profile
-            student = user_override
+    student = request.request_visible_student_user_data()
 
     recent_activities = recent_activity.recent_activity_list(student)
     recent_completions = filter(
@@ -2117,14 +2112,7 @@ def get_student_progress_report():
 @jsonp
 @jsonify
 def get_user_goals():
-    student = models.UserData.current() or models.UserData.pre_phantom()
-    user_override = request.request_user_data("email")
-    if user_override and user_override.key_email != student.key_email:
-        if not user_override.is_visible_to(student):
-            return api_unauthorized_response("Cannot view this profile")
-        else:
-            # Allow access to this student's profile
-            student = user_override
+    student = request.request_visible_student_user_data()
 
     goals = GoalList.get_all_goals(student)
     return [g.get_visible_data() for g in goals]
@@ -2134,15 +2122,7 @@ def get_user_goals():
 @jsonp
 @jsonify
 def get_user_current_goals():
-    student = models.UserData.current() or models.UserData.pre_phantom()
-
-    user_override = request.request_user_data("email")
-    if user_override and user_override.key_email != student.key_email:
-        if not user_override.is_visible_to(student):
-            return api_unauthorized_response("Cannot view this profile")
-        else:
-            # Allow access to this student's profile
-            student = user_override
+    student = request.request_visible_student_user_data()
 
     goals = GoalList.get_current_goals(student)
     return [g.get_visible_data() for g in goals]

@@ -141,4 +141,3 @@ class IsCertainToBeThirteenFilter(BridgeFilter):
     @staticmethod
     def _matches(context, identity):
         return identity.is_certain_to_be_thirteen()
-

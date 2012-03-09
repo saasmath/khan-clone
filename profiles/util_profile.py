@@ -8,12 +8,11 @@ import models
 import consts
 from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import disallow_phantoms
-from models import StudentList, UserData
+from models import StudentList, UserData, CoachRequest
 import simplejson
 from avatars import util_avatars
 from badges import util_badges
 from gae_bingo.gae_bingo import bingo
-from experiments import SuggestedActivityExperiment
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -197,10 +196,6 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
-            bingo([
-                'suggested_activity_visit_profile',
-            ])
-
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
@@ -242,6 +237,7 @@ class UserProfile(object):
     def __init__(self):
         self.username = None
         self.email = ""
+        self.is_phantom = True
         
         # Indicates whether or not the profile has been marked public. Not
         # necessarily indicative of what fields are currently filled in this
@@ -254,6 +250,8 @@ class UserProfile(object):
         self.is_data_collectible = False
         
         self.is_coaching_logged_in_user = False
+        self.is_requesting_to_coach_logged_in_user = False
+
         self.nickname = ""
         self.date_joined = ""
         self.points = 0
@@ -322,12 +320,7 @@ class UserProfile(object):
 
         profile.is_self = is_self
         profile.is_coaching_logged_in_user = is_coaching_logged_in_user
-
-        suggested_alternative = SuggestedActivityExperiment.get_alternative_for_user(
-                user, is_self) or SuggestedActivityExperiment.NO_SHOW
-        show_suggested_activity = (suggested_alternative == SuggestedActivityExperiment.SHOW)
-
-        profile.show_suggested_activity = show_suggested_activity
+        profile.is_phantom = user.is_phantom
 
         profile.is_public = user.has_public_profile()
         if full_projection:
@@ -336,6 +329,52 @@ class UserProfile(object):
 
         return profile
 
+    @staticmethod
+    def get_coach_and_requester_profiles_for_student(student_user_data):
+        coach_profiles = []
+
+        for coach_user_data in student_user_data.get_coaches_data():
+            profile = UserProfile._from_coach(coach_user_data, student_user_data)
+            coach_profiles.append(profile)
+
+        requests = CoachRequest.get_for_student(student_user_data)
+        for request in requests:
+            coach_user_data = request.coach_requesting_data
+            profile = UserProfile._from_coach(coach_user_data, student_user_data)
+            coach_profiles.append(profile)
+
+        return coach_profiles
+
+    @staticmethod
+    def _from_coach(coach, actor):
+        """ Retrieve profile information about a coach for the specified actor.
+
+        At minimum, this will return a UserProfile with the following data:
+        -- email
+        -- is_coaching_logged_in_user
+        -- is_requesting_to_coach_logged_in_user
+        
+        If the coach has a public profile or if she is coached by the actor,
+        more information will be retrieved as allowed.
+        
+        coach - models.UserData object to retrieve information from
+        actor - models.UserData object corresponding to who is requesting
+                the data
+
+        TODO(marcia): Move away from using email to manage coaches, since
+        this breaks our notions of public/private profiles.
+        
+        """
+
+        profile = UserProfile.from_user(coach, actor) or UserProfile()
+
+        profile.email = coach.email
+
+        is_coach = actor.is_coached_by(coach)
+        profile.is_coaching_logged_in_user = is_coach
+        profile.is_requesting_to_coach_logged_in_user = not is_coach
+
+        return profile
 
 class ProfileGraph(request_handler.RequestHandler):
 

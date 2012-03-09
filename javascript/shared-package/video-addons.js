@@ -1,15 +1,27 @@
 function onYouTubePlayerStateChange(state) {
     VideoStats.playerStateChange(state);
+    $(VideoControls).trigger("playerStateChange", state);
 }
 
 var VideoControls = {
 
     player: null,
+    autoPlayEnabled: false,
+    autoPlayCallback: null,
+    continuousPlayButton: null,
 
     readyDeferred_: new $.Deferred(),
 
     initJumpLinks: function() {
         $("span.youTube").addClass("playYouTube").removeClass("youTube").click(VideoControls.clickYouTubeJump);
+    },
+
+    initContinuousPlayLinks: function(parentEl) {
+        this.continuousPlayButton = $("a.continuous-play", parentEl);
+        this.continuousPlayButton.click(function() {
+            VideoControls.setAutoPlayEnabled(!VideoControls.autoPlayEnabled);
+        });
+        this.setAutoPlayEnabled(VideoControls.autoPlayEnabled);
     },
 
     clickYouTubeJump: function() {
@@ -31,6 +43,22 @@ var VideoControls = {
     pause: function() {
         if (VideoControls.player && VideoControls.player.pauseVideo)
             VideoControls.player.pauseVideo();
+    },
+
+    setAutoPlayEnabled: function(enabled) {
+    /*
+        this.autoPlayEnabled = enabled;
+        this.continuousPlayButton.toggleClass("green", enabled);
+        if (enabled) {
+            this.continuousPlayButton.html("Continuous play is ON");
+        } else {
+            this.continuousPlayButton.html("Continuous play is OFF");
+        }
+        */
+    },
+
+    setAutoPlayCallback: function(callback) {
+        this.autoPlayCallback = callback;
     },
 
     scrollToPlayer: function() {
@@ -91,19 +119,28 @@ var VideoControls = {
     thumbnailClick: function() {
         var jelParent = $(this).parents("td").first();
         var youtubeId = jelParent.attr("data-youtube-id");
-        if (VideoControls.player && youtubeId) {
-            $(VideoControls).trigger("beforeplay");
-
-            VideoControls.player.loadVideoById(youtubeId, 0, "default");
-            VideoControls.scrollToPlayer();
+        {
+            this.playVideo(youtubeId, jelParent.attr("data-key"), true);
 
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
 
-            VideoStats.startLoggingProgress(jelParent.attr("data-key"));
-
             return false;
         }
+    },
+
+    playVideo: function(youtubeId, videoKey, forcePlayBegin) {
+        if (VideoControls.player && youtubeId) {
+            $(VideoControls).trigger("beforeplay");
+
+            if (forcePlayBegin || this.autoPlayEnabled) {
+                VideoControls.player.loadVideoById(youtubeId, 0, "default");
+            } else {
+                VideoControls.player.cueVideoById(youtubeId, 0, "default");
+            }
+            VideoControls.scrollToPlayer();
+        }
+        VideoStats.startLoggingProgress(videoKey);
     },
 
     /**
@@ -178,10 +215,8 @@ var VideoStats = {
         if (this.player) this.listenToPlayerStateChange();
         // If the player isn't ready yet or if it is replaced in the future,
         // listen to the state changes once it is ready/replaced.
-        var me = this;
-        $(this).bind("playerready.videostats", function() {
-            me.listenToPlayerStateChange();
-        });
+        $(this).on("playerready.videostats",
+            _.bind(this.listenToPlayerStateChange, this));
 
         if (this.intervalId === null) {
             // Every 10 seconds check to see if we've crossed over our percent
@@ -222,7 +257,21 @@ var VideoStats = {
         }
     },
 
+    checkVideoComplete: function() {
+        var state = this.player.getPlayerState();
+        if (state === 0) { // ended
+            if (VideoControls.autoPlayCallback) {
+                VideoControls.autoPlayCallback();
+            } else {
+                VideoControls.setAutoPlayEnabled(false);
+            }
+        } else if (state === 2) { // paused
+            VideoControls.setAutoPlayEnabled(false);
+        }
+    },
+
     playerStateChange: function(state) {
+        var self = this;
         var playing = this.playing || this.fAlternativePlayer;
         if (state === -2) { // playing normally
             var percent = this.getPercentWatched();
@@ -233,10 +282,22 @@ var VideoStats = {
         } else if (state === 0 && playing) { // ended
             this.playing = false;
             this.save();
+
+            if (VideoControls.autoPlayEnabled) {
+                setTimeout(function() { self.checkVideoComplete() }, 500);
+            } else {
+                VideoControls.setAutoPlayEnabled(false);
+            }
         } else if (state === 2 && playing) { // paused
             this.playing = false;
             if (this.getSecondsWatchedSinceSave() > 1) {
-              this.save();
+                this.save();
+            }
+
+            if (VideoControls.autoPlayEnabled) {
+                setTimeout(function() { self.checkVideoComplete() }, 500);
+            } else {
+                VideoControls.setAutoPlayEnabled(false);
             }
         } else if (state === 1) { // play
             this.playing = true;
@@ -323,15 +384,23 @@ var VideoStats = {
         if (dict_json && dict_json.action_results.user_video) {
             video = dict_json.action_results.user_video;
             // Update the energy points box with the new data.
-            var jelPoints = $(".video-energy-points");
-            if (jelPoints.length)
-            {
-                jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, video.points));
-                $(".video-energy-points-current", jelPoints).text(video.points);
+            this.updatePoints(video.points);
 
-                // Replace the old tooltip with an updated one.
-                VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
+            if (window.Video) {
+                Video.updateVideoPoints(video.points);
             }
+        }
+    },
+
+    updatePoints: function(points) {
+        var jelPoints = $(".video-energy-points");
+        if (jelPoints.length)
+        {
+            jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, points));
+            $(".video-energy-points-current", jelPoints).text(points);
+
+            // Replace the old tooltip with an updated one.
+            VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
         }
     },
 

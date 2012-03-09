@@ -123,7 +123,11 @@ def topic_browser(browser_id, version_number=None):
     else:
         version = None
 
-    tree = models.Topic.get_root(version).make_tree(types = ["Topics"])
+    root = models.Topic.get_root(version)
+    if not root:
+        return ""
+
+    tree = root.make_tree(types = ["Topics"])
 
     # TODO(tomyedwab): Remove this once the confusion over the old Developmental Math playlists settles down
     if not version:
@@ -135,7 +139,7 @@ def topic_browser(browser_id, version_number=None):
         standalone_title="Developmental Math"
     )
     developmental_math.children = []
-    [topic for topic in tree.children if topic.id == "math"][0].children.append(developmental_math)
+    #[topic for topic in tree.children if topic.id == "math"][0].children.append(developmental_math)
 
     template_values = {
        'browser_id': browser_id, 'topic_tree': tree 
@@ -160,9 +164,9 @@ def topic_browser_tree(tree, level=0):
             href = "#%s" % escape(slugify(child.id))
 
             if level == 0:
-                s += "<li class='solo'><a href='%s' class='menulink'>%s</a></li>" % (href, escape(child.title))
+                s += "<li class='solo'><a href='%s' data-tag='TopicBrowser' class='menulink'>%s</a></li>" % (href, escape(child.title))
             else:
-                s += "<li class='%s'><a href='%s'>%s</a></li>" % (class_name, href, escape(child.title))
+                s += "<li class='%s'><a href='%s' data-tag='TopicBrowser'>%s</a></li>" % (class_name, href, escape(child.title))
 
         else:
             if level > 0:

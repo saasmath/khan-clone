@@ -87,7 +87,7 @@
                 {% if topic.key().__str__() in video.topic_string_keys %}
                     <li class="videos">
                       <div class="column">
-                        <a href="{% if video.readable_id %}/video/{{video.readable_id|urlencode}}{% else %}{{video.url}}{% endif %}" class="video-result"><span class="searchresulthighlight">{{ video.title|escape }}</span></a>
+                        <a href="{% if video.readable_id %}/video/{{video.readable_id|urlencode}}{% else %}{{video.url}}{% endif %}" data-tag="Search Body" class="video-result"><span class="searchresulthighlight">{{ video.title|escape }}</span></a>
                         {% if video.description %}
                         <p class="description searchresulthighlight">{{ video.description|escape }}</p>
                         {% endif %}
@@ -95,7 +95,7 @@
                       <div class="column">
                         <p class="column-heading">Watch</p>
                         <ul>
-                          <li><a href="{% if video.readable_id %}/video/{{video.readable_id|urlencode}}{% else %}{{video.url}}{% endif %}" class="vl"><span class="vid-progress v{{ video.key().id() }}">Watch the video lesson</a></li>
+                          <li><a href="{% if video.readable_id %}/video/{{video.readable_id|urlencode}}{% else %}{{video.url}}{% endif %}" data-tag="Search Body" class="vl"><span class="vid-progress v{{ video.key().id() }}">Watch the video lesson</a></li>
                         </ul>
                       </div>
                       {% if video_exercises[video.key().__str__()] %}
@@ -103,7 +103,7 @@
                         <p class="column-heading">Practice Exercises</p>
                           <ul>
                             {% for exercise in video_exercises[video.key().__str__()] %}
-                              <li><a href="{{ exercise.relative_url }}" class="exercise-link">{{ exercise.display_name|escape }}</a></li>
+                              <li><a href="{{ exercise.relative_url }}" data-tag="Search Body" class="exercise-link">{{ exercise.display_name|escape }}</a></li>
                             {% endfor %}
                           </ul>
                       </div>
@@ -113,7 +113,7 @@
                 {% endif %}
             {% endfor %}
             <li>
-                <a href="/#{{topic.standalone_title|slugify|escape}}">See all videos from topic {{ topic.standalone_title|escape }}</a>
+                <a href="/#{{topic.standalone_title|slugify|escape}}" data-tag="Search Body">See all videos from topic {{ topic.standalone_title|escape }}</a>
             </li>
             </ol>
         {% endfor %}
