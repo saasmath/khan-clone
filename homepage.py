@@ -183,7 +183,7 @@ class ViewHomePage(request_handler.RequestHandler):
             
         from gae_bingo.gae_bingo import ab_test, create_redirect_url
 
-        donate_button_test = ab_test("donate_button", {"":0, "button":1, "text":19}, conversion_name=['hp_click', 'paypal'])
+        donate_button_test = ab_test("donate_button", {"":0, "button":1, "text":99}, conversion_name=['hp_click', 'paypal'])
 
         template_values = {
                             'marquee_video': marquee_video,
