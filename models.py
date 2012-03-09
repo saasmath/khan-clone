@@ -622,7 +622,7 @@ class UserExercise(db.Model):
         # TODO(kamens): can we get away w/ not inserting UE's unnecessarily here???
         user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
 
-        return UserExercise._prepare_for_stack_api(user_exercises)
+        return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
     @staticmethod
     def next_in_review(user_data, n=3, queued=[]):
@@ -635,7 +635,7 @@ class UserExercise(db.Model):
         exercises = [Exercise.get_by_name(exid) for exid in user_exercise_graph.review_exercise_names()]
         user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
 
-        return UserExercise._prepare_for_stack_api(user_exercises)
+        return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
     @staticmethod
     def _prepare_for_stack_api(user_exercises, n=3, queued=[]):

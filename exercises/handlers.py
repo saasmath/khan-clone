@@ -3,7 +3,7 @@ import urllib
 
 import request_handler
 import models
-from exercises.stacks import get_problem_stack, get_review_stack
+from exercises.stacks import get_problem_stack, get_review_stack, MAX_CARDS_PER_REVIEW_STACK
 from api.jsonify import jsonify
 from api.auth.xsrf import ensure_xsrf_cookie
 
@@ -76,7 +76,7 @@ class ViewExercise(request_handler.RequestHandler):
             # Practice mode involves a single exercise only
             user_exercises = [user_data.get_or_insert_exercise(exercise)]
         elif review_mode:
-            user_exercises = models.UserExercise.next_in_review(user_data)
+            user_exercises = models.UserExercise.next_in_review(user_data, n=MAX_CARDS_PER_REVIEW_STACK)
         else:
             # Topics mode context switches between multiple exercises
             user_exercises = models.UserExercise.next_in_topic(user_data, topic)
