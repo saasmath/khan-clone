@@ -32,7 +32,7 @@ import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
-from decorators import clamp
+from decorators import clamp, lock
 import base64, os
 
 from image_cache import ImageCache
@@ -1741,6 +1741,7 @@ class TopicVersion(db.Model):
         return TopicVersion.all().filter("edit = ", True).get()
 
     @staticmethod
+    @lock()
     def create_edit_version():
         version = TopicVersion.all().filter("edit = ", True).get()
         if version is None:
@@ -1804,7 +1805,7 @@ class TopicVersion(db.Model):
         else:
             last_edited_by = None
         self.last_edited_by = last_edited_by
-        self.put()
+        self.put()        
 
     def find_content_problems(self):
         logging.info("checking for problems")
@@ -1868,7 +1869,8 @@ class TopicVersion(db.Model):
         logging.info("starting set_default_version")
         content_problems = self.find_content_problems()
         for problem_type, problems in content_problems.iteritems():
-            raise Exception("content problems found: <a target=_blank href='/api/v1/dev/topictree/%i/problems'>Click here to see problems.</a>" % self.number)
+            if len(problems):
+                raise Exception("%s content problems found: <a target=_blank href='/api/v1/dev/topictree/%i/problems'>Click here to see problems.</a>" % (problem_type, self.number))
 
         do_set_default_deferred_step(apply_version_content_changes, 
                             self.number,
@@ -2797,9 +2799,9 @@ class Topic(Searchable, db.Model):
 
                 else:
                     title = getattr(child, "title", getattr(child, "display_name", ""))
-                    if title.lower().find(query) > -1:
+                    id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id())))
+                    if title.lower().find(query) > -1 or str(id).lower().find(query) > -1:
                         match_path = path[:]
-                        id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id())))
                         match_path.append(id)
                         match_path.append(child_key.kind())
                         matching_paths.append(match_path)
@@ -2988,13 +2990,6 @@ class Topic(Searchable, db.Model):
         return content_topics
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(
-        lambda types=None, version=None, include_hidden=False:
-        "topic.get_filled_content_topics_%s_%s" % (
-            (str(version.number) + str(version.updated_on)) if version
-            else Setting.topic_tree_version(),
-            include_hidden),
-        layer=layer_cache.Layers.Blobstore)
     def get_filled_content_topics(types=None, version=None, include_hidden=False):
         if types is None:
             types = []
@@ -3392,12 +3387,6 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 tree["child_keys"] = []
                 if "children" in tree:
                     for child in tree["children"]:
-                        '''
-                        if child["kind"] == "Video":
-                            logging.info(child["title"])
-                        else:
-                            logging.info(child["name"])
-                        '''
                         tree["child_keys"].append(child["key"])
                         add_child_keys_json_tree(child)
 
