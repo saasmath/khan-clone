@@ -91,12 +91,16 @@ class CredentialedUser(db.Model):
         
         def txn():
             credential = Credential.retrieve_for_user(other_user)
+            cred_copy = None
             if credential:
                 cred_copy = Credential(parent=self)
                 cred_copy.hashed_pass = credential.hashed_pass
                 cred_copy.salt = credential.salt
             self.credential_version = other_user.credential_version
-            db.put([cred_copy, self])
+            if cred_copy:
+                db.put([cred_copy, self])
+            else:
+                db.put(self)
             
         if db.is_in_transaction():
             txn()
