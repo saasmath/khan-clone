@@ -386,7 +386,7 @@ var VideoStats = {
             // Update the energy points box with the new data.
             this.updatePoints(video.points);
 
-            if (window.Video) {
+            if (window.Video && Video.updateVideoPoints) {
                 Video.updateVideoPoints(video.points);
             }
         }
