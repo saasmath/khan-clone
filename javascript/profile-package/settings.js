@@ -56,7 +56,7 @@ var Settings = {
         }
 
         // Check matching.
-        if (password2 && password2 != password1) {
+        if (password2 && password2 !== password1) {
             $(".sidenote.password2").addClass("error").text("Passwords don't match.");
         } else {
             $(".sidenote.password2").removeClass("error").text("");
