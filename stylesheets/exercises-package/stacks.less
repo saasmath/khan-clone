@@ -391,27 +391,30 @@
       inset 0 -2px 6px rgba(0,0,0,0.4);
     position: relative;
     overflow: hidden;
-
-    -webkit-animation: progress-bar 2s;
-    -moz-animation: progress-bar 2s;
 }
 
-.end-of-stack-info .progress-graph .skill-bar.orange .fill {
+.end-of-stack-info .progress-graph .skill-bar .fill.orange {
     background-color: #f1a165;
     background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #f1a165),color-stop(1, #f36d0a));
     background-image: -webkit-linear-gradient(top, #f1a165, #f36d0a);
     background-image: -moz-linear-gradient(top, #f1a165, #f36d0a);
     background-image: -ms-linear-gradient(top, #f1a165, #f36d0a);
     background-image: -o-linear-gradient(top, #f1a165, #f36d0a);
+
+    position: relative;
+    top: -15px;
 }
 
-.end-of-stack-info .progress-graph .skill-bar.red .fill {
+.end-of-stack-info .progress-graph .skill-bar .fill.red {
     background-color: #f0a3a3;
     background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #f0a3a3),color-stop(1, #f42323));
     background-image: -webkit-linear-gradient(top, #f0a3a3, #f42323);
     background-image: -moz-linear-gradient(top, #f0a3a3, #f42323);
     background-image: -ms-linear-gradient(top, #f0a3a3, #f42323);
     background-image: -o-linear-gradient(top, #f0a3a3, #f42323);
+
+    -webkit-animation: progress-bar 2s;
+    -moz-animation: progress-bar 2s;
 }
 
 /** 
@@ -420,8 +423,8 @@
  */
 
 @-webkit-keyframes progress-bar {
-   0% { width: 0; }
+   0% { width: 0; opacity: 0.6; }
 }
 @-moz-keyframes progress-bar {
-   0% { width: 0; }
+   0% { width: 0; opacity: 0.6; }
 }

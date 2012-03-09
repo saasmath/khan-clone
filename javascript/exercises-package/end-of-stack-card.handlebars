@@ -11,9 +11,14 @@
 	    {{#each progress}}
 	    	<h2 class="skill-bar-title">{{displayName}}</h2>
 	    	<div class="skill-bar orange">
-	    		<div class="fill" style="width:{{end}}%;">
+	    		<div class="fill red" style="width:{{end}}%;">
 	    			<div class="description">
-		    			{{end}} (change: {{change}})
+		    			<!-- {{end}} (change: {{change}}) -->
+		    		</div>
+	    		</div>
+	    		<div class="fill orange" style="width:{{start}}%;">
+	    			<div class="description">
+		    			<!-- {{end}} (change: {{change}}) -->
 		    		</div>
 	    		</div>
 	        </div>
