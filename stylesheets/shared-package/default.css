@@ -2931,9 +2931,21 @@ a.proficient-badge.disabled {
     font-size: 20px;
     text-decoration: none;
     text-align: center;
-    padding: 10px 0 12px;
+    padding: 10px 35px 12px;
     margin-bottom: 15px;
     font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
+}
+
+#homepage-text a.call-to-action.watch-a-video {
+    float: left;
+}
+
+#homepage-text a.call-to-action.try-an-exercise {
+    float: right;
+}
+
+#homepage-text p.try-teacher-toolkit {
+    margin-top: 10px;
 }
 
 #back-to-top {
