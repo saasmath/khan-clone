@@ -673,7 +673,7 @@ Exercises.SessionStats = Backbone.Model.extend({
             var progressStats = this.get("progress") || {},
 
                 stat = progressStats[exerciseName] || {
-                    exerciseName: exerciseName,
+                    displayName: userExercise.exerciseModel.displayName,
                     start: userExercise.progress
                 };
 
