@@ -58,6 +58,7 @@ var Profile = {
         Profile.render();
 
         Profile.router = new Profile.TabRouter({routes: this.getRoutes_()});
+        Profile.router.bind("all", Analytics.handleRouterNavigation);
 
         Backbone.history.start({
             pushState: true,
