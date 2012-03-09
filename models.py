@@ -611,7 +611,7 @@ class UserExercise(db.Model):
         # all have the same progress, we want to send the user the one they did
         # least recently. Otherwise, we send the exercise that is most lacking in
         # progress.
-        sorted_dicts = sorted(graph_dicts, key=lambda d: d["last_done"])
+        sorted_dicts = sorted(graph_dicts, key=lambda d: d.get("last_done", None) or datetime.datetime.min)
         sorted_dicts = sorted(sorted_dicts, key=lambda d: d["progress"])
 
         # And finally, chop off our extras
