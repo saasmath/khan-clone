@@ -243,6 +243,11 @@ input.simple-button {
         height: 24px;
     }
 
+.simple-button.donate-button {
+    padding: 3px 7px;
+    bottom: 1px;
+}
+
 .vertical-shadow {
     border: 1px solid #ccc;
     border-bottom: 1px solid #aaa;
@@ -848,7 +853,7 @@ footer {
     float: right;
     display: block;
     position: relative;
-    margin: 6px 6px 0 0;
+    margin: 6px 0 0 0;
     z-index: 101;
 }
     #top-header #top-header-links #page_auth.page_links #login-menu {
@@ -909,6 +914,10 @@ footer {
 
         opacity: 0.75;
         filter:alpha(opacity=75);
+    }
+
+    #top-header #top-header-links #page_auth #top-right-nav a {
+        margin-right: 8px;
     }
 
     #login-menu .fb_button, #login-menu .fb_button_rtl {
