@@ -155,19 +155,19 @@ def _get_url_parts(url):
 def secure_url(url):
     """ Given a Khan Academy URL (i.e. not to an external site), returns an
     absolute https version of the URL, if possible.
-    
+
     Abstracts away limitations of https, such as non-support in vanity domains
     and dev servers.
-    
+
     """
-    
+
     if url.startswith("https://"):
         return url
-    
+
     if App.is_dev_server:
         # Dev servers can't handle https.
         return url
-    
+
     _, netloc, path, query, fragment = _get_url_parts(url)
 
     if (netloc.lower().endswith(".khanacademy.org")):
@@ -175,18 +175,18 @@ def secure_url(url):
         # are simple CNAMEs to the default app engine instance.
         # http://code.google.com/p/googleappengine/issues/detail?id=792
         netloc = "khan-academy.appspot.com"
-        
+
     return urlparse.urlunsplit(("https", netloc, path, query, fragment))
 
 def insecure_url(url):
     """ Given a Khan Academy URL (i.e. not to an external site), returns an
     absolute http version of the URL.
-    
+
     """
 
     if url.startswith("http://"):
         return url
-    
+
     _, netloc, path, query, fragment = _get_url_parts(url)
 
     return urlparse.urlunsplit(("http", netloc, path, query, fragment))
@@ -200,10 +200,28 @@ def static_url(relative_url):
     else:
         return "http://khan-academy.appspot.com%s" % relative_url
 
+def is_khanacademy_url(url):
+    """ Determines whether or not the specified URL points to a Khan Academy
+    property.
+
+    Relative URLs are considered safe and owned by Khan Academy.
+    """
+
+    scheme, netloc, path, query, fragment = urlparse.urlsplit(url) #@UnusedVariable
+    # Check all absolute URLs
+    if (scheme and
+            not netloc.endswith(".khanacademy.org") and
+            not netloc.endswith(".khan-academy.appspot.com") and
+            not netloc == "khan-academy.appspot.com"):
+        return False
+
+    # Relative URL's are considered to be a Khan Academy URL.
+    return True
+
 def clone_entity(e, **extra_args):
     """http://stackoverflow.com/questions/2687724/copy-an-entity-in-google-app-engine-datastore-in-python-without-knowing-property
     Clones an entity, adding or overriding constructor attributes.
-    
+
     The cloned entity will have exactly the same property values as the original
     entity, except where overridden. By default it will have no parent entity or
     key name, unless supplied.

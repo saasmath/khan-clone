@@ -43,7 +43,7 @@ class Login(request_handler.RequestHandler):
         errors - a dictionary of possible errors from a previous login that
                  can be highlighted in the UI of the login page
         """
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
         direct = self.request_bool('direct', default=False)
 
         if App.facebook_app_secret is None:
@@ -60,7 +60,7 @@ class Login(request_handler.RequestHandler):
 
     def post(self):
         """ Handles a POST from the login page. """
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
         login_type = self.request_int('type', default=LoginType.UNKNOWN)
         if not LoginType.is_valid(login_type):
             # Can't figure out what the user wants to do - just send them
@@ -160,7 +160,7 @@ def _merge_phantom_into(phantom_data, target_data):
 
 class PostLogin(request_handler.RequestHandler):
     def get(self):
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
 
         # Immediately after login we make sure this user has a UserData entity
         user_data = UserData.current()
@@ -233,8 +233,7 @@ class Logout(request_handler.RequestHandler):
 
         next_url = "/"
         if google_user is not None:
-            next_url = users.create_logout_url(self.request_string("continue",
-                                                                   default="/"))
+            next_url = users.create_logout_url(self.request_continue_url())
         self.redirect(next_url)
 
 # TODO(benkomalo): move this to a more appropriate, generic spot
@@ -258,7 +257,7 @@ class Register(request_handler.RequestHandler):
             self.render_jinja2_template('under13.html', {'name': name})
             return
 
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
         template_values = {
             'continue': cont,
             'errors': {},
@@ -274,7 +273,7 @@ class Register(request_handler.RequestHandler):
         explicit registration via our own services.
         """
 
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
 
         # Store values in a dict so we can iterate for monotonous checks.
         values = {
@@ -409,7 +408,7 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             # We're good!
             user_data.set_password(password1)
-            cont = self.request_string("continue")
+            cont = self.request_continue_url()
 
             # Need to create a new auth token as the existing cookie will expire
             Login.redirect_with_auth_stamp(self, user_data, cont)
