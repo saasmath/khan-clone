@@ -55,7 +55,11 @@ class Login(request_handler.RequestHandler):
                            'identifier': identifier or "",
                            'errors': errors or {},
                            }
-        self.render_jinja2_template('login.html', template_values)
+
+        # TODO(benkomalo): This is disabled until password-based logins is
+        # fully implemented.
+        #self.render_jinja2_template('login.html', template_values)
+        self.render_jinja2_template('login_legacy.html', template_values)
 
     def post(self):
         """ Handles a POST from the login page. """
@@ -98,18 +102,18 @@ class Login(request_handler.RequestHandler):
                 return
 
             Login.redirect_with_auth_stamp(self, u, cont)
-        
+
     @staticmethod
     def redirect_with_auth_stamp(handler, user_data, cont="/"):
         """ Handles a successful login for a user by redirecting them
         to the PostLogin URL with the auth token, which will ultimately set
         the auth cookie for them.
-        
+
         This level of indirection is needed since the Login/Register handlers
         must accept requests with password strings over https, but the rest
         of the site is not (yet) using https, and therefore must use a
         non-https cookie.
-        
+
         """
 
         auth_token = auth.tokens.mint_token_for_user(user_data)
@@ -130,7 +134,7 @@ def _merge_phantom_into(phantom_data, target_data):
     Will bail if any signs that the target user has previous activity.
     """
 
-    
+
     # First make sure user has 0 points and phantom user has some activity
     if (target_data.points == 0 and
             phantom_data and
@@ -203,7 +207,7 @@ class PostLogin(request_handler.RequestHandler):
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
                 )
             )
-            
+
         auth_stamp = self.request_string("auth")
         if auth_stamp:
             auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
@@ -225,11 +229,11 @@ class Logout(request_handler.RequestHandler):
         if App.facebook_app_id:
             handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
             handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
-        
+
     def get(self):
         google_user = users.get_current_user()
         Logout.delete_all_identifying_cookies(self)
-        
+
         next_url = "/"
         if google_user is not None:
             next_url = users.create_logout_url(self.request_string("continue",
@@ -249,7 +253,7 @@ _email_re = re.compile(
 class Register(request_handler.RequestHandler):
     def get(self):
         """ Renders the register for new user page.  """
-        
+
         if (self.request_bool('under13', default=False)
                 or cookie_util.get_cookie_value(auth.cookies.U13_COOKIE_NAME)):
             # User detected to be under13. Show them a sorry page.
@@ -267,7 +271,7 @@ class Register(request_handler.RequestHandler):
 
     def post(self):
         """ Handles registration request on our site.
-        
+
         Note that new users can still be created via PostLogin if the user
         signs in via Google/FB for the first time - this is for the
         explicit registration via our own services.
@@ -295,7 +299,7 @@ class Register(request_handler.RequestHandler):
                              ('password', "Password required")]:
             if not values[field]:
                 errors[field] = error
-                
+
         # Under-13 check.
         if values['birthdate']:
             try:
@@ -304,7 +308,7 @@ class Register(request_handler.RequestHandler):
                 birthdate = birthdate.date()
             except ValueError:
                 errors['birthdate'] = "Invalid birthdate"
-            
+
         if birthdate and age_util.get_age(birthdate) < 13:
             # We don't yet allow under13 users. We need to lock them out now,
             # unfortunately. Set an under-13 cookie so they can't try again,
@@ -339,7 +343,7 @@ class Register(request_handler.RequestHandler):
                                                          values['nickname'],
                                                          values['username']):
                 errors['password'] = "Password is too weak"
-                
+
 
         if len(errors) > 0:
             # Never send back down the password.
@@ -367,7 +371,7 @@ class Register(request_handler.RequestHandler):
             # username was taken just as this method was processing.
             self.response.write("Oops. can't make user")
             return
-        
+
         # Set other properties we collected about the user (these are a little
         # more free and doesn't need to happen in the transaction above)
         # Note update_nickname calls put()
@@ -390,13 +394,13 @@ class PasswordChange(request_handler.RequestHandler):
         if not user_data.validate_password(existing):
             self.response.unauthorized()
             return
-        
+
         password1 = self.request_string("password1")
         password2 = self.request_string("password2")
         if not password1 or not password2:
             self.response.bad_request()
             return
-        
+
         # TODO(benkomalo): actually wire this up to a UI instead of just
         # writing text like this.
         if password1 != password2:
@@ -409,6 +413,6 @@ class PasswordChange(request_handler.RequestHandler):
             # We're good!
             user_data.set_password(password1)
             cont = self.request_string("continue")
-            
+
             # Need to create a new auth token as the existing cookie will expire
             Login.redirect_with_auth_stamp(self, user_data, cont)
