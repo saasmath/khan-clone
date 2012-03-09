@@ -47,3 +47,7 @@ Handlebars.registerHelper("toBingoHref", function(destination) {
     return gae_bingo.create_redirect_url.call(null, destination, conversionNames);
 });
 
+Handlebars.registerHelper("toLoginRedirectHref", function(destination) {
+    var redirectParam = "/postlogin?continue=" + destination;
+    return "/login?continue=" + encodeURIComponent(redirectParam);
+});

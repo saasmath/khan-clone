@@ -45,7 +45,7 @@ def topic_title_dicts(version_number=None):
     return map(lambda topic: {
         "title": topic.standalone_title,
         "key": str(topic.key()),
-        "ka_url": topic.ka_url,
+        "relative_url": topic.relative_url,
         "id": topic.id
     },  Topic.get_content_topics(version=version))
 
