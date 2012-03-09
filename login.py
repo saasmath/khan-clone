@@ -56,10 +56,7 @@ class Login(request_handler.RequestHandler):
                            'errors': errors or {},
                            }
 
-        # TODO(benkomalo): This is disabled until password-based logins is
-        # fully implemented.
-        #self.render_jinja2_template('login.html', template_values)
-        self.render_jinja2_template('login_legacy.html', template_values)
+        self.render_jinja2_template('login.html', template_values)
 
     def post(self):
         """ Handles a POST from the login page. """
