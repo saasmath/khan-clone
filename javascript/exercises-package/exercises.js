@@ -162,6 +162,9 @@ var Exercises = {
         // content inside of each card.
         $(Khan).bind("gotoNextProblem", function() {
 
+            // Hide any badges that were just awarded.
+            Badges.hide();
+
             // Start the next card process
             Exercises.nextCard();
 
