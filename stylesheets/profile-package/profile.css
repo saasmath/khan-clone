@@ -763,71 +763,6 @@ div.profile-notification.uncover-nav {
   opacity: 0.85;
   filter:alpha(opacity=85);
 }
-
-/**
- * Edit Profile dropdown
- * from http://css-tricks.com/examples/SimplejQueryDropdowns/#
- */
- .user-profile-controls {
-     margin-top: 5px;
- }
-.user-profile-controls .dropdown {
-    float: left;
-}
-ul.dropdown li {
-    float: left;
-    background: transparent;
-}
-ul.dropdown li a {
-    display: block;
-    padding: 4px 8px;
-    color: black;
-    white-space: nowrap;
-}
-ul.dropdown ul.sub_menu {
-    z-index: 10;
-    display: none;
-    background: #ccc;
-    position: absolute;
-    min-width: 120px;
-    border: 2px solid #999;
-    margin-top: 10px;
-
-    box-shadow: 0 2px 5px rgba(0,0,0,.3);
-}
-ul.dropdown ul.sub_menu li:hover{
-    background: #005987;
-}
-ul.dropdown ul.sub_menu li:hover a {
-    color: #fff !important;
-    text-decoration: none;
-}
-ul.dropdown ul.sub_menu:before{
-    content: ' ';
-    position: absolute;
-    z-index: 11;
-
-    width: 0;
-    height: 15px;
-
-    /* simulate a triangle with borders */
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid #999; /* must be the same as badge-picker */
-
-    left: 25%;
-    margin-left: -10px;
-    top: -25px;
-    display: block;
-}
-ul.dropdown ul li {
-    font-weight: normal;
-    background: #f6f6f6;
-    color: black;
-    border-bottom: 1px solid #ccc;
-    float: none;
-}
-
 .lte8 .user-card {
     min-width: 970px;
 }
@@ -950,7 +885,7 @@ li.profile-tab {
 }
 .user-deets .basic-stats {
     min-width: 180px;
-    margin-top: 14px;
+    margin-top: 10px;
 }
 
 .basic-user-info {
@@ -1191,4 +1126,7 @@ li.profile-tab {
 }
 .coach-row .controls {
     float: right;
+}
+.user-profile-controls {
+    margin-top: 10px;
 }

@@ -1,5 +1,4 @@
 <div class="user-info vertical-shadow clearfix">
-
     <div class="basic-user-info" style="float: left;">
       <div class="avatar-pic-container{{#if isEditable}} editable{{/if}}" style="float:left;" >
         <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic" >
@@ -18,21 +17,21 @@
           </div>
           <div class="user-profile-controls clearfix">
           {{#if isEditable}}
-              <ul class="dropdown">
-                  <li>
-                      <span id="edit-profile" class="simple-button action-gradient">Edit profile</span>
-                      <ul class="sub_menu">
-                        {{#if isFullyEditable}}
-                        <li><a id="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
-                        {{/if}}
-                        <li><a id="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
-                        <li><a id="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
-                        {{#if isFullyEditable}}
-                        <li><a id="edit-visibility" href="javascript:void(0)">Toggle privacy setting</a></li>
-                        {{/if}}
-                      </ul>
-                  </li>
+            <div class="dropdown">
+              <span class="dropdown-toggle simple-button action-gradient" data-toggle="dropdown">
+                Edit profile
+              </span>
+              <ul class="dropdown-menu">
+                  {{#if isFullyEditable}}
+                  <li><a id="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
+                  {{/if}}
+                  <li><a id="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
+                  <li><a id="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
+                  {{#if isFullyEditable}}
+                  <li><a id="edit-visibility" href="javascript:void(0)">Toggle privacy setting</a></li>
+                  {{/if}}
               </ul>
+            </div>
           {{else}}
             <!--
               {{#unless isSelf}}<a href="javascript:void(0)" class="add-remove-coach simple-button action-gradient" style="{{#if isCoachingLoggedInUser}} display: none;{{/if}}">Add as a coach</a>{{/unless}}
