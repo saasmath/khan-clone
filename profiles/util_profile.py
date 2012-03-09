@@ -102,17 +102,6 @@ class ViewClassProfile(request_handler.RequestHandler):
                 # if you are a dev, admin, or coworker.
                 coach = user_override
 
-            if not coach.has_students() and show_coach_resources:
-                template_values = {
-                        'user_data_coach': coach,
-                        'coach_email': coach.email,
-                        'selected_nav_link': 'coach',
-                        'selected_id': 'coach-resources',
-                        'is_profile_empty': not coach.has_students(),
-                }
-                self.render_jinja2_template('coach_resources/view_resources.html', template_values)
-                return
-
             student_lists = StudentList.get_for_coach(coach.key())
 
             student_lists_list = [{
@@ -156,14 +145,11 @@ class ViewClassProfile(request_handler.RequestHandler):
                     }
             self.render_jinja2_template('viewclassprofile.html', template_values)
         else:
-            if show_coach_resources:
-                template_values = {
-                        'selected_nav_link': 'coach',
-                        'selected_id': 'coach-resources',
-                }
-                self.render_jinja2_template('coach_resources/view_resources.html', template_values)
-            else:
-                self.redirect(util.create_login_url(self.request.uri))
+            template_values = {
+                    'selected_nav_link': 'coach',
+                    'selected_id': 'coach-resources',
+            }
+            self.render_jinja2_template('coach_resources/view_resources.html', template_values)
 
 class ViewProfile(request_handler.RequestHandler):
     @ensure_xsrf_cookie

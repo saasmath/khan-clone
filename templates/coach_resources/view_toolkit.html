@@ -1,4 +1,4 @@
-{% extends "coach_resources/coach_resources_template.html" %}
+{% extends "page_template.html" %}
 
 {% import 'macros/analytics.html' as analytics %}
 
@@ -9,7 +9,6 @@
 {% block meta_page_title %}Teacher Toolkit | {% endblock meta_page_title %}
 {% block pagescript %}
     <style>
-        
 	/* Special thanks to #business.Twitter for inspiration behind callout and lead styling */
 		
 		#public #container #form1 #header {
@@ -78,7 +77,15 @@
     </style>
 {% endblock pagescript %}
 
-{% block resourcecontent %}
+{% block pagesubmenu %}
+<span class="breadcrumbs_nav">
+    <a href="/coach/resources" id="teacher-resources" class="selected">Teacher Resources</a>
+    <a href="/students" id="manage-students">Manage Students</a>
+    <a href="/class_profile" id="class-stats">Class Stats</a>
+</span>
+{% endblock pagesubmenu %}
+
+{% block pagecontent %}
 <article id="toolkit">
 	<menu class="profile-navigation">
 	    <ul class="vertical-tab-list">
@@ -113,28 +120,34 @@
 	                <li><a href="{{base_url}}/instructional-strategies" class="tab-link no-recolor {% if 'instructional-strategies' == selected_id %}active-tab{% endif %}" rel="getting-started documents">Instructional strategies</a></li>
 	                <li><a href="{{base_url}}/different-learners" class="tab-link no-recolor {% if 'different-learners' == selected_id %}active-tab{% endif %}" rel="getting-started technology">Different learners</a></li>
 	                <li><a href="{{base_url}}/using-data" class="tab-link no-recolor {% if 'using-data' == selected_id %}active-tab{% endif %}" rel="getting-started technology">Using data</a></li>
+	                <li><a href="/coach/demo" class="tab-link no-recolor {% if 'demo' == selected_id %}active-tab{% endif %}" rel="demo">Demo</a></li>
 	            </ul>
 	        </li>
 	        <li>
 	            <span class="inactive link-section-header">Curriculum</span>
 	            <ul class="vertical-tab-list second-tier">
 	                <li><a href="{{base_url}}/individualized-units" class="tab-link no-recolor {% if 'individualized-units' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">Individualized units</a></li>
-	                
+	                <li><a href="/commoncore" class="tab-link no-recolor {% if 'commoncore' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">Common Core</a></li>
 	            </ul>
 	        </li>
 	        <li>
-	            <span class="inactive link-section-header">FAQ</span>
+	            <span class="inactive link-section-header">Other resources</span>
 	            <ul class="vertical-tab-list second-tier">
-	                <li><a href="{{base_url}}/teacher-faqs" class="tab-link no-recolor {% if 'teacher-faqs' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">Teacher FAQs</a></li>
+	                <li><a href="http://khanacademy.desk.com/customer/portal/topics/189393-khan-academy-in-the-classroom/articles" class="tab-link no-recolor {% if 'teacher-faqs' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">Teacher FAQs</a></li>
+	                <li><a href="/coach/schools-blog" class="tab-link no-recolor {% if 'schools-blog' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">Schools Blog</a></li>
 	            </ul>
 	        </li>
 			
 			
 	    </ul>
-	</menu>
+        </menu>
 	
 	<section class="tab-content">
 				
+        {% if not_in_toolkit_format %}
+                {% block resourcecontent %}
+                {% endblock resourcecontent %}
+        {% else %}
 		<div class="col1 sixty-forty">
 		{% block col1content %}
 		{% endblock col1content %}
@@ -144,12 +157,14 @@
 			{% block col2content %}
 			{% endblock col2content %}
 			</div>
-		</div>
+                </div>
+        {% endif %}
 				
 	</section>	
 	
 </article>
-{% endblock resourcecontent %}
+{% endblock pagecontent %}
+
 {% block bottompagescript %}
     {{ js_css_packages.js_package("commoncore") }}
 	{{ analytics.crazyegg_tracker(False) }}

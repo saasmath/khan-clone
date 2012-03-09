@@ -930,7 +930,7 @@ li.profile-tab {
 .tab-content {
     margin-left: 150px; /* must be the same as width of profile-navigation */
     padding: 20px 0 20px 20px;
-    min-height: 500px;
+    min-height: 570px;
     border-left: 1px solid #ccc;
     position: relative;
 }

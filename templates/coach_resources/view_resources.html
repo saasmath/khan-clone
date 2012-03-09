@@ -1,8 +1,16 @@
-{% extends "coach_resources/coach_resources_template.html" %}
+{% extends "page_template.html" %}
 
 {% import 'macros/mailing_lists.html' as mailing_lists %}
 
-{% block resourcecontent %}
+{% block pagesubmenu %}
+<span class="breadcrumbs_nav">
+    <a href="/coach/resources" id="teacher-resources" class="selected">Teacher Resources</a>
+    <a href="/students" id="manage-students">Manage Students</a>
+    <a href="/class_profile" id="class-stats">Class Stats</a>
+</span>
+{% endblock pagesubmenu %}
+
+{% block pagecontent %}
 
 <article id="coach-resources">
     <div class="col1 fifty-fifty" style="text-align: center; padding-top: 18px;">
@@ -16,7 +24,7 @@
     </div>
 
     <div class="col2 fifty-fifty" style="text-align: center; padding-top: 18px;">
-        <a href="http://khanacademy.desk.com">
+        <a href="http://khanacademy.desk.com/customer/portal/topics/189393-khan-academy-in-the-classroom/articles">
             <img class="rounded-background" src="/images/questionmark.gif" style="width:400px;height:243px" />
         </a>
         <br>
@@ -52,4 +60,4 @@
     {% endif %}
 </article>
 
-{% endblock resourcecontent %}
+{% endblock pagecontent %}

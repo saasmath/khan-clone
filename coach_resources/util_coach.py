@@ -50,16 +50,12 @@ class ViewToolkit(CoachResourcesRequestHandler):
             'selected_id': toolkit_section,
         })
 
-class ViewBlog(CoachResourcesRequestHandler):
-    def get(self):
-        self.render_jinja2_template('coach_resources/schools_blog.html', {
-            "selected_id": "schools-blog",
-        })
-
 class ViewDemo(CoachResourcesRequestHandler):
     def get(self):
         self.render_jinja2_template('coach_resources/view_demo.html', {
             "selected_id": "demo",
+            "base_url": "/toolkit",
+            "not_in_toolkit_format": 1,
         })
 
 class AccessDemo(CoachResourcesRequestHandler):
@@ -93,7 +89,3 @@ class AccessDemo(CoachResourcesRequestHandler):
         oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), oauth_consumer, access_token)
 
         self.redirect(oauth_request.to_url())
-
-class ViewFAQ(CoachResourcesRequestHandler):
-    def get(self):
-        self.render_jinja2_template('coach_resources/schools-faq.html', {})

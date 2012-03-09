@@ -127,6 +127,8 @@ class ViewBlog(util_coach.CoachResourcesRequestHandler):
                 "prev_offset": prev_offset,
                 "next_offset": next_offset,
                 "selected_id": "schools-blog",
+                "not_in_toolkit_format": 1,
+                "base_url": "/toolkit",
         }
 
         self.render_jinja2_template('coach_resources/view_blog.html', dict_context)

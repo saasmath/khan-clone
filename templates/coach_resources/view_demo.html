@@ -1,16 +1,16 @@
-{% extends "coach_resources/coach_resources_template.html" %}
+{% extends "coach_resources/view_toolkit.html" %}
 {% import 'macros/youtube.html' as youtube %}
 
 {% block resourcecontent %}
 <div id="demo">
     <div class="col1 fifty-fifty" style="text-align: center; padding-top: 18px;">
-        {{ youtube.player_embed("DLt6mMQH1OY", "99%", 405) }}
+        {{ youtube.player_embed("DLt6mMQH1OY", "99%", 425) }}
     </div>
     <div class="col2 fifty-fifty">
-        <h2 class="main-headline" style="white-space: pre;">Classroom data</h2>
+        <h2 class="main-headline" style="white-space: pre;">Demo</h2>
         <p>
         In addition to the tremendous content that Khan Academy provides via video lessons and
-        practice exercises, there is also a wealth of data that a coach/teacher can access about
+        practice exercises, there is also a wealth of data that a coach can access about
         his/her classroom. The short video on the left explains what some of the capabilities are.
         </p>
 
@@ -19,20 +19,20 @@
         classroom setting by simulating the scenario. Some of us at Khan Academy have added ourselves
         to a class, and you can access this class through a <a href="/coach/accessdemo" target="_blank">
         demo</a>.
-        <menu>
-            <li>Watch the video on the left
-            <li>Then simply click on the demo button and you will have access to a small class
-                worth of data
-            <li>Experience the power of the data by clicking around the different reports - access
-                our progress sumamry; dive deep into a specific student that piques your interest;
-                see our daily activity; our progress over time and more
-            <li>Click logout when you are done
-        </menu>
+        <ul class=bullet>
+            <li>Simply click on the demo button (if you are logged into your account, you will be logged out of it)
+            <li>Experience the power of the data by clicking around the different reports
+            <li>Click logout when you are done (and log back into your account)
+        </ul>
         </p>
 
         <p>
-        <a href="/coach/accessdemo" target="_blank" class="call-to-action simple-button action-gradient green">Access Demo</a>
+        <a href="/coach/accessdemo" target="_blank" class="call-to-action simple-button action-gradient blue">Access Demo</a>
         </p>
+    </div>
+
+    
+    <p><a href="{{base_url}}/six-step-process" class="call-to-action simple-button action-gradient green">Next: 6 step process to integrate KA into your curriculum  →</a></p>
 </div>
 
 {% endblock resourcecontent %}
