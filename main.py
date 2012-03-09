@@ -15,6 +15,7 @@ from google.appengine.api import memcache
 from api.auth.decorators import developer_required
 
 import webapp2
+from webapp2_extras.routes import DomainRoute
 
 import devpanel
 import bulk_update.handler
@@ -669,11 +670,10 @@ class MemcacheViewer(request_handler.RequestHandler):
         if self.request_bool("clear", False):
             memcache.delete(key, namespace=namespace)
 
-applicationSmartHistory = webapp2.WSGIApplication([
-    ('/.*', smarthistory.SmartHistoryProxy)
-])
-
 application = webapp2.WSGIApplication([
+    DomainRoute('smarthistory.khanacademy.org', [
+        webapp2.SimpleRoute('/.*', smarthistory.SmartHistoryProxy)
+    ]),
     ('/', homepage.ViewHomePage),
     ('/about', util_about.ViewAbout),
     ('/about/blog', blog.ViewBlog),
@@ -889,10 +889,7 @@ application = GAEBingoWSGIMiddleware(application)
 application = request_cache.RequestCacheMiddleware(application)
 
 def main():
-    if os.environ["SERVER_NAME"] == "smarthistory.khanacademy.org":
-        run_wsgi_app(applicationSmartHistory)
-    else:
-        run_wsgi_app(application)
+    run_wsgi_app(application)
 
 if __name__ == '__main__':
     main()
