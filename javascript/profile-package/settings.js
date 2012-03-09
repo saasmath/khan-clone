@@ -26,17 +26,20 @@ var Settings = {
     },
 
     onClickSubmit_: function(e) {
-        var submitButton = $("#submit-settings");
-        submitButton.val("Submitting...");
-        submitButton.attr("disabled", true);
+        $("#submit-settings")
+            .val("Submitting...")
+            .prop("disabled", true);
 
-        $("#pw-change-form #continue").val(window.location.href);
         // TODO(benkomalo): send down notification on success.
 
         // We can't use $.ajax to send - we have to actually do a form POST
         // since the requirement of sending over https means we'd
         // break same-origin policies of browser XHR's
-        $("#pw-change-form").submit();
+        $("#pw-change-form")
+            .find("#continue")
+                .val(window.location.href)
+                .end()
+            .submit();
     },
 
     // Must be consistent with what's on the server in auth/passwords.py
