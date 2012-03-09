@@ -126,13 +126,13 @@ Exercises.StackCollection = Backbone.Collection.extend({
             return card.get("leavesEarned") >= 3;
         });
 
-        var longestSpeedStreak = this.longestStreak(function(card) {
+        var speedyCards = this.filter(function(card) {
             return card.get("leavesEarned") >= 4;
-        });
-
+        }).length;
+            
         return {
             "longestStreak": longestStreak,
-            "longestSpeedStreak": longestSpeedStreak,
+            "speedyCards": speedyCards,
             "totalLeaves": totalLeaves
         };
     }
