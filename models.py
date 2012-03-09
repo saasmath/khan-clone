@@ -583,6 +583,31 @@ class UserExercise(db.Model):
             _accuracy_model=AccuracyModel()
         )
 
+    @classmethod
+    def from_dict(cls, attrs, user_data):
+        """ Create a UserExercise model from a dictionary of attributes
+        and a UserData model. This is useful for creating these objects
+        from the property dictionaries cached in UserExerciseCache.
+        """
+
+        user_exercise = cls(
+            key_name=attrs["name"],
+            parent=user_data,
+            user=user_data.user,
+            exercise=attrs["name"],
+            _progress=attrs["progress"],
+        )
+
+        for key in attrs:
+            if hasattr(user_exercise, key):
+                try:
+                    setattr(user_exercise, key, attrs[key])
+                except AttributeError:
+                    # Some attributes are unsettable -- ignore
+                    pass
+
+        return user_exercise
+
     # TODO(kamens) unit test next_in_topic...seriously, unit test this like crazy.
     @staticmethod
     def next_in_topic(user_data, topic, n=3, queued=[]):
@@ -617,10 +642,8 @@ class UserExercise(db.Model):
         # And finally, chop off our extras
         sorted_dicts = sorted_dicts[:n]
 
-        exercises = [Exercise.get_by_name(d["name"]) for d in sorted_dicts]
-
-        # TODO(kamens): can we get away w/ not inserting UE's unnecessarily here???
-        user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
+        # Build up UserExercise objects from our graph dicts
+        user_exercises = [UserExercise.from_dict(d, user_data) for d in sorted_dicts]
 
         return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
@@ -629,11 +652,10 @@ class UserExercise(db.Model):
         """ Returns the next n suggested user exercises for this user's
         review mode, all prepped and ready for JSONification
         """
+        graph = UserExerciseGraph.get(user_data)
 
-        # TODO(kamens): can we get away w/ not inserting UE's unnecessarily here???
-        user_exercise_graph = UserExerciseGraph.get(user_data)
-        exercises = [Exercise.get_by_name(exid) for exid in user_exercise_graph.review_exercise_names()]
-        user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
+        # Build up UserExercise objects from our graph dicts
+        user_exercises = [UserExercise.from_dict(d, user_data) for d in graph.review_graph_dicts()]
 
         return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
@@ -653,7 +675,7 @@ class UserExercise(db.Model):
         user_exercises = [u_e for u_e in user_exercises if u_e.exercise not in queued][:n]
 
         for user_exercise in user_exercises:
-            exercise = user_exercise.exercise_model
+            exercise = Exercise.get_by_name(user_exercise.exercise)
 
             # Attach related videos before sending down
             exercise.related_videos = [exercise_video.video for exercise_video in exercise.related_videos_fetch()]
@@ -663,6 +685,8 @@ class UserExercise(db.Model):
                 # icon for related videos. If we decide to expose ids for all models via the API,
                 # this will go away.
                 video.id = video.key().id()
+
+            user_exercise.exercise_model = exercise
 
         return user_exercises
 
