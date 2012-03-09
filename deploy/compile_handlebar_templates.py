@@ -68,10 +68,12 @@ def compile_template_to_python(root_path, rel_path, file_name):
     dir_path = os.path.join(root_path, rel_path)
     input_path = os.path.join(dir_path, file_name)
 
-    package_name = rel_path.replace("-", "_")
-    function_name = (os.path.splitext(file_name)[0]).replace("-", "_")
+    package_name = rel_path.replace("-", "_").split("_")[0]
+    original_function_name = os.path.splitext(file_name)[0]
+    partial_name = package_name + "_" + original_function_name
+    function_name = original_function_name.replace("-", "_")
 
-    out_dir_path = os.path.join("compiled_templates", package_name)
+    out_dir_path = os.path.join("compiled_templates", package_name + "_package")
     output_path = os.path.join(out_dir_path, function_name) + ".py"
     init_path = os.path.join(out_dir_path, "__init__.py")
 
@@ -79,6 +81,7 @@ def compile_template_to_python(root_path, rel_path, file_name):
 
     in_file = open(input_path, 'r')
     source = unicode(in_file.read())
+    source = source.replace("{{else}}", "{{^}}") # Pybars doesn't handle {{else}} for some reason
     template = compiler.compile(source)
 
     output_string = []
@@ -118,9 +121,6 @@ def compile_template_to_python(root_path, rel_path, file_name):
     if not os.path.exists(out_dir_path):
         os.makedirs(out_dir_path)
 
-    out_file = open(os.path.join("compiled_templates", "__init__.py"), 'w')
-    out_file.close()
-
     out_file = open(init_path, 'w')
     out_file.close()
 
@@ -130,7 +130,12 @@ def compile_template_to_python(root_path, rel_path, file_name):
 
     print "Compiled to %s" % output_path
 
+    return (partial_name, package_name, function_name)
+
 def compile_templates():
+    partials_buffer = "from handlebars import handlebars_template\n\n"
+    partials_buffer += "handlebars_partials = {\n"
+
     root_path = "javascript"
     rel_path_index = len(root_path) + 1
     for dir_path, dir_names, file_names in os.walk(root_path):
@@ -141,7 +146,16 @@ def compile_templates():
                                  dir_path[rel_path_index:],
                                  file_name)
 
-                compile_template_to_python(root_path, dir_path[rel_path_index:], file_name)
+                partial_info = compile_template_to_python(root_path, dir_path[rel_path_index:], file_name)
+
+                partial_string = "    \"%s\": lambda params, partials=None, helpers=None: handlebars_template(\"%s\", \"%s\", params),\n" % (partial_info[0], partial_info[1], partial_info[2])
+                partials_buffer += partial_string
+
+    partials_buffer += "}\n"
+
+    out_file = open(os.path.join("compiled_templates", "__init__.py"), 'w')
+    out_file.write(partials_buffer)
+    out_file.close()
 
 if __name__ == "__main__":
     validate_env()

@@ -167,6 +167,8 @@ class Scope:
             return self.parent
         if name == 'this':
             return self.context
+        if type(self.context) in (list, tuple):
+            return self.context[name]
         result = self.context.get(name, self)
         if result is not self:
             return result
@@ -184,8 +186,11 @@ def resolve(context, *segments):
         if segment in (None, ""):
             continue
         if type(context) in (list, tuple):
-            offset = int(segment)
-            context = context[offset]
+            if segment == 'length':
+                context = len(context)
+            else:
+                offset = int(segment)
+                context = context[offset]
         else:
             context = context.get(segment)
     return context
@@ -193,9 +198,10 @@ def resolve(context, *segments):
 
 def _each(this, options, context):
     result = strlist()
-    for local_context in context:
-        scope = Scope(local_context, this)
-        result.grow(options['fn'](scope))
+    if context:
+        for local_context in context:
+            scope = Scope(local_context, this)
+            result.grow(options['fn'](scope))
     return result
 
 
@@ -204,6 +210,8 @@ def _if(this, options, context):
         context = context(this)
     if context:
         return options['fn'](this)
+    else:
+        return options['inverse'](this)
 
 
 def _log(this, context):

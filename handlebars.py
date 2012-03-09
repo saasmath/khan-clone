@@ -6,8 +6,36 @@ import re
 import simplejson
 import subprocess
 import tempfile
+import urllib
 
+# Helpers (from javascript/shared-package/handlebars-extras.js)
+
+def handlebars_repeat(context, options, count):
+    fn = options["fn"]
+    ret = ""
+
+    for i in range(0, count):
+        ret = ret + u''.join(fn(context))
+
+    return ret
+
+def handlebars_to_login_redirect_href(context, destination):
+    redirectParam = "/postlogin?continue=" + destination
+    return "/login?continue=" + urllib.quote(redirectParam, '')
+
+def handlebars_commafy(context, number):
+    return re.sub(r'(\d)(?=(\d{3})+$)', r'\1,', str(number))
+
+handlebars_helpers = {
+    "repeat": handlebars_repeat,
+    "toLoginRedirectHref": handlebars_to_login_redirect_href,
+    "commafy": handlebars_commafy
+}
+
+# Invoke a template and return the output string
 def handlebars_template(package, name, params):
+    partials = dict()
+
     package_name = package.replace("-", "_")
     function_name = name.replace("-", "_")
 
@@ -21,9 +49,10 @@ def handlebars_template(package, name, params):
             return u""
 
     function = getattr(sys.modules[module_name], function_name)
-    ret = function(params)
+    ret = function(params, helpers=handlebars_helpers, partials=handlebars_partials)
     return u"".join(ret)
 
+# Unit test to ensure that Python & JS outputs match
 class HandlebarsTest(unittest.TestCase):
     def test_handlebars_templates(self):
         matches = []
@@ -43,6 +72,8 @@ class HandlebarsTest(unittest.TestCase):
             source = in_file.read()
             test_data = simplejson.loads(source)
 
+            print "Testing %s..." % handlebars_file
+
             # Run Python template (append extra newline to make comparison with JS easier)
             python_output = str(handlebars_template(package, template_name, test_data)) + "\n"
 
@@ -54,11 +85,14 @@ class HandlebarsTest(unittest.TestCase):
 
             if js_output != python_output:
                 open("python.txt", "w").write(python_output)
-                print "PYTHON:"
-                print python_output
+                #print "PYTHON:"
+                #print python_output
 
                 open("js.txt", "w").write(js_output)
-                print "JS:"
-                print js_output
+                #print "JS:"
+                #print js_output
 
             self.assertEqual(js_output, python_output)
+
+from compiled_templates import handlebars_partials
+

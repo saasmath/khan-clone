@@ -650,8 +650,8 @@ var Profile = {
             this.graph = block.hash.graph;
             return block(this);
         });
-        Handlebars.registerPartial("graph-date-picker", Templates.get("profile.graph-date-picker"));
-        Handlebars.registerPartial("vital-statistics", Templates.get("profile.vital-statistics"));
+        Handlebars.registerPartial("profile_graph-date-picker", Templates.get("profile.graph-date-picker"));
+        Handlebars.registerPartial("profile_vital-statistics", Templates.get("profile.vital-statistics"));
 
         $("#profile-content").html(profileTemplate({
             profileRoot: this.profileRoot,
@@ -786,13 +786,13 @@ var Profile = {
                 });
 
                 Handlebars.registerPartial(
-                        "badge-container",
+                        "profile_badge-container",
                         Templates.get("profile.badge-container"));
                 Handlebars.registerPartial(
-                        "badge",
+                        "profile_badge",
                         Templates.get("profile.badge"));
                 Handlebars.registerPartial(
-                        "user-badge",
+                        "profile_user-badge",
                         Templates.get("profile.user-badge"));
 
                 $.each(data["badgeCollections"], function(collectionIndex, collection) {
