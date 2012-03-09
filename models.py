@@ -151,8 +151,6 @@ class Exercise(db.Model):
     # List of parent topics
     topic_string_keys = object_property.TsvProperty(indexed=False)
 
-    sha1 = "TODO(kamens): sha1s should be cut or accessible (and cached) as properties"
-
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
             "coverers", "prerequisites_ex", "assigned",
@@ -199,6 +197,13 @@ class Exercise(db.Model):
     @property
     def num_milestones(self):
         return len(self.prerequisites) if self.summative else 1
+
+    @property
+    def sha1(self):
+        # TODO(kamens): when exercises.__init__ is cleaned out and this doesn't
+        # cause circular reference issues, import at top of file.
+        from exercises.file_contents import exercise_sha1
+        return exercise_sha1(self)
 
     @staticmethod
     def to_short_name(name):
@@ -660,6 +665,15 @@ class UserExercise(db.Model):
         return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
     @staticmethod
+    def next_in_practice(user_data, exercise):
+        """ Returns single user exercise used to practice specified exercise,
+        all prepped and ready for JSONification
+        """
+        graph = UserExerciseGraph.get(user_data)
+        user_exercise = UserExercise.from_dict(graph.graph_dict(exercise.name), user_data)
+        return UserExercise._prepare_for_stack_api([user_exercise])
+
+    @staticmethod
     def _prepare_for_stack_api(user_exercises, n=3, queued=[]):
         """ Returns the passed-in list of UserExercises, with additional properties
         added in preparation for JSONification by our API.
@@ -670,7 +684,6 @@ class UserExercise(db.Model):
         TODO: when we eventually have support for various API projections, get rid
         of this manual property additions.
         """
-
         # Filter out already queued exercises
         user_exercises = [u_e for u_e in user_exercises if u_e.exercise not in queued][:n]
 

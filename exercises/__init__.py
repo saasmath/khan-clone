@@ -26,6 +26,7 @@ from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
 from exercises.handlers import ViewExercise, ViewExerciseDeprecated
+from exercises.file_contents import raw_exercise_contents
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -320,7 +321,7 @@ class RawExercise(request_handler.RequestHandler):
         self.response.headers["Content-Type"] = "text/html"
         self.response.out.write(raw_exercise_contents(exercise_file))
 
-# TODO(kamens): hoping this whole thing will go away due to power mode
+# TODO(kamens): this whole thing should go away
 @layer_cache.cache(layer=layer_cache.Layers.InAppMemory)
 def exercise_template():
     path = os.path.join(os.path.dirname(__file__), "../khan-exercises/exercises/khan-exercise.html")
@@ -339,7 +340,7 @@ def exercise_template():
 
     return contents
 
-# TODO(kamens): hoping this whole thing will go away due to power mode
+# TODO(kamens): this whole thing should go away
 @layer_cache.cache_with_key_fxn(lambda exercise: "exercise_contents_%s" % exercise.name, layer=layer_cache.Layers.InAppMemory)
 def exercise_contents(exercise):
     contents = raw_exercise_contents("%s.html" % exercise.name)
@@ -373,41 +374,6 @@ def exercise_contents(exercise):
         return result
     else:
         return layer_cache.UncachedResult(result)
-
-@layer_cache.cache_with_key_fxn(lambda exercise_file: "exercise_raw_html_%s" % exercise_file, layer=layer_cache.Layers.InAppMemory)
-def raw_exercise_contents(exercise_file):
-    if templatetags.use_compressed_packages():
-        exercises_dir = "../khan-exercises/exercises-packed"
-        safe_to_cache = True
-    else:
-        exercises_dir = "../khan-exercises/exercises"
-        safe_to_cache = False
-
-    path = os.path.join(os.path.dirname(__file__), "%s/%s" % (exercises_dir, exercise_file))
-
-    f = None
-    contents = ""
-
-    try:
-        f = open(path)
-        contents = f.read()
-    except:
-        raise MissingExerciseException(
-                "Missing exercise file for exid '%s'" % exercise_file)
-    finally:
-        if f:
-            f.close()
-
-    if not len(contents):
-        raise MissingExerciseException(
-                "Missing exercise content for exid '%s'" % exercise_file)
-
-    if safe_to_cache:
-        return contents
-    else:
-        # we are displaying an unpacked exercise, either locally or in prod
-        # with a querystring override. It's unsafe to cache this.
-        return layer_cache.UncachedResult(contents)
 
 def make_wrong_attempt(user_data, user_exercise):
     if user_exercise and user_exercise.belongs_to(user_data):
