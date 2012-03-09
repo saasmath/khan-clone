@@ -282,11 +282,16 @@ Exercises.StackView = Backbone.View.extend({
                 .prepend(
                     $(Templates.get("exercises.card")(context))
                         .css("display", "none")
+                        .css("opacity", 0)
                 )
                 .find(".card-container")
                     .first()
                         .delay(40)
-                        .slideDown(140);
+                        .slideDown(140)
+                        .animate(
+                            { opacity: 1 },
+                            { queue: false, duration: 140 }
+                        );
 
     }
 

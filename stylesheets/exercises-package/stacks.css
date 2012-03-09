@@ -15,6 +15,10 @@
     margin-bottom: 10px;
 }
 
+.current-card-container {
+    position: relative;
+}
+
 .current-card-container-inner {
     border: 1px solid silver;
     background-color: #F8F8F8;
@@ -40,17 +44,14 @@
     -webkit-animation: none;
 }
 
-/* TODO(kamens/jason): all of these animation bits are experimental and
- * webkit-only atm */
+/* TODO(kamens) and TODO(jason): all of these animations are webkit-only atm */
 @-webkit-keyframes translate-center-to-ur {
-    0% { -webkit-transform: translate(0px, 0px); }
-    85% { -webkit-transform: translate(500px, -200px); }
-    100% { -webkit-transform: translate(500px, -200px); }
+    85% { top: -202px; left: 510px; }
+    100% { top: -202px; left: 510px; }
 }
 
 @-webkit-keyframes shrink-right-and-fade {
-    0% { -webkit-transform: scale(1.0); }
-    85% { opacity: 1.0; -webkit-transform: scale(0.1); }
+    85% { opacity: 0.15; -webkit-transform: scale(0.1); }
     100% { opacity: 0.0; -webkit-transform: scale(0.1); }
 }
 
@@ -66,7 +67,8 @@
 }
 
 .current-card.shrinkLeft .current-card-container {
-    -webkit-transform: translate(-500px, -240px);
+    left: -510px;
+    top: -202px;
 }
 .current-card.shrinkLeft .current-card-container-inner {
     -webkit-transform: scale(0.1);
