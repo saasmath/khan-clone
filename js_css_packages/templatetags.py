@@ -100,7 +100,6 @@ def js_dynamic_package(package_name):
     return "\n".join(list_js)
 
 def css_package(package_name):
-
     if not use_compressed_packages():
         package = packages.stylesheets[package_name]
     else:
@@ -109,9 +108,15 @@ def css_package(package_name):
 
     list_css = []
     if not use_compressed_packages():
-        for filename in package["files"]:
-            list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
-                % (base_url, filename))
+        if "files" in package:
+            for filename in package["files"]:
+                list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
+                    % (base_url, filename))
+        if "less" in package:
+            #TODO: Make LESS work in non-dev mode also
+            for filename in package["less"]:
+                list_css.append("<link rel='stylesheet/less' type='text/css' href='%s/%s' />" \
+                    % (base_url, filename))
     elif package_name+'-non-ie' not in packages_compressed.compressed_stylesheets:
         list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
             % (util.static_url(base_url), package["hashed-filename"]))
