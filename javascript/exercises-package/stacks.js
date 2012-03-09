@@ -680,9 +680,11 @@ Exercises.SessionStats = Backbone.Model.extend({
 
                 stat = progressStats[exerciseName] || {
                     displayName: userExercise.exerciseModel.displayName,
+                    startTotalDone: userExercise.totalDone,
                     start: userExercise.progress * 100
                 };
 
+            stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress * 100;
             stat.change = stat.end - stat.start;
 
@@ -695,8 +697,19 @@ Exercises.SessionStats = Backbone.Model.extend({
 
     },
 
+    /**
+     * Return list of stat objects for only those exercises which had at least
+     * one problem done during this session.
+     */
     progressStats: function() {
-        return { progress: _.values(this.get("progress") || {}) };
+        return { progress: 
+            _.filter(
+                    _.values(this.get("progress") || {}),
+                    function(stat) {
+                        return stat.endTotalDone && stat.endTotalDone > stat.startTotalDone;
+                    }
+            )
+        };
     }
 
 });
