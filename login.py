@@ -405,5 +405,7 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             # We're good!
             user_data.set_password(password1)
-            self.response.write("OK")
-
+            cont = self.request_string("continue")
+            
+            # Need to create a new auth token as the existing cookie will expire
+            Login.redirect_with_auth_stamp(self, user_data, cont)

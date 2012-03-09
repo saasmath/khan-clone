@@ -10,6 +10,7 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     profile: null,
+    secureUrlBase: null,
 
     /**
      * The root segment of the URL for the profile page for this user.
@@ -50,6 +51,7 @@ var Profile = {
 
         this.profileRoot = root;
         this.isDataCollectible = json.isDataCollectible;
+        this.secureUrlBase = json.secureUrlBase;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
 

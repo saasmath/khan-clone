@@ -1,5 +1,5 @@
 <h4 style="margin-top: 2em">Change password</h4>
-<form id="pw-change-form" method="POST" action="/pwchange">
+<form id="pw-change-form" method="POST" action="{{secureUrlBase}}pwchange">
 <table>
 <tr>
     <td class="input-label-cell">Current password:</td>
@@ -16,5 +16,6 @@
 </table>
 
 <input id="submit-settings" type="button" value="Change password" class="simple-button action-gradient green" style="margin-top: 1em;">
+<input id="continue" name="continue" type="hidden">
 </form>
 
