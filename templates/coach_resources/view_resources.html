@@ -11,9 +11,224 @@
 {% endblock pagesubmenu %}
 
 {% block pagecontent %}
+<style type="text/css">
+.row {
+  margin-left: -20px;
+  *zoom: 1;
+}
+.row:before, .row:after {
+  display: table;
+  content: "";
+}
+.row:after {
+  clear: both;
+}
+[class*="span"] {
+  float: left;
+  margin-left: 20px;
+}
+.span1 {
+  width: 60px;
+}
+.span2 {
+  width: 140px;
+}
+.span3 {
+  width: 220px;
+}
+.span4 {
+  width: 300px;
+}
+.span5 {
+  width: 380px;
+}
+.span6 {
+  width: 460px;
+}
+.span7 {
+  width: 540px;
+}
+.span8 {
+  width: 620px;
+}
+.span9 {
+  width: 700px;
+}
+.span10 {
+  width: 780px;
+}
+.span11 {
+  width: 860px;
+}
+.span12, .container {
+  width: 940px;
+}
+.offset1 {
+  margin-left: 100px;
+}
+.offset2 {
+  margin-left: 180px;
+}
+.offset3 {
+  margin-left: 260px;
+}
+.offset4 {
+  margin-left: 340px;
+}
+.offset5 {
+  margin-left: 420px;
+}
+.offset6 {
+  margin-left: 500px;
+}
+.offset7 {
+  margin-left: 580px;
+}
+.offset8 {
+  margin-left: 660px;
+}
+.offset9 {
+  margin-left: 740px;
+}
+.offset10 {
+  margin-left: 820px;
+}
+.offset11 {
+  margin-left: 900px;
+}
+.row-fluid {
+  width: 100%;
+  *zoom: 1;
+}
+.row-fluid:before, .row-fluid:after {
+  display: table;
+  content: "";
+}
+.row-fluid:after {
+  clear: both;
+}
+.row-fluid > [class*="span"] {
+  float: left;
+  margin-left: 2.127659574%;
+}
+.row-fluid > [class*="span"]:first-child {
+  margin-left: 0;
+}
+.row-fluid > .span1 {
+  width: 6.382978723%;
+}
+.row-fluid > .span2 {
+  width: 14.89361702%;
+}
+.row-fluid > .span3 {
+  width: 23.404255317%;
+}
+.row-fluid > .span4 {
+  width: 31.914893614%;
+}
+.row-fluid > .span5 {
+  width: 40.425531911%;
+}
+.row-fluid > .span6 {
+  width: 48.93617020799999%;
+}
+.row-fluid > .span7 {
+  width: 57.446808505%;
+}
+.row-fluid > .span8 {
+  width: 65.95744680199999%;
+}
+.row-fluid > .span9 {
+  width: 74.468085099%;
+}
+.row-fluid > .span10 {
+  width: 82.97872339599999%;
+}
+.row-fluid > .span11 {
+  width: 91.489361693%;
+}
+.row-fluid > .span12 {
+  width: 99.99999998999999%;
+}
+.container {
+  width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+  *zoom: 1;
+}
+.container:before, .container:after {
+  display: table;
+  content: "";
+}
+.container:after {
+  clear: both;
+}
+.container-fluid {
+  padding-left: 20px;
+  padding-right: 20px;
+  *zoom: 1;
+}
+.container-fluid:before, .container-fluid:after {
+  display: table;
+  content: "";
+}
+.container-fluid:after {
+  clear: both;
+}
 
+.bigdeal { margin-top:2em; }
+.bigdeal .bigpic {overflow:hidden; height:250px; }
+.bigdeal .bigpic img{ width:100%; }
+.smallpic {background-color: #ddd; height:150px; }
+.extra-resources {margin-top:3em;}
+</style>
+<article id="coach-slash">
+    <div class="login row">
+        <span class="span1">Login </span>
+        <span class="fb span2">with facebook</span>
+        <span class="goog span2">with google</span>
+    </div>
+    
+    <div class="bigdeal row">
+        <div class="bigpic span5 offset1">
+            <img src="/images/teacher-classroom.png" alt="a teacher interacting with students">
+        </div>
+        <div class="bigcallout span5 offset2">
+            <h2>Be Awesome TK</h2>
+            <p>Check out the free resources available to all coaches at the khan academy. TKTKTK</p>
+        </div>
+    </div>
+
+    <div class="extra-resources row">
+        <div class="span3">
+            <div class="smallpic"></div>
+            <h3>still awesome TK</h3>
+            <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
+        </div>
+        <div class="span3">
+            <div class="smallpic"></div>
+            <h3>still awesome TK</h3>
+            <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
+        </div>
+        <div class="span3">
+            <div class="smallpic"></div>
+            <h3>still awesome TK</h3>
+            <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
+        </div>
+        <div class="span3">
+            <div class="smallpic"></div>
+            <h3>still awesome TK</h3>
+            <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
+        </div>
+
+    </div>
+
+</article>
+
+{# 
 <article id="coach-resources">
-    <div class="col1 fifty-fifty" style="text-align: center; padding-top: 18px;">
+    
+   <div class="col1 fifty-fifty" style="text-align: center; padding-top: 18px;">
         <a href="/toolkit">
             <img class="rounded-background" src="/images/large-tree-transparent.png" style="width:400px;" />
         </a>
@@ -41,7 +256,7 @@
             <input type="email" size=105 name="email" placeholder="Enter your email" value="">
         {% endif %}
         <input type = "submit" value="Register your class" class="simple button action gradient">
-    </form>
+    </form> 
 
     {% if coach_email %}
         {% if is_profile_empty %}
@@ -59,5 +274,5 @@
         </div>
     {% endif %}
 </article>
-
+#}
 {% endblock pagecontent %}
