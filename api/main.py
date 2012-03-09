@@ -1,6 +1,7 @@
 import logging
+from types import GeneratorType
 
-from wsgiref.handlers import CGIHandler
+from google.appengine.ext.webapp.util import run_wsgi_app
 
 import request_cache
 from app import App
@@ -15,46 +16,59 @@ from api import auth #@UnusedImport
 from api import v0 #@UnusedImport
 from api import v1 #@UnusedImport
 
-def real_main():
+class ProfilerMiddleware(object):
+    def __init__(self, app):
+        self.app = app
 
-    wsgi_app = request_cache.RequestCacheMiddleware(api_app)
-    wsgi_app = profiler.ProfilerWSGIMiddleware(wsgi_app)
-    wsgi_app = middleware.GAEBingoWSGIMiddleware(wsgi_app)
+    def __call__(self, environ, start_response):
+        # This is the main function for profiling
+        # We've renamed our original main() above to real_main()
+        import cProfile, pstats
+        prof = cProfile.Profile()
 
-    if App.is_dev_server:
-        try:
-            # Run debugged app
-            from werkzeug_debugger_appengine import get_debugged_app
-            api_app.debug = True
-            debugged_app = get_debugged_app(wsgi_app)
-            CGIHandler().run(debugged_app)
-            return
-        except Exception, e:
-            api_app.debug = False
-            logging.warning("Error running debugging version of werkzeug app, running production version: %s" % e)
+        # Get profiled wsgi result
+        result = prof.runcall(lambda *args, **kwargs: self.app(environ, start_response), None, None)
 
-    # Run production app
-    from google.appengine.ext.webapp.util import run_wsgi_app
-    run_wsgi_app(wsgi_app)
+        # If we're dealing w/ a generator, profile all of the .next calls as well
+        if type(result) == GeneratorType:
+            while True:
+                try:
+                    yield prof.runcall(result.next)
+                except StopIteration:
+                    break
+        else:
+            for value in result:
+                yield value
 
-def profile_main():
-    # This is the main function for profiling
-    # We've renamed our original main() above to real_main()
-    import cProfile, pstats
-    prof = cProfile.Profile()
-    prof = prof.runctx("real_main()", globals(), locals())
-    print "<pre>"
-    stats = pstats.Stats(prof)
-    stats.sort_stats("cumulative")  # time or cumulative
-    stats.print_stats(80)  # 80 = how many to print
-    # The rest is optional.
-    # stats.print_callees()
-    stats.print_callers()
-    print "</pre>"
+        print "<pre>"
+        stats = pstats.Stats(prof)
+        stats.sort_stats("cumulative")  # time or cumulative
+        stats.print_stats(80)  # 80 = how many to print
+        # The rest is optional.
+        # stats.print_callees()
+        stats.print_callers()
+        print "</pre>"
+
+
+application = request_cache.RequestCacheMiddleware(api_app)
+application = profiler.ProfilerWSGIMiddleware(application)
+application = middleware.GAEBingoWSGIMiddleware(application)
+
+if App.is_dev_server:
+    try:
+        # Run debugged app
+        from werkzeug_debugger_appengine import get_debugged_app
+        api_app.debug = True
+        application = get_debugged_app(application)
+    except Exception, e:
+        api_app.debug = False
+        logging.warning("Error running debugging version of werkzeug app, running production version: %s" % e)
     
-main = real_main
 # Uncomment the following line to enable profiling 
-# main = profile_main
+#application = ProfilerMiddleware(application)
+
+def main():
+    run_wsgi_app(application)
 
 # Use App Engine app caching
 if __name__ == "__main__":
