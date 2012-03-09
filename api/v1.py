@@ -15,8 +15,9 @@ from badges.templatetags import badge_notifications_html
 from phantom_users.templatetags import login_notifications_html
 from exercises import attempt_problem, make_wrong_attempt
 from models import StudentList
-from phantom_users.phantom_util import api_create_phantom
+from phantom_users.phantom_util import api_create_phantom, api_disallow_phantoms
 import notifications
+import user_util
 import coaches
 from gae_bingo.gae_bingo import bingo
 from autocomplete import video_title_dicts, topic_title_dicts, url_title_dicts
@@ -1078,18 +1079,22 @@ def update_user_profile():
 
 @route("/api/v1/user/coaches", methods=["GET"])
 @oauth_required()
+@api_disallow_phantoms
 @jsonp
 @jsonify
 def get_coaches_and_requesters():
     """ Return list of UserProfiles corresponding to the student's
         coaches and coach requesters
     """
-    # TODO(marcia): Only reveal coach information for self
     user_data = request.request_visible_student_user_data()
+    if not user_util.is_current_user(user_data):
+        return api_unauthorized_response("You can only see your own coaches.")
+
     return util_profile.UserProfile.get_coach_and_requester_profiles_for_student(user_data)
 
 @route("/api/v1/user/coaches", methods=["PUT"])
 @oauth_required()
+@api_disallow_phantoms
 @jsonp
 @jsonify
 def update_coaches_and_requesters():

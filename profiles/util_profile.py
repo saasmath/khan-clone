@@ -256,6 +256,7 @@ class UserProfile(object):
     def __init__(self):
         self.username = None
         self.email = ""
+        self.is_phantom = True
         
         # Indicates whether or not the profile has been marked public. Not
         # necessarily indicative of what fields are currently filled in this
@@ -338,6 +339,7 @@ class UserProfile(object):
 
         profile.is_self = is_self
         profile.is_coaching_logged_in_user = is_coaching_logged_in_user
+        profile.is_phantom = user.is_phantom
 
         profile.is_public = user.has_public_profile()
         if full_projection:

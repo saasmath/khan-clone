@@ -245,10 +245,16 @@ var Profile = {
 
         showCoaches: function() {
             Profile.populateCoaches();
+
             $("#tab-content-coaches").show()
                 .siblings().hide();
+
             this.activateRelatedTab("people coaches");
             this.updateTitleBreadcrumbs(["Coaches"]);
+
+            if (Profile.profile.get("isPhantom")) {
+                Profile.showNotification("no-coaches-for-phantoms");
+            }
         },
 
         activateRelatedTab: function(rel) {

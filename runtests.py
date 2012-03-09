@@ -3,8 +3,11 @@
 import optparse
 import os
 import sys
-# Install the Python unittest2 package before you run this script.
-import unittest2
+# For python2.5, install the Python unittest2 package before you run this script.
+try:   # Work under either python2.5 or python2.7
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 USAGE = """%prog [TEST_PATH] [options]
 
@@ -51,13 +54,13 @@ def main(test_path):
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages"))
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages/flask.zip"))
 
-    loader = unittest2.loader.TestLoader()
+    loader = unittest.loader.TestLoader()
     if test_path.endswith('.py'):
         suite =  loader.loadTestsFromName(file_path_to_module(test_path))
     else:
         suite = loader.discover(test_path, pattern=TEST_FILE_RE)
 
-    result = unittest2.TextTestRunner(verbosity=2).run(suite)
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
     return not result.wasSuccessful()
 
 if __name__ == '__main__':
