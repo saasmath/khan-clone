@@ -4,7 +4,9 @@ try:
     import secrets
 except:
     class secrets(object):
-        pass
+        # TODO(benkomalo): this is only a temporary stopgap to allow
+        # devs to deploy without a token_recipe_key in their secrets file.
+        token_recipe_key = None
 
 # A singleton shared across requests
 class App(object):
