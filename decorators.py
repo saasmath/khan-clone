@@ -12,6 +12,15 @@ def clamp(min_val, max_val):
     return decorator
 
 def lock(key=None, timeout=10):
+    """A mutually exclusive (mutex) lock based on memcache.  
+    USE WITH EXTREME CAUTION:
+    
+    It should be used only on things that two processes should not be doing at 
+    the same time.  It could be used on an expensive function that will then be 
+    cached, so that more than one process does not have to do that function, 
+    but if the cache dies for some reason, you could get a lot of processes 
+    waiting serially for the next one to finish.
+    """
     def decorator(func):
         @wraps(func)
         def wrapped(*arg, **kwargs):
