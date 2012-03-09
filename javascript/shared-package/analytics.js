@@ -22,7 +22,7 @@
             events: {}
         },
 
-        // On page load, load the persist data from cookies and try to send any events
+        // On page load, load the persist data from sessionStorage and try to send any events
         // that didn't get sent last time.
         loadAndSendPersistData: function() {
             if (window.sessionStorage) {
@@ -68,7 +68,7 @@
             KAConsole.log("Successfully sent event " + event.name + " (" + event.id + ")");
         },
 
-        // Save the queue to a cookie
+        // Save the queue to sessionStorage
         storePersistData: function() {
             if (window.sessionStorage) {
                 this.persistData.timestamp = Date.now();
