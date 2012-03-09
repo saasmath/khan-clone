@@ -5,6 +5,7 @@ from google.appengine.api import users
 enabled_profiler_emails = [
     "benkomalo@gmail.com",
     "chris@khanacademy.org",
+    "csilvers@khanacademy.org",
     "davidhu91@gmail.com",
     "dmnd@desmondbrand.com",
     "jace.kohlmeier@gmail.com",
