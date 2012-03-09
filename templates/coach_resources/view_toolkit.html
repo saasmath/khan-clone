@@ -9,7 +9,10 @@
 {% block meta_page_title %}Teacher Toolkit | {% endblock meta_page_title %}
 {% block pagescript %}
     <style>
-        #public #container #form1 #header {
+        
+	/* Special thanks to #business.Twitter for inspiration behind callout and lead styling */
+		
+		#public #container #form1 #header {
 			display: none; 
 		}
 		
@@ -86,18 +89,17 @@
 	        </a></li>
 	        
 			<li>
-	            <span class="inactive link-section-header">Committing to KA</span>
+	            <span class="inactive link-section-header">Choosing KA</span>
 	            <ul class="vertical-tab-list second-tier">
 	                <li><a href="{{base_url}}/how-to-use-this-toolkit" class="tab-link no-recolor {% if 'how-to-use-this-toolkit' == selected_id %}active-tab{% endif %}" rel="section-1">How to use this toolkit</a></li>
 	                <li><a href="{{base_url}}/toolkit-sections" class="tab-link no-recolor {% if 'toolkit-sections' == selected_id %}active-tab{% endif %}" rel="section-2">Toolkit sections</a></li>
-					<li><a href="{{base_url}}/common-questions" class="tab-link no-recolor {% if 'common-questions' == selected_id %}active-tab{% endif %}" rel="section-3">Common Questions</a></li>
+					<li><a href="{{base_url}}/KA-classrooms" class="tab-link no-recolor {% if 'KA-classrooms' == selected_id %}active-tab{% endif %}" rel="section-3">KA Classrooms</a></li>
 	            </ul>
 	        </li>
 	        <li>
 	            <span class="inactive link-section-header">Getting Started</span>
 	            <ul class="vertical-tab-list second-tier">
 	                <li><a href="{{base_url}}/setting-up-accounts" class="tab-link no-recolor {% if 'setting-up-accounts' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">Setting up accounts</a></li>
-	                <!--li><a href="{{base_url}}/release-documents" class="tab-link no-recolor {% if 'release-documents' == selected_id %}active-tab{% endif %}" rel="getting-started documents">Release documents</a></li>
 	                <li><a href="{{base_url}}/technology" class="tab-link no-recolor {% if 'technology' == selected_id %}active-tab{% endif %}" rel="getting-started technology">Technology</a></li>
 	                <li><a href="{{base_url}}/navigating-the-site" class="tab-link no-recolor {% if 'navigating-the-site' == selected_id %}active-tab{% endif %}" rel="getting-started navigating">Navigating the Site</a></li>
 	                <li><a href="{{base_url}}/first-week" class="tab-link no-recolor {% if 'first-week' == selected_id %}active-tab{% endif %}" rel="getting-started warming">1st day/week/month</a></li-->
@@ -116,8 +118,8 @@
 	        <li>
 	            <span class="inactive link-section-header">Curriculum</span>
 	            <ul class="vertical-tab-list second-tier">
-	                <li><a href="{{base_url}}/six-step-process" class="tab-link no-recolor {% if 'six-step-process' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">6-step process</a></li>
-	                <li><a href="{{base_url}}/sample-unit-plans" class="tab-link no-recolor {% if 'sample-unit-plans' == selected_id %}active-tab{% endif %}" rel="getting-started documents">Sample unit plans</a></li>
+	                <li><a href="{{base_url}}/individualized-units" class="tab-link no-recolor {% if 'individualized-units' == selected_id %}active-tab{% endif %}" rel="getting-started accounts">Individualized units</a></li>
+	                
 	            </ul>
 	        </li>
 	        <li>
