@@ -34,6 +34,7 @@ javascript = {
             "templates.js",
             "bootstrap-modal.js",
             "../../gae_bingo/static/js/gae_bingo.js",
+            "less-1.2.2.min.js",
 
             # application code & templates:
             "streak-bar.handlebars",
@@ -354,8 +355,8 @@ stylesheets = {
         ]
     },
     "exercises": {
-        "files": [
-            "stacks.css",
+        "less": [
+            "stacks.less",
         ]
     },
     "topicsadmin": {
