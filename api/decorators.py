@@ -1,7 +1,7 @@
 import hashlib
 import zlib
 from base64 import b64encode, b64decode
-from pickle import dumps, loads
+from cPickle import dumps, loads
 from functools import wraps
 
 import flask

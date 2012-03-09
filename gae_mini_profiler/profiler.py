@@ -2,7 +2,7 @@ import datetime
 import time
 import logging
 import os
-import pickle
+import cPickle as pickle
 import re
 import simplejson
 import StringIO

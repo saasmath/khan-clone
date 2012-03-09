@@ -1,4 +1,4 @@
-import pickle
+import cPickle as pickle
 import datetime
 
 from google.appengine.ext import db

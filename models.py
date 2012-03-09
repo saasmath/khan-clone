@@ -4,7 +4,7 @@ import datetime, logging
 import simplejson as json
 import math
 import urllib
-import pickle
+import cPickle as pickle
 import random
 import itertools
 
@@ -3154,7 +3154,6 @@ class Topic(Searchable, db.Model):
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data
     import zlib
-    import pickle
 
     tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
 

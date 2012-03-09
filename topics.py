@@ -8,7 +8,7 @@ import layer_cache
 import urllib2
 import simplejson
 import zlib
-import pickle
+import cPickle as pickle
 
 from api.auth.xsrf import ensure_xsrf_cookie
 from google.appengine.ext import deferred
