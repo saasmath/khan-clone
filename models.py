@@ -589,7 +589,7 @@ class UserExercise(db.Model):
         """ Returns the next n suggested user exercises for this topic,
         all prepped and ready for JSONification
 
-        TODO(kamens) but really TODO(jace): *This* is where the magic will happen.
+        TODO(jace): *This* is where the magic will happen.
         """
         exercises = [ex for ex in topic.get_exercises(include_descendants=True) if ex.live]
         graph = UserExerciseGraph.get(user_data, exercises_allowed=exercises)
