@@ -1,5 +1,12 @@
 <div class="end-of-stack-info">
-    <h1>TOTAL STACK DOMINATION</h1>
+    <div class="title clearfix">
+        <div class="stack-stats">
+            <p>{{longestStreak}} Streak!</p>
+            <p>{{longestSpeedStreak}} Speedy Answers</p>
+            <p>{{totalLeaves}} Leaves</p>
+        </div>
+        <h1>TOTAL STACK DOMINATION</h1>
+    </div>
     <div class="progress-graph">
 	    {{#each progress}}
 	    	<h2 class="skill-bar-title">{{exerciseName}}</h2>
@@ -12,13 +19,8 @@
 	        </div>
 	    {{/each}}
     </div>
-    <div class="stack-stats">
-       <p>{{longestStreak}} Streak!</p>
-       <p>{{speedyCards}} Speedy Answers</p>
-       <p>{{totalLeaves}} Leaves</p>
-   </div>
-   <div class="stack-controls">
-   	   <!-- TODO Jason/Kamens: Get real URLs in here -->
-       <a href="/exercisedashboard" class="simple-button action-gradient">Take a Break</a><a href="/math/arithmetic/addition-subtraction/e/" class="simple-button action-gradient green">More Stacks!</a>
-   </div>
+    <div class="stack-controls">
+      <!-- TODO Jason/Kamens: Get real URLs in here -->
+      <a href="/exercisedashboard" class="simple-button action-gradient left">Take a Break</a><a href="/math/arithmetic/addition-subtraction/e/" class="simple-button action-gradient green right">More Stacks!</a>
+    </div>
 </div>

@@ -285,29 +285,41 @@
 
 /* End of Stack Card Styling */
 
+.end-of-stack-info .title h1 {
+    float: left;
+}
 .end-of-stack-info .stack-controls .simple-button {
     display: inline-block;
     font-size: 150%;
     text-align: center;
     width: 48%;
-    margin: 0 1%;
 
     box-sizing: border-box;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
 }
-
+.end-of-stack-info .stack-controls .right {
+    margin: 0 0 0 2%;
+}
+.end-of-stack-info .stack-controls .left {
+    margin: 0 2% 0 0;
+}
+.end-of-stack-info .stack-stats {
+    float: right;
+}
 .end-of-stack-info .stack-stats p {
     display: inline-block;
-    width: 33%;
     text-align: center;
-    font-size: 200%;
+    font-size: 150%;
+    margin: 0;
+    margin-left: 40px;
 }
 
 .end-of-stack-info .progress-graph {
     background: white;
     padding: 20px;
     border: 1px solid #CCC;
+    margin-bottom: 22px;
 }
 
 .end-of-stack-info .progress-graph .skill-bar-title {
