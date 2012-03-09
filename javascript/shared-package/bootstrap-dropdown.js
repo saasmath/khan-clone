@@ -53,8 +53,12 @@
 
       isActive = $parent.hasClass('open')
 
-      clearMenus()
-      !isActive && $parent.toggleClass('open')
+      if (isActive) {
+        clearMenus()
+      } else {
+        $(toggle).trigger('open')
+        $parent.toggleClass('open')
+      }
 
       return false
     }
@@ -62,7 +66,8 @@
   }
 
   function clearMenus() {
-    $(toggle).parent().removeClass('open')
+    $(toggle).trigger('close')
+        .parent().removeClass('open')
   }
 
 

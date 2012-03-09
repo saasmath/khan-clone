@@ -233,11 +233,21 @@ UserCardView = Backbone.View.extend({
         return this;
     },
 
+    onDropdownOpen_: function() {
+        this.$(".dropdown-toggle").addClass("toggled");
+    },
+
+    onDropdownClose_: function() {
+        this.$(".dropdown-toggle").removeClass("toggled");
+    },
+
     delegateEditEvents_: function() {
         if (this.model.isEditable()) {
-            $(".dropdown-toggle").dropdown();
             this.bindQtip_();
             this.delegateEvents(this.editEvents);
+            this.$(".dropdown-toggle").dropdown()
+                .bind("open", _.bind(this.onDropdownOpen_, this))
+                .bind("close", _.bind(this.onDropdownClose_, this));
         }
     },
 
