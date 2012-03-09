@@ -177,53 +177,88 @@
 }
 
 .bigdeal { margin-top:2em; }
-.bigdeal .bigpic {overflow:hidden; height:250px; }
+.bigdeal .bigpic {overflow:hidden; height:230px; -webkit-border-radius:8px; }
 .bigdeal .bigpic img{ width:100%; }
-.smallpic {background-color: #ddd; height:150px; }
-.extra-resources {margin-top:3em;}
+.bigdeal h2 {font-family: museosans-300; font-size:28px; color: rgb(137, 185, 8); }
+.smallpic { height:120px; border-bottom:2px solid #e3f1f9; margin-bottom:1em; }
+.extra-resources { margin-top:1em; }
+.extra-resources h3 { color: #444; }
+.extra-resources h3 small {color: #900; position:relative; font-size:9px; top:-4px; text-transform:uppercase; letter-spacing:1px;}
+.extra-resources p{ font-size:12px; line-height:1.5em; }
+.middle.row {margin-top: 3em; position:relative; }
+.middle.row hr {
+    height:0; width:100%; 
+    border-bottom: 2px solid #d0e39c; position:absolute; }
+.middle.row h4 {
+    text-transform:uppercase; letter-spacing: 4px; 
+    width:auto; text-align:center; color:#444;
+    font-family: MuseoSans-300; font-size:12px;
+    margin-top:.5em; position:relative; 
+}
+.middle.row h4 span {background-color:white; padding:0 15px; }
 </style>
-<article id="coach-slash">
+
+<article id="coach-splash">
+
+<div class="container">
     <div class="login row">
         <span class="span1">Login </span>
         <span class="fb span2">with facebook</span>
         <span class="goog span2">with google</span>
     </div>
     
+    
     <div class="bigdeal row">
-        <div class="bigpic span5 offset1">
+
+        <div class="bigpic span5">
             <img src="/images/teacher-classroom.png" alt="a teacher interacting with students">
         </div>
-        <div class="bigcallout span5 offset2">
-            <h2>Be Awesome TK</h2>
-            <p>Check out the free resources available to all coaches at the khan academy. TKTKTK</p>
+        <div class="bigcallout span6 offset1">
+            <h2>Jumpstart Your Classroom</h2>
+            <p>The Khan Academy offers a wealth of resources to all educators. Visit our coach toolkit and see the incredible things other teachers and coaches are doing with the Khan Academy right now.
+            <p>We're committed to providing top-tier resources to our coaches. Free. Always. Comprehensive data and meaningful analytics are only the beginning.</p>
         </div>
+    </div>
+
+    <div class="middle row">
+        <hr>
+        <h4><span>Plus, all coaches get access to</span></h4>
     </div>
 
     <div class="extra-resources row">
         <div class="span3">
-            <div class="smallpic"></div>
-            <h3>still awesome TK</h3>
+            <div class="smallpic">
+                <img src="/images/toolkit-01.png">
+            </div>
+            <h3>Rich Data</h3>
             <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
         </div>
         <div class="span3">
-            <div class="smallpic"></div>
-            <h3>still awesome TK</h3>
+            <div class="smallpic">
+                <img src="/images/toolkit-02.png">
+            </div>
+            <h3>Your Questions</h3>
             <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
         </div>
         <div class="span3">
-            <div class="smallpic"></div>
-            <h3>still awesome TK</h3>
+            <div class="smallpic">
+                <img src="/images/toolkit-03.png">
+            </div>
+            <h3>Common Core <small>alpha</small></h3>
             <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
         </div>
         <div class="span3">
-            <div class="smallpic"></div>
-            <h3>still awesome TK</h3>
+            <div class="smallpic">
+                <img src="/images/toolkit-04.png">
+            </div>
+            <h3>Keep In Touch</h3>
             <p>awesome awesome awesome doo dee doo. awesome awesome awesome. TKTKTK
         </div>
 
     </div>
 
 </article>
+</div>
 
 {# 
 <article id="coach-resources">
