@@ -288,6 +288,12 @@ var VideoStats = {
             } else {
                 VideoControls.setAutoPlayEnabled(false);
             }
+            
+            if (this.analyticsActivity) {
+                this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackActivityEnd(this.analyticsActivity);
+                this.analyticsActivity = null;
+            }
         } else if (state === 2 && playing) { // paused
             this.playing = false;
             if (this.getSecondsWatchedSinceSave() > 1) {
@@ -299,10 +305,29 @@ var VideoStats = {
             } else {
                 VideoControls.setAutoPlayEnabled(false);
             }
+            
+            if (this.analyticsActivity) {
+                this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
+                Analytics.trackActivityEnd(this.analyticsActivity);
+                this.analyticsActivity = null;
+            }
         } else if (state === 1) { // play
             this.playing = true;
             this.dtLastSaved = new Date();
             this.dPercentLastSaved = this.getPercentWatched();
+
+            if (!this.analyticsActivity) {
+                var id = "";
+                if (this.sVideoKey !== null) {
+                    id = this.sVideoKey;
+                } else if (this.sYoutubeId !== null) {
+                    id = this.sYoutubeId;
+                }
+                this.analyticsActivity = Analytics.trackActivityBegin("Video Play", {
+                    "Video ID": id,
+                    "Percent (begin)": this.dPercentLastSaved
+                });
+            }
         }
         // If state is buffering, unstarted, or cued, don't do anything
     },
@@ -389,6 +414,30 @@ var VideoStats = {
             if (window.Video && Video.updateVideoPoints) {
                 Video.updateVideoPoints(video.points);
             }
+
+            if (video.completed) {
+                var id = "";
+                if (this.sVideoKey !== null) {
+                    id = this.sVideoKey;
+                } else if (this.sYoutubeId !== null) {
+                    id = this.sYoutubeId;
+                }
+                Analytics.trackSingleEvent("Video Complete", {
+                    "Video ID": id
+                });
+            }
+        }
+    },
+
+    updatePoints: function(points) {
+        var jelPoints = $(".video-energy-points");
+        if (jelPoints.length)
+        {
+            jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, points));
+            $(".video-energy-points-current", jelPoints).text(points);
+
+            // Replace the old tooltip with an updated one.
+            VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
         }
     },
 
