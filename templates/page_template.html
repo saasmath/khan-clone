@@ -219,9 +219,10 @@
         {# Analytics utility #}
         {% if mixpanel_enabled %}
         $(function() {
+            mpq.identify("{{ mixpanel_id }}");
+
+            {# Slightly nicer display name in MixPanel dashboard #}
             {% if logged_in %}
-            // Pass user data to MixPanel
-            mpq.identify("{{ user_data.email }}");
             mpq.name_tag("{{ username }}");
             {% endif %}
 

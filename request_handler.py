@@ -5,6 +5,7 @@ import simplejson
 import sys
 import re
 import traceback
+import gae_bingo.identity
 
 from google.appengine.api import users
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
@@ -355,6 +356,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         # Analytics
         template_values['mixpanel_enabled'] = gandalf('mixpanel_enabled')
+        template_values['mixpanel_id'] = gae_bingo.identity.identity()
 
         if False: # Enable for testing only
             template_values['mixpanel_test'] = "70acc4fce4511b89477ac005639cfee1"
