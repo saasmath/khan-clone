@@ -2,11 +2,13 @@ import os
 
 try:
     import secrets
+    # TODO(benkomalo): this is only a temporary stopgap to allow
+    # devs to deploy without a token_recipe_key in their secrets file.
+    if not hasattr(secrets, 'token_recipe_key'):
+        setattr(secrets, 'token_recipe_key', None)
 except:
     class secrets(object):
-        # TODO(benkomalo): this is only a temporary stopgap to allow
-        # devs to deploy without a token_recipe_key in their secrets file.
-        token_recipe_key = None
+        pass
 
 # A singleton shared across requests
 class App(object):
