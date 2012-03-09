@@ -179,8 +179,6 @@ var Badges = {
             jel.remove();
             $("body").append(sBadgeContainerHtml);
             jel = $(".badge-award-container");
-
-            if (jel.length) Social.init(jel);
         }
 
         if (!jel.length) return;

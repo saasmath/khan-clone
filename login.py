@@ -218,6 +218,9 @@ class Logout(request_handler.RequestHandler):
         handler.delete_cookie('ureg_id')
         handler.delete_cookie(auth.cookies.AUTH_COOKIE_NAME)
 
+        # Delete session cookie set by flask (used in /api/auth/token_to_session)
+        handler.delete_cookie('session')
+
         # Delete Facebook cookie, which sets ithandler both on "www.ka.org" and ".www.ka.org"
         if App.facebook_app_id:
             handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)

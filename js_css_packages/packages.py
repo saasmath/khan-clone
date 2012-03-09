@@ -150,7 +150,6 @@ javascript = {
             "coaches.js",
             "coach.handlebars",
             "no-coaches.handlebars",
-            "no-requests.handlebars",
             "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",

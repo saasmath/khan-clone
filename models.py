@@ -1478,18 +1478,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         return count > 0
 
-    def coach_emails(self):
-        """ Return coaches' emails... but going to be removed imminently!
-        
-        Watch out!
-        """
-        emails = []
-        for key_email in self.coaches:
-            user_data_coach = UserData.get_from_db_key_email(key_email)
-            if user_data_coach:
-                emails.append(user_data_coach.email)
-        return emails
-
     def remove_student_lists(self, removed_coach_emails):
         """ Remove student lists associated with removed coaches.
         """
@@ -1844,29 +1832,33 @@ class TopicVersion(db.Model):
     def set_default_version(self):
         logging.info("starting set_default_version")
 
-        deferred.defer(apply_version_content_changes,
-                       self.number,
-                       _queue="topics-set-default-queue",
-                       _name="%i_apply_version_content_changes" % self.number,
-                       _url="/_ah/queue/deferred_topics-set-default-queue")
+        do_set_default_deferred_step(apply_version_content_changes, 
+                            self.number,
+                            "%i_apply_version_content_changes" % self.number) 
+
+def do_set_default_deferred_step(func, version_number, taskname):
+    try:
+        deferred.defer(func, 
+                       version_number,
+                       _queue = "topics-set-default-queue",
+                       _name = taskname,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        logging.info("deferred task %s already exists" % taskname)
+
 
 def apply_version_content_changes(version_number):
     version = TopicVersion.get_by_id(version_number)
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
-    for change in changes:
+    num_changes = len(changes)
+    for i, change in enumerate(changes):
         change.apply_change()
+        logging.info("applied change %i of %i" % (i, num_changes))
     logging.info("applied content changes")
-    taskname = "%i_preload_library" % version_number
-    try:
-        deferred.defer(preload_library,
-                       version_number,
-                       _queue="topics-set-default-queue",
-                       _name=taskname,
-                       _url="/_ah/queue/deferred_topics-set-default-queue")
-    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
-        logging.info("deferred task %s already exists" % taskname)
-
+    do_set_default_deferred_step(preload_library, 
+                                 version_number,
+                                 "%i_preload_library" % version_number) 
 
 def preload_library(version_number):
     version = TopicVersion.get_by_id(version_number)
@@ -1888,16 +1880,11 @@ def preload_library(version_number):
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
-    taskname = "%i_change_default_version" % version_number
-    try:
-        deferred.defer(change_default_version,
-                       version_number,
-                       _queue="topics-set-default-queue",
-                       _name=taskname,
-                       _url="/_ah/queue/deferred_topics-set-default-queue")
-    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
-        logging.info("deferred task %s already exists" % taskname)
 
+    do_set_default_deferred_step(change_default_version, 
+                                 version_number,
+                                 "%i_change_default_version" % version_number) 
+    
 def change_default_version(version_number):
     version = TopicVersion.get_by_id(version_number)
 
@@ -1929,7 +1916,7 @@ def change_default_version(version_number):
 
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
-
+    
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
 
@@ -1939,16 +1926,10 @@ def change_default_version(version_number):
     Setting.count_videos(len(vids) + len(urls))
     Video.approx_count(bust_cache=True)
 
-    taskname = "%i_rebuild_content_caches" % version_number
-    try:
-        deferred.defer(rebuild_content_caches,
-                       version_number,
-                       _queue="topics-set-default-queue",
-                       _name=taskname,
-                       _url="/_ah/queue/deferred_topics-set-default-queue")
-    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
-        logging.info("deferred task %s already exists" % taskname)
-
+    do_set_default_deferred_step(rebuild_content_caches, 
+                                 version_number,
+                                 "%i_rebuild_content_caches"  % version_number)
+   
 def rebuild_content_caches(version_number):
     version = TopicVersion.get_by_id(version_number)
 
@@ -1992,7 +1973,6 @@ def rebuild_content_caches(version_number):
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
     logging.info("set_default_version complete")
-
 
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
@@ -2168,7 +2148,7 @@ class Topic(Searchable, db.Model):
 
     @property
     def relative_url(self):
-        return '#%s' % self.id
+        return '/#%s' % self.id
 
     @property
     def ka_url(self):
@@ -3742,7 +3722,7 @@ class Video(Searchable, db.Model):
                 }
             button_top_exercise = ex_to_dict(related_exercises[0])
 
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
+        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current())
 
         awarded_points = 0
         if user_video:
@@ -4167,7 +4147,6 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
-                'suggested_activity_videos_finished',
             ])
         video_log.is_video_completed = user_video.completed
 
@@ -5114,6 +5093,7 @@ class UserExerciseGraph(object):
                 "suggested": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
+                "live": exercise.live,
             }
 
     @staticmethod
@@ -5165,7 +5145,7 @@ class UserExerciseGraph(object):
         boundary_graph_dicts = []
         for exercise_name in graph:
             graph_dict = graph[exercise_name]
-            if is_boundary(graph_dict):
+            if graph_dict["live"] and is_boundary(graph_dict):
                 boundary_graph_dicts.append(graph_dict)
 
         boundary_graph_dicts = sorted(sorted(boundary_graph_dicts,
