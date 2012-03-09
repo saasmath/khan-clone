@@ -583,7 +583,7 @@ class UserExercise(db.Model):
             _accuracy_model=AccuracyModel()
         )
 
-    # TODO(kamens) unit test next_in_topic
+    # TODO(kamens) unit test next_in_topic...seriously, unit test this like crazy.
     @staticmethod
     def next_in_topic(user_data, topic, n=3, queued=[]):
         """ Returns the next n suggested user exercises for this topic,
@@ -591,14 +591,36 @@ class UserExercise(db.Model):
 
         TODO(kamens) but really TODO(jace): *This* is where the magic will happen.
         """
+        exercises = [ex for ex in topic.get_exercises(include_descendants=True) if ex.live]
+        graph = UserExerciseGraph.get(user_data, exercises_allowed=exercises)
+
+        # Start off by getting all boundary exercises (those that aren't proficient
+        # and aren't covered by other boundary exercises)
+        graph_dicts = [
+            graph.graph_dict(exid) for exid in UserExerciseGraph.get_boundary_names(graph.graph)
+        ]
+
+        # If we don't have *any* boundary exercises, fill things out with the other
+        # topic exercises. Note that if we have at least one boundary exercise, we don't
+        # want to add others to the mix because they may screw w/ the boundary conditions
+        # by adding a too-difficult exercise, etc.
+        if len(graph_dicts) == 0:
+            graph_dicts = graph.graph_dicts()
+
+        # Now we sort the exercises by last_done and progress. If five exercises
+        # all have the same progress, we want to send the user the one they did
+        # least recently. Otherwise, we send the exercise that is most lacking in
+        # progress.
+        sorted_dicts = sorted(graph_dicts, key=lambda d: d["last_done"])
+        sorted_dicts = sorted(sorted_dicts, key=lambda d: d["progress"])
+
+        # And finally, chop off our extras
+        sorted_dicts = sorted_dicts[:n]
+
+        exercises = [Exercise.get_by_name(d["name"]) for d in sorted_dicts]
 
         # TODO(kamens): can we get away w/ not inserting UE's unnecessarily here???
-        exercises = [ex for ex in topic.get_exercises(include_descendants=True) if ex.live]
         user_exercises = [user_data.get_or_insert_exercise(ex) for ex in exercises]
-
-        # Sort the UserExercises with lowest progress first
-        # TODO(kamens): include prerequisites/covers/etc
-        user_exercises = sorted(user_exercises, key=lambda u_e: u_e.progress)
 
         return UserExercise._prepare_for_stack_api(user_exercises)
 
@@ -4929,7 +4951,7 @@ class UserExerciseGraph(object):
         return UserExerciseGraph.get(UserData.current())
 
     @staticmethod
-    def get(user_data_or_list):
+    def get(user_data_or_list, exercises_allowed=None):
         if not user_data_or_list:
             return [] if type(user_data_or_list) == list else None
 
@@ -4940,7 +4962,7 @@ class UserExerciseGraph(object):
         if not user_exercise_cache_list:
             return [] if type(user_data_or_list) == list else None
 
-        exercise_dicts = UserExerciseGraph.exercise_dicts()
+        exercise_dicts = UserExerciseGraph.exercise_dicts(exercises_allowed)
 
         user_exercise_graphs = map(
                 lambda (user_data, user_exercise_cache): UserExerciseGraph.generate(user_data, user_exercise_cache, exercise_dicts),
@@ -4968,8 +4990,11 @@ class UserExerciseGraph(object):
             }
 
     @staticmethod
-    def exercise_dicts():
-        return map(UserExerciseGraph.dict_from_exercise, Exercise.get_all_use_cache())
+    def exercise_dicts(exercises_allowed=None):
+        return map(
+                UserExerciseGraph.dict_from_exercise,
+                exercises_allowed or Exercise.get_all_use_cache()
+        )
 
     @staticmethod
     def get_and_update(user_data, user_exercise):
