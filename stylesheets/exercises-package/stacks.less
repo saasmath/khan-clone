@@ -298,7 +298,7 @@
 }
 
 .end-of-stack-info .progress-graph .skill-bar-title {
-    margin: 0;
+    margin: 0 0 5px;
 }
 
 /* Much credit goes to: http://css-tricks.com/css3-progress-bars/ */
@@ -308,10 +308,10 @@
     height: 15px;
     padding: 7px;
     position: relative;
-    background: #555;
+    border: 1px solid #bbb;
 
     .border-radius(10px);
-    .box-shadow(inset 0 -1px 1px rgba(255,255,255,0.3);
+    .box-shadow(inset 0 0 4px rgba(0,0,0,0.3);
 }
 
 .end-of-stack-info .progress-graph .skill-bar .description {
@@ -333,10 +333,16 @@
 
 .end-of-stack-info .progress-graph .skill-bar .fill.orange {
     #gradient > .vertical(#f1a165,#f36d0a);
+
+    position: relative;
+    top: -15px;
 }
 
 .end-of-stack-info .progress-graph .skill-bar .fill.red {
     #gradient > .vertical(#f0a3a3,#f42323);
+
+    -webkit-animation: progress-bar 2s;
+    -moz-animation: progress-bar 2s;
 }
 
 /** 
