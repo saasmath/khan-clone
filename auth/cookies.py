@@ -14,10 +14,6 @@ AUTH_COOKIE_NAME = 'KAID'
 # locked out in accordance to COPPA
 U13_COOKIE_NAME = 'u13'
 
-# TODO(benkomalo): look up what the provisions say to see if there's
-# a specified lockout period? or how they can get out of this.
-U13_LOCKOUT_PERIOD_SECONDS = (60 * 60 * 24 * 7)
-
 def get_user_from_khan_cookies():
     cookies = None
     try:
@@ -55,8 +51,5 @@ def set_auth_cookie(handler, user, auth_token=None):
                        httponly=False)
 
 def set_under13_cookie(handler):
-    handler.set_cookie(U13_COOKIE_NAME,
-                       value="1",
-                       max_age=U13_LOCKOUT_PERIOD_SECONDS)
-
+    handler.set_cookie(U13_COOKIE_NAME, value="1")
 
