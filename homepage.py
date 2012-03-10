@@ -197,6 +197,13 @@ class ViewHomePage(request_handler.RequestHandler):
         else:
             library_content = library.library_content_html()
             
+        from gae_bingo.gae_bingo import ab_test, create_redirect_url
+
+        donate_button_test = ab_test("donate_button",
+                                     {"button":1, "text":99},
+                                     conversion_name=['hp_click', 'paypal'])
+        donate_redirect_url = create_redirect_url("/donate", "hp_click")
+
         template_values = {
                             'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,
@@ -206,7 +213,9 @@ class ViewHomePage(request_handler.RequestHandler):
                             'approx_vid_count': models.Video.approx_count(),
                             'exercise_count': models.Exercise.get_count(),
                             'link_heat': self.request_bool("heat", default=False),
-                            'version_number': version_number
+                            'version_number': version_number,
+                            'donate_button_test': donate_button_test,
+                            'donate_redirect_url': donate_redirect_url
                         }
 
         self.render_jinja2_template('homepage.html', template_values)
