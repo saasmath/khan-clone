@@ -110,10 +110,10 @@ class MarqueeVideoExperiment(object):
     NAME = 'Marquee Video Experiment'
 
     _ab_test_alternatives = {
-        'rotating': 25,  # The original, just select daily from a rotating cast all marquee-eligible videos
-        'the-golden-ratio': 25,  # the rest of the alternatives set a specific video as the marquee for the duration of the experiment
-        'introduction-to-programs-data-types-and-variables': 25,  
-        'black-holes': 25,  
+        'futures-introduction': 25,  
+        'euclid-as-the-father-of-geometry': 25,  
+        'heart-disease-and-heart-attacks': 25,  
+        'us-and-japanese-quantitative-easing': 25,  
     }
     _conversion_tests = [
         ('marquee_started_marquee_video', ConversionTypes.Binary),
