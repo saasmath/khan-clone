@@ -67,6 +67,10 @@ def compile_template(root_path, rel_path, file_name):
 def compile_template_to_python(root_path, rel_path, file_name):
     dir_path = os.path.join(root_path, rel_path)
     input_path = os.path.join(dir_path, file_name)
+    test_path = input_path + ".json"
+
+    if not os.path.exists(test_path):
+        return None
 
     package_name = rel_path.replace("-", "_").split("_")[0]
     original_function_name = os.path.splitext(file_name)[0]
@@ -148,8 +152,9 @@ def compile_templates():
 
                 partial_info = compile_template_to_python(root_path, dir_path[rel_path_index:], file_name)
 
-                partial_string = "    \"%s\": lambda params, partials=None, helpers=None: handlebars_template(\"%s\", \"%s\", params),\n" % (partial_info[0], partial_info[1], partial_info[2])
-                partials_buffer += partial_string
+                if partial_info:
+                    partial_string = "    \"%s\": lambda params, partials=None, helpers=None: handlebars_template(\"%s\", \"%s\", params),\n" % (partial_info[0], partial_info[1], partial_info[2])
+                    partials_buffer += partial_string
 
     partials_buffer += "}\n"
 
