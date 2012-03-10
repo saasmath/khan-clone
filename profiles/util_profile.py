@@ -224,6 +224,11 @@ class ViewProfile(request_handler.RequestHandler):
             'user_data_student': user_data if has_full_access else None,
             'profile_root': user_data.profile_root,
             "view": self.request_string("view", default=""),
+            
+            # TODO(benkomalo): consider moving this to a more generic app
+            # context so that the JS client always has this info
+            
+            "secure_url_base": util.secure_url("/"),
         }
         self.render_jinja2_template('viewprofile.html', template_values)
 
