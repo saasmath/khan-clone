@@ -1,0 +1,128 @@
+{% extends "coach_resources/view_toolkit.html" %}
+
+{% block col1content %}
+		
+	<h1>Instructional strategies</h1>
+	<hr>
+	<p class="lead">When students master concepts at their own pace, classrooms become dynamic places where many activities may be happening simultaneously. The instructional strategies below help define how teachers can best meet their students’ needs.</p>
+	
+	<p>In dynamic classrooms, we’ve seen students jump from a teacher seminar to working alone to peer tutoring to a group project at the end of class.  There is no one right way to implement these strategies, and often students are engaged in different activities all at the same time.  Dynamic classrooms look different from day to day, and managing them can be difficult.  In the most successful classrooms we’ve observed, the following has been present:</p>
+	
+	<ol class="number">
+		<li>Strong classroom management</li>
+		<li>Clear expectations for each student for the entire class period</li>
+		<li>Strategic use of classroom space</li>
+	</ol>
+	
+	<p>With these three elements in your classroom, use the instructional strategies below when appropriate for your students.</p>
+	
+	<h3>1-on-1 (Teacher to student)</h3>
+	<p class="has-media"><span class="toolkit-media"><iframe width="100%" height="200" src="http://www.youtube.com/embed/igKzAD8_GHk" frameborder="0" allowfullscreen></iframe></span>
+		Use when…</p>
+	<ul class="bullet">	
+		<li>You see a student has been struggling based on his/her data</li>
+		<li>You want to provide additional guidance and motivation</li>
+		<li>You want to check-in on a student’s individual progress</li>
+		<li>You want to set goals and acknowledge accomplishments</li>
+	</ul>
+	
+		
+
+	<p>Examples of implementation:</p>
+	<ul class="bullet">
+		<li>Using the data, bring up the specific exercise or problem that the student is struggling on, diagnose the error, and prompt the student discover the answer</li>
+		<li>Use the student’s individual reports to discuss specific points of data, e.g. which goals were set, how much time was spent on KA outside of class, recent badges earned, etc.</li>
+	</ul>
+
+
+	<h3>Peer to peer</h3>
+	<p class="has-media"><span class="toolkit-media"><iframe width="100%" height="200" src="http://www.youtube.com/embed/FjD8oKwtYcs" frameborder="0" allowfullscreen></iframe></iframe></span>
+		Use when…</p>
+	<ul class="bullet">
+		<li>A student is struggling with a topic that another is proficient in, and you're busy helping someone else</li>
+		<li>You want to enable many levels of differentiation in the class</li>
+		<li>Students start to plateau when working on their own</li>
+		<li>You want to verify that students actually learned the concept by teaching it to someone else</li>
+	</ul>	
+
+	<p>Examples of implementation:</p>
+	<ul class="bullet">
+		<li>Teacher uses the progress summary report to pair up students</li>
+		<li>A classroom board that has two columns (I need help with…/I can help with…) enables students to reach out and help each other</li>
+	</ul>	
+
+
+	<h3>Small groups</h3>
+	<p class="has-media"><span class="toolkit-media"><iframe width="100%" height="200" src="http://www.youtube.com/embed/uaFPgVsrvMQ" frameborder="0" allowfullscreen></iframe></span>
+		Use when…</p>
+	<ul class="bullet">
+		<li>You want to tailor a lesson to meet the needs of a specific group of students</li>
+	</ul>
+
+
+	<p>Examples of Implementation:</p>
+	<ul class="bullet">
+		<li>Teacher uses the progress summary report to figure out which students need a seminar to reinforce certain skills</li>
+		<li>Teacher creates groups based on skill-level and allows each group to work together on the concept they are struggling with </li>
+		<li>Teacher creates mixed-ability groups with “experts” in each and allows the “experts” to guide their peers in learning specific concepts</li>
+	</ul>	
+
+	<h3>Projects</h3>
+	<p class="has-media"><span class="toolkit-media"><iframe width="100%" height="200" src="http://www.youtube.com/embed/6musH9V3R6w" frameborder="0" allowfullscreen></iframe></span>
+		Use when…</p>
+	<ul class="bullet">
+		<li>You want to develop real-world skills in leadership, teamwork, and problem solving</li>
+		<li>You want students to apply the concepts mastered in KA and deepen their understanding</li>
+	</ul>	
+
+	<p>Examples of Implementation:</p>
+	<ul class="bullet">
+		<li>Based on dashboard data, groups are created based on skill-level and each group works on a different project</li>
+		<li>Based on dashboard data, once students master a set of prerequisites (can be KA exercises), they can work on a project with other students who have also mastered all prerequisites.  Teachers can have different projects ready within any given unit, each with varying requirements.</li>
+	</ul>	
+
+
+	<h3>Stations</h3>
+	<p>Use when...</p>
+	<ul class="bullet">
+		<li>You want to focus on a small group of students at a time</li>
+		<li>You want students to apply the concepts mastered in KA and deepen their understanding</li>
+		<li>You want to re-invest students in using KA</li>
+	</ul>
+
+
+	<p>Examples of Implementation:</p>
+	<ul class="bullet">
+		<li>Create different stations that students rotate through during the class period (e.g. Station 1: watching KA videos, Station 2: working on a group project or challenge, Station 3: completing exercises, Station 4: small group with teacher)</li>
+	</ul>	
+
+
+	<h3>Energizers</h3>
+	<p>Use when…</p>
+	<ul class="bullet">
+		<li>You want to give students an opportunity to show off their math skills</li>
+		<li>You want to re-invest students in math/KA</li>
+	</ul>	
+
+
+	<p>Examples of Implementation:</p>
+	<ul class="bullet">
+		<li><strong>“Rocket Runs”</strong><br>
+		Class is divided into teams at teacher’s discretion (e.g. split the room in half).  Teacher chooses a module based on dashboard data or students choose a module of their choice.  One team is given 3 minutes to earn as many energy points as possible while other teams watch.  Teacher projects dashboard data showing average energy points earned in real time.  This is repeated for each team.  The team with the highest average wins. (Thanks to the LASD teachers for this!)</li>
+		<li><strong>Class vs. Class</strong><br>
+		Charts that track the amount of energy points earned by class are kept and updated daily.  The class with the highest amount of energy points by the end of the week wins.  Energy points should be measured and reset every week so that classes stay invested.</li>
+	</ul>	
+	
+	<p><a href="{{base_url}}/different-learners" class="call-to-action simple-button action-gradient green">Next: Different learners →</a></p>
+	
+{% endblock col1content %}	
+		
+{% block col2content %}	
+
+		<h3>Useful links</h3>
+		<ul class="bullet">
+			<li><a href="#">What type of computers should I get for my classroom?</a></li>
+			<li><a href="#">How fast does my internet connection need to be to run Khan Academy?</a></li>
+		</ul>			
+	
+{% endblock col2content %}	
