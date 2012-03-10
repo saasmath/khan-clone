@@ -37,6 +37,9 @@ for attr in [
     'khanbugz_passwd',
     'paypal_token_id',
     'token_recipe_key',
+    'khan_demo_consumer_key',
+    'khan_demo_consumer_secret',
+    'khan_demo_request_token',
 ]:
     # These secrets are optional in development but not in production
     if App.is_dev_server and not hasattr(secrets, attr):
