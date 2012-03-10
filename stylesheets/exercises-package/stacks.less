@@ -17,6 +17,9 @@
     border: 1px solid silver;
     background-color: #F8F8F8;
 }
+.card-type-endofstack .current-card-container-inner {
+    background-color: #E9EFDD;
+}
 
 .current-card-container,
 .current-card-container-inner {
@@ -356,3 +359,63 @@
 @-moz-keyframes progress-bar {
    0% { width: 0; opacity: 0.6; }
 }
+
+/**
+ * Beginner end-of-stack calculation animations
+ */
+.stack .card-container.into-pocket,
+.stack .card-container.into-pocket .card-container-inner {
+    -webkit-animation-duration: 0.5s;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-fill-mode: forwards;
+}
+
+.translate-x(@x) {
+    -webkit-transform: translateX(@x);
+}
+.translate-y-and-rotate(@y, @rotation) {
+    -webkit-transform: translateY(@y) rotate(@rotation);
+}
+.up-down-rotate(@y1, @rotation1, @y2, @rotation2) {
+    50% { .translate-y-and-rotate(@y1, @rotation1); }
+    100% { .translate-y-and-rotate(@y2, @rotation2); }
+}
+
+@-webkit-keyframes card-up-down-0 { .up-down-rotate(-70px, -5deg, -118px, -20deg); }
+@-webkit-keyframes card-up-down-1 { .up-down-rotate(-80px, -5deg, -92px, -12deg); }
+@-webkit-keyframes card-up-down-2 { .up-down-rotate(-40px, 5deg, 78px, 10deg); }
+@-webkit-keyframes card-up-down-3 { .up-down-rotate(-124px, 2deg, -8px, 7deg); }
+@-webkit-keyframes card-up-down-4 { .up-down-rotate(-190px, -2deg, -232px, -11deg); }
+@-webkit-keyframes card-up-down-5 { .up-down-rotate(-200px, -3deg, -300px, -15deg); }
+@-webkit-keyframes card-up-down-6 { .up-down-rotate(-240px, -2deg, -272px, -11deg); }
+@-webkit-keyframes card-up-down-7 { .up-down-rotate(-260px, -3deg, -360px, -15deg); }
+
+@-webkit-keyframes card-left-right-0 { 100% { .translate-x(-520px); } }
+@-webkit-keyframes card-left-right-1 { 100% { .translate-x(-540px); } }
+@-webkit-keyframes card-left-right-2 { 100% { .translate-x(-580px); } }
+@-webkit-keyframes card-left-right-3 { 100% { .translate-x(-452px); } }
+@-webkit-keyframes card-left-right-4 { 100% { .translate-x(-650px); } }
+@-webkit-keyframes card-left-right-5 { 100% { .translate-x(-620px); } }
+@-webkit-keyframes card-left-right-6 { 100% { .translate-x(-480px); } }
+@-webkit-keyframes card-left-right-7 { 100% { .translate-x(-562px); } }
+
+.stack .card-container.into-pocket-0 { -webkit-animation-name: card-up-down-0; }
+.stack .card-container.into-pocket-1 { -webkit-animation-name: card-up-down-1; }
+.stack .card-container.into-pocket-2 { -webkit-animation-name: card-up-down-2; }
+.stack .card-container.into-pocket-3 { -webkit-animation-name: card-up-down-3; }
+.stack .card-container.into-pocket-4 { -webkit-animation-name: card-up-down-4; }
+.stack .card-container.into-pocket-5 { -webkit-animation-name: card-up-down-5; }
+.stack .card-container.into-pocket-6 { -webkit-animation-name: card-up-down-6; }
+.stack .card-container.into-pocket-7 { -webkit-animation-name: card-up-down-7; }
+
+.stack .card-container.into-pocket-0 .card-container-inner { -webkit-animation-name: card-left-right-0; }
+.stack .card-container.into-pocket-1 .card-container-inner { -webkit-animation-name: card-left-right-1; }
+.stack .card-container.into-pocket-2 .card-container-inner { -webkit-animation-name: card-left-right-2; }
+.stack .card-container.into-pocket-3 .card-container-inner { -webkit-animation-name: card-left-right-3; }
+.stack .card-container.into-pocket-4 .card-container-inner { -webkit-animation-name: card-left-right-4; }
+.stack .card-container.into-pocket-5 .card-container-inner { -webkit-animation-name: card-left-right-5; }
+.stack .card-container.into-pocket-6 .card-container-inner { -webkit-animation-name: card-left-right-6; }
+.stack .card-container.into-pocket-7 .card-container-inner { -webkit-animation-name: card-left-right-7; }
+/**
+ * End end-of-stack calculation animations
+ */

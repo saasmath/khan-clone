@@ -406,13 +406,37 @@ Exercises.CurrentCardView = Backbone.View.extend({
     renderCalculationInProgressCard: function() {
         this.renderCardContainer();
         this.renderCardContents("exercises.calculating-card");
+
+        setTimeout(function() {
+
+            // Animate the first 8 cards into place -- others just go away
+            $(".complete-stack .card-container").each(function(ix, el) {
+                if (ix < 8) {
+                    $(el).addClass("into-pocket").addClass("into-pocket-" + ix);
+                } else {
+                    $(el).css("display", "none");
+                }
+            });
+
+        }, 500);
+
+        // Fade in each h2 sequentially
+        $(".current-card-contents h2").each(function(ix, el) {
+
+            setTimeout(function() {
+
+                $(el).fadeIn(600);
+
+            }, 100 + (ix * 800));
+
+        });
     },
 
     /**
      * Renders a "calculations in progress" card, waits for API requests
      * to finish, and then renders the requested card template.
      */
-    renderCardAfterAPIRequests: function(templateName, optionalContextFxn) {
+    renderCardAfterAPIRequests: function(templateName, optionalContextFxn, optionalCallbackFxn) {
 
         // Start off by showing the "calculations in progress" card...
         this.renderCalculationInProgressCard();
@@ -424,6 +448,10 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
                 optionalContextFxn = optionalContextFxn || function(){};
                 Exercises.currentCardView.renderCardContents(templateName, optionalContextFxn());
+
+                if (optionalCallbackFxn) {
+                    optionalCallbackFxn();
+                }
 
             });
         }, 2400);
@@ -475,9 +503,15 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders a new card showing end-of-stack statistics
      */
     renderEndOfStackCard: function() {
-        this.renderCardAfterAPIRequests("exercises.end-of-stack-card", function() { 
-            return _.extend(Exercises.sessionStats.progressStats(), Exercises.completeStack.stats());
-        });
+        this.renderCardAfterAPIRequests(
+            "exercises.end-of-stack-card",
+            function() { 
+                return _.extend(Exercises.sessionStats.progressStats(), Exercises.completeStack.stats());
+            },
+            function() {
+                $(Exercises.completeStackView.el).hide();
+            }
+        );
     },
 
     /**
