@@ -1517,6 +1517,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
             if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
 
+            if util.hours_between(self.last_activity, dt_activity) >= 12:
+                bingo(['marquee_actively_returned', 'marquee_num_active_returns'])
+
             self.last_activity = dt_activity
 
     def current_consecutive_activity_days(self):

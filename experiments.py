@@ -120,6 +120,8 @@ class MarqueeVideoExperiment(object):
         ('marquee_started_any_video', ConversionTypes.Binary),
         ('marquee_num_videos_completed', ConversionTypes.Counting),
         ('marquee_num_exercises_started', ConversionTypes.Counting),
+        ('marquee_actively_returned', ConversionTypes.Binary),
+        ('marquee_num_active_returns', ConversionTypes.Counting),
     ]
     _conversion_names, _conversion_types = [
         list(x) for x in zip(*_conversion_tests)]
