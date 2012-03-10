@@ -8,6 +8,8 @@ import subprocess
 import tempfile
 import urllib
 
+from pybars import Compiler
+
 # Helpers (from javascript/shared-package/handlebars-extras.js)
 
 def handlebars_repeat(context, options, count):
@@ -36,19 +38,34 @@ handlebars_helpers = {
 def handlebars_template(package, name, params):
     partials = dict()
 
+    original_file_name = "javascript/%s-package/%s.handlebars" % (package, name)
+
     package_name = package.replace("-", "_")
     function_name = name.replace("-", "_")
 
     module_name = "compiled_templates.%s_package.%s" % (package_name, function_name)
 
+    function = None
+
     if not module_name in sys.modules:
         # Dynamically load the module
         try:
             __import__(module_name)
+            function = getattr(sys.modules[module_name], function_name)
         except ImportError:
+            pass
+
+    if not function:
+        try:
+            in_file = open(original_file_name, 'r')
+            source = unicode(in_file.read())
+            source = source.replace("{{else}}", "{{^}}") # Pybars doesn't handle {{else}} for some reason
+
+            compiler = Compiler()
+            function = compiler.compile(source)
+        except:
             return u""
 
-    function = getattr(sys.modules[module_name], function_name)
     ret = function(params, helpers=handlebars_helpers, partials=handlebars_partials)
     return u"".join(ret)
 
@@ -94,5 +111,9 @@ class HandlebarsTest(unittest.TestCase):
 
             self.assertEqual(js_output, python_output)
 
-from compiled_templates import handlebars_partials
+try:
+    from compiled_templates import handlebars_partials
+except:
+    handlebars_partials = {}
+    pass
 
