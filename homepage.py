@@ -171,7 +171,7 @@ class ViewHomePage(request_handler.RequestHandler):
                     # set the marquee video as determined by the ab_test, if we can find it
                     alt_videos = []
                     for thumbnail_link_set in thumbnail_link_sets:
-                        alt_videos += filter(lambda item: item["marquee"] and marquee_alternative in item["href"], thumbnail_link_set)
+                        alt_videos += filter(lambda item: "/video/"+marquee_alternative == item["href"], thumbnail_link_set)
 
                     if len(alt_videos)==1:  # should be 1 and only 1
                         marquee_video = alt_videos[0]
