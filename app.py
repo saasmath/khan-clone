@@ -2,6 +2,10 @@ import os
 
 try:
     import secrets
+    # TODO(benkomalo): this is only a temporary stopgap to allow
+    # devs to deploy without a token_recipe_key in their secrets file.
+    if not hasattr(secrets, 'token_recipe_key'):
+        setattr(secrets, 'token_recipe_key', None)
 except:
     class secrets(object):
         pass
@@ -32,12 +36,16 @@ for attr in [
     'dashboard_secret',
     'khanbugz_passwd',
     'paypal_token_id',
-    'khan_demo_consumer_key',
-    'khan_demo_consumer_secret',
-    'khan_demo_request_token',
+    'token_recipe_key',
 ]:
     # These secrets are optional in development but not in production
     if App.is_dev_server and not hasattr(secrets, attr):
         setattr(App, attr, None)
     else:
         setattr(App, attr, getattr(secrets, attr))
+
+if App.is_dev_server and App.token_recipe_key is None:
+    # If a key is missing to dishout auth tokens on dev, we can't login with
+    # our own auth system. So just set it to a random string.
+    App.token_recipe_key = 'lkj9Hg7823afpEOI3nmlkfl3jfnklsfQQ'
+
