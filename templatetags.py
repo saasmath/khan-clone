@@ -8,6 +8,7 @@ import models
 import shared_jinja
 import layer_cache
 from models import Exercise
+import util
 
 
 def user_info(username, user_data):
@@ -183,3 +184,15 @@ def video_name_and_progress(video):
 
 def jsonify(obj, camel_cased):
     return apijsonify.jsonify(obj, camel_cased=camel_cased)
+
+def to_secure_url(url):
+    """ Returns the appropriate https server URL for a url
+    somewhere on Khan Academy. Note - this is not intended for links to
+    external sites.
+
+    This abstracts away some of the difficulties and limitations of https
+    in the current environment.
+    
+    """
+    
+    return util.secure_url(url)

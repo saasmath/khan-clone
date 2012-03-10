@@ -10,6 +10,7 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     profile: null,
+    secureUrlBase: null,
 
     /**
      * The root segment of the URL for the profile page for this user.
@@ -50,12 +51,14 @@ var Profile = {
 
         this.profileRoot = root;
         this.isDataCollectible = json.isDataCollectible;
+        this.secureUrlBase = json.secureUrlBase;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
 
         Profile.render();
 
         Profile.router = new Profile.TabRouter({routes: this.getRoutes_()});
+        Profile.router.bind("all", Analytics.handleRouterNavigation);
 
         Backbone.history.start({
             pushState: true,
@@ -114,6 +117,9 @@ var Profile = {
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "/vital-statistics/:graph": "showVitalStatistics",
         "/coaches": "showCoaches",
+
+        // Not associated with any tab highlighting.
+        "/settings": "showSettings",
 
         "": "showDefault",
         // If the user types /profile/username/ with a trailing slash
@@ -245,10 +251,26 @@ var Profile = {
 
         showCoaches: function() {
             Profile.populateCoaches();
+
             $("#tab-content-coaches").show()
                 .siblings().hide();
+
             this.activateRelatedTab("people coaches");
             this.updateTitleBreadcrumbs(["Coaches"]);
+
+            if (Profile.profile.get("isPhantom")) {
+                Profile.showNotification("no-coaches-for-phantoms");
+            }
+        },
+
+        showSettings: function() {
+            // Populate HTML/reset.
+            Settings.render($("#tab-content-settings"));
+
+            // Show.
+            $("#tab-content-settings").show().siblings().hide();
+            this.activateRelatedTab("");
+            this.updateTitleBreadcrumbs(["Settings"]);
         },
 
         activateRelatedTab: function(rel) {

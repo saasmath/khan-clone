@@ -16,6 +16,7 @@ hashed-*.js
 js_css_packages/packages_hash.py
 *.pem
 secrets.py
+secrets_dev.py
 datastore/*
 sample_data/bulkloader*
 *.DS_Store
@@ -24,3 +25,10 @@ offline/*
 .*.un~
 compiled_templates*
 .vims
+*.handlebars.js
+.project
+.pydevproject
+deploy/node_modules/*
+.settings/org.eclipse.core.resources.prefs
+.tags
+.tags_sorted_by_file

@@ -4,9 +4,11 @@ var Coaches = {
     url: "/api/v1/user/coaches",
 
     init: function() {
-        var deferred;
+        var isSelf = Profile.profile.get("isSelf"),
+            isPhantom = Profile.profile.get("isPhantom"),
+            deferred;
 
-        if (Profile.profile.get("isSelf")) {
+        if (isSelf && !isPhantom) {
             var email = Profile.profile.get("email"),
                 template = Templates.get("profile.coaches");
             $("#tab-content-coaches").html(template(Profile.profile.toJSON()));
@@ -31,70 +33,12 @@ var Coaches = {
     },
 
     onDataLoaded_: function(users) {
-        var coaches = [],
-            requests = [];
-
-        _.each(users, function(user) {
-            if (user.isCoachingLoggedInUser) {
-                coaches.push(user);
-            } else {
-                requests.push(user);
-            }
-        });
-
-        this.coachCollection = new Coaches.CoachCollection(coaches);
+        this.coachCollection = new Coaches.CoachCollection(users);
 
         new Coaches.CoachCollectionView({
             collection: Coaches.coachCollection,
-            el: "#coach-list-container",
-            emptyTemplateName: "profile.no-coaches"
+            el: "#coach-list-container"
         }).render();
-
-        this.requestCollection = new Coaches.CoachCollection(requests);
-
-        if(!this.requestCollection.isEmpty()) {
-            $("#requests").show();
-
-            new Coaches.CoachCollectionView({
-                collection: Coaches.requestCollection,
-                el: "#request-list-container",
-                emptyTemplateName: "profile.no-requests"
-            }).render();
-        }
-    },
-
-    // TODO(marcia): Throttle to avoid inconsistent state
-    save: function() {
-        var options = {
-            url: this.url,
-            contentType: "application/json",
-            success: _.bind(this.onSaveSuccess_, this),
-            error: _.bind(this.onSaveError_, this)
-        };
-
-        var json = [];
-
-        this.requestCollection.each(function(model) {
-            json.push(model.toJSON());
-        });
-
-        this.coachCollection.each(function(model) {
-            json.push(model.toJSON());
-        });
-
-        options["data"] = JSON.stringify(json);
-
-        Backbone.sync("update", null, options);
-    },
-
-    onSaveSuccess_: function() {
-        $("#coach-email").val("");
-        this.coachCollection.markCoachesAsSaved();
-    },
-
-    onSaveError_: function() {
-        this.coachCollection.removeUnsavedCoaches();
-        this.showError_("We couldn't find anyone with that email.")
     },
 
     delegateEvents_: function() {
@@ -112,61 +56,28 @@ var Coaches = {
     },
 
     onAddCoach_: function() {
-        var email = $.trim($("#coach-email").val()),
-            attrs = {
-                email: email,
-                isCoachingLoggedInUser: true
-            };
-
+        var email = $.trim($("#coach-email").val());
         if (email) {
-            var model = null;
-            if (this.coachCollection.findByEmail(email)) {
-                var message = email + " is already your coach.";
-                this.showError_(message);
-            } else if (model = this.requestCollection.findByEmail(email)){
-                this.acceptCoachRequest(model);
-            } else {
-                this.coachCollection.add(attrs);
-                this.save();
-            }
+            this.coachCollection.addByEmail(email);
         }
-    },
-
-    showError_: function(message) {
-        $(".coaches-section .notification.error").text(message)
-            .show()
-            .delay(2000)
-            .fadeOut(function() {
-                $(this).text("");
-            });
-    },
-
-    acceptCoachRequest: function(model) {
-        this.requestCollection.remove(model);
-        model.set({
-            isCoachingLoggedInUser: true,
-            isRequestingToCoachLoggedInUser: false
-        });
-
-        Coaches.coachCollection.add(model);
-        Coaches.save();
     }
 };
 
 Coaches.CoachView = Backbone.View.extend({
     className: "coach-row",
-
-    // The corresponding Coaches.CoachCollection
     collection_: null,
     template_: null,
 
     events: {
         "click .controls .remove": "onRemoveCoach_",
         "click .controls .accept": "onAcceptCoach_",
-        "click .controls .deny": "onDenyCoach_"
+        "click .controls .deny": "onDenyCoach_",
+        "mouseenter .controls .remove": "onMouseEnterRemove_",
+        "mouseleave .controls .remove": "onMouseLeaveRemove_"
     },
 
     initialize: function(options) {
+        this.model.bind("change", this.render, this);
         this.collection_ = options.collection;
         this.template_ = Templates.get("profile.coach");
     },
@@ -183,16 +94,25 @@ Coaches.CoachView = Backbone.View.extend({
 
     onRemoveCoach_: function() {
         this.collection_.remove(this.model);
-        Coaches.save();
     },
 
     onAcceptCoach_: function() {
-        Coaches.acceptCoachRequest(this.model);
+        this.model.set({
+            isCoachingLoggedInUser: true,
+            isRequestingToCoachLoggedInUser: false
+        });
     },
 
     onDenyCoach_: function() {
         this.collection_.remove(this.model);
-        Coaches.save();
+    },
+
+    onMouseEnterRemove_: function(evt) {
+        this.$(".controls .remove").addClass("orange");
+    },
+
+    onMouseLeaveRemove_: function(evt) {
+        this.$(".controls .remove").removeClass("orange");
     }
 
 });
@@ -213,7 +133,23 @@ Coaches.CoachCollection = Backbone.Collection.extend({
     model: Coaches.Coach,
 
     initialize: function() {
+        this.bind("add", this.save, this);
+        this.bind("remove", this.save, this);
+        this.bind("change", this.save, this);
+
         this.markCoachesAsSaved();
+    },
+
+    comparator: function(model) {
+        // TODO(marcia): Once we upgrade to Backbone 0.9,
+        // we could define this as a sort instead of a sortBy
+        // http://documentcloud.github.com/backbone/#Collection-comparator
+        var isCoaching = model.get("isCoachingLoggedInUser"),
+            email = model.get("email").toLowerCase();
+
+        // Show pending requests before coaches,
+        // then order alphabetically
+        return (isCoaching ? "b" : "a") + " " + email;
     },
 
     findByEmail: function(email) {
@@ -221,6 +157,58 @@ Coaches.CoachCollection = Backbone.Collection.extend({
             return model.get("email") === email;
         });
     },
+
+    addByEmail: function(email) {
+        var attrs = {
+                email: email,
+                isCoachingLoggedInUser: true
+            };
+
+        var model = this.findByEmail(email);
+
+        if (model) {
+            if (model.get("isCoachingLoggedInUser")) {
+                // Already a coach
+                var message = email + " is already your coach.";
+                this.trigger("showError", message);
+            } else {
+                // Åccept the pending coach request
+                model.set({isCoachingLoggedInUser: true});
+            }
+        } else {
+            // Add the coach to the collection
+            this.add(attrs);
+        }
+    },
+
+    save: function() {
+        this.debouncedSave_();
+    },
+
+    debouncedSave_: _.debounce(function() {
+        var options = {
+            url: Coaches.url,
+            contentType: "application/json",
+            success: _.bind(this.onSaveSuccess_, this),
+            error: _.bind(this.onSaveError_, this)
+        };
+
+        options["data"] = JSON.stringify(this.toJSON());
+
+        Backbone.sync("update", null, options);
+    }, 750),
+
+    onSaveSuccess_: function() {
+        this.markCoachesAsSaved();
+        this.trigger("saveSuccess");
+    },
+
+    onSaveError_: function() {
+        this.removeUnsavedCoaches();
+        this.trigger("saveError");
+    },
+
+    increasingId: 0,
 
     /**
      * Mark which coach models have been saved to server,
@@ -230,8 +218,11 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         this.each(function(model) {
             // Backbone models without an id are considered
             // to be new, as in not yet saved to server.
-            model.set({id: "marks-model-as-saved-on-server"});
-        });
+            // Append an increasing number since collections cannot have
+            // models with the same id, as of Backbone 0.9
+            model.set({id: "marks-model-as-saved-on-server" + this.increasingId++},
+                    {silent: true});
+        }, this);
     },
 
     removeUnsavedCoaches: function() {
@@ -248,17 +239,28 @@ Coaches.CoachCollectionView = Backbone.View.extend({
 
     initialize: function(options) {
         this.coachViews_ = [];
-        this.emptyTemplateName_ = options["emptyTemplateName"];
 
-        this.collection.each(this.add, this);
+        this.collection.each(this.onAdd_, this);
 
-        this.collection.bind("add", this.add, this);
-        this.collection.bind("remove", this.remove, this);
+        this.collection.bind("add", this.onAdd_, this);
+        this.collection.bind("remove", this.onRemove_, this);
         this.collection.bind("add", this.handleEmptyNotification_, this);
         this.collection.bind("remove", this.handleEmptyNotification_, this);
+
+        this.collection.bind("saveSuccess", this.onSaveSuccess_, this);
+        this.collection.bind("saveError", this.onSaveError_, this);
+        this.collection.bind("showError", this.showError_, this);
     },
 
-    add: function(model) {
+    onSaveSuccess_: function() {
+        $("#coach-email").val("");
+    },
+
+    onSaveError_: function() {
+        this.showError_("We couldn't find anyone with that email.")
+    },
+
+    onAdd_: function(model) {
         var coachView = new Coaches.CoachView({
             model: model,
             collection: this.collection
@@ -269,7 +271,7 @@ Coaches.CoachCollectionView = Backbone.View.extend({
         }
     },
 
-    remove: function(model) {
+    onRemove_: function(model) {
         var viewToRemove = _.find(this.coachViews_, function(view) {
                 return view.model === model;
             });
@@ -286,7 +288,7 @@ Coaches.CoachCollectionView = Backbone.View.extend({
 
     showEmptyNotification_: function() {
         if (!this.emptyNotification_) {
-            var template = Templates.get(this.emptyTemplateName_);
+            var template = Templates.get("profile.no-coaches");
             this.emptyNotification_ = $("<div>").addClass("empty-notification").html(template());
             $(this.el).append(this.emptyNotification_);
         }
@@ -301,6 +303,15 @@ Coaches.CoachCollectionView = Backbone.View.extend({
         }
     },
 
+    showError_: function(message) {
+        $(".coaches-section .notification.error").text(message)
+            .show()
+            .delay(2000)
+            .fadeOut(function() {
+                $(this).text("");
+            });
+    },
+
     render: function() {
         this.rendered_ = true;
         $(this.el).empty();
@@ -308,7 +319,7 @@ Coaches.CoachCollectionView = Backbone.View.extend({
         this.handleEmptyNotification_();
 
         _.each(this.coachViews_, function(view) {
-            $(this.el).prepend(view.render().el);
+            $(this.el).append(view.render().el);
         }, this);
 
         return this;

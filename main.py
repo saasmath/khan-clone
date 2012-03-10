@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 import urllib
-import urlparse
 import logging
 import re
 
@@ -24,10 +23,10 @@ from gae_bingo.middleware import GAEBingoWSGIMiddleware
 import autocomplete
 import coaches
 import knowledgemap
-import consts
 import youtube_sync
 import warmup
 import library
+import login
 import homepage
 
 import search
@@ -56,7 +55,7 @@ import labs
 import socrates
 
 import models
-from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
+from models import UserData, Video, Url, ExerciseVideo, Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
 from phantom_users import util_notify
@@ -65,17 +64,12 @@ from mailing_lists import util_mailing_lists
 from profiles import util_profile
 from custom_exceptions import MissingVideoException
 from oauth_provider import apps as oauth_apps
-from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
-from counters import user_counter
-from notifications import UserNotifier
-from nicknames import get_default_nickname_for
 from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
-from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -194,13 +188,13 @@ class ReportIssue(request_handler.RequestHandler):
 
     def get(self):
         issue_type = self.request.get('type')
-        self.write_response(issue_type, {'issue_labels': self.request.get('issue_labels'),})
+        self.write_response(issue_type, {'issue_labels': self.request.get('issue_labels'), })
 
     def write_response(self, issue_type, extra_template_values):
         user_agent = self.request.headers.get('User-Agent')
         if user_agent is None:
             user_agent = ''
-        user_agent = user_agent.replace(',',';') # Commas delimit labels, so we don't want them
+        user_agent = user_agent.replace(',', ';') # Commas delimit labels, so we don't want them
         template_values = {
             'referer': self.request.headers.get('Referer'),
             'user_agent': user_agent,
@@ -355,7 +349,7 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
         # the Google user ID changes and the new User object's are not considered equal to the old User object's with the same
         # email, so querying the datastore for entities referring to users with the same email return nothing. However an inequality
         # query will return the relevant entities.
-        gt_user = users.User(old_email[:-1] + chr(ord(old_email[-1])-1) + chr(127))
+        gt_user = users.User(old_email[:-1] + chr(ord(old_email[-1]) - 1) + chr(127))
         lt_user = users.User(old_email + chr(0))
         return db.GqlQuery(('select __key__ from %s where %s > :1 and %s < :2' % (kind, prop, prop)), gt_user, lt_user)
 
@@ -369,116 +363,6 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
             return False
         setattr(entity, prop, users.User(new_email))
         return True
-
-class Login(request_handler.RequestHandler):
-    def get(self):
-        """ Renders the login page. """
-        cont = self.request_string('continue', default="/")
-        direct = self.request_bool('direct', default=False)
-
-        if App.facebook_app_secret is None:
-            self.redirect(users.create_login_url(cont))
-            return
-        template_values = {
-                           'continue': cont,
-                           'direct': direct
-                           }
-        self.render_jinja2_template('login.html', template_values)
-
-    def post(self):
-        """ Handles a POST from the login page.
-        Right now this basically means the user opted to login via Google,
-        so redirect them to the appropriate Google Login page.
-        """
-        cont = self.request_string('continue', default="/")
-        self.redirect(users.create_login_url(cont))
-
-class MobileOAuthLogin(request_handler.RequestHandler):
-    def get(self):
-        self.render_jinja2_template('login_mobile_oauth.html', {
-            "oauth_map_id": self.request_string("oauth_map_id", default=""),
-            "anointed": self.request_bool("an", default=False),
-            "view": self.request_string("view", default="")
-        })
-
-class PostLogin(request_handler.RequestHandler):
-    def get(self):
-        cont = self.request_string('continue', default = "/")
-
-        # Immediately after login we make sure this user has a UserData entity
-        user_data = UserData.current()
-        if user_data:
-
-            # Update email address if it has changed
-            current_google_user = users.get_current_user()
-            if current_google_user and current_google_user.email() != user_data.email:
-                user_data.user_email = current_google_user.email()
-                user_data.put()
-
-            # If the user has a public profile, we stop "syncing" their username
-            # from Facebook, as they now have an opportunity to set it themself
-            if not user_data.username:
-                user_data.update_nickname()
-
-            # Set developer and moderator to True if user is admin
-            if (not user_data.developer or not user_data.moderator) and users.is_current_user_admin():
-                user_data.developer = True
-                user_data.moderator = True
-                user_data.put()
-
-            # If user is brand new and has 0 points, migrate data
-            phantom_id = get_phantom_user_id_from_cookies()
-            if phantom_id:
-                phantom_data = UserData.get_from_db_key_email(phantom_id)
-
-                # First make sure user has 0 points and phantom user has some activity
-                if user_data.points == 0 and phantom_data and phantom_data.points > 0:
-
-                    # Make sure user has no students
-                    if not user_data.has_students():
-
-                        # Clear all "login" notifications
-                        UserNotifier.clear_all(phantom_data)
-
-                        # Update phantom user_data to real user_data
-                        phantom_data.user_id = user_data.user_id
-                        phantom_data.current_user = user_data.current_user
-                        phantom_data.user_email = user_data.user_email
-                        phantom_data.user_nickname = user_data.user_nickname
-
-                        if phantom_data.put():
-                            # Phantom user was just transitioned to real user
-                            user_counter.add(1)
-                            user_data.delete()
-
-                        cont = "/newaccount?continue=%s" % cont
-        else:
-
-            # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            if App.facebook_app_id:
-                self.delete_cookie("fbsr_" + App.facebook_app_id)
-                self.delete_cookie("fbs_" + App.facebook_app_id)
-
-            logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
-                    util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
-                )
-            )
-
-        # Always delete phantom user cookies on login
-        self.delete_cookie('ureg_id')
-
-        self.redirect(cont)
-
-class Logout(request_handler.RequestHandler):
-    def get(self):
-        self.delete_cookie('ureg_id')
-
-        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
-        if App.facebook_app_id:
-            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
-            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
-
-        self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 class Search(request_handler.RequestHandler):
 
@@ -582,7 +466,7 @@ class Search(request_handler.RequestHandler):
             if len(filtered_videos) > 0:
                 for topic in topics:
                     topic.match_count = [(str(topic.key()) in video.topic_string_keys) for video in filtered_videos].count(True)
-                topics = sorted(topics, key=lambda topic: -topic.match_count)
+                topics = sorted(topics, key=lambda topic:-topic.match_count)
             else:
                 for topic in topics:
                     topic.match_count = 0
@@ -658,7 +542,7 @@ class MemcacheViewer(request_handler.RequestHandler):
     def get(self):
         key = self.request_string("key", "__layer_cache_models._get_settings_dict__")
         namespace = self.request_string("namespace", App.version)
-        values =  memcache.get(key, namespace=namespace)
+        values = memcache.get(key, namespace=namespace)
         self.response.out.write("Memcache key %s = %s.<br>\n" % (key, values))
         if type(values) is dict:
             for k, value in values.iteritems():
@@ -678,13 +562,13 @@ application = webapp2.WSGIApplication([
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
-    ('/about/discovery-lab', util_about.ViewDiscoveryLab ),
-    ('/about/tos', ViewTOS ),
+    ('/about/discovery-lab', util_about.ViewDiscoveryLab),
+    ('/about/tos', ViewTOS),
     ('/about/api-tos', ViewAPITOS),
-    ('/about/privacy-policy', ViewPrivacyPolicy ),
-    ('/about/dmca', ViewDMCA ),
-    ('/contribute', ViewContribute ),
-    ('/contribute/credits', ViewCredits ),
+    ('/about/privacy-policy', ViewPrivacyPolicy),
+    ('/about/dmca', ViewDMCA),
+    ('/contribute', ViewContribute),
+    ('/contribute/credits', ViewCredits),
     ('/frequently-asked-questions', util_about.ViewFAQ),
     ('/about/faq', util_about.ViewFAQ),
     ('/downloads', util_about.ViewDownloads),
@@ -755,8 +639,6 @@ application = webapp2.WSGIApplication([
 
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
-    ('/registercoach', coaches.RegisterCoach),
-    ('/unregistercoach', coaches.UnregisterCoach),
     ('/unregisterstudent', coaches.UnregisterStudent),
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
@@ -780,10 +662,14 @@ application = webapp2.WSGIApplication([
     ('/profile', util_profile.ViewProfile),
     ('/class_profile', util_profile.ViewClassProfile),
 
-    ('/login', Login),
-    ('/login/mobileoauth', MobileOAuthLogin),
-    ('/postlogin', PostLogin),
-    ('/logout', Logout),
+    ('/login', login.Login),
+    ('/login/mobileoauth', login.MobileOAuthLogin),
+    ('/postlogin', login.PostLogin),
+    ('/logout', login.Logout),
+    
+    # TODO(benkomalo): disabled until password based logins is complete.
+    #('/register', login.Register),
+    #('/pwchange', login.PasswordChange),
 
     ('/api-apps/register', oauth_apps.Register),
 
