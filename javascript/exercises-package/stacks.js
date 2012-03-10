@@ -516,6 +516,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
             },
             function() {
                 $(Exercises.completeStackView.el).hide();
+                $(Exercises.currentCardView.el)
+                    .find(".stack-stats p")
+                        .each(Exercises.currentCardView.attachCardTooltip);
             }
         );
     },
@@ -554,7 +557,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     },
 
-    attachLeafTooltip: function() {
+    attachCardTooltip: function() {
         $(this).qtip({
             content: {
                 text: $(this).data("desc")
@@ -588,7 +591,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                     $(Templates.get("exercises.card-leaves")(this.viewContext()))
                 )
                 .find(".leaf")
-                    .each(this.attachLeafTooltip);
+                    .each(this.attachCardTooltip);
 
         if (this.model.get("done")) {
 
