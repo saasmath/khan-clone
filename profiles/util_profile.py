@@ -145,11 +145,7 @@ class ViewClassProfile(request_handler.RequestHandler):
                     }
             self.render_jinja2_template('viewclassprofile.html', template_values)
         else:
-            template_values = {
-                    'selected_nav_link': 'coach',
-                    'selected_id': 'coach-resources',
-            }
-            self.render_jinja2_template('coach_resources/view_resources.html', template_values)
+            self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
     @ensure_xsrf_cookie

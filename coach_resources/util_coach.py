@@ -5,6 +5,7 @@ from oauth_provider import oauth
 import urllib2, urlparse, cgi
 import logging
 from app import App
+import simplejson as json
 
 class CoachResourcesRequestHandler(request_handler.RequestHandler):
     def render_jinja2_template(self, template_name, template_values):
@@ -52,6 +53,8 @@ class ViewToolkit(CoachResourcesRequestHandler):
 
 class ViewDemo(CoachResourcesRequestHandler):
     def get(self):
+        coach = UserData.current()
+
         self.render_jinja2_template('coach_resources/view_demo.html', {
             "selected_id": "demo",
             "base_url": "/toolkit",
@@ -59,7 +62,7 @@ class ViewDemo(CoachResourcesRequestHandler):
         })
 
 class AccessDemo(CoachResourcesRequestHandler):
-    def get(self):
+    def post(self):
         oauth_consumer = oauth.OAuthConsumer(App.khan_demo_consumer_key, App.khan_demo_consumer_secret)
 
         # First leg of OAuth - request token (skip a server call because we have it)
