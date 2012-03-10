@@ -670,19 +670,21 @@ Exercises.SessionStats = Backbone.Model.extend({
 
         if (userExercise) {
 
-            var progressStats = this.get("progress") || {},
-
-                stat = progressStats[exerciseName] || {
-                    exerciseName: exerciseName,
-                    start: userExercise.progress
-                };
-
             /** 
              * For now, we're just keeping track of the change in progress per
              * exercise
              * Converting manually from decimal to % so it can be more easily used in
-             * HTML/CSS land. TODO Jason/Kamens: Decide on format for this and make it consistent.
+             * HTML/CSS land.
              */
+            var progressStats = this.get("progress") || {},
+
+                stat = progressStats[exerciseName] || {
+                    displayName: userExercise.exerciseModel.displayName,
+                    startTotalDone: userExercise.totalDone,
+                    start: userExercise.progress * 100
+                };
+
+            stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress * 100;
             stat.change = stat.end - stat.start;
 
@@ -695,8 +697,19 @@ Exercises.SessionStats = Backbone.Model.extend({
 
     },
 
+    /**
+     * Return list of stat objects for only those exercises which had at least
+     * one problem done during this session.
+     */
     progressStats: function() {
-        return { progress: _.values(this.get("progress") || {}) };
+        return { progress: 
+            _.filter(
+                    _.values(this.get("progress") || {}),
+                    function(stat) {
+                        return stat.endTotalDone && stat.endTotalDone > stat.startTotalDone;
+                    }
+            )
+        };
     }
 
 });

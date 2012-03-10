@@ -61,8 +61,28 @@ var APIActionResults = {
 
     },
 
+    /**
+     * Converts our Python code's underscore_variable_notation to camelCase
+     *
+     * TODO: can remove when all of our API calls use casing:camel, see
+     * APIActionResults.register above.
+     */
+    toCamelCase: function(prop) {
+        // From http://stackoverflow.com/questions/6660977/convert-hyphens-to-camel-case-camelcase
+        return prop.replace(/_([a-z])/g, function (match) { return match[1].toUpperCase() });
+    },
+
+    /**
+     * Register both prop and the camelCase version of prop as an API event
+     * listener.
+     *
+     * TODO: when all of our API calls use casing:camel, we won't need
+     * toCamelCase because everything will register with APIActionResults using
+     * the camelCased variable name.
+     */
     register: function(prop, fxn) {
         this.hooks[this.hooks.length] = {prop: prop, fxn: fxn};
+        this.hooks[this.hooks.length] = {prop: APIActionResults.toCamelCase(prop), fxn: fxn};
     }
 };
 
