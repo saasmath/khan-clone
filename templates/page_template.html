@@ -137,16 +137,15 @@
                             {% else %}
                                 <a class="badge-target" href="{{ login_url|escape }}">Login</a>
                             {% endif %}
-                                <span class="separator"></span>
-                            {% if donate_button_test == "button" %}
-                                <span id="top-right-nav">
-                                    <a href="{{ donate_redirect_url }}" id="donate-link" data-tag="Header" class="call-to-action simple-button action-gradient green donate-button">Donate</a>
-                                </span>
-                            {% elif donate_button_test == "text" %}
-                                <a href="{{ donate_redirect_url }}" id="donate-link" data-tag="Header">Donate</a>
-                            {% else %}
-                                <a href="/donate" id="donate-link" data-tag="Header">Donate</a>
-                            {% endif %}
+                            <span class="separator"></span>
+                            <span>
+                                <a href={{ donate_redirect_url or "/donate" }}
+                                    {% if donate_button_test == "button" %}
+                                        class="call-to-action simple-button action-gradient green donate-button"
+                                    {% endif %}>
+                                    Donate
+                                </a>
+                            </span>
                         </span>
                         <div class="clear"></div>
                         <div id="nav-and-search">

@@ -183,7 +183,10 @@ class ViewHomePage(request_handler.RequestHandler):
             
         from gae_bingo.gae_bingo import ab_test, create_redirect_url
 
-        donate_button_test = ab_test("donate_button", {"":0, "button":1, "text":99}, conversion_name=['hp_click', 'paypal'])
+        donate_button_test = ab_test("donate_button",
+                                     {"button":1, "text":99},
+                                     conversion_name=['hp_click', 'paypal'])
+        donate_redirect_url = create_redirect_url("/donate", "hp_click")
 
         template_values = {
                             'marquee_video': marquee_video,
@@ -196,7 +199,7 @@ class ViewHomePage(request_handler.RequestHandler):
                             'link_heat': self.request_bool("heat", default=False),
                             'version_number': version_number,
                             'donate_button_test': donate_button_test,
-                            'donate_redirect_url': create_redirect_url("/donate", "hp_click")
+                            'donate_redirect_url': donate_redirect_url
                         }
 
         self.render_jinja2_template('homepage.html', template_values)
