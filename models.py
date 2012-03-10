@@ -111,6 +111,10 @@ class Setting(db.Model):
         return Setting._get_or_set_with_key("last_youtube_sync_generation_start", val) or 0
 
     @staticmethod
+    def topic_admin_task_message(val=None):
+        return Setting._get_or_set_with_key("topic_admin_task_message", val) 
+
+    @staticmethod
     def smarthistory_version(val=None):
         return Setting._get_or_set_with_key("smarthistory_version", val) or 0
 
@@ -1867,27 +1871,44 @@ class TopicVersion(db.Model):
 
     def set_default_version(self):
         logging.info("starting set_default_version")
-        content_problems = self.find_content_problems()
-        for problem_type, problems in content_problems.iteritems():
-            if len(problems):
-                raise Exception("%s content problems found: <a target=_blank href='/api/v1/dev/topictree/%i/problems'>Click here to see problems.</a>" % (problem_type, self.number))
-
-        do_set_default_deferred_step(apply_version_content_changes, 
+        Setting.topic_admin_task_message("Publish: started") 
+        run_code = base64.urlsafe_b64encode(os.urandom(30))   
+        do_set_default_deferred_step(check_for_problems, 
                             self.number,
-                            "%i_apply_version_content_changes" % self.number) 
+                            run_code) 
 
-def do_set_default_deferred_step(func, version_number, taskname):
+def do_set_default_deferred_step(func, version_number, run_code):
+    taskname = "v%i_run_%s_%s" % (version_number, run_code, func.__name__)
     try:
         deferred.defer(func, 
-                       version_number,
+                       version_number, 
+                       run_code,
                        _queue = "topics-set-default-queue",
                        _name = taskname,
                        _url = "/_ah/queue/deferred_topics-set-default-queue")
     except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
         logging.info("deferred task %s already exists" % taskname)
 
+def check_for_problems(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: checking for content problems")
+    version = TopicVersion.get_by_id(version_number)
+    content_problems = version.find_content_problems()
+    for problem_type, problems in content_problems.iteritems():
+        if len(problems):
+            Setting.topic_admin_task_message(("Error - content problems " +
+                "found: %s. <a target=_blank " +
+                "href='/api/v1/dev/topictree/%i/problems'>" +
+                "Click here to see problems.</a>") % 
+                (problem_type, version_number))
+                
+            raise deferred.PermanentTaskFailure
 
-def apply_version_content_changes(version_number):
+    do_set_default_deferred_step(apply_version_content_changes, 
+                                 version_number,
+                                 run_code) 
+
+def apply_version_content_changes(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: applying version content changes")  
     version = TopicVersion.get_by_id(version_number)
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
@@ -1898,9 +1919,10 @@ def apply_version_content_changes(version_number):
     logging.info("applied content changes")
     do_set_default_deferred_step(preload_library, 
                                  version_number,
-                                 "%i_preload_library" % version_number) 
+                                 run_code) 
 
-def preload_library(version_number):
+def preload_library(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: preloading cache")  
     version = TopicVersion.get_by_id(version_number)
 
     # causes circular importing if put at the top
@@ -1923,9 +1945,10 @@ def preload_library(version_number):
 
     do_set_default_deferred_step(change_default_version, 
                                  version_number,
-                                 "%i_change_default_version" % version_number) 
+                                 run_code) 
     
-def change_default_version(version_number):
+def change_default_version(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: changing default version")  
     version = TopicVersion.get_by_id(version_number)
 
     default_version = TopicVersion.get_default_version()
@@ -1954,9 +1977,13 @@ def change_default_version(version_number):
 
     logging.info("done setting new default version")
 
+    Setting.topic_admin_task_message("Publish: reindexing new content")  
+
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
     
+    Setting.topic_admin_task_message("Publish: creating new edit version")  
+
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
 
@@ -1968,9 +1995,11 @@ def change_default_version(version_number):
 
     do_set_default_deferred_step(rebuild_content_caches, 
                                  version_number,
-                                 "%i_rebuild_content_caches"  % version_number)
+                                 run_code)
    
-def rebuild_content_caches(version_number):
+def rebuild_content_caches(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: rebuilding content caches")
+      
     version = TopicVersion.get_by_id(version_number)
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
@@ -2006,6 +2035,7 @@ def rebuild_content_caches(version_number):
                 else:
                     logging.info("Failed to find URL " + str(child_key))
 
+    Setting.topic_admin_task_message("Publish: putting all content caches") 
     logging.info("About to put content caches for all videos")
     db.put(videos)
     logging.info("Finished putting videos. About to put urls")
@@ -2013,6 +2043,7 @@ def rebuild_content_caches(version_number):
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
     logging.info("set_default_version complete")
+    Setting.topic_admin_task_message("Publish: finished successfully") 
 
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
@@ -5403,5 +5434,4 @@ class VideoSubtitlesFetchReport(db.Model):
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from goals.models import GoalList
-
 

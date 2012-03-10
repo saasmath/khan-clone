@@ -401,6 +401,13 @@ def get_default_topic_version_id():
     default_version = models.TopicVersion.get_default_version()
     return default_version.number if default_version else None
 
+@route("/api/v1/dev/task_message", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def get_topic_admin_task_message():
+    return models.Setting.topic_admin_task_message()
+
 def topic_find_child(parent_id, version_id, kind, id):
     version = models.TopicVersion.get_by_id(version_id)
 
