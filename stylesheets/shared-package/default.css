@@ -2926,7 +2926,7 @@ a.proficient-badge.disabled {
 #homepage-text {
     max-width: 37%;
     margin-left: 63%;
-    height: 435px;
+    height: 420px;
     font-size:  16px;
     line-height: 24px;
 }
@@ -3187,14 +3187,14 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 #homepage #main-video object, #homepage #main-video embed {
     width: 100%;
-    height: 395px;
+    height: 380px;
 }
 #homepage #main-video-placeholder {
     background: #000;
     background-repeat: no-repeat;
     background-position: center center;
     width: 100%;
-    height: 395px;
+    height: 380px;
     cursor: pointer;
 }
 #homepage a#main-video-link:visited,
