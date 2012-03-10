@@ -2927,25 +2927,16 @@ a.proficient-badge.disabled {
     line-height: 24px;
 }
 #homepage-text a.call-to-action {
-    display: block;
+    display: inline-block;
     font-size: 20px;
     text-decoration: none;
     text-align: center;
     padding: 10px 35px 12px;
-    margin-bottom: 15px;
     font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
 }
 
 #homepage-text a.call-to-action.watch-a-video {
-    float: left;
-}
-
-#homepage-text a.call-to-action.try-an-exercise {
-    float: right;
-}
-
-#homepage-text p.try-teacher-toolkit {
-    margin-top: 10px;
+    margin-right: 5px;
 }
 
 #back-to-top {
