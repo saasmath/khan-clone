@@ -407,9 +407,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
         this.renderCardContainer();
         this.renderCardContents("exercises.calculating-card");
 
+        // Animate the first 8 cards into place -- others just go away
         setTimeout(function() {
 
-            // Animate the first 8 cards into place -- others just go away
             $(".complete-stack .card-container").each(function(ix, el) {
                 if (ix < 8) {
                     $(el).addClass("into-pocket").addClass("into-pocket-" + ix);
@@ -420,17 +420,23 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
         }, 500);
 
-        // Fade in each h2 sequentially
-        $(".current-card-contents h2").each(function(ix, el) {
+        // Fade in/out our various pieces of "calculating progress" text
+        var fadeInNextText = function(jel) {
 
-            setTimeout(function() {
+            if (!jel || !jel.length) {
+                jel = $(".current-card-contents .calc-text-spin span").first();
+            }
 
-                $(el).fadeIn(600);
+            jel.fadeIn(600, function() {
+                jel.delay(1000).fadeOut(600, function() {
+                    fadeInNextText(jel.next("span"));
+                });
+            })
+        };
 
-            }, 100 + (ix * 800));
+        fadeInNextText();
 
-        });
-    },
+   },
 
     /**
      * Renders a "calculations in progress" card, waits for API requests
