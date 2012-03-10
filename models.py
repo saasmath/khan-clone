@@ -621,6 +621,9 @@ class UserExercise(db.Model):
 
         TODO(jace): *This* is where the magic will happen.
         """
+
+        # TODO: shouldn't need the .live check here eventually --
+        # all other code handles live-or-not exercises gracefully
         exercises = [ex for ex in topic.get_exercises(include_descendants=True) if ex.live]
         graph = UserExerciseGraph.get(user_data, exercises_allowed=exercises)
 
