@@ -38,6 +38,7 @@ import base64, os
 
 from image_cache import ImageCache
 
+from auth import age_util
 from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import bingo
@@ -1361,6 +1362,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         """
 
         # Normal Gmail accounts and FB accounts require users be at least 13yo.
+        if self.birthdate:
+            return age_util.get_age(self.birthdate) >= 13
+            
         email = self.email
         return (email.endswith("@gmail.com")
                 or email.endswith("@googlemail.com")  # Gmail in Germany
