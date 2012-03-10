@@ -88,8 +88,9 @@ def api_create_phantom(method):
 
             response = method(*args, **kwargs)
 
-            cookie = _get_cookie_from_phantom(user_data)
-            response.set_cookie(PHANTOM_MORSEL_KEY, cookie)
+            if user_data:
+                cookie = _get_cookie_from_phantom(user_data)
+                response.set_cookie(PHANTOM_MORSEL_KEY, cookie)
 
             return response
 

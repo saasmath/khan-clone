@@ -1,3 +1,4 @@
+import auth.cookies
 import os
 import datetime
 import urllib
@@ -18,6 +19,8 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
 
 from api.auth.google_util import get_google_user_id_and_email_from_oauth_map
 from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
+import Cookie
+import urlparse
 
 @request_cache.cache()
 def get_current_user_id():
@@ -47,9 +50,14 @@ def get_current_user_id_from_oauth_map(oauth_map):
 def get_current_user_id_from_cookies_unsafe():
     user = users.get_current_user()
 
+    user_id = None
     if user: # if we have a google account
         user_id = "http://googleid.khanacademy.org/" + user.user_id()
-    else: # if not a google account, try facebook
+
+    if not user_id:
+        user_id = auth.cookies.get_user_from_khan_cookies()
+
+    if not user_id:
         user_id = facebook_util.get_current_facebook_user_id_from_cookies()
 
     if not user_id: # if we don't have a user_id, then it's not facebook or google
@@ -126,6 +134,62 @@ def config_iterable(plain_config, batch_size=50, limit=1000):
         logging.exception("Failed to create QueryOptions config object: %s", e)
 
     return config
+
+def _get_url_parts(url):
+    scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
+    if not netloc:
+        # No server_name - must be a relative url.
+        if 'HTTP_HOST' in os.environ:
+            netloc = os.environ['HTTP_HOST'] # includes port string
+        else:
+            server_name = os.environ['SERVER_NAME']
+
+            # Note that this is always a string
+            port = os.environ['SERVER_PORT']
+            if port == "80":
+                netloc = server_name
+            else:
+                netloc = "%s:%s" % (server_name, port)
+    return (scheme, netloc, path, query, fragment)
+
+def secure_url(url):
+    """ Given a Khan Academy URL (i.e. not to an external site), returns an
+    absolute https version of the URL, if possible.
+    
+    Abstracts away limitations of https, such as non-support in vanity domains
+    and dev servers.
+    
+    """
+    
+    if url.startswith("https://"):
+        return url
+    
+    if App.is_dev_server:
+        # Dev servers can't handle https.
+        return url
+    
+    _, netloc, path, query, fragment = _get_url_parts(url)
+
+    if (netloc.lower().endswith(".khanacademy.org")):
+        # Vanity domains can't handle https - but all the ones we own
+        # are simple CNAMEs to the default app engine instance.
+        # http://code.google.com/p/googleappengine/issues/detail?id=792
+        netloc = "khan-academy.appspot.com"
+        
+    return urlparse.urlunsplit(("https", netloc, path, query, fragment))
+
+def insecure_url(url):
+    """ Given a Khan Academy URL (i.e. not to an external site), returns an
+    absolute http version of the URL.
+    
+    """
+
+    if url.startswith("http://"):
+        return url
+    
+    _, netloc, path, query, fragment = _get_url_parts(url)
+
+    return urlparse.urlunsplit(("http", netloc, path, query, fragment))
 
 def absolute_url(relative_url):
     return 'http://%s%s' % (os.environ['HTTP_HOST'], relative_url)
