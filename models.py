@@ -4066,7 +4066,7 @@ class VideoLog(BackupModel):
         if seconds_watched > 0:
 
             bingo('marquee_started_any_video')
-            if video.readable_id in MarqueeVideoExperiment.ab_test():
+            if video.readable_id == MarqueeVideoExperiment.ab_test():
                 bingo('marquee_started_marquee_video')
 
             if user_video.seconds_watched == 0:
