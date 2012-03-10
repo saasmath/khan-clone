@@ -176,6 +176,8 @@
   clear: both;
 }
 
+.container{ margin-top:2em; }
+
 .bigdeal { margin-top:2em; }
 .bigdeal .bigpic {
     overflow:hidden; height:230px;
@@ -186,7 +188,8 @@
     border-radius:8px;
 }
 .bigdeal .bigpic img{ width:100%; }
-.bigdeal h2 {font-family: museosans-300; font-size:28px; color: rgb(137, 185, 8); }
+.bigdeal h2 {font-family: museosans300, museosans-300, helveticaneue-light, "helvetica neue"; font-size:28px; color: rgb(137, 185, 8); }
+.bigdeal a.simple-button.action-gradient.green { font-size:18px; font-family: museosans300, museosans-300, helveticaneue-light, "helvetica neue"; }
 .smallpic { height:120px; border-bottom:2px solid #e3f1f9; margin-bottom:1em; }
 .extra-resources { margin-top:1em; }
 .extra-resources h3, .extra-resources h3 a:visited { color:rgb(0,89,135); }
@@ -201,7 +204,7 @@
     text-transform:uppercase; letter-spacing: 4px; 
     width:auto; text-align:center; color:#444;
     font-family: MuseoSans-300; font-size:12px;
-    margin-top:.5em; position:relative; 
+    margin-top:.7em; position:relative;
 }
 .middle.row h4 span {background-color:white; padding:0 15px; }
 .keepintouch input{ width: 95%; }
@@ -222,12 +225,15 @@
     <div class="bigdeal row">
 
         <div class="bigpic span5">
+            <a href="/toolkit/">
             <img src="/images/teacher-classroom.png" alt="a teacher interacting with students">
+            </a>
         </div>
         <div class="bigcallout span6 offset1">
             <h2>Jumpstart Your Classroom</h2>
             <p>Visit our coach toolkit and see the incredible things other teachers and coaches are doing with the Khan Academy right now.
             <p>We're committed to providing top-tier resources to our coaches. Free. Always. Comprehensive data and meaningful analytics are only the beginning.</p>
+            <p><a href="/toolkit/" class="simple-button action-gradient green">Explore The Toolkit</a></p>
         </div>
     </div>
 
@@ -240,12 +246,13 @@
         <div class="span3">
             <!-- please to be going to  -->
             <div class="smallpic">
-                <a href="http://www.khanacademy.org/toolkit/navigating-the-site">
+                <a href="/toolkit/navigating-the-site">
                     <img src="/images/toolkit-01.png">
                 </a>
             </div>
             <h3><a href="http://www.khanacademy.org/toolkit/navigating-the-site">Rich Data</a></h3>
             <p>Get the whole picture: from how your class is doing on <em>linear equations</em> to Brian's progress on <em>Adding Fractions</em>.
+            <p>Login and add your students to see what's possible.
         </div>
 
         <div class="span3">
