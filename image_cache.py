@@ -4,13 +4,11 @@ from google.appengine.ext.webapp import blobstore_handlers
 import urllib
 import logging
 
-import webapp2
-
 import layer_cache
 
 CACHE_EXPIRATION = 60 * 60 * 24 * 60 # Cache for two months
 
-class ImageCache(webapp2.RequestHandler, blobstore_handlers.BlobstoreDownloadHandler):
+class ImageCache(blobstore_handlers.BlobstoreDownloadHandler):
     """ ImageCache is a little utility used to cache images at other URLs
     in our blobstore with our own aggressive caching headers for client-side perf.
 
