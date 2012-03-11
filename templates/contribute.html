@@ -7,6 +7,9 @@
     <style>
         #page_sub_nav { display: none; }
         #public #container #form1 #header {display: none; }
+
+        #donate-by-mail { clear: both; }
+        #donate-by-mail span { font-size: 12px;; }
     </style>
 {% endblock pagescript %}
 {% block pagecontent %}
@@ -232,7 +235,7 @@
 
         <p class="pulled" style="font-family: Georgia, serif; font-size: 13px; margin-bottom: 18px;">
             <em>We are a nonprofit (Tax ID: 26-1544963), and are totally reliant on donations 
-            like yours to keep us running. Your gifts are tax-deductible where applicable. For donation questions or issues, email <a href="mailto:donate@khanacademy.org">us</a>.</em>
+            like yours to keep us running. Your gifts are tax-deductible where applicable. For donation questions or issues, email us at <a href="mailto:donate@khanacademy.org">donate@khanacademy.org</a>.</em>
         </p>
         <div class="col1" style="max-width: 45%; min-width: 45%;">
             <h4>One-time donation</h4>
@@ -290,7 +293,20 @@
                      $("#selected-time-frame").html($("option:selected", this).attr("data-plural"));
                  });
              </script>
+         </div>
+
+        <div id="donate-by-mail">
+            <p>
+                If you'd like send us your support by mail, please use:<br>
+
+                <span>
+                    Khan Academy<br>
+                    PO Box 1630<br>
+                    Mountain View, CA, 94042
+                </span>
+            </p>
         </div>
+
     </div>
     <div class="clear"></div>
     <hr>
