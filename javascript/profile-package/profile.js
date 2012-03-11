@@ -130,7 +130,9 @@ var Profile = {
         // her username, it still shows the default profile screen. Note that
         // these routes aren't relative to the root URL, but will still work.
         "/profile": "showDefault",
-        "/profile/": "showDefault"
+        "/profile/": "showDefault",
+        // And for the mobile app... hopefully we can find a better fix.
+        "/profile?view=mobile": "showDefault"
     },
 
     /**
