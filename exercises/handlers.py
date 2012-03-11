@@ -28,6 +28,20 @@ class ViewExerciseDeprecated(request_handler.RequestHandler):
 
 class ViewExercise(request_handler.RequestHandler):
 
+    def browser_support_values(self):
+        # We cannot render old problems that were created in the v1 exercise framework.
+        renderable = self.request_bool("renderable", True)
+
+        is_webos = self.is_webos()
+        browser_disabled = is_webos or self.is_older_ie()
+        renderable = renderable and not browser_disabled
+
+        return {
+            "is_webos": is_webos,
+            "browser_disabled": browser_disabled,
+            "renderable": renderable
+        }
+
     @ensure_xsrf_cookie
     def get(self, topic_path, exid=None):
 
@@ -101,5 +115,8 @@ class ViewExercise(request_handler.RequestHandler):
             "exercise_json": jsonify(exercise, camel_cased=True),
             "user_data_json": jsonify(user_data, camel_cased=True),
         }
+
+        # Add disabled browser warnings
+        template_values.update(self.browser_support_values())
 
         self.render_jinja2_template("exercises/exercise_template.html", template_values)
