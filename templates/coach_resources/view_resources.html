@@ -284,7 +284,7 @@
                 <form name="coach_mailing_list_form" class="keepintouch">
                     <input type="email" name="email" class="email simple-input ui-corner-all"
                      id="mailform" placeholder="Enter your email"
-                     {% if coach_email %} value="{{ coach_email }}" {% endif %} />
+                     {% if logged_in %} value="{{ coach_email }}" {% endif %} />
                     <input type="submit" value="Register your class" class="simple button action gradient">
                 </form>
             </div>
