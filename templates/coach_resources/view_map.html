@@ -10,7 +10,7 @@
     </style>
 {% endblock pagescript %}
 {% block pagecontent %}
-<article id="commoncore" class="clearfix">
+<article id="commoncore">
 	
 	<style type="text/css">
 	
@@ -116,10 +116,6 @@
 		color: #000000;
 		text-decoration: none;
 	}
-	
-        .selected {
-                background-color: #DBDBDB;
-        }
 
 	.hover {
 		background-color: #DBDBDB;
@@ -196,19 +192,22 @@
 				
 	</script>
 	
+	<div id="page-background" style="background-color:#ffffff;">
 	
-        <div id="cc-header">
+    <div id="cc-header">
 		<!--a href="#" class="simple-button action-gradient" style="float:right; margin-top:22px;">Submit a Common Core Tag</a>
 		<div style="clear:both;"></div-->
 	</div>
-		
-        <br>
+	
+	<br>
+	<br>
+	<br>
 		
 	<div id="sidebar" class="col1" style="max-width:20%; min-width:20%;">
 		
 		<div id="sidebar-wrapper">
 		
-			<h4 id="filter-header"><b>Common Core Map</b></h4>
+			<h3 id="filter-header"><b>Common Core Map</b></h3>
 		
 	        <div id="search-box">
 	            <!-- Hold for el search box -->
@@ -344,6 +343,8 @@
 		</div>	
 			
 		{% endfor %}
+	</div>
+	
 	</div>		
 </article>
 {% endblock pagecontent %}
