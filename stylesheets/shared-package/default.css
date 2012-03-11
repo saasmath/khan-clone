@@ -797,6 +797,10 @@ footer {
 #topic-jump nav > ul > li ul {
     font-size: 12px;
 }
+
+#social-actions {
+    margin-top: 25px;
+}
 #social-actions #fb-like-badge {
     display: inline-block;
     width: 165px;
@@ -804,7 +808,7 @@ footer {
     vertical-align: top;
 }
 .homepage-mailing {
-    padding-top: 13px;
+    padding-top: 24px;
 }
 .homepage-mailing .mailing_list_container input.simple-button {
     display: inline;
@@ -2926,7 +2930,7 @@ a.proficient-badge.disabled {
 #homepage-text {
     max-width: 37%;
     margin-left: 63%;
-    height: 420px;
+    height: 435px;
     font-size:  16px;
     line-height: 24px;
 }
@@ -2935,8 +2939,9 @@ a.proficient-badge.disabled {
     font-size: 20px;
     text-decoration: none;
     text-align: center;
-    padding: 10px 35px 12px;
+    padding: 10px 0 12px;
     font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
+    width: 208px;
 }
 
 #homepage-text a.call-to-action.watch-a-video {
@@ -3187,14 +3192,14 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 }
 #homepage #main-video object, #homepage #main-video embed {
     width: 100%;
-    height: 380px;
+    height: 395px;
 }
 #homepage #main-video-placeholder {
     background: #000;
     background-repeat: no-repeat;
     background-position: center center;
     width: 100%;
-    height: 380px;
+    height: 395px;
     cursor: pointer;
 }
 #homepage a#main-video-link:visited,
