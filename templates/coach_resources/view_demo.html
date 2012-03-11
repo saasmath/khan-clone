@@ -20,9 +20,9 @@
         to a class, and you can access this class through a <a href="/coach/accessdemo" target="_blank">
         demo</a>.
         <ul class=bullet>
-            <li>Simply click on the demo button (if you are logged into your account, you will be logged out of it)
+            <li>Simply click on the demo button (if you are logged into your account, you will need to log out first)
             <li>Experience the power of the data by clicking around the different reports
-            <li>Click logout when you are done (and log back into your account)
+            <li>Logout of the demo account when you are done (and log back into your account)
         </ul>
         </p>
 
@@ -31,6 +31,29 @@
             <input id="demo-submit" type="submit" value="Access Demo" class="call-to-action simple-button action-gradient blue">
         </form>
         </p>
+
+        <script>
+            $(document).ready(function(e) {
+                var logged_in = {{ is_logged_in }}
+                if (logged_in) {
+                    $("input[id='demo-submit']").val("Logout and access demo")
+                    $("input[id='demo-submit']").removeClass("blue")
+                    $("input[id='demo-submit']").addClass("orange")
+                }
+            });
+
+            $("#coach_demo_form").submit(function(e) {
+                if ($("input[id='demo-submit']").val() != "Access Demo") {
+                    window.location = "/logout?continue=/coach/demo"
+
+                    $("input[id='demo-submit']").val("Access Demo")
+                    $("input[id='demo-submit']").removeClass("orange")
+                    $("input[id='demo-submit']").addClass("blue")
+
+                    e.preventDefault()
+                }
+            });
+        </script>
     </div>
 </div>
 

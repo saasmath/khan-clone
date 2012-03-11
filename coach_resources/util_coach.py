@@ -59,6 +59,7 @@ class ViewDemo(CoachResourcesRequestHandler):
             "selected_id": "demo",
             "base_url": "/toolkit",
             "not_in_toolkit_format": 1,
+            "is_logged_in": json.dumps(coach is not None),
         })
 
 class AccessDemo(CoachResourcesRequestHandler):
