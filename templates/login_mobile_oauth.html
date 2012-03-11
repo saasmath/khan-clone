@@ -17,6 +17,22 @@
         </style>
         {% endif %}
 
+        <style>
+            #login-page {
+                padding-top: 18px;
+            }
+            #login-page .providers li .sign-in-text {
+                color: #777;
+            }
+            .providers li {
+                padding: 0 10px 8px;
+                margin: 0 17px 0 0;
+            }
+            .providers li img {
+                margin: 0;
+            }
+        </style>
+
         {% if view == "mobile" %}
         <script>document.ontouchmove = function(e){e.preventDefault();}</script>
         {% endif %}
@@ -28,7 +44,7 @@
 
                 <!-- ontouchstart="" is needed to allow the :active pseudoclass to work
                      See http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari  -->
-                <ul class="providers"> 
+                <ul class="providers">
                     <li class="action-gradient" title="Google">
                         <a ontouchstart="" href="/api/auth/request_token_callback/google/{{ oauth_map_id|escape }}">
                             <div class="sign-in-text">Login with:</div>
