@@ -1392,7 +1392,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
                 userExercise = UserExercise.get(str(key_user_exercise))
 
         if allow_insert and not userExercise:
-            bingo('marquee_num_exercises_started')
             userExercise = UserExercise.get_or_insert(
                 key_name=exid,
                 parent=self,
@@ -4102,7 +4101,7 @@ class VideoLog(BackupModel):
         if seconds_watched > 0:
 
             bingo('marquee_started_any_video')
-            if video.readable_id == MarqueeVideoExperiment.ab_test():
+            if video.readable_id in MarqueeVideoExperiment._ab_test_alternatives and video.readable_id == MarqueeVideoExperiment.ab_test():
                 bingo('marquee_started_marquee_video')
 
             if user_video.seconds_watched == 0:
