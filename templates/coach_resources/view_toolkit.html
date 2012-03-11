@@ -26,6 +26,10 @@
 			margin-bottom:22px;
 		}
 		
+		span.video-link {
+			margin-left: 15px;
+		}
+		
 		ul.bullet > li {
 			line-height: 1.4em;
 			margin-bottom: .4em;
@@ -44,8 +48,8 @@
 		
 		.callout {
 			background: #F3F3F3;
-			padding: 10px;
-			margin: 1px 0 1px;
+			padding: 19px 19px 5px;
+			margin: 20px 0px 20px;
 			border: 1px solid #EEE;
 			border-top-color: #DDD;
 			border-radius: 6px;
@@ -124,7 +128,7 @@
 	<menu class="profile-navigation">
 	    <ul class="vertical-tab-list">
 	        <!-- TODO(Matt): transpent-ify the hand-tree image -->
-			<li class="profile-tab"><a href="{{base_url}}/index" class="tab-link no-recolor {% if 'index' == selected_id %}active-tab{% endif %}" rel="profile">
+			<li class="profile-tab"><a href="{{base_url}}" class="tab-link no-recolor {% if 'index' == selected_id %}active-tab{% endif %}" rel="profile">
 	            <img src="/images/hand-tree.png" class="profile-tab-avatar">
 	            <span id="profile-tab-link" class="profile-tab-text">Teacher Toolkit</span>
 	        </a></li>
@@ -181,14 +185,16 @@
                 {% block resourcecontent %}
                 {% endblock resourcecontent %}
         {% else %}
+		
 		<div class="col1 sixty-forty">
 		{% block col1content %}
 		{% endblock col1content %}
 		</div>
-                <div class="col2 sixty-forty">
+		
+        <div class="col2 sixty-forty">
 		{% block col2content %}
 		{% endblock col2content %}
-                </div>
+        </div>
         {% endif %}
 				
 	</section>	
