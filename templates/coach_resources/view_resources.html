@@ -279,14 +279,20 @@
                 </a>
             </div>
             <h3><a href="javascript:$('#mailform').focus();">Keep In Touch</a></h3>
-            <form action="/addcoach_to_mailing_list" name="coach_mailing_list_form" class="keepintouch">
-                    <input type="email" placeholder="Enter your email" name="email"
-                    id="mailform"
-                    class="simple-input ui-corner-all"
-                    {% if coach_email %} value="{{ coach_email }}" {% endif %}>
-                <input type="submit" value="Register your class" class="simple button action gradient">
-            </form>
-            <p>Sign up for our coach mailing list and keep up to date with new developments.
+            <div class="mailing_list_container" id="mailing_list_container_2">
+                <form name="coach_mailing_list_form" class="keepintouch">
+                    <input type="email" name="email" class="email simple-input ui-corner-all"
+                     id="mailform" placeholder="Enter your email"
+                     {% if coach_email %} value="{{ coach_email }}" {% endif %} />
+                    <input type="submit" value="Register your class" class="simple button action gradient">
+                </form>
+            </div>
+            <p>Sign up for our coach mailing list and keep up to date with new developments.</p>
+            <script>
+                if (typeof MailingList !== "undefined") {
+                    MailingList.init("2");
+                }
+            </script>
         </div>
 
     </div>
