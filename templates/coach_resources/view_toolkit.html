@@ -26,6 +26,10 @@
 			margin-bottom:22px;
 		}
 		
+		span.video-link {
+			margin-left: 15px;
+		}
+		
 		ul.bullet > li {
 			line-height: 1.4em;
 			margin-bottom: .4em;
@@ -181,14 +185,16 @@
                 {% block resourcecontent %}
                 {% endblock resourcecontent %}
         {% else %}
+		
 		<div class="col1 sixty-forty">
 		{% block col1content %}
 		{% endblock col1content %}
 		</div>
-                <div class="col2 sixty-forty">
+		
+        <div class="col2 sixty-forty">
 		{% block col2content %}
 		{% endblock col2content %}
-                </div>
+        </div>
         {% endif %}
 				
 	</section>	
