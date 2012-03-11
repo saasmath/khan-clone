@@ -2949,6 +2949,10 @@ a.proficient-badge.disabled {
     margin-right: 5px;
 }
 
+#homepage-text .try-teacher-toolkit {
+    white-space: nowrap;
+}
+
 #back-to-top {
     position: fixed;
     bottom: 32px;
