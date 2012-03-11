@@ -2939,13 +2939,18 @@ a.proficient-badge.disabled {
     font-size: 20px;
     text-decoration: none;
     text-align: center;
-    padding: 10px 0 12px;
+    padding: 0;
+    line-height: 44px;
+    width: 48%;
     font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
-    width: 208px;
 }
 
 #homepage-text a.call-to-action.watch-a-video {
     margin-right: 5px;
+}
+
+#homepage-text .try-teacher-toolkit {
+    white-space: nowrap;
 }
 
 #back-to-top {
