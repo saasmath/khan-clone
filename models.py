@@ -3771,6 +3771,7 @@ class Video(Searchable, db.Model):
             'player_html': player_html,
             'discussion_html': discussion_html,
             'subtitles_html': subtitles_html,
+            'videoPoints': awarded_points,
         }
 
 class Playlist(Searchable, db.Model):
