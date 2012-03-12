@@ -18,13 +18,13 @@ from oauth_provider.utils import initialize_server_request
 from oauth_provider.stores import check_valid_callback
 
 # Our API's OAuth authentication and authorization is designed to encapsulate the OAuth support
-# of our identity providers (Google/Facebook), so each of our mobile apps and client applications 
+# of our identity providers (Google/Facebook), so each of our mobile apps and client applications
 # don't have to handle each auth provider independently. We behave as one single OAuth set of endpoints
 # for them to interact with.
 
 # Request token endpoint
 #
-# Flask-friendly version of oauth_providers.oauth_request.RequestTokenHandler that 
+# Flask-friendly version of oauth_providers.oauth_request.RequestTokenHandler that
 # hands off to Google/Facebook to gather the appropriate request tokens.
 @route("/api/auth/request_token", methods=["GET", "POST"])
 def request_token():
@@ -48,7 +48,7 @@ def request_token():
     oauth_map.request_token_secret = token.secret
     oauth_map.request_token = token.key_
     oauth_map.callback_url = requested_oauth_callback()
-    
+
     if request.values.get("view") == "mobile":
         oauth_map.view = "mobile"
 
@@ -133,7 +133,7 @@ def access_token():
         if not token:
             return oauth_error_response(OAuthError("Cannot find corresponding access token."))
 
-        # Grab the mapping of access tokens to our identity providers 
+        # Grab the mapping of access tokens to our identity providers
         oauth_map = OAuthMap.get_from_request_token(oauth_request.get_parameter("oauth_token"))
         if not oauth_map:
             return oauth_error_response(OAuthError("Cannot find oauth mapping for request token."))
