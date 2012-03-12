@@ -1,4 +1,4 @@
-total_storage_limit: 999M
+total_storage_limit: 99999M
 queue:
 - name: badge-statistics-queue
   rate: 5/s
