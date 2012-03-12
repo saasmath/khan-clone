@@ -4,7 +4,7 @@ from google.appengine.api import users
 
 # CUSTOMIZE set queue_name to something other than "default"
 # if you'd like to use a non-default task queue.
-QUEUE_NAME = "default"
+QUEUE_NAME = "gae-bingo-queue"
 
 # CUSTOMIZE can_see_experiments however you want to specify
 # whether or not the currently-logged-in user has access
