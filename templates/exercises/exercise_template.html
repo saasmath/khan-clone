@@ -15,9 +15,12 @@
 
 {% block pagecontent %}
 
-{% if renderable %}
+{% if renderable and not browser_disabled %}
 
-<div id="container" class="exercises-content-container visited-no-recolor" style="overflow:hidden"></div>
+<div 
+    id="container" 
+    class="exercises-content-container visited-no-recolor {% if read_only %}read-only{% endif %}" 
+    style="overflow:hidden"></div>
 
 {% else %}
     {% if browser_disabled %}
@@ -69,7 +72,7 @@
 {{ js_css_packages.js_package("exercise-content") }}
 {{ js_css_packages.js_package("video") }}
 
-{% if renderable %}
+{% if renderable and not browser_disabled %}
 <script>
     Exercises.init({
         topic: {{ topic_json }},
@@ -78,7 +81,8 @@
         userExercises: {{ user_exercises_json }},
         incompleteStack: {{ stack_json }},
         reviewMode: {{ review_mode_json }},
-        practiceMode: {{ practice_mode_json }}
+        practiceMode: {{ practice_mode_json }},
+        readOnly: {% if read_only %}true{% else %}false {% endif %}
     });
 
     $(function() {

@@ -24,23 +24,10 @@ class ViewExerciseDeprecated(request_handler.RequestHandler):
         if not topic:
             raise MissingExerciseException("Exercise '%s' is missing a topic" % exid)
 
-        self.redirect("/%s/e/%s" % (topic.get_extended_slug(), urllib.quote(exid)))
+        self.redirect("/%s/e/%s?%s" % 
+                (topic.get_extended_slug(), urllib.quote(exid), self.request.query_string))
 
 class ViewExercise(request_handler.RequestHandler):
-
-    def browser_support_values(self):
-        # We cannot render old problems that were created in the v1 exercise framework.
-        renderable = self.request_bool("renderable", True)
-
-        is_webos = self.is_webos()
-        browser_disabled = is_webos or self.is_older_ie()
-        renderable = renderable and not browser_disabled
-
-        return {
-            "is_webos": is_webos,
-            "browser_disabled": browser_disabled,
-            "renderable": renderable
-        }
 
     @ensure_xsrf_cookie
     def get(self, topic_path, exid=None):
@@ -107,8 +94,10 @@ class ViewExercise(request_handler.RequestHandler):
 
         template_values = {
             "title": title,
+            "selected_nav_link": "practice",
+            "renderable": True,
+            "read_only": False,
             "stack_json": jsonify(stack, camel_cased=True),
-            "user_exercises_json": jsonify(user_exercises, camel_cased=True),
             "review_mode_json": jsonify(review_mode, camel_cased=True),
             "practice_mode_json": jsonify(practice_mode, camel_cased=True),
             "topic_json": jsonify(topic, camel_cased=True),
@@ -119,4 +108,138 @@ class ViewExercise(request_handler.RequestHandler):
         # Add disabled browser warnings
         template_values.update(self.browser_support_values())
 
+        if practice_mode:
+            # Add history data to template context if we're viewing an old problem
+            template_values.update(self.problem_history_values(user_data, user_exercises[0]))
+
+        # We have to jsonify user_exercises after problem_history_values because it currently stores
+        # all of its historical problem data on the user_exercises object. TODO: fix this and pass
+        # down data independently.
+        template_values.update({"user_exercises_json": jsonify(user_exercises, camel_cased=True)})
+
         self.render_jinja2_template("exercises/exercise_template.html", template_values)
+
+    def browser_support_values(self):
+        """ Returns a dictionary containing relevant browser support data
+        for our interactive exercises
+        """
+
+        is_webos = self.is_webos()
+        browser_disabled = is_webos or self.is_older_ie()
+
+        return {
+            "is_webos": is_webos,
+            "browser_disabled": browser_disabled,
+        }
+
+    def problem_history_values(self, user_data, user_exercise):
+        """ Returns a dictionary containing historical data, if requested, about 
+        a particular problem done in user_exercise.
+        """
+
+        problem_number = self.request_int('problem_number', default=(user_exercise.total_done + 1))
+
+        user_data_student = self.request_student_user_data(legacy=True) or user_data
+        if user_data_student.key_email != user_data.key_email and not user_data_student.is_visible_to(user_data):
+            user_data_student = user_data
+
+        viewing_other = user_data_student.key_email != user_data.key_email
+
+        # Can't view your own problems ahead of schedule
+        if not viewing_other and problem_number > user_exercise.total_done + 1:
+            problem_number = user_exercise.total_done + 1
+
+        # When viewing another student's problem or a problem out-of-order, show read-only view
+        read_only = viewing_other or problem_number != (user_exercise.total_done + 1)
+
+        renderable = True
+
+        if read_only:
+            # Override current problem number and user being inspected
+            # so proper exercise content will be generated
+            user_exercise.total_done = problem_number - 1
+            user_exercise.user = user_data_student.user
+            user_exercise.read_only = True
+
+            if not self.request_bool("renderable", True):
+                # We cannot render old problems that were created in the v1 exercise framework.
+                renderable = False
+
+            query = models.ProblemLog.all()
+            query.filter("user = ", user_data_student.user)
+            query.filter("exercise = ", user_exercise.exercise)
+
+            # adding this ordering to ensure that query is served by an existing index.
+            # could be ok if we remove this
+            query.order('time_done')
+            problem_logs = query.fetch(500)
+
+            problem_log = None
+            for p in problem_logs:
+                if p.problem_number == problem_number:
+                    problem_log = p
+                    break
+
+            user_activity = []
+            previous_time = 0
+
+            if not problem_log or not hasattr(problem_log, "hint_after_attempt_list"):
+                renderable = False
+            else:
+                # Don't include incomplete information
+                problem_log.hint_after_attempt_list = filter(lambda x: x != -1, problem_log.hint_after_attempt_list)
+
+                while len(problem_log.hint_after_attempt_list) and problem_log.hint_after_attempt_list[0] == 0:
+                    user_activity.append([
+                        "hint-activity",
+                        "0",
+                        max(0, problem_log.hint_time_taken_list[0] - previous_time)
+                        ])
+
+                    previous_time = problem_log.hint_time_taken_list[0]
+                    problem_log.hint_after_attempt_list.pop(0)
+                    problem_log.hint_time_taken_list.pop(0)
+
+                # For each attempt, add it to the list and then add any hints
+                # that came after it
+                for i in range(0, len(problem_log.attempts)):
+                    user_activity.append([
+                        "correct-activity" if problem_log.correct else "incorrect-activity",
+                        unicode(problem_log.attempts[i] if problem_log.attempts[i] else 0),
+                        max(0, problem_log.time_taken_attempts[i] - previous_time)
+                        ])
+
+                    previous_time = 0
+
+                    # Here i is 0-indexed but problems are numbered starting at 1
+                    while (len(problem_log.hint_after_attempt_list) and
+                            problem_log.hint_after_attempt_list[0] == i + 1):
+                        user_activity.append([
+                            "hint-activity",
+                            "0",
+                            max(0, problem_log.hint_time_taken_list[0] - previous_time)
+                            ])
+
+                        previous_time = problem_log.hint_time_taken_list[0]
+                        # easiest to just pop these instead of maintaining
+                        # another index into this list
+                        problem_log.hint_after_attempt_list.pop(0)
+                        problem_log.hint_time_taken_list.pop(0)
+
+                user_exercise.user_activity = user_activity
+
+                if problem_log.count_hints is not None:
+                    user_exercise.count_hints = problem_log.count_hints
+
+                user_exercise.current = problem_log.sha1 == user_exercise.exercise_model.sha1
+
+                url_pattern = "/exercise/%s?student_email=%s&problem_number=%d"
+                user_exercise.previous_problem_url = url_pattern % \
+                    (user_exercise.exercise, user_data_student.key_email, problem_number - 1)
+                user_exercise.next_problem_url = url_pattern % \
+                    (user_exercise.exercise, user_data_student.key_email, problem_number + 1)
+
+        return {
+            "renderable": renderable,
+            "read_only": read_only,
+        }

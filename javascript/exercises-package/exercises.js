@@ -30,9 +30,13 @@ var Exercises = {
     // (single-exercise) mode
     topic: null,
 
+    userData: null,
+
     // exercise will be populated if we're in practice mode
     exercise: null,
-    userData: null,
+
+    // readOnlyUserExercise will only be populated if we're in readOnly mode
+    readOnlyUserExercise: null,
 
     currentCard: null,
     currentCardView: null,
@@ -60,6 +64,7 @@ var Exercises = {
         this.userData = json.userData;
         this.practiceMode = json.practiceMode;
         this.reviewMode = json.reviewMode;
+        this.readOnly = json.readOnly;
 
         // sessionStats and completeStack will be loaded from local cache if available
         this.sessionStats = new Exercises.SessionStats(/* attrs */ null, {sessionId: this.sessionId()});
@@ -73,11 +78,22 @@ var Exercises = {
         // Start w/ the first card ready to go
         this.currentCard = this.incompleteStack.pop();
 
-        Exercises.BottomlessQueue.init(
-                this.topic, 
-                json.userExercises, 
-                /* refillEnabled */ !this.reviewMode && !this.practiceMode
-        );
+        if (!this.readOnly) {
+
+            // Prepare our never-ending queue of upcoming user exercises
+            Exercises.BottomlessQueue.init(
+                    this.topic, 
+                    json.userExercises, 
+                    /* refillEnabled */ !this.reviewMode && !this.practiceMode
+            );
+
+        } else {
+
+            // readOnly only shows a single historical problem from a single
+            // user exercise.
+            this.readOnlyUserExercise = json.userExercises[0];
+
+        }
 
     },
 
@@ -88,6 +104,11 @@ var Exercises = {
      * being tackled.
      */
     sessionId: function() {
+
+        if (this.readOnly) {
+            // Read only mode stores and uses no cached session state
+            return null;
+        }
 
         var contextId = null;
 
@@ -219,6 +240,15 @@ var Exercises = {
             .bind("apiRequestStarted", function() { Exercises.pendingAPIRequests++; })
             .bind("apiRequestEnded", function() { Exercises.pendingAPIRequests--; });
 
+    },
+
+    nextUserExercise: function() {
+
+        if (this.readOnly) {
+            return this.readOnlyUserExercise;
+        } else {
+            return this.BottomlessQueue.next();
+        }
     },
 
     nextCard: function() {

@@ -151,10 +151,6 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
 
         this.sessionId = options ? options.sessionId : null;
 
-        if (!this.sessionId) {
-            throw "Must supply a unique sessionId for any stack being cached";
-        }
-
         // Try to load models from cache
         if (!models) {
             this.loadFromCache();
@@ -169,6 +165,10 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
     },
 
     cacheKey: function() {
+        if (!this.sessionId) {
+            throw "Missing session id for cache key";
+        }
+
         return [
             "cachedstack",
             this.sessionId
@@ -176,6 +176,12 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
     },
 
     loadFromCache: function() {
+
+        if (!this.sessionId) {
+            // Don't cache session-less pages (such as when viewing historical
+            // problems)
+            return;
+        }
 
         var modelAttrs = LocalStore.get(this.cacheKey());
         if (modelAttrs) {
@@ -189,6 +195,13 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
     },
 
     cache: function() {
+
+        if (!this.sessionId) {
+            // Don't cache session-less pages (such as when viewing historical
+            // problems)
+            return;
+        }
+
         LocalStore.set(this.cacheKey(), this.models);
     },
 
@@ -497,7 +510,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     renderExerciseInProblemCard: function() {
 
-        var nextUserExercise = Exercises.BottomlessQueue.next();
+        var nextUserExercise = Exercises.nextUserExercise();
         if (nextUserExercise) {
             // khan-exercises is listening and will fill the card w/ new problem contents
             $(Exercises).trigger("readyForNextProblem", {userExercise: nextUserExercise});
@@ -666,10 +679,6 @@ Exercises.SessionStats = Backbone.Model.extend({
 
         this.sessionId = options ? options.sessionId : null;
 
-        if (!this.sessionId) {
-            throw "Must supply a unique sessionId for any stack stats being cached";
-        }
-
         // Try to load stats from cache
         this.loadFromCache();
 
@@ -682,6 +691,10 @@ Exercises.SessionStats = Backbone.Model.extend({
     },
 
     cacheKey: function() {
+        if (!this.sessionId) {
+            throw "Missing session id for cache key";
+        }
+
         return [
             "cachedsessionstats",
             this.sessionId
@@ -689,6 +702,12 @@ Exercises.SessionStats = Backbone.Model.extend({
     },
 
     loadFromCache: function() {
+        if (!this.sessionId) {
+            // Don't cache session-less pages (such as when viewing historical
+            // problems)
+            return;
+        }
+
         var attrs = LocalStore.get(this.cacheKey());
         if (attrs) {
             this.set(attrs);
@@ -696,6 +715,12 @@ Exercises.SessionStats = Backbone.Model.extend({
     },
 
     cache: function() {
+        if (!this.sessionId) {
+            // Don't cache session-less pages (such as when viewing historical
+            // problems)
+            return;
+        }
+
         LocalStore.set(this.cacheKey(), this.attributes);
     },
 
