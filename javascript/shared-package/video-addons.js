@@ -337,7 +337,7 @@ var VideoStats = {
     // Right now it relies on a global variable set in page_template.html
     // for the user's nickname.
     isPhantom_: function() {
-        return !USERNAME;
+        return !window.USERNAME;
     },
 
     save: function() {
