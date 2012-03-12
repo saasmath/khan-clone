@@ -2,7 +2,6 @@ import models
 import util
 import logging
 from templatefilters import seconds_to_time_string
-from exercises import exercise_contents
 
 class ProblemPoint:
     def __init__(self, problem_log, current_sha1):
