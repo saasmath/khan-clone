@@ -32,9 +32,6 @@ class ViewExercise(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self, topic_path, exid=None):
 
-        # TODO(kamens): error/permission handling, past problem viewing,
-        #  and the rest of exercises/__init__.py's ViewExercise edge cases
-
         review_mode = "review" == topic_path
         practice_mode = bool(exid)
 

@@ -60,7 +60,7 @@ def exercise_problems_graph_context(user_data_student, exid):
 
     user_exercise = user_data_student.get_or_insert_exercise(exercise)
 
-    sha1 = exercise_contents(exercise)[4]
+    sha1 = exercise.sha1
 
     related_videos = exercise.related_videos_query()
     video_list = []
