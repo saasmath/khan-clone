@@ -110,7 +110,7 @@ class Token(db.Model):
         key = generate_random(length=KEY_SIZE)
         secret = generate_random(length=SECRET_SIZE)
 
-        while Token.all().filter('key_ =',key).filter('secret =',secret).count():
+        while Token.all().filter('key_ =',key).count():
             key = generate_random(length=KEY_SIZE)
             secret = generate_random(length=SECRET_SIZE)
 
@@ -136,34 +136,16 @@ class Token(db.Model):
     def create_token(cls, consumer, token_type, timestamp, resource,
             user=None, callback=None, callback_confirmed=False):
         """Shortcut to create a token with random key/secret."""
-        tokens = Token.all()\
-            .filter('consumer =',consumer)\
-            .filter('token_type =',token_type)\
-            .filter('timestamp =',timestamp)\
-            .filter('resource =',resource)\
-            .filter('user =',user)\
-            .filter('callback =',callback)\
-            .filter('callback_confirmed =',callback_confirmed).fetch(1000)
-
-        if len(tokens) == 1:
-            token = tokens[0]
-        elif len(tokens) == 0:
-            #create a nonce
-            token = Token(consumer=consumer,
-                                token_type=token_type,
-                                timestamp=timestamp,
-                                resource=resource,
-                                user=user,
-                                callback=callback,
-                                callback_confirmed=callback_confirmed)
-            token.generate_random_codes()
-            token.put()
-        else:
-            raise Exception('More then one token matches consumer_key "%s", \
-                token_type "%s", timestamp "%s", resource "%s", user "%s" \
-                callback "%s", callback_confirmed "%s"'\
-                %(consumer.key,token_type, timestamp, resource, user, callback,\
-                    callback_confirmed))
+        token = Token(
+            consumer=consumer,
+            token_type=token_type,
+            timestamp=timestamp,
+            resource=resource,
+            user=user,
+            callback=callback,
+            callback_confirmed=callback_confirmed)
+        token.generate_random_codes()
+        token.put()
 
         return token
     create_token = classmethod(create_token)
