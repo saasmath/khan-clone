@@ -41,6 +41,7 @@ def request_token():
         return oauth_error_response(e)
 
     if OAuthMap.get_from_request_token(token.key_):
+        logging.error("OAuth key %s already used" % token.key_)
         return oauth_error_response(OAuthError("OAuth parameters already used."))
 
     # Start a new OAuth mapping
