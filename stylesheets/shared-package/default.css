@@ -589,16 +589,28 @@ footer {
     .dark #top-header #user-info {
         text-shadow: 0 1px 0 #1A222D;
     }
-    #user-info ul {
-        display: block;
-        clear: right;
-        float: right;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
     #user-info a.notification_link img {
         position: relative;
+    }
+    #user-info .dropdown {
+        padding: 5px;
+    }
+    #user-info .dropdown.open {
+        background-color: #FFF;
+        padding-bottom: 10px;
+    }
+    #user-info .dropdown-menu:before {
+        display: none;
+    }
+    #user-info .dropdown-menu {
+        margin-top: 7px;
+        position: absolute;
+        right: 0;
+        border: none;
+        width: 120px;
+    }
+    #user-info .dropdown-menu li > a:hover {
+        background-color: #C6D1AD;
     }
 
 #nav-and-search {
@@ -1088,11 +1100,6 @@ nav#page_sub_nav {
         -moz-box-shadow: 0 -2px 0 #1A222C;
         box-shadow: 0 -2px 0 #1A222C;
     }
-
-header ul {
-    margin: 0;
-    padding: .2em 1em .2em 1em;
-}
 
 nav ul.page_links li, header ul.page_links li {
     display: inline;

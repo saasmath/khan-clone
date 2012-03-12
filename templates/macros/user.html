@@ -1,7 +1,7 @@
 {% macro user_info(username, user_data) -%}
-{{ username_and_notification(username, user_data) }}
 {{ badges.badge_counts(user_data) }}
 {{ user_points(user_data) }}
+{{ username_and_notification(username, user_data) }}
 {%- endmacro %}
 
 {% macro user_points(user_data, points=0) -%}
@@ -27,13 +27,21 @@
     {% set profile_root = '/profile' %}
     {% set count = 0 %}
 {% endif %}
-<span class="username_and_notification">
-    {% if count %}
-    <span class="user-notification">
-        <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
+<span class="dropdown">
+    <span class="username_and_notification dropdown-toggle" data-toggle="dropdown">
+        {% if count %}
+        <span class="user-notification">
+            <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
+        </span>
+        {% endif %}
+        <a href="{{profile_root}}"><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
+        <b class="caret"></b>
     </span>
-    {% endif %}
-    <a href="{{profile_root}}"><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
+    <ul class="dropdown-menu vertical-shadow">
+        <li><a href="{{profile_root}}">Visit profile</a></li>
+        <li><a href="{{profile_root}}/settings">Change settings</a></li>
+        <li><a href="#">Logout</a></li>
+    </ul>
 </span>
 {%- endmacro %}
 
