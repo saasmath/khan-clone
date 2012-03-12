@@ -10,6 +10,7 @@ from templatefilters import timesince_ago, seconds_to_time_string
 
 from models import Exercise, UserVideo, Video
 import util
+import logging
 
 
 class Goal(db.Model):
@@ -242,7 +243,7 @@ class GoalObjective(object):
 
     def url():
         '''url to which the objective points when used as a nav bar.'''
-        raise Exception
+        raise Exception("Not implemented in base class")
 
     def record_progress(self):
         return False
@@ -318,6 +319,9 @@ class GoalObjectiveExerciseProficiency(GoalObjective):
 
     def url(self):
         exercise = Exercise.get_by_name(self.exercise_name)
+        if not exercise:
+            logging.warn("Exercise [%s] not found for goal" % self.exercise_name)
+            return ""
         return exercise.relative_url
 
     def internal_id(self):
