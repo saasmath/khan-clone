@@ -1258,6 +1258,12 @@ def log_user_video(youtube_id):
         logging.warning("Video watched with no user_data present")
         return unauthorized_response()
 
+    if user_data.is_phantom:
+        # TODO(kamens): phantom user video logging
+        # Just return an empty 200 for now and don't do anything else.
+        # Trying to take it easy on our task queue for a bit after 60 minute crunch.
+        return
+
     video_key_str = request.request_string("video_key")
 
     if not youtube_id and not video_key_str:
