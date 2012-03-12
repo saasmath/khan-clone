@@ -162,6 +162,7 @@ var VideoStats = {
     dPercentGranularity: 0.05,
     dPercentLastSaved: 0.0,
     fSaving: false,
+    consecutiveFailures: 0,
     player: null,
     intervalId: null,
     fAlternativePlayer: false,
@@ -332,6 +333,13 @@ var VideoStats = {
         // If state is buffering, unstarted, or cued, don't do anything
     },
 
+    // TODO(benkomalo): move this temporary check elsewhere and beef it up.
+    // Right now it relies on a global variable set in page_template.html
+    // for the user's nickname.
+    isPhantom_: function() {
+        return !window.USERNAME;
+    },
+
     save: function() {
 
         if (this.fSaving) {
@@ -341,6 +349,11 @@ var VideoStats = {
         // Make sure cookies are enabled, otherwise this totally won't work
         if (!areCookiesEnabled()) {
             KAConsole.log("Cookies appear to be disabled. Not logging video progress.");
+            return;
+        }
+
+        if (this.isPhantom_() && this.consecutiveFailures >= 3) {
+            KAConsole.log("Not sending video log request due to too many failures");
             return;
         }
 
@@ -365,12 +378,14 @@ var VideoStats = {
                 data: data,
                 success: function(data) {
                     VideoStats.finishSave(data, percent);
+                    VideoStats.consecutiveFailures = 0;
                 },
                 error: function() {
                     // Restore pre-error stats so user can still get full
                     // credit for video even if GAE timed out on a request
                     VideoStats.fSaving = false;
                     VideoStats.dtLastSaved = dtLastSavedBeforeError;
+                    VideoStats.consecutiveFailures++;
                 }
         });
 
