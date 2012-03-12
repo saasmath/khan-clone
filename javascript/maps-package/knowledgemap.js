@@ -750,14 +750,15 @@ function KnowledgeMap(params) {
                         row.inflate();
                     }
                 }
-                row.el.show();
+                // use css() because show() is somewhat slow
+                row.el.css("display", "block");
 
                 if (rowHeight === 0) {
                     rowHeight = row.el.outerHeight(/* includeMargin */ true);
                 }
                 renderedHeight += rowHeight;
             } else {
-                row.el.hide();
+                row.el.css("display", "none");
             }
 
             // filter the item off the map view
