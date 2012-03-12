@@ -308,11 +308,7 @@ class BingoIdentityCache(object):
             # If over 50 identities are waiting for persistent storage, 
             # go ahead and kick off a deferred task to do so
             # in case it'll be a while before the cron job runs.
-            try:
-                deferred.defer(persist_gae_bingo_identity_records, list_identities)
-            except:
-                # TODO(kamens): FIX
-                pass
+            deferred.defer(persist_gae_bingo_identity_records, list_identities)
 
             # There are race conditions here such that we could miss persistence
             # of some identities, but that's not a big deal as long as
