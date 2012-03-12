@@ -44,6 +44,7 @@ def request_token():
         logging.error("OAuth key %s already used" % token.key_)
         params = dict([(key, request.get(key)) for key in request.arguments()])
         logging.info("params: %r" % params)
+        logging.info("Authorization: %s", request.headers.get('Authorization'))
         return oauth_error_response(OAuthError("OAuth parameters already used."))
 
     # Start a new OAuth mapping
