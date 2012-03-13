@@ -609,9 +609,8 @@ footer {
     }
     #user-info .dropdown-menu {
         margin-top: 5px;
-        right: 0;
         border: none;
-        width: 120px;
+        width: 110px;
     }
     #user-info .dropdown-menu li > a:hover {
         background-color: #C6D1AD;
