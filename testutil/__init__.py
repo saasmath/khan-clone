@@ -4,6 +4,7 @@ import datetime
 import unittest
 from google.appengine.ext import testbed
 from google.appengine.datastore import datastore_stub_util
+import copy
 
 class GAEModelTestCase(unittest.TestCase):
     """ A test case that stubs out appengine's persistence layers in setUp.
@@ -43,7 +44,7 @@ class MockDatetime(object):
         value.
 
         """
-        return self.value
+        return copy.copy(self.value)
 
     def advance(self, delta):
         """ Advances by a datetime.timedelta """

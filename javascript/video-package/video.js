@@ -23,6 +23,7 @@ var Video = {
 
             if (window.history && window.history.pushState && params.videoTopLevelTopic) {
                 this.router = new VideoRouter();
+                this.router.bind("all", Analytics.handleRouterNavigation);
                 Backbone.history.start({pushState: true, root: "/" + params.videoTopLevelTopic});
             } else {
                 this.pushStateDisabled = true;

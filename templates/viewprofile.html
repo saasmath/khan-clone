@@ -15,7 +15,8 @@
         footer,
         .profile-navigation,
         .user-profile-controls,
-        .visibility-toggler {
+        .visibility-toggler,
+        #suggested-activity {
             display: none;
         }
 
@@ -68,7 +69,8 @@
             countVideos: {{count_videos}},
             countExercises: {{count_exercises}},
             profileRoot: "{{profile_root}}",
-            profileData: {{ templatetags.jsonify(profile, true) }}
+            profileData: {{ templatetags.jsonify(profile, true) }},
+            secureUrlBase: "{{secure_url_base}}"
         });
     });
     </script>

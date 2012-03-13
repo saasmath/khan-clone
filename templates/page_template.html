@@ -94,7 +94,12 @@
       {# Mixpanel #}
       {% if mixpanel_enabled %}
       var mpq = [];
+      {% if mixpanel_test %}
+      mpq.push(["init","{{ mixpanel_test }}"]);
+      {% else %}
       mpq.push(["init","5f375bcfa7dc57184da63393e2af841c"]);
+      {% endif %}
+      window._initialPageTime = (new Date()).getTime(); // For page load time tracking
       {% endif %}
  
     </script>
@@ -133,9 +138,14 @@
                                 <a class="badge-target" href="{{ login_url|escape }}">Login</a>
                             {% endif %}
                             <span class="separator"></span>
-                            <a href="/contribute" id="donate-link" data-tag="Header">Donate</a>
-                            <span class="separator"></span>
-                            <a href="http://khanacademy.desk.com" id="faq-link" data-tag="Header">FAQ</a>
+                            <span>
+                                <a href={{ donate_redirect_url or "/donate" }}
+                                    {% if donate_button_test == "button" %}
+                                        class="call-to-action simple-button action-gradient green donate-button"
+                                    {% endif %}>
+                                    Donate
+                                </a>
+                            </span>
                         </span>
                         <div class="clear"></div>
                         <div id="nav-and-search">
@@ -212,22 +222,19 @@
         {% endif %}
 
         {# Analytics utility #}
+        {% if mixpanel_enabled %}
         $(function() {
-            // Pass user data to MixPanel
-            {% if logged_in and mixpanel_enabled %}
-            mpq.identify("{{ user_data.email }}");
+            mpq.identify("{{ mixpanel_id }}");
+
+            {# Slightly nicer display name in MixPanel dashboard #}
+            {% if logged_in %}
             mpq.name_tag("{{ username }}");
             {% endif %}
 
-            // Initialize the LinkTracker automatically on page load.
-            // This will set up the event handler and report an event
-            // if the cookie has been set.
-            Analytics.LinkTracker({
-            {% if mixpanel_enabled %}
-                mpqEnabled: true
-            {% endif %}
-            });
+            // Send the page load event & initialize MixPanel analytics
+            Analytics.trackInitialPageLoad(_initialPageTime);
         });
+        {% endif %}
     </script>
     {%- endif -%}
 

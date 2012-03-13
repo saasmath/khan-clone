@@ -119,7 +119,7 @@ def get_user_data_coach_from_request():
     user_data_coach = models.UserData.current()
     user_data_override = request.request_user_data("coach_email")
 
-    if user_data_override and (user_data_coach.developer or user_data_coach.is_coworker_of(user_data_override)):
+    if user_data_override and user_data_coach and (user_data_coach.developer or user_data_coach.is_coworker_of(user_data_override)):
         user_data_coach = user_data_override
 
     return user_data_coach
@@ -164,7 +164,7 @@ def topics_library_compact():
     topic_dict = {}
     for topic in topics:
         # special cases
-        if ((topic.id == "new-and-noteworthy") or 
+        if ((topic.id == "new-and-noteworthy") or
             (topic.standalone_title == "California Standards Test: Geometry" and topic.id != "geometry-2")):
             continue
 
@@ -182,10 +182,10 @@ def topics_library_compact():
 def topic_version_change_list(version_id):
     version = models.TopicVersion.get_by_id(version_id)
     changes = models.VersionContentChange.all().filter("version =", version).fetch(10000)
-    
+
     # add the related_videos of ExerciseVideos of the change.content
-    exercise_dict = dict((change.content.key(), change.content) 
-                         for change in changes 
+    exercise_dict = dict((change.content.key(), change.content)
+                         for change in changes
                          if type(change.content) == models.Exercise)
 
     models.Exercise.add_related_videos_prop(exercise_dict)
@@ -198,20 +198,20 @@ def topic_version_change_list(version_id):
 @jsonp
 @cache_with_key_fxn_and_param(
     "casing",
-    (lambda topic_id, version_id = None: "api_topic_videos_%s_%s_%s" % (topic_id, 
-        version_id, 
-        models.Setting.topic_tree_version())         
+    (lambda topic_id, version_id = None: "api_topic_videos_%s_%s_%s" % (topic_id,
+        version_id,
+        models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_videos(topic_id, version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     topic = models.Topic.get_by_id(topic_id, version)
-    if topic is None: 
+    if topic is None:
         topic = models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
         if topic is None:
             raise ValueError("Invalid topic readable_id.")
-    
+
     videos = models.Topic.get_cached_videos_for_topic(topic, False, version)
     for i, video in enumerate(videos):
         video.position = i + 1
@@ -224,18 +224,18 @@ def topic_videos(topic_id, version_id = None):
 @cache_with_key_fxn_and_param(
     "casing",
     (lambda topic_id, version_id = None: "api_topic_exercises_%s_%s_%s" % (
-        topic_id, version_id, models.Setting.topic_tree_version()) 
+        topic_id, version_id, models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
 def topic_exercises(topic_id, version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     topic = models.Topic.get_by_id(topic_id, version)
-    if topic is None: 
+    if topic is None:
         topic = models.Topic.get_by_title(topic_id, version) # needed for people who were using the playlists api
         if topic is None:
             raise ValueError("Invalid topic readable_id.")
-    
+
     exercises = topic.get_exercises()
     return exercises
 
@@ -256,12 +256,12 @@ def topic_progress(topic_id):
 
 @route("/api/v1/topicversion/<version_id>/topictree", methods=["GET"])
 @route("/api/v1/topictree", methods=["GET"])
-@etag(lambda version_id = None: version_id) 
+@etag(lambda version_id = None: version_id)
 @jsonp
-@decompress 
+@decompress
 @layer_cache.cache_with_key_fxn(
-    (lambda version_id = None: "api_topictree_%s_%s" % (version_id, 
-        models.Setting.topic_tree_version())        
+    (lambda version_id = None: "api_topictree_%s_%s" % (version_id,
+        models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @compress
@@ -277,7 +277,7 @@ def topictree(version_id = None):
 @jsonify
 def topic_tree_problems(version_id = "edit"):
     version = models.TopicVersion.get_by_id(version_id)
-    
+
     exercises = models.Exercise.all()
     exercise_dict = dict((e.key(),e) for e in exercises)
 
@@ -285,10 +285,10 @@ def topic_tree_problems(version_id = "edit"):
     duplicate_positions = list()
     changes = models.VersionContentChange.get_updated_content_dict(version)
     exercise_dict.update(changes)
-    
-    for exercise in [e for e in exercise_dict.values() 
+
+    for exercise in [e for e in exercise_dict.values()
                      if e.live and not e.summative]:
-               
+
         if exercise.h_position not in location_dict:
             location_dict[exercise.h_position] = {}
 
@@ -301,7 +301,7 @@ def topic_tree_problems(version_id = "edit"):
             location_dict[exercise.h_position][exercise.v_position] = [exercise]
 
     problems = {
-        "ExerciseVideos with topicless videos" : 
+        "ExerciseVideos with topicless videos" :
             models.ExerciseVideo.get_all_with_topicless_videos(version),
         "Exercises with colliding positions" : list(duplicate_positions)}
 
@@ -314,8 +314,8 @@ def topic_tree_problems(version_id = "edit"):
 @jsonp
 @decompress
 @layer_cache.cache_with_key_fxn(
-    (lambda version_id = None, topic_id = "root": "api_topictree_export_%s_%s" % (version_id, 
-        models.Setting.topic_tree_version())        
+    (lambda version_id = None, topic_id = "root": "api_topictree_export_%s_%s" % (version_id,
+        models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None),
     layer=layer_cache.Layers.Memcache)
 @compress
@@ -354,8 +354,8 @@ def topictreesearch(version_id, query):
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda topic_id, version_id = None: ("api_topic_%s_%s_%s" % (
-        topic_id, 
-        version_id, 
+        topic_id,
+        version_id,
         models.Setting.topic_tree_version())
         if version_id is None or version_id == "default" else None)),
     layer=layer_cache.Layers.Memcache)
@@ -363,13 +363,13 @@ def topictreesearch(version_id, query):
 def topic(topic_id, version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     topic = models.Topic.get_by_id(topic_id, version)
-    
+
     if not topic:
         return api_invalid_param_response("Could not find topic with ID " + str(topic_id))
 
     return topic.get_visible_data()
 
-@route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["PUT"])    
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>", methods=["PUT"])
 @route("/api/v1/topic/<topic_id>", methods=["PUT"])
 @developer_required
 @oauth_optional()
@@ -430,13 +430,13 @@ def topic_find_child(parent_id, version_id, kind, id):
 
     return [None, child, parent_topic, version]
 
-@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/addchild", methods=["POST"])   
+@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/addchild", methods=["POST"])
 @route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
 @developer_required
 @jsonp
 @jsonify
 def topic_add_child(parent_id, version_id = "edit"):
-    kind = request.request_string("kind")        
+    kind = request.request_string("kind")
     id = request.request_string("id")
 
     [error, child, parent_topic, version] = topic_find_child(parent_id, version_id, kind, id)
@@ -449,14 +449,14 @@ def topic_add_child(parent_id, version_id = "edit"):
 
     return parent_topic.get_visible_data()
 
-@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/deletechild", methods=["POST"])   
+@route("/api/v1/topicversion/<version_id>/topic/<parent_id>/deletechild", methods=["POST"])
 @route("/api/v1/topic/<parent_id>/deletechild", methods=["POST"])
 @developer_required
 @jsonp
 @jsonify
 def topic_delete_child(parent_id, version_id = "edit"):
-    
-    kind = request.request_string("kind")        
+
+    kind = request.request_string("kind")
     id = request.request_string("id")
 
     [error, child, parent_topic, version] = topic_find_child(parent_id, version_id, kind, id)
@@ -466,15 +466,15 @@ def topic_delete_child(parent_id, version_id = "edit"):
     parent_topic.delete_child(child)
 
     return parent_topic.get_visible_data()
-  
-@route("/api/v1/topicversion/<version_id>/topic/<old_parent_id>/movechild", methods=["POST"])   
+
+@route("/api/v1/topicversion/<version_id>/topic/<old_parent_id>/movechild", methods=["POST"])
 @route("/api/v1/topic/<old_parent_id>/movechild", methods=["POST"])
 @developer_required
 @jsonp
 @jsonify
 def topic_move_child(old_parent_id, version_id = "edit"):
-    
-    kind = request.request_string("kind")        
+
+    kind = request.request_string("kind")
     id = request.request_string("id")
 
     [error, child, old_parent_topic, version] = topic_find_child(old_parent_id, version_id, kind, id)
@@ -485,14 +485,14 @@ def topic_move_child(old_parent_id, version_id = "edit"):
     new_parent =  models.Topic.get_by_id(new_parent_id, version)
     if not old_parent_topic:
         return api_invalid_param_response("Could not find topic with ID " + str(old_parent_id))
-           
+
     new_parent_pos = request.request_string("new_parent_pos")
 
     old_parent_topic.move_child(child, new_parent, new_parent_pos)
 
-    return True    
+    return True
 
-@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/ungroup", methods=["POST"])  
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/ungroup", methods=["POST"])
 @route("/api/v1/topic/<topic_id>/ungroup", methods=["POST"])
 @developer_required
 @jsonp
@@ -508,12 +508,12 @@ def topic_ungroup(topic_id, version_id = "edit"):
 
     return True
 
-@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])   
+@route("/api/v1/topicversion/<version_id>/topic/<topic_id>/children", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/children", methods=["GET"])
 @jsonp
 @layer_cache.cache_with_key_fxn(
     (lambda topic_id, version_id = None: "api_topic_children_%s_%s_%s" % (
-        topic_id, version_id, models.Setting.topic_tree_version()) 
+        topic_id, version_id, models.Setting.topic_tree_version())
         if version_id is None or version_id=="default" else None),
     layer=layer_cache.Layers.Memcache)
 @jsonify
@@ -526,7 +526,7 @@ def topic_children(topic_id, version_id = None):
 
     return db.get(topic.child_keys)
 
-@route("/api/v1/topicversion/<version_id>/setdefault", methods=["GET"])   
+@route("/api/v1/topicversion/<version_id>/setdefault", methods=["GET"])
 @developer_required
 @jsonp
 @jsonify
@@ -535,8 +535,8 @@ def topic_children(version_id = None):
     version.set_default_version()
     models.TopicVersion.get_edit_version() # creates a new edit version if one does not already exists
     return version
-    
-@route("/api/v1/topicversion/<version_id>", methods=["GET"])   
+
+@route("/api/v1/topicversion/<version_id>", methods=["GET"])
 @developer_required
 @jsonp
 @jsonify
@@ -550,11 +550,11 @@ def topic_version(version_id = None):
 @jsonify
 def topic_version(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
-    
+
     version_json = request.json
 
     changed = False
-    for key in ["title", "description"]: 
+    for key in ["title", "description"]:
         if getattr(version, key) != version_json[key]:
             setattr(version, key, version_json[key])
             changed = True
@@ -564,14 +564,14 @@ def topic_version(version_id = None):
 
     return {}
 
-@route("/api/v1/topicversions/", methods=["GET"])   
+@route("/api/v1/topicversions/", methods=["GET"])
 @jsonp
 @jsonify
 def topic_versions():
     versions = models.TopicVersion.all().order("-number").fetch(10000)
     return versions
 
-@route("/api/v1/topicversion/<version_id>/unused_content", methods=["GET"])   
+@route("/api/v1/topicversion/<version_id>/unused_content", methods=["GET"])
 @jsonp
 @jsonify
 def topic_version_unused_content(version_id = None):
@@ -579,7 +579,7 @@ def topic_version_unused_content(version_id = None):
     return version.get_unused_content()
 
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["GET"])
-@route("/api/v1/url/<int:url_id>", methods=["GET"])   
+@route("/api/v1/url/<int:url_id>", methods=["GET"])
 @jsonp
 @jsonify
 def get_url(url_id, version_id=None):
@@ -589,8 +589,8 @@ def get_url(url_id, version_id=None):
 @route("/api/v1/topicversion/<version_id>/url/", methods=["PUT"])
 @route("/api/v1/topicversion/<version_id>/url/<int:url_id>", methods=["PUT"])
 @route("/api/v1/url/", methods=["PUT"])
-@route("/api/v1/url/<int:url_id>", methods=["PUT"]) 
-@developer_required  
+@route("/api/v1/url/<int:url_id>", methods=["PUT"])
+@developer_required
 @jsonp
 @jsonify
 def save_url(url_id = None, version_id=None):
@@ -598,7 +598,7 @@ def save_url(url_id = None, version_id=None):
     changeable_props = ["tags", "title", "url"]
 
     if url_id is None:
-        return models.VersionContentChange.add_new_content(models.Url, 
+        return models.VersionContentChange.add_new_content(models.Url,
                                                            version,
                                                            request.json,
                                                            changeable_props)
@@ -607,8 +607,8 @@ def save_url(url_id = None, version_id=None):
         if url is None:
             return api_invalid_param_response("Could not find a Url with ID %s " % (url_id))
         return models.VersionContentChange.add_content_change(
-            url, 
-            version, 
+            url,
+            version,
             request.json,
             changeable_props)
 
@@ -638,8 +638,8 @@ def playlists_library():
             if child.kind() == "Topic":
                 topic = {}
                 topic["name"] = child.title
-                videos = [] 
-                
+                videos = []
+
                 for grandchild in child.children:
                     if grandchild.kind() == "Video" or grandchild.kind() == "Url":
                         videos.append(grandchild)
@@ -652,16 +652,16 @@ def playlists_library():
                     topic["playlist"] = child
                 else:
                     topic["items"] = convert_tree(child)
-                
+
                 topics.append(topic)
-        return topics            
+        return topics
 
     return convert_tree(tree)
 
 # We expose the following "fresh" route but don't publish the URL for internal services
 # that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
 # not to change until we have a new version, the cached version is good enough
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"]) 
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"])
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
@@ -675,8 +675,8 @@ def playlists_library_list():
     topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
-        (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or 
-        (t.standalone_title == "California Standards Test: Geometry" and t.id != "geometry-2"))    
+        (t.standalone_title == "California Standards Test: Algebra I" and t.id != "algebra-i") or
+        (t.standalone_title == "California Standards Test: Geometry" and t.id != "geometry-2"))
         ]
 
     for topic in topics_list:
@@ -685,7 +685,7 @@ def playlists_library_list():
         del topic.children
 
     return topics_list
-    
+
 @route("/api/v1/exercises", methods=["GET"])
 @jsonp
 @jsonify
@@ -743,23 +743,23 @@ def exercise_save(exercise_name = None, version_id = "edit"):
 def exercise_save_data(version, data, exercise=None, put_change=True):
     if "name" not in data:
         raise Exception("exercise 'name' missing")
-    data["live"] = data["live"] == "true" or data["live"] == True 
+    data["live"] = data["live"] == "true" or data["live"] == True
     data["v_position"] = int(data["v_position"])
     data["h_position"] = int(data["h_position"])
     data["seconds_per_fast_problem"] = (
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "summative", "prerequisites", "covers", 
-                        "related_videos", "related_video_keys", 
+                        "summative", "prerequisites", "covers",
+                        "related_videos", "related_video_keys",
                         "short_display_name"]
     if exercise:
-        return models.VersionContentChange.add_content_change(exercise, 
-            version, 
+        return models.VersionContentChange.add_content_change(exercise,
+            version,
             data,
             changeable_props)
     else:
-        return models.VersionContentChange.add_new_content(models.Exercise, 
+        return models.VersionContentChange.add_new_content(models.Exercise,
                                                            version,
                                                            data,
                                                            changeable_props,
@@ -775,7 +775,7 @@ def video(video_id, version_id = None):
 
     if video is None:
         video = models.Video.all().filter("youtube_id =", video_id).get()
-    
+
     return video
 
 
@@ -825,7 +825,7 @@ def video_exercises(video_id):
 @jsonify
 def video_play_data(topic_id, video_id):
     topic = models.Topic.get_by_id(topic_id)
-    if topic is None: 
+    if topic is None:
         raise ValueError("Invalid topic readable_id.")
 
     get_topic_data = request.request_bool('topic', default=False);
@@ -903,47 +903,47 @@ def save_video(video_id="", version_id = "edit"):
         if video:
             query = query.filter("__key__ !=", video.key())
         other_video = query.get()
-                
+
         if other_video:
             return api_invalid_param_response(
                 "Video with readable_id %s already exists" %
-                (new_data["readable_id"]))        
-        
+                (new_data["readable_id"]))
+
         # make sure we are not changing the video's youtube_id to another one's
         query = models.Video.all()
         query = query.filter("youtube_id =", new_data["youtube_id"])
         if video:
             query = query.filter("__key__ !=", video.key())
         other_video = query.get()
-        
+
         if other_video:
             return api_invalid_param_response(
                 "Video with youtube_id %s already appears with readable_id %s" %
-                (new_data["youtube_id"], video.readable_id)) 
+                (new_data["youtube_id"], video.readable_id))
 
         # make sure we are not changing the video's readable_id to an updated one in the Version's Content Changes
         changes = models.VersionContentChange.get_updated_content_dict(version)
         for key, content in changes.iteritems():
-            if type(content) == models.Video and (video is None or 
-                                                  key != video.key()): 
+            if type(content) == models.Video and (video is None or
+                                                  key != video.key()):
 
                 if content.readable_id == new_data["readable_id"]:
                     return api_invalid_param_response(
                         "Video with readable_id %s already exists" %
                         (new_data["readable_id"]))
-                       
+
                 elif content.youtube_id == new_data["youtube_id"]:
                     return api_invalid_param_response(
                         "Video with youtube_id %s already appears with readable_id %s" %
-                        (new_data["youtube_id"], content.readable_id))  
+                        (new_data["youtube_id"], content.readable_id))
 
     if video:
         error = check_duplicate(request.json, video)
         if error:
             return error
-        return models.VersionContentChange.add_content_change(video, 
-            version, 
-            request.json, 
+        return models.VersionContentChange.add_content_change(video,
+            version,
+            request.json,
             ["readable_id", "title", "youtube_id", "description", "keywords"])
 
     # handle making a new video
@@ -956,10 +956,10 @@ def save_video(video_id="", version_id = "edit"):
         video_data = youtube_get_video_data_dict(request.json["youtube_id"])
         if video_data is None:
             return None
-        return models.VersionContentChange.add_new_content(models.Video, 
+        return models.VersionContentChange.add_new_content(models.Video,
                                                            version,
                                                            video_data)
-    
+
 def replace_playlist_values(structure, playlist_dict):
     if type(structure) == list:
         for sub_structure in structure:
@@ -1027,7 +1027,7 @@ def mark_promo_as_seen(promo_name):
 @jsonify
 def update_user_profile():
     """ Update public information about a user.
-    
+
     The posted data should be JSON, with fields representing the values that
     needs to be changed. Supports "user_nickname", "avatar_name",
     "username", and "isPublic".
@@ -1037,7 +1037,7 @@ def update_user_profile():
     profile_json = request.json
     if not profile_json:
         return api_invalid_param_response("Profile data expected")
-    
+
     if profile_json['nickname'] is not None:
         user_data.update_nickname(profile_json['nickname'])
 
@@ -1800,7 +1800,7 @@ def update_public_user_badges():
             updated_badge_list.append(badges_dict[name])
         elif name == empty_name:
             updated_badge_list.append(None)
-    
+
     badge_awarded = False
     if (len(updated_badge_list) == util_badges.NUM_PUBLIC_BADGE_SLOTS
             and not any([badge is None for badge in updated_badge_list])):
@@ -1811,7 +1811,7 @@ def update_public_user_badges():
     user_data.public_badges = [(badge.name if badge else empty_name)
                                for badge in updated_badge_list]
     user_data.put()
-    
+
     result = updated_badge_list
     if badge_awarded:
         result = {
@@ -2333,5 +2333,5 @@ def get_avatars():
 @jsonp
 @jsonify
 def get_version_id():
-    return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None } 
+    return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None }
 

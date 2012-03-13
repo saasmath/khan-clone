@@ -4,6 +4,7 @@ from google.appengine.api import oauth as google_oauth
 from google.appengine.api.oauth.oauth_api import InvalidOAuthTokenError
 from google.appengine.api import users
 
+import shared_jinja
 from flask import request, redirect
 
 from oauth_provider.oauth import OAuthError
@@ -11,12 +12,12 @@ from oauth_provider.oauth import OAuthError
 import layer_cache
 
 from api import route
-from api.auth.auth_util import current_oauth_map, authorize_token_redirect, access_token_response, append_url_params, oauth_error_response
+from api.auth.auth_util import current_oauth_map, authorize_token_redirect, access_token_response, append_url_params, oauth_error_response, OAuthBadRequestError
 from api.auth.google_oauth_client import GoogleOAuthClient
 from api.auth.auth_models import OAuthMap
 from api.decorators import jsonify
 
-# Utility request handler to let Google authorize the OAuth token/request and 
+# Utility request handler to let Google authorize the OAuth token/request and
 # return the authorized user's id and email address.
 @route("/api/auth/current_google_oauth_user_id_and_email")
 @jsonify
@@ -60,11 +61,8 @@ def google_request_token_handler(oauth_map):
 
 def retrieve_google_access_token(oauth_map):
     # Start Google access token process
-    try:
-        google_client = GoogleOAuthClient()
-        google_token = google_client.fetch_access_token(oauth_map)
-    except Exception, e:
-        raise OAuthError(e.message)
+    google_client = GoogleOAuthClient()
+    google_token = google_client.fetch_access_token(oauth_map)
 
     oauth_map.google_access_token = google_token.key
     oauth_map.google_access_token_secret = google_token.secret
@@ -85,6 +83,9 @@ def google_token_callback():
 
     try:
         oauth_map = retrieve_google_access_token(oauth_map)
+    except OAuthBadRequestError, e:
+        jinja = shared_jinja.get()
+        return jinja.render_template('login_mobile_error.html', message='Unable to log in to Google.')
     except OAuthError, e:
         return oauth_error_response(e)
 

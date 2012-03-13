@@ -243,6 +243,11 @@ input.simple-button {
         height: 24px;
     }
 
+.simple-button.donate-button {
+    padding: 3px 7px;
+    bottom: 1px;
+}
+
 .vertical-shadow {
     border: 1px solid #ccc;
     border-bottom: 1px solid #aaa;
@@ -641,6 +646,14 @@ footer {
                 color: #fff;
             }
 
+#page_sub_nav .breadcrumbs_accordion {
+        font-weight: normal;
+        font-size: 16px;
+        line-height: 18px;
+        width: auto;
+        float: left;
+    }
+
 #page_sub_nav .breadcrumbs_nav {
         font-weight: normal;
         font-size: 16px;
@@ -694,6 +707,7 @@ footer {
         #sitewide-navigation a.about-link.selected:before {left: 23px;}
         /*#page_sub_nav .breadcrumbs_nav a#faq.selected:before {left: 9px;}*/
         /*#page_sub_nav .breadcrumbs_nav a#getting-started.selected:before {left: 54px;}*/
+        #page_sub_nav .breadcrumbs_nav a#teacher-resources.selected:before {left: 70px;}
         #page_sub_nav .breadcrumbs_nav a#discovery-lab.selected:before {left: 50px;}
         #page_sub_nav .breadcrumbs_nav a#blog.selected:before {left: 14px;}
         #page_sub_nav .breadcrumbs_nav a#the-team.selected:before {left: 31px;}
@@ -730,6 +744,7 @@ footer {
     #sitewide-navigation a.about-link.selected:after {left: 24px;}
     /*#page_sub_nav .breadcrumbs_nav a#faq.selected:after {left: 10px;}*/
     /*#page_sub_nav .breadcrumbs_nav a#getting-started.selected:after {left: 55px;}*/
+    #page_sub_nav .breadcrumbs_nav a#teacher-resources.selected:after {left: 71px;}
     #page_sub_nav .breadcrumbs_nav a#discovery-lab.selected:after {left: 51px;}
     #page_sub_nav .breadcrumbs_nav a#blog.selected:after {left: 15px;}
     #page_sub_nav .breadcrumbs_nav a#the-team.selected:after {left: 32px;}
@@ -782,6 +797,10 @@ footer {
 #topic-jump nav > ul > li ul {
     font-size: 12px;
 }
+
+#social-actions {
+    margin-top: 25px;
+}
 #social-actions #fb-like-badge {
     display: inline-block;
     width: 165px;
@@ -789,7 +808,7 @@ footer {
     vertical-align: top;
 }
 .homepage-mailing {
-    padding-top: 13px;
+    padding-top: 24px;
 }
 .homepage-mailing .mailing_list_container input.simple-button {
     display: inline;
@@ -848,7 +867,7 @@ footer {
     float: right;
     display: block;
     position: relative;
-    margin: 6px 6px 0 0;
+    margin: 6px 8px 0 0;
     z-index: 101;
 }
     #top-header #top-header-links #page_auth.page_links #login-menu {
@@ -910,7 +929,6 @@ footer {
         opacity: 0.75;
         filter:alpha(opacity=75);
     }
-
     #login-menu .fb_button, #login-menu .fb_button_rtl {
         background-image: none;
         background: transparent;
@@ -2688,6 +2706,42 @@ a.proficient-badge.disabled {
     max-width: 63%;
 }
 
+.col1.fifty-fifty {
+    min-width: 48%;
+    max-width: 48%;
+}
+
+.col2.fifty-fifty {
+    min-width: 48%;
+    max-width: 48%;
+}
+
+#coach-resources {
+    margin-top: 100px;
+    margin-bottom: 5px;
+    font-size: 15px;
+    margin: 9px auto;
+    width:700px;
+    text-align:left;
+}
+
+#coach-resource-text {
+    max-width: 80%;
+    margin-left: 10%;
+    height: 435px;
+    font-size:  16px;
+    line-height: 24px;
+}
+#coach-resource-text a.call-to-action {
+    display: block;
+    font-size: 20px;
+    text-decoration: none;
+    text-align: center;
+    padding: 10px 0 12px;
+    margin-bottom: 15px;
+    font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
+}
+
 .spinealign .col1 { text-align:right; }
 .spinealign .col2 { text-align:left; }
 
@@ -2881,13 +2935,22 @@ a.proficient-badge.disabled {
     line-height: 24px;
 }
 #homepage-text a.call-to-action {
-    display: block;
+    display: inline-block;
     font-size: 20px;
     text-decoration: none;
     text-align: center;
-    padding: 10px 0 12px;
-    margin-bottom: 15px;
+    padding: 0;
+    line-height: 44px;
+    width: 48%;
     font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
+}
+
+#homepage-text a.call-to-action.watch-a-video {
+    margin-right: 5px;
+}
+
+#homepage-text .try-teacher-toolkit {
+    white-space: nowrap;
 }
 
 #back-to-top {
