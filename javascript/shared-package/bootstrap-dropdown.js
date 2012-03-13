@@ -26,11 +26,22 @@
   * ========================= */
 
   var toggle = '[data-toggle="dropdown"]'
-    , Dropdown = function ( element ) {
-        var $el = $(element).on('click.dropdown.data-api', this.toggle)
-        $('html').on('click.dropdown.data-api', function () {
-          $el.parent().removeClass('open')
-        })
+    , Dropdown = function ( element, option ) {
+        if (option === 'hover') {
+            $(element).hoverIntent(
+                function () {
+                    $(this).dropdown('open')
+                },
+                $.noop
+            ).parent().hoverIntent(
+                $.noop,
+                function () {
+                    $(this).find('.dropdown-toggle').dropdown('close')
+                }
+            );
+        } else {
+            $(element).on('click.dropdown.data-api', this.toggle)
+        }
       }
 
   Dropdown.prototype = {
@@ -54,15 +65,20 @@
       isActive = $parent.hasClass('open')
 
       if (isActive) {
-        clearMenus()
+        Dropdown.prototype.close.call(this)
       } else {
-        $(this).trigger('open')
-        $parent.toggleClass('open')
+        Dropdown.prototype.open.call(this)
       }
 
       return false
     }
-
+  , open: function () {
+      $(this).trigger('open')
+        .parent().addClass('open')
+    }
+  , close: function () {
+      clearMenus()
+    }
   }
 
   function clearMenus() {
@@ -78,8 +94,15 @@
     return this.each(function () {
       var $this = $(this)
         , data = $this.data('dropdown')
-      if (!data) $this.data('dropdown', (data = new Dropdown(this)))
-      if (typeof option == 'string') data[option].call($this)
+      if (!data) {
+          $this.data('dropdown', (data = new Dropdown(this, option)))
+      }
+      if (typeof option == 'string') {
+          var action = data[option]
+          if (action) {
+              action.call(this)
+          }
+      }
     })
   }
 
@@ -91,7 +114,6 @@
 
   $(function () {
     $('html').on('click.dropdown.data-api', clearMenus)
-    $('body').on('click.dropdown.data-api', toggle, Dropdown.prototype.toggle)
   })
 
 }( window.jQuery );

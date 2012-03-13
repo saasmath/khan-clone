@@ -593,7 +593,7 @@ footer {
         position: relative;
     }
     #user-info .dropdown {
-        padding: 5px;
+        padding: 5px 5px 5px 0;
     }
     #user-info .dropdown.open {
         background-color: #FFF;
@@ -603,8 +603,7 @@ footer {
         display: none;
     }
     #user-info .dropdown-menu {
-        margin-top: 7px;
-        position: absolute;
+        margin-top: 5px;
         right: 0;
         border: none;
         width: 120px;

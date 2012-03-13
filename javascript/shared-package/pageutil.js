@@ -167,6 +167,9 @@ $(function() {
         // Only allow submission if there is a non-empty query.
         return !!$.trim($("#page_search input[type=text]").val());
     });
+
+    $("#user-info .dropdown-toggle").dropdown("hover");
+
 });
 
 var Badges = {
