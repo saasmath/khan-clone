@@ -249,17 +249,17 @@ Coaches.CoachCollectionView = Backbone.View.extend({
 
         this.collection.each(this.onAdd_, this);
 
-        this.collection.bind("add", this.onAdd_, this);
-        this.collection.bind("remove", this.onRemove_, this);
-        this.collection.bind("removeFromView", this.onRemove_, this);
+        this.collection.bind("add", this.onAdd_, this)
+            .bind("remove", this.onRemove_, this)
+            .bind("removeFromView", this.onRemove_, this);
 
-        this.collection.bind("add", this.handleEmptyNotification_, this);
-        this.collection.bind("remove", this.handleEmptyNotification_, this);
-        this.collection.bind("removeFromView", this.handleEmptyNotification_, this);
+        this.collection.bind("add", this.handleEmptyNotification_, this)
+            .bind("remove", this.handleEmptyNotification_, this)
+            .bind("removeFromView", this.handleEmptyNotification_, this);
 
-        this.collection.bind("saveSuccess", this.onSaveSuccess_, this);
-        this.collection.bind("saveError", this.onSaveError_, this);
-        this.collection.bind("showError", this.showError_, this);
+        this.collection.bind("saveSuccess", this.onSaveSuccess_, this)
+            .bind("saveError", this.onSaveError_, this)
+            .bind("showError", this.showError_, this);
     },
 
     onSaveSuccess_: function() {
