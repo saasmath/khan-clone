@@ -16,6 +16,9 @@ from api.auth.xsrf import validate_xsrf_value
 from oauth_provider.oauth import build_authenticate_header, OAuthError
 import cookie_util
 
+class OAuthBadRequestError(OAuthError):
+    pass
+
 def oauth_error_response(e):
     logging.error("OAuth error. %s" % e.message)
     logging.exception(e)
@@ -153,6 +156,9 @@ def get_response(url, params={}):
 
         if result.status_code == 200:
             return result.content
+        elif result.status_code == 400:
+            # Probably user denied access to our app; we'll catch this and show a nice error
+            raise OAuthBadRequestError("Bad request for url %s" % url)
         else:
             logging.warning(result.content)
             raise OAuthError("Error in get_response, received status %s for url %s" % (result.status_code, url))
