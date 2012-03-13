@@ -1023,6 +1023,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # The user's birthday was only relatively recently collected (Mar 2012)
     # so older UserData may not have this information.
     birthdate = db.DateProperty(indexed=False)
+    
+    # The user's gender is optional, and only collected as of Mar 2012,
+    # so older UserData may not have this information.
+    gender = db.StringProperty(indexed=False)
 
     # Whether or not the user has indicated she wishes to have a public
     # profile (and can be searched, etc)
@@ -1036,7 +1040,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             "expanded_all_exercises", "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
             "avatar_name", "username", "is_profile_public",
-            "credential_version", "birthdate"
+            "credential_version", "birthdate", "gender"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1652,8 +1656,8 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     def __unicode__(self):
         return "<UserData [%s] [%s] [%s]>" % (self.user_id,
-                                            self.email,
-                                            self.username or "<no username>")
+                                              self.email,
+                                              self.username or "<no username>")
 
     @classmethod
     def from_json(cls, json, user=None):

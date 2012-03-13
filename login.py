@@ -333,6 +333,11 @@ class Register(request_handler.RequestHandler):
             self.redirect("/register?under13=1&name=%s" %
                           urllib.quote(values['nickname'] or ""))
             return
+        
+        if values['gender']:
+            gender = values['gender'].lower()
+            if gender not in ['male', 'female']:
+                gender = None
 
         # Check validity of auth credentials
         if values['email']:
@@ -404,6 +409,7 @@ class Register(request_handler.RequestHandler):
         # more free and doesn't need to happen in the transaction above)
         # Note update_nickname calls put()
         created_user.birthdate = birthdate
+        created_user.gender = gender
         created_user.update_nickname(values['nickname'])
 
         # TODO(benkomalo): send welcome e-mail
