@@ -204,7 +204,7 @@ Coaches.CoachCollection = Backbone.Collection.extend({
     },
 
     onSaveError_: function() {
-        this.removeUnsavedCoaches();
+        this.removeUnsavedCoaches_();
         this.trigger("saveError");
     },
 
@@ -225,12 +225,18 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         }, this);
     },
 
-    removeUnsavedCoaches: function() {
+    removeUnsavedCoaches_: function() {
         var modelsToRemove = this.filter(function(model) {
             return model.isNew();
         });
 
-        this.remove(modelsToRemove);
+        // Don't trigger saves when removing invalid coaches
+        this.remove(modelsToRemove, {silent: true});
+
+        // Trigger removal from view
+        _.each(modelsToRemove, _.bind(function(model) {
+                this.trigger("removeFromView", model);
+            }, this));
     }
 });
 
@@ -245,8 +251,11 @@ Coaches.CoachCollectionView = Backbone.View.extend({
 
         this.collection.bind("add", this.onAdd_, this);
         this.collection.bind("remove", this.onRemove_, this);
+        this.collection.bind("removeFromView", this.onRemove_, this);
+
         this.collection.bind("add", this.handleEmptyNotification_, this);
         this.collection.bind("remove", this.handleEmptyNotification_, this);
+        this.collection.bind("removeFromView", this.handleEmptyNotification_, this);
 
         this.collection.bind("saveSuccess", this.onSaveSuccess_, this);
         this.collection.bind("saveError", this.onSaveError_, this);
