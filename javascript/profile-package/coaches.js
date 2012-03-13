@@ -272,7 +272,7 @@ Coaches.CoachCollectionView = Backbone.View.extend({
     },
 
     onSaveError_: function() {
-        this.showError_("We couldn't find anyone with that email.")
+        this.showError_("We couldn't find anyone with that email.");
     },
 
     onAdd_: function(model) {
