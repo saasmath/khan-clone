@@ -56,7 +56,7 @@
       if (isActive) {
         clearMenus()
       } else {
-        $(toggle).trigger('open')
+        $(this).trigger('open')
         $parent.toggleClass('open')
       }
 
