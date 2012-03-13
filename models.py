@@ -259,7 +259,7 @@ class Exercise(db.Model):
         if video_dict is None:
             video_dict = {}
 
-        # if no pregotten evs were passed in asynchrnously get them for all 
+        # if no pregotten evs were passed in asynchrnously get them for all
         # exercises in exercise_dict
         if evs is None:
             queries = []
@@ -269,7 +269,7 @@ class Exercise(db.Model):
             tasks = util.async_queries(queries, limit=10000)
             evs = [ev for task in tasks for ev in task.get_result()]
 
-        # if too many evs were passed in filter out exercise_videos which are 
+        # if too many evs were passed in filter out exercise_videos which are
         # not looking at one of the exercises in exercise_dict
         evs = [ev for ev in evs
                if ExerciseVideo.exercise.get_value_for_datastore(ev)
@@ -284,7 +284,7 @@ class Exercise(db.Model):
         extra_video_dict = dict((v.key(), v) for v in extra_videos)
         video_dict.update(extra_video_dict)
 
-        # buid a ev_dict in the form 
+        # buid a ev_dict in the form
         # ev_dict[exercise_key][video_key] = (video_readable_id, ev.exercise_order)
         ev_dict = {}
         for ev in evs:
@@ -297,7 +297,7 @@ class Exercise(db.Model):
 
             ev_dict[exercise_key][video_key] = (video_readable_id, ev.exercise_order)
 
-        # update all exercises to include the related_videos in their right 
+        # update all exercises to include the related_videos in their right
         # orders
         for exercise in exercise_dict.values():
             related_videos = (ev_dict[exercise.key()]
@@ -1019,7 +1019,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     # The name of the avatar the user has chosen. See avatar.util_avatar.py
     avatar_name = db.StringProperty(indexed=False)
-    
+
     # The user's birthday was only relatively recently collected (Mar 2012)
     # so older UserData may not have this information.
     birthdate = db.DateProperty(indexed=False)
@@ -1836,13 +1836,13 @@ class TopicVersion(db.Model):
     def set_default_version(self):
         logging.info("starting set_default_version")
 
-        do_set_default_deferred_step(apply_version_content_changes, 
+        do_set_default_deferred_step(apply_version_content_changes,
                             self.number,
-                            "%i_apply_version_content_changes" % self.number) 
+                            "%i_apply_version_content_changes" % self.number)
 
 def do_set_default_deferred_step(func, version_number, taskname):
     try:
-        deferred.defer(func, 
+        deferred.defer(func,
                        version_number,
                        _queue = "topics-set-default-queue",
                        _name = taskname,
@@ -1860,9 +1860,9 @@ def apply_version_content_changes(version_number):
         change.apply_change()
         logging.info("applied change %i of %i" % (i, num_changes))
     logging.info("applied content changes")
-    do_set_default_deferred_step(preload_library, 
+    do_set_default_deferred_step(preload_library,
                                  version_number,
-                                 "%i_preload_library" % version_number) 
+                                 "%i_preload_library" % version_number)
 
 def preload_library(version_number):
     version = TopicVersion.get_by_id(version_number)
@@ -1885,10 +1885,10 @@ def preload_library(version_number):
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
 
-    do_set_default_deferred_step(change_default_version, 
+    do_set_default_deferred_step(change_default_version,
                                  version_number,
-                                 "%i_change_default_version" % version_number) 
-    
+                                 "%i_change_default_version" % version_number)
+
 def change_default_version(version_number):
     version = TopicVersion.get_by_id(version_number)
 
@@ -1911,7 +1911,7 @@ def change_default_version(version_number):
     else:
         xg_on = db.create_transaction_options(xg=True)
         db.run_in_transaction_options(xg_on, update_txn)
-        # setting the topic tree version in the transaction won't update 
+        # setting the topic tree version in the transaction won't update
         # memcache as the new values for the setting are not complete till the
         # transaction finishes ... so updating again outside the txn
         Setting.topic_tree_version(version.number)
@@ -1920,7 +1920,7 @@ def change_default_version(version_number):
 
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
-    
+
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
 
@@ -1930,10 +1930,10 @@ def change_default_version(version_number):
     Setting.count_videos(len(vids) + len(urls))
     Video.approx_count(bust_cache=True)
 
-    do_set_default_deferred_step(rebuild_content_caches, 
+    do_set_default_deferred_step(rebuild_content_caches,
                                  version_number,
                                  "%i_rebuild_content_caches"  % version_number)
-   
+
 def rebuild_content_caches(version_number):
     version = TopicVersion.get_by_id(version_number)
 
@@ -2465,7 +2465,7 @@ class Topic(Searchable, db.Model):
         self.version.update()
         return db.run_in_transaction(move_txn)
 
-    # Ungroup takes all of a topics children, moves them up a level, then 
+    # Ungroup takes all of a topics children, moves them up a level, then
     # deletes the topic
     def ungroup(self):
         parent = db.get(self.parent_keys[0])
@@ -3248,7 +3248,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 tree["key"] = topic.key()
                 topic_dict[tree["id"]] = topic
 
-            # if this topic is not the parent topic (ie. its not root, nor the 
+            # if this topic is not the parent topic (ie. its not root, nor the
             # topic_id you are updating)
             if (parent.key() != topic.key() and
                 # and this topic is not in the new parent
@@ -3259,8 +3259,8 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 topic.parent_keys[0] != parent.key()):
 
                 # move it from that old parent topic, its position in the new
-                # parent does not matter as child_keys will get written over 
-                # later.  move_child is needed only to make sure that the 
+                # parent does not matter as child_keys will get written over
+                # later.  move_child is needed only to make sure that the
                 # parent_keys and ancestor_keys will all match up correctly
                 old_parent = topic_keys_dict[topic.parent_keys[0]]
                 logging.info("moving topic %s from %s to %s" % (topic.id,
@@ -3294,7 +3294,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                 tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
             else:
                 if "related_videos" in tree:
-                    # adding keys to entity tree so we don't need to look it up 
+                    # adding keys to entity tree so we don't need to look it up
                     # again when creating the video in add_new_content
                     tree["related_video_keys"] = []
                     for readable_id in tree["related_videos"]:
@@ -3377,7 +3377,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     changed_nodes = []
 
     i = 0
-    # now loop through all the nodes 
+    # now loop through all the nodes
     for key, node in nodes.iteritems():
         if node["kind"] == "Topic":
             topic = all_entities_dict[node["key"]]
@@ -4730,7 +4730,7 @@ class ExerciseVideo(db.Model):
 
                 # the following line is needed otherwise the list comprehension
                 # by the return statement will fail on the un put EVs with:
-                # Key' object has no attribute '_video' if 
+                # Key' object has no attribute '_video' if
                 # ExerciseVideo.video.get_value_for_datastore(ev) is used
                 ev.video = video
 
@@ -4773,7 +4773,7 @@ class ExerciseVideo(db.Model):
             evs = [ev for ev in ev_key_dict.values()]
             evs += new_evs
 
-            # ExerciseVideo.video.get_value_for_datastore(ev) is not needed 
+            # ExerciseVideo.video.get_value_for_datastore(ev) is not needed
             # because we populated ev.video
             return [ev for ev in evs if ev.video.key() not in video_keys]
 
@@ -5168,7 +5168,7 @@ class UserExerciseGraph(object):
     @staticmethod
     def get_attempted_names(graph):
         """ Return the names of the exercises that the student has attempted.
-        
+
         Exact details, such as the threshold that marks a real attempt
         or the relevance rankings of attempted exercises, TBD.
         """
@@ -5190,10 +5190,10 @@ class UserExerciseGraph(object):
     def mark_suggested(graph):
         """ Mark 5 exercises as suggested, which are used by the knowledge map
         and the profile page.
-        
+
         Attempted but not proficient exercises are suggested first,
         then padded with exercises just beyond the proficiency boundary.
-        
+
         TODO: Although exercises might be marked in a particular order,
         they will always be returned by suggested_graph_dicts()
         sorted by knowledge map position. We might want to change that.
@@ -5285,7 +5285,7 @@ class UserExerciseGraph(object):
 class PromoRecord(db.Model):
     """ A record to mark when a user has viewed a one-time event of some
     sort, such as a promo.
-    
+
     """
 
     def __str__(self):
