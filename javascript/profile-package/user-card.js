@@ -187,11 +187,10 @@ UserCardView = Backbone.View.extend({
          "click .avatar-pic-container": "onAvatarClick_",
          "mouseenter .avatar-pic-container": "onAvatarHover_",
          "mouseleave .avatar-pic-container": "onAvatarLeave_",
-         "click #edit-profile": "onEditProfileClicked_",
-         "click .sub_menu #edit-basic-info": "onEditBasicInfoClicked_",
-         "click .sub_menu #edit-display-case": "onEditDisplayCaseClicked_",
-         "click .sub_menu #edit-avatar": "onAvatarClick_",
-         "click .sub_menu #edit-visibility": "onEditVisibilityClicked_",
+         "click #edit-basic-info": "onEditBasicInfoClicked_",
+         "click #edit-display-case": "onEditDisplayCaseClicked_",
+         "click #edit-avatar": "onAvatarClick_",
+         "click #edit-visibility": "onEditVisibilityClicked_",
          "click .edit-visibility": "onEditVisibilityClicked_"
      },
 
@@ -234,10 +233,21 @@ UserCardView = Backbone.View.extend({
         return this;
     },
 
+    onDropdownOpen_: function() {
+        this.$(".dropdown-toggle").addClass("toggled");
+    },
+
+    onDropdownClose_: function() {
+        this.$(".dropdown-toggle").removeClass("toggled");
+    },
+
     delegateEditEvents_: function() {
         if (this.model.isEditable()) {
             this.bindQtip_();
             this.delegateEvents(this.editEvents);
+            this.$(".dropdown-toggle").dropdown()
+                .bind("open", _.bind(this.onDropdownOpen_, this))
+                .bind("close", _.bind(this.onDropdownClose_, this));
         }
     },
 
@@ -309,40 +319,6 @@ UserCardView = Backbone.View.extend({
      */
     onIsCoachingLoggedInUserChanged_: function() {
         this.$(".add-remove-coach").toggle();
-    },
-
-    /**
-     * On a click outside the edit profile submenu,
-     * hide the submenu and unbind this handler.
-     */
-    getBoundHideSubMenuFn_: function() {
-        if (!this.boundHideSubMenuFn_) {
-            this.boundHideSubMenuFn_ = _.bind(function(e) {
-                var jelSubMenu = $(".sub_menu");
-                for (var node = e.target; node; node = node.parentNode) {
-                    if (node === jelSubMenu.get(0)) {
-                        // Click inside the submenu somewhere - ignore.
-                        return;
-                    }
-                }
-                jelSubMenu.hide();
-                $(document).unbind(e);
-            }, this);
-        }
-        return this.boundHideSubMenuFn_;
-    },
-
-    onEditProfileClicked_: function(evt) {
-        evt.stopPropagation();
-        var jelSubMenu = $(".sub_menu").toggle();
-
-        if (jelSubMenu.is(":visible")) {
-            $(document).bind("mousedown", this.getBoundHideSubMenuFn_());
-        } else {
-            // Because the edit profile button can also hide the submenu,
-            // unbind this handler so they don't pile up.
-            $(document).unbind("mousedown", this.getBoundHideSubMenuFn_());
-        }
     },
 
     onEditBasicInfoClicked_: function(evt, setPublic) {

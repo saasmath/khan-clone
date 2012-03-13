@@ -130,10 +130,8 @@
                             <span id="goals-container"></span>
                             {% if logged_in %}
                                 <span id="user-info" class="badge-target">
-                                    {{ user.user_info(username, user_data) }}
+                                    {{ user.user_info(username, user_data, logout_url) }}
                                 </span>
-                                <span class="separator"></span>
-                                <a id="page_logout" href="{{ logout_url|escape }}">Logout</a>
                             {% else %}
                                 <a class="badge-target" href="{{ login_url|escape }}">Login</a>
                             {% endif %}
