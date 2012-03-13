@@ -98,6 +98,21 @@ var Exercises = {
     },
 
     /**
+     * Send off an api request using supplied options and keep track of its
+     * incomplete/complete status so we know how many exercise requests are
+     * pending.
+     */
+    apiRequest: function(options) {
+
+        $.ajax(options).done($.proxy(function() {
+            this.pendingAPIRequests--;
+        }, this));
+
+        this.pendingAPIRequests++;
+
+    },
+
+    /**
      * Returns an identifier for the current user's session that can be
      * used for various cache keys. This sessionId isn't meant to be globally
      * unique, just an identifier for the current user and topic/exercise

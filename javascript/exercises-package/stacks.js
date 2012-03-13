@@ -550,14 +550,12 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
             // Then send another API request to see how many reviews are left --
             // and we'll change the end of review card's UI accordingly.
-            $.ajax({
+            Exercises.apiRequest({
                 url: "/api/v1/user/exercises/reviews/count",
                 type: "GET",
                 dataType: "json",
-                success: function(data) { reviewsLeft = data; },
-                complete: function() { Exercises.pendingAPIRequests--; }
+                success: function(data) { reviewsLeft = data; }
             });
-            Exercises.pendingAPIRequests++;
 
             // And finally wait for the previous API call to finish before
             // rendering end of review card.

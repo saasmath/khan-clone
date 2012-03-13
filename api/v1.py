@@ -1583,8 +1583,7 @@ def topic_next_exercises(topic_id):
     if not topic:
         return api_invalid_param_response("Invalid topic id")
 
-    exercises, user_exercises = models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
-    return user_exercises
+    return models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
 
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
 @oauth_required()

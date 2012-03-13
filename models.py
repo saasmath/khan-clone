@@ -616,8 +616,7 @@ class UserExercise(db.Model):
     # TODO(kamens) unit test next_in_topic...seriously, unit test this like crazy.
     @staticmethod
     def next_in_topic(user_data, topic, n=3, queued=[]):
-        """ Returns the Exercises contained in this topic and 
-        the next n suggested user exercises for this topic,
+        """ Returns the next n suggested user exercises for this topic,
         all prepped and ready for JSONification, as a tuple.
 
         TODO(jace): *This* is where the magic will happen.
@@ -654,7 +653,7 @@ class UserExercise(db.Model):
         # Build up UserExercise objects from our graph dicts
         user_exercises = [UserExercise.from_dict(d, user_data) for d in sorted_dicts]
 
-        return (exercises, UserExercise._prepare_for_stack_api(user_exercises, n, queued))
+        return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
     @staticmethod
     def next_in_review(user_data, n=3, queued=[]):

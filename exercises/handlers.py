@@ -40,7 +40,6 @@ class ViewExercise(request_handler.RequestHandler):
 
         topic = None
         user_exercises = None
-        exercises = None
 
         if review_mode:
 
@@ -79,7 +78,7 @@ class ViewExercise(request_handler.RequestHandler):
             user_exercises = models.UserExercise.next_in_review(user_data, n=MAX_CARDS_PER_REVIEW_STACK)
         else:
             # Topics mode context switches between multiple exercises
-            exercises, user_exercises = models.UserExercise.next_in_topic(user_data, topic)
+            user_exercises = models.UserExercise.next_in_topic(user_data, topic)
 
         if len(user_exercises) == 0:
             # If something has gone wrong and we didn't get any UserExercises,
@@ -95,7 +94,6 @@ class ViewExercise(request_handler.RequestHandler):
             "selected_nav_link": "practice",
             "renderable": True,
             "read_only": False,
-            "exercises_json": jsonify(exercises, camel_cased=True),
             "stack_json": jsonify(stack, camel_cased=True),
             "review_mode_json": jsonify(review_mode, camel_cased=True),
             "practice_mode_json": jsonify(practice_mode, camel_cased=True),
