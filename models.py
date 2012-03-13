@@ -2183,6 +2183,12 @@ class Topic(Searchable, db.Model):
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
+    def has_content(self):
+        for child_key in self.child_keys:
+            if child_key.kind() != "Topic":
+                return True
+        return False
+
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
     @layer_cache.cache_with_key_fxn(lambda self:
         "topic_extended_slug_%s" % self.key(),
@@ -2233,14 +2239,17 @@ class Topic(Searchable, db.Model):
             "title": v.title
         } for v in Topic.get_cached_videos_for_topic(self)]
 
-        parent_titles = [topic.title for topic in db.get(self.ancestor_keys)][0:-1]
-        parent_titles.reverse()
+        ancestor_topics = [{"title": topic.title, "url": topic.relative_url 
+            if topic.id in Topic._super_topic_ids or topic.has_content() 
+            else "#"} for topic in db.get(self.ancestor_keys)][0:-1]
+        ancestor_topics.reverse()
 
         return {
             'id': self.id,
             'title': self.title,
+            'url': self.relative_url,
             'extended_slug': self.get_extended_slug(),
-            'parent_titles': parent_titles,
+            'ancestor_topics': ancestor_topics,
             'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,
             'videos': videos_dict,
             'previous_topic_title': previous_topic.standalone_title if previous_topic else None,
