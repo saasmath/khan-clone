@@ -154,6 +154,7 @@ def get_response(url, params={}):
         if result.status_code == 200:
             return result.content
         else:
+            logging.warning(result.content)
             raise OAuthError("Error in get_response, received status %s for url %s" % (result.status_code, url))
 
     elif c_tries_left == 0:
