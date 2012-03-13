@@ -176,6 +176,7 @@ class PostLogin(request_handler.RequestHandler):
                 if (not user_data or
                         not auth.tokens.validate_token(user_data, auth_stamp)):
                     logging.error("Invalid authentication token specified")
+                    user_data = None
                 else:
                     # Good auth stamp - set the cookie for the user.
                     auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
