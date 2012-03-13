@@ -137,10 +137,11 @@ class ViewExercise(request_handler.RequestHandler):
         problem_number = self.request_int('problem_number', default=(user_exercise.total_done + 1))
 
         user_data_student = self.request_student_user_data(legacy=True) or user_data
-        if user_data_student.key_email != user_data.key_email and not user_data_student.is_visible_to(user_data):
+
+        if user_data_student.user_id != user_data.user_id and not user_data_student.is_visible_to(user_data):
             user_data_student = user_data
 
-        viewing_other = user_data_student.key_email != user_data.key_email
+        viewing_other = user_data_student.user_id != user_data.user_id
 
         # Can't view your own problems ahead of schedule
         if not viewing_other and problem_number > user_exercise.total_done + 1:
@@ -232,9 +233,9 @@ class ViewExercise(request_handler.RequestHandler):
 
                 url_pattern = "/exercise/%s?student_email=%s&problem_number=%d"
                 user_exercise.previous_problem_url = url_pattern % \
-                    (user_exercise.exercise, user_data_student.key_email, problem_number - 1)
+                    (user_exercise.exercise, user_data_student.email, problem_number - 1)
                 user_exercise.next_problem_url = url_pattern % \
-                    (user_exercise.exercise, user_data_student.key_email, problem_number + 1)
+                    (user_exercise.exercise, user_data_student.email, problem_number + 1)
 
         return {
             "renderable": renderable,
