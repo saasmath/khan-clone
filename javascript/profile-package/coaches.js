@@ -58,8 +58,28 @@ var Coaches = {
     onAddCoach_: function() {
         var email = $.trim($("#coach-email").val());
         if (email) {
+            Coaches.disableInput();
             this.coachCollection.addByEmail(email);
         }
+    },
+
+    disableInput: function() {
+        $("#add-coach").addClass("disabled")
+            .prop("disabled", true);
+
+        $("#coach-email").prop("disabled", true);
+
+        $(".coach-throbber").show();
+    },
+
+    enableInput: function() {
+        $("#add-coach").removeClass("disabled")
+            .prop("disabled", false);
+
+        $("#coach-email").prop("disabled", false)
+            .focus();
+
+        $(".coach-throbber").hide();
     }
 };
 
@@ -201,6 +221,7 @@ Coaches.CoachCollection = Backbone.Collection.extend({
     onSaveSuccess_: function() {
         this.markCoachesAsSaved();
         this.trigger("saveSuccess");
+        Coaches.enableInput();
     },
 
     onSaveError_: function() {
@@ -328,6 +349,8 @@ Coaches.CoachCollectionView = Backbone.View.extend({
             .fadeOut(function() {
                 $(this).text("");
             });
+
+        Coaches.enableInput();
     },
 
     render: function() {
