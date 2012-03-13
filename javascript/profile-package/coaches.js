@@ -236,6 +236,7 @@ Coaches.CoachCollection = Backbone.Collection.extend({
 
 Coaches.CoachCollectionView = Backbone.View.extend({
     rendered_: false,
+    onlyAddingCoaches_: true,
 
     initialize: function(options) {
         this.coachViews_ = [];
@@ -253,7 +254,12 @@ Coaches.CoachCollectionView = Backbone.View.extend({
     },
 
     onSaveSuccess_: function() {
-        $("#coach-email").val("");
+        // Clear textfield only if we successfully added a coach,
+        // as opposed to removing a coach.
+        if (this.onlyAddingCoaches_) {
+            $("#coach-email").val("");
+        }
+        this.onlyAddingCoaches_ = true;
     },
 
     onSaveError_: function() {
@@ -277,7 +283,10 @@ Coaches.CoachCollectionView = Backbone.View.extend({
             });
 
         if (viewToRemove) {
+            this.onlyAddingCoaches_ = false;
+
             this.coachViews_ = _.without(this.coachViews_, viewToRemove);
+
             if (this.rendered_){
                 $(viewToRemove.el).fadeOut(function() {
                     viewToRemove.remove();
