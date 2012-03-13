@@ -2239,9 +2239,12 @@ class Topic(Searchable, db.Model):
             "title": v.title
         } for v in Topic.get_cached_videos_for_topic(self)]
 
-        ancestor_topics = [{"title": topic.title, "url": topic.relative_url 
-            if topic.id in Topic._super_topic_ids or topic.has_content() 
-            else "#"} for topic in db.get(self.ancestor_keys)][0:-1]
+        ancestor_topics = [{
+            "title": topic.title, 
+            "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
+                    or topic.has_content() else "#")
+            } 
+            for topic in db.get(self.ancestor_keys)][0:-1]
         ancestor_topics.reverse()
 
         return {
