@@ -6,7 +6,13 @@ import urllib
 import logging
 import layer_cache
 import urllib2
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import zlib
 import cPickle as pickle
 
@@ -72,7 +78,7 @@ class EditContent(request_handler.RequestHandler):
         try:
             opener = urllib2.build_opener()
             f = opener.open(request)
-            topictree = simplejson.load(f)
+            topictree = json.load(f)
 
             logging.info("calling /_ah/queue/deferred_import")
 
@@ -311,7 +317,7 @@ def getSmartHistoryContent():
     try:
         opener = urllib2.build_opener()
         f = opener.open(request)
-        smart_history = simplejson.load(f)
+        smart_history = json.load(f)
     except urllib2.URLError, e:
         logging.exception("Failed fetching smarthistory video list")
         smart_history = None

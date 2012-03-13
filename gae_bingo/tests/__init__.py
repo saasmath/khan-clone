@@ -1,6 +1,11 @@
 import os
 import logging
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from google.appengine.ext.webapp import RequestHandler
 from google.appengine.api import memcache
@@ -60,7 +65,7 @@ class RunStep(RequestHandler):
         elif step == "create_chimps_redirect_url":
             v = self.create_chimps_redirect_url()
 
-        self.response.out.write(simplejson.dumps(v))
+        self.response.out.write(json.dumps(v))
 
     def delete_all_experiments(self):
         bingo_cache = BingoCache.get()

@@ -1,7 +1,13 @@
 import os
 import logging
 import datetime
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import sys
 import re
 import traceback
@@ -372,16 +378,16 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return shared_jinja.get().render_template(template_name, **template_values)
 
     def render_json(self, obj):
-        json = simplejson.dumps(obj, ensure_ascii=False)
-        self.response.out.write(json)
+        json_string = json.dumps(obj, ensure_ascii=False)
+        self.response.out.write(json_string)
 
     def render_jsonp(self, obj):
-        json = obj if isinstance(obj, basestring) else simplejson.dumps(obj, ensure_ascii=False, indent=4)
+        json_string = obj if isinstance(obj, basestring) else json.dumps(obj, ensure_ascii=False, indent=4)
         callback = self.request_string("callback")
         if callback:
-            self.response.out.write("%s(%s)" % (callback, json))
+            self.response.out.write("%s(%s)" % (callback, json_string))
         else:
-            self.response.out.write(json)
+            self.response.out.write(json_string)
 
 from models import UserData
 import util

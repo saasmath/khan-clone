@@ -1,7 +1,12 @@
 # Based on http://appengine-cookbook.appspot.com/recipe/extended-jsonify-function-for-dbmodel,
 # with modifications for performance.
 
-import simplejson
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from google.appengine.ext import db
 from datetime import datetime
 
@@ -59,7 +64,7 @@ def is_visible_class_name(class_name):
                 ('db.Query' in class_name)
             )
 
-class JSONModelEncoder(simplejson.JSONEncoder):
+class JSONModelEncoder(json.JSONEncoder):
     def default(self, o):
         """jsonify default encoder"""
         return dumps(o)
@@ -68,6 +73,6 @@ def jsonify(data, **kwargs):
     """jsonify data in a standard (human friendly) way. If a db.Model
     entity is passed in it will be encoded as a dict.
     """
-    return simplejson.dumps(data, skipkeys=True, sort_keys=True,
+    return json.dumps(data, skipkeys=True, sort_keys=True,
             ensure_ascii=False, indent=4,
             cls=JSONModelEncoder)

@@ -47,7 +47,12 @@ import time
 import logging
 import urllib
 import urllib2
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 class GraphAPI(object):
     """A client for the Facebook Graph API.
@@ -170,7 +175,7 @@ class GraphAPI(object):
                                   urllib.urlencode(args), post_data)
 
         try:
-            response = simplejson.loads(file.read())
+            response = json.loads(file.read())
         finally:
             file.close()
         if response.get("error"):
@@ -297,7 +302,7 @@ def parse_signed_request(signed_request, secret):
         return {}
 
     sig = urlsafe_b64decode(str(esig))
-    data = simplejson.loads(urlsafe_b64decode(str(payload)))
+    data = json.loads(urlsafe_b64decode(str(payload)))
 
     if not isinstance(data, dict):
         raise SignedRequestError("Pyload is not a json string!")

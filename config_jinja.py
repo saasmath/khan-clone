@@ -1,8 +1,13 @@
 # Jinja2 config
 
-from urllib import quote_plus
-import simplejson as json
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import os
+from urllib import quote_plus
 
 from webapp2_extras import jinja2
 

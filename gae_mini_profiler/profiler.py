@@ -4,7 +4,13 @@ import logging
 import os
 import cPickle as pickle
 import re
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import StringIO
 from types import GeneratorType
 import zlib
@@ -74,7 +80,7 @@ class RequestStatsHandler(RequestHandler):
                     request_stats.disabled = True
                     request_stats.store()
 
-        self.response.out.write(simplejson.dumps(list_request_stats))
+        self.response.out.write(json.dumps(list_request_stats))
 
 class RequestStats(object):
 

@@ -1,7 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime, logging
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import math
 import urllib
 import cPickle as pickle
@@ -5302,7 +5308,7 @@ class VideoSubtitles(db.Model):
         """
         try:
             return json.loads(self.json)
-        except json.JSONDecodeError:
+        except ValueError:
             logging.warn('VideoSubtitles.load_json: json decode error')
 
 class VideoSubtitlesFetchReport(db.Model):
