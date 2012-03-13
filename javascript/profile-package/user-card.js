@@ -187,10 +187,10 @@ UserCardView = Backbone.View.extend({
          "click .avatar-pic-container": "onAvatarClick_",
          "mouseenter .avatar-pic-container": "onAvatarHover_",
          "mouseleave .avatar-pic-container": "onAvatarLeave_",
-         "click .dropdown-menu #edit-basic-info": "onEditBasicInfoClicked_",
-         "click .dropdown-menu #edit-display-case": "onEditDisplayCaseClicked_",
-         "click .dropdown-menu #edit-avatar": "onAvatarClick_",
-         "click .dropdown-menu #edit-visibility": "onEditVisibilityClicked_",
+         "click #edit-basic-info": "onEditBasicInfoClicked_",
+         "click #edit-display-case": "onEditDisplayCaseClicked_",
+         "click #edit-avatar": "onAvatarClick_",
+         "click #edit-visibility": "onEditVisibilityClicked_",
          "click .edit-visibility": "onEditVisibilityClicked_"
      },
 
