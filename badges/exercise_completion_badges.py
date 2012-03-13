@@ -1,5 +1,5 @@
 import models
-from badges import Badge, BadgeCategory
+from badges import Badge, BadgeCategory, RetiredBadge
 import simplejson as json
 
 # All badges awarded for completing some subset of exercises inherit from ExerciseCompletionBadge
@@ -87,7 +87,7 @@ class LevelThreeArithmeticianBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 750
 
-class TopLevelArithmeticianBadge(ChallengeCompletionBadge):
+class TopLevelArithmeticianBadge(ChallengeCompletionBadge, RetiredBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['arithmetic_challenge']
@@ -123,7 +123,7 @@ class LevelThreeTrigonometricianBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 750
 
-class TopLevelTrigonometricianBadge(ChallengeCompletionBadge):
+class TopLevelTrigonometricianBadge(ChallengeCompletionBadge, RetiredBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['trigonometry_challenge']
@@ -159,7 +159,7 @@ class LevelThreePrealgebraistBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 750
 
-class TopLevelPrealgebraistBadge(ChallengeCompletionBadge):
+class TopLevelPrealgebraistBadge(ChallengeCompletionBadge, RetiredBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['pre-algebra_challenge']
@@ -211,7 +211,7 @@ class LevelFiveAlgebraistBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 1000
 
-class TopLevelAlgebraistBadge(ChallengeCompletionBadge):
+class TopLevelAlgebraistBadge(ChallengeCompletionBadge, RetiredBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['algebra_challenge']

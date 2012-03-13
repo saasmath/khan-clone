@@ -1887,6 +1887,9 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         clear: left;
         width: 45px;
     }
+    .achievement-badge .achievement-desc .badge-context-retired {
+        color: red;
+    }
     .achievement-badge .achievement-desc {
         font-size: 11px;
         line-height: 13px;
