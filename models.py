@@ -1647,6 +1647,11 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
                 and self.username is not None
                 and len(self.username) > 0)
 
+    def __unicode__(self):
+        return "<UserData [%s] [%s] [%s]>" % (self.user_id,
+                                            self.email,
+                                            self.username or "<no username>")
+
     @classmethod
     def from_json(cls, json, user=None):
         '''This method exists for testing convenience only. It's called only
