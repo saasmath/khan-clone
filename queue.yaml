@@ -19,7 +19,7 @@ queue:
   rate: 80/s
 
 - name: video-log-queue
-  rate: 60/s
+  rate: 80/s
 
 - name: log-summary-queue
   rate: 60/s
@@ -28,6 +28,9 @@ queue:
   rate: 10/s
 
 - name: slow-background-queue
+  rate: 10/s
+
+- name: gae-bingo-queue
   rate: 10/s
 
 - name: fancy-exercise-stats-queue

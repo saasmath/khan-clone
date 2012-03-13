@@ -357,19 +357,16 @@ class BlobCache():
         start = datetime.now()
         blob_info = BlobCache.get_first_blob_info(key, namespace)
         end = datetime.now()
-        logging.info("time to get blob info %s", (end-start))
 
         if blob_info:
             start = datetime.now()
             blob_reader = blob_info.open()
             value = blob_reader.read()
             end = datetime.now()
-            logging.info("time to read blob into mem %s", (end-start))
 
             start = datetime.now()
             obj = pickle.loads(value)
             end = datetime.now()
-            logging.info("time to depickle %s", (end-start))
 
             return obj
        

@@ -12,8 +12,6 @@ import util
 from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
-from gae_bingo.gae_bingo import bingo, ab_test
-from gae_bingo.models import ConversionTypes
 from experiments import MarqueeVideoExperiment
 
 ITEMS_PER_SET = 4
