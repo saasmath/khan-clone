@@ -25,7 +25,6 @@ from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
-import login
 import util
 
 class MoveMapNodes(request_handler.RequestHandler):
@@ -117,7 +116,6 @@ class ViewExercise(request_handler.RequestHandler):
 
         if not viewing_other:
             if user_data.is_demo:
-                login.Logout.delete_all_identifying_cookies(self)
                 self.redirect(util.create_logout_url(self.request.uri))
                 return
 
@@ -324,7 +322,6 @@ class ViewAllExercises(request_handler.RequestHandler):
         user_data = models.UserData.current()
         # If accessing demo, do not allow knowledge map view, redirect via logout
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
 
         user_data = models.UserData.current() or models.UserData.pre_phantom()
@@ -352,7 +349,6 @@ class RawExercise(request_handler.RequestHandler):
         user_data = models.UserData.current()
         # If accessing demo, do not allow, redirect via logout
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
 
         path = self.request.path

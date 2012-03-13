@@ -143,7 +143,6 @@ class ViewVideo(request_handler.RequestHandler):
         user_data = UserData.current()
         # Logout and redirect for video views when logged in to demo,
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
 
         if path:
@@ -165,7 +164,6 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
         user_data = UserData.current()
         # Logout and redirect for video views when logged in to demo,
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
 
         # This method displays a video in the context of a particular topic.

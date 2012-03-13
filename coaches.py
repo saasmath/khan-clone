@@ -5,7 +5,6 @@ import facebook_util
 import util
 import user_util
 from request_handler import RequestHandler
-import login
 
 from models import UserData, CoachRequest, StudentList
 from badges import util_badges
@@ -86,7 +85,6 @@ class ViewCoaches(RequestHandler):
         user_data = UserData.current()
         # If accessing demo, do not allow viewing coaches, redirect via logout
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
             return
 
@@ -103,7 +101,6 @@ class ViewStudents(RequestHandler):
         user_data = UserData.current()
         # If accessing demo, do not allow viewing students, redirect via logout
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
             return
 
@@ -162,7 +159,6 @@ class RequestStudent(RequestHandler):
 
         # If accessing demo, do not allow student requests, redirect via logout
         if user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
             return
 
@@ -194,7 +190,6 @@ class AcceptCoach(RequestHandler):
 
         # If accessing demo, do not allow coach accepts, redirect via logout
         if user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
             return
 
@@ -258,7 +253,6 @@ class UnregisterStudent(UnregisterStudentCoach):
         user_data = UserData.current()
         # If accessing demo, do not allow unregistering a student, redirect via logout
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
             return
 
@@ -274,7 +268,6 @@ class AddStudentToList(RequestHandler):
         user_data = UserData.current()
         # If accessing demo, do not allow changing student lists, redirect via logout
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
             return
 
@@ -292,7 +285,6 @@ class RemoveStudentFromList(RequestHandler):
         user_data = UserData.current()
         # If accessing demo, do not allow changing student lists, redirect via logout
         if user_data is not None and user_data.is_demo:
-            login.Logout.delete_all_identifying_cookies(self)
             self.redirect(util.create_logout_url(self.request.uri))
             return
 

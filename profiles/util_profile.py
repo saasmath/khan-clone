@@ -13,7 +13,6 @@ import simplejson
 from avatars import util_avatars
 from badges import util_badges
 from gae_bingo.gae_bingo import bingo
-import login
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -100,7 +99,6 @@ class ViewClassProfile(request_handler.RequestHandler):
             user_override = self.request_user_data("coach_email")
             if not user_override and coach.is_demo:
                 # Do not allow viewing class profile for the demo user directly, redirect via logout
-                login.Logout.delete_all_identifying_cookies(self)
                 self.redirect(util.create_logout_url(self.request.uri))
                 return
 
@@ -207,7 +205,6 @@ class ViewProfile(request_handler.RequestHandler):
         if is_self:
             if user_data.is_demo:
                 # Do not allow viewing profile for the demo user, redirect via logout
-                login.Logout.delete_all_identifying_cookies(self)
                 self.redirect(util.create_logout_url(self.request.uri))
                 return
 
