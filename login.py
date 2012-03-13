@@ -162,16 +162,40 @@ class PostLogin(request_handler.RequestHandler):
     def get(self):
         cont = self.request_continue_url()
 
-        # Immediately after login we make sure this user has a UserData entity
-        user_data = UserData.current()
+        auth_stamp = self.request_string("auth")
+        if auth_stamp:
+            # If an auth stamp is provided, it means they logged in using
+            # a password via HTTPS, and it has redirected here to postlogin
+            # to set the auth cookie from that token. We can't rely on
+            # UserData.current() since no cookies have yet been set.
+            user_id = auth.tokens.user_id_from_token(auth_stamp)
+            if not user_id:
+                logging.error("Invalid authentication token specified")
+            else:
+                user_data = UserData.get_from_user_id(user_id)
+                if (not user_data or
+                        not auth.tokens.validate_token(user_data, auth_stamp)):
+                    logging.error("Invalid authentication token specified")
+                else:
+                    # Good auth stamp - set the cookie for the user.
+                    auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
+        else:
+            # Facebook or Google logins should always have a user_data otherwise
+            user_data = UserData.current()
+            
         if user_data:
 
             # Update email address if it has changed
             current_google_user = users.get_current_user()
-            if current_google_user and current_google_user.email() != user_data.email:
-                user_data.user_email = current_google_user.email()
-                user_data.put()
-
+            if current_google_user:
+                if current_google_user.email() != user_data.email:
+                    user_data.user_email = current_google_user.email()
+                    user_data.put()
+                # TODO(benkomalo): if they have a password based login with
+                # matching e-mail, merge the two userdata profiles, since it
+                # must be the case that this is the first time logging in
+                # with the Google Account.
+                
             # If the user has a public profile, we stop "syncing" their username
             # from Facebook, as they now have an opportunity to set it themself
             if not user_data.username:
@@ -204,10 +228,6 @@ class PostLogin(request_handler.RequestHandler):
                     util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
                 )
             )
-
-        auth_stamp = self.request_string("auth")
-        if auth_stamp:
-            auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
 
         # Always delete phantom user cookies on login
         self.delete_cookie('ureg_id')
@@ -374,6 +394,8 @@ class Register(request_handler.RequestHandler):
         created_user.birthdate = birthdate
         created_user.update_nickname(values['nickname'])
 
+        # TODO(benkomalo): check for UserData objects with matching e-mails
+        #                  (if a Google account, merge them, otherwise reject)
         # TODO(benkomalo): send welcome e-mail
         # TODO(benkomalo): do some kind of onboarding instead of taking them
         #                  directly to a continue URL
