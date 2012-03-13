@@ -317,6 +317,7 @@ class Register(request_handler.RequestHandler):
                 errors[field] = error
 
         # Under-13 check.
+        birthdate = None
         if values['birthdate']:
             try:
                 birthdate = datetime.datetime.strptime(values['birthdate'],
@@ -334,6 +335,7 @@ class Register(request_handler.RequestHandler):
                           urllib.quote(values['nickname'] or ""))
             return
         
+        gender = None
         if values['gender']:
             gender = values['gender'].lower()
             if gender not in ['male', 'female']:
