@@ -1331,31 +1331,37 @@ def user_exercises_all():
 
     if not user_data:
         user_data = models.UserData.pre_phantom()
+
     student = get_visible_user_data_from_request(user_data=user_data)
+
     exercises = models.Exercise.get_all_use_cache()
     user_exercise_graph = models.UserExerciseGraph.get(student)
-    if student.is_pre_phantom:
-        user_exercises = []
-    else:
-        user_exercises = (models.UserExercise.all().
-                          filter("user =", student.user).
-                          fetch(10000))
 
-    user_exercises_dict = dict((user_exercise.exercise, user_exercise)
-                               for user_exercise in user_exercises)
+    user_exercises_dict = {}
+
+    if not student.is_pre_phantom:
+        user_exercises_dict = dict(
+            (attrs["name"], models.UserExercise.from_dict(attrs, student))
+            for attrs in user_exercise_graph.graph_dicts()
+        )
 
     results = []
+
     for exercise in exercises:
+
         name = exercise.name
+
         if name not in user_exercises_dict:
             user_exercise = models.UserExercise()
             user_exercise.exercise = name
             user_exercise.user = student.user
         else:
             user_exercise = user_exercises_dict[name]
+
         user_exercise.exercise_model = exercise
         user_exercise._user_data = student
         user_exercise._user_exercise_graph = user_exercise_graph
+
         results.append(user_exercise)
 
     return results
