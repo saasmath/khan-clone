@@ -755,6 +755,7 @@ Exercises.SessionStats = Backbone.Model.extend({
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress * 100;
             stat.change = stat.end - stat.start;
+            stat.proficient = true ? (stat.end < 100) : false;
 
             // Set and cache the latest
             progressStats[exerciseName] = stat;
