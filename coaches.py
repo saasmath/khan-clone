@@ -5,6 +5,7 @@ import facebook_util
 import util
 import user_util
 from request_handler import RequestHandler
+import login
 
 from models import UserData, CoachRequest, StudentList
 from badges import util_badges
@@ -83,6 +84,11 @@ class ViewCoaches(RequestHandler):
         """ Redirect legacy /coaches to profile page's coaches tab.
         """
         user_data = UserData.current()
+        # If accessing demo, do not allow viewing coaches, redirect via logout
+        if user_data is not None and user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
+            return
 
         if user_data:
             self.redirect(user_data.profile_root + "/coaches")
@@ -95,6 +101,11 @@ class ViewStudents(RequestHandler):
     @ensure_xsrf_cookie
     def get(self):
         user_data = UserData.current()
+        # If accessing demo, do not allow viewing students, redirect via logout
+        if user_data is not None and user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
+            return
 
         if user_data:
 
@@ -148,6 +159,13 @@ class RequestStudent(RequestHandler):
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
             return
+
+        # If accessing demo, do not allow student requests, redirect via logout
+        if user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
+            return
+
         user_data_student = self.request_user_data("student_email")
         if user_data_student:
             if not user_data_student.is_coached_by(user_data):
@@ -172,6 +190,12 @@ class AcceptCoach(RequestHandler):
 
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
+            return
+
+        # If accessing demo, do not allow coach accepts, redirect via logout
+        if user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
             return
 
         accept_coach = self.request_bool("accept", default = False)
@@ -231,6 +255,13 @@ class UnregisterStudentCoach(RequestHandler):
 class UnregisterStudent(UnregisterStudentCoach):
     @disallow_phantoms
     def get(self):
+        user_data = UserData.current()
+        # If accessing demo, do not allow unregistering a student, redirect via logout
+        if user_data is not None and user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
+            return
+
         return self.do_request(
             self.request_user_data("student_email"),
             UserData.current(),
@@ -240,6 +271,13 @@ class UnregisterStudent(UnregisterStudentCoach):
 class AddStudentToList(RequestHandler):
     @RequestHandler.exceptions_to_http(400)
     def post(self):
+        user_data = UserData.current()
+        # If accessing demo, do not allow changing student lists, redirect via logout
+        if user_data is not None and user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
+            return
+
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
         if student_list.key() in student_data.student_lists:
@@ -251,6 +289,13 @@ class AddStudentToList(RequestHandler):
 class RemoveStudentFromList(RequestHandler):
     @RequestHandler.exceptions_to_http(400)
     def post(self):
+        user_data = UserData.current()
+        # If accessing demo, do not allow changing student lists, redirect via logout
+        if user_data is not None and user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
+            return
+
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
         # due to a bug, we have duplicate lists in the collection. fix this:

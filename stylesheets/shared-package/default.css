@@ -3610,6 +3610,22 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 
 }
 
+.demo-notification-bar { /* for demo notifications when logged in as demo user */
+    background: #875900 url(/images/candy-stripe.png) repeat-x; /*! data-uri(/images/candy-stripe.png) */
+    width:100%;
+    height:35px;
+    text-align:center;
+    vertical-align:middle;
+    border-bottom: 1px solid #998c73;
+    outline:solid 1px #6E4900;
+    color: #eee;
+    position:fixed;
+    z-index:200;
+    left:0px;
+    top:-35px;
+    font-size: 15px;
+}
+
 .notification-bar {
     background: #005987 url(/images/candy-stripe.png) repeat-x; /*! data-uri(/images/candy-stripe.png) */
     width:100%;

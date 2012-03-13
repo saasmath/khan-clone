@@ -113,6 +113,13 @@
 <!--[if !IE]><!--> <body> <!--<![endif]-->
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
+    {% if user_data.is_demo %}
+        <div class="demo-notification-bar" style="display:none;">
+            <span class="notification-bar-content">You are logged in to the Khan Academy Demo account, access is limited! You should <a href="/logout?continue={{ continue }}" class="simple-button action-gradient orange">Remember to logout</a></span>
+            <script>$(function(){ DemoNotifications.show(); });</script>
+        </div>
+    {% endif %}
+    <div class="notification-bar-spacer"></div>
     <div id="page-container">
     <div id="page-container-inner">
         {# Facebook connect root #}
@@ -139,11 +146,11 @@
                             {% endif %}
                             <span class="separator"></span>
                             <span>
-                                <a href={{ donate_redirect_url or "/donate" }}
-                                    {% if donate_button_test == "button" %}
-                                        class="call-to-action simple-button action-gradient green donate-button"
-                                    {% endif %}>
-                                    Donate
+                                <a href='{% if user_data.is_demo %}/logout?continue={% endif %}{{ donate_redirect_url or "/donate" }}'
+                                {% if donate_button_test == "button" %}
+                                    class="call-to-action simple-button action-gradient green donate-button"
+                                {% endif %}>
+                                Donate
                                 </a>
                             </span>
                         </span>
@@ -152,11 +159,11 @@
                             <div id="sitewide-navigation">
                                 <nav>
                                   <span class="links">
-                                      <a href="/#browse" data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link"{% else %}class="watch-link"{% endif %}>Watch</a>
-                                    <a href="/exercisedashboard" data-tag="Header" {% if selected_nav_link == "practice" %}class="selected practice-link"{% endif %}>Practice</a>
-                                    <a href="/class_profile" data-tag="Header" {% if selected_nav_link == "coach" %}class="selected coach-link"{% endif %}>Coach</a>
-                                    <a href="/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
-                                    <a href="/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/#browse" data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link"{% else %}class="watch-link"{% endif %}>Watch</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/exercisedashboard" data-tag="Header" {% if selected_nav_link == "practice" %}class="selected practice-link"{% endif %}>Practice</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/class_profile" data-tag="Header" {% if selected_nav_link == "coach" %}class="selected coach-link"{% endif %}>Coach</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
                                     </span>
                                 </nav>
                             </div>

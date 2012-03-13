@@ -140,6 +140,12 @@ class ViewVideo(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     def get(self, path, video_id):
+        user_data = UserData.current()
+        # Logout and redirect for video views when logged in to demo,
+        if user_data is not None and user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
+
         if path:
             path_list = path.split('/')
 
@@ -155,6 +161,12 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
     # handler now.
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
+
+        user_data = UserData.current()
+        # Logout and redirect for video views when logged in to demo,
+        if user_data is not None and user_data.is_demo:
+            login.Logout.delete_all_identifying_cookies(self)
+            self.redirect(util.create_logout_url(self.request.uri))
 
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
