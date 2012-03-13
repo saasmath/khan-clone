@@ -34,7 +34,7 @@ javascript = {
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
             "bootstrap-modal.js",
-            "bootstrap-dropdown.js",
+            "dropdown.js",
             "../../gae_bingo/static/js/gae_bingo.js",
 
             # application code & templates:

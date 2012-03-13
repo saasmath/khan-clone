@@ -1,3 +1,35 @@
+/*
+ * This humble dropdown has strayed away from its bootstrap origins
+ * enough to warrant its own documentation.
+
+    Sample usage:
+    <div class="dropdown">
+        <span class="dropdown-toggle>Interact with me to toggle!</span>
+        <ul class="dropdown-menu">
+            <li><a href="foo">Foo</a></li>
+            <li><a href="moo">Moo</a></li>
+        </ul>
+    </div>
+
+    To initialize
+    -- with click to toggle:
+        $(".dropdown-toggle").dropdown();
+    -- with hover to toggle:
+        $(".dropdown-toggle").dropdown("hover");
+
+    If you want to listen for open and close events:
+        $(".dropdown-toggle").dropdown()
+            .bind("open", function() {
+                console.log("Hey, I'm open!");
+            }).bind("close", function() {
+                console.log("Oops, closed.");
+            });
+
+    If you want to programmatically open/close/toggle:
+        $(".dropdown-toggle").dropdown("open");
+ */
+
+
 /* ============================================================
  * bootstrap-dropdown.js v2.0.1
  * http://twitter.github.com/bootstrap/javascript.html#dropdowns
@@ -25,7 +57,7 @@
  /* DROPDOWN CLASS DEFINITION
   * ========================= */
 
-  var toggle = '[data-toggle="dropdown"]'
+  var toggle = '.dropdown-toggle'
     , Dropdown = function ( element, option ) {
         if (option === 'hover') {
             $(element).hoverIntent(
@@ -49,6 +81,9 @@
     constructor: Dropdown
 
   , toggle: function ( e ) {
+      // TODO(marcia): Investigate whether it would abide by convention more
+      // to have `this` refer to Dropdown instead of an html element.
+      // Fun fact: bootstrap-modal doesn't follow the below approach.
       var $this = $(this)
         , selector = $this.attr('data-target')
         , $parent

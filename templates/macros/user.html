@@ -32,7 +32,7 @@
     {% set count = 0 %}
 {% endif %}
 <span class="dropdown">
-    <span class="username_and_notification dropdown-toggle" data-toggle="dropdown">
+    <span class="username_and_notification dropdown-toggle">
         {% if count %}
         <span class="user-notification">
             <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
