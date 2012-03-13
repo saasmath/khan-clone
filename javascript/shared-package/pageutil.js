@@ -184,7 +184,14 @@ $(function() {
         return !!$.trim($("#page_search input[type=text]").val());
     });
 
-    $("#user-info .dropdown-toggle").dropdown("hover");
+    if (KA.isMobileCapable) {
+        // Open dropdown on click
+        $("#user-info .dropdown-toggle").dropdown();
+    } else {
+        // Open dropdown on hover
+        $("#user-info .dropdown-toggle").dropdown("hover");
+    }
+
 
 });
 

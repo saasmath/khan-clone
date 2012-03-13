@@ -25,7 +25,8 @@
             var USERNAME = '{{ username|escapejs }}';
 
             var KA = {
-                "profileRoot": "{{ viewer_profile_root }}"
+                "profileRoot": "{{ viewer_profile_root }}",
+                "isMobileCapable": {{ templatetags.jsonify(is_mobile_capable, True) }}
             };
         </script>
 
