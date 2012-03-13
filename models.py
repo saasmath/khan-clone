@@ -3567,11 +3567,13 @@ class Video(Searchable, db.Model):
     @staticmethod
     def youtube_thumbnail_urls(youtube_id):
 
+        # You might think that hq > sd, but you'd be wrong -- hqdefault is 480x360;
+        # sddefault is 640x480. Unfortunately, not all videos have the big one.
         hq_youtube_url = "http://img.youtube.com/vi/%s/hqdefault.jpg" % youtube_id
         sd_youtube_url = "http://img.youtube.com/vi/%s/sddefault.jpg" % youtube_id
 
         return {
-                "hq": ImageCache.url_for(hq_youtube_url),
+                "hq": hq_youtube_url,
                 "sd": ImageCache.url_for(sd_youtube_url, fallback_url=hq_youtube_url),
         }
 
