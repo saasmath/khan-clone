@@ -45,7 +45,6 @@
   border-top: 4px solid #000000;
   opacity: 0.3;
   filter: alpha(opacity=30);
-  content: "\2193";
 }
 .dropdown .caret {
   margin-top: 10px;
