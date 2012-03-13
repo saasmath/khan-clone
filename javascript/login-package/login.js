@@ -41,6 +41,11 @@ Login.initLoginPage = function() {
     $("#submit-button").click(function(e) {
         Login.loginWithPassword();
     });
+    $("#password").on("keypress", function(e) {
+        if (e.keyCode === $.ui.keyCode.ENTER) {
+            Login.loginWithPassword();
+        }
+    });
 };
 
 /**
@@ -148,6 +153,11 @@ Login.initRegistrationPage = function() {
 
     $("#submit-button").click(function() {
         Login.submitRegistration();
+    });
+    $("#password").on("keypress", function(e) {
+        if (e.keyCode === $.ui.keyCode.ENTER) {
+            Login.submitRegistration();
+        }
     });
 };
 

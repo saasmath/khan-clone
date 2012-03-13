@@ -38,6 +38,7 @@ import base64, os
 
 from image_cache import ImageCache
 
+from auth import age_util
 from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
@@ -1023,6 +1024,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # The user's birthday was only relatively recently collected (Mar 2012)
     # so older UserData may not have this information.
     birthdate = db.DateProperty(indexed=False)
+    
+    # The user's gender is optional, and only collected as of Mar 2012,
+    # so older UserData may not have this information.
+    gender = db.StringProperty(indexed=False)
 
     # Whether or not the user has indicated she wishes to have a public
     # profile (and can be searched, etc)
@@ -1036,7 +1041,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             "expanded_all_exercises", "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
             "avatar_name", "username", "is_profile_public",
-            "credential_version", "birthdate"
+            "credential_version", "birthdate", "gender"
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1362,6 +1367,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         """
 
         # Normal Gmail accounts and FB accounts require users be at least 13yo.
+        if self.birthdate:
+            return age_util.get_age(self.birthdate) >= 13
+            
         email = self.email
         return (email.endswith("@gmail.com")
                 or email.endswith("@googlemail.com")  # Gmail in Germany
@@ -1642,10 +1650,18 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             db.get([self.key()])
         return result
 
+    def has_password(self):
+        return self.credential_version is not None
+
     def has_public_profile(self):
         return (self.is_profile_public
                 and self.username is not None
                 and len(self.username) > 0)
+
+    def __unicode__(self):
+        return "<UserData [%s] [%s] [%s]>" % (self.user_id,
+                                              self.email,
+                                              self.username or "<no username>")
 
     @classmethod
     def from_json(cls, json, user=None):

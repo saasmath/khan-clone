@@ -43,7 +43,7 @@ class Login(request_handler.RequestHandler):
         errors - a dictionary of possible errors from a previous login that
                  can be highlighted in the UI of the login page
         """
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
         direct = self.request_bool('direct', default=False)
 
         if App.facebook_app_secret is None:
@@ -56,14 +56,11 @@ class Login(request_handler.RequestHandler):
                            'errors': errors or {},
                            }
 
-        # TODO(benkomalo): This is disabled until password-based logins is
-        # fully implemented.
-        #self.render_jinja2_template('login.html', template_values)
-        self.render_jinja2_template('login_legacy.html', template_values)
+        self.render_jinja2_template('login.html', template_values)
 
     def post(self):
         """ Handles a POST from the login page. """
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
         login_type = self.request_int('type', default=LoginType.UNKNOWN)
         if not LoginType.is_valid(login_type):
             # Can't figure out what the user wants to do - just send them
@@ -163,18 +160,42 @@ def _merge_phantom_into(phantom_data, target_data):
 
 class PostLogin(request_handler.RequestHandler):
     def get(self):
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
 
-        # Immediately after login we make sure this user has a UserData entity
+        auth_stamp = self.request_string("auth")
+        if auth_stamp:
+            # If an auth stamp is provided, it means they logged in using
+            # a password via HTTPS, and it has redirected here to postlogin
+            # to set the auth cookie from that token. We can't rely on
+            # UserData.current() since no cookies have yet been set.
+            user_id = auth.tokens.user_id_from_token(auth_stamp)
+            if not user_id:
+                logging.error("Invalid authentication token specified")
+            else:
+                user_data = UserData.get_from_user_id(user_id)
+                if (not user_data or
+                        not auth.tokens.validate_token(user_data, auth_stamp)):
+                    logging.error("Invalid authentication token specified")
+                    user_data = None
+                else:
+                    # Good auth stamp - set the cookie for the user, which
+                    # will also set it for this request.
+                    auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
+                    
         user_data = UserData.current()
         if user_data:
 
             # Update email address if it has changed
             current_google_user = users.get_current_user()
-            if current_google_user and current_google_user.email() != user_data.email:
-                user_data.user_email = current_google_user.email()
-                user_data.put()
-
+            if current_google_user:
+                if current_google_user.email() != user_data.email:
+                    user_data.user_email = current_google_user.email()
+                    user_data.put()
+                # TODO(benkomalo): if they have a password based login with
+                # matching e-mail, merge the two userdata profiles, since it
+                # must be the case that this is the first time logging in
+                # with the Google Account.
+                
             # If the user has a public profile, we stop "syncing" their username
             # from Facebook, as they now have an opportunity to set it themself
             if not user_data.username:
@@ -208,10 +229,6 @@ class PostLogin(request_handler.RequestHandler):
                 )
             )
 
-        auth_stamp = self.request_string("auth")
-        if auth_stamp:
-            auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
-
         # Always delete phantom user cookies on login
         self.delete_cookie('ureg_id')
         self.redirect(cont)
@@ -236,8 +253,7 @@ class Logout(request_handler.RequestHandler):
 
         next_url = "/"
         if google_user is not None:
-            next_url = users.create_logout_url(self.request_string("continue",
-                                                                   default="/"))
+            next_url = users.create_logout_url(self.request_continue_url())
         self.redirect(next_url)
 
 # TODO(benkomalo): move this to a more appropriate, generic spot
@@ -261,7 +277,7 @@ class Register(request_handler.RequestHandler):
             self.render_jinja2_template('under13.html', {'name': name})
             return
 
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
         template_values = {
             'continue': cont,
             'errors': {},
@@ -277,7 +293,7 @@ class Register(request_handler.RequestHandler):
         explicit registration via our own services.
         """
 
-        cont = self.request_string('continue', default="/")
+        cont = self.request_continue_url()
 
         # Store values in a dict so we can iterate for monotonous checks.
         values = {
@@ -301,6 +317,7 @@ class Register(request_handler.RequestHandler):
                 errors[field] = error
 
         # Under-13 check.
+        birthdate = None
         if values['birthdate']:
             try:
                 birthdate = datetime.datetime.strptime(values['birthdate'],
@@ -311,14 +328,18 @@ class Register(request_handler.RequestHandler):
 
         if birthdate and age_util.get_age(birthdate) < 13:
             # We don't yet allow under13 users. We need to lock them out now,
-            # unfortunately. Set an under-13 cookie so they can't try again,
-            # and so they're denied all phantom-user activities.
+            # unfortunately. Set an under-13 cookie so they can't try again.
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
-            # TODO(benkomalo): do we care about wiping their phantom data?
             self.redirect("/register?under13=1&name=%s" %
                           urllib.quote(values['nickname'] or ""))
             return
+        
+        gender = None
+        if values['gender']:
+            gender = values['gender'].lower()
+            if gender not in ['male', 'female']:
+                gender = None
 
         # Check validity of auth credentials
         if values['email']:
@@ -328,6 +349,20 @@ class Register(request_handler.RequestHandler):
             # valid until we send an e-mail.
             if not _email_re.search(email):
                 errors['email'] = "Email appears to be invalid"
+            else:
+                existing = models.UserData.get_from_user_input_email(email)
+                if existing is not None:
+                    if existing.has_password():
+                        # TODO(benkomalo): do something nicer and maybe ask the
+                        # user to try and login with that e-mail?
+                        errors['email'] = "There is already an account with that e-mail"
+                    else:
+                        # There's an existing user but no password based login
+                        # exists for them. They must have been using a Google
+                        # login - suggest merging the two
+                        # TODO(benkomalo): actually implement....somehow
+                        pass
+                        
 
         if values['username']:
             username = values['username']
@@ -350,7 +385,7 @@ class Register(request_handler.RequestHandler):
             del values['password']
 
             template_values = {
-	            'cont': cont,
+	            'continue': cont,
 	            'errors': errors,
 	            'values': values,
 	        }
@@ -376,6 +411,7 @@ class Register(request_handler.RequestHandler):
         # more free and doesn't need to happen in the transaction above)
         # Note update_nickname calls put()
         created_user.birthdate = birthdate
+        created_user.gender = gender
         created_user.update_nickname(values['nickname'])
 
         # TODO(benkomalo): send welcome e-mail
@@ -412,7 +448,7 @@ class PasswordChange(request_handler.RequestHandler):
         else:
             # We're good!
             user_data.set_password(password1)
-            cont = self.request_string("continue")
+            cont = self.request_continue_url()
 
             # Need to create a new auth token as the existing cookie will expire
             Login.redirect_with_auth_stamp(self, user_data, cont)

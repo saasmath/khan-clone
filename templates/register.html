@@ -26,7 +26,7 @@
             <select id="gender" name="gender" class="simple-input ui-corner-all">
                 <option value="unspecified" {% if values['gender'] == 'unspecified' %}selected{% endif %}> </option>
                 <option value="male" {% if values['gender'] == 'male' %}selected{% endif %}>Male</option>
-                <option value="female" {% if values['gender'] == female %}selected{% endif %}>Female</option>
+                <option value="female" {% if values['gender'] == 'female' %}selected{% endif %}>Female</option>
             </select>
         </div>
 
@@ -60,8 +60,7 @@
         <br>
 
         <div class="field-container" style="margin-top: 2em">
-            <!-- TODO(benkomalo): say something nicer and actually link it to what we want? -->
-            <input type="checkbox" name="agree"><label for="agree">I agree to the Terms of Service</label>
+            By clicking "Signup", you agree to our <a href="/about/tos" target="_blank" tabindex=1>Terms of Service</a> and <a href="/about/privacy-policy" target="_blank" tabindex=1>Privacy Policy</a>
         </div>
         <br>
         <div class="field-container" style="margin-top: 2em">

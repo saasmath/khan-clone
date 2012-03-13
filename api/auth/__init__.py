@@ -165,4 +165,4 @@ def default_callback():
 @oauth_required(require_anointed_consumer=True)
 def token_to_session():
     set_current_oauth_map_in_session()
-    return redirect(request.request_string("continue", default="/"))
+    return redirect(request.request_continue_url())

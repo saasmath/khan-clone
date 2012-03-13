@@ -21,8 +21,27 @@ from api.jsonify import jsonify
 
 class RequestInputHandler(object):
 
-    def request_string(self, key, default = ''):
+    def request_string(self, key, default=''):
         return self.request.get(key, default_value=default)
+    
+    def request_continue_url(self, key="continue", default="/"):
+        """ Gets the request string representing a continue URL for the current
+        request.
+        
+        This will safely filter out continue URL's that are not-served by
+        us so that users can't be tricked into going to a malicious site post
+        login or some other flow that goes through KA.
+        """
+        val = self.request_string(key, default)
+        if val and not App.is_dev_server and not util.is_khanacademy_url(val):
+            logging.warn("Invalid continue URI [%s]. Ignoring." % val)
+            if val != default and util.is_khanacademy_url(default):
+                # Make a last ditch effort to try the default, in case the
+                # explicit continue URI was the bad one
+                return default
+            return "/"
+
+        return val
 
     def request_int(self, key, default = None):
         try:

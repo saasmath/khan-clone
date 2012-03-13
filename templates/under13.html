@@ -7,16 +7,23 @@
 {% endblock pagecss %}
 
 {% block pagecontent %}
-<article id="page-root">
-{# TODO(benkomalo): make this nicer and make some more helpful suggestions for this case. #}
+
+<article id="page-root" style="padding: 20px 0;">
+
+<img src="/images/large-tree-transparent.png">
+
+<h3>
 {% if name %}
 Sorry, {{ name|escape }}!
 {% else %}
 Sorry!
 {% endif %}
-<br>
-We can't support under 13 users yet!
-<br>
-(you have a u13 cookie set now. sorry, homestar)
+</h3>
+
+<div style='color: #444; font-family: "MuseoSans500", sans-serif; font-size: 16px'>
+Looks like you're under 13.<br>
+We can't quite handle acounts for children, yet.
+</div>
+
 </article>
 {% endblock pagecontent %}

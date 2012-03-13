@@ -10,10 +10,10 @@ except ImportError:
 class TestUrl(unittest.TestCase):
     def setUp(self):
         super(TestUrl, self).setUp()
-        
+
         App.is_dev_server = False
         self.orig_host = None
-        
+
     def stub_server_name(self, stubbed_name):
         if os.environ.has_key('HTTP_HOST'):
             self.orig_host = os.environ['HTTP_HOST']
@@ -26,18 +26,18 @@ class TestUrl(unittest.TestCase):
             os.environ['HTTP_HOST'] = self.orig_host
         else:
             del os.environ['HTTP_HOST']
-        
+
     def test_url_securing_on_normal_url(self):
         self.stub_server_name('www.khanacademy.org')
         # relative url
         self.assertEqual("https://khan-academy.appspot.com/login",
                          util.secure_url("/login"))
-                         
+
         # Absolute url (gets re-written to appspot)
         self.assertEqual("https://khan-academy.appspot.com/login",
                          util.secure_url("http://www.khanacademy.org/login"))
         self.restore_server_name()
-        
+
     def test_url_insecuring_on_normal_url(self):
         self.stub_server_name('www.khanacademy.org')
 
@@ -69,3 +69,25 @@ class TestUrl(unittest.TestCase):
         self.assertEqual("http://non-default.khan-academy.appspot.com/foo",
                          util.insecure_url("https://non-default.khan-academy.appspot.com/foo"))
         self.restore_server_name()
+
+    def test_detection_of_ka_urls(self):
+        def is_ka_url(url):
+            return util.is_khanacademy_url(url)
+
+        self.stub_server_name("www.khanacademy.org")
+        self.assertTrue(is_ka_url("/relative/url"))
+        self.assertTrue(is_ka_url(util.absolute_url("/relative/url")))
+        self.assertTrue(is_ka_url(util.static_url("/images/foo")))
+        self.assertTrue(is_ka_url("http://www.khanacademy.org"))
+        self.assertTrue(is_ka_url("http://smarthistory.khanacademy.org"))
+        self.assertTrue(is_ka_url("http://www.khanacademy.org/"))
+        self.assertTrue(is_ka_url("http://www.khanacademy.org/foo"))
+        self.assertTrue(is_ka_url("https://khan-academy.appspot.com"))
+        self.assertTrue(is_ka_url("http://non-default.khan-academy.appspot.com"))
+        self.assertTrue(is_ka_url("https://non-default.khan-academy.appspot.com"))
+        self.restore_server_name()
+
+    def test_detection_of_non_ka_urls(self):
+        self.assertFalse(util.is_khanacademy_url("http://evil.com"))
+        self.assertFalse(util.is_khanacademy_url("https://khanacademy.phising.com"))
+
