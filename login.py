@@ -378,7 +378,7 @@ class Register(request_handler.RequestHandler):
             del values['password']
 
             template_values = {
-	            'cont': cont,
+	            'continue': cont,
 	            'errors': errors,
 	            'values': values,
 	        }
