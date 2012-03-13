@@ -1,8 +1,13 @@
-{{#each topic.parent_titles }}
-<a href="#">{{ this }}</a>
+{{#each topic.ancestor_topics }}
+{{#if this.url }}
+<a href="{{ this.url }}">{{ this.title }}</a>
 <span class="breadcrumb-separator">&#187;</span>
+{{else}}
+<span>{{ this.title }}</span>
+<span class="breadcrumb-separator">&#187;</span>
+{{/if}}
 {{/each}}
-<a href="#">{{ topic.title }}</a>
+<a href="{{ topic.url }}">{{ topic.title }}</a>
 <span class="breadcrumb-separator">&#187;</span>
 <span id="video_dropdown" style="display:none;" class="selected">
   <a href="/{{ topic.extended_slug }}/v/{{ video.readable_id }}">{{ video.title }}</a>

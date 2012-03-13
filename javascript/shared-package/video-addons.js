@@ -120,7 +120,7 @@ var VideoControls = {
         var jelParent = $(this).parents("td").first();
         var youtubeId = jelParent.attr("data-youtube-id");
         {
-            this.playVideo(youtubeId, jelParent.attr("data-key"), true);
+            VideoControls.playVideo(youtubeId, jelParent.attr("data-key"), true);
 
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
