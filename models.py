@@ -2242,7 +2242,7 @@ class Topic(Searchable, db.Model):
         ancestor_topics = [{
             "title": topic.title, 
             "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
-                    or topic.has_content() else "#")
+                    or topic.has_content() else None)
             } 
             for topic in db.get(self.ancestor_keys)][0:-1]
         ancestor_topics.reverse()
