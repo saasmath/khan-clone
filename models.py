@@ -1642,6 +1642,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             db.get([self.key()])
         return result
 
+    def has_password(self):
+        return self.credential_version is not None
+
     def has_public_profile(self):
         return (self.is_profile_public
                 and self.username is not None

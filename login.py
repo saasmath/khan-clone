@@ -345,6 +345,20 @@ class Register(request_handler.RequestHandler):
             # valid until we send an e-mail.
             if not _email_re.search(email):
                 errors['email'] = "Email appears to be invalid"
+            else:
+                existing = models.UserData.get_from_user_input_email(email)
+                if existing is not None:
+                    if existing.has_password():
+                        # TODO(benkomalo): do something nicer and maybe ask the
+                        # user to try and login with that e-mail?
+                        errors['email'] = "There is already an account with that e-mail"
+                    else:
+                        # There's an existing user but no password based login
+                        # exists for them. They must have been using a Google
+                        # login - suggest merging the two
+                        # TODO(benkomalo): actually implement....somehow
+                        pass
+                        
 
         if values['username']:
             username = values['username']
@@ -395,8 +409,6 @@ class Register(request_handler.RequestHandler):
         created_user.birthdate = birthdate
         created_user.update_nickname(values['nickname'])
 
-        # TODO(benkomalo): check for UserData objects with matching e-mails
-        #                  (if a Google account, merge them, otherwise reject)
         # TODO(benkomalo): send welcome e-mail
         # TODO(benkomalo): do some kind of onboarding instead of taking them
         #                  directly to a continue URL
