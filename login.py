@@ -178,12 +178,11 @@ class PostLogin(request_handler.RequestHandler):
                     logging.error("Invalid authentication token specified")
                     user_data = None
                 else:
-                    # Good auth stamp - set the cookie for the user.
+                    # Good auth stamp - set the cookie for the user, which
+                    # will also set it for this request.
                     auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
-        else:
-            # Facebook or Google logins should always have a user_data otherwise
-            user_data = UserData.current()
-            
+                    
+        user_data = UserData.current()
         if user_data:
 
             # Update email address if it has changed
@@ -328,11 +327,9 @@ class Register(request_handler.RequestHandler):
 
         if birthdate and age_util.get_age(birthdate) < 13:
             # We don't yet allow under13 users. We need to lock them out now,
-            # unfortunately. Set an under-13 cookie so they can't try again,
-            # and so they're denied all phantom-user activities.
+            # unfortunately. Set an under-13 cookie so they can't try again.
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
-            # TODO(benkomalo): do we care about wiping their phantom data?
             self.redirect("/register?under13=1&name=%s" %
                           urllib.quote(values['nickname'] or ""))
             return
