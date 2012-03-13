@@ -89,7 +89,7 @@ def add_next_topic(topics, next_topic=None):
         "library_content_by_topic_%s_v%s" % (
         "ajax" if ajax else "inline", 
         version_number if version_number else Setting.topic_tree_version()),
-        layer=layer_cache.Layers.Blobstore
+        layer=layer_cache.Layers.Memcache
         )
 def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the topics as they will be
