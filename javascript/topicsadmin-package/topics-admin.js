@@ -471,11 +471,11 @@ var TopicTreeEditor = {
             success: function(message) {
                 if (message != "Publish: finished successfully") {
                     hideGenericMessageBox();
-                popupGenericMessageBox({
-                    title: "Topic tree publish begun",
-                    message: "Topic tree publish is now in progress. This may take a few minutes...<br/>Current Status - " + message,
-                    buttons: []
-                });
+                    popupGenericMessageBox({
+                        title: "Topic tree publish begun",
+                        message: "Topic tree publish is now in progress. This may take a few minutes...<br/>Current Status - " + message,
+                        buttons: []
+                    });
                     setTimeout(TopicTreeEditor.waitForTreeDefault, 15000);
                 } else {
                     hideGenericMessageBox();
