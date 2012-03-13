@@ -209,7 +209,7 @@ def is_khanacademy_url(url):
 
     scheme, netloc, path, query, fragment = urlparse.urlsplit(url) #@UnusedVariable
     # Check all absolute URLs
-    if (scheme and
+    if (netloc and
             not netloc.endswith(".khanacademy.org") and
             not netloc.endswith(".khan-academy.appspot.com") and
             not netloc == "khan-academy.appspot.com"):
