@@ -87,7 +87,7 @@ class LevelThreeArithmeticianBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 750
 
-class TopLevelArithmeticianBadge(ChallengeCompletionBadge, RetiredBadge):
+class TopLevelArithmeticianBadge(RetiredBadge, ChallengeCompletionBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['arithmetic_challenge']
@@ -123,7 +123,7 @@ class LevelThreeTrigonometricianBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 750
 
-class TopLevelTrigonometricianBadge(ChallengeCompletionBadge, RetiredBadge):
+class TopLevelTrigonometricianBadge(RetiredBadge, ChallengeCompletionBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['trigonometry_challenge']
@@ -159,7 +159,7 @@ class LevelThreePrealgebraistBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 750
 
-class TopLevelPrealgebraistBadge(ChallengeCompletionBadge, RetiredBadge):
+class TopLevelPrealgebraistBadge(RetiredBadge, ChallengeCompletionBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['pre-algebra_challenge']
@@ -211,7 +211,7 @@ class LevelFiveAlgebraistBadge(ExerciseCompletionBadge):
         self.badge_category = BadgeCategory.SILVER
         self.points = 1000
 
-class TopLevelAlgebraistBadge(ChallengeCompletionBadge, RetiredBadge):
+class TopLevelAlgebraistBadge(RetiredBadge, ChallengeCompletionBadge):
     def __init__(self):
         ChallengeCompletionBadge.__init__(self)
         self.exercise_names_required = ['algebra_challenge']

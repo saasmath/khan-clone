@@ -160,7 +160,7 @@ class Badge(object):
     _serialize_whitelist = [
             "points", "badge_category", "description",
             "safe_extended_description", "name", "user_badges", "icon_src",
-            "is_owned", "objectives", "can_become_goal", "icons", "retired"
+            "is_owned", "objectives", "can_become_goal", "icons", "is_retired"
             ]
 
     def __init__(self):
@@ -178,9 +178,6 @@ class Badge(object):
         # on the "all badges" page if the badge hasn't been achieved yet
         self.is_teaser_if_unknown = False
 
-        # Hide the badge from all badge lists if it hasn't been achieved yet
-        self.is_hidden_if_unknown = False
-
         self.is_owned = False
         
         # A badge may have an associated goal
@@ -188,7 +185,10 @@ class Badge(object):
 
         # Retired badges are disabled for all users except those who've already earned them.
         # To retire a badge, see RetiredBadge use below.
-        self.retired = False
+        self.is_retired = isinstance(self, RetiredBadge)
+
+        # Hide the badge from all badge lists if it hasn't been achieved yet
+        self.is_hidden_if_unknown = self.is_retired
 
     @staticmethod
     def add_target_context_name(name, target_context_name):
@@ -324,23 +324,16 @@ class RetiredBadge(Badge):
 
     To retire a badge, inherit from RetiredBadge like so:
         class MonkeyBadge(RetiredBadge)
-        ...or, if the retired badge inherits from something other than Badge...
-        class MonkeyBadge(AnimalBadge, RetiredBadge)
+        
+    If the retired badge inherits from something other than Badge,
+    then be sure to inherit from RetiredBadge first:
+        class MonkeyBadge(RetiredBadge, AnimalBadge)
 
     This will set the right method resolution order so is_satisfied_by always
     returns False but your retired badge can still override methods like extended_description.
     """
-    def __init__(self):
-        Badge.__init__(self)
-
-        self.is_hidden_if_unknown = True
-        self.retired = True
-    
     def is_satisfied_by(self, *args, **kwargs):
         return False
-
-    def extended_description(self):
-        return "This badge has been retired!"
 
 class GroupedUserBadge(object):
     """ Represents a set of user badges for any particular type. For example,

@@ -8,7 +8,7 @@
         <div class="achievement-text">
         <div class="achievement-title">{{ badge.description|escape }}{% if frequency %} <span class="frequency">(x{{ frequency }})</span>{% endif %}</div>
         <div class="achievement-desc {% if not user_badge %}achievement-desc-no-count{% endif %}">
-            {% if badge.retired %}
+            {% if badge.is_retired %}
                 This badge has been <span class="badge-context-retired">retired</span>!
                 You get to keep it forever, but nobody else can earn it.
             {% else %}
