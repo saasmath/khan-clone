@@ -119,8 +119,8 @@ var VideoControls = {
     thumbnailClick: function() {
         var jelParent = $(this).parents("td").first();
         var youtubeId = jelParent.attr("data-youtube-id");
-        {
-            this.playVideo(youtubeId, jelParent.attr("data-key"), true);
+        if (youtubeId) {
+            VideoControls.playVideo(youtubeId, jelParent.attr("data-key"), true);
 
             $("#thumbnails td.selected").removeClass("selected");
             jelParent.addClass("selected");
@@ -289,7 +289,7 @@ var VideoStats = {
             } else {
                 VideoControls.setAutoPlayEnabled(false);
             }
-            
+
             if (this.analyticsActivity) {
                 this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
                 Analytics.trackActivityEnd(this.analyticsActivity);
@@ -306,7 +306,7 @@ var VideoStats = {
             } else {
                 VideoControls.setAutoPlayEnabled(false);
             }
-            
+
             if (this.analyticsActivity) {
                 this.analyticsActivity.parameters["Percent (end)"] = this.dPercentLastSaved;
                 Analytics.trackActivityEnd(this.analyticsActivity);

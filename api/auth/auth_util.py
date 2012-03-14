@@ -16,6 +16,9 @@ from api.auth.xsrf import validate_xsrf_value
 from oauth_provider.oauth import build_authenticate_header, OAuthError
 import cookie_util
 
+class OAuthBadRequestError(OAuthError):
+    pass
+
 def oauth_error_response(e):
     logging.error("OAuth error. %s" % e.message)
     logging.exception(e)
@@ -140,8 +143,9 @@ def get_response(url, params={}):
 
     # Be extra forgiving w/ timeouts during API auth consumer calls
     # in case Facebook or Google is slow.
+    # In case of 503, try again.
     c_tries_left = 5
-    while not result and c_tries_left > 0:
+    while (not result or result.status_code == 503) and c_tries_left > 0:
 
         try:
             result = urlfetch.fetch(url_with_params, deadline=10)
@@ -153,7 +157,11 @@ def get_response(url, params={}):
 
         if result.status_code == 200:
             return result.content
+        elif result.status_code == 400:
+            # Probably user denied access to our app; we'll catch this and show a nice error
+            raise OAuthBadRequestError("Bad request for url %s" % url)
         else:
+            logging.warning(result.content)
             raise OAuthError("Error in get_response, received status %s for url %s" % (result.status_code, url))
 
     elif c_tries_left == 0:

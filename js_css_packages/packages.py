@@ -34,6 +34,7 @@ javascript = {
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
             "bootstrap-modal.js",
+            "dropdown.js",
             "../../gae_bingo/static/js/gae_bingo.js",
 
             # application code & templates:
@@ -294,6 +295,7 @@ stylesheets = {
             "museo-sans.css",
             "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
+            "bootstrap-dropdown.css",
             "goals.css",
         ]
     },
