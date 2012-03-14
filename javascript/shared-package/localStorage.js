@@ -4,7 +4,7 @@
  * BankersBox, but for now this is much lighter weight.
  *
  * If you ever need to completely wipe LocalStore for *all* users when,
- * say, changing the format of data being cached, just bump up the "version
+ * say, changing the format of data being cached, just bump up the "version"
  * property below.
  *
  * TODO(kamens): extremely unit-test-friendly.
