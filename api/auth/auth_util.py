@@ -143,8 +143,9 @@ def get_response(url, params={}):
 
     # Be extra forgiving w/ timeouts during API auth consumer calls
     # in case Facebook or Google is slow.
+    # In case of 503, try again.
     c_tries_left = 5
-    while not result and c_tries_left > 0:
+    while (not result or result.status_code == 503) and c_tries_left > 0:
 
         try:
             result = urlfetch.fetch(url_with_params, deadline=10)
