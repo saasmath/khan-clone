@@ -83,19 +83,12 @@ function KnowledgeMapInitGlobals() {
                 lowercaseName: this.get("display_name").toLowerCase()
             });
 
-            var milestones = [];
-            for (var milestone = 0; milestone < this.get("num_milestones") - 1; milestone++) {
-                milestones.push({
-                    "left": Math.round((milestone + 1) * (228 / this.get("num_milestones")))
-                });
-            }
             this.set({"streakBar": {
                 "proficient": this.get("progress") >= 1,
                 "suggested": (this.get("status") == "Suggested" || (this.get("progress") < 1 && this.get("progress") > 0)),
                 "progressDisplay": this.get("progress_display"),
                 "maxWidth": 228,
-                "width": Math.min(1.0, this.get("progress")) * 228,
-                "milestones": []
+                "width": Math.min(1.0, this.get("progress")) * 228
             }});
         },
 

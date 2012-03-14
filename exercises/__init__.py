@@ -96,7 +96,6 @@ def exercise_graph_dict_json(user_data, admin=False):
             'h_position': graph_dict["h_position"],
             'v_position': graph_dict["v_position"],
             'summative': graph_dict["summative"],
-            'num_milestones': graph_dict.get("num_milestones", 0),
             'goal_req': (graph_dict["name"] in goal_exercises),
 
             # get_by_name returns only exercises visible to current user

@@ -271,7 +271,6 @@ window.TestTopics = function() {
             v_position: 0,
             live: false, 
             summative: false, 
-            num_milestones: 0, 
             seconds_per_fast_problem: 0, 
             covers: [], 
             prerequisites: [], 
