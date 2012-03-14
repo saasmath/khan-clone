@@ -1,9 +1,15 @@
 <div class="end-of-stack-info">
     <div class="title clearfix">
         <div class="stack-stats">
-            <p data-desc="Your longest streak in this stack.">{{longestStreak}} Streak!</p>
-            <p data-desc="Your total speedy answers for this stack.">{{speedyCards}} Speedy Answers</p>
-            <p data-desc="Your total leaves for this stack.">{{totalLeaves}} Leaves</p>
+            <p data-desc="Your longest streak in this stack.">
+            	<img src="/images/power-mode/streak.png" /><span class="times">&times;</span>{{longestStreak}}
+           	</p>
+            <p data-desc="Your total speedy answers for this stack.">
+            	<img src="/images/power-mode/speed-answer.png" /><span class="times">&times;</span>{{speedyCards}}
+            </p>
+            <p data-desc="Your total leaves for this stack.">
+            	<img src="/images/power-mode/card-leaf-full-large.png" /><span class="times">&times;</span>{{totalLeaves}}
+            </p>
         </div>
         <h1>TOTAL STACK DOMINATION</h1>
     </div>
@@ -11,16 +17,24 @@
 	    {{#each progress}}
 	    	<h2 class="skill-bar-title">{{displayName}}</h2>
 	    	<div class="skill-bar orange">
-	    		<div class="fill red" style="width:{{end}}%;">
+	    		<div class="fill green" style="width:{{end}}%;">
 	    			<div class="description">
 		    			<!-- {{end}} (change: {{change}}) -->
 		    		</div>
 	    		</div>
-	    		<div class="fill orange" style="width:{{start}}%;">
+	    		{{#if proficient}}
+	    		<div class="fill gray" style="width:{{start}}%;">
 	    			<div class="description">
 		    			<!-- {{end}} (change: {{change}}) -->
 		    		</div>
 	    		</div>
+	    		{{else}}
+	    		<div class="fill blue" style="width:{{end}}%;">
+	    			<div class="description">
+		    			<!-- {{end}} (change: {{change}}) -->
+		    		</div>
+	    		</div>
+	    		{{/if}}
 	        </div>
 	    {{/each}}
     </div>

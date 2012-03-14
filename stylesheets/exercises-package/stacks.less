@@ -324,14 +324,23 @@
 }
 .end-of-stack-info .stack-stats {
     float: right;
+    margin-top: -8px;
 }
-.end-of-stack-info .stack-stats p {
-    display: inline-block;
-    text-align: center;
-    font-size: 150%;
-    margin: 0;
-    margin-left: 40px;
-}
+    .end-of-stack-info .stack-stats p {
+        display: inline-block;
+        text-align: center;
+        font-size: 150%;
+        margin: 0;
+        margin-left: 40px;
+    }
+    .end-of-stack-info .stack-stats img {
+        height: 38px;
+        vertical-align: -11px;
+    }
+    .end-of-stack-info .stack-stats .times {
+        display: inline-block;
+        margin: 0 7px;
+    }
 
 .end-of-stack-info .progress-graph {
     background: white;
@@ -349,11 +358,11 @@
 .end-of-stack-info .progress-graph .skill-bar {
     margin-bottom: 15px;
     height: 15px;
-    padding: 7px;
+    padding: 0px;
     position: relative;
     border: 1px solid #bbb;
 
-    .border-radius(10px);
+    .border-radius(4px);
     .box-shadow(inset 0 0 4px rgba(0,0,0,0.3);
 }
 
@@ -367,25 +376,34 @@
 .end-of-stack-info .progress-graph .skill-bar .fill {
     display: block;
     height: 100%;
-    .border-radius(6px);
+    .border-radius(3px);
     #gradient > .vertical(rgb(43,194,83),rgb(84,240,84));
     .box-shadow(inset 0 2px 9px  rgba(255,255,255,0.3),inset 0 -2px 6px rgba(0,0,0,0.4));
     position: relative;
     overflow: hidden;
 }
 
-.end-of-stack-info .progress-graph .skill-bar .fill.orange {
-    #gradient > .vertical(#f1a165,#f36d0a);
+.end-of-stack-info .progress-graph .skill-bar .fill.gray {
+    #gradient > .vertical(#ddd, #ccc);
 
     position: relative;
     top: -15px;
 }
 
-.end-of-stack-info .progress-graph .skill-bar .fill.red {
-    #gradient > .vertical(#f0a3a3,#f42323);
+.end-of-stack-info .progress-graph .skill-bar .fill.green {
+    #gradient > .vertical(#8aba08, #6e9700);
 
-    -webkit-animation: progress-bar 2s;
-    -moz-animation: progress-bar 2s;
+    -webkit-animation: progress-bar 1s;
+    -moz-animation: progress-bar 1s;
+}
+.end-of-stack-info .progress-graph .skill-bar .fill.blue {
+    #gradient > .vertical(lighten(#0080C9, 10%), #0080C9);
+
+    -webkit-animation: progress-bar .6s;
+    -moz-animation: progress-bar .6s;
+
+    position: relative;
+    top: -15px;
 }
 
 /** 
