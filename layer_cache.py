@@ -194,13 +194,16 @@ def layer_cache_check_set_return(
             try:
                 if not memcache.set(key, result, time=expiration, namespace=namespace):
                     logging.error("Memcache set failed for %s" % key)
-            except ValueError:
-                compressed_result = CompressedResult(result)
-                try:
-                    memcache.set(key, compressed_result, time=expiration, namespace=namespace)
-                    logging.info("Had to compress %s to size %i to store in cache" % (key, len(compressed_result.compressed_result)))
-                except:
-                    logging.error("Can't store %s in cache. Compressed size %i > 1000000 bytes" % (key, len(compressed_result.compressed_result)))
+            except ValueError, e:
+                if str(e).startswith("Values may not be more than"):
+                    compressed_result = CompressedResult(result)
+                    try:
+                        memcache.set(key, compressed_result, time=expiration, namespace=namespace)
+                        logging.info("Had to compress %s to size %i to store in cache" % (key, len(compressed_result.compressed_result)))
+                    except:
+                        logging.error("Can't store %s in cache. Compressed size %i > 1000000 bytes" % (key, len(compressed_result.compressed_result)))
+                else: 
+                    raise
 
         if layer & Layers.Datastore:
             KeyValueCache.set(key, result, time=expiration, namespace=namespace)
