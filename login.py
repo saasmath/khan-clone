@@ -12,6 +12,7 @@ import auth.tokens
 import cookie_util
 import datetime
 import logging
+import mail.registration
 import models
 import os
 import re
@@ -149,6 +150,7 @@ def _merge_phantom_into(phantom_data, target_data):
             phantom_data.user_email = target_data.user_email
             phantom_data.user_nickname = target_data.user_nickname
             phantom_data.birthdate = target_data.birthdate
+            phantom_data.gender = target_data.gender
             phantom_data.set_password_from_user(target_data)
 
             if phantom_data.put():
