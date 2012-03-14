@@ -85,7 +85,7 @@ def google_token_callback():
         oauth_map = retrieve_google_access_token(oauth_map)
     except OAuthBadRequestError, e:
         jinja = shared_jinja.get()
-        return jinja.render_template('login_mobile_error.html', message='Unable to log in to Google.')
+        return jinja.render_template('login_mobile_error.html', message='Unable to log in with Google.')
     except OAuthError, e:
         return oauth_error_response(e)
 

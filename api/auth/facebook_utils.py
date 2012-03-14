@@ -75,7 +75,7 @@ def facebook_token_callback():
         oauth_map = retrieve_facebook_access_token(oauth_map)
     except OAuthBadRequestError, e:
         jinja = shared_jinja.get()
-        return jinja.render_template('login_mobile_error.html', message='Unable to log in to Facebook.')
+        return jinja.render_template('login_mobile_error.html', message='Unable to log in with Facebook.')
     except OAuthError, e:
         return oauth_error_response(e)
 
