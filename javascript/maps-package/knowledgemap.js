@@ -61,16 +61,15 @@ function KnowledgeMapInitGlobals() {
 
     window.KnowledgeMapExercise = Backbone.Model.extend({
         initialize: function() {
-            var s_prefix = "node";
 
             if (this.get("status") == "Suggested") {
-                this.set({"isSuggested": true, "badgeIcon": "/images/" + s_prefix + "-suggested.png?" + KA_VERSION});
+                this.set({"isSuggested": true, "badgeIcon": "/images/node-suggested.png?" + KA_VERSION});
             } else if (this.get("status") == "Review") {
                 this.set({"isSuggested": true, "isReview": true, "badgeIcon": "/images/node-review.png?" + KA_VERSION});
             } else if (this.get("status") == "Proficient") {
-                this.set({"isSuggested": false, "badgeIcon": "/images/" + s_prefix + "-complete.png?" + KA_VERSION});
+                this.set({"isSuggested": false, "badgeIcon": "/images/node-complete.png?" + KA_VERSION});
             } else {
-                this.set({"isSuggested": false, "badgeIcon": "/images/" + s_prefix + "-not-started.png?" + KA_VERSION});
+                this.set({"isSuggested": false, "badgeIcon": "/images/node-not-started.png?" + KA_VERSION});
             }
 
             this.set({
