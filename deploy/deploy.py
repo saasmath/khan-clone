@@ -154,19 +154,19 @@ def git_revision_msg(revision_id):
     return popen_results(['git', '--work-tree=khan-exercises/', '--git-dir=khan-exercises/.git', 'show', '-s', '--pretty=format:%s', revision_id]).strip()
 
 def check_secrets():
-    content = ""
-
     try:
-        f = open("secrets.py", "r")
-        content = f.read()
-        f.close()
-    except:
+        import secrets
+    except ImportError, e:
         return False
 
-    # Try to find the beginning of our production facebook app secret
-    # to verify deploy is being sent from correct directory.
-    regex = re.compile("^facebook_app_secret = '050c.+'$", re.MULTILINE)
-    return regex.search(content)
+    if not hasattr(secrets, 'verify_secrets_is_up_to_date'):
+        print "Your secrets is too old; update it using the instructions at:"
+        print "https://www.dropbox.com/home/Khan%20Academy%20All%20Staff/Secrets"
+        print
+        return False
+
+    fb_secret = getattr(secrets, 'facebook_app_secret', '')
+    return fb_secret.startswith('050c')
 
 def check_deps():
     """Check if npm and friends are installed"""
