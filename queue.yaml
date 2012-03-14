@@ -19,7 +19,7 @@ queue:
   rate: 100/s
 
 - name: video-log-queue
-  rate: 100/s
+  rate: 140/s
 
 - name: log-summary-queue
   rate: 60/s
