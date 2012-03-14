@@ -766,8 +766,6 @@ Exercises.SessionStats = Backbone.Model.extend({
             /** 
              * For now, we're just keeping track of the change in progress per
              * exercise
-             * Converting manually from decimal to % so it can be more easily used in
-             * HTML/CSS land.
              */
             var progressStats = this.get("progress") || {},
 
@@ -775,11 +773,11 @@ Exercises.SessionStats = Backbone.Model.extend({
                     name: userExercise.exercise,
                     displayName: userExercise.exerciseModel.displayName,
                     startTotalDone: userExercise.totalDone,
-                    start: userExercise.progress * 100
+                    start: userExercise.progress
                 };
 
             stat.endTotalDone = userExercise.totalDone;
-            stat.end = userExercise.progress * 100;
+            stat.end = userExercise.progress;
             stat.change = stat.end - stat.start;
             stat.proficient = stat.end == 100;
 

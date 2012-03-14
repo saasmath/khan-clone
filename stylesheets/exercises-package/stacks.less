@@ -349,9 +349,18 @@
     margin-bottom: 22px;
 }
 
+.end-of-stack-info .progress-graph.current-topic .skill-status {
+    width: 48%;
+    margin-right: 2%;
+    float: left;
+}
+
 .end-of-stack-info .progress-graph .skill-bar-title {
     margin: 0 0 5px;
 }
+    .end-of-stack-info .progress-graph.current-topic .skill-bar-title {
+        margin: 0;
+    }
 
 /* Much credit goes to: http://css-tricks.com/css3-progress-bars/ */
 
@@ -365,6 +374,9 @@
     .border-radius(4px);
     .box-shadow(inset 0 0 4px rgba(0,0,0,0.3);
 }
+    .end-of-stack-info .progress-graph.current-topic .skill-bar {
+        height: 5px;
+    }
 
 .end-of-stack-info .progress-graph .skill-bar .description {
     position: relative;
@@ -404,6 +416,11 @@
 
     position: relative;
     top: -15px;
+}
+
+.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.gray,
+.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.blue {
+    top: -5px !important;
 }
 
 /** 

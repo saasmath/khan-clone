@@ -13,38 +13,38 @@
         </div>
         <h1>TOTAL STACK DOMINATION</h1>
     </div>
-    <div class="progress-graph">
+    <div class="progress-graph current-stack">
 	    {{#each progress}}
-	    	<h2 class="skill-bar-title">{{displayName}} ({{#if userExercise.exerciseStates.proficient}}*proficient*{{/if}})</h2>
-	    	<div class="skill-bar orange">
-	    		<div class="fill green" style="width:{{end}}%;">
-	    			<div class="description">
-		    			<!-- {{end}} (change: {{change}}) -->
-		    		</div>
-	    		</div>
-	    		{{#if proficient}}
-	    		<div class="fill blue" style="width:{{end}}%;">
-	    			<div class="description">
-		    			<!-- {{end}} (change: {{change}}) -->
-		    		</div>
-	    		</div>
-	    		{{else}}
-	    		<div class="fill gray" style="width:{{start}}%;">
-	    			<div class="description">
-		    			<!-- {{end}} (change: {{change}}) -->
-		    		</div>
-	    		</div>
-	    		{{/if}}
-	        </div>
+	    	<div class="skill-status">
+		    	<h2 class="skill-bar-title">{{displayName}} ({{#if userExercise.exerciseStates.proficient}}*proficient*{{/if}})</h2>
+		    	<div class="skill-bar orange">
+		    		<div class="fill green" style="width:{{multiply end 100}}%;"></div>
+		    		{{#if userExercise.exerciseStates.proficient}}
+		    		<div class="fill blue" style="width:{{multiply end 100}}%;"></div>
+		    		{{else}}
+		    		<div class="fill gray" style="width:{{multiply start 100}}%;"></div>
+		    		{{/if}}
+		        </div>
+		    </div>
 	    {{/each}}
+    </div>
+    <div class="progress-graph current-topic clearfix">
+    {{#each topicUserExercises}}
+    	<div class="skill-status">
+	    	<h4 class="skill-bar-title">
+	    		{{exerciseModel.displayName}} ({{#if exerciseStates.proficient}}*proficient*{{/if}})
+	    	</h2>
+	    	<div class="skill-bar orange">
+	    		<div class="fill green" style="width:{{multiply progress 100}}%;"></div>
+	    		{{#if exerciseStates.proficient}}
+	    		<div class="fill blue" style="width:{{multiply progress 100}}%;"></div>
+	    		{{/if}}
+	        </div> 
+        </div>
+    {{/each}}
     </div>
     <div class="stack-controls">
       <!-- TODO Jason/Kamens: Get real URLs in here -->
       <a href="/exercisedashboard" class="simple-button action-gradient left">Take a Break</a><a href="/math/arithmetic/addition-subtraction/e/" class="simple-button action-gradient green right">More Stacks!</a>
-    </div>
-    <div>
-    {{#each topicUserExercises}}
-        {{exerciseModel.displayName}} ({{#if exerciseStates.proficient}}*proficient* {{/if}}progress: {{progress}}) | 
-    {{/each}}
     </div>
 </div>
