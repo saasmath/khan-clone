@@ -274,7 +274,8 @@ def main():
 
     if not options.nosecrets:
         if not check_secrets():
-            print "Stopping deploy. It doesn't look like you're deploying from a directory with the appropriate secrets.py."
+            print "Stopping deploy. It doesn't look like you're deploying from a directory with"
+            print "the appropriate secrets.py."
             return
 
     if not compile_templates():
