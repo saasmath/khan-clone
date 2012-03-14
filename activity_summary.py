@@ -6,7 +6,6 @@ from google.appengine.ext import db
 import util
 import request_handler
 import models
-import fast_slow_queue
 
 class ActivitySummaryExerciseItem:
     def __init__(self):
@@ -174,8 +173,10 @@ def is_daily_activity_waiting(user_data):
     dt_start, dt_end = next_daily_activity_dates(user_data)
     return dt_start and dt_end
 
-@fast_slow_queue.handler(is_daily_activity_waiting)
 def daily_activity_summary_map(user_data):
+
+    if not is_daily_activity_waiting(user_data):
+        return
 
     dt_start, dt_end = next_daily_activity_dates(user_data)
 
@@ -219,7 +220,7 @@ class StartNewDailyActivityLogMapReduce(request_handler.RequestHandler):
                 },
                 mapreduce_parameters = {},
                 shard_count = 64,
-                queue_name = fast_slow_queue.QUEUE_NAME,)
+                queue_name = "activity-summary-queue")
         self.response.out.write("OK: " + str(mapreduce_id))
 
 

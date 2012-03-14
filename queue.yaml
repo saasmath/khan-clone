@@ -24,7 +24,10 @@ queue:
 - name: log-summary-queue
   rate: 60/s
 
-- name: fast-background-queue
+- name: activity-summary-queue
+  rate: 10/s
+
+- name: user-badge-queue
   rate: 10/s
 
 - name: slow-background-queue
