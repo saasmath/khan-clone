@@ -609,6 +609,7 @@ footer {
     }
     #user-info .dropdown-menu {
         margin: 0;
+        left: 0;
         border: none;
         width: 110px;
     }
