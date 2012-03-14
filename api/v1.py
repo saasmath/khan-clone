@@ -1306,9 +1306,9 @@ def user_exercises_all():
     """
     user_data = models.UserData.current()
 
-    if not user_data:
-        user_data = models.UserData.pre_phantom()
     student = get_visible_user_data_from_request(user_data=user_data)
+    if not student:
+        student = models.UserData.pre_phantom()
     exercises = models.Exercise.get_all_use_cache()
     user_exercise_graph = models.UserExerciseGraph.get(student)
     if student.is_pre_phantom:
