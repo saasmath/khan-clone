@@ -48,6 +48,27 @@ var KA_TEST = {
     },
 
     /**
+     * Run a collection of test fxns and return true only if all fxns return true.
+     * document.write any failures.
+     */
+    run: function(tests) {
+        var pass = true;
+
+        _.each(tests, function(test, ix) {
+
+            var passTest = test();
+            if (!passTest) {
+                document.write("Failed test " + (ix + 1) + "<br>");
+            }
+
+            pass = pass && passTest;
+
+        });
+
+        return pass;
+    },
+
+    /**
      * The list of templates that need to be loaded still.
      */
     outstandingTemplates: [],
