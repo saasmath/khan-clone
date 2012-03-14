@@ -522,18 +522,45 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders a new card showing end-of-stack statistics
      */
     renderEndOfStackCard: function() {
-        this.renderCardAfterAPIRequests(
-            "exercises.end-of-stack-card",
-            function() { 
-                return _.extend(Exercises.sessionStats.progressStats(), Exercises.completeStack.stats());
-            },
-            function() {
-                $(Exercises.completeStackView.el).hide();
-                $(Exercises.currentCardView.el)
-                    .find(".stack-stats p")
-                        .each(Exercises.currentCardView.attachCardTooltip);
+
+        this.renderCalculationInProgressCard();
+
+        // First wait for all API requests to finish
+        this.runAfterAPIRequests($.proxy(function() {
+
+            var topicUserExercises = [];
+
+            if (Exercises.topic) {
+                Exercises.apiRequest({
+                    url: "/api/v1/user/topic/" + encodeURIComponent(Exercises.topic.get("id")) + "/exercises",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        _.each(data, function(userExercise) {
+                            topicUserExercises[topicUserExercises.length] = userExercise;
+                        });
+                    }
+                });
             }
-        );
+
+            this.renderCardAfterAPIRequests(
+                "exercises.end-of-stack-card",
+                function() { 
+                    return _.extend(
+                        Exercises.sessionStats.progressStats(), 
+                        Exercises.completeStack.stats(),
+                        { topicUserExercises: topicUserExercises }
+                    );
+                },
+                function() {
+                    $(Exercises.completeStackView.el).hide();
+                    $(Exercises.currentCardView.el)
+                        .find(".stack-stats p")
+                            .each(Exercises.currentCardView.attachCardTooltip);
+                }
+            );
+
+        }, this));
     },
 
     /**

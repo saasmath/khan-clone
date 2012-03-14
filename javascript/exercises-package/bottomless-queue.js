@@ -317,14 +317,13 @@ Exercises.BottomlessQueue = {
         }
 
         $.ajax({
-            url: "/api/v1/topic/" + encodeURIComponent(this.topic.get("id")) + "/exercises/next",
+            url: "/api/v1/user/topic/" + encodeURIComponent(this.topic.get("id")) + "/exercises/next",
             type: "GET",
             dataType: "json",
             data: {
                 // Return a list of upcoming exercises so the server can decide
                 // whether or not to re-suggest them.
                 queued: _.pluck(this.currentQueue, "exercise"),
-                casing: "camel"
             },
             complete: function() {
                 Exercises.BottomlessQueue.refilling = false;

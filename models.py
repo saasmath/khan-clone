@@ -622,9 +622,7 @@ class UserExercise(db.Model):
         TODO(jace): *This* is where the magic will happen.
         """
 
-        # TODO: shouldn't need the .live check here eventually --
-        # all other code handles live-or-not exercises gracefully
-        exercises = [ex for ex in topic.get_exercises(include_descendants=True) if ex.live]
+        exercises = topic.get_exercises(include_descendants=True)
         graph = UserExerciseGraph.get(user_data, exercises_allowed=exercises)
 
         # Start off by getting all boundary exercises (those that aren't proficient
@@ -2959,8 +2957,12 @@ class Topic(Searchable, db.Model):
                                            include_hidden)
 
     def get_exercises(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Exercise", 
+        exercises = Topic._get_children_of_kind(self, "Exercise", 
                                            include_descendants, include_hidden)
+
+        # Topic.get_exercises should only return live exercises for now, as 
+        # its results are cached and should never show users unpublished exercises.
+        return [ex for ex in exercises if ex.live]
 
     def get_videos(self, include_descendants=False, include_hidden=False):
         return Topic._get_children_of_kind(self, "Video", include_descendants,
