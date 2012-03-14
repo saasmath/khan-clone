@@ -11,7 +11,7 @@ from models import Exercise
 import util
 
 
-def user_info(username, user_data):
+def user_info(user_data):
     context = {"user_data": user_data}
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
