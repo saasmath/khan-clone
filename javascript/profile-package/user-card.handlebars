@@ -23,12 +23,12 @@
               </span>
               <ul class="dropdown-menu">
                   {{#if isFullyEditable}}
-                  <li><a id="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
+                  <li><a class="edit-basic-info" href="javascript:void(0)">Edit basic info</a></li>
                   {{/if}}
-                  <li><a id="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
-                  <li><a id="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
+                  <li><a class="edit-display-case" href="javascript:void(0)">Edit display case</a></li>
+                  <li><a class="edit-avatar" href="javascript:void(0)">Edit avatar</a></li>
                   {{#if isFullyEditable}}
-                  <li><a id="edit-visibility" href="javascript:void(0)">Toggle privacy setting</a></li>
+                  <li><a class="edit-visibility" href="javascript:void(0)">Toggle privacy setting</a></li>
                   {{/if}}
               </ul>
             </div>
@@ -57,7 +57,7 @@
 
 </div>
 {{#if isFullyEditable}}
-<a href="javascript:void(0)" id="edit-visibility"
+<a href="javascript:void(0)"
     class="edit-visibility visibility-toggler {{#if isPublic}}public{{else}}private{{/if}}">Profile is {{#if isPublic}}public{{else}}private{{/if}}</a>
 <div id="username-picker-container" class="modal fade hide" style="display: none;">
 </div>

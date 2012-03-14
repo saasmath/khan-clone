@@ -187,10 +187,9 @@ UserCardView = Backbone.View.extend({
          "click .avatar-pic-container": "onAvatarClick_",
          "mouseenter .avatar-pic-container": "onAvatarHover_",
          "mouseleave .avatar-pic-container": "onAvatarLeave_",
-         "click #edit-basic-info": "onEditBasicInfoClicked_",
-         "click #edit-display-case": "onEditDisplayCaseClicked_",
-         "click #edit-avatar": "onAvatarClick_",
-         "click #edit-visibility": "onEditVisibilityClicked_",
+         "click .edit-basic-info": "onEditBasicInfoClicked_",
+         "click .edit-display-case": "onEditDisplayCaseClicked_",
+         "click .edit-avatar": "onAvatarClick_",
          "click .edit-visibility": "onEditVisibilityClicked_"
      },
 
@@ -252,7 +251,7 @@ UserCardView = Backbone.View.extend({
     },
 
     bindQtip_: function() {
-        this.$("#edit-visibility").qtip({
+        this.$(".edit-visibility").qtip({
             content: {
                 text: "Making your profile public will make the information in this user card visible to anyone who visits your profile page. It will also allow your user card to show up when your friends search for you.",
                 title: {
