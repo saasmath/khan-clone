@@ -45,6 +45,7 @@
   border-top: 4px solid #000000;
   opacity: 0.3;
   filter: alpha(opacity=30);
+  cursor: pointer;
 }
 .dropdown .caret {
   margin-top: 10px;

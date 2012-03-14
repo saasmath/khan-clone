@@ -602,7 +602,7 @@ footer {
         position: relative;
     }
     #user-info .dropdown {
-        padding: 5px 5px 5px 0;
+        padding: 5px 0 5px 0;
     }
     #user-info .dropdown.open {
         background-color: #FFF;
@@ -615,10 +615,10 @@ footer {
         margin: 0;
         left: 0;
         border: none;
-        width: 110px;
+        width: 100%;
     }
     #user-info .dropdown-menu li > a:hover {
-        background-color: #C6D1AD;
+        background-color: #E5f0CC;
     }
 
 #nav-and-search {
@@ -919,7 +919,12 @@ footer {
     }
 
     #top-header #top-header-links span.badge_count_container { vertical-align:baseline; }
-    #top-header #top-header-links span.username_and_notification { vertical-align:baseline; position:relative; top:2px; }
+    #top-header #top-header-links span.username_and_notification {
+        vertical-align: baseline;
+        position: relative;
+        top: 0;
+        padding: 5px 5px;
+    }
     #top-header #top-header-links span.username_and_notification span.user-name { vertical-align:baseline; }
     #top-header #top-header-links span.username_and_notification span.user-notification { vertical-align:baseline; }
     #top-header #top-header-links span.username_and_notification_shift { left: 12px; }

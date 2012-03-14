@@ -184,12 +184,19 @@ $(function() {
         return !!$.trim($("#page_search input[type=text]").val());
     });
 
+    var jelToggle = $("#user-info .dropdown-toggle");
+
     if (KA.isMobileCapable) {
         // Open dropdown on click
-        $("#user-info .dropdown-toggle").dropdown();
+        jelToggle.dropdown();
     } else {
         // Open dropdown on hover
-        $("#user-info .dropdown-toggle").dropdown("hover");
+        jelToggle.dropdown("hover");
+    }
+
+    var width = jelToggle.width();
+    if (width < 60) {
+        jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
     }
 
 

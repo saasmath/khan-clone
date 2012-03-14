@@ -60,17 +60,14 @@
   var toggle = '.dropdown-toggle'
     , Dropdown = function ( element, option ) {
         if (option === 'hover') {
-            $(element).hoverIntent(
-                function () {
-                    $(this).dropdown('open')
-                },
-                $.noop
-            ).parent().hoverIntent(
-                $.noop,
-                function () {
-                    $(this).find('.dropdown-toggle').dropdown('close')
-                }
-            );
+            $(element).on('mouseenter', function() {
+                $(this).dropdown('open')
+            }).parent().on('mouseleave', function() {
+                $(this).find('.dropdown-toggle').dropdown('close')
+            }).find('.caret').on('click', function() {
+                $(this).parent().dropdown('toggle')
+                return false
+            })
         } else {
             $(element).on('click.dropdown.data-api', this.toggle)
         }
@@ -108,7 +105,12 @@
       return false
     }
   , open: function () {
-      $(this).trigger('open')
+      var $this = $(this)
+
+      if ($this.hasClass('caret')) {
+          $this = $this.parent()
+      }
+      $this.trigger('open')
         .parent().addClass('open')
     }
   , close: function () {
