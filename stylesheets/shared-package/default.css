@@ -211,7 +211,11 @@ input.simple-button {
 	border-bottom-color: #803503 !important;
 	text-shadow:  0 -1px 0 #a64403;
 }
-.simple-button:disabled, .simple-button.disabled {
+.simple-button:disabled,
+.simple-button.disabled {
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
     color: #ddd !important;
     cursor: not-allowed !important;
     top: 0 !important;
