@@ -21,9 +21,11 @@ except Exception, e:
     hipchat_deploy_token = None
 
 try:
-    from secrets_dev import app_engine_username, app_engine_password
+    import secrets_dev
+    app_engine_username = getattr(secrets_dev, 'app_engine_username', None)
+    app_engine_password = getattr(secrets_dev, 'app_engine_password', None)
 except Exception, e:
-    (app_engine_username, app_engine_password) = (None, None)
+    app_engine_username, app_engine_password = None, None
 
 if hipchat_deploy_token:
     import hipchat.room
@@ -44,7 +46,7 @@ def get_app_engine_credentials():
         print "Using password for %s from secrets.py" % app_engine_username
         return (app_engine_username, app_engine_password)
     else:
-        email = raw_input("App Engine Email: ")
+        email = app_engine_username or raw_input("App Engine Email: ")
         password = getpass.getpass("Password for %s: " % email)
         return (email, password)
 
