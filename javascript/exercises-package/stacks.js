@@ -530,7 +530,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
             var topicUserExercises = [];
 
-            if (Exercises.topic) {
+            if (!Exercises.practiceMode && !Exercises.reviewMode) {
                 Exercises.apiRequest({
                     url: "/api/v1/user/topic/" + encodeURIComponent(Exercises.topic.get("id")) + "/exercises",
                     type: "GET",
