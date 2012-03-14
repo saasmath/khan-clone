@@ -1164,6 +1164,26 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         return root
 
+    # Return data about the user that we'd like to track in MixPanel
+    @property
+    def analytics_properties(self):
+        if self.developer:
+            return []
+
+        properties_dict = dict()
+        if self.is_phantom:
+            properties_dict["User Type"] = "Phantom"
+        else:
+            properties_dict["User Type"] = "Logged In"
+
+        properties_dict["User Points"] = self.points
+        properties_dict["User Badges"] = len(self.badges)
+        properties_dict["User Videos Completed"] = self.get_videos_completed()
+        properties_dict["User Exercises Proficient"] = len(self.all_proficient_exercises)
+        properties_dict["User Seconds Watched"] = self.total_seconds_watched
+
+        return properties_dict
+
     @staticmethod
     @request_cache.cache()
     def current():

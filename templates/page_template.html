@@ -224,6 +224,7 @@
         {% if mixpanel_enabled %}
         $(function() {
             mpq.identify("{{ mixpanel_id }}");
+            mpq.register({{ mixpanel_superprops }}, "all", 31);
 
             {# Slightly nicer display name in MixPanel dashboard #}
             {% if logged_in %}

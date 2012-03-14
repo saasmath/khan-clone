@@ -14,12 +14,14 @@
     var currentPage = null;
     var currentPageLoadTime = 0;
     var currentTrackingActivity = null;
+    var eventQueue = [];
 
     // Internal utility to make sure events get tracked even if the page is unloaded
     var analyticsStore = {
         persistData: {
             timestamp: 0,
-            events: {}
+            events: {},
+            trackingProperties: {}
         },
 
         // On page load, load the persist data from sessionStorage and try to send any events
@@ -37,6 +39,7 @@
                 if (persistData && (currentTimeMS - persistData.timestamp) < 60 * 1000) {
                     var self = this;
                     this.persistData = persistData;
+                    this.trackingProperties = this.trackingProperties || {};
 
                     _.each(persistData.events, function(event) {
                         mpq.track(event.name, event.parameters, function() {
@@ -76,6 +79,17 @@
 
                 sessionStorage.setItem("ka_analytics", persistDataJSON);
             }
+        },
+
+        // Store a property for use in later events
+        setTrackingProperty: function(name, value) {
+            this.persistData.trackingProperties[name] = value;
+            this.storePersistData();
+        },
+
+        // Retrieve a property set earlier
+        getTrackingProperty: function(name) {
+            return this.persistData.trackingProperties[name];
         }
     };
 
@@ -105,6 +119,11 @@
             });
 
             this.trackPageLoad(startTime, landingPage);
+
+            var self = this;
+            _.each(eventQueue, function(event) {
+                self.trackSingleEvent(event.name, event.parameters);
+            });
         },
 
         // Called once on arriving at a page (if MixPanel is enabled)
@@ -112,17 +131,32 @@
         // to navigate will trigger trackPageLoad.
         trackPageLoad: function(startTime, landingPage) {
             var currentTimeMS = Date.now();
-            var loadTimeMS = (startTime > 0) ? (currentTimeMS - startTime) : 0;
+            var loadTimeS = (startTime > 0) ? Math.floor((currentTimeMS - startTime) / 1000.0) : 0;
 
             analyticsStore.addEvent({
                 id: "Page Load" + currentTimeMS,
                 name: "Page Load",
                 parameters: {
                     "Page": window.location.pathname,
-                    "Load Time (ms)": loadTimeMS,
-                    "Landing Page": (landingPage ? "Yes" : "No")
+                    "Load Time (s)": loadTimeS
                 }
             });
+            if (landingPage) {
+                analyticsStore.addEvent({
+                    id: "Landing Page Load" + currentTimeMS,
+                    name: "Landing Page Load",
+                    parameters: {
+                        "Landing Page": window.location.pathname
+                    }
+                });
+                analyticsStore.setTrackingProperty("Session Start", currentTimeMS);
+                analyticsStore.setTrackingProperty("Session Pages", 1);
+            } else {
+                var pageCount = analyticsStore.getTrackingProperty("Session Pages");
+                if (pageCount) {
+                    analyticsStore.setTrackingProperty("Session Pages", pageCount+1);
+                }
+            }
 
             currentPage = window.location.pathname;
             currentPageLoadTime = currentTimeMS;
@@ -183,12 +217,23 @@
         _trackActivityEnd: function(endTime) {
             if (currentTrackingActivity) {
                 // Calculate event duration
-                currentTrackingActivity.parameters["Page"] = currentPage;
-                currentTrackingActivity.parameters["Duration (ms)"] = endTime - currentTrackingActivity.parameters._startTime;
-                currentTrackingActivity.parameters["Page Time (ms)"] = endTime - currentPageLoadTime;
+                var durationS = Math.floor((endTime - currentTrackingActivity.parameters._startTime) / 1000.0);
+                var pageTimeS = Math.floor((endTime - currentPageLoadTime) / 1000.0);
+                var sessionTimeMS = analyticsStore.getTrackingProperty("Session Start");
+
+                currentTrackingActivity.parameters[currentTrackingActivity.name + " Page"] = currentPage;
+                currentTrackingActivity.parameters[currentTrackingActivity.name + " Duration (s)"] = durationS;
+                currentTrackingActivity.parameters[currentTrackingActivity.name + " Page Time (s)"] = pageTimeS;
                 delete currentTrackingActivity.parameters._startTime;
 
-                KAConsole.log("Stopped tracking activity " + currentTrackingActivity.name + " after " + currentTrackingActivity.parameters["Duration (ms)"] + " ms.");
+                if (sessionTimeMS) {
+                    var sessionTimeS = Math.floor((endTime - sessionTimeMS) / 1000.0);
+                    var sessionPageCount = analyticsStore.getTrackingProperty("Session Pages");
+                    currentTrackingActivity.parameters[currentTrackingActivity.name + " Session Time (s)"] = sessionTimeS;
+                    currentTrackingActivity.parameters[currentTrackingActivity.name + " Session Pages"] = sessionPageCount;
+                }
+
+                KAConsole.log("Stopped tracking activity " + currentTrackingActivity.name + " after " + durationS + " sec.");
 
                 analyticsStore.addEvent(currentTrackingActivity);
 
@@ -199,13 +244,14 @@
         // Track an instantaneous event with no duration.
         trackSingleEvent: function(eventName, parameters) {
             if (!currentPage) {
-                return null;
+                eventQueue.push({name: eventName, parameters: parameters});               
+                return;
             }
 
             var currentTimeMS = Date.now();
 
             parameters["Page"] = currentPage;
-            parameters["Page Time (ms)"] = currentTimeMS - currentPageLoadTime;
+            parameters[eventName + " Page Time (s)"] = Math.floor((currentTimeMS - currentPageLoadTime) / 1000.0);
 
             var event = {
                 id: eventName + currentTimeMS,

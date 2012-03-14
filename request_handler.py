@@ -362,12 +362,16 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         # Analytics
         template_values['mixpanel_enabled'] = gandalf('mixpanel_enabled')
-        template_values['mixpanel_id'] = gae_bingo.identity.identity()
 
         if False: # Enable for testing only
             template_values['mixpanel_test'] = "70acc4fce4511b89477ac005639cfee1"
             template_values['mixpanel_enabled'] = True
             template_values['hide_analytics'] = False
+
+        if template_values['mixpanel_enabled']:
+            template_values['mixpanel_id'] = gae_bingo.identity.identity()
+            superprops = user_data.analytics_properties if user_data else {}
+            template_values['mixpanel_superprops'] = jsonify(superprops)
 
         if user_data:
             goals = GoalList.get_current_goals(user_data)

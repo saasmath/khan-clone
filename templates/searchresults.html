@@ -145,6 +145,12 @@ $(function() {
         // Only allow submission if there is a non-empty query.
         return !!$.trim( $("#page_requery #search-page-box").val() );
     });
+
+    {%- if not hide_analytics -%}
+        {% if mixpanel_enabled %}
+        Analytics.trackSingleEvent("Search", {"Search Term": "{{page_search_query|escape}}"});
+        {% endif %}
+    {%- endif %}
 })
 </script>
 {% endblock bottompagescript %}
