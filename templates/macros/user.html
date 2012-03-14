@@ -1,11 +1,12 @@
-{% macro user_info(username, user_data, logout_url="/logout") -%}
-    {# TODO(marcia): After one encounter with v1.py's add_action_results,
-    logging out will not redirect you back to the page you were on.
-    Fix so that it does, or so that we are no longer sending back html in api responses.
-     #}
-{{ badges.badge_counts(user_data) }}
-{{ user_points(user_data) }}
-{{ username_and_notification(username, user_data, logout_url) }}
+{% macro user_info(username, user_data, logout_url) -%}
+    {{ badges.badge_counts(user_data) }}
+    {{ user_points(user_data) }}
+    {{ username_and_notification(username, user_data, logout_url) }}
+{%- endmacro %}
+
+{% macro badges_and_points(user_data) -%}
+    {{ badges.badge_counts(user_data) }}
+    {{ user_points(user_data) }}
 {%- endmacro %}
 
 {% macro user_points(user_data, points=0) -%}

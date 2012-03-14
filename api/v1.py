@@ -55,7 +55,7 @@ def add_action_results(obj, dict_results):
     if user_data:
         dict_results["user_data"] = user_data
 
-        dict_results["user_info_html"] = templatetags.user_info(user_data.nickname, user_data)
+        dict_results["user_info_html"] = templatetags.user_info(user_data)
 
         user_notifications_dict = notifications.UserNotifier.pop_for_user_data(user_data)
 
