@@ -3,9 +3,18 @@
  * get/set/delete. We may end up wanting something more powerful like
  * BankersBox, but for now this is much lighter weight.
  *
+ * If you ever need to completely wipe LocalStore for *all* users when,
+ * say, changing the format of data being cached, just bump up the "version
+ * property below.
+ *
  * TODO(kamens): extremely unit-test-friendly.
  */
 var LocalStore = {
+
+    // Bump up "version" any time you want to completely wipe LocalStore results.
+    // This lets us expire values on all users' LocalStores when deploying
+    // a new version, if necessary.
+    version: 1,
 
     keyPrefix: "ka",
 
@@ -14,7 +23,7 @@ var LocalStore = {
             throw "Attempting to use LocalStore without a key"
         }
 
-        return [LocalStore.keyPrefix, key].join(":");
+        return [this.keyPrefix, this.version, key].join(":");
     },
 
     /**
