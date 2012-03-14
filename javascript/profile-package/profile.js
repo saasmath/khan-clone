@@ -52,6 +52,8 @@ var Profile = {
         this.profileRoot = root;
         this.isDataCollectible = json.isDataCollectible;
         this.secureUrlBase = json.secureUrlBase;
+        this.isViewMobile = json.isViewMobile;
+
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
 
@@ -949,16 +951,20 @@ var Profile = {
             goalTemplate = Templates.get("profile.recent-activity-goal");
 
         Handlebars.registerHelper("renderActivity", function(activity) {
-            _.extend(activity, {profileRoot: Profile.profileRoot});
+            var context = {
+                activity: activity,
+                profileRoot: Profile.profileRoot,
+                isViewMobile: Profile.isViewMobile
+            };
 
             if (activity.sType === "Exercise") {
-                return exerciseTemplate(activity);
+                return exerciseTemplate(context);
             } else if (activity.sType === "Badge") {
-                return badgeTemplate(activity);
+                return badgeTemplate(context);
             } else if (activity.sType === "Video") {
-                return videoTemplate(activity);
+                return videoTemplate(context);
             } else if (activity.sType === "Goal") {
-                return goalTemplate(activity);
+                return goalTemplate(context);
             }
 
             return "";

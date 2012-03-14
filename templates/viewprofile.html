@@ -9,6 +9,11 @@
         {{ js_css_packages.css_package("profile-intro") }}
     {% endif %}
 
+    {# The view template variable is used for our iPad app, and you
+        can see the result by visiting /profile?view=mobile.
+        See request_handler.py for more on the related but different
+        global template values is_mobile and is_mobile_capable.
+     #}
     {% if view == "mobile" %}
     <style type="text/css">
         header,
@@ -70,7 +75,8 @@
             countExercises: {{count_exercises}},
             profileRoot: "{{profile_root}}",
             profileData: {{ templatetags.jsonify(profile, true) }},
-            secureUrlBase: "{{secure_url_base}}"
+            secureUrlBase: "{{secure_url_base}}",
+            isViewMobile: {{ templatetags.jsonify(view == "mobile", true) }}
         });
     });
     </script>
