@@ -32,7 +32,7 @@ import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
-from decorators import clamp, lock
+from decorators import clamp, synchronized_with_memcache
 import base64, os
 
 from image_cache import ImageCache
@@ -1745,7 +1745,7 @@ class TopicVersion(db.Model):
         return TopicVersion.all().filter("edit = ", True).get()
 
     @staticmethod
-    @lock()
+    @synchronized_with_memcache(timeout=300) #takes 70secs on dev 03/2012
     def create_edit_version():
         version = TopicVersion.all().filter("edit = ", True).get()
         if version is None:
