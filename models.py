@@ -134,8 +134,6 @@ class Exercise(db.Model):
     # Non-live exercises are only visible to admins.
     live = db.BooleanProperty(default=False)
 
-    summative = db.BooleanProperty(default=False)
-
     # Teachers contribute raw html with embedded CSS and JS
     # and we sanitize it with Caja before displaying it to
     # students.
@@ -208,36 +206,6 @@ class Exercise(db.Model):
 
     def is_visible_to_current_user(self):
         return self.live or user_util.is_current_user_developer()
-
-    def summative_children(self):
-        if not self.summative:
-            return []
-        query = db.Query(Exercise)
-        query.filter("name IN ", self.prerequisites)
-        return query
-
-    def non_summative_exercise(self, problem_number):
-        if not self.summative:
-            return self
-
-        if len(self.prerequisites) <= 0:
-            raise Exception("Summative exercise '%s' does not include any other exercises" % self.name)
-
-        # For now we just cycle through all of the included exercises in a summative exercise
-        index = int(problem_number) % len(self.prerequisites)
-        exid = self.prerequisites[index]
-
-        query = Exercise.all()
-        query.filter('name =', exid)
-        exercise = query.get()
-
-        if not exercise:
-            raise Exception("Unable to find included exercise")
-
-        if exercise.summative:
-            return exercise.non_summative_exercise(problem_number)
-        else:
-            return exercise
 
     def has_topic(self):
         return bool(self.topic_string_keys)
@@ -341,7 +309,6 @@ class UserExercise(db.Model):
     review_interval_secs = db.IntegerProperty(default=(60 * 60 * 24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS), indexed=False) # Default 7 days until review
     proficient_date = db.DateTimeProperty()
     seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
-    summative = db.BooleanProperty(default=False, indexed=False)
     _accuracy_model = object_property.ObjectProperty()  # Stateful function object that estimates P(next problem correct). May not exist for old UserExercise objects (but will be created when needed).
 
     _USER_EXERCISE_KEY_FORMAT = "UserExercise.all().filter('user = '%s')"
@@ -563,7 +530,6 @@ class UserExercise(db.Model):
             first_done=util.parse_iso8601(json['first_done']),
             last_done=util.coalesce(util.parse_iso8601, json['last_done']),
             total_done=int(json['total_done']),
-            summative=bool(json['summative']),
             _accuracy_model=AccuracyModel()
         )
 
@@ -1403,7 +1369,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 first_done=datetime.datetime.now(),
                 last_done=None,
                 total_done=0,
-                summative=exercise.summative,
                 _accuracy_model=AccuracyModel(),
                 )
 
@@ -4306,7 +4271,6 @@ class ProblemLog(BackupModel):
     hint_after_attempt_list = db.ListProperty(int, indexed=False)
     count_hints = db.IntegerProperty(default = 0, indexed=False)
     problem_number = db.IntegerProperty(default = -1) # Used to reproduce problems
-    exercise_non_summative = db.StringProperty(indexed=False) # Used to reproduce problems from summative exercises
     hint_used = db.BooleanProperty(default = False, indexed=False)
     points_earned = db.IntegerProperty(default = 0, indexed=False)
     earned_proficiency = db.BooleanProperty(default = False) # True if proficiency was earned on this problem
@@ -4341,7 +4305,6 @@ class ProblemLog(BackupModel):
             count_hints=int(json['count_hints']),
             earned_proficiency=bool(json['earned_proficiency']),
             exercise=exercise.name,
-            exercise_non_summative=json['exercise_non_summative'],
             hint_after_attempt_list=json['hint_after_attempt_list'],
             hint_time_taken_list=json['hint_time_taken_list'],
             hint_used=bool(json['hint_used']),
@@ -4436,7 +4399,6 @@ def commit_problem_log(problem_log_source, user_data = None):
                 seed = problem_log_source.seed,
                 problem_type = problem_log_source.problem_type,
                 suggested = problem_log_source.suggested,
-                exercise_non_summative = problem_log_source.exercise_non_summative,
                 ip_address = problem_log_source.ip_address,
                 review_mode = problem_log_source.review_mode,
         )
@@ -4939,8 +4901,7 @@ class UserExerciseGraph(object):
 
         candidate_dicts = []
         for graph_dict in self.graph_dicts():
-            if (not graph_dict["summative"] and
-                    graph_dict["proficient"] and
+            if (graph_dict["proficient"] and
                     graph_dict["next_review"] <= now and
                     graph_dict["total_done"] > 0):
                 graph_dict["is_review_candidate"] = True
@@ -4963,7 +4924,6 @@ class UserExerciseGraph(object):
             "proficient": graph_dict["proficient"],
             "suggested": graph_dict["suggested"],
             "struggling": graph_dict["struggling"],
-            "summative": graph_dict["summative"],
             "reviewing": graph_dict in self.review_graph_dicts(),
         }
 
@@ -5001,7 +4961,6 @@ class UserExerciseGraph(object):
                 "display_name": exercise.display_name,
                 "h_position": exercise.h_position,
                 "v_position": exercise.v_position,
-                "summative": exercise.summative,
                 "proficient": None,
                 "explicitly_proficient": None,
                 "suggested": None,

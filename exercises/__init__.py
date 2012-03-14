@@ -95,7 +95,6 @@ def exercise_graph_dict_json(user_data, admin=False):
             'longest_streak': graph_dict["longest_streak"],
             'h_position': graph_dict["h_position"],
             'v_position': graph_dict["v_position"],
-            'summative': graph_dict["summative"],
             'goal_req': (graph_dict["name"] in goal_exercises),
 
             # get_by_name returns only exercises visible to current user
@@ -150,7 +149,7 @@ def make_wrong_attempt(user_data, user_exercise):
 
 def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
     attempt_content, sha1, seed, completed, count_hints, time_taken,
-    review_mode, exercise_non_summative, problem_type, ip_address):
+    review_mode, problem_type, ip_address):
 
     if user_exercise and user_exercise.belongs_to(user_data):
         dt_now = datetime.datetime.now()
@@ -160,7 +159,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         user_exercise.last_done = dt_now
         user_exercise.seconds_per_fast_problem = exercise.seconds_per_fast_problem
-        user_exercise.summative = exercise.summative
 
         user_data.record_activity(user_exercise.last_done)
 
@@ -197,9 +195,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 ip_address=ip_address,
                 review_mode=review_mode,
         )
-
-        if exercise.summative:
-            problem_log.exercise_non_summative = exercise_non_summative
 
         first_response = (attempt_number == 1 and count_hints == 0) or (count_hints == 1 and attempt_number == 0)
 
@@ -376,7 +371,6 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise.prerequisites = []
             exercise.covers = []
             exercise.author = user
-            exercise.summative = dict["summative"]
 
         exercise.prerequisites = dict["prerequisites"] 
         exercise.covers = dict["covers"]
@@ -478,7 +472,6 @@ class UpdateExercise(request_handler.RequestHandler):
             self.response.out.write("No exercise submitted, please resubmit if you just logged in.")
             return
 
-        dict["summative"] = self.request_bool('summative', default=False)
         dict["v_position"] = self.request.get('v_position')
         dict["h_position"] = self.request.get('h_position')
         dict["short_display_name"] = self.request.get('short_display_name')

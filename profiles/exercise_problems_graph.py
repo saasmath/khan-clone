@@ -9,8 +9,6 @@ class ProblemPoint:
         self.time_done = problem_log.time_done
         self.correct = problem_log.correct
         self.count_hints = problem_log.count_hints
-        self.exercise_non_summative = problem_log.exercise_non_summative
-        self.exercise_non_summative_display_name = models.Exercise.to_display_name(problem_log.exercise_non_summative)
         self.dt = problem_log.time_done
         self.problem_number = max(problem_log.problem_number, 1)
         self.video_point = None

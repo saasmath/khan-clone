@@ -27,10 +27,6 @@ def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
         # Never award less than a few points
         points = consts.EXERCISE_POINTS_BASE
 
-    if user_exercise.summative:
-        # Slightly higher rewards for summative exercises
-        points = points * consts.SUMMATIVE_EXERCISE_MULTIPLIER
-
     if suggested:
         # Higher awards for suggested
         points = points * consts.SUGGESTED_EXERCISE_MULTIPLIER
@@ -39,9 +35,9 @@ def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
         # Higher awards for not being currently proficient
         points = points * consts.INCOMPLETE_EXERCISE_MULTIPLIER
 
-    if not user_exercise.summative and user_exercise.total_done >= consts.LIMIT_EXERCISES_NON_SUMMATIVE:
-        # Non-summative exercises can be gamed by getting 9 correct, then 1 wrong. Put an upper limit
-        # on the number of problems that continue to award useful points for non-summative.
+    if user_exercise.total_done >= consts.LIMIT_EXERCISES:
+        # Practice exercises can be gamed by getting 9 correct, then 1 wrong. Put an upper limit
+        # on the number of problems that continue to award useful points.
         points = consts.EXERCISE_POINTS_BASE
 
     return int(math.ceil(points))

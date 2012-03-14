@@ -12,12 +12,7 @@ function KnowledgeMapInitGlobals() {
                         Review: "/images/node-review.png?" + KA_VERSION,
                         Suggested: "/images/node-suggested.png?" + KA_VERSION,
                         Normal: "/images/node-not-started.png?" + KA_VERSION
-                          },
-                Summative: {
-                        Normal: "/images/node-challenge-not-started.png?" + KA_VERSION,
-                        Proficient: "/images/node-challenge-complete.png?" + KA_VERSION,
-                        Suggested: "/images/node-challenge-suggested.png?" + KA_VERSION
-                           }
+                          }
         },
         coordsHome: { lat: -0.064844, lng: 0.736268, zoom: 9, when: 0 },
         latMin: 90,
@@ -66,7 +61,7 @@ function KnowledgeMapInitGlobals() {
 
     window.KnowledgeMapExercise = Backbone.Model.extend({
         initialize: function() {
-            var s_prefix = this.get("summative") ? "node-challenge" : "node";
+            var s_prefix = "node";
 
             if (this.get("status") == "Suggested") {
                 this.set({"isSuggested": true, "badgeIcon": "/images/" + s_prefix + "-suggested.png?" + KA_VERSION});
@@ -179,7 +174,7 @@ function KnowledgeMapInitGlobals() {
             this.goalIconVisible = false;
             this.parent = this.options.parent;
 
-            var iconSet = KnowledgeMapGlobals.icons[exercise.get("summative") ? "Summative" : "Exercise"];
+            var iconSet = KnowledgeMapGlobals.icons["Exercise"];
             this.iconUrl = iconSet[exercise.get("status")];
             if (!this.iconUrl) this.iconUrl = iconSet.Normal;
 
@@ -221,7 +216,7 @@ function KnowledgeMapInitGlobals() {
             {
                 var url = this.iconUrl;
 
-                if (!this.model.get("summative") && this.zoom <= KnowledgeMapGlobals.options.minZoom)
+                if (this.zoom <= KnowledgeMapGlobals.options.minZoom)
                 {
                     url = this.iconUrl.replace(".png", "-star.png");
                 }
@@ -233,11 +228,7 @@ function KnowledgeMapInitGlobals() {
 
         getLabelClass: function() {
             var classText = "nodeLabel nodeLabel" + this.model.get("status");
-            var visible = !this.model.get("summative") || this.zoom == KnowledgeMapGlobals.options.minZoom;
-            if (this.model.get("summative") && visible) this.zoom = KnowledgeMapGlobals.options.maxZoom - 1;
 
-            if (this.model.get("summative")) classText += " nodeLabelSummative";
-            classText += (visible ? "" : " nodeLabelHidden");
             classText += (" nodeLabelZoom" + this.zoom);
             classText += (this.filtered ? " nodeLabelFiltered" : "");
             classText += (this.model.get("invalidForGoal") ? " goalNodeInvalid" : "");
@@ -313,7 +304,7 @@ function KnowledgeMapInitGlobals() {
         onNodeClick: function(evt) {
             var self = this;
 
-            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
+            if (!this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
 
             if (this.parent.admin)
@@ -408,7 +399,7 @@ function KnowledgeMapInitGlobals() {
         },
 
         onNodeMouseover: function() {
-            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
+            if (this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
@@ -418,7 +409,7 @@ function KnowledgeMapInitGlobals() {
         },
 
         onNodeMouseout: function() {
-            if (!this.model.get("summative") && this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
+            if (this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
                 return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
@@ -769,7 +760,7 @@ function KnowledgeMap(params) {
             // Update map graph
             this.addNode(exerciseModel.toJSON());
             _.each(exerciseModel.get("prereqs"), function(prereq) {
-                this.addEdge(exerciseModel.get("name"), prereq, exerciseModel.get("summative"));
+                this.addEdge(exerciseModel.get("name"), prereq);
             }, this);
         }, this);
 
@@ -824,9 +815,7 @@ function KnowledgeMap(params) {
         var node = this.dictNodes[dataID];
 
         // Set appropriate zoom level if necessary
-        if (node.summative && this.map.getZoom() > KnowledgeMapGlobals.options.minZoom)
-            this.map.setZoom(KnowledgeMapGlobals.options.minZoom);
-        else if (!node.summative && this.map.getZoom() == KnowledgeMapGlobals.options.minZoom)
+        if (this.map.getZoom() == KnowledgeMapGlobals.options.minZoom)
             this.map.setZoom(KnowledgeMapGlobals.options.minZoom + 1);
 
         // Move the node to the center of the view
@@ -901,10 +890,10 @@ function KnowledgeMap(params) {
         this.dictNodes[node.name] = node;
     };
 
-    this.addEdge = function(source, target, summative) {
+    this.addEdge = function(source, target) {
         if (!this.dictEdges[source]) this.dictEdges[source] = [];
         var rg = this.dictEdges[source];
-        rg[rg.length] = {"target": target, "summative": summative};
+        rg[rg.length] = {"target": target};
     };
 
     this.nodeStatusCount = function(status) {
@@ -985,14 +974,14 @@ function KnowledgeMap(params) {
                     "<img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/>" +
                     "<div>" + node.display_name + "</div></a>"],
                 "",
-                node.summative ? 2 : 1,
+                1,
                 0, 0);
 
         this.markers[this.markers.length] = marker;
     };
 
     this.getMapForEdge = function(edge, zoom) {
-        return ((zoom == KnowledgeMapGlobals.options.minZoom) == edge.summative) ? this.map : null;
+        return (zoom != KnowledgeMapGlobals.options.minZoom) ? this.map : null;
     };
 
     this.highlightNode = function(node_name, highlight) {
