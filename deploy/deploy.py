@@ -162,8 +162,9 @@ def check_secrets():
         return False
 
     if not hasattr(secrets, 'verify_secrets_is_up_to_date'):
-        print "Your secrets is too old; update it using the instructions at:"
-        print "https://www.dropbox.com/home/Khan%20Academy%20All%20Staff/Secrets"
+        print "Your secrets is too old; update it using the instructions in"
+        print "password_for_secrets_py_cast5.txt at:"
+        print "  https://www.dropbox.com/home/Khan%20Academy%20All%20Staff/Secrets"
         print
         return False
 
