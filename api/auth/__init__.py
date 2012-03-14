@@ -7,6 +7,7 @@ from flask import request, redirect
 from flask import current_app
 
 from api import route
+from api.auth import xsrf
 from api.auth.auth_models import OAuthMap
 from api.auth.auth_util import oauth_error_response, append_url_params, requested_oauth_callback, access_token_response, custom_scheme_redirect, set_current_oauth_map_in_session
 from api.auth.google_util import google_request_token_handler
@@ -42,6 +43,9 @@ def request_token():
 
     if OAuthMap.get_from_request_token(token.key_):
         logging.error("OAuth key %s already used" % token.key_)
+        params = dict([(key, request.get(key)) for key in request.arguments()])
+        logging.info("params: %r" % params)
+        logging.info("Authorization: %s", request.headers.get('Authorization'))
         return oauth_error_response(OAuthError("OAuth parameters already used."))
 
     # Start a new OAuth mapping

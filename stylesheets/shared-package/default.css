@@ -662,6 +662,7 @@ footer {
         float: right;
     }
     #page_sub_nav .breadcrumbs_nav > a,
+    #page_sub_nav .breadcrumbs_nav > span,
     #page_sub_nav .breadcrumbs_nav .breadcrumb-separator,
     #page_sub_nav .breadcrumbs_nav #video_dropdown {
         display: block;
