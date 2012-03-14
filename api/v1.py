@@ -1313,15 +1313,35 @@ def log_user_video(youtube_id):
 
     return video_log
 
-
-@route("/api/v1/user/exercises", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>/exercises/next", methods=["GET"])
 @oauth_optional()
 @jsonp
 @jsonify
-def user_exercises_all():
+def topic_next_exercises(topic_id):
+    """ Retrieves the next few suggested user exercises in a specific topic.
+    """
+
+    user_data = models.UserData.current()
+    if not user_data:
+        return api_invalid_param_response("User not logged in")
+
+    topic = models.Topic.get_by_id(topic_id)
+    if not topic:
+        return api_invalid_param_response("Could not find topic with id: %s " + topic_id)
+
+    return models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
+
+@route("/api/v1/user/exercises", methods=["GET"])
+@route("/api/v1/user/topic/<topic_id>/exercises", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def user_exercises_list(topic_id = None):
     """ Retrieves the list of exercise models wrapped inside of an object that
     gives information about what sorts of progress and interaction the current
     user has had with it.
+
+    If topic_id is supplied, limits the list to the topic's subset of exercises.
 
     Defaults to a pre-phantom users, in which case the encasing object is
     skeletal and contains little information.
@@ -1331,31 +1351,53 @@ def user_exercises_all():
 
     if not user_data:
         user_data = models.UserData.pre_phantom()
-    student = get_visible_user_data_from_request(user_data=user_data)
-    exercises = models.Exercise.get_all_use_cache()
-    user_exercise_graph = models.UserExerciseGraph.get(student)
-    if student.is_pre_phantom:
-        user_exercises = []
-    else:
-        user_exercises = (models.UserExercise.all().
-                          filter("user =", student.user).
-                          fetch(10000))
 
-    user_exercises_dict = dict((user_exercise.exercise, user_exercise)
-                               for user_exercise in user_exercises)
+    student = get_visible_user_data_from_request(user_data=user_data)
+
+    exercises = None
+
+    if topic_id:
+
+        # Grab all exercises within a specific topic
+        topic = models.Topic.get_by_id(topic_id)
+
+        if not topic:
+            return api_invalid_param_response("Could not find topic with id: %s " + topic_id)
+
+        exercises = topic.get_exercises(include_descendants=True)
+
+    else:
+
+        # Grab all exercises
+        exercises = models.Exercise.get_all_use_cache()
+
+    user_exercise_graph = models.UserExerciseGraph.get(student, exercises_allowed=exercises)
+
+    user_exercises_dict = {}
+
+    if not student.is_pre_phantom:
+        user_exercises_dict = dict(
+            (attrs["name"], models.UserExercise.from_dict(attrs, student))
+            for attrs in user_exercise_graph.graph_dicts()
+        )
 
     results = []
+
     for exercise in exercises:
+
         name = exercise.name
+
         if name not in user_exercises_dict:
             user_exercise = models.UserExercise()
             user_exercise.exercise = name
             user_exercise.user = student.user
         else:
             user_exercise = user_exercises_dict[name]
+
         user_exercise.exercise_model = exercise
         user_exercise._user_data = student
         user_exercise._user_exercise_graph = user_exercise_graph
+
         results.append(user_exercise)
 
     return results
@@ -1568,22 +1610,6 @@ def reset_reviews():
 
         db.put(user_exercises)
         db.put(user_exercise_cache)
-
-@route("/api/v1/topic/<topic_id>/exercises/next", methods=["GET"])
-@oauth_optional()
-@jsonp
-@jsonify
-def topic_next_exercises(topic_id):
-
-    user_data = models.UserData.current()
-    if not user_data:
-        return api_invalid_param_response("User not logged in")
-
-    topic = models.Topic.get_by_id(topic_id)
-    if not topic:
-        return api_invalid_param_response("Invalid topic id")
-
-    return models.UserExercise.next_in_topic(user_data, topic, queued=request.values.getlist("queued[]"))
 
 @route("/api/v1/user/exercises/<exercise_name>/log", methods=["GET"])
 @oauth_required()

@@ -1,3 +1,4 @@
+import logging
 import os
 import hashlib
 
@@ -7,8 +8,13 @@ from custom_exceptions import MissingExerciseException
 
 @layer_cache.cache_with_key_fxn(lambda exercise: "exercise_sha1_%s" % exercise.name, layer=layer_cache.Layers.InAppMemory)
 def exercise_sha1(exercise):
-    contents = raw_exercise_contents("%s.html" % exercise.name)
-    sha1 = hashlib.sha1(contents).hexdigest()
+    sha1 = None
+
+    try:
+        contents = raw_exercise_contents("%s.html" % exercise.name)
+        sha1 = hashlib.sha1(contents).hexdigest()
+    except MissingExerciseException:
+        pass
 
     if templatetags.use_compressed_packages():
         return sha1

@@ -522,18 +522,45 @@ Exercises.CurrentCardView = Backbone.View.extend({
      * Renders a new card showing end-of-stack statistics
      */
     renderEndOfStackCard: function() {
-        this.renderCardAfterAPIRequests(
-            "exercises.end-of-stack-card",
-            function() { 
-                return _.extend(Exercises.sessionStats.progressStats(), Exercises.completeStack.stats());
-            },
-            function() {
-                $(Exercises.completeStackView.el).hide();
-                $(Exercises.currentCardView.el)
-                    .find(".stack-stats p")
-                        .each(Exercises.currentCardView.attachCardTooltip);
+
+        this.renderCalculationInProgressCard();
+
+        // First wait for all API requests to finish
+        this.runAfterAPIRequests($.proxy(function() {
+
+            var topicUserExercises = [];
+
+            if (!Exercises.practiceMode && !Exercises.reviewMode) {
+                Exercises.apiRequest({
+                    url: "/api/v1/user/topic/" + encodeURIComponent(Exercises.topic.get("id")) + "/exercises",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        _.each(data, function(userExercise) {
+                            topicUserExercises[topicUserExercises.length] = userExercise;
+                        });
+                    }
+                });
             }
-        );
+
+            this.renderCardAfterAPIRequests(
+                "exercises.end-of-stack-card",
+                function() { 
+                    return _.extend(
+                        Exercises.sessionStats.progressStats(), 
+                        Exercises.completeStack.stats(),
+                        { topicUserExercises: topicUserExercises }
+                    );
+                },
+                function() {
+                    $(Exercises.completeStackView.el).hide();
+                    $(Exercises.currentCardView.el)
+                        .find(".stack-stats p")
+                            .each(Exercises.currentCardView.attachCardTooltip);
+                }
+            );
+
+        }, this));
     },
 
     /**
@@ -550,14 +577,12 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
             // Then send another API request to see how many reviews are left --
             // and we'll change the end of review card's UI accordingly.
-            $.ajax({
+            Exercises.apiRequest({
                 url: "/api/v1/user/exercises/reviews/count",
                 type: "GET",
                 dataType: "json",
-                success: function(data) { reviewsLeft = data; },
-                complete: function() { Exercises.pendingAPIRequests--; }
+                success: function(data) { reviewsLeft = data; }
             });
-            Exercises.pendingAPIRequests++;
 
             // And finally wait for the previous API call to finish before
             // rendering end of review card.
@@ -747,6 +772,7 @@ Exercises.SessionStats = Backbone.Model.extend({
             var progressStats = this.get("progress") || {},
 
                 stat = progressStats[exerciseName] || {
+                    name: userExercise.exercise,
                     displayName: userExercise.exerciseModel.displayName,
                     startTotalDone: userExercise.totalDone,
                     start: userExercise.progress * 100
@@ -768,17 +794,24 @@ Exercises.SessionStats = Backbone.Model.extend({
 
     /**
      * Return list of stat objects for only those exercises which had at least
-     * one problem done during this session.
+     * one problem done during this session, with latest userExercise state
+     * from server attached.
      */
     progressStats: function() {
-        return { progress: 
-            _.filter(
-                    _.values(this.get("progress") || {}),
-                    function(stat) {
-                        return stat.endTotalDone && stat.endTotalDone > stat.startTotalDone;
-                    }
-            )
-        };
+
+        var stats = _.filter(
+                        _.values(this.get("progress") || {}),
+                        function(stat) {
+                            return stat.endTotalDone && stat.endTotalDone > stat.startTotalDone;
+                        }
+                    );
+
+        // Attach relevant userExercise object to each stat
+        _.each(stats, function(stat) {
+            stat.userExercise = Exercises.BottomlessQueue.userExerciseCache[stat.name];
+        });
+
+        return { progress: stats };
     }
 
 });

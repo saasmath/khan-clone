@@ -32,13 +32,14 @@ class ViewExercise(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self, topic_path, exid=None):
 
+        title = None
         review_mode = "review" == topic_path
+
         practice_mode = bool(exid)
+        practice_exercise = None
 
         topic = None
-        exercise = None
         user_exercises = None
-        title = None
 
         if review_mode:
 
@@ -59,20 +60,19 @@ class ViewExercise(request_handler.RequestHandler):
             title = topic.standalone_title
 
             if exid:
-                exercise = models.Exercise.get_by_name(exid)
+                practice_exercise = models.Exercise.get_by_name(exid)
 
                 # Exercises are not required but must be valid if supplied
-                if not exercise:
+                if not practice_exercise:
                     raise MissingExerciseException("Missing exercise w/ exid '%s'" % exid)
 
-                title = exercise.display_name
+                title = practice_exercise.display_name
 
         user_data = models.UserData.current() or models.UserData.pre_phantom()
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
         if practice_mode:
             # Practice mode involves a single exercise only
-            user_exercises = models.UserExercise.next_in_practice(user_data, exercise)
+            user_exercises = models.UserExercise.next_in_practice(user_data, practice_exercise)
         elif review_mode:
             # Review mode sends down up to a certain limit of review exercises
             user_exercises = models.UserExercise.next_in_review(user_data, n=MAX_CARDS_PER_REVIEW_STACK)
@@ -98,7 +98,7 @@ class ViewExercise(request_handler.RequestHandler):
             "review_mode_json": jsonify(review_mode, camel_cased=True),
             "practice_mode_json": jsonify(practice_mode, camel_cased=True),
             "topic_json": jsonify(topic, camel_cased=True),
-            "exercise_json": jsonify(exercise, camel_cased=True),
+            "practice_exercise_json": jsonify(practice_exercise, camel_cased=True),
             "user_data_json": jsonify(user_data, camel_cased=True),
         }
 

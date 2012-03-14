@@ -32,8 +32,8 @@ var Exercises = {
 
     userData: null,
 
-    // exercise will be populated if we're in practice mode
-    exercise: null,
+    // practice exercise will be populated if we're in practice mode
+    practiceExercise: null,
 
     // readOnlyUserExercise will only be populated if we're in readOnly mode
     readOnlyUserExercise: null,
@@ -59,7 +59,7 @@ var Exercises = {
     init: function(json) {
 
         this.topic = new Topic(json.topic);
-        this.exercise = new Exercise(json.exercise);
+        this.practiceExercise = new Exercise(json.practiceExercise);
 
         this.userData = json.userData;
         this.practiceMode = json.practiceMode;
@@ -98,6 +98,25 @@ var Exercises = {
     },
 
     /**
+     * Send off an api request using supplied options and keep track of its
+     * incomplete/complete status so we know how many exercise requests are
+     * pending.
+     */
+    apiRequest: function(options) {
+
+        // Ensure camel casing
+        if (!options.data) options.data = {};
+        options.data.casing = "camel";
+
+        $.ajax(options).done($.proxy(function() {
+            this.pendingAPIRequests--;
+        }, this));
+
+        this.pendingAPIRequests++;
+
+    },
+
+    /**
      * Returns an identifier for the current user's session that can be
      * used for various cache keys. This sessionId isn't meant to be globally
      * unique, just an identifier for the current user and topic/exercise
@@ -114,8 +133,8 @@ var Exercises = {
 
         if (this.reviewMode) {
             contextId = "review";
-        } else if (this.practiceMode && !!this.exercise) {
-            contextId = "practice:" + this.exercise.get("name");
+        } else if (this.practiceMode && !!this.practiceExercise) {
+            contextId = "practice:" + this.practiceExercise.get("name");
         } else if (!!this.topic) {
             contextId = "topic:" + this.topic.get("id");
         }
@@ -136,11 +155,11 @@ var Exercises = {
         Handlebars.registerPartial("card", Templates.get("exercises.card"));
         Handlebars.registerPartial("card-leaves", Templates.get("exercises.card-leaves"));
 
-        var profileExercise = Templates.get("exercises.exercise");
+        var exerciseTemplate = Templates.get("exercises.exercise");
 
-        $(".exercises-content-container").html(profileExercise({
+        $(".exercises-content-container").html(exerciseTemplate({
             topic: this.topic.toJSON(),
-            exercise: this.exercise.toJSON(),
+            exercise: this.practiceExercise.toJSON(),
             practiceMode: this.practiceMode,
             reviewMode: this.reviewMode
         }));
