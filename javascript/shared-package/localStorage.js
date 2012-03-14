@@ -14,7 +14,7 @@ var LocalStore = {
     // Bump up "version" any time you want to completely wipe LocalStore results.
     // This lets us expire values on all users' LocalStores when deploying
     // a new version, if necessary.
-    version: 1,
+    version: 3,
 
     keyPrefix: "ka",
 

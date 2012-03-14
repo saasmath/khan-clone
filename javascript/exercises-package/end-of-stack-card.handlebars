@@ -15,7 +15,7 @@
     </div>
     <div class="progress-graph">
 	    {{#each progress}}
-	    	<h2 class="skill-bar-title">{{displayName}}</h2>
+	    	<h2 class="skill-bar-title">{{displayName}} ({{#if userExercise.exerciseStates.proficient}}*proficient*{{/if}})</h2>
 	    	<div class="skill-bar orange">
 	    		<div class="fill green" style="width:{{end}}%;">
 	    			<div class="description">
@@ -44,7 +44,7 @@
     </div>
     <div>
     {{#each topicUserExercises}}
-        {{exerciseModel.displayName}}: {{progress}} | 
+        {{exerciseModel.displayName}} ({{#if exerciseStates.proficient}}*proficient* {{/if}}progress: {{progress}}) | 
     {{/each}}
     </div>
 </div>
