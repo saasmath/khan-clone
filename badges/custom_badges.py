@@ -10,7 +10,7 @@ class CustomBadge(Badge):
     @staticmethod
     def all():
         custom_badges = []
-        custom_badge_types = CustomBadgeType.all().fetch(1000)
+        custom_badge_types = CustomBadgeType.all()
         for custom_badge_type in custom_badge_types:
             custom_badges.append(CustomBadge(custom_badge_type))
         return custom_badges

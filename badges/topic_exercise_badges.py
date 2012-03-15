@@ -73,7 +73,7 @@ class TopicExerciseBadge(Badge):
     @staticmethod
     def all():
         topic_exercise_badges = []
-        topic_exercise_badge_types = TopicExerciseBadgeType.all().fetch(1000)
+        topic_exercise_badge_types = TopicExerciseBadgeType.all()
         for topic_exercise_badge_type in topic_exercise_badge_types:
             topic_exercise_badges.append(TopicExerciseBadge(topic_exercise_badge_type))
         return topic_exercise_badges
