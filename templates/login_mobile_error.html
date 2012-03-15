@@ -32,7 +32,7 @@ p {
 </head>
 <body>
     <div id="image"></div>
-    <p>{{ message }}</p>
+    <p>{{ message|escape }}</p>
 </body>
 <script>
     document.ontouchmove = function(event){
