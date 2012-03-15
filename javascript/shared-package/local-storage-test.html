@@ -9,25 +9,25 @@
 
 var pass = KA_TEST.run([
 
-    function() {
+    function testClear() {
         LocalStore.clearAll();
         return LocalStore.get("Monkey") === null;
     },
 
-    function() {
+    function testSimpleSetAndGet() {
         LocalStore.set("Monkey", "Gorilla");
         return LocalStore.get("Monkey") === "Gorilla" &&
                 LocalStore.get("Gorilla") === null &&
                 LocalStore.get("monkey") === null;
     },
 
-    function() {
+    function testDelete() {
         LocalStore.set("Monkey", "Bananas");
         LocalStore.del("Monkey");
         return LocalStore.get("Monkey") === null;
     },
 
-    function() {
+    function testVersionChange() {
         LocalStore.set("Giraffe", "Kangaroo");
 
         var versionLast = LocalStore.version;
