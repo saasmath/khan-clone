@@ -228,6 +228,46 @@ var QA = {
 
         QA.loadPage($("#qa_page").val() || 0, true, $("#qa_expand_key").val());
         QA.enable();
+
+        $(".video-footer").on("mouseenter", ".author-nickname", function() {
+            var jel = $(this),
+                userID = jel.data("user-id"),
+                hasQtip = jel.data("hasQtip");
+
+            if (userID && !hasQtip) {
+                $.ajax({
+                    type: "GET",
+                    url: "/api/v1/user/profile",
+                    data: {
+                        casing: "camel",
+                        userID: userID
+                      },
+                    dataType: "json",
+                    success: _.bind(QA.onHoverCardDataLoaded_, this)
+                });
+            }
+        });
+    },
+
+    onHoverCardDataLoaded_: function(data) {
+        // TODO(marcia): Cache per user to avoid unnecessary requests
+        var model = new ProfileModel(data),
+            view = new HoverCardView({model: model});
+
+        $(this)
+            .qtip({
+                content: {
+                    text: view.render().el.innerHTML
+                },
+                style: {
+                    classes: "ui-tooltip-light ui-tooltip-shadow user-info-container"
+                },
+                hide: {
+                    delay: 100,
+                    fixed: true
+                }
+            }).qtip("show")
+            .data("hasQtip", true);
     },
 
     initPagesAndQuestions: function() {

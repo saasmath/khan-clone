@@ -3980,4 +3980,63 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     width: 60px;
     text-align: center;
 }
+/* TODO(marcia): Clean this up, some overlap with profile.css */
+.qtip.user-info-container .user-info {
+  padding: 10px;
+  position: relative;
+  background: #eee; /* same as visibility-toggler */
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+}
 
+.qtip.user-info-container {
+    width: 310px;
+}
+.qtip.user-info-container .avatar-pic-container {
+    display: inline-block;
+    position: relative;
+}
+.qtip.user-info-container .avatar-pic {
+    vertical-align: top;
+    width: 80px;
+    height: 80px;
+}
+.qtip.user-info-container .user-deets {
+    float: left;
+    width: 180px;
+}
+.qtip.user-info-container .user-deets .nickname {
+    font-size: 150%;
+    padding: 0;
+    margin: 0;
+}
+.qtip.user-info-container .basic-stats {
+    padding: 5px 0 0 0;
+}
+.qtip.user-info-container .basic-stats .simple-stat {
+    float: left;
+    text-align: left;
+    margin-right: 10px;
+}
+.qtip.user-info-container .simple-stat .summary-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 1px;
+    background: #005987;
+    border-radius: 5px;
+    padding: 2px 8px;
+}
+
+.qtip.user-info-container .simple-stat .summary-icon.star {
+    width: 14px;
+    height: 14px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.qtip.user-info-container .simple-stat .stat-divider {
+    font-size: 150%;
+    vertical-align: middle;
+}
