@@ -90,9 +90,16 @@ def jsonify(func):
 
         camel_cased= (has_flask_request_context() and
                       flask.request.values.get("casing") == "camel")
-        return (obj if isinstance(obj, unicode) 
-                else obj.decode('utf-8') if isinstance(obj, str) 
-                else apijsonify.jsonify(obj, camel_cased=camel_cased))
+
+        if isinstance(obj, unicode):
+            # This saves us from calling api.jsonify
+            return obj
+        elif isinstance(obj, str):
+            # This will make sure that we will always return unicode rather 
+            # than a str, and saves us from calling api.jsonify
+            return obj.decode('utf-8') 
+        else: 
+            return apijsonify.jsonify(obj, camel_cased=camel_cased)
     return jsonified
 
 def jsonp(func):
@@ -127,9 +134,13 @@ def compress(func):
     @wraps(func)
     def compressed(*args, **kwargs):
         val = func(*args, **kwargs)
-        if not isinstance(val, unicode):
-            raise ValueError("Was expecting <type 'unicode'> received %s" % type(val))
-        return zlib.compress(val.encode('utf-8'))
+        try:
+            val = val.encode('utf-8')
+        except:
+            if not isinstance(val, unicode):
+                raise ValueError("Was expecting <type 'unicode'> received %s" % type(val))
+            raise
+        return zlib.compress(val)
     return compressed
 
 def decompress(func):
