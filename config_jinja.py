@@ -1,16 +1,15 @@
 # Jinja2 config
 
-from urllib import quote_plus
-import simplejson as json
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import os
+from urllib import quote_plus
 
 from webapp2_extras import jinja2
-
-# We configure django's version here just to make sure
-# we've got it specified in case a 3rd-party library wants to use it.
-# (gae_mini_profiler and gae_bingo currently use it)
-from google.appengine.dist import use_library
-use_library('django', '0.96')
 
 # Bring in our globally available custom templates and tags.
 # When possible, we now use jinja macros instead of these global tags.

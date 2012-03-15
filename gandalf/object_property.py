@@ -1,7 +1,7 @@
 # From http://kovshenin.com/archives/app-engine-python-objects-in-the-google-datastore/
 
 from google.appengine.ext import db
-import pickle
+import cPickle as pickle
 
 # Use this property to store objects.
 class ObjectProperty(db.BlobProperty):

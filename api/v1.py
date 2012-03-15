@@ -328,7 +328,7 @@ def topictree_export(version_id = None, topic_id = "root"):
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root", publish=False):
     import zlib
-    import pickle
+    import cPickle as pickle
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing

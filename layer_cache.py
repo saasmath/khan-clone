@@ -5,7 +5,7 @@ from google.appengine.ext import blobstore
 
 import datetime
 import logging
-import pickle
+import cPickle as pickle
 import zlib
 
 from google.appengine.api import memcache
