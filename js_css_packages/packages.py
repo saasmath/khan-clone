@@ -34,6 +34,7 @@ javascript = {
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
             "bootstrap-modal.js",
+            "dropdown.js",
             "../../gae_bingo/static/js/gae_bingo.js",
 
             # application code & templates:
@@ -41,6 +42,7 @@ javascript = {
             "handlebars-extras.js",
             "cookies.js",
             "pageutil.js",
+            "facebookutil.js",
             "video-addons.js",
             "api.js",
             "backbone-extensions.js",
@@ -116,6 +118,12 @@ javascript = {
             "highcharts.js",
         ]
     },
+    "login": {
+        "files": [
+            "bday-picker.js",
+            "login.js",
+        ]
+    },
     "profile": {
         "files": [
             "jquery.address-1.4.min.js",
@@ -139,10 +147,10 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
+            "settings.handlebars",
             "coaches.js",
             "coach.handlebars",
             "no-coaches.handlebars",
-            "no-requests.handlebars",
             "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
@@ -160,6 +168,7 @@ javascript = {
             "class-progress-summary.js",
             "exercise_progress.handlebars",
             "profile-goals.js",
+            "settings.js",
             "profile.js",
         ]
     },
@@ -286,6 +295,7 @@ stylesheets = {
             "museo-sans.css",
             "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
+            "bootstrap-dropdown.css",
             "goals.css",
         ]
     },

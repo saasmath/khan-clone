@@ -763,87 +763,6 @@ div.profile-notification.uncover-nav {
   opacity: 0.85;
   filter:alpha(opacity=85);
 }
-
-/**
- * Edit Profile dropdown
- * from http://css-tricks.com/examples/SimplejQueryDropdowns/#
- * Waiting for Monsieur Jason!
- */
- .user-profile-controls {
-     margin-top: 5px;
- }
-.user-profile-controls .dropdown {
-    float: left;
-}
-.user-profile-controls .dropdown:hover .sub_menu {
-    position: absolute;
-    z-index: 10;
-}
-ul.dropdown li {
-    float: left;
-    background: transparent;
-}
-ul.dropdown li a {
-    display: block;
-    padding: 4px 8px;
-    border-right: 1px solid #333;
-    color: black;
-    white-space: nowrap;
-}
-/* Doesn't work in IE */
-ul.dropdown li:last-child a {
-    border-right: none;
-}
-ul.dropdown li {
-    color: black;
-    position: relative;
-}
-ul.dropdown li a {
-    color: black;
-}
-ul.dropdown ul.sub_menu {
-    display: none;
-    background: #ccc;
-    position: absolute;
-    min-width: 120px;
-    border: 2px solid #999;
-    margin-top: 10px;
-
-    box-shadow: 0 2px 5px rgba(0,0,0,.3);
-}
-ul.dropdown ul.sub_menu li:hover{
-    background: #005987;
-}
-ul.dropdown ul.sub_menu li:hover a {
-    color: #fff !important;
-    text-decoration: none;
-}
-ul.dropdown ul.sub_menu:before{
-    content: ' ';
-    position: absolute;
-    z-index: 11;
-
-    width: 0;
-    height: 15px;
-
-    /* simulate a triangle with borders */
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid #999; /* must be the same as badge-picker */
-
-    left: 25%;
-    margin-left: -10px;
-    top: -25px;
-    display: block;
-}
-ul.dropdown ul li {
-    font-weight: normal;
-    background: #f6f6f6;
-    color: black;
-    border-bottom: 1px solid #ccc;
-    float: none;
-}
-
 .lte8 .user-card {
     min-width: 970px;
 }
@@ -946,7 +865,7 @@ li.profile-tab {
 .tab-content {
     margin-left: 150px; /* must be the same as width of profile-navigation */
     padding: 20px 0 20px 20px;
-    min-height: 500px;
+    min-height: 570px;
     border-left: 1px solid #ccc;
     position: relative;
 }
@@ -966,7 +885,7 @@ li.profile-tab {
 }
 .user-deets .basic-stats {
     min-width: 180px;
-    margin-top: 14px;
+    margin-top: 10px;
 }
 
 .basic-user-info {
@@ -1078,15 +997,15 @@ li.profile-tab {
 .username-picker .example-username {
     color: #678D00;
 }
-.username-picker .sidenote {
+.sidenote {
     background-repeat: no-repeat;
     background-position: 0 30%;
     padding-left: 13px;
 }
-.username-picker .sidenote.success {
+.sidenote.success {
     background-image:url(/images/video-indicator-complete.png);
 }
-.username-picker .sidenote.error {
+.sidenote.error {
     background-image:url(/images/cross.png);
 }
 
@@ -1195,18 +1114,36 @@ li.profile-tab {
 }
 .coach-row {
     padding: 10px;
-}
-.lte8 .coach-row {
     border-top: 1px solid #EFEFEF;
-}
-.coach-row:nth-child(2n+1) {
-    background-color: #EFEFEF;
 }
 .coach-row span.email {
     display: inline-block;
     width: 260px;
     word-wrap: break-word;
 }
+.coach-row span.email .pending {
+    color: #BBB;
+}
 .coach-row .controls {
     float: right;
+}
+.user-profile-controls {
+    margin-top: 10px;
+}
+
+#pw-change-form .input-label-cell {
+    padding: 0.5em 2em 0.5em 0;
+}
+
+#pw-change-form .simple-input {
+    /* TODO(benkomalo): consolidate these input styles in forms across the site.
+       this is kind of copied from login-package/login.css */
+    font-size: 14px;
+    padding: 0.1em 0.3em;
+    margin: 0.1em 0;
+    width: 14em;
+}
+
+#pw-change-form .sidenote {
+    margin-left: 5px;
 }

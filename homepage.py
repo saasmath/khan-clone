@@ -11,6 +11,7 @@ import templatetags
 from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
+from experiments import MarqueeVideoExperiment
 
 ITEMS_PER_SET = 4
 
@@ -159,7 +160,20 @@ class ViewHomePage(request_handler.RequestHandler):
                                          thumbnail_link_set)
 
             if marquee_videos:
+                # default to rotating behavior
                 marquee_video = marquee_videos[day % len(marquee_videos)]
+
+                # but if the AB test returns a specific video, allow an override
+                marquee_alternative = MarqueeVideoExperiment.ab_test()
+                if marquee_alternative != 'rotating':
+                    # set the marquee video as determined by the ab_test, if we can find it
+                    alt_videos = []
+                    for thumbnail_link_set in thumbnail_link_sets:
+                        alt_videos += filter(lambda item: "/video/"+marquee_alternative == item["href"], thumbnail_link_set)
+
+                    if len(alt_videos)==1:  # should be 1 and only 1
+                        marquee_video = alt_videos[0]
+                    
                 marquee_video["selected"] = True
 
             if len(thumbnail_link_sets[current_link_set_offset]) < ITEMS_PER_SET:
@@ -181,6 +195,13 @@ class ViewHomePage(request_handler.RequestHandler):
         else:
             library_content = library.library_content_html()
             
+        from gae_bingo.gae_bingo import ab_test, create_redirect_url
+
+        donate_button_test = ab_test("donate_button",
+                                     {"button":1, "text":99},
+                                     conversion_name=['hp_click', 'paypal'])
+        donate_redirect_url = create_redirect_url("/donate", "hp_click")
+
         template_values = {
                             'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,
@@ -190,7 +211,9 @@ class ViewHomePage(request_handler.RequestHandler):
                             'approx_vid_count': models.Video.approx_count(),
                             'exercise_count': models.Exercise.get_count(),
                             'link_heat': self.request_bool("heat", default=False),
-                            'version_number': version_number
+                            'version_number': version_number,
+                            'donate_button_test': donate_button_test,
+                            'donate_redirect_url': donate_redirect_url
                         }
 
         self.render_jinja2_template('homepage.html', template_values)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# TODO(benkomalo): move away form using testutil.GAEModelTestCase to agar.test.BaseTest
 import models
 import custom_exceptions
 import coaches
@@ -302,7 +303,7 @@ class PromoRecordTest(testutil.GAEModelTestCase):
     # Shorthand
     def r(self, promo_name, user_id):
         return models.PromoRecord.record_promo(promo_name, user_id)
-    
+
     def test_promo_record(self):
         u1 = "http://facebookid.khanacademy.org/1234"
         u2 = "http://googleid.khanacademy.org/5678"
@@ -314,10 +315,10 @@ class PromoRecordTest(testutil.GAEModelTestCase):
         # Second time and onwards
         for i in range(10):
             self.assertFalse(self.r(p1, u1))
-            
+
         # Different user
         self.assertTrue(self.r(p1, u2))
-        
+
         # Different promo
         self.assertTrue(self.r(p2, u1))
 
@@ -338,3 +339,52 @@ class VideoSubtitlesTest(unittest2.TestCase):
         json = subs.load_json()
         self.assertIsNone(json)
         self.assertEqual(warn.call_count, 1, 'logging.warn() not called')
+
+class UserDataCreationTest(testutil.GAEModelTestCase):
+    def flush(self, items):
+        """ Ensures items are flushed in the HRD. """
+        db.get([item.key() for item in items if item])
+
+    def insert_user(self, user_id, email, username=None, password=None):
+        return models.UserData.insert_for(user_id, email, username, password)
+    
+    def test_creation_without_username(self):
+        added = [
+            self.insert_user("larry", "email1@gmail.com"),
+            self.insert_user("curly", "email2@gmail.com"),
+            self.insert_user("moe", "email3@gmail.com"),
+        ]
+        # We don't care about consistency policy issues - we just want proper
+        # counts and such.
+        self.flush(added)
+        self.assertEqual(3, models.UserData.all().count())
+        self.assertEqual(set(["larry", "curly", "moe"]),
+                         set(user.user_id for user in models.UserData.all()))
+        
+        # "Re-adding" moe doesn't duplicate.
+        self.flush([self.insert_user("moe", "email3@gmail.com")])
+        self.assertEqual(3, models.UserData.all().count())
+
+    def test_creation_with_bad_username(self):
+        self.assertTrue(self.insert_user("larry", "email1@gmail.com", "!!!!!")
+                        is None)
+        
+    def test_creation_with_existing_username(self):
+        self.flush([self.insert_user("larry", "email1@gmail.com", "larry")])
+        self.assertEqual(1, models.UserData.all().count())
+        self.assertEqual("larry", models.UserData.all()[0].user_id)
+        self.assertEqual("larry", models.UserData.all()[0].username)
+
+        self.assertTrue(self.insert_user("larry2", "tooslow@gmail.com", "larry")
+                        is None)
+        
+    def test_creation_with_password(self):
+        self.flush([self.insert_user("larry",
+                                     "email1@gmail.com",
+                                     "larry",
+                                     "Password1")])
+        self.assertEqual(1, models.UserData.all().count())
+        retrieved = models.UserData.all()[0]
+        self.assertEqual("larry", retrieved.user_id)
+        self.assertTrue(retrieved.validate_password("Password1"))
+        self.assertFalse(retrieved.validate_password("Password2"))

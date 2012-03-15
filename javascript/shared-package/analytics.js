@@ -1,86 +1,222 @@
-// A set of internal analytics tools to get better analytics in Google Analytics.
+/**
+ * A set of utilities to track user interactions on the website (using MixPanel).
+ *
+ * Events can be either instantaneous or have a duration, and only one
+ * non-instantaneous event can be occurring at a time. If another event is begun,
+ * the previous event is ended automatically.
+ *
+ * The utility also attempts to resend events that happen just before the page is
+ * unloaded or on pages that are unloaded before the sending script is fully loaded.
+ */
 
 (function() {
-    var currentLinkTrackerTimeout = null;
-    var pageLoadTime = null;
-    var mpqEnabled = false;
-    
-    window.Analytics = {
 
-        // Utility to record event information on a user link click and report it 
-        // to Google Analytics on the arrival page.
-        //
-        // To use this, just add the following markup to your link anchor tag:
-        // <a href="/mypage" data-tag="Footer Link">Go to my page</a>
-        LinkTracker: function(params) {
-            window._gaq = window._gaq || [];
+    var currentPage = null;
+    var currentPageLoadTime = 0;
+    var currentTrackingActivity = null;
 
-            // Get the page load timestamp (in milliseconds)
-            pageLoadTime = (new Date()).getTime();
+    // Internal utility to make sure events get tracked even if the page is unloaded
+    var analyticsStore = {
+        persistData: {
+            timestamp: 0,
+            events: {}
+        },
 
-            mpqEnabled = params.mpqEnabled || false;
+        // On page load, load the persist data from sessionStorage and try to send any events
+        // that didn't get sent last time.
+        loadAndSendPersistData: function() {
+            if (window.sessionStorage) {
+                var persistData = null;
+                try {
+                    persistData = $.parseJSON(sessionStorage.getItem("ka_analytics"));
+                } catch (e) { }
 
-            // Detect an existing cookie, report it to GA and remove it
-            var loadTag = readCookie("ka_event_tag");
+                var currentTimeMS = Date.now();
 
-            if (loadTag) {
-                var duration = readCookie("ka_event_duration") * 1;
-                var referrer = readCookie("ka_event_referrer");
-                _gaq.push(['_trackEvent', 'Page Load', loadTag, referrer, duration, true]);
-                if (mpqEnabled) {
-                    mpq.track("Page Load", {
-                        "Path": window.location.pathname,
-                        "Link tag": loadTag,
-                        "Previous page time": duration
-                    });
-                }
+                // Time out persist data after a minute
+                if (persistData && (currentTimeMS - persistData.timestamp) < 60 * 1000) {
+                    var self = this;
+                    this.persistData = persistData;
 
-                eraseCookie("ka_event_tag");
-                eraseCookie("ka_event_duration");
-                eraseCookie("ka_event_referrer");
-            } else {
-                if (mpqEnabled) {
-                    mpq.track("Page Load", {
-                        "Path": window.location.pathname
+                    _.each(persistData.events, function(event) {
+                        mpq.track(event.name, event.parameters, function() {
+                            self.clearEvent(event);
+                        });
                     });
                 }
             }
+        },
 
-            // Set an event handler to listen for clicks on anchor tags with a data-tag attribute
+        // Add an event to the queue to get sent to MixPanel
+        addEvent: function(event) {
+            var self = this;
+
+            this.persistData.events[event.id] = event;
+            self.storePersistData();
+
+            // Send to tracker (may silently fail)
+            mpq.track(event.name, event.parameters, function() {
+                self.clearEvent(event);
+            });
+        },
+
+        // Once an event is successfully sent, clear it from the queue
+        clearEvent: function(event) {
+            // If tracking succeeds, remove from persist data
+            delete this.persistData.events[event.id];
+            this.storePersistData();
+            KAConsole.log("Successfully sent event " + event.name + " (" + event.id + ")");
+        },
+
+        // Save the queue to sessionStorage
+        storePersistData: function() {
+            if (window.sessionStorage) {
+                this.persistData.timestamp = Date.now();
+                var persistDataJSON = JSON.stringify(this.persistData);
+
+                sessionStorage.setItem("ka_analytics", persistDataJSON);
+            }
+        }
+    };
+
+    window.Analytics = {
+
+        // Called once on every page load (if MixPanel is enabled)
+        trackInitialPageLoad: function(startTime) {
+            var landingPage = (document.referrer.split('/')[2] === "www.khanacademy.org");
+
+            analyticsStore.loadAndSendPersistData();
+
+            // Send the final event before unloading the page
+            $(window).unload(function() {
+                Analytics._trackActivityEnd(Date.now());
+            });
+
+            // Add event handler for decorated links
             $("body").on("click", "a", function(event) {
                 var tag = $(this).attr("data-tag");
                 if (tag) {
-                    if (currentLinkTrackerTimeout) {
-                        clearTimeout(currentLinkTrackerTimeout);
-                    }
-
-                    var timeDelta = ((new Date()).getTime() - pageLoadTime);
-                    var timeDeltaSeconds = Math.floor(timeDelta/1000);
-                    createCookie("ka_event_tag", tag);
-                    createCookie("ka_event_duration", timeDeltaSeconds);
-                    createCookie("ka_event_referrer", window.location.pathname);
-
-                    currentLinkTrackerTimeout = setTimeout(function() {
-                        _gaq.push(['_trackEvent', 'Page Nav', tag, window.location.pathname, timeDeltaSeconds, true]);
-                        if (mpqEnabled) {
-                            mpq.track("Page Navigate", {
-                                "Path": window.location.pathname,
-                                "Link tag": tag,
-                                "Previous page time": timeDeltaSeconds
-                            });
-                        }
-
-                        // Reset page load time
-                        pageLoadTime = (new Date()).getTime();
-
-                        eraseCookie("ka_event_tag");
-                        eraseCookie("ka_event_duration");
-                        eraseCookie("ka_event_referrer");
-                    }, 1000);
+                    var href = $(this).attr("href");
+                    Analytics.trackSingleEvent("Link Click", {
+                        "Link Tag": tag,
+                        "Href": href
+                    });
                 }
             });
-        }
 
+            this.trackPageLoad(startTime, landingPage);
+        },
+
+        // Called once on arriving at a page (if MixPanel is enabled)
+        // Differs from trackInitialPageLoad because using a Backbone Router
+        // to navigate will trigger trackPageLoad.
+        trackPageLoad: function(startTime, landingPage) {
+            var currentTimeMS = Date.now();
+            var loadTimeMS = (startTime > 0) ? (currentTimeMS - startTime) : 0;
+
+            analyticsStore.addEvent({
+                id: "Page Load" + currentTimeMS,
+                name: "Page Load",
+                parameters: {
+                    "Page": window.location.pathname,
+                    "Load Time (ms)": loadTimeMS,
+                    "Landing Page": (landingPage ? "Yes" : "No")
+                }
+            });
+
+            currentPage = window.location.pathname;
+            currentPageLoadTime = currentTimeMS;
+            this.trackActivityBegin("Page View", {});
+        },
+
+        handleRouterNavigation: function(eventName) {
+            if (eventName.indexOf("route:") != 0) {
+                return;
+            }
+            if (!currentPage) {
+                return;
+            }
+
+            if (window.location.pathname !== currentPage) {
+                Analytics.trackPageLoad(0, false);
+            }
+        },
+
+        // Call this function in response to a user starting an interaction.
+        // Returns the event object to use if you want to modify the parameters
+        // or track the end of the event.
+        // This will automatically preempt the previously active activity.
+        trackActivityBegin: function(eventName, parameters) {
+            if (!currentPage) {
+                return null;
+            }
+
+            var currentTimeMS = Date.now();
+
+            this._trackActivityEnd(currentTimeMS);
+
+            parameters._startTime = currentTimeMS;
+
+            KAConsole.log("Started tracking activity " + eventName + " (" + currentTimeMS + ")");
+
+            currentTrackingActivity = {
+                id: eventName + currentTimeMS,
+                name: eventName,
+                parameters: parameters
+            };
+            return currentTrackingActivity;
+        },
+
+        // Track the end of the event if it is the currently active event &
+        // restart the default Page View activity.
+        trackActivityEnd: function(event) {
+            if (event == currentTrackingActivity) {
+                var currentTimeMS = Date.now();
+                this._trackActivityEnd(currentTimeMS);
+
+                // Go back to "Page View" mode because nothing else is active
+                this.trackActivityBegin("Page View", {});
+            }
+        },
+
+        // Internal function to track the end of the current event
+        _trackActivityEnd: function(endTime) {
+            if (currentTrackingActivity) {
+                // Calculate event duration
+                currentTrackingActivity.parameters["Page"] = currentPage;
+                currentTrackingActivity.parameters["Duration (ms)"] = endTime - currentTrackingActivity.parameters._startTime;
+                currentTrackingActivity.parameters["Page Time (ms)"] = endTime - currentPageLoadTime;
+                delete currentTrackingActivity.parameters._startTime;
+
+                KAConsole.log("Stopped tracking activity " + currentTrackingActivity.name + " after " + currentTrackingActivity.parameters["Duration (ms)"] + " ms.");
+
+                analyticsStore.addEvent(currentTrackingActivity);
+
+                currentTrackingActivity = null;
+            }
+        },
+
+        // Track an instantaneous event with no duration.
+        trackSingleEvent: function(eventName, parameters) {
+            if (!currentPage) {
+                return null;
+            }
+
+            var currentTimeMS = Date.now();
+
+            parameters["Page"] = currentPage;
+            parameters["Page Time (ms)"] = currentTimeMS - currentPageLoadTime;
+
+            var event = {
+                id: eventName + currentTimeMS,
+                name: eventName,
+                parameters: parameters
+            };
+
+            KAConsole.log("Tracking single event " + eventName + " (" + currentTimeMS + ")");
+
+            analyticsStore.addEvent(event);
+        }
     };
 })();
 

@@ -85,7 +85,10 @@ if (typeof Notifications !== "undefined") {
 // Update user info after appropriate API ajax requests
 $(function() { APIActionResults.register("user_info_html",
         function(sUserInfoHtml) {
-            $("#user-info").html(sUserInfoHtml);
+            $("#badge-count-container").remove();
+            $("#user-points-container").remove();
+
+            $("#user-info").prepend(sUserInfoHtml);
         }
     );
 });

@@ -1,11 +1,27 @@
 var KAConsole = {
     debugEnabled: false,
+    oldMessages: [],
+
     log: function() {
         if (window.console && KAConsole.debugEnabled) {
             if (console.log.apply)
                 console.log.apply(console, arguments);
             else
                 Function.prototype.apply.call(console.log, null, arguments);
+        } else {
+            this.oldMessages.push(arguments);
+        }
+    },
+
+    enableLog: function() {
+        if (window.console) {
+            this.debugEnabled = true;
+            _.each(this.oldMessages, function(args) {
+                if (console.log.apply)
+                    console.log.apply(console, args);
+                else
+                    Function.prototype.apply.call(console.log, null, args);
+            });
         }
     }
 };
@@ -167,6 +183,23 @@ $(function() {
         // Only allow submission if there is a non-empty query.
         return !!$.trim($("#page_search input[type=text]").val());
     });
+
+    var jelToggle = $("#user-info .dropdown-toggle");
+
+    if (KA.isMobileCapable) {
+        // Open dropdown on click
+        jelToggle.dropdown();
+    } else {
+        // Open dropdown on hover
+        jelToggle.dropdown("hover");
+    }
+
+    var width = jelToggle.width();
+    if (width < 60) {
+        jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
+    }
+
+
 });
 
 var Badges = {
@@ -179,8 +212,6 @@ var Badges = {
             jel.remove();
             $("body").append(sBadgeContainerHtml);
             jel = $(".badge-award-container");
-
-            if (jel.length) Social.init(jel);
         }
 
         if (!jel.length) return;
@@ -434,83 +465,6 @@ var VideoViews = {
 };
 $(VideoViews.init);
 
-var FacebookHook = {
-    init: function() {
-        if (!window.FB_APP_ID) return;
-
-        window.fbAsyncInit = function() {
-            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
-
-            if (!USERNAME) {
-                FB.Event.subscribe("auth.login", function(response) {
-
-                    if (response.authResponse) {
-                        FacebookHook.fixMissingCookie(response.authResponse);
-                    }
-
-                    var url = URL_CONTINUE || "/";
-                    if (url.indexOf("?") > -1)
-                        url += "&fb=1";
-                    else
-                        url += "?fb=1";
-
-                    var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
-                    url += "&hc=" + (hasCookie ? "1" : "0");
-
-                    url += "&hs=" + (response.authResponse ? "1" : "0");
-
-                    window.location = url;
-               });
-            }
-
-            FB.getLoginStatus(function(response) {
-
-                if (response.authResponse) {
-                    FacebookHook.fixMissingCookie(response.authResponse);
-                }
-
-                $("#page_logout").click(function(e) {
-
-                    eraseCookie("fbsr_" + FB_APP_ID);
-
-                    if (response.authResponse) {
-
-                        FB.logout(function() {
-                            window.location = $("#page_logout").attr("href");
-                        });
-
-                        e.preventDefault();
-                        return false;
-                    }
-
-                });
-
-            });
-        };
-
-        $(function() {
-            var e = document.createElement("script"); e.async = true;
-            e.src = document.location.protocol + "//connect.facebook.net/en_US/all.js";
-            document.getElementById("fb-root").appendChild(e);
-        });
-    },
-
-    fixMissingCookie: function(authResponse) {
-        // In certain circumstances, Facebook's JS SDK fails to set their cookie
-        // but still thinks users are logged in. To avoid continuous reloads, we
-        // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
-
-        if (readCookie("fbsr_" + FB_APP_ID))
-            return;
-
-        if (authResponse && authResponse.signedRequest) {
-            // Explicitly use a session cookie here for IE's sake.
-            createCookie("fbsr_" + FB_APP_ID, authResponse.signedRequest);
-        }
-    }
-
-};
-FacebookHook.init();
 
 var Throbber = {
     jElement: null,

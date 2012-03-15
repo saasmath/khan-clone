@@ -116,11 +116,7 @@
 		color: #000000;
 		text-decoration: none;
 	}
-	
-	.selected {
-		background-color: #DBDBDB;
-	}
-	
+
 	.hover {
 		background-color: #DBDBDB;
 		cursor: pointer;
@@ -196,20 +192,22 @@
 				
 	</script>
 	
+	<div id="page-background" style="background-color:#ffffff;">
 	
-	<div id="cc-header">
-		<h1 class="section-headline" style="float:left;">Common Core Map</h1>
+    <div id="cc-header">
 		<!--a href="#" class="simple-button action-gradient" style="float:right; margin-top:22px;">Submit a Common Core Tag</a>
 		<div style="clear:both;"></div-->
 	</div>
-		
-	<hr>
+	
+	<br>
+	<br>
+	<br>
 		
 	<div id="sidebar" class="col1" style="max-width:20%; min-width:20%;">
 		
 		<div id="sidebar-wrapper">
 		
-			<h6 id="filter-header"><b>FILTER MAP</b></h6>
+			<h3 id="filter-header"><b>Common Core Map</b></h3>
 		
 	        <div id="search-box">
 	            <!-- Hold for el search box -->
@@ -218,7 +216,7 @@
 			<div id="grade-list" class="pull-down">
 				
 				{% for grade in cc_map %}
-					<h4 class="grade-link" href="#grade-{{grade["grade"]|escape}}"><a href="#grade-{{grade["grade"]|escape}}">Grade: {{grade["grade"]|escape}}</a></h4>
+					<h5 class="grade-link" href="#grade-{{grade["grade"]|escape}}"><a href="#grade-{{grade["grade"]|escape}}">Grade: {{grade["grade"]|escape}}</a></h5>
 					<div class="domain-link">
 						<ul>
 							{% for domain in grade["domains"] %}
@@ -345,6 +343,8 @@
 		</div>	
 			
 		{% endfor %}
+	</div>
+	
 	</div>		
 </article>
 {% endblock pagecontent %}

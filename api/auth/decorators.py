@@ -13,6 +13,8 @@ from oauth_provider.oauth import OAuthError
 
 import util
 import models
+import os
+import logging
 
 # TODO: rename this to be something more generic, since it's not just
 # oauth specific.
@@ -59,6 +61,7 @@ def oauth_required(require_anointed_consumer = False):
 
             elif util.allow_cookie_based_auth():
                 if not util.get_current_user_id():
+                    logging.warning("Cookie: %s" % os.environ.get('HTTP_COOKIE',''))
                     return oauth_error_response(OAuthError(
                             "Unable to read user value from cookies/oauth map"))
             else:

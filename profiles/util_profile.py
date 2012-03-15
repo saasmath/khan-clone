@@ -13,7 +13,6 @@ import simplejson
 from avatars import util_avatars
 from badges import util_badges
 from gae_bingo.gae_bingo import bingo
-from experiments import SuggestedActivityExperiment
 
 def get_last_student_list(request_handler, student_lists, use_cookie=True):
     student_lists = student_lists.fetch(100)
@@ -92,6 +91,7 @@ class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
     def get(self):
+        show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
         if coach:
@@ -197,10 +197,6 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
-            bingo([
-                'suggested_activity_visit_profile',
-            ])
-
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
@@ -228,6 +224,11 @@ class ViewProfile(request_handler.RequestHandler):
             'user_data_student': user_data if has_full_access else None,
             'profile_root': user_data.profile_root,
             "view": self.request_string("view", default=""),
+            
+            # TODO(benkomalo): consider moving this to a more generic app
+            # context so that the JS client always has this info
+            
+            "secure_url_base": util.secure_url("/"),
         }
         self.render_jinja2_template('viewprofile.html', template_values)
 
@@ -242,6 +243,7 @@ class UserProfile(object):
     def __init__(self):
         self.username = None
         self.email = ""
+        self.is_phantom = True
         
         # Indicates whether or not the profile has been marked public. Not
         # necessarily indicative of what fields are currently filled in this
@@ -324,12 +326,7 @@ class UserProfile(object):
 
         profile.is_self = is_self
         profile.is_coaching_logged_in_user = is_coaching_logged_in_user
-
-        suggested_alternative = SuggestedActivityExperiment.get_alternative_for_user(
-                user, is_self) or SuggestedActivityExperiment.NO_SHOW
-        show_suggested_activity = (suggested_alternative == SuggestedActivityExperiment.SHOW)
-
-        profile.show_suggested_activity = show_suggested_activity
+        profile.is_phantom = user.is_phantom
 
         profile.is_public = user.has_public_profile()
         if full_projection:

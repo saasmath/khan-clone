@@ -1,4 +1,4 @@
-total_storage_limit: 999M
+total_storage_limit: 99999M
 queue:
 - name: badge-statistics-queue
   rate: 5/s
@@ -16,18 +16,24 @@ queue:
   rate: 5/s
 
 - name: problem-log-queue
-  rate: 80/s
+  rate: 100/s
 
 - name: video-log-queue
-  rate: 60/s
+  rate: 140/s
 
 - name: log-summary-queue
   rate: 60/s
 
-- name: fast-background-queue
+- name: activity-summary-queue
+  rate: 10/s
+
+- name: user-badge-queue
   rate: 10/s
 
 - name: slow-background-queue
+  rate: 20/s
+
+- name: gae-bingo-queue
   rate: 10/s
 
 - name: fancy-exercise-stats-queue
