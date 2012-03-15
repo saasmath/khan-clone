@@ -104,9 +104,11 @@ var Exercises = {
      */
     apiRequest: function(options) {
 
-        // Ensure camel casing
         if (!options.data) options.data = {};
+
+        // Ensure camel casing and json
         options.data.casing = "camel";
+        options.data.dataType = "json";
 
         $.ajax(options).done($.proxy(function() {
             this.pendingAPIRequests--;
