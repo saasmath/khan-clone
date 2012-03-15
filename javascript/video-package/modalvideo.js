@@ -89,6 +89,7 @@ var ModalVideo = {
                 this.modal.removeClass("fade");
             }, this));
 
+        VideoStats.updatePointsSaved(points);
         Video.init({});
         ModalVideo.linkifyTooltip();
         return this.modal;
