@@ -17,7 +17,7 @@
 	    {{#each progress}}
 	    	<div class="skill-status">
 		    	<h2 class="skill-bar-title">{{displayName}} ({{#if userExercise.exerciseStates.proficient}}*proficient*{{/if}})</h2>
-		    	<div class="skill-bar orange">
+		    	<div class="skill-bar">
 		    		<div class="fill green" style="width:{{multiply end 100}}%;"></div>
 		    		{{#if userExercise.exerciseStates.proficient}}
 		    		<div class="fill blue" style="width:{{multiply end 100}}%;"></div>
@@ -34,7 +34,7 @@
 	    	<h4 class="skill-bar-title">
 	    		{{exerciseModel.displayName}} ({{#if exerciseStates.proficient}}*proficient*{{/if}})
 	    	</h2>
-	    	<div class="skill-bar orange">
+	    	<div class="skill-bar">
 	    		<div class="fill green" style="width:{{multiply progress 100}}%;"></div>
 	    		{{#if exerciseStates.proficient}}
 	    		<div class="fill blue" style="width:{{multiply progress 100}}%;"></div>
