@@ -211,7 +211,11 @@ input.simple-button {
 	border-bottom-color: #803503 !important;
 	text-shadow:  0 -1px 0 #a64403;
 }
-.simple-button:disabled, .simple-button.disabled {
+.simple-button:disabled,
+.simple-button.disabled {
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
     color: #ddd !important;
     cursor: not-allowed !important;
     top: 0 !important;
@@ -594,16 +598,27 @@ footer {
     .dark #top-header #user-info {
         text-shadow: 0 1px 0 #1A222D;
     }
-    #user-info ul {
-        display: block;
-        clear: right;
-        float: right;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
     #user-info a.notification_link img {
         position: relative;
+    }
+    #user-info .dropdown {
+        padding: 5px 0 5px 0;
+    }
+    #user-info .dropdown.open {
+        background-color: #FFF;
+        padding-bottom: 10px;
+    }
+    #user-info .dropdown-menu:before {
+        display: none;
+    }
+    #user-info .dropdown-menu {
+        margin: 0;
+        left: 0;
+        border: none;
+        width: 100%;
+    }
+    #user-info .dropdown-menu li > a:hover {
+        background-color: #E5f0CC;
     }
 
 #nav-and-search {
@@ -662,6 +677,7 @@ footer {
         float: right;
     }
     #page_sub_nav .breadcrumbs_nav > a,
+    #page_sub_nav .breadcrumbs_nav > span,
     #page_sub_nav .breadcrumbs_nav .breadcrumb-separator,
     #page_sub_nav .breadcrumbs_nav #video_dropdown {
         display: block;
@@ -903,7 +919,12 @@ footer {
     }
 
     #top-header #top-header-links span.badge_count_container { vertical-align:baseline; }
-    #top-header #top-header-links span.username_and_notification { vertical-align:baseline; position:relative; top:2px; }
+    #top-header #top-header-links span.username_and_notification {
+        vertical-align: baseline;
+        position: relative;
+        top: 0;
+        padding: 5px 5px;
+    }
     #top-header #top-header-links span.username_and_notification span.user-name { vertical-align:baseline; }
     #top-header #top-header-links span.username_and_notification span.user-notification { vertical-align:baseline; }
     #top-header #top-header-links span.username_and_notification_shift { left: 12px; }
@@ -1106,11 +1127,6 @@ nav#page_sub_nav {
         -moz-box-shadow: 0 -2px 0 #1A222C;
         box-shadow: 0 -2px 0 #1A222C;
     }
-
-header ul {
-    margin: 0;
-    padding: .2em 1em .2em 1em;
-}
 
 nav ul.page_links li, header ul.page_links li {
     display: inline;

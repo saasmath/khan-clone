@@ -58,8 +58,28 @@ var Coaches = {
     onAddCoach_: function() {
         var email = $.trim($("#coach-email").val());
         if (email) {
+            Coaches.disableInput();
             this.coachCollection.addByEmail(email);
         }
+    },
+
+    disableInput: function() {
+        $("#add-coach").addClass("disabled")
+            .prop("disabled", true);
+
+        $("#coach-email").prop("disabled", true);
+
+        $(".coach-throbber").show();
+    },
+
+    enableInput: function() {
+        $("#add-coach").removeClass("disabled")
+            .prop("disabled", false);
+
+        $("#coach-email").prop("disabled", false)
+            .focus();
+
+        $(".coach-throbber").hide();
     }
 };
 
@@ -201,10 +221,11 @@ Coaches.CoachCollection = Backbone.Collection.extend({
     onSaveSuccess_: function() {
         this.markCoachesAsSaved();
         this.trigger("saveSuccess");
+        Coaches.enableInput();
     },
 
     onSaveError_: function() {
-        this.removeUnsavedCoaches();
+        this.removeUnsavedCoaches_();
         this.trigger("saveError");
     },
 
@@ -225,39 +246,54 @@ Coaches.CoachCollection = Backbone.Collection.extend({
         }, this);
     },
 
-    removeUnsavedCoaches: function() {
+    removeUnsavedCoaches_: function() {
         var modelsToRemove = this.filter(function(model) {
             return model.isNew();
         });
 
-        this.remove(modelsToRemove);
+        // Don't trigger saves when removing invalid coaches
+        this.remove(modelsToRemove, {silent: true});
+
+        // Trigger removal from view
+        _.each(modelsToRemove, _.bind(function(model) {
+                this.trigger("removeFromView", model);
+            }, this));
     }
 });
 
 Coaches.CoachCollectionView = Backbone.View.extend({
     rendered_: false,
+    onlyAddingCoaches_: true,
 
     initialize: function(options) {
         this.coachViews_ = [];
 
         this.collection.each(this.onAdd_, this);
 
-        this.collection.bind("add", this.onAdd_, this);
-        this.collection.bind("remove", this.onRemove_, this);
-        this.collection.bind("add", this.handleEmptyNotification_, this);
-        this.collection.bind("remove", this.handleEmptyNotification_, this);
+        this.collection.bind("add", this.onAdd_, this)
+            .bind("remove", this.onRemove_, this)
+            .bind("removeFromView", this.onRemove_, this);
 
-        this.collection.bind("saveSuccess", this.onSaveSuccess_, this);
-        this.collection.bind("saveError", this.onSaveError_, this);
-        this.collection.bind("showError", this.showError_, this);
+        this.collection.bind("add", this.handleEmptyNotification_, this)
+            .bind("remove", this.handleEmptyNotification_, this)
+            .bind("removeFromView", this.handleEmptyNotification_, this);
+
+        this.collection.bind("saveSuccess", this.onSaveSuccess_, this)
+            .bind("saveError", this.onSaveError_, this)
+            .bind("showError", this.showError_, this);
     },
 
     onSaveSuccess_: function() {
-        $("#coach-email").val("");
+        // Clear textfield only if we successfully added a coach,
+        // as opposed to removing a coach.
+        if (this.onlyAddingCoaches_) {
+            $("#coach-email").val("");
+        }
+        this.onlyAddingCoaches_ = true;
     },
 
     onSaveError_: function() {
-        this.showError_("We couldn't find anyone with that email.")
+        this.showError_("We couldn't find anyone with that email.");
     },
 
     onAdd_: function(model) {
@@ -277,7 +313,10 @@ Coaches.CoachCollectionView = Backbone.View.extend({
             });
 
         if (viewToRemove) {
+            this.onlyAddingCoaches_ = false;
+
             this.coachViews_ = _.without(this.coachViews_, viewToRemove);
+
             if (this.rendered_){
                 $(viewToRemove.el).fadeOut(function() {
                     viewToRemove.remove();
@@ -310,6 +349,8 @@ Coaches.CoachCollectionView = Backbone.View.extend({
             .fadeOut(function() {
                 $(this).text("");
             });
+
+        Coaches.enableInput();
     },
 
     render: function() {

@@ -11,8 +11,8 @@ from models import Exercise
 import util
 
 
-def user_info(username, user_data):
-    context = {"username": username, "user_data": user_data}
+def user_info(user_data):
+    context = {"user_data": user_data}
     return shared_jinja.get().render_template("user_info_only.html", **context)
 
 def column_major_sorted_videos(topic, num_cols=3, column_width=300, gutter=20, font_size=12):

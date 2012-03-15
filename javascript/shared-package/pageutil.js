@@ -183,6 +183,23 @@ $(function() {
         // Only allow submission if there is a non-empty query.
         return !!$.trim($("#page_search input[type=text]").val());
     });
+
+    var jelToggle = $("#user-info .dropdown-toggle");
+
+    if (KA.isMobileCapable) {
+        // Open dropdown on click
+        jelToggle.dropdown();
+    } else {
+        // Open dropdown on hover
+        jelToggle.dropdown("hover");
+    }
+
+    var width = jelToggle.width();
+    if (width < 60) {
+        jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
+    }
+
+
 });
 
 var Badges = {
