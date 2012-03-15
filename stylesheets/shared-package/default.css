@@ -3994,8 +3994,7 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     width: 310px;
 }
 .qtip.user-info-container .avatar-pic-container {
-    display: inline-block;
-    position: relative;
+    float: left;
 }
 .qtip.user-info-container .avatar-pic {
     vertical-align: top;
