@@ -35,8 +35,84 @@ def _make_token_signature(user_id,
     secret = key or App.token_recipe_key
     return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
-DEFAULT_TOKEN_EXPIRY = datetime.timedelta(days=14)
-DEFAULT_TOKEN_EXPIRY_SECONDS = DEFAULT_TOKEN_EXPIRY.days * 86400
+class AuthToken(object):
+    """ A secure token used to authenticate a user.
+
+    Note that instances may be created that are invalid. Clients must check
+    is_valid() to ensure the contents of the token are valid.
+    
+    """
+
+    def __init__(self, user_id, timestamp, signature):
+        self.user_id = user_id
+        self.timestamp = timestamp
+        self.signature = signature
+        self._value_internal = None
+    
+    @staticmethod
+    def for_user(user_data, clock=None):
+        if not user_data.credential_version:
+            raise Exception("Cannot mint an auth token for user [%s] "
+                            " - no credential version" % user_data.user_id)
+
+        timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
+        signature = _make_token_signature(user_data.user_id,
+                                          timestamp,
+                                          user_data.credential_version)
+        return AuthToken(user_data.user_id, timestamp, signature)
+    
+    @staticmethod
+    def for_value(token_value):
+        try:
+            contents = base64.b64decode(token_value)
+        except TypeError:
+            # Not proper base64 encoded value.
+            logging.info("Tried to decode auth token that isn't base64 encoded")
+            return None
+
+        parts = contents.split("\n")
+        if len(parts) != 3:
+            # Wrong number of parts / malformed.
+            logging.info("Tried to decode malformed auth token")
+            return None
+        user_id, timestamp, signature = parts
+        return AuthToken(user_id, timestamp, signature)
+    
+    DEFAULT_EXPIRY = datetime.timedelta(days=14)
+    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 86400
+
+    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        dt = _from_timestamp(self.timestamp)
+        now = (clock or datetime.datetime).utcnow()
+        return not dt or (now - dt) > time_to_expiry
+    
+    def is_authentic(self, user_data):
+        if self.user_id != user_data.user_id:
+            return False
+
+        expected = _make_token_signature(user_data.user_id,
+                                         self.timestamp,
+                                         user_data.credential_version)
+        return expected == self.signature
+    
+    def is_valid(self, user_data,
+                 time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        return (not self.is_expired(time_to_expiry, clock) and
+                self.is_authentic(user_data))
+
+    def __str__(self):
+        return self.value
+    
+    def __unicode__(self):
+        return self.value
+    
+    @property
+    def value(self):
+        if self._value_internal is None:
+            self._value_internal = base64.b64encode("\n".join([self.user_id,
+                                                               self.timestamp,
+                                                               self.signature]))
+        return self._value_internal
 
 def mint_token_for_user(user_data, clock=None):
     """ Generates a base64 encoded value to be used as an authentication token
@@ -45,63 +121,23 @@ def mint_token_for_user(user_data, clock=None):
     The token will contain the identity of the user and timestamp of creation,
     so expiry logic is externalized and controlled at a higher level.
     """
-    user_id = user_data.user_id
-    timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
-    credential_version = user_data.credential_version
-    if not credential_version:
-        raise Exception("Cannot mint an auth token for user [%s] " +
-                        " - no credential version" % user_id)
-    signature = _make_token_signature(user_id, timestamp, credential_version)
-    return base64.b64encode("\n".join([user_id, timestamp, signature]))
 
-def _parse_token(token):
-    """ Returns a triple of (user_id, timestamp, signature) for the token. """
-    try:
-        contents = base64.b64decode(token)
-    except TypeError:
-        # Not proper base64 encoded value.
-        logging.info("Tried to decode auth token that isn't base64 encoded")
-        return None
-
-    parts = contents.split("\n")
-    if len(parts) != 3:
-        # Wrong number of parts / malformed.
-        logging.info("Tried to decode malformed auth token")
-        return None
-    return parts
+    token = AuthToken.for_user(user_data, clock)
+    return token.value
 
 def validate_token(user_data,
-                   token,
-                   time_to_expiry=DEFAULT_TOKEN_EXPIRY,
+                   token_value,
+                   time_to_expiry=AuthToken.DEFAULT_EXPIRY,
                    clock=None):
     """ Determines whether or not the token is a valid authentication token
     for the specified user.
 
     """
 
-    parts = _parse_token(token)
-    if not parts:
-        return False
-    user_id, timestamp, signature = parts
+    token = AuthToken.for_value(token_value)
+    return token.is_valid(user_data, time_to_expiry, clock)
 
-    if user_id != user_data.user_id:
-        logging.info("Tried to decode auth token for different user." +
-                     " requestor[%s] token[%s]" % (user_data.user_id, user_id))
-        return False
-
-    dt = _from_timestamp(timestamp)
-    now = (clock or datetime.datetime).utcnow()
-    if not dt or (now - dt) > time_to_expiry:
-        return False
-
-    # Contents look good - now make sure it validates against the sig.
-    expected = _make_token_signature(user_data.user_id,
-                                     timestamp,
-                                     user_data.credential_version)
-    return expected == signature
-
-
-def user_id_from_token(token):
+def user_id_from_token(token_value):
     """ Given an auth token, determine the user_id that it's supposed to belong
     to.
     
@@ -111,8 +147,6 @@ def user_id_from_token(token):
     
     """
 
-    parts = _parse_token(token)
-    if not parts:
-        return None
-    return parts[0]
+    token = AuthToken.for_value(token_value)
+    return token.user_id
 
