@@ -39,6 +39,7 @@ class FeedbackFlag:
 
 class Feedback(db.Model):
     author = db.UserProperty()
+    author_user_id = db.StringProperty()
     author_nickname = db.StringProperty()
     content = db.TextProperty()
     date = db.DateTimeProperty(auto_now_add=True)
@@ -75,6 +76,7 @@ class Feedback(db.Model):
     def set_author(self, user_data):
         self.author = user_data.user
         self.author_nickname = user_data.nickname
+        self.author_user_id = user_data.user_id
 
     def authored_by(self, user_data):
         return user_data and self.author == user_data.user
@@ -174,11 +176,11 @@ class Feedback(db.Model):
         self.is_flagged = len(self.flags or []) > 0
         self.is_hidden_by_flags = len(self.flags or []) >= FeedbackFlag.HIDE_LIMIT
 
-    def get_author_id(self):
-        # TODO(marcia): Is it possible for the author to no longer exist?
-        # Might want to write user_id when setting author, instead of
-        # all these look ups
-        return models.UserData.get_from_user(self.author).user_id
+    def get_author_user_id(self):
+        if self.author_user_id is not None:
+            return self.author_user_id
+        else:
+            return models.UserData.get_from_user(self.author).user_id
 
 class FeedbackNotification(db.Model):
     feedback = db.ReferenceProperty(Feedback)

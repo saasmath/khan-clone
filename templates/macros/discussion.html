@@ -277,7 +277,7 @@
             {% endif %}
 
             {% if verb %}
-                <span class="author-nickname" data-user-id="{{ target.get_author_id()|escape }}">{{ target.author_nickname|escape }}</span> {{ verb }} {{ target.date|timesince_ago }}
+                <span class="author-nickname" data-user-id="{{ target.get_author_user_id()|escape }}">{{ target.author_nickname|escape }}</span> {{ verb }} {{ target.date|timesince_ago }}
             {% else %}
                 {{ target.author_nickname|escape }}, {{ target.date|timesince_ago }}
             {% endif %}
