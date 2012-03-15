@@ -1783,30 +1783,37 @@ def apply_version_content_changes(version):
         change.apply_change()
     logging.info("applied content changes")
 
-    deferred.defer(preload_library, version, _queue="topics-set-default-queue")
+    deferred.defer(preload_default_version_data, version, _queue="topics-set-default-queue")
 
-def preload_library(version):
-    # causes circular importing if put at the top
+def preload_default_version_data(version):
+
+    # Causes circular importing if put at the top
     from library import library_content_html
     import autocomplete
     import templatetags
 
-    # preload library and autocomplete cache
+    # Preload library for upcoming version
     library_content_html(False, version.number)
     logging.info("preloaded library_content_html")
 
     library_content_html(True, version.number)
     logging.info("preloaded ajax library_content_html")
 
+    # Preload autocomplete cache
     autocomplete.video_title_dicts(version.number)
     logging.info("preloaded video autocomplete")
 
     autocomplete.topic_title_dicts(version.number)
     logging.info("preloaded topic autocomplete")
 
+    # Preload topic browser
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
+
+    # Sync all topic exercise badges with upcoming version
+    topic_exercise_badges.sync_with_topic_version(version)
+    logging.info("synced topic exercise badges")
 
     deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
     
@@ -5219,6 +5226,6 @@ class VideoSubtitlesFetchReport(db.Model):
     errors = db.IntegerProperty(indexed=False)
     redirects = db.IntegerProperty(indexed=False)
 
-from badges import util_badges, last_action_cache
+from badges import util_badges, last_action_cache, topic_exercise_badges
 from phantom_users import util_notify
 from goals.models import GoalList
