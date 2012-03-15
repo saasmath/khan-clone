@@ -482,7 +482,7 @@ class Search(request_handler.RequestHandler):
 
             if show_matching_topic:
                 for topic in topics:
-                    if (str(topic.key()) in [result["key"] for result in topic_partial_results]) and topic.title.lower() == query:
+                    if topic.title.lower() == query:
                         topic.matches = True
                         matching_topic_count += 1
 
