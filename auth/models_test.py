@@ -34,13 +34,12 @@ class CredentialTest(BaseTest):
         u = self.make_user('bob@example.com')
 
         u.set_password('Password1')
-        token = auth.tokens.mint_token_for_user(u)
-        self.assertTrue(auth.tokens.validate_token(u, token))
+        token = auth.tokens.AuthToken.for_user(u)
+        self.assertTrue(token.is_authentic(u))
 
         u.set_password('NewS3cr3t!')
         self.assertFalse(u.validate_password('Password1'))
         self.assertTrue(u.validate_password('NewS3cr3t!'))
 
         # The old token should be invalidated
-        self.assertFalse(auth.tokens.validate_token(u, token))
-
+        self.assertFalse(token.is_authentic(u))

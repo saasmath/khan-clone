@@ -25,14 +25,14 @@ def get_user_from_khan_cookies():
 
     morsel = cookies.get(AUTH_COOKIE_NAME)
     if morsel and morsel.value:
-        token = morsel.value
-        user_id = auth.tokens.user_id_from_token(token)
-        if user_id:
-            user_data = models.UserData.get_from_user_id(user_id)
-            if user_data and auth.tokens.validate_token(user_data, token):
-                return user_id
+        token_value = morsel.value
+        token = auth.tokens.AuthToken.for_value(token_value)
+        if not token:
+            return None
+        user_data = models.UserData.get_from_user_id(token.user_id)
+        if user_data and token.is_valid(user_data):
+            return token.user_id
     return None
-
 
 def set_auth_cookie(handler, user, auth_token=None):
     """ Issues a Set-Cookie directive with the appropriate auth_token for
@@ -44,13 +44,13 @@ def set_auth_cookie(handler, user, auth_token=None):
     """
 
     if auth_token is None:
-        auth_token = auth.tokens.mint_token_for_user(user)
+        auth_token = auth.tokens.AuthToken.for_user(user)
     else:
         pass # TODO(benkomalo): do we want to validate the auth token if passed?
-    max_age = auth.tokens.DEFAULT_TOKEN_EXPIRY_SECONDS
+    max_age = auth.tokens.AuthToken.DEFAULT_EXPIRY_SECONDS
 
     handler.set_cookie(AUTH_COOKIE_NAME,
-                       value=auth_token,
+                       value=auth_token.value,
                        max_age=max_age,
                        path='/',
                        domain=None,

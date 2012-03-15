@@ -114,29 +114,6 @@ class AuthToken(object):
                                                                self.signature]))
         return self._value_internal
 
-def mint_token_for_user(user_data, clock=None):
-    """ Generates a base64 encoded value to be used as an authentication token
-    for a user, that can be used in things like cookies.
-
-    The token will contain the identity of the user and timestamp of creation,
-    so expiry logic is externalized and controlled at a higher level.
-    """
-
-    token = AuthToken.for_user(user_data, clock)
-    return token.value
-
-def validate_token(user_data,
-                   token_value,
-                   time_to_expiry=AuthToken.DEFAULT_EXPIRY,
-                   clock=None):
-    """ Determines whether or not the token is a valid authentication token
-    for the specified user.
-
-    """
-
-    token = AuthToken.for_value(token_value)
-    return token.is_valid(user_data, time_to_expiry, clock)
-
 def user_id_from_token(token_value):
     """ Given an auth token, determine the user_id that it's supposed to belong
     to.

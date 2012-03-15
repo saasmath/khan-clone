@@ -113,7 +113,7 @@ class Login(request_handler.RequestHandler):
 
         """
 
-        auth_token = auth.tokens.mint_token_for_user(user_data)
+        auth_token = auth.tokens.AuthToken.for_user(user_data)
         cont = util.create_post_login_url(cont) + ("&auth=%s" % auth_token)
         cont = util.insecure_url(cont)
         handler.redirect(cont)
@@ -169,19 +169,18 @@ class PostLogin(request_handler.RequestHandler):
             # a password via HTTPS, and it has redirected here to postlogin
             # to set the auth cookie from that token. We can't rely on
             # UserData.current() since no cookies have yet been set.
-            user_id = auth.tokens.user_id_from_token(auth_stamp)
-            if not user_id:
+            token = auth.tokens.AuthToken.for_value(auth_stamp)
+            if not token:
                 logging.error("Invalid authentication token specified")
             else:
-                user_data = UserData.get_from_user_id(user_id)
-                if (not user_data or
-                        not auth.tokens.validate_token(user_data, auth_stamp)):
+                user_data = UserData.get_from_user_id(token.user_id)
+                if not user_data or not token.is_valid(user_data):
                     logging.error("Invalid authentication token specified")
                     user_data = None
                 else:
                     # Good auth stamp - set the cookie for the user, which
                     # will also set it for this request.
-                    auth.cookies.set_auth_cookie(self, user_data, auth_stamp)
+                    auth.cookies.set_auth_cookie(self, user_data, token)
                     
         user_data = UserData.current()
         if user_data:
