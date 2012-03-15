@@ -1,4 +1,4 @@
-import logging
+import string
 
 from google.appengine.ext import db
 
@@ -111,14 +111,36 @@ class TopicExerciseBadge(Badge):
         return "Achieve proficiency in all skills in %s" % self.topic_standalone_title
 
     @property
+    def icon_filename(self):
+        """ Some topics will have custom icons pre-prepared, and some won't.
+        To add a custom icon to a topic, add the topic's name to TOPICS_WITH_CUSTOM_ICONS
+        below. Those without will use a default icon.
+
+        Custom icon location and format:
+        40x40px: /images/power-mode/badges/[lowercase-alphanumeric-and-underscores-only topic title]-40x40.png
+        60x60px: /images/power-mode/badges/[lowercase-alphanumeric-and-underscores-only topic title]-60x60.png
+
+        See /images/power-mode/badges/readme
+        """
+
+        if self.topic_standalone_title in TOPICS_WITH_CUSTOM_ICONS:
+            return self.safe_topic_title_filename
+        else:
+            return "default"
+
+    @property
+    def safe_topic_title_filename(self):
+        valid_chars = frozenset(" %s%s" % (string.ascii_letters, string.digits))
+        filename = "".join([c for c in self.topic_standalone_title if c in valid_chars])
+        return filename.lower().replace(" ", "_")
+
+    @property
     def compact_icon_src(self):
-        # TODO:(kamens) custom icons
-        return "/images/power-mode/badges/default-40x40.png"
+        return "/images/power-mode/badges/%s-40x40.png" % self.icon_filename
 
     @property
     def icon_src(self):
-        # TODO:(kamens) custom icons
-        return "/images/power-mode/badges/default.png"
+        return "/images/power-mode/badges/%s-60x60.png" % self.icon_filename
 
 class TopicExerciseBadgeType(db.Model):
     """ Every time we publish a new topic tree,
@@ -153,4 +175,9 @@ class TopicExerciseBadgeType(db.Model):
 
         return topic_badge_type
 
-
+# TODO: when we find a nicer way of detecting existence of icons,
+# use that. Couple ideas so far felt even grosser than this quick
+# and easy hack.
+TOPICS_WITH_CUSTOM_ICONS = frozenset([
+    "Addition and subtraction"
+])
