@@ -1167,28 +1167,30 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Return data about the user that we'd like to track in MixPanel
     @staticmethod
     def get_analytics_properties(user_data):
-        properties_dict = dict()
+        properties_list = []
 
         if not user_data:
-            properties_dict["User Type"] = "New"
+            properties_list.append(("User Type", "New"))
         elif user_data.is_phantom:
-            properties_dict["User Type"] = "Phantom"
+            properties_list.append(("User Type", "Phantom"))
         else:
-            properties_dict["User Type"] = "Logged In"
+            properties_list.append(("User Type", "Logged In"))
+
+        # If you want to track a GAE/Bingo experiment in analytics, set its name here
+        current_experiment_name = None
+        if current_experiment_name:
+            properties_list.append((current_experiment_name, ab_test(current_experiment_name)))
+        else:
+            properties_list.append(("No bingo experiment", ""))
 
         if user_data:
-            properties_dict["User Points"] = user_data.points
-            properties_dict["User Badges"] = len(user_data.badges)
-            properties_dict["User Videos Completed"] = user_data.get_videos_completed()
-            properties_dict["User Exercises Proficient"] = len(user_data.all_proficient_exercises)
-            properties_dict["User Seconds Watched"] = user_data.total_seconds_watched
+            properties_list.append(("User Points", user_data.points))
+            properties_list.append(("User Videos", user_data.get_videos_completed()))
+            properties_list.append(("User Exercises", len(user_data.all_proficient_exercises)))
+            properties_list.append(("User Badges", len(user_data.badges)))
+            properties_list.append(("User Video Time", user_data.total_seconds_watched))
 
-        # GAE/Bingo experiment names to track for each user
-        experiment_names = []
-        for experiment in experiment_names:
-            properties_dict["Bingo " + experiment] = ab_test(experiment)
-
-        return properties_dict
+        return properties_list
 
     @staticmethod
     @request_cache.cache()

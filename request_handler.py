@@ -370,8 +370,12 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         if template_values['mixpanel_enabled']:
             template_values['mixpanel_id'] = gae_bingo.identity.identity()
-            superprops = UserData.get_analytics_properties(user_data)
-            template_values['mixpanel_superprops'] = jsonify(superprops)
+
+        if not template_values['hide_analytics']:
+            superprops_list = UserData.get_analytics_properties(user_data)
+            superprops_dict = dict(superprops_list)
+            template_values['mixpanel_superprops'] = jsonify(superprops_dict)
+            template_values['ga_custom_vars'] = superprops_list[0:5]
 
         if user_data:
             goals = GoalList.get_current_goals(user_data)
