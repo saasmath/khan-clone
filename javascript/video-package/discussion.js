@@ -230,34 +230,24 @@ var QA = {
         QA.enable();
 
         $(".video-footer").on("mouseenter", ".author-nickname", function() {
-            var jel = $(this),
-                userID = jel.data("user-id"),
-                hasQtip = jel.data("hasQtip");
-
-            if (userID && !hasQtip) {
-                $.ajax({
-                    type: "GET",
-                    url: "/api/v1/user/profile",
-                    data: {
-                        casing: "camel",
-                        userID: userID
-                      },
-                    dataType: "json",
-                    success: _.bind(QA.onHoverCardDataLoaded_, this)
-                });
-            }
+            QA.createHoverCardQtip($(this));
         });
     },
 
-    onHoverCardDataLoaded_: function(data) {
-        // TODO(marcia): Cache per user to avoid unnecessary requests
-        var model = new ProfileModel(data),
-            view = new HoverCardView({model: model});
+    hoverCardCache_: {},
 
-        $(this)
+    createHoverCardQtip: function(jel) {
+        var userID = jel.data("user-id"),
+            hasQtip = jel.data("has-qtip");
+
+        if (!userID || hasQtip) {
+            return;
+        }
+
+        jel.data("has-qtip", true)
             .qtip({
                 content: {
-                    text: view.render().el.innerHTML
+                    text: "Loading..."
                 },
                 style: {
                     classes: "ui-tooltip-light ui-tooltip-shadow user-info-container"
@@ -266,8 +256,39 @@ var QA = {
                     delay: 100,
                     fixed: true
                 }
-            }).qtip("show")
-            .data("hasQtip", true);
+            }).qtip("show");
+
+        var html = QA.hoverCardCache_[userID];
+
+        if (html) {
+            jel.qtip("option", "content.text", html);
+        } else {
+            $.ajax({
+                type: "GET",
+                url: "/api/v1/user/profile",
+                data: {
+                    casing: "camel",
+                    userID: userID
+                  },
+                dataType: "json",
+                success: _.bind(QA.onHoverCardDataLoaded_, jel)
+            });
+        }
+    },
+
+    onHoverCardDataLoaded_: function(data) {
+        // TODO(marcia): Figure out what to show for non-accessible profiles
+        // and whether should just render template directly instead of
+        // going through a backbone model + view..
+        var jel = this,
+            userID = jel.data("user-id"),
+            model = new ProfileModel(data),
+            view = new HoverCardView({model: model}),
+            html = view.render().el.innerHTML;
+
+        QA.hoverCardCache_[userID] = html;
+        jel.qtip("option", "content.text", html);
+
     },
 
     initPagesAndQuestions: function() {
