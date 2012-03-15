@@ -1303,14 +1303,18 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         # Forcefully override with important items.
         user = users.User(email)
         key_name = UserData.key_for(user_id)
-        prop_values.update({
-	        'key_name': key_name,
+        for pname, pvalue in {
+            'key_name': key_name,
             'user': user,
             'current_user': user,
             'user_id': user_id,
             'last_login': datetime.datetime.now(),
             'user_email': email,
-        })
+            }.iteritems():
+            if pname in prop_values:
+                logging.warning("UserData creation about to override"
+                                " specified [%s] value" % pname)
+            prop_values[pname] = pvalue
 
         if username or password:
             # Username or passwords are separate entities.
