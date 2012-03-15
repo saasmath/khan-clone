@@ -4199,9 +4199,15 @@ class VideoLog(BackupModel):
         # If the last video logged is not this video and the times being credited
         # overlap, don't give points for this video. Can only get points for one video
         # at a time.
-        if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
+        if (detect_cheat and
+                last_video_log and
+                last_video_log.key_for_video() != video.key()):
             dt_now = datetime.datetime.now()
-            if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
+            other_video_time = last_video_log.time_watched
+            this_video_time = dt_now - datetime.timedelta(seconds=seconds_watched)
+            if other_video_time > this_video_time:
+                logging.warning("Detected overlapping video logs " +
+                                "(user may be watching multiple videos?)")
                 return (None, None, 0, False)
 
         video_log = VideoLog()
