@@ -290,3 +290,20 @@ def count_with_cursors(query, max_value=None):
             query.with_cursor(cursor)
 
     return count
+
+
+def ensure_in_transaction(func, xg_on=False):
+    """ Runs the specified method in a transaction, if the current thread is
+    not currently running in a transaction already.
+    Returns the result of the specified func method.
+
+    """
+
+    if db.is_in_transaction():
+        return func()
+    
+    if xg_on:
+        options = db.create_transaction_options(xg=True)
+        return db.run_in_transaction_options(options, func)
+    else:
+        return db.run_in_transaction(func)
