@@ -1778,11 +1778,12 @@ class TopicVersion(db.Model):
 def apply_version_content_changes(version):
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
+
     for change in changes:
         change.apply_change()
     logging.info("applied content changes")
-    deferred.defer(preload_library, version, _queue="topics-set-default-queue")
 
+    deferred.defer(preload_library, version, _queue="topics-set-default-queue")
 
 def preload_library(version):
     # causes circular importing if put at the top
@@ -1813,14 +1814,18 @@ def change_default_version(version):
     default_version = TopicVersion.get_default_version()
 
     def update_txn():
+
         if default_version:
             default_version.default = False
             default_version.put()
+
         version.default = True
         version.made_default_on = datetime.datetime.now()
         version.edit = False
+
         Setting.topic_tree_version(version.number)
         Setting.cached_content_add_date(datetime.datetime.now())
+
         version.put()
 
     # using --high-replication is slow on dev, so instead not using cross-group transactions on dev
