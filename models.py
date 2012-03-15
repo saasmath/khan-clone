@@ -3679,31 +3679,6 @@ class Playlist(Searchable, db.Model):
         return filter(lambda playlist: playlist.title in all_topics_list,
                 Playlist.all().fetch(1000))
 
-    def get_exercises(self):
-        video_query = Video.all(keys_only=True)
-        video_query.filter('playlists = ', self.title)
-        video_keys = video_query.fetch(1000)
-
-        exercise_query = Exercise.all()
-        exercise_key_dict = Exercise.get_dict(exercise_query, lambda exercise: exercise.key())
-
-        exercise_video_query = ExerciseVideo.all()
-        exercise_video_key_dict = ExerciseVideo.get_key_dict(exercise_video_query)
-
-        playlist_exercise_dict = {}
-        for video_key in video_keys:
-            if exercise_video_key_dict.has_key(video_key):
-                for exercise_key in exercise_video_key_dict[video_key]:
-                    if exercise_key_dict.has_key(exercise_key):
-                        exercise = exercise_key_dict[exercise_key]
-                        playlist_exercise_dict[exercise_key] = exercise
-
-        playlist_exercises = []
-        for exercise_key in playlist_exercise_dict:
-            playlist_exercises.append(playlist_exercise_dict[exercise_key])
-
-        return playlist_exercises
-
     def get_videos(self):
         video_query = Video.all()
         video_query.filter('playlists = ', self.title)
