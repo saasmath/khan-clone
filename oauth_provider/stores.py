@@ -53,8 +53,10 @@ class GAEOAuthDataStore(oauth.OAuthDataStore):
             self.request_token = request_tokens[0]
             return self.request_token
         elif len(request_tokens) == 0:
+            logger.info("No token found")
             return None
         else:
+            logger.info("%d tokens found" % len(request_tokens))
             raise Exception('More then one %s token matches token "%s"'%(token_type,token))
 
 

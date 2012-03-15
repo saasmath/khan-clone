@@ -93,6 +93,8 @@ def authorize_token():
 
     try:
         # get the request token
+        # logging.warning(oauth_request)
+        # logging.warning(oauth_request.get_parameter('oauth_consumer_key'))
         token = oauth_server.fetch_request_token(oauth_request)
     except OAuthError, e:
         return oauth_error_response(e)
