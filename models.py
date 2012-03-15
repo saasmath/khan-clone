@@ -945,6 +945,12 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
+class BlockReason(object):
+    """ An enumeration of possible reasons a user may be blocked from using
+    the site's functionality. """
+    
+    EMAIL_NEEDS_CONFIRMATION = "email-unverified"
+
 class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
@@ -973,6 +979,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # A globally unique user-specified username,
     # which will be used in URLS like khanacademy.org/profile/<username>
     username = db.StringProperty(default="")
+    
+    # A state indicating whether the account is blocked from further use for
+    # any reason. Must be a value in BlockReason
+    blocked = db.StringProperty(indexed=False)
 
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
@@ -1273,26 +1283,34 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         return UserData.get_from_username(username)
 
     @staticmethod
-    def insert_for(user_id, email, username=None, password=None):
+    def insert_for(user_id, email, username=None, password=None, **kwds):
         if not user_id or not email:
             return None
 
-        user = users.User(email)
-        key_name = UserData.key_for(user_id)
-        kwds = {
-	        'key_name': key_name,
-            'user': user,
-            'current_user': user,
-            'user_id': user_id,
+        # Make default dummy values for the ones that don't matter
+        prop_values = {
             'moderator': False,
-            'last_login': datetime.datetime.now(),
             'proficient_exercises': [],
             'suggested_exercises': [],
             'need_to_reassess': True,
             'points': 0,
             'coaches': [],
-            'user_email': email,
         }
+
+        # Allow clients to override
+        prop_values.update(**kwds)
+        
+        # Forcefully override with important items.
+        user = users.User(email)
+        key_name = UserData.key_for(user_id)
+        prop_values.update({
+	        'key_name': key_name,
+            'user': user,
+            'current_user': user,
+            'user_id': user_id,
+            'last_login': datetime.datetime.now(),
+            'user_email': email,
+        })
 
         if username or password:
             # Username or passwords are separate entities.
@@ -1300,7 +1318,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             def create_txn():
                 user_data = UserData.get_by_key_name(key_name)
                 if user_data is None:
-                    user_data = UserData(**kwds)
+                    user_data = UserData(**prop_values)
                     # Both claim_username and set_password updates user_data
                     # and will call put() for us.
                     if username and not user_data._claim_username_internal(username):
@@ -1319,7 +1337,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             # No username means we don't have to do manual transactions.
             # Note that get_or_insert is a transaction itself, and it can't
             # be nested in the above transaction.
-            user_data = UserData.get_or_insert(**kwds)
+            user_data = UserData.get_or_insert(**prop_values)
 
         if user_data and not user_data.is_phantom:
             # Record that we now have one more registered user
