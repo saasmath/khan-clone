@@ -124,6 +124,16 @@
             _.each(eventQueue, function(event) {
                 self.trackSingleEvent(event.name, event.parameters);
             });
+
+            // 4 hour timeout: stop collecting analytics
+            setTimeout(function() {
+                // End whatever activity is currently going on
+                var currentTimeMS = Date.now();
+                Analytics._trackActivityEnd(currentTimeMS);
+
+                // Disable further sending of events
+                currentPage = null;
+            }, 4*60*60*1000);
         },
 
         // Called once on arriving at a page (if MixPanel is enabled)
