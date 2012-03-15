@@ -12,7 +12,6 @@ import auth.tokens
 import cookie_util
 import datetime
 import logging
-import mail.registration
 import models
 import os
 import re
