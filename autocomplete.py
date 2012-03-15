@@ -42,10 +42,13 @@ def topic_title_dicts(version_number=None):
     else:
         version = None
 
+    topic_list = Topic.get_content_topics(version=version)
+    topic_list.extend(Topic.get_super_topics(version=version))
+
     return map(lambda topic: {
         "title": topic.standalone_title,
         "key": str(topic.key()),
         "relative_url": topic.relative_url,
         "id": topic.id
-    },  Topic.get_content_topics(version=version))
+    },  topic_list)
 

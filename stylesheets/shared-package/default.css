@@ -3858,50 +3858,53 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: url(/images/email-button-24.png) no-repeat;
 }
 
-#search-topics span.highlighted {
+.search-topics span.highlighted {
     font-weight: bold;
 }
-#search-topics .topic {
+.searchresult-counts {
+    font-style: italic;
+}
+.search-topics .topic {
     margin-top: 38px;
     margin-bottom: 5px;
     font-size: 18px
 }
-#search-topics .videos {
+.search-topics .videos {
     margin-left: 0px;
 }
-#search-topics .video-result {
+.search-topics .video-result {
     font-size: 14px;
 }
-#search-topics .description {
+.search-topics .description {
     margin: 2px 0px 0px 0px;
     font-size: 11px;
     line-height: 18px;
 }
-#search-topics li {
+.search-topics li {
     margin-top: 40px;
     margin-bottom: 40px;
 }
-#search-topics .match_count {
+.search-topics .match_count {
     font-size: 14px;
 }
-#search-topics .column {
+.search-topics .column {
     float: left;
     width: 200px;
     padding-right: 20px;
 }
-#search-topics .column:first-child {
+.search-topics .column:first-child {
     width: 360px;
 }
-#search-topics .column-heading {
+.search-topics .column-heading {
     width: 180px;
     border-bottom: 2px solid black;
     margin: 0px;
 }
-#search-topics .column li {
+.search-topics .column li {
     margin: 5px 0px 0px 0px;
     line-height: 14px;
 }
-#search-topics br {
+.search-topics br {
     clear: left;
 }
 

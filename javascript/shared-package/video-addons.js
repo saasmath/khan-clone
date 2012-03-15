@@ -380,6 +380,8 @@ var VideoStats = {
                     "Video ID": id,
                     "Percent (begin)": this.dPercentLastSaved
                 });
+                gae_bingo.bingo(["search_topic_started_video"]);
+                
             }
         }
         // If state is buffering, unstarted, or cued, don't do anything
@@ -491,6 +493,7 @@ var VideoStats = {
                 Analytics.trackSingleEvent("Video Complete", {
                     "Video ID": id
                 });
+                gae_bingo.bingo(["search_topic_completed_video"]);
             }
         }
     },

@@ -72,6 +72,7 @@ from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
+from gae_bingo.gae_bingo import ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -405,7 +406,7 @@ class Search(request_handler.RequestHandler):
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        # all_key_list.extend([result["key"] for result in topic_partial_results])
+        all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
@@ -428,8 +429,6 @@ class Search(request_handler.RequestHandler):
                 videos.append(entity)
             elif entity:
                 logging.info("Found unknown object " + repr(entity))
-
-        topic_count = len(topics)
 
         # Get topics for videos not in matching topics
         filtered_videos = []
@@ -463,15 +462,32 @@ class Search(request_handler.RequestHandler):
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
+        # A/B test showing a matching topic at the top of the page
+        show_matching_topic = ab_test("Search shows matching topic", ["show", "hide"], ["search_topic_started_video", "search_topic_completed_video"]) == "show"
+
         # Count number of videos in each topic and sort descending
+        topic_count = 0
+        matching_topic_count = 0
         if topics:
             if len(filtered_videos) > 0:
                 for topic in topics:
                     topic.match_count = [(str(topic.key()) in video.topic_string_keys) for video in filtered_videos].count(True)
+                    if topic.match_count > 0:
+                        topic_count += 1
+
                 topics = sorted(topics, key=lambda topic:-topic.match_count)
             else:
                 for topic in topics:
                     topic.match_count = 0
+
+            if show_matching_topic:
+                for topic in topics:
+                    if (str(topic.key()) in [result["key"] for result in topic_partial_results]) and topic.title.lower() == query:
+                        topic.matches = True
+                        matching_topic_count += 1
+
+                        child_topics = topic.get_child_topics(include_descendants=True)
+                        topic.child_topics = [t for t in child_topics if t.has_content()]
 
         template_values.update({
                            'topics': topics,
@@ -480,6 +496,7 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
+                           'matching_topic_count': matching_topic_count
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)
