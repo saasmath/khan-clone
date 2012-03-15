@@ -351,4 +351,3 @@ indexes:
   properties:
   - name: time_recorded
     direction: desc
-
