@@ -180,7 +180,11 @@ def layer_cache_check_set_return(
                 return result
         
         if layer & Layers.Blobstore:
-            result = BlobCache.get(key, namespace=namespace)
+            try:
+                result = BlobCache.get(key, namespace=namespace)
+            except Exception, e:
+                logging.warning("Reading from blobstore failed with: %s" % e)
+    
             # TODO: fill upward layers if size of dumped result is going to be less than 1MB (might be too costly to figure that out
             return result
 
@@ -209,7 +213,11 @@ def layer_cache_check_set_return(
             KeyValueCache.set(key, result, time=expiration, namespace=namespace)
 
         if layer & Layers.Blobstore:
-            BlobCache.set(key, result, time=expiration, namespace=namespace)
+            try:
+                BlobCache.set(key, result, time=expiration, namespace=namespace)
+            except:
+                logging.warning("Writing to the blobstore failed with: %s" % e)
+                
 
     bust_cache = False
     if "bust_cache" in kwargs:
