@@ -65,7 +65,7 @@ javascript = {
             "goal-new.js",
             "topics.js",
             "analytics.js",
-            "user-card.js",
+            "profile-model.js",
             "hover-card-view.js",
             "hover-card.handlebars",
         ]
