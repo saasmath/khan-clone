@@ -125,7 +125,7 @@ def get_profile_from_fb_token(access_token):
                 logging.debug("Ignoring '%s'. Assuming access_token is no longer valid: %s" % (error, access_token))
             else:
                 c_facebook_tries_left -= 1
-                logging.debug("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
+                logging.error("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
 
     return profile
 
