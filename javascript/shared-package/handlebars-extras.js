@@ -51,3 +51,9 @@ Handlebars.registerHelper("toLoginRedirectHref", function(destination) {
     var redirectParam = "/postlogin?continue=" + destination;
     return "/login?continue=" + encodeURIComponent(redirectParam);
 });
+
+Handlebars.registerHelper("commafy", function(numPoints) {
+    // From KhanUtil.commafy in math-format.js
+    return numPoints.toString().replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+});
+
