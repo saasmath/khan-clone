@@ -4,6 +4,7 @@ import logging
 
 from google.appengine.ext import db
 
+import models
 from app import App
 import request_cache
 import layer_cache
@@ -172,6 +173,12 @@ class Feedback(db.Model):
     def recalculate_flagged(self):
         self.is_flagged = len(self.flags or []) > 0
         self.is_hidden_by_flags = len(self.flags or []) >= FeedbackFlag.HIDE_LIMIT
+
+    def get_author_id(self):
+        # TODO(marcia): Is it possible for the author to no longer exist?
+        # Might want to write user_id when setting author, instead of
+        # all these look ups
+        return models.UserData.get_from_user(self.author).user_id
 
 class FeedbackNotification(db.Model):
     feedback = db.ReferenceProperty(Feedback)
