@@ -1793,15 +1793,20 @@ def preload_library(version):
     # preload library and autocomplete cache
     library_content_html(False, version.number)
     logging.info("preloaded library_content_html")
+
     library_content_html(True, version.number)
     logging.info("preloaded ajax library_content_html")
+
     autocomplete.video_title_dicts(version.number)
     logging.info("preloaded video autocomplete")
+
     autocomplete.topic_title_dicts(version.number)
     logging.info("preloaded topic autocomplete")
+
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
+
     deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
     
 def change_default_version(version):
