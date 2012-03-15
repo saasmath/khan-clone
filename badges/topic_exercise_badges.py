@@ -63,7 +63,7 @@ def sync_with_topic_version(version):
         db.put(entities_to_put)
 
 class TopicExerciseBadge(Badge):
-    """ TopicExerciseBadge represents a single challenge patch for achieveing proficiency
+    """ TopicExerciseBadge represents a single challenge patch for achieving proficiency
     in all constituent exercises of a Topic.
 
     TopicExerciseBadges are constructed by the data stored in
@@ -77,10 +77,12 @@ class TopicExerciseBadge(Badge):
     def __init__(self, topic_exercise_badge_type):
         Badge.__init__(self)
 
-        self.name = "topic_exercise_%s" % topic_exercise_badge_type.topic_key_name
+        # Set topic-specific properties
         self.topic_standalone_title = topic_exercise_badge_type.topic_standalone_title
         self.exercise_names_required = topic_exercise_badge_type.exercise_names_required
 
+        # Set typical badge properties
+        self.name = "topic_exercise_%s" % topic_exercise_badge_type.topic_key_name
         self.description = self.topic_standalone_title
         self.points = 0
         self.badge_category = BadgeCategory.MASTER
@@ -101,6 +103,7 @@ class TopicExerciseBadge(Badge):
         if len(self.exercise_names_required) <= 0:
             return False
 
+        # Make sure user is proficient in all topic exercises
         for exercise_name in self.exercise_names_required:
             if not user_data.is_proficient_at(exercise_name):
                 return False
