@@ -13,7 +13,7 @@ from mock import patch
 from agar.test.base_test import BaseTest
 
 
-class UserDataCoachTest(object): #BaseTest):
+class UserDataCoachTest(BaseTest):
 
     def make_user(self, email):
         u = models.UserData.insert_for(email, email)
@@ -163,7 +163,7 @@ class UserDataCoachTest(object): #BaseTest):
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
         self.assertEqual(0, len(requests_for_renesmee))
 
-class UsernameTest(object): #testutil.GAEModelTestCase):
+class UsernameTest(testutil.GAEModelTestCase):
     def tearDown(self):
         # Clear all usernames just to be safe
         for u in models.UniqueUsername.all():
@@ -263,7 +263,7 @@ class UsernameTest(object): #testutil.GAEModelTestCase):
                 u2.user_id,
                 models.UserData.get_from_username("superbob").user_id)
 
-class ProfileSegmentTest(object): #testutil.GAEModelTestCase):
+class ProfileSegmentTest(testutil.GAEModelTestCase):
     def to_url(self, user):
         return user.prettified_user_email
     def from_url(self, segment):
@@ -299,7 +299,7 @@ class ProfileSegmentTest(object): #testutil.GAEModelTestCase):
                 self.from_url(self.to_url(sally)).user_id,
                 sally.user_id)
 
-class PromoRecordTest(object): #testutil.GAEModelTestCase):
+class PromoRecordTest(testutil.GAEModelTestCase):
     # Shorthand
     def r(self, promo_name, user_id):
         return models.PromoRecord.record_promo(promo_name, user_id)
@@ -340,7 +340,7 @@ class VideoSubtitlesTest(unittest2.TestCase):
         self.assertIsNone(json)
         self.assertEqual(warn.call_count, 1, 'logging.warn() not called')
 
-class UserDataCreationTest(object): #testutil.GAEModelTestCase):
+class UserDataCreationTest(testutil.GAEModelTestCase):
     def flush(self, items):
         """ Ensures items are flushed in the HRD. """
         db.get([item.key() for item in items if item])
@@ -392,7 +392,12 @@ class UserDataCreationTest(object): #testutil.GAEModelTestCase):
 
 class UserConsumptionTest(testutil.GAEModelTestCase):
 
-    def test_phantom_consumes_new_user(self):
+    def make_exercise(self, name):
+        exercise = models.Exercise(name=name)
+        exercise.put()
+        return exercise
+        
+    def test_user_identity_consumption(self):
         superman = models.UserData.insert_for(
                 "superman@gmail.krypt",
                 email="superman@gmail.krypt",
@@ -413,3 +418,33 @@ class UserConsumptionTest(testutil.GAEModelTestCase):
         self.assertEqual("superman@gmail.krypt", clark.email)
         self.assertEqual(clark.key(),
                          models.UserData.get_from_username("superman").key())
+        self.assertEqual(clark.key(),
+                         models.UserData.get_from_user_id("superman@gmail.krypt").key())
+        self.assertTrue(clark.validate_password("Password1"))
+        
+    def test_user_exercise_preserved_after_consuming(self):
+        # A user goes on as a phantom...
+        phantom = models.UserData.insert_for("phantom", "phantom")
+        exercises = [
+                self.make_exercise("Adding 1"),
+                self.make_exercise("Multiplication yo"),
+                self.make_exercise("All about chickens"),
+                ]
+
+        # Does some exercises....
+        for e in exercises:
+            ue = phantom.get_or_insert_exercise(e)
+            ue.total_done = 7
+            ue.put()
+
+        # Signs up!
+        jimmy = models.UserData.insert_for("justjoinedjimmy@gmail.com",
+                                           email="justjoinedjimmy@gmail.com")
+        phantom.consume_identity(jimmy)
+        
+        # Make sure we can still see the old user exercises
+        shouldbejimmy = models.UserData.get_from_user_id("justjoinedjimmy@gmail.com")
+        user_exercises = models.UserExercise.get_for_user_data(shouldbejimmy).fetch(100)
+        self.assertEqual(len(exercises), len(user_exercises))
+        for ue in user_exercises:
+            self.assertEqual(7, ue.total_done)
