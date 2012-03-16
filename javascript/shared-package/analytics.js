@@ -226,26 +226,28 @@
         // Internal function to track the end of the current event
         _trackActivityEnd: function(endTime) {
             if (currentTrackingActivity) {
+                var activity = currentTrackingActivity;
+
                 // Calculate event duration
-                var durationS = Math.floor((endTime - currentTrackingActivity.parameters._startTime) / 1000.0);
+                var durationS = Math.floor((endTime - activity.parameters._startTime) / 1000.0);
                 var pageTimeS = Math.floor((endTime - currentPageLoadTime) / 1000.0);
                 var sessionTimeMS = analyticsStore.getTrackingProperty("Session Start");
 
-                currentTrackingActivity.parameters[currentTrackingActivity.name + " Page"] = currentPage;
-                currentTrackingActivity.parameters[currentTrackingActivity.name + " Duration (s)"] = durationS;
-                currentTrackingActivity.parameters[currentTrackingActivity.name + " Page Time (s)"] = pageTimeS;
-                delete currentTrackingActivity.parameters._startTime;
+                activity.parameters[activity.name + " Page"] = currentPage;
+                activity.parameters[activity.name + " Duration (s)"] = durationS;
+                activity.parameters[activity.name + " Page Time (s)"] = pageTimeS;
+                delete activity.parameters._startTime;
 
                 if (sessionTimeMS) {
                     var sessionTimeS = Math.floor((endTime - sessionTimeMS) / 1000.0);
                     var sessionPageCount = analyticsStore.getTrackingProperty("Session Pages");
-                    currentTrackingActivity.parameters[currentTrackingActivity.name + " Session Time (s)"] = sessionTimeS;
-                    currentTrackingActivity.parameters[currentTrackingActivity.name + " Session Pages"] = sessionPageCount;
+                    activity.parameters[activity.name + " Session Time (s)"] = sessionTimeS;
+                    activity.parameters[activity.name + " Session Pages"] = sessionPageCount;
                 }
 
-                KAConsole.log("Stopped tracking activity " + currentTrackingActivity.name + " after " + durationS + " sec.");
+                KAConsole.log("Stopped tracking activity " + activity.name + " after " + durationS + " sec.");
 
-                analyticsStore.addEvent(currentTrackingActivity);
+                analyticsStore.addEvent(activity);
 
                 currentTrackingActivity = null;
             }
