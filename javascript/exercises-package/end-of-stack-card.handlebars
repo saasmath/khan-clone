@@ -1,13 +1,13 @@
 <div class="end-of-stack-info">
     <div class="title clearfix">
         <div class="stack-stats">
-            <p data-desc="Your longest streak in this stack.">
+            <p data-desc="Your longest streak in this stack of cards.">
             	<img src="/images/power-mode/streak.png" /><span class="times">&times;</span>{{longestStreak}}
            	</p>
-            <p data-desc="Your total speedy answers for this stack.">
+            <p data-desc="Your total speedy answers for this stack of cards.">
             	<img src="/images/power-mode/speed-answer.png" /><span class="times">&times;</span>{{speedyCards}}
             </p>
-            <p data-desc="Your total leaves for this stack.">
+            <p data-desc="Your total leaves for this stack of cards.">
             	<img src="/images/power-mode/card-leaf-full-large.png" /><span class="times">&times;</span>{{totalLeaves}}
             </p>
         </div>
@@ -16,7 +16,7 @@
     <div class="progress-graph current-stack">
 	    {{#each progress}}
 	    	<div class="skill-status">
-		    	<h2 class="skill-bar-title">{{displayName}} ({{#if userExercise.exerciseStates.proficient}}*proficient*{{/if}})</h2>
+		    	<h2 class="skill-bar-title">{{displayName}} {{#if userExercise.exerciseStates.proficient}}<img src="/images/objective-complete-tick.png" class="proficient-tick" data-desc="You've earned proficiency in this skill"/>{{/if}}</h2>
 		    	<div class="skill-bar">
 		    		<div class="fill green" style="width:{{multiply end 100}}%;"></div>
 		    		{{#if userExercise.exerciseStates.proficient}}
@@ -32,7 +32,7 @@
     {{#each topicUserExercises}}
     	<div class="skill-status">
 	    	<h4 class="skill-bar-title">
-	    		{{exerciseModel.displayName}} ({{#if exerciseStates.proficient}}*proficient*{{/if}})
+	    		{{exerciseModel.displayName}} {{#if exerciseStates.proficient}}<img src="/images/objective-complete-tick.png" width="12" height="12" class="proficient-tick" data-desc="You've earned proficiency in this skill"/>{{/if}}
 	    	</h2>
 	    	<div class="skill-bar">
 	    		<div class="fill green" style="width:{{multiply progress 100}}%;"></div>

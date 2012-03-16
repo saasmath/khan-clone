@@ -555,7 +555,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 function() {
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
-                        .find(".stack-stats p")
+                        .find(".stack-stats p, .proficient-tick")
                             .each(Exercises.currentCardView.attachCardTooltip);
                 }
             );
