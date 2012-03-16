@@ -886,6 +886,25 @@ class UniqueUsername(db.Model):
             return
         entity.release_date = clock.utcnow()
         entity.put()
+        
+    @staticmethod
+    def transfer(from_user, to_user):
+        """ Transfers a username from one user to another, assuming the to_user
+        does not already have a username.
+        
+        Returns whether or not a transfer occurred.
+
+        """
+        def txn():
+            if not from_user.username or to_user.username:
+                return False
+            entity = UniqueUsername.get_canonical(from_user.username)
+            entity.claimer_id = to_user.user_id
+            to_user.username = from_user.username
+            from_user.username = None
+            db.put([from_user, to_user, entity])
+            return True
+        return util.ensure_in_transaction(txn, xg_on=True)
 
     @staticmethod
     def get_canonical(username):
@@ -1384,17 +1403,25 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             self.birthdate = new_user.birthdate
             self.gender = new_user.gender
             self.set_password_from_user(new_user)
+            UniqueUsername.transfer(new_user, self)
             
             # TODO(benkomalo): update nickname and indices!
         
             if self.put():
-                # Phantom user was just transitioned to real user
-                user_counter.add(1)
                 new_user.delete()
                 return True
             return False
 
-        return util.ensure_in_transaction(txn, xg_on=True)
+        result = util.ensure_in_transaction(txn, xg_on=True)
+        if result:
+            # Note that all of the updates to the above fields causes changes
+            # to indices affected by each user. Since some of those are really
+            # important (e.g. retrieving a user by user_id), it'd be dangerous
+            # for a subsequent request to see stale indices. Force an apply()
+            # of the HRD by doing a get()
+            db.get(self.key())
+            db.get(new_user.key())
+        return result
 
     @staticmethod
     def get_visible_user(user, actor=None):

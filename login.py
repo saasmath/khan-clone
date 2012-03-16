@@ -135,6 +135,9 @@ def _upgrade_phantom_into(phantom_data, target_data):
     # First make sure user has 0 points and phantom user has some activity
     if (phantom_data and phantom_data.points > 0):
         if phantom_data.consume_identity(target_data):
+            # Phantom user just converted into a real user.
+            user_counter.add(1)
+
             # Clear all "login" notifications
             UserNotifier.clear_all(phantom_data)
             return True

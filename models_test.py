@@ -13,7 +13,7 @@ from mock import patch
 from agar.test.base_test import BaseTest
 
 
-class UserDataCoachTest(BaseTest):
+class UserDataCoachTest(object): #BaseTest):
 
     def make_user(self, email):
         u = models.UserData.insert_for(email, email)
@@ -163,7 +163,7 @@ class UserDataCoachTest(BaseTest):
         requests_for_renesmee = models.CoachRequest.get_for_student(renesmee).fetch(1000)
         self.assertEqual(0, len(requests_for_renesmee))
 
-class UsernameTest(testutil.GAEModelTestCase):
+class UsernameTest(object): #testutil.GAEModelTestCase):
     def tearDown(self):
         # Clear all usernames just to be safe
         for u in models.UniqueUsername.all():
@@ -263,7 +263,7 @@ class UsernameTest(testutil.GAEModelTestCase):
                 u2.user_id,
                 models.UserData.get_from_username("superbob").user_id)
 
-class ProfileSegmentTest(testutil.GAEModelTestCase):
+class ProfileSegmentTest(object): #testutil.GAEModelTestCase):
     def to_url(self, user):
         return user.prettified_user_email
     def from_url(self, segment):
@@ -299,7 +299,7 @@ class ProfileSegmentTest(testutil.GAEModelTestCase):
                 self.from_url(self.to_url(sally)).user_id,
                 sally.user_id)
 
-class PromoRecordTest(testutil.GAEModelTestCase):
+class PromoRecordTest(object): #testutil.GAEModelTestCase):
     # Shorthand
     def r(self, promo_name, user_id):
         return models.PromoRecord.record_promo(promo_name, user_id)
@@ -340,7 +340,7 @@ class VideoSubtitlesTest(unittest2.TestCase):
         self.assertIsNone(json)
         self.assertEqual(warn.call_count, 1, 'logging.warn() not called')
 
-class UserDataCreationTest(testutil.GAEModelTestCase):
+class UserDataCreationTest(object): #testutil.GAEModelTestCase):
     def flush(self, items):
         """ Ensures items are flushed in the HRD. """
         db.get([item.key() for item in items if item])
@@ -388,3 +388,28 @@ class UserDataCreationTest(testutil.GAEModelTestCase):
         self.assertEqual("larry", retrieved.user_id)
         self.assertTrue(retrieved.validate_password("Password1"))
         self.assertFalse(retrieved.validate_password("Password2"))
+
+
+class UserConsumptionTest(testutil.GAEModelTestCase):
+
+    def test_phantom_consumes_new_user(self):
+        superman = models.UserData.insert_for(
+                "superman@gmail.krypt",
+                email="superman@gmail.krypt",
+                username="superman",
+                password="Password1",
+                gender="male",
+                )
+
+        clark = models.UserData.insert_for(
+                "clark@kent.com",
+                email="clark@kent.com",
+                username=None,
+                password=None,
+                )
+
+        clark.consume_identity(superman)
+        self.assertEqual("superman@gmail.krypt", clark.user_id)
+        self.assertEqual("superman@gmail.krypt", clark.email)
+        self.assertEqual(clark.key(),
+                         models.UserData.get_from_username("superman").key())
