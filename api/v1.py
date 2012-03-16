@@ -291,7 +291,7 @@ def topic_tree_problems(version_id = "edit"):
     exercise_dict.update(changes)
     
     for exercise in [e for e in exercise_dict.values() 
-                     if e.live and not e.summative]:
+                     if e.live]:
                
         if exercise.h_position not in location_dict:
             location_dict[exercise.h_position] = {}
@@ -754,7 +754,7 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "summative", "prerequisites", "covers", 
+                        "prerequisites", "covers", 
                         "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise, 
@@ -1669,7 +1669,6 @@ def attempt_problem_number(exercise_name, problem_number):
                     request.request_int("count_hints", default=0),
                     int(request.request_float("time_taken")),
                     review_mode,
-                    request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
@@ -1739,7 +1738,6 @@ def hint_problem_number(exercise_name, problem_number):
                     count_hints,
                     int(request.request_float("time_taken")),
                     review_mode,
-                    request.request_string("non_summative"),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )

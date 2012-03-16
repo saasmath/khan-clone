@@ -11,7 +11,7 @@ class BadgeCategory(object):
     GOLD = 2 # Earth, "Rare"
     PLATINUM = 3 # Sun, "Epic"
     DIAMOND = 4 # Black Hole, "Legendary"
-    MASTER = 5 # Summative/Academic Achievement
+    MASTER = 5 # Topic/Academic Achievement
 
     _serialize_blacklist = [
             "BRONZE", "SILVER", "GOLD",

@@ -534,7 +534,6 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 Exercises.apiRequest({
                     url: "/api/v1/user/topic/" + encodeURIComponent(Exercises.topic.get("id")) + "/exercises",
                     type: "GET",
-                    dataType: "json",
                     success: function(data) {
                         _.each(data, function(userExercise) {
                             topicUserExercises[topicUserExercises.length] = userExercise;
@@ -580,7 +579,6 @@ Exercises.CurrentCardView = Backbone.View.extend({
             Exercises.apiRequest({
                 url: "/api/v1/user/exercises/reviews/count",
                 type: "GET",
-                dataType: "json",
                 success: function(data) { reviewsLeft = data; }
             });
 
