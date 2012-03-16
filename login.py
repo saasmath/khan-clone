@@ -126,37 +126,18 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             "view": self.request_string("view", default="")
         })
 
-def _merge_phantom_into(phantom_data, target_data):
+def _upgrade_phantom_into(phantom_data, target_data):
     """ Attempts to merge a phantom user into a target user.
     Will bail if any signs that the target user has previous activity.
     """
 
 
     # First make sure user has 0 points and phantom user has some activity
-    if (target_data.points == 0 and
-            phantom_data and
-            phantom_data.points > 0):
-
-        # Make sure user has no students
-        if not target_data.has_students():
-
+    if (phantom_data and phantom_data.points > 0):
+        if phantom_data.consume_identity(target_data):
             # Clear all "login" notifications
             UserNotifier.clear_all(phantom_data)
-
-            # Update phantom user_data to real user_data
-            phantom_data.user_id = target_data.user_id
-            phantom_data.current_user = target_data.current_user
-            phantom_data.user_email = target_data.user_email
-            phantom_data.user_nickname = target_data.user_nickname
-            phantom_data.birthdate = target_data.birthdate
-            phantom_data.gender = target_data.gender
-            phantom_data.set_password_from_user(target_data)
-
-            if phantom_data.put():
-                # Phantom user was just transitioned to real user
-                user_counter.add(1)
-                target_data.delete()
-                return True
+            return True
     return False
 
 class PostLogin(request_handler.RequestHandler):
@@ -215,7 +196,7 @@ class PostLogin(request_handler.RequestHandler):
             phantom_id = get_phantom_user_id_from_cookies()
             if phantom_id:
                 phantom_data = UserData.get_from_db_key_email(phantom_id)
-                if _merge_phantom_into(phantom_data, user_data):
+                if _upgrade_phantom_into(phantom_data, user_data):
                     cont = "/newaccount?continue=%s" % cont
         else:
 

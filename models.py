@@ -1353,6 +1353,49 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         return user_data
 
+    def consume_identity(self, new_user):
+        """ Takes over another UserData's identity by updating this user's
+        user_id, and other personal information with that of new_user's,
+        assuming the new_user has never received any points.
+
+        This is useful if this account is a phantom user with history
+        and needs to be updated with a newly registered user's info, or some
+        other similar situation.
+
+        This method will fail if new_user has any points whatsoever,
+        since we don't yet support migrating associated UserVideo
+        and UserExercise objects.
+
+        Returns whether or not the merge was successful.
+        
+        """
+        
+        if (new_user.points > 0):
+            return False
+    
+        if new_user.has_students():
+            return False
+    
+        def txn():
+            self.user_id = new_user.user_id
+            self.current_user = new_user.current_user
+            self.user_email = new_user.user_email
+            self.user_nickname = new_user.user_nickname
+            self.birthdate = new_user.birthdate
+            self.gender = new_user.gender
+            self.set_password_from_user(new_user)
+            
+            # TODO(benkomalo): update nickname and indices!
+        
+            if self.put():
+                # Phantom user was just transitioned to real user
+                user_counter.add(1)
+                new_user.delete()
+                return True
+            return False
+
+        return util.ensure_in_transaction(txn, xg_on=True)
+
     @staticmethod
     def get_visible_user(user, actor=None):
         """ Retrieve user for actor, in the style of O-Town, all or nothing.
@@ -1376,6 +1419,8 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         if not self.is_phantom:
             user_counter.add(-1)
+        
+        # TODO(benkomalo): handle cleanup of nickname indices!
 
         # Delegate to the normal implentation
         super(UserData, self).delete()
