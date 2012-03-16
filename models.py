@@ -1,10 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime, logging
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import math
 import urllib
-import pickle
+import cPickle as pickle
 import random
 import itertools
 
@@ -3309,7 +3315,6 @@ class Topic(Searchable, db.Model):
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data
     import zlib
-    import pickle
 
     try:
         tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
@@ -5476,7 +5481,7 @@ class VideoSubtitles(db.Model):
         """
         try:
             return json.loads(self.json)
-        except json.JSONDecodeError:
+        except ValueError:
             logging.warn('VideoSubtitles.load_json: json decode error')
 
 class VideoSubtitlesFetchReport(db.Model):
