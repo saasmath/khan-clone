@@ -721,6 +721,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has started the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.STARTED, version,
                        _queue="video-log-queue",
@@ -728,6 +730,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_completed(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has completed the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.COMPLETED, version,
                        _queue="video-log-queue",
@@ -762,8 +766,11 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     id = '.v%d' % video_key.id()
     if status == UserVideoCss.STARTED:
-        css['completed'].discard(id)
-        css['started'].add(id)
+        if id in css['completed']:
+            logging.warn("video [%s] for [%s] went from completed->started. ignoring." %
+                         (video_key, user_data_key))
+        else:
+            css['started'].add(id)
     else:
         css['started'].discard(id)
         css['completed'].add(id)
