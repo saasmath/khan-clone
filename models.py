@@ -1325,7 +1325,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
                     user_data = UserData(**prop_values)
                     # Both claim_username and set_password updates user_data
                     # and will call put() for us.
-                    if username and not user_data._claim_username_internal(username):
+                    if username and not user_data.claim_username(username):
                         raise Rollback("username [%s] already taken" % username)
                     if password and user_data.set_password(password):
                         raise Rollback("invalid password for user")
@@ -1686,29 +1686,22 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             db.put([self, goal])
         db.run_in_transaction(save_goal)
 
-    def _claim_username_internal(self, name, clock=None):
-        """ Claims a username internally. Must be called in a transaction! """
-        # Since we are guaranteed to be in a transaction, and GAE does not
-        # support nested transactions, bypass making a transaction
-        # in UniqueUsername
-        claim_success = UniqueUsername._claim_internal(name,
-                                                       claimer_id=self.user_id,
-                                                       clock=clock)
-        if claim_success:
-            if self.username:
-                UniqueUsername.release(self.username, clock)
-            self.username = name
-            self.put()
-        return claim_success
-
     def claim_username(self, name, clock=None):
         """ Claims a username for the current user, and assigns it to her
         atomically. Returns True on success.
         """
         def claim_and_set():
-            return self._claim_username_internal(name, clock)
-        xg_on = db.create_transaction_options(xg=True)
-        result = db.run_in_transaction_options(xg_on, claim_and_set)
+            claim_success = UniqueUsername._claim_internal(name,
+                                                           claimer_id=self.user_id,
+                                                           clock=clock)
+            if claim_success:
+                if self.username:
+                    UniqueUsername.release(self.username, clock)
+                self.username = name
+                self.put()
+            return claim_success
+        
+        result = util.ensure_in_transaction(claim_and_set, xg_on=True)
         if result:
             # Success! Ensure we flush the apply() phase of the modifications
             # so that subsequent queries get consistent results. This makes
