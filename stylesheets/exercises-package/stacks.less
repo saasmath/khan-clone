@@ -350,10 +350,8 @@
     margin-bottom: 22px;
 }
 
-.end-of-stack-info .progress-graph.current-topic .skill-status {
-    width: 48%;
-    margin-right: 2%;
-    float: left;
+.end-of-stack-info .progress-graph.current-topic {
+    display: none;
 }
 
 .end-of-stack-info .progress-graph .skill-bar-title {
@@ -427,6 +425,21 @@
     top: -5px !important;
 }
 
+.three-col {
+    float: left;
+    width: 32%;
+    .box-sizing(border-box);
+}
+.three-col.col-one,
+.three-col.col-two {
+    margin-right: 2%;
+}
+
+#show-topic-details {
+    position: relative;
+    top: -2px;
+    margin-left: 10px;
+}
 /** 
  * Leaving out the "to" or 100% state in these keyframe animations 
  * causes the fill to animate based on the inline width.

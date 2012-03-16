@@ -545,10 +545,34 @@ Exercises.CurrentCardView = Backbone.View.extend({
             this.renderCardAfterAPIRequests(
                 "exercises.end-of-stack-card",
                 function() { 
+                    var unstartedExercises = [];
+                    var proficientExercises = [];
+                    var startedExercises = [];
+
+                    _.each(topicUserExercises, function(userExercise){
+                        if (userExercise.totalDone == 0) {
+                            unstartedExercises.push(userExercise);
+                        } else if (userExercise.exerciseStates.proficient) {
+                            proficientExercises.push(userExercise);
+                        } else if ((userExercise.totalDone > 0) && (!userExercise.exerciseStates.proficient)){
+                            startedExercises.push(userExercise);
+                        }
+                    });
+
+                    var summaryStats = { 
+                        'proficient': proficientExercises.length,
+                        'total': topicUserExercises.length
+                    }
+
                     return _.extend(
                         Exercises.sessionStats.progressStats(), 
                         Exercises.completeStack.stats(),
-                        { topicUserExercises: topicUserExercises }
+                        { 
+                            startedExercises: startedExercises,
+                            unstartedExercises: unstartedExercises,
+                            proficientExercises: proficientExercises,
+                            summaryStats: summaryStats
+                        }
                     );
                 },
                 function() {
