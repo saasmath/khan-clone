@@ -1177,7 +1177,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             properties_list.append(("User Type", "Logged In"))
 
         # If you want to track a GAE/Bingo experiment in analytics, set its name here
-        current_experiment_name = None
+        current_experiment_name = "Search shows matching topic"
         if current_experiment_name:
             properties_list.append((current_experiment_name, ab_test(current_experiment_name)))
         else:

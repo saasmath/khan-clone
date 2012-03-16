@@ -3861,6 +3861,30 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 .search-topics span.highlighted {
     font-weight: bold;
 }
+.search-topics div.matching-topic {
+    width: 620px;
+    margin-left: 20px;
+}
+.search-topics .matching-topic h2 {
+    padding-top: 20px;
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+.search-topics .matching-topic .topic-description {
+    margin-bottom: 5px;
+}
+.search-topics .matching-topic ul {
+    margin-left: 20px;
+}
+.search-topics .matching-topic li {
+    float: left;
+    width: 300px;
+    list-style-type: none;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
 .searchresult-counts {
     font-style: italic;
 }
