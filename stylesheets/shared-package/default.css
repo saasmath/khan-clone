@@ -3980,7 +3980,11 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     width: 60px;
     text-align: center;
 }
+
 /* TODO(marcia): Clean this up, some overlap with profile.css */
+.qtip.user-info-container {
+    width: 310px;
+}
 .qtip.user-info-container .user-info {
   padding: 10px;
   position: relative;
@@ -3988,10 +3992,6 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
-}
-
-.qtip.user-info-container {
-    width: 310px;
 }
 .qtip.user-info-container .avatar-pic-container {
     float: left;
@@ -4011,12 +4011,13 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     margin: 0;
 }
 .qtip.user-info-container .basic-stats {
-    padding: 5px 0 0 0;
+    padding: 1px 0 0 0;
 }
 .qtip.user-info-container .basic-stats .simple-stat {
     float: left;
     text-align: left;
     margin-right: 10px;
+    padding: 3px 0 0 0;
 }
 .qtip.user-info-container .simple-stat .summary-icon {
     display: block;
@@ -4027,15 +4028,19 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     border-radius: 5px;
     padding: 2px 8px;
 }
-
 .qtip.user-info-container .simple-stat .summary-icon.star {
     width: 14px;
     height: 14px;
     padding-top: 3px;
     padding-bottom: 3px;
 }
-
 .qtip.user-info-container .simple-stat .stat-divider {
     font-size: 150%;
     vertical-align: middle;
+}
+.qtip.user-info-container .stat-text {
+    padding-top: 1px;
+}
+.qtip.user-info-container .inaccessible .basic-stats {
+    display: none;
 }

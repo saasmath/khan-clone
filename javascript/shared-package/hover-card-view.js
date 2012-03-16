@@ -12,6 +12,8 @@ HoverCardView = Backbone.View.extend({
         //TODO(marcia): Use real counts
         json["countExercises"] = 300;
         json["countVideos"] = 3000;
+        json["isInaccessible"] = this.model.isInaccessible();
+
         $(this.el).html(this.template(json)).find("abbr.timeago").timeago();
 
         return this;

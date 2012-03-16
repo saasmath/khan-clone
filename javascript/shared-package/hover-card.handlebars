@@ -1,16 +1,20 @@
-<div class="user-info vertical-shadow clearfix">
+<div class="user-info vertical-shadow clearfix {{#if isInaccessible}}inaccessible{{/if}}">
     <div class="basic-user-info">
       <div class="avatar-pic-container">
         <img src="{{avatarSrc}}" id="avatar-pic" class="avatar-pic" >
       </div>
       <div class="user-deets">
           <div>
-              <span class="nickname">{{nickname}}</span>
-          </div>
-          <div>
-              <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
+            {{#if isInaccessible}}
+                <span class="nickname">This user is hiding.</span>
+            {{else}}
+                <span class="nickname">{{nickname}}</span>
+            {{/if}}
           </div>
           <div class="basic-stats clearfix">
+              <div>
+                  <span>Joined <abbr class="timeago" title="{{dateJoined}}">{{dateJoined}}</abbr></span>
+              </div>
               <div class="simple-stat">
                   <img class="summary-icon star" src="/images/profile-icons/inset-star.png">
                   <div class="stat-text">{{countExercisesProficient}}<span class="stat-divider">/</span>{{countExercises}}</div>
@@ -19,7 +23,7 @@
                   <img class="summary-icon" src="/images/profile-icons/inset-camera.png">
                   <div class="stat-text">{{countVideosCompleted}}<span class="stat-divider">/</span>{{countVideos}}</div>
               </div>
-              <div class="simple-stat"><span title="{{commafy points}} energy points" class="energy-points-badge" style="float:none; display:block; margin-bottom: 1px; margin-top: 2px; padding:0; line-height: 20px;">{{commafy points}}</span> Energy Points</div>
+              <div class="simple-stat"><span title="{{commafy points}} energy points" class="energy-points-badge" style="float:none; display:block; margin-bottom: 4px; margin-top: 2px; padding:0; line-height: 20px;">{{commafy points}}</span> <div class="stat-text">Energy Points</div></div>
           </div>
       </div>
     </div>

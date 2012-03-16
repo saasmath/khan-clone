@@ -31,6 +31,12 @@ var ProfileModel = Backbone.Model.extend({
         return email.indexOf(ProfileModel.PHANTOM_EMAIL_PREFIX) === 0;
     },
 
+    isInaccessible: function() {
+        // TODO(marcia): Learn from BenKomalo on how to deal with this nicely
+        // Maybe follow UserProfile?
+        return (this.get("avatarName") === "darth");
+    },
+
     /**
      * Whether or not the current actor can customize this profile.
      * Note that users under 13 without parental consent can only
