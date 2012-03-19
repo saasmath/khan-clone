@@ -180,10 +180,7 @@ def layer_cache_check_set_return(
                 return result
         
         if layer & Layers.Blobstore:
-            try:
-                result = BlobCache.get(key, namespace=namespace)
-            except Exception, e:
-                logging.warning("Reading from blobstore failed with: %s" % e)
+            result = BlobCache.get(key, namespace=namespace)
     
             # TODO: fill upward layers if size of dumped result is going to be less than 1MB (might be too costly to figure that out
             return result
@@ -215,7 +212,7 @@ def layer_cache_check_set_return(
         if layer & Layers.Blobstore:
             try:
                 BlobCache.set(key, result, time=expiration, namespace=namespace)
-            except:
+            except Exception, e:
                 logging.warning("Writing to the blobstore failed with: %s" % e)
                 
 
