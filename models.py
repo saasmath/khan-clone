@@ -1967,11 +1967,15 @@ def check_for_problems(version_number, run_code):
     content_problems = version.find_content_problems()
     for problem_type, problems in content_problems.iteritems():
         if len(problems):
+            content_problems["Version"] = version_number
+            content_problems["Date detected"] = datetime.datetime.now()
+            layer_cache.KeyValueCache.set(
+                "set_default_version_content_problem_details", content_problems)
             Setting.topic_admin_task_message(("Error - content problems " +
                 "found: %s. <a target=_blank " +
-                "href='/api/v1/dev/topictree/%i/problems'>" +
+                "href='/api/v1/dev/topictree/problems'>" +
                 "Click here to see problems.</a>") % 
-                (problem_type, version_number))
+                (problem_type))
                 
             raise deferred.PermanentTaskFailure
 

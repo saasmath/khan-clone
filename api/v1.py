@@ -293,14 +293,13 @@ def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
-@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
 @route("/api/v1/dev/topictree/problems", methods=["GET"])
 # TODO(james) add @developer_required once Tom creates interface
 @jsonp
 @jsonify
 def topic_tree_problems(version_id = "edit"):
-    version = models.TopicVersion.get_by_id(version_id)
-    return version.find_content_problems()
+    return layer_cache.KeyValueCache.get(
+        "set_default_version_content_problem_details")
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])

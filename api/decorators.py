@@ -91,15 +91,7 @@ def jsonify(func):
         camel_cased= (has_flask_request_context() and
                       flask.request.values.get("casing") == "camel")
 
-        if isinstance(obj, unicode):
-            # This saves us from calling api.jsonify
-            return obj
-        elif isinstance(obj, str):
-            # This will make sure that we will always return unicode rather 
-            # than a str, and saves us from calling api.jsonify
-            return obj.decode('utf-8') 
-        else: 
-            return apijsonify.jsonify(obj, camel_cased=camel_cased)
+        return apijsonify.jsonify(obj, camel_cased=camel_cased)
     return jsonified
 
 def jsonp(func):
