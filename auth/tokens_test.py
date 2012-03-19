@@ -81,3 +81,12 @@ class TokenTests(BaseTest):
         u.credential_version = "credential version 1"
         u.put()
         self.assertFalse(token.is_valid(u, time_to_expiry, clock))
+
+    def test_auth_token_parses(self):
+        clock = testutil.MockDatetime()
+        u = self.make_user("userid1", "credential version 0")
+        token = tokens.AuthToken.for_user(u, clock)
+        
+        parsed = tokens.AuthToken.for_value(token.value)
+        time_to_expiry = datetime.timedelta(30)
+        self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))
