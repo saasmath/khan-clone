@@ -90,20 +90,3 @@ class TokenTests(BaseTest):
         parsed = tokens.AuthToken.for_value(token.value)
         time_to_expiry = datetime.timedelta(30)
         self.assertTrue(parsed.is_valid(u, time_to_expiry, clock))
-
-    def test_distinguishing_token_types(self):
-        clock = testutil.MockDatetime()
-        u = self.make_user("userid1", "credential version 0")
-        u.joined = clock.utcnow()
-        u.blocked = models.BlockReason.EMAIL_NEEDS_CONFIRMATION
-        u.put()
-
-        auth_token = tokens.AuthToken.for_user(u, clock)
-        email_verif_token = tokens.EmailVerificationToken.for_user(u, clock)
-        
-        parsed_auth = tokens.AuthToken.for_value(email_verif_token.value)
-        parsed_email = tokens.EmailVerificationToken.for_value(auth_token.value)
-
-        time_to_expiry = datetime.timedelta(30)
-        self.assertFalse(parsed_auth.is_valid(u, time_to_expiry, clock))
-        self.assertFalse(parsed_email.is_valid(u, time_to_expiry, clock))
