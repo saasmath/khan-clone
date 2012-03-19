@@ -579,7 +579,13 @@ Exercises.CurrentCardView = Backbone.View.extend({
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
                         .find(".stack-stats p, .proficient-tick")
-                            .each(Exercises.currentCardView.attachCardTooltip);
+                            .each(Exercises.currentCardView.attachCardTooltip)
+                        .end()
+                        .find("#show-topic-details")
+                            .click(function(){
+                                $('.current-topic').slideDown(); 
+                                $(this).hide();
+                            });
                 }
             );
 
