@@ -28,11 +28,13 @@
 		    </div>
 	    {{/each}}
     </div>
+
+    {{#unless practiceMode}}
     <div>
         <h2 style="display: inline-block;">Overall Progress</h2>
         <!-- TODO: If this interaction sticks around it should be pulled back into backbone -->
         <a href="javascript:void(0);" onclick="$('.current-topic').slideDown(); $(this).hide(); return false;" class="simple-button action-gradient" id="show-topic-details">
-            {{summaryStats.proficient}}/{{summaryStats.total}} Skills
+            {{proficient}}/{{total}} Skills
         </a>
         
     </div>
@@ -78,6 +80,8 @@
             {{/each}}
         </div>
     </div>
+    {{/unless}}
+
     <div class="stack-controls">
       <!-- TODO Jason/Kamens: Get real URLs in here -->
       <a href="/exercisedashboard" class="simple-button action-gradient left">Take a Break</a><a href="/math/arithmetic/addition-subtraction/e/" class="simple-button action-gradient green right">More Stacks!</a>

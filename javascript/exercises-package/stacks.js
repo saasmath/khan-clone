@@ -553,21 +553,19 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         }),
                         startedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone > 0;
-                        }),
-                        summaryStats = { 
-                            'proficient': proficientExercises.length,
-                            'total': topicUserExercises.length
-                        }
+                        })
 
                     return _.extend(
-                        Exercises.sessionStats.progressStats(), 
-                        Exercises.completeStack.stats(),
-                        { 
+                        {
+                            "practiceMode": Exercises.practiceMode,
+                            "proficient": proficientExercises.length,
+                            "total": topicUserExercises.length,
                             startedExercises: startedExercises,
                             unstartedExercises: unstartedExercises,
                             proficientExercises: proficientExercises,
-                            summaryStats: summaryStats
-                        }
+                        },
+                        Exercises.sessionStats.progressStats(), 
+                        Exercises.completeStack.stats()
                     );
                 },
                 function() {
