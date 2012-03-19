@@ -147,17 +147,3 @@ class AuthToken(object):
                                                                self.timestamp,
                                                                self.signature]))
         return self._value_internal
-
-def user_id_from_token(token_value):
-    """ Given an auth token, determine the user_id that it's supposed to belong
-    to.
-    
-    Does not actually validate authenticity of the token - only well - formedness.
-    Clients are expected to call validate_token when the CredentialedUser has
-    been retrieved from the id.
-    
-    """
-
-    token = AuthToken.for_value(token_value)
-    return token.user_id
-
