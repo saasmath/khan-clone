@@ -19,6 +19,7 @@ skip_files:
 - ^(.*/)?khan-exercises/test/.*
 - ^(.*/)?presskit/.*
 - ^(.*/)?deploy/.*
+- ^(.*/)?images/power-mode/badges/readme
 - ^(.*/)?javascript/testbase\.js
 - ^(.*/)?javascript/test/.*
 - ^(.*/)?.*_test\.html
