@@ -417,6 +417,13 @@ Exercises.CurrentCardView = Backbone.View.extend({
     },
 
     renderCalculationInProgressCard: function() {
+
+        if ($(".calculating-end-of-stack").is(":visible")) {
+            // If the calculation in progress card is already visible,
+            // bail.
+            return;
+        }
+
         this.renderCardContainer();
         this.renderCardContents("exercises.calculating-card");
 

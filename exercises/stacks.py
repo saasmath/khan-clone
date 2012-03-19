@@ -1,6 +1,6 @@
 
-DEFAULT_CARDS_PER_STACK = 10
-MAX_CARDS_PER_REVIEW_STACK = 8
+DEFAULT_CARDS_PER_STACK = 2
+MAX_CARDS_PER_REVIEW_STACK = 2
 
 # TODO: this will probably eventually by persisted to the datastore in the form
 # of a double-pickled list of cards attached to UserTopics or something similar.

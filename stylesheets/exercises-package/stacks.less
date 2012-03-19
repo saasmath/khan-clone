@@ -17,7 +17,8 @@
     border: 1px solid silver;
     background-color: #F8F8F8;
 }
-.card-type-endofstack .current-card-container-inner {
+.card-type-endofstack .current-card-container-inner,
+.card-type-endofreview .current-card-container-inner {
     background-color: #E9EFDD;
 }
 
@@ -55,7 +56,8 @@
     -webkit-animation: translate-center-to-ur 0.18s ease-in-out 0s 1 forwards normal;
 }
 .current-card.shrinkRight #extras,
-.card-type-endofstack #extras {
+.card-type-endofstack #extras,
+.card-type-endofreview #extras {
     display: none;
 }
 .current-card.shrinkRight .current-card-container-inner {
@@ -157,7 +159,8 @@
     position: absolute;
     right: 10px;
 }
-    .card-type-endofstack .leaves-container {
+    .card-type-endofstack .leaves-container,
+    .card-type-endofreview .leaves-container {
         display: none;
     }
 
@@ -236,7 +239,8 @@
     display: none;
 }
 
-.card-type-endofstack .current-card-contents {
+.card-type-endofstack .current-card-contents,
+.card-type-endofreview .current-card-contents {
     padding: 20px;
 }
 
