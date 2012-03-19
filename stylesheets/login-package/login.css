@@ -127,6 +127,10 @@ a:visited {
     outline: none;
 }
 
+.auth-form .simple-input:disabled {
+    color: #333;
+}
+
 /* TODO(benkomalo): possibly make this a standard for the site. */
 .auth-form select.simple-input {
     /* Work around a webkit "bug" where box shadows don't work unless you
