@@ -2,7 +2,7 @@ from app import App
 from auth import age_util
 from counters import user_counter
 from google.appengine.api import users
-from models import UserData
+from models import UserData, BlockReason
 from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
@@ -90,15 +90,41 @@ class Login(request_handler.RequestHandler):
                 self.render_login(identifier, errors)
                 return
 
-            u = models.UserData.get_from_username_or_email(identifier.strip())
-            if not u or not u.validate_password(password):
+            user_data = models.UserData.get_from_username_or_email(identifier.strip())
+            if not user_data or not user_data.validate_password(password):
                 errors = {}
                 errors['badlogin'] = True
                 # TODO(benkomalo): IP-based throttling of failed logins?
                 self.render_login(identifier, errors)
                 return
 
-            Login.redirect_with_auth_stamp(self, u, cont)
+            # Successful login - check first to see if they can proceed.
+            if user_data.blocked == BlockReason.EMAIL_NEEDS_CONFIRMATION:
+                Login.redirect_to_unverified_warning(self, user_data)
+            else:
+                Login.redirect_with_auth_stamp(self, user_data, cont)
+
+    @staticmethod
+    def redirect_to_unverified_warning(handler,
+                                       user_data,
+                                       existing_google_user_detected=None):
+        """ Handles a successful login for a user that has not had their
+        e-mail address verified, and therefore needs to be stopped from
+        actually getting an auth token. """
+        
+        if existing_google_user_detected == None:
+            # Check to see if there is an existing UserData account that was
+            # created using a Google login.
+            existing_google_user_detected = False
+            for u in models.UserData.get_all_for_user_input_email(user_data.email):
+                if not u.has_password():
+                    existing_google_user_detected = True
+                    break
+
+        cont = util.insecure_url("/unverified?uid=%s&google=%s" % (
+                urllib.quote(user_data.user_id),
+                "1" if existing_google_user_detected else "0"))
+        handler.redirect(util.insecure_url(cont))
 
     @staticmethod
     def redirect_with_auth_stamp(handler, user_data, cont="/"):
@@ -152,7 +178,7 @@ class PostLogin(request_handler.RequestHandler):
             # If an auth stamp is provided, it means they logged in using
             # a password via HTTPS, and it has redirected here to postlogin
             # to set the auth cookie from that token. We can't rely on
-            # UserData.current() since no cookies have yet been set.
+            # UserData.current() yet since no cookies have yet been set.
             token = auth.tokens.AuthToken.for_value(auth_stamp)
             if not token:
                 logging.error("Invalid authentication token specified")
@@ -161,6 +187,13 @@ class PostLogin(request_handler.RequestHandler):
                 if not user_data or not token.is_valid(user_data):
                     logging.error("Invalid authentication token specified")
                     user_data = None
+                elif user_data.blocked == BlockReason.EMAIL_NEEDS_CONFIRMATION:
+                    # Shouldn't expect to get here, since Login.post should
+                    # avoid redirecting to postlogin, but double check to see
+                    # if the user hasn't verified her e-mail.
+                    # Deny access until that happens.
+                    Login.redirect_to_unverified_warning(self, user_data)
+                    return
                 else:
                     # Good auth stamp - set the cookie for the user, which
                     # will also set it for this request.
@@ -326,6 +359,7 @@ class Register(request_handler.RequestHandler):
                 gender = None
 
         # Check validity of auth credentials
+        existing_google_user_detected = False
         if values['email']:
             email = values['email']
 
@@ -341,12 +375,9 @@ class Register(request_handler.RequestHandler):
                         # user to try and login with that e-mail?
                         errors['email'] = "There is already an account with that e-mail"
                     else:
-                        # There's an existing user but no password based login
-                        # exists for them. They must have been using a Google
-                        # login - suggest merging the two
-                        # TODO(benkomalo): actually implement....somehow
-                        pass
-                        
+                        existing_google_user_detected = True
+                        logging.warn("User tried to register with password, "
+                                     "but has an account w/ Google login")
 
         if values['username']:
             username = values['username']
@@ -369,10 +400,10 @@ class Register(request_handler.RequestHandler):
             del values['password']
 
             template_values = {
-	            'continue': cont,
-	            'errors': errors,
-	            'values': values,
-	        }
+                'continue': cont,
+                'errors': errors,
+                'values': values,
+            }
 
             self.render_jinja2_template('register.html', template_values)
             return
@@ -381,27 +412,33 @@ class Register(request_handler.RequestHandler):
         # centralized place and do a double check ID collisions
         import uuid
         user_id = "http://id.khanacademy.org/" + uuid.uuid4().hex
-        created_user = models.UserData.insert_for(user_id,
-                                                  email,
-                                                  username,
-                                                  password)
+        created_user = models.UserData.insert_for(
+                user_id,
+                email,
+                username,
+                password,
+                birthdate=birthdate,
+                gender=gender,
+                # The user needs to verify their e-mail prior to moving on.
+                blocked=BlockReason.EMAIL_NEEDS_CONFIRMATION)
+
         if not created_user:
             # TODO(benkomalo): STOPSHIP handle the low probability event that a
             # username was taken just as this method was processing.
             self.response.write("Oops. can't make user")
             return
-
-        # Set other properties we collected about the user (these are a little
-        # more free and doesn't need to happen in the transaction above)
-        # Note update_nickname calls put()
-        created_user.birthdate = birthdate
-        created_user.gender = gender
+        
+        # Nickname is special since it requires updating external indices.
         created_user.update_nickname(values['nickname'])
+        
+        # TODO(benkomalo): send verification e-mail
+        # TODO(benkomalo): since users are now blocked from further access
+        #    due to requiring verification of e-mail, we need to do something
+        #    about migrating phantom data.
 
-        # TODO(benkomalo): send welcome e-mail
-        # TODO(benkomalo): do some kind of onboarding instead of taking them
-        #                  directly to a continue URL
-        Login.redirect_with_auth_stamp(self, created_user, cont)
+        Login.redirect_to_unverified_warning(self,
+                                             created_user,
+                                             existing_google_user_detected)
 
 class PasswordChange(request_handler.RequestHandler):
     def post(self):
@@ -436,3 +473,9 @@ class PasswordChange(request_handler.RequestHandler):
 
             # Need to create a new auth token as the existing cookie will expire
             Login.redirect_with_auth_stamp(self, user_data, cont)
+
+class UnverifiedAccount(request_handler.RequestHandler):
+    def get(self):
+        # TODO(benkomalo): implement
+        self.render_jinja2_template('unverified_account.html', {})
+

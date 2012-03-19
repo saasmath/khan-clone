@@ -41,7 +41,7 @@ from image_cache import ImageCache
 from auth import age_util
 from auth.models import CredentialedUser
 from templatefilters import slugify
-from gae_bingo.gae_bingo import ab_test, bingo
+from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment, MarqueeVideoExperiment
 import re
@@ -1237,6 +1237,15 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
+    
+    @staticmethod
+    def get_all_for_user_input_email(email):
+        if not email:
+            return []
+
+        query = UserData.all()
+        query.filter('user_email =', email)
+        return query
 
     @staticmethod
     def get_from_username(username):

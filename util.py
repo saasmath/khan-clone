@@ -19,7 +19,6 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
 
 from api.auth.google_util import get_google_user_id_and_email_from_oauth_map
 from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
-import Cookie
 import urlparse
 
 @request_cache.cache()
