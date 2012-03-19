@@ -324,6 +324,7 @@ Exercises.BottomlessQueue = {
                 // Return a list of upcoming exercises so the server can decide
                 // whether or not to re-suggest them.
                 queued: _.pluck(this.currentQueue, "exercise"),
+                casing: "camel"
             },
             complete: function() {
                 Exercises.BottomlessQueue.refilling = false;
