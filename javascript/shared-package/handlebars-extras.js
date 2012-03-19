@@ -46,3 +46,7 @@ Handlebars.registerHelper("toBingoHref", function(destination) {
 
     return gae_bingo.create_redirect_url.call(null, destination, conversionNames);
 });
+
+Handlebars.registerHelper("multiply", function(num1, num2){
+    return (num1 * num2)
+});

@@ -545,16 +545,40 @@ Exercises.CurrentCardView = Backbone.View.extend({
             this.renderCardAfterAPIRequests(
                 "exercises.end-of-stack-card",
                 function() { 
+                    var unstartedExercises = [];
+                    var proficientExercises = [];
+                    var startedExercises = [];
+
+                    _.each(topicUserExercises, function(userExercise){
+                        if (userExercise.totalDone == 0) {
+                            unstartedExercises.push(userExercise);
+                        } else if (userExercise.exerciseStates.proficient) {
+                            proficientExercises.push(userExercise);
+                        } else if ((userExercise.totalDone > 0) && (!userExercise.exerciseStates.proficient)){
+                            startedExercises.push(userExercise);
+                        }
+                    });
+
+                    var summaryStats = { 
+                        'proficient': proficientExercises.length,
+                        'total': topicUserExercises.length
+                    }
+
                     return _.extend(
                         Exercises.sessionStats.progressStats(), 
                         Exercises.completeStack.stats(),
-                        { topicUserExercises: topicUserExercises }
+                        { 
+                            startedExercises: startedExercises,
+                            unstartedExercises: unstartedExercises,
+                            proficientExercises: proficientExercises,
+                            summaryStats: summaryStats
+                        }
                     );
                 },
                 function() {
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
-                        .find(".stack-stats p")
+                        .find(".stack-stats p, .proficient-tick")
                             .each(Exercises.currentCardView.attachCardTooltip);
                 }
             );
@@ -764,8 +788,6 @@ Exercises.SessionStats = Backbone.Model.extend({
             /** 
              * For now, we're just keeping track of the change in progress per
              * exercise
-             * Converting manually from decimal to % so it can be more easily used in
-             * HTML/CSS land.
              */
             var progressStats = this.get("progress") || {},
 
@@ -773,13 +795,13 @@ Exercises.SessionStats = Backbone.Model.extend({
                     name: userExercise.exercise,
                     displayName: userExercise.exerciseModel.displayName,
                     startTotalDone: userExercise.totalDone,
-                    start: userExercise.progress * 100
+                    start: userExercise.progress
                 };
 
             stat.endTotalDone = userExercise.totalDone;
-            stat.end = userExercise.progress * 100;
+            stat.end = userExercise.progress;
             stat.change = stat.end - stat.start;
-            stat.proficient = true ? (stat.end < 100) : false;
+            stat.proficient = stat.end == 100;
 
             // Set and cache the latest
             progressStats[exerciseName] = stat;

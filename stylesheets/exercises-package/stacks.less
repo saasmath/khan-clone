@@ -122,6 +122,7 @@
 
 .current-card {
     position: relative;
+    margin-bottom: 20px;
 }
 
 .current-card #answer_area_wrap {
@@ -349,10 +350,20 @@
     margin-bottom: 22px;
 }
 
+.end-of-stack-info .progress-graph.current-topic {
+    display: none;
+}
+
 .end-of-stack-info .progress-graph .skill-bar-title {
     margin: 0 0 5px;
 }
+    .end-of-stack-info .progress-graph.current-topic .skill-bar-title {
+        margin: 0;
+    }
 
+.proficient-tick {
+    vertical-align: -1px;
+}
 /* Much credit goes to: http://css-tricks.com/css3-progress-bars/ */
 
 .end-of-stack-info .progress-graph .skill-bar {
@@ -365,6 +376,9 @@
     .border-radius(4px);
     .box-shadow(inset 0 0 4px rgba(0,0,0,0.3);
 }
+    .end-of-stack-info .progress-graph.current-topic .skill-bar {
+        height: 5px;
+    }
 
 .end-of-stack-info .progress-graph .skill-bar .description {
     position: relative;
@@ -406,6 +420,26 @@
     top: -15px;
 }
 
+.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.gray,
+.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.blue {
+    top: -5px !important;
+}
+
+.three-col {
+    float: left;
+    width: 32%;
+    .box-sizing(border-box);
+}
+.three-col.col-one,
+.three-col.col-two {
+    margin-right: 2%;
+}
+
+#show-topic-details {
+    position: relative;
+    top: -2px;
+    margin-left: 10px;
+}
 /** 
  * Leaving out the "to" or 100% state in these keyframe animations 
  * causes the fill to animate based on the inline width.
