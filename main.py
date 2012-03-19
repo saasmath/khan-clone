@@ -487,8 +487,8 @@ class Search(request_handler.RequestHandler):
 
         # A/B test showing a matching topic at the top of the page
         if matching_topic_count > 0:
-            show_matching_topic = ab_test("Search shows matching topic (2)", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
-            analytics_bingo = {"name": "Bingo: Search topic (2)", "value": "Show" if show_matching_topic else "Hide"}
+            show_matching_topic = ab_test("Search shows matching topic 2", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
+            analytics_bingo = {"name": "Bingo: Search topic 2", "value": "Show" if show_matching_topic else "Hide"}
 
             if not show_matching_topic:
                 for topic in topics:
