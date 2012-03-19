@@ -608,10 +608,16 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
             // And finally wait for the previous API call to finish before
             // rendering end of review card.
-            Exercises.currentCardView.renderCardAfterAPIRequests("exercises.end-of-review-card", function() { 
-                // Pass reviews left info into end of review card
-                return _.extend({}, Exercises.completeStack.stats(), {reviewsLeft: reviewsLeft});
-            });
+            Exercises.currentCardView.renderCardAfterAPIRequests(
+                "exercises.end-of-review-card",
+                function() { 
+                    // Pass reviews left info into end of review card
+                    return _.extend({}, Exercises.completeStack.stats(), {reviewsLeft: reviewsLeft});
+                },
+                function() {
+                    $(Exercises.completeStackView.el).hide();
+                }
+            );
 
         });
 

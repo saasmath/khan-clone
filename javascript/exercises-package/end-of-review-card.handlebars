@@ -1,13 +1,17 @@
-<div>
-    END OF REVIEW!!!
-    <br><br>
-    longest streak: {{longestStreak}}<br>
-    longest speed streak: {{speedyCards}}<br>
-    leaves: {{totalLeaves}}<br>
-    <br><br>
-    {{#if reviewsLeft }}
-    <strong>You still have some reviews left! <a href="/review">Do 'em up.</a></strong>
-    {{else}}
-    <strong>[Nifty review done animation goes here!]</strong>
-    {{/if}}
+<div class="end-of-stack-info">
+    <div class="title clearfix">
+        {{#if reviewsLeft}}
+        <h2>You have {{reviewsLeft}} skill{{pluralize reviewsLeft}} left to review...</h2>
+        {{else}}
+        <h2>You're done reviewing!</h2>
+        {{/if}}
+    </div>
+    <div class="stack-controls">
+        {{#if reviewsLeft}}
+        <a href="/exercisedashboard" class="simple-button action-gradient left">Take a Break</a><a href="?" class="simple-button action-gradient green right">Keep reviewing!</a>
+        {{else}}
+        <a href="/exercisedashboard" class="simple-button action-gradient left">Head back to your exercise dashboard</a>
+        {{/if}}
+    </div>
 </div>
+

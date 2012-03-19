@@ -25,6 +25,10 @@ Handlebars.registerHelper("repeat", function(n, options) {
     return ret;
 });
 
+Handlebars.registerHelper("pluralize", function(num) {
+    return (num === 1) ? "" : "s";
+});
+
 Handlebars.registerHelper("reverseEach", function(context, block) {
     var result = "";
     for (var i = context.length - 1; i >= 0; i--) {
