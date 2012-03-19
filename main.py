@@ -462,10 +462,6 @@ class Search(request_handler.RequestHandler):
         for video_key, exercise_keys in filtered_videos_by_key.iteritems():
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
-        # A/B test showing a matching topic at the top of the page
-        show_matching_topic = ab_test("Search shows matching topic", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
-        analytics_bingo = {"name": "Bingo: Search topic", "value": "Show" if show_matching_topic else "Hide"}
-
         # Count number of videos in each topic and sort descending
         topic_count = 0
         matching_topic_count = 0
@@ -481,14 +477,26 @@ class Search(request_handler.RequestHandler):
                 for topic in topics:
                     topic.match_count = 0
 
-            if show_matching_topic:
-                for topic in topics:
-                    if topic.title.lower() == query:
-                        topic.matches = True
-                        matching_topic_count += 1
+            for topic in topics:
+                if topic.title.lower() == query:
+                    topic.matches = True
+                    matching_topic_count += 1
 
-                        child_topics = topic.get_child_topics(include_descendants=True)
-                        topic.child_topics = [t for t in child_topics if t.has_content()]
+                    child_topics = topic.get_child_topics(include_descendants=True)
+                    topic.child_topics = [t for t in child_topics if t.has_content()]
+
+        # A/B test showing a matching topic at the top of the page
+        if matching_topic_count > 0:
+            show_matching_topic = ab_test("Search shows matching topic (2)", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
+            analytics_bingo = {"name": "Bingo: Search topic (2)", "value": "Show" if show_matching_topic else "Hide"}
+
+            if not show_matching_topic:
+                for topic in topics:
+                    topic.matches = False
+                matching_topic_count = 0
+
+        else:
+            analytics_bingo = None
 
         template_values.update({
                            'topics': topics,
