@@ -545,13 +545,13 @@ Exercises.CurrentCardView = Backbone.View.extend({
             this.renderCardAfterAPIRequests(
                 "exercises.end-of-stack-card",
                 function() { 
-                    var unstartedExercises = _.filter(topicUserExercises, function() {
-                            return userExercise.totalDone == 0;
+                    var unstartedExercises = _.filter(topicUserExercises, function(userExercise) {
+                            return !userExercise.exerciseStates.proficient && userExercise.totalDone == 0;
                         }),
-                        proficientExercises = _.filter(topicUserExercises, function() {
+                        proficientExercises = _.filter(topicUserExercises, function(userExercise) {
                             return userExercise.exerciseStates.proficient;
                         }),
-                        startedExercises = _.filter(topicUserExercises, function() {
+                        startedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone > 0;
                         }),
                         summaryStats = { 
