@@ -463,7 +463,8 @@ class Search(request_handler.RequestHandler):
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
         # A/B test showing a matching topic at the top of the page
-        show_matching_topic = ab_test("Search shows matching topic", ["show", "hide"], ["search_topic_started_video", "search_topic_completed_video"]) == "show"
+        show_matching_topic = ab_test("Search shows matching topic", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
+        analytics_bingo = {"name": "Bingo: Search topic", "value": "Show" if show_matching_topic else "Hide"}
 
         # Count number of videos in each topic and sort descending
         topic_count = 0
@@ -496,7 +497,8 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
-                           'matching_topic_count': matching_topic_count
+                           'matching_topic_count': matching_topic_count,
+                           'analytics_bingo': analytics_bingo
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)

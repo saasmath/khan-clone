@@ -89,6 +89,9 @@
       {% for variable in ga_custom_vars %} 
       _gaq.push(['_setCustomVar', {{ loop.index }}, '{{ variable[0] }}', '{{ variable[1] }}', 1 ]);
       {% endfor %}
+      {% if analytics_bingo %}
+      _gaq.push(['_setCustomVar', 5, '{{ analytics_bingo.name }}', '{{ analytics_bingo.value }}', 1 ]);
+      {% endif %}
 
       {# For OER Analytics #}
       _gaq.push(['ht._setAccount', 'UA-5033010-1']);
@@ -228,6 +231,9 @@
         $(function() {
             mpq.identify("{{ mixpanel_id }}");
             mpq.register({{ mixpanel_superprops }}, "all", 31);
+            {% if analytics_bingo %}
+            mpq.register({ "{{ analytics_bingo.name }}": "{{ analytics_bingo.value }}" }, "all", 31);
+            {% endif %}
 
             {# Slightly nicer display name in MixPanel dashboard #}
             {% if logged_in %}
