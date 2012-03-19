@@ -1,4 +1,8 @@
+from __future__ import absolute_import
+
 from app import App
+from models import BlockReason
+
 import base64
 import datetime
 import hashlib
@@ -68,10 +72,7 @@ class BaseToken(object):
         type, user_id, timestamp, signature = parts
         return cls(user_id, timestamp, signature)
     
-    DEFAULT_EXPIRY = datetime.timedelta(days=14)
-    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 86400
-
-    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+    def is_expired(self, time_to_expiry=None, clock=None):
         """ Determines whether or not the specified token is expired.
         
         Note that tokens encapsulate timestamp on creation, so the application
@@ -79,10 +80,8 @@ class BaseToken(object):
         tokens with such changes.
         
         """
+        raise Exception("Not implemented in base class")
 
-        dt = _from_timestamp(self.timestamp)
-        now = (clock or datetime.datetime).utcnow()
-        return not dt or (now - dt) > time_to_expiry
     
     def is_authentic(self, user_data):
         """ Determines if the token is valid for a given user. """
@@ -93,7 +92,7 @@ class BaseToken(object):
         return expected == self.signature
 
     def is_valid(self, user_data,
-                 time_to_expiry=DEFAULT_EXPIRY, clock=None):
+                 time_to_expiry=None, clock=None):
         return (not self.is_expired(time_to_expiry, clock) and
                 self.is_authentic(user_data))
 
@@ -114,16 +113,19 @@ class BaseToken(object):
 
 
 class AuthToken(BaseToken):
-    """ A secure token used to authenticate a user that has a password set.
-
-    Note that instances may be created that are invalid. Clients must check
-    is_valid() to ensure the contents of the token are valid.
-    
-    """
+    """ A secure token used to authenticate a user that has a password set. """
 
     @property
     def type(self):
         return "auth"
+
+    DEFAULT_EXPIRY = datetime.timedelta(days=14)
+    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 86400
+
+    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        dt = _from_timestamp(self.timestamp)
+        now = (clock or datetime.datetime).utcnow()
+        return not dt or (now - dt) > time_to_expiry
 
     @staticmethod
     def for_user(user_data, clock=None):
@@ -156,6 +158,46 @@ class AuthToken(BaseToken):
 
         payload = "\n".join([user_data.user_id,
                              user_data.credential_version,
+                             timestamp])
+        secret = key or App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+
+class EmailVerificationToken(BaseToken):
+    """ A unique token for a user that gets embedded in an e-mail sent to them
+    so that they can click on a link to verify they own the e-mail address.
+
+    """
+
+    @property
+    def type(self):
+        return "emailverify"
+    
+    def is_expired(self, time_to_expiry=None, clock=None):
+        # Email verification tokens never expire.
+        return False
+
+    @staticmethod
+    def for_user(user_data, clock=None):
+        """ Given a user, build an EmailVerificationToken for that user. """
+
+        if user_data.blocked != BlockReason.EMAIL_NEEDS_CONFIRMATION:
+            logging.warn("Building EmailVerificationToken for user [%s]"
+                         " with already verified email" % user_data.user_id)
+
+        timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
+        signature = EmailVerificationToken._make_token_signature(
+                user_data,
+                timestamp)
+        return EmailVerificationToken(user_data.user_id, timestamp, signature)
+
+    @staticmethod
+    def _make_token_signature(user_data, timestamp, key=None):
+        """ Generates a signature to be embedded inside of an email verification
+        token. """
+
+        payload = "\n".join([user_data.user_id,
+                             _to_timestamp(user_data.joined),
                              timestamp])
         secret = key or App.token_recipe_key
         return hmac.new(secret, payload, hashlib.sha256).hexdigest()
