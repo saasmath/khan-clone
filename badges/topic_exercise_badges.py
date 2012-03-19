@@ -51,7 +51,7 @@ def sync_with_topic_version(version):
     for badge_type in TopicExerciseBadgeType.all():
 
         # Make sure each TopicExerciseBadgeType has a corresponding topic...
-        exists = len([t for t in topics if t.key().name() in badge_type.topic_key_name]) > 0
+        exists = len([t for t in topics if t.key().name() == badge_type.topic_key_name]) > 0
 
         # ...if it doesn't, it may've been created by an old topic that has since been removed.
         # In this case, retire the badge.
