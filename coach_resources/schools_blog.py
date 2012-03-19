@@ -2,7 +2,12 @@ import logging
 import urllib
 import urllib2
 
-import simplejson
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from google.appengine.api import memcache
 
 from custom_exceptions import TumblrException
@@ -13,13 +18,13 @@ TUMBLR_URL = "http://ka-implementations.tumblr.com"
 POSTS_PER_PAGE = 5
 
 class BlogPost:
-    def __init__(self, json):
-        self.post_id = json["id"]
-        self.title = json["regular-title"]
-        self.body = json["regular-body"]
-        self.dt = json["date"]
-        self.url = json["url-with-slug"]
-        self.slug = json["slug"]
+    def __init__(self, dict_json):
+        self.post_id = dict_json["id"]
+        self.title = dict_json["regular-title"]
+        self.body = dict_json["regular-body"]
+        self.dt = dict_json["date"]
+        self.url = dict_json["url-with-slug"]
+        self.slug = dict_json["slug"]
 
     def local_url(self):
         return "/coach/schools-blog"
@@ -33,21 +38,21 @@ class TumblrDownBlogPost(BlogPost):
         self.url = "/coach/schools-blog"
         self.slug = ""
 
-def strip_json(json):
+def strip_json(json_string):
 
-    json = json.strip()
+    json_string = json_string.strip()
 
-    if not json.startswith("{"):
-        json = json[json.index("{"):]
+    if not json_string.startswith("{"):
+        json_string = json_string[json_string.index("{"):]
 
-    if not json.endswith("}"):
-        json = json[:json.rindex("}") + 1]
+    if not json_string.endswith("}"):
+        json_string = json_string[:json_string.rindex("}") + 1]
 
-    return json
+    return json_string
 
 def get_posts(offset = 0, post_id = None, force_refresh = False):
 
-    json = ""
+    json_string = ""
 
     params = {"start": offset, "num": POSTS_PER_PAGE + 1, "type": "text"}
     if post_id:
@@ -61,15 +66,15 @@ def get_posts(offset = 0, post_id = None, force_refresh = False):
     if not posts or force_refresh:
         try:
             request = urllib2.urlopen("%s/api/read/json" % TUMBLR_URL, params_encoded)
-            json = request.read()
+            json_string = request.read()
         except:
             raise TumblrException("Error while grabbing blog posts from Tumblr.")
 
         posts = []
 
         try:
-            json = strip_json(json)
-            posts = parse_json_posts(json)
+            json_string = strip_json(json_string)
+            posts = parse_json_posts(json_string)
         except:
             raise TumblrException("Error while parsing blog posts from Tumblr")
 
@@ -85,10 +90,10 @@ def get_single_post(post_id, force_refresh = False):
         return posts[0]
     return None
 
-def parse_json_posts(json):
+def parse_json_posts(json_string):
 
     dict_json = None
-    dict_json = simplejson.loads(json)
+    dict_json = json.loads(json_string)
 
     if not dict_json:
         return []
