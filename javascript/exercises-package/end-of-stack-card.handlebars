@@ -16,8 +16,8 @@
     <div class="progress-graph current-stack">
 	    {{#each progress}}
 	    	<div class="skill-status">
-		    	<h2 class="skill-bar-title">{{displayName}} {{#with userExercise}}{{> small-exercise-icon}}{{/with}}</h2>
-                {{{skill-bar end start userExercise.exerciseStates justEarnedProficiency}}}
+                <h2 class="skill-bar-title">{{displayName}} {{#with exerciseStates}}{{> small-exercise-icon}}{{/with}}</h2>
+                {{{skill-bar end start exerciseStates justEarnedProficiency}}}
 		    </div>
 	    {{/each}}
     </div>
@@ -57,9 +57,9 @@
             {{#each proficientExercises}}
         	<div class="skill-status">
     	    	<h4 class="skill-bar-title">
-    	    		{{exerciseModel.displayName}} {{> small-exercise-icon}}
+    	    		{{exerciseModel.displayName}} {{#with this.exerciseStates}}{{> small-exercise-icon}}{{/with}}
     	    	</h4>
-                {{{skill-bar progress progress this.exerciseStates}}}
+                {{{skill-bar progress progress exerciseStates}}}
             </div>
             {{/each}}
         </div>

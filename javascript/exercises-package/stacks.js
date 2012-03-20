@@ -825,11 +825,13 @@ Exercises.SessionStats = Backbone.Model.extend({
                     start: userExercise.progress
                 };
 
+            // Add all current proficiency/review/struggling states
+            stat.exerciseStates = userExercise.exerciseStates;
+
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress;
             stat.change = stat.end - stat.start;
-            stat.proficient = userExercise.exerciseStates.proficient;
-            stat.justEarnedProficiency = stat.proficient && !stat.startProficient;
+            stat.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
 
             // Set and cache the latest
             progressStats[exerciseName] = stat;
