@@ -5,6 +5,7 @@ from google.appengine.ext import db
 import object_property
 import models
 from badges import Badge, BadgeCategory
+from templatefilters import slugify
 
 def sync_with_topic_version(version):
     """ Syncs state of all TopicExerciseBadges with the specified TopicVersion's topic tree.
@@ -124,8 +125,8 @@ class TopicExerciseBadge(Badge):
         below. Those without will use a default icon.
 
         Custom icon location and format:
-        40x40px: /images/power-mode/badges/[lowercase-alphanumeric-and-underscores-only topic title]-40x40.png
-        60x60px: /images/power-mode/badges/[lowercase-alphanumeric-and-underscores-only topic title]-60x60.png
+        40x40px: /images/power-mode/badges/[lowercase-alphanumeric-and-dashes-only topic title]-40x40.png
+        60x60px: /images/power-mode/badges/[lowercase-alphanumeric-and-dashes-only topic title]-60x60.png
 
         See /images/power-mode/badges/readme
         """
@@ -137,9 +138,7 @@ class TopicExerciseBadge(Badge):
 
     @property
     def safe_topic_title_filename(self):
-        valid_chars = frozenset(" %s%s" % (string.ascii_letters, string.digits))
-        filename = "".join([c for c in self.topic_standalone_title if c in valid_chars])
-        return filename.lower().replace(" ", "_")
+        return slugify(self.topic_standalone_title)
 
     @property
     def compact_icon_src(self):
