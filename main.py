@@ -74,7 +74,7 @@ import robots
 from importer.handlers import ImportHandler
 from gae_bingo.gae_bingo import ab_test
 
-from library import flatten_tree
+from library import library_topic_html
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -99,12 +99,9 @@ class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
     def show_topic(handler, topic):
-        tree = topic.make_tree(types = ["Topics", "Video", "Url"])
-        topics = flatten_tree(tree)
-
         template_values = {
             "main_topic": topic,
-            "topics": topics
+            "library_content": library_topic_html(topic.id)
         }
         handler.render_jinja2_template('viewtopic.html', template_values)
 
