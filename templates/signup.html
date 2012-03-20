@@ -13,15 +13,14 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="signup-form" action="/signup">
-    <input type="hidden" name="token" id="type-input" value="{{token}}">
-
     <div class="signup-contents">
+        <form method="POST" class="auth-form" id="signup-form" action="/signup">
+
         <h3>Signup for a Khan Academy account</h3>
         <div class="field-container">
             <label class="field-label" for="email">Email</label><br>
             <input id="email" name="email" type="email" class="simple-input ui-corner-all" value="{{ values['email']|escape }}">
-            <div class="field-error" id="email-error">{{ errors['email']|escape }}</div>
+            <div class="field-error" id="email-error"></div>
         </div>
 
         <br>
@@ -29,6 +28,10 @@
         <div class="field-container">
             <label class="field-label" for="birthday">Birthday</label><br>
             <div id="birthday-picker" data-date="{{ values['birthdate']|escape }}">{# contents filled by JS #}</div>
+
+            {# Note that the actual name of the field sent to the server is "birthdate"
+               (it is a hidden input populated by the JS) #}
+            <div class="field-error" id="birthdate-error"></div>
         </div>
 
         <br>
@@ -37,9 +40,8 @@
             <input type="button" id="submit-button" name="signup" value="Signup" class="simple-button action-gradient green">
         </div>
 
+        </form>
     </div>
-
-    </form>
 </article>
 {% endblock pagecontent %}
 

@@ -30,7 +30,7 @@ Login.submitCompleteSignup = function() {
     valid = Login.ensureValid_("#username", "Username required") && valid;
     valid = Login.ensureValid_("#password", "Password required") && valid;
     if (valid) {
-        $("#registration-form").submit();
+        $("#signup-form").submit();
     }
 };
 

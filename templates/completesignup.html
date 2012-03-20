@@ -13,10 +13,10 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="registration-form" action="{{templatetags.to_secure_url('/completesignup')}}?continue={{continue|urlencode}}">
+    <form method="POST" class="auth-form" id="signup-form" action="{{templatetags.to_secure_url('/completesignup')}}?continue={{continue|urlencode}}">
     <input type="hidden" name="token" id="type-input" value={{token.value}}>
 
-    <div class="registration-contents">
+    <div class="signup-contents">
         <h3>Signup for a Khan Academy account</h3>
 
         <div class="field-container">

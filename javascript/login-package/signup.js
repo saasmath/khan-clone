@@ -35,21 +35,65 @@ Login.initSignupPage = function() {
     $("#email").focus().on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             Login.submitSignup();
+
+            e.preventDefault();
         }
     });
 
-    $("#submit-button").click(function() {
+    $("#submit-button").click(function(e) {
         Login.submitSignup();
+
+        // Prevent direct form submission since we'll POST the data manually.
+        e.preventDefault();
     });
 };
 
 /**
- * Submits the signup attempt if passes pre-checks.
+ * Submits the signup attempt if it passes pre-checks.
  */
 Login.submitSignup = function() {
     // Success!
     if (Login.ensureValid_("#email", "Email required")) {
-        $("#signup-form").submit();
+        var data = $("#signup-form").serialize();
+        $.ajax({
+            "type": "POST",
+            "url": $("#signup-form").prop("action"),
+            "data": data,
+            "dataType": "json",
+            "success": function(data) {
+                Login.handleSignupResponse(data);
+            },
+            "error": function() {
+                // TODO(benkomalo): handle
+            }
+        });
+    }
+};
+
+
+/**
+ * Handles a response from the server for the signup attempt.
+ */
+Login.handleSignupResponse = function(data) {
+    if (data["under13"]) {
+        window.location.href = "/signup?under13=1";
+        return;
+    }
+
+    var errors = data["errors"] || {};
+    if (_.isEmpty(errors)) {
+        // Success!
+
+        // TODO(benkomalo): handle properly!
+        $(".signup-contents")
+                .html("Success! VERIFICATION LINK FOR DEBUGGING: ")
+                .append($("<a></a>")
+                            .prop("href", "/completesignup?token=" + data["token"])
+                            .text("/completesignup?token=" + data["token"]));
+    } else {
+        _.each(errors, function(error, fieldName) {
+            $("#" + fieldName + "-error").text(error);
+        });
     }
 };
 

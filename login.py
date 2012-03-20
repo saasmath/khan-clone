@@ -1,3 +1,4 @@
+from api import jsonify
 from app import App
 from auth import age_util
 from counters import user_counter
@@ -101,26 +102,6 @@ class Login(request_handler.RequestHandler):
             # Successful login
             Login.redirect_with_auth_stamp(self, user_data, cont)
 
-    @staticmethod
-    def redirect_to_unverified_warning(handler,
-                                       unverified_user,
-                                       existing_google_user_detected=None):
-        """ Handles a successful login for a user that has not had their
-        e-mail address verified, and therefore needs to be stopped from
-        actually getting an auth token. """
-
-        if existing_google_user_detected == None:
-            # Check to see if there is an existing UserData account that was
-            # created using a Google login.
-            existing_google_user_detected = False
-            for u in models.UserData.get_all_for_user_input_email(unverified_user.email):
-                if not u.has_password():
-                    existing_google_user_detected = True
-                    break
-
-        handler.redirect("/unverified?token=%s&google=%s" % (
-                auth.tokens.EmailVerificationToken.for_user(unverified_user).value,
-                "1" if existing_google_user_detected else "0"))
 
     @staticmethod
     def redirect_with_auth_stamp(handler, user_data, cont="/"):
@@ -295,6 +276,7 @@ class Signup(request_handler.RequestHandler):
         Note that new users can still be created via PostLogin if the user
         signs in via Google/FB for the first time - this is for the
         explicit registration via our own services.
+
         """
 
         values = {
@@ -302,7 +284,6 @@ class Signup(request_handler.RequestHandler):
             'email': self.request_string('email', default=None),
         }
 
-        # Simple existence validations
         errors = {}
 
         # Under-13 check.
@@ -322,8 +303,10 @@ class Signup(request_handler.RequestHandler):
             # unfortunately. Set an under-13 cookie so they can't try again.
             Logout.delete_all_identifying_cookies(self)
             auth.cookies.set_under13_cookie(self)
-            self.redirect("/register?under13=1&name=%s" %
-                          urllib.quote(values['nickname'] or ""))
+            
+            # TODO(benkomalo): investigate how reliable setting cookies from
+            # a jQuery POST is going to be
+            self.response.write_json(jsonify.jsonify({"under13": True}))
             return
 
         existing_google_user_detected = False
@@ -357,27 +340,29 @@ class Signup(request_handler.RequestHandler):
             errors['email'] = "Email required"
 
         if len(errors) > 0:
-            template_values = {
-                'errors': errors,
-                'values': values,
-            }
-
-            self.render_jinja2_template('signup.html', template_values)
+            self.response.write_json(jsonify.jsonify({
+                    'errors': errors,
+                    }, camel_cased=True))
             return
 
         # Success!
         unverified_user = models.UnverifiedUser.insert_for(email)
+        verification_token = auth.tokens.EmailVerificationToken.for_user(unverified_user)
 
-        # TODO(benkomalo): send verification e-mail
+        # TODO(benkomalo): send verification e-mail with verification_token.value
         # TODO(benkomalo): since users are now blocked from further access
         #    due to requiring verification of e-mail, we need to do something
         #    about migrating phantom data (we can store the phantom id in
         #    the UnverifiedUser object and migrate after they finish
         #    registering, for example)
-
-        Login.redirect_to_unverified_warning(self,
-                                             unverified_user,
-                                             existing_google_user_detected)
+        self.response.write_json(jsonify.jsonify({
+                'success': True,
+                'existing_google_user_detected': existing_google_user_detected,
+                
+                # TODO(benkomalo): STOPSHIP - don't send down the verification
+                #    token obviously - this is just useful for debugging
+                'token': verification_token.value,
+                }, camel_cased=True))
 
 class CompleteSignup(request_handler.RequestHandler):
     @staticmethod
