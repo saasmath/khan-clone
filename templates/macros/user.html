@@ -1,7 +1,12 @@
-{% macro user_info(username, user_data) -%}
-{{ username_and_notification(username, user_data) }}
-{{ badges.badge_counts(user_data) }}
-{{ user_points(user_data) }}
+{% macro user_info(username, user_data, logout_url) -%}
+    {{ badges.badge_counts(user_data) }}
+    {{ user_points(user_data) }}
+    {{ username_and_notification(username, user_data, logout_url) }}
+{%- endmacro %}
+
+{% macro badges_and_points(user_data) -%}
+    {{ badges.badge_counts(user_data) }}
+    {{ user_points(user_data) }}
 {%- endmacro %}
 
 {% macro user_points(user_data, points=0) -%}
@@ -24,7 +29,7 @@
 <span title="{{ points|thousands_separated }} energy points" class="energy-points-badge" onclick="location.href='{{profile_root}}'" {% if not points %} style="display: none" {% endif %}>{{ points|thousands_separated }}</span>
 {%- endmacro %}
 
-{% macro username_and_notification(username, user_data) -%}
+{% macro username_and_notification(username, user_data, logout_url) -%}
 {% if user_data %}
     {% if user_data.is_demo %}
         {% set profile_root = '/logout?continue=/profile' %}
@@ -37,13 +42,23 @@
     {% set profile_root = '/profile' %}
     {% set count = 0 %}
 {% endif %}
-<span class="username_and_notification">
-    {% if count %}
-    <span class="user-notification">
-        <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
+{% if count %}
+<span class="user-notification">
+    <a class="notification_link" href="/discussion/videofeedbacknotificationlist" title="{{ count }} new answers to your questions"><img src="{{ "/images/email.png"|static_url }}" class="icon" style="width:16px;height:11px;"/><span class="notification_bubble">{{ count }}</span></a>
+</span>
+{% endif %}
+<span class="dropdown">
+    <span class="username_and_notification dropdown-toggle">
+        <a href="{{profile_root}}"><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
+        <b class="caret"></b>
     </span>
-    {% endif %}
-    <a href="{{profile_root}}"><img class="user-avatar" src="{{ avatars.get_src_for_user(user_data) }}"><span class="user-name">{{username|escape}}</span></a>
+    <ul class="dropdown-menu vertical-shadow">
+        <li><a class="profile-link" href="{{profile_root}}">Visit profile</a></li>
+        <!-- TODO(marcia): Uncomment below link when some milestone of Auth launches. -->
+        <!-- <li><a href="{{profile_root}}/settings">Change settings</a></li> -->
+        <!-- Facebook's JS logout requires the page_logout ID -->
+        <li><a id="page_logout" href="{{logout_url}}">Logout</a></li>
+    </ul>
 </span>
 {%- endmacro %}
 

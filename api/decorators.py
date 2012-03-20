@@ -1,7 +1,7 @@
 import hashlib
 import zlib
 from base64 import b64encode, b64decode
-from pickle import dumps, loads
+from cPickle import dumps, loads
 from functools import wraps
 
 import flask
@@ -90,7 +90,8 @@ def jsonify(func):
 
         camel_cased= (has_flask_request_context() and
                       flask.request.values.get("casing") == "camel")
-        return obj if type(obj) == str else apijsonify.jsonify(obj, camel_cased=camel_cased)
+
+        return apijsonify.jsonify(obj, camel_cased=camel_cased)
     return jsonified
 
 def jsonp(func):
@@ -107,25 +108,17 @@ def jsonp(func):
         return current_app.response_class(val, mimetype="application/json; charset=utf-8")
     return jsonp_enabled
 
-def utf8(func):
-    @wraps(func)
-    def utf8_headed(*args, **kwargs):
-        val = func(*args, **kwargs)
-
-        if isinstance(val, current_app.response_class):
-            return val
-
-        callback = request.values.get("callback")
-        if callback:
-            val = "%s(%s)" % (callback, val)
-        return current_app.response_class(val, contentencoding="utf8")
-    return utf8_headed
-
-
 def compress(func):
     @wraps(func)
     def compressed(*args, **kwargs):
-        return zlib.compress(func(*args, **kwargs).encode('utf-8'))
+        val = func(*args, **kwargs)
+        try:
+            val = val.encode('utf-8')
+        except:
+            if not isinstance(val, unicode):
+                raise ValueError("Was expecting <type 'unicode'> received %s" % type(val))
+            raise
+        return zlib.compress(val)
     return compressed
 
 def decompress(func):

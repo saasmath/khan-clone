@@ -1,3 +1,9 @@
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from app import App
 import app
 import custom_exceptions
@@ -14,7 +20,6 @@ from profiles.util_profile import ClassProgressReportGraph, ClassEnergyPointsPer
 
 from phantom_users.phantom_util import disallow_phantoms
 import profiles.util_profile as util_profile
-import simplejson as json
 from api.auth.xsrf import ensure_xsrf_cookie
 
 def update_coaches_and_requests(user_data, coaches_json):

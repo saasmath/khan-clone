@@ -14,6 +14,7 @@ from google.appengine.api import memcache
 from api.auth.decorators import developer_required
 
 import webapp2
+from webapp2_extras.routes import DomainRoute
 
 import devpanel
 import bulk_update.handler
@@ -71,6 +72,7 @@ from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
+from gae_bingo.gae_bingo import ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -414,7 +416,7 @@ class Search(request_handler.RequestHandler):
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        # all_key_list.extend([result["key"] for result in topic_partial_results])
+        all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
@@ -437,8 +439,6 @@ class Search(request_handler.RequestHandler):
                 videos.append(entity)
             elif entity:
                 logging.info("Found unknown object " + repr(entity))
-
-        topic_count = len(topics)
 
         # Get topics for videos not in matching topics
         filtered_videos = []
@@ -473,14 +473,40 @@ class Search(request_handler.RequestHandler):
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
         # Count number of videos in each topic and sort descending
+        topic_count = 0
+        matching_topic_count = 0
         if topics:
             if len(filtered_videos) > 0:
                 for topic in topics:
                     topic.match_count = [(str(topic.key()) in video.topic_string_keys) for video in filtered_videos].count(True)
+                    if topic.match_count > 0:
+                        topic_count += 1
+
                 topics = sorted(topics, key=lambda topic:-topic.match_count)
             else:
                 for topic in topics:
                     topic.match_count = 0
+
+            for topic in topics:
+                if topic.title.lower() == query:
+                    topic.matches = True
+                    matching_topic_count += 1
+
+                    child_topics = topic.get_child_topics(include_descendants=True)
+                    topic.child_topics = [t for t in child_topics if t.has_content()]
+
+        # A/B test showing a matching topic at the top of the page
+        if matching_topic_count > 0:
+            show_matching_topic = ab_test("Search shows matching topic 2", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
+            analytics_bingo = {"name": "Bingo: Search topic 2", "value": "Show" if show_matching_topic else "Hide"}
+
+            if not show_matching_topic:
+                for topic in topics:
+                    topic.matches = False
+                matching_topic_count = 0
+
+        else:
+            analytics_bingo = None
 
         template_values.update({
                            'topics': topics,
@@ -489,6 +515,8 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
+                           'matching_topic_count': matching_topic_count,
+                           'analytics_bingo': analytics_bingo
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)
@@ -557,11 +585,10 @@ class MemcacheViewer(request_handler.RequestHandler):
         if self.request_bool("clear", False):
             memcache.delete(key, namespace=namespace)
 
-applicationSmartHistory = webapp2.WSGIApplication([
-    ('/.*', smarthistory.SmartHistoryProxy)
-])
-
 application = webapp2.WSGIApplication([
+    DomainRoute('smarthistory.khanacademy.org', [
+        webapp2.SimpleRoute('/.*', smarthistory.SmartHistoryProxy)
+    ]),
     ('/', homepage.ViewHomePage),
     ('/about', util_about.ViewAbout),
     ('/about/blog', blog.ViewBlog),
@@ -786,10 +813,7 @@ application = GAEBingoWSGIMiddleware(application)
 application = request_cache.RequestCacheMiddleware(application)
 
 def main():
-    if os.environ["SERVER_NAME"] == "smarthistory.khanacademy.org":
-        run_wsgi_app(applicationSmartHistory)
-    else:
-        run_wsgi_app(application)
+    run_wsgi_app(application)
 
 if __name__ == '__main__':
     main()

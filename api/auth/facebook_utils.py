@@ -6,7 +6,7 @@ from flask import request, redirect
 from app import App
 
 from api import route
-from api.auth.auth_util import oauth_error_response, get_response, get_parsed_params, authorize_token_redirect
+from api.auth.auth_util import pretty_error_response, oauth_error_response, get_response, get_parsed_params, authorize_token_redirect, OAuthBadRequestError
 from api.auth.auth_models import OAuthMap
 
 from oauth_provider.oauth import OAuthError
@@ -37,15 +37,12 @@ def retrieve_facebook_access_token(oauth_map):
                 "code": oauth_map.facebook_authorization_code,
                 }
 
-    try:
-        response = get_response(FB_URL_ACCESS_TOKEN, params)
-    except Exception, e:
-        raise OAuthError(e.message)
+    response = get_response(FB_URL_ACCESS_TOKEN, params)
 
     response_params = get_parsed_params(response)
     if not response_params or not response_params.get("access_token"):
         raise OAuthError("Cannot get access_token from Facebook's /oauth/access_token response")
-     
+
     # Associate our access token and Google/Facebook's
     oauth_map.facebook_access_token = response_params["access_token"][0]
 
@@ -75,6 +72,8 @@ def facebook_token_callback():
 
     try:
         oauth_map = retrieve_facebook_access_token(oauth_map)
+    except OAuthBadRequestError, e:
+        return pretty_error_response('Unable to log in with Facebook.')
     except OAuthError, e:
         return oauth_error_response(e)
 
