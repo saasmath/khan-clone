@@ -671,8 +671,7 @@ application = webapp2.WSGIApplication([
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
     
-    # TODO(benkomalo): change "register" to "signup"
-    ('/register', login.Register),
+    ('/signup', login.Register),
     ('/completesignup', login.CompleteSignup),
     ('/pwchange', login.PasswordChange),
     ('/unverified', login.UnverifiedAccount),

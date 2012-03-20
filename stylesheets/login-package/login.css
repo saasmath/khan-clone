@@ -13,7 +13,7 @@ form.auth-form {
     display: block;
 }
 
-.providers, .pw-login, .registration-contents {
+.providers, .pw-login, .signup-contents {
     display: inline-block;
     text-align: left;
     width: 500px;

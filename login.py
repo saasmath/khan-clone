@@ -287,7 +287,7 @@ class Register(request_handler.RequestHandler):
             'errors': {},
             'values': {},
         }
-        self.render_jinja2_template('register.html', template_values)
+        self.render_jinja2_template('signup.html', template_values)
 
     def post(self):
         """ Handles registration request on our site.
@@ -362,7 +362,7 @@ class Register(request_handler.RequestHandler):
                 'values': values,
             }
 
-            self.render_jinja2_template('register.html', template_values)
+            self.render_jinja2_template('signup.html', template_values)
             return
         
         # Success!

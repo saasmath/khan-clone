@@ -5,9 +5,9 @@
 
 
 /**
- * Entry point for initial registration page setup.
+ * Entry point for initial signup page setup.
  */
-Login.initRegistrationPage = function() {
+Login.initSignupPage = function() {
     var dateData = $("#birthday-picker").data("date");
     var defaultDate;
     if (dateData) {
@@ -34,22 +34,22 @@ Login.initRegistrationPage = function() {
 
     $("#email").focus().on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
-            Login.submitRegistration();
+            Login.submitSignup();
         }
     });
 
     $("#submit-button").click(function() {
-        Login.submitRegistration();
+        Login.submitSignup();
     });
 };
 
 /**
- * Submits the registration attempt if passes pre-checks.
+ * Submits the signup attempt if passes pre-checks.
  */
-Login.submitRegistration = function() {
+Login.submitSignup = function() {
     // Success!
     if (Login.ensureValid_("#email", "Email required")) {
-        $("#registration-form").submit();
+        $("#signup-form").submit();
     }
 };
 

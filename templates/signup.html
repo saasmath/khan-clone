@@ -13,10 +13,10 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="registration-form" action="/register">
+    <form method="POST" class="auth-form" id="signup-form" action="/signup">
     <input type="hidden" name="token" id="type-input" value="{{token}}">
 
-    <div class="registration-contents">
+    <div class="signup-contents">
         <h3>Signup for a Khan Academy account</h3>
         <div class="field-container">
             <label class="field-label" for="email">Email</label><br>
@@ -34,7 +34,7 @@
         <br>
 
         <div class="field-container" style="margin-top: 2em">
-            <input type="button" id="submit-button" name="register" value="Signup" class="simple-button action-gradient green">
+            <input type="button" id="submit-button" name="signup" value="Signup" class="simple-button action-gradient green">
         </div>
 
     </div>
@@ -46,7 +46,7 @@
 {% block bottompagescript %}
     {{ js_css_packages.js_package("login") }}
     <script>
-    $(Login.initRegistrationPage);
+    $(Login.initSignupPage);
     </script>
 {% endblock bottompagescript %}
 
