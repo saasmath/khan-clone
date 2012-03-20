@@ -17,13 +17,7 @@
 	    {{#each progress}}
 	    	<div class="skill-status">
 		    	<h2 class="skill-bar-title">{{displayName}} {{#with userExercise}}{{> small-exercise-icon}}{{/with}}</h2>
-		    	<div class="skill-bar">
-		    		<div class="fill green" style="width:{{multiply end 100}}%;"></div>
-		    		<div class="fill gray" style="width:{{multiply start 100}}%;"></div>
-		    		{{#if userExercise.exerciseStates.proficient}}
-		    		<div class="fill blue {{#if justEarnedProficiency}}just-earned{{/if}}" style="width:{{multiply end 100}}%;"></div>
-		    		{{/if}}
-		        </div>
+                {{{skill-bar end start userExercise.exerciseStates justEarnedProficiency}}}
 		    </div>
 	    {{/each}}
     </div>
@@ -43,9 +37,7 @@
                 <h4 class="skill-bar-title">
                     {{exerciseModel.displayName}}
                 </h4>
-                <div class="skill-bar">
-                    <div class="fill green" style="width:{{multiply progress 100}}%;"></div>
-                </div> 
+                {{{skill-bar progress progress}}}
             </div>
             {{/each}}
         </div>
@@ -56,9 +48,7 @@
                 <h4 class="skill-bar-title">
                     {{exerciseModel.displayName}}
                 </h4>
-                <div class="skill-bar">
-                    <div class="fill green" style="width:{{multiply progress 100}}%;"></div>
-                </div> 
+                {{{skill-bar progress progress}}}
             </div>
             {{/each}}
         </div>
@@ -69,10 +59,7 @@
     	    	<h4 class="skill-bar-title">
     	    		{{exerciseModel.displayName}} {{> small-exercise-icon}}
     	    	</h4>
-    	    	<div class="skill-bar">
-                    <div class="fill green" style="width:{{multiply progress 100}}%;"></div>
-    	    		<div class="fill blue" style="width:{{multiply progress 100}}%;"></div>
-    	        </div> 
+                {{{skill-bar progress progress this.exerciseStates}}}
             </div>
             {{/each}}
         </div>
