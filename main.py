@@ -74,6 +74,8 @@ import robots
 from importer.handlers import ImportHandler
 from gae_bingo.gae_bingo import ab_test
 
+from library import flatten_tree
+
 class VideoDataTest(request_handler.RequestHandler):
 
     @user_util.developer_only
@@ -87,6 +89,40 @@ def get_mangled_topic_name(topic_name):
     for char in " :()":
         topic_name = topic_name.replace(char, "")
     return topic_name
+
+# Handler that displays a topic page if the URL matches
+# a pre-existing topic. (i.e. /math/algebra or just /algebra)
+# NOTE: Since there is no specific route we are matching,
+# this handler is registered as the default handler, so
+# anything it doesn't recognize should return a 404.
+class TopicPage(request_handler.RequestHandler):
+
+    @staticmethod
+    def show_topic(handler, topic):
+        tree = topic.make_tree(types = ["Topics", "Video", "Url"])
+        topics = flatten_tree(tree)
+
+        template_values = {
+            "main_topic": topic,
+            "topics": topics
+        }
+        handler.render_jinja2_template('viewtopic.html', template_values)
+
+    @ensure_xsrf_cookie
+    def get(self, path):
+        path_list = path.split('/')
+        if len(path_list) > 0:
+            topic = models.Topic.get_by_id(path_list[-1])
+            if topic:
+                if path != topic.get_extended_slug():
+                    self.redirect("/%s" % topic.get_extended_slug(), True)
+                    return
+
+                TopicPage.show_topic(self, topic)
+                return
+
+        self.abort(404)
+    
 
 # New video view handler.
 # The URI format is a topic path followed by /v/ and then the video identifier, i.e.:
@@ -794,6 +830,11 @@ application = webapp2.WSGIApplication([
     ('/index\.html', PermanentRedirectToHome),
 
     ('/_ah/warmup.*', warmup.Warmup),
+
+    # Topic paths can be anything, so we match everything.
+    # The TopicPage handler will throw a 404 if no page is found.
+    # (For more information see TopicPage handler above)
+    ('/(.*)', TopicPage),
 
 
     ], debug=True)
