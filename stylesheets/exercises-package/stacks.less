@@ -403,25 +403,29 @@
 
 .end-of-stack-info .progress-graph .skill-bar .fill.gray {
     #gradient > .vertical(#ddd, #ccc);
-
-    position: relative;
-    top: -15px;
 }
-
 .end-of-stack-info .progress-graph .skill-bar .fill.green {
     #gradient > .vertical(#8aba08, #6e9700);
-
-    -webkit-animation: progress-bar 1s;
-    -moz-animation: progress-bar 1s;
 }
 .end-of-stack-info .progress-graph .skill-bar .fill.blue {
     #gradient > .vertical(lighten(#0080C9, 10%), #0080C9);
+}
 
-    -webkit-animation: progress-bar .6s;
-    -moz-animation: progress-bar .6s;
-
+.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.green {
+    -webkit-animation: progress-bar 1s;
+    -moz-animation: progress-bar 1s;
+}
+.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.gray {
     position: relative;
     top: -15px;
+}
+.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.blue {
+    position: relative;
+    top: -30px;
+}
+.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.blue.just-earned {
+    -webkit-animation: progress-bar-proficient 1.5s;
+    -moz-animation: progress-bar-proficient 1.5s;
 }
 
 .end-of-stack-info .progress-graph.current-topic .skill-bar .fill {
@@ -459,6 +463,14 @@
 }
 @-moz-keyframes progress-bar {
    0% { width: 0; opacity: 0.6; }
+}
+@-webkit-keyframes progress-bar-proficient {
+   0% { opacity: 0; }
+   66% { opacity: 0; } /* Keep opacity at 0 until progress bar is done filling */
+}
+@-moz-keyframes progress-bar-proficient {
+   0% { opacity: 0; }
+   66% { opacity: 0; } /* Keep opacity at 0 until progress bar is done filling */
 }
 
 /**

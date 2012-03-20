@@ -19,10 +19,9 @@
 		    	<h2 class="skill-bar-title">{{displayName}} {{#if userExercise.exerciseStates.proficient}}<img src="/images/objective-complete-tick.png" class="proficient-tick" data-desc="You've earned proficiency in this skill"/>{{/if}}</h2>
 		    	<div class="skill-bar">
 		    		<div class="fill green" style="width:{{multiply end 100}}%;"></div>
-		    		{{#if userExercise.exerciseStates.proficient}}
-		    		<div class="fill blue" style="width:{{multiply end 100}}%;"></div>
-		    		{{else}}
 		    		<div class="fill gray" style="width:{{multiply start 100}}%;"></div>
+		    		{{#if userExercise.exerciseStates.proficient}}
+		    		<div class="fill blue {{#if justEarnedProficiency}}just-earned{{/if}}" style="width:{{multiply end 100}}%;"></div>
 		    		{{/if}}
 		        </div>
 		    </div>
@@ -32,7 +31,6 @@
     {{#unless practiceMode}}
     <div>
         <h2 style="display: inline-block;">Overall Progress</h2>
-        <!-- TODO: If this interaction sticks around it should be pulled back into backbone -->
         <a href="javascript:void(0);" class="simple-button action-gradient" id="show-topic-details">
             {{proficient}}/{{total}} Skills
         </a>

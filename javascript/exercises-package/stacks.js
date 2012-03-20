@@ -806,6 +806,7 @@ Exercises.SessionStats = Backbone.Model.extend({
                 stat = progressStats[exerciseName] || {
                     name: userExercise.exercise,
                     displayName: userExercise.exerciseModel.displayName,
+                    startProficient: userExercise.exerciseStates.proficient,
                     startTotalDone: userExercise.totalDone,
                     start: userExercise.progress
                 };
@@ -813,7 +814,8 @@ Exercises.SessionStats = Backbone.Model.extend({
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress;
             stat.change = stat.end - stat.start;
-            stat.proficient = stat.end == 100;
+            stat.proficient = userExercise.exerciseStates.proficient;
+            stat.justEarnedProficiency = stat.proficient && !stat.startProficient;
 
             // Set and cache the latest
             progressStats[exerciseName] = stat;
