@@ -161,7 +161,7 @@ var Exercises = {
 
         $(".exercises-content-container").html(exerciseTemplate({
             topic: this.topic.toJSON(),
-            exercise: this.practiceExercise.toJSON(),
+            practiceExercise: this.practiceExercise.toJSON(),
             practiceMode: this.practiceMode,
             reviewMode: this.reviewMode
         }));
