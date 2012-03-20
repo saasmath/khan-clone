@@ -153,7 +153,10 @@ class YouTubeSync(request_handler.RequestHandler):
 
         videos_to_put = set()
 
-        for video in Video.all():
+        # doing fetch now otherwise query timesout later while doing youtube requests
+        # theoretically we can also change this code to use Mapper class:
+        # http://code.google.com/appengine/articles/deferred.html
+        for i, video in enumerate(Video.all().fetch(100000)):
             entry = None
             youtube_id = video.youtube_id
 
@@ -172,8 +175,8 @@ class YouTubeSync(request_handler.RequestHandler):
             if entry:
                 count = int(entry.statistics.view_count)
                 if count != video.views:
-                    logging.info("Updating %s from %i to %i views" % 
-                                (video.title, video.views, count)) 
+                    logging.info("%i: Updating %s from %i to %i views" % 
+                                (i, video.title, video.views, count)) 
                     video.views = count
                     videos_to_put.add(video)
                 
@@ -181,8 +184,6 @@ class YouTubeSync(request_handler.RequestHandler):
                 if duration != video.duration:
                     video.duration = duration
                     videos_to_put.add(video)
-
-                logging.info(video.readable_id)
 
         db.put(list(videos_to_put))
             

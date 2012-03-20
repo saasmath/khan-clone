@@ -6,6 +6,7 @@ import urlparse
 
 from google.appengine.api import urlfetch
 
+import shared_jinja
 import flask
 from flask import current_app, request, redirect, session
 from flask.session import Session
@@ -18,6 +19,10 @@ import cookie_util
 
 class OAuthBadRequestError(OAuthError):
     pass
+
+def pretty_error_response(message):
+    jinja = shared_jinja.get()
+    return jinja.render_template('login_mobile_error.html', message=message)
 
 def oauth_error_response(e):
     logging.error("OAuth error. %s" % e.message)
@@ -143,8 +148,9 @@ def get_response(url, params={}):
 
     # Be extra forgiving w/ timeouts during API auth consumer calls
     # in case Facebook or Google is slow.
+    # In case of 503, try again.
     c_tries_left = 5
-    while not result and c_tries_left > 0:
+    while (not result or result.status_code == 503) and c_tries_left > 0:
 
         try:
             result = urlfetch.fetch(url_with_params, deadline=10)

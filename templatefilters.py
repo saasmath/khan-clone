@@ -4,6 +4,7 @@ import math
 
 import util
 from app import App
+from gae_bingo.gae_bingo import create_redirect_url
 
 def timesince_ago(content):
     if not content:
@@ -166,3 +167,6 @@ def linebreaksbr_ellipsis(content, ellipsis_content = "&hellip;"):
 
 def pluralize(i):
     return "" if i == 1 else "s"
+
+def bingo_redirect_url(url, conversions):
+    return create_redirect_url(url, conversions)

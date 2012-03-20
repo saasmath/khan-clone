@@ -47,6 +47,12 @@ def ExercisePointCalculator(user_exercise, suggested, proficient, offset=0):
     return int(math.ceil(points))
 
 def VideoPointCalculator(user_video):
+    """ Computes the number of points the user should get for the given UserVideo.
+
+    This must be kept in sync with the client implementation in
+    shared-package/video-addons.j
+    """
+
     if user_video.duration is None or user_video.duration <= 0:
         return 0
 

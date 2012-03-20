@@ -1,6 +1,11 @@
 {{#each topic.ancestor_topics }}
-<a href="{{this.url}}">{{ this.title }}</a>
+{{#if this.url }}
+<a href="{{ this.url }}">{{ this.title }}</a>
 <span class="breadcrumb-separator">&#187;</span>
+{{else}}
+<span>{{ this.title }}</span>
+<span class="breadcrumb-separator">&#187;</span>
+{{/if}}
 {{/each}}
 <a href="{{ topic.url }}">{{ topic.title }}</a>
 <span class="breadcrumb-separator">&#187;</span>

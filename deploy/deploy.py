@@ -21,9 +21,11 @@ except Exception, e:
     hipchat_deploy_token = None
 
 try:
-    from secrets_dev import app_engine_username, app_engine_password
+    import secrets_dev
+    app_engine_username = getattr(secrets_dev, 'app_engine_username', None)
+    app_engine_password = getattr(secrets_dev, 'app_engine_password', None)
 except Exception, e:
-    (app_engine_username, app_engine_password) = (None, None)
+    app_engine_username, app_engine_password = None, None
 
 if hipchat_deploy_token:
     import hipchat.room
@@ -44,7 +46,7 @@ def get_app_engine_credentials():
         print "Using password for %s from secrets.py" % app_engine_username
         return (app_engine_username, app_engine_password)
     else:
-        email = raw_input("App Engine Email: ")
+        email = app_engine_username or raw_input("App Engine Email: ")
         password = getpass.getpass("Password for %s: " % email)
         return (email, password)
 
@@ -154,19 +156,20 @@ def git_revision_msg(revision_id):
     return popen_results(['git', '--work-tree=khan-exercises/', '--git-dir=khan-exercises/.git', 'show', '-s', '--pretty=format:%s', revision_id]).strip()
 
 def check_secrets():
-    content = ""
-
     try:
-        f = open("secrets.py", "r")
-        content = f.read()
-        f.close()
-    except:
+        import secrets
+    except ImportError, e:
         return False
 
-    # Try to find the beginning of our production facebook app secret
-    # to verify deploy is being sent from correct directory.
-    regex = re.compile("^facebook_app_secret = '050c.+'$", re.MULTILINE)
-    return regex.search(content)
+    if not hasattr(secrets, 'verify_secrets_is_up_to_date'):
+        print "Your secrets is too old; update it using the instructions in"
+        print "password_for_secrets_py_cast5.txt at:"
+        print "  https://www.dropbox.com/home/Khan%20Academy%20All%20Staff/Secrets"
+        print
+        return False
+
+    fb_secret = getattr(secrets, 'facebook_app_secret', '')
+    return fb_secret.startswith('050c')
 
 def check_deps():
     """Check if npm and friends are installed"""
@@ -274,7 +277,8 @@ def main():
 
     if not options.nosecrets:
         if not check_secrets():
-            print "Stopping deploy. It doesn't look like you're deploying from a directory with the appropriate secrets.py."
+            print "Stopping deploy. It doesn't look like you're deploying from a directory with"
+            print "the appropriate secrets.py."
             return
 
     if not compile_templates():

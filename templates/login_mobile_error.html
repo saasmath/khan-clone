@@ -24,7 +24,7 @@ p {
 }
 @media only screen and (-webkit-min-device-pixel-ratio: 2) {
     #image {
-        background-image: url(/images/mobile-error@2x.png);
+        background-image: url(/images/mobile-error-2x.png);
         background-size: 100%;
     }
 }
@@ -32,7 +32,7 @@ p {
 </head>
 <body>
     <div id="image"></div>
-    <p>{{ message }}</p>
+    <p>{{ message|escape }}</p>
 </body>
 <script>
     document.ontouchmove = function(event){

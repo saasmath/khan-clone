@@ -1,10 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime, logging
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import math
 import urllib
-import pickle
+import cPickle as pickle
 import random
 import itertools
 
@@ -33,7 +39,7 @@ import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
-from decorators import clamp
+from decorators import clamp, synchronized_with_memcache
 import base64, os
 
 from image_cache import ImageCache
@@ -43,7 +49,7 @@ from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import bingo
 from gae_bingo.models import GAEBingoIdentityModel
-from experiments import StrugglingExperiment, MarqueeVideoExperiment
+from experiments import StrugglingExperiment
 import re
 
 
@@ -115,6 +121,10 @@ class Setting(db.Model):
         return Setting._get_or_set_with_key("last_youtube_sync_generation_start", val) or 0
 
     @staticmethod
+    def topic_admin_task_message(val=None):
+        return Setting._get_or_set_with_key("topic_admin_task_message", val) 
+
+    @staticmethod
     def smarthistory_version(val=None):
         return Setting._get_or_set_with_key("smarthistory_version", val) or 0
 
@@ -157,6 +167,7 @@ class Exercise(db.Model):
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
             "coverers", "prerequisites_ex", "assigned",
+            "related_video_keys"
             ]
 
     @staticmethod
@@ -717,6 +728,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has started the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.STARTED, version,
                        _queue="video-log-queue",
@@ -724,6 +737,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_completed(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has completed the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.COMPLETED, version,
                        _queue="video-log-queue",
@@ -758,8 +773,11 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     id = '.v%d' % video_key.id()
     if status == UserVideoCss.STARTED:
-        css['completed'].discard(id)
-        css['started'].add(id)
+        if id in css['completed']:
+            logging.warn("video [%s] for [%s] went from completed->started. ignoring." %
+                         (video_key, user_data_key))
+        else:
+            css['started'].add(id)
     else:
         css['started'].discard(id)
         css['completed'].add(id)
@@ -1083,7 +1101,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             "expanded_all_exercises", "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
             "avatar_name", "username", "is_profile_public",
-            "credential_version", "birthdate", "gender"
+            "credential_version", "birthdate", "gender",
+            
+            "conversion_test_hard_exercises",
+            "conversion_test_easy_exercises",
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1189,6 +1210,27 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             root += self.prettified_user_email
 
         return root
+
+    # Return data about the user that we'd like to track in MixPanel
+    @staticmethod
+    def get_analytics_properties(user_data):
+        properties_list = []
+
+        if not user_data:
+            properties_list.append(("User Type", "New"))
+        elif user_data.is_phantom:
+            properties_list.append(("User Type", "Phantom"))
+        else:
+            properties_list.append(("User Type", "Logged In"))
+
+        if user_data:
+            properties_list.append(("User Points", user_data.points))
+            properties_list.append(("User Videos", user_data.get_videos_completed()))
+            properties_list.append(("User Exercises", len(user_data.all_proficient_exercises)))
+            properties_list.append(("User Badges", len(user_data.badges)))
+            properties_list.append(("User Video Time", user_data.total_seconds_watched))
+
+        return properties_list
 
     @staticmethod
     @request_cache.cache()
@@ -1678,9 +1720,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
 
-            if util.hours_between(self.last_activity, dt_activity) >= 12:
-                bingo(['marquee_actively_returned', 'marquee_num_active_returns'])
-
             self.last_activity = dt_activity
 
     def current_consecutive_activity_days(self):
@@ -1895,6 +1934,7 @@ class TopicVersion(db.Model):
         return TopicVersion.all().filter("edit = ", True).get()
 
     @staticmethod
+    @synchronized_with_memcache(timeout=300) #takes 70secs on dev 03/2012
     def create_edit_version():
         version = TopicVersion.all().filter("edit = ", True).get()
         if version is None:
@@ -1958,27 +1998,110 @@ class TopicVersion(db.Model):
         else:
             last_edited_by = None
         self.last_edited_by = last_edited_by
-        self.put()
+        self.put()        
+
+    def find_content_problems(self):
+        logging.info("checking for problems")
+        version = self
+                
+        # find exercises that are overlapping on the knowledge map
+        logging.info("checking for exercises that are overlapping on the knowledge map")
+        exercises = Exercise.all()
+        exercise_dict = dict((e.key(),e) for e in exercises)
+
+        location_dict = {}
+        duplicate_positions = list()
+        changes = VersionContentChange.get_updated_content_dict(version)
+        exercise_changes = dict((k,v) for k,v in changes.iteritems() 
+                                if v.key() in exercise_dict)
+        exercise_dict.update(exercise_changes)
+        
+        for exercise in [e for e in exercise_dict.values() 
+                         if e.live and not e.summative]:
+                   
+            if exercise.h_position not in location_dict:
+                location_dict[exercise.h_position] = {}
+
+            if exercise.v_position in location_dict[exercise.h_position]:
+                location_dict[exercise.h_position][exercise.v_position].append(exercise)
+                duplicate_positions.append(
+                    location_dict[exercise.h_position][exercise.v_position])
+            else:
+                location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+        # find videos whose duration is 0
+        logging.info("checking for videos with 0 duration")
+        zero_duration_videos = Video.all().filter("duration =", 0).fetch(10000)
+        zero_duration_dict = dict((v.key(),v) for v in zero_duration_videos)
+        video_changes = dict((k,v) for k,v in changes.iteritems() 
+                                if k in zero_duration_dict or (
+                                type(v) == Video and v.duration == 0))
+        zero_duration_dict.update(video_changes)
+        zero_duration_videos = [v for v in zero_duration_dict.values() 
+                                if v.duration == 0]
+
+        # find videos with invalid youtube_ids that would be marked live
+        logging.info("checking for videos with invalid youtube_ids")
+        root = Topic.get_root(version)
+        videos = root.get_videos(include_descendants = True)
+        bad_videos = []
+        for video in videos:
+            if re.search("_DUP_\d*$", video.youtube_id):
+                bad_videos.append(video) 
+
+        problems = {
+            "ExerciseVideos with topicless videos" : 
+                ExerciseVideo.get_all_with_topicless_videos(version),
+            "Exercises with colliding positions" : list(duplicate_positions),
+            "Zero duration videos": zero_duration_videos,
+            "Videos with bad youtube_ids": bad_videos}
+
+        return problems
 
     def set_default_version(self):
         logging.info("starting set_default_version")
-
-        do_set_default_deferred_step(apply_version_content_changes,
+        Setting.topic_admin_task_message("Publish: started") 
+        run_code = base64.urlsafe_b64encode(os.urandom(30))   
+        do_set_default_deferred_step(check_for_problems, 
                             self.number,
-                            "%i_apply_version_content_changes" % self.number)
+                            run_code) 
 
-def do_set_default_deferred_step(func, version_number, taskname):
+def do_set_default_deferred_step(func, version_number, run_code):
+    taskname = "v%i_run_%s_%s" % (version_number, run_code, func.__name__)
     try:
-        deferred.defer(func,
-                       version_number,
+        deferred.defer(func, 
+                       version_number, 
+                       run_code,
                        _queue = "topics-set-default-queue",
                        _name = taskname,
                        _url = "/_ah/queue/deferred_topics-set-default-queue")
     except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
         logging.info("deferred task %s already exists" % taskname)
 
+def check_for_problems(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: checking for content problems")
+    version = TopicVersion.get_by_id(version_number)
+    content_problems = version.find_content_problems()
+    for problem_type, problems in content_problems.iteritems():
+        if len(problems):
+            content_problems["Version"] = version_number
+            content_problems["Date detected"] = datetime.datetime.now()
+            layer_cache.KeyValueCache.set(
+                "set_default_version_content_problem_details", content_problems)
+            Setting.topic_admin_task_message(("Error - content problems " +
+                "found: %s. <a target=_blank " +
+                "href='/api/v1/dev/topictree/problems'>" +
+                "Click here to see problems.</a>") % 
+                (problem_type))
+                
+            raise deferred.PermanentTaskFailure
 
-def apply_version_content_changes(version_number):
+    do_set_default_deferred_step(apply_version_content_changes, 
+                                 version_number,
+                                 run_code) 
+
+def apply_version_content_changes(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: applying version content changes")  
     version = TopicVersion.get_by_id(version_number)
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
@@ -1989,9 +2112,10 @@ def apply_version_content_changes(version_number):
     logging.info("applied content changes")
     do_set_default_deferred_step(preload_library,
                                  version_number,
-                                 "%i_preload_library" % version_number)
+                                 run_code) 
 
-def preload_library(version_number):
+def preload_library(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: preloading cache")  
     version = TopicVersion.get_by_id(version_number)
 
     # causes circular importing if put at the top
@@ -2014,9 +2138,10 @@ def preload_library(version_number):
 
     do_set_default_deferred_step(change_default_version,
                                  version_number,
-                                 "%i_change_default_version" % version_number)
-
-def change_default_version(version_number):
+                                 run_code) 
+    
+def change_default_version(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: changing default version")  
     version = TopicVersion.get_by_id(version_number)
 
     default_version = TopicVersion.get_default_version()
@@ -2045,8 +2170,12 @@ def change_default_version(version_number):
 
     logging.info("done setting new default version")
 
+    Setting.topic_admin_task_message("Publish: reindexing new content")  
+
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
+    
+    Setting.topic_admin_task_message("Publish: creating new edit version")  
 
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
@@ -2059,9 +2188,11 @@ def change_default_version(version_number):
 
     do_set_default_deferred_step(rebuild_content_caches,
                                  version_number,
-                                 "%i_rebuild_content_caches"  % version_number)
-
-def rebuild_content_caches(version_number):
+                                 run_code)
+   
+def rebuild_content_caches(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: rebuilding content caches")
+      
     version = TopicVersion.get_by_id(version_number)
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
@@ -2097,6 +2228,7 @@ def rebuild_content_caches(version_number):
                 else:
                     logging.info("Failed to find URL " + str(child_key))
 
+    Setting.topic_admin_task_message("Publish: putting all content caches") 
     logging.info("About to put content caches for all videos")
     db.put(videos)
     logging.info("Finished putting videos. About to put urls")
@@ -2104,6 +2236,7 @@ def rebuild_content_caches(version_number):
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
     logging.info("set_default_version complete")
+    Setting.topic_admin_task_message("Publish: finished successfully") 
 
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
@@ -2176,9 +2309,9 @@ class VersionContentChange(db.Model):
     @staticmethod
     def add_new_content(klass, version, new_props, changeable_props=None,
                         put_change=True):
-        new_props = dict((str(k), v) for k, v in new_props.iteritems()
+        filtered_props = dict((str(k), v) for k,v in new_props.iteritems()
                          if changeable_props is None or k in changeable_props)
-        content = klass(**new_props)
+        content = klass(**filtered_props)
         content.put()
 
         if (type(content) == Exercise and "related_videos" in new_props):
@@ -2206,7 +2339,7 @@ class VersionContentChange(db.Model):
         if put_change:
             change = VersionContentChange(parent=version)
             change.version = version
-            change.content_changes = new_props
+            change.content_changes = filtered_props
             change.content = content
             Setting.cached_content_add_date(datetime.datetime.now())
             change.put()
@@ -2234,9 +2367,14 @@ class VersionContentChange(db.Model):
             for prop in changeable_props:
                 if (prop in new_props and
                     new_props[prop] is not None and (
-                        not hasattr(content, prop) or
-                        new_props[prop] != getattr(content, prop))
-                        ):
+                        not hasattr(content, prop) or (
+                            prop != "related_videos" and
+                            new_props[prop] != getattr(content, prop)
+                        ) or (
+                            prop == "related_videos" and 
+                            set(new_props[prop]) != set(getattr(content, prop))
+                        ))
+                    ):
 
                     # add new changes for all props that are different from what
                     # is currently in content
@@ -2366,9 +2504,12 @@ class Topic(Searchable, db.Model):
             "title": v.title
         } for v in Topic.get_cached_videos_for_topic(self)]
 
-        ancestor_topics = [{"title": topic.title, "url": topic.relative_url 
-            if topic.id in Topic._super_topic_ids or topic.has_content() 
-            else "#"} for topic in db.get(self.ancestor_keys)][0:-1]
+        ancestor_topics = [{
+            "title": topic.title, 
+            "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
+                    or topic.has_content() else None)
+            } 
+            for topic in db.get(self.ancestor_keys)][0:-1]
         ancestor_topics.reverse()
 
         return {
@@ -2894,9 +3035,9 @@ class Topic(Searchable, db.Model):
 
                 else:
                     title = getattr(child, "title", getattr(child, "display_name", ""))
-                    if title.lower().find(query) > -1:
+                    id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id())))
+                    if title.lower().find(query) > -1 or str(id).lower().find(query) > -1:
                         match_path = path[:]
-                        id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id())))
                         match_path.append(id)
                         match_path.append(child_key.kind())
                         matching_paths.append(match_path)
@@ -3085,13 +3226,6 @@ class Topic(Searchable, db.Model):
         return content_topics
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(
-        lambda types=None, version=None, include_hidden=False:
-        "topic.get_filled_content_topics_%s_%s" % (
-            (str(version.number) + str(version.updated_on)) if version
-            else Setting.topic_tree_version(),
-            include_hidden),
-        layer=layer_cache.Layers.Blobstore)
     def get_filled_content_topics(types=None, version=None, include_hidden=False):
         if types is None:
             types = []
@@ -3330,247 +3464,249 @@ class Topic(Searchable, db.Model):
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data
     import zlib
-    import pickle
 
-    tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
+    try:
+        tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
 
-    logging.info("starting import")
-    version = TopicVersion.get_by_id(version_id)
-    parent = Topic.get_by_id(topic_id, version)
+        logging.info("starting import")
+        version = TopicVersion.get_by_id(version_id)
+        parent = Topic.get_by_id(topic_id, version)
 
-    topics = Topic.get_all_topics(version, True)
-    logging.info("got all topics")
-    topic_dict = dict((topic.id, topic) for topic in topics)
-    topic_keys_dict = dict((topic.key(), topic) for topic in topics)
+        topics = Topic.get_all_topics(version, True)
+        logging.info("got all topics")
+        topic_dict = dict((topic.id, topic) for topic in topics)
+        topic_keys_dict = dict((topic.key(), topic) for topic in topics)
 
-    videos = Video.get_all()
-    logging.info("got all videos")
-    video_dict = dict((video.readable_id, video) for video in videos)
+        videos = Video.get_all()
+        logging.info("got all videos")
+        video_dict = dict((video.readable_id, video) for video in videos)
 
-    exercises = Exercise.get_all_use_cache()
-    logging.info("got all exercises")
-    exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
+        exercises = Exercise.get_all_use_cache()
+        logging.info("got all exercises")
+        exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
 
-    urls = Url.all()
-    url_dict = dict((url.id, url) for url in urls)
-    logging.info("got all urls")
+        urls = Url.all()
+        url_dict = dict((url.id, url) for url in urls)
+        logging.info("got all urls")
 
-    all_entities_dict = {}
-    new_content_keys = []
+        all_entities_dict = {}
+        new_content_keys = []
 
-    # on dev server dont record new items in ContentVersionChanges
-    if App.is_dev_server:
-        put_change = False
-    else:
-        put_change = True
+        # on dev server dont record new items in ContentVersionChanges
+        if App.is_dev_server:
+            put_change = False
+        else:
+            put_change = True
 
-    # delete all subtopics of node we are copying over the same topic
-    if tree_json["id"] == parent.id:
-        parent.delete_descendants()
+        # delete all subtopics of node we are copying over the same topic
+        if tree_json["id"] == parent.id:
+            parent.delete_descendants()
 
-    # adds key to each entity in json tree, if the node is not in the tree then add it
-    def add_keys_json_tree(tree, parent, do_exercises, i=0, prefix=None):
-        pos = ((prefix + ".") if prefix else "") + str(i)
+        # adds key to each entity in json tree, if the node is not in the tree then add it
+        def add_keys_json_tree(tree, parent, do_exercises, i=0, prefix=None):
+            pos = ((prefix + ".") if prefix else "") + str(i)
 
-        if not do_exercises and tree["kind"] == "Topic":
-            if tree["id"] in topic_dict:
-                topic = topic_dict[tree["id"]]
-                tree["key"] = topic.key()
-            else:
-                kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
-                kwargs["version"] = version
-                topic = Topic.insert(title=tree['title'], parent=parent, **kwargs)
-                logging.info("%s: added topic %s" % (pos, topic.title))
-                tree["key"] = topic.key()
-                topic_dict[tree["id"]] = topic
+            if not do_exercises and tree["kind"] == "Topic":
+                if tree["id"] in topic_dict:
+                    topic = topic_dict[tree["id"]]
+                    tree["key"] = topic.key()
+                else:
+                    kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
+                    kwargs["version"] = version
+                    topic = Topic.insert(title=tree['title'], parent=parent, **kwargs)
+                    logging.info("%s: added topic %s" % (pos, topic.title))
+                    tree["key"] = topic.key()
+                    topic_dict[tree["id"]] = topic
 
-            # if this topic is not the parent topic (ie. its not root, nor the
-            # topic_id you are updating)
-            if (parent.key() != topic.key() and
-                # and this topic is not in the new parent
-                topic.key() not in parent.child_keys and
-                # if it already exists in a topic
-                len(topic.parent_keys) and
-                # and that topic is not the parent topic
-                topic.parent_keys[0] != parent.key()):
+                # if this topic is not the parent topic (ie. its not root, nor the 
+                # topic_id you are updating)
+                if (parent.key() != topic.key() and
+                    # and this topic is not in the new parent
+                    topic.key() not in parent.child_keys and
+                    # if it already exists in a topic
+                    len(topic.parent_keys) and
+                    # and that topic is not the parent topic
+                    topic.parent_keys[0] != parent.key()):
 
-                # move it from that old parent topic, its position in the new
-                # parent does not matter as child_keys will get written over
-                # later.  move_child is needed only to make sure that the
-                # parent_keys and ancestor_keys will all match up correctly
-                old_parent = topic_keys_dict[topic.parent_keys[0]]
-                logging.info("moving topic %s from %s to %s" % (topic.id,
-                    old_parent.id, parent.id))
-                old_parent.move_child(topic, parent, 0)
+                    # move it from that old parent topic, its position in the new
+                    # parent does not matter as child_keys will get written over 
+                    # later.  move_child is needed only to make sure that the 
+                    # parent_keys and ancestor_keys will all match up correctly
+                    old_parent = topic_keys_dict[topic.parent_keys[0]]
+                    logging.info("moving topic %s from %s to %s" % (topic.id,
+                        old_parent.id, parent.id))
+                    old_parent.move_child(topic, parent, 0)
 
-            all_entities_dict[tree["key"]] = topic
+                all_entities_dict[tree["key"]] = topic
 
-        elif not do_exercises and tree["kind"] == "Video":
-            if tree["readable_id"] in video_dict:
-                video = video_dict[tree["readable_id"]]
-                tree["key"] = video.key()
-            else:
-                changeable_props = ["youtube_id", "url", "title", "description",
-                                    "keywords", "duration", "readable_id",
-                                    "views"]
-                video = VersionContentChange.add_new_content(Video,
-                                                                version,
-                                                                tree,
-                                                                changeable_props,
-                                                                put_change)
-                logging.info("%s: added video %s" % (pos, video.title))
-                new_content_keys.append(video.key())
-                tree["key"] = video.key()
-                video_dict[tree["readable_id"]] = video
+            elif not do_exercises and tree["kind"] == "Video":
+                if tree["readable_id"] in video_dict:
+                    video = video_dict[tree["readable_id"]]
+                    tree["key"] = video.key()
+                else:
+                    changeable_props = ["youtube_id", "url", "title", "description",
+                                        "keywords", "duration", "readable_id",
+                                        "views"]
+                    video = VersionContentChange.add_new_content(Video,
+                                                                    version,
+                                                                    tree,
+                                                                    changeable_props,
+                                                                    put_change)
+                    logging.info("%s: added video %s" % (pos, video.title))
+                    new_content_keys.append(video.key())
+                    tree["key"] = video.key()
+                    video_dict[tree["readable_id"]] = video
 
-            all_entities_dict[tree["key"]] = video
+                all_entities_dict[tree["key"]] = video
 
-        elif do_exercises and tree["kind"] == "Exercise":
-            if tree["name"] in exercise_dict:
-                tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
-            else:
-                if "related_videos" in tree:
-                    # adding keys to entity tree so we don't need to look it up
-                    # again when creating the video in add_new_content
-                    tree["related_video_keys"] = []
-                    for readable_id in tree["related_videos"]:
-                        video = video_dict[readable_id]
-                        tree["related_video_keys"].append(video.key())
-                exercise = exercise_save_data(version, tree, None, put_change)
-                logging.info("%s: added Exercise %s" % (pos, exercise.name))
-                new_content_keys.append(exercise.key())
-                tree["key"] = exercise.key()
-                exercise_dict[tree["name"]] = exercise
+            elif do_exercises and tree["kind"] == "Exercise":
+                if tree["name"] in exercise_dict:
+                    tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
+                else:
+                    if "related_videos" in tree:
+                        # adding keys to entity tree so we don't need to look it up 
+                        # again when creating the video in add_new_content
+                        tree["related_video_keys"] = []
+                        for readable_id in tree["related_videos"]:
+                            video = video_dict[readable_id]
+                            tree["related_video_keys"].append(video.key())
+                    exercise = exercise_save_data(version, tree, None, put_change)
+                    logging.info("%s: added Exercise %s" % (pos, exercise.name))
+                    new_content_keys.append(exercise.key())
+                    tree["key"] = exercise.key()
+                    exercise_dict[tree["name"]] = exercise
 
-            all_entities_dict[tree["key"]] = exercise_dict[tree["name"]]
+                all_entities_dict[tree["key"]] = exercise_dict[tree["name"]]
 
-        elif not do_exercises and tree["kind"] == "Url":
-            if tree["id"] in url_dict:
-                url = url_dict[tree["id"]]
-                tree["key"] = url.key()
-            else:
-                changeable_props = ["tags", "title", "url"]
-                url = VersionContentChange.add_new_content(Url,
-                                                           version,
-                                                           tree,
-                                                           changeable_props,
-                                                           put_change)
-                logging.info("%s: added Url %s" % (pos, url.title))
-                new_content_keys.append(url.key())
-                tree["key"] = url.key()
-                url_dict[tree["id"]] = url
+            elif not do_exercises and tree["kind"] == "Url":
+                if tree["id"] in url_dict:
+                    url = url_dict[tree["id"]]
+                    tree["key"] = url.key()
+                else:
+                    changeable_props = ["tags", "title", "url"]
+                    url = VersionContentChange.add_new_content(Url,
+                                                               version,
+                                                               tree,
+                                                               changeable_props,
+                                                               put_change)
+                    logging.info("%s: added Url %s" % (pos, url.title))
+                    new_content_keys.append(url.key())
+                    tree["key"] = url.key()
+                    url_dict[tree["id"]] = url
 
-            all_entities_dict[tree["key"]] = url
+                all_entities_dict[tree["key"]] = url
 
-        i = 0
-        # recurse through the tree's children
-        if "children" in tree:
-            for child in tree["children"]:
-                add_keys_json_tree(child, topic_dict[tree["id"]], do_exercises, i, pos)
-                i += 1
-
-    add_keys_json_tree(tree_json, parent, do_exercises=False)
-
-    # add related_videos prop to exercises
-    evs = ExerciseVideo.all().fetch(10000)
-    exercise_key_dict = dict((e.key(), e) for e in exercises)
-    video_key_dict = dict((v.key(), v) for v in video_dict.values())
-    Exercise.add_related_videos_prop(exercise_key_dict, evs, video_key_dict)
-
-    # exercises need to be done after, because if they reference ExerciseVideos
-    # those Videos have to already exist
-    add_keys_json_tree(tree_json, parent, do_exercises=True)
-
-    logging.info("added keys to nodes")
-
-    def add_child_keys_json_tree(tree):
-        if tree["kind"] == "Topic":
-            tree["child_keys"] = []
+            i = 0
+            # recurse through the tree's children
             if "children" in tree:
                 for child in tree["children"]:
-                    '''
-                    if child["kind"] == "Video":
-                        logging.info(child["title"])
-                    else:
-                        logging.info(child["name"])
-                    '''
-                    tree["child_keys"].append(child["key"])
-                    add_child_keys_json_tree(child)
+                    add_keys_json_tree(child, topic_dict[tree["id"]], do_exercises, i, pos)
+                    i += 1
 
-    add_child_keys_json_tree(tree_json)
-    logging.info("added children keys")
+        add_keys_json_tree(tree_json, parent, do_exercises=False)
 
-    def extract_nodes(tree, nodes):
-        if "children" in tree:
-            for child in tree["children"]:
-                nodes.update(extract_nodes(child, nodes))
-            del(tree["children"])
-        nodes[tree["key"]] = tree
-        return nodes
+        # add related_videos prop to exercises
+        evs = ExerciseVideo.all().fetch(10000)
+        exercise_key_dict = dict((e.key(), e) for e in exercises)
+        video_key_dict = dict((v.key(), v) for v in video_dict.values())
+        Exercise.add_related_videos_prop(exercise_key_dict, evs, video_key_dict)
 
-    nodes = extract_nodes(tree_json, {})
-    logging.info("extracted %i nodes" % len(nodes))
-    changed_nodes = []
+        # exercises need to be done after, because if they reference ExerciseVideos
+        # those Videos have to already exist
+        add_keys_json_tree(tree_json, parent, do_exercises=True)
 
-    i = 0
-    # now loop through all the nodes
-    for key, node in nodes.iteritems():
-        if node["kind"] == "Topic":
-            topic = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any change to Topic %s" % (i, len(nodes), topic.title))
+        logging.info("added keys to nodes")
 
-            kwargs = (dict((str(key), value) for key, value in node.iteritems()
-                    if key in ['id', 'title', 'standalone_title', 'description',
-                    'tags', 'hide', 'child_keys']))
-            kwargs["version"] = version
-            kwargs["put"] = False
-            if topic.update(**kwargs):
-                changed_nodes.append(topic)
+        def add_child_keys_json_tree(tree):
+            if tree["kind"] == "Topic":
+                tree["child_keys"] = []
+                if "children" in tree:
+                    for child in tree["children"]:
+                        tree["child_keys"].append(child["key"])
+                        add_child_keys_json_tree(child)
 
-        elif node["kind"] == "Video" and node["key"] not in new_content_keys:
-            video = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any change to Video %s" % (i, len(nodes), video.title))
+        add_child_keys_json_tree(tree_json)
+        logging.info("added children keys")
 
-            change = VersionContentChange.add_content_change(video,
-                version,
-                node,
-                ["readable_id", "title", "youtube_id", "description", "keywords"])
-            if change:
-                logging.info("changed")
+        def extract_nodes(tree, nodes):
+            if "children" in tree:
+                for child in tree["children"]:
+                    nodes.update(extract_nodes(child, nodes))
+                del(tree["children"])
+            nodes[tree["key"]] = tree
+            return nodes
 
-        elif node["kind"] == "Exercise" and node["key"] not in new_content_keys:
-            exercise = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
+        nodes = extract_nodes(tree_json, {})
+        logging.info("extracted %i nodes" % len(nodes))
+        changed_nodes = []
 
-            change = exercise_save_data(version, node, exercise)
-            if change:
-                logging.info("changed")
+        i = 0
+        # now loop through all the nodes 
+        for key, node in nodes.iteritems():
+            if node["kind"] == "Topic":
+                topic = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any change to Topic %s" % (i, len(nodes), topic.title))
 
-        elif node["kind"] == "Url" and node["key"] not in new_content_keys:
-            url = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any changes to Url %s" % (i, len(nodes), url.title))
+                kwargs = (dict((str(key), value) for key, value in node.iteritems()
+                        if key in ['id', 'title', 'standalone_title', 'description',
+                        'tags', 'hide', 'child_keys']))
+                kwargs["version"] = version
+                kwargs["put"] = False
+                if topic.update(**kwargs):
+                    changed_nodes.append(topic)
 
-            changeable_props = ["tags", "title", "url"]
+            elif node["kind"] == "Video" and node["key"] not in new_content_keys:
+                video = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any change to Video %s" % (i, len(nodes), video.title))
 
-            change = VersionContentChange.add_content_change(
-                url,
-                version,
-                node,
-                changeable_props)
+                change = VersionContentChange.add_content_change(video,
+                    version,
+                    node,
+                    ["readable_id", "title", "youtube_id", "description", "keywords"])
+                if change:
+                    logging.info("changed")
 
-            if change:
-                logging.info("changed")
+            elif node["kind"] == "Exercise" and node["key"] not in new_content_keys:
+                exercise = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
+
+                change = exercise_save_data(version, node, exercise)
+                if change:
+                    logging.info("changed")
+
+            elif node["kind"] == "Url" and node["key"] not in new_content_keys:
+                url = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any changes to Url %s" % (i, len(nodes), url.title))
+
+                changeable_props = ["tags", "title", "url"]
+
+                change = VersionContentChange.add_content_change(
+                    url,
+                    version,
+                    node,
+                    changeable_props)
+
+                if change:
+                    logging.info("changed")
 
 
-        i += 1
+            i += 1
 
-    logging.info("about to put %i topic nodes" % len(changed_nodes))
-    Setting.cached_content_add_date(datetime.datetime.now())
-    db.put(changed_nodes)
-    logging.info("done with import")
+        logging.info("about to put %i topic nodes" % len(changed_nodes))
+        Setting.cached_content_add_date(datetime.datetime.now())
+        db.put(changed_nodes)
+        logging.info("done with import")
 
-    if publish:
-        version.set_default_version()
+        if publish:
+            version.set_default_version()
+
+    except Exception, e:
+        import traceback, StringIO
+        fp = StringIO.StringIO()
+        traceback.print_exc(file=fp)
+        logging.error(fp.getvalue())
+        logging.error("Topic import failed with %s", e)
+        raise deferred.PermanentTaskFailure
 
     return True
 
@@ -3909,6 +4045,7 @@ class Video(Searchable, db.Model):
             'player_html': player_html,
             'discussion_html': discussion_html,
             'subtitles_html': subtitles_html,
+            'videoPoints': awarded_points,
         }
 
 class Playlist(Searchable, db.Model):
@@ -4223,9 +4360,15 @@ class VideoLog(BackupModel):
         # If the last video logged is not this video and the times being credited
         # overlap, don't give points for this video. Can only get points for one video
         # at a time.
-        if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
+        if (detect_cheat and
+                last_video_log and
+                last_video_log.key_for_video() != video.key()):
             dt_now = datetime.datetime.now()
-            if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
+            other_video_time = last_video_log.time_watched
+            this_video_time = dt_now - datetime.timedelta(seconds=seconds_watched)
+            if other_video_time > this_video_time:
+                logging.warning("Detected overlapping video logs " +
+                                "(user may be watching multiple videos?)")
                 return (None, None, 0, False)
 
         video_log = VideoLog()
@@ -4237,10 +4380,6 @@ class VideoLog(BackupModel):
         video_log.last_second_watched = last_second_watched
 
         if seconds_watched > 0:
-
-            bingo('marquee_started_any_video')
-            if video.readable_id in MarqueeVideoExperiment._ab_test_alternatives and video.readable_id == MarqueeVideoExperiment.ab_test():
-                bingo('marquee_started_marquee_video')
 
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
@@ -4294,7 +4433,6 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
-                'marquee_num_videos_completed',
             ])
         video_log.is_video_completed = user_video.completed
 
@@ -5487,7 +5625,7 @@ class VideoSubtitles(db.Model):
         """
         try:
             return json.loads(self.json)
-        except json.JSONDecodeError:
+        except ValueError:
             logging.warn('VideoSubtitles.load_json: json decode error')
 
 class VideoSubtitlesFetchReport(db.Model):
@@ -5510,3 +5648,4 @@ class VideoSubtitlesFetchReport(db.Model):
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from goals.models import GoalList
+

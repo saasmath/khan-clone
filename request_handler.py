@@ -1,7 +1,13 @@
 import os
 import logging
 import datetime
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import sys
 import re
 import traceback
@@ -375,12 +381,27 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         # Analytics
         template_values['mixpanel_enabled'] = gandalf('mixpanel_enabled')
-        template_values['mixpanel_id'] = gae_bingo.identity.identity()
 
         if False: # Enable for testing only
             template_values['mixpanel_test'] = "70acc4fce4511b89477ac005639cfee1"
             template_values['mixpanel_enabled'] = True
             template_values['hide_analytics'] = False
+
+        if template_values['mixpanel_enabled']:
+            template_values['mixpanel_id'] = gae_bingo.identity.identity()
+
+        if not template_values['hide_analytics']:
+            superprops_list = UserData.get_analytics_properties(user_data)
+
+            # Create a superprops dict for MixPanel with a version number
+            # Bump the version number if changes are made to the client-side analytics
+            # code and we want to be able to filter by version.
+            superprops_dict = dict(superprops_list)
+            superprops_dict["Version"] = 1
+            template_values['mixpanel_superprops'] = jsonify(superprops_dict)
+
+            # Copy over first 4 per-user properties for GA (5th is reserved for Bingo)
+            template_values['ga_custom_vars'] = superprops_list[0:4]
 
         if user_data:
             goals = GoalList.get_current_goals(user_data)
@@ -398,16 +419,16 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return shared_jinja.get().render_template(template_name, **template_values)
 
     def render_json(self, obj):
-        json = simplejson.dumps(obj, ensure_ascii=False)
-        self.response.out.write(json)
+        json_string = json.dumps(obj, ensure_ascii=False)
+        self.response.out.write(json_string)
 
     def render_jsonp(self, obj):
-        json = obj if isinstance(obj, basestring) else simplejson.dumps(obj, ensure_ascii=False, indent=4)
+        json_string = obj if isinstance(obj, basestring) else json.dumps(obj, ensure_ascii=False, indent=4)
         callback = self.request_string("callback")
         if callback:
-            self.response.out.write("%s(%s)" % (callback, json))
+            self.response.out.write("%s(%s)" % (callback, json_string))
         else:
-            self.response.out.write(json)
+            self.response.out.write(json_string)
 
 from models import UserData
 import util

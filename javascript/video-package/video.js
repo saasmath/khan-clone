@@ -81,7 +81,7 @@ var Video = {
             }
         }
 
-        // Bingo conversions for watching a video video
+        // Bingo conversions for reaching a video page
         gae_bingo.bingo(["videos_landing",
             "struggling_videos_landing"]);
 
@@ -162,11 +162,7 @@ var Video = {
         QA.init();
 
         this.initEventHandlers();
-
-        // Update the points display if we've made progress since the last page load
-        if (videoData.videoPoints) {
-            VideoStats.updatePoints(videoData.videoPoints);
-        }
+        VideoStats.updatePointsSaved(videoData.videoPoints);
 
         // Set up next/previous links
         if (!this.pushStateDisabled) {
@@ -211,6 +207,7 @@ var Video = {
         if (this.currentVideoData) {
             this.currentVideoData.videoPoints = points;
         }
+        VideoStats.updatePointsSaved(points);
         this.needsUserVideoCSSReload = true;
     },
 

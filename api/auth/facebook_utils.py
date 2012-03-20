@@ -1,13 +1,12 @@
 import datetime
 import urllib
 
-import shared_jinja
 from flask import request, redirect
 
 from app import App
 
 from api import route
-from api.auth.auth_util import oauth_error_response, get_response, get_parsed_params, authorize_token_redirect, OAuthBadRequestError
+from api.auth.auth_util import pretty_error_response, oauth_error_response, get_response, get_parsed_params, authorize_token_redirect, OAuthBadRequestError
 from api.auth.auth_models import OAuthMap
 
 from oauth_provider.oauth import OAuthError
@@ -74,8 +73,7 @@ def facebook_token_callback():
     try:
         oauth_map = retrieve_facebook_access_token(oauth_map)
     except OAuthBadRequestError, e:
-        jinja = shared_jinja.get()
-        return jinja.render_template('login_mobile_error.html', message='Unable to log in to Facebook.')
+        return pretty_error_response('Unable to log in with Facebook.')
     except OAuthError, e:
         return oauth_error_response(e)
 

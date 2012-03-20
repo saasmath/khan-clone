@@ -66,6 +66,8 @@ body {
     margin: 0;
     color: #444;
     line-height: 22px;
+    /* extend background to cover #page-container on horizontal scroll */
+    min-width: 1000px;
 }
 
 
@@ -211,7 +213,11 @@ input.simple-button {
 	border-bottom-color: #803503 !important;
 	text-shadow:  0 -1px 0 #a64403;
 }
-.simple-button:disabled, .simple-button.disabled {
+.simple-button:disabled,
+.simple-button.disabled {
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
     color: #ddd !important;
     cursor: not-allowed !important;
     top: 0 !important;
@@ -594,16 +600,27 @@ footer {
     .dark #top-header #user-info {
         text-shadow: 0 1px 0 #1A222D;
     }
-    #user-info ul {
-        display: block;
-        clear: right;
-        float: right;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
     #user-info a.notification_link img {
         position: relative;
+    }
+    #user-info .dropdown {
+        padding: 5px 0 5px 0;
+    }
+    #user-info .dropdown.open {
+        background-color: #FFF;
+        padding-bottom: 10px;
+    }
+    #user-info .dropdown-menu:before {
+        display: none;
+    }
+    #user-info .dropdown-menu {
+        margin: 0;
+        left: 0;
+        border: none;
+        width: 100%;
+    }
+    #user-info .dropdown-menu li > a:hover {
+        background-color: #E5f0CC;
     }
 
 #nav-and-search {
@@ -662,6 +679,7 @@ footer {
         float: right;
     }
     #page_sub_nav .breadcrumbs_nav > a,
+    #page_sub_nav .breadcrumbs_nav > span,
     #page_sub_nav .breadcrumbs_nav .breadcrumb-separator,
     #page_sub_nav .breadcrumbs_nav #video_dropdown {
         display: block;
@@ -903,7 +921,12 @@ footer {
     }
 
     #top-header #top-header-links span.badge_count_container { vertical-align:baseline; }
-    #top-header #top-header-links span.username_and_notification { vertical-align:baseline; position:relative; top:2px; }
+    #top-header #top-header-links span.username_and_notification {
+        vertical-align: baseline;
+        position: relative;
+        top: 0;
+        padding: 5px 5px;
+    }
     #top-header #top-header-links span.username_and_notification span.user-name { vertical-align:baseline; }
     #top-header #top-header-links span.username_and_notification span.user-notification { vertical-align:baseline; }
     #top-header #top-header-links span.username_and_notification_shift { left: 12px; }
@@ -1106,11 +1129,6 @@ nav#page_sub_nav {
         -moz-box-shadow: 0 -2px 0 #1A222C;
         box-shadow: 0 -2px 0 #1A222C;
     }
-
-header ul {
-    margin: 0;
-    padding: .2em 1em .2em 1em;
-}
 
 nav ul.page_links li, header ul.page_links li {
     display: inline;
@@ -3842,50 +3860,77 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: url(/images/email-button-24.png) no-repeat;
 }
 
-#search-topics span.highlighted {
+.search-topics span.highlighted {
     font-weight: bold;
 }
-#search-topics .topic {
+.search-topics div.matching-topic {
+    width: 620px;
+    margin-left: 20px;
+}
+.search-topics .matching-topic h2 {
+    padding-top: 20px;
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+.search-topics .matching-topic .topic-description {
+    margin-bottom: 5px;
+}
+.search-topics .matching-topic ul {
+    margin-left: 20px;
+}
+.search-topics .matching-topic li {
+    float: left;
+    width: 300px;
+    list-style-type: none;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.searchresult-counts {
+    font-style: italic;
+}
+.search-topics .topic {
     margin-top: 38px;
     margin-bottom: 5px;
     font-size: 18px
 }
-#search-topics .videos {
+.search-topics .videos {
     margin-left: 0px;
 }
-#search-topics .video-result {
+.search-topics .video-result {
     font-size: 14px;
 }
-#search-topics .description {
+.search-topics .description {
     margin: 2px 0px 0px 0px;
     font-size: 11px;
     line-height: 18px;
 }
-#search-topics li {
+.search-topics li {
     margin-top: 40px;
     margin-bottom: 40px;
 }
-#search-topics .match_count {
+.search-topics .match_count {
     font-size: 14px;
 }
-#search-topics .column {
+.search-topics .column {
     float: left;
     width: 200px;
     padding-right: 20px;
 }
-#search-topics .column:first-child {
+.search-topics .column:first-child {
     width: 360px;
 }
-#search-topics .column-heading {
+.search-topics .column-heading {
     width: 180px;
     border-bottom: 2px solid black;
     margin: 0px;
 }
-#search-topics .column li {
+.search-topics .column li {
     margin: 5px 0px 0px 0px;
     line-height: 14px;
 }
-#search-topics br {
+.search-topics br {
     clear: left;
 }
 

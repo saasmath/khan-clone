@@ -3,10 +3,11 @@ import sys
 from urllib import urlencode
 from urllib2 import urlopen, Request
 
+# use json in Python 2.7, fallback to simplejson for Python 2.5
 try:
-    import simplejson as json
-except:
     import json
+except ImportError:
+    import simplejson as json
 
 import hipchat.config
 

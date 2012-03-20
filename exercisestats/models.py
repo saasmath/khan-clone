@@ -1,6 +1,6 @@
 from google.appengine.ext import db
 from time import mktime
-import pickle
+import cPickle as pickle
 import datetime as dt
 
 class ExerciseStatisticShard(db.Model):
