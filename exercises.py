@@ -495,9 +495,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
         first_response = (attempt_number == 1 and count_hints == 0) or (count_hints == 1 and attempt_number == 0)
 
-        if user_exercise.total_done == 0:
-            bingo('marquee_num_exercises_started')
-        
         if user_exercise.total_done > 0 and user_exercise.streak == 0 and first_response:
             bingo('hints_keep_going_after_wrong')
 
