@@ -248,13 +248,17 @@ var Exercises = {
         });
 
         $(Khan).bind("hintUsed", function() {
-            // Using a hint drops leaves possibility to 2.
-            Exercises.currentCard.decreaseLeavesAvailable(2);
+            if (!Exercises.currentCard.get("done")) {
+                // Using a hint drops leaves possibility to 2.
+                Exercises.currentCard.decreaseLeavesAvailable(2);
+            }
         });
 
         $(Khan).bind("allHintsUsed", function() {
-            // Using all hints drops leaves possibility to 1.
-            Exercises.currentCard.decreaseLeavesAvailable(1);
+            if (!Exercises.currentCard.get("done")) {
+                // Using all hints drops leaves possibility to 1.
+                Exercises.currentCard.decreaseLeavesAvailable(1);
+            }
         });
 
         $(Khan)

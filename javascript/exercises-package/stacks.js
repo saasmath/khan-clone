@@ -31,27 +31,7 @@ Exercises.Card = Backbone.Model.extend({
 
         return this.set({ leavesAvailable: leavesAvailable });
 
-    },
-
-    /**
-     * Increases leaves earned for this card -- if leaves earned is already
-     * at this level or higher, noop
-     */
-    increaseLeavesEarned: function(leavesEarned) {
-
-        var currentLeaves = this.get("leavesEarned");
-        if (currentLeaves) {
-            leavesEarned = Math.max(currentLeaves, leavesEarned);
-        }
-
-        // leavesEarned takes precedence over leavesAvailable because
-        // leavesEarned is only set when the card is done, and leavesAvailable
-        // no longer matters at this point.
-        // 
-        // We update leavesAvailable here just to keep the card's data consistent.
-        return this.set({ leavesEarned: leavesEarned, leavesAvailable: leavesEarned });
-
-    },
+    }
 
 });
 
