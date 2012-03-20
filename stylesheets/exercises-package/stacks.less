@@ -424,6 +424,10 @@
     top: -30px;
 }
 .end-of-stack-info .progress-graph.current-stack .skill-bar .fill.blue.just-earned {
+    /* The 1s progress-bar animation and 1.5s progress-bar-proficient animations
+     * are connected, timing-wise. Don't change one without changing the other appropriately
+     * and taking a look at the keyframes %'s in each animation.
+     */
     -webkit-animation: progress-bar-proficient 1.5s;
     -moz-animation: progress-bar-proficient 1.5s;
 }
