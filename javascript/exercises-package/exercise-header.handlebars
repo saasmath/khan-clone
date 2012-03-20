@@ -1,11 +1,19 @@
 <h2 class="section-headline">
 {{#if reviewMode}}
+
 Review
+
 {{else}}
     {{#if practiceMode}}
+
+    <span class="topic-exercise-badge">&nbsp;<!-- Practice exercisees don't have badge images, just a placeholder --></span>
     {{practiceExercise.displayName}}
+
     {{else}}
-    <img class="topic-exercise-badge" src="{{topicExerciseBadge.icons.compact}}"> {{topic.standaloneTitle}}
+
+    <img class="topic-exercise-badge" src="{{topicExerciseBadge.icons.compact}}">
+    {{topic.standaloneTitle}}
+
     {{/if}}
 {{/if}}
 </h2>
