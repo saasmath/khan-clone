@@ -671,7 +671,7 @@ application = webapp2.WSGIApplication([
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
     
-    ('/signup', login.Register),
+    ('/signup', login.Signup),
     ('/completesignup', login.CompleteSignup),
     ('/pwchange', login.PasswordChange),
     ('/unverified', login.UnverifiedAccount),

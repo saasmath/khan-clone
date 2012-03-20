@@ -108,7 +108,7 @@ class Login(request_handler.RequestHandler):
         """ Handles a successful login for a user that has not had their
         e-mail address verified, and therefore needs to be stopped from
         actually getting an auth token. """
-        
+
         if existing_google_user_detected == None:
             # Check to see if there is an existing UserData account that was
             # created using a Google login.
@@ -187,7 +187,7 @@ class PostLogin(request_handler.RequestHandler):
                     # Good auth stamp - set the cookie for the user, which
                     # will also set it for this request.
                     auth.cookies.set_auth_cookie(self, user_data, token)
-                    
+
         user_data = UserData.current()
         if user_data:
 
@@ -201,7 +201,7 @@ class PostLogin(request_handler.RequestHandler):
                 # matching e-mail, merge the two userdata profiles, since it
                 # must be the case that this is the first time logging in
                 # with the Google Account.
-                
+
             # If the user has a public profile, we stop "syncing" their username
             # from Facebook, as they now have an opportunity to set it themself
             if not user_data.username:
@@ -272,7 +272,7 @@ _email_re = re.compile(
     r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-011\013\014\016-\177])*"' # quoted-string
     r')@(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$', re.IGNORECASE)  # domain
 
-class Register(request_handler.RequestHandler):
+class Signup(request_handler.RequestHandler):
     def get(self):
         """ Renders the register for new user page.  """
 
@@ -355,7 +355,7 @@ class Register(request_handler.RequestHandler):
                         errors['email'] = "Looks like you've already tried signing up"
         else:
             errors['email'] = "Email required"
-            
+
         if len(errors) > 0:
             template_values = {
                 'errors': errors,
@@ -364,30 +364,32 @@ class Register(request_handler.RequestHandler):
 
             self.render_jinja2_template('signup.html', template_values)
             return
-        
+
         # Success!
         unverified_user = models.UnverifiedUser.insert_for(email)
 
         # TODO(benkomalo): send verification e-mail
         # TODO(benkomalo): since users are now blocked from further access
         #    due to requiring verification of e-mail, we need to do something
-        #    about migrating phantom data.
+        #    about migrating phantom data (we can store the phantom id in
+        #    the UnverifiedUser object and migrate after they finish
+        #    registering, for example)
 
         Login.redirect_to_unverified_warning(self,
                                              unverified_user,
                                              existing_google_user_detected)
-        
+
 class CompleteSignup(request_handler.RequestHandler):
     @staticmethod
     def build_link(unverified_user):
         return util.absolute_url(
                 "/completesignup?token=%s" %
                 auth.tokens.EmailVerificationToken.for_user(unverified_user).value)
-        
+
     def validated_token(self):
         token_value = self.request_string("token", default=None)
         token = auth.tokens.EmailVerificationToken.for_value(token_value)
-        
+
         if not token:
             self.response.bad_request("Invalid parameters")
             return None
@@ -492,19 +494,19 @@ class CompleteSignup(request_handler.RequestHandler):
                 password,
                 birthdate=unverified_user.birthdate,
                 gender=gender)
-        
+
         if not created_user:
             # TODO(benkomalo): STOPSHIP handle the low probability event that a
             # username was taken just as this method was processing.
             self.response.write("Oops. can't make user")
             return
-        
+
         # Nickname is special since it requires updating external indices.
         created_user.update_nickname(values['nickname'])
 
         # TODO(benkomalo): move this into a transaction with the above creation
         unverified_user.delete()
-        
+
         # TODO(benkomalo): give some kind of "congrats"/"welcome" notification
         Login.redirect_with_auth_stamp(self, created_user)
 
@@ -550,7 +552,7 @@ class UnverifiedAccount(request_handler.RequestHandler):
         if not token:
             self.redirect("/")
             return
-        
+
         unverified_user = models.UnverifiedUser.get_for_value(token.email)
         if not unverified_user or not token.is_valid(unverified_user):
             self.redirect("/")
@@ -559,7 +561,7 @@ class UnverifiedAccount(request_handler.RequestHandler):
         # TODO(benkomalo): actually do something different for users with
         #     an existing Google account detected.
         existing_google_user_detected = False
-        
+
         # TODO(benkomalo): STOPSHIP this link should be e-mailed to the user
         # and not actually embedded in this template
         link = CompleteSignup.build_link(unverified_user)
