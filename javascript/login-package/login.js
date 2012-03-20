@@ -1,10 +1,9 @@
 /**
- * Various utilities related to the login or registration page.
+ * Various utilities related to the login page.
  */
 
 // TODO(benkomalo): do more on-the-fly client side validation of things like
 // valid usernames or passwords
-// TODO(benkomalo): break this file up into login/signup/completesignup files
 
 // Namespace
 var Login = Login || {};
@@ -120,87 +119,5 @@ Login.ensureValid_ = function(selector, errorText, checkFunc) {
 
     $(selector + "-error").text("");
     return true;
-};
-
-/**
- * Entry point for initial registration page setup.
- */
-Login.initRegistrationPage = function() {
-    var dateData = $("#birthday-picker").data("date");
-    var defaultDate;
-    if (dateData) {
-        var parts = dateData.split("-");
-        if (parts.length === 3) {
-            var year = parseInt(parts[0], 10);
-            var month = parseInt(parts[1], 10) - 1;
-            var date = parseInt(parts[2], 10);
-            if (!isNaN(year + month + date)) {
-                defaultDate = new Date(year, month, date);
-            }
-        }
-    }
-    if (!defaultDate) {
-        // Jan 1, 13 years ago
-        defaultDate = new Date(new Date().getFullYear() - 13, 0, 1);
-    }
-
-    $("#birthday-picker").birthdaypicker({
-        placeholder: false,
-        classes: "simple-input ui-corner-all login-input",
-        defaultDate: defaultDate
-    });
-
-    $("#email").focus().on("keypress", function(e) {
-        if (e.keyCode === $.ui.keyCode.ENTER) {
-            Login.submitRegistration();
-        }
-    });
-
-    $("#submit-button").click(function() {
-        Login.submitRegistration();
-    });
-};
-
-/**
- * Submits the registration attempt if passes pre-checks.
- */
-Login.submitRegistration = function() {
-    // Success!
-    if (Login.ensureValid_("#email", "Email required")) {
-        $("#registration-form").submit();
-    }
-};
-
-
-/**
- * Initializes the form for completing the signup process, asking the user
- * for additional information like password and username (after
- * having verified her e-mail address already).
- */
-Login.initCompleteSignupPage = function() {
-    $("#nickname").focus();
-
-    $("#password").on("keypress", function(e) {
-        if (e.keyCode === $.ui.keyCode.ENTER) {
-            Login.submitCompleteSignup();
-        }
-    });
-
-    $("#submit-button").click(function() {
-        Login.submitCompleteSignup();
-    });
-};
-
-
-/**
- * Submits the complete signup attempt if it passes pre-checks.
- */
-Login.submitCompleteSignup = function() {
-    var valid = Login.ensureValid_("#nickname", "Name required");
-    valid = Login.ensureValid_("#username", "Username required") && valid;
-    valid = Login.ensureValid_("#password", "Password required") && valid;
-    if (valid) {
-        $("#registration-form").submit();
-    }
 };
 
