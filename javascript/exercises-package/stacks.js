@@ -560,7 +560,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         }),
                         startedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone > 0;
-                        })
+                        });
 
                     return _.extend(
                         {
@@ -578,7 +578,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 function() {
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
-                        .find(".stack-stats p, .proficient-tick")
+                        .find(".stack-stats p, .small-exercise-icon")
                             .each(Exercises.currentCardView.attachTooltip)
                         .end()
                         .find("#show-topic-details")

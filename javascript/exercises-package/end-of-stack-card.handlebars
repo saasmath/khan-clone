@@ -16,7 +16,7 @@
     <div class="progress-graph current-stack">
 	    {{#each progress}}
 	    	<div class="skill-status">
-		    	<h2 class="skill-bar-title">{{displayName}} {{#if userExercise.exerciseStates.proficient}}<img src="/images/objective-complete-tick.png" class="proficient-tick" data-desc="You've earned proficiency in this skill"/>{{/if}}</h2>
+		    	<h2 class="skill-bar-title">{{displayName}} {{#with userExercise}}{{> small-exercise-icon}}{{/with}}</h2>
 		    	<div class="skill-bar">
 		    		<div class="fill green" style="width:{{multiply end 100}}%;"></div>
 		    		<div class="fill gray" style="width:{{multiply start 100}}%;"></div>
@@ -34,7 +34,6 @@
         <a href="javascript:void(0);" class="simple-button action-gradient" id="show-topic-details">
             {{proficient}}/{{total}} Skills
         </a>
-        
     </div>
     <div class="progress-graph current-topic clearfix">
         <div class="three-col col-one">
@@ -68,7 +67,7 @@
             {{#each proficientExercises}}
         	<div class="skill-status">
     	    	<h4 class="skill-bar-title">
-    	    		{{exerciseModel.displayName}} <img src="/images/objective-complete-tick.png" width="12" height="12" class="proficient-tick" data-desc="You've earned proficiency in this skill"/>
+    	    		{{exerciseModel.displayName}} {{> small-exercise-icon}}
     	    	</h4>
     	    	<div class="skill-bar">
                     <div class="fill green" style="width:{{multiply progress 100}}%;"></div>

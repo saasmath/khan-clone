@@ -209,6 +209,7 @@ javascript = {
             "card.handlebars",
             "current-card.handlebars",
             "card-leaves.handlebars",
+            "small-exercise-icon.handlebars",
             "problem-template.handlebars",
             "end-of-stack-card.handlebars",
             "end-of-review-card.handlebars",
