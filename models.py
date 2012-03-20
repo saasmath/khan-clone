@@ -1413,7 +1413,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         
         if (new_user.points > 0):
             return False
-    
+
+        # Really important that we be mindful of people who have been added as
+        # coaches - no good way to transfer that right now.
         if new_user.has_students():
             return False
     
