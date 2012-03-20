@@ -270,6 +270,13 @@ class Signup(request_handler.RequestHandler):
         }
         self.render_jinja2_template('signup.html', template_values)
 
+
+    # TODO(benkomalo): move this out to a more generic area where we can extend
+    # webapp2 utilities
+    def return_json(self, result):
+        self.response.content_type = "application/json"
+        self.response.write(jsonify.jsonify(result, camel_cased=True))
+
     def post(self):
         """ Handles registration request on our site.
 
@@ -306,7 +313,7 @@ class Signup(request_handler.RequestHandler):
             
             # TODO(benkomalo): investigate how reliable setting cookies from
             # a jQuery POST is going to be
-            self.response.write_json(jsonify.jsonify({"under13": True}))
+            self.return_json({"under13": True})
             return
 
         existing_google_user_detected = False
@@ -340,9 +347,7 @@ class Signup(request_handler.RequestHandler):
             errors['email'] = "Email required"
 
         if len(errors) > 0:
-            self.response.write_json(jsonify.jsonify({
-                    'errors': errors,
-                    }, camel_cased=True))
+            self.return_json({'errors': errors})
             return
 
         # Success!
@@ -355,14 +360,14 @@ class Signup(request_handler.RequestHandler):
         #    about migrating phantom data (we can store the phantom id in
         #    the UnverifiedUser object and migrate after they finish
         #    registering, for example)
-        self.response.write_json(jsonify.jsonify({
+        self.return_json({
                 'success': True,
                 'existing_google_user_detected': existing_google_user_detected,
                 
                 # TODO(benkomalo): STOPSHIP - don't send down the verification
                 #    token obviously - this is just useful for debugging
                 'token': verification_token.value,
-                }, camel_cased=True))
+                })
 
 class CompleteSignup(request_handler.RequestHandler):
     @staticmethod
