@@ -39,6 +39,8 @@ class ViewExercise(request_handler.RequestHandler):
         practice_exercise = None
 
         topic = None
+        topic_exercise_badge = None
+
         user_exercises = None
 
         if review_mode:
@@ -79,6 +81,7 @@ class ViewExercise(request_handler.RequestHandler):
         else:
             # Topics mode context switches between multiple exercises
             user_exercises = models.UserExercise.next_in_topic(user_data, topic)
+            topic_exercise_badge = topic.get_exercise_badge()
 
         if len(user_exercises) == 0:
             # If something has gone wrong and we didn't get any UserExercises,
@@ -98,6 +101,7 @@ class ViewExercise(request_handler.RequestHandler):
             "review_mode_json": jsonify(review_mode, camel_cased=True),
             "practice_mode_json": jsonify(practice_mode, camel_cased=True),
             "topic_json": jsonify(topic, camel_cased=True),
+            "topic_exercise_badge_json": jsonify(topic_exercise_badge, camel_cased=True),
             "practice_exercise_json": jsonify(practice_exercise, camel_cased=True),
             "user_data_json": jsonify(user_data, camel_cased=True),
         }

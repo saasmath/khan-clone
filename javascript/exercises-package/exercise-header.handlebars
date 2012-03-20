@@ -1,11 +1,11 @@
 <h2 class="section-headline">
-{{#if reviewMode }}
+{{#if reviewMode}}
 Review
 {{else}}
-    {{#if practiceMode }}
-    {{ practiceExercise.displayName }}
+    {{#if practiceMode}}
+    {{practiceExercise.displayName}}
     {{else}}
-    {{ topic.standaloneTitle }}
+    <img class="topic-exercise-badge" src="{{topicExerciseBadge.icons.compact}}"> {{topic.standaloneTitle}}
     {{/if}}
 {{/if}}
 </h2>

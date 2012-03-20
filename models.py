@@ -2944,6 +2944,12 @@ class Topic(Searchable, db.Model):
         descendants = query.filter("ancestor_keys =", self.key()).fetch(10000)
         db.delete(descendants)
 
+    def get_exercise_badge(self):
+        """ Returns the TopicExerciseBadge associated with this topic
+        """
+        badge_name = topic_exercise_badges.TopicExerciseBadge.name_for_topic_key_name(self.key().name())
+        return util_badges.all_badges_dict().get(badge_name, None)
+
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda
         topic, include_descendants=False, version=None:

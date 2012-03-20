@@ -26,9 +26,10 @@ var Exercises = {
     practiceMode: false,
     reviewMode: false,
 
-    // topic will be populated if we're not in review or practice
-    // (single-exercise) mode
+    // topic and topicExerciseBadge will be populated if we're not in
+    // review or practice (single-exercise) mode
     topic: null,
+    topicExerciseBadge: null,
 
     userData: null,
 
@@ -59,10 +60,12 @@ var Exercises = {
     init: function(json) {
 
         this.topic = new Topic(json.topic);
+        this.topicExerciseBadge = json.topicExerciseBadge;
+
         this.practiceExercise = new Exercise(json.practiceExercise);
+        this.practiceMode = json.practiceMode;
 
         this.userData = json.userData;
-        this.practiceMode = json.practiceMode;
         this.reviewMode = json.reviewMode;
         this.readOnly = json.readOnly;
 
@@ -161,6 +164,7 @@ var Exercises = {
 
         $(".exercises-content-container").html(exerciseTemplate({
             topic: this.topic.toJSON(),
+            topicExerciseBadge: this.topicExerciseBadge,
             practiceExercise: this.practiceExercise.toJSON(),
             practiceMode: this.practiceMode,
             reviewMode: this.reviewMode

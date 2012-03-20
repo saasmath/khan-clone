@@ -74,6 +74,10 @@ class TopicExerciseBadge(Badge):
     def all():
         return [TopicExerciseBadge(badge_type) for badge_type in TopicExerciseBadgeType.all()]
 
+    @staticmethod
+    def name_for_topic_key_name(topic_key_name):
+        return "topic_exercise_%s" % topic_key_name
+
     def __init__(self, topic_exercise_badge_type):
         Badge.__init__(self)
 
@@ -82,7 +86,7 @@ class TopicExerciseBadge(Badge):
         self.exercise_names_required = topic_exercise_badge_type.exercise_names_required
 
         # Set typical badge properties
-        self.name = "topic_exercise_%s" % topic_exercise_badge_type.topic_key_name
+        self.name = TopicExerciseBadge.name_for_topic_key_name(topic_exercise_badge_type.topic_key_name)
         self.description = self.topic_standalone_title
         self.points = 0
         self.badge_category = BadgeCategory.MASTER
