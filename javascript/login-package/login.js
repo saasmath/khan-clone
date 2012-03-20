@@ -4,6 +4,7 @@
 
 // TODO(benkomalo): do more on-the-fly client side validation of things like
 // valid usernames or passwords
+// TODO(benkomalo): break this file up into login/signup/completesignup files
 
 // Namespace
 var Login = Login || {};
@@ -122,7 +123,7 @@ Login.ensureValid_ = function(selector, errorText, checkFunc) {
 };
 
 /**
- * Entry point for registration page setup.
+ * Entry point for initial registration page setup.
  */
 Login.initRegistrationPage = function() {
     var dateData = $("#birthday-picker").data("date");
@@ -149,15 +150,14 @@ Login.initRegistrationPage = function() {
         defaultDate: defaultDate
     });
 
-    $("#nickname").focus();
-
-    $("#submit-button").click(function() {
-        Login.submitRegistration();
-    });
-    $("#password").on("keypress", function(e) {
+    $("#email").focus().on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             Login.submitRegistration();
         }
+    });
+
+    $("#submit-button").click(function() {
+        Login.submitRegistration();
     });
 };
 
@@ -165,12 +165,40 @@ Login.initRegistrationPage = function() {
  * Submits the registration attempt if passes pre-checks.
  */
 Login.submitRegistration = function() {
+    // Success!
+    if (Login.ensureValid_("#email", "Email required")) {
+        $("#registration-form").submit();
+    }
+};
+
+
+/**
+ * Initializes the form for completing the signup process, asking the user
+ * for additional information like password and username (after
+ * having verified her e-mail address already).
+ */
+Login.initCompleteSignupPage = function() {
+    $("#nickname").focus();
+
+    $("#password").on("keypress", function(e) {
+        if (e.keyCode === $.ui.keyCode.ENTER) {
+            Login.submitCompleteSignup();
+        }
+    });
+
+    $("#submit-button").click(function() {
+        Login.submitCompleteSignup();
+    });
+};
+
+
+/**
+ * Submits the complete signup attempt if it passes pre-checks.
+ */
+Login.submitCompleteSignup = function() {
     var valid = Login.ensureValid_("#nickname", "Name required");
     valid = Login.ensureValid_("#username", "Username required") && valid;
-    valid = Login.ensureValid_("#email", "Email required") && valid;
     valid = Login.ensureValid_("#password", "Password required") && valid;
-
-    // Success!
     if (valid) {
         $("#registration-form").submit();
     }

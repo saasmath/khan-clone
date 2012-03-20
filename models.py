@@ -964,11 +964,28 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
-class BlockReason(object):
-    """ An enumeration of possible reasons a user may be blocked from using
-    the site's functionality. """
+class UnverifiedUser(db.Model):
+    """ Preliminary signup data, including an e-mail address that needs to be
+    verified. """
     
-    EMAIL_NEEDS_CONFIRMATION = "email-unverified"
+    email = db.StringProperty()
+    birthdate = db.DateProperty(indexed=False)
+
+    # used to generate a unique token for completing sign up
+    randstring = db.StringProperty(indexed=False)
+    
+    @staticmethod
+    def insert_for(email):
+        user = UnverifiedUser(key_name=email,
+                              email=email,
+                              randstring=os.urandom(8).encode("hex"))
+        user.put()
+        return user
+
+    @staticmethod
+    def get_for_value(email):
+        # Email is also used as the db key
+        return UnverifiedUser.get_by_key_name(email)
 
 class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
@@ -999,10 +1016,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # which will be used in URLS like khanacademy.org/profile/<username>
     username = db.StringProperty(default="")
     
-    # A state indicating whether the account is blocked from further use for
-    # any reason. Must be a value in BlockReason
-    blocked = db.StringProperty(indexed=False)
-
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
     joined = db.DateTimeProperty(auto_now_add=True)

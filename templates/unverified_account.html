@@ -1,4 +1,7 @@
 {% extends "page_template.html" %}
+{# This is the page that gets rendered after a user signs up with their e-mail,
+    but has to verify ownership of their e-mail address #}
+
 {% block meta_page_title %}Sign In | {% endblock meta_page_title %}
 {% block pagetitle %}{% endblock pagetitle %}
 
@@ -19,6 +22,9 @@ Go check your e-mail. Or click on this link to resend it. (What link? it doesn't
 Or you can also sign in with a Google account with that matching e-mail. You can do that here:
 (insert some nice way to do that)
 </div>
+
+VERIFICATION LINK FOR DEBUGGING:<br>
+<a href="{{ link }}">{{link}}</a>
 
 </article>
 {% endblock pagecontent %}

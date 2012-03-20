@@ -118,7 +118,7 @@ class AuthToken(object):
         return expected == self.signature
     
     def is_valid(self, user_data,
-                 time_to_expiry=None, clock=None):
+                 time_to_expiry=DEFAULT_EXPIRY, clock=None):
         return (not self.is_expired(time_to_expiry, clock) and
                 self.is_authentic(user_data))
 
@@ -150,5 +150,91 @@ class AuthToken(object):
         if self._value_internal is None:
             self._value_internal = base64.b64encode("\n".join([self.user_id,
                                                                self.timestamp,
+                                                               self.signature]))
+        return self._value_internal
+    
+# TODO(benkomalo): factor out a base class with AuthToken when this settles
+# down and we know what's actually shared.
+class EmailVerificationToken(object):
+    """ A token embedded in a link e-mailed out for new users.
+    Used to verify ownership of an e-mail.
+    
+    Note that instances may be created that are invalid. Clients must check
+    is_valid() to ensure the contents of the token are valid.
+    
+    """
+
+    def __init__(self, email, signature):
+        self.email = email
+        self.signature = signature
+        self._value_internal = None
+    
+    @staticmethod
+    def for_user(unverified_user, clock=None):
+        """ Given a models.UnverifiedUser, build a unique token to be sent
+        for verification of that email.
+
+        """
+
+        signature = EmailVerificationToken._make_token_signature(
+                unverified_user.email,
+                unverified_user.randstring)
+        return EmailVerificationToken(unverified_user.email, signature)
+
+    @staticmethod
+    def for_value(token_value):
+        """ Parses a string intended to be an AuthToken value.
+
+        Returns None if the string is invalid, and an instance of AuthToken
+        otherwise. Note that this essentially only checks well-formedness,
+        and the token itself may be expired or invalid so clients must call
+        is_valid or equivalent to verify.
+
+        """
+        try:
+            contents = base64.b64decode(token_value)
+        except TypeError:
+            # Not proper base64 encoded value.
+            logging.info("Tried to decode auth token that isn't base64 encoded")
+            return None
+
+        parts = contents.split("\n", 1)
+        if len(parts) != 2:
+            # Wrong number of parts / malformed.
+            logging.info("Tried to decode malformed auth token")
+            return None
+        email, signature = parts
+        return EmailVerificationToken(email, signature)
+
+    def is_valid(self, unverified_user):
+        """ Determines if the token is valid for the specified
+        models.UnverifiedUser object.
+
+        """
+
+        if self.email != unverified_user.email:
+            return False
+
+        expected = self._make_token_signature(
+                    unverified_user.email,
+                    unverified_user.randstring)
+        return expected == self.signature
+
+    @staticmethod
+    def _make_token_signature(email, randstring, key=None):
+        payload = "\n".join([email, randstring])
+        secret = key or App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    def __str__(self):
+        return self.value
+    
+    def __unicode__(self):
+        return self.value
+    
+    @property
+    def value(self):
+        if self._value_internal is None:
+            self._value_internal = base64.b64encode("\n".join([self.email,
                                                                self.signature]))
         return self._value_internal

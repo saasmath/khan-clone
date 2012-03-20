@@ -1,4 +1,9 @@
 {% extends "page_template.html" %}
+
+{# This is the initial registration form that asks a user for their birthdate
+    and e-mail. All other fields about the user are collected after they
+    verify ownership of their e-mail address in completesignup.html #}
+
 {% block meta_page_title %}Sign In | {% endblock meta_page_title %}
 {% block pagetitle %}{% endblock pagetitle %}
 
@@ -8,26 +13,15 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="registration-form" action="{{templatetags.to_secure_url('/register')}}?continue={{continue|urlencode}}">
-    <input type="hidden" name="type" id="type-input">
+    <form method="POST" class="auth-form" id="registration-form" action="/register">
+    <input type="hidden" name="token" id="type-input" value="{{token}}">
 
     <div class="registration-contents">
         <h3>Signup for a Khan Academy account</h3>
         <div class="field-container">
-            <label class="field-label" for="nickname">Real Name</label><br>
-            <input id="nickname" name="nickname" class="simple-input ui-corner-all" value="{{ values['nickname']|escape}}">
-            <div class="field-error" id="nickname-error">{{ errors['nickname']|escape }}</div>
-        </div>
-
-        <br>
-
-        <div class="field-container">
-            <label class="field-label" for="gender">Gender (optional)</label><br>
-            <select id="gender" name="gender" class="simple-input ui-corner-all">
-                <option value="unspecified" {% if values['gender'] == 'unspecified' %}selected{% endif %}> </option>
-                <option value="male" {% if values['gender'] == 'male' %}selected{% endif %}>Male</option>
-                <option value="female" {% if values['gender'] == 'female' %}selected{% endif %}>Female</option>
-            </select>
+            <label class="field-label" for="email">Email</label><br>
+            <input id="email" name="email" type="email" class="simple-input ui-corner-all" value="{{ values['email']|escape }}">
+            <div class="field-error" id="email-error">{{ errors['email']|escape }}</div>
         </div>
 
         <br>
@@ -39,30 +33,6 @@
 
         <br>
 
-        <div class="field-container">
-            <label class="field-label" for="username">Username</label><br>
-            <input id="username" name="username" class="simple-input ui-corner-all" value="{{ values['username']|escape }}">
-            <div class="field-error" id="username-error">{{ errors['username']|escape }}</div>
-        </div>
-
-        <div class="field-container">
-            <label class="field-label" for="email">Email</label><br>
-            <input id="email" name="email" type="email" class="simple-input ui-corner-all" value="{{ values['email']|escape }}">
-            <div class="field-error" id="email-error">{{ errors['email']|escape }}</div>
-        </div>
-
-        <div class="field-container">
-            <label class="field-label" for="password">Password</label><br>
-            <input id="password" name="password" type="password" class="simple-input ui-corner-all">
-            <div class="field-error" id="password-error">{{ errors['password']|escape }}</div>
-        </div>
-
-        <br>
-
-        <div class="field-container" style="margin-top: 2em">
-            By clicking "Signup", you agree to our <a href="/about/tos" target="_blank" tabindex="1">Terms of Service</a> and <a href="/about/privacy-policy" target="_blank" tabindex="1">Privacy Policy</a>
-        </div>
-        <br>
         <div class="field-container" style="margin-top: 2em">
             <input type="button" id="submit-button" name="register" value="Signup" class="simple-button action-gradient green">
         </div>
