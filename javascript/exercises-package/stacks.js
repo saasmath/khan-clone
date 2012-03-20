@@ -641,6 +641,18 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 my: "bottom center",
                 at: "top center"
             },
+            events: {
+                show: function(e, api) {
+
+                    // If the leaf icon is currently being animated,
+                    // don't show the tooltip.
+                    var targetLeaf = $(api.elements.target).find(".full-leaf");
+                    if (parseInt(targetLeaf.css("opacity")) != 1) {
+                        e.preventDefault();
+                    }
+
+                }
+            },
             show: {
                 delay: 0,
                 effect: {
