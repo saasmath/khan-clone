@@ -579,7 +579,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
                         .find(".stack-stats p, .proficient-tick")
-                            .each(Exercises.currentCardView.attachCardTooltip)
+                            .each(Exercises.currentCardView.attachTooltip)
                         .end()
                         .find("#show-topic-details")
                             .click(function(){
@@ -629,7 +629,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
     },
 
-    attachCardTooltip: function() {
+    attachTooltip: function() {
         $(this).qtip({
             content: {
                 text: $(this).data("desc")
@@ -644,11 +644,13 @@ Exercises.CurrentCardView = Backbone.View.extend({
             events: {
                 show: function(e, api) {
 
-                    // If the leaf icon is currently being animated,
-                    // don't show the tooltip.
-                    var targetLeaf = $(api.elements.target).find(".full-leaf");
-                    if (parseInt(targetLeaf.css("opacity")) != 1) {
-                        e.preventDefault();
+                    var target = $(api.elements.target);
+                    if (target.is(".leaf")) {
+                        // If we're hovering a leaf and the full leaf icon
+                        // is currently being animated, don't show the tooltip.
+                        if (parseInt(target.find(".full-leaf").css("opacity")) != 1) {
+                            e.preventDefault();
+                        }
                     }
 
                 }
@@ -675,7 +677,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                     $(Templates.get("exercises.card-leaves")(this.viewContext()))
                 )
                 .find(".leaf")
-                    .each(this.attachCardTooltip);
+                    .each(this.attachTooltip);
 
         if (this.model.get("done")) {
 
