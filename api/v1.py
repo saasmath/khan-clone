@@ -1686,6 +1686,9 @@ def attempt_problem_number(exercise_name, problem_number):
             user_states = user_exercise_graph.states(exercise.name)
             correct = request.request_bool("complete")
 
+            # Avoid an extra user exercise graph lookup during serialization
+            user_exercise._user_exercise_graph = user_exercise_graph
+
             action_results = {
                 "exercise_state": {
                     "state": [state for state in user_states if user_states[state]],
