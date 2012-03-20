@@ -191,9 +191,6 @@ class Exercise(db.Model):
 
     @property
     def sha1(self):
-        # TODO(kamens): when exercises.__init__ is cleaned out and this doesn't
-        # cause circular reference issues, import at top of file.
-        from exercises.file_contents import exercise_sha1
         return exercise_sha1(self)
 
     @staticmethod
@@ -5235,3 +5232,4 @@ class VideoSubtitlesFetchReport(db.Model):
 from badges import util_badges, last_action_cache, topic_exercise_badges
 from phantom_users import util_notify
 from goals.models import GoalList
+from exercises.file_contents import exercise_sha1
