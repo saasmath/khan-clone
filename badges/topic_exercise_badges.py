@@ -96,6 +96,7 @@ class TopicExerciseBadge(Badge):
         self.points = 0
         self.badge_category = BadgeCategory.MASTER
         self.is_retired = topic_exercise_badge_type.retired
+        self.is_hidden_if_unknown = self.is_retired
 
     def is_satisfied_by(self, *args, **kwargs):
 
