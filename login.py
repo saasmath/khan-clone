@@ -1,4 +1,6 @@
 from api import jsonify
+from google.appengine.api import mail
+
 from app import App
 from auth import age_util
 from counters import user_counter
@@ -355,6 +357,10 @@ class Signup(request_handler.RequestHandler):
         verification_token = auth.tokens.EmailVerificationToken.for_user(unverified_user)
 
         # TODO(benkomalo): send verification e-mail with verification_token.value
+        verification_link = CompleteSignup.build_link(unverified_user)
+
+        self.send_verification_email(email, verification_link)
+
         # TODO(benkomalo): since users are now blocked from further access
         #    due to requiring verification of e-mail, we need to do something
         #    about migrating phantom data (we can store the phantom id in
@@ -368,6 +374,33 @@ class Signup(request_handler.RequestHandler):
                 #    token obviously - this is just useful for debugging
                 'token': verification_token.value,
                 })
+
+    def send_verification_email(self, email, verification_link):
+        # TODO(marcia): Change sender (?) and enable DKIM
+        # TODO(marcia): Separate out into email sending util so we just need to specify content
+
+        # TODO(marcia): Currently always sending to myself...
+        email = 'marcia@khanacademy.org'
+
+        template_values = {
+                'verification_link': verification_link,
+            }
+
+        text_only = self.render_jinja2_template_to_string(
+                'verification-email-text-only.html',
+                template_values)
+
+        html = self.render_jinja2_template_to_string(
+                'verification-email.html',
+                template_values)
+
+        if not App.is_dev_server:
+            mail.send_mail(
+                    sender = 'no-reply@khanacademy.org',
+                    to = email,
+                    subject = "Verify your email with Khan Academy",
+                    body = text_only,
+                    html = html)
 
 class CompleteSignup(request_handler.RequestHandler):
     @staticmethod
