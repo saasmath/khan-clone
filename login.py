@@ -90,7 +90,7 @@ class Login(request_handler.RequestHandler):
                 errors = {}
                 if not identifier: errors['noemail'] = True
                 if not password: errors['nopassword'] = True
-                self.render_login(identifier, errors)
+                self.render_json({'errors': errors})
                 return
 
             user_data = models.UserData.get_from_username_or_email(identifier.strip())
@@ -98,15 +98,14 @@ class Login(request_handler.RequestHandler):
                 errors = {}
                 errors['badlogin'] = True
                 # TODO(benkomalo): IP-based throttling of failed logins?
-                self.render_login(identifier, errors)
+                self.render_json({'errors': errors})
                 return
 
             # Successful login
-            Login.redirect_with_auth_stamp(self, user_data, cont)
-
+            Login.return_login_json(self, user_data, cont)
 
     @staticmethod
-    def redirect_with_auth_stamp(handler, user_data, cont="/"):
+    def return_login_json(handler, user_data, cont="/"):
         """ Handles a successful login for a user by redirecting them
         to the PostLogin URL with the auth token, which will ultimately set
         the auth cookie for them.
@@ -119,9 +118,10 @@ class Login(request_handler.RequestHandler):
         """
 
         auth_token = auth.tokens.AuthToken.for_user(user_data)
-        cont = util.create_post_login_url(cont) + ("&auth=%s" % auth_token)
-        cont = util.insecure_url(cont)
-        handler.redirect(cont)
+        handler.response.write(jsonify.jsonify({
+                    'auth': auth_token.value,
+                    'continue': cont
+                }, camel_cased=True))
 
 class MobileOAuthLogin(request_handler.RequestHandler):
     def get(self):
@@ -273,12 +273,6 @@ class Signup(request_handler.RequestHandler):
         self.render_jinja2_template('signup.html', template_values)
 
 
-    # TODO(benkomalo): move this out to a more generic area where we can extend
-    # webapp2 utilities
-    def return_json(self, result):
-        self.response.content_type = "application/json"
-        self.response.write(jsonify.jsonify(result, camel_cased=True))
-
     def post(self):
         """ Handles registration request on our site.
 
@@ -315,7 +309,7 @@ class Signup(request_handler.RequestHandler):
             
             # TODO(benkomalo): investigate how reliable setting cookies from
             # a jQuery POST is going to be
-            self.return_json({"under13": True})
+            self.render_json({"under13": True})
             return
 
         existing_google_user_detected = False
@@ -349,7 +343,7 @@ class Signup(request_handler.RequestHandler):
             errors['email'] = "Email required"
 
         if len(errors) > 0:
-            self.return_json({'errors': errors})
+            self.render_json({'errors': errors})
             return
 
         # Success!
@@ -364,7 +358,7 @@ class Signup(request_handler.RequestHandler):
         #    about migrating phantom data (we can store the phantom id in
         #    the UnverifiedUser object and migrate after they finish
         #    registering, for example)
-        self.return_json({
+        self.render_json({
                 'success': True,
                 'existing_google_user_detected': existing_google_user_detected,
 
@@ -490,16 +484,7 @@ class CompleteSignup(request_handler.RequestHandler):
 
 
         if len(errors) > 0:
-            # Never send back down the password.
-            del values['password']
-
-            template_values = {
-                'errors': errors,
-                'values': values,
-                'token': valid_token,
-            }
-
-            self.render_jinja2_template('completesignup.html', template_values)
+            self.render_json({'errors': errors}, camel_cased=True)
             return
 
         unverified_user = models.UnverifiedUser.get_for_value(valid_token.email)
@@ -517,9 +502,8 @@ class CompleteSignup(request_handler.RequestHandler):
                 gender=gender)
 
         if not created_user:
-            # TODO(benkomalo): STOPSHIP handle the low probability event that a
-            # username was taken just as this method was processing.
-            self.response.write("Oops. can't make user")
+            self.render_json({'errors': {'username': "Username taken."}},
+                             camel_cased=True)
             return
 
         # Nickname is special since it requires updating external indices.
@@ -529,7 +513,7 @@ class CompleteSignup(request_handler.RequestHandler):
         unverified_user.delete()
 
         # TODO(benkomalo): give some kind of "congrats"/"welcome" notification
-        Login.redirect_with_auth_stamp(self, created_user)
+        Login.return_login_json(self, created_user)
 
 class PasswordChange(request_handler.RequestHandler):
     def post(self):
@@ -563,7 +547,7 @@ class PasswordChange(request_handler.RequestHandler):
             cont = self.request_continue_url()
 
             # Need to create a new auth token as the existing cookie will expire
-            Login.redirect_with_auth_stamp(self, user_data, cont)
+            Login.return_login_json(self, user_data, cont)
 
 class UnverifiedAccount(request_handler.RequestHandler):
     def get(self):

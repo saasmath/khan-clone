@@ -31,6 +31,8 @@ var Settings = {
             .prop("disabled", true);
 
         // TODO(benkomalo): send down notification on success.
+        // TODO(benkomalo): switch to using the new asyncFormPost in the login
+        //     page so we can easily notify on success or error
 
         // We can't use $.ajax to send - we have to actually do a form POST
         // since the requirement of sending over https means we'd

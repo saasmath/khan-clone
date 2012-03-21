@@ -32,12 +32,11 @@
 
     <div class="pw-login">
         <h3>Login with a Khan Academy account:</h3>
-        <div class="field-error" id="login-fail-message">{% if errors["badlogin"] %}Username and password doesn't match{% endif %}</div>
+        <div class="field-error" id="login-fail-message"></div>
 
         <div class="field-container">
             <label class="field-label" for="identifier">Email or username</label><br>
             <input tabindex=1 id="identifier" name="identifier" class="simple-input ui-corner-all" value="{{ identifier|escape }}">
-            <div class="field-error" id="identifier-error">{% if errors["noemail"] %}Email or username required{% endif %}</div>
         </div>
 
         <div class="field-container">
@@ -49,12 +48,9 @@
 
             <!-- HACK: put login button in same fieldset/same row as password button for easy lining up -->
             <input tabindex=3 id="submit-button" class="simple-button action-gradient green" value="Login" type="button" style="margin-left:1em;">
-
-            <div class="field-error" id="password-error">{% if errors["nopassword"] %}Password required{% endif %}</div>
         </div>
 
     </div>
-
 
     <div class="signup-prompt-container">
         <span class="signup-prompt">Don't have an account, yet?</span>
