@@ -162,13 +162,13 @@ var Goal = Backbone.Model.extend({
     },
 
     defaultExerciseProcessGoalAttrs_: {
-        title: "Complete Five Exercises",
+        title: "Complete Five Skills",
         objectives: [
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" },
-            { description: "Any exercise", type: "GoalObjectiveAnyExerciseProficiency" }
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" },
+            { description: "Any skill", type: "GoalObjectiveAnyExerciseProficiency" }
         ]
     },
 
