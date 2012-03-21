@@ -31,27 +31,7 @@ Exercises.Card = Backbone.Model.extend({
 
         return this.set({ leavesAvailable: leavesAvailable });
 
-    },
-
-    /**
-     * Increases leaves earned for this card -- if leaves earned is already
-     * at this level or higher, noop
-     */
-    increaseLeavesEarned: function(leavesEarned) {
-
-        var currentLeaves = this.get("leavesEarned");
-        if (currentLeaves) {
-            leavesEarned = Math.max(currentLeaves, leavesEarned);
-        }
-
-        // leavesEarned takes precedence over leavesAvailable because
-        // leavesEarned is only set when the card is done, and leavesAvailable
-        // no longer matters at this point.
-        // 
-        // We update leavesAvailable here just to keep the card's data consistent.
-        return this.set({ leavesEarned: leavesEarned, leavesAvailable: leavesEarned });
-
-    },
+    }
 
 });
 
@@ -560,7 +540,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                         }),
                         startedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone > 0;
-                        })
+                        });
 
                     return _.extend(
                         {
@@ -578,7 +558,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 function() {
                     $(Exercises.completeStackView.el).hide();
                     $(Exercises.currentCardView.el)
-                        .find(".stack-stats p, .proficient-tick")
+                        .find(".stack-stats p, .small-exercise-icon")
                             .each(Exercises.currentCardView.attachTooltip)
                         .end()
                         .find("#show-topic-details")
@@ -825,11 +805,13 @@ Exercises.SessionStats = Backbone.Model.extend({
                     start: userExercise.progress
                 };
 
+            // Add all current proficiency/review/struggling states
+            stat.exerciseStates = userExercise.exerciseStates;
+
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress;
             stat.change = stat.end - stat.start;
-            stat.proficient = userExercise.exerciseStates.proficient;
-            stat.justEarnedProficiency = stat.proficient && !stat.startProficient;
+            stat.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
 
             // Set and cache the latest
             progressStats[exerciseName] = stat;

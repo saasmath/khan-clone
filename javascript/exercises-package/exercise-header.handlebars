@@ -6,11 +6,11 @@
 Review
 {{else}}
     {{#if practiceMode}}
-    <div class="topic-exercise-badge">
-	    <span class="topic-exercise-image">&nbsp;<!-- Practice exercises don't have badge images, just a placeholder --></span>
+	<div class="topic-exercise-badge">
+        <span class="topic-exercise-badge">&nbsp;<!-- Practice exercises don't have badge images, just a placeholder --></span>
+        <span class="practice-exercise-topic-context">Practicing</span> {{practiceExercise.displayName}}
+        <span class="practice-exercise-topic-context">in <img class="topic-exercise-badge" src="{{topicExerciseBadge.icons.compact}}"> <a href=".">{{topic.standaloneTitle}}</a></span>
 	</div>
-    {{practiceExercise.displayName}}
-
     {{else}}
     <div class="topic-exercise-badge">
 	    <img class="topic-exercise-image" src="{{topicExerciseBadge.icons.compact}}">

@@ -1,0 +1,13 @@
+{{#if exerciseStates.reviewing}}
+
+<img src="/images/small-review-circle.png" class="small-exercise-icon" data-desc="You should review this skill">
+
+{{else}}
+
+    {{#if exerciseStates.proficient}}
+
+    <img src="/images/objective-complete-tick.png" class="small-exercise-icon" data-desc="You've earned proficiency in this skill">
+
+    {{/if}}
+
+{{/if}}

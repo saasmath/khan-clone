@@ -411,6 +411,9 @@
 .end-of-stack-info .progress-graph .skill-bar .fill.blue {
     #gradient > .vertical(lighten(#0080C9, 10%), #0080C9);
 }
+.end-of-stack-info .progress-graph .skill-bar .fill.orange {
+    #gradient > .vertical(#F46626, #E35D22);
+}
 
 .end-of-stack-info .progress-graph.current-stack .skill-bar .fill.green {
     -webkit-animation: progress-bar 1s;
@@ -420,7 +423,8 @@
     position: relative;
     top: -15px;
 }
-.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.blue {
+.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.blue,
+.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.orange {
     position: relative;
     top: -30px;
 }
@@ -438,8 +442,11 @@
     -moz-animation: none;
 }
 
-.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.gray,
-.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.blue {
+.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.gray {
+    display: none;
+}
+.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.blue,
+.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.orange {
     top: -5px !important;
 }
 
@@ -563,4 +570,12 @@
     height: 40px;
     vertical-align: middle;
     margin: -10px auto 0;
+}
+.exercises-header .practice-exercise-topic-context {
+    font-size: 70%;
+}
+.exercises-header .practice-exercise-topic-context .topic-exercise-badge {
+    width: 20px;
+    height: 20px;
+    margin-right: 2px;
 }
