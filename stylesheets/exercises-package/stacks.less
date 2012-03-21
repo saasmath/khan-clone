@@ -494,7 +494,10 @@
     -webkit-animation-fill-mode: forwards;
 }
 
-/* Start arc */
+/* Start arc.
+ * See http://lea.verou.me/2012/02/moving-an-element-along-a-circle/ to learn about
+ * the chaining transforms (rotate, translate, rotate, translate) used here.
+ */
 .half-circle-arc {
 	0% {
         -webkit-transform: rotate(0deg) translateX(50px) rotate(0deg) translateX(-50px);
