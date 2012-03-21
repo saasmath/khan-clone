@@ -86,7 +86,8 @@
 
 .stack .card-container {
     position: relative;
-    margin-bottom: -5px;
+    margin-bottom: -20px;
+    .rotate(-20deg);
     z-index: 1;
 }
 
@@ -111,7 +112,7 @@
 .exercises-stack,
 .exercises-card {
     float: left;
-    width: 5%;
+    width: 7%;
 
     /* margin-bottom: -9999px;
     padding-bottom: 9999px; */
@@ -119,7 +120,7 @@
     .box-sizing(border-box);
 }
 .exercises-card {
-    width: 90%;
+    width: 86%;
 }
 
 .current-card {
@@ -552,12 +553,14 @@
 /**
  * End read-only historical problem viewing mode
  */
-
 .exercises-header .topic-exercise-badge {
-    display: inline-block;
+    width: 7%;
+    float: left;
+}
+.exercises-header .topic-exercise-image {
+    display: block;
     width: 40px;
     height: 40px;
     vertical-align: middle;
-    margin-left: 2px;
-    margin-right: 10px;
+    margin: -10px auto 0;
 }
