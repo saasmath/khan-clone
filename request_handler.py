@@ -373,9 +373,16 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
         if not template_values['hide_analytics']:
             superprops_list = UserData.get_analytics_properties(user_data)
+
+            # Create a superprops dict for MixPanel with a version number
+            # Bump the version number if changes are made to the client-side analytics
+            # code and we want to be able to filter by version.
             superprops_dict = dict(superprops_list)
+            superprops_dict["Version"] = 1
             template_values['mixpanel_superprops'] = jsonify(superprops_dict)
-            template_values['ga_custom_vars'] = superprops_list[0:5]
+
+            # Copy over first 4 per-user properties for GA (5th is reserved for Bingo)
+            template_values['ga_custom_vars'] = superprops_list[0:4]
 
         if user_data:
             goals = GoalList.get_current_goals(user_data)

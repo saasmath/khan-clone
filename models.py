@@ -48,7 +48,7 @@ from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
 from gae_bingo.models import GAEBingoIdentityModel
-from experiments import StrugglingExperiment, MarqueeVideoExperiment
+from experiments import StrugglingExperiment
 import re
 
 
@@ -1176,13 +1176,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         else:
             properties_list.append(("User Type", "Logged In"))
 
-        # If you want to track a GAE/Bingo experiment in analytics, set its name here
-        current_experiment_name = "Search shows matching topic"
-        if current_experiment_name:
-            properties_list.append((current_experiment_name, ab_test(current_experiment_name)))
-        else:
-            properties_list.append(("No bingo experiment", ""))
-
         if user_data:
             properties_list.append(("User Points", user_data.points))
             properties_list.append(("User Videos", user_data.get_videos_completed()))
@@ -1601,9 +1594,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
 
-            if util.hours_between(self.last_activity, dt_activity) >= 12:
-                bingo(['marquee_actively_returned', 'marquee_num_active_returns'])
-
             self.last_activity = dt_activity
 
     def current_consecutive_activity_days(self):
@@ -1967,11 +1957,15 @@ def check_for_problems(version_number, run_code):
     content_problems = version.find_content_problems()
     for problem_type, problems in content_problems.iteritems():
         if len(problems):
+            content_problems["Version"] = version_number
+            content_problems["Date detected"] = datetime.datetime.now()
+            layer_cache.KeyValueCache.set(
+                "set_default_version_content_problem_details", content_problems)
             Setting.topic_admin_task_message(("Error - content problems " +
                 "found: %s. <a target=_blank " +
-                "href='/api/v1/dev/topictree/%i/problems'>" +
+                "href='/api/v1/dev/topictree/problems'>" +
                 "Click here to see problems.</a>") % 
-                (problem_type, version_number))
+                (problem_type))
                 
             raise deferred.PermanentTaskFailure
 
@@ -4260,10 +4254,6 @@ class VideoLog(BackupModel):
 
         if seconds_watched > 0:
 
-            bingo('marquee_started_any_video')
-            if video.readable_id in MarqueeVideoExperiment._ab_test_alternatives and video.readable_id == MarqueeVideoExperiment.ab_test():
-                bingo('marquee_started_marquee_video')
-
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
                 UserVideoCss.set_started(user_data, user_video.video, user_data.uservideocss_version)
@@ -4316,7 +4306,6 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
-                'marquee_num_videos_completed',
             ])
         video_log.is_video_completed = user_video.completed
 

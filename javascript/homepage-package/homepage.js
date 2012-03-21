@@ -131,13 +131,12 @@ var Homepage = {
                 }
             }
 
-            var container = $("#" + topic["id"] + " ol").get(0);
-            container.innerHTML = template(topic);
+            $("#" + topic["id"] + " ol").html(template(topic));
         });
 
         topics = null;
     }
-}
+};
 
 $(function() {Homepage.init();});
 

@@ -64,6 +64,7 @@ jinja2.default_config = {
         "find_column_index": templatefilters.find_column_index,
         "in_list": templatefilters.in_list,
         "column_height": templatefilters.column_height,
+        "bingo_redirect_url": templatefilters.bingo_redirect_url,
         "thousands_separated": util.thousands_separated_number,
         "static_url": util.static_url,
         "login_url": util.create_login_url,
