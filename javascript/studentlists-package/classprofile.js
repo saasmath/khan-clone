@@ -432,7 +432,7 @@ var ClassProfile = {
                         if (objective.type === "GoalObjectiveExerciseProficiency") {
                             objective.url = base + "/problems/" + objective.internal_id;
                         } else if (objective.type === "GoalObjectiveAnyExerciseProficiency") {
-                            objective.url = base + "/exercise-progress";
+                            objective.url = base + "/skill-progress";
                         } else {
                             objective.url = base + "/activity";
                         }

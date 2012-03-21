@@ -171,7 +171,7 @@ var Profile = {
                     "activity": "/profile/graph/activity?student_email=" + emailEncoded,
                     "focus": "/profile/graph/focus?student_email=" + emailEncoded,
                     "skill-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
-                    "exercise-progress": "/api/v1/user/exercises?email=" + emailEncoded,
+                    "skill-progress": "/api/v1/user/exercises?email=" + emailEncoded,
                     "problems": "/profile/graph/exerciseproblems?" +
                                             "exercise_name=" + exercise +
                                             "&" + "student_email=" + emailEncoded
@@ -364,7 +364,7 @@ var Profile = {
         } else if (graphName === "focus") {
             FocusGraph.render();
             Profile.fLoadedGraph = true;
-        } else if (graphName === "exercise-progress") {
+        } else if (graphName === "skill-progress") {
             Profile.loadGraph("/api/v1/exercises");
         } else {
             ExerciseGraphOverTime.render();

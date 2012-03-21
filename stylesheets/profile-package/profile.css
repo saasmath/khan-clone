@@ -919,7 +919,7 @@ a[rel="vital-statistics activity"] {
 a[rel="vital-statistics focus"] {
     background: transparent url(/images/profile-icons/chart-pie-separate.png) no-repeat 4px 50%;
 }
-a[rel="vital-statistics exercise-progress"] {
+a[rel="vital-statistics skill-progress"] {
     background: transparent url(/images/profile-icons/color-swatch.png) no-repeat 4px 50%;
 }
 a[rel="vital-statistics skill-progress-over-time"] {
