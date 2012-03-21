@@ -42,7 +42,7 @@ class RecoveryProblemBadge(ExerciseBadge):
         return False
 
     def extended_description(self):
-        return "Answer an exercise problem correctly after having some trouble with %s and sticking with the exercise." % self.s_problems_description
+        return "Answer a problem correctly after having some trouble with %s and sticking with the skill." % self.s_problems_description
 
 class RecoveryBadge(RecoveryProblemBadge):
 
