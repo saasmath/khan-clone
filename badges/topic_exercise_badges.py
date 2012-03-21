@@ -19,6 +19,10 @@ def sync_with_topic_version(version):
     # need a different interaction w/ models.Topic.
     topics = models.Topic.get_filled_content_topics(types=["Exercise"], version=version)
 
+    # Filter out New and Noteworthy special-case topic. It might have exercises,
+    # but we don't want it to own a badge.
+    topics = [t for t in topics if t.title != "New and Noteworthy"]
+
     # Remove non-live exercises
     for topic in topics:
         topic.children = [exercise for exercise in topic.children if exercise.live]
