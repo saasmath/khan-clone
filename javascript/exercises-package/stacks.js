@@ -628,7 +628,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                     if (target.is(".leaf")) {
                         // If we're hovering a leaf and the full leaf icon
                         // is currently being animated, don't show the tooltip.
-                        if (parseInt(target.find(".full-leaf").css("opacity")) != 1) {
+                        if (parseInt(target.find(".full-leaf").css("opacity"), 10) != 1) {
                             e.preventDefault();
                         }
                     }
