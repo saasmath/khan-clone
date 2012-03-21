@@ -170,7 +170,7 @@ var Profile = {
                 hrefLookup = {
                     "activity": "/profile/graph/activity?student_email=" + emailEncoded,
                     "focus": "/profile/graph/focus?student_email=" + emailEncoded,
-                    "exercise-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
+                    "skill-progress-over-time": "/profile/graph/exercisesovertime?student_email=" + emailEncoded,
                     "exercise-progress": "/api/v1/user/exercises?email=" + emailEncoded,
                     "problems": "/profile/graph/exerciseproblems?" +
                                             "exercise_name=" + exercise +
