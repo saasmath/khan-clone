@@ -7,6 +7,12 @@ import models
 from badges import Badge, BadgeCategory
 from templatefilters import slugify
 
+# Topics in TOPIC_EXERCISE_BADGE_BLACKLIST will not have topic exercise
+# badges created for them during sync_with_topic_version.
+TOPIC_EXERCISE_BADGE_BLACKLIST = [
+    "New and Noteworthy",
+]
+
 def sync_with_topic_version(version):
     """ Syncs state of all TopicExerciseBadges with the specified TopicVersion's topic tree.
     This'll add new badges for any new topics that have exercises, retire badges associated
@@ -18,6 +24,10 @@ def sync_with_topic_version(version):
     # TODO: when we want this to support multiple layers of topics, we'll
     # need a different interaction w/ models.Topic.
     topics = models.Topic.get_filled_content_topics(types=["Exercise"], version=version)
+
+    # Filter out New and Noteworthy special-case topic. It might have exercises,
+    # but we don't want it to own a badge.
+    topics = [t for t in topics if t.title not in TOPIC_EXERCISE_BADGE_BLACKLIST]
 
     # Remove non-live exercises
     for topic in topics:
@@ -92,6 +102,7 @@ class TopicExerciseBadge(Badge):
         self.points = 0
         self.badge_category = BadgeCategory.MASTER
         self.is_retired = topic_exercise_badge_type.retired
+        self.is_hidden_if_unknown = self.is_retired
 
     def is_satisfied_by(self, *args, **kwargs):
 
@@ -185,5 +196,16 @@ class TopicExerciseBadgeType(db.Model):
 # use that. Couple ideas so far felt even grosser than this quick
 # and easy hack.
 TOPICS_WITH_CUSTOM_ICONS = frozenset([
-    "Addition and subtraction"
+    "Addition and subtraction",
+    "Basic exponents",
+    "Decimals",
+    "Factors and multiples",
+    "Fractions",
+    "Multiplication and division",
+    "Negative numbers",
+    "Order of operations",
+    "Percents",
+    "Properties of numbers",
+    "Ratios and proportions",
+    "Solving linear equations",
 ])

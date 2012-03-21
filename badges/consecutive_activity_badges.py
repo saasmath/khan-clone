@@ -11,7 +11,7 @@ class ConsecutiveActivityBadge(Badge):
         return user_data.current_consecutive_activity_days() >= self.days_required
 
     def extended_description(self):
-        return "Watch part of any video or work on any exercise each day for %s consecutive days" % self.days_required
+        return "Watch part of any video or work on any skill each day for %s consecutive days" % self.days_required
 
 class FiveDayConsecutiveActivityBadge(ConsecutiveActivityBadge):
     def __init__(self):

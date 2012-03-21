@@ -12,7 +12,7 @@ class StreakBadge(ExerciseBadge):
         return user_exercise.longest_streak >= self.streak_required
 
     def extended_description(self):
-        return "Correctly answer %s problems in a row in a single exercise" % str(self.streak_required)
+        return "Correctly answer %s problems in a row in a single skill" % str(self.streak_required)
 
 class NiceStreakBadge(StreakBadge):
 
