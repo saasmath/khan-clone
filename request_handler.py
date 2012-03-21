@@ -2,12 +2,6 @@ import os
 import logging
 import datetime
 
-# use json in Python 2.7, fallback to simplejson for Python 2.5
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 import sys
 import re
 import traceback
@@ -418,12 +412,15 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
     def render_jinja2_template_to_string(self, template_name, template_values):
         return shared_jinja.get().render_template(template_name, **template_values)
 
-    def render_json(self, obj):
-        json_string = json.dumps(obj, ensure_ascii=False)
+    def render_json(self, obj, camel_cased=False):
+        json_string = jsonify(obj, camel_cased=camel_cased)
         self.response.out.write(json_string)
 
-    def render_jsonp(self, obj):
-        json_string = obj if isinstance(obj, basestring) else json.dumps(obj, ensure_ascii=False, indent=4)
+    def render_jsonp(self, obj, camel_cased=False):
+        if isinstance(obj, basestring):
+            json_string = obj
+        else:
+            json_string = jsonify(obj, camel_cased=camel_cased)
         callback = self.request_string("callback")
         if callback:
             self.response.out.write("%s(%s)" % (callback, json_string))
