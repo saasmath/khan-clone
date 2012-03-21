@@ -185,5 +185,14 @@ class TopicExerciseBadgeType(db.Model):
 # use that. Couple ideas so far felt even grosser than this quick
 # and easy hack.
 TOPICS_WITH_CUSTOM_ICONS = frozenset([
-    "Addition and subtraction"
+    "Addition and subtraction",
+    "Decimals",
+    "Factors and multiples",
+    "Fractions",
+    "Multiplication and division",
+    "Negative numbers",
+    "Order of operations",
+    "Percents",
+    "Properties of numbers",
+    "Ratios and proportions",
 ])
