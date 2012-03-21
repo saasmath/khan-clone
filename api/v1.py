@@ -1669,6 +1669,7 @@ def attempt_problem_number(exercise_name, problem_number):
                     request.request_int("count_hints", default=0),
                     int(request.request_float("time_taken")),
                     review_mode,
+                    request.request_bool("topic_mode", default=False),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )
@@ -1741,6 +1742,7 @@ def hint_problem_number(exercise_name, problem_number):
                     count_hints,
                     int(request.request_float("time_taken")),
                     review_mode,
+                    request.request_bool("topic_mode", default=False),
                     request.request_string("problem_type"),
                     request.remote_addr,
                     )

@@ -147,8 +147,8 @@ class CreateRandomGoalData(RequestHandler):
                             (objective['exercise'].name, count, hints * count))
                         for i in xrange(1, count):
                             attempt_problem(user_data, user_exercise, i, 1,
-                                'TEST', 'TEST', 'TEST', True, hints, 0, False,
-                                "TEST", 'TEST', '0.0.0.0')
+                                'TEST', 'TEST', 'TEST', True, hints, 0, False, False,
+                                "TEST", '0.0.0.0')
 
                     elif objective['type'] == 'GoalObjectiveWatchVideo':
                         seconds = random.randint(1, 1200)

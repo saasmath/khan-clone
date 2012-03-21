@@ -149,7 +149,7 @@ def make_wrong_attempt(user_data, user_exercise):
 
 def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
     attempt_content, sha1, seed, completed, count_hints, time_taken,
-    review_mode, problem_type, ip_address):
+    review_mode, topic_mode, problem_type, ip_address):
 
     if user_exercise and user_exercise.belongs_to(user_data):
         dt_now = datetime.datetime.now()
@@ -194,6 +194,7 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 attempts=[attempt_content],
                 ip_address=ip_address,
                 review_mode=review_mode,
+                topic_mode=topic_mode,
         )
 
         first_response = (attempt_number == 1 and count_hints == 0) or (count_hints == 1 and attempt_number == 0)
