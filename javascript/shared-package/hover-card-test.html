@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+
+<!-- Unit tests and demos for hover card -->
+<html>
+<head>
+<script src="../testbase.js"></script>
+<script src="jquery.timeago.js"></script>
+<script src="handlebars-extras.js"></script>
+<script src="profile-model.js"></script>
+<script src="hover-card-view.js"></script>
+<link rel="stylesheet" type="text/css" href="../../stylesheets/shared-package/default.css"></link>
+<script>
+var SAMPLE_PROFILE_DATA = {
+    "avatarSrc": "../../images/darth.png",
+    "dateJoined": "2011-11-16T23:55:12Z",
+    "nickname": "Curious George",
+    "points": 10000,
+    "publicBadges": []
+};
+
+KA_TEST.loadTemplates([
+    "shared.hover-card"
+    ], function() {
+        var datas = [ SAMPLE_PROFILE_DATA ];
+        $.each(datas, function(index, data) {
+            var model = new ProfileModel(data),
+                view = new HoverCardView({model: model}),
+                jel = $("<div>").addClass("user-info-container")
+                        .addClass("qtip")
+                        .html(view.render().el)
+                        .css("margin", 20),
+                jelClear = $("<div>").css("clear", "both");
+
+            $("body").append(jel)
+                .append(jelClear);
+        });
+});
+
+</script>
+</head>
+
+<body></body>
+
+</html>
