@@ -23,7 +23,7 @@ var ExerciseGraphOverTime = {
                     events: {
                         click: function() {
                             Profile.router.navigate(
-                                    "/vital-statistics/exercise-problems/" + this.name,
+                                    "/vital-statistics/problems/" + this.name,
                                     true);
                         }
                     }

@@ -430,7 +430,7 @@ var ClassProfile = {
                         objective.objectiveID = idx3;
                         var base = student.profile_root + "/vital-statistics";
                         if (objective.type === "GoalObjectiveExerciseProficiency") {
-                            objective.url = base + "/exercise-problems/" + objective.internal_id;
+                            objective.url = base + "/problems/" + objective.internal_id;
                         } else if (objective.type === "GoalObjectiveAnyExerciseProficiency") {
                             objective.url = base + "/exercise-progress";
                         } else {
@@ -493,7 +493,7 @@ var ClassProfile = {
                     $(this).click(function() {
                         // TODO: awkward turtle, replace with normal href action
                         window.location = goalViewModel.student.profile_root
-                                            + "/vital-statistics/exercise-problems/"
+                                            + "/vital-statistics/problems/"
                                             + goalObjective.internal_id;
                     });
                 } else {
@@ -878,7 +878,7 @@ var ClassProfile = {
                 exercise.progress = (exercise.progress*100).toFixed(0);
                 // TODO: awkward turtle, replace w normal href
                 exercise.link = student_row.profile_root
-                                    + "/vital-statistics/exercise-problems/"
+                                    + "/vital-statistics/problems/"
                                     + data.exercise_names[idx2].name;
                 if (exercise.last_done) {
                     exercise.seconds_since_done = ((new Date()).getTime() - Date.parse(exercise.last_done)) / 1000;
