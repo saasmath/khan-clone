@@ -1912,6 +1912,13 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         margin: 5px 0 0 5px;
         float: left;
     }
+    .achievement-badge.category-5 #badge-icon {
+        -webkit-border-radius: 20px;
+        -moz-border-radius: 20px;
+        -ms-border-radius: 20px;
+        -o-border-radius: 20px;
+        border-radius: 20px;
+    }
     .achievement-badge.category-0 #badge-icon {
         margin-top: 1px;
     }
