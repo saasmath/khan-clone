@@ -43,7 +43,7 @@ var ExerciseGraphOverTime = {
         },
         yAxis: {
             title: {
-                text: "Modules Completed"
+                text: "Skills Completed"
             },
             plotLines: [{
                 value: 0,
