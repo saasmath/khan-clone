@@ -12,11 +12,15 @@
 	#page_sub_nav { display: none; }
 	td { vertical-align: top; }
 	.ui-tooltip, .qtip { max-width: 200px; }
+    #library-content .library-content-header h2.root-topic { font-size: 22pt; font-weight: bold; margin-bottom: 18px; }
+    #library-content .library-content-list p.topic-desc { display: block; width: 500px; }
+    #library-content .topic-spacer { display: block; margin-bottom: 30px; }
 </style>
 {% endblock pagecss %}
 
 {% block pagecontent %}
-<article id="topic">
+<article id="homepage">
+{{ templatetags.topic_browser("topic-browse") }}
 {{ library_content }}
 </article>
 {% endblock %}

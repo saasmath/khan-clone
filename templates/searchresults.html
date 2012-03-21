@@ -63,7 +63,7 @@
     <section class="topics search-topics">
         {% for topic in topics %}
         {% if topic.matches %}
-        <div class="matching-topic">
+        <div class="topic-condensed">
           <h2><a href="{{ topic.relative_url|bingo_redirect_url(["search_topic_clicked_link"]) }}" data-tag="Search Topic Results">{{ topic.standalone_title|escape }}</a></h2>
 
           {% if topic.description %}

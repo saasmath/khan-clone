@@ -163,12 +163,16 @@ def library_topic_html(topic_id, version_number=None):
 
     template_values = {
         'topics': topics,
+        'root_topic': root_topic,
         'ajax': False,
         'version_date': str(version.made_default_on),
         'version_id': version.number
     }
 
-    html = shared_jinja.get().render_template("library_content_template.html", **template_values)
+    if root_topic.has_content() or root_topic.id in Topic._super_topic_ids:
+        html = shared_jinja.get().render_template("library_content_template.html", **template_values)
+    else:
+        html = shared_jinja.get().render_template("library_condensed_template.html", **template_values)
 
     return html
 

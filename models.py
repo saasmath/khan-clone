@@ -2292,6 +2292,10 @@ class Topic(Searchable, db.Model):
         return '/#%s' % self.id
 
     @property
+    def topic_page_url(self):
+         return '/%s' % self.get_extended_slug()
+
+    @property
     def ka_url(self):
         return util.absolute_url(self.relative_url)
 

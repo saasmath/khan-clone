@@ -109,9 +109,17 @@ class TopicPage(request_handler.RequestHandler):
     def get(self, path):
         path_list = path.split('/')
         if len(path_list) > 0:
+            # Only look at the actual topic ID
             topic = models.Topic.get_by_id(path_list[-1])
+
+            # Handle a trailing slash
+            if not topic and path_list[-1] == "":
+                topic = models.Topic.get_by_id(path_list[-2])
+
             if topic:
                 if path != topic.get_extended_slug():
+                    # If the topic ID is found but the path is incorrect,
+                    # redirect the user to the canonical path
                     self.redirect("/%s" % topic.get_extended_slug(), True)
                     return
 
