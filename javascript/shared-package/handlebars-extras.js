@@ -33,8 +33,6 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
     return result;
 });
 
-Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
-
 /**
  * Return a bingo redirect url
  *
@@ -57,3 +55,4 @@ Handlebars.registerHelper("commafy", function(numPoints) {
     return numPoints.toString().replace(/(\d)(?=(\d{3})+$)/g, "$1,");
 });
 
+Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
