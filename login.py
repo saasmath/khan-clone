@@ -355,8 +355,6 @@ class Signup(request_handler.RequestHandler):
         # Success!
         unverified_user = models.UnverifiedUser.insert_for(email)
         verification_token = auth.tokens.EmailVerificationToken.for_user(unverified_user)
-
-        # TODO(benkomalo): send verification e-mail with verification_token.value
         verification_link = CompleteSignup.build_link(unverified_user)
 
         self.send_verification_email(email, verification_link)
@@ -369,7 +367,7 @@ class Signup(request_handler.RequestHandler):
         self.return_json({
                 'success': True,
                 'existing_google_user_detected': existing_google_user_detected,
-                
+
                 # TODO(benkomalo): STOPSHIP - don't send down the verification
                 #    token obviously - this is just useful for debugging
                 'token': verification_token.value,
@@ -396,11 +394,11 @@ class Signup(request_handler.RequestHandler):
 
         if not App.is_dev_server:
             mail.send_mail(
-                    sender = 'no-reply@khanacademy.org',
-                    to = email,
-                    subject = "Verify your email with Khan Academy",
-                    body = text_only,
-                    html = html)
+                    sender='no-reply@khanacademy.org',
+                    to=email,
+                    subject="Verify your email with Khan Academy",
+                    body=text_only,
+                    html=html)
 
 class CompleteSignup(request_handler.RequestHandler):
     @staticmethod
