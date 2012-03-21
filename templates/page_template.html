@@ -230,7 +230,8 @@
         {% if mixpanel_enabled %}
         $(function() {
             mpq.identify("{{ mixpanel_id }}");
-            mpq.register({{ mixpanel_superprops }}, "all", 31);
+            mpq.register({ "Version": Analytics.getVersionNumber() }, "all", 31);
+            mpq.register({{ json.dumps(mixpanel_superprops) }}, "all", 31);
             {% if analytics_bingo %}
             mpq.register({ "{{ analytics_bingo.name }}": "{{ analytics_bingo.value }}" }, "all", 31);
             {% endif %}
