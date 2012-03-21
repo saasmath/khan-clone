@@ -1,5 +1,5 @@
 
-DEFAULT_CARDS_PER_STACK = 5
+DEFAULT_CARDS_PER_STACK = 8
 MAX_CARDS_PER_REVIEW_STACK = 8
 
 # TODO: this will probably eventually by persisted to the datastore in the form
