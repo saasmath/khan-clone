@@ -11,13 +11,8 @@
 
 {% macro user_points(user_data, points=0) -%}
     {% if user_data %}
-        {% if user_data.is_demo %}
-            {% set profile_root = '/logout?continue=/profile' %}
-            {% set points = 0 %}
-        {% else %}
-            {% set profile_root = user_data.profile_root %}
-            {% set points = user_data.points %}
-        {% endif %}
+        {% set profile_root = user_data.profile_root %}
+        {% set points = user_data.points %}
     {% else %}
         {% set profile_root = '/profile' %}
         {% set points = 0 %}
@@ -31,13 +26,8 @@
 
 {% macro username_and_notification(username, user_data, logout_url) -%}
 {% if user_data %}
-    {% if user_data.is_demo %}
-        {% set profile_root = '/logout?continue=/profile' %}
-        {% set count = 0 %}
-    {% else %}
-        {% set profile_root = user_data.profile_root %}
-        {% set count = user_data.feedback_notification_count() %}
-    {% endif %}
+    {% set profile_root = user_data.profile_root %}
+    {% set count = user_data.feedback_notification_count() %}
 {% else %}
     {% set profile_root = '/profile' %}
     {% set count = 0 %}
@@ -64,9 +54,7 @@
 
 {% macro user_video_css(user_data) -%}
     {% if user_data %}
-    {% if not user_data.is_demo %}
     <link rel='stylesheet' type='text/css' href='/user_video_css?version={{ user_data.uservideocss_version }}&id={{ user_data.user_id }}' />
-    {% endif %}
     {% endif %}
 {%- endmacro %}
 
