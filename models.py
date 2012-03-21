@@ -48,7 +48,7 @@ from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
 from gae_bingo.models import GAEBingoIdentityModel
-from experiments import StrugglingExperiment, MarqueeVideoExperiment
+from experiments import StrugglingExperiment
 import re
 
 
@@ -1593,9 +1593,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             # See http://meta.stackoverflow.com/questions/55483/proposed-consecutive-days-badge-tracking-change
             if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
-
-            if util.hours_between(self.last_activity, dt_activity) >= 12:
-                bingo(['marquee_actively_returned', 'marquee_num_active_returns'])
 
             self.last_activity = dt_activity
 
@@ -4257,10 +4254,6 @@ class VideoLog(BackupModel):
 
         if seconds_watched > 0:
 
-            bingo('marquee_started_any_video')
-            if video.readable_id in MarqueeVideoExperiment._ab_test_alternatives and video.readable_id == MarqueeVideoExperiment.ab_test():
-                bingo('marquee_started_marquee_video')
-
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
                 UserVideoCss.set_started(user_data, user_video.video, user_data.uservideocss_version)
@@ -4313,7 +4306,6 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
-                'marquee_num_videos_completed',
             ])
         video_log.is_video_completed = user_video.completed
 

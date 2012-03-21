@@ -665,19 +665,20 @@ def playlists_library():
     return convert_tree(tree)
 
 # We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
-# not to change until we have a new version, the cached version is good enough
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"])
+# that don't want to deal w/ cached values ie. youtube-export script
+@route("/api/v1/playlists/library/list/<fresh>", methods=["GET"])
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_list_%s" % models.Setting.topic_tree_version(),
+    lambda fresh=False: (
+        None if fresh else
+        "api_library_list_%s" % models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
-def playlists_library_list():
+def playlists_library_list(fresh=False):
     topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
