@@ -1991,19 +1991,29 @@ def preload_library(version_number, run_code):
     version = TopicVersion.get_by_id(version_number)
 
     # causes circular importing if put at the top
-    from library import library_content_html
+    from library import library_content_html, library_topic_html
     import autocomplete
     import templatetags
+
+    topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
     # preload library and autocomplete cache
     library_content_html(False, version.number)
     logging.info("preloaded library_content_html")
+
+    for topic in topics:
+        library_topic_html(topic.id, version.number)
+    logging.info("preloaded library_topic_html for all topics")
+
     library_content_html(True, version.number)
     logging.info("preloaded ajax library_content_html")
+
     autocomplete.video_title_dicts(version.number)
     logging.info("preloaded video autocomplete")
+
     autocomplete.topic_title_dicts(version.number)
     logging.info("preloaded topic autocomplete")
+
     templatetags.topic_browser("browse", version.number)
     templatetags.topic_browser("browse-fixed", version.number)
     logging.info("preloaded topic_browser")
