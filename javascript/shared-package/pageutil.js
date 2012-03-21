@@ -314,6 +314,37 @@ var Notifications = {
     }
 };
 
+var DemoNotifications = { // for demo-notification-bar (brown and orange, which informs to logout after demo
+
+    show: function(sNotificationContainerHtml) {
+        var jel = $(".demo-notification-bar");
+
+        if (sNotificationContainerHtml)
+        {
+            var jelNew = $(sNotificationContainerHtml);
+            jel.empty().append(jelNew.children());
+        }
+
+        if (!jel.is(":visible")) {
+            setTimeout(function() {
+
+                jel
+                    .css("visibility", "hidden")
+                    .css("display", "")
+                    .css("top", -jel.height() - 2) // 2 for border and outline
+                    .css("visibility", "visible");
+
+                // Queue:false to make sure all of these run at the same time
+                var animationOptions = {duration: 350, queue: false};
+
+                $(".notification-bar-spacer").animate({ height: 35 }, animationOptions);
+                jel.show().animate({ top: 0 }, animationOptions);
+
+            }, 100);
+        }
+    }
+};
+
 var Timezone = {
     tz_offset: null,
 
