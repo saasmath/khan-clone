@@ -22,7 +22,7 @@
       <ul>
         {% for child_topic in topic.subtopics %}
         <li>
-          <a href="{{ child_topic.topic_page_url }}" data-tag="Search Topic Results" class="topic-result"><span class="searchresulthighlight">{{ child_topic.title|escape }}</span></a>
+          <a href="{{ topic.topic_page_url }}#{{ child_topic.id }}" data-tag="Search Topic Results" class="topic-result"><span class="searchresulthighlight">{{ child_topic.title|escape }}</span></a>
         </li>
         {% endfor %}
       </ul>
