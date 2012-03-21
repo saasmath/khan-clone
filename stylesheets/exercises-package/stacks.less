@@ -14,7 +14,6 @@
 }
 
 .current-card-container-inner {
-    border: 1px solid silver;
     background-color: #F8F8F8;
 }
 .card-type-endofstack .current-card-container-inner,
@@ -578,8 +577,16 @@
     margin: -10px auto 0;
 	.border-radius(20px);
 }
+    .exercises-header .topic-exercise-image.inline {
+        display: inline-block;
+        margin: -50% 0; // Don't let the image affect the height of its container
+    }
 .exercises-header .practice-exercise-topic-context {
-    font-size: 70%;
+    .opacity(30);
+    .transition(opacity 0.1s ease-in-out);
+}
+.exercises-header:hover .practice-exercise-topic-context.solid-hover {
+    .opacity(100);
 }
 .exercises-header .practice-exercise-topic-context .topic-exercise-badge {
     width: 20px;

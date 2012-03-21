@@ -8,9 +8,10 @@ Review
     {{#if practiceMode}}
 	<div class="topic-exercise-badge">
         <span class="topic-exercise-badge">&nbsp;<!-- Practice exercises don't have badge images, just a placeholder --></span>
+    </div>
         <span class="practice-exercise-topic-context">Practicing</span> {{practiceExercise.displayName}}
-        <span class="practice-exercise-topic-context">in <img class="topic-exercise-badge" src="{{topicExerciseBadge.icons.compact}}"> <a href=".">{{topic.standaloneTitle}}</a></span>
-	</div>
+        <span class="practice-exercise-topic-context">in </span>
+        <span class="practice-exercise-topic-context solid-hover"><img class="topic-exercise-image inline" src="{{topicExerciseBadge.icons.compact}}"> <a href=".">{{topic.standaloneTitle}}</a></span>
     {{else}}
     <div class="topic-exercise-badge">
 	    <img class="topic-exercise-image" src="{{topicExerciseBadge.icons.compact}}">
