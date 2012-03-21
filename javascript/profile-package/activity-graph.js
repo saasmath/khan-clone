@@ -11,7 +11,7 @@ var ActivityGraph = {
     },
     exerciseMinutes: {
         type: "column",
-        name: "Exercise Minutes",
+        name: "Skill Minutes",
         color: "#00C9AF",
         data: [],
         defaultPoint: {
@@ -41,7 +41,7 @@ var ActivityGraph = {
     },
     proficientExercises: {
         type: "scatter",
-        name: "Proficient Exercises",
+        name: "Proficient Skills",
         showInLegend: false,
         data: [],
         defaultPoint: {
@@ -227,7 +227,7 @@ var ActivityGraph = {
         extra = this.generateBar_(this.bucketData.dictTopicBuckets[bucket], "Videos");
         this.videoMinutes.data.push(_.extend({}, this.videoMinutes.defaultPoint, x, extra));
 
-        extra = this.generateBar_(this.bucketData.dictExerciseBuckets[bucket], "Exercises");
+        extra = this.generateBar_(this.bucketData.dictExerciseBuckets[bucket], "Skills");
         this.exerciseMinutes.data.push(_.extend({}, this.exerciseMinutes.defaultPoint, x, extra));
 
         extra = this.generateSpline_(this.bucketData.dictPointsBuckets[bucket]);
