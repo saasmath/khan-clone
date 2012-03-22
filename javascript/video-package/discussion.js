@@ -244,17 +244,24 @@ var QA = {
             return;
         }
 
+        // TODO(marcia): Stick "loading..." text into tooltip
+        // TODO(marcia): Handle inaccessible case
+        // TODO(marcia): Populate with real display case badges
         jel.data("has-qtip", true)
             .qtip({
                 content: {
                     text: "Loading..."
                 },
                 style: {
-                    classes: "ui-tooltip-light ui-tooltip-shadow user-info-container"
+                    classes: "custom-override"
                 },
                 hide: {
                     delay: 100,
                     fixed: true
+                },
+                position: {
+                    my: "top left",
+                    at: "bottom left"
                 }
             }).qtip("show");
 

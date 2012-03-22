@@ -3981,66 +3981,87 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     text-align: center;
 }
 
-/* TODO(marcia): Clean this up, some overlap with profile.css */
-.qtip.user-info-container {
-    width: 310px;
+/* For hover card tooltips */
+.ui-tooltip-default.custom-override {
+    border-color: transparent;
+    background-color: transparent;
 }
-.qtip.user-info-container .user-info {
-  padding: 10px;
-  position: relative;
-  background: #eee; /* same as visibility-toggler */
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-  border-radius: 5px;
+    .ui-tooltip-default.custom-override .ui-tooltip-content {
+        border: none;
+        background-color: transparent;
+        padding: 0 0 10px 0;
+        top: -7px;
+    }
+.hover-card-triangle {
+    position: relative;
+    /* Why do we need a height here? Ask Jason.*/
+    height: 10px;
 }
-.qtip.user-info-container .avatar-pic-container {
-    float: left;
-}
-.qtip.user-info-container .avatar-pic {
-    vertical-align: top;
-    width: 80px;
-    height: 80px;
-}
-.qtip.user-info-container .user-deets {
-    float: left;
-    width: 180px;
-}
-.qtip.user-info-container .user-deets .nickname {
-    font-size: 150%;
-    padding: 0;
-    margin: 0;
-}
-.qtip.user-info-container .basic-stats {
-    padding: 1px 0 0 0;
-}
-.qtip.user-info-container .basic-stats .simple-stat {
-    float: left;
-    text-align: left;
-    margin-right: 10px;
-    padding: 3px 0 0 0;
-}
-.qtip.user-info-container .simple-stat .summary-icon {
+.hover-card-triangle:before {
     display: block;
-    width: 16px;
-    height: 16px;
-    margin: 2px 0 1px;
-    background: #005987;
-    border-radius: 5px;
-    padding: 2px 8px;
+    position: absolute;
+    left: 26px;
+    top: 1px;
+    content: " ";
+    width: 0;
+    height: 0;
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-bottom: 13px solid #CCC;
 }
-.qtip.user-info-container .simple-stat .summary-icon.star {
-    width: 14px;
-    height: 14px;
-    padding-top: 3px;
-    padding-bottom: 3px;
+.hover-card-triangle:after {
+    display: block;
+    position: absolute;
+    left: 30px;
+    top: 3px;
+    content: " ";
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid #FFF;
+    z-index: 1;
 }
-.qtip.user-info-container .simple-stat .stat-divider {
-    font-size: 150%;
-    vertical-align: middle;
+.hover-card-container {
+    width: 400px;
+    line-height: normal;
 }
-.qtip.user-info-container .stat-text {
-    padding-top: 1px;
+.hover-card-content-container {
+    position: relative;
+    background: #FFF;
 }
-.qtip.user-info-container .inaccessible .basic-stats {
-    display: none;
+.hover-card-content {
+    margin: 8px 10px 3px 5px;
+    position: relative;
+}
+.hover-card-content .avatar-pic-container {
+    float: left;
+}
+.hover-card-content .user-info {
+    float: left;
+    font-size: 175%;
+    width: 190px;
+    padding-left: 10px;
+}
+.hover-card-content .badge-container {
+    padding-top: 2px;
+}
+.hover-card-content .badge-container img{
+    width: 18px;
+    height: 18px;
+}
+.hover-card-content .user-stats {
+    float: left;
+}
+.hover-card-content .user-stats .points {
+    position: absolute;
+    top: 2px;
+    right: 0;
+}
+.hover-card-content .user-stats .join-date {
+    position: absolute;
+    bottom: 9px;
+    right: 0;
+    color: #999;
+    font-size: 90%;
 }
