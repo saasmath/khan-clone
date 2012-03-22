@@ -61,6 +61,9 @@
 {% block pagecontent %}
 <div id="background">
   <div id="container" class="dashboard{% if not logged_in %} unregistered{% endif %}">
+
+    <img src="/images/power-mode/disappoint.png?3" style="position:absolute;z-index:1000;top:10px;left:150px;-webkit-box-shadow:0px 0px 12px #ccc;">
+
     {{ exercise_macros.exercise_legend() }}
     {{ exercise_macros.exercise_dashboard(show_review_drawer, review_statement, review_call_to_action) }}
 
