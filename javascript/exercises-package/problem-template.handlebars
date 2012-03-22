@@ -19,20 +19,23 @@
 	<div id="answer_area_wrap"><div id="answer_area">
 		<form id="answerform" action="/exercisedashboard" method="get" name="answerform">
 			<div id="answercontent" class="info-box fancy-scrollbar">
+				<a id="examples-show" href="">Acceptable formats</a>
 				<span class="info-box-header">Answer</span>
 				<div id="solutionarea"></div>
+				<ul id="examples" style="display: none"></ul>
+				<div class="answer-buttons">
 				<input type="button" class="simple-button action-gradient green" id="check-answer-button" tabindex="10" value="Check Answer"/>
 				<input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px">
 				<input type="button" class="simple-button action-gradient green" id="next-question-button" style="display:none;" name="correctnextbutton" value="Correct! Next Question..."/>
 				<span id="show-solution-button-container"></span>
-				<div id="check-answer-results">
-					<img id="sad" style="display: none;"/>
-					<img id="happy" style="display: none;"/>
+				<div id="check-answer-results" style="display:none">
+					<!-- TODO(kamens) or TODO(jason): smiley/frowny face decision
+                        <img id="sad" style="display: none;"/>                    
+    					<img id="happy" style="display: none;"/>
+                    -->
 					<p class="check-answer-message info-box-sub-description"></p>
 				</div>
-				<a id="examples-show" href="">Show acceptable answer formats</a>
-				<ul id="examples" style="display: none">
-				</ul>
+				</div>
 			</div>
 			<div id="readonly" class="info-box">
 				<span id="readonly-problem" class="info-box-header"></span>
@@ -40,7 +43,7 @@
 				<span class="info-box-sub-description">To work on problems like this, <a id="readonly-start" href="">start this exercise</a>.</span>
 			</div>
 			<div class="info-box hint-box">
-				<span class="info-box-header">Need help? Get a hint.</span>
+				<span class="info-box-header">Need help?</span>
 				<div id="get-hint-button-container">
 					<input id="hint" type="button" class="simple-button action-gradient orange" value="I'd like a hint" name="hint"/>
 				</div>

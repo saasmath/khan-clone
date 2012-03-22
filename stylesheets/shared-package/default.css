@@ -2341,7 +2341,8 @@ a.proficient-badge.disabled {
         color: #777;
         display: block;
         font-size: 18px;
-        line-height: 150%;
+        line-height: 100%;
+        margin-bottom: 10px;
         font-weight: bold;
         text-shadow: 0 1px 0 #fff;
     }
