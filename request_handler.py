@@ -18,6 +18,8 @@ from app import App
 import cookie_util
 
 from api.jsonify import jsonify
+import auth.cookies
+import auth.tokens
 
 class RequestInputHandler(object):
 
@@ -131,6 +133,33 @@ class RequestInputHandler(object):
 
 class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
+    def consume_auth_token(self):
+        """ Checks to see if a valid auth token is specified as a param
+        in the request, so it can be converted into a cookie
+        and used as the identifier for the current and future requests.
+        
+        """
+
+        auth_stamp = self.request_string("auth")
+        if auth_stamp:
+            # If an auth stamp is provided, it means they logged in using
+            # a password via HTTPS, and it has redirected here to postlogin
+            # to set the auth cookie from that token. We can't rely on
+            # UserData.current() yet since no cookies have yet been set.
+            token = auth.tokens.AuthToken.for_value(auth_stamp)
+            if not token:
+                logging.error("Invalid authentication token specified")
+            else:
+                user_data = UserData.get_from_user_id(token.user_id)
+                if not user_data or not token.is_valid(user_data):
+                    logging.error("Invalid authentication token specified")
+                else:
+                    # Good auth stamp - set the cookie for the user, which
+                    # will also set it for this request.
+                    auth.cookies.set_auth_cookie(self, user_data, token)
+                    return True
+        return False
+        
     def is_ajax_request(self):
         # jQuery sets X-Requested-With header for this detection.
         if self.request.headers.has_key("x-requested-with"):
