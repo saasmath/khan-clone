@@ -244,12 +244,35 @@ var QA = {
             return;
         }
 
-        // TODO(marcia): Stick "loading..." text into tooltip
-        // TODO(marcia): Handle inaccessible case
-        jel.data("has-qtip", true)
-            .qtip({
+        var cachedHtml = QA.hoverCardCache_[userID],
+            html;
+
+        if (cachedHtml) {
+            // We've hovered over the user somewhere else on the page
+            html = cachedHtml;
+        } else {
+            // Create "loading..." view
+            var view = new HoverCardView(),
+                html = view.render().el.innerHTML;
+
+            $.ajax({
+                type: "GET",
+                url: "/api/v1/user/profile",
+                data: {
+                    casing: "camel",
+                    userID: userID
+                  },
+                dataType: "json",
+                success: _.bind(QA.onHoverCardDataLoaded_, jel)
+            });
+        }
+
+        jel.data("has-qtip", true);
+
+        // Create the tooltip
+        jel.qtip({
                 content: {
-                    text: "Loading..."
+                    text: html
                 },
                 style: {
                     classes: "custom-override"
@@ -262,37 +285,23 @@ var QA = {
                     my: "top left",
                     at: "bottom left"
                 }
-            }).qtip("show");
-
-        var html = QA.hoverCardCache_[userID];
-
-        if (html) {
-            jel.qtip("option", "content.text", html);
-        } else {
-            $.ajax({
-                type: "GET",
-                url: "/api/v1/user/profile",
-                data: {
-                    casing: "camel",
-                    userID: userID
-                  },
-                dataType: "json",
-                success: _.bind(QA.onHoverCardDataLoaded_, jel)
             });
-        }
+
+        jel.qtip("show");
+
     },
 
     onHoverCardDataLoaded_: function(data) {
-        // TODO(marcia): Figure out what to show for non-accessible profiles
-        // and whether should just render template directly instead of
-        // going through a backbone model + view..
         var jel = this,
             userID = jel.data("user-id"),
             model = new ProfileModel(data),
             view = new HoverCardView({model: model}),
             html = view.render().el.innerHTML;
 
+        // Cache html for this user
         QA.hoverCardCache_[userID] = html;
+
+        // Replace tooltip's "loading..." content
         jel.qtip("option", "content.text", html);
 
     },

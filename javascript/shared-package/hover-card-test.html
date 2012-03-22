@@ -67,18 +67,27 @@ var SAMPLE_PROFILE_DATA = {
 KA_TEST.loadTemplates([
     "shared.hover-card"
     ], function() {
-        var datas = [ {}, SAMPLE_PROFILE_DATA ];
-        $.each(datas, function(index, data) {
-            var model = new ProfileModel(data),
-                view = new HoverCardView({model: model}),
-                jel = $("<div>").addClass("user-info-container")
+        function addHoverCard(view) {
+            var jel = $("<div>").addClass("user-info-container")
                         .addClass("qtip")
                         .html(view.render().el)
-                        .css("margin", 20),
-                jelClear = $("<div>").css("clear", "both");
+                        .css("margin", 20);
+
+            var jelClear = $("<div>").css("clear", "both");
 
             $("body").append(jel)
                 .append(jelClear);
+        }
+
+        // "Loading..." hover card
+        addHoverCard(new HoverCardView());
+
+        var datas = [ {}, SAMPLE_PROFILE_DATA ];
+        $.each(datas, function(index, data) {
+            var model = new ProfileModel(data),
+                view = new HoverCardView({model: model});
+
+            addHoverCard(view);
         });
 });
 

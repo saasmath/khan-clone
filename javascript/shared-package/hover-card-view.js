@@ -5,14 +5,17 @@ HoverCardView = Backbone.View.extend({
     },
 
     render: function() {
-        var json = this.model.toJSON();
-        // TODO: this data isn't specific to any profile and is more about the library.
-        // It should probably be moved out eventially.
+        var json = {};
 
-        //TODO(marcia): Use real counts
-        json["countExercises"] = 300;
-        json["countVideos"] = 3000;
-        json["isInaccessible"] = this.model.isInaccessible();
+        if (this.model) {
+            json = this.model.toJSON();
+            if (this.model.isInaccessible()) {
+                json["isInaccessible"] = this.model.isInaccessible();
+                json["messageOnly"] = true;
+            }
+        } else {
+            json["messageOnly"] = true;
+        }
 
         $(this.el).html(this.template(json)).find("abbr.timeago").timeago();
 

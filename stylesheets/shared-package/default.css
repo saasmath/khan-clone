@@ -4065,14 +4065,3 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     color: #999;
     font-size: 90%;
 }
-
-.hover-card-container.message-only {
-    width: 280px;
-}
-.hover-card-container.message-only .avatar-pic-container,
-.hover-card-container.message-only .user-stats{
-    display: none;
-}
-.hover-card-container.message-only .nickname {
-    font-size: 80%;
-}
