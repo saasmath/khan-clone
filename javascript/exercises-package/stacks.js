@@ -823,8 +823,12 @@ Exercises.SessionStats = Backbone.Model.extend({
 
             stat.endTotalDone = userExercise.totalDone;
             stat.end = userExercise.progress;
-            stat.change = stat.end - stat.start;
             stat.justEarnedProficiency = stat.exerciseStates.proficient && !stat.startProficient;
+
+            // Keep start set at the minimum of starting and current progress.
+            // We do this b/c we never want to animate backwards progress --
+            // if the user lost ground, just show their ending position.
+            stat.start = Math.min(stat.start, stat.end);
 
             // Set and cache the latest
             progressStats[exerciseName] = stat;
