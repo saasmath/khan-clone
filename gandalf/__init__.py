@@ -1,8 +1,8 @@
+import logging
+
 from app import App
 from gandalf.cache import GandalfCache
 from gandalf.config import current_logged_in_identity
-
-import logging
 
 def gandalf(bridge_name):
 
