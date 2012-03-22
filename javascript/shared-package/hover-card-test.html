@@ -67,7 +67,7 @@ var SAMPLE_PROFILE_DATA = {
 KA_TEST.loadTemplates([
     "shared.hover-card"
     ], function() {
-        var datas = [ SAMPLE_PROFILE_DATA ];
+        var datas = [ {}, SAMPLE_PROFILE_DATA ];
         $.each(datas, function(index, data) {
             var model = new ProfileModel(data),
                 view = new HoverCardView({model: model}),

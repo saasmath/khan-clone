@@ -314,6 +314,8 @@ table.feedback_list th {
 }
 .author-nickname {
     color: #069;
+    cursor: pointer;
+    display: inline-block;
 }
 span.flag_tools_show img {
     width: 14px;

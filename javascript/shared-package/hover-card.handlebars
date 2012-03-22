@@ -1,17 +1,19 @@
-<div class="hover-card-container">
+<div class="hover-card-container {{#if isInaccessible}}message-only{{/if}}">
     <div class="hover-card-triangle"></div>
-    <div class="hover-card-content-container vertical-shadow {{#if isInaccessible}}inaccessible{{/if}}">
+    <div class="hover-card-content-container vertical-shadow">
         <div class="hover-card-content clearfix">
+            {{#if isInaccessible}}
+            <div style="padding-left: 10px">
+                Oops, this user doesn't have a public profile!
+            </div>
+            {{/if}}
             <div class="avatar-pic-container">
                 <img src="{{avatarSrc}}" style="width: 50px; height: 50px;">
             </div>
             <div class="user-info">
-                {{#if isInaccessible}}
-                    <span class="nickname">This user is hiding.</span>
-                {{else}}
+                {{#unless isInaccessible}}
                     <span class="nickname"><a href="#">{{nickname}}</a></span>
-                {{/if}}
-
+                {{/unless}}
                 <div class="badge-container">
                     {{#each publicBadges}}
                         {{#if this}}
