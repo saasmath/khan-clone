@@ -165,7 +165,6 @@ var Profile = {
 
         showVitalStatistics: function(graph, exercise, timePeriod) {
             var exercise = exercise || "addition_1",
-                timePeriod = timePeriod || "last-week",
                 emailEncoded = encodeURIComponent(USER_EMAIL),
                 hrefLookup = {
                     "activity": "/profile/graph/activity?student_email=" + emailEncoded,
