@@ -307,7 +307,7 @@ var Exercises = {
             // our right-hand-stack cache
             if (!Exercises.incompleteStack.length) {
                 Exercises.completeStack.clearCache();
-                Exercises.sessionStats.clearCache();
+                Exercises.sessionStats.clearAndDisableCache();
             }
 
             // Render next card

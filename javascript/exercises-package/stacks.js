@@ -726,10 +726,12 @@ Exercises.CurrentCardView = Backbone.View.extend({
  */
 Exercises.SessionStats = Backbone.Model.extend({
 
+    enabled: false,
     sessionId: null,
 
     initialize: function(attributes, options) {
 
+        this.enabled = true;
         this.sessionId = options ? options.sessionId : null;
 
         // Try to load stats from cache
@@ -781,11 +783,22 @@ Exercises.SessionStats = Backbone.Model.extend({
         LocalStore.del(this.cacheKey());
     },
 
+    /*
+     * Clears cache and disables sessionStats from being accumulated
+     * if any more events are fired.
+     */
+    clearAndDisableCache: function() {
+        this.enabled = false;
+        this.clearCache();
+    },
+
     /**
      * Update the start/end/change progress for this specific exercise so we
      * can summarize the user's session progress at the end of a stack.
      */
     updateProgressStats: function(exerciseName) {
+
+        if (!this.enabled) return;
 
         var userExercise = Exercises.BottomlessQueue.userExerciseCache[exerciseName];
 
