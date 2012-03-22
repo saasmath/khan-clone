@@ -446,7 +446,7 @@ class ClassTimeChunk:
                 desc_exercises += "<br/>"
             desc_exercises += " - <em>%s</em>" % Exercise.to_display_name(key)
         if len(desc_exercises) > 0:
-            desc_exercises = "<br/><b>Exercises:</b><br/>" + desc_exercises
+            desc_exercises = "<br/><b>Skills:</b><br/>" + desc_exercises
 
         desc = ("<b>%s</b> - <b>%s</b><br/>(<em>~%.0f min.</em>)" % (self.start.strftime("%I:%M%p"), self.end.strftime("%I:%M%p"), self.minutes_spent())) + "<br/>" + desc_videos + desc_exercises
 
@@ -676,7 +676,7 @@ class UserAdjacentActivitySummary:
                 desc_exercises += "<br/>"
             desc_exercises += " - <em>%s</em>" % Exercise.to_display_name(key)
         if len(desc_exercises) > 0:
-            desc_exercises = "<br/><b>Exercises:</b><br/>" + desc_exercises
+            desc_exercises = "<br/><b>Skills:</b><br/>" + desc_exercises
  
         desc = ("<b>%s</b> - <b>%s</b><br/>(<em>~%.0f min.</em>)" % (self.start.strftime("%I:%M%p"), self.end.strftime("%I:%M%p"), self.minutes_spent())) + "<br/>" + desc_videos + desc_exercises
 
