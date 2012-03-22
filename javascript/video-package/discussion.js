@@ -246,7 +246,6 @@ var QA = {
 
         // TODO(marcia): Stick "loading..." text into tooltip
         // TODO(marcia): Handle inaccessible case
-        // TODO(marcia): Populate with real display case badges
         jel.data("has-qtip", true)
             .qtip({
                 content: {

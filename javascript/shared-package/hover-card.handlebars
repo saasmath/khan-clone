@@ -13,11 +13,13 @@
                 {{/if}}
 
                 <div class="badge-container">
-                    <img src="/images/badges/arithmetic.png">
-                    <img src="/images/badges/moon-small.png">
-                    <img src="/images/badges/sun-small.png">
-                    <img src="/images/badges/earth-small.png">
-                    <img src="/images/badges/meteorite-small.png">
+                    {{#each publicBadges}}
+                        {{#if this}}
+                            {{#with this}}
+                                <img src="{{icons.small}}">
+                            {{/with}}
+                        {{/if}}
+                    {{/each}}
                 </div>
             </div>
             <div class="user-stats">
