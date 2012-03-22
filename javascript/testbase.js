@@ -39,7 +39,7 @@ var KA_TEST = {
         // Write out some common utilities which are probably going to be
         // needed in most tests.
         this.writeScript(sharedPackagePath, "jquery.js");
-        this.writeScript(basePath, "jquery-ui.js");
+        this.writeScript(sharedPackagePath, "jquery-ui-1.8.16.custom.js");
         this.writeScript(basePath + "../../khan-exercises/utils/",
                 "underscore.js");
         this.writeScript(sharedPackagePath, "backbone.js");
