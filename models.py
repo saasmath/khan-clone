@@ -561,7 +561,7 @@ class UserExercise(db.Model):
         """ Returns the next n suggested user exercises for this topic,
         all prepped and ready for JSONification, as a tuple.
 
-        TODO(jace): *This* is where the magic will happen.
+        TODO(save us, Jace): *This* is where the magic will happen.
         """
 
         exercises = topic.get_exercises(include_descendants=True)
