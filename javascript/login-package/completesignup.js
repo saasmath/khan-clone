@@ -12,14 +12,14 @@ Login.initCompleteSignupPage = function() {
 
     $("#password").on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
-            Login.submitCompleteSignup();
             e.preventDefault();
+            Login.submitCompleteSignup();
         }
     });
 
     $("#submit-button").click(function(e) {
-        Login.submitCompleteSignup();
         e.preventDefault();
+        Login.submitCompleteSignup();
     });
 };
 
@@ -49,7 +49,7 @@ Login.submitCompleteSignup = function() {
 };
 
 /**
- * Handles a successful request to the POST to complete the signup.
+ * Handles a success response to the POST to complete the signup.
  * This will cause the page to refresh and to set the auth cookie.
  */
 Login.onCompleteSignupSucess = function(data) {

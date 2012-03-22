@@ -39,13 +39,13 @@ Login.initLoginPage = function() {
     }
 
     $("#submit-button").click(function(e) {
-        Login.loginWithPassword();
         e.preventDefault();
+        Login.loginWithPassword();
     });
     $("#password").on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
-            Login.loginWithPassword();
             e.preventDefault();
+            Login.loginWithPassword();
         }
     });
 };
@@ -123,18 +123,17 @@ Login.loginWithPassword = function() {
  * Handle a failed attempt at logging in with a username/password.
  */
 Login.onPasswordLoginFail = function(errors) {
+    var text;
     if (errors["badlogin"]) {
-        $("#login-fail-message")
-            .text("Username and password doesn't match")
-            .show();
-        $("#password").focus();
+        text = "Username and password doesn't match";
     } else {
         // Unexpected error. This shouldn't really happen but
         // just in case...
-        $("#login-fail-message")
-            .text("Error logging in. Please try again")
-            .show();
+        text = "Error logging in. Please try again";
     }
+
+    $("#login-fail-message").text(text).show();
+    $("#password").focus();
 };
 
 /**
@@ -148,7 +147,7 @@ Login.onPasswordLoginSuccess = function(data) {
     var continueUri = data["continue"] || "/";
     window.location.replace(
             "/postlogin?continue=" + encodeURIComponent(continueUri) +
-            "&auth=" + auth);
+            "&auth=" + encodeURIComponent(auth));
 };
 
 /**
@@ -197,6 +196,9 @@ Login.asyncFormPost = function(jelForm, success, error) {
 
     var iframeName = "async-form-iframe";
     if (!Login.iframeForPost_) {
+        // Note: some browsers may not load a completely hidden frame, so we
+        // make sure it has some dimension and use visibility:hidden and
+        // negative margins to minimize its impact to layout.
         Login.iframeForPost_ = $("<iframe></iframe>")
             .attr("name", iframeName)
             .attr("id", iframeName)
@@ -206,15 +208,7 @@ Login.asyncFormPost = function(jelForm, success, error) {
                     "width: 1px; height: 1px;" +
                     "margin-top: -1px; margin-left: -1px;")
             .appendTo(jelForm.parent())
-            .on("load", function(e) {
-                try {
-                    Login.handleAsyncFormLoad_(e.target);
-                } catch (ex) {
-                    // Client callbacks may have thrown, but make sure
-                    // we still clean up.
-                }
-                Login.requestInFlight_ = null;
-            });
+            .on("load", Login.handleAsyncFormLoad_);
     }
 
     jelForm.prop("target", iframeName);
@@ -235,7 +229,9 @@ Login.requestInFlight_ = null;
 /**
  * Internal callback for when an iframe finishes loading.
  */
-Login.handleAsyncFormLoad_ = function(frame) {
+Login.handleAsyncFormLoad_ = function(e) {
+    var frame = e.target;
+
     var doc;
     if ($.browser.webkit) {
         doc = frame.document || frame.contentWindow.document;
@@ -243,6 +239,7 @@ Login.handleAsyncFormLoad_ = function(frame) {
         doc = frame.contentDocument || frame.contentWindow.document;
     }
     var result;
+    var success = true;
     try {
         // There may be reasons why we can't access the content (e.g. it
         // doesn't exist or we're not allowed), such as in IE's default 404
@@ -252,11 +249,18 @@ Login.handleAsyncFormLoad_ = function(frame) {
         // The content is expected to be JSON in all uses of this so far.
         result = $.parseJSON(rawContent);
     } catch (ex) {
-        if (Login.requestInFlight_.error) {
-            Login.requestInFlight_.error();
-            return;
-        }
+        success = false;
     }
-    Login.requestInFlight_.success(result);
+    try {
+        if (success) {
+            Login.requestInFlight_.success(result);
+        } else if (Login.requestInFlight_.error) {
+            Login.requestInFlight_.error();
+        }
+    } finally {
+        // The callbacks may throw or error out but it's important we
+        // clean up the state.
+        Login.requestInFlight_ = null;
+    }
 };
 
