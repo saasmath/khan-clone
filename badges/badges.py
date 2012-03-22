@@ -61,7 +61,7 @@ class BadgeCategory(object):
         elif category == BadgeCategory.DIAMOND:
             return "Black Hole badges are legendary and unknown. They are the most unique Khan Academy awards."
         elif category == BadgeCategory.MASTER:
-            return "Challenge Patches are special awards for completing challenge exercises."
+            return "Challenge Patches are special awards for completing topic challenges."
         return ""
 
     @staticmethod
