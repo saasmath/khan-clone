@@ -124,6 +124,9 @@ javascript = {
             "login.js",
             "signup.js",
             "completesignup.js",
+
+            # Used for password change forms
+            "settings.js",
         ]
     },
     "profile": {
@@ -149,7 +152,6 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
-            "settings.handlebars",
             "coaches.js",
             "coach.handlebars",
             "no-coaches.handlebars",
@@ -170,7 +172,6 @@ javascript = {
             "class-progress-summary.js",
             "exercise_progress.handlebars",
             "profile-goals.js",
-            "settings.js",
             "profile.js",
         ]
     },

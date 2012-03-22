@@ -172,3 +172,37 @@ a:visited {
 a.signup-link {
     color: #678d00;
 }
+
+#pw-change-form {
+    margin-top: 0;
+}
+
+#pw-change-form .input-label-cell {
+    padding: 0.5em 2em 0.5em 0;
+}
+
+#pw-change-form .sidenote {
+    margin-left: 5px;
+}
+
+/* TODO(benkomalo): style nicer */
+#pw-change-form .message.success {
+    color: green;
+}
+
+#pw-change-form .message.error {
+    color: red;
+}
+
+/* TODO(benkomalo): consolidate these with the profile page's sidenote styles */
+.sidenote {
+    background-repeat: no-repeat;
+    background-position: 0 30%;
+    padding-left: 13px;
+}
+.sidenote.success {
+    background-image:url(/images/video-indicator-complete.png);
+}
+.sidenote.error {
+    background-image:url(/images/cross.png);
+}

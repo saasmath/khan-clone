@@ -20,7 +20,6 @@ import os
 import re
 import request_handler
 import util
-import urllib
 
 class LoginType():
     """ Enum representing which types of logins a user can use
@@ -152,24 +151,7 @@ class PostLogin(request_handler.RequestHandler):
     def get(self):
         cont = self.request_continue_url()
 
-        auth_stamp = self.request_string("auth")
-        if auth_stamp:
-            # If an auth stamp is provided, it means they logged in using
-            # a password via HTTPS, and it has redirected here to postlogin
-            # to set the auth cookie from that token. We can't rely on
-            # UserData.current() yet since no cookies have yet been set.
-            token = auth.tokens.AuthToken.for_value(auth_stamp)
-            if not token:
-                logging.error("Invalid authentication token specified")
-            else:
-                user_data = UserData.get_from_user_id(token.user_id)
-                if not user_data or not token.is_valid(user_data):
-                    logging.error("Invalid authentication token specified")
-                    user_data = None
-                else:
-                    # Good auth stamp - set the cookie for the user, which
-                    # will also set it for this request.
-                    auth.cookies.set_auth_cookie(self, user_data, token)
+        self.consume_auth_token()
 
         user_data = UserData.current()
         if user_data:
@@ -191,8 +173,8 @@ class PostLogin(request_handler.RequestHandler):
                 user_data.update_nickname()
 
             # Set developer and moderator to True if user is admin
-            if ((not user_data.developer or not user_data.moderator)
-                    and users.is_current_user_admin()):
+            if ((not user_data.developer or not user_data.moderator) and
+                    users.is_current_user_admin()):
                 user_data.developer = True
                 user_data.moderator = True
                 user_data.put()
@@ -516,6 +498,19 @@ class CompleteSignup(request_handler.RequestHandler):
         Login.return_login_json(self, created_user)
 
 class PasswordChange(request_handler.RequestHandler):
+    def get(self):
+        if self.consume_auth_token():
+            # Just updated the auth cookie, which means we just succesfully
+            # completed a password change.
+            self.render_form(message="Password changed", success=True)
+        else:
+            self.render_form()
+
+    def render_form(self, message=None, success=False):
+        self.render_jinja2_template('password-change.html',
+                                    {'message': message or "",
+                                     'success': success})
+        
     def post(self):
         user_data = models.UserData.current()
         if not user_data:
@@ -524,30 +519,28 @@ class PasswordChange(request_handler.RequestHandler):
 
         existing = self.request_string("existing")
         if not user_data.validate_password(existing):
-            self.response.unauthorized()
+            # TODO(benkomalo): throttle incorrect password attempts
+            self.render_form(message="Incorrect password")
             return
 
         password1 = self.request_string("password1")
         password2 = self.request_string("password2")
-        if not password1 or not password2:
-            self.response.bad_request()
-            return
-
-        # TODO(benkomalo): actually wire this up to a UI instead of just
-        # writing text like this.
-        if password1 != password2:
-            self.response.write("Passwords don't match.")
+        if (not password1 or
+                not password2 or
+                password1 != password2):
+            self.render_form(message="Passwords don't match")
         elif not auth.passwords.is_sufficient_password(password1,
                                                        user_data.nickname,
                                                        user_data.username):
-            self.response.write("Password too weak.")
+            self.render_form(message="Password too weak")
         else:
             # We're good!
             user_data.set_password(password1)
-            cont = self.request_continue_url()
 
             # Need to create a new auth token as the existing cookie will expire
-            Login.return_login_json(self, user_data, cont)
+            auth_token = auth.tokens.AuthToken.for_user(user_data)
+            self.redirect(util.insecure_url(
+                    "/pwchange?auth=%s" % auth_token.value))
 
 class UnverifiedAccount(request_handler.RequestHandler):
     def get(self):

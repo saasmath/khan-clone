@@ -1,22 +1,19 @@
 
 /**
- * Utilities for user settings, such as changing a password.
+ * Utilities for changing a user's password.
+ * This is intended to be used in a minimal form, usually in an iframe.
  */
 var Settings = {
 
-    template: Templates.get("profile.settings"),
-
-    render: function(targetJel) {
-        targetJel.html(this.template({secureUrlBase: Profile.secureUrlBase}));
-
+    init: function() {
         $("#password1").on(
                 Keys.textChangeEvents,
-                Keys.wrapTextChangeHandler(this.onPasswordInput_, this));
+                Keys.wrapTextChangeHandler(Settings.onPasswordInput_, Settings));
         $("#password2").on(
                 Keys.textChangeEvents,
-                Keys.wrapTextChangeHandler(this.onPasswordInput_, this));
+                Keys.wrapTextChangeHandler(Settings.onPasswordInput_, Settings));
 
-        $("#submit-settings").click(_.bind(this.onClickSubmit_, this));
+        $("#submit-settings").click(_.bind(Settings.onClickSubmit_, Settings));
     },
 
     onPasswordInput_: function(e) {
