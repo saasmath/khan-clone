@@ -56,52 +56,41 @@ class Login(request_handler.RequestHandler):
                            'direct': direct,
                            'identifier': identifier or "",
                            'errors': errors or {},
+                           'google_url': users.create_login_url(cont),
                            }
 
         self.render_jinja2_template('login.html', template_values)
 
     def post(self):
-        """ Handles a POST from the login page. """
+        """ Handles a POST from the login page.
+
+        This happens when the user attempts to login with an identifier (email
+        or username) and password.
+
+        """
+
         cont = self.request_continue_url()
-        login_type = self.request_int('type', default=LoginType.UNKNOWN)
-        if not LoginType.is_valid(login_type):
-            # Can't figure out what the user wants to do - just send them
-            # the login page.
-            self.get()
+
+        # Authenticate via username or email + password
+        identifier = self.request_string('identifier')
+        password = self.request_string('password')
+        if not identifier or not password:
+            errors = {}
+            if not identifier: errors['noemail'] = True
+            if not password: errors['nopassword'] = True
+            self.render_json({'errors': errors})
             return
 
-        if login_type == LoginType.FACEBOOK:
-            # Unexpected - login through Facebook is done client side using
-            # Fb's JS SDK righ tnow.
-            logging.error("Unexpected login type of Facebook in Login form")
+        user_data = models.UserData.get_from_username_or_email(identifier.strip())
+        if not user_data or not user_data.validate_password(password):
+            errors = {}
+            errors['badlogin'] = True
+            # TODO(benkomalo): IP-based throttling of failed logins?
+            self.render_json({'errors': errors})
             return
 
-        if login_type == LoginType.GOOGLE:
-            # Redirect to Google's login page
-            self.redirect(users.create_login_url(cont))
-            return
-
-        elif login_type == LoginType.PASSWORD:
-            # Authenticate via username or email + password
-            identifier = self.request_string('identifier')
-            password = self.request_string('password')
-            if not identifier or not password:
-                errors = {}
-                if not identifier: errors['noemail'] = True
-                if not password: errors['nopassword'] = True
-                self.render_json({'errors': errors})
-                return
-
-            user_data = models.UserData.get_from_username_or_email(identifier.strip())
-            if not user_data or not user_data.validate_password(password):
-                errors = {}
-                errors['badlogin'] = True
-                # TODO(benkomalo): IP-based throttling of failed logins?
-                self.render_json({'errors': errors})
-                return
-
-            # Successful login
-            Login.return_login_json(self, user_data, cont)
+        # Successful login
+        Login.return_login_json(self, user_data, cont)
 
     @staticmethod
     def return_login_json(handler, user_data, cont="/"):
