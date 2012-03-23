@@ -578,12 +578,15 @@ Exercises.CurrentCardView = Backbone.View.extend({
                     $(Exercises.currentCardView.el)
                         .find(".stack-stats p, .small-exercise-icon")
                             .each(Exercises.currentCardView.attachTooltip)
-                        .end()
+                            .end()
                         .find("#show-topic-details")
                             .click(function(){
                                 $('.current-topic').slideDown(); 
                                 $(this).hide();
-                            });
+                            })
+                            .end()
+                        .find(".more-stacks")
+                            .focus();
                 }
             );
 
