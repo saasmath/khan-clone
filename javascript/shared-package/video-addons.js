@@ -159,7 +159,7 @@ var VideoControls = {
 
 var VideoStats = {
 
-    dPercentGranularity: 0.05,
+    dPercentGranularity: 0.1,
     dPercentLastSaved: 0.0,
     fSaving: false,
     consecutiveFailures: 0,
@@ -174,6 +174,13 @@ var VideoStats = {
     sYoutubeId: null,
     playing: false, //ensures pause and end events are idempotent
 
+    /**
+     * A cache of the last point value saved.
+     * A value of -1 indicates that no value has been saved and we don't
+     * know the points earned for the current video.
+     */
+    pointsSaved: -1,
+
     getSecondsWatched: function() {
         if (!this.player) return 0;
         return this.player.getCurrentTime() || 0;
@@ -184,13 +191,44 @@ var VideoStats = {
         return Math.min(secondsPageTime, this.getSecondsWatched());
     },
 
+    POINTS_BASE: 750,
+    REQUIRED_PERCENTAGE_FOR_FULL_VIDEO_POINTS: 0.9,
+
+    /**
+     * Computes an estimate of the points for the current video.
+     * Returns -1 if no reasonable estimate can be made.
+     * This logic must be in sync with the code in the server at points.py
+     */
+    getPointsEstimate: function() {
+        if (this.pointsSaved < 0) {
+            return -1;
+        }
+        var duration = this.player.getDuration() || 0;
+        if (duration <= 0) {
+            return -1;
+        }
+
+        var secondsSinceSave = this.getSecondsWatchedSinceSave();
+        var percentSinceSave = Math.min(1.0, secondsSinceSave / duration);
+        var percentTotal = percentSinceSave + (this.pointsSaved / this.POINTS_BASE);
+        if (percentTotal > this.REQUIRED_PERCENTAGE_FOR_FULL_VIDEO_POINTS) {
+            percentTotal = 1.0;
+        }
+
+        return Math.ceil(this.POINTS_BASE * percentTotal);
+    },
+
     getPercentWatched: function() {
-        if (!this.player) return 0;
+        if (!this.player) {
+            return 0;
+        }
 
         var duration = this.player.getDuration() || 0;
-        if (duration <= 0) return 0;
+        if (duration <= 0) {
+            return 0;
+        }
 
-        return this.getSecondsWatched() / duration;
+        return Math.min(1.0, this.getSecondsWatched() / duration);
     },
 
     startLoggingProgress: function(sVideoKey, sYoutubeId) {
@@ -276,9 +314,23 @@ var VideoStats = {
         var playing = this.playing || this.fAlternativePlayer;
         if (state === -2) { // playing normally
             var percent = this.getPercentWatched();
+
+            // Save after we hit certain intervals of video watching.
             if (percent > (this.dPercentLastSaved + this.dPercentGranularity)) {
-                // Another 10% has been watched
                 this.save();
+            } else if (this.playing) {
+                // If we hit the max video points for the first time, force a save,
+                // since showing an estimate might entice the user to close the browser
+                // thinking they finished (and it not having actually saved).
+                var threshold = this.REQUIRED_PERCENTAGE_FOR_FULL_VIDEO_POINTS;
+                if (this.dPercentLastSaved < threshold && percent >= threshold) {
+                    this.save();
+                } else {
+                    var estimate = this.getPointsEstimate();
+                    if (estimate >= 0) {
+                        this.updatePointsDisplay(estimate);
+                    }
+                }
             }
         } else if (state === 0 && playing) { // ended
             this.playing = false;
@@ -328,6 +380,8 @@ var VideoStats = {
                     "Video ID": id,
                     "Percent (begin)": this.dPercentLastSaved
                 });
+                gae_bingo.bingo(["search_topic_started_video"]);
+                
             }
         }
         // If state is buffering, unstarted, or cued, don't do anything
@@ -423,11 +477,10 @@ var VideoStats = {
 
         if (dict_json && dict_json.action_results.user_video) {
             video = dict_json.action_results.user_video;
-            // Update the energy points box with the new data.
-            this.updatePoints(video.points);
-
             if (window.Video && Video.updateVideoPoints) {
                 Video.updateVideoPoints(video.points);
+            } else {
+                this.updatePointsSaved(video.points);
             }
 
             if (video.completed) {
@@ -440,31 +493,36 @@ var VideoStats = {
                 Analytics.trackSingleEvent("Video Complete", {
                     "Video ID": id
                 });
+                gae_bingo.bingo(["search_topic_completed_video"]);
             }
         }
     },
 
-    updatePoints: function(points) {
-        var jelPoints = $(".video-energy-points");
-        if (jelPoints.length)
-        {
-            jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, points));
-            $(".video-energy-points-current", jelPoints).text(points);
-
-            // Replace the old tooltip with an updated one.
-            VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
-        }
+    /**
+     * Updates the number of points the video has earned, as saved to
+     * the server.
+     */
+    updatePointsSaved: function(points) {
+        this.pointsSaved = points;
+        this.updatePointsDisplay(points);
     },
 
-    updatePoints: function(points) {
+    /**
+     * Update the points in the visible display of the video player.
+     */
+    updatePointsDisplay: function(points) {
         var jelPoints = $(".video-energy-points");
-        if (jelPoints.length)
-        {
-            jelPoints.data("title", jelPoints.data("title").replace(/^\d+/, points));
+        if (jelPoints.length) {
+            var hoverData = jelPoints.data("title");
+            if (hoverData) {
+                jelPoints.data("title", hoverData.replace(/^\d+/, points));
+            }
             $(".video-energy-points-current", jelPoints).text(points);
 
             // Replace the old tooltip with an updated one.
-            VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
+            if (hoverData) {
+                VideoStats.tooltip("#points-badge-hover", jelPoints.data("title"));
+            }
         }
     },
 
@@ -562,4 +620,3 @@ function connectYouTubePlayer(player) {
     $(VideoControls).trigger("playerready");
     $(VideoStats).trigger("playerready");
 }
-

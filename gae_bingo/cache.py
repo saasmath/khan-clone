@@ -1,5 +1,5 @@
 import logging
-import pickle
+import cPickle as pickle
 import hashlib
 
 from google.appengine.ext import db

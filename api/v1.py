@@ -192,6 +192,29 @@ def topic_version_change_list(version_id):
     return changes
 
 
+@route("/api/v1/topicversion/<version_id>/deletechange", methods=["POST"])
+@developer_required
+@jsonp
+@jsonify
+def topic_version_delete_change(version_id):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    kind = request.request_string("kind")        
+    id = request.request_string("id")
+        
+    content = get_content_entity(kind, id, version) 
+    if content:
+        query = models.VersionContentChange.all()
+        query.filter("version =", version)
+        query.filter("content =", content)
+        change = query.get()
+
+        if change:
+            change.delete()
+            return True
+
+    return False
+
 @route("/api/v1/topicversion/<version_id>/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/topic/<topic_id>/videos", methods=["GET"])
 @route("/api/v1/playlists/<topic_id>/videos", methods=["GET"])
@@ -270,42 +293,13 @@ def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
-@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
 @route("/api/v1/dev/topictree/problems", methods=["GET"])
 # TODO(james) add @developer_required once Tom creates interface
 @jsonp
 @jsonify
 def topic_tree_problems(version_id = "edit"):
-    version = models.TopicVersion.get_by_id(version_id)
-
-    exercises = models.Exercise.all()
-    exercise_dict = dict((e.key(),e) for e in exercises)
-
-    location_dict = {}
-    duplicate_positions = list()
-    changes = models.VersionContentChange.get_updated_content_dict(version)
-    exercise_dict.update(changes)
-
-    for exercise in [e for e in exercise_dict.values()
-                     if e.live and not e.summative]:
-
-        if exercise.h_position not in location_dict:
-            location_dict[exercise.h_position] = {}
-
-        if exercise.v_position in location_dict[exercise.h_position]:
-            # duplicate_positions.add(exercise)
-            location_dict[exercise.h_position][exercise.v_position].append(exercise)
-            duplicate_positions.append(
-                location_dict[exercise.h_position][exercise.v_position])
-        else:
-            location_dict[exercise.h_position][exercise.v_position] = [exercise]
-
-    problems = {
-        "ExerciseVideos with topicless videos" :
-            models.ExerciseVideo.get_all_with_topicless_videos(version),
-        "Exercises with colliding positions" : list(duplicate_positions)}
-
-    return problems
+    return layer_cache.KeyValueCache.get(
+        "set_default_version_content_problem_details")
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
@@ -333,7 +327,7 @@ def topictree_export(version_id = None, topic_id = "root"):
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root", publish=False):
     import zlib
-    import pickle
+    import cPickle as pickle
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing
@@ -405,7 +399,14 @@ def put_topic(topic_id, version_id = "edit"):
 @jsonify
 def get_default_topic_version_id():
     default_version = models.TopicVersion.get_default_version()
-    return default_version.number
+    return default_version.number if default_version else None
+
+@route("/api/v1/dev/task_message", methods=["GET"])
+@developer_required
+@jsonp
+@jsonify
+def get_topic_admin_task_message():
+    return models.Setting.topic_admin_task_message()
 
 def topic_find_child(parent_id, version_id, kind, id):
     version = models.TopicVersion.get_by_id(version_id)
@@ -414,21 +415,26 @@ def topic_find_child(parent_id, version_id, kind, id):
     if not parent_topic:
         return ["Could not find topic with ID %s" % str(parent_id), None, None, None]
 
-    if kind == "Topic":
-        child = models.Topic.get_by_id(id, version)
-    elif kind == "Exercise":
-        child = models.Exercise.get_by_name(id, version)
-    elif kind == "Video":
-        child = models.Video.get_for_readable_id(id, version)
-    elif kind == "Url":
-        child = models.Url.get_by_id_for_version(int(id), version)
-    else:
+    child = get_content_entity(kind, id, version)
+    if child == "Invalid kind":
         return ["Invalid kind: %s" % kind, None, None, None]
 
     if not child:
         return ["Could not find a %s with ID %s " % (kind, id), None, None, None]
 
     return [None, child, parent_topic, version]
+
+def get_content_entity(kind, id, version):
+    if kind == "Topic":
+        return models.Topic.get_by_id(id, version)
+    elif kind == "Exercise":
+        return models.Exercise.get_by_name(id, version)
+    elif kind == "Video":
+        return models.Video.get_for_readable_id(id, version)
+    elif kind == "Url":
+        return models.Url.get_by_id_for_version(int(id), version)
+    else:
+        return "Invalid kind"
 
 @route("/api/v1/topicversion/<version_id>/topic/<parent_id>/addchild", methods=["POST"])
 @route("/api/v1/topic/<parent_id>/addchild", methods=["POST"])
@@ -659,19 +665,20 @@ def playlists_library():
     return convert_tree(tree)
 
 # We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
-# not to change until we have a new version, the cached version is good enough
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"])
+# that don't want to deal w/ cached values ie. youtube-export script
+@route("/api/v1/playlists/library/list/<fresh>", methods=["GET"])
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_list_%s" % models.Setting.topic_tree_version(),
+    lambda fresh=False: (
+        None if fresh else
+        "api_library_list_%s" % models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
-def playlists_library_list():
+def playlists_library_list(fresh=False):
     topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
@@ -750,9 +757,8 @@ def exercise_save_data(version, data, exercise=None, put_change=True):
         float(data["seconds_per_fast_problem"]))
 
     changeable_props = ["name", "covers", "h_position", "v_position", "live",
-                        "summative", "prerequisites", "covers",
-                        "related_videos", "related_video_keys",
-                        "short_display_name"]
+                        "summative", "prerequisites", "covers", 
+                        "related_videos", "short_display_name"]
     if exercise:
         return models.VersionContentChange.add_content_change(exercise,
             version,
@@ -1977,12 +1983,6 @@ def autocomplete():
         topic_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
                 topic_title_dicts())
-        topic_results.extend(map(lambda topic: {
-                "title": topic.standalone_title,
-                "key": str(topic.key()),
-                "relative_url": topic.relative_url,
-                "id": topic.id
-            }, filter(lambda topic: query in topic.title.lower(), models.Topic.get_super_topics())))
         url_results = filter(
                 lambda url_dict: query in url_dict["title"].lower(),
                 url_title_dicts())

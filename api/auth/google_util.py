@@ -4,7 +4,6 @@ from google.appengine.api import oauth as google_oauth
 from google.appengine.api.oauth.oauth_api import InvalidOAuthTokenError
 from google.appengine.api import users
 
-import shared_jinja
 from flask import request, redirect
 
 from oauth_provider.oauth import OAuthError
@@ -12,7 +11,7 @@ from oauth_provider.oauth import OAuthError
 import layer_cache
 
 from api import route
-from api.auth.auth_util import current_oauth_map, authorize_token_redirect, access_token_response, append_url_params, oauth_error_response, OAuthBadRequestError
+from api.auth.auth_util import current_oauth_map, authorize_token_redirect, access_token_response, append_url_params, pretty_error_response, oauth_error_response, OAuthBadRequestError
 from api.auth.google_oauth_client import GoogleOAuthClient
 from api.auth.auth_models import OAuthMap
 from api.decorators import jsonify
@@ -84,8 +83,7 @@ def google_token_callback():
     try:
         oauth_map = retrieve_google_access_token(oauth_map)
     except OAuthBadRequestError, e:
-        jinja = shared_jinja.get()
-        return jinja.render_template('login_mobile_error.html', message='Unable to log in with Google.')
+        return pretty_error_response('Unable to log in with Google.')
     except OAuthError, e:
         return oauth_error_response(e)
 

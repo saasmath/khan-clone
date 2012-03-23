@@ -1,5 +1,11 @@
 import os
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import urllib
 import urllib2
 
@@ -45,7 +51,7 @@ class RunStep(RequestHandler):
         elif step == "can_cross_all_users_outside_percentage":
             v = self.can_cross_all_users_outside_percentage()
 
-        self.response.out.write(simplejson.dumps(v))
+        self.response.out.write(json.dumps(v))
 
     # TODO (jpulgarin): This hangs on urlopen, fix
     def creating_bridge(self):

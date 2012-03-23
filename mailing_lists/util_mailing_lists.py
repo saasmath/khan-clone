@@ -4,7 +4,11 @@ import urllib2
 import datetime
 import xml.dom.minidom as minidom
 
-import simplejson
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from app import App
 import request_handler
@@ -117,4 +121,4 @@ class Subscribe(request_handler.RequestHandler):
         list_id = self.request_string("list_id")
 
         result = subscribe_to_constant_contact(email, list_id)
-        self.response.out.write(simplejson.dumps({"result": result}, True))
+        self.response.out.write(json.dumps({"result": result}, True))

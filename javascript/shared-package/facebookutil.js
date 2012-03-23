@@ -50,11 +50,19 @@ var FacebookUtil = {
 
                 if (FacebookUtil.isUsingFbLogin()) {
                     // If the user used FB to login, log them out of FB, too.
-                    FB.logout(function() {
-                        window.location = $("#page_logout").attr("href");
-                    });
-                    e.preventDefault();
-                    return false;
+                    try {
+                        FB.logout(function() {
+                            window.location = $("#page_logout").attr("href");
+                        });
+                        e.preventDefault();
+                        return false;
+                    } catch (e) {
+                        // FB.logout can throw if the user isn't actually
+                        // signed into FB. We can get into this state
+                        // in a few odd ways (if they re-sign in using Google,
+                        // then sign out of FB in a separate tab).
+                        // Just ignore it, and have logout work as normal.
+                    }
                 }
             });
         };

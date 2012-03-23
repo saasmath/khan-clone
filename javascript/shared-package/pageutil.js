@@ -186,20 +186,20 @@ $(function() {
 
     var jelToggle = $("#user-info .dropdown-toggle");
 
-    if (KA.isMobileCapable) {
-        // Open dropdown on click
-        jelToggle.dropdown();
-    } else {
-        // Open dropdown on hover
-        jelToggle.dropdown("hover");
+    if (jelToggle.length) {
+        if (KA.isMobileCapable) {
+            // Open dropdown on click
+            jelToggle.dropdown();
+        } else {
+            // Open dropdown on hover
+            jelToggle.dropdown("hover");
+        }
+
+        var width = jelToggle.width();
+        if (width < 60) {
+            jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
+        }
     }
-
-    var width = jelToggle.width();
-    if (width < 60) {
-        jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
-    }
-
-
 });
 
 var Badges = {
