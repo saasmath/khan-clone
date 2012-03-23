@@ -1036,7 +1036,16 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     
     moderator = db.BooleanProperty(default=False)
     developer = db.BooleanProperty(default=False)
+
+    # Account creation date in UTC
     joined = db.DateTimeProperty(auto_now_add=True)
+    
+    # TODO(benkomalo): STOPSHIP - put in a date when we launch as to when
+    # this should have started been filled in.
+
+    # Last login date in UTC. Note that this was incorrectly set, and could
+    # have stale values (though is always non-empty) for users who have never
+    # logged in prior to the launch of our own password based logins.
     last_login = db.DateTimeProperty(indexed=False)
 
     # Whether or not user has been hellbanned from community participation
@@ -1391,7 +1400,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             'user': user,
             'current_user': user,
             'user_id': user_id,
-            'last_login': datetime.datetime.now(),
             'user_email': email,
             }.iteritems():
             if pname in prop_values:
@@ -1468,6 +1476,9 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             self.user_nickname = new_user.user_nickname
             self.birthdate = new_user.birthdate
             self.gender = new_user.gender
+            self.joined = new_user.joined
+            self.last_login = max(new_user.last_login,
+                                  self.last_login)
             self.set_password_from_user(new_user)
             UniqueUsername.transfer(new_user, self)
             

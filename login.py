@@ -130,13 +130,18 @@ class PostLogin(request_handler.RequestHandler):
 
         user_data = UserData.current()
         if user_data:
+            
+            if not user_data.last_login:
+                # New user!
+                # TODO(benkomalo): handle new users with pending unverified
+                # accounts.
+                pass
 
             # Update email address if it has changed
             current_google_user = users.get_current_user()
             if current_google_user:
                 if current_google_user.email() != user_data.email:
                     user_data.user_email = current_google_user.email()
-                    user_data.put()
                 # TODO(benkomalo): if they have a password based login with
                 # matching e-mail, merge the two userdata profiles, since it
                 # must be the case that this is the first time logging in
@@ -152,7 +157,9 @@ class PostLogin(request_handler.RequestHandler):
                     users.is_current_user_admin()):
                 user_data.developer = True
                 user_data.moderator = True
-                user_data.put()
+
+            user_data.last_login = datetime.datetime.utcnow()
+            user_data.put()
 
             # If user is brand new and has 0 points, migrate data.
             # This should only happen for Facebook/Google users right now,
