@@ -1,0 +1,15 @@
+<ul class="topic-browser-menu" data-role="listview" data-inset="true" style="height: {{ topic_browser_height }}px">
+  {% for topic in topics recursive %}
+    {% if topic.children %}
+      <li class="level{{ topic.level }} has-subtopics">
+        <a {% if topic.href %}href="{{ topic.href }}"{% endif %} data-tag="TopicBrowserPulldown" class="menulink">{{ topic.title }}</a>
+        <div class="right-arrow"></div>
+        <ul style="height: {{ topic.child_height }}px;">
+          {{ loop(topic.children) }}
+        </ul>
+      </li>
+    {% else %}
+      <li class="level{{ topic.level }} {% if topic.has_children %}has-children{% else %}no-children{% endif %}"><a {% if topic.href %}href="{{ topic.href }}"{% endif %} data-tag="TopicBrowserPulldown" class="menulink">{{ topic.title }}</a></li>
+    {% endif %}
+  {% endfor %}
+</ul>

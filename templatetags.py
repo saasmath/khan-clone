@@ -179,6 +179,76 @@ def topic_browser_tree(tree, level=0):
 
     return s
 
+def topic_browser_get_topics(tree, level=0):
+    item_list = []
+    idx = 0
+
+    for child in tree.children:
+        if not child.children or child.id in models.Topic._super_topic_ids:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
+
+            # Show leaf node as a link
+            item_list.append({
+                "level": level,
+                "href": escape(child.relative_url),
+                "title": escape(child.title)
+            })
+
+        elif level == 0:
+
+            # First level gets a popup menu for children
+            child_list = topic_browser_get_topics(child, level=level + 1)
+
+            item_list.append({
+                "level": level,
+                "href": None,
+                "title": escape(child.title),
+                "children": child_list,
+                "child_height": len(child_list) * 30
+            })
+
+        else:
+
+            # Second level has children embedded into the list
+            item_list.append({
+                "level": level,
+                "href": None,
+                "has_children": True,
+                "title": escape(child.title)
+            })
+
+            item_list += topic_browser_get_topics(child, level=level + 1)
+
+        idx += 1
+
+    return item_list if len(item_list) > 0 else None
+
+def topic_browser_pulldown(version_number=None):
+    if version_number:
+        version = models.TopicVersion.get_by_number(version_number)
+    else:
+        version = None
+
+    root = models.Topic.get_root(version)
+    if not root:
+        return ""
+
+    tree = root.make_tree(types = ["Topics"])
+    topics_list = topic_browser_get_topics(tree)
+
+    template_values = {
+       'topics': topics_list,
+       'topic_browser_height': len(topics_list) * 30
+    }
+
+    return shared_jinja.get().render_template("topic_browser_pulldown.html", **template_values)
+
 def video_name_and_progress(video):
     return "<span class='vid-progress v%d'>%s</span>" % (video.key().id(), escape(video.title.encode('utf-8', 'ignore')))
 

@@ -173,15 +173,19 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
     };
 }
 
+function initWatchTopicBrowser() {
+    $(".nav-subheader .dropdown-toggle").dropdown();
+}
+
 $(function() {
     // Configure the search form
-    if ($("#page_search input[type=text]").placeholder().length) {
-        initAutocomplete("#page_search input[type=text]", true);
+    if ($(".page-search input[type=text]").placeholder().length) {
+        initAutocomplete(".page-search input[type=text]", true);
     }
 
-    $("#page_search").submit(function(e) {
+    $(".page-search").submit(function(e) {
         // Only allow submission if there is a non-empty query.
-        return !!$.trim($("#page_search input[type=text]").val());
+        return !!$.trim($(this).find("input[type=text]").val());
     });
 
     var jelToggle = $("#user-info .dropdown-toggle");
@@ -195,6 +199,8 @@ $(function() {
             jelToggle.dropdown("hover");
         }
     }
+
+    initWatchTopicBrowser();
 });
 
 var Badges = {

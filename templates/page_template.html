@@ -158,18 +158,22 @@
                         <div id="nav-and-search">
                             <div id="sitewide-navigation">
                                 <nav>
-                                  <span class="links">
-                                      <a href="/#browse" data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link"{% else %}class="watch-link"{% endif %}>Watch</a>
+                                  <span class="links nav-subheader">
+                                    <span class="dropdown topic-browser-dropdown">
+                                      <a data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link dropdown-toggle"{% else %}class="watch-link dropdown-toggle"{% endif %}>Watch <b class="caret"></b></a>
                                     <a href="/exercisedashboard" data-tag="Header" {% if selected_nav_link == "practice" %}class="selected practice-link"{% endif %}>Practice</a>
                                     <a href="/class_profile" data-tag="Header" {% if selected_nav_link == "coach" %}class="selected coach-link"{% endif %}>Coach</a>
                                     <a href="/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
                                     <a href="/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
+                                    <div style="clear: both"></div>
+                                    {{ templatetags.topic_browser_pulldown() }}
+                                    </span>
                                     </span>
                                 </nav>
                             </div>
                             <div id="search-box">
-                                <form id="page_search" action="/search">
-                                    <input id="search-input" type="text" placeholder="Search for a video or topic" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " id="search-submit" />
+                                <form class="page-search" action="/search">
+                                    <input id="search-input" type="text" placeholder="Search for a video or topic" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " class="search-submit" />
                                 </form>
                             </div>
                             <div class="clear"></div>
