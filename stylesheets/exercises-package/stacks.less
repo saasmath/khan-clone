@@ -56,6 +56,7 @@
 }
 .current-card.shrinkRight #extras,
 .card-type-endofstack #extras,
+.card-type-happypicture #extras,
 .card-type-endofreview #extras {
     display: none;
 }
@@ -158,10 +159,10 @@
     overflow: visible;
     position: absolute;
     right: 10px;
+    display: none;
 }
-    .card-type-endofstack .leaves-container,
-    .card-type-endofreview .leaves-container {
-        display: none;
+    .card-type-problem .leaves-container {
+        display: block;
     }
 
 .qtip.ui-tooltip.leaf-tooltip {
@@ -595,4 +596,16 @@
     width: 20px;
     height: 20px;
     margin-right: 2px;
+}
+
+.card-type-happypicture {
+    text-align: center;
+}
+.card-type-happypicture h4,
+.card-type-happypicture .img-container {
+    margin: 22px 0;
+}
+.card-type-happypicture .happy-picture {
+    margin-left: auto;
+    margin-right: auto;
 }

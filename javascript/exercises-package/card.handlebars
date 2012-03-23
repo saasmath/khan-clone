@@ -4,7 +4,9 @@
             {{#if frontVisible}}
             <div class="card-front card-face">
                 <span>
-                    {{> card-leaves}}
+                    {{#if leavesAvailable}}
+                        {{> card-leaves}}
+                    {{/if}}
                 </span>
             </div>
             {{else}}

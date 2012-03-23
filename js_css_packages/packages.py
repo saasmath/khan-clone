@@ -214,6 +214,7 @@ javascript = {
             "problem-template.handlebars",
             "end-of-stack-card.handlebars",
             "end-of-review-card.handlebars",
+            "happy-picture-card.handlebars",
             "calculating-card.handlebars",
             "handlebars-helpers.js",
             "exercises.js",

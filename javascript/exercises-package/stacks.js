@@ -70,22 +70,29 @@ Exercises.StackCollection = Backbone.Collection.extend({
 
     /**
      * Return the longest streak of cards in this stack
-     * that satisfies the truth test fxn
+     * that satisfies the truth test fxn.
+     * If fxnSkip is supplied, the card won't count towards
+     * or break a streak.
      */
-    longestStreak: function(fxn) {
+    longestStreak: function(fxn, fxnSkip) {
 
         var current = 0,
-            longest = 0;
+            longest = 0,
+            fxnSkip = fxnSkip || function(){ return false; };
 
         this.each(function(card) {
 
-            if (fxn(card)) {
-                current += 1;
-            } else {
-                current = 0;
-            }
+            if (!fxnSkip(card)) {
 
-            longest = Math.max(current, longest);
+                if (fxn(card)) {
+                    current += 1;
+                } else {
+                    current = 0;
+                }
+
+                longest = Math.max(current, longest);
+
+            }
 
         });
 
@@ -102,9 +109,16 @@ Exercises.StackCollection = Backbone.Collection.extend({
             return card.get("leavesEarned") + sum;
         }, 0);
 
-        var longestStreak = this.longestStreak(function(card) {
-            return card.get("leavesEarned") >= 3;
-        });
+        var longestStreak = this.longestStreak(
+            function(card) {
+                return card.get("leavesEarned") >= 3;
+            },
+            function(card) {
+                // Skip any cards w/ 0 leaves available -- 
+                // those don't count.
+                return card.get("leavesAvailable") == 0;
+            }
+        );
 
         var speedyCards = this.filter(function(card) {
             return card.get("leavesEarned") >= 4;
@@ -335,6 +349,10 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
             case "endofreview":
                 this.renderEndOfReviewCard();
+                break;
+
+            case "happypicture":
+                this.renderHappyPictureCard();
                 break;
 
             default:
@@ -607,6 +625,21 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
         });
 
+    },
+
+    /**
+     * Renders a new card showing end-of-review statistics
+     */
+    renderHappyPictureCard: function() {
+        this.renderCardContainer();
+        this.renderCardContents("exercises.happy-picture-card");
+
+        $(this.el)
+            .find("#next-question-button")
+                .click(function() {
+                    Exercises.nextCard();
+                })
+                .focus();
     },
 
     attachTooltip: function() {
