@@ -619,7 +619,11 @@ footer {
         border: none;
         width: 100%;
     }
-    #user-info .dropdown-menu li > a:hover {
+    #user-info .dropdown-menu li > .profile-link {
+        white-space: nowrap;
+    }
+
+    #user-info .dropdown-menu li > .profile-link:hover {
         background-color: #E5f0CC;
     }
 
