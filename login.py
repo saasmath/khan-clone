@@ -311,7 +311,7 @@ class Signup(request_handler.RequestHandler):
             return
 
         # Success!
-        unverified_user = models.UnverifiedUser.insert_for(email)
+        unverified_user = models.UnverifiedUser.get_or_insert_for_value(email)
         verification_token = auth.tokens.EmailVerificationToken.for_user(unverified_user)
         verification_link = CompleteSignup.build_link(unverified_user)
 

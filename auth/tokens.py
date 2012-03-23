@@ -170,7 +170,7 @@ class EmailVerificationToken(object):
         self._value_internal = None
     
     @staticmethod
-    def for_user(unverified_user, clock=None):
+    def for_user(unverified_user):
         """ Given a models.UnverifiedUser, build a unique token to be sent
         for verification of that email.
 
@@ -215,7 +215,7 @@ class EmailVerificationToken(object):
         if self.email != unverified_user.email:
             return False
 
-        expected = self._make_token_signature(
+        expected = EmailVerificationToken._make_token_signature(
                     unverified_user.email,
                     unverified_user.randstring)
         return expected == self.signature

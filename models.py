@@ -993,12 +993,11 @@ class UnverifiedUser(db.Model):
     randstring = db.StringProperty(indexed=False)
     
     @staticmethod
-    def insert_for(email):
-        user = UnverifiedUser(key_name=email,
-                              email=email,
-                              randstring=os.urandom(8).encode("hex"))
-        user.put()
-        return user
+    def get_or_insert_for_value(email):
+        return UnverifiedUser.get_or_insert(
+                key_name=email,
+                email=email,
+                randstring=os.urandom(8).encode("hex"))
 
     @staticmethod
     def get_for_value(email):
