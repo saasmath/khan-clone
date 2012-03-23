@@ -3629,13 +3629,13 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 }
 
 .demo-notification-bar { /* for demo notifications when logged in as demo user */
-    background: #875900 url(/images/candy-stripe.png) repeat-x; /*! data-uri(/images/candy-stripe.png) */
+    background: #6e9700 url(/images/candy-stripe.png) repeat-x; /*! data-uri(/images/candy-stripe.png) */
     width:100%;
     height:35px;
     text-align:center;
     vertical-align:middle;
-    border-bottom: 1px solid #998c73;
-    outline:solid 1px #6E4900;
+    border-bottom: 1px solid #76a005;
+    outline:solid 1px #557303;
     color: #eee;
     position:fixed;
     z-index:200;
@@ -4008,9 +4008,9 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 .modal.generic-dialog {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
-  width: 450px;
-  margin: 0 0 0 -225px;
-  top: 90px;
+  width: 500px;
+  margin: 0 0 0 -250px;
+  top: 60px;
   left: 50%;
 }
 
@@ -4019,10 +4019,19 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 }
 
 .modal .generic-button {
+    display: inline-block;
     float: right;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    width: 60px;
+    font-size: 90%;
+    font-weight: bold;
+    margin-left: 6px;
+    margin-right: 4px;
+    min-width: 40px;
+    padding: 3px 5px;
     text-align: center;
+    text-decoration: none;
 }
 
+.modal .generic-title {
+    color: #1054AA;
+    font-size: 21px;
+}

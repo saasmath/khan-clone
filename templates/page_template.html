@@ -126,7 +126,6 @@
             <script>$(function(){ DemoNotifications.show(); });</script>
         </div>
     {% endif %}
-    <div class="notification-bar-spacer"></div>
     <div id="page-container">
     <div id="page-container-inner">
         {# Facebook connect root #}
@@ -153,7 +152,9 @@
                             <span>
                                 <a href='{% if user_data.is_demo %}/logout?continue={% endif %}{{ donate_redirect_url or "/donate" }}'
                                 {% if donate_button_test == "button" %}
-                                    class="call-to-action simple-button action-gradient green donate-button"
+                                class="call-to-action simple-button action-gradient green donate-button{%if user_data.is_demo %} show-demo-dialog{% endif %}"
+                                {% else %}
+                                {%if user_data.is_demo %}class="show-demo-dialog"{% endif %}
                                 {% endif %}>
                                 Donate
                                 </a>
@@ -164,11 +165,11 @@
                             <div id="sitewide-navigation">
                                 <nav>
                                   <span class="links">
-                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/#browse" data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link"{% else %}class="watch-link"{% endif %}>Watch</a>
-                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/exercisedashboard" data-tag="Header" {% if selected_nav_link == "practice" %}class="selected practice-link"{% endif %}>Practice</a>
-                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/class_profile" data-tag="Header" {% if selected_nav_link == "coach" %}class="selected coach-link"{% endif %}>Coach</a>
-                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
-                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/#browse" data-tag="Header" class="{% if selected_nav_link == 'watch' %}selected{% endif %} watch-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Watch</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/exercisedashboard" data-tag="Header" class="{% if selected_nav_link == 'practice' %}selected{% endif %} practice-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Practice</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/class_profile" data-tag="Header" class="{% if selected_nav_link == 'coach' %}selected{% endif %} coach-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Coach</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/contribute" data-tag="Header" class="{% if selected_nav_link == 'contribute' %}selected{% endif %} contribute-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Volunteer</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/about" data-tag="Header" class="{% if selected_nav_link == 'about' %}selected{% endif %} about-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">About</a>
                                     </span>
                                 </nav>
                             </div>
@@ -262,5 +263,20 @@
     </script>
     {%- endif -%}
 
+    {% if user_data.is_demo %}
+    <script>
+        $(".show-demo-dialog").click(function(e) {
+            e.preventDefault()
+            popupGenericMessageBox({
+                title: "Leaving Demo",
+                message: "The Demo allows you to view coach and student reports for a demo account. Navigating out of the demo area, will log you out of the demo account. Do you want to leave the demo?",
+                buttons: [
+                    { title: "No, stay within the demo", action: hideGenericMessageBox, button_color: "gray" },
+                    { title: "Yes, log me out of demo account", action: function() { hideGenericMessageBox; window.location = e.target.href }, button_color: "green" }
+                ]
+            })
+        })
+    </script>
+    {% endif %}
     </body>
 </html>
