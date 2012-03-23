@@ -1,6 +1,12 @@
 import re
 import base64
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import urllib2
 import httplib
 import logging

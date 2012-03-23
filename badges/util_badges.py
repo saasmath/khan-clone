@@ -1,7 +1,12 @@
 import logging
 import datetime
 import sys
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from google.appengine.api import taskqueue
 from mapreduce import control

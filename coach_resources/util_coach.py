@@ -5,7 +5,12 @@ from oauth_provider import oauth
 import urllib2, urlparse, cgi
 import logging
 from app import App
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 class CoachResourcesRequestHandler(request_handler.RequestHandler):
     def render_jinja2_template(self, template_name, template_values):

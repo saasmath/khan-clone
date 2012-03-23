@@ -293,14 +293,13 @@ def topictree(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_by_id("root", version).make_tree()
 
-@route("/api/v1/dev/topictree/<version_id>/problems", methods=["GET"])
 @route("/api/v1/dev/topictree/problems", methods=["GET"])
 # TODO(james) add @developer_required once Tom creates interface
 @jsonp
 @jsonify
 def topic_tree_problems(version_id = "edit"):
-    version = models.TopicVersion.get_by_id(version_id)
-    return version.find_content_problems()
+    return layer_cache.KeyValueCache.get(
+        "set_default_version_content_problem_details")
 
 @route("/api/v1/dev/topicversion/<version_id>/topic/<topic_id>/topictree", methods=["GET"])
 @route("/api/v1/dev/topicversion/<version_id>/topictree", methods=["GET"])
@@ -328,7 +327,7 @@ def topictree_export(version_id = None, topic_id = "root"):
 @jsonify
 def topictree_import(version_id = "edit", topic_id="root", publish=False):
     import zlib
-    import pickle
+    import cPickle as pickle
     logging.info("calling /_ah/queue/deferred_import")
 
     # importing the full topic tree can be too large so pickling and compressing
@@ -666,19 +665,21 @@ def playlists_library():
     return convert_tree(tree)
 
 # We expose the following "fresh" route but don't publish the URL for internal services
-# that don't want to deal w/ cached values. - since with topics now, the library is guaranteed
-# not to change until we have a new version, the cached version is good enough
-@route("/api/v1/playlists/library/list/fresh", methods=["GET"])
+# that don't want to deal w/ cached values ie. youtube-export script
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"], 
+                                               defaults = {"fresh": True})
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
 @cache_with_key_fxn_and_param(
     "casing",
-    lambda: "api_library_list_%s" % models.Setting.topic_tree_version(),
+    lambda fresh=False: (
+        None if fresh else
+        "api_library_list_%s" % models.Setting.topic_tree_version()),
     layer=layer_cache.Layers.Memcache)
 @compress
 @jsonify
-def playlists_library_list():
+def playlists_library_list(fresh=False):
     topics = models.Topic.get_filled_content_topics(types = ["Video", "Url"])
 
     topics_list = [t for t in topics if not (
@@ -1026,7 +1027,16 @@ def mark_promo_as_seen(promo_name):
     user_data = models.UserData.current()
     return models.PromoRecord.record_promo(promo_name, user_data.user_id)
 
-# TODO: the "GET" version of this.
+@route("/api/v1/user/profile", methods=["GET"])
+@jsonp
+@jsonify
+def get_user_profile():
+    # TODO(marcia): This uses user_id, as opposed to email...
+    # which means that the GET and POST are not symmetric...
+    current_user_data = models.UserData.current() or models.UserData.pre_phantom()
+    user_data = request.request_user_data_by_user_id()
+    return util_profile.UserProfile.from_user(user_data, current_user_data)
+
 @route("/api/v1/user/profile", methods=["POST", "PUT"])
 @oauth_required()
 @jsonp
@@ -1974,12 +1984,6 @@ def autocomplete():
         topic_results = filter(
                 lambda topic_dict: query in topic_dict["title"].lower(),
                 topic_title_dicts())
-        topic_results.extend(map(lambda topic: {
-                "title": topic.standalone_title,
-                "key": str(topic.key()),
-                "relative_url": topic.relative_url,
-                "id": topic.id
-            }, filter(lambda topic: query in topic.title.lower(), models.Topic.get_super_topics())))
         url_results = filter(
                 lambda url_dict: query in url_dict["title"].lower(),
                 url_title_dicts())

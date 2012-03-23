@@ -22,7 +22,7 @@ def get_facebook_nickname_key(user_id):
 
 @request_cache.cache_with_key_fxn(get_facebook_nickname_key)
 @layer_cache.cache_with_key_fxn(
-        get_facebook_nickname_key, 
+        get_facebook_nickname_key,
         layer=layer_cache.Layers.Memcache | layer_cache.Layers.Datastore,
         persist_across_app_versions=True)
 def get_facebook_nickname(user_id):
@@ -80,7 +80,7 @@ def get_profile_from_cookies():
     morsel = cookies.get(morsel_key)
     if morsel:
         return get_profile_from_cookie_key_value(morsel_key, morsel.value)
-    
+
     return None
 
 @layer_cache.cache_with_key_fxn(
@@ -91,7 +91,7 @@ def get_profile_from_cookie_key_value(cookie_key, cookie_value):
 
     fb_auth_dict = facebook.get_user_from_cookie_patched(
             { cookie_key: cookie_value },
-            App.facebook_app_id, 
+            App.facebook_app_id,
             App.facebook_app_secret)
 
     if fb_auth_dict:
@@ -125,7 +125,7 @@ def get_profile_from_fb_token(access_token):
                 logging.debug("Ignoring '%s'. Assuming access_token is no longer valid: %s" % (error, access_token))
             else:
                 c_facebook_tries_left -= 1
-                logging.debug("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
+                logging.error("Ignoring Facebook graph error '%s'. Tries left: %s" % (error, c_facebook_tries_left))
 
     return profile
 

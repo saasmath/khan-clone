@@ -1,10 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime, logging
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import math
 import urllib
-import pickle
+import cPickle as pickle
 import random
 import itertools
 
@@ -42,7 +48,7 @@ from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
 from gae_bingo.models import GAEBingoIdentityModel
-from experiments import StrugglingExperiment, MarqueeVideoExperiment
+from experiments import StrugglingExperiment
 import re
 
 
@@ -721,6 +727,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has started the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.STARTED, version,
                        _queue="video-log-queue",
@@ -728,6 +736,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_completed(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has completed the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.COMPLETED, version,
                        _queue="video-log-queue",
@@ -762,8 +772,11 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     id = '.v%d' % video_key.id()
     if status == UserVideoCss.STARTED:
-        css['completed'].discard(id)
-        css['started'].add(id)
+        if id in css['completed']:
+            logging.warn("video [%s] for [%s] went from completed->started. ignoring." %
+                         (video_key, user_data_key))
+        else:
+            css['started'].add(id)
     else:
         css['started'].discard(id)
         css['completed'].add(id)
@@ -1151,6 +1164,27 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
         return root
 
+    # Return data about the user that we'd like to track in MixPanel
+    @staticmethod
+    def get_analytics_properties(user_data):
+        properties_list = []
+
+        if not user_data:
+            properties_list.append(("User Type", "New"))
+        elif user_data.is_phantom:
+            properties_list.append(("User Type", "Phantom"))
+        else:
+            properties_list.append(("User Type", "Logged In"))
+
+        if user_data:
+            properties_list.append(("User Points", user_data.points))
+            properties_list.append(("User Videos", user_data.get_videos_completed()))
+            properties_list.append(("User Exercises", len(user_data.all_proficient_exercises)))
+            properties_list.append(("User Badges", len(user_data.badges)))
+            properties_list.append(("User Video Time", user_data.total_seconds_watched))
+
+        return properties_list
+
     @staticmethod
     @request_cache.cache()
     def current():
@@ -1233,6 +1267,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
+
+    @staticmethod
+    def get_from_user(user):
+        return UserData.get_from_db_key_email(user.email())
 
     @staticmethod
     def get_from_username_or_email(username_or_email):
@@ -1559,9 +1597,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             # See http://meta.stackoverflow.com/questions/55483/proposed-consecutive-days-badge-tracking-change
             if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
-
-            if util.hours_between(self.last_activity, dt_activity) >= 12:
-                bingo(['marquee_actively_returned', 'marquee_num_active_returns'])
 
             self.last_activity = dt_activity
 
@@ -1926,11 +1961,15 @@ def check_for_problems(version_number, run_code):
     content_problems = version.find_content_problems()
     for problem_type, problems in content_problems.iteritems():
         if len(problems):
+            content_problems["Version"] = version_number
+            content_problems["Date detected"] = datetime.datetime.now()
+            layer_cache.KeyValueCache.set(
+                "set_default_version_content_problem_details", content_problems)
             Setting.topic_admin_task_message(("Error - content problems " +
                 "found: %s. <a target=_blank " +
-                "href='/api/v1/dev/topictree/%i/problems'>" +
+                "href='/api/v1/dev/topictree/problems'>" +
                 "Click here to see problems.</a>") % 
-                (problem_type, version_number))
+                (problem_type))
                 
             raise deferred.PermanentTaskFailure
 
@@ -3302,7 +3341,6 @@ class Topic(Searchable, db.Model):
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
     from api.v1 import exercise_save_data
     import zlib
-    import pickle
 
     try:
         tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
@@ -4199,9 +4237,15 @@ class VideoLog(BackupModel):
         # If the last video logged is not this video and the times being credited
         # overlap, don't give points for this video. Can only get points for one video
         # at a time.
-        if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
+        if (detect_cheat and
+                last_video_log and
+                last_video_log.key_for_video() != video.key()):
             dt_now = datetime.datetime.now()
-            if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
+            other_video_time = last_video_log.time_watched
+            this_video_time = dt_now - datetime.timedelta(seconds=seconds_watched)
+            if other_video_time > this_video_time:
+                logging.warning("Detected overlapping video logs " +
+                                "(user may be watching multiple videos?)")
                 return (None, None, 0, False)
 
         video_log = VideoLog()
@@ -4213,10 +4257,6 @@ class VideoLog(BackupModel):
         video_log.last_second_watched = last_second_watched
 
         if seconds_watched > 0:
-
-            bingo('marquee_started_any_video')
-            if video.readable_id in MarqueeVideoExperiment._ab_test_alternatives and video.readable_id == MarqueeVideoExperiment.ab_test():
-                bingo('marquee_started_marquee_video')
 
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
@@ -4270,7 +4310,6 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
-                'marquee_num_videos_completed',
             ])
         video_log.is_video_completed = user_video.completed
 
@@ -5463,7 +5502,7 @@ class VideoSubtitles(db.Model):
         """
         try:
             return json.loads(self.json)
-        except json.JSONDecodeError:
+        except ValueError:
             logging.warn('VideoSubtitles.load_json: json decode error')
 
 class VideoSubtitlesFetchReport(db.Model):

@@ -66,6 +66,8 @@ body {
     margin: 0;
     color: #444;
     line-height: 22px;
+    /* extend background to cover #page-container on horizontal scroll */
+    min-width: 1000px;
 }
 
 
@@ -3858,50 +3860,77 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     background: url(/images/email-button-24.png) no-repeat;
 }
 
-#search-topics span.highlighted {
+.search-topics span.highlighted {
     font-weight: bold;
 }
-#search-topics .topic {
+.search-topics div.matching-topic {
+    width: 620px;
+    margin-left: 20px;
+}
+.search-topics .matching-topic h2 {
+    padding-top: 20px;
+    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: 5px;
+}
+.search-topics .matching-topic .topic-description {
+    margin-bottom: 5px;
+}
+.search-topics .matching-topic ul {
+    margin-left: 20px;
+}
+.search-topics .matching-topic li {
+    float: left;
+    width: 300px;
+    list-style-type: none;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.searchresult-counts {
+    font-style: italic;
+}
+.search-topics .topic {
     margin-top: 38px;
     margin-bottom: 5px;
     font-size: 18px
 }
-#search-topics .videos {
+.search-topics .videos {
     margin-left: 0px;
 }
-#search-topics .video-result {
+.search-topics .video-result {
     font-size: 14px;
 }
-#search-topics .description {
+.search-topics .description {
     margin: 2px 0px 0px 0px;
     font-size: 11px;
     line-height: 18px;
 }
-#search-topics li {
+.search-topics li {
     margin-top: 40px;
     margin-bottom: 40px;
 }
-#search-topics .match_count {
+.search-topics .match_count {
     font-size: 14px;
 }
-#search-topics .column {
+.search-topics .column {
     float: left;
     width: 200px;
     padding-right: 20px;
 }
-#search-topics .column:first-child {
+.search-topics .column:first-child {
     width: 360px;
 }
-#search-topics .column-heading {
+.search-topics .column-heading {
     width: 180px;
     border-bottom: 2px solid black;
     margin: 0px;
 }
-#search-topics .column li {
+.search-topics .column li {
     margin: 5px 0px 0px 0px;
     line-height: 14px;
 }
-#search-topics br {
+.search-topics br {
     clear: left;
 }
 
@@ -3981,3 +4010,90 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     text-align: center;
 }
 
+/* For hover card tooltips */
+.ui-tooltip-default.custom-override {
+    border-color: transparent;
+    background-color: transparent;
+}
+    .ui-tooltip-default.custom-override .ui-tooltip-tip {
+        /* Because qtip seems to add inline styles in IE */
+        display: none !important;
+    }
+    .ui-tooltip-default.custom-override .ui-tooltip-content {
+        border: none;
+        background-color: transparent;
+        padding: 0 0 10px 0;
+        top: -7px;
+    }
+.hover-card-triangle {
+    position: relative;
+    height: 10px;
+    z-index: 1;
+}
+.hover-card-triangle:before {
+    display: block;
+    position: absolute;
+    left: 26px;
+    top: 2px;
+    content: " ";
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid #BBB;
+}
+.hover-card-triangle:after {
+    display: block;
+    position: absolute;
+    left: 26px;
+    top: 3px;
+    content: " ";
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid #FFF;
+}
+.hover-card-container {
+    width: 400px;
+    line-height: normal;
+}
+.hover-card-content-container {
+    position: relative;
+    background: #FFF;
+}
+.hover-card-content {
+    margin: 8px 10px 3px 5px;
+    position: relative;
+}
+.hover-card-content .avatar-pic-container {
+    float: left;
+}
+.hover-card-content .user-info {
+    float: left;
+    font-size: 175%;
+    width: 190px;
+    padding-left: 10px;
+}
+.hover-card-content .badge-container {
+    padding-top: 2px;
+}
+.hover-card-content .badge-container img{
+    width: 18px;
+    height: 18px;
+}
+.hover-card-content .user-stats {
+    float: left;
+}
+.hover-card-content .user-stats .points {
+    position: absolute;
+    top: 2px;
+    right: 0;
+}
+.hover-card-content .user-stats .join-date {
+    position: absolute;
+    bottom: 9px;
+    right: 0;
+    color: #999;
+    font-size: 90%;
+}

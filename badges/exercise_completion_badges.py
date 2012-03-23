@@ -1,6 +1,11 @@
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import models
 from badges import Badge, BadgeCategory
-import simplejson as json
 
 # All badges awarded for completing some subset of exercises inherit from ExerciseCompletionBadge
 class ExerciseCompletionBadge(Badge):
