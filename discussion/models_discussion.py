@@ -180,7 +180,11 @@ class Feedback(db.Model):
         if self.author_user_id is not None:
             return self.author_user_id
         else:
-            return models.UserData.get_from_user(self.author).user_id
+            user_data = models.UserData.get_from_user(self.author)
+            if user_data is not None:
+                return user_data.user_id
+            else:
+                return ''
 
 class FeedbackNotification(db.Model):
     feedback = db.ReferenceProperty(Feedback)
