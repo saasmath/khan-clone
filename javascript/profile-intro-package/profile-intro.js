@@ -138,8 +138,8 @@ if (typeof Profile !== "undefined") {
             guiders.createGuider({
                 id: "privacy-settings",
 
-                attachTo: ".edit-visibility",
-                highlight: ".user-info, .edit-visibility",
+                attachTo: ".edit-visibility.visibility-toggler",
+                highlight: ".user-info, .edit-visibility.visibility-toggler",
                 overlay: true,
                 position: 9,
                 buttons: [{
@@ -151,5 +151,5 @@ if (typeof Profile !== "undefined") {
                 description: "The information in the box above can be made public. If you make your profile public, you'll get your own special space on Khan Academy. Other users will be able to visit your page. Don't worry! You can make your profile private at any time, in which case only you and your coaches can see your info."
             });
         }
-    }
+    };
 }
