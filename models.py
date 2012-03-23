@@ -1269,6 +1269,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         return query.get()
 
     @staticmethod
+    def get_from_user(user):
+        return UserData.get_from_db_key_email(user.email())
+
+    @staticmethod
     def get_from_username_or_email(username_or_email):
         if not username_or_email:
             return None

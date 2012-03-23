@@ -75,6 +75,10 @@ class RequestInputHandler(object):
         override_user_data = self.request_student_user_data()
         return UserData.get_visible_user(override_user_data)
 
+    def request_user_data_by_user_id(self):
+        user_id = self.request_string("userID")
+        return UserData.get_from_user_id(user_id)
+
     # get the UserData instance based on the querystring. The precedence is:
     # 1. email
     # 2. student_email

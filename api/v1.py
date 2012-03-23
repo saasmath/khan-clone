@@ -666,7 +666,8 @@ def playlists_library():
 
 # We expose the following "fresh" route but don't publish the URL for internal services
 # that don't want to deal w/ cached values ie. youtube-export script
-@route("/api/v1/playlists/library/list/<fresh>", methods=["GET"])
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"], 
+                                               defaults = {"fresh": True})
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
@@ -1026,7 +1027,16 @@ def mark_promo_as_seen(promo_name):
     user_data = models.UserData.current()
     return models.PromoRecord.record_promo(promo_name, user_data.user_id)
 
-# TODO: the "GET" version of this.
+@route("/api/v1/user/profile", methods=["GET"])
+@jsonp
+@jsonify
+def get_user_profile():
+    # TODO(marcia): This uses user_id, as opposed to email...
+    # which means that the GET and POST are not symmetric...
+    current_user_data = models.UserData.current() or models.UserData.pre_phantom()
+    user_data = request.request_user_data_by_user_id()
+    return util_profile.UserProfile.from_user(user_data, current_user_data)
+
 @route("/api/v1/user/profile", methods=["POST", "PUT"])
 @oauth_required()
 @jsonp
