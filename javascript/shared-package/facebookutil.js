@@ -5,7 +5,9 @@
 var FacebookUtil = {
 
     init: function() {
-        if (!window.FB_APP_ID) return;
+        if (!window.FB_APP_ID) {
+            return;
+        }
 
         window.fbAsyncInit = function() {
             FB.init({
@@ -65,6 +67,8 @@ var FacebookUtil = {
                     }
                 }
             });
+
+            FacebookUtil.fbReadyDeferred_.resolve();
         };
 
         $(function() {
@@ -72,6 +76,11 @@ var FacebookUtil = {
             e.src = document.location.protocol + "//connect.facebook.net/en_US/all.js";
             document.getElementById("fb-root").appendChild(e);
         });
+    },
+
+    fbReadyDeferred_: new $.Deferred(),
+    runOnFbReady: function(func) {
+        this.fbReadyDeferred_.done(func);
     },
 
     isUsingFbLoginCached_: undefined,
