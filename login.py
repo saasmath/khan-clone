@@ -338,32 +338,21 @@ class Signup(request_handler.RequestHandler):
                 'token': verification_token.value,
                 })
 
-    def send_verification_email(self, email, verification_link):
-        # TODO(marcia): Change sender (?) and enable DKIM
-        # TODO(marcia): Separate out into email sending util so we just need to specify content
-
-        # TODO(marcia): Currently always sending to myself...
-        email = 'marcia@khanacademy.org'
-
+    def send_verification_email(self, recipient, verification_link):
         template_values = {
                 'verification_link': verification_link,
             }
 
-        text_only = self.render_jinja2_template_to_string(
+        body = self.render_jinja2_template_to_string(
                 'verification-email-text-only.html',
-                template_values)
-
-        html = self.render_jinja2_template_to_string(
-                'verification-email.html',
                 template_values)
 
         if not App.is_dev_server:
             mail.send_mail(
                     sender='no-reply@khanacademy.org',
-                    to=email,
+                    to=recipient,
                     subject="Verify your email with Khan Academy",
-                    body=text_only,
-                    html=html)
+                    body=body)
 
 class CompleteSignup(request_handler.RequestHandler):
     @staticmethod
