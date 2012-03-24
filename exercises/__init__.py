@@ -108,31 +108,6 @@ def exercise_graph_dict_json(user_data, admin=False):
 
     return json.dumps(graph_dict_data)
 
-class ViewAllExercises(request_handler.RequestHandler):
-
-    def get(self):
-        user_data = models.UserData.current() or models.UserData.pre_phantom()
-        user_exercise_graph = models.UserExerciseGraph.get(user_data)
-
-        show_review_drawer = (not user_exercise_graph.has_completed_review())
-
-        template_values = {
-            'graph_dict_data': exercise_graph_dict_json(user_data),
-            'user_data': user_data,
-            'expanded_all_exercises': user_data.expanded_all_exercises,
-            'map_coords': json.dumps(knowledgemap.deserializeMapCoords(user_data.map_coords)),
-            'selected_nav_link': 'practice',
-            'show_review_drawer': show_review_drawer,
-        }
-
-        if show_review_drawer:
-            template_values['review_statement'] = 'Attain mastery'
-            template_values['review_call_to_action'] = "I'll do it"
-
-        bingo('suggested_activity_exercises_landing')
-
-        self.render_jinja2_template('viewexercises.html', template_values)
-
 class RawExercise(request_handler.RequestHandler):
     def get(self):
         path = self.request.path

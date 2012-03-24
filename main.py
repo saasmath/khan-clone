@@ -23,7 +23,7 @@ from gae_mini_profiler import profiler
 from gae_bingo.middleware import GAEBingoWSGIMiddleware
 import autocomplete
 import coaches
-import knowledgemap
+import knowledgemap.handlers
 import consts
 import youtube_sync
 import warmup
@@ -789,7 +789,7 @@ application = webapp2.WSGIApplication([
     ('/about/downloads', util_about.ViewDownloads),
     ('/getinvolved', ViewGetInvolved),
     ('/donate', Donate),
-    ('/exercisedashboard', exercises.ViewAllExercises),
+    ('/exercisedashboard', knowledgemap.handlers.ViewKnowledgeMap),
 
     ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
@@ -804,7 +804,7 @@ application = webapp2.WSGIApplication([
     ('/(review)', exercises.ViewExercise),
 
     ('/khan-exercises/exercises/.*', exercises.RawExercise),
-    ('/viewexercisesonmap', exercises.ViewAllExercises),
+    ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
     ('/moveexercisemapnodes', exercises.MoveMapNodes),
@@ -815,8 +815,8 @@ application = webapp2.WSGIApplication([
     ('/(.*)/v/([^/]*)', ViewVideo),
     ('/reportissue', ReportIssue),
     ('/search', Search),
-    ('/savemapcoords', knowledgemap.SaveMapCoords),
-    ('/saveexpandedallexercises', knowledgemap.SaveExpandedAllExercises),
+    ('/savemapcoords', knowledgemap.handlers.SaveMapCoords),
+    ('/saveexpandedallexercises', knowledgemap.handlers.SaveExpandedAllExercises),
     ('/crash', Crash),
 
     ('/image_cache/(.+)', ImageCache),
