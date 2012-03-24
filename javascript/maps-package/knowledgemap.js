@@ -496,6 +496,7 @@ function KnowledgeMap(params) {
     this.updateFilterTimout = null;
 
     // Models
+    this.topicModels = []; // list of topics
     this.exerciseModels = []; // list of exercises in displayed order
     this.exercisesByName = {}; // fast access to exercises by name
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
@@ -535,6 +536,13 @@ function KnowledgeMap(params) {
         this.filterSettings.set({"userShowAll": this.admin});
 
         Handlebars.registerPartial("knowledgemap-exercise", Templates.get("shared.knowledgemap-exercise")); // TomY TODO do this automatically?
+
+        // Initial setup of topic list
+        if (params.topic_graph_json) {
+            this.topicModels = _.map(params.topic_graph_json.topics, function(dict) {
+                return new KnowledgeMapModels.Topic(dict);
+            });
+        }
 
         // Initial setup of exercise list from embedded data
         this.exerciseModels = _.map(params.graph_dict_data, function(exercise) {

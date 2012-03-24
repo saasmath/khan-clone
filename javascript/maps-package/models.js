@@ -3,6 +3,8 @@
 // instead of needing the KnowledgeMap naming prefix.
 var KnowledgeMapModels = {
 
+    Topic: Backbone.Model.extend({}),
+
     Exercise: Backbone.Model.extend({
         initialize: function() {
 
