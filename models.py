@@ -2892,6 +2892,32 @@ class Topic(Searchable, db.Model):
         return list(set(Topic.get_content_topics()+Topic.get_super_topics()))
 
     @staticmethod
+    def get_exercise_topics(version=None):
+        """ Get all topics containing live exercises as direct children.
+        This does *not* currently return topics with exercise-containing subtopics.
+        """
+        # TODO: when we want this to support multiple layers of topics, we'll
+        # need a different interaction w/ Topic.
+        topics = Topic.get_filled_content_topics(types=["Exercise"], version=version)
+
+        # Topics in ignored_topics will not show up on the knowledge map,
+        # have topic exercise badges created for them, etc.
+        ignored_topics = [
+            "New and Noteworthy",
+        ]
+
+        # Filter out New and Noteworthy special-case topic. It might have exercises,
+        # but we don't want it to own a badge.
+        topics = [t for t in topics if t.title not in ignored_topics]
+
+        # Remove non-live exercises
+        for topic in topics:
+            topic.children = [exercise for exercise in topic.children if exercise.live]
+
+        # Filter down to only topics that have live exercises
+        return [topic for topic in topics if len(topic.children) > 0]
+
+    @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
         keys = [child_key for child_key in topic.child_keys if not kind or child_key.kind() == kind]  
         if include_descendants:
