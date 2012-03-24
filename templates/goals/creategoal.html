@@ -1,8 +1,6 @@
 {% import 'macros/exercises.html' as exercise_macros %}
 
 <script>
-var graph_dict_data = {{ graph_dict_data }};
-
 function createGoalInitialize() {
     var mapParams = {
         'mapCoords': {{ map_coords }},
@@ -10,7 +8,8 @@ function createGoalInitialize() {
         'hideReview': true,
         'hideDrawer': true,
         'newGoal': true,
-        'container': 'goal-choose-exercises'
+        'container': 'goal-choose-exercises',
+        'graph_dict_data': {{ graph_dict_data }}
     };
     var knowledgeMap = new KnowledgeMap(mapParams);
     GoalCreator.init(knowledgeMap);

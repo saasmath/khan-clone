@@ -573,7 +573,7 @@ function KnowledgeMap(params) {
         Handlebars.registerPartial("knowledgemap-exercise", Templates.get("shared.knowledgemap-exercise")); // TomY TODO do this automatically?
 
         // Initial setup of exercise list from embedded data
-        this.exerciseModels = _.map(graph_dict_data, function(exercise) {
+        this.exerciseModels = _.map(params.graph_dict_data, function(exercise) {
             var invalidForGoal = (
                 exercise.goal_req ||
                 exercise.status === "Proficient" ||

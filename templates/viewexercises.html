@@ -40,7 +40,8 @@
         var mapParams = {
             'mapCoords': {{ map_coords }},
             'admin': false,
-            'container': 'container'
+            'container': 'container',
+            'graph_dict_data': {{ graph_dict_data }}
         };
 
         new KnowledgeMap(mapParams);
@@ -52,8 +53,6 @@
             });
         {% endif %}
     });
-
-    var graph_dict_data = {{ graph_dict_data }};
 
 </script>
 {% endblock pagescript %}

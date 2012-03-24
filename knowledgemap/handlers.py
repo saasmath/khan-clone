@@ -1,15 +1,10 @@
-# use json in Python 2.7, fallback to simplejson for Python 2.5
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 from gae_bingo.gae_bingo import bingo, ab_test
 
 import models
 import request_handler
 import knowledgemap
 from exercises import exercise_graph_dict_json
+from api.jsonify import jsonify
 
 class ViewKnowledgeMap(request_handler.RequestHandler):
 
@@ -20,9 +15,10 @@ class ViewKnowledgeMap(request_handler.RequestHandler):
         show_review_drawer = (not user_exercise_graph.has_completed_review())
 
         template_values = {
+            # TODO: should be camel cased once entire knowledgemap.js codebase is switched to camel case
+            'map_coords': jsonify(knowledgemap.deserializeMapCoords(user_data.map_coords), camel_cased=False),
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
-            'map_coords': json.dumps(knowledgemap.deserializeMapCoords(user_data.map_coords)),
             'selected_nav_link': 'practice',
             'show_review_drawer': show_review_drawer,
         }

@@ -47,12 +47,11 @@
         var mapParams = {
             'mapCoords': {{ map_coords }},
             'admin': true,
-            'container': 'container'
+            'container': 'container',
+            'graph_dict_data': {{ graph_dict_data }}
         }
         adminKnowledgeMap = new KnowledgeMap(mapParams);
     });
-
-    var graph_dict_data = {{ graph_dict_data }};
 </script>
 {%- raw -%}
     <script id="exercise-admin-tmpl" type="text/html">
