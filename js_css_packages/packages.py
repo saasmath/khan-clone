@@ -167,6 +167,7 @@ javascript = {
     "maps": {
         "files": [
             "fastmarkeroverlay.js",
+            "models.js",
             "knowledgemap.js",
         ]
     },
