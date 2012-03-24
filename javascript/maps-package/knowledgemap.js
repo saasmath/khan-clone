@@ -169,7 +169,7 @@ function KnowledgeMap(params) {
 
     // Views
     this.exerciseRowViews = [];
-    this.exerciseMarkerViews = {};
+    this.nodeMarkerViews = {};
 
     // Map
     this.map = null;
@@ -344,7 +344,7 @@ function KnowledgeMap(params) {
         var filterText = this.filterSettings.get("filterText");
         var bounds = this.map.getBounds();
         if (bounds)
-            bounds = ExerciseMarkerView.extendBounds(bounds);
+            bounds = KnowledgeMapViews.NodeMarker.extendBounds(bounds);
 
         _.each(this.exerciseRowViews, function(row) {
             var exerciseName = row.model.get("lowercaseName");
@@ -380,8 +380,8 @@ function KnowledgeMap(params) {
             }
 
             // filter the item off the map view
-            if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
-                this.exerciseMarkerViews[row.nodeName].setFiltered(!filterMatches, bounds);
+            if (row.options.type == "all" && this.nodeMarkerViews[row.nodeName]) {
+                this.nodeMarkerViews[row.nodeName].setFiltered(!filterMatches, bounds);
             }
         }, this);
 
@@ -504,16 +504,16 @@ function KnowledgeMap(params) {
             jrgNodes.each(function() {
                 var exerciseName = $(this).attr("data-id");
                 var exercise = self.exercisesByName[exerciseName];
-                var view = self.exerciseMarkerViews[exerciseName];
+                var view = self.nodeMarkerViews[exerciseName];
                 if (view) {
                     view.updateElement($(this));
                 } else {
-                    view = new KnowledgeMapViews.ExerciseMarker({
+                    view = new KnowledgeMapViews.NodeMarker({
                         model: exercise,
                         el: $(this),
                         parent: self
                     });
-                    self.exerciseMarkerViews[exerciseName] = view;
+                    self.nodeMarkerViews[exerciseName] = view;
                 }
             });
 
@@ -620,7 +620,7 @@ function KnowledgeMap(params) {
     };
 
     this.highlightNode = function(node_name, highlight) {
-        var markerView = this.exerciseMarkerViews[node_name];
+        var markerView = this.nodeMarkerViews[node_name];
         if (markerView)
             markerView.setHighlight(highlight);
     };
@@ -696,8 +696,8 @@ function KnowledgeMap(params) {
         this.queryNodesRendered = true;
 
         _.each(this.exerciseRowViews, function(row) {
-            if (row.options.type == "all" && this.exerciseMarkerViews[row.nodeName]) {
-                this.exerciseMarkerViews[row.nodeName].updateAppearance();
+            if (row.options.type == "all" && this.nodeMarkerViews[row.nodeName]) {
+                this.nodeMarkerViews[row.nodeName].updateAppearance();
             }
         }, this);
     };

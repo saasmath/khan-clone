@@ -75,7 +75,7 @@ var KnowledgeMapViews = {
         }
     }),
 
-    ExerciseMarker: Backbone.View.extend({
+    NodeMarker: Backbone.View.extend({
 
         initialize: function() {
             var exercise = this.model;
@@ -90,6 +90,7 @@ var KnowledgeMapViews = {
 
             this.updateElement(this.el);
         },
+
         updateElement: function(el) {
             this.el = el;
             this.zoom = this.parent.map.getZoom();
@@ -327,7 +328,8 @@ var KnowledgeMapViews = {
             $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
             this.parent.highlightNode(this.nodeName, false);
         }
-    }, {
+    },
+    {
         extendBounds: function(bounds, dlat, dlng) {
             dlat = dlat || KnowledgeMapGlobals.nodeSpacing.lat;
             dlng = dlat || KnowledgeMapGlobals.nodeSpacing.lng;
