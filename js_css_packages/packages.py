@@ -168,6 +168,7 @@ javascript = {
         "files": [
             "fastmarkeroverlay.js",
             "models.js",
+            "views.js",
             "knowledgemap.js",
         ]
     },
