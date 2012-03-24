@@ -29,7 +29,6 @@ class CreateNewGoal(RequestHandler):
         context = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
-            'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': json.dumps(deserializeMapCoords(user_data.map_coords)),
 
             # Get pregenerated library content from our in-memory/memcache

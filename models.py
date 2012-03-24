@@ -1023,7 +1023,6 @@ class UserData(GAEBingoIdentityModel, db.Model):
     coworkers = db.StringListProperty()
     student_lists = db.ListProperty(db.Key)
     map_coords = db.StringProperty(indexed=False)
-    expanded_all_exercises = db.BooleanProperty(default=True, indexed=False)
     videos_completed = db.IntegerProperty(default=-1)
     last_daily_summary = db.DateTimeProperty(indexed=False)
     last_badge_review = db.DateTimeProperty(indexed=False)
@@ -1049,9 +1048,9 @@ class UserData(GAEBingoIdentityModel, db.Model):
     _serialize_blacklist = [
             "badges", "count_feedback_notification",
             "last_daily_summary", "need_to_reassess", "videos_completed",
-            "moderator", "expanded_all_exercises", "question_sort_order",
+            "moderator", "question_sort_order",
             "last_login", "user", "current_user", "map_coords",
-            "expanded_all_exercises", "user_nickname", "user_email",
+            "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
             "avatar_name", "username", "is_profile_public"
     ]

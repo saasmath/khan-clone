@@ -816,7 +816,6 @@ application = webapp2.WSGIApplication([
     ('/reportissue', ReportIssue),
     ('/search', Search),
     ('/savemapcoords', knowledgemap.handlers.SaveMapCoords),
-    ('/saveexpandedallexercises', knowledgemap.handlers.SaveExpandedAllExercises),
     ('/crash', Crash),
 
     ('/image_cache/(.+)', ImageCache),

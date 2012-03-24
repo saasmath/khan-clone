@@ -22,7 +22,6 @@ class ViewKnowledgeMap(request_handler.RequestHandler):
         template_values = {
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
-            'expanded_all_exercises': user_data.expanded_all_exercises,
             'map_coords': json.dumps(knowledgemap.deserializeMapCoords(user_data.map_coords)),
             'selected_nav_link': 'practice',
             'show_review_drawer': show_review_drawer,
@@ -35,16 +34,6 @@ class ViewKnowledgeMap(request_handler.RequestHandler):
         bingo('suggested_activity_exercises_landing')
 
         self.render_jinja2_template('viewexercises.html', template_values)
-
-class SaveExpandedAllExercises(request_handler.RequestHandler):
-    def post(self):
-        user_data = models.UserData.current()
-
-        if user_data:
-            expanded = self.request_bool("expanded")
-
-            user_data.expanded_all_exercises = expanded
-            user_data.put() 
 
 class SaveMapCoords(request_handler.RequestHandler):
 
