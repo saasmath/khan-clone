@@ -3414,6 +3414,12 @@ a.nodeLabel:hover {
     margin-left: 18px;
 }
 
+.nodeLabelZoom7 img {
+	-moz-border-radius: 20px;
+	-webkit-border-radius: 20px;
+	border-radius: 20px;
+}
+
 .nodeLabelHighlight div {
     -webkit-box-shadow: 0 0 10px yellow;
     -moz-box-shadow: 0 0 10px yellow;
