@@ -3380,36 +3380,35 @@ a.nodeLabel:hover {
     height: 80px;
 }
 
+.nodeLabelZoom7,
 .nodeLabelZoom9 {
     position: relative;
     left: -40px;
     top: -20px;
 }
+.nodeLabelZoom7 img,
 .nodeLabelZoom9 img {
     width: 40px;
     height: 40px;
 }
+.lte7 .nodeLabelZoom7 img,
 .lte7 .nodeLabelZoom9 img {
     margin-left: 20px;
 }
 
-.nodeLabelZoom7,
 .nodeLabelZoom8 {
     position: relative;
     left: -30px;
     top: -13px;
 }
-.nodeLabelZoom7 div,
 .nodeLabelZoom8 div {
     font-size: 9px;
     width: 60px;
 }
-.nodeLabelZoom7 img,
 .nodeLabelZoom8 img {
     width: 26px;
     height: 26px;
 }
-.lte7 .nodeLabelZoom7 img,
 .lte7 .nodeLabelZoom8 img {
     margin-left: 18px;
 }
