@@ -22,6 +22,7 @@ from goals.models import (GoalList, Goal, GoalObjective,
     GoalObjectiveAnyExerciseProficiency, GoalObjectiveAnyVideo)
 import profiles.util_profile as util_profile
 from profiles import class_progress_report_graph, recent_activity, suggested_activity
+from knowledgemap.layout import MapLayout
 from common_core.models import CommonCoreMap
 from youtube_sync import youtube_get_video_data_dict, youtube_get_video_data
 from app import App
@@ -415,6 +416,51 @@ def put_topic(topic_id, version_id = "edit"):
     return {
         "id": topic.id
     }
+
+@route("/api/v1/topicversion/<version_id>/maplayout", methods=["GET"])
+@route("/api/v1/maplayout", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def get_maplayout(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+    return MapLayout.get_for_version(version)
+
+@route("/api/v1/topicversion/<version_id>/maplayout", methods=["PUT"])
+@route("/api/v1/maplayout", methods=["PUT"])
+@developer_required
+@oauth_optional()
+@jsonp
+@jsonify
+def put_maplayout(version_id = "edit"):
+    version = models.TopicVersion.get_by_id(version_id)
+
+    map_layout = MapLayout.get_for_version(version)
+    map_layout.layout = request.json
+    map_layout.put()
+
+    return { "id": map_layout.id }
+
+# TODO(kamens) STOPSHIP: this hacky /populate route makes it easy to
+# prefill your default version's map layout,
+# and it will be going away pre-shipping
+# https://trello.com/card/when-default-topic-layout-exists-in-some-current-sqllite-db-get-rid-of-layout-json/4f3f43cd45533a1b3a065a1d/149
+@route("/api/v1/maplayout/populate", methods=["GET"])
+@oauth_optional()
+@jsonp
+@jsonify
+def populate_maplayout():
+    import simplejson as json
+
+    version = models.TopicVersion.get_default_version()
+    map_layout = MapLayout.get_for_version(version)
+
+    f = open("../knowledgemap/layout.json", "r")
+    map_layout.layout = json.loads(f.read())
+    f.close()
+
+    map_layout.put()
+    return map_layout
 
 @route("/api/v1/topicversion/default/id", methods=["GET"])
 @oauth_optional()
