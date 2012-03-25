@@ -19,8 +19,8 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
 
         this.set({
             name: name,
-            h_position: x,
-            v_position: y,
+            x: x,
+            y: y,
             display_name: display_name,
             lowercaseName: display_name.toLowerCase(),
             inAllList: false, // TODO(kamens): remove?
@@ -75,8 +75,8 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
         this.setNodeAttrs(
             this.get("name"),
             this.get("display_name"),
-            this.get("h_position"),
-            this.get("v_position"),
+            this.get("v_position"), // v_position is actually x
+            this.get("h_position"), // h_position is actually y
             KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
             [KnowledgeMapGlobals.options.minZoom + 1, KnowledgeMapGlobals.options.maxZoom]
         );

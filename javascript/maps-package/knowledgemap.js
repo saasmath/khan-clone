@@ -43,7 +43,7 @@ function KnowledgeMapInitGlobals() {
 
         xyToLatLng: function(x, y) {
             return new google.maps.LatLng(
-                    -1 * (x - 1) * KnowledgeMapGlobals.nodeSpacing.lat, y * KnowledgeMapGlobals.nodeSpacing.lng
+                    -1 * (y - 1) * KnowledgeMapGlobals.nodeSpacing.lat, x * KnowledgeMapGlobals.nodeSpacing.lng
             );
         },
 
@@ -647,7 +647,7 @@ function KnowledgeMap(params) {
 
     this.drawMarker = function(node, zoom) {
 
-        node.latLng = KnowledgeMapGlobals.xyToLatLng(node.h_position, node.v_position);
+        node.latLng = KnowledgeMapGlobals.xyToLatLng(node.x, node.y);
 
         var lat = node.latLng.lat(),
             lng = node.latLng.lng();
