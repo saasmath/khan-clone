@@ -7,12 +7,14 @@ topics_layout = {
         {
             "id": "absolute-value",
             "standalone_title": "Absolute value",
+            "icon_url": "/images/power-mode/badges/default-60x60.png",
             "x": 6,
             "y": 12,
         },
         {
             "id": "addition-subtraction",
             "standalone_title": "Addition and subtraction",
+            "icon_url": "/images/power-mode/badges/addition-and-subtraction-60x60.png",
             "x": 4,
             "y": 10,
         }

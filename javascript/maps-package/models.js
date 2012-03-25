@@ -15,9 +15,7 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
     /**
      * Set all required properties for rendering map node
      */
-    setNodeAttrs: function(name, display_name, x, y, zoomBounds) {
-
-        var iconUrl = KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal;
+    setNodeAttrs: function(name, display_name, x, y, iconUrl, zoomBounds) {
 
         this.set({
             name: name,
@@ -26,8 +24,8 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             display_name: display_name,
             lowercaseName: display_name.toLowerCase(),
             inAllList: false, // TODO(kamens): remove?
-            zoomBounds: zoomBounds,
-            iconUrl: iconUrl
+            iconUrl: iconUrl,
+            zoomBounds: zoomBounds
         });
 
     }
@@ -44,6 +42,7 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
             this.get("standalone_title"),
             this.get("x"),
             this.get("y"),
+            this.get("icon_url"),
             [KnowledgeMapGlobals.options.minZoom, KnowledgeMapGlobals.options.minZoom]
         );
 
@@ -78,6 +77,7 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             this.get("display_name"),
             this.get("h_position"),
             this.get("v_position"),
+            KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
             [KnowledgeMapGlobals.options.minZoom + 1, KnowledgeMapGlobals.options.maxZoom]
         );
 
