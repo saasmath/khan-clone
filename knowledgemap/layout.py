@@ -5,13 +5,13 @@ topics_layout = {
 
     "topics": [
         {
-            "key_name": "yYz7VOgJHEdSv9uC3cuwb8kOf-k5sL9VlfBCfoVO",
+            "id": "absolute-value",
             "standalone_title": "Absolute value",
             "x": 10,
             "y": 15,
         },
         {
-            "key_name": "QFBqv9HZLk_KuLHw4ZKKlg091934jRS9BkNQofEM",
+            "id": "addition-subtraction",
             "standalone_title": "Addition and subtraction",
             "x": 4,
             "y": 10,

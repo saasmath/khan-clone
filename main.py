@@ -800,6 +800,7 @@ application = webapp2.WSGIApplication([
     ('/(.*)/e', exercises.ViewExercise),
     ('/(.*)/e/([^/]*)', exercises.ViewExercise),
     ('/exercise/(.+)', exercises.ViewExerciseDeprecated), # /exercise/addition_1
+    ('/topicexercise/(.+)', exercises.ViewTopicExerciseDeprecated), # /topicexercise/addition_and_subtraction
     ('/exercises', exercises.ViewExerciseDeprecated), # /exercises?exid=addition_1
     ('/(review)', exercises.ViewExercise),
 

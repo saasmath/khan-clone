@@ -162,7 +162,7 @@ function KnowledgeMap(params) {
     // Models
     this.topicModels = []; // list of topics
     this.exerciseModels = []; // list of exercises in displayed order
-    this.exercisesByName = {}; // fast access to exercises by name
+    this.modelsByName = {}; // fast access to models by name
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
     this.numSuggestedExercises = 0;
     this.numRecentExercises = 0;
@@ -204,27 +204,31 @@ function KnowledgeMap(params) {
         // Initial setup of topic list
         if (params.topic_graph_json) {
             this.topicModels = _.map(params.topic_graph_json.topics, function(dict) {
-                return new KnowledgeMapModels.Topic(dict);
-            });
+
+                // Index nodes by name
+                var topic = new KnowledgeMapModels.Topic(dict);
+                return this.modelsByName[topic.get("name")] = topic;
+
+            }, this);
         }
 
         // Initial setup of exercise list from embedded data
-        this.exerciseModels = _.map(params.graph_dict_data, function(exercise) {
+        this.exerciseModels = _.map(params.graph_dict_data, function(dict) {
             var invalidForGoal = (
-                exercise.goal_req ||
-                exercise.status === "Proficient" ||
-                exercise.status === "Review"
+                dict.goal_req ||
+                dict.status === "Proficient" ||
+                dict.status === "Review"
             );
 
             if (self.newGoal && invalidForGoal) {
-                exercise.invalidForGoal = true;
+                dict.invalidForGoal = true;
             }
 
-            return new KnowledgeMapModels.Exercise(exercise);
-        });
-        this.exercisesByName = _.indexBy(this.exerciseModels, function(ex) {
-            return ex.get("name");
-        });
+            // Index nodes by name
+            var exercise = new KnowledgeMapModels.Exercise(dict);
+            return this.modelsByName[exercise.get("name")] = exercise;
+
+        }, this);
 
         this.initSidebar();
         this.initMap();
@@ -241,7 +245,7 @@ function KnowledgeMap(params) {
             return $("<div>", {'class': 'exercise-badge'});
         };
 
-        _.each(this.exercisesByName, function(exerciseModel) {
+        _.each(this.modelsByName, function(exerciseModel) {
             // Create views
             var element;
             if (exerciseModel.get("isSuggested")) {
@@ -391,12 +395,16 @@ function KnowledgeMap(params) {
     };
 
     this.initMap = function() {
-        _.each(this.exercisesByName, function(exerciseModel) {
+/*        _.each(this.modelsByName, function(exerciseModel) {
             // Update map graph
             this.addNode(exerciseModel.toJSON());
             _.each(exerciseModel.get("prereqs"), function(prereq) {
                 this.addEdge(exerciseModel.get("name"), prereq);
             }, this);
+        }, this);*/
+
+        _.each(this.topicModels, function(topic) {
+            this.addNode(topic.toJSON());
         }, this);
 
         var mapElement = this.getElement("map-canvas");
@@ -492,6 +500,7 @@ function KnowledgeMap(params) {
         this.overlay = new com.redfin.FastMarkerOverlay(this.map, this.markers);
         this.overlay.drawOriginal = this.overlay.draw;
         this.overlay.draw = function() {
+
             this.drawOriginal();
 
             var jrgNodes = $(self.containerID).find(".nodeLabel");
@@ -502,19 +511,26 @@ function KnowledgeMap(params) {
             }
 
             jrgNodes.each(function() {
+
                 var exerciseName = $(this).attr("data-id");
-                var exercise = self.exercisesByName[exerciseName];
+                var exercise = self.modelsByName[exerciseName];
                 var view = self.nodeMarkerViews[exerciseName];
+
                 if (view) {
+
                     view.updateElement($(this));
+
                 } else {
+
                     view = new KnowledgeMapViews.NodeMarker({
                         model: exercise,
                         el: $(this),
                         parent: self
                     });
                     self.nodeMarkerViews[exerciseName] = view;
+
                 }
+
             });
 
             self.fFirstDraw = false;

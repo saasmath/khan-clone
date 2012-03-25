@@ -17,7 +17,7 @@ import string
 import simplejson as json
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
-from custom_exceptions import MissingExerciseException, QuietException
+from custom_exceptions import QuietException
 from api.auth.xsrf import ensure_xsrf_cookie
 from api import jsonify
 from gae_bingo.gae_bingo import bingo, ab_test
@@ -25,7 +25,7 @@ from gae_bingo.models import ConversionTypes
 from goals.models import GoalList
 from experiments import StrugglingExperiment
 from js_css_packages import templatetags
-from exercises.handlers import ViewExercise, ViewExerciseDeprecated
+from exercises.handlers import ViewExercise, ViewExerciseDeprecated, ViewTopicExerciseDeprecated
 from exercises.file_contents import raw_exercise_contents
 
 class MoveMapNodes(request_handler.RequestHandler):

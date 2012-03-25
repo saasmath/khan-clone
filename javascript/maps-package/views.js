@@ -78,14 +78,13 @@ var KnowledgeMapViews = {
     NodeMarker: Backbone.View.extend({
 
         initialize: function() {
-            var exercise = this.model;
-            this.nodeName = exercise.get("name");
+            this.nodeName = this.model.get("name");
             this.filtered = false;
             this.goalIconVisible = false;
             this.parent = this.options.parent;
 
             var iconSet = KnowledgeMapGlobals.icons["Exercise"];
-            this.iconUrl = iconSet[exercise.get("status")];
+            this.iconUrl = iconSet[this.model.get("status")];
             if (!this.iconUrl) this.iconUrl = iconSet.Normal;
 
             this.updateElement(this.el);

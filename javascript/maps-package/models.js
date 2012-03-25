@@ -5,20 +5,29 @@ var KnowledgeMapModels = {
 
     Topic: Backbone.Model.extend({
 
-        initialize: function() {
+        initialize: function(attributes) {
 
+            // Translate topic properties to standard node properties
             this.set({
-                name: this.get("key_name"),
+                name: this.get("id"),
                 h_position: this.get("x"),
                 v_position: this.get("y"),
+                display_name: this.get("standalone_title"),
+                lowercaseName: this.get("standalone_title").toLowerCase()
             });
 
-        }
+            return Backbone.Model.prototype.initialize.call(this, attributes);
+
+        },
+
+        url: function() {
+            return "/topicexercise/" + this.get("id");
+        },
 
     }),
 
     Exercise: Backbone.Model.extend({
-        initialize: function() {
+        initialize: function(attributes) {
 
             if (this.get("status") == "Suggested") {
                 this.set({"isSuggested": true, "badgeIcon": "/images/node-suggested.png?" + KA_VERSION});
@@ -42,6 +51,8 @@ var KnowledgeMapModels = {
                 "maxWidth": 228,
                 "width": Math.min(1.0, this.get("progress")) * 228
             }});
+
+            return Backbone.Model.prototype.initialize.call(this, attributes);
         },
 
         url: function() {

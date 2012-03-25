@@ -1,6 +1,7 @@
 import logging
 import urllib
 
+from custom_exceptions import MissingExerciseException
 import request_handler
 import models
 from exercises.stacks import get_problem_stack, get_review_stack, MAX_CARDS_PER_REVIEW_STACK
@@ -8,7 +9,7 @@ from api.jsonify import jsonify
 from api.auth.xsrf import ensure_xsrf_cookie
 
 class ViewExerciseDeprecated(request_handler.RequestHandler):
-    """ Redirects old exercise URLs (/exercise?exid=monkeys, /exercises/monkeys)
+    """ Redirects old exercise URLs (/exercise?exid=monkeys, /exercise/monkeys)
     to their newer form (/earth/forests/e/monkeys).
     """
 
@@ -26,6 +27,26 @@ class ViewExerciseDeprecated(request_handler.RequestHandler):
 
         self.redirect("/%s/e/%s?%s" % 
                 (topic.get_extended_slug(), urllib.quote(exid), self.request.query_string))
+
+class ViewTopicExerciseDeprecated(request_handler.RequestHandler):
+    """ Redirects old topic exercise URLs (/topicexercise/monkeys)
+    to their newer form (/earth/forests/e/monkeys).
+
+    TODO: Adding an already-deprecated URL here. We currently have no fast access
+    to each topic's extended slug. As soon as this gets cached in topic models
+    (https://trello.com/card/topic-models-seriously-need-cached-access-to-their-full-path-urls/4f3f43cd45533a1b3a065a1d/140),
+    we'll serialize the full slug when returning topics via our API and switch our knowledge map
+    to link to topics appropriately.
+    """
+    def get(self, topic_id):
+
+        topic = models.Topic.get_by_id(topic_id)
+
+        if not topic:
+            raise MissingExerciseException("Missing topic w/ id '%s'" % topic_id)
+
+        self.redirect("/%s/e?%s" % 
+                (topic.get_extended_slug(), self.request.query_string))
 
 class ViewExercise(request_handler.RequestHandler):
 
