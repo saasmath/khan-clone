@@ -83,10 +83,6 @@ var KnowledgeMapViews = {
             this.goalIconVisible = false;
             this.parent = this.options.parent;
 
-            var iconSet = KnowledgeMapGlobals.icons["Exercise"];
-            this.iconUrl = iconSet[this.model.get("status")];
-            if (!this.iconUrl) this.iconUrl = iconSet.Normal;
-
             this.updateElement(this.el);
         },
 
@@ -116,8 +112,6 @@ var KnowledgeMapViews = {
                     function() {return self.onNodeMouseout();}
                 );
 
-            var iconOptions = this.getIconOptions();
-            this.el.find("img.node-icon").attr("src", iconOptions.url);
             this.el.attr("class", this.getLabelClass());
 
             if (this.parent.admin)
@@ -129,18 +123,6 @@ var KnowledgeMapViews = {
                 this.el.find(".exercise-goal-icon").show();
             else
                 this.el.find(".exercise-goal-icon").hide();
-        },
-
-        getIconOptions: function() {
-
-            var iconUrlCacheKey = this.iconUrl + "@" + this.zoom;
-
-            if (!this.parent.iconCache) this.parent.iconCache = {};
-            if (!this.parent.iconCache[iconUrlCacheKey])
-            {
-                this.parent.iconCache[iconUrlCacheKey] = {url: this.iconUrl};
-            }
-            return this.parent.iconCache[iconUrlCacheKey];
         },
 
         getLabelClass: function() {

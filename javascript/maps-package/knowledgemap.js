@@ -617,11 +617,13 @@ function KnowledgeMap(params) {
         if (lng < KnowledgeMapGlobals.lngMin) KnowledgeMapGlobals.lngMin = lng;
         if (lng > KnowledgeMapGlobals.lngMax) KnowledgeMapGlobals.lngMax = lng;
 
+        var iconUrl = KnowledgeMapGlobals.icons.Exercise[node.status] || KnowledgeMapGlobals.icons.Exercise.Normal;
+
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name,
                 node.latLng,
                 [   "<a data-id='" + node.name + "' class='nodeLabel'>" +
-                    "<img class='node-icon' src=''/>" +
+                    "<img class='node-icon' src='" + iconUrl + "'/>" +
                     "<img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/>" +
                     "<div>" + node.display_name + "</div></a>"],
                 "",
