@@ -395,13 +395,13 @@ function KnowledgeMap(params) {
     };
 
     this.initMap = function() {
-/*        _.each(this.modelsByName, function(exerciseModel) {
+        _.each(this.modelsByName, function(exerciseModel) {
             // Update map graph
             this.addNode(exerciseModel.toJSON());
             _.each(exerciseModel.get("prereqs"), function(prereq) {
                 this.addEdge(exerciseModel.get("name"), prereq);
             }, this);
-        }, this);*/
+        }, this);
 
         _.each(this.topicModels, function(topic) {
             this.addNode(topic.toJSON());

@@ -7,8 +7,8 @@ topics_layout = {
         {
             "id": "absolute-value",
             "standalone_title": "Absolute value",
-            "x": 10,
-            "y": 15,
+            "x": 6,
+            "y": 12,
         },
         {
             "id": "addition-subtraction",

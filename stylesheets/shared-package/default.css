@@ -3360,9 +3360,6 @@ a.nodeLabel:hover {
     background: rgba(0, 0, 0, 0.5);
 }
 
-.nodeLabelHidden {
-    display: none;
-}
 .nodeLabelFiltered div {
     color: #444;
 }
@@ -3396,38 +3393,25 @@ a.nodeLabel:hover {
     margin-left: 20px;
 }
 
+.nodeLabelZoom7,
 .nodeLabelZoom8 {
     position: relative;
     left: -30px;
     top: -13px;
 }
+.nodeLabelZoom7 div,
 .nodeLabelZoom8 div {
     font-size: 9px;
     width: 60px;
 }
+.nodeLabelZoom7 img,
 .nodeLabelZoom8 img {
     width: 26px;
     height: 26px;
 }
+.lte7 .nodeLabelZoom7 img,
 .lte7 .nodeLabelZoom8 img {
     margin-left: 18px;
-}
-
-.nodeLabelZoom7 {
-    position: relative;
-    left: -41px;
-    top: -7px;
-    cursor: inherit;
-}
-.nodeLabelZoom7 div {
-    visibility: hidden;
-}
-.nodeLabelZoom7 img {
-    width: 10px;
-    height: 10px;
-}
-.lte7 .nodeLabelZoom7 img {
-    margin-left: 35px;
 }
 
 .nodeLabelHighlight div {
@@ -3436,13 +3420,6 @@ a.nodeLabel:hover {
     box-shadow: 0 0 10px yellow;
     border: 1px solid #aaa;
     background-color: black;
-}
-.nodeLabelSummative div {
-    visibility: visible;
-    font-size: 12px;
-    background-color: black;
-    z-index: 1000;
-    position: relative;
 }
 
 .creditLabel {

@@ -91,8 +91,22 @@ var KnowledgeMapViews = {
         },
 
         updateElement: function(el) {
+
             this.el = el;
             this.zoom = this.parent.map.getZoom();
+
+            if (this.zoom < this.model.get("zoomBounds")[0] || this.zoom > this.model.get("zoomBounds")[1]) {
+
+                // Don't render nodes outside of their zoom bounds
+                this.el.css("display", "none");
+                return;
+
+            } else {
+
+                this.el.css("display", "");
+
+            }
+
             var self = this;
 
             this.el.click(
@@ -124,14 +138,7 @@ var KnowledgeMapViews = {
             if (!this.parent.iconCache) this.parent.iconCache = {};
             if (!this.parent.iconCache[iconUrlCacheKey])
             {
-                var url = this.iconUrl;
-
-                if (this.zoom <= KnowledgeMapGlobals.options.minZoom)
-                {
-                    url = this.iconUrl.replace(".png", "-star.png");
-                }
-
-                this.parent.iconCache[iconUrlCacheKey] = {url: url};
+                this.parent.iconCache[iconUrlCacheKey] = {url: this.iconUrl};
             }
             return this.parent.iconCache[iconUrlCacheKey];
         },
@@ -178,9 +185,6 @@ var KnowledgeMapViews = {
             // perf hack: instead of changing css opacity, set a whole new image
             var img = this.el.find('img.node-icon');
             var url = img.attr('src');
-
-            // don't adjust images of stars when zoomed out
-            if (url.indexOf("-star.png") >= 0) return;
 
             // normalize
             if (url.indexOf("faded") >= 0) {
@@ -309,8 +313,6 @@ var KnowledgeMapViews = {
         },
 
         onNodeMouseover: function() {
-            if (this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
-                return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
 
@@ -319,8 +321,6 @@ var KnowledgeMapViews = {
         },
 
         onNodeMouseout: function() {
-            if (this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
-                return;
             if (this.nodeName in this.parent.selectedNodes)
                 return;
 
