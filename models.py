@@ -2084,16 +2084,8 @@ class Topic(Searchable, db.Model):
         return '#%s' % self.id
 
     @property
-    def relative_exercise_url(self):
-        return ''
-
-    @property
     def ka_url(self):
         return util.absolute_url(self.relative_url)
-
-    @property
-    def ka_exercise_url(self):
-        return util.absolute_url(self.relative_exercise_url)
 
     def get_visible_data(self, node_dict=None):
         if node_dict:
