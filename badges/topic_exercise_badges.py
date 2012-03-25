@@ -64,7 +64,8 @@ class TopicExerciseBadge(Badge):
 
     @staticmethod
     def all():
-        return [TopicExerciseBadge(badge_type) for badge_type in TopicExerciseBadgeType.all()]
+        badges = [TopicExerciseBadge(badge_type) for badge_type in TopicExerciseBadgeType.all()]
+        return sorted(badges, key=lambda badge: badge.topic_standalone_title.lower())
 
     @staticmethod
     def name_for_topic_key_name(topic_key_name):
