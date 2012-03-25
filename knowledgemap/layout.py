@@ -15,14 +15,14 @@ topics_layout = {
             "id": "absolute-value",
             "standalone_title": "Absolute value",
             "icon_url": "/images/power-mode/badges/default-60x60.png",
-            "x": 6,
+            "x": 8,
             "y": 5,
         },
         {
             "id": "multiplication-division",
             "standalone_title": "Multiplication and division",
             "icon_url": "/images/power-mode/badges/multiplication-and-division-60x60.png",
-            "x": 2,
+            "x": 0,
             "y": 5,
         },
     ],
@@ -31,13 +31,15 @@ topics_layout = {
         {
             "path": [
                 { "x": 4, "y": 3 },
-                { "x": 6, "y": 5 },
+                { "x": 8, "y": 4 },
+                { "x": 8, "y": 5 },
             ],
         },
         {
             "path": [
                 { "x": 4, "y": 3 },
-                { "x": 2, "y": 5 },
+                { "x": 0, "y": 4 },
+                { "x": 0, "y": 5 },
             ],
         },
     ]
