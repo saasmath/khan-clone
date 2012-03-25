@@ -3414,9 +3414,20 @@ a.nodeLabel:hover {
 }
 
 .nodeLabelZoom7 img {
-	-moz-border-radius: 20px;
-	-webkit-border-radius: 20px;
-	border-radius: 20px;
+    filter: alpha(opacity=50);
+    -khtml-opacity: 0.5;
+    -moz-opacity: 0.5;
+    opacity: 0.5;
+    -moz-border-radius: 20px;
+    -webkit-border-radius: 20px;
+    border-radius: 20px;
+}
+
+.nodeLabelproficient.nodeLabelZoom7 img {
+    filter: alpha(opacity=100);
+    -khtml-opacity: 1.0;
+    -moz-opacity: 1.0;
+    opacity: 1.0;
 }
 
 .nodeLabelHighlight div {

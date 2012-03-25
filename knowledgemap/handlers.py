@@ -18,7 +18,7 @@ class ViewKnowledgeMap(request_handler.RequestHandler):
         template_values = {
             # TODO: should be camel cased once entire knowledgemap.js codebase is switched to camel case
             'map_coords': jsonify(knowledgemap.deserializeMapCoords(user_data.map_coords), camel_cased=False),
-            'topic_graph_json': jsonify(topics_layout, camel_cased=False),
+            'topic_graph_json': jsonify(topics_layout(user_data), camel_cased=False),
             'graph_dict_data': exercise_graph_dict_json(user_data),
             'user_data': user_data,
             'selected_nav_link': 'practice',
