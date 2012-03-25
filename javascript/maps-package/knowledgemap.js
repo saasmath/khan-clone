@@ -1,11 +1,14 @@
 function KnowledgeMapInitGlobals() {
+
     window.KnowledgeMapGlobals = {
+
         colors: {
             blue: "#0080C9",
             green: "#8EBE4F",
             red: "#E35D04",
             gray: "#FFFFFF"
         },
+
         icons: {
                 Exercise: {
                         Proficient: "/images/node-complete.png?" + KA_VERSION,
@@ -14,12 +17,14 @@ function KnowledgeMapInitGlobals() {
                         Normal: "/images/node-not-started.png?" + KA_VERSION
                           }
         },
+
         coordsHome: { lat: -0.064844, lng: 0.736268, zoom: 9, when: 0 },
         latMin: 90,
         latMax: -90,
         lngMin: 180,
         lngMax: -180,
         nodeSpacing: {lat: 0.392, lng: 0.35},
+
         options: {
                     getTileUrl: function(coord, zoom) {
                         // Sky tiles example from
@@ -35,6 +40,13 @@ function KnowledgeMapInitGlobals() {
                     minZoom: 7,
                     isPng: false
         },
+
+        xyToLatLng: function(x, y) {
+            return new google.maps.LatLng(
+                    -1 * x * KnowledgeMapGlobals.nodeSpacing.lat, y * KnowledgeMapGlobals.nodeSpacing.lng
+            );
+        },
+
         getHorizontallyRepeatingTileUrl: function(coord, zoom, urlfunc) {
 
             // From http://gmaps-samples-v3.googlecode.com/svn/trunk/planetary-maptypes/planetary-maptypes.html
@@ -161,6 +173,8 @@ function KnowledgeMap(params) {
 
     // Models
     this.topicModels = []; // list of topics
+    this.topicPolylineModels = []; // polylines for topics connections
+
     this.exerciseModels = []; // list of exercises in displayed order
     this.modelsByName = {}; // fast access to models by name
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
@@ -177,6 +191,7 @@ function KnowledgeMap(params) {
     this.dictNodes = {};
     this.dictEdges = {};
     this.markers = [];
+    this.topicPolylines = [];
     this.latLngBounds = null;
     this.fFirstDraw = true;
     this.fCenterChanged = false;
@@ -210,6 +225,10 @@ function KnowledgeMap(params) {
                 return this.modelsByName[topic.get("name")] = topic;
 
             }, this);
+
+            this.topicPolylineModels = _.map(params.topic_graph_json.polylines, function(dict) {
+                return new KnowledgeMapModels.Polyline(dict);
+            });
         }
 
         // Initial setup of exercise list from embedded data
@@ -493,6 +512,8 @@ function KnowledgeMap(params) {
                 self.drawEdge(self.dictNodes[key], rgTargets[ix], zoom);
             }
         });
+
+        this.drawTopicPolylines();
     };
 
     this.drawOverlay = function() {
@@ -556,6 +577,25 @@ function KnowledgeMap(params) {
         return c;
     };
 
+    this.drawTopicPolylines = function() {
+
+        var visible = this.map.getZoom() == KnowledgeMapGlobals.options.minZoom;
+
+        this.topicPolylines = _.map(this.topicPolylineModels, function(polylineModel) {
+
+            return new google.maps.Polyline({
+                path: polylineModel.get("latLngPath"),
+                strokeColor: KnowledgeMapGlobals.colors.gray,
+                strokeOpacity: 0.48,
+                strokeWeight: 1.0,
+                clickable: false,
+                map: visible ? this.map : null
+            });
+
+        }, this);
+
+    };
+
     this.drawEdge = function(nodeSource, edgeTarget, zoom) {
 
         var nodeTarget = this.dictNodes[edgeTarget.target];
@@ -607,10 +647,10 @@ function KnowledgeMap(params) {
 
     this.drawMarker = function(node, zoom) {
 
-        var lat = -1 * (node.h_position - 1) * KnowledgeMapGlobals.nodeSpacing.lat;
-        var lng = (node.v_position - 1) * KnowledgeMapGlobals.nodeSpacing.lng;
+        node.latLng = KnowledgeMapGlobals.xyToLatLng(node.h_position - 1, node.v_position);
 
-        node.latLng = new google.maps.LatLng(lat, lng);
+        var lat = node.latLng.lat(),
+            lng = node.latLng.lng();
 
         if (lat < KnowledgeMapGlobals.latMin) KnowledgeMapGlobals.latMin = lat;
         if (lat > KnowledgeMapGlobals.latMax) KnowledgeMapGlobals.latMax = lat;
@@ -650,6 +690,7 @@ function KnowledgeMap(params) {
 
         this.fZoomChanged = true;
 
+        // Set visibility of exercise-level polylines
         var self = this;
         $.each(this.dictEdges, function(idx, rgTargets) {
             for (var ix = 0; ix < rgTargets.length; ix++)
@@ -661,6 +702,16 @@ function KnowledgeMap(params) {
                 if (line.getMap() != map) line.setMap(map);
             }
         });
+
+        // Set visibility of topic-level polylines
+        _.each(this.topicPolylines, function(polyline) {
+            var visible = zoom == KnowledgeMapGlobals.options.minZoom;
+
+            if (visible != !!(polyline.getMap())) {
+                polyline.setMap(visible ? this.map : null);
+            }
+        }, this);
+
     };
 
     this.getMapCoords = function(){

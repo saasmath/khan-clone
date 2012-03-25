@@ -102,3 +102,22 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
     }
 
 });
+
+/**
+ * Polyline represents a collection of line points for drawing paths on the map
+ */
+KnowledgeMapModels.Polyline = Backbone.Model.extend({
+
+    initialize: function(attributes) {
+
+        // Convert line path to appropriate lat/lng coord path
+        this.set({
+            latLngPath: _.map(this.get("path"), function(pt) {
+                return KnowledgeMapGlobals.xyToLatLng(pt.x, pt.y);
+            })
+        });
+
+        return Backbone.Model.prototype.initialize.call(this, attributes);
+    }
+
+});

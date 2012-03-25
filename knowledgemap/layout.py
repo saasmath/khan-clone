@@ -17,18 +17,24 @@ topics_layout = {
             "icon_url": "/images/power-mode/badges/addition-and-subtraction-60x60.png",
             "x": 4,
             "y": 10,
-        }
+        },
     ],
 
-    "lines": [
-        [
-            { "x": 12, "y": 12 },
-            { "x": 15, "y": 15 },
-        ],
-        [
-            { "x": 15, "y": 15 },
-            { "x": 9, "y": 12 },
-        ],
+    "polylines": [
+        {
+            "path": [
+                { "x": 7, "y": 13 },
+                { "x": 3, "y": 9 },
+                { "x": 5, "y": 16 },
+            ],
+        },
+        {
+            "path": [
+                { "x": 4, "y": 5 },
+                { "x": 4, "y": 8 },
+                { "x": 2, "y": 4 },
+            ],
+        },
     ]
 
 }
