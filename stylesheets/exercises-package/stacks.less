@@ -359,10 +359,10 @@
     display: none;
 }
 
-.end-of-stack-info .progress-graph .skill-bar-title {
+.skill-bar-title {
     margin: 0 0 5px;
 }
-    .end-of-stack-info .progress-graph.current-topic .skill-bar-title {
+    .current-topic .skill-bar-title {
         margin: 0;
     }
 
@@ -371,7 +371,7 @@
 }
 /* Much credit goes to: http://css-tricks.com/css3-progress-bars/ */
 
-.end-of-stack-info .progress-graph .skill-bar {
+.skill-bar {
     margin-bottom: 15px;
     height: 15px;
     padding: 0px;
@@ -381,18 +381,18 @@
     .border-radius(4px);
     .box-shadow(inset 0 0 4px rgba(0,0,0,0.3);
 }
-    .end-of-stack-info .progress-graph.current-topic .skill-bar {
+    .current-topic .skill-bar {
         height: 5px;
     }
 
-.end-of-stack-info .progress-graph .skill-bar .description {
+.skill-bar .description {
     position: relative;
     color: #fff;
     line-height: 17px; /* This needs to be adjusted if you adjust the skill-bar height */
     padding-left: 10px;
     z-index: 2;
 }
-.end-of-stack-info .progress-graph .skill-bar .fill {
+.skill-bar .fill {
     display: block;
     height: 100%;
     .border-radius(3px);
@@ -402,33 +402,33 @@
     overflow: hidden;
 }
 
-.end-of-stack-info .progress-graph .skill-bar .fill.gray {
+.skill-bar .fill.gray {
     #gradient > .vertical(#ddd, #ccc);
 }
-.end-of-stack-info .progress-graph .skill-bar .fill.green {
+.skill-bar .fill.green {
     #gradient > .vertical(#8aba08, #6e9700);
 }
-.end-of-stack-info .progress-graph .skill-bar .fill.blue {
+.skill-bar .fill.blue {
     #gradient > .vertical(lighten(#0080C9, 10%), #0080C9);
 }
-.end-of-stack-info .progress-graph .skill-bar .fill.orange {
+.skill-bar .fill.orange {
     #gradient > .vertical(#F46626, #E35D22);
 }
 
-.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.green {
+.current-stack .skill-bar .fill.green {
     -webkit-animation: progress-bar 1s;
     -moz-animation: progress-bar 1s;
 }
-.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.gray {
+.current-stack .skill-bar .fill.gray {
     position: relative;
     top: -15px;
 }
-.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.blue,
-.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.orange {
+.current-stack .skill-bar .fill.blue,
+.current-stack .skill-bar .fill.orange {
     position: relative;
     top: -30px;
 }
-.end-of-stack-info .progress-graph.current-stack .skill-bar .fill.blue.just-earned {
+.current-stack .skill-bar .fill.blue.just-earned {
     /* The 1s progress-bar animation and 1.5s progress-bar-proficient animations
      * are connected, timing-wise. Don't change one without changing the other appropriately
      * and taking a look at the keyframes %'s in each animation.
@@ -437,16 +437,16 @@
     -moz-animation: progress-bar-proficient 1.5s;
 }
 
-.end-of-stack-info .progress-graph.current-topic .skill-bar .fill {
+.current-topic .skill-bar .fill {
     -webkit-animation: none;
     -moz-animation: none;
 }
 
-.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.gray {
+.current-topic .skill-bar .fill.gray {
     display: none;
 }
-.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.blue,
-.end-of-stack-info .progress-graph.current-topic .skill-bar .fill.orange {
+.current-topic .skill-bar .fill.blue,
+.current-topic .skill-bar .fill.orange {
     top: -5px !important;
 }
 
