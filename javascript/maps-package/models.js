@@ -28,6 +28,10 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             zoomBounds: zoomBounds
         });
 
+    },
+
+    isVisibleAtZoom: function(zoom) {
+        return zoom < this.get("zoomBounds")[0] || zoom > this.get("zoomBounds")[1];
     }
 
 });
