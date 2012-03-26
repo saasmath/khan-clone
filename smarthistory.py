@@ -114,7 +114,7 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
         persist_across_app_versions = True, 
         permanent_key_fxn = lambda self: "smart_history_permanent_%s" % (self.request.path_qs))
     def load_resource(self):
-        path = self.request.path
+        path = self.request.path_qs
 
         #img is in users browser cache - we don't want to cache a Not-Modified response otherwise people who don't have image in browser cache won't get it
         headers = dict((k, v) for (k, v) in self.request.headers.iteritems() if k not in ["If-Modified-Since", "If-None-Match", "Content-Length","Host"])
@@ -124,7 +124,7 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
             response = urlfetch.fetch(url = SMARTHISTORY_URL + path, headers = headers, deadline=25)
         except urlfetch.ResponseTooLargeError, e:
             logging.info("got too large a file back, sending redirect headers")
-            response_headers = {"Location": SMARTHISTORY_URL + str(self.request.path)}
+            response_headers = {"Location": SMARTHISTORY_URL + str(path)}
             return ["", response_headers, None]    
         except Exception, e:
             raise SmartHistoryLoadException("Failed loading %s from SmartHistory with Exception: %s" % (path, e))
