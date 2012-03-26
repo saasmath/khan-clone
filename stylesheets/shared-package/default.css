@@ -1341,6 +1341,9 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     overflow: hidden;
     position: relative;
 }
+.exercise-badge {
+    position: relative;
+}
     .dark #container {
         -webkit-box-shadow: 0 -2px 0 #1A222C;
         -moz-box-shadow: 0 -2px 0 #1A222C;
@@ -1433,14 +1436,14 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
 
     .exercise-show {
         position: absolute;
-        padding: 5px 5px;
-        left: 282px;
-        top: 5px;
+        padding: 1px;
+        left: 300px;
+        top: -2px;
         line-height: 1px;
         z-index:20;
     }
     .exercise-show:hover {
-        top: 6px;
+        top: -1px;
     }
 
     .exercise-goal-wrapper {
