@@ -1158,7 +1158,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             def txn():
                 NicknameIndex.update_indices(self)
                 self.put()
-            db.run_in_transaction(txn)
+            util.ensure_in_transaction(txn, xg_on=True)
         return True
 
     @property
