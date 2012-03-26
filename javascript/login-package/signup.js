@@ -8,6 +8,14 @@
  * Entry point for initial signup page setup.
  */
 Login.initSignupPage = function() {
+    if (readCookie("u13")) {
+        // User has the under-13 session cookie set - redirect.
+        // This codepath will be most commonly hit if the user presses
+        // the back button from the under-13 page.
+        window.location.href = "/signup?under13=1";
+        return;
+    }
+
     $("#login-facebook").click(function(e) {
         Login.connectWithFacebook("/postlogin?completesignup=1");
     });
