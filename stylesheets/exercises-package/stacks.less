@@ -419,12 +419,12 @@
     -webkit-animation: progress-bar 1s;
     -moz-animation: progress-bar 1s;
 }
-.current-stack .skill-bar .fill.gray {
+.skill-bar .fill.gray {
     position: relative;
     top: -15px;
 }
-.current-stack .skill-bar .fill.blue,
-.current-stack .skill-bar .fill.orange {
+.skill-bar .fill.blue,
+.skill-bar .fill.orange {
     position: relative;
     top: -30px;
 }
@@ -442,12 +442,13 @@
     -moz-animation: none;
 }
 
+.dashboard-drawer .skill-bar .fill.gray,
 .current-topic .skill-bar .fill.gray {
-    display: none;
+    visibility: hidden;
 }
 .current-topic .skill-bar .fill.blue,
 .current-topic .skill-bar .fill.orange {
-    top: -5px !important;
+    top: -10px !important;
 }
 
 .three-col {

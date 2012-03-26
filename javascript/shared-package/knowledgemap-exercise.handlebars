@@ -1,12 +1,14 @@
-<!-- TODO(kamens) skill bar state is undone here, and still need to remove exercise-badge references elsewhere -->
-<div class="skill-status" data-id="{{name}}">
+<!-- TODO(kamens) still need to remove exercise-badge references elsewhere -->
+<div class="exercise-badge">
+    <div class="skill-status" data-id="{{name}}">
 
-    <span class="exercise-show simple-button action-gradient" data-id="name" style="display:none;"><img src="/images/map-target.png" title="Show in map" alt="Show in map"></span>
-    <div class="exercise-goal-wrapper"><img class="exercise-goal-icon" style="display: none" src="/images/flag.png"></div>
+        <span class="exercise-show simple-button action-gradient" data-id="name" style="display:none;"><img src="/images/map-target.png" title="Show in map" alt="Show in map"></span>
+        <div class="exercise-goal-wrapper"><img class="exercise-goal-icon" style="display: none" src="/images/flag.png"></div>
 
-    <h4 class="skill-bar-title">
-        <a href="{{url}}">{{display_name}}</a>
-        {{#with states}}{{> small-exercise-icon}}{{/with}}
-    </h4>
-    {{{skill-bar progress 0}}}
+        <h4 class="skill-bar-title">
+            <a href="{{url}}">{{display_name}}</a>
+            {{#with states}}{{> small-exercise-icon}}{{/with}}
+        </h4>
+        {{{skill-bar progress 0 states}}}
+    </div>
 </div>
