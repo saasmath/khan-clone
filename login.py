@@ -423,6 +423,7 @@ class CompleteSignup(request_handler.RequestHandler):
             values['email'] = valid_token.email
 
         template_values = {
+            'user': user_data,
             'values': values,
             'token': valid_token,
         }

@@ -21,10 +21,12 @@
     <div class="signup-contents">
         <h3>Signup for a Khan Academy account</h3>
 
+        {% if not user %}
         <div class="field-container">
             <label class="field-label" for="email">Email</label><br>
             <input id="email" name="email" class="simple-input ui-corner-all" value="{{values['email']|escape}}" disabled="true">
         </div>
+        {% endif %}
 
         <br>
         <div class="field-container">
