@@ -32,7 +32,7 @@ var HoverCard = {
             // We've hovered over the user somewhere else on the page
             html = cachedHtml;
         } else {
-            // Create "loading..." view
+            // Create loading view
             var view = new HoverCardView(),
                 html = view.render().el.innerHTML;
 
@@ -50,7 +50,7 @@ var HoverCard = {
 
         jel.data("has-qtip", true);
 
-        // Create the tooltip
+        // Create tooltip
         jel.qtip({
                 content: {
                     text: html
@@ -82,7 +82,7 @@ var HoverCard = {
         // Cache html for this user
         HoverCard.cache_[userID] = html;
 
-        // Replace tooltip's "loading..." content
+        // Replace tooltip content
         jel.qtip("option", "content.text", html);
 
     }
