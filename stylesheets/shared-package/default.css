@@ -1341,9 +1341,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     overflow: hidden;
     position: relative;
 }
-.exercise-badge {
-    position: relative;
-}
     .dark #container {
         -webkit-box-shadow: 0 -2px 0 #1A222C;
         -moz-box-shadow: 0 -2px 0 #1A222C;
