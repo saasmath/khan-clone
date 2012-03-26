@@ -197,6 +197,7 @@ javascript = {
         "files": [
             "studentlists.js",
             "classprofile.js",
+            "class-goals.js",
             "class-progress-report.js",
             "class-progress-column.handlebars",
             "class-progress-summary.handlebars",
