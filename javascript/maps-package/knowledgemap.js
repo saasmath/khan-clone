@@ -135,10 +135,10 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
         jelMapContent.height(newHeight);
 
-
-        // Account for padding in the dashboard drawer
+        // Account for padding in the dashboard drawer and review link
+        var adjustment = 20 + $("#dashboard-review-exercises").height();
         var jelDrawerInner = $(".dashboard-drawer-inner", context);
-        jelDrawerInner.height(jelDrawerInner.height() - 20);
+        jelDrawerInner.height(jelDrawerInner.height() - adjustment);
 
         if (self.knowledgeMap && self.knowledgeMap.map)
             google.maps.event.trigger(self.knowledgeMap.map, "resize");
