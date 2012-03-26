@@ -25,6 +25,21 @@ var GoalCreator = {
             });
 
         GoalCreator.updateViewAndDescription();
+
+        var anchorTable = {};
+        $("#goal-choose-videos .dashboard-content-stretch a").each(function() {
+            var el = $(this);
+            anchorTable[el.attr("name")] = el;
+        });
+
+        $("#goal-choose-videos .topic_browser a").click(function() {
+            var anchor = $(this).attr("href").substr(1);
+            if (anchorTable[anchor]) {
+                var parentEl = $("#goal-choose-videos .dashboard-content-stretch");
+                parentEl.scrollTop(anchorTable[anchor].offset().top + parentEl.scrollTop() - parentEl.offset().top);
+            }
+            return false;
+        });
     },
     getCurrentVideoObjectives: function() {
         var list = {};
