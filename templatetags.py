@@ -182,6 +182,7 @@ def topic_browser_tree(tree, level=0):
 def topic_browser_get_topics(tree, level=0):
     item_list = []
     idx = 0
+    needs_divider = False
 
     for child in tree.children:
         if not child.children or child.id in models.Topic._super_topic_ids:
@@ -197,8 +198,11 @@ def topic_browser_get_topics(tree, level=0):
             item_list.append({
                 "level": level,
                 "href": escape(child.relative_url),
-                "title": escape(child.title)
+                "title": escape(child.title),
+                "has_divider": needs_divider
             })
+
+            needs_divider = False
 
         elif level == 0:
 
@@ -210,7 +214,7 @@ def topic_browser_get_topics(tree, level=0):
                 "href": None,
                 "title": escape(child.title),
                 "children": child_list,
-                "child_height": len(child_list) * 30
+                "child_height": len(child_list) * 31
             })
 
         else:
@@ -220,10 +224,13 @@ def topic_browser_get_topics(tree, level=0):
                 "level": level,
                 "href": None,
                 "has_children": True,
+                "has_divider": True,
                 "title": escape(child.title)
             })
 
             item_list += topic_browser_get_topics(child, level=level + 1)
+
+            needs_divider = True
 
         idx += 1
 
@@ -243,8 +250,7 @@ def topic_browser_pulldown(version_number=None):
     topics_list = topic_browser_get_topics(tree)
 
     template_values = {
-       'topics': topics_list,
-       'topic_browser_height': len(topics_list) * 30
+       'topics': topics_list
     }
 
     return shared_jinja.get().render_template("topic_browser_pulldown.html", **template_values)
