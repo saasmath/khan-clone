@@ -64,7 +64,10 @@ javascript = {
             "goals.js",
             "goal-new.js",
             "topics.js",
-            "analytics.js"
+            "analytics.js",
+            "profile-model.js",
+            "hover-card-view.js",
+            "hover-card.handlebars",
         ]
     },
     "video": {
@@ -141,8 +144,8 @@ javascript = {
             "avatar-picker.js",
             "username-picker.handlebars",
             "username-picker.js",
+            "user-card-view.js",
             "user-card.handlebars",
-            "user-card.js",
             "profile.handlebars",
             "suggested-activity.handlebars",
             "recent-activity-list.handlebars",
@@ -201,6 +204,11 @@ javascript = {
         "files": [
             "studentlists.js",
             "classprofile.js",
+        ]
+    },
+    "donate": {
+        "files": [
+            "donate.js",
         ]
     },
     "stories": {
@@ -343,6 +351,11 @@ stylesheets = {
         "files": [
             "guiders.css",
         ],
+    },
+    "donate": {
+        "files": [
+            "donate.css",
+        ]
     },
     "stories": {
         "files": [

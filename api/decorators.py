@@ -184,9 +184,10 @@ def cache_with_key_fxn_and_param(
         def wrapper(*args, **kwargs):
             def wrapped_key_fxn(*args, **kwargs):
                 underlying = key_fxn(*args, **kwargs)
-                return "%s:%s=%s" % (underlying,
-                                     param_name,
-                                     request.values.get(param_name))
+                return (None if underlying is None else
+                        "%s:%s=%s" % (underlying,
+                                      param_name,
+                                      request.values.get(param_name)))
             return layer_cache_check_set_return(func,
                                                 wrapped_key_fxn,
                                                 expiration,

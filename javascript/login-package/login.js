@@ -39,29 +39,28 @@ Login.initLoginPage = function() {
  * Use Facebook's JS SDK to connect with Facebook.
  */
 Login.connectWithFacebook = function() {
-    FB.login(function(response) {
-        if (response) {
-            FacebookUtil.fixMissingCookie(response);
-        }
-
-        if (response["status"] === "connected") {
-            FacebookUtil.markUsingFbLogin();
-            var url = URL_CONTINUE || "/";
-            if (url.indexOf("?") > -1) {
-                url += "&fb=1";
-            } else {
-                url += "?fb=1";
+    FacebookUtil.runOnFbReady(function() {
+        // TODO(benkomalo): add some visual indicator that we're trying.
+        FB.login(function(response) {
+            if (response) {
+                FacebookUtil.fixMissingCookie(response);
             }
 
-            var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
-            url += "&hc=" + (hasCookie ? "1" : "0");
-            url += "&hs=" + (response ? "1" : "0");
+            if (response["status"] === "connected") {
+                FacebookUtil.markUsingFbLogin();
+                var url = URL_CONTINUE || "/";
+                if (url.indexOf("?") > -1) {
+                    url += "&fb=1";
+                } else {
+                    url += "?fb=1";
+                }
 
-            window.location = url;
-        } else {
-            // TODO(benkomalo): handle - the user didn't login properly in facebook.
-        }
-   });
+                window.location = url;
+            } else {
+                // TODO(benkomalo): handle - the user didn't login properly in facebook.
+            }
+       });
+    });
 };
 
 /**

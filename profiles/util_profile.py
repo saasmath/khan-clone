@@ -247,6 +247,7 @@ class UserProfile(object):
 
     def __init__(self):
         self.username = None
+        self.profile_root = "/profile"
         self.email = ""
         self.is_phantom = True
         
@@ -334,6 +335,10 @@ class UserProfile(object):
         profile.is_phantom = user.is_phantom
 
         profile.is_public = user.has_public_profile()
+
+        if profile.is_public or full_projection:
+            profile.profile_root = user.profile_root
+
         if full_projection:
             profile.email = user.email
             profile.is_data_collectible = user.is_certain_to_be_thirteen()

@@ -7,8 +7,6 @@ except ImportError:
     import simplejson as json
 
 import os
-from urllib import quote_plus
-
 from webapp2_extras import jinja2
 
 # Bring in our globally available custom templates and tags.
@@ -48,7 +46,7 @@ jinja2.default_config = {
         "App": App,
     }, 
     "filters": {
-        "urlencode": lambda s: quote_plus(s or ""),
+        "urlencode": templatefilters.urlencode,
         "strip": lambda s: (s or "").strip(),
         "escapejs": templatefilters.escapejs,
         "phantom_login_link": templatefilters.phantom_login_link,

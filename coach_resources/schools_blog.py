@@ -14,7 +14,7 @@ from custom_exceptions import TumblrException
 from app import App
 from coach_resources import util_coach
 
-TUMBLR_URL = "http://ka-implementations.tumblr.com"
+SCHOOLS_TUMBLR_URL = "http://ka-implementations.tumblr.com"
 POSTS_PER_PAGE = 5
 
 class BlogPost:
@@ -65,7 +65,7 @@ def get_posts(offset = 0, post_id = None, force_refresh = False):
 
     if not posts or force_refresh:
         try:
-            request = urllib2.urlopen("%s/api/read/json" % TUMBLR_URL, params_encoded)
+            request = urllib2.urlopen("%s/api/read/json" % SCHOOLS_TUMBLR_URL, params_encoded)
             json_string = request.read()
         except:
             raise TumblrException("Error while grabbing blog posts from Tumblr.")

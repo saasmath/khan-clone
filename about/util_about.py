@@ -1,8 +1,6 @@
 import request_handler
-import util
 from models import Video
 from app import App
-from gandalf import gandalf
 
 class AboutRequestHandler(request_handler.RequestHandler):
     def render_jinja2_template(self, template_name, template_values):
@@ -14,7 +12,6 @@ class ViewAbout(AboutRequestHandler):
         self.render_jinja2_template('about/about_the_site.html', {
             "selected_id": "the-site",
             "approx_vid_count": Video.approx_count(),
-            "gandalf_production_test": gandalf("production_test"),
         })
 
 class ViewAboutTheTeam(AboutRequestHandler):

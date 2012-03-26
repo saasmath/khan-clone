@@ -147,6 +147,8 @@
                                 <a href={{ donate_redirect_url or "/donate" }}
                                     {% if donate_button_test == "button" %}
                                         class="call-to-action simple-button action-gradient green donate-button"
+                                    {% elif selected_nav_link == "donate" %}
+                                        class="selected"
                                     {% endif %}>
                                     Donate
                                 </a>
@@ -230,7 +232,8 @@
         {% if mixpanel_enabled %}
         $(function() {
             mpq.identify("{{ mixpanel_id }}");
-            mpq.register({{ mixpanel_superprops }}, "all", 31);
+            mpq.register({ "Version": Analytics.getVersionNumber() }, "all", 31);
+            mpq.register({{ json.dumps(mixpanel_superprops) }}, "all", 31);
             {% if analytics_bingo %}
             mpq.register({ "{{ analytics_bingo.name }}": "{{ analytics_bingo.value }}" }, "all", 31);
             {% endif %}
