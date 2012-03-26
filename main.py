@@ -277,7 +277,7 @@ class ViewCredits(request_handler.RequestHandler):
 
 class Donate(request_handler.RequestHandler):
     def get(self):
-        self.redirect("/contribute", True)
+        self.render_jinja2_template('donate.html', {"selected_nav_link": "donate"})
 
 class ViewTOS(request_handler.RequestHandler):
     def get(self):

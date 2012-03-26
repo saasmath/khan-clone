@@ -4035,3 +4035,91 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
     color: #1054AA;
     font-size: 21px;
 }
+
+/* For hover card tooltips */
+.ui-tooltip-default.custom-override {
+    border-color: transparent;
+    background-color: transparent;
+}
+    .ui-tooltip-default.custom-override .ui-tooltip-tip {
+        /* Because qtip seems to add inline styles in IE */
+        display: none !important;
+    }
+    .ui-tooltip-default.custom-override .ui-tooltip-content {
+        border: none;
+        background-color: transparent;
+        padding: 0 0 10px 0;
+        top: -7px;
+    }
+.hover-card-triangle {
+    position: relative;
+    height: 10px;
+    z-index: 1;
+}
+.hover-card-triangle:before {
+    display: block;
+    position: absolute;
+    left: 26px;
+    top: 2px;
+    content: " ";
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid #BBB;
+}
+.hover-card-triangle:after {
+    display: block;
+    position: absolute;
+    left: 26px;
+    top: 3px;
+    content: " ";
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid #FFF;
+}
+.hover-card-container {
+    width: 400px;
+    line-height: normal;
+}
+.hover-card-content-container {
+    position: relative;
+    background: #FFF;
+}
+.hover-card-content {
+    margin: 8px 10px 3px 5px;
+    position: relative;
+}
+.hover-card-content .avatar-pic-container {
+    float: left;
+}
+.hover-card-content .user-info {
+    float: left;
+    font-size: 175%;
+    width: 190px;
+    padding-left: 10px;
+}
+.hover-card-content .badge-container {
+    padding-top: 2px;
+}
+.hover-card-content .badge-container img{
+    width: 18px;
+    height: 18px;
+}
+.hover-card-content .user-stats {
+    float: left;
+}
+.hover-card-content .user-stats .points {
+    position: absolute;
+    top: 2px;
+    right: 0;
+}
+.hover-card-content .user-stats .join-date {
+    position: absolute;
+    bottom: 9px;
+    right: 0;
+    color: #999;
+    font-size: 90%;
+}

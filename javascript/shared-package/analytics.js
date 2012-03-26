@@ -7,6 +7,12 @@
  *
  * The utility also attempts to resend events that happen just before the page is
  * unloaded or on pages that are unloaded before the sending script is fully loaded.
+ *
+ * NOTE: If you substantially change the data being sent up to MixPanel (such as
+ * changing event names or properties) you will want to bump the version number
+ * in Analytics.getVersionNumber() below so we can filter by that version in the
+ * dashboard.
+ *
  */
 
 (function() {
@@ -94,6 +100,10 @@
     };
 
     window.Analytics = {
+        
+        getVersionNumber: function() {
+            return 1;
+        },
 
         // Called once on every page load (if MixPanel is enabled)
         trackInitialPageLoad: function(startTime) {

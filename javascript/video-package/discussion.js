@@ -228,6 +228,82 @@ var QA = {
 
         QA.loadPage($("#qa_page").val() || 0, true, $("#qa_expand_key").val());
         QA.enable();
+
+        $(".video-footer").on("mouseenter", ".author-nickname", function() {
+            QA.createHoverCardQtip($(this));
+        });
+    },
+
+    hoverCardCache_: {},
+
+    createHoverCardQtip: function(jel) {
+        var userID = jel.data("user-id"),
+            hasQtip = jel.data("has-qtip");
+
+        if (!userID || hasQtip) {
+            return;
+        }
+
+        var cachedHtml = QA.hoverCardCache_[userID],
+            html;
+
+        if (cachedHtml) {
+            // We've hovered over the user somewhere else on the page
+            html = cachedHtml;
+        } else {
+            // Create "loading..." view
+            var view = new HoverCardView(),
+                html = view.render().el.innerHTML;
+
+            $.ajax({
+                type: "GET",
+                url: "/api/v1/user/profile",
+                data: {
+                    casing: "camel",
+                    userID: userID
+                  },
+                dataType: "json",
+                success: _.bind(QA.onHoverCardDataLoaded_, jel)
+            });
+        }
+
+        jel.data("has-qtip", true);
+
+        // Create the tooltip
+        jel.qtip({
+                content: {
+                    text: html
+                },
+                style: {
+                    classes: "custom-override"
+                },
+                hide: {
+                    delay: 100,
+                    fixed: true
+                },
+                position: {
+                    my: "top left",
+                    at: "bottom left"
+                }
+            });
+
+        jel.qtip("show");
+
+    },
+
+    onHoverCardDataLoaded_: function(data) {
+        var jel = this,
+            userID = jel.data("user-id"),
+            model = new ProfileModel(data),
+            view = new HoverCardView({model: model}),
+            html = view.render().el.innerHTML;
+
+        // Cache html for this user
+        QA.hoverCardCache_[userID] = html;
+
+        // Replace tooltip's "loading..." content
+        jel.qtip("option", "content.text", html);
+
     },
 
     initPagesAndQuestions: function() {
