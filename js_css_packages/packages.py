@@ -167,9 +167,6 @@ javascript = {
             "profile-goals.handlebars",
             "profile-class-goals.handlebars",
             "profile-class-progress-report.handlebars",
-            "class-progress-column.handlebars",
-            "class-progress-summary.handlebars",
-            "class-progress-summary.js",
             "exercise_progress.handlebars",
             "profile-goals.js",
             "settings.js",
@@ -203,6 +200,9 @@ javascript = {
             "studentlists.js",
             "classprofile.js",
             "class-progress-report.js",
+            "class-progress-column.handlebars",
+            "class-progress-summary.handlebars",
+            "class-progress-summary.js",
         ]
     },
     "donate": {
