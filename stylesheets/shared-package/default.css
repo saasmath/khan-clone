@@ -1587,7 +1587,7 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         margin-top: 2px;
     }
 
-.exercise-filter-count,.exercise-all-exercises {
+.exercise-filter-count {
     font-size: 11px;
     color: #444;
 }
@@ -1599,6 +1599,8 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     margin-top: 0px;
 }
 .exercise-badge {
+    /* TODO(kamens): exercise-badge is going away */
+    display: none;
     background: #f3f3f3;
     margin-bottom: 5px;
     margin-left: 1px;
