@@ -689,9 +689,9 @@ function KnowledgeMap(params) {
 
         // Set visibility of topic-level polylines
         _.each(this.topicPolylines, function(polyline) {
-            var visible = zoom == KnowledgeMapGlobals.options.minZoom;
+            var visible = zoom === KnowledgeMapGlobals.options.minZoom;
 
-            if (visible != !!(polyline.getMap())) {
+            if (visible !== !!(polyline.getMap())) {
                 polyline.setMap(visible ? this.map : null);
             }
         }, this);
