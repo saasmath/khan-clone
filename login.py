@@ -67,7 +67,7 @@ class Login(request_handler.RequestHandler):
             self.render_json({'errors': errors})
             return
 
-        user_data = models.UserData.get_from_username_or_email(identifier.strip())
+        user_data = UserData.get_from_username_or_email(identifier.strip())
         if not user_data or not user_data.validate_password(password):
             errors = {}
             errors['badlogin'] = True
@@ -130,22 +130,14 @@ class PostLogin(request_handler.RequestHandler):
 
         user_data = UserData.current()
         if user_data:
-            
-            if not user_data.last_login:
-                # New user!
-                # TODO(benkomalo): handle new users with pending unverified
-                # accounts.
-                pass
+
+            first_time = not user_data.last_login
 
             # Update email address if it has changed
             current_google_user = users.get_current_user()
             if current_google_user:
                 if current_google_user.email() != user_data.email:
                     user_data.user_email = current_google_user.email()
-                # TODO(benkomalo): if they have a password based login with
-                # matching e-mail, merge the two userdata profiles, since it
-                # must be the case that this is the first time logging in
-                # with the Google Account.
 
             # If the user has a public profile, we stop "syncing" their username
             # from Facebook, as they now have an opportunity to set it themself
@@ -160,16 +152,31 @@ class PostLogin(request_handler.RequestHandler):
 
             user_data.last_login = datetime.datetime.utcnow()
             user_data.put()
+            
+            complete_signup = self.request_bool("completesignup", default=False)
+            if first_time:
+                if current_google_user:
+                    # Look for a matching UnverifiedUser with the same e-mail
+                    # to see if the user used Google login to verify.
+                    unverified_user = models.UnverifiedUser.get_for_value(
+                            current_google_user.email())
+                    if unverified_user:
+                        unverified_user.delete()
 
-            # If user is brand new and has 0 points, migrate data.
-            # This should only happen for Facebook/Google users right now,
-            # since users with username/password go through the /register
-            # code path, which does the merging there.
-            phantom_id = get_phantom_user_id_from_cookies()
-            if phantom_id:
-                phantom_data = UserData.get_from_db_key_email(phantom_id)
-                if _upgrade_phantom_into(phantom_data, user_data):
-                    cont = "/newaccount?continue=%s" % cont
+                # Note that we can only migrate phantom users right now if this
+                # login is not going to lead to a "/completesignup" page, which
+                # indicates the user has to finish more information in the
+                # signup phase.
+                if not complete_signup:
+                    # If user is brand new and has 0 points, migrate data.
+                    phantom_id = get_phantom_user_id_from_cookies()
+                    if phantom_id:
+                        phantom_data = UserData.get_from_db_key_email(phantom_id)
+                        if _upgrade_phantom_into(phantom_data, user_data):
+                            cont = "/newaccount?continue=%s" % cont
+            if complete_signup:
+                cont = "/completesignup"
+
         else:
 
             # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
@@ -233,9 +240,9 @@ class Signup(request_handler.RequestHandler):
         template_values = {
             'errors': {},
             'values': {},
+            'google_url': users.create_login_url("/postlogin?completesignup=1"),
         }
         self.render_jinja2_template('signup.html', template_values)
-
 
     def post(self):
         """ Handles registration request on our site.
@@ -285,7 +292,7 @@ class Signup(request_handler.RequestHandler):
             if not _email_re.search(email):
                 errors['email'] = "Email appears to be invalid"
             else:
-                existing = models.UserData.get_from_user_input_email(email)
+                existing = UserData.get_from_user_input_email(email)
                 if existing is not None:
                     if existing.has_password():
                         # TODO(benkomalo): do something nicer and maybe ask the
@@ -348,23 +355,37 @@ class Signup(request_handler.RequestHandler):
                     body=body)
 
 class CompleteSignup(request_handler.RequestHandler):
+    """ A handler for a page that allows users to create a password to login
+    with a Khan Academy account. This is also being doubly used for existing
+    Google/FB users to add a password to their account
+
+    """
+
     @staticmethod
     def build_link(unverified_user):
+        """ Builds a link for an unverified user by minting a unique token
+        via auth.tokens.EmailVerificationToken and embedding it in the URL
+
+        """
+
         return util.absolute_url(
                 "/completesignup?token=%s" %
                 auth.tokens.EmailVerificationToken.for_user(unverified_user).value)
 
     def validated_token(self):
+        """ Validates the token specified in the request parameters and returns
+        it. Returns None if no valid token was detected.
+
+        """
+
         token_value = self.request_string("token", default=None)
         token = auth.tokens.EmailVerificationToken.for_value(token_value)
 
         if not token:
-            self.response.bad_request("Invalid parameters")
             return None
 
         unverified_user = models.UnverifiedUser.get_for_value(token.email)
         if not unverified_user or not token.is_valid(unverified_user):
-            self.response.bad_request("Invalid parameters")
             return None
 
         # Success - token does indeed point to an unverified user.
@@ -378,22 +399,36 @@ class CompleteSignup(request_handler.RequestHandler):
         can be made via build_link().
 
         """
+        
         valid_token = self.validated_token()
-        if not valid_token:
-            # TODO(benkomalo): do something nicer
-            self.response.bad_request("Bad token")
+        user_data = UserData.current()
+        if not valid_token and not user_data:
+            # Just take them to the homepage for now.
+            self.redirect("/")
             return
 
+        values = {}
+        if user_data:
+            # TODO(benkomalo): handle storage for FB users. Right now their
+            # "email" value is a URI like http://facebookid.ka.org/1234
+            if not user_data.is_facebook_user:
+                values['email'] = user_data.email
+            values['nickname'] = user_data.nickname
+            values['gender'] = user_data.gender
+            values['username'] = user_data.username
+        else:
+            values['email'] = valid_token.email
+
         template_values = {
-            'errors': {},
-            'values': {},
+            'values': values,
             'token': valid_token,
         }
         self.render_jinja2_template('completesignup.html', template_values)
 
     def post(self):
         valid_token = self.validated_token()
-        if not valid_token:
+        user_data = UserData.current()
+        if not valid_token and not user_data:
             # TODO(benkomalo): do something nicer
             self.response.bad_request("Bad token")
             return
@@ -425,7 +460,11 @@ class CompleteSignup(request_handler.RequestHandler):
             # TODO(benkomalo): ask for advice on text
             if not models.UniqueUsername.is_valid_username(username):
                 errors['username'] = "Must start with a letter, be alphanumeric, and at least 3 characters"
-            elif not models.UniqueUsername.is_available_username(username):
+
+            # Only check to see if it's available if we're changing values
+            # or if this is a brand new UserData
+            elif ((not user_data or user_data.username != username) and
+                    not models.UniqueUsername.is_available_username(username)):
                 errors['username'] = "Username is not available"
 
         if values['password']:
@@ -440,33 +479,51 @@ class CompleteSignup(request_handler.RequestHandler):
             self.render_json({'errors': errors}, camel_cased=True)
             return
 
-        unverified_user = models.UnverifiedUser.get_for_value(valid_token.email)
+        if user_data:
+            # Existing user - update their info
+            def txn():
+                if (username != user_data.username
+                        and not user_data.claim_username(username)):
+                    errors['username'] = "Username is not available"
+                    return False
 
-        # TODO(benkomalo): actually move out user id generation to a nice,
-        # centralized place and do a double check ID collisions
-        import uuid
-        user_id = "http://id.khanacademy.org/" + uuid.uuid4().hex
-        created_user = models.UserData.insert_for(
-                user_id,
-                unverified_user.email,
-                username,
-                password,
-                birthdate=unverified_user.birthdate,
-                gender=gender)
+                user_data.set_password(password)
+                user_data.update_nickname(values['nickname'])
 
-        if not created_user:
-            self.render_json({'errors': {'username': "Username taken."}},
-                             camel_cased=True)
-            return
+            util.ensure_in_transaction(txn, xg_on=True)
+            if len(errors) > 0:
+                self.render_json({'errors': errors}, camel_cased=True)
+                return
 
-        # Nickname is special since it requires updating external indices.
-        created_user.update_nickname(values['nickname'])
+        else:
+            unverified_user = models.UnverifiedUser.get_for_value(
+                    valid_token.email)
 
-        # TODO(benkomalo): move this into a transaction with the above creation
-        unverified_user.delete()
+            # TODO(benkomalo): actually move out user id generation to a nice,
+            # centralized place and do a double check ID collisions
+            import uuid
+            user_id = "http://id.khanacademy.org/" + uuid.uuid4().hex
+            user_data = models.UserData.insert_for(
+                    user_id,
+                    unverified_user.email,
+                    username,
+                    password,
+                    birthdate=unverified_user.birthdate,
+                    gender=gender)
+
+            if not user_data:
+                self.render_json({'errors': {'username': "Username taken."}},
+                                 camel_cased=True)
+                return
+
+            # Nickname is special since it requires updating external indices.
+            user_data.update_nickname(values['nickname'])
+
+            # TODO(benkomalo): move this into a transaction with the above creation
+            unverified_user.delete()
 
         # TODO(benkomalo): give some kind of "congrats"/"welcome" notification
-        Login.return_login_json(self, created_user)
+        Login.return_login_json(self, user_data)
 
 class PasswordChange(request_handler.RequestHandler):
     def get(self):

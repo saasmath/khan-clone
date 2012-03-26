@@ -67,7 +67,11 @@
 {% block bottompagescript %}
     {{ js_css_packages.js_package("login") }}
     <script>
-    $(Login.initLoginPage);
+    $(function() {
+        Login.initLoginPage({
+            continueUrl: {{ templatetags.jsonify(continue, camel_cased=True) }}
+        });
+    });
     </script>
 {% endblock bottompagescript %}
 

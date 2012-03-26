@@ -8,6 +8,10 @@
  * Entry point for initial signup page setup.
  */
 Login.initSignupPage = function() {
+    $("#login-facebook").click(function(e) {
+        Login.connectWithFacebook("/postlogin?completesignup=1");
+    });
+
     var dateData = $("#birthday-picker").data("date");
     var defaultDate;
     if (dateData) {

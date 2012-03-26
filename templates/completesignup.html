@@ -14,20 +14,22 @@
 {% block pagecontent %}
 <article id="page-root">
     <form method="POST" class="auth-form" id="signup-form" action="{{templatetags.to_secure_url('/completesignup')}}?continue={{continue|urlencode}}">
+    {% if token %}
     <input type="hidden" name="token" id="type-input" value={{token.value}}>
+    {% endif %}
 
     <div class="signup-contents">
         <h3>Signup for a Khan Academy account</h3>
 
         <div class="field-container">
             <label class="field-label" for="email">Email</label><br>
-            <input id="email" name="email" class="simple-input ui-corner-all" value="{{token.email|escape}}" disabled="true">
+            <input id="email" name="email" class="simple-input ui-corner-all" value="{{values['email']|escape}}" disabled="true">
         </div>
 
         <br>
         <div class="field-container">
             <label class="field-label" for="nickname">Your name</label><br>
-            <input id="nickname" name="nickname" class="simple-input ui-corner-all" value="{{ values['nickname']|escape}}">
+            <input id="nickname" name="nickname" class="simple-input ui-corner-all" value="{{values['nickname']|escape}}">
             <div class="field-error" id="nickname-error"></div>
         </div>
 

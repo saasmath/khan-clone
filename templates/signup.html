@@ -17,6 +17,26 @@
         <form method="POST" class="auth-form" id="signup-form" action="/signup">
 
         <h3>Signup for a Khan Academy account</h3>
+        Have you signed up with a Google or Facebook account before?
+        <ul class="providers">
+        <li class="action-gradient" id="login-google">
+            <div class="img-container">
+                <a href="{{google_url}}">
+                    <img width="205" height="70" alt="Google" src="/images/google-logo-large.png" >
+                </a>
+            </div>
+        </li>
+
+        {% if App.facebook_app_secret %}
+        <li id="login-facebook" class="action-gradient">
+            <div class="img-container">
+            <img width="205" height="70" alt="Facebook" src="/images/facebook-logo-large.png" >
+            </div>
+        </li>
+        {% endif %}
+        </ul>
+
+        <p>No? Then get your own login! </p>
         <div class="field-container">
             <label class="field-label" for="email">Email</label><br>
             <input id="email" name="email" type="email" class="simple-input ui-corner-all" value="{{ values['email']|escape }}">
