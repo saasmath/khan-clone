@@ -202,6 +202,7 @@ javascript = {
         "files": [
             "studentlists.js",
             "classprofile.js",
+            "class-progress-report.js",
         ]
     },
     "donate": {
