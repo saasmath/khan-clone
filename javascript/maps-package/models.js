@@ -15,14 +15,14 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
     /**
      * Set all required properties for rendering map node
      */
-    setNodeAttrs: function(name, display_name, x, y, iconUrl, zoomBounds) {
+    setNodeAttrs: function(name, displayName, x, y, iconUrl, zoomBounds) {
 
         this.set({
             name: name,
             x: x,
             y: y,
-            display_name: display_name,
-            lowercaseName: display_name.toLowerCase(),
+            display_name: displayName,
+            lowercaseName: displayName.toLowerCase(),
             inAllList: false, // TODO(kamens): remove?
             iconUrl: iconUrl,
             zoomBounds: zoomBounds
