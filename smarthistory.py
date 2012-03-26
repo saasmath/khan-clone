@@ -31,7 +31,8 @@ def deleteOldBlobs():
                 blob.delete()
 
 class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHandler):
-    def __init__(self):
+    def __init__(self, request=None, response=None):
+        self.initialize(request, response)
         self.attempt_counter = 0	
 	
     def get(self):
