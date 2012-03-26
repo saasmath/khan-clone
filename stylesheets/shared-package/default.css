@@ -1435,15 +1435,14 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
         }
 
     .exercise-show {
-        position: absolute;
+        position: relative;
+        float: right;
         padding: 1px;
-        left: 300px;
-        top: -2px;
         line-height: 1px;
         z-index:20;
     }
     .exercise-show:hover {
-        top: -1px;
+        top: 1px;
     }
 
     .exercise-goal-wrapper {
