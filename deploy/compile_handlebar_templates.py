@@ -69,6 +69,9 @@ def compile_template_to_python(root_path, rel_path, file_name):
     input_path = os.path.join(dir_path, file_name)
     test_path = input_path + ".json"
 
+    # We intentionally ignore Handlebars templates that don't have unit tests
+    # when compiling to Python. If someday all templates have unit tests we
+    # should emit an error here.
     if not os.path.exists(test_path):
         return None
 

@@ -1,1 +1,31 @@
-{"status":"Suggested","display_name":"Number line","name":"number_line","summative":false,"prereqs":[],"h_position":1,"num_milestones":1,"points":"","v_position":0,"longest_streak":2,"progress":0.63705356,"goal_req":true,"progress_display":"63%","recent":true,"invalidForGoal":true,"isSuggested":true,"badgeIcon":"/images/node-suggested.png?764.1","inAllList":false,"lowercaseName":"number line","streakBar":{"proficient":false,"suggested":true,"progressDisplay":"63%","maxWidth":228,"width":145.248212,"milestones":[]},"url":"/exercise/number_line","disabled":true}
+{
+    "status": "Suggested",
+    "display_name": "Number line",
+    "name": "number_line",
+    "summative": false,
+    "prereqs": [],
+    "h_position": 1,
+    "num_milestones": 1,
+    "points": "",
+    "v_position": 0,
+    "longest_streak": 2,
+    "progress": 0.63705356,
+    "goal_req": true,
+    "progress_display": "63%",
+    "recent": true,
+    "invalidForGoal": true,
+    "isSuggested": true,
+    "badgeIcon": "/images/node-suggested.png?764.1",
+    "inAllList": false,
+    "lowercaseName": "number line",
+    "streakBar": {
+        "proficient": false,
+        "suggested": true,
+        "progressDisplay": "63%",
+        "maxWidth": 228,
+        "width": 145.248212,
+        "milestones": []
+    },
+    "url": "/exercise/number_line",
+    "disabled": true
+}

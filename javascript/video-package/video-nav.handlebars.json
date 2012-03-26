@@ -1,1 +1,518 @@
-{"topic":{"extended_slug":"math/algebra/solving-linear-equations","id":"solving-linear-equations","next_topic_subtopic_slug":"math/algebra/solving-linear-inequalities","next_topic_title":"Solving linear inequalities","next_topic_video":"interpreting-inequalities","parent_titles":["Math","Algebra"],"previous_topic_subtopic_slug":"math/algebra/introduction-to-algebra","previous_topic_title":"Introduction to Algebra","previous_topic_video":"descartes-and-cartesian-coordinates","title":"Solving linear equations","top_level_topic":"math","videos":[{"key_id":235,"readable_id":"variables-expressions-and-equations","title":"Variables Expressions and Equations"},{"key_id":236,"readable_id":"variables-and-expressions-1","title":"Variables and Expressions 1"},{"key_id":237,"readable_id":"evaluating-expressions-with-two-variables","title":"Evaluating Expressions with Two Variables"},{"key_id":238,"readable_id":"order-of-operations-example","title":"Order of Operations Example"},{"key_id":239,"readable_id":"simple-equations","title":"Simple Equations"},{"key_id":240,"readable_id":"solving-one-step-equations","title":"Solving One-Step Equations"},{"key_id":241,"readable_id":"solving-one-step-equations-2","title":"Solving One-Step Equations 2"},{"key_id":242,"readable_id":"one-step-equations","title":"One Step Equations"},{"key_id":243,"readable_id":"evaluate-a-formula-using-substitution","title":"Evaluate a formula using substitution"},{"key_id":244,"readable_id":"example-of-solving-for-a-variable","title":"Example of Solving for a Variable"},{"key_id":245,"readable_id":"solving-for-a-variable","title":"Solving for a Variable"},{"key_id":246,"readable_id":"solving-for-a-variable-2","title":"Solving for a Variable 2"},{"key_id":247,"readable_id":"algebra--linear-equations-2","title":"Algebra: Linear Equations 2"},{"key_id":248,"readable_id":"equations-2","title":"Equations 2"},{"key_id":249,"readable_id":"solving-equations-1","title":"Solving Equations 1"},{"key_id":250,"readable_id":"two-step-equations","title":"Two-Step Equations"},{"key_id":251,"readable_id":"new-operator-definitions","title":"New Operator Definitions"},{"key_id":252,"readable_id":"solving-equations-2","title":"Solving Equations 2"},{"key_id":253,"readable_id":"equations-3","title":"Equations 3"},{"key_id":254,"readable_id":"equations-with-variables-on-both-sides","title":"Equations with Variables on Both Sides"},{"key_id":255,"readable_id":"multi-step-equations","title":"Multi-Step Equations"},{"key_id":256,"readable_id":"multi-step-equations-1","title":"Multi-step equations 1"},{"key_id":257,"readable_id":"multi-step-equations-2","title":"Multi-step equations 2"},{"key_id":258,"readable_id":"solving-equations-with-the-distributive-property","title":"Solving Equations with the Distributive Property"},{"key_id":259,"readable_id":"solving-equations-with-the-distributive-property-2","title":"Solving equations with the distributive property 2"},{"key_id":260,"readable_id":"algebra--linear-equations-3","title":"Algebra: Linear Equations 3"},{"key_id":261,"readable_id":"algebra--linear-equations-4","title":"Algebra: Linear Equations 4"},{"key_id":262,"readable_id":"equation-special-cases","title":"Equation Special Cases"},{"key_id":263,"readable_id":"sum-of-consecutive-odd-integers","title":"Sum of Consecutive Odd Integers"},{"key_id":264,"readable_id":"integer-sums","title":"Integer sums"},{"key_id":265,"readable_id":"rearrange-formulas-to-isolate-specific-variables","title":"Rearrange formulas to isolate specific variables"},{"key_id":266,"readable_id":"algebraic-word-problem","title":"Algebraic Word Problem"},{"key_id":267,"readable_id":"basic-rate-problem","title":"Basic Rate Problem"},{"key_id":268,"readable_id":"averages","title":"Averages"},{"key_id":269,"readable_id":"application-problems-with-equation-in-one-variable","title":"Application problems with equation in one variable"},{"key_id":270,"readable_id":"percent-problems","title":"Percent Problems"},{"key_id":271,"readable_id":"word-problem-solving-3","title":"Word Problem Solving 3"},{"key_id":272,"readable_id":"taking-percentages","title":"Taking percentages"},{"key_id":209,"readable_id":"growing-by-a-percentage","title":"Growing by a percentage"},{"key_id":273,"readable_id":"another-percent-word-problem","title":"Another Percent Word Problem"},{"key_id":274,"readable_id":"more-percent-problems","title":"More percent problems"},{"key_id":275,"readable_id":"direct-variation-1","title":"Direct Variation 1"},{"key_id":276,"readable_id":"proportionality-constant-for-direct-variation","title":"Proportionality Constant for Direct Variation"},{"key_id":277,"readable_id":"direct-variation-application","title":"Direct Variation Application"},{"key_id":278,"readable_id":"early-train-word-problem","title":"Early Train Word Problem"},{"key_id":279,"readable_id":"age-word-problems-1","title":"Age word problems 1"},{"key_id":280,"readable_id":"age-word-problems-2","title":"Age word problems 2"},{"key_id":281,"readable_id":"age-word-problems-3","title":"Age word problems 3"},{"key_id":282,"readable_id":"writing-proportions","title":"Writing Proportions"},{"key_id":178,"readable_id":"coverting-repeating-decimals-to-fractions-1","title":"Coverting Repeating Decimals to Fractions 1"},{"key_id":179,"readable_id":"coverting-repeating-decimals-to-fractions-2","title":"Coverting Repeating Decimals to Fractions 2"},{"key_id":283,"readable_id":"patterns-in-sequences-1","title":"Patterns in Sequences 1"},{"key_id":284,"readable_id":"patterns-in-sequences-2","title":"Patterns in Sequences 2"},{"key_id":285,"readable_id":"equations-of-sequence-patterns","title":"Equations of Sequence Patterns"},{"key_id":286,"readable_id":"finding-the-100th-term-in-a-sequence","title":"Finding the 100th Term in a Sequence"},{"key_id":287,"readable_id":"basic-linear-function","title":"Basic Linear Function"},{"key_id":288,"readable_id":"absolute-value-equations","title":"Absolute Value Equations"},{"key_id":289,"readable_id":"absolute-value-equations-1","title":"Absolute Value Equations 1"},{"key_id":290,"readable_id":"absolute-value-equations-example-1","title":"Absolute Value Equations Example 1"},{"key_id":291,"readable_id":"absolute-value-equation-example-2","title":"Absolute Value Equation Example 2"}]},"video":{"author_profile":"https://plus.google.com/103970106103092409324","button_top_exercise":{"name":"Percentage word problems 1","url":"/exercise/percentage_word_problems_1"},"description":"Percent Problems from Chapter 3 of ck12.org Algebra I textbook","discussion_html":"\n\n\n    <div class=\"video_comments requires_script\">\n        <a name=\"comments\"></a>\n        <strong>Comments:</strong>\n\n        <div class=\"comments_container\"><em>Loading...</em> <img class=\"icon\" src=\"/images/throbber.gif\"/></div>\n        \n        \n        <a href=\"/login?continue=/video%3Fv%3D1LtBcfk1uHg\" class=\"control\"><img class=\"icon\" src=\"/images/balloon-plus.png\" />Log in to add a comment</a>\n        \n\n        <span class=\"comments_show_more\">\n            <a href=\"/video/percent-problems?topic=solving-linear-equations&comments_page=1\" class=\"comment_show control uses_script\"><img class=\"icon\" src=\"/images/balloons.png\" />Show more</a>\n        </span>\n\n        <div class=\"comment_form\" style=\"display:none;\">\n            <form class=\"comments\" name=\"comments\">\n                <div style=\"display:none;\">\n        <input type=\"text\" name=\"honey_input\" value=\"\" />\n        <textarea name=\"honey_textarea\"></textarea>\n    </div>\n                <input type=\"hidden\" id=\"video_key\" name=\"video_key\" value=\"ahBkZXZ-a2hhbi1hY2FkZW15cgwLEgVWaWRlbxiOAgw\" />\n                <input type=\"hidden\" id=\"topic_key\" name=\"topic_key\" value=\"ahBkZXZ-a2hhbi1hY2FkZW15cmYLEgVUb3BpYyIoVGtUemZQMjlFZ2Y5VVd0TjNySG5TOVZ5bVR2NDNIclE5QmNELVhqcQwLEgVUb3BpYyIobWJ5NUdUcFVtVWtxVHZlanRoc0Q2ZGZvMWxmUWF1MGg2Z1J2eThfcQw\" />\n                <textarea name=\"comment_text\" class=\"comment_text\" rows=\"3\" cols=\"40\"></textarea><br/>\n                <div class=\"comment_controls_container\"\n        \n    >\n        <div class=\"comment_add_controls feedback_add_controls\">\n            <div class=\"controls\">\n                \n\n                <input class=\"button comment_submit\" type=\"button\" value=\"Comment\"/>\n                or <a href=\"#\" class=\"comment_cancel control\">Cancel</a>\n            </div>\n\n            \n                <div class=\"chars_remaining\">\n                    <span class=\"chars_remaining_count\">500</span> characters left\n                </div>\n            \n            <div class=\"clearFloat\">&nbsp;</div>\n\n        </div>\n    </div>\n            </form>\n        </div>\n\n    </div>\n \n    \n    \n\n    \n\n    <div class=\"video_questions requires_script\">\n        <a name=\"qa\"></a>\n        <nav class=\"css-menu\" style=\"float:right;\">\n            <ul data-role=\"listview\" data-inset=\"true\">\n                <li style=\"color:black;\">\n                    \n                        Most votes first\n                    \n                    <ul>\n                        <li><a href=\"/discussion/updateqasort?sort=1&readable_id=percent-problems&topic_title=Solving+linear+equations#qa\">Most votes first</a></li>\n                        <li><a href=\"/discussion/updateqasort?sort=2&readable_id=percent-problems&topic_title=Solving+linear+equations#qa\">Newest questions first</a></li>\n                    </ul>\n                </li>\n            </ul>\n        </nav>\n        <strong>Questions and answers about percent problems:</strong>\n\n        <div class=\"questions_container\"><em>Loading...</em> <img class=\"icon\" src=\"/images/throbber.gif\"/></div>\n\n        <div class=\"sticky_note\" style=\"display:none;\">\n            <div class=\"sticky_note_content\">\n                <h2>Asking helpful questions about percent problems</h2>\n\n                <table class=\"tips-and-examples\">\n                    <tr>\n                        <th class=\"cell left-cell\">\n                            <strong>Helpful questions...</strong>\n                            <ul>\n                                <li>...are on-topic (about this video's content) and specific</li>\n                                <li>...refer to times in the video, like \"5:28\"</li>\n                                <li>...are upvoted and receive badges</li>\n                            </ul>\n                        </th>\n                        <th class=\"cell\">\n                            <strong>Unhelpful questions...</strong>\n                            <ul>\n                                <li>...are off-topic or unspecific</li>\n                                <li>...don't help other users understand the video's content</li>\n                                <li>...are downvoted and flagged</li>\n                            </ul>\n                        </th>\n                    </tr>\n                    <tr>\n                        <td class=\"cell left-cell\">\n                            <ul>\n                                <li class=\"question-example\"><img class=\"vote-example\" src=\"/images/vote-up-gray.png\"> \"During the eclipse Sal talks about at 5:28, why is the moon the exact size of the sun, offering complete 1 for 1 coverage?\"</li>\n                            </ul>\n                        </td>\n                        <td class=\"cell\">\n                            <ul>\n                                <li class=\"question-example\"><img class=\"vote-example\" src=\"/images/vote-down-gray.png\"> \"I don't get it?\" <span class=\"question-note\">(Not specific)</span></li>\n                            </ul>\n                            <ul>\n                                <li class=\"question-example\"><img class=\"vote-example\" src=\"/images/vote-down-gray.png\"> \"Sal this is awesome!!!\" <span class=\"question-note\">(Off-topic, belongs in comments)</span></li>\n                            </ul>\n                            <ul>\n                                <li class=\"question-example\"><img class=\"vote-example\" src=\"/images/vote-down-gray.png\"> \"Why isn't this thing working?\" <span class=\"question-note\">(<a href=\"/reportissue?type=Defect&issue_labels=Component-Videos\">Report problems here</a> instead)</span></li>\n                            </ul>\n                        </td>\n                    </tr>\n                </table>\n            </div>\n        </div>\n\n        <div class=\"question_container\">\n            <div class=\"question_form\">\n                <form class=\"question\" name=\"questions\">\n                    <div style=\"display:none;\">\n        <input type=\"text\" name=\"honey_input\" value=\"\" />\n        <textarea name=\"honey_textarea\"></textarea>\n    </div>\n                    <input type=\"hidden\" id=\"video_key\" class=\"video_key_primary\" name=\"video_key\" value=\"ahBkZXZ-a2hhbi1hY2FkZW15cgwLEgVWaWRlbxiOAgw\" />\n                    <input type=\"hidden\" id=\"topic_key\" name=\"topic_key\" value=\"ahBkZXZ-a2hhbi1hY2FkZW15cmYLEgVUb3BpYyIoVGtUemZQMjlFZ2Y5VVd0TjNySG5TOVZ5bVR2NDNIclE5QmNELVhqcQwLEgVUb3BpYyIobWJ5NUdUcFVtVWtxVHZlanRoc0Q2ZGZvMWxmUWF1MGg2Z1J2eThfcQw\" />\n                    <div class=\"question_placeholder requires_script\">\n                        <textarea name=\"question_text\" class=\"question_text\" rows=\"3\" cols=\"40\" \n                                    placeholder=\"Ask a question about this video\"></textarea>\n                    </div>\n                    <div class=\"question_controls_container\"\n        \n            style=\"display:none;\"\n        \n    >\n        <div class=\"question_add_controls feedback_add_controls\">\n            <div class=\"controls\">\n                \n\n                <input class=\"button question_submit\" type=\"button\" value=\"Ask your question\"/>\n                or <a href=\"#\" class=\"question_cancel control\">Cancel</a>\n            </div>\n\n            \n                <div class=\"chars_remaining\">\n                    <span class=\"chars_remaining_count\">500</span> characters left\n                </div>\n            \n            <div class=\"clearFloat\">&nbsp;</div>\n\n        </div>\n    </div>\n               </form>\n            </div>\n        </div>\n\n        <input type=\"hidden\" id=\"sort\" value=\"1\" />\n        <input type=\"hidden\" id=\"qa_page\" value=\"0\" />\n        <input type=\"hidden\" id=\"qa_expand_key\" value=\"\" />\n\n        <div class=\"info_note note\" style=\"display:none;\">\n            <span class=\"note_desc\"></span>\n            <a href=\"#\" class=\"close_note\">Close</a>\n        </div>\n\n        \n\n            <div class=\"login_note note\" style=\"display:none;\">\n                <a class=\"login_link\" href=\"/login?continue=/video%3Fv%3D1LtBcfk1uHg\"><img class=\"icon\" src=\"/images/key-plus.png\"/ >Log in first</a>\n                <span class=\"note_desc\"></span>\n                <a href=\"#\" class=\"close_note\">Close</a>\n            </div>\n        \n\n    </div>\n    <br/>\n","issue_labels":"Component-Videos,Video-percent-problems","key":"ahBkZXZ-a2hhbi1hY2FkZW15cgwLEgVWaWRlbxiOAgw","next_video":{"key_id":271,"readable_id":"word-problem-solving-3","title":"Word Problem Solving 3"},"player_html":"\n\n\n<span class=\"video_extra_links desktop-only\">\n    <nobr>\n\n    <div class=\"extra-link-bar\">\n\n        \n\n        <a href=\"#\" title=\"Toggle subtitles and translations\" style=\"z-index:101;\" class=\"simple-button action-gradient with-icon subtitles-link\">\n        <img src=\"/images/subtitles-icon-small.png\" />\n                Video Subtitles\n        </a>\n\n        \n\n        <!--<a href=\"#\" title=\"Continuous Play is OFF\" class=\"simple-button action-gradient continuous-play\">Continuous Play is OFF</a>-->\n\n        \n<a href=\"#\" class=\"simple-button action-gradient with-icon download-icon share-link notif-share\" onclick=\"_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Button']);return false;\">\n  <img src=\"/images/share-icon-small.png\" />\n          Share\n  </a>\n<div class=\"sharepop\">\n\t<div class=\"triangle-isosceles top\">\n\t\n\t\n        \n<a class=\"emailShare\" href=\"mailto:?Subject=I+just+learned+about+Percent+Problems+on+Khan+Academy&amp;Body=You+can+learn+about+it+too.+Check+out+http%3A%2F%2Fkhanacademy.org%2Fvideo%3Fv%3D1LtBcfk1uHg\" onclick=\"_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Email']);\">Email</a>\n\n        \n\n\n<a href=\"javascript:void(0);\" class=\"facebookShare\" onclick=\"_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Facebook']);Social.facebookVideo('Percent Problems','Percent Problems from Chapter 3 of ck12.org Algebra I textbook','/video?v=1LtBcfk1uHg');\"></a>\n\n\n\n        \n<a href=\"http://twitter.com/share?url=http%3A%2F%2Fkhanacademy.org%2Fvideo%3Fv%3D1LtBcfk1uHg&text=just+learned+about+Percent+Problems&related=khanacademy:Trying+to+make+a+world-class+education+available+to+anyone%2C+anywhere.&via=khanacademy\" class=\"twitterShare\" onclick=\"_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Twitter']);\"> </a>\n\n    \n    \n    <div class=\"clearFloat\"></div>\n\t</div>\n</div>\n\n\n    </div>\n    <span style=\"float:right;\" id=\"points-badge-hover\">\n        <div class=\"video-energy-points\" title=\"You're earning points for watching this video. Sign in to keep them\"><span class=\"video-energy-points-current\">0</span> of 750</div> \n    </span>\n    </nobr>\n </span>","previous_video":{"key_id":269,"readable_id":"application-problems-with-equation-in-one-variable","title":"Application problems with equation in one variable"},"readable_id":"percent-problems","related_exercises":[],"selected_nav_link":"watch","subtitles_html":"\n","title":"Percent Problems","video_path":null,"youtube_id":"1LtBcfk1uHg"}}
+{
+    "topic": {
+        "extended_slug": "math/algebra/solving-linear-equations",
+        "id": "solving-linear-equations",
+        "next_topic_subtopic_slug": "math/algebra/solving-linear-inequalities",
+        "next_topic_title": "Solving linear inequalities",
+        "next_topic_video": "interpreting-inequalities",
+        "parent_titles": ["Math", "Algebra"],
+        "previous_topic_subtopic_slug": "math/algebra/introduction-to-algebra",
+        "previous_topic_title": "Introduction to Algebra",
+        "previous_topic_video": "descartes-and-cartesian-coordinates",
+        "title": "Solving linear equations",
+        "top_level_topic": "math",
+        "videos": [{
+            "key_id": 235,
+            "readable_id": "variables-expressions-and-equations",
+            "title": "Variables Expressions and Equations"
+        }, {
+            "key_id": 236,
+            "readable_id": "variables-and-expressions-1",
+            "title": "Variables and Expressions 1"
+        }, {
+            "key_id": 237,
+            "readable_id": "evaluating-expressions-with-two-variables",
+            "title": "Evaluating Expressions with Two Variables"
+        }, {
+            "key_id": 238,
+            "readable_id": "order-of-operations-example",
+            "title": "Order of Operations Example"
+        }, {
+            "key_id": 239,
+            "readable_id": "simple-equations",
+            "title": "Simple Equations"
+        }, {
+            "key_id": 240,
+            "readable_id": "solving-one-step-equations",
+            "title": "Solving One-Step Equations"
+        }, {
+            "key_id": 241,
+            "readable_id": "solving-one-step-equations-2",
+            "title": "Solving One-Step Equations 2"
+        }, {
+            "key_id": 242,
+            "readable_id": "one-step-equations",
+            "title": "One Step Equations"
+        }, {
+            "key_id": 243,
+            "readable_id": "evaluate-a-formula-using-substitution",
+            "title": "Evaluate a formula using substitution"
+        }, {
+            "key_id": 244,
+            "readable_id": "example-of-solving-for-a-variable",
+            "title": "Example of Solving for a Variable"
+        }, {
+            "key_id": 245,
+            "readable_id": "solving-for-a-variable",
+            "title": "Solving for a Variable"
+        }, {
+            "key_id": 246,
+            "readable_id": "solving-for-a-variable-2",
+            "title": "Solving for a Variable 2"
+        }, {
+            "key_id": 247,
+            "readable_id": "algebra--linear-equations-2",
+            "title": "Algebra: Linear Equations 2"
+        }, {
+            "key_id": 248,
+            "readable_id": "equations-2",
+            "title": "Equations 2"
+        }, {
+            "key_id": 249,
+            "readable_id": "solving-equations-1",
+            "title": "Solving Equations 1"
+        }, {
+            "key_id": 250,
+            "readable_id": "two-step-equations",
+            "title": "Two-Step Equations"
+        }, {
+            "key_id": 251,
+            "readable_id": "new-operator-definitions",
+            "title": "New Operator Definitions"
+        }, {
+            "key_id": 252,
+            "readable_id": "solving-equations-2",
+            "title": "Solving Equations 2"
+        }, {
+            "key_id": 253,
+            "readable_id": "equations-3",
+            "title": "Equations 3"
+        }, {
+            "key_id": 254,
+            "readable_id": "equations-with-variables-on-both-sides",
+            "title": "Equations with Variables on Both Sides"
+        }, {
+            "key_id": 255,
+            "readable_id": "multi-step-equations",
+            "title": "Multi-Step Equations"
+        }, {
+            "key_id": 256,
+            "readable_id": "multi-step-equations-1",
+            "title": "Multi-step equations 1"
+        }, {
+            "key_id": 257,
+            "readable_id": "multi-step-equations-2",
+            "title": "Multi-step equations 2"
+        }, {
+            "key_id": 258,
+            "readable_id": "solving-equations-with-the-distributive-property",
+            "title": "Solving Equations with the Distributive Property"
+        }, {
+            "key_id": 259,
+            "readable_id": "solving-equations-with-the-distributive-property-2",
+            "title": "Solving equations with the distributive property 2"
+        }, {
+            "key_id": 260,
+            "readable_id": "algebra--linear-equations-3",
+            "title": "Algebra: Linear Equations 3"
+        }, {
+            "key_id": 261,
+            "readable_id": "algebra--linear-equations-4",
+            "title": "Algebra: Linear Equations 4"
+        }, {
+            "key_id": 262,
+            "readable_id": "equation-special-cases",
+            "title": "Equation Special Cases"
+        }, {
+            "key_id": 263,
+            "readable_id": "sum-of-consecutive-odd-integers",
+            "title": "Sum of Consecutive Odd Integers"
+        }, {
+            "key_id": 264,
+            "readable_id": "integer-sums",
+            "title": "Integer sums"
+        }, {
+            "key_id": 265,
+            "readable_id": "rearrange-formulas-to-isolate-specific-variables",
+            "title": "Rearrange formulas to isolate specific variables"
+        }, {
+            "key_id": 266,
+            "readable_id": "algebraic-word-problem",
+            "title": "Algebraic Word Problem"
+        }, {
+            "key_id": 267,
+            "readable_id": "basic-rate-problem",
+            "title": "Basic Rate Problem"
+        }, {
+            "key_id": 268,
+            "readable_id": "averages",
+            "title": "Averages"
+        }, {
+            "key_id": 269,
+            "readable_id": "application-problems-with-equation-in-one-variable",
+            "title": "Application problems with equation in one variable"
+        }, {
+            "key_id": 270,
+            "readable_id": "percent-problems",
+            "title": "Percent Problems"
+        }, {
+            "key_id": 271,
+            "readable_id": "word-problem-solving-3",
+            "title": "Word Problem Solving 3"
+        }, {
+            "key_id": 272,
+            "readable_id": "taking-percentages",
+            "title": "Taking percentages"
+        }, {
+            "key_id": 209,
+            "readable_id": "growing-by-a-percentage",
+            "title": "Growing by a percentage"
+        }, {
+            "key_id": 273,
+            "readable_id": "another-percent-word-problem",
+            "title": "Another Percent Word Problem"
+        }, {
+            "key_id": 274,
+            "readable_id": "more-percent-problems",
+            "title": "More percent problems"
+        }, {
+            "key_id": 275,
+            "readable_id": "direct-variation-1",
+            "title": "Direct Variation 1"
+        }, {
+            "key_id": 276,
+            "readable_id": "proportionality-constant-for-direct-variation",
+            "title": "Proportionality Constant for Direct Variation"
+        }, {
+            "key_id": 277,
+            "readable_id": "direct-variation-application",
+            "title": "Direct Variation Application"
+        }, {
+            "key_id": 278,
+            "readable_id": "early-train-word-problem",
+            "title": "Early Train Word Problem"
+        }, {
+            "key_id": 279,
+            "readable_id": "age-word-problems-1",
+            "title": "Age word problems 1"
+        }, {
+            "key_id": 280,
+            "readable_id": "age-word-problems-2",
+            "title": "Age word problems 2"
+        }, {
+            "key_id": 281,
+            "readable_id": "age-word-problems-3",
+            "title": "Age word problems 3"
+        }, {
+            "key_id": 282,
+            "readable_id": "writing-proportions",
+            "title": "Writing Proportions"
+        }, {
+            "key_id": 178,
+            "readable_id": "coverting-repeating-decimals-to-fractions-1",
+            "title": "Coverting Repeating Decimals to Fractions 1"
+        }, {
+            "key_id": 179,
+            "readable_id": "coverting-repeating-decimals-to-fractions-2",
+            "title": "Coverting Repeating Decimals to Fractions 2"
+        }, {
+            "key_id": 283,
+            "readable_id": "patterns-in-sequences-1",
+            "title": "Patterns in Sequences 1"
+        }, {
+            "key_id": 284,
+            "readable_id": "patterns-in-sequences-2",
+            "title": "Patterns in Sequences 2"
+        }, {
+            "key_id": 285,
+            "readable_id": "equations-of-sequence-patterns",
+            "title": "Equations of Sequence Patterns"
+        }, {
+            "key_id": 286,
+            "readable_id": "finding-the-100th-term-in-a-sequence",
+            "title": "Finding the 100th Term in a Sequence"
+        }, {
+            "key_id": 287,
+            "readable_id": "basic-linear-function",
+            "title": "Basic Linear Function"
+        }, {
+            "key_id": 288,
+            "readable_id": "absolute-value-equations",
+            "title": "Absolute Value Equations"
+        }, {
+            "key_id": 289,
+            "readable_id": "absolute-value-equations-1",
+            "title": "Absolute Value Equations 1"
+        }, {
+            "key_id": 290,
+            "readable_id": "absolute-value-equations-example-1",
+            "title": "Absolute Value Equations Example 1"
+        }, {
+            "key_id": 291,
+            "readable_id": "absolute-value-equation-example-2",
+            "title": "Absolute Value Equation Example 2"
+        }]
+    },
+    "video": {
+        "author_profile": "https://plus.google.com/103970106103092409324",
+        "button_top_exercise": {
+            "name": "Percentage word problems 1",
+            "url": "/exercise/percentage_word_problems_1"
+        },
+        "description": "Percent Problems from Chapter 3 of ck12.org Algebra I textbook",
+        "discussion_html": "
+
+
+    <div class="video_comments requires_script">
+        <a name="comments"></a>
+        <strong>Comments:</strong>
+
+        <div class="comments_container"><em>Loading...</em> <img class="icon" src="/images/throbber.gif"/></div>
+        
+        
+        <a href="/login?continue=/video%3Fv%3D1LtBcfk1uHg" class="control"><img class="icon" src="/images/balloon-plus.png" />Log in to add a comment</a>
+        
+
+        <span class="comments_show_more">
+            <a href="/video/percent-problems?topic=solving-linear-equations&comments_page=1" class="comment_show control uses_script"><img class="icon" src="/images/balloons.png" />Show more</a>
+        </span>
+
+        <div class="comment_form" style="display:none;">
+            <form class="comments" name="comments">
+                <div style="display:none;">
+        <input type="text" name="honey_input" value="" />
+        <textarea name="honey_textarea"></textarea>
+    </div>
+                <input type="hidden" id="video_key" name="video_key" value="ahBkZXZ-a2hhbi1hY2FkZW15cgwLEgVWaWRlbxiOAgw" />
+                <input type="hidden" id="topic_key" name="topic_key" value="ahBkZXZ-a2hhbi1hY2FkZW15cmYLEgVUb3BpYyIoVGtUemZQMjlFZ2Y5VVd0TjNySG5TOVZ5bVR2NDNIclE5QmNELVhqcQwLEgVUb3BpYyIobWJ5NUdUcFVtVWtxVHZlanRoc0Q2ZGZvMWxmUWF1MGg2Z1J2eThfcQw" />
+                <textarea name="comment_text" class="comment_text" rows="3" cols="40"></textarea><br/>
+                <div class="comment_controls_container"
+        
+    >
+        <div class="comment_add_controls feedback_add_controls">
+            <div class="controls">
+                
+
+                <input class="button comment_submit" type="button" value="Comment"/>
+                or <a href="#" class="comment_cancel control">Cancel</a>
+            </div>
+
+            
+                <div class="chars_remaining">
+                    <span class="chars_remaining_count">500</span> characters left
+                </div>
+            
+            <div class="clearFloat">&nbsp;</div>
+
+        </div>
+    </div>
+            </form>
+        </div>
+
+    </div>
+ 
+    
+    
+
+    
+
+    <div class="video_questions requires_script">
+        <a name="qa"></a>
+        <nav class="css-menu" style="float:right;">
+            <ul data-role="listview" data-inset="true">
+                <li style="color:black;">
+                    
+                        Most votes first
+                    
+                    <ul>
+                        <li><a href="/discussion/updateqasort?sort=1&readable_id=percent-problems&topic_title=Solving+linear+equations#qa">Most votes first</a></li>
+                        <li><a href="/discussion/updateqasort?sort=2&readable_id=percent-problems&topic_title=Solving+linear+equations#qa">Newest questions first</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <strong>Questions and answers about percent problems:</strong>
+
+        <div class="questions_container"><em>Loading...</em> <img class="icon" src="/images/throbber.gif"/></div>
+
+        <div class="sticky_note" style="display:none;">
+            <div class="sticky_note_content">
+                <h2>Asking helpful questions about percent problems</h2>
+
+                <table class="tips-and-examples">
+                    <tr>
+                        <th class="cell left-cell">
+                            <strong>Helpful questions...</strong>
+                            <ul>
+                                <li>...are on-topic (about this video's content) and specific</li>
+                                <li>...refer to times in the video, like "5:28"</li>
+                                <li>...are upvoted and receive badges</li>
+                            </ul>
+                        </th>
+                        <th class="cell">
+                            <strong>Unhelpful questions...</strong>
+                            <ul>
+                                <li>...are off-topic or unspecific</li>
+                                <li>...don't help other users understand the video's content</li>
+                                <li>...are downvoted and flagged</li>
+                            </ul>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td class="cell left-cell">
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-up-gray.png"> "During the eclipse Sal talks about at 5:28, why is the moon the exact size of the sun, offering complete 1 for 1 coverage?"</li>
+                            </ul>
+                        </td>
+                        <td class="cell">
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-down-gray.png"> "I don't get it?" <span class="question-note">(Not specific)</span></li>
+                            </ul>
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-down-gray.png"> "Sal this is awesome!!!" <span class="question-note">(Off-topic, belongs in comments)</span></li>
+                            </ul>
+                            <ul>
+                                <li class="question-example"><img class="vote-example" src="/images/vote-down-gray.png"> "Why isn't this thing working?" <span class="question-note">(<a href="/reportissue?type=Defect&issue_labels=Component-Videos">Report problems here</a> instead)</span></li>
+                            </ul>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="question_container">
+            <div class="question_form">
+                <form class="question" name="questions">
+                    <div style="display:none;">
+        <input type="text" name="honey_input" value="" />
+        <textarea name="honey_textarea"></textarea>
+    </div>
+                    <input type="hidden" id="video_key" class="video_key_primary" name="video_key" value="ahBkZXZ-a2hhbi1hY2FkZW15cgwLEgVWaWRlbxiOAgw" />
+                    <input type="hidden" id="topic_key" name="topic_key" value="ahBkZXZ-a2hhbi1hY2FkZW15cmYLEgVUb3BpYyIoVGtUemZQMjlFZ2Y5VVd0TjNySG5TOVZ5bVR2NDNIclE5QmNELVhqcQwLEgVUb3BpYyIobWJ5NUdUcFVtVWtxVHZlanRoc0Q2ZGZvMWxmUWF1MGg2Z1J2eThfcQw" />
+                    <div class="question_placeholder requires_script">
+                        <textarea name="question_text" class="question_text" rows="3" cols="40" 
+                                    placeholder="Ask a question about this video"></textarea>
+                    </div>
+                    <div class="question_controls_container"
+        
+            style="display:none;"
+        
+    >
+        <div class="question_add_controls feedback_add_controls">
+            <div class="controls">
+                
+
+                <input class="button question_submit" type="button" value="Ask your question"/>
+                or <a href="#" class="question_cancel control">Cancel</a>
+            </div>
+
+            
+                <div class="chars_remaining">
+                    <span class="chars_remaining_count">500</span> characters left
+                </div>
+            
+            <div class="clearFloat">&nbsp;</div>
+
+        </div>
+    </div>
+               </form>
+            </div>
+        </div>
+
+        <input type="hidden" id="sort" value="1" />
+        <input type="hidden" id="qa_page" value="0" />
+        <input type="hidden" id="qa_expand_key" value="" />
+
+        <div class="info_note note" style="display:none;">
+            <span class="note_desc"></span>
+            <a href="#" class="close_note">Close</a>
+        </div>
+
+        
+
+            <div class="login_note note" style="display:none;">
+                <a class="login_link" href="/login?continue=/video%3Fv%3D1LtBcfk1uHg"><img class="icon" src="/images/key-plus.png"/ >Log in first</a>
+                <span class="note_desc"></span>
+                <a href="#" class="close_note">Close</a>
+            </div>
+        
+
+    </div>
+    <br/>
+",
+        "issue_labels": "Component-Videos,Video-percent-problems",
+        "key": "ahBkZXZ-a2hhbi1hY2FkZW15cgwLEgVWaWRlbxiOAgw",
+        "next_video": {
+            "key_id": 271,
+            "readable_id": "word-problem-solving-3",
+            "title": "Word Problem Solving 3"
+        },
+        "player_html": "
+
+
+<span class="video_extra_links desktop-only">
+    <nobr>
+
+    <div class="extra-link-bar">
+
+        
+
+        <a href="#" title="Toggle subtitles and translations" style="z-index:101;" class="simple-button action-gradient with-icon subtitles-link">
+        <img src="/images/subtitles-icon-small.png" />
+                Video Subtitles
+        </a>
+
+        
+
+        <!--<a href="#" title="Continuous Play is OFF" class="simple-button action-gradient continuous-play">Continuous Play is OFF</a>-->
+
+        
+<a href="#" class="simple-button action-gradient with-icon download-icon share-link notif-share" onclick="_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Button']);return false;">
+  <img src="/images/share-icon-small.png" />
+          Share
+  </a>
+<div class="sharepop">
+	<div class="triangle-isosceles top">
+	
+	
+        
+<a class="emailShare" href="mailto:?Subject=I+just+learned+about+Percent+Problems+on+Khan+Academy&amp;Body=You+can+learn+about+it+too.+Check+out+http%3A%2F%2Fkhanacademy.org%2Fvideo%3Fv%3D1LtBcfk1uHg" onclick="_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Email']);">Email</a>
+
+        
+
+
+<a href="javascript:void(0);" class="facebookShare" onclick="_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Facebook']);Social.facebookVideo('Percent Problems','Percent Problems from Chapter 3 of ck12.org Algebra I textbook','/video?v=1LtBcfk1uHg');"></a>
+
+
+
+        
+<a href="http://twitter.com/share?url=http%3A%2F%2Fkhanacademy.org%2Fvideo%3Fv%3D1LtBcfk1uHg&text=just+learned+about+Percent+Problems&related=khanacademy:Trying+to+make+a+world-class+education+available+to+anyone%2C+anywhere.&via=khanacademy" class="twitterShare" onclick="_gaq.push(['_trackEvent', 'Click', 'Video-Page-Share-Twitter']);"> </a>
+
+    
+    
+    <div class="clearFloat"></div>
+	</div>
+</div>
+
+
+    </div>
+    <span style="float:right;" id="points-badge-hover">
+        <div class="video-energy-points" title="You're earning points for watching this video. Sign in to keep them"><span class="video-energy-points-current">0</span> of 750</div> 
+    </span>
+    </nobr>
+ </span>",
+        "previous_video": {
+            "key_id": 269,
+            "readable_id": "application-problems-with-equation-in-one-variable",
+            "title": "Application problems with equation in one variable"
+        },
+        "readable_id": "percent-problems",
+        "related_exercises": [],
+        "selected_nav_link": "watch",
+        "subtitles_html": "
+",
+        "title": "Percent Problems",
+        "video_path": null,
+        "youtube_id": "1LtBcfk1uHg"
+    }
+}

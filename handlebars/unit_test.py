@@ -44,13 +44,9 @@ class HandlebarsTest(unittest.TestCase):
             js_output = str(tmp.read())
 
             if js_output != python_output:
-                open("python.txt", "w").write(python_output)
-                #print "PYTHON:"
-                #print python_output
-
-                open("js.txt", "w").write(js_output)
-                #print "JS:"
-                #print js_output
+                open("unittest-%s-python.txt" % template_name, "w").write(python_output)
+                open("unittest-%s-js.txt" % template_name, "w").write(js_output)
+                print "Test failed! Wrote output to unittest-%s-python.txt and unittest-%s-js.txt." % (template_name, template_name)
 
             self.assertEqual(js_output, python_output)
 

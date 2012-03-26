@@ -57,9 +57,6 @@ Templates.get = function(name) {
     var ret = Templates.cache_[name] ||
         (Templates.cache_[name] = Templates.fromScript_(name));
     return function(params) {
-        KAConsole.enableLog();
-        var json = JSON.stringify(params);
-        KAConsole.log("Templates.get:", name, {json:json}); // donotcheckin
         return ret(params);
     };
 };
