@@ -1,0 +1,48 @@
+{% extends "page_template_mini.html" %}
+
+{% block pagescript %}
+<style>.descr { font-color: #888888 }</style>
+{% endblock pagescript %}
+
+{% block pagecontent %}
+
+<h1>Appengine Stats: Memcache</h1>
+
+Data retrieved at <b>{{now}}</b> ({{now_time_t}})
+
+<ul>
+  <li> <p><b>hits:</b> {{memcache_stats['hits']}} <br>
+       <div class="descr">Number of cache get requests resulting in a
+       cache hit.</div></p>
+
+  <li> <p><b>misses:</b> {{memcache_stats['misses']}} <br>
+       <div class="descr">Number of cache get requests resulting in a
+       cache miss.</div></p>
+
+  <li> <p><b>byte_hits:</b> {{memcache_stats['byte_hits']}} <br>
+       <div class="descr">Sum of bytes transferred on get
+	 requests. Rolls over to zero on overflow.</div></p>
+
+  <li> <p><b>items:</b> {{memcache_stats['items']}} <br>
+       <div class="descr">Number of key/value pairs in the
+       cache.</div></p>
+
+  <li> <p><b>bytes:</b> {{memcache_stats['bytes']}} <br>
+       <div class="descr">Total size of all items in the
+       cache.</div></p>
+
+  <li> <p><b>oldest_item_age:</b> {{memcache_stats['oldest_item_age']}} <br>
+       <div class="descr">How long in seconds since the oldest item in
+       the cache was accessed. Effectively, this indicates how long a
+       new item will survive in the cache without being accessed. This
+       is not the amount of time that has elapsed since the item was
+       created.</div></p>
+
+</ul>
+
+{% endblock pagecontent %}
+
+{% block bottompagescript %}
+    {{ js_css_packages.js_package("profile") }}
+{% endblock bottompagescript %}
+
