@@ -379,6 +379,9 @@ class CompleteSignup(request_handler.RequestHandler):
         """
 
         token_value = self.request_string("token", default=None)
+        if not token_value:
+            return None
+
         token = auth.tokens.EmailVerificationToken.for_value(token_value)
 
         if not token:
