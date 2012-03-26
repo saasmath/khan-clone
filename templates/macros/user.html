@@ -43,11 +43,11 @@
         <b class="caret"></b>
     </span>
     <ul class="dropdown-menu vertical-shadow">
-        <li><a class="profile-link" href="{{profile_root}}">Visit profile</a></li>
+        <li><a class="dropdown-link" href="{{profile_root}}">Visit profile</a></li>
         <!-- TODO(marcia): Uncomment below link when some milestone of Auth launches. -->
-        <!-- <li><a href="{{profile_root}}/settings">Change settings</a></li> -->
+        <!-- <li><a class="dropdown-link" href="{{profile_root}}/settings">Change settings</a></li> -->
         <!-- Facebook's JS logout requires the page_logout ID -->
-        <li><a id="page_logout" href="{{logout_url}}">Logout</a></li>
+        <li><a class="dropdown-link" id="page_logout" href="{{logout_url}}">Logout</a></li>
     </ul>
 </span>
 {%- endmacro %}
