@@ -38,7 +38,7 @@ Login.initLoginPage = function() {
 /**
  * Use Facebook's JS SDK to connect with Facebook.
  */
-Login.connectWithFacebook = function() {
+Login.connectWithFacebook = function(continueUrl) {
     FacebookUtil.runOnFbReady(function() {
         // TODO(benkomalo): add some visual indicator that we're trying.
         FB.login(function(response) {
@@ -48,7 +48,7 @@ Login.connectWithFacebook = function() {
 
             if (response["status"] === "connected") {
                 FacebookUtil.markUsingFbLogin();
-                var url = URL_CONTINUE || "/";
+                var url = continueUrl || "/";
                 if (url.indexOf("?") > -1) {
                     url += "&fb=1";
                 } else {
