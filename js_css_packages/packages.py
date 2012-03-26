@@ -204,6 +204,11 @@ javascript = {
             "classprofile.js",
         ]
     },
+    "donate": {
+        "files": [
+            "donate.js",
+        ]
+    },
     "stories": {
         "files": [
             "bootstrap-modal.js",
@@ -344,6 +349,11 @@ stylesheets = {
         "files": [
             "guiders.css",
         ],
+    },
+    "donate": {
+        "files": [
+            "donate.css",
+        ]
     },
     "stories": {
         "files": [

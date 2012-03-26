@@ -618,8 +618,13 @@ footer {
         left: 0;
         border: none;
         width: 100%;
+        min-width: 100px;
     }
-    #user-info .dropdown-menu li > a:hover {
+    #user-info .dropdown-menu li > .dropdown-link {
+        white-space: nowrap;
+    }
+
+    #user-info .dropdown-menu li > .dropdown-link:hover {
         background-color: #E5f0CC;
     }
 

@@ -194,11 +194,6 @@ $(function() {
             // Open dropdown on hover
             jelToggle.dropdown("hover");
         }
-
-        var width = jelToggle.width();
-        if (width < 60) {
-            jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
-        }
     }
 });
 

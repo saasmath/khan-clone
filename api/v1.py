@@ -666,7 +666,8 @@ def playlists_library():
 
 # We expose the following "fresh" route but don't publish the URL for internal services
 # that don't want to deal w/ cached values ie. youtube-export script
-@route("/api/v1/playlists/library/list/<fresh>", methods=["GET"])
+@route("/api/v1/playlists/library/list/fresh", methods=["GET"], 
+                                               defaults = {"fresh": True})
 @route("/api/v1/playlists/library/list", methods=["GET"])
 @jsonp
 @decompress # We compress and decompress around layer_cache so memcache never has any trouble storing the large amount of library data.
