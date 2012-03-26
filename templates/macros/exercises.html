@@ -36,12 +36,8 @@
        </div>
        <div class="exercise-list">
         <span class="exercise-sublist dashboard-suggested-exercises hide-on-dashboard-filter">
-        <h3>Suggested Exercises <span class="exercise-filter-count"></span></h3>
+        <h3>Suggested <span class="exercise-filter-count"></span></h3>
          <div class="exercise-content suggested-exercises-content"></div>
-        </span>
-        <span class="exercise-sublist dashboard-recent-exercises hide-on-dashboard-filter">
-         <h3>Recent Exercises <span class="exercise-filter-count"></span></h3>
-         <div class="exercise-content recent-exercises-content"></div>
         </span>
         <span class="exercise-sublist dashboard-all-exercises">
          <h3>All Exercises <span class="exercise-filter-count"></span>
@@ -58,6 +54,7 @@
 {% macro knowledgemap(import_maps_package) -%}
   {%- if import_maps_package -%}
     <script src="http://maps.google.com/maps/api/js?v=3.3&sensor=false" type="text/javascript"></script>
+    {{ js_css_packages.js_package("exercises") }}
     {{ js_css_packages.js_package("maps") }}
   {%- endif -%}
     <div class="map-canvas"></div>

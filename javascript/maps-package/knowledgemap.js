@@ -179,7 +179,6 @@ function KnowledgeMap(params) {
     this.modelsByName = {}; // fast access to models by name
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
     this.numSuggestedExercises = 0;
-    this.numRecentExercises = 0;
 
     // Views
     this.exerciseRowViews = [];
@@ -256,7 +255,6 @@ function KnowledgeMap(params) {
 
     this.initSidebar = function() {
         var suggestedExercisesContent = this.admin ? null : this.getElement("suggested-exercises-content");
-        var recentExercisesContent = this.admin ? null : this.getElement("recent-exercises-content");
         var allExercisesContent = this.getElement("all-exercises-content");
 
         // ensure blank elements take up the right amount of space
@@ -280,20 +278,6 @@ function KnowledgeMap(params) {
                     }));
                     this.numSuggestedExercises++;
                 }
-            }
-
-            if (exerciseModel.get("recent")) {
-                element = createEl();
-                element.appendTo(recentExercisesContent);
-                this.exerciseRowViews.push(new KnowledgeMapViews.ExerciseRow({
-                    model: exerciseModel,
-                    el: element,
-                    type: "recent",
-                    admin: this.admin,
-                    parent: this
-                }));
-
-                this.numRecentExercises++;
             }
 
             element = createEl();
@@ -830,7 +814,7 @@ function KnowledgeMap(params) {
     };
 
     this.postUpdateFilter = function() {
-        var counts = { "suggested": 0, "recent": 0, "all": 0 };
+        var counts = { "suggested": 0, "all": 0 };
         var filterText = self.filterSettings.get("filterText");
 
         $.each(self.exerciseRowViews, function(idx, exerciseRowView) {
