@@ -415,8 +415,8 @@ var ClassProfile = {
             }
         });
 
-        var template = Templates.get( "profile.profile-class-goals" );
-        $("#graph-content").html( template(studentGoalsViewModel) );
+        var template = Templates.get("studentlists.class-goals");
+        $("#graph-content").html(template(studentGoalsViewModel));
 
         $("#class-student-goal .goal-row").each(function() {
             var goalViewModel = studentGoalsViewModel.rowData[$(this).attr('data-id')];
@@ -797,9 +797,9 @@ var ClassProfile = {
             });
         });
 
-        var template = Templates.get( "profile.profile-class-progress-report" );
+        var template = Templates.get("studentlists.class-progress-report");
 
-        $("#graph-content").html( template(data) );
+        $("#graph-content").html(template(data));
         ProgressReport.init(data);
     }
 };

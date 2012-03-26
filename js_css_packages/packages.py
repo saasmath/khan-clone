@@ -165,8 +165,6 @@ javascript = {
             "empty-badge-picker.handlebars",
             "badges.js",
             "profile-goals.handlebars",
-            "profile-class-goals.handlebars",
-            "profile-class-progress-report.handlebars",
             "exercise_progress.handlebars",
             "profile-goals.js",
             "settings.js",
@@ -203,6 +201,8 @@ javascript = {
             "class-progress-column.handlebars",
             "class-progress-summary.handlebars",
             "class-progress-summary.js",
+            "class-goals.handlebars",
+            "class-progress-report.handlebars",
         ]
     },
     "donate": {
