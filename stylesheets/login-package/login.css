@@ -194,6 +194,15 @@ a.signup-link {
     color: red;
 }
 
+/* Dialog shown after step 1 of sign up */
+.signup-success-dialog.modal.fade.in {
+    width: 700px;
+    left: 50%;
+    margin-left: -350px;
+    position: absolute;
+    top: 150px;
+}
+
 /* TODO(benkomalo): consolidate these with the profile page's sidenote styles */
 .sidenote {
     background-repeat: no-repeat;

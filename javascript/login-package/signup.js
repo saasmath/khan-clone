@@ -34,17 +34,16 @@ Login.initSignupPage = function() {
 
     $("#email").focus().on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
-            Login.submitSignup();
-
             e.preventDefault();
+            Login.submitSignup();
         }
     });
 
     $("#submit-button").click(function(e) {
-        Login.submitSignup();
-
         // Prevent direct form submission since we'll POST the data manually.
         e.preventDefault();
+
+        Login.submitSignup();
     });
 };
 
@@ -82,14 +81,17 @@ Login.handleSignupResponse = function(data) {
 
     var errors = data["errors"] || {};
     if (_.isEmpty(errors)) {
-        // Success!
+        // TODO(benkomalo): STOPSHIP - remove. only for debugging.
+        var verificationLink = "/completesignup?token=" + data["token"];
 
-        // TODO(benkomalo): handle properly!
-        $(".signup-contents")
-                .html("Success! VERIFICATION LINK FOR DEBUGGING: ")
-                .append($("<a></a>")
-                            .prop("href", "/completesignup?token=" + data["token"])
-                            .text("/completesignup?token=" + data["token"]));
+        // Success!
+        var template = Templates.get("login.signup-success");
+        var dialogEl = $(template({link: verificationLink}))
+            .appendTo($(document.body))
+            .modal({
+                backdrop: "static",
+                show: true
+            });
     } else {
         _.each(errors, function(error, fieldName) {
             $("#" + fieldName + "-error").text(error);

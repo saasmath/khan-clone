@@ -125,6 +125,7 @@ javascript = {
         "files": [
             "bday-picker.js",
             "login.js",
+            "signup-success.handlebars",
             "signup.js",
             "completesignup.js",
 
