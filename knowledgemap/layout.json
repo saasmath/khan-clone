@@ -1361,7 +1361,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "absolute-value", 
-            "key_name": "yYz7VOgJHEdSv9uC3cuwb8kOf-k5sL9VlfBCfoVO", 
             "standalone_title": "Absolute value", 
             "x": -0.82999999999999996, 
             "y": 10.470000000000001
@@ -1369,7 +1368,6 @@
         {
             "icon_url": "/images/power-mode/badges/addition-and-subtraction-40x40.png", 
             "id": "addition-subtraction", 
-            "key_name": "QFBqv9HZLk_KuLHw4ZKKlg091934jRS9BkNQofEM", 
             "standalone_title": "Addition and subtraction", 
             "x": 1.8700000000000001, 
             "y": 1.73
@@ -1377,7 +1375,6 @@
         {
             "icon_url": "/images/power-mode/badges/basic-exponents-40x40.png", 
             "id": "basic-exponents", 
-            "key_name": "PGgzdvuQvHbEibeaCpJMwLK4YMVwcqfUBFC2MmoG", 
             "standalone_title": "Basic exponents", 
             "x": 3.1499999999999999, 
             "y": 9.5
@@ -1385,7 +1382,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "basic-ratios-proportions", 
-            "key_name": "S3KwKT9pNWdDCz8dcPlvK0FUPKhPKMsEZvPumtzx", 
             "standalone_title": "Basic ratios and proportions", 
             "x": -5.25, 
             "y": 13.25
@@ -1393,7 +1389,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "calculus", 
-            "key_name": "VegnBxSXWORVQ9pD8Hdwa_x_nGbfQsLsncxJmYkz", 
             "standalone_title": "Calculus", 
             "x": -4.0999999999999996, 
             "y": 27.399999999999999
@@ -1401,7 +1396,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "algebra-i", 
-            "key_name": "OcAOSuYcC7Bcz1SnIHTDxlITEpZRCAlabCgimzSf", 
             "standalone_title": "California Standards Test: Algebra I", 
             "x": -0.69999999999999996, 
             "y": 20.829999999999998
@@ -1409,7 +1403,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "california-standards-test-algebra-2", 
-            "key_name": "f8Gpe639iJh4rHf2xwGmUJFPVVL_rCb_6I5yI0D7", 
             "standalone_title": "California Standards Test: Algebra II", 
             "x": 5.0, 
             "y": 21.100000000000001
@@ -1417,7 +1410,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "complex-numbers", 
-            "key_name": "laLBel3QpKfoFzgz8zzQlPNUxZA7XY-Pxjrmq4Rj", 
             "standalone_title": "Complex numbers", 
             "x": -8.4000000000000004, 
             "y": 18.800000000000001
@@ -1425,7 +1417,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "conic-sections", 
-            "key_name": "OcDUiVEBPW9GxY7G76L5TGtqxoQFh3jAy9uD7m4k", 
             "standalone_title": "Conic sections", 
             "x": 9.1699999999999999, 
             "y": 23.670000000000002
@@ -1433,7 +1424,6 @@
         {
             "icon_url": "/images/power-mode/badges/decimals-40x40.png", 
             "id": "decimals", 
-            "key_name": "HvTvZ4FdXaZVAqJLIaRbQp_sWMjhGjpivPMI20vh", 
             "standalone_title": "Decimals", 
             "x": -2.77, 
             "y": 9.2200000000000006
@@ -1441,7 +1431,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "exponents-radicals", 
-            "key_name": "OPz9Kj3xYyYEDC-D219cgNrjMutRTGC56_kFOeDL", 
             "standalone_title": "Exponents and Radicals", 
             "x": 5.5300000000000002, 
             "y": 11.199999999999999
@@ -1449,7 +1438,6 @@
         {
             "icon_url": "/images/power-mode/badges/factors-and-multiples-40x40.png", 
             "id": "factors-multiples", 
-            "key_name": "4hiVBhfC3PlAE1pnCu4AVWUaCy_Krvx3aqQW1jgC", 
             "standalone_title": "Factors and multiples", 
             "x": 6.4299999999999997, 
             "y": 8.5700000000000003
@@ -1457,7 +1445,6 @@
         {
             "icon_url": "/images/power-mode/badges/fractions-40x40.png", 
             "id": "fractions", 
-            "key_name": "X2HbfN9Om5Nyxb9xzLMXSSIxtdvkmlFo0si_MNLR", 
             "standalone_title": "Fractions", 
             "x": -4.5300000000000002, 
             "y": 11.199999999999999
@@ -1465,7 +1452,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "algebra-functions", 
-            "key_name": "eSbUH4KUDVQTsBk3NjuWZk6PrdMXCvTHx4j5yd7u", 
             "standalone_title": "Functions", 
             "x": 3.6699999999999999, 
             "y": 14.800000000000001
@@ -1473,7 +1459,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "core-geometry", 
-            "key_name": "AGRSJW8nNVciqc6JG7ITlA9sI9lZ1isqIAnjtC_c", 
             "standalone_title": "Geometry", 
             "x": 10.630000000000001, 
             "y": 15.050000000000001
@@ -1481,7 +1466,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "linear-algebra", 
-            "key_name": "AYR61rUIhsdysyiIuQ93lYd2K7Eq_H3lh5mTYgLE", 
             "standalone_title": "Linear Algebra", 
             "x": 7.2000000000000002, 
             "y": 17.25
@@ -1489,7 +1473,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "linear-equations-and-inequalitie", 
-            "key_name": "yAqolQ0LeVPtNYdfuNpEiAuVArpxDYtIUWVUkci7", 
             "standalone_title": "Linear equations and inequalities", 
             "x": 5.0, 
             "y": 17.25
@@ -1497,7 +1480,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "logarithms", 
-            "key_name": "T4oUFAdQ173iIWKGxTLJoVbUN77UvzACHNtCbi6g", 
             "standalone_title": "Logarithms", 
             "x": 3.0, 
             "y": 12.5
@@ -1505,7 +1487,6 @@
         {
             "icon_url": "/images/power-mode/badges/multiplication-and-division-40x40.png", 
             "id": "multiplication-division", 
-            "key_name": "ZzoKc5tUA9UqBsrOHxHmTo22VVnALOf9YdN4xK_B", 
             "standalone_title": "Multiplication and division", 
             "x": 5.1699999999999999, 
             "y": 4.4800000000000004
@@ -1513,7 +1494,6 @@
         {
             "icon_url": "/images/power-mode/badges/negative-numbers-40x40.png", 
             "id": "negative-numbers", 
-            "key_name": "_4tIRt7io-bUvGB__-7scZz0fUjJuxHf0NWt7Ubk", 
             "standalone_title": "Negative numbers", 
             "x": 1.0, 
             "y": 5.5700000000000003
@@ -1521,7 +1501,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "number-properties", 
-            "key_name": "ALNSg_iz3BkflQXTVYpAYBMqUi6XcezQajwI3QFm", 
             "standalone_title": "Number properties", 
             "x": -2.6000000000000001, 
             "y": 4.4000000000000004
@@ -1529,7 +1508,6 @@
         {
             "icon_url": "/images/power-mode/badges/order-of-operations-40x40.png", 
             "id": "order-of-operations", 
-            "key_name": "Ofmkz6wU97c0CRhCPJWsHKFcHMTUOWxiBRn23q-s", 
             "standalone_title": "Order of operations", 
             "x": 1.0, 
             "y": 8.0
@@ -1537,7 +1515,6 @@
         {
             "icon_url": "/images/power-mode/badges/percents-40x40.png", 
             "id": "percents", 
-            "key_name": "jMC3AJngHog1A-0Pyxxp0bsmLQ75SsYBozBnEVSf", 
             "standalone_title": "Percents", 
             "x": -5.1299999999999999, 
             "y": 15.880000000000001
@@ -1545,7 +1522,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "polynomials", 
-            "key_name": "C_A_c4qPYtSQYwbGuKyQoQUrCBlZN5LOL0Bdy8rE", 
             "standalone_title": "Polynomials", 
             "x": -4.6699999999999999, 
             "y": 17.670000000000002
@@ -1553,7 +1529,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "precalculus", 
-            "key_name": "IhaHbzw5H_xWNoieVrvE8Tm7W5irgcidKYwOZFDP", 
             "standalone_title": "Precalculus", 
             "x": -0.82999999999999996, 
             "y": 24.030000000000001
@@ -1561,7 +1536,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "probability", 
-            "key_name": "dR4LazOIu_lRG4dC__L1Ky5m-n57v-Vjtzv4lRI5", 
             "standalone_title": "Probability", 
             "x": 11.0, 
             "y": 12.5
@@ -1569,7 +1543,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "quadtratics", 
-            "key_name": "Xf1EqUv0UQwcVwAVfq2XDkmdiGPK-nGfjguwLtdv", 
             "standalone_title": "Quadratics", 
             "x": -7.0, 
             "y": 21.0
@@ -1577,7 +1550,6 @@
         {
             "icon_url": "/images/power-mode/badges/ratios-and-proportions-40x40.png", 
             "id": "ratios-proportions", 
-            "key_name": "tpTH_a4ykAd4cGp9bSpTaHt04kIYhN7yMLQ0Iexu", 
             "standalone_title": "Ratios and proportions", 
             "x": -7.5, 
             "y": 15.83
@@ -1585,7 +1557,6 @@
         {
             "icon_url": "/images/power-mode/badges/solving-linear-equations-40x40.png", 
             "id": "solving-linear-equations", 
-            "key_name": "mby5GTpUmUkqTvejthsD6dfo1lfQau0h6gRvy8_q", 
             "standalone_title": "Solving linear equations", 
             "x": -1.7, 
             "y": 14.5
@@ -1593,7 +1564,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "solving-linear-inequalities", 
-            "key_name": "a04ZtWxDDqYTgzaQb0FLEcp407fkkY8rCFLn94oV", 
             "standalone_title": "Solving linear inequalities", 
             "x": 0.29999999999999999, 
             "y": 15.75
@@ -1601,7 +1571,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "statistics", 
-            "key_name": "XMpwl5-1E1DZBM3HiYn25gEQEVV1RcpNd-gOxUvT", 
             "standalone_title": "Statistics", 
             "x": 14.08, 
             "y": 10.83
@@ -1609,7 +1578,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "systems-of-eq-and-ineq", 
-            "key_name": "xhy_YPRgIg9D1LpTEMlzZra8ez2Yp1uUYs_draWD", 
             "standalone_title": "Systems of equations and inequalities", 
             "x": 3.29, 
             "y": 25.710000000000001
@@ -1617,7 +1585,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "trigonometry", 
-            "key_name": "Miatj4_JNKHBukbQoN-H11D4V68SanJEUAlD0Gpa", 
             "standalone_title": "Trigonometry", 
             "x": 8.0, 
             "y": 13.83
@@ -1625,7 +1592,6 @@
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "ck12-algebra-1", 
-            "key_name": "pbiyQqDdVs3XnoXvkuIKQAEejIdD_R36yYINDTUh", 
             "standalone_title": "ck12.org Algebra 1 Examples", 
             "x": 2.2400000000000002, 
             "y": 18.579999999999998
