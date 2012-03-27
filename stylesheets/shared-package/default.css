@@ -460,7 +460,7 @@ footer {
         z-index: 10;
     }
     footer #leaves {
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: 319px -908px;
         height: 188px;
     }
@@ -498,7 +498,7 @@ footer {
         padding: 8px 10px 0 0;
     }
     footer #creative-commons-link {
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -143px -67px;
         display: inline-block;
         height: 15px;
@@ -528,15 +528,15 @@ footer {
         position: static;
     }
     footer.short .small-social-links .youtube {
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -10px -67px;
     }
     footer.short .small-social-links .twitter {
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -10px -111px;
     }
     footer.short .small-social-links .facebook {
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -10px -155px;
     }
     footer.short .inner {
@@ -559,7 +559,7 @@ footer {
 #top-header #logo {
     height: 100px;
     position: relative;
-    background-image: url(/images/non-repeating-sprites.3.png);
+    background-image: url(/images/non-repeating-sprites.4.png);
     background-position: -10px -261px;
     width: 317px;
 }
@@ -572,11 +572,11 @@ footer {
     #top-header #logo #logo-image {
         width: 280px;
         height: 65px;
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -10px -465px;
     }
         .dark #top-header #logo #logo-image {
-            background-image: url(/images/non-repeating-sprites.3.png);
+            background-image: url(/images/non-repeating-sprites.4.png);
             background-position: -320px -465px;
         }
 
@@ -1035,7 +1035,7 @@ footer {
         font-style: italic;
     }
     .simple-input.search-input {
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -5px -867px;
         padding-left: 25px;
     }
@@ -1235,7 +1235,7 @@ a:link.google-analytics-link-track
 		width:390px;
 		padding: 2px 2px 2px 18px;
 		font-size:12px;
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -5px -867px;
 		border: 1px solid #ddd;
 	}
@@ -1857,7 +1857,7 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
 
     .streak-bar {
         /* the dashboard streak bar doesn't use a generated gradient*/
-        background-image: url(/images/non-repeating-sprites.3.png);
+        background-image: url(/images/non-repeating-sprites.4.png);
         background-position: -10px -730px;
         width: 100%;
         height: 30px;
@@ -2348,7 +2348,7 @@ a.proficient-badge.disabled {
     padding-left: 10px;
 }
 #back-to-dashboard.single-exercise a#dashboard-breadcrumb {
-    background-image: url(/images/non-repeating-sprites.3.png);
+    background-image: url(/images/non-repeating-sprites.4.png);
     background-position: -1px -598px;
     color: #333;
     display: block;
@@ -2356,7 +2356,7 @@ a.proficient-badge.disabled {
     padding: 48px 0 0 4px;
 }
 #back-to-dashboard.single-exercise a#dashboard-breadcrumb:hover {
-    background-image: url(/images/non-repeating-sprites.3.png);
+    background-image: url(/images/non-repeating-sprites.4.png);
     background-position: -81px -598px;
     color: #E35D04;
 }
@@ -3216,6 +3216,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     opacity: 1;
     filter: alpha(opacity=100);
 }
+#sitewide-navigation .nav-subheader .topic-browser-dropdown a.dropdown-toggle {
+    cursor: pointer;
+}
 #sitewide-navigation .nav-subheader .topic-browser-dropdown.open a.dropdown-toggle {
     background-color: #005987;
     color: #fff;
@@ -3266,7 +3269,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     border-top: solid 1px #ccc;
 }
 #sitewide-navigation .nav-subheader ul.topic-browser-menu li > a > .right-arrow {
-    background-image: url(/images/non-repeating-sprites.3.png);
+    background-image: url(/images/non-repeating-sprites.4.png);
     background-position: -82px -36px;
 
     position: absolute;
