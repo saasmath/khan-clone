@@ -15,7 +15,7 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
     /**
      * Set all required properties for rendering map node
      */
-    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, zoomBounds) {
+    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, minZoom, maxZoom) {
 
         this.set({
             name: name,
@@ -26,13 +26,14 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             inAllList: false, // TODO(kamens): remove?
             iconUrl: iconUrl,
             isSuggested: isSuggested,
-            zoomBounds: zoomBounds
+            minZoom: minZoom,
+            maxZoom: maxZoom
         });
 
     },
 
     isVisibleAtZoom: function(zoom) {
-        return zoom < this.get("zoomBounds")[0] || zoom > this.get("zoomBounds")[1];
+        return zoom >= this.get("minZoom") && zoom <= this.get("maxZoom");
     }
 
 });
@@ -49,7 +50,8 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
             this.get("y"),
             this.get("icon_url"),
             this.get("suggested"),
-            [KnowledgeMapGlobals.options.minZoom, KnowledgeMapGlobals.options.minZoom]
+            KnowledgeMapGlobals.options.minZoom,
+            KnowledgeMapGlobals.options.minZoom
         );
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);
@@ -78,7 +80,8 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             this.get("h_position"), // h_position is actually y
             KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
             this.get("states")["suggested"] || this.get("states")["reviewing"],
-            [KnowledgeMapGlobals.options.minZoom + 1, KnowledgeMapGlobals.options.maxZoom]
+            KnowledgeMapGlobals.options.minZoom + 1,
+            KnowledgeMapGlobals.options.maxZoom
         );
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);
