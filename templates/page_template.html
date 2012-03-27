@@ -284,12 +284,10 @@
     <script>
         $(".show-demo-dialog").click(function(e) {
             e.preventDefault()
-            console.log(e)
             var target = e.target.href
             if (e.target.href == undefined) {
                 target = "/logout?continue=/"
             }
-            console.log(target)
             popupGenericMessageBox({
                 title: "Leaving Demo",
                 message: "The Demo allows you to view coach and student reports for a demo account. Navigating out of the demo area, will log you out of the demo account. Do you want to leave the demo?",
