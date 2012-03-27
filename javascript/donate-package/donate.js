@@ -46,7 +46,13 @@ $("#donation-submit").click(function() {
         }
 
     }
+    // Google analytics to track people's clicking the button
+    // that takes them to PayPal to make a donation.
     _gaq.push(['_trackEvent', 'Click', 'Donate-Link-Paypal']);
+
+    // Trigger result for donate button test -- did the user click
+    // the button to go to PayPal?
+    gae_bingo.bingo( "paypal" );
 });
 
 // Initialize the accordion behavior.
