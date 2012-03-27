@@ -19,8 +19,9 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
         if (this.inflated)
             return;
 
-        var template = Templates.get(this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise");
+        var template = this.getTemplate();
         var context = this.model.toJSON();
+
         if (this.options.admin) {
             context.url = this.model.adminUrl();
         } else {
@@ -59,13 +60,6 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
     onPanToClick: function() {
         this.parent.panToNode(this.nodeName);
         this.parent.highlightNode(this.nodeName, true);
-    },
-
-    showGoalIcon: function(visible) {
-        if (visible)
-            this.el.find(".exercise-goal-icon").show();
-        else
-            this.el.find(".exercise-goal-icon").hide();
     }
 
 });
@@ -317,6 +311,30 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         var swe = new google.maps.LatLng(sw.lat() - dlat, sw.lng() - dlng);
 
         return new google.maps.LatLngBounds(swe, nee);
+    }
+
+});
+
+KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
+
+    getTemplate: function() {
+        // TODO: do these templates really need to be in "shared"?
+        return Templates.get(this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise");
+    },
+
+    showGoalIcon: function(visible) {
+        if (visible)
+            this.el.find(".exercise-goal-icon").show();
+        else
+            this.el.find(".exercise-goal-icon").hide();
+    }
+    
+});
+
+KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
+
+    getTemplate: function() {
+        return Templates.get("exercises.knowledgemap-topic");
     }
 
 });

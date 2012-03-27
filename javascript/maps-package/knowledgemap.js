@@ -172,11 +172,8 @@ function KnowledgeMap(params) {
     this.updateFilterTimout = null;
 
     // Models
-    this.topicModels = []; // list of topics
+    this.modelsByName = {}; // fast access to Exercise and Topic models by name
     this.topicPolylineModels = []; // polylines for topics connections
-
-    this.exerciseModels = []; // list of exercises in displayed order
-    this.modelsByName = {}; // fast access to models by name
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
     this.numSuggestedExercises = 0;
 
@@ -217,7 +214,7 @@ function KnowledgeMap(params) {
 
         // Initial setup of topic list
         if (params.topic_graph_json) {
-            this.topicModels = _.map(params.topic_graph_json.topics, function(dict) {
+            _.map(params.topic_graph_json.topics, function(dict) {
 
                 // Index nodes by name
                 var topic = new KnowledgeMapModels.Topic(dict);
@@ -231,7 +228,7 @@ function KnowledgeMap(params) {
         }
 
         // Initial setup of exercise list from embedded data
-        this.exerciseModels = _.map(params.graph_dict_data, function(dict) {
+        _.map(params.graph_dict_data, function(dict) {
             var invalidForGoal = (
                 dict.goal_req ||
                 dict.status === "Proficient" ||
@@ -262,9 +259,9 @@ function KnowledgeMap(params) {
             return $("<div>", {'class': 'exercise-badge'});
         };
 
-        _.each(this.modelsByName, function(exerciseModel) {
+        _.each(this.modelsByName, function(model) {
 
-            if (!exerciseModel.get("states")) {
+            if (!model.get("states")) {
                 // TODO(kamens): need to handle topic/exercise
                 // model/view differentiation here.
                 return;
@@ -272,12 +269,12 @@ function KnowledgeMap(params) {
 
             // Create views
             var element;
-            if (exerciseModel.get("isSuggested")) {
-                if (!params.hideReview || !exerciseModel.get("isReview")) {
+            if (model.get("isSuggested")) {
+                if (!params.hideReview || !model.get("isReview")) {
                     element = createEl();
                     element.appendTo(suggestedExercisesContent);
-                    this.nodeRowViews.push(new KnowledgeMapViews.NodeRow({
-                        model: exerciseModel,
+                    this.nodeRowViews.push(new KnowledgeMapViews.ExerciseRow({
+                        model: model,
                         el: element,
                         type: "suggested",
                         admin: this.admin,
@@ -289,8 +286,8 @@ function KnowledgeMap(params) {
 
             element = createEl();
             element.appendTo(allExercisesContent);
-            this.nodeRowViews.push(new KnowledgeMapViews.NodeRow({
-                model: exerciseModel,
+            this.nodeRowViews.push(new KnowledgeMapViews.ExerciseRow({
+                model: model,
                 el: element,
                 type: "all",
                 admin: this.admin,
@@ -406,16 +403,12 @@ function KnowledgeMap(params) {
     };
 
     this.initMap = function() {
-        _.each(this.modelsByName, function(exerciseModel) {
+        _.each(this.modelsByName, function(model) {
             // Update map graph
-            this.addNode(exerciseModel.toJSON());
-            _.each(exerciseModel.get("prereqs"), function(prereq) {
-                this.addEdge(exerciseModel.get("name"), prereq);
+            this.addNode(model.toJSON());
+            _.each(model.get("prereqs"), function(prereq) {
+                this.addEdge(model.get("name"), prereq);
             }, this);
-        }, this);
-
-        _.each(this.topicModels, function(topic) {
-            this.addNode(topic.toJSON());
         }, this);
 
         var mapElement = this.getElement("map-canvas");
