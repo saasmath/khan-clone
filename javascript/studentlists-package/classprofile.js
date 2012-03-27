@@ -6,7 +6,6 @@
 
 var ClassProfile = {
     version: 0,
-    initialGraphUrl: null, // Filled in by the template after script load.
     fLoadingGraph: false,
     fLoadedGraph: false,
 
@@ -118,80 +117,6 @@ var ClassProfile = {
             ClassProfile.loadFilters(href);
         }
     }),
-
-    highlightPoints: function(chart, fxnHighlight) {
-
-        if (!chart) return;
-
-        for (var ix = 0; ix < chart.series.length; ix++) {
-            var series = chart.series[ix];
-
-            this.muteSeriesStyles(series);
-
-            for (var ixData = 0; ixData < series.data.length; ixData++) {
-                var pointOptions = series.data[ixData].options;
-                if (!pointOptions.marker) pointOptions.marker = {};
-                pointOptions.marker.enabled = fxnHighlight(pointOptions);
-                if (pointOptions.marker.enabled) pointOptions.marker.radius = 6;
-            }
-
-            series.isDirty = true;
-        }
-
-        chart.redraw();
-    },
-
-    muteSeriesStyles: function(series) {
-        if (series.options.fMuted) return;
-
-        series.graph.attr('opacity', 0.1);
-        series.graph.attr('stroke', '#CCCCCC');
-        series.options.lineWidth = 1;
-        series.options.shadow = false;
-        series.options.fMuted = true;
-    },
-
-    accentuateSeriesStyles: function(series) {
-        series.options.lineWidth = 3.5;
-        series.options.shadow = true;
-        series.options.fMuted = false;
-    },
-
-    highlightSeries: function(chart, seriesHighlight) {
-
-        if (!chart || !seriesHighlight) return;
-
-        for (var ix = 0; ix < chart.series.length; ix++)
-        {
-            var series = chart.series[ix];
-            var fSelected = (series == seriesHighlight);
-
-            if (series.fSelectedLast == null || series.fSelectedLast != fSelected)
-            {
-                if (fSelected)
-                    this.accentuateSeriesStyles(series);
-                else
-                    this.muteSeriesStyles(series);
-
-                for (var ixData = 0; ixData < series.data.length; ixData++) {
-                    series.data[ixData].options.marker = {
-                        enabled: fSelected,
-                        radius: fSelected ? 5 : 4
-                    };
-                }
-
-                series.isDirty = true;
-                series.fSelectedLast = fSelected;
-            }
-        }
-
-        var options = seriesHighlight.options;
-        options.color = '#0080C9';
-        seriesHighlight.remove(false);
-        chart.addSeries(options, false, false);
-
-        chart.redraw();
-    },
 
     collapseAccordion: function() {
         // Turn on collapsing, collapse everything, and turn off collapsing
