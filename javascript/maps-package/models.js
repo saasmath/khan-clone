@@ -54,6 +54,10 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
 
     },
 
+    viewType: function() {
+        return KnowledgeMapViews.TopicRow;
+    },
+
     url: function() {
         return "/topicexercise/" + this.get("id");
     }
@@ -79,6 +83,10 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
         );
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);
+    },
+
+    viewType: function() {
+        return KnowledgeMapViews.ExerciseRow;
     },
 
     url: function() {

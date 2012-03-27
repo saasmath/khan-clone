@@ -261,19 +261,15 @@ function KnowledgeMap(params) {
 
         _.each(this.modelsByName, function(model) {
 
-            if (!model.get("states")) {
-                // TODO(kamens): need to handle topic/exercise
-                // model/view differentiation here.
-                return;
-            }
-
             // Create views
-            var element;
+            var element,
+                viewType = model.viewType();
+
             if (model.get("isSuggested")) {
                 if (!params.hideReview || !model.get("isReview")) {
                     element = createEl();
                     element.appendTo(suggestedExercisesContent);
-                    this.nodeRowViews.push(new KnowledgeMapViews.ExerciseRow({
+                    this.nodeRowViews.push(new viewType({
                         model: model,
                         el: element,
                         type: "suggested",
@@ -286,7 +282,7 @@ function KnowledgeMap(params) {
 
             element = createEl();
             element.appendTo(allExercisesContent);
-            this.nodeRowViews.push(new KnowledgeMapViews.ExerciseRow({
+            this.nodeRowViews.push(new viewType({
                 model: model,
                 el: element,
                 type: "all",
