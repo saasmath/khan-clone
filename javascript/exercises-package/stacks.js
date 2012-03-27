@@ -631,7 +631,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     },
 
     /**
-     * Renders a new card showing end-of-review statistics
+     * Renders a new card showing a leeeeeetle surprise
      */
     renderHappyPictureCard: function() {
         this.renderCardContainer();
