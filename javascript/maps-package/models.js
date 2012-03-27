@@ -40,6 +40,10 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
 
     initialize: function(attributes) {
 
+        this.set({
+            isSuggested: this.get("count_suggested") > 0
+        });
+
         // Translate topic properties to standard node properties
         this.setNodeAttrs(
             this.get("id"),

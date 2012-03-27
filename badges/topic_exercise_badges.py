@@ -86,18 +86,6 @@ class TopicExerciseBadge(Badge):
         self.is_retired = topic_exercise_badge_type.retired
         self.is_hidden_if_unknown = self.is_retired
 
-    def count_total(self):
-        return len(self.exercise_names_required)
-
-    def count_proficient(self, user_data):
-        """ Return number of exercises completed in this topic.
-        """
-        completed = 0
-        for exercise_name in self.exercise_names_required:
-            if user_data.is_proficient_at(exercise_name):
-                completed += 1
-        return completed
-
     def is_satisfied_by(self, *args, **kwargs):
 
         # This badge can't inherit from RetiredBadge because its Retired status

@@ -11,9 +11,9 @@ import models
 from badges.util_badges import all_badges_dict
 from badges.topic_exercise_badges import TopicExerciseBadge
 
-def topics_layout(user_data):
-    """ Return topics layout data with per-user badge completion info
-    already filled in.
+def topics_layout(user_data, user_exercise_graph):
+    """ Return topics layout data with per-user topic completion 
+    and suggested info already filled in.
     """
 
     layout = MapLayout.get_for_version(models.TopicVersion.get_default_version()).layout
@@ -21,22 +21,37 @@ def topics_layout(user_data):
     if not layout:
         raise Exception("Missing map layout for default topic version")
 
+    # TODO: once Eater completes his work, re-enable polyline rendering
     layout["polylines"] = []
 
-    # Check for badge completion in each topic
+    # Build each topic's completion/suggested status from constituent exercises
     for topic_dict in layout["topics"]:
 
+        # We currently use TopicExerciseBadge as the quickest cached list of constituent
+        # exercise names in each topic. TODO: once this data is elsewhere, we don't need
+        # to use this badge.
         badge_name = TopicExerciseBadge.name_for_topic_key_name(topic_dict["key_name"])
         badge = all_badges_dict().get(badge_name, None)
-
         if not badge:
             raise Exception("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
 
-        # Send down the ratio of constituent exercises completed:required
-        topic_dict["proficient"] = badge.count_proficient(user_data)
-        topic_dict["total"] = badge.count_total()
+        proficient, suggested, total = (0, 0, 0)
 
-        if badge.is_already_owned_by(user_data):
+        for exercise_name in badge.exercise_names_required:
+            graph_dict = user_exercise_graph.graph_dict(exercise_name)
+
+            total += 1
+            if graph_dict["proficient"]:
+                proficient += 1
+            if graph_dict["suggested"]:
+                suggested += 1
+
+        # Send down the ratio of constituent exercises completed:total
+        topic_dict["count_proficient"] = proficient
+        topic_dict["count_suggested"] = suggested
+        topic_dict["total"] = total
+
+        if proficient >= suggested:
             topic_dict["status"] = "proficient"
 
     return layout
