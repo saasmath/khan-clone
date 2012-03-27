@@ -166,18 +166,25 @@
                         <div id="nav-and-search">
                             <div id="sitewide-navigation">
                                 <nav>
-                                  <span class="links">
+                                  <span class="links nav-subheader">
+                                    <span class="dropdown topic-browser-dropdown">
+                                      {% if watch_topic_browser_enabled %}
+                                      <a data-tag="Header" class="watch-link dropdown-toggle{%if user_data.is_demo %} show-demo-dialog{% endif %}">Watch <b class="caret"></b></a>
+                                      {% else %}
                                       <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/#browse" data-tag="Header" class="{% if selected_nav_link == 'watch' %}selected{% endif %} watch-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Watch</a>
+                                      {% endif %}
                                       <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/exercisedashboard" data-tag="Header" class="{% if selected_nav_link == 'practice' %}selected{% endif %} practice-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Practice</a>
                                       <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/class_profile" data-tag="Header" class="{% if selected_nav_link == 'coach' %}selected{% endif %} coach-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Coach</a>
                                       <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/contribute" data-tag="Header" class="{% if selected_nav_link == 'contribute' %}selected{% endif %} contribute-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Volunteer</a>
                                       <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/about" data-tag="Header" class="{% if selected_nav_link == 'about' %}selected{% endif %} about-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">About</a>
+                                      <div style="clear: both"></div>
                                     </span>
+                                  </span>
                                 </nav>
                             </div>
                             <div id="search-box">
-                                <form id="page_search" action="/search">
-                                    <input id="search-input" type="text" placeholder="Search for a video or topic" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " id="search-submit" />
+                                <form class="page-search" action="/search">
+                                    <input id="search-input" type="text" placeholder="Search for a video or topic" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " class="search-submit" />
                                 </form>
                             </div>
                             <div class="clear"></div>
@@ -266,16 +273,29 @@
     </script>
     {%- endif -%}
 
+    {% if watch_topic_browser_enabled %}
+    <script type="text/javascript">
+    HeaderTopicBrowser.init();
+    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data() }});
+    </script>
+    {% endif %}
+
     {% if user_data.is_demo %}
     <script>
         $(".show-demo-dialog").click(function(e) {
             e.preventDefault()
+            console.log(e)
+            var target = e.target.href
+            if (e.target.href == undefined) {
+                target = "/logout?continue=/"
+            }
+            console.log(target)
             popupGenericMessageBox({
                 title: "Leaving Demo",
                 message: "The Demo allows you to view coach and student reports for a demo account. Navigating out of the demo area, will log you out of the demo account. Do you want to leave the demo?",
                 buttons: [
                     { title: "No, stay within the demo", action: hideGenericMessageBox, button_color: "gray" },
-                    { title: "Yes, log me out of demo account", action: function() { hideGenericMessageBox; window.location = e.target.href }, button_color: "green" }
+                    { title: "Yes, log me out of demo account", action: function() { hideGenericMessageBox; window.location = target }, button_color: "green" }
                 ]
             })
         })
