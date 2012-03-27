@@ -836,6 +836,8 @@ function KnowledgeMap(params) {
             self.getElement("exercise-no-results").hide();
         }
 
+        // TODO: would be cool to do all this hiding/showing w/ one or two
+        // classes on an outer container.
         if (filterText) {
             self.getElement("dashboard-filter-clear").show();
             self.getElement("hide-on-dashboard-filter").hide();
