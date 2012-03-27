@@ -593,31 +593,3 @@ class PasswordChange(request_handler.RequestHandler):
             auth_token = auth.tokens.AuthToken.for_user(user_data)
             self.redirect(util.insecure_url(
                     "/pwchange?auth=%s" % auth_token.value))
-
-class UnverifiedAccount(request_handler.RequestHandler):
-    def get(self):
-        token_value = self.request_string("token", default="")
-        token = auth.tokens.EmailVerificationToken.for_value(token_value)
-        # On bad requests, just throw the user back to the homepage.
-        if not token:
-            self.redirect("/")
-            return
-
-        unverified_user = models.UnverifiedUser.get_for_value(token.email)
-        if not unverified_user or not token.is_valid(unverified_user):
-            self.redirect("/")
-            return
-
-        # TODO(benkomalo): actually do something different for users with
-        #     an existing Google account detected.
-        existing_google_user_detected = False
-
-        # TODO(benkomalo): STOPSHIP this link should be e-mailed to the user
-        # and not actually embedded in this template
-        link = CompleteSignup.build_link(unverified_user)
-        self.render_jinja2_template(
-                'unverified_account.html',
-                {
-                    'existing_google_user_detected': existing_google_user_detected,
-                    'link': link,
-                })
