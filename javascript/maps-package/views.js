@@ -12,9 +12,7 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
     },
 
     events: {
-        "click .exercise-title": "onBadgeClick",
-        "click .proficient-badge": "onBadgeClick",
-        "click .exercise-show": "onShowExerciseClick"
+        "click .pan-to": "onPanToClick"
     },
 
     inflate: function() {
@@ -46,25 +44,19 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
         this.delegateEvents();
     },
 
-    onBadgeClick: function(evt) {
-        // give the parent a chance to handle this exercise click. If it
-        // doesn't, we'll just follow the anchor href
-        return this.parent.nodeClickHandler(this.model, evt);
-    },
-
     onBadgeMouseover: function(node_name, element) {
         this.parent.highlightNode(node_name, true);
 
-        element.find(".exercise-show").show();
+        element.find(".pan-to").show();
     },
 
     onBadgeMouseout: function(node_name, element) {
         this.parent.highlightNode(node_name, false);
 
-        element.find(".exercise-show").hide();
+        element.find(".pan-to").hide();
     },
 
-    onShowExerciseClick: function() {
+    onPanToClick: function() {
         this.parent.panToNode(this.nodeName);
         this.parent.highlightNode(this.nodeName, true);
     },

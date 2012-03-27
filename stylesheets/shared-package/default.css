@@ -1431,14 +1431,14 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
           border-left: 5px solid #C7E5f7;
         }
 
-    .exercise-show {
+    .pan-to {
         position: relative;
         float: right;
         padding: 1px;
         line-height: 1px;
         z-index:20;
     }
-    .exercise-show:hover {
+    .pan-to:hover {
         top: 1px;
     }
 
