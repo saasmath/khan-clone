@@ -15,7 +15,7 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
     /**
      * Set all required properties for rendering map node
      */
-    setNodeAttrs: function(name, displayName, x, y, iconUrl, zoomBounds) {
+    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, zoomBounds) {
 
         this.set({
             name: name,
@@ -25,6 +25,7 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             lowercaseName: displayName.toLowerCase(),
             inAllList: false, // TODO(kamens): remove?
             iconUrl: iconUrl,
+            isSuggested: isSuggested,
             zoomBounds: zoomBounds
         });
 
@@ -40,10 +41,6 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
 
     initialize: function(attributes) {
 
-        this.set({
-            isSuggested: this.get("count_suggested") > 0
-        });
-
         // Translate topic properties to standard node properties
         this.setNodeAttrs(
             this.get("id"),
@@ -51,6 +48,7 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
             this.get("x"),
             this.get("y"),
             this.get("icon_url"),
+            this.get("suggested"),
             [KnowledgeMapGlobals.options.minZoom, KnowledgeMapGlobals.options.minZoom]
         );
 
@@ -72,10 +70,6 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
 
     initialize: function(attributes) {
 
-        this.set({
-            isSuggested: this.get("states")["suggested"] || this.get("states")["reviewing"]
-        });
-
         // Translate exercise properties to standard node properties
         this.setNodeAttrs(
             this.get("name"),
@@ -83,6 +77,7 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             this.get("v_position"), // v_position is actually x
             this.get("h_position"), // h_position is actually y
             KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
+            this.get("states")["suggested"] || this.get("states")["reviewing"],
             [KnowledgeMapGlobals.options.minZoom + 1, KnowledgeMapGlobals.options.maxZoom]
         );
 
