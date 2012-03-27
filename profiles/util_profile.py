@@ -95,7 +95,13 @@ def get_coach_student_and_student_list(request_handler):
 class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
-    def get(self):
+    def get(self, subpath=None):
+        """ Render class profile.
+        
+        Keyword arguments:
+        subpath -- matches the grouping in /class_profile/(.*) and is ignored
+        server-side, but is used to route client-side
+        """
         show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
 
