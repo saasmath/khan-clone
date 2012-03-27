@@ -33,6 +33,7 @@ def append_paths():
 
     for path in extra_paths:
         sys.path.append(path)
+        print "Appserver path: %s" % path
 
 # Append app and GAE paths so we can simulate our app environment
 # when precompiling templates (otherwise compilation will bail on errors)
