@@ -32,7 +32,7 @@ def topics_layout(user_data):
         if not badge:
             raise Exception("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
 
-        # Send down the ratio of constituent exercises completed:required as a tuple
+        # Send down the ratio of constituent exercises completed:required
         topic_dict["proficient"] = badge.count_proficient(user_data)
         topic_dict["total"] = badge.count_total()
 
