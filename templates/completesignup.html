@@ -13,13 +13,15 @@
 
 {% block pagecontent %}
 <article id="page-root">
-    <form method="POST" class="auth-form" id="signup-form" action="{{templatetags.to_secure_url('/completesignup')}}?continue={{continue|urlencode}}">
-    {% if token %}
-    <input type="hidden" name="token" id="type-input" value={{token.value}}>
-    {% endif %}
-
     <div class="completesignup-container card-case vertical-shadow">
-        <h3>Great! Now create your Khan Academy login.</h3>
+        <img src="/images/hand-tree.png" class="tree">
+        <h3><strong>Great!</strong> Now create your Khan Academy login.</h3>
+
+        <form method="POST" class="auth-form" id="signup-form" action="{{templatetags.to_secure_url('/completesignup')}}?continue={{continue|urlencode}}">
+        {% if token %}
+        <input type="hidden" name="token" id="type-input" value={{token.value}}>
+        {% endif %}
+
 
         {% if not user %}
         <div class="field-container">
@@ -55,17 +57,13 @@
             <div class="field-error" id="password-error"></div>
         </div>
 
-        <div class="field-container" style="margin-top: 2em">
-            By clicking "Signup", you agree to our <a href="/about/tos" target="_blank" tabindex="1">Terms of Service</a> and <a href="/about/privacy-policy" target="_blank" tabindex="1">Privacy Policy</a>
-        </div>
-
-        <div class="field-container" style="margin-top: 2em">
+        <div class="field-container submit-container">
+            <span class="tos-area">By clicking "Signup", you agree to our <a href="/about/tos" target="_blank" tabindex="1">Terms of Service</a> and <a href="/about/privacy-policy" target="_blank" tabindex="1">Privacy Policy</a></span>
             <input type="button" id="submit-button" name="register" value="Signup" class="simple-button action-gradient green">
         </div>
 
+        </form>
     </div>
-
-    </form>
 </article>
 {% endblock pagecontent %}
 

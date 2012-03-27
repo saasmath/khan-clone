@@ -287,12 +287,49 @@ a.signup-link {
 
 .completesignup-container.card-case {
     margin: 6em auto;
-    padding: 2em 4em;
-    width: 500px;
+    padding: 2em;
+    width: 550px;
 }
 
 .completesignup-container .simple-input {
     width: 17em;
+}
+
+
+.completesignup-container img.tree {
+    float: left;
+    margin-right: 1em;
+}
+
+.completesignup-container h3 {
+    font-family: "MuseoSans300", sans-serif;
+    vertical-align: middle;
+}
+
+.completesignup-container .auth-form {
+    /* To clear the floated img of the tree */
+    clear: both;
+}
+
+.completesignup-container .tos-area {
+    display: inline-block;
+    width: 18em;
+    font-size: 11px;
+    text-align: right;
+    margin-right: 2em;
+    vertical-align: middle;
+}
+
+.completesignup-container .submit-container {
+    margin-top: 2em;
+}
+.completesignup-container .submit-container,
+.completesignup-container .field-error {
+    text-align: right;
+
+    /* HACK(benkomalo): add in enough padding on the right to right align
+     * contents with the form fields */
+    padding-right: 8.4em;
 }
 
 /* Settings page styles */
