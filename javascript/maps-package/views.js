@@ -146,6 +146,7 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
     },
 
     updateAppearance: function() {
+
         // set class for css to apply styles
         if (this.filtered) {
             this.el.addClass("nodeLabelFiltered");
@@ -156,6 +157,12 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         // perf hack: instead of changing css opacity, set a whole new image
         var img = this.el.find('img.node-icon');
         var url = img.attr('src');
+
+        if (url.indexOf("power-mode") >= 0) {
+            // TODO: for now, we don't have image opacity effects on topics
+            // during search filtering
+            return;
+        }
 
         // normalize
         if (url.indexOf("faded") >= 0) {
