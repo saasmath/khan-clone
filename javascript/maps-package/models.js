@@ -14,6 +14,10 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
 
     /**
      * Set all required properties for rendering map node
+     *
+     * minZoom and maxZoom are zoom values that correspond to google.maps API's
+     * map.getZoom() functionality. This node will be invisible unless the
+     * current map's zoom is within minZoom/maxZoom.
      */
     setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, minZoom, maxZoom) {
 
