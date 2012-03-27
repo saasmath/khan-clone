@@ -42,6 +42,11 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
 
 });
 
+/**
+ * Model of topic node on the knowledge map. Note that
+ * this has properties unique to a knowledge map node that
+ * may differ from a standard Topic model.
+ */
 KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
 
     initialize: function(attributes) {
@@ -72,6 +77,11 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
 
 });
 
+/**
+ * Model of an exercise node on the knowledge map. Note that
+ * this has properties unique to a knowledge map node that
+ * may differ from a standard Exercise model.
+ */
 KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
 
     initialize: function(attributes) {
