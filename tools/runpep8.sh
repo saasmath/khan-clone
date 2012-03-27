@@ -9,12 +9,11 @@
 blacklist=`dirname "$0"`/runpep8_blacklist.txt
 
 # To generate the blacklist:
-# find . -name '*.py' -print0 | xargs -0 pep8 -r | cut -d : -f 1 | sort | uniq
+# find . -name '*.py' -print0 | xargs -0 pep8 -r | cut -d : -f 1 | sort -u
 
 # Lint files not in the blacklist.
 find . -name "*.py" \
-    | sort \
-    | uniq \
+    | sort -u \
     | comm -23 - "${blacklist}" \
     | tr "\n" "\0" \
     | xargs -0 pep8 -r

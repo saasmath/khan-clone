@@ -179,6 +179,86 @@ def topic_browser_tree(tree, level=0):
 
     return s
 
+def topic_browser_get_topics(tree, level=0):
+    """ Return a two-level tree of topics that we use to build the
+        topic browser in the page header. """
+
+    item_list = []
+    idx = 0
+    needs_divider = False
+
+    for child in tree.children:
+        if not child.children or child.id in models.Topic._super_topic_ids:
+            # special cases
+            if child.id == "new-and-noteworthy":
+                continue
+            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                child.id = "algebra-i"
+            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                child.id = "geometry-2"
+
+            # Show leaf node as a link
+            item_list.append({
+                "level": level,
+                "href": child.relative_url,
+                "title": child.title,
+                "has_divider": needs_divider
+            })
+
+            needs_divider = False
+
+        elif level == 0:
+
+            # First level gets a popup menu for children
+            child_list = topic_browser_get_topics(child, level=level + 1)
+
+            item_list.append({
+                "level": level,
+                "href": None,
+                "title": child.title,
+                "children": child_list
+            })
+
+        else:
+
+            # Second level has children embedded into the list
+            item_list.append({
+                "level": level,
+                "href": None,
+                "has_children": True,
+                "has_divider": True,
+                "title": child.title
+            })
+
+            item_list += topic_browser_get_topics(child, level=level + 1)
+
+            needs_divider = True
+
+        idx += 1
+
+    return item_list if len(item_list) > 0 else None
+
+@layer_cache.cache_with_key_fxn(lambda version_number=None:
+    "Templatetags.topic_browser_data_%s" % (
+    version_number if version_number else models.Setting.topic_tree_version()))
+def topic_browser_data(version_number=None):
+    """ Returns the JSON data necessary to render the topic browser embedded
+        in the page header on the client. """
+
+    if version_number:
+        version = models.TopicVersion.get_by_number(version_number)
+    else:
+        version = None
+
+    root = models.Topic.get_root(version)
+    if not root:
+        return ""
+
+    tree = root.make_tree(types = ["Topics"])
+    topics_list = topic_browser_get_topics(tree)
+
+    return apijsonify.jsonify(topics_list)
+
 def video_name_and_progress(video):
     return "<span class='vid-progress v%d'>%s</span>" % (video.key().id(), escape(video.title.encode('utf-8', 'ignore')))
 
