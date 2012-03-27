@@ -180,6 +180,9 @@ def topic_browser_tree(tree, level=0):
     return s
 
 def topic_browser_get_topics(tree, level=0):
+    """ Return a two-level tree of topics that we use to build the
+        topic browser in the page header. """
+
     item_list = []
     idx = 0
     needs_divider = False
@@ -239,6 +242,9 @@ def topic_browser_get_topics(tree, level=0):
     "Templatetags.topic_browser_data_%s" % (
     version_number if version_number else models.Setting.topic_tree_version()))
 def topic_browser_data(version_number=None):
+    """ Returns the JSON data necessary to render the topic browser embedded
+        in the page header on the client. """
+
     if version_number:
         version = models.TopicVersion.get_by_number(version_number)
     else:

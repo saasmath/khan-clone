@@ -3269,7 +3269,6 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     background-image: url(/images/non-repeating-sprites.3.png);
     background-position: -82px -36px;
 
-    content: "";
     position: absolute;
     top: 7px;
     right: 6px;
