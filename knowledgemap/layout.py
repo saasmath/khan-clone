@@ -32,7 +32,7 @@ def topics_layout(user_data, user_exercise_graph):
         # We currently use TopicExerciseBadge as the quickest cached list of constituent
         # exercise names in each topic. TODO: once this data is elsewhere, we don't need
         # to use this badge.
-        badge_name = TopicExerciseBadge.name_for_topic_key_name(topic_dict["key_name"])
+        badge_name = TopicExerciseBadge.name_for_topic_id(topic_dict["id"])
         badge = all_badges_dict().get(badge_name, None)
         if not badge:
             raise Exception("Missing topic badge for topic: %s" % topic_dict["standalone_title"])

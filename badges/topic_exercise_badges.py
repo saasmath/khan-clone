@@ -43,7 +43,7 @@ def sync_with_topic_version(version):
     for badge_type in TopicExerciseBadgeType.all():
 
         # Make sure each TopicExerciseBadgeType has a corresponding topic...
-        exists = len([t for t in topics if t.key().name() == badge_type.topic_key_name]) > 0
+        exists = len([t for t in topics if t.id == badge_type.topic_id]) > 0
 
         # ...if it doesn't, it may've been created by an old topic that has since been removed.
         # In this case, retire the badge.
@@ -68,8 +68,8 @@ class TopicExerciseBadge(Badge):
         return sorted(badges, key=lambda badge: badge.topic_standalone_title.lower())
 
     @staticmethod
-    def name_for_topic_key_name(topic_key_name):
-        return "topic_exercise_%s" % topic_key_name
+    def name_for_topic_id(topic_id):
+        return "topic_exercise_%s" % topic_id
 
     def __init__(self, topic_exercise_badge_type):
         Badge.__init__(self)
@@ -79,7 +79,7 @@ class TopicExerciseBadge(Badge):
         self.exercise_names_required = topic_exercise_badge_type.exercise_names_required
 
         # Set typical badge properties
-        self.name = TopicExerciseBadge.name_for_topic_key_name(topic_exercise_badge_type.topic_key_name)
+        self.name = TopicExerciseBadge.name_for_topic_id(topic_exercise_badge_type.topic_id)
         self.description = self.topic_standalone_title
         self.points = 0
         self.badge_category = BadgeCategory.MASTER
@@ -147,14 +147,14 @@ class TopicExerciseBadgeType(db.Model):
     each topic that contains exercises.
     """
 
-    topic_key_name = db.StringProperty()
+    topic_id = db.StringProperty()
     topic_standalone_title = db.StringProperty(indexed=False)
     exercise_names_required = object_property.TsvProperty(indexed=False)
     retired = db.BooleanProperty(default=False, indexed=False)
 
     @staticmethod
     def get_key_name(topic):
-        return "topic:%s" % topic.key().name()
+        return "topic:%s" % topic.id
 
     @staticmethod
     def get_or_insert_for_topic(topic):
@@ -168,7 +168,7 @@ class TopicExerciseBadgeType(db.Model):
         if not topic_badge_type:
             topic_badge_type = TopicExerciseBadgeType.get_or_insert(
                     key_name = key_name,
-                    topic_key_name = topic.key().name(),
+                    topic_id = topic.id,
                     topic_standalone_title = topic.standalone_title,
                     )
 
