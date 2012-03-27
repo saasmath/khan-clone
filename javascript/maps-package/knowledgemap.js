@@ -263,6 +263,13 @@ function KnowledgeMap(params) {
         };
 
         _.each(this.modelsByName, function(exerciseModel) {
+
+            if (!exerciseModel.get("states")) {
+                // TODO(kamens): need to handle topic/exercise
+                // model/view differentiation here.
+                return;
+            }
+
             // Create views
             var element;
             if (exerciseModel.get("isSuggested")) {
@@ -354,6 +361,7 @@ function KnowledgeMap(params) {
             bounds = KnowledgeMapViews.NodeMarker.extendBounds(bounds);
 
         _.each(this.exerciseRowViews, function(row) {
+
             var exerciseName = row.model.get("lowercaseName");
 
             // single letter filters have lots of matches, so require exercise

@@ -29,6 +29,8 @@ KnowledgeMapViews.ExerciseRow = Backbone.View.extend({
             context.url = this.model.url();
         }
 
+        // TODO(kamens): make sure this disabled goal status is still passed
+        // appropriately to KM
         context.disabled = this.model.get("invalidForGoal") || false;
 
         var newContent = $(template(context));
