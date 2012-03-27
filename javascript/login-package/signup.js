@@ -98,7 +98,10 @@ Login.handleSignupResponse = function(data) {
 
         // Success!
         var template = Templates.get("login.signup-success");
-        var dialogEl = $(template({link: verificationLink}))
+        var dialogEl = $(template({
+                email: data["email"],
+                link: verificationLink
+            }))
             .appendTo($(document.body))
             .modal({
                 backdrop: "static",

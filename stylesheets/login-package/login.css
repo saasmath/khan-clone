@@ -357,11 +357,38 @@ a.signup-link {
 
 /* Dialog shown after step 1 of sign up */
 .signup-success-dialog.modal.fade.in {
-    width: 700px;
+    width: 450px;
     left: 50%;
-    margin-left: -350px;
+    margin-left: -200px;
     position: absolute;
     top: 150px;
+    background-color: #eee;
+}
+
+.signup-success-dialog .modal-body {
+    padding: 2em 4em;
+}
+
+.signup-success-dialog .email-header {
+    font-family: "MuseoSans300", sans-serif;
+    color: #333;
+    margin-bottom: 0.5em;
+}
+
+.signup-success-dialog .email {
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 18px;
+    color: #000;
+    text-align: center;
+}
+
+.signup-success-dialog .instructions {
+    font-family: "MuseoSans500", sans-serif;
+    display: inline-block;
+    font-size: 16px;
+    width: 15em;
+    margin-left: 2em;
+    margin-top: 2em;
 }
 
 /* TODO(benkomalo): consolidate these with the profile page's sidenote styles */

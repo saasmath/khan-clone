@@ -331,6 +331,7 @@ class Signup(request_handler.RequestHandler):
         #    registering, for example)
         self.render_json({
                 'success': True,
+                'email': email,
                 'existing_google_user_detected': existing_google_user_detected,
 
                 # TODO(benkomalo): STOPSHIP - don't send down the verification
