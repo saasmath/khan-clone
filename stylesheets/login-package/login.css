@@ -34,7 +34,7 @@ form.auth-form {
 }
 .pw-login h3 {
     text-align: left;
-    margin-bottom: 2em;
+    margin-bottom: 3em;
 }
 
 #page-root .vertical-separator {
@@ -207,8 +207,13 @@ a:visited {
     margin-right: 6px;
 }
 
+.pw-login img.tree {
+    float: left;
+    padding-left: 2em;
+}
+
 .signup-prompt-container {
-    margin-top: 6em;
+    margin-top: 4em;
     margin-right: 4px;
 }
 
