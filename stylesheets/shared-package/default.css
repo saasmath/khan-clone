@@ -741,6 +741,7 @@ footer {
         border-bottom-color: #ccc;
         top: 32px;
     }
+        #sitewide-navigation a.watch-link.selected:before {margin-top: 4px;}
         #sitewide-navigation a.practice-link.selected:before {left: 29px;}
         #sitewide-navigation a.coach-link.selected:before {left: 23px;}
         #sitewide-navigation a.contribute-link.selected:before {left: 40px;}
@@ -778,6 +779,7 @@ footer {
     border-bottom-color: #fff;
     top: 33px;
 }
+    #sitewide-navigation a.watch-link.selected:after {margin-top: 4px;}
     #sitewide-navigation a.practice-link.selected:after {left: 30px; border-bottom-color: #fafafa;}
     #sitewide-navigation a.coach-link.selected:after {left: 24px;}
     #sitewide-navigation a.contribute-link.selected:after {left: 41px;}

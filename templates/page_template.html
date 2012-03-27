@@ -161,7 +161,7 @@
                                   <span class="links nav-subheader">
                                     <span class="dropdown topic-browser-dropdown">
                                       {% if watch_topic_browser_enabled %}
-                                      <a data-tag="Header" class="watch-link dropdown-toggle">Watch <b class="caret"></b></a>
+                                      <a data-tag="Header" class="{% if selected_nav_link == "watch" %}selected{% endif %} watch-link dropdown-toggle">Watch <b class="caret"></b></a>
                                       {% else %}
                                       <a href="/#browse" data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link"{% else %}class="watch-link"{% endif %}>Watch</a>
                                       {% endif %}
