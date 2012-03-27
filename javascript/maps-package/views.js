@@ -330,10 +330,12 @@ KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
     },
 
     showGoalIcon: function(visible) {
-        if (visible)
+        if (visible) {
             this.el.find(".exercise-goal-icon").show();
-        else
+        }
+        else {
             this.el.find(".exercise-goal-icon").hide();
+        }
     }
     
 });
