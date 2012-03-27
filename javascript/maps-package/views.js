@@ -3,7 +3,7 @@
 // instead of needing the KnowledgeMap naming prefix.
 var KnowledgeMapViews = {}
 
-KnowledgeMapViews.ExerciseRow = Backbone.View.extend({
+KnowledgeMapViews.NodeRow = Backbone.View.extend({
 
     initialize: function() {
         this.visible = false;

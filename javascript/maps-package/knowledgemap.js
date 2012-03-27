@@ -181,7 +181,7 @@ function KnowledgeMap(params) {
     this.numSuggestedExercises = 0;
 
     // Views
-    this.exerciseRowViews = [];
+    this.nodeRowViews = [];
     this.nodeMarkerViews = {};
 
     // Map
@@ -276,7 +276,7 @@ function KnowledgeMap(params) {
                 if (!params.hideReview || !exerciseModel.get("isReview")) {
                     element = createEl();
                     element.appendTo(suggestedExercisesContent);
-                    this.exerciseRowViews.push(new KnowledgeMapViews.ExerciseRow({
+                    this.nodeRowViews.push(new KnowledgeMapViews.NodeRow({
                         model: exerciseModel,
                         el: element,
                         type: "suggested",
@@ -289,7 +289,7 @@ function KnowledgeMap(params) {
 
             element = createEl();
             element.appendTo(allExercisesContent);
-            this.exerciseRowViews.push(new KnowledgeMapViews.ExerciseRow({
+            this.nodeRowViews.push(new KnowledgeMapViews.NodeRow({
                 model: exerciseModel,
                 el: element,
                 type: "all",
@@ -307,7 +307,7 @@ function KnowledgeMap(params) {
         var handler = function(evt) {
             // as doFilter is running while elements are detached, dimensions
             // will not work. Record the dimensions before we call it.
-            var row = _.find(this.exerciseRowViews, function(row) { return row.visible; });
+            var row = _.find(this.nodeRowViews, function(row) { return row.visible; });
 
             var rowHeight;
             if (row) {
@@ -331,7 +331,7 @@ function KnowledgeMap(params) {
     this.queryRowsRendered = false;
     this.inflateVisible = function(evt) {
         if (this.queryRowsRendered) return;
-        _.each(this.exerciseRowViews, function(rowView) {
+        _.each(this.nodeRowViews, function(rowView) {
             if (rowView.visible && !rowView.inflated) {
                 rowView.inflate();
             }
@@ -360,7 +360,7 @@ function KnowledgeMap(params) {
         if (bounds)
             bounds = KnowledgeMapViews.NodeMarker.extendBounds(bounds);
 
-        _.each(this.exerciseRowViews, function(row) {
+        _.each(this.nodeRowViews, function(row) {
 
             var exerciseName = row.model.get("lowercaseName");
 
@@ -754,7 +754,7 @@ function KnowledgeMap(params) {
         if (this.queryNodesRendered) return;
         this.queryNodesRendered = true;
 
-        _.each(this.exerciseRowViews, function(row) {
+        _.each(this.nodeRowViews, function(row) {
             if (row.options.type == "all" && this.nodeMarkerViews[row.nodeName]) {
                 this.nodeMarkerViews[row.nodeName].updateAppearance();
             }
@@ -825,7 +825,7 @@ function KnowledgeMap(params) {
         var counts = { "suggested": 0, "all": 0 };
         var filterText = self.filterSettings.get("filterText");
 
-        $.each(self.exerciseRowViews, function(idx, exerciseRowView) {
+        $.each(self.nodeRowViews, function(idx, exerciseRowView) {
             if (exerciseRowView.visible)
                 counts[exerciseRowView.options.type]++;
         });
@@ -843,7 +843,7 @@ function KnowledgeMap(params) {
             self.getElement("hide-on-dashboard-filter").hide();
             if (!self.admin)
                 self.getElement("exercise-all-exercises").hide();
-            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + self.exerciseRowViews.length + ")").show();
+            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + self.nodeRowViews.length + ")").show();
         } else {
             self.getElement("dashboard-filter-clear").hide();
             self.getElement("hide-on-dashboard-filter").show();
