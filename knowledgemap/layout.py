@@ -26,8 +26,6 @@ def topics_layout(user_data, user_exercise_graph):
     # TODO: once Eater completes his work, re-enable polyline rendering
     layout["polylines"] = []
 
-    suggested_topics = []
-
     # Build each topic's completion/suggested status from constituent exercises
     for topic_dict in layout["topics"]:
 
