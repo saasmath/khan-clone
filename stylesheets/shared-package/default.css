@@ -631,7 +631,7 @@ footer {
     #user-info .dropdown-menu {
         margin: 0;
         left: 0;
-        border: none;
+        border: 1px solid #ccc;
         width: 100%;
         min-width: 86px;
         padding: 3px 0px;
@@ -3207,6 +3207,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     margin-top: -4px;
     padding: 4px 10px;
 }
+#sitewide-navigation .nav-subheader .topic-browser-dropdown {
+    position: static;
+}
 #sitewide-navigation .nav-subheader .topic-browser-dropdown .caret {
     margin-left: 2px;
     margin-top: 8px;
@@ -3218,7 +3221,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     color: #fff;
 }
 #sitewide-navigation .nav-subheader .topic-browser-dropdown.open .caret {
-  border-top: 4px solid #FFF;
+    border-top: 4px solid #FFF;
 }
 
 #sitewide-navigation .nav-subheader .dropdown-menu:before {
