@@ -160,12 +160,16 @@
                                 <nav>
                                   <span class="links nav-subheader">
                                     <span class="dropdown topic-browser-dropdown">
-                                      <a data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link dropdown-toggle"{% else %}class="watch-link dropdown-toggle"{% endif %}>Watch <b class="caret"></b></a>
-                                    <a href="/exercisedashboard" data-tag="Header" {% if selected_nav_link == "practice" %}class="selected practice-link"{% endif %}>Practice</a>
-                                    <a href="/class_profile" data-tag="Header" {% if selected_nav_link == "coach" %}class="selected coach-link"{% endif %}>Coach</a>
-                                    <a href="/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
-                                    <a href="/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
-                                    <div style="clear: both"></div>
+                                      {% if watch_topic_browser_enabled %}
+                                      <a data-tag="Header" class="watch-link dropdown-toggle">Watch <b class="caret"></b></a>
+                                      {% else %}
+                                      <a href="/#browse" data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link"{% else %}class="watch-link"{% endif %}>Watch</a>
+                                      {% endif %}
+                                      <a href="/exercisedashboard" data-tag="Header" {% if selected_nav_link == "practice" %}class="selected practice-link"{% endif %}>Practice</a>
+                                      <a href="/class_profile" data-tag="Header" {% if selected_nav_link == "coach" %}class="selected coach-link"{% endif %}>Coach</a>
+                                      <a href="/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
+                                      <a href="/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
+                                      <div style="clear: both"></div>
                                     </span>
                                   </span>
                                 </nav>
@@ -262,9 +266,12 @@
     </script>
     {%- endif -%}
 
+    {% if watch_topic_browser_enabled %}
     <script type="text/javascript">
+    HeaderTopicBrowser.init();
     HeaderTopicBrowser.setData({{ templatetags.topic_browser_data() }});
     </script>
+    {% endif %}
 
     </body>
 </html>

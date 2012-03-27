@@ -173,7 +173,6 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
     };
 }
 
-
 $(function() {
     // Configure the search form
     if ($(".page-search input[type=text]").placeholder().length) {
@@ -196,8 +195,6 @@ $(function() {
             jelToggle.dropdown("hover");
         }
     }
-
-    HeaderTopicBrowser.init();
 });
 
 var Badges = {
@@ -859,6 +856,7 @@ var HeaderTopicBrowser = {
         $(".nav-subheader .dropdown-toggle")
             .dropdown()
             .click(function() {
+                gae_bingo.bingo(["topic_browser_clicked_link"]);
                 if (!HeaderTopicBrowser.rendered) {
                     HeaderTopicBrowser.render();
                 }
