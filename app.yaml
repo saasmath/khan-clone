@@ -23,6 +23,7 @@ skip_files:
 - ^requirements\.txt
 - ^agar
 - ^testutil
+- ^tools
 
 handlers:
 - url: /videos

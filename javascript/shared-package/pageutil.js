@@ -175,13 +175,13 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
 
 $(function() {
     // Configure the search form
-    if ($("#page_search input[type=text]").placeholder().length) {
-        initAutocomplete("#page_search input[type=text]", true);
+    if ($(".page-search input[type=text]").placeholder().length) {
+        initAutocomplete(".page-search input[type=text]", true);
     }
 
-    $("#page_search").submit(function(e) {
+    $(".page-search").submit(function(e) {
         // Only allow submission if there is a non-empty query.
-        return !!$.trim($("#page_search input[type=text]").val());
+        return !!$.trim($(this).find("input[type=text]").val());
     });
 
     var jelToggle = $("#user-info .dropdown-toggle");
@@ -193,11 +193,6 @@ $(function() {
         } else {
             // Open dropdown on hover
             jelToggle.dropdown("hover");
-        }
-
-        var width = jelToggle.width();
-        if (width < 60) {
-            jelToggle.parent().find(".dropdown-menu .profile-link").text("Profile");
         }
     }
 });
@@ -883,3 +878,33 @@ var Review = {
         reviewCounterElem.data("counter", reviewsLeftCount);
     }
 };
+
+var HeaderTopicBrowser = {
+    topicBrowserData: null,
+    rendered: false,
+
+    init: function() {
+        $(".nav-subheader .dropdown-toggle")
+            .dropdown()
+            .click(function() {
+                gae_bingo.bingo(["topic_browser_clicked_link"]);
+                if (!HeaderTopicBrowser.rendered) {
+                    HeaderTopicBrowser.render();
+                }
+            });
+    },
+
+    setData: function(topicBrowserData) {
+        this.topicBrowserData = topicBrowserData;
+    },
+
+    render: function() {
+        if (this.topicBrowserData) {
+            var template = Templates.get("shared.topic-browser-pulldown");
+            var html = template({topics: this.topicBrowserData});
+            $("#sitewide-navigation .topic-browser-dropdown").append($(html));
+            this.rendered = true;
+        }
+    }
+};
+

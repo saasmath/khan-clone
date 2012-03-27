@@ -47,6 +47,7 @@ import paypal
 import smarthistory
 import topics
 import goals.handlers
+import appengine_stats
 import stories
 import summer
 import common_core
@@ -72,7 +73,6 @@ from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
-from gae_bingo.gae_bingo import ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -495,19 +495,6 @@ class Search(request_handler.RequestHandler):
                     child_topics = topic.get_child_topics(include_descendants=True)
                     topic.child_topics = [t for t in child_topics if t.has_content()]
 
-        # A/B test showing a matching topic at the top of the page
-        if matching_topic_count > 0:
-            show_matching_topic = ab_test("Search shows matching topic 2", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
-            analytics_bingo = {"name": "Bingo: Search topic 2", "value": "Show" if show_matching_topic else "Hide"}
-
-            if not show_matching_topic:
-                for topic in topics:
-                    topic.matches = False
-                matching_topic_count = 0
-
-        else:
-            analytics_bingo = None
-
         template_values.update({
                            'topics': topics,
                            'videos': filtered_videos,
@@ -515,8 +502,7 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
-                           'matching_topic_count': matching_topic_count,
-                           'analytics_bingo': analytics_bingo
+                           'matching_topic_count': matching_topic_count
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)
@@ -789,6 +775,11 @@ application = webapp2.WSGIApplication([
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
+
+    # Stats about appengine
+    ('/stats/dashboard', dashboard.Dashboard),
+    ('/stats/contentdash', dashboard.ContentDashboard),
+    ('/stats/memcache', appengine_stats.MemcacheStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 
