@@ -336,7 +336,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         if (this.nodeName in this.parent.selectedNodes)
             return;
 
-        $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").addClass("exercise-badge-hover");
         this.parent.highlightNode(this.nodeName, true);
     },
 
@@ -344,7 +343,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         if (this.nodeName in this.parent.selectedNodes)
             return;
 
-        $(".exercise-badge[data-id=\"" + this.parent.escapeSelector(this.nodeName) + "\"]").removeClass("exercise-badge-hover");
         this.parent.highlightNode(this.nodeName, false);
     }
 },
