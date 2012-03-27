@@ -3,6 +3,7 @@
  */
 @import "../shared-package/mixins.less";
 @import "../shared-package/variables.less";
+@import "stack-animations.less";
 
 .stack {
     min-height: 100px;
@@ -37,40 +38,28 @@
     -o-transition: color 0 ease-in;
     transition: none;
 
-    -webkit-animation: none;
-}
-
-/* TODO(kamens) and TODO(jason): all of these animations are webkit-only atm */
-@-webkit-keyframes translate-center-to-ur {
-    85% { top: -202px; left: 510px; }
-    100% { top: -202px; left: 510px; }
-}
-
-@-webkit-keyframes shrink-right-and-fade {
-    85% { opacity: 0.15; -webkit-transform: scale(0.1); }
-    100% { opacity: 0.0; -webkit-transform: scale(0.1); }
+    .animation(none);
 }
 
 .current-card.shrinkRight .current-card-container {
-    -webkit-animation: translate-center-to-ur 0.18s ease-in-out 0s 1 forwards normal;
+    .animation(move-center-to-ur 0.18s ease-in-out 0s 1 forwards normal);
 }
+.current-card.shrinkRight .current-card-container-inner {
+    .animation(shrink-right-and-fade 0.18s ease-in-out 0s 1 forwards normal);
+}
+.current-card.shrinkLeft .current-card-container {
+    .translate(-510px, -202px);
+}
+.current-card.shrinkLeft .current-card-container-inner {
+    .scale(0.1);
+    .opacity(0);
+}
+
 .current-card.shrinkRight #extras,
 .card-type-endofstack #extras,
 .card-type-happypicture #extras,
 .card-type-endofreview #extras {
     display: none;
-}
-.current-card.shrinkRight .current-card-container-inner {
-    -webkit-animation: shrink-right-and-fade 0.18s ease-in-out 0s 1 forwards normal;
-}
-
-.current-card.shrinkLeft .current-card-container {
-    left: -510px;
-    top: -202px;
-}
-.current-card.shrinkLeft .current-card-container-inner {
-    .scale(0.1);
-    .opacity(0);
 }
 
 .stack .card {
@@ -88,7 +77,16 @@
     position: relative;
     margin-bottom: -20px;
     .rotate(-20deg);
+
     z-index: 1;
+}
+.lte9 .stack .card-container {
+    /* *
+     * Rotate these in IE too.
+     * WARNING: This is brittle. If we change the rotation from -20deg, these values need to be recalculated.
+     */
+    filter: ~"progid:DXImageTransform.Microsoft.Matrix(M11=0.9396926207859084, M12=0.3420201433256687, M21=-0.3420201433256687, M22=0.9396926207859084, sizingMethod='auto expand')";
+    zoom: 1;
 }
 
 .stack .card .card-face {
@@ -105,7 +103,7 @@
     background-color: #aaa;
 }
 .stack .card-face.card-back {
-    .box-shadow(inset 0 0 0 2px #fff, inset 0 0 0 4px #cfcfcf);
+    .box-shadow(~"inset 0 0 0 2px #fff, inset 0 0 0 4px #cfcfcf");
     background-color: #ccc;
 }
 
@@ -178,6 +176,9 @@
     height: 40px;
     margin-right: 20px;
 }
+.lte8 .current-card .leaves .leaf {
+    background: transparent url(/images/power-mode/card-leaf-empty-small.png) no-repeat 50% 0;
+}
 
 .stack .leaves .leaf {
     width: 5px;
@@ -207,24 +208,24 @@
 .leaves .leaf.earned .full-leaf {
     background: url(/images/power-mode/card-leaf-full-large.png) no-repeat;
     background-size: 40px 40px;
+    opacity: 0; /* Don't support IE < 8 on purpose. It screws up display of transparent PNG leaf */
+    -moz-opacity: 0;
     .scale(8);
-    .opacity(0);
     .transition(all 0.18s ease-in-out);
 
     width: 40px;
     height: 40px;
     margin: 0 auto;
 }
-
-@-webkit-keyframes fly-in-leaf {
-    0% { -webkit-transform: scale(8); opacity: 0; }
-    66% { -webkit-transform: scale(1); opacity: 0.17; }
-    100% { -webkit-transform: scale(1); opacity: 1.0; }
+.lte8 .leaves .leaf.earned .full-leaf {
+    background: url(/images/power-mode/card-leaf-full-small.png) no-repeat 50% 0;
 }
+
 .leaves .leaf.earned .full-leaf.animated {
-    -webkit-animation: fly-in-leaf 0.3s ease-out 0s 1 forwards normal;
+    .animation(fly-in-leaf 0.3s ease-out 0s 1 forwards normal);
     .scale(1);
-    .opacity(100);
+    opacity: 1;
+    -moz-opacity: 1;
 }
 
 .stack .leaves .leaf.earned {
@@ -397,7 +398,7 @@
     height: 100%;
     .border-radius(3px);
     #gradient > .vertical(rgb(43,194,83),rgb(84,240,84));
-    .box-shadow(inset 0 2px 9px  rgba(255,255,255,0.3),inset 0 -2px 6px rgba(0,0,0,0.4));
+    .box-shadow(~"inset 0 2px 9px  rgba(255,255,255,0.3)");
     position: relative;
     overflow: hidden;
 }
@@ -416,8 +417,7 @@
 }
 
 .end-of-stack-info .progress-graph.current-stack .skill-bar .fill.green {
-    -webkit-animation: progress-bar 1s;
-    -moz-animation: progress-bar 1s;
+    .animation(progress-bar 1s);
 }
 .end-of-stack-info .progress-graph.current-stack .skill-bar .fill.gray {
     position: relative;
@@ -433,8 +433,7 @@
      * are connected, timing-wise. Don't change one without changing the other appropriately
      * and taking a look at the keyframes %'s in each animation.
      */
-    -webkit-animation: progress-bar-proficient 1.5s;
-    -moz-animation: progress-bar-proficient 1.5s;
+    .animation(progress-bar-proficient 1.5s);
 }
 
 .end-of-stack-info .progress-graph.current-topic .skill-bar .fill {
@@ -465,86 +464,6 @@
     top: -2px;
     margin-left: 10px;
 }
-/** 
- * Leaving out the "to" or 100% state in these keyframe animations 
- * causes the fill to animate based on the inline width.
- */
-
-@-webkit-keyframes progress-bar {
-   0% { width: 0; opacity: 0.6; }
-}
-@-moz-keyframes progress-bar {
-   0% { width: 0; opacity: 0.6; }
-}
-@-webkit-keyframes progress-bar-proficient {
-   0% { opacity: 0; }
-   66% { opacity: 0; } /* Keep opacity at 0 until progress bar is done filling */
-}
-@-moz-keyframes progress-bar-proficient {
-   0% { opacity: 0; }
-   66% { opacity: 0; } /* Keep opacity at 0 until progress bar is done filling */
-}
-
-/**
- * Beginner end-of-stack calculation animations
- */
-.stack .card-container.into-pocket,
-.stack .card-container.into-pocket .card-container-inner {
-    -webkit-animation-duration: 0.55s;
-    -webkit-animation-timing-function: linear;
-    -webkit-animation-fill-mode: forwards;
-}
-
-/* Start arc.
- * See http://lea.verou.me/2012/02/moving-an-element-along-a-circle/ to learn about
- * the chaining transforms (rotate, translate, rotate, translate) used here.
- */
-.half-circle-arc {
-	0% {
-        -webkit-transform: rotate(0deg) translateX(70px) rotate(0deg) translateX(-70px);
-	}
-	100% {
-		-webkit-transform: rotate(-180deg) translateX(70px) rotate(180deg) translateX(-70px);
-	}
-}
-
-@-webkit-keyframes card-up-down { .half-circle-arc; }
-
-.stack .card-container.into-pocket { -webkit-animation-name: card-up-down; }
-/* End arc */
-
-/* Start arc's final position adjustment */
-.arc-adjustment(@ix, @yTweak) {
-    @x: -515px + 28px * @ix;
-    @y: 45px - (22px * @ix) + @yTweak;
-
-    100% {
-        -webkit-transform: translateX(@x) translateY(@y);
-    }
-}
-
-@-webkit-keyframes card-left-right-0 { .arc-adjustment(0, 0px); } 
-@-webkit-keyframes card-left-right-1 { .arc-adjustment(1, 5px); } 
-@-webkit-keyframes card-left-right-2 { .arc-adjustment(2, -7px); } 
-@-webkit-keyframes card-left-right-3 { .arc-adjustment(3, -3px); } 
-@-webkit-keyframes card-left-right-4 { .arc-adjustment(4, 2px); } 
-@-webkit-keyframes card-left-right-5 { .arc-adjustment(5, 0px); } 
-@-webkit-keyframes card-left-right-6 { .arc-adjustment(6, 7px); } 
-@-webkit-keyframes card-left-right-7 { .arc-adjustment(7, 1px); } 
-
-.stack .card-container.into-pocket-0 .card-container-inner { -webkit-animation-name: card-left-right-0; }
-.stack .card-container.into-pocket-1 .card-container-inner { -webkit-animation-name: card-left-right-1; }
-.stack .card-container.into-pocket-2 .card-container-inner { -webkit-animation-name: card-left-right-2; }
-.stack .card-container.into-pocket-3 .card-container-inner { -webkit-animation-name: card-left-right-3; }
-.stack .card-container.into-pocket-4 .card-container-inner { -webkit-animation-name: card-left-right-4; }
-.stack .card-container.into-pocket-5 .card-container-inner { -webkit-animation-name: card-left-right-5; }
-.stack .card-container.into-pocket-6 .card-container-inner { -webkit-animation-name: card-left-right-6; }
-.stack .card-container.into-pocket-7 .card-container-inner { -webkit-animation-name: card-left-right-7; }
-/* End arc's final position adjustment */
-
-/**
- * End end-of-stack calculation animations
- */
 
 /**
  * Read-only historical problem viewing mode
@@ -586,8 +505,8 @@
         margin: -50% 0; // Don't let the image affect the height of its container
     }
 .exercises-header .practice-exercise-topic-context {
-    .opacity(30);
     .transition(opacity 0.1s ease-in-out);
+    .opacity(30);
 }
 .exercises-header:hover .practice-exercise-topic-context.solid-hover {
     .opacity(100);
