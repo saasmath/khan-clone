@@ -252,8 +252,26 @@ a.signup-link {
     margin-left: 2em;
 }
 
+.signup-container .providers-container {
+    padding: 0 2em 2em;
+}
+
+.signup-container .providers-container h4 {
+    margin-bottom: 0.5em;
+}
+
 .signup-container .providers {
     height: auto;
+    display: inline-block;
+}
+
+.signup-container .providers-info {
+    display: inline-block;
+    font-family: "MuseoSans500", sans-serif;
+    font-size: 14px;
+    width: 12em;
+    margin-top: 0.5em;
+    margin-left: 1em;
 }
 
 .signup-container #submit-button {

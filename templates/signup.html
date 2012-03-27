@@ -43,28 +43,29 @@
         </div>
 
 
-
-
         <h3>Already using Google or Facebook to log into Khan Academy?</h3>
-        <h4>Log in with</h4>
-        <ul class="providers">
-        <li class="action-gradient" id="login-google">
-            <div class="img-container">
-                <a href="{{google_url}}">
-                    <img width="180" height="65" alt="Google" src="/images/google-logo-large.png" >
-                </a>
-            </div>
-        </li>
+        <div class="providers-container">
+            <h4>Log in with</h4>
+            <ul class="providers">
+            <li class="action-gradient" id="login-google">
+                <div class="img-container">
+                    <a href="{{google_url}}">
+                        <img width="180" height="65" alt="Google" src="/images/google-logo-large.png" >
+                    </a>
+                </div>
+            </li>
 
-        {% if App.facebook_app_secret %}
-        <li id="login-facebook" class="action-gradient">
-            <div class="img-container">
-            <img width="180" height="65" alt="Facebook" src="/images/facebook-logo-large.png" >
-            </div>
-        </li>
-        {% endif %}
-        </ul>
+            {% if App.facebook_app_secret %}
+            <li id="login-facebook" class="action-gradient">
+                <div class="img-container">
+                <img width="180" height="65" alt="Facebook" src="/images/facebook-logo-large.png" >
+                </div>
+            </li>
+            {% endif %}
+            </ul>
 
+            <div class="providers-info">...and then we will create your Khan Academy username and password</div>
+        </div>
 
         </form>
     </div>
