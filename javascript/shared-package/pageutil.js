@@ -173,9 +173,6 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
     };
 }
 
-function initWatchTopicBrowser() {
-    $(".nav-subheader .dropdown-toggle").dropdown();
-}
 
 $(function() {
     // Configure the search form
@@ -200,7 +197,7 @@ $(function() {
         }
     }
 
-    initWatchTopicBrowser();
+    HeaderTopicBrowser.init();
 });
 
 var Badges = {
@@ -853,3 +850,32 @@ var Review = {
         reviewCounterElem.data("counter", reviewsLeftCount);
     }
 };
+
+var HeaderTopicBrowser = {
+    topicBrowserData: null,
+    rendered: false,
+
+    init: function() {
+        $(".nav-subheader .dropdown-toggle")
+            .dropdown()
+            .click(function() {
+                if (!HeaderTopicBrowser.rendered) {
+                    HeaderTopicBrowser.render();
+                }
+            });
+    },
+
+    setData: function(topicBrowserData) {
+        this.topicBrowserData = topicBrowserData;
+    },
+
+    render: function() {
+        if (this.topicBrowserData) {
+            var template = Templates.get("shared.topic-browser-pulldown");
+            var html = template({topics: this.topicBrowserData});
+            $("#sitewide-navigation .topic-browser-dropdown").append($(html));
+            this.rendered = true;
+        }
+    }
+};
+

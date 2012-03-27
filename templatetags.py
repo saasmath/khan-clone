@@ -197,8 +197,8 @@ def topic_browser_get_topics(tree, level=0):
             # Show leaf node as a link
             item_list.append({
                 "level": level,
-                "href": escape(child.relative_url),
-                "title": escape(child.title),
+                "href": child.relative_url,
+                "title": child.title,
                 "has_divider": needs_divider
             })
 
@@ -212,9 +212,8 @@ def topic_browser_get_topics(tree, level=0):
             item_list.append({
                 "level": level,
                 "href": None,
-                "title": escape(child.title),
-                "children": child_list,
-                "child_height": len(child_list) * 31
+                "title": child.title,
+                "children": child_list
             })
 
         else:
@@ -225,7 +224,7 @@ def topic_browser_get_topics(tree, level=0):
                 "href": None,
                 "has_children": True,
                 "has_divider": True,
-                "title": escape(child.title)
+                "title": child.title
             })
 
             item_list += topic_browser_get_topics(child, level=level + 1)
@@ -236,7 +235,10 @@ def topic_browser_get_topics(tree, level=0):
 
     return item_list if len(item_list) > 0 else None
 
-def topic_browser_pulldown(version_number=None):
+@layer_cache.cache_with_key_fxn(lambda version_number=None:
+    "Templatetags.topic_browser_data_%s" % (
+    version_number if version_number else models.Setting.topic_tree_version()))
+def topic_browser_data(version_number=None):
     if version_number:
         version = models.TopicVersion.get_by_number(version_number)
     else:
@@ -249,11 +251,7 @@ def topic_browser_pulldown(version_number=None):
     tree = root.make_tree(types = ["Topics"])
     topics_list = topic_browser_get_topics(tree)
 
-    template_values = {
-       'topics': topics_list
-    }
-
-    return shared_jinja.get().render_template("topic_browser_pulldown.html", **template_values)
+    return apijsonify.jsonify(topics_list)
 
 def video_name_and_progress(video):
     return "<span class='vid-progress v%d'>%s</span>" % (video.key().id(), escape(video.title.encode('utf-8', 'ignore')))

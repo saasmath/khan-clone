@@ -68,6 +68,7 @@ javascript = {
             "profile-model.js",
             "hover-card-view.js",
             "hover-card.handlebars",
+            "topic-browser-pulldown.handlebars",
         ]
     },
     "video": {

@@ -166,7 +166,6 @@
                                     <a href="/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
                                     <a href="/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
                                     <div style="clear: both"></div>
-                                    {{ templatetags.topic_browser_pulldown() }}
                                     </span>
                                   </span>
                                 </nav>
@@ -251,6 +250,7 @@
             Analytics.trackInitialPageLoad(_initialPageTime);
         });
         {% endif %}
+
     </script>
     {%- endif -%}
 
@@ -261,6 +261,10 @@
     window.GoalsBootstrap = {{ global_goals }};
     </script>
     {%- endif -%}
+
+    <script type="text/javascript">
+    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data() }});
+    </script>
 
     </body>
 </html>
