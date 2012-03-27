@@ -47,6 +47,7 @@ import paypal
 import smarthistory
 import topics
 import goals.handlers
+import appengine_stats
 import stories
 import summer
 import common_core
@@ -779,6 +780,11 @@ application = webapp2.WSGIApplication([
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
+
+    # Stats about appengine
+    ('/stats/dashboard', dashboard.Dashboard),
+    ('/stats/contentdash', dashboard.ContentDashboard),
+    ('/stats/memcache', appengine_stats.MemcacheStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 
