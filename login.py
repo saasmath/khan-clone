@@ -323,21 +323,22 @@ class Signup(request_handler.RequestHandler):
         verification_link = CompleteSignup.build_link(unverified_user)
 
         self.send_verification_email(email, verification_link)
+        
+        response_json = {
+                'success': True,
+                'email': email,
+                'existing_google_user_detected': existing_google_user_detected,
+                }
+        
+        if App.is_dev_server:
+            response_json['token'] = verification_token.value
 
         # TODO(benkomalo): since users are now blocked from further access
         #    due to requiring verification of e-mail, we need to do something
         #    about migrating phantom data (we can store the phantom id in
         #    the UnverifiedUser object and migrate after they finish
         #    registering, for example)
-        self.render_json({
-                'success': True,
-                'email': email,
-                'existing_google_user_detected': existing_google_user_detected,
-
-                # TODO(benkomalo): STOPSHIP - don't send down the verification
-                #    token obviously - this is just useful for debugging
-                'token': verification_token.value,
-                })
+        self.render_json(response_json, camel_cased=True)
 
     def send_verification_email(self, recipient, verification_link):
         template_values = {

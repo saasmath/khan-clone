@@ -9,6 +9,8 @@
         <img src="/images/hand-tree.png" class="tree">
         <div class="instructions">Follow the link in that message to create your Khan Academy username and password.</div>
 
-        <a href="{{link}}">{{link}}</a>
+        {{#if token}}
+        <div class="debug">token for debugging: <a href="/completesignup?token={{token}}">{{token}}</a></div>
+        {{/if}}
     </div>
 </div>

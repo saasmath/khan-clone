@@ -93,14 +93,14 @@ Login.handleSignupResponse = function(data) {
 
     var errors = data["errors"] || {};
     if (_.isEmpty(errors)) {
-        // TODO(benkomalo): STOPSHIP - remove. only for debugging.
-        var verificationLink = "/completesignup?token=" + data["token"];
-
         // Success!
         var template = Templates.get("login.signup-success");
         var dialogEl = $(template({
                 email: data["email"],
-                link: verificationLink
+
+                // On dev servers, the token is sent back down for easy
+                // debugging. This is obviously not available on prod.
+                token: data["token"]
             }))
             .appendTo($(document.body))
             .modal({
