@@ -823,7 +823,7 @@ Exercises.SessionStats = Backbone.Model.extend({
         LocalStore.del(this.cacheKey());
     },
 
-    /*
+    /**
      * Clears cache and disables sessionStats from being accumulated
      * if any more events are fired.
      */
