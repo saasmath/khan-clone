@@ -29,7 +29,14 @@ def topics_layout(user_data):
         badge_name = TopicExerciseBadge.name_for_topic_key_name(topic_dict["key_name"])
         badge = all_badges_dict().get(badge_name, None)
 
-        if badge and badge.is_already_owned_by(user_data):
+        if not badge:
+            raise Exception("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
+
+        # Send down the ratio of constituent exercises completed:required as a tuple
+        topic_dict["proficient"] = badge.count_proficient(user_data)
+        topic_dict["total"] = badge.count_total()
+
+        if badge.is_already_owned_by(user_data):
             topic_dict["status"] = "proficient"
 
     return layout
