@@ -70,6 +70,40 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
 });
 
 /**
+ * ExerciseRow renders exercise-specific rows in the knowledge map's left-hand
+ * drawer.
+ */
+KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
+
+    getTemplate: function() {
+        // TODO: do these templates really need to be in "shared"?
+        return Templates.get(this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise");
+    },
+
+    showGoalIcon: function(visible) {
+        if (visible) {
+            this.el.find(".exercise-goal-icon").show();
+        }
+        else {
+            this.el.find(".exercise-goal-icon").hide();
+        }
+    }
+    
+});
+
+/**
+ * TopicRow renders topic-specific rows in the knowledge map's left-hand
+ * drawer.
+ */
+KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
+
+    getTemplate: function() {
+        return Templates.get("exercises.knowledgemap-topic");
+    }
+
+});
+
+/**
  * NodeMarker renders nodes of any type on the knowledge map itself.
  */
 KnowledgeMapViews.NodeMarker = Backbone.View.extend({
@@ -326,40 +360,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         var swe = new google.maps.LatLng(sw.lat() - dlat, sw.lng() - dlng);
 
         return new google.maps.LatLngBounds(swe, nee);
-    }
-
-});
-
-/**
- * ExerciseRow renders exercise-specific rows in the knowledge map's left-hand
- * drawer.
- */
-KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
-
-    getTemplate: function() {
-        // TODO: do these templates really need to be in "shared"?
-        return Templates.get(this.options.admin ? "shared.knowledgemap-admin-exercise" : "shared.knowledgemap-exercise");
-    },
-
-    showGoalIcon: function(visible) {
-        if (visible) {
-            this.el.find(".exercise-goal-icon").show();
-        }
-        else {
-            this.el.find(".exercise-goal-icon").hide();
-        }
-    }
-    
-});
-
-/**
- * TopicRow renders topic-specific rows in the knowledge map's left-hand
- * drawer.
- */
-KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
-
-    getTemplate: function() {
-        return Templates.get("exercises.knowledgemap-topic");
     }
 
 });
