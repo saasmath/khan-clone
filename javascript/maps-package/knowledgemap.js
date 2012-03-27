@@ -841,7 +841,7 @@ function KnowledgeMap(params) {
             self.getElement("hide-on-dashboard-filter").hide();
             if (!self.admin)
                 self.getElement("exercise-all-exercises").hide();
-            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + graph_dict_data.length + ")").show();
+            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + self.exerciseRowViews.length + ")").show();
         } else {
             self.getElement("dashboard-filter-clear").hide();
             self.getElement("hide-on-dashboard-filter").show();
