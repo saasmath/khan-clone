@@ -359,7 +359,7 @@ class Signup(request_handler.RequestHandler):
 class CompleteSignup(request_handler.RequestHandler):
     """ A handler for a page that allows users to create a password to login
     with a Khan Academy account. This is also being doubly used for existing
-    Google/FB users to add a password to their account
+    Google/FB users to add a password to their account.
 
     """
 
@@ -401,7 +401,8 @@ class CompleteSignup(request_handler.RequestHandler):
         has verified ownership of their e-mail account.
 
         The request URI must include a valid EmailVerificationToken, and
-        can be made via build_link().
+        can be made via build_link(), or be made by a user without an existing
+        password set.
 
         """
         
@@ -412,8 +413,20 @@ class CompleteSignup(request_handler.RequestHandler):
             self.redirect("/")
             return
 
+        if user_data and user_data.has_password():
+            # The user already has a KA login - redirect them to their profile
+            self.redirect(user_data.profile_root)
+            return
+
         values = {}
-        if user_data:
+        if valid_token:
+            # Give priority to the token in the URL.
+            values['email'] = valid_token.email
+            user_data = None
+        else:
+            # Must be that the user is signing in with Google/FB and wanting
+            # to create a KA password to associate with it
+
             # TODO(benkomalo): handle storage for FB users. Right now their
             # "email" value is a URI like http://facebookid.ka.org/1234
             if not user_data.is_facebook_user:
@@ -421,8 +434,6 @@ class CompleteSignup(request_handler.RequestHandler):
             values['nickname'] = user_data.nickname
             values['gender'] = user_data.gender
             values['username'] = user_data.username
-        else:
-            values['email'] = valid_token.email
 
         template_values = {
             'user': user_data,
@@ -435,9 +446,16 @@ class CompleteSignup(request_handler.RequestHandler):
         valid_token = self.validated_token()
         user_data = UserData.current()
         if not valid_token and not user_data:
-            # TODO(benkomalo): do something nicer
-            self.response.bad_request("Bad token")
+            logging.warn("No valid token or user for /completesignup")
+            self.redirect("/")
             return
+
+        if valid_token:
+            if user_data:
+                logging.warn("Existing user is signed in, but also specified "
+                             "a valid EmailVerificationToken. Ignoring "
+                             " existing sign-in and using token")
+            user_data = None
 
         # Store values in a dict so we can iterate for monotonous checks.
         values = {
