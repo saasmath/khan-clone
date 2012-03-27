@@ -55,9 +55,7 @@ def set_auth_cookie(handler, user, auth_token=None):
                        path='/',
                        domain=None,
                        secure=False,
-                       # TODO(benkomalo): make this httponly!
-                       # STOPSHIP - this is just easier for testing for now
-                       httponly=False)
+                       httponly=True)
     set_request_cookie(AUTH_COOKIE_NAME, auth_token)
 
 def set_under13_cookie(handler):
