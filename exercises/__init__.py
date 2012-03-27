@@ -96,6 +96,7 @@ def exercise_graph_dict_json(user_data, admin=False):
             'h_position': graph_dict["h_position"],
             'v_position': graph_dict["v_position"],
             'goal_req': (graph_dict["name"] in goal_exercises),
+            'states': user_exercise_graph.states(graph_dict["name"]),
 
             # get_by_name returns only exercises visible to current user
             'prereqs': [prereq["name"] for prereq in graph_dict["prerequisites"] if models.Exercise.get_by_name(prereq["name"])],

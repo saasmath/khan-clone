@@ -135,10 +135,10 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
         jelMapContent.height(newHeight);
 
-
-        // Account for padding in the dashboard drawer
+        // Account for padding in the dashboard drawer and review link
+        var adjustment = 20 + $("#dashboard-review-exercises").height();
         var jelDrawerInner = $(".dashboard-drawer-inner", context);
-        jelDrawerInner.height(jelDrawerInner.height() - 20);
+        jelDrawerInner.height(jelDrawerInner.height() - adjustment);
 
         if (self.knowledgeMap && self.knowledgeMap.map)
             google.maps.event.trigger(self.knowledgeMap.map, "resize");
@@ -179,10 +179,9 @@ function KnowledgeMap(params) {
     this.modelsByName = {}; // fast access to models by name
     this.filterSettings = new Backbone.Model({"filterText": "---", "userShowAll": false});
     this.numSuggestedExercises = 0;
-    this.numRecentExercises = 0;
 
     // Views
-    this.exerciseRowViews = [];
+    this.nodeRowViews = [];
     this.nodeMarkerViews = {};
 
     // Map
@@ -256,7 +255,6 @@ function KnowledgeMap(params) {
 
     this.initSidebar = function() {
         var suggestedExercisesContent = this.admin ? null : this.getElement("suggested-exercises-content");
-        var recentExercisesContent = this.admin ? null : this.getElement("recent-exercises-content");
         var allExercisesContent = this.getElement("all-exercises-content");
 
         // ensure blank elements take up the right amount of space
@@ -265,13 +263,20 @@ function KnowledgeMap(params) {
         };
 
         _.each(this.modelsByName, function(exerciseModel) {
+
+            if (!exerciseModel.get("states")) {
+                // TODO(kamens): need to handle topic/exercise
+                // model/view differentiation here.
+                return;
+            }
+
             // Create views
             var element;
             if (exerciseModel.get("isSuggested")) {
                 if (!params.hideReview || !exerciseModel.get("isReview")) {
                     element = createEl();
                     element.appendTo(suggestedExercisesContent);
-                    this.exerciseRowViews.push(new KnowledgeMapViews.ExerciseRow({
+                    this.nodeRowViews.push(new KnowledgeMapViews.NodeRow({
                         model: exerciseModel,
                         el: element,
                         type: "suggested",
@@ -282,23 +287,9 @@ function KnowledgeMap(params) {
                 }
             }
 
-            if (exerciseModel.get("recent")) {
-                element = createEl();
-                element.appendTo(recentExercisesContent);
-                this.exerciseRowViews.push(new KnowledgeMapViews.ExerciseRow({
-                    model: exerciseModel,
-                    el: element,
-                    type: "recent",
-                    admin: this.admin,
-                    parent: this
-                }));
-
-                this.numRecentExercises++;
-            }
-
             element = createEl();
             element.appendTo(allExercisesContent);
-            this.exerciseRowViews.push(new KnowledgeMapViews.ExerciseRow({
+            this.nodeRowViews.push(new KnowledgeMapViews.NodeRow({
                 model: exerciseModel,
                 el: element,
                 type: "all",
@@ -316,7 +307,7 @@ function KnowledgeMap(params) {
         var handler = function(evt) {
             // as doFilter is running while elements are detached, dimensions
             // will not work. Record the dimensions before we call it.
-            var row = _.find(this.exerciseRowViews, function(row) { return row.visible; });
+            var row = _.find(this.nodeRowViews, function(row) { return row.visible; });
 
             var rowHeight;
             if (row) {
@@ -340,7 +331,7 @@ function KnowledgeMap(params) {
     this.queryRowsRendered = false;
     this.inflateVisible = function(evt) {
         if (this.queryRowsRendered) return;
-        _.each(this.exerciseRowViews, function(rowView) {
+        _.each(this.nodeRowViews, function(rowView) {
             if (rowView.visible && !rowView.inflated) {
                 rowView.inflate();
             }
@@ -369,7 +360,8 @@ function KnowledgeMap(params) {
         if (bounds)
             bounds = KnowledgeMapViews.NodeMarker.extendBounds(bounds);
 
-        _.each(this.exerciseRowViews, function(row) {
+        _.each(this.nodeRowViews, function(row) {
+
             var exerciseName = row.model.get("lowercaseName");
 
             // single letter filters have lots of matches, so require exercise
@@ -705,9 +697,9 @@ function KnowledgeMap(params) {
 
         // Set visibility of topic-level polylines
         _.each(this.topicPolylines, function(polyline) {
-            var visible = zoom == KnowledgeMapGlobals.options.minZoom;
+            var visible = zoom === KnowledgeMapGlobals.options.minZoom;
 
-            if (visible != !!(polyline.getMap())) {
+            if (visible !== !!(polyline.getMap())) {
                 polyline.setMap(visible ? this.map : null);
             }
         }, this);
@@ -762,7 +754,7 @@ function KnowledgeMap(params) {
         if (this.queryNodesRendered) return;
         this.queryNodesRendered = true;
 
-        _.each(this.exerciseRowViews, function(row) {
+        _.each(this.nodeRowViews, function(row) {
             if (row.options.type == "all" && this.nodeMarkerViews[row.nodeName]) {
                 this.nodeMarkerViews[row.nodeName].updateAppearance();
             }
@@ -830,10 +822,10 @@ function KnowledgeMap(params) {
     };
 
     this.postUpdateFilter = function() {
-        var counts = { "suggested": 0, "recent": 0, "all": 0 };
+        var counts = { "suggested": 0, "all": 0 };
         var filterText = self.filterSettings.get("filterText");
 
-        $.each(self.exerciseRowViews, function(idx, exerciseRowView) {
+        $.each(self.nodeRowViews, function(idx, exerciseRowView) {
             if (exerciseRowView.visible)
                 counts[exerciseRowView.options.type]++;
         });
@@ -844,12 +836,14 @@ function KnowledgeMap(params) {
             self.getElement("exercise-no-results").hide();
         }
 
+        // TODO: would be cool to do all this hiding/showing w/ one or two
+        // classes on an outer container.
         if (filterText) {
             self.getElement("dashboard-filter-clear").show();
             self.getElement("hide-on-dashboard-filter").hide();
             if (!self.admin)
                 self.getElement("exercise-all-exercises").hide();
-            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + graph_dict_data.length + ")").show();
+            self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + self.nodeRowViews.length + ")").show();
         } else {
             self.getElement("dashboard-filter-clear").hide();
             self.getElement("hide-on-dashboard-filter").show();

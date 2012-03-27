@@ -15,19 +15,23 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
     /**
      * Set all required properties for rendering map node
      */
-    setNodeAttrs: function(name, display_name, x, y, iconUrl, zoomBounds) {
+    setNodeAttrs: function(name, displayName, x, y, iconUrl, zoomBounds) {
 
         this.set({
             name: name,
             x: x,
             y: y,
-            display_name: display_name,
-            lowercaseName: display_name.toLowerCase(),
+            display_name: displayName,
+            lowercaseName: displayName.toLowerCase(),
             inAllList: false, // TODO(kamens): remove?
             iconUrl: iconUrl,
             zoomBounds: zoomBounds
         });
 
+    },
+
+    isVisibleAtZoom: function(zoom) {
+        return zoom < this.get("zoomBounds")[0] || zoom > this.get("zoomBounds")[1];
     }
 
 });
@@ -60,16 +64,9 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
 
     initialize: function(attributes) {
 
-        // TODO(kamens): remove/replace w/ simple streak bar/icon?
-        if (this.get("status") == "Suggested") {
-            this.set({"isSuggested": true, "badgeIcon": "/images/node-suggested.png?" + KA_VERSION});
-        } else if (this.get("status") == "Review") {
-            this.set({"isSuggested": true, "isReview": true, "badgeIcon": "/images/node-review.png?" + KA_VERSION});
-        } else if (this.get("status") == "Proficient") {
-            this.set({"isSuggested": false, "badgeIcon": "/images/node-complete.png?" + KA_VERSION});
-        } else {
-            this.set({"isSuggested": false, "badgeIcon": "/images/node-not-started.png?" + KA_VERSION});
-        }
+        this.set({
+            isSuggested: this.get("states")["suggested"] || this.get("states")["reviewing"]
+        });
 
         // Translate exercise properties to standard node properties
         this.setNodeAttrs(
@@ -80,15 +77,6 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
             [KnowledgeMapGlobals.options.minZoom + 1, KnowledgeMapGlobals.options.maxZoom]
         );
-
-        // TODO(kamens): remove/replace w/ simple streak bar/icon?
-        this.set({"streakBar": {
-            "proficient": this.get("progress") >= 1,
-            "suggested": (this.get("status") == "Suggested" || (this.get("progress") < 1 && this.get("progress") > 0)),
-            "progressDisplay": this.get("progress_display"),
-            "maxWidth": 228,
-            "width": Math.min(1.0, this.get("progress")) * 228
-        }});
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);
     },

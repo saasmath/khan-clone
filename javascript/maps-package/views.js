@@ -3,7 +3,7 @@
 // instead of needing the KnowledgeMap naming prefix.
 var KnowledgeMapViews = {}
 
-KnowledgeMapViews.ExerciseRow = Backbone.View.extend({
+KnowledgeMapViews.NodeRow = Backbone.View.extend({
 
     initialize: function() {
         this.visible = false;
@@ -12,9 +12,7 @@ KnowledgeMapViews.ExerciseRow = Backbone.View.extend({
     },
 
     events: {
-        "click .exercise-title": "onBadgeClick",
-        "click .proficient-badge": "onBadgeClick",
-        "click .exercise-show": "onShowExerciseClick"
+        "click .pan-to": "onPanToClick"
     },
 
     inflate: function() {
@@ -29,6 +27,8 @@ KnowledgeMapViews.ExerciseRow = Backbone.View.extend({
             context.url = this.model.url();
         }
 
+        // TODO(kamens): make sure this disabled goal status is still passed
+        // appropriately to KM
         context.disabled = this.model.get("invalidForGoal") || false;
 
         var newContent = $(template(context));
@@ -44,25 +44,19 @@ KnowledgeMapViews.ExerciseRow = Backbone.View.extend({
         this.delegateEvents();
     },
 
-    onBadgeClick: function(evt) {
-        // give the parent a chance to handle this exercise click. If it
-        // doesn't, we'll just follow the anchor href
-        return this.parent.nodeClickHandler(this.model, evt);
-    },
-
     onBadgeMouseover: function(node_name, element) {
         this.parent.highlightNode(node_name, true);
 
-        element.find(".exercise-show").show();
+        element.find(".pan-to").show();
     },
 
     onBadgeMouseout: function(node_name, element) {
         this.parent.highlightNode(node_name, false);
 
-        element.find(".exercise-show").hide();
+        element.find(".pan-to").hide();
     },
 
-    onShowExerciseClick: function() {
+    onPanToClick: function() {
         this.parent.panToNode(this.nodeName);
         this.parent.highlightNode(this.nodeName, true);
     },
@@ -92,7 +86,7 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         this.el = el;
         this.zoom = this.parent.map.getZoom();
 
-        if (this.zoom < this.model.get("zoomBounds")[0] || this.zoom > this.model.get("zoomBounds")[1]) {
+        if (this.model.isVisibleAtZoom(this.zoom)) {
 
             // Don't render nodes outside of their zoom bounds
             this.el.css("display", "none");
