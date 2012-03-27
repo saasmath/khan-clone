@@ -3,6 +3,11 @@
 // instead of needing the KnowledgeMap naming prefix.
 var KnowledgeMapViews = {}
 
+/**
+ * NodeRow is a base view class that can be used to render
+ * a row in the knowledge map's left-hand drawer. It should
+ * be extended by any type of Node, such as ExerciseRow and TopicRow.
+ */
 KnowledgeMapViews.NodeRow = Backbone.View.extend({
 
     initialize: function() {
@@ -64,6 +69,9 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
 
 });
 
+/**
+ * NodeMarker renders nodes of any type on the knowledge map itself.
+ */
 KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
     initialize: function() {
@@ -322,6 +330,10 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
 });
 
+/**
+ * ExerciseRow renders exercise-specific rows in the knowledge map's left-hand
+ * drawer.
+ */
 KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
 
     getTemplate: function() {
@@ -340,6 +352,10 @@ KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
     
 });
 
+/**
+ * TopicRow renders topic-specific rows in the knowledge map's left-hand
+ * drawer.
+ */
 KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
 
     getTemplate: function() {
