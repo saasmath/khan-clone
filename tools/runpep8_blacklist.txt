@@ -497,6 +497,7 @@
 ./sample_data/sample_data.py
 ./search/__init__.py
 ./search/pyporter2/Stemmer.py
+./secrets.py
 ./shared_jinja.py
 ./smarthistory.py
 ./social/templatetags.py
