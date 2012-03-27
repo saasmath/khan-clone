@@ -50,7 +50,8 @@ def main(test_path):
 
     import dev_appserver
     dev_appserver.fix_sys_path()
-    top_project_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+    top_project_dir = os.path.join(__file__, '../..')
+    sys.path.insert(0, top_project_dir)
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages"))
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages/flask.zip"))
 

@@ -44,5 +44,5 @@ end
 
 desc "Run unit tests"
 task :unittest do
-    system "python", "runtests.py"
+    sh "python tools/runtests.py"
 end
