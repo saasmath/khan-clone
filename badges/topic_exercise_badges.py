@@ -7,10 +7,6 @@ import models
 from badges import Badge, BadgeCategory
 from templatefilters import slugify
 
-# Minimum number of constituent exercises required
-# before a specific topic's badge is enabled.
-MINIMUM_REQUIRED_EXERCISES = 5
-
 def sync_with_topic_version(version):
     """ Syncs state of all TopicExerciseBadges with the specified TopicVersion's topic tree.
     This'll add new badges for any new topics that have exercises, retire badges associated
@@ -88,17 +84,7 @@ class TopicExerciseBadge(Badge):
         self.points = 0
         self.badge_category = BadgeCategory.MASTER
         self.is_retired = topic_exercise_badge_type.retired
-
-        # This badge is hidden if it's retired or doesn't have enough constituent exercises
-        self.is_hidden_if_unknown = self.is_retired or not self.has_minimum_required_exercises()
-
-    def has_minimum_required_exercises(self):
-        """ Returns false if this topic badge has less than N constituent
-        exercises. If this is the case, the topic will show up on the knowledge map
-        and function appropriately, but a badge will *not* be visible or awarded to users.
-        """
-
-        return len(self.exercise_names_required) > MINIMUM_REQUIRED_EXERCISES
+        self.is_hidden_if_unknown = self.is_retired
 
     def is_satisfied_by(self, *args, **kwargs):
 
@@ -106,11 +92,6 @@ class TopicExerciseBadge(Badge):
         # is set dynamically by topics, so it must handle self.is_retired
         # manually.
         if self.is_retired:
-            return False
-
-        # This badge doesn't have enough required exercises to be awarded
-        # to anybody.
-        if not self.has_minimum_required_exercises():
             return False
 
         user_data = kwargs.get("user_data", None)
