@@ -389,7 +389,9 @@ class ImportSmartHistory(request_handler.RequestHandler):
             href = link["href"]
             title = link["title"]
             parent_title = link["parent"]
+            content = link["content"]
             youtube_id = link["youtube_id"] if "youtube_id" in link else None
+            extra_properties = {"original_url": href}
 
             if parent_title not in subtopic_dict:
                 subtopic = Topic.insert(title=parent_title,
@@ -417,6 +419,7 @@ class ImportSmartHistory(request_handler.RequestHandler):
                         video = None
                         if video_data:
                             video_data["title"] = title
+                            video_data["extra_properties"] = extra_properties
                             video = models.VersionContentChange.add_new_content(
                                                                 models.Video,
                                                                 version,
@@ -427,6 +430,10 @@ class ImportSmartHistory(request_handler.RequestHandler):
 
                 else:
                     video = video_dict[youtube_id] 
+                    if video.extra_properties != extra_properties:
+                        logging.info("changing extra properties of %i %s %s from %s to %s" % (i, href, title, video.extra_properties, extra_properties))
+                        video.extra_properties = extra_properties
+                        video.put()
                                     
                 if video:
                     subtopic_child_keys[parent_title].append(video.key())

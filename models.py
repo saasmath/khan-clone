@@ -3645,6 +3645,7 @@ class Video(Searchable, db.Model):
     description = db.TextProperty()
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default=0)
+    extra_properties = object_property.UnvalidatedObjectProperty()
 
     # Human readable, unique id that can be used in URLS.
     readable_id = db.StringProperty()
@@ -3907,6 +3908,7 @@ class Video(Searchable, db.Model):
 
         return {
             'title': video.title,
+            'extra_properties': video.extra_properties,
             'description': video.description,
             'youtube_id': video.youtube_id,
             'readable_id': video.readable_id,
