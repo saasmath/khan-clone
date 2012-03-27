@@ -13,6 +13,8 @@ from google.appengine.api import memcache
 from custom_exceptions import TumblrException
 from app import App
 from about import util_about
+import request_handler
+import user_util
 
 TUMBLR_URL = "http://khanacademy.tumblr.com"
 POSTS_PER_PAGE = 5
@@ -109,6 +111,7 @@ def parse_json_posts(json_string):
 
 class ViewBlog(util_about.AboutRequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         offset = self.request_int("offset", default=0)
@@ -140,6 +143,7 @@ class ViewBlog(util_about.AboutRequestHandler):
 
 class ViewBlogPost(util_about.AboutRequestHandler):
 
+    @user_util.open_access
     def get(self):
         post_id = None
 

@@ -12,6 +12,7 @@ except ImportError:
 
 from app import App
 import request_handler
+import user_util
 
 CONSTANT_CONTACT_USERNAME = "shantanu@khanacademy.org"
 
@@ -115,6 +116,7 @@ def subscribe_to_constant_contact(email, list_id):
     return False
 
 class Subscribe(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
 
         email = self.request_string("email")

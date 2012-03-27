@@ -123,6 +123,42 @@ class RequestInputHandler(object):
 
 class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
+    class __metaclass__(type):
+        """Enforce that subclasses of RequestHandler decorate get()/push().
+
+        This metaclass enforces that whenever we create a
+        RequestHandler or subclass thereof, that the class we're
+        creating has a decorator on its get() and push() methods that
+        specify the access needed to get or push (admin, moderator,
+        etc).
+
+        It does this through a two-step process.  In step 1, we make
+        all the access-control decorators set a function-global
+        variable in the method they're decorating.  (This is done in
+        the decorator definitions in user_util.py.)  In step 2, here,
+        we check that that variable is defined.  We can do this
+        because metaclass, when creating a new class, has access to
+        the functions (methods) that the class implements.
+
+        Note that this check happens at import-time, so we don't have
+        to worry about this assertion triggering surprisingly in
+        production.
+        """
+        def __new__(mcls, name, bases, attrs):
+            for fn in ("get", "post"):
+                if fn in attrs:
+                    # TODO(csilvers): remove the requirement that the
+                    # access control decorator go first.  To do that,
+                    # we'll have to store state somewhere other than
+                    # in func_dict (which later decorators overwrite).
+                    assert '_access_control' in attrs[fn].func_dict, \
+                           ('FATAL ERROR: '
+                            'Need to put an access control decorator '
+                            '(from user_util) on %s.%s. '
+                            '(It must be the topmost decorator for the method.)'
+                            % (name, fn))
+            return type.__new__(mcls, name, bases, attrs)
+
     def is_ajax_request(self):
         # jQuery sets X-Requested-With header for this detection.
         if self.request.headers.has_key("x-requested-with"):

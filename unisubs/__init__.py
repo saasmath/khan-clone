@@ -9,6 +9,7 @@ from models import Video
 from models import VideoSubtitles
 from models import VideoSubtitlesFetchReport
 import request_handler
+import user_util
 
 BATCH_SIZE = 5
 DEFER_SECONDS = 1
@@ -21,6 +22,7 @@ TASK_QUEUE = 'subtitles-fetch-queue'
 
 
 class ReportHandler(request_handler.RequestHandler):
+    @user_util.admin_only
     def get(self):
         """Display reports from recent imports"""
         limit = self.request_int('limit', 25)
@@ -40,6 +42,7 @@ class ReportHandler(request_handler.RequestHandler):
 
 
 class ImportHandler(request_handler.RequestHandler):
+    @user_util.admin_only
     def get(self):
         """Start the subtitles import task chain
 
@@ -47,6 +50,7 @@ class ImportHandler(request_handler.RequestHandler):
         """
         self.post()
 
+    @user_util.admin_only
     def post(self):
         """Start the subtitles import task chain
 

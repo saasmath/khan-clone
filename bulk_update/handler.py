@@ -125,7 +125,8 @@ class UpdateKind(webapp.RequestHandler):
                 cancel_uri = self.request.path_url + '?' + self.request.query_string + '&cancel=1'
                 self.response.out.write('To interrupt the request, <a href="%s">click here</a>.' % cancel_uri)
 
-    def post(self):        
+    @user_util.admin_only
+    def post(self):
         # To prevent CSRF attacks, all requests must be from the task queue
         if 'X-AppEngine-QueueName' not in self.request.headers:
             logging.error("Potential CSRF attack detected")

@@ -1,63 +1,125 @@
+"""
+Utilities for handling user accounts.
+
+Among other things, this file provides access-control decorators.
+All handlers that derive from request_handler.py's RequestHandler
+must decorate their get() and post() methods with one of these
+decorators.
+
+Here are the decorators that you can use:
+   @open_access
+   @moderator_only
+   @developer_only
+   @admin_only
+   @manual_access_checking
+
+@manual_access_checking means that the get()/post() routine you are
+writing manually checks that the access is allowed.  Use sparingly!
+"""
+
 from functools import wraps
 import logging
 import urllib
 
 from google.appengine.api import users
 
-import models
 import request_cache
 from app import App
 
-def admin_only(method):
-    '''Decorator that requires a admin account.'''
+def _go_to_login(handler, why):
+    '''Redirects the user to the login page, and logs the access attempt.'''
+    user_data = models.UserData.current()
+    if user_data:
+        logging.warning("Attempt by %s to access %s page"
+                        % (user_data.user_id, why))
+    # can't import util here because of circular dependencies
+    url = "/login?continue=%s" % urllib.quote(handler.request.uri)
+    return handler.redirect(url)
+
+
+def open_access(method):
+    '''Decorator that allows anyone to access this page.'''
 
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        if users.is_current_user_admin():
-            return method(self, *args, **kwargs)
-        else:
-            user_data = models.UserData.current()
-            if user_data:
-                logging.warning("Attempt by %s to access admin-only page" % user_data.user_id)
+        return method(self, *args, **kwargs)
 
-            # can't import util here because of circular dependencies
-            url = "/login?continue=%s" % urllib.quote(self.request.uri)
-
-            self.redirect(url)
-            return
-
+    wrapper._access_control = 'open-access'   # for sanity checks
     return wrapper
+
+# TODO(csilvers): add login_only, with
+# is_current_user_logged_in: users.is_current_user_admin() or user_data is not None
 
 @request_cache.cache()
 def is_current_user_developer():
     user_data = models.UserData.current()
-    return bool(users.is_current_user_admin() or (user_data and user_data.developer))
-
-def is_current_user(user_data):
-    current_user_data = models.UserData.current()
-    return (current_user_data and
-            current_user_data.user_id == user_data.user_id)
+    return (users.is_current_user_admin() or
+            bool(user_data and user_data.developer))
 
 def developer_only(method):
-    '''Decorator that requires a developer account.'''
+    '''Decorator checking that users of a request are register as a developer.'''
 
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         if is_current_user_developer():
             return method(self, *args, **kwargs)
         else:
-            user_data = models.UserData.current()
-            if user_data:
-                logging.warning("Attempt by %s to access developer-only page" % user_data.user_id)
+            return _go_to_login(self, "admin-only")
 
-            # can't import util here because of circular dependencies
-            url = "/login?continue=%s" % urllib.quote(self.request.uri)
-
-            self.redirect(url)
-            return
-
+    wrapper._access_control = 'developer-only'   # checked in RequestHandler
     return wrapper
 
+@request_cache.cache()
+def is_current_user_moderator():
+    user_data = models.UserData.current()
+    return (users.is_current_user_admin() or
+            bool(user_data and (user_data.moderator or user_data.developer)))
+
+def moderator_only(method):
+    '''Decorator checking that users of a request is registered as a moderator.'''
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if is_current_user_moderator():
+            return method(self, *args, **kwargs)
+        else:
+            return _go_to_login(self, "admin-only")
+
+    wrapper._access_control = 'moderator-only'   # checked in RequestHandler
+    return wrapper
+
+
+def admin_only(method):
+    '''Decorator checking that users of a request have an admin account.'''
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if users.is_current_user_admin():
+            return method(self, *args, **kwargs)
+        else:
+            return _go_to_login(self, "admin-only")
+
+    wrapper._access_control = 'admin-only'   # checked in RequestHandler
+    return wrapper
+
+def manual_access_checking(method):
+    '''Decorator that documents the method will do its own access checking.'''
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        return method(self, *args, **kwargs)
+
+    wrapper._access_control = 'manual-access'   # checked in RequestHandler
+    return wrapper
+
+
+def is_current_user(user_data):
+    current_user_data = models.UserData.current()
+    return (current_user_data and
+            current_user_data.user_id == user_data.user_id)
+
+
+# This isn't an access-control method, but is still useful.
 def dev_server_only(method):
     '''Decorator that prevents a handler from working in production'''
 
@@ -78,27 +140,6 @@ def dev_server_only(method):
 
     return wrapper
 
-@request_cache.cache()
-def is_current_user_moderator():
-    user_data = models.UserData.current()
-    return users.is_current_user_admin() or (user_data and (user_data.moderator or user_data.developer))
-
-def moderator_only(method):
-    '''Decorator that requires a moderator account.'''
-
-    @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        if is_current_user_moderator():
-            return method(self, *args, **kwargs)
-        else:
-            user_data = models.UserData.current()
-            if user_data:
-                logging.warning("Attempt by %s to access moderator-only page" % user_data.user_id)
-
-            # can't import util here because of circular dependencies
-            url = "/login?continue=%s" % urllib.quote(self.request.uri)
-
-            self.redirect(url)
-            return
-
-    return wrapper
+# Put down here to avoid circular-import problems.
+# See http://effbot.org/zone/import-confusion.htm
+import models

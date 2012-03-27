@@ -25,6 +25,7 @@ class Dashboard(request_handler.RequestHandler):
             'ProblemLog',
     ])
 
+    @user_util.manual_access_checking
     def get(self):
         if not user_util.is_current_user_developer():
             if App.dashboard_secret and self.request_string("x", default=None) != App.dashboard_secret:
@@ -63,9 +64,11 @@ def daily_graph_context(cls, key):
     return { key: filter(lambda count: hasattr(count, "delta"), counts) }
 
 class RecordStatistics(request_handler.RequestHandler):
+    @user_util.admin_only
     def get(self):
         return self.post()
 
+    @user_util.admin_only
     def post(self):
         DailyStatistic.record_all()
         self.response.out.write("Dashboard statistics recorded.")
@@ -85,6 +88,7 @@ class EntityCounts(request_handler.RequestHandler):
         
 class ContentCountsCSV(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         root = models.Topic.get_root()
         tree = root.make_tree()
@@ -184,6 +188,7 @@ class ContentDashboard(request_handler.RequestHandler):
     
     """
 
+    @user_util.open_access
     def get(self):
         # Right now there is no dynamic data from the db necessary.
         # the template does, however, query Google Analytics

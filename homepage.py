@@ -5,6 +5,7 @@ from jinja2.utils import escape
 
 import library
 import request_handler
+import user_util
 import models
 import layer_cache
 import templatetags
@@ -126,6 +127,7 @@ class ViewHomePage(request_handler.RequestHandler):
 
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self):
 

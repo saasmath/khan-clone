@@ -33,6 +33,7 @@ from experiments import StrugglingExperiment
 from js_css_packages import templatetags
 
 class MoveMapNodes(request_handler.RequestHandler):
+    @user_util.developer_only
     def post(self):
         self.get()
 
@@ -75,6 +76,7 @@ class ViewExercise(request_handler.RequestHandler):
         list(x) for x in zip(*_hints_conversion_tests)]
 
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self, exid=None):
 
         # TODO(david): Is there some webapp2 magic that will allow me not to
@@ -318,6 +320,7 @@ def exercise_graph_dict_json(user_data, admin=False):
 
 class ViewAllExercises(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
@@ -340,6 +343,7 @@ class ViewAllExercises(request_handler.RequestHandler):
         self.render_jinja2_template('viewexercises.html', template_values)
 
 class RawExercise(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
@@ -755,6 +759,7 @@ class UpdateExercise(request_handler.RequestHandler):
         
         db.put(exercise_videos)
 
+    @user_util.developer_only
     def post(self):
         self.get()
 

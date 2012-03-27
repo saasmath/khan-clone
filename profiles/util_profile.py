@@ -9,6 +9,7 @@ except ImportError:
 
 from profiles import templatetags
 import request_handler
+import user_util
 import util
 import models
 import consts
@@ -95,6 +96,7 @@ def get_coach_student_and_student_list(request_handler):
 class ViewClassProfile(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
+    @user_util.manual_access_checking
     def get(self):
         show_coach_resources = self.request_bool('show_coach_resources', default=True)
         coach = UserData.current()
@@ -154,6 +156,7 @@ class ViewClassProfile(request_handler.RequestHandler):
 
 class ViewProfile(request_handler.RequestHandler):
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self, email_or_username=None, subpath=None):
         """Render a student profile.
 
@@ -394,6 +397,7 @@ class UserProfile(object):
 
 class ProfileGraph(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         html = ""
         json_update = ""

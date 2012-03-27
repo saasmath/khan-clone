@@ -4,23 +4,24 @@ from google.appengine.api import users
 import request_handler
 import models
 import models_discussion
-from user_util import admin_only, moderator_only
 from badges.discussion_badges import ModeratorBadge
+import user_util
 
 class RedirectToModPanel(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("/discussion/mod")
 
 class ModPanel(request_handler.RequestHandler):
 
-    @moderator_only
+    @user_util.moderator_only
     def get(self):
         self.render_jinja2_template('discussion/mod/mod.html', { "selected_id": "panel" })
 
 class ModeratorList(request_handler.RequestHandler):
 
     # Must be an admin to change moderators
-    @admin_only
+    @user_util.admin_only
     def get(self):
         mods = models.UserData.gql("WHERE moderator = :1", True)
         self.render_jinja2_template('discussion/mod/moderatorlist.html', {
@@ -28,7 +29,7 @@ class ModeratorList(request_handler.RequestHandler):
             "selected_id": "moderatorlist",
         })
 
-    @admin_only
+    @user_util.admin_only
     def post(self):
         user_data = self.request_user_data("user")
 
@@ -45,7 +46,7 @@ class ModeratorList(request_handler.RequestHandler):
 
 class FlaggedFeedback(request_handler.RequestHandler):
 
-    @moderator_only
+    @user_util.moderator_only
     def get(self):
 
         # Show all non-deleted feedback flagged for moderator attention
@@ -72,7 +73,7 @@ class FlaggedFeedback(request_handler.RequestHandler):
 
 class BannedList(request_handler.RequestHandler):
 
-    @moderator_only
+    @user_util.moderator_only
     def get(self):
         banned_user_data_list = models.UserData.gql("WHERE discussion_banned = :1", True)
         self.render_jinja2_template('discussion/mod/bannedlist.html', {
@@ -80,7 +81,7 @@ class BannedList(request_handler.RequestHandler):
             "selected_id": "bannedlist",
         })
 
-    @moderator_only
+    @user_util.moderator_only
     def post(self):
         user_data = self.request_user_data("user")
 
