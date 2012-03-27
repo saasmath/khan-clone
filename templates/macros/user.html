@@ -44,7 +44,9 @@
     </span>
     <ul class="dropdown-menu vertical-shadow">
         <li><a class="dropdown-link" href="{{profile_root}}">Visit profile</a></li>
+        {% if user_data.has_password() %}
         <li><a class="dropdown-link" href="{{profile_root}}/settings">Change settings</a></li>
+        {% endif %}
         <!-- Facebook's JS logout requires the page_logout ID -->
         <li><a class="dropdown-link" id="page_logout" href="{{logout_url}}">Logout</a></li>
     </ul>
