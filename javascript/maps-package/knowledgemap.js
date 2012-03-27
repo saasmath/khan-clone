@@ -458,8 +458,8 @@ function KnowledgeMap(params) {
         var node = this.dictNodes[dataID];
 
         // Set appropriate zoom level if necessary
-        if (this.map.getZoom() == KnowledgeMapGlobals.options.minZoom)
-            this.map.setZoom(KnowledgeMapGlobals.options.minZoom + 1);
+        if (this.map.getZoom() != node.zoomBounds[0])
+            this.map.setZoom(node.zoomBounds[0]);
 
         // Move the node to the center of the view
         this.map.panTo(node.latLng);
