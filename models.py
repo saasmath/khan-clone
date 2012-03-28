@@ -982,6 +982,12 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
+# Demo user khanacademy.demo2@gmail.com is a coworker of khanacademy.demo@gmail.com
+# khanacademy.demo@gmail.com is coach of a bunch of Khan staff and LASD staff, which is shared
+# with users as a demo. Access to the demo is via /api/auth/token_to_session with
+# oauth tokens for khanacademy.demo2@gmail.com supplied via secrets.py
+COACH_DEMO_COWORKER_EMAIL = "khanacademy.demo2@gmail.com"
+
 class UnverifiedUser(db.Model):
     """ Preliminary signup data, including an e-mail address that needs to be
     verified. """
@@ -1269,6 +1275,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     @property
     def is_phantom(self):
         return util.is_phantom_user(self.user_id)
+
+    @property
+    def is_demo(self):
+        return self.user_email.startswith(COACH_DEMO_COWORKER_EMAIL)
 
     @property
     def is_pre_phantom(self):

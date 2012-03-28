@@ -73,7 +73,6 @@ from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
-from gae_bingo.gae_bingo import ab_test
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -143,6 +142,11 @@ class ViewVideo(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     def get(self, path, video_id):
+        user_data = UserData.current()
+        # Logout and redirect for video views when logged in to demo,
+        if user_data is not None and user_data.is_demo:
+            self.redirect(util.create_logout_url(self.request.uri))
+
         if path:
             path_list = path.split('/')
 
@@ -158,6 +162,11 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
     # handler now.
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
+
+        user_data = UserData.current()
+        # Logout and redirect for video views when logged in to demo,
+        if user_data is not None and user_data.is_demo:
+            self.redirect(util.create_logout_url(self.request.uri))
 
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
@@ -486,19 +495,6 @@ class Search(request_handler.RequestHandler):
                     child_topics = topic.get_child_topics(include_descendants=True)
                     topic.child_topics = [t for t in child_topics if t.has_content()]
 
-        # A/B test showing a matching topic at the top of the page
-        if matching_topic_count > 0:
-            show_matching_topic = ab_test("Search shows matching topic 2", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
-            analytics_bingo = {"name": "Bingo: Search topic 2", "value": "Show" if show_matching_topic else "Hide"}
-
-            if not show_matching_topic:
-                for topic in topics:
-                    topic.matches = False
-                matching_topic_count = 0
-
-        else:
-            analytics_bingo = None
-
         template_values.update({
                            'topics': topics,
                            'videos': filtered_videos,
@@ -506,8 +502,7 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
-                           'matching_topic_count': matching_topic_count,
-                           'analytics_bingo': analytics_bingo
+                           'matching_topic_count': matching_topic_count
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)

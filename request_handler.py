@@ -20,6 +20,7 @@ import cookie_util
 from api.jsonify import jsonify
 import auth.cookies
 import auth.tokens
+from gae_bingo.gae_bingo import ab_test
 
 class RequestInputHandler(object):
 
@@ -433,6 +434,12 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             goals_data = [g.get_visible_data() for g in goals]
             if goals_data:
                 template_values['global_goals'] = jsonify(goals_data)
+
+        # A/B test to show topic browser in the header
+        show_topic_browser = ab_test("Show topic browser in header", ["show", "hide"], ["topic_browser_clicked_link", "topic_browser_started_video", "topic_browser_completed_video"])
+        template_values['watch_topic_browser_enabled'] = (show_topic_browser == "show")
+        analytics_bingo = {"name": "Bingo: Header topic browser (fixed)", "value": show_topic_browser}
+        template_values['analytics_bingo'] = analytics_bingo
 
         return template_values
 

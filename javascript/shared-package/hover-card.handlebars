@@ -1,13 +1,13 @@
-<div class="hover-card-container">
+<div class="hover-card-container {{#if isInaccessible}}inaccessible{{/if}}">
     <div class="hover-card-triangle"></div>
     <div class="hover-card-content-container vertical-shadow">
         <div class="hover-card-content clearfix">
             {{#if messageOnly}}
                 <div style="padding: 0 0 2px 5px; font-size: 120%">
                     {{#if isInaccessible}}
-                        Oops, this user doesn't have a public profile!
+                        This person does not have a public profile.
                     {{else}}
-                        Loading...
+                        Finding profile information...
                     {{/if}}
                 </div>
             {{else}}
@@ -22,7 +22,7 @@
                         {{#each publicBadges}}
                             {{#if this}}
                                 {{#with this}}
-                                    <img src="{{icons.small}}">
+                                    <img src="{{icons.small}}" alt="{{description}}" title="{{description}}">
                                 {{/with}}
                             {{/if}}
                         {{/each}}
