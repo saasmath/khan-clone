@@ -65,7 +65,7 @@ javascript = {
             "goals.js",
             "goal-new.js",
             "topics.js",
-            "localStorage.js"
+            "localStorage.js",
             "analytics.js",
             "profile-model.js",
             "hover-card.js",
