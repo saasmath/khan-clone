@@ -67,24 +67,27 @@ Login.connectWithFacebook = function(continueUrl) {
  * Login with a username and password.
  */
 Login.loginWithPassword = function() {
-    // TODO(benkomalo): put the login button into a spinner state of some sort
-
     // Hide any previous failed login notification after any other attempt.
-    $("#login-fail-message").hide();
+    // Use "visibility" so as to avoid any jerks in the layout.
+    $("#login-fail-message").css("visiblity", "hidden");
 
     // Pre-validate.
     var valid = Login.ensureValid_("#identifier", "Email or username required");
     valid = Login.ensureValid_("#password", "Password required") && valid;
 
     if (valid) {
+        Login.disableLoginButton_();
         Login.asyncFormPost(
                 $("#login-form"),
                 function(data) {
                     // Server responded with 200, but login may have failed.
                     if (data["errors"]) {
                         Login.onPasswordLoginFail(data["errors"]);
+                        Login.enableLoginButton_();
                     } else {
                         Login.onPasswordLoginSuccess(data);
+                        // Don't re-enable the login button as we're about
+                        // to refresh the page.
                     }
                 },
                 function(data) {
@@ -92,6 +95,21 @@ Login.loginWithPassword = function() {
                     // TODO(benkomalo): handle
                 });
     }
+};
+
+/**
+ * Disables the login button on a login attempt, to prevent duplicate tries.
+ */
+Login.disableLoginButton_ = function() {
+    $("#submit-button").attr("disabled", true);
+};
+
+/**
+ * Restores the login button, usually after a response from a server
+ * from a login attempt.
+ */
+Login.enableLoginButton_ = function() {
+    $("#submit-button").removeAttr("disabled");
 };
 
 /**
@@ -107,7 +125,7 @@ Login.onPasswordLoginFail = function(errors) {
         text = "Error logging in. Please try again";
     }
 
-    $("#login-fail-message").text(text).show();
+    $("#login-fail-message").text(text).css("visibility", "");
     $("#password").focus();
 };
 
@@ -182,7 +200,7 @@ Login.asyncFormPost = function(jelForm, success, error) {
                     "visibility: hidden;" +
                     "width: 1px; height: 1px;" +
                     "margin-top: -1px; margin-left: -1px;")
-            .appendTo(jelForm.parent())
+            .appendTo(document.body)
             .on("load", Login.handleAsyncFormLoad_);
     }
 
