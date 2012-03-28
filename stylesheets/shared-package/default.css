@@ -636,12 +636,12 @@ footer {
         min-width: 86px;
         padding: 3px 0px;
     }
-    #user-info .dropdown-menu li > .dropdown-link {
+    #user-info .dropdown-menu li > a {
         white-space: nowrap;
         border: none;
     }
 
-    #user-info .dropdown-menu li > .dropdown-link:hover {
+    #user-info .dropdown-menu li > a:hover {
         color: #fff !important;
     }
 
