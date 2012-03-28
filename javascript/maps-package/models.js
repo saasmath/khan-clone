@@ -93,7 +93,7 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             this.get("v_position"), // v_position is actually x
             this.get("h_position"), // h_position is actually y
             KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
-            this.get("states")["suggested"] || this.get("states")["reviewing"],
+            this.get("states")["suggested"] && !this.get("states")["reviewing"],
             KnowledgeMapGlobals.options.minZoom + 1,
             KnowledgeMapGlobals.options.maxZoom
         );

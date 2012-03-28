@@ -266,18 +266,16 @@ function KnowledgeMap(params) {
                 viewType = model.viewType();
 
             if (model.get("isSuggested")) {
-                if (!params.hideReview || !model.get("isReview")) {
-                    element = createEl();
-                    element.appendTo(suggestedExercisesContent);
-                    this.nodeRowViews.push(new viewType({
-                        model: model,
-                        el: element,
-                        type: "suggested",
-                        admin: this.admin,
-                        parent: this
-                    }));
-                    this.numSuggestedExercises++;
-                }
+                element = createEl();
+                element.appendTo(suggestedExercisesContent);
+                this.nodeRowViews.push(new viewType({
+                    model: model,
+                    el: element,
+                    type: "suggested",
+                    admin: this.admin,
+                    parent: this
+                }));
+                this.numSuggestedExercises++;
             }
 
             element = createEl();
