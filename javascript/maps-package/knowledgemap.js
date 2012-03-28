@@ -802,9 +802,9 @@ function KnowledgeMap(params) {
         var counts = { "suggested": 0, "all": 0 };
         var filterText = self.filterSettings.get("filterText");
 
-        $.each(self.nodeRowViews, function(idx, exerciseRowView) {
-            if (exerciseRowView.visible)
-                counts[exerciseRowView.options.type]++;
+        $.each(self.nodeRowViews, function(idx, nodeRowView) {
+            if (nodeRowView.visible)
+                counts[nodeRowView.options.type]++;
         });
 
         if (filterText && counts.all == 0) {

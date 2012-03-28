@@ -17,6 +17,7 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
     },
 
     events: {
+        "click .skill-bar-title a": "onTitleClick",
         "click .pan-to": "onPanToClick"
     },
 
@@ -48,6 +49,12 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
         this.el = newContent;
         this.inflated = true;
         this.delegateEvents();
+    },
+
+    onTitleClick: function(evt) {
+        // give the parent a chance to handle this exercise click. If it
+        // doesn't, we'll just follow the anchor href
+        return this.parent.nodeClickHandler(this.model, evt);
     },
 
     onBadgeMouseover: function(node_name, element) {
@@ -236,11 +243,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
     },
 
     onNodeClick: function(evt) {
-        var self = this;
-
-        if (!this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
-            return;
-
         return this.parent.nodeClickHandler(this.model, evt);
     },
 
