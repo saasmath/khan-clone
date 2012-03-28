@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 import urllib
-import urlparse
 import logging
 import re
 
@@ -15,6 +14,7 @@ from google.appengine.api import memcache
 from api.auth.decorators import developer_required
 
 import webapp2
+from webapp2_extras.routes import DomainRoute
 
 import devpanel
 import bulk_update.handler
@@ -24,10 +24,10 @@ from gae_bingo.middleware import GAEBingoWSGIMiddleware
 import autocomplete
 import coaches
 import knowledgemap.handlers
-import consts
 import youtube_sync
 import warmup
 import library
+import login
 import homepage
 
 import search
@@ -47,6 +47,7 @@ import paypal
 import smarthistory
 import topics
 import goals.handlers
+import appengine_stats
 import stories
 import summer
 import common_core
@@ -56,26 +57,22 @@ import labs
 import socrates
 
 import models
-from models import UserData, Video, Url, ExerciseVideo, UserVideo, VideoLog, VideoSubtitles, Topic
+from models import UserData, Video, Url, ExerciseVideo, Topic
 from discussion import comments, notification, qa, voting, moderation
 from about import blog, util_about
+from coach_resources import util_coach, schools_blog
 from phantom_users import util_notify
 from badges import util_badges, custom_badges
 from mailing_lists import util_mailing_lists
 from profiles import util_profile
 from custom_exceptions import MissingVideoException
 from oauth_provider import apps as oauth_apps
-from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 from phantom_users.cloner import Clone
-from counters import user_counter
-from notifications import UserNotifier
-from nicknames import get_default_nickname_for
 from image_cache import ImageCache
 from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
-from gae_bingo.gae_bingo import bingo
 
 class VideoDataTest(request_handler.RequestHandler):
 
@@ -122,7 +119,7 @@ class ViewVideo(request_handler.RequestHandler):
             url = "/%s/v/%s" % (topic.get_extended_slug(), urllib.quote(readable_id))
             logging.info("Redirecting to %s" % url)
             handler.redirect(url, True)
-            return
+            return None
 
         # Note: Bingo conversions are tracked on the client now, so they have been removed here. (tomyedwab)
 
@@ -141,121 +138,23 @@ class ViewVideo(request_handler.RequestHandler):
             "selected_nav_link": 'watch'
         }
 
-        handler.render_jinja2_template('viewvideo.html', template_values)
-
-    # This is also deprecated; only keep around while Socrates is in development /labs
-    @classmethod
-    def get_template_data(cls, self, readable_id, video, topic):
-        # If we got here, we have a readable_id and a topic, so we can display
-        # the topic and the video in it that has the readable_id.  Note that we don't
-        # query the Video entities for one with the requested readable_id because in some
-        # cases there are multiple Video objects in the datastore with the same readable_id
-        # (e.g. there are 2 "Order of Operations" videos).
-        videos = Topic.get_cached_videos_for_topic(topic)
-        previous_video = None
-        next_video = None
-        for v in videos:
-            if v.readable_id == readable_id:
-                v.selected = 'selected'
-                video = v
-            elif video is None:
-                previous_video = v
-            else:
-                next_video = v
-                break
-
-        # If we're at the beginning or end of a topic, show the adjacent topic.
-        # previous_topic/next_topic are the topic to display.
-        # previous_video_topic/next_video_topic are the subtopics the videos
-        # are actually in.
-        previous_topic = None
-        previous_video_topic = None
-        next_topic = None
-        next_video_topic = None
-
-        if not previous_video:
-            previous_topic = topic
-            while not previous_video:
-                previous_topic = previous_topic.get_previous_topic()
-                if previous_topic:
-                    (previous_video, previous_video_topic) = previous_topic.get_last_video_and_topic()
-                else:
-                    break
-
-        if not next_video:
-            next_topic = topic
-            while not next_video:
-                next_topic = next_topic.get_next_topic()
-                if next_topic:
-                    (next_video, next_video_topic) = next_topic.get_first_video_and_topic()
-                else:
-                    break
-
-        if video is None:
-            raise MissingVideoException("Missing video '%s'" % readable_id)
-
-        if App.offline_mode:
-            video_path = "/videos/" + get_mangled_topic_name(topic.id) + "/" + video.readable_id + ".flv"
-        else:
-            video_path = video.download_video_url()
-
-        if video.description == video.title:
-            video.description = None
-
-        related_exercises = video.related_exercises()
-        button_top_exercise = None
-        if related_exercises:
-            def ex_to_dict(exercise):
-                return {
-                    'name': exercise.display_name,
-                    'url': exercise.relative_url,
-                }
-            button_top_exercise = ex_to_dict(related_exercises[0])
-
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
-
-        awarded_points = 0
-        if user_video:
-            awarded_points = user_video.points
-
-        subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
-        subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
-        subtitles_json = None
-        if subtitles:
-            subtitles_json = subtitles.load_json()
-
-        template_values = {
-                            'topic': topic,
-                            'video': video,
-                            'videos': videos,
-                            'video_path': video_path,
-                            'video_points_base': consts.VIDEO_POINTS_BASE,
-                            'subtitles_json': subtitles_json,
-                            'button_top_exercise': button_top_exercise,
-                            'related_exercises': [], # disabled for now
-                            'previous_topic': previous_topic,
-                            'previous_video': previous_video,
-                            'previous_video_topic': previous_video_topic,
-                            'next_topic': next_topic,
-                            'next_video': next_video,
-                            'next_video_topic': next_video_topic,
-                            'selected_nav_link': 'watch',
-                            'awarded_points': awarded_points,
-                            'issue_labels': ('Component-Videos,Video-%s' % readable_id),
-                            'author_profile': 'https://plus.google.com/103970106103092409324'
-                        }
-        template_values = qa.add_template_values(template_values, self.request)
         return template_values
 
     @ensure_xsrf_cookie
     def get(self, path, video_id):
+        user_data = UserData.current()
+        # Logout and redirect for video views when logged in to demo,
+        if user_data is not None and user_data.is_demo:
+            self.redirect(util.create_logout_url(self.request.uri))
+
         if path:
             path_list = path.split('/')
 
             if len(path_list) > 0:
                 topic_id = path_list[-1]
-                ViewVideo.show_video(self, video_id, topic_id)
-                return
+                template_values = ViewVideo.show_video(self, video_id, topic_id)
+                if template_values:
+                    self.render_jinja2_template('viewvideo.html', template_values)
 
 class ViewVideoDeprecated(request_handler.RequestHandler):
 
@@ -263,6 +162,11 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
     # handler now.
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
+
+        user_data = UserData.current()
+        # Logout and redirect for video views when logged in to demo,
+        if user_data is not None and user_data.is_demo:
+            self.redirect(util.create_logout_url(self.request.uri))
 
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
@@ -297,13 +201,13 @@ class ReportIssue(request_handler.RequestHandler):
 
     def get(self):
         issue_type = self.request.get('type')
-        self.write_response(issue_type, {'issue_labels': self.request.get('issue_labels'),})
+        self.write_response(issue_type, {'issue_labels': self.request.get('issue_labels'), })
 
     def write_response(self, issue_type, extra_template_values):
         user_agent = self.request.headers.get('User-Agent')
         if user_agent is None:
             user_agent = ''
-        user_agent = user_agent.replace(',',';') # Commas delimit labels, so we don't want them
+        user_agent = user_agent.replace(',', ';') # Commas delimit labels, so we don't want them
         template_values = {
             'referer': self.request.headers.get('Referer'),
             'user_agent': user_agent,
@@ -373,7 +277,7 @@ class ViewCredits(request_handler.RequestHandler):
 
 class Donate(request_handler.RequestHandler):
     def get(self):
-        self.redirect("/contribute", True)
+        self.render_jinja2_template('donate.html', {"selected_nav_link": "donate"})
 
 class ViewTOS(request_handler.RequestHandler):
     def get(self):
@@ -458,7 +362,7 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
         # the Google user ID changes and the new User object's are not considered equal to the old User object's with the same
         # email, so querying the datastore for entities referring to users with the same email return nothing. However an inequality
         # query will return the relevant entities.
-        gt_user = users.User(old_email[:-1] + chr(ord(old_email[-1])-1) + chr(127))
+        gt_user = users.User(old_email[:-1] + chr(ord(old_email[-1]) - 1) + chr(127))
         lt_user = users.User(old_email + chr(0))
         return db.GqlQuery(('select __key__ from %s where %s > :1 and %s < :2' % (kind, prop, prop)), gt_user, lt_user)
 
@@ -472,116 +376,6 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
             return False
         setattr(entity, prop, users.User(new_email))
         return True
-
-class Login(request_handler.RequestHandler):
-    def get(self):
-        """ Renders the login page. """
-        cont = self.request_string('continue', default="/")
-        direct = self.request_bool('direct', default=False)
-
-        if App.facebook_app_secret is None:
-            self.redirect(users.create_login_url(cont))
-            return
-        template_values = {
-                           'continue': cont,
-                           'direct': direct
-                           }
-        self.render_jinja2_template('login.html', template_values)
-
-    def post(self):
-        """ Handles a POST from the login page.
-        Right now this basically means the user opted to login via Google,
-        so redirect them to the appropriate Google Login page.
-        """
-        cont = self.request_string('continue', default="/")
-        self.redirect(users.create_login_url(cont))
-
-class MobileOAuthLogin(request_handler.RequestHandler):
-    def get(self):
-        self.render_jinja2_template('login_mobile_oauth.html', {
-            "oauth_map_id": self.request_string("oauth_map_id", default=""),
-            "anointed": self.request_bool("an", default=False),
-            "view": self.request_string("view", default="")
-        })
-
-class PostLogin(request_handler.RequestHandler):
-    def get(self):
-        cont = self.request_string('continue', default = "/")
-
-        # Immediately after login we make sure this user has a UserData entity
-        user_data = UserData.current()
-        if user_data:
-
-            # Update email address if it has changed
-            current_google_user = users.get_current_user()
-            if current_google_user and current_google_user.email() != user_data.email:
-                user_data.user_email = current_google_user.email()
-                user_data.put()
-
-            # If the user has a public profile, we stop "syncing" their username
-            # from Facebook, as they now have an opportunity to set it themself
-            if not user_data.username:
-                user_data.update_nickname()
-
-            # Set developer and moderator to True if user is admin
-            if (not user_data.developer or not user_data.moderator) and users.is_current_user_admin():
-                user_data.developer = True
-                user_data.moderator = True
-                user_data.put()
-
-            # If user is brand new and has 0 points, migrate data
-            phantom_id = get_phantom_user_id_from_cookies()
-            if phantom_id:
-                phantom_data = UserData.get_from_db_key_email(phantom_id)
-
-                # First make sure user has 0 points and phantom user has some activity
-                if user_data.points == 0 and phantom_data and phantom_data.points > 0:
-
-                    # Make sure user has no students
-                    if not user_data.has_students():
-
-                        # Clear all "login" notifications
-                        UserNotifier.clear_all(phantom_data)
-
-                        # Update phantom user_data to real user_data
-                        phantom_data.user_id = user_data.user_id
-                        phantom_data.current_user = user_data.current_user
-                        phantom_data.user_email = user_data.user_email
-                        phantom_data.user_nickname = user_data.user_nickname
-
-                        if phantom_data.put():
-                            # Phantom user was just transitioned to real user
-                            user_counter.add(1)
-                            user_data.delete()
-
-                        cont = "/newaccount?continue=%s" % cont
-        else:
-
-            # If nobody is logged in, clear any expired Facebook cookie that may be hanging around.
-            if App.facebook_app_id:
-                self.delete_cookie("fbsr_" + App.facebook_app_id)
-                self.delete_cookie("fbs_" + App.facebook_app_id)
-
-            logging.critical("Missing UserData during PostLogin, with id: %s, cookies: (%s), google user: %s" % (
-                    util.get_current_user_id(), os.environ.get('HTTP_COOKIE', ''), users.get_current_user()
-                )
-            )
-
-        # Always delete phantom user cookies on login
-        self.delete_cookie('ureg_id')
-
-        self.redirect(cont)
-
-class Logout(request_handler.RequestHandler):
-    def get(self):
-        self.delete_cookie('ureg_id')
-
-        # Delete Facebook cookie, which sets itself both on "www.ka.org" and ".www.ka.org"
-        if App.facebook_app_id:
-            self.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
-            self.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
-
-        self.redirect(users.create_logout_url(self.request_string("continue", default="/")))
 
 class Search(request_handler.RequestHandler):
 
@@ -622,7 +416,7 @@ class Search(request_handler.RequestHandler):
 
         # Combine results & do one big get!
         all_key_list = [str(key_and_title[0]) for key_and_title in all_text_keys]
-        # all_key_list.extend([result["key"] for result in topic_partial_results])
+        all_key_list.extend([result["key"] for result in topic_partial_results])
         all_key_list.extend([result["key"] for result in video_partial_results])
         all_key_list.extend([result["key"] for result in url_partial_results])
         all_key_list = list(set(all_key_list))
@@ -645,8 +439,6 @@ class Search(request_handler.RequestHandler):
                 videos.append(entity)
             elif entity:
                 logging.info("Found unknown object " + repr(entity))
-
-        topic_count = len(topics)
 
         # Get topics for videos not in matching topics
         filtered_videos = []
@@ -681,14 +473,27 @@ class Search(request_handler.RequestHandler):
             video_exercises[video_key] = map(lambda exkey: [exercise for exercise in exercises if exercise.key() == exkey][0], exercise_keys)
 
         # Count number of videos in each topic and sort descending
+        topic_count = 0
+        matching_topic_count = 0
         if topics:
             if len(filtered_videos) > 0:
                 for topic in topics:
                     topic.match_count = [(str(topic.key()) in video.topic_string_keys) for video in filtered_videos].count(True)
-                topics = sorted(topics, key=lambda topic: -topic.match_count)
+                    if topic.match_count > 0:
+                        topic_count += 1
+
+                topics = sorted(topics, key=lambda topic:-topic.match_count)
             else:
                 for topic in topics:
                     topic.match_count = 0
+
+            for topic in topics:
+                if topic.title.lower() == query:
+                    topic.matches = True
+                    matching_topic_count += 1
+
+                    child_topics = topic.get_child_topics(include_descendants=True)
+                    topic.child_topics = [t for t in child_topics if t.has_content()]
 
         template_values.update({
                            'topics': topics,
@@ -697,6 +502,7 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
+                           'matching_topic_count': matching_topic_count
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)
@@ -705,9 +511,9 @@ class RedirectToJobvite(request_handler.RequestHandler):
     def get(self):
         self.redirect("http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7")
 
-class RedirectToToolkit(request_handler.RequestHandler):
+class RedirectToSchoolImplementationsBlog(request_handler.RequestHandler):
     def get(self):
-        self.redirect("https://sites.google.com/a/khanacademy.org/schools/")
+        self.redirect("http://ka-implementations.tumblr.com/")
 
 class PermanentRedirectToHome(request_handler.RequestHandler):
     def get(self):
@@ -757,7 +563,7 @@ class MemcacheViewer(request_handler.RequestHandler):
     def get(self):
         key = self.request_string("key", "__layer_cache_models._get_settings_dict__")
         namespace = self.request_string("namespace", App.version)
-        values =  memcache.get(key, namespace=namespace)
+        values = memcache.get(key, namespace=namespace)
         self.response.out.write("Memcache key %s = %s.<br>\n" % (key, values))
         if type(values) is dict:
             for k, value in values.iteritems():
@@ -765,24 +571,24 @@ class MemcacheViewer(request_handler.RequestHandler):
         if self.request_bool("clear", False):
             memcache.delete(key, namespace=namespace)
 
-applicationSmartHistory = webapp2.WSGIApplication([
-    ('/.*', smarthistory.SmartHistoryProxy)
-])
-
 application = webapp2.WSGIApplication([
+    DomainRoute('smarthistory.khanacademy.org', [
+        webapp2.SimpleRoute('/.*', smarthistory.SmartHistoryProxy)
+    ]),
     ('/', homepage.ViewHomePage),
     ('/about', util_about.ViewAbout),
     ('/about/blog', blog.ViewBlog),
+    ('/about/blog/schools', RedirectToSchoolImplementationsBlog),
     ('/about/blog/.*', blog.ViewBlogPost),
     ('/about/the-team', util_about.ViewAboutTheTeam),
     ('/about/getting-started', util_about.ViewGettingStarted),
-    ('/about/discovery-lab', util_about.ViewDiscoveryLab ),
-    ('/about/tos', ViewTOS ),
+    ('/about/discovery-lab', util_about.ViewDiscoveryLab),
+    ('/about/tos', ViewTOS),
     ('/about/api-tos', ViewAPITOS),
-    ('/about/privacy-policy', ViewPrivacyPolicy ),
-    ('/about/dmca', ViewDMCA ),
-    ('/contribute', ViewContribute ),
-    ('/contribute/credits', ViewCredits ),
+    ('/about/privacy-policy', ViewPrivacyPolicy),
+    ('/about/dmca', ViewDMCA),
+    ('/contribute', ViewContribute),
+    ('/contribute/credits', ViewCredits),
     ('/frequently-asked-questions', util_about.ViewFAQ),
     ('/about/faq', util_about.ViewFAQ),
     ('/downloads', util_about.ViewDownloads),
@@ -793,6 +599,10 @@ application = webapp2.WSGIApplication([
 
     ('/stories/submit', stories.SubmitStory),
     ('/stories/?.*', stories.ViewStories),
+
+    # Labs
+    ('/labs', labs.LabsRequestHandler),
+    ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
     ('/library_content', library.GenerateLibraryContent),
@@ -849,10 +659,15 @@ application = webapp2.WSGIApplication([
     ('/devadmin/content', topics.EditContent),
     ('/devadmin/memcacheviewer', MemcacheViewer),
 
+    ('/coach/resources', util_coach.ViewCoachResources),
+    ('/coach/demo', util_coach.ViewDemo),
+    ('/coach/accessdemo', util_coach.AccessDemo),
+    ('/coach/schools-blog', schools_blog.ViewBlog),
+    ('/toolkit', util_coach.ViewToolkit),
+    ('/toolkit/(.*)', util_coach.ViewToolkit),
+    ('/coaches', coaches.ViewCoaches),
     ('/coaches', coaches.ViewCoaches),
     ('/students', coaches.ViewStudents),
-    ('/registercoach', coaches.RegisterCoach),
-    ('/unregistercoach', coaches.UnregisterCoach),
     ('/unregisterstudent', coaches.UnregisterStudent),
     ('/requeststudent', coaches.RequestStudent),
     ('/acceptcoach', coaches.AcceptCoach),
@@ -876,10 +691,14 @@ application = webapp2.WSGIApplication([
     ('/profile', util_profile.ViewProfile),
     ('/class_profile', util_profile.ViewClassProfile),
 
-    ('/login', Login),
-    ('/login/mobileoauth', MobileOAuthLogin),
-    ('/postlogin', PostLogin),
-    ('/logout', Logout),
+    ('/login', login.Login),
+    ('/login/mobileoauth', login.MobileOAuthLogin),
+    ('/postlogin', login.PostLogin),
+    ('/logout', login.Logout),
+    
+    # TODO(benkomalo): disabled until password based logins is complete.
+    #('/register', login.Register),
+    #('/pwchange', login.PasswordChange),
 
     ('/api-apps/register', oauth_apps.Register),
 
@@ -912,8 +731,6 @@ application = webapp2.WSGIApplication([
 
     ('/githubpost', github.NewPost),
     ('/githubcomment', github.NewComment),
-
-    ('/toolkit', RedirectToToolkit),
 
     ('/paypal/autoreturn', paypal.AutoReturn),
     ('/paypal/ipn', paypal.IPN),
@@ -961,9 +778,10 @@ application = webapp2.WSGIApplication([
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
 
-    # Labs
-    ('/labs', labs.LabsRequestHandler),
-    ('/labs/socrates/(.*)', socrates.SocratesHandler),
+    # Stats about appengine
+    ('/stats/dashboard', dashboard.Dashboard),
+    ('/stats/contentdash', dashboard.ContentDashboard),
+    ('/stats/memcache', appengine_stats.MemcacheStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 
@@ -988,10 +806,7 @@ application = GAEBingoWSGIMiddleware(application)
 application = request_cache.RequestCacheMiddleware(application)
 
 def main():
-    if os.environ["SERVER_NAME"] == "smarthistory.khanacademy.org":
-        run_wsgi_app(applicationSmartHistory)
-    else:
-        run_wsgi_app(application)
+    run_wsgi_app(application)
 
 if __name__ == '__main__':
     main()

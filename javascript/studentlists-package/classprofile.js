@@ -11,28 +11,6 @@ var ClassProfile = {
     fLoadedGraph: false,
 
     init: function() {
-        $(".share-link").hide();
-        $(".sharepop").hide();
-
-        $(".achievement,.exercise,.video").hover(
-            function () {
-                $(this).find(".share-link").show();
-                },
-            function () {
-                $(this).find(".share-link").hide();
-                $(this).find(".sharepop").hide();
-              });
-
-        $(".share-link").click(function() {
-            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
-                $(this).next(".sharepop").toggle();
-            } else {
-                $(this).next(".sharepop").toggle(
-                        "drop", { direction:"up" }, "fast" );
-            }
-            return false;
-        });
-
         // Init Highcharts global options.
         Highcharts.setOptions({
             credits: {
@@ -89,42 +67,6 @@ var ClassProfile = {
                 }
             }
         );
-
-        $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
-            var category = $(this).attr("id");
-            var clickedBadge = $(this);
-
-            $("#badge-container").css("display", "");
-            clickedBadge.siblings().removeClass("selected");
-
-            if ($("#badge-container > #" + category ).is(":visible")) {
-               if (clickedBadge.parents().hasClass("standard-view")) {
-                   $("#badge-container > #" + category ).slideUp(300, function(){
-                           $("#badge-container").css("display", "none");
-                           clickedBadge.removeClass("selected");
-                       });
-               }
-               else {
-                   $("#badge-container > #" + category ).hide();
-                   $("#badge-container").css("display", "none");
-                   clickedBadge.removeClass("selected");
-               }
-            }
-            else {
-               var jelContainer = $("#badge-container");
-               var oldHeight = jelContainer.height();
-               $(jelContainer).children().hide();
-               if (clickedBadge.parents().hasClass("standard-view")) {
-                   $(jelContainer).css("min-height", oldHeight);
-                   $("#" + category, jelContainer).slideDown(300, function() {
-                       $(jelContainer).animate({"min-height": 0}, 200);
-                   });
-               } else {
-                   $("#" + category, jelContainer).show();
-               }
-               clickedBadge.addClass("selected");
-            }
-        });
 
         // remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
@@ -483,7 +425,7 @@ var ClassProfile = {
             goalViewModel.startTimeElement = $(this).find('.goal-start-time');
             goalViewModel.updateTimeElement = $(this).find('.goal-update-time');
 
-            ClassProfile.AddObjectiveHover($(this));
+            Profile.hoverContent($(this).find(".objective"));
 
             $(this).find("a.objective").each(function() {
                 var goalObjective = goalViewModel.goal.objectives[$(this).attr('data-id')];
@@ -768,48 +710,6 @@ var ClassProfile = {
                 qs.push(key + kvjoin + hash[key]);
         }
         return qs.join(eljoin);
-    },
-
-    // TODO: this is redundant with addobjectivehover in profile.js
-    AddObjectiveHover: function(element) {
-        var infoHover = $("#info-hover-container");
-        var lastHoverTime;
-        var mouseX;
-        var mouseY;
-        element.find(".objective").hover(
-            function(e) {
-                var hoverTime = +(new Date);
-                lastHoverTime = hoverTime;
-                mouseX = e.pageX;
-                mouseY = e.pageY;
-                var self = this;
-                setTimeout(function() {
-                    if (hoverTime != lastHoverTime) {
-                        return;
-                    }
-
-                    var hoverData = $(self).children(".hover-data");
-                    if ($.trim(hoverData.html())) {
-                        infoHover.html($.trim(hoverData.html()));
-
-                        var left = mouseX + 15;
-                        var jelGraph = $("#graph-content");
-                        var leftMax = jelGraph.offset().left +
-                                jelGraph.width() - 150;
-
-                        infoHover.css('left', Math.min(left, leftMax));
-                        infoHover.css('top', mouseY + 5);
-                        infoHover.css('cursor', 'pointer');
-                        infoHover.css('position', 'fixed');
-                        infoHover.show();
-                    }
-                }, 100);
-            },
-            function(e){
-                lastHoverTime = null;
-                $("#info-hover-container").hide();
-            }
-        );
     },
 
     getStudentListFromId: function (list_id) {

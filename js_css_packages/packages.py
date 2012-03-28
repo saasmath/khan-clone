@@ -29,10 +29,12 @@ javascript = {
             "jquery.qtip.js",
             "../../khan-exercises/utils/underscore.js",
             "underscore-extras.js",
+            "keyhandling.js",
             "backbone.js",
             register_conditional_file("handlebars.js", "handlebars.vm.js"),
             "templates.js",
             "bootstrap-modal.js",
+            "dropdown.js",
             "../../gae_bingo/static/js/gae_bingo.js",
             "less-1.2.2.min.js",
 
@@ -41,6 +43,7 @@ javascript = {
             "handlebars-extras.js",
             "cookies.js",
             "pageutil.js",
+            "facebookutil.js",
             "video-addons.js",
             "api.js",
             "backbone-extensions.js",
@@ -63,6 +66,12 @@ javascript = {
             "goal-new.js",
             "topics.js",
             "localStorage.js"
+            "analytics.js",
+            "profile-model.js",
+            "hover-card.js",
+            "hover-card-view.js",
+            "hover-card.handlebars",
+            "topic-browser-pulldown.handlebars",
         ]
     },
     "video": {
@@ -116,6 +125,12 @@ javascript = {
             "highcharts.js",
         ]
     },
+    "login": {
+        "files": [
+            "bday-picker.js",
+            "login.js",
+        ]
+    },
     "profile": {
         "files": [
             "jquery.address-1.4.min.js",
@@ -128,8 +143,8 @@ javascript = {
             "avatar-picker.js",
             "username-picker.handlebars",
             "username-picker.js",
+            "user-card-view.js",
             "user-card.handlebars",
-            "user-card.js",
             "profile.handlebars",
             "suggested-activity.handlebars",
             "recent-activity-list.handlebars",
@@ -139,6 +154,11 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
+            "settings.handlebars",
+            "coaches.js",
+            "coach.handlebars",
+            "no-coaches.handlebars",
+            "coaches.handlebars",
             "achievements.handlebars",
             "badge-container.handlebars",
             "user-badge.handlebars",
@@ -155,6 +175,7 @@ javascript = {
             "class-progress-summary.js",
             "exercise_progress.handlebars",
             "profile-goals.js",
+            "settings.js",
             "profile.js",
         ]
     },
@@ -186,6 +207,11 @@ javascript = {
         "files": [
             "studentlists.js",
             "classprofile.js",
+        ]
+    },
+    "donate": {
+        "files": [
+            "donate.js",
         ]
     },
     "stories": {
@@ -231,13 +257,17 @@ javascript = {
             "khan-exercise.js",
             "utils/angles.js",
             "utils/answer-types.js",
+            "utils/ast.js",
             "utils/calculus.js",
             "utils/congruence.js",
             "utils/convert-values.js",
             "utils/d3.js",
             "utils/derivative-intuition.js",
             "utils/exponents.js",
+            "utils/expr-helpers.js",
+            "utils/expr-normal-form.js",
             "utils/expressions.js",
+            "utils/factoring-expressions.js",
             "utils/functional.js",
             "utils/graphie-geometry.js",
             "utils/graphie-helpers-arithmetic.js",
@@ -250,14 +280,19 @@ javascript = {
             "utils/jquery.mobile.vmouse.js",
             "utils/math-format.js",
             "utils/math.js",
+            "utils/math-model.js",
             "utils/mean-and-median.js",
             "utils/parabola-intuition.js",
             "utils/polynomials.js",
             "utils/probability.js",
             "utils/raphael.js",
             "utils/scratchpad.js",
+            "utils/simplify.js",
+            "utils/simplifying-expressions.js",
             "utils/slice-clone.js",
             "utils/stat.js",
+            "utils/steps-helpers.js",
+            "utils/subhints.js",
             "utils/tmpl.js",
             "utils/word-problems.js",
             "utils/spin.js",
@@ -302,6 +337,7 @@ stylesheets = {
             "museo-sans.css",
             "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
+            "bootstrap-dropdown.css",
             "goals.css",
         ],
         "less": [
@@ -350,6 +386,11 @@ stylesheets = {
             "guiders.css",
         ],
     },
+    "donate": {
+        "files": [
+            "donate.css",
+        ]
+    },
     "stories": {
         "files": [
             "bootstrap.css",
@@ -378,6 +419,11 @@ stylesheets = {
     "labs": {
         "files": [
             "labs.css",
+        ]
+    },
+    "bootstrap": {
+        "files": [
+            "bootstrap.css"
         ]
     }
 }

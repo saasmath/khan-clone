@@ -1,16 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import datetime, logging
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import math
 import urllib
-import pickle
+import cPickle as pickle
 import random
 import itertools
 
 from google.appengine.api import users
 from google.appengine.api import memcache
+from google.appengine.api.datastore_errors import Rollback
 from google.appengine.ext import deferred
+from google.appengine.api import taskqueue
 from google.appengine.ext.db import TransactionFailedError
 from api.jsonify import jsonify
 
@@ -25,21 +33,24 @@ from app import App
 import layer_cache
 import request_cache
 from discussion import models_discussion
+from experiments import InteractiveTranscriptExperiment
 from topics_list import all_topics_list
 import nicknames
 from counters import user_counter
 from facebook_util import is_facebook_user_id, FACEBOOK_ID_PREFIX
 from accuracy_model import AccuracyModel, InvFnExponentialNormalizer
-from decorators import clamp
+from decorators import clamp, synchronized_with_memcache
 import base64, os
 
 from image_cache import ImageCache
 
+from auth.models import CredentialedUser
 from templatefilters import slugify
-from gae_bingo.gae_bingo import bingo
+from gae_bingo.gae_bingo import ab_test, bingo
 from gae_bingo.models import GAEBingoIdentityModel
 from experiments import StrugglingExperiment
 import re
+
 
 class BackupModel(db.Model):
     """Back up this model
@@ -63,7 +74,7 @@ class Setting(db.Model):
         return db.Key.from_path('Settings', 'default_settings')
 
     @staticmethod
-    def _get_or_set_with_key(key, val = None):
+    def _get_or_set_with_key(key, val=None):
         if val is None:
             return Setting._cache_get_by_key_name(key)
         else:
@@ -89,35 +100,39 @@ class Setting(db.Model):
         return results
 
     @staticmethod
-    def cached_content_add_date(val = None):
+    def cached_content_add_date(val=None):
         return Setting._get_or_set_with_key("cached_content_add_date", val)
 
     @staticmethod
-    def topic_tree_version(val = None):
+    def topic_tree_version(val=None):
         return Setting._get_or_set_with_key("topic_tree_version", val)
 
     @staticmethod
-    def cached_exercises_date(val = None):
+    def cached_exercises_date(val=None):
         return Setting._get_or_set_with_key("cached_exercises_date", val)
 
     @staticmethod
-    def count_videos(val = None):
+    def count_videos(val=None):
         return Setting._get_or_set_with_key("count_videos", val) or 0
 
     @staticmethod
-    def last_youtube_sync_generation_start(val = None):
+    def last_youtube_sync_generation_start(val=None):
         return Setting._get_or_set_with_key("last_youtube_sync_generation_start", val) or 0
 
     @staticmethod
-    def smarthistory_version(val = None):
+    def topic_admin_task_message(val=None):
+        return Setting._get_or_set_with_key("topic_admin_task_message", val) 
+
+    @staticmethod
+    def smarthistory_version(val=None):
         return Setting._get_or_set_with_key("smarthistory_version", val) or 0
 
     @staticmethod
-    def classtime_report_method(val = None):
+    def classtime_report_method(val=None):
         return Setting._get_or_set_with_key("classtime_report_method", val)
 
     @staticmethod
-    def classtime_report_startdate(val = None):
+    def classtime_report_startdate(val=None):
         return Setting._get_or_set_with_key("classtime_report_startdate", val)
 
 class Exercise(db.Model):
@@ -128,7 +143,7 @@ class Exercise(db.Model):
     covers = db.StringListProperty()
     v_position = db.IntegerProperty() # actually horizontal position on knowledge map
     h_position = db.IntegerProperty() # actually vertical position on knowledge map
-    seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM) # Seconds expected to finish a problem 'quickly' for badge calculation
+    seconds_per_fast_problem = db.FloatProperty(default=consts.INITIAL_SECONDS_PER_FAST_PROBLEM) # Seconds expected to finish a problem 'quickly' for badge calculation
 
     # True if this exercise is live and visible to all users.
     # Non-live exercises are only visible to admins.
@@ -150,7 +165,7 @@ class Exercise(db.Model):
     _serialize_blacklist = [
             "author", "raw_html", "last_modified",
             "coverers", "prerequisites_ex", "assigned",
-            "topic_string_keys"
+            "topic_string_keys", "related_video_keys"
             ]
 
     @staticmethod
@@ -220,14 +235,67 @@ class Exercise(db.Model):
         query.filter('exercise =', self.key()).order('exercise_order')
         return query
 
-    @layer_cache.cache_with_key_fxn(lambda self: "related_videos_%s_%s" % 
-        (self.key(), Setting.topic_tree_version()), 
+    @layer_cache.cache_with_key_fxn(lambda self: "related_videos_%s_%s" %
+        (self.key(), Setting.topic_tree_version()),
         layer=layer_cache.Layers.Memcache)
     def related_videos_fetch(self):
         exercise_videos = self.related_videos_query().fetch(10)
         for exercise_video in exercise_videos:
             exercise_video.video # Pre-cache video entity
         return exercise_videos
+
+    @staticmethod
+    def add_related_videos_prop(exercise_dict, evs=None, video_dict=None):
+        if video_dict is None:
+            video_dict = {}
+
+        # if no pregotten evs were passed in asynchrnously get them for all
+        # exercises in exercise_dict
+        if evs is None:
+            queries = []
+            for exercise in exercise_dict.values():
+                queries.append(exercise.related_videos_query())
+
+            tasks = util.async_queries(queries, limit=10000)
+            evs = [ev for task in tasks for ev in task.get_result()]
+
+        # if too many evs were passed in filter out exercise_videos which are
+        # not looking at one of the exercises in exercise_dict
+        evs = [ev for ev in evs
+               if ExerciseVideo.exercise.get_value_for_datastore(ev)
+               in exercise_dict.keys()]
+
+        # add any videos to video_dict that we need and are not already in
+        # the video_dict passed in
+        extra_video_keys = [ExerciseVideo.video.get_value_for_datastore(ev)
+            for ev in evs if ExerciseVideo.video.get_value_for_datastore(ev)
+            not in video_dict.keys()]
+        extra_videos = db.get(extra_video_keys)
+        extra_video_dict = dict((v.key(), v) for v in extra_videos)
+        video_dict.update(extra_video_dict)
+
+        # buid a ev_dict in the form
+        # ev_dict[exercise_key][video_key] = (video_readable_id, ev.exercise_order)
+        ev_dict = {}
+        for ev in evs:
+            exercise_key = ExerciseVideo.exercise.get_value_for_datastore(ev)
+            video_key = ExerciseVideo.video.get_value_for_datastore(ev)
+            video_readable_id = video_dict[video_key].readable_id
+
+            if exercise_key not in ev_dict:
+                ev_dict[exercise_key] = {}
+
+            ev_dict[exercise_key][video_key] = (video_readable_id, ev.exercise_order)
+
+        # update all exercises to include the related_videos in their right
+        # orders
+        for exercise in exercise_dict.values():
+            related_videos = (ev_dict[exercise.key()]
+                              if exercise.key() in ev_dict else {})
+            related_videos = sorted(related_videos.items(),
+                                    key=lambda i:i[1][1])
+            exercise.related_video_keys = map(lambda i: i[0], related_videos)
+            exercise.related_videos = map(lambda i: i[1][0], related_videos)
 
     # followup_exercises reverse walks the prerequisites to give you
     # the exercises that list the current exercise as its prerequisite.
@@ -236,7 +304,7 @@ class Exercise(db.Model):
         return [exercise for exercise in Exercise.get_all_use_cache() if self.name in exercise.prerequisites]
 
     @classmethod
-    def all(cls, live_only = False, **kwargs):
+    def all(cls, live_only=False, **kwargs):
         query = super(Exercise, cls).all(**kwargs)
         if live_only or not user_util.is_current_user_developer():
             query.filter("live =", True)
@@ -254,7 +322,7 @@ class Exercise(db.Model):
             return Exercise._get_all_use_cache_safe()
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "all_exercises_unsafe_%s" % Setting.cached_exercises_date())
+    @layer_cache.cache_with_key_fxn(lambda * args, **kwargs: "all_exercises_unsafe_%s" % Setting.cached_exercises_date())
     def _get_all_use_cache_unsafe():
         query = Exercise.all_unsafe().order('h_position')
         return query.fetch(1000) # TODO(Ben) this limit is tenuous
@@ -264,7 +332,7 @@ class Exercise(db.Model):
         return filter(lambda exercise: exercise.live, Exercise._get_all_use_cache_unsafe())
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda *args, **kwargs: "all_exercises_dict_unsafe_%s" % Setting.cached_exercises_date())
+    @layer_cache.cache_with_key_fxn(lambda * args, **kwargs: "all_exercises_dict_unsafe_%s" % Setting.cached_exercises_date())
     def _get_dict_use_cache_unsafe():
         exercises = Exercise._get_all_use_cache_unsafe()
         dict_exercises = {}
@@ -295,17 +363,17 @@ class UserExercise(db.Model):
     user = db.UserProperty()
     exercise = db.StringProperty()
     exercise_model = db.ReferenceProperty(Exercise)
-    streak = db.IntegerProperty(default = 0)
-    _progress = db.FloatProperty(default = None, indexed=False)  # A continuous value >= 0.0, where 1.0 means proficiency. This measure abstracts away the internal proficiency model.
-    longest_streak = db.IntegerProperty(default = 0, indexed=False)
+    streak = db.IntegerProperty(default=0)
+    _progress = db.FloatProperty(default=None, indexed=False)  # A continuous value >= 0.0, where 1.0 means proficiency. This measure abstracts away the internal proficiency model.
+    longest_streak = db.IntegerProperty(default=0, indexed=False)
     first_done = db.DateTimeProperty(auto_now_add=True)
     last_done = db.DateTimeProperty()
-    total_done = db.IntegerProperty(default = 0)
-    total_correct = db.IntegerProperty(default = 0)
+    total_done = db.IntegerProperty(default=0)
+    total_correct = db.IntegerProperty(default=0)
     last_review = db.DateTimeProperty(default=datetime.datetime.min)
     review_interval_secs = db.IntegerProperty(default=(60 * 60 * 24 * consts.DEFAULT_REVIEW_INTERVAL_DAYS), indexed=False) # Default 7 days until review
     proficient_date = db.DateTimeProperty()
-    seconds_per_fast_problem = db.FloatProperty(default = consts.INITIAL_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
+    seconds_per_fast_problem = db.FloatProperty(default=consts.INITIAL_SECONDS_PER_FAST_PROBLEM, indexed=False) # Seconds expected to finish a problem 'quickly' for badge calculation
     _accuracy_model = object_property.ObjectProperty()  # Stateful function object that estimates P(next problem correct). May not exist for old UserExercise objects (but will be created when needed).
 
     _USER_EXERCISE_KEY_FORMAT = "UserExercise.all().filter('user = '%s')"
@@ -319,12 +387,12 @@ class UserExercise(db.Model):
     # TODO(david): This is a bit of a hack to not have the normalizer move too
     #     slowly if the user got a lot of wrongs.
     _all_correct_normalizer = InvFnExponentialNormalizer(
-        accuracy_model = AccuracyModel().update(correct=False),
-        proficiency_threshold = AccuracyModel.simulate([True] * _MIN_PROBLEMS_REQUIRED)
+        accuracy_model=AccuracyModel().update(correct=False),
+        proficiency_threshold=AccuracyModel.simulate([True] * _MIN_PROBLEMS_REQUIRED)
     ).normalize
     _had_wrong_normalizer = InvFnExponentialNormalizer(
-        accuracy_model = AccuracyModel().update([False] * 3),
-        proficiency_threshold = consts.PROFICIENCY_ACCURACY_THRESHOLD
+        accuracy_model=AccuracyModel().update([False] * 3),
+        proficiency_threshold=consts.PROFICIENCY_ACCURACY_THRESHOLD
     ).normalize
 
     @property
@@ -673,9 +741,9 @@ class CoachRequest(db.Model):
     @staticmethod
     def get_or_insert_for(user_data_coach, user_data_student):
         return CoachRequest.get_or_insert(
-                key_name = CoachRequest.key_for(user_data_coach, user_data_student),
-                coach_requesting = user_data_coach.user,
-                student_requested = user_data_student.user,
+                key_name=CoachRequest.key_for(user_data_coach, user_data_student),
+                coach_requesting=user_data_coach.user,
+                student_requested=user_data_student.user,
                 )
 
     @staticmethod
@@ -738,6 +806,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_started(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has started the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.STARTED, version,
                        _queue="video-log-queue",
@@ -745,6 +815,8 @@ class UserVideoCss(db.Model):
 
     @staticmethod
     def set_completed(user_data, video, version):
+        """ Enqueues a task to asynchronously update the UserVideoCss to
+        indicate the user has completed the video. """
         deferred.defer(set_css_deferred, user_data.key(), video.key(),
                        UserVideoCss.COMPLETED, version,
                        _queue="video-log-queue",
@@ -779,8 +851,11 @@ def set_css_deferred(user_data_key, video_key, status, version):
 
     id = '.v%d' % video_key.id()
     if status == UserVideoCss.STARTED:
-        css['completed'].discard(id)
-        css['started'].add(id)
+        if id in css['completed']:
+            logging.warn("video [%s] for [%s] went from completed->started. ignoring." %
+                         (video_key, user_data_key))
+        else:
+            css['started'].add(id)
     else:
         css['started'].discard(id)
         css['completed'].add(id)
@@ -966,7 +1041,13 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
-class UserData(GAEBingoIdentityModel, db.Model):
+# Demo user khanacademy.demo2@gmail.com is a coworker of khanacademy.demo@gmail.com
+# khanacademy.demo@gmail.com is coach of a bunch of Khan staff and LASD staff, which is shared
+# with users as a demo. Access to the demo is via /api/auth/token_to_session with
+# oauth tokens for khanacademy.demo2@gmail.com supplied via secrets.py
+COACH_DEMO_COWORKER_EMAIL = "khanacademy.demo2@gmail.com"
+
+class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
     # user_id can be used as a unique identifier instead.
@@ -1028,8 +1109,8 @@ class UserData(GAEBingoIdentityModel, db.Model):
     last_badge_review = db.DateTimeProperty(indexed=False)
     last_activity = db.DateTimeProperty(indexed=False)
     start_consecutive_activity_date = db.DateTimeProperty(indexed=False)
-    count_feedback_notification = db.IntegerProperty(default=-1, indexed=False)
-    question_sort_order = db.IntegerProperty(default=-1, indexed=False)
+    count_feedback_notification = db.IntegerProperty(default= -1, indexed=False)
+    question_sort_order = db.IntegerProperty(default= -1, indexed=False)
     uservideocss_version = db.IntegerProperty(default=0, indexed=False)
     has_current_goals = db.BooleanProperty(default=False, indexed=False)
 
@@ -1040,6 +1121,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     # The name of the avatar the user has chosen. See avatar.util_avatar.py
     avatar_name = db.StringProperty(indexed=False)
+
+    # The user's birthday was only relatively recently collected (Mar 2012)
+    # so older UserData may not have this information.
+    birthdate = db.DateProperty(indexed=False)
 
     # Whether or not the user has indicated she wishes to have a public
     # profile (and can be searched, etc)
@@ -1052,7 +1137,11 @@ class UserData(GAEBingoIdentityModel, db.Model):
             "last_login", "user", "current_user", "map_coords",
             "user_nickname", "user_email",
             "seconds_since_joined", "has_current_goals", "public_badges",
-            "avatar_name", "username", "is_profile_public"
+            "avatar_name", "username", "is_profile_public",
+            "credential_version", "birthdate",
+            
+            "conversion_test_hard_exercises",
+            "conversion_test_easy_exercises",
     ]
 
     conversion_test_hard_exercises = set(['order_of_operations', 'graphing_points',
@@ -1103,10 +1192,21 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
     @property
     def email(self):
+        """ Unlike key_email below, this email property
+        represents the user's current email address and
+        can be displayed to users.
+        """
         return self.user_email
 
     @property
     def key_email(self):
+        """ key_email is an unchanging key that's used
+        as a reference to this user in many old db entities.
+        It will never change, and it does not represent the user's
+        actual email. It is used as a key for db queries only. It
+        should not be displayed to users -- for that, use the 'email'
+        property.
+        """
         return self.user.email()
 
     @property
@@ -1148,6 +1248,27 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return root
 
+    # Return data about the user that we'd like to track in MixPanel
+    @staticmethod
+    def get_analytics_properties(user_data):
+        properties_list = []
+
+        if not user_data:
+            properties_list.append(("User Type", "New"))
+        elif user_data.is_phantom:
+            properties_list.append(("User Type", "Phantom"))
+        else:
+            properties_list.append(("User Type", "Logged In"))
+
+        if user_data:
+            properties_list.append(("User Points", user_data.points))
+            properties_list.append(("User Videos", user_data.get_videos_completed()))
+            properties_list.append(("User Exercises", len(user_data.all_proficient_exercises)))
+            properties_list.append(("User Badges", len(user_data.badges)))
+            properties_list.append(("User Video Time", user_data.total_seconds_watched))
+
+        return properties_list
+
     @staticmethod
     @request_cache.cache()
     def current():
@@ -1177,6 +1298,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
     @property
     def is_phantom(self):
         return util.is_phantom_user(self.user_id)
+
+    @property
+    def is_demo(self):
+        return self.user_email.startswith(COACH_DEMO_COWORKER_EMAIL)
 
     @property
     def is_pre_phantom(self):
@@ -1232,6 +1357,10 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return query.get()
 
     @staticmethod
+    def get_from_user(user):
+        return UserData.get_from_db_key_email(user.email())
+
+    @staticmethod
     def get_from_username_or_email(username_or_email):
         if not username_or_email:
             return None
@@ -1273,29 +1402,55 @@ class UserData(GAEBingoIdentityModel, db.Model):
         return UserData.get_from_username(username)
 
     @staticmethod
-    def insert_for(user_id, email):
+    def insert_for(user_id, email, username=None, password=None):
         if not user_id or not email:
             return None
 
         user = users.User(email)
+        key_name = UserData.key_for(user_id)
+        kwds = {
+	        'key_name': key_name,
+            'user': user,
+            'current_user': user,
+            'user_id': user_id,
+            'moderator': False,
+            'last_login': datetime.datetime.now(),
+            'proficient_exercises': [],
+            'suggested_exercises': [],
+            'need_to_reassess': True,
+            'points': 0,
+            'coaches': [],
+            'user_email': email,
+        }
 
-        user_data = UserData.get_or_insert(
-            key_name=UserData.key_for(user_id),
-            user=user,
-            current_user=user,
-            user_id=user_id,
-            moderator=False,
-            last_login=datetime.datetime.now(),
-            proficient_exercises=[],
-            suggested_exercises=[],
-            need_to_reassess=True,
-            points=0,
-            coaches=[],
-            user_email=email
+        if username or password:
+            # Username or passwords are separate entities.
+            # That means we have to do this in multiple steps - make a txn.
+            def create_txn():
+                user_data = UserData.get_by_key_name(key_name)
+                if user_data is None:
+                    user_data = UserData(**kwds)
+                    # Both claim_username and set_password updates user_data
+                    # and will call put() for us.
+                    if username and not user_data._claim_username_internal(username):
+                        raise Rollback("username [%s] already taken" % username)
+                    if password and user_data.set_password(password):
+                        raise Rollback("invalid password for user")
+                else:
+                    logging.warning("Tried to re-make a user for key=[%s]" %
+                                    key_name)
+                return user_data
 
-            )
+            xg_on = db.create_transaction_options(xg=True)
+            user_data = db.run_in_transaction_options(xg_on, create_txn)
 
-        if not user_data.is_phantom:
+        else:
+            # No username means we don't have to do manual transactions.
+            # Note that get_or_insert is a transaction itself, and it can't
+            # be nested in the above transaction.
+            user_data = UserData.get_or_insert(**kwds)
+
+        if user_data and not user_data.is_phantom:
             # Record that we now have one more registered user
             if (datetime.datetime.now() - user_data.joined).seconds < 60:
                 # Extra safety check against user_data.joined in case some
@@ -1305,14 +1460,32 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return user_data
 
+    @staticmethod
+    def get_visible_user(user, actor=None):
+        """ Retrieve user for actor, in the style of O-Town, all or nothing.
+
+        TODO(marcia): Sort out UserData and UserProfile visibility turf war
+        """
+        if actor is None:
+            actor = UserData.current() or UserData.pre_phantom()
+
+        if user and user.is_visible_to(actor):
+            # Allow access to user's profile
+            return user
+
+        return None
+
     def delete(self):
+        # Override delete(), so that we can log this severe event, and clean
+        # up some statistics.
         logging.info("Deleting user data for %s with points %s" % (self.key_email, self.points))
         logging.info("Dumping user data for %s: %s" % (self.user_id, jsonify(self)))
 
         if not self.is_phantom:
             user_counter.add(-1)
 
-        db.delete(self)
+        # Delegate to the normal implentation
+        super(UserData, self).delete()
 
     def is_certain_to_be_thirteen(self):
         """ A conservative check that guarantees a user is at least 13 years
@@ -1330,7 +1503,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
                 or self.developer  # Really little kids don't write software
                 or is_facebook_user_id(email))
 
-    def get_or_insert_exercise(self, exercise, allow_insert = True):
+    def get_or_insert_exercise(self, exercise, allow_insert=True):
         if not exercise:
             return None
 
@@ -1341,7 +1514,7 @@ class UserData(GAEBingoIdentityModel, db.Model):
             # There are some old entities lying around that don't have keys.
             # We have to check for them here, but once we have reparented and rekeyed legacy entities,
             # this entire function can just be a call to .get_or_insert()
-            query = UserExercise.all(keys_only = True)
+            query = UserExercise.all(keys_only=True)
             query.filter('user =', self.user)
             query.filter('exercise =', exid)
             query.order('-total_done') # Temporary workaround for issue 289
@@ -1403,6 +1576,16 @@ class UserData(GAEBingoIdentityModel, db.Model):
         self.reassess_if_necessary()
         return (exid in self.suggested_exercises)
 
+    def get_coaches_data(self):
+        """ Return list of coaches UserData.
+        """
+        coaches = []
+        for key_email in self.coaches:
+            user_data_coach = UserData.get_from_db_key_email(key_email)
+            if user_data_coach:
+                coaches.append(user_data_coach)
+        return coaches
+
     def get_students_data(self):
         coach_email = self.key_email
         query = UserData.all().filter('coaches =', coach_email)
@@ -1429,13 +1612,27 @@ class UserData(GAEBingoIdentityModel, db.Model):
 
         return count > 0
 
-    def coach_emails(self):
-        emails = []
-        for key_email in self.coaches:
-            user_data_coach = UserData.get_from_db_key_email(key_email)
-            if user_data_coach:
-                emails.append(user_data_coach.email)
-        return emails
+    def remove_student_lists(self, removed_coach_emails):
+        """ Remove student lists associated with removed coaches.
+        """
+        if len(removed_coach_emails):
+            # Get the removed coaches' keys
+            removed_coach_keys = frozenset([
+                    UserData.get_from_username_or_email(coach_email).key()
+                    for coach_email in removed_coach_emails])
+
+            # Get the StudentLists from our list of StudentList keys
+            student_lists = StudentList.get(self.student_lists)
+
+            # Theoretically, a StudentList allows for multiple coaches,
+            # but in practice there is exactly one coach per StudentList.
+            # If/when we support multiple coaches per list, we would need to change
+            # how this works... How *does* it work? Well, let me tell you.
+
+            # Set our student_lists to all the keys of StudentLists
+            # whose coaches do not include any removed coaches.
+            self.student_lists = [l.key() for l in student_lists
+                    if (len(frozenset(l.coaches) & removed_coach_keys) == 0)]
 
     def is_coached_by(self, user_data_coach):
         return user_data_coach.key_email in self.coaches or user_data_coach.key_email.lower() in self.coaches
@@ -1651,9 +1848,9 @@ class TopicVersion(db.Model):
         "TopicVersion.get_all_content_keys_%s" %
         Setting.cached_content_add_date())
     def get_all_content_keys():
-        video_keys = Video.all(keys_only = True).fetch(100000)
-        exercise_keys = Exercise.all(keys_only = True).fetch(100000)
-        url_keys = Url.all(keys_only = True).fetch(100000)
+        video_keys = Video.all(keys_only=True).fetch(100000)
+        exercise_keys = Exercise.all(keys_only=True).fetch(100000)
+        url_keys = Url.all(keys_only=True).fetch(100000)
 
         content = video_keys
         content.extend(exercise_keys)
@@ -1687,8 +1884,8 @@ class TopicVersion(db.Model):
             last_edited_by = UserData.current().user
         else:
             last_edited_by = None
-        new_version = TopicVersion(last_edited_by = last_edited_by,
-                                   number = new_version_number)
+        new_version = TopicVersion(last_edited_by=last_edited_by,
+                                   number=new_version_number)
         new_version.put()
         return new_version
 
@@ -1701,6 +1898,7 @@ class TopicVersion(db.Model):
         return TopicVersion.all().filter("edit = ", True).get()
 
     @staticmethod
+    @synchronized_with_memcache(timeout=300) #takes 70secs on dev 03/2012
     def create_edit_version():
         version = TopicVersion.all().filter("edit = ", True).get()
         if version is None:
@@ -1717,7 +1915,7 @@ class TopicVersion(db.Model):
         version = TopicVersion.create_new_version()
 
         old_root = Topic.get_root(self)
-        old_tree = old_root.make_tree(types = ["Topics"], include_hidden = True)
+        old_tree = old_root.make_tree(types=["Topics"], include_hidden=True)
         TopicVersion.copy_tree(old_tree, version)
 
         version.copied_from = self
@@ -1741,11 +1939,11 @@ class TopicVersion(db.Model):
             key_name = Topic.get_new_key_name()
 
         new_tree = util.clone_entity(old_tree,
-                                     key_name = key_name,
-                                     version = new_version,
-                                     parent = new_root,
-                                     parent_keys = parent_keys,
-                                     ancestor_keys = ancestor_keys)
+                                     key_name=key_name,
+                                     version=new_version,
+                                     parent=new_root,
+                                     parent_keys=parent_keys,
+                                     ancestor_keys=ancestor_keys)
         new_tree.put()
         if not new_root:
             new_root = new_tree
@@ -1764,24 +1962,125 @@ class TopicVersion(db.Model):
         else:
             last_edited_by = None
         self.last_edited_by = last_edited_by
-        self.put()
+        self.put()        
+
+    def find_content_problems(self):
+        logging.info("checking for problems")
+        version = self
+                
+        # find exercises that are overlapping on the knowledge map
+        logging.info("checking for exercises that are overlapping on the knowledge map")
+        exercises = Exercise.all()
+        exercise_dict = dict((e.key(),e) for e in exercises)
+
+        location_dict = {}
+        duplicate_positions = list()
+        changes = VersionContentChange.get_updated_content_dict(version)
+        exercise_changes = dict((k,v) for k,v in changes.iteritems() 
+                                if v.key() in exercise_dict)
+        exercise_dict.update(exercise_changes)
+        
+        for exercise in [e for e in exercise_dict.values() 
+                         if e.live and not e.summative]:
+                   
+            if exercise.h_position not in location_dict:
+                location_dict[exercise.h_position] = {}
+
+            if exercise.v_position in location_dict[exercise.h_position]:
+                location_dict[exercise.h_position][exercise.v_position].append(exercise)
+                duplicate_positions.append(
+                    location_dict[exercise.h_position][exercise.v_position])
+            else:
+                location_dict[exercise.h_position][exercise.v_position] = [exercise]
+
+        # find videos whose duration is 0
+        logging.info("checking for videos with 0 duration")
+        zero_duration_videos = Video.all().filter("duration =", 0).fetch(10000)
+        zero_duration_dict = dict((v.key(),v) for v in zero_duration_videos)
+        video_changes = dict((k,v) for k,v in changes.iteritems() 
+                                if k in zero_duration_dict or (
+                                type(v) == Video and v.duration == 0))
+        zero_duration_dict.update(video_changes)
+        zero_duration_videos = [v for v in zero_duration_dict.values() 
+                                if v.duration == 0]
+
+        # find videos with invalid youtube_ids that would be marked live
+        logging.info("checking for videos with invalid youtube_ids")
+        root = Topic.get_root(version)
+        videos = root.get_videos(include_descendants = True)
+        bad_videos = []
+        for video in videos:
+            if re.search("_DUP_\d*$", video.youtube_id):
+                bad_videos.append(video) 
+
+        problems = {
+            "ExerciseVideos with topicless videos" : 
+                ExerciseVideo.get_all_with_topicless_videos(version),
+            "Exercises with colliding positions" : list(duplicate_positions),
+            "Zero duration videos": zero_duration_videos,
+            "Videos with bad youtube_ids": bad_videos}
+
+        return problems
 
     def set_default_version(self):
         logging.info("starting set_default_version")
+        Setting.topic_admin_task_message("Publish: started") 
+        run_code = base64.urlsafe_b64encode(os.urandom(30))   
+        do_set_default_deferred_step(check_for_problems, 
+                            self.number,
+                            run_code) 
 
-        deferred.defer(apply_version_content_changes, self, _queue="topics-set-default-queue")
+def do_set_default_deferred_step(func, version_number, run_code):
+    taskname = "v%i_run_%s_%s" % (version_number, run_code, func.__name__)
+    try:
+        deferred.defer(func, 
+                       version_number, 
+                       run_code,
+                       _queue = "topics-set-default-queue",
+                       _name = taskname,
+                       _url = "/_ah/queue/deferred_topics-set-default-queue")
+    except (taskqueue.TaskAlreadyExistsError, taskqueue.TombstonedTaskError):
+        logging.info("deferred task %s already exists" % taskname)
 
-def apply_version_content_changes(version):
+def check_for_problems(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: checking for content problems")
+    version = TopicVersion.get_by_id(version_number)
+    content_problems = version.find_content_problems()
+    for problem_type, problems in content_problems.iteritems():
+        if len(problems):
+            content_problems["Version"] = version_number
+            content_problems["Date detected"] = datetime.datetime.now()
+            layer_cache.KeyValueCache.set(
+                "set_default_version_content_problem_details", content_problems)
+            Setting.topic_admin_task_message(("Error - content problems " +
+                "found: %s. <a target=_blank " +
+                "href='/api/v1/dev/topictree/problems'>" +
+                "Click here to see problems.</a>") % 
+                (problem_type))
+                
+            raise deferred.PermanentTaskFailure
+
+    do_set_default_deferred_step(apply_version_content_changes, 
+                                 version_number,
+                                 run_code) 
+
+def apply_version_content_changes(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: applying version content changes")  
+    version = TopicVersion.get_by_id(version_number)
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
-
-    for change in changes:
+    num_changes = len(changes)
+    for i, change in enumerate(changes):
         change.apply_change()
+        logging.info("applied change %i of %i" % (i, num_changes))
     logging.info("applied content changes")
+    do_set_default_deferred_step(preload_default_version_data,
+                                 version_number,
+                                 run_code) 
 
-    deferred.defer(preload_default_version_data, version, _queue="topics-set-default-queue")
-
-def preload_default_version_data(version):
+def preload_default_version_data(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: preloading cache")  
+    version = TopicVersion.get_by_id(version_number)
 
     # Causes circular importing if put at the top
     from library import library_content_html
@@ -1811,9 +2110,14 @@ def preload_default_version_data(version):
     topic_exercise_badges.sync_with_topic_version(version)
     logging.info("synced topic exercise badges")
 
-    deferred.defer(change_default_version, version, _queue="topics-set-default-queue")
+    do_set_default_deferred_step(change_default_version,
+                                 version_number,
+                                 run_code) 
     
-def change_default_version(version):
+def change_default_version(version_number, run_code):
+    Setting.topic_admin_task_message("Publish: changing default version")  
+    version = TopicVersion.get_by_id(version_number)
+
     default_version = TopicVersion.get_default_version()
 
     def update_txn():
@@ -1837,16 +2141,20 @@ def change_default_version(version):
     else:
         xg_on = db.create_transaction_options(xg=True)
         db.run_in_transaction_options(xg_on, update_txn)
-        # setting the topic tree version in the transaction won't update 
+        # setting the topic tree version in the transaction won't update
         # memcache as the new values for the setting are not complete till the
         # transaction finishes ... so updating again outside the txn
         Setting.topic_tree_version(version.number)
 
     logging.info("done setting new default version")
 
+    Setting.topic_admin_task_message("Publish: reindexing new content")  
+
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
     
+    Setting.topic_admin_task_message("Publish: creating new edit version")  
+
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
 
@@ -1856,13 +2164,18 @@ def change_default_version(version):
     Setting.count_videos(len(vids) + len(urls))
     Video.approx_count(bust_cache=True)
 
-    deferred.defer(rebuild_content_caches, version, _queue="topics-set-default-queue")
-
-def rebuild_content_caches(version):
+    do_set_default_deferred_step(rebuild_content_caches,
+                                 version_number,
+                                 run_code)
+   
+def rebuild_content_caches(version_number, run_code):
     """ Uses existing Topic structure to rebuild and recache topic_string_keys
     properties in Video, Url, and Exercise entities for easy parental Topic
     lookups.
     """
+    Setting.topic_admin_task_message("Publish: rebuilding content caches")
+      
+    version = TopicVersion.get_by_id(version_number)
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
 
@@ -1917,6 +2230,7 @@ def rebuild_content_caches(version):
                 else:
                     logging.info("Failed to find exercise " + str(child_key))
 
+    Setting.topic_admin_task_message("Publish: putting all content caches") 
     logging.info("About to put content caches for all videos, urls, and exercises.")
     db.put(list(videos) + list(urls) + list(exercises))
     logging.info("Finished putting videos, urls, and exercises.")
@@ -1926,6 +2240,7 @@ def rebuild_content_caches(version):
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
     logging.info("set_default_version complete")
+    Setting.topic_admin_task_message("Publish: finished successfully") 
 
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
@@ -1961,7 +2276,7 @@ class VersionContentChange(db.Model):
         return content
 
     # if content is passed as an argument it saves a reference lookup
-    def updated_content(self, content = None):
+    def updated_content(self, content=None):
         if content is None:
             content = self.content
         elif content.key() != self.content.key():
@@ -1996,18 +2311,41 @@ class VersionContentChange(db.Model):
         return change
 
     @staticmethod
-    def add_new_content(klass, version, new_props, changeable_props=None, 
+    def add_new_content(klass, version, new_props, changeable_props=None,
                         put_change=True):
-        new_props = dict((str(k), v) for k,v in new_props.iteritems()
+        filtered_props = dict((str(k), v) for k,v in new_props.iteritems()
                          if changeable_props is None or k in changeable_props)
-        content = klass(**new_props)
+        content = klass(**filtered_props)
         content.put()
+
+        if (type(content) == Exercise and "related_videos" in new_props):
+            # exercises imports from request_handler which imports from models,
+            # meaning putting this import at the top creates a import loop
+            from exercises import UpdateExercise
+
+            if "related_video_keys" in new_props:
+                related_video_keys = new_props["related_video_keys"]
+                logging.info("related video keys already added")
+            else:
+                related_video_keys = []
+                for readable_id in new_props["related_videos"]:
+                    video = Video.get_for_readable_id(readable_id, version)
+                    logging.info("doing get for readable_id")
+                    related_video_keys.append(video.key())
+
+            for i, video_key in enumerate(related_video_keys):
+                ExerciseVideo(
+                    exercise=content,
+                    video=video_key,
+                    exercise_order=i
+                    ).put()
+
         if put_change:
-            change = VersionContentChange(parent = version)
+            change = VersionContentChange(parent=version)
             change.version = version
-            change.content_changes = new_props
-            Setting.cached_content_add_date(datetime.datetime.now())
+            change.content_changes = filtered_props
             change.content = content
+            Setting.cached_content_add_date(datetime.datetime.now())
             change.put()
         return content
 
@@ -2017,28 +2355,30 @@ class VersionContentChange(db.Model):
             changeable_props = new_props.keys()
 
         change = VersionContentChange.get_change_for_content(content, version)
-       
+
         if change:
             previous_changes = True
         else:
-            previous_changes = False 
-            change = VersionContentChange(parent = version)
+            previous_changes = False
+            change = VersionContentChange(parent=version)
             change.version = version
             change.content = content
-            change.content_changes = {}
+
+        change.content_changes = {}
 
         if content and content.is_saved():
-            
-            if previous_changes:
-                content = change.updated_content(content)
-                change.content_changes = {}
 
             for prop in changeable_props:
                 if (prop in new_props and
                     new_props[prop] is not None and (
-                        not hasattr(content, prop) or
-                        new_props[prop] != getattr(content, prop))
-                        ):
+                        not hasattr(content, prop) or (
+                            prop != "related_videos" and
+                            new_props[prop] != getattr(content, prop)
+                        ) or (
+                            prop == "related_videos" and 
+                            set(new_props[prop]) != set(getattr(content, prop))
+                        ))
+                    ):
 
                     # add new changes for all props that are different from what
                     # is currently in content
@@ -2057,16 +2397,16 @@ class VersionContentChange(db.Model):
         return change.content_changes
 
 class Topic(Searchable, db.Model):
-    title = db.StringProperty(required = True) # title used when viewing topic in a tree structure
+    title = db.StringProperty(required=True) # title used when viewing topic in a tree structure
     standalone_title = db.StringProperty() # title used when on its own
-    id = db.StringProperty(required = True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
+    id = db.StringProperty(required=True) # this is the slug, or readable_id - the one used to refer to the topic in urls and in the api
     description = db.TextProperty(indexed=False)
     parent_keys = db.ListProperty(db.Key) # to be able to access the parent without having to resort to a query - parent_keys is used to be able to hold more than one parent if we ever want that
     ancestor_keys = db.ListProperty(db.Key) # to be able to quickly get all descendants
     child_keys = db.ListProperty(db.Key) # having this avoids having to modify Content entities
-    version = db.ReferenceProperty(TopicVersion, required = True)
+    version = db.ReferenceProperty(TopicVersion, required=True)
     tags = db.StringListProperty()
-    hide = db.BooleanProperty(default = False)
+    hide = db.BooleanProperty(default=False)
     created_on = db.DateTimeProperty(indexed=False, auto_now_add=True)
     updated_on = db.DateTimeProperty(indexed=False, auto_now=True)
     last_edited_by = db.UserProperty(indexed=False)
@@ -2077,11 +2417,11 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic", "art-history"] 
+    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry"]
 
     @property
     def relative_url(self):
-        return '#%s' % self.id
+        return '/#%s' % self.id
 
     @property
     def ka_url(self):
@@ -2102,7 +2442,7 @@ class Topic(Searchable, db.Model):
         for child in children:
             self.children.append({
 				"kind": child.__class__.__name__,
-				"id": getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) ),
+				"id": getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()))),
 				"title": getattr(child, "title", getattr(child, "display_name", "")),
 				"hide": getattr(child, "hide", False),
 				"url": getattr(child, "ka_url", getattr(child, "url", ""))
@@ -2111,6 +2451,12 @@ class Topic(Searchable, db.Model):
 
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
+
+    def has_content(self):
+        for child_key in self.child_keys:
+            if child_key.kind() != "Topic":
+                return True
+        return False
 
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
     @layer_cache.cache_with_key_fxn(lambda self:
@@ -2162,14 +2508,20 @@ class Topic(Searchable, db.Model):
             "title": v.title
         } for v in Topic.get_cached_videos_for_topic(self)]
 
-        parent_titles = [topic.title for topic in db.get(self.ancestor_keys)][0:-1]
-        parent_titles.reverse()
+        ancestor_topics = [{
+            "title": topic.title, 
+            "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
+                    or topic.has_content() else None)
+            } 
+            for topic in db.get(self.ancestor_keys)][0:-1]
+        ancestor_topics.reverse()
 
         return {
             'id': self.id,
             'title': self.title,
+            'url': self.relative_url,
             'extended_slug': self.get_extended_slug(),
-            'parent_titles': parent_titles,
+            'ancestor_topics': ancestor_topics,
             'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,
             'videos': videos_dict,
             'previous_topic_title': previous_topic.standalone_title if previous_topic else None,
@@ -2208,13 +2560,13 @@ class Topic(Searchable, db.Model):
         return Topic.all().filter("title =", title).filter("parent_keys =", parent.key()).get()
 
     @staticmethod
-    def get_root(version = None):
+    def get_root(version=None):
         if not version:
             version = TopicVersion.get_default_version()
         return Topic.all().filter('id =', 'root').filter('version =', version).get()
 
     @staticmethod
-    def get_new_id(parent, title, version):       
+    def get_new_id(parent, title, version):
         potential_id = title.lower()
         potential_id = re.sub('[^a-z0-9]', '-', potential_id);
         potential_id = re.sub('-+$', '', potential_id)  # remove any trailing dashes (see issue 1140)
@@ -2394,14 +2746,14 @@ class Topic(Searchable, db.Model):
         self.version.update()
         return db.run_in_transaction(move_txn)
 
-    # Ungroup takes all of a topics children, moves them up a level, then 
+    # Ungroup takes all of a topics children, moves them up a level, then
     # deletes the topic
     def ungroup(self):
         parent = db.get(self.parent_keys[0])
         pos = parent.child_keys.index(self.key())
         children = db.get(self.child_keys)
         for i, child in enumerate(children):
-            self.move_child(child, parent, pos+i)
+            self.move_child(child, parent, pos + i)
         parent.delete_child(self)
 
     def copy(self, title, parent=None, **kwargs):
@@ -2421,11 +2773,11 @@ class Topic(Searchable, db.Model):
 
         topic = Topic.get_by_key_name(kwargs["key_name"])
         if topic is not None:
-            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % kwargs["key_name"] )
+            raise Exception("Trying to insert a topic with the duplicate key_name '%s'" % kwargs["key_name"])
 
         kwargs["title"] = title
         kwargs["parent_keys"] = [parent.key()] if parent else []
-        kwargs["ancestor_keys"] =  kwargs["parent_keys"][:]
+        kwargs["ancestor_keys"] = kwargs["parent_keys"][:]
         kwargs["ancestor_keys"].extend(parent.ancestor_keys if parent else [])
 
         new_topic = util.clone_entity(self, **kwargs)
@@ -2562,22 +2914,22 @@ class Topic(Searchable, db.Model):
             ancestor_keys = parent_keys[:]
             ancestor_keys.extend(parent.ancestor_keys)
 
-            new_topic = Topic(parent = root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
-                              key_name = key_name,
-                              version = version,
-                              id = id,
-                              title = title,
-                              parent_keys = parent_keys,
-                              ancestor_keys = ancestor_keys)
+            new_topic = Topic(parent=root, # setting the root to be the parent so that inserts and deletes can be done in a transaction
+                              key_name=key_name,
+                              version=version,
+                              id=id,
+                              title=title,
+                              parent_keys=parent_keys,
+                              ancestor_keys=ancestor_keys)
 
         else:
             root = Topic.get_root(version)
 
-            new_topic = Topic(parent = root,
-                              key_name = key_name,
-                              version = version,
-                              id = id,
-                              title = title)
+            new_topic = Topic(parent=root,
+                              key_name=key_name,
+                              version=version,
+                              id=id,
+                              title=title)
 
         for key in kwargs:
             setattr(new_topic, key, kwargs[key])
@@ -2588,14 +2940,14 @@ class Topic(Searchable, db.Model):
     def update(self, **kwargs):
         if self.version.default:
             raise Exception("You can't edit the default version")
-     
+
 
         if "put" in kwargs:
             put = kwargs["put"]
             del kwargs["put"]
         else:
             put = True
-        
+
         changed = False
         if "id" in kwargs and kwargs["id"] != self.id:
 
@@ -2605,17 +2957,17 @@ class Topic(Searchable, db.Model):
                 changed = True
             else:
                 pass # don't allow people to change the slug to a different nodes slug
-            del kwargs["id"]             
+            del kwargs["id"]
 
         for attr, value in kwargs.iteritems():
             if getattr(self, attr) != value:
                 setattr(self, attr, value)
                 changed = True
-        
+
         if changed:
             if put:
                 self.put()
-                self.version.update()   
+                self.version.update()
             return self
 
     @layer_cache.cache_with_key_fxn(
@@ -2639,9 +2991,24 @@ class Topic(Searchable, db.Model):
 
         # get all content that belongs in this tree
         contentItems = db.get(contentKeys)
-        # add the content to the node dict
-        for content in contentItems:
-            node_dict[content.key()]=content
+        content_dict = dict((content.key(), content) for content in contentItems)
+
+        if "Exercise" in types or len(types) == 0:
+            evs = ExerciseVideo.all().fetch(10000)
+            exercise_dict = dict((k, v) for k, v in content_dict.iteritems() if
+                          (k.kind() == "Exercise"))
+            video_dict = dict((k, v) for k, v in content_dict.iteritems() if
+                          (k.kind() == "Video"))
+
+            Exercise.add_related_videos_prop(exercise_dict, evs, video_dict)
+
+        # make any content changes for this version
+        changes = VersionContentChange.get_updated_content_dict(self.version)
+        type_changes = dict((k, c) for k, c in changes.iteritems() if
+                       (k.kind() in types or len(types) == 0))
+        content_dict.update(type_changes)
+
+        node_dict.update(content_dict)
 
         # cycle through the nodes adding each to its parent's children list
         for key, descendant in node_dict.iteritems():
@@ -2672,9 +3039,9 @@ class Topic(Searchable, db.Model):
 
                 else:
                     title = getattr(child, "title", getattr(child, "display_name", ""))
-                    if title.lower().find(query) > -1:
+                    id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id())))
+                    if title.lower().find(query) > -1 or str(id).lower().find(query) > -1:
                         match_path = path[:]
-                        id = getattr(child, "id", getattr(child, "readable_id", getattr(child, "name", child.key().id()) ) )
                         match_path.append(id)
                         match_path.append(child_key.kind())
                         matching_paths.append(match_path)
@@ -2703,7 +3070,7 @@ class Topic(Searchable, db.Model):
         contentItems = db.get(contentKeys)
         # add the content to the node dict
         for content in contentItems:
-            node_dict[content.key()]=content
+            node_dict[content.key()] = content
 
         matching_paths = []
         matching_nodes = []
@@ -2717,12 +3084,12 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False: 
+        lambda version=None, include_hidden=False:
         "topic.get_all_topic_%s_%s" % (
-            (str(version.number)+str(version.updated_on)) if version 
-            else Setting.topic_tree_version(), 
+            (str(version.number) + str(version.updated_on)) if version
+            else Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Memcache)    
+        layer=layer_cache.Layers.Memcache)
     def get_all_topics(version=None, include_hidden=False):
         if not version:
             version = TopicVersion.get_default_version()
@@ -2735,35 +3102,35 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None: 
+        lambda version=None:
         "topic.get_visible_topics_%s" % (
             version.key() if version else Setting.topic_tree_version()),
         layer=layer_cache.Layers.Memcache)
-    def get_visible_topics(version = None):
+    def get_visible_topics(version=None):
         topics = Topic.get_all_topics(version, False)
         return [t for t in topics]
 
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False: 
+        lambda version=None, include_hidden=False:
         "topic.get_super_topics_%s_%s" % (
-            (str(version.number)+str(version.updated_on))  if version 
+            (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Memcache) 
+        layer=layer_cache.Layers.Memcache)
     def get_super_topics(version=None):
         topics = Topic.get_visible_topics()
         return [t for t in topics if t.id in Topic._super_topic_ids]
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False: 
+        lambda version=None, include_hidden=False:
         "topic.get_rolled_up_top_level_topics_%s_%s" % (
-            (str(version.number)+str(version.updated_on))  if version 
+            (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Memcache) 
+        layer=layer_cache.Layers.Memcache)
     def get_rolled_up_top_level_topics(version=None, include_hidden=False):
         topics = Topic.get_all_topics(version, include_hidden)
 
@@ -2775,7 +3142,7 @@ class Topic(Searchable, db.Model):
             # if the topic is a subtopic of a super topic
             if set(super_topic_keys) & set(topic.ancestor_keys):
                 continue
-                
+
             for child_key in topic.child_keys:
                  if child_key.kind() != "Topic":
                     rolled_up_topics.append(topic)
@@ -2785,12 +3152,12 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda types=None, version=None, include_hidden = False: 
+        lambda types=None, version=None, include_hidden=False:
         "topic.get_filled_rolled_up_top_level_topics_%s_%s" % (
-            (str(version.number)+str(version.updated_on))  if version 
+            (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Blobstore) 
+        layer=layer_cache.Layers.Blobstore)
     def get_filled_rolled_up_top_level_topics(types=None, version=None, include_hidden=False):
         if types is None:
             types = []
@@ -2820,36 +3187,36 @@ class Topic(Searchable, db.Model):
             # if the topic is a subtopic of a super topic
             if set(super_topic_keys) & set(topic.ancestor_keys):
                 continue
-                
+
             for child_key in topic.child_keys:
                  if child_key.kind() != "Topic":
                     rolled_up_topics.append(topic)
                     break
-        
+
 
         child_dict = {}
         for topic in rolled_up_topics:
-            child_dict.update(dict((key, True) for key in topic.child_keys 
-                                   if key.kind() in types or 
+            child_dict.update(dict((key, True) for key in topic.child_keys
+                                   if key.kind() in types or
                                    (len(types) == 0 and key.kind() != "Topic")))
-        
+
         child_dict.update(dict((e.key(), e) for e in db.get(child_dict.keys())))
 
         for topic in rolled_up_topics:
             topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]
-        
+
         return rolled_up_topics
 
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(
-        lambda version=None, include_hidden = False: 
+        lambda version=None, include_hidden=False:
         "topic.get_content_topics_%s_%s" % (
-            (str(version.number)+str(version.updated_on))  if version 
+            (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
             include_hidden),
-        layer=layer_cache.Layers.Memcache) 
-    def get_content_topics(version = None, include_hidden = False):
+        layer=layer_cache.Layers.Memcache)
+    def get_content_topics(version=None, include_hidden=False):
         topics = Topic.get_all_topics(version, include_hidden)
 
         content_topics = []
@@ -2858,24 +3225,17 @@ class Topic(Searchable, db.Model):
                 if child_key.kind() != "Topic":
                     content_topics.append(topic)
                     break
-        
-        content_topics.sort(key = lambda topic: topic.standalone_title)
+
+        content_topics.sort(key=lambda topic: topic.standalone_title)
         return content_topics
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(
-        lambda types=None, version=None, include_hidden = False: 
-        "topic.get_filled_content_topics_%s_%s" % (
-            (str(version.number)+str(version.updated_on)) if version 
-            else Setting.topic_tree_version(),
-            include_hidden),
-        layer=layer_cache.Layers.Blobstore) 
     def get_filled_content_topics(types=None, version=None, include_hidden=False):
         if types is None:
             types = []
 
         topics = Topic.get_content_topics(version)
-        
+
         child_dict = {}
         for topic in topics:
             child_dict.update(dict((key, True) for key in topic.child_keys if key.kind() in types or (len(types) == 0 and key.kind() != "Topic")))
@@ -2888,7 +3248,7 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     def get_homepage_topics(version=None):
-        return list(set(Topic.get_content_topics()+Topic.get_super_topics()))
+        return list(set(Topic.get_content_topics() + Topic.get_super_topics()))
 
     @staticmethod
     def get_exercise_topics(version=None):
@@ -2918,7 +3278,7 @@ class Topic(Searchable, db.Model):
 
     @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
-        keys = [child_key for child_key in topic.child_keys if not kind or child_key.kind() == kind]  
+        keys = [child_key for child_key in topic.child_keys if not kind or child_key.kind() == kind]
         if include_descendants:
 
             subtopics = Topic.all().filter("ancestor_keys =", topic.key())
@@ -2928,15 +3288,15 @@ class Topic(Searchable, db.Model):
 
             for subtopic in subtopics:
                 keys.extend([key for key in subtopic.child_keys if not kind or key.kind() == kind])
-              
-        nodes = db.get(keys) 
+
+        nodes = db.get(keys)
         if not kind:
             nodes.extend(subtopics)
 
         return nodes
 
     def get_urls(self, include_descendants=False, include_hidden=False):
-        return Topic._get_children_of_kind(self, "Url", include_descendants, 
+        return Topic._get_children_of_kind(self, "Url", include_descendants,
                                            include_hidden)
 
     def get_exercises(self, include_descendants=False, include_hidden=False):
@@ -3142,230 +3502,251 @@ class Topic(Searchable, db.Model):
             return progress_tree
 
 def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
-    from api.v1 import exercise_save_data 
+    from api.v1 import exercise_save_data
     import zlib
-    import pickle
 
-    tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
- 
-    logging.info("starting import")
-    version = TopicVersion.get_by_id(version_id)
-    parent = Topic.get_by_id(topic_id, version)
+    try:
+        tree_json = pickle.loads(zlib.decompress(tree_json_compressed))
 
-    topics = Topic.get_all_topics(version, True)
-    logging.info("got all topics")
+        logging.info("starting import")
+        version = TopicVersion.get_by_id(version_id)
+        parent = Topic.get_by_id(topic_id, version)
 
-    topic_dict = dict((topic.id, topic) for topic in topics)
-    topic_keys_dict = dict((topic.key(), topic) for topic in topics)
-    videos = Video.get_all()
-    logging.info("got all videos")
+        topics = Topic.get_all_topics(version, True)
+        logging.info("got all topics")
+        topic_dict = dict((topic.id, topic) for topic in topics)
+        topic_keys_dict = dict((topic.key(), topic) for topic in topics)
 
-    video_dict = dict((video.youtube_id, video) for video in videos)
-    exercises = Exercise.get_all_use_cache()
-    logging.info("got all exercises")
+        videos = Video.get_all()
+        logging.info("got all videos")
+        video_dict = dict((video.readable_id, video) for video in videos)
 
-    exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
-    urls = Url.all()
-    url_dict = dict((url.id, url) for url in urls)
-    logging.info("got all urls")
+        exercises = Exercise.get_all_use_cache()
+        logging.info("got all exercises")
+        exercise_dict = dict((exercise.name, exercise) for exercise in exercises)
 
-    all_entities_dict = {}
-    new_content_keys = []
+        urls = Url.all()
+        url_dict = dict((url.id, url) for url in urls)
+        logging.info("got all urls")
 
-    # on dev server dont record new items in ContentVersionChanges
-    if App.is_dev_server:
-        put_change = False
-    else:
-        put_change = True
+        all_entities_dict = {}
+        new_content_keys = []
 
-    # delete all subtopics of node we are copying over the same topic
-    if tree_json["id"] == parent.id:
-        parent.delete_descendants() 
+        # on dev server dont record new items in ContentVersionChanges
+        if App.is_dev_server:
+            put_change = False
+        else:
+            put_change = True
 
-    # adds key to each entity in json tree, if the node is not in the tree then add it
-    def add_keys_json_tree(tree, parent, i=0, prefix="0"):
-        pos = prefix + "." + str(i)
+        # delete all subtopics of node we are copying over the same topic
+        if tree_json["id"] == parent.id:
+            parent.delete_descendants()
 
-        if tree["kind"] == "Topic":
-            if tree["id"] in topic_dict:
-                topic = topic_dict[tree["id"]]
-                tree["key"] = topic.key()
-            else:
-                kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
-                kwargs["version"] = version
-                topic = Topic.insert(title = tree['title'], parent = parent, **kwargs)
-                logging.info("%s: added topic %s" % (pos, topic.title))
-                tree["key"] = topic.key()
-                topic_dict[tree["id"]]=topic
+        # adds key to each entity in json tree, if the node is not in the tree then add it
+        def add_keys_json_tree(tree, parent, do_exercises, i=0, prefix=None):
+            pos = ((prefix + ".") if prefix else "") + str(i)
 
-            # if this topic is not the parent topic (ie. its not root, nor the 
-            # topic_id you are updating)
-            if (parent.key() != topic.key() and
-                # and this topic is not in the new parent
-                topic.key() not in parent.child_keys and
-                # if it already exists in a topic
-                len(topic.parent_keys) and 
-                # and that topic is not the parent topic
-                topic.parent_keys[0] != parent.key()):
-    
-                # move it from that old parent topic, its position in the new
-                # parent does not matter as child_keys will get written over 
-                # later.  move_child is needed only to make sure that the 
-                # parent_keys and ancestor_keys will all match up correctly
-                old_parent = topic_keys_dict[topic.parent_keys[0]]
-                logging.info("moving topic %s from %s to %s" % (topic.id, 
-                    old_parent.id, parent.id))
-                old_parent.move_child(topic, parent, 0)
+            if not do_exercises and tree["kind"] == "Topic":
+                if tree["id"] in topic_dict:
+                    topic = topic_dict[tree["id"]]
+                    tree["key"] = topic.key()
+                else:
+                    kwargs = dict((str(key), value) for key, value in tree.iteritems() if key in ['standalone_title', 'description', 'tags'])
+                    kwargs["version"] = version
+                    topic = Topic.insert(title=tree['title'], parent=parent, **kwargs)
+                    logging.info("%s: added topic %s" % (pos, topic.title))
+                    tree["key"] = topic.key()
+                    topic_dict[tree["id"]] = topic
 
-            all_entities_dict[tree["key"]] = topic
-        
-        elif tree["kind"] == "Video":
-            if tree["youtube_id"] in video_dict:
-                video = video_dict[tree["youtube_id"]]
-                tree["key"] = video.key()
-            else:                    
-                changeable_props = ["youtube_id", "url", "title", "description",
-                                    "keywords", "duration", "readable_id", 
-                                    "views"]
-                video = VersionContentChange.add_new_content(Video, 
-                                                                version,
-                                                                tree, 
-                                                                changeable_props,
-                                                                put_change)
-                logging.info("%s: added video %s" % (pos, video.title))
-                new_content_keys.append(video.key())
-                tree["key"] = video.key()
-                video_dict[tree["youtube_id"]] = video
-          
-            all_entities_dict[tree["key"]] = video
+                # if this topic is not the parent topic (ie. its not root, nor the 
+                # topic_id you are updating)
+                if (parent.key() != topic.key() and
+                    # and this topic is not in the new parent
+                    topic.key() not in parent.child_keys and
+                    # if it already exists in a topic
+                    len(topic.parent_keys) and
+                    # and that topic is not the parent topic
+                    topic.parent_keys[0] != parent.key()):
 
-        elif tree["kind"] == "Exercise":
-            if tree["name"] in exercise_dict:
-                tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
-            else:
-                exercise = exercise_save_data(version, tree, None, put_change)
-                logging.info("%s: added Exercise %s" % (pos, exercise.name))
-                new_content_keys.append(exercise.key())
-                tree["key"] = exercise.key()
-                exercise_dict[tree["name"]] = exercise
-            
-            all_entities_dict[tree["key"]] = exercise_dict[tree["name"]]
-            
-        elif tree["kind"] == "Url":
-            if tree["id"] in url_dict:
-                url = url_dict[tree["id"]]
-                tree["key"] = url.key() 
-            else:    
-                changeable_props = ["tags", "title", "url"]
-                url = VersionContentChange.add_new_content(Url, 
-                                                           version,
-                                                           tree,
-                                                           changeable_props,
-                                                           put_change)
-                logging.info("%s: added Url %s" % (pos, url.title))
-                new_content_keys.append(url.key())
-                tree["key"] = url.key()
-                url_dict[tree["id"]] = url
+                    # move it from that old parent topic, its position in the new
+                    # parent does not matter as child_keys will get written over 
+                    # later.  move_child is needed only to make sure that the 
+                    # parent_keys and ancestor_keys will all match up correctly
+                    old_parent = topic_keys_dict[topic.parent_keys[0]]
+                    logging.info("moving topic %s from %s to %s" % (topic.id,
+                        old_parent.id, parent.id))
+                    old_parent.move_child(topic, parent, 0)
 
-            all_entities_dict[tree["key"]] = url
+                all_entities_dict[tree["key"]] = topic
 
-        i = 0
-        # recurse through the tree's children
-        if "children" in tree:
-            for child in tree["children"]:
-                add_keys_json_tree(child, topic_dict[tree["id"]], i, pos)
-                i += 1
-   
-    add_keys_json_tree(tree_json, parent)
-    logging.info("added keys to nodes")
+            elif not do_exercises and tree["kind"] == "Video":
+                if tree["readable_id"] in video_dict:
+                    video = video_dict[tree["readable_id"]]
+                    tree["key"] = video.key()
+                else:
+                    changeable_props = ["youtube_id", "url", "title", "description",
+                                        "keywords", "duration", "readable_id",
+                                        "views"]
+                    video = VersionContentChange.add_new_content(Video,
+                                                                    version,
+                                                                    tree,
+                                                                    changeable_props,
+                                                                    put_change)
+                    logging.info("%s: added video %s" % (pos, video.title))
+                    new_content_keys.append(video.key())
+                    tree["key"] = video.key()
+                    video_dict[tree["readable_id"]] = video
 
-    def add_child_keys_json_tree(tree):
-        if tree["kind"] == "Topic":
-            tree["child_keys"]=[]
+                all_entities_dict[tree["key"]] = video
+
+            elif do_exercises and tree["kind"] == "Exercise":
+                if tree["name"] in exercise_dict:
+                    tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
+                else:
+                    if "related_videos" in tree:
+                        # adding keys to entity tree so we don't need to look it up 
+                        # again when creating the video in add_new_content
+                        tree["related_video_keys"] = []
+                        for readable_id in tree["related_videos"]:
+                            video = video_dict[readable_id]
+                            tree["related_video_keys"].append(video.key())
+                    exercise = exercise_save_data(version, tree, None, put_change)
+                    logging.info("%s: added Exercise %s" % (pos, exercise.name))
+                    new_content_keys.append(exercise.key())
+                    tree["key"] = exercise.key()
+                    exercise_dict[tree["name"]] = exercise
+
+                all_entities_dict[tree["key"]] = exercise_dict[tree["name"]]
+
+            elif not do_exercises and tree["kind"] == "Url":
+                if tree["id"] in url_dict:
+                    url = url_dict[tree["id"]]
+                    tree["key"] = url.key()
+                else:
+                    changeable_props = ["tags", "title", "url"]
+                    url = VersionContentChange.add_new_content(Url,
+                                                               version,
+                                                               tree,
+                                                               changeable_props,
+                                                               put_change)
+                    logging.info("%s: added Url %s" % (pos, url.title))
+                    new_content_keys.append(url.key())
+                    tree["key"] = url.key()
+                    url_dict[tree["id"]] = url
+
+                all_entities_dict[tree["key"]] = url
+
+            i = 0
+            # recurse through the tree's children
             if "children" in tree:
                 for child in tree["children"]:
-                    '''
-                    if child["kind"] == "Video":
-                        logging.info(child["title"])
-                    else:
-                        logging.info(child["name"])
-                    '''
-                    tree["child_keys"].append(child["key"])
-                    add_child_keys_json_tree(child)
+                    add_keys_json_tree(child, topic_dict[tree["id"]], do_exercises, i, pos)
+                    i += 1
 
-    add_child_keys_json_tree(tree_json)
-    logging.info("added children keys")
+        add_keys_json_tree(tree_json, parent, do_exercises=False)
 
-    def extract_nodes(tree, nodes):
-        if "children" in tree:
-            for child in tree["children"]:
-                nodes.update(extract_nodes(child, nodes))
-            del(tree["children"])
-        nodes[tree["key"]]=tree
-        return nodes
-    
-    nodes = extract_nodes(tree_json, {})
-    logging.info("extracted %i nodes" % len(nodes))
-    changed_nodes = []
+        # add related_videos prop to exercises
+        evs = ExerciseVideo.all().fetch(10000)
+        exercise_key_dict = dict((e.key(), e) for e in exercises)
+        video_key_dict = dict((v.key(), v) for v in video_dict.values())
+        Exercise.add_related_videos_prop(exercise_key_dict, evs, video_key_dict)
 
-    i = 0
-    # now loop through all the nodes 
-    for key, node in nodes.iteritems():
-        if node["kind"] == "Topic":
-            topic = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any change to Topic %s" % (i, len(nodes), topic.title))
+        # exercises need to be done after, because if they reference ExerciseVideos
+        # those Videos have to already exist
+        add_keys_json_tree(tree_json, parent, do_exercises=True)
 
-            kwargs = (dict((str(key), value) for key, value in node.iteritems() 
-                    if key in ['id', 'title', 'standalone_title', 'description',
-                    'tags', 'hide', 'child_keys']))
-            kwargs["version"] = version
-            kwargs["put"] = False
-            if topic.update(**kwargs):
-                changed_nodes.append(topic)
-        
-        elif node["kind"] == "Video" and node["key"] not in new_content_keys:
-            video = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any change to Video %s" % (i, len(nodes), video.title))
-            
-            change = VersionContentChange.add_content_change(video, 
-                version, 
-                node, 
-                ["readable_id", "title", "youtube_id", "description", "keywords"])
-            if change:
-                logging.info("changed")
-        
-        elif node["kind"] == "Exercise" and node["key"] not in new_content_keys:
-            exercise = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
+        logging.info("added keys to nodes")
 
-            change = exercise_save_data(version, node, exercise)
-            if change:
-                logging.info("changed")
+        def add_child_keys_json_tree(tree):
+            if tree["kind"] == "Topic":
+                tree["child_keys"] = []
+                if "children" in tree:
+                    for child in tree["children"]:
+                        tree["child_keys"].append(child["key"])
+                        add_child_keys_json_tree(child)
 
-        elif node["kind"] == "Url" and node["key"] not in new_content_keys:
-            url = all_entities_dict[node["key"]]
-            logging.info("%i/%i Updating any changes to Url %s" % (i, len(nodes), url.title))
+        add_child_keys_json_tree(tree_json)
+        logging.info("added children keys")
 
-            changeable_props = ["tags", "title", "url"]
+        def extract_nodes(tree, nodes):
+            if "children" in tree:
+                for child in tree["children"]:
+                    nodes.update(extract_nodes(child, nodes))
+                del(tree["children"])
+            nodes[tree["key"]] = tree
+            return nodes
 
-            change = VersionContentChange.add_content_change(
-                url, 
-                version, 
-                node,
-                changeable_props)
+        nodes = extract_nodes(tree_json, {})
+        logging.info("extracted %i nodes" % len(nodes))
+        changed_nodes = []
 
-            if change:
-                logging.info("changed")
+        i = 0
+        # now loop through all the nodes 
+        for key, node in nodes.iteritems():
+            if node["kind"] == "Topic":
+                topic = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any change to Topic %s" % (i, len(nodes), topic.title))
+
+                kwargs = (dict((str(key), value) for key, value in node.iteritems()
+                        if key in ['id', 'title', 'standalone_title', 'description',
+                        'tags', 'hide', 'child_keys']))
+                kwargs["version"] = version
+                kwargs["put"] = False
+                if topic.update(**kwargs):
+                    changed_nodes.append(topic)
+
+            elif node["kind"] == "Video" and node["key"] not in new_content_keys:
+                video = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any change to Video %s" % (i, len(nodes), video.title))
+
+                change = VersionContentChange.add_content_change(video,
+                    version,
+                    node,
+                    ["readable_id", "title", "youtube_id", "description", "keywords"])
+                if change:
+                    logging.info("changed")
+
+            elif node["kind"] == "Exercise" and node["key"] not in new_content_keys:
+                exercise = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any changes to Exercise %s" % (i, len(nodes), exercise.name))
+
+                change = exercise_save_data(version, node, exercise)
+                if change:
+                    logging.info("changed")
+
+            elif node["kind"] == "Url" and node["key"] not in new_content_keys:
+                url = all_entities_dict[node["key"]]
+                logging.info("%i/%i Updating any changes to Url %s" % (i, len(nodes), url.title))
+
+                changeable_props = ["tags", "title", "url"]
+
+                change = VersionContentChange.add_content_change(
+                    url,
+                    version,
+                    node,
+                    changeable_props)
+
+                if change:
+                    logging.info("changed")
 
 
-        i += 1
+            i += 1
 
-    logging.info("about to put %i topic nodes" % len(changed_nodes))
-    db.put(changed_nodes)
-    logging.info("done with import")
+        logging.info("about to put %i topic nodes" % len(changed_nodes))
+        Setting.cached_content_add_date(datetime.datetime.now())
+        db.put(changed_nodes)
+        logging.info("done with import")
 
-    if publish:
-        version.set_default_version()
+        if publish:
+            version.set_default_version()
+
+    except Exception, e:
+        import traceback, StringIO
+        fp = StringIO.StringIO()
+        traceback.print_exc(file=fp)
+        logging.error(fp.getvalue())
+        logging.error("Topic import failed with %s", e)
+        raise deferred.PermanentTaskFailure
 
     return True
 
@@ -3392,7 +3773,7 @@ class Url(db.Model):
 
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
-        "Url.get_all_%s" % 
+        "Url.get_all_%s" %
         Setting.cached_content_add_date())
     def get_all():
         return Url.all().fetch(100000)
@@ -3403,8 +3784,8 @@ class Url(db.Model):
             version = TopicVersion.get_default_version()
 
         root = Topic.get_root(version)
-        urls = root.get_urls(include_descendants = True, include_hidden = False)
-        
+        urls = root.get_urls(include_descendants=True, include_hidden=False)
+
         # return only unique urls
         url_dict = dict((u.key(), u) for u in urls)
         return url_dict.values()
@@ -3426,7 +3807,7 @@ class Video(Searchable, db.Model):
     title = db.StringProperty()
     description = db.TextProperty()
     keywords = db.StringProperty()
-    duration = db.IntegerProperty(default = 0)
+    duration = db.IntegerProperty(default=0)
 
     # Human readable, unique id that can be used in URLS.
     readable_id = db.StringProperty()
@@ -3435,7 +3816,7 @@ class Video(Searchable, db.Model):
     topic_string_keys = object_property.TsvProperty(indexed=False)
 
     # YouTube view count from last sync.
-    views = db.IntegerProperty(default = 0)
+    views = db.IntegerProperty(default=0)
 
     # Date first added via KA library sync with YouTube.
     # This property hasn't always existsed, so for many old videos
@@ -3498,16 +3879,18 @@ class Video(Searchable, db.Model):
     @staticmethod
     def youtube_thumbnail_urls(youtube_id):
 
+        # You might think that hq > sd, but you'd be wrong -- hqdefault is 480x360;
+        # sddefault is 640x480. Unfortunately, not all videos have the big one.
         hq_youtube_url = "http://img.youtube.com/vi/%s/hqdefault.jpg" % youtube_id
         sd_youtube_url = "http://img.youtube.com/vi/%s/sddefault.jpg" % youtube_id
 
         return {
-                "hq": ImageCache.url_for(hq_youtube_url),
+                "hq": hq_youtube_url,
                 "sd": ImageCache.url_for(sd_youtube_url, fallback_url=hq_youtube_url),
         }
 
     @staticmethod
-    def get_for_readable_id(readable_id, version = None):
+    def get_for_readable_id(readable_id, version=None):
         video = None
         query = Video.all()
         query.filter('readable_id =', readable_id)
@@ -3555,8 +3938,8 @@ class Video(Searchable, db.Model):
             version = TopicVersion.get_default_version()
 
         root = Topic.get_root(version)
-        videos = root.get_videos(include_descendants = True, include_hidden = False)
-        
+        videos = root.get_videos(include_descendants=True, include_hidden=False)
+
         # return only unique videos
         video_dict = dict((v.key(), v) for v in videos)
         return video_dict.values()
@@ -3657,7 +4040,7 @@ class Video(Searchable, db.Model):
                 }
             button_top_exercise = ex_to_dict(related_exercises[0])
 
-        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current(), insert_if_missing=True)
+        user_video = UserVideo.get_for_video_and_user_data(video, UserData.current())
 
         awarded_points = 0
         if user_video:
@@ -3666,17 +4049,24 @@ class Video(Searchable, db.Model):
         subtitles_key_name = VideoSubtitles.get_key_name('en', video.youtube_id)
         subtitles = VideoSubtitles.get_by_key_name(subtitles_key_name)
         subtitles_json = None
+        show_interactive_transcript = False
         if subtitles:
             subtitles_json = subtitles.load_json()
+            transcript_alternative = InteractiveTranscriptExperiment.ab_test()
+            show_interactive_transcript = (transcript_alternative == InteractiveTranscriptExperiment.SHOW)
 
         # TODO (tomyedwab): This is ugly; we would rather have these templates client-side.
         import shared_jinja
         player_html = shared_jinja.get().render_template('videoplayer.html',
             user_data=UserData.current(), video_path=video_path, video=video,
-            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE)
+            awarded_points=awarded_points, video_points_base=consts.VIDEO_POINTS_BASE,
+            subtitles_json=subtitles_json, show_interactive_transcript=show_interactive_transcript)
 
         discussion_html = shared_jinja.get().render_template('videodiscussion.html',
             user_data=UserData.current(), video=video, topic=topic, **discussion_options)
+
+        subtitles_html = shared_jinja.get().render_template('videosubtitles.html',
+            subtitles_json=subtitles_json)
 
         return {
             'title': video.title,
@@ -3685,7 +4075,6 @@ class Video(Searchable, db.Model):
             'readable_id': video.readable_id,
             'key': video.key(),
             'video_path': video_path,
-            'subtitles_json': subtitles_json,
             'button_top_exercise': button_top_exercise,
             'related_exercises': [], # disabled for now
             'previous_video': previous_video_dict,
@@ -3694,7 +4083,9 @@ class Video(Searchable, db.Model):
             'issue_labels': ('Component-Videos,Video-%s' % readable_id),
             'author_profile': 'https://plus.google.com/103970106103092409324',
             'player_html': player_html,
-            'discussion_html': discussion_html
+            'discussion_html': discussion_html,
+            'subtitles_html': subtitles_html,
+            'videoPoints': awarded_points,
         }
 
 class Playlist(Searchable, db.Model):
@@ -3754,8 +4145,8 @@ class Playlist(Searchable, db.Model):
 class UserPlaylist(db.Model):
     user = db.UserProperty()
     playlist = db.ReferenceProperty(Playlist)
-    seconds_watched = db.IntegerProperty(default = 0)
-    last_watched = db.DateTimeProperty(auto_now_add = True)
+    seconds_watched = db.IntegerProperty(default=0)
+    last_watched = db.DateTimeProperty(auto_now_add=True)
     title = db.StringProperty(indexed=False)
 
     @staticmethod
@@ -3777,18 +4168,18 @@ class UserPlaylist(db.Model):
 
         if insert_if_missing:
             return UserPlaylist.get_or_insert(
-                        key_name = key,
-                        user = user_data.user,
-                        playlist = playlist)
+                        key_name=key,
+                        user=user_data.user,
+                        playlist=playlist)
         else:
             return UserPlaylist.get_by_key_name(key)
 
 # No longer depends on the Playlist model; currently used only with Topics
 class UserTopic(db.Model):
     user = db.UserProperty()
-    seconds_watched = db.IntegerProperty(default = 0)
-    seconds_migrated = db.IntegerProperty(default = 0) # can remove after migration
-    last_watched = db.DateTimeProperty(auto_now_add = True)
+    seconds_watched = db.IntegerProperty(default=0)
+    seconds_migrated = db.IntegerProperty(default=0) # can remove after migration
+    last_watched = db.DateTimeProperty(auto_now_add=True)
     topic_key_name = db.StringProperty()
     title = db.StringProperty(indexed=False)
 
@@ -3811,10 +4202,10 @@ class UserTopic(db.Model):
 
         if insert_if_missing:
             return UserTopic.get_or_insert(
-                        key_name = key,
-                        title = topic.standalone_title,
-                        topic_key_name = topic.key().name(),
-                        user = user_data.user)
+                        key_name=key,
+                        title=topic.standalone_title,
+                        topic_key_name=topic.key().name(),
+                        user=user_data.user)
         else:
             return UserTopic.get_by_key_name(key)
 
@@ -3828,10 +4219,10 @@ class UserTopic(db.Model):
 
         if insert_if_missing:
             return UserTopic.get_or_insert(
-                        key_name = key,
-                        title = topic.standalone_title,
-                        topic_key_name = topic.key().name(),
-                        user = user)
+                        key_name=key,
+                        title=topic.standalone_title,
+                        topic_key_name=topic.key().name(),
+                        user=user)
         else:
             return UserTopic.get_by_key_name(key)
 
@@ -3852,10 +4243,10 @@ class UserVideo(db.Model):
 
         if insert_if_missing:
             return UserVideo.get_or_insert(
-                        key_name = key,
-                        user = user_data.user,
-                        video = video,
-                        duration = video.duration)
+                        key_name=key,
+                        user=user_data.user,
+                        video=video,
+                        duration=video.duration)
         else:
             return UserVideo.get_by_key_name(key)
 
@@ -3874,16 +4265,16 @@ class UserVideo(db.Model):
     video = db.ReferenceProperty(Video)
 
     # Most recently watched second in video (playhead state)
-    last_second_watched = db.IntegerProperty(default = 0, indexed=False)
+    last_second_watched = db.IntegerProperty(default=0, indexed=False)
 
     # Number of seconds actually spent watching this video, regardless of jumping around to various
     # scrubber positions. This value can exceed the total duration of the video if it is watched
     # many times, and it doesn't necessarily match the percent watched.
-    seconds_watched = db.IntegerProperty(default = 0)
+    seconds_watched = db.IntegerProperty(default=0)
 
-    last_watched = db.DateTimeProperty(auto_now_add = True)
-    duration = db.IntegerProperty(default = 0, indexed=False)
-    completed = db.BooleanProperty(default = False)
+    last_watched = db.DateTimeProperty(auto_now_add=True)
+    duration = db.IntegerProperty(default=0, indexed=False)
+    completed = db.BooleanProperty(default=False)
 
     @property
     def points(self):
@@ -3893,6 +4284,9 @@ class UserVideo(db.Model):
     def progress(self):
         if self.completed:
             return 1.0
+        elif self.duration <= 0:
+            logging.error("UserVideo.duration has invalid value %r, key: %s" % (self.duration, str(self.key())))
+            return 0.0
         else:
             return min(1.0, float(self.seconds_watched) / self.duration)
 
@@ -3927,12 +4321,12 @@ class VideoLog(BackupModel):
     youtube_id = db.StringProperty(indexed=False)
 
     # The timestamp corresponding to when this entry was created.
-    time_watched = db.DateTimeProperty(auto_now_add = True)
-    seconds_watched = db.IntegerProperty(default = 0, indexed=False)
+    time_watched = db.DateTimeProperty(auto_now_add=True)
+    seconds_watched = db.IntegerProperty(default=0, indexed=False)
 
     # Most recently watched second in video (playhead state)
     last_second_watched = db.IntegerProperty(indexed=False)
-    points_earned = db.IntegerProperty(default = 0, indexed=False)
+    points_earned = db.IntegerProperty(default=0, indexed=False)
     playlist_titles = db.StringListProperty(indexed=False)
 
     # Indicates whether or not the video is deemed "complete" by the user.
@@ -3974,16 +4368,22 @@ class VideoLog(BackupModel):
 
         video_points_previous = points.VideoPointCalculator(user_video)
 
-        action_cache=last_action_cache.LastActionCache.get_for_user_data(user_data)
+        action_cache = last_action_cache.LastActionCache.get_for_user_data(user_data)
 
         last_video_log = action_cache.get_last_video_log()
 
         # If the last video logged is not this video and the times being credited
         # overlap, don't give points for this video. Can only get points for one video
         # at a time.
-        if detect_cheat and last_video_log and last_video_log.key_for_video() != video.key():
+        if (detect_cheat and
+                last_video_log and
+                last_video_log.key_for_video() != video.key()):
             dt_now = datetime.datetime.now()
-            if last_video_log.time_watched > (dt_now - datetime.timedelta(seconds=seconds_watched)):
+            other_video_time = last_video_log.time_watched
+            this_video_time = dt_now - datetime.timedelta(seconds=seconds_watched)
+            if other_video_time > this_video_time:
+                logging.warning("Detected overlapping video logs " +
+                                "(user may be watching multiple videos?)")
                 return (None, None, 0, False)
 
         video_log = VideoLog()
@@ -3995,6 +4395,7 @@ class VideoLog(BackupModel):
         video_log.last_second_watched = last_second_watched
 
         if seconds_watched > 0:
+
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
                 UserVideoCss.set_started(user_data, user_video.video, user_data.uservideocss_version)
@@ -4045,8 +4446,8 @@ class VideoLog(BackupModel):
             UserVideoCss.set_completed(user_data, user_video.video, user_data.uservideocss_version)
 
             bingo([
+                'videos_finished',
                 'struggling_videos_finished',
-                'suggested_activity_videos_finished'
             ])
         video_log.is_video_completed = user_video.completed
 
@@ -4063,20 +4464,20 @@ class VideoLog(BackupModel):
         # and want to shift it off to an automatically-retrying task queue.
         # http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
         deferred.defer(commit_video_log, video_log,
-                       _queue = "video-log-queue",
-                       _url = "/_ah/queue/deferred_videolog")
+                       _queue="video-log-queue",
+                       _url="/_ah/queue/deferred_videolog")
 
 
         if user_data is not None and user_data.coaches:
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used
             deferred.defer(commit_log_summary_coaches, video_log, user_data.coaches,
-                _queue = "log-summary-queue",
-                _url = "/_ah/queue/deferred_log_summary")
+                _queue="log-summary-queue",
+                _url="/_ah/queue/deferred_log_summary")
 
         return (user_video, video_log, video_points_total, goals_updated)
 
     def time_started(self):
-        return self.time_watched - datetime.timedelta(seconds = self.seconds_watched)
+        return self.time_watched - datetime.timedelta(seconds=self.seconds_watched)
 
     def time_ended(self):
         return self.time_watched
@@ -4107,7 +4508,7 @@ class VideoLog(BackupModel):
         )
 
 # commit_video_log is used by our deferred video log insertion process
-def commit_video_log(video_log, user_data = None):
+def commit_video_log(video_log, user_data=None):
     video_log.put()
 
 class DailyActivityLog(db.Model):
@@ -4220,12 +4621,12 @@ class LogSummary(db.Model):
                 if log_summary is None:
                     activity = activities[0]
 
-                    log_summary = LogSummary(key_name = shard_name, \
-                                             name = name, \
-                                             user = user_data.user, \
-                                             start = LogSummary.get_start_of_period(activity, delta), \
-                                             end = LogSummary.get_end_of_period(activity, delta), \
-                                             summary_type = summary_type)
+                    log_summary = LogSummary(key_name=shard_name, \
+                                             name=name, \
+                                             user=user_data.user, \
+                                             start=LogSummary.get_start_of_period(activity, delta), \
+                                             end=LogSummary.get_end_of_period(activity, delta), \
+                                             summary_type=summary_type)
 
                     log_summary.summary = summary_class()
 
@@ -4256,8 +4657,8 @@ class LogSummary(db.Model):
             db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
         except TransactionFailedError:
             # if it is a transaction lock
-            logging.info("increasing the number of shards to %i log summary: %s" %(config.num_shards+1, name))
-            LogSummaryShardConfig.increase_shards(name, config.num_shards+1)
+            logging.info("increasing the number of shards to %i log summary: %s" % (config.num_shards + 1, name))
+            LogSummaryShardConfig.increase_shards(name, config.num_shards + 1)
             shard_name = str(config.num_shards) + ":" + name
             db.run_in_transaction(txn, name, shard_name, user_data, activities, summary_class, summary_type, delta)
 
@@ -4284,28 +4685,28 @@ class ProblemLog(BackupModel):
 
     user = db.UserProperty()
     exercise = db.StringProperty()
-    correct = db.BooleanProperty(default = False)
+    correct = db.BooleanProperty(default=False)
     time_done = db.DateTimeProperty(auto_now_add=True)
-    time_taken = db.IntegerProperty(default = 0, indexed=False)
+    time_taken = db.IntegerProperty(default=0, indexed=False)
     hint_time_taken_list = db.ListProperty(int, indexed=False)
     hint_after_attempt_list = db.ListProperty(int, indexed=False)
-    count_hints = db.IntegerProperty(default = 0, indexed=False)
-    problem_number = db.IntegerProperty(default = -1) # Used to reproduce problems
-    hint_used = db.BooleanProperty(default = False, indexed=False)
-    points_earned = db.IntegerProperty(default = 0, indexed=False)
-    earned_proficiency = db.BooleanProperty(default = False) # True if proficiency was earned on this problem
-    suggested = db.BooleanProperty(default = False) # True if the exercise was suggested to the user
+    count_hints = db.IntegerProperty(default=0, indexed=False)
+    problem_number = db.IntegerProperty(default=-1) # Used to reproduce problems
+    hint_used = db.BooleanProperty(default=False, indexed=False)
+    points_earned = db.IntegerProperty(default=0, indexed=False)
+    earned_proficiency = db.BooleanProperty(default=False) # True if proficiency was earned on this problem
+    suggested = db.BooleanProperty(default=False) # True if the exercise was suggested to the user
 
     # True if the problem was done while in review mode
-    review_mode = db.BooleanProperty(default = False, indexed=False)
+    review_mode = db.BooleanProperty(default=False, indexed=False)
 
     # True if the problem was done while in context-switching topic mode
-    topic_mode = db.BooleanProperty(default = False, indexed=False)
+    topic_mode = db.BooleanProperty(default=False, indexed=False)
 
     sha1 = db.StringProperty(indexed=False)
     seed = db.StringProperty(indexed=False)
     problem_type = db.StringProperty(indexed=False)
-    count_attempts = db.IntegerProperty(default = 0, indexed=False)
+    count_attempts = db.IntegerProperty(default=0, indexed=False)
     time_taken_attempts = db.ListProperty(int, indexed=False)
     attempts = db.StringListProperty(indexed=False)
     random_float = db.FloatProperty() # Add a random float in [0, 1) for easy random sampling
@@ -4379,7 +4780,7 @@ class ProblemLog(BackupModel):
         return min(consts.MAX_WORKING_ON_PROBLEM_SECONDS, self.time_taken)
 
     def time_started(self):
-        return self.time_done - datetime.timedelta(seconds = self.time_taken_capped_for_reporting())
+        return self.time_done - datetime.timedelta(seconds=self.time_taken_capped_for_reporting())
 
     def time_ended(self):
         return self.time_done
@@ -4388,7 +4789,7 @@ class ProblemLog(BackupModel):
         return util.minutes_between(self.time_started(), self.time_ended())
 
 # commit_problem_log is used by our deferred problem log insertion process
-def commit_problem_log(problem_log_source, user_data = None):
+def commit_problem_log(problem_log_source, user_data=None):
     try:
         if not problem_log_source or not problem_log_source.key().name:
             logging.critical("Skipping problem log commit due to missing problem_log_source or key().name")
@@ -4447,7 +4848,7 @@ def commit_problem_log(problem_log_source, user_data = None):
 
             # Add time_taken for this individual attempt
             problem_log.time_taken += problem_log_source.time_taken
-            insert_in_position(index_attempt, problem_log.time_taken_attempts, problem_log_source.time_taken, filler=-1)
+            insert_in_position(index_attempt, problem_log.time_taken_attempts, problem_log_source.time_taken, filler= -1)
 
             # Add actual attempt content
             insert_in_position(index_attempt, problem_log.attempts, problem_log_source.attempts[0], filler="")
@@ -4465,10 +4866,10 @@ def commit_problem_log(problem_log_source, user_data = None):
                 return
 
             # Add time taken for hint
-            insert_in_position(index_hint, problem_log.hint_time_taken_list, problem_log_source.time_taken, filler=-1)
+            insert_in_position(index_hint, problem_log.hint_time_taken_list, problem_log_source.time_taken, filler= -1)
 
             # Add attempt number this hint follows
-            insert_in_position(index_hint, problem_log.hint_after_attempt_list, problem_log_source.count_attempts, filler=-1)
+            insert_in_position(index_hint, problem_log.hint_after_attempt_list, problem_log_source.count_attempts, filler= -1)
 
         # Points should only be earned once per problem, regardless of attempt count
         problem_log.points_earned = max(problem_log.points_earned, problem_log_source.points_earned)
@@ -4492,8 +4893,8 @@ class VideoPlaylist(db.Model):
     video_position = db.IntegerProperty()
 
     # Lets us enable/disable video playlist relationships in bulk without removing the entry
-    live_association = db.BooleanProperty(default = False)
-    last_live_association_generation = db.IntegerProperty(default = 0)
+    live_association = db.BooleanProperty(default=False)
+    last_live_association_generation = db.IntegerProperty(default=0)
 
     _VIDEO_PLAYLIST_KEY_FORMAT = "VideoPlaylist_Videos_for_Playlist_%s"
     _PLAYLIST_VIDEO_KEY_FORMAT = "VideoPlaylist_Playlists_for_Video_%s"
@@ -4591,12 +4992,12 @@ class ExerciseVideo(db.Model):
         videos = Video.get_all_live(version)
         video_keys = [v.key() for v in videos]
         evs = ExerciseVideo.all().fetch(100000)
-               
+
         if version is None or version.default:
-            return [ev for ev in evs 
-                    if ExerciseVideo.video.get_value_for_datastore(ev) 
+            return [ev for ev in evs
+                    if ExerciseVideo.video.get_value_for_datastore(ev)
                     not in video_keys]
-       
+
         # if there is a version check to see if there are any updates to the exercise videos
         else:
             video_dict = dict((v.key(), v.readable_id) for v in videos)
@@ -4609,7 +5010,7 @@ class ExerciseVideo(db.Model):
             for ev in evs:
                 exercise_key = ExerciseVideo.exercise.get_value_for_datastore(ev)
                 video_key = ExerciseVideo.video.get_value_for_datastore(ev)
-                
+
                 # if the video is not live get it (it will be a topicless video)
                 # there shouldnt be too many of these, hence not bothering to do
                 # things efficiently in one get
@@ -4623,23 +5024,23 @@ class ExerciseVideo(db.Model):
 
                 # the following line is needed otherwise the list comprehension
                 # by the return statement will fail on the un put EVs with:
-                # Key' object has no attribute '_video' if 
+                # Key' object has no attribute '_video' if
                 # ExerciseVideo.video.get_value_for_datastore(ev) is used
                 ev.video = video
 
                 if exercise_key not in ev_dict:
                     ev_dict[exercise_key] = {}
-                
-                ev_dict[exercise_key][video_readable_id] = ev.key() 
+
+                ev_dict[exercise_key][video_readable_id] = ev.key()
 
             # cycle through all the version changes to see if an exercise has been updated
             changes = VersionContentChange.get_updated_content_dict(version)
-            new_evs=[]
-            
+            new_evs = []
+
             for key, content in changes.iteritems():
-                
+
                 if (type(content) == Exercise):
-                    
+
                     # remove the existing Exercise_Videos if there are any
                     if key in ev_dict:
                         for video_readable_id, ev_key in ev_dict[key].iteritems():
@@ -4648,7 +5049,7 @@ class ExerciseVideo(db.Model):
                     # add new related_videos
                     for i, video_readable_id in enumerate(content.related_videos
                         if hasattr(content, "related_videos") else []):
-                        
+
                         if video_readable_id not in video_readable_dict:
                             video = video.get_for_readable_id(video_readable_id)
                             video_readable_dict[video_readable_id] = (
@@ -4657,16 +5058,16 @@ class ExerciseVideo(db.Model):
                             video = video_readable_dict[video_readable_id]
 
                         new_ev = ExerciseVideo(
-                            video = video,
-                            exercise = content,
-                            exercise_order= i
+                            video=video,
+                            exercise=content,
+                            exercise_order=i
                             )
-                        new_evs.append(new_ev)  
-                
+                        new_evs.append(new_ev)
+
             evs = [ev for ev in ev_key_dict.values()]
             evs += new_evs
 
-            # ExerciseVideo.video.get_value_for_datastore(ev) is not needed 
+            # ExerciseVideo.video.get_value_for_datastore(ev) is not needed
             # because we populated ev.video
             return [ev for ev in evs if ev.video.key() not in video_keys]
 
@@ -4734,7 +5135,7 @@ class UserExerciseCache(db.Model):
             # exercise information is too much for app engine instances.
             BATCH_SIZE = 5
             for i in range(0, len(async_queries), BATCH_SIZE):
-                tasks = util.async_queries(async_queries[i:i+BATCH_SIZE])
+                tasks = util.async_queries(async_queries[i:i + BATCH_SIZE])
 
                 # Populate the missing graphs w/ results from async queries
                 for j, task in enumerate(tasks):
@@ -4814,9 +5215,9 @@ class UserExerciseCache(db.Model):
                 dicts[user_exercise.exercise] = user_exercise_dict
 
         return UserExerciseCache(
-                key_name = UserExerciseCache.key_for_user_data(user_data),
-                version = UserExerciseCache.CURRENT_VERSION,
-                dicts = dicts,
+                key_name=UserExerciseCache.key_for_user_data(user_data),
+                version=UserExerciseCache.CURRENT_VERSION,
+                dicts=dicts,
             )
 
 class UserExerciseGraph(object):
@@ -4997,6 +5398,7 @@ class UserExerciseGraph(object):
                 "suggested": None,
                 "prerequisites": map(lambda exercise_name: {"name": exercise_name, "display_name": Exercise.to_display_name(exercise_name)}, exercise.prerequisites),
                 "covers": exercise.covers,
+                "live": exercise.live,
             }
 
     @staticmethod
@@ -5051,7 +5453,7 @@ class UserExerciseGraph(object):
         boundary_graph_dicts = []
         for exercise_name in graph:
             graph_dict = graph[exercise_name]
-            if is_boundary(graph_dict):
+            if graph_dict["live"] and is_boundary(graph_dict):
                 boundary_graph_dicts.append(graph_dict)
 
         boundary_graph_dicts = sorted(sorted(boundary_graph_dicts,
@@ -5064,7 +5466,7 @@ class UserExerciseGraph(object):
     @staticmethod
     def get_attempted_names(graph):
         """ Return the names of the exercises that the student has attempted.
-        
+
         Exact details, such as the threshold that marks a real attempt
         or the relevance rankings of attempted exercises, TBD.
         """
@@ -5086,10 +5488,10 @@ class UserExerciseGraph(object):
     def mark_suggested(graph):
         """ Mark 5 exercises as suggested, which are used by the knowledge map
         and the profile page.
-        
+
         Attempted but not proficient exercises are suggested first,
         then padded with exercises just beyond the proficiency boundary.
-        
+
         TODO: Although exercises might be marked in a particular order,
         they will always be returned by suggested_graph_dicts()
         sorted by knowledge map position. We might want to change that.
@@ -5175,12 +5577,12 @@ class UserExerciseGraph(object):
         UserExerciseGraph.mark_suggested(graph)
         UserExerciseGraph.mark_reviewing(graph)
 
-        return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
+        return UserExerciseGraph(graph=graph, cache=user_exercise_cache)
 
 class PromoRecord(db.Model):
     """ A record to mark when a user has viewed a one-time event of some
     sort, such as a promo.
-    
+
     """
 
     def __str__(self):
@@ -5244,7 +5646,7 @@ class VideoSubtitles(db.Model):
         """
         try:
             return json.loads(self.json)
-        except json.JSONDecodeError:
+        except ValueError:
             logging.warn('VideoSubtitles.load_json: json decode error')
 
 class VideoSubtitlesFetchReport(db.Model):

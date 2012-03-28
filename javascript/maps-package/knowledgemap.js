@@ -370,19 +370,20 @@ function KnowledgeMap(params) {
 
             if (row.visible) {
                 // only actually inflate if it's going to be on screen
-                if (renderedHeight < screenHeight) {
+                if (renderedHeight < screenHeight || this.admin) {
                     if (!row.inflated) {
                         row.inflate();
                     }
                 }
-                row.el.show();
+                // use css() because show() is somewhat slow
+                row.el.css("display", "block");
 
                 if (rowHeight === 0) {
                     rowHeight = row.el.outerHeight(/* includeMargin */ true);
                 }
                 renderedHeight += rowHeight;
             } else {
-                row.el.hide();
+                row.el.css("display", "none");
             }
 
             // filter the item off the map view
@@ -827,15 +828,16 @@ function KnowledgeMap(params) {
         // classes on an outer container.
         if (filterText) {
             self.getElement("dashboard-filter-clear").show();
-            self.getElement("hide-on-dashboard-filter").hide();
-            if (!self.admin)
+            if (!self.admin) {
+                self.getElement("hide-on-dashboard-filter").hide();
                 self.getElement("exercise-all-exercises").hide();
+            }
             self.getElement("dashboard-all-exercises").find(".exercise-filter-count").html("(Showing " + counts.all + " of " + self.nodeRowViews.length + ")").show();
         } else {
             self.getElement("dashboard-filter-clear").hide();
-            self.getElement("hide-on-dashboard-filter").show();
             self.getElement("dashboard-all-exercises").find(".exercise-filter-count").hide();
             if (!self.admin) {
+                self.getElement("hide-on-dashboard-filter").show();
                 self.getElement("exercise-all-exercises").show();
                 self.getElement("exercise-all-exercises-text").html(self.filterSettings.get("userShowAll") ? "Hide All" : "Show All");
             }

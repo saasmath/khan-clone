@@ -6,6 +6,7 @@ import urlparse
 
 from google.appengine.api import urlfetch
 
+import shared_jinja
 import flask
 from flask import current_app, request, redirect, session
 from flask.session import Session
@@ -16,7 +17,16 @@ from api.auth.xsrf import validate_xsrf_value
 from oauth_provider.oauth import build_authenticate_header, OAuthError
 import cookie_util
 
+class OAuthBadRequestError(OAuthError):
+    pass
+
+def pretty_error_response(message):
+    jinja = shared_jinja.get()
+    return jinja.render_template('login_mobile_error.html', message=message)
+
 def oauth_error_response(e):
+    logging.error("OAuth error. %s" % e.message)
+    logging.exception(e)
     return current_app.response_class("OAuth error. %s" % e.message, status=401, headers=build_authenticate_header(realm="http://www.khanacademy.org"))
 
 def unauthorized_response():
@@ -138,8 +148,9 @@ def get_response(url, params={}):
 
     # Be extra forgiving w/ timeouts during API auth consumer calls
     # in case Facebook or Google is slow.
+    # In case of 503, try again.
     c_tries_left = 5
-    while not result and c_tries_left > 0:
+    while (not result or result.status_code == 503) and c_tries_left > 0:
 
         try:
             result = urlfetch.fetch(url_with_params, deadline=10)
@@ -151,7 +162,11 @@ def get_response(url, params={}):
 
         if result.status_code == 200:
             return result.content
+        elif result.status_code == 400:
+            # Probably user denied access to our app; we'll catch this and show a nice error
+            raise OAuthBadRequestError("Bad request for url %s" % url)
         else:
+            logging.warning(result.content)
             raise OAuthError("Error in get_response, received status %s for url %s" % (result.status_code, url))
 
     elif c_tries_left == 0:

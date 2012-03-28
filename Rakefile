@@ -8,7 +8,7 @@ task :clean do
     args = exclude_patterns.map {|s| "-X \"#{s}\""}.join(" ")
     system "hg purge --all #{args}"
     Dir.chdir "khan-exercises" do
-        system "git", "clean", "-Xdf"
+        system "git", "clean", "-xdf"
     end
 end
 
@@ -35,4 +35,14 @@ end
 desc "Compress css"
 task :css do
     system "python", "deploy/compress.py", "css"
+end
+
+desc "Run lint checks"
+task :lint do
+    sh "tools/runpep8.sh"
+end
+
+desc "Run unit tests"
+task :unittest do
+    sh "python tools/runtests.py"
 end

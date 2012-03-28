@@ -1,11 +1,27 @@
 var KAConsole = {
     debugEnabled: false,
+    oldMessages: [],
+
     log: function() {
         if (window.console && KAConsole.debugEnabled) {
             if (console.log.apply)
                 console.log.apply(console, arguments);
             else
                 Function.prototype.apply.call(console.log, null, arguments);
+        } else {
+            this.oldMessages.push(arguments);
+        }
+    },
+
+    enableLog: function() {
+        if (window.console) {
+            this.debugEnabled = true;
+            _.each(this.oldMessages, function(args) {
+                if (console.log.apply)
+                    console.log.apply(console, args);
+                else
+                    Function.prototype.apply.call(console.log, null, args);
+            });
         }
     }
 };
@@ -141,6 +157,8 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
         else if (item.kind == "exercise")
             jLink.prepend("<span class='autocomplete-exercise'>Exercise </span>");
 
+        jLink.attr("data-tag", "Autocomplete");
+
         return $("<li></li>")
             .data("item.autocomplete", item)
             .append(jLink)
@@ -157,14 +175,26 @@ function initAutocomplete(selector, fTopics, fxnSelect, fIgnoreSubmitOnEnter)
 
 $(function() {
     // Configure the search form
-    if ($("#page_search input[type=text]").placeholder().length) {
-        initAutocomplete("#page_search input[type=text]", true);
+    if ($(".page-search input[type=text]").placeholder().length) {
+        initAutocomplete(".page-search input[type=text]", true);
     }
 
-    $("#page_search").submit(function(e) {
+    $(".page-search").submit(function(e) {
         // Only allow submission if there is a non-empty query.
-        return !!$.trim($("#page_search input[type=text]").val());
+        return !!$.trim($(this).find("input[type=text]").val());
     });
+
+    var jelToggle = $("#user-info .dropdown-toggle");
+
+    if (jelToggle.length) {
+        if (KA.isMobileCapable) {
+            // Open dropdown on click
+            jelToggle.dropdown();
+        } else {
+            // Open dropdown on hover
+            jelToggle.dropdown("hover");
+        }
+    }
 });
 
 var Badges = {
@@ -177,8 +207,6 @@ var Badges = {
             jel.remove();
             $("body").append(sBadgeContainerHtml);
             jel = $(".badge-award-container");
-
-            if (jel.length) Social.init(jel);
         }
 
         if (!jel.length) return;
@@ -278,6 +306,37 @@ var Notifications = {
         );
 
         $.post("/notifierclose");
+    }
+};
+
+var DemoNotifications = { // for demo-notification-bar (brown and orange, which informs to logout after demo
+
+    show: function(sNotificationContainerHtml) {
+        var jel = $(".demo-notification-bar");
+
+        if (sNotificationContainerHtml)
+        {
+            var jelNew = $(sNotificationContainerHtml);
+            jel.empty().append(jelNew.children());
+        }
+
+        if (!jel.is(":visible")) {
+            setTimeout(function() {
+
+                jel
+                    .css("visibility", "hidden")
+                    .css("display", "")
+                    .css("top", -jel.height() - 2) // 2 for border and outline
+                    .css("visibility", "visible");
+
+                // Queue:false to make sure all of these run at the same time
+                var animationOptions = {duration: 350, queue: false};
+
+                $(".notification-bar-spacer").animate({ height: 35 }, animationOptions);
+                jel.show().animate({ top: 0 }, animationOptions);
+
+            }, 100);
+        }
     }
 };
 
@@ -432,83 +491,6 @@ var VideoViews = {
 };
 $(VideoViews.init);
 
-var FacebookHook = {
-    init: function() {
-        if (!window.FB_APP_ID) return;
-
-        window.fbAsyncInit = function() {
-            FB.init({appId: FB_APP_ID, status: true, cookie: true, xfbml: true, oauth: true});
-
-            if (!USERNAME) {
-                FB.Event.subscribe("auth.login", function(response) {
-
-                    if (response.authResponse) {
-                        FacebookHook.fixMissingCookie(response.authResponse);
-                    }
-
-                    var url = URL_CONTINUE || "/";
-                    if (url.indexOf("?") > -1)
-                        url += "&fb=1";
-                    else
-                        url += "?fb=1";
-
-                    var hasCookie = !!readCookie("fbsr_" + FB_APP_ID);
-                    url += "&hc=" + (hasCookie ? "1" : "0");
-
-                    url += "&hs=" + (response.authResponse ? "1" : "0");
-
-                    window.location = url;
-               });
-            }
-
-            FB.getLoginStatus(function(response) {
-
-                if (response.authResponse) {
-                    FacebookHook.fixMissingCookie(response.authResponse);
-                }
-
-                $("#page_logout").click(function(e) {
-
-                    eraseCookie("fbsr_" + FB_APP_ID);
-
-                    if (response.authResponse) {
-
-                        FB.logout(function() {
-                            window.location = $("#page_logout").attr("href");
-                        });
-
-                        e.preventDefault();
-                        return false;
-                    }
-
-                });
-
-            });
-        };
-
-        $(function() {
-            var e = document.createElement("script"); e.async = true;
-            e.src = document.location.protocol + "//connect.facebook.net/en_US/all.js";
-            document.getElementById("fb-root").appendChild(e);
-        });
-    },
-
-    fixMissingCookie: function(authResponse) {
-        // In certain circumstances, Facebook's JS SDK fails to set their cookie
-        // but still thinks users are logged in. To avoid continuous reloads, we
-        // set the cookie manually. See http://forum.developers.facebook.net/viewtopic.php?id=67438.
-
-        if (readCookie("fbsr_" + FB_APP_ID))
-            return;
-
-        if (authResponse && authResponse.signedRequest) {
-            // Explicitly use a session cookie here for IE's sake.
-            createCookie("fbsr_" + FB_APP_ID, authResponse.signedRequest);
-        }
-    }
-
-};
-FacebookHook.init();
 
 var Throbber = {
     jElement: null,
@@ -801,5 +783,34 @@ $.fx.step.reviewExplode = function(fx) {
     var val = fx.now + fx.unit;
     $(fx.elem).css("boxShadow",
         "0 0 " + val + " " + val + " " + "rgba(227, 93, 4, 0.2)");
+};
+
+var HeaderTopicBrowser = {
+    topicBrowserData: null,
+    rendered: false,
+
+    init: function() {
+        $(".nav-subheader .dropdown-toggle")
+            .dropdown()
+            .click(function() {
+                gae_bingo.bingo(["topic_browser_clicked_link"]);
+                if (!HeaderTopicBrowser.rendered) {
+                    HeaderTopicBrowser.render();
+                }
+            });
+    },
+
+    setData: function(topicBrowserData) {
+        this.topicBrowserData = topicBrowserData;
+    },
+
+    render: function() {
+        if (this.topicBrowserData) {
+            var template = Templates.get("shared.topic-browser-pulldown");
+            var html = template({topics: this.topicBrowserData});
+            $("#sitewide-navigation .topic-browser-dropdown").append($(html));
+            this.rendered = true;
+        }
+    }
 };
 

@@ -8,6 +8,7 @@ import request_handler
 import models
 import layer_cache
 import templatetags
+import util
 from app import App
 from topics_list import DVD_list
 from api.auth.xsrf import ensure_xsrf_cookie
@@ -129,6 +130,10 @@ class ViewHomePage(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self):
 
+        # If accessing via demo account, logout and redirect
+        if models.UserData.current() and models.UserData.current().is_demo:
+            self.redirect(util.create_logout_url(self.request.uri))
+
         version_number = None
 
         if models.UserData.current() and models.UserData.current().developer:
@@ -181,6 +186,13 @@ class ViewHomePage(request_handler.RequestHandler):
         else:
             library_content = library.library_content_html()
             
+        from gae_bingo.gae_bingo import ab_test, create_redirect_url
+
+        donate_button_test = ab_test("donate_button",
+                                     {"button":1, "text":99},
+                                     conversion_name=['hp_click', 'paypal'])
+        donate_redirect_url = create_redirect_url("/donate", "hp_click")
+
         template_values = {
                             'marquee_video': marquee_video,
                             'thumbnail_link_sets': thumbnail_link_sets,
@@ -189,7 +201,9 @@ class ViewHomePage(request_handler.RequestHandler):
                             'is_mobile_allowed': True,
                             'approx_vid_count': models.Video.approx_count(),
                             'link_heat': self.request_bool("heat", default=False),
-                            'version_number': version_number
+                            'version_number': version_number,
+                            'donate_button_test': donate_button_test,
+                            'donate_redirect_url': donate_redirect_url
                         }
 
         self.render_jinja2_template('homepage.html', template_values)

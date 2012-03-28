@@ -1,7 +1,12 @@
 import logging
 import datetime
 import sys
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from google.appengine.api import taskqueue
 from mapreduce import control
@@ -29,7 +34,6 @@ import consecutive_activity_badges
 import discussion_badges
 import feedback_badges
 
-import fast_slow_queue
 import layer_cache
 import request_handler
 
@@ -322,7 +326,7 @@ class StartNewBadgeMapReduce(request_handler.RequestHandler):
                 reader_parameters = {"entity_kind": "models.UserData"},
                 mapreduce_parameters = {"processing_rate": 250},
                 shard_count = 64,
-                queue_name = fast_slow_queue.QUEUE_NAME,
+                queue_name = "user-badge-queue"
                 )
 
         self.response.out.write("OK: " + str(mapreduce_id))
@@ -349,8 +353,11 @@ def is_badge_review_waiting(user_data):
 
     return True
 
-@fast_slow_queue.handler(is_badge_review_waiting)
 def badge_update_map(user_data):
+
+    if not is_badge_review_waiting(user_data):
+        return
+
     action_cache = last_action_cache.LastActionCache.get_for_user_data(user_data)
 
     # Update all no-context badges

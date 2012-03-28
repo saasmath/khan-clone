@@ -14,7 +14,13 @@ import points
 import layer_cache
 import knowledgemap
 import string
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify
 from custom_exceptions import QuietException
@@ -27,6 +33,7 @@ from experiments import StrugglingExperiment
 from js_css_packages import templatetags
 from exercises.handlers import ViewExercise, ViewExerciseDeprecated, ViewTopicExerciseDeprecated
 from exercises.file_contents import raw_exercise_contents
+import util
 
 class MoveMapNodes(request_handler.RequestHandler):
     def post(self):
@@ -111,6 +118,11 @@ def exercise_graph_dict_json(user_data, admin=False):
 
 class RawExercise(request_handler.RequestHandler):
     def get(self):
+        user_data = models.UserData.current()
+        # If accessing demo, do not allow, redirect via logout
+        if user_data is not None and user_data.is_demo:
+            self.redirect(util.create_logout_url(self.request.uri))
+
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
         self.response.headers["Content-Type"] = "text/html"
@@ -207,14 +219,12 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
 
                 bingo([
                     'struggling_problems_correct',
-                    'suggested_activity_problems_correct',
                 ])
 
                 if user_exercise.progress >= 1.0 and not explicitly_proficient:
                     bingo([
                         'hints_gained_proficiency_all',
                         'struggling_gained_proficiency_all',
-                        'suggested_activity_gained_proficiency_all',
                     ])
                     if not user_exercise.has_been_proficient():
                         bingo('hints_gained_new_proficiency')
@@ -240,7 +250,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
             bingo([
                 'hints_problems_done',
                 'struggling_problems_done',
-                'suggested_activity_problems_done',
             ])
 
         else:
@@ -250,7 +259,6 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
                 bingo([
                     'hints_wrong_problems',
                     'struggling_problems_wrong',
-                    'suggested_activity_problems_wrong',
                 ])
 
             if user_exercise.is_struggling(struggling_model):
@@ -365,10 +373,10 @@ class UpdateExercise(request_handler.RequestHandler):
 
         exercise.put()
 
-        if "related_videos" in dict:
+        if "related_videos" in dict and len(dict["related_videos"]):
             UpdateExercise.do_update_related_videos(exercise, 
                                                     dict["related_videos"])
-        elif "related_video_keys" in dict:
+        elif "related_video_keys" in dict and len(dict["related_video_keys"]):
             UpdateExercise.do_update_related_video_keys(exercise, 
                                                     dict["related_video_keys"])
         else:

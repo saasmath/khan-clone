@@ -151,22 +151,41 @@ class YouTubeSync(request_handler.RequestHandler):
         yt_service.developer_key = "AI39si6ctKTnSR_Vx7o7GpkpeSZAKa6xjbZz6WySzTvKVYRDAO7NHBVwofphk82oP-OSUwIZd0pOJyNuWK8bbOlqzJc9OFozrQ"
         yt_service.client_id = "n/a"
 
-        videos_to_put = []
+        videos_to_put = set()
 
-        for video in Video.all():
+        # doing fetch now otherwise query timesout later while doing youtube requests
+        # theoretically we can also change this code to use Mapper class:
+        # http://code.google.com/appengine/articles/deferred.html
+        for i, video in enumerate(Video.all().fetch(100000)):
+            entry = None
+            youtube_id = video.youtube_id
+
+            # truncating youtubeid at 11 to handle _DUP_X's
+            # handling the _DUPs to make it easier to detect content problems when duration = 0
+            if re.search("_DUP_\d*$", youtube_id):
+                youtube_id = youtube_id[0:11]
+
             try:
-                entry = yt_service.GetYouTubeVideoEntry(video_id=video.youtube_id)
+                entry = yt_service.GetYouTubeVideoEntry(video_id=youtube_id)
+
             except Exception, e:
                 logging.info("Error trying to get %s: %s" % 
-                            (video.youtube_id, e))
-            count = int(entry.statistics.view_count)
-            if count != video.views:
-                logging.info("Updating %s from %i to %i views" % 
-                            (video.title, video.views, count)) 
-                video.views = count
-                videos_to_put.append(video)
+                            (youtube_id, e))
+            
+            if entry:
+                count = int(entry.statistics.view_count)
+                if count != video.views:
+                    logging.info("%i: Updating %s from %i to %i views" % 
+                                (i, video.title, video.views, count)) 
+                    video.views = count
+                    videos_to_put.add(video)
+                
+                duration = int(entry.media.duration.seconds)
+                if duration != video.duration:
+                    video.duration = duration
+                    videos_to_put.add(video)
 
-        db.put(videos_to_put)
+        db.put(list(videos_to_put))
             
     def updateVideoAndPlaylistData(self):
         self.response.out.write('<html>')

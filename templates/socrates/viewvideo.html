@@ -6,8 +6,9 @@
 {% import 'macros/analytics.html' as analytics %}
 {% import 'macros/discussion.html' as discussion %}
 
-{% block meta_page_title %}{{video.title|escape}} | {{topic.title|escape}} | {% endblock %}
-{% block meta_keywords %}{{video.keywords}}{% endblock %}
+{% block meta_page_title %}
+{% if topic_data %}{{video.title|escape}} | {{topic_data.title|escape}}{% endif %} | {% endblock %}{% block meta_keywords %}{{video.keywords}}
+{% endblock %}
 {% block meta_description %}{{video.description}}{% endblock %}
 
 {% block pagecss %}
@@ -15,6 +16,19 @@
     {% if has_socrates %}
     {{ js_css_packages.css_package("socrates") }}
     {% endif %}
+
+<style>
+.sidebar-section h3 {
+  margin: 30px 0 0 0;
+}
+.sidebar-section h4 {
+  margin: 15px 0 0 0;
+}
+.sidebar-section a, .sidebar-section a:visited {
+  color: #333;
+  text-decoration: none;
+}
+</style>
 {% endblock pagecss %}
 
 {% block pagescript %}
@@ -23,120 +37,50 @@
 {% endblock pagescript %}
 
 {% block pagesubmenu %}
-<span class="breadcrumbs_nav video-nav">
-        <a href="/#browse">All videos</a>
-        <span class="breadcrumb-separator">&#187;</span>
-        <a href="/?video={{video.readable_id|urlencode}}#{{topic.id|slugify|urlencode}}">{{topic.title|escape}}</a>
-        <span class="breadcrumb-separator">&#187;</span>
-    <span id="video_dropdown" style="display:none;" class="selected">
-        <a href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}">{{video.title|escape}}</a>
-        <div id="video_menu">
-            <ol>
-                {% for v in videos %}
-                <li data-selected='{{v.selected|default("")}}'><a href="/video/{{v.readable_id}}?topic={{topic.id|urlencode}}">{{ library.video_name_and_progress(v) }}</a></li>
-                {% endfor %}
-            </ol>
-        </div>
-    </span>
-</span>
+<span class="breadcrumbs_nav video-nav"></span>
 {% endblock pagesubmenu %}
 
 {% block sidebarcontent %}
+<div class="sidebar-section">
+<h3>Interactive videos</h3>
+A new way to watch videos where you will be quizzed on the content as you watch.
 <div>
-    <strong>Linear Algebra</strong>
+    <h4>Linear Algebra</h4>
     <ul>
-        <li><a href="/labs/socrates/introduction-to-matrices?topic=linear-algebra">Introduction to Matrices</a></li>
+        <li><a href="/labs/socrates/linear-algebra/v/introduction-to-matrices">Introduction to Matrices</a></li>
     </ul>
 </div>
 <div>
-    <strong>Fractions</strong>
+    <h4>Fractions</h4>
     <ul>
-        <li><a href="/labs/socrates/numerator-and-denominator-of-a-fraction?topic=fractions">Numerator and Denominator of a Fraction</a></li>
-        <li><a href="/labs/socrates/identifying-fraction-parts?topic=fractions">Identifying Fraction Parts</a></li>
-        <li><a href="/labs/socrates/equivalent-fractions?topic=fractions">Equivalent fractions</a></li>
+        <li><a href="/labs/socrates/fractions/v/numerator-and-denominator-of-a-fraction">Numerator and Denominator of a Fraction</a></li>
+        <li><a href="/labs/socrates/fractions/v/identifying-fraction-parts">Identifying Fraction Parts</a></li>
+        <li><a href="/labs/socrates/fractions/v/equivalent-fractions">Equivalent fractions</a></li>
     </ul>
+</div>
 </div>
 {% endblock sidebarcontent %}
 
 {% block pagecontent %}
 <article id="video-page">
-<div class="interactive-video-controls" style="display: none">
-    <h3>Controls</h3>
-    <ul>
-        <li><button id="label">Label</button></li>
-        <li><button id="inputtext">InputText</button></li>
-        <li><button id="toggle">Toggle</button></li>
-    </ul>
-    <ul>
-        <li><button id="trigger">Trigger</button></li>
-    </ul>
-</div>
 <div class="video" data-role="page" data-theme="b">
     <div data-role="header" class="mobile-only">
         <a href="#" data-rel="back" data-icon="arrow-l">Back</a>
-        <h2>{{video.title|escape}}</h2>
+        <h2 class="video-title"></h2>
         <a href="/" data-icon="home" data-iconpos="notext" data-direction="reverse"></a>
     </div>
     <div data-role="content" itemscope itemtype="http://schema.org/VideoObject">
-        <link itemprop="url" href="/video/{{video.readable_id}}?topic={{topic.id|urlencode}}">
-        <div id="description">
-            {%- if button_top_exercise %}
-            <a href="{{button_top_exercise.url}}" class="practice simple-button action-gradient green desktop-only" title="Test your understanding with an exercise">Practice this concept</a>
-            {%- endif %}
-            <h1 class="title-header">
-                <span itemprop="name" class="title desktop-only">{{video.title|escape}}</span>
-            {% if video.description %}
-                <span class="long-description"><span class="desktop-only">: </span><span itemprop="description">{{video.description|escape}}</span></span>
-            {% endif %}
-            </h1>
-
-            {%- if related_exercises %}
-            <div class="related-content visited-no-recolor">
-                <span class="related-content-title">Related exercises:</span>
-                <ul class="related-exercise-list">
-                    {%- for exercise in related_exercises %}
-                    <li>
-                        <a href="{{exercise.url}}" title="{{exercise.name}}">{{exercise.name}}</a>
-                        {%- if not loop.last -%}
-                        <span class="separator">, </span>
-                        {%- endif -%}
-                    </li>
-                    {%- endfor %}
-                </ul>
-            </div>
-            {%- endif %}
+        <div style="min-height: 88px">
+          <div id="description" class="video-description"></div>
+          <span class="video-header"></span>
         </div>
-    <div style="margin-top: -5px;">
-        <nav class="prev_next_nav desktop-only">
-            {% if previous_video %}
-            <label id="prev_video">
-              {% if previous_topic %}
-                <a rel=prev href="/video/{{previous_video.readable_id}}?topic={{previous_video_topic.id|urlencode}}"><b>Previous Topic:</b> {{ previous_topic.standalone_title }}</a>
-              {% else %}
-                <a rel=prev href="/video/{{previous_video.readable_id}}?topic={{topic.id|urlencode}}"><b>Previous Video:</b> {{ library.video_name_and_progress(previous_video) }}</a>
-              {% endif %}
-            </label>
-            {% endif %}
-            {% if next_video %}
-            <label id="next_video">
-              {% if next_topic %}
-                <a rel=next href="/video/{{next_video.readable_id}}?topic={{next_video_topic.id|urlencode}}"><b>Next Topic:</b> {{ next_topic.standalone_title }}</a>
-              {% else %}
-                <a rel=next href="/video/{{next_video.readable_id}}?topic={{topic.id|urlencode}}"><b>Next Video:</b> {{ library.video_name_and_progress(next_video) }}</a>
-              {% endif %}
-            </label>
-                {% endif %}
-            <div class="clear"></div>
-        </nav>
 
         <div class="video-container" style="position: relative">
-            <div class="video-overlay"></div>
-            <div id="youtube_blocked" class="desktop-only">
-                {{ youtube.flv_player_embed(video_path) }}
-            </div>
+            <div class="video-overlay" class="desktop-only"></div>
+            <div id="youtube_blocked" class="desktop-only"></div>
             <div class="youtube-video">
-                <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{video.youtube_id}}/hqdefault.jpg">
-                {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host) }}
+                <link itemprop="thumbnailUrl" href="http://img.youtube.com/vi/{{ video.youtube_id }}/hqdefault.jpg">
+                {{ youtube.player_embed(video.youtube_id, mobile=is_mobile_capable, use_iframe_embed=is_ipad, http_origin=http_host)  }}
                 <div class="subtitles-warning desktop-only">
                     &lArr; Use this menu to view and help create subtitles for this video in many different languages.
                     You'll probably want to hide YouTube's captions if using these subtitles.
@@ -144,44 +88,18 @@
                 </div>
             </div>
         </div>
-        {% if subtitles_json %}
-        <div itemprop="transcript" class="subtitles">
-            {% for entry in subtitles_json: %}
-            <p>{{ entry.text|e }}</p>
-            {% endfor %}
+        <div>
+          <div class="socrates-nav"></div>
+          <div itemprop="transcript" class="subtitles">
+          {% if video.subtitles_json %}
+              {% for entry in video.subtitles_json: %}
+              <p>{{ entry.text|e }}</p>
+              {% endfor %}
+          {% endif %}
+          </div>
+          <span class="video-footer"></span>
         </div>
-        {% endif %}
-        <span class="video_extra_links desktop-only">
-            <nobr>
-
-            <div class="extra-link-bar">
-
-                <a href="#" title="Toggle subtitles and translations" style="z-index:101;" class="simple-button action-gradient with-icon subtitles-link">
-                <img src="/images/subtitles-icon-small.png" />
-                        Subtitles
-                </a>
-
-                {% if video_path %}
-                <a href="{{video_path}}" title="Download this lesson" style="z-index:101;" class="simple-button action-gradient with-icon download-icon download-link">
-                <img src="/images/download-icon-small.png" />
-                         Download
-                </a>
-                {% endif %}
-
-                {{ social.share_video_button(video.title, video.description, video.youtube_id, "Video-Page-Share") }}
-
-            </div>
-            <span style="float:right;" id="points-badge-hover">
-                {{ user.possible_points_badge(awarded_points, video_points_base, logged_in) }}
-            </span>
-            </nobr>
-         </span>
-
-        <div class="desktop-only">
-            <div class="socrates-nav"></div>
-            {{ discussion.comments(user_data, video, topic, comments_page) }}
-            {{ discussion.qa(user_data, video, topic, qa_page, qa_expand_key, sort) }}
-        </div>
+        <div class="desktop-only video-discussion"></div>
     </div>
     </div>
 </div>
@@ -196,31 +114,32 @@
     {{ js_css_packages.js_package(video.youtube_id) }}
     {% endif %}
     <script>
+      {% if topic_data_json and video_data_json %}
+      window.videoTopLevelTopic = "{{ topic_data.top_level_topic }}";
+      window.videoLibrary = {
+        "{{ topic_data.id }}": {
+            topic: {{ topic_data_json }},
+            videos: {
+                "{{ video.readable_id }}": {{ video_data_json }}
+            }
+        }
+      };
+      {% else %}
+      window.videoTopLevelTopic = "{{ top_level_topic }}";
+      window.videoLibrary = { };
+      {% endif %}
+
+      window.loginURL = "{{ login_url|escape }}";
+
+
       $(function() {
-        Video.init();
-        VideoStats.startLoggingProgress("{{ video.key()|escapejs }}");
-
         {% if has_socrates %}
+        // Socrates will call Video.init()
         Socrates.init("{{video.youtube_id}}");
+        {% else %}
+        Video.init();
         {% endif %}
-        Discussion.init();
-        Moderation.init();
-        Voting.init();
-        Comments.init();
-        QA.init();
       });
-
-      // We take the message in the title of the energy points box and place it
-      // in a tooltip, and if it's the message with a link to the login we
-      // replace it with a nicer link (we don't want to have to pass the url to
-      // the templatetag).
-      var $points = $('.video-energy-points');
-      $points.data('title', $points.attr('title').replace(/Sign in/,
-                 '<a href="{{ login_url|escape }}">Sign in</a>'))
-             .removeAttr('title');
-
-      VideoStats.tooltip('#points-badge-hover', $points.data('title'));
     </script>
     {{ analytics.crazyegg_tracker(False) }}
 {% endblock bottompagescript %}
-

@@ -240,7 +240,7 @@ window.TestTopics = function() {
             this.version = version;
         },
 
-        urlRoot: "/api/v1/topicversion/edit/videos",
+        urlRoot: "/api/v1/topicversion/edit/videos"
     });
 
 	window.VideoList = IncrementalCollection.extend({

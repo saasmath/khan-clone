@@ -33,6 +33,11 @@ def is_current_user_developer():
     user_data = models.UserData.current()
     return bool(users.is_current_user_admin() or (user_data and user_data.developer))
 
+def is_current_user(user_data):
+    current_user_data = models.UserData.current()
+    return (current_user_data and
+            current_user_data.user_id == user_data.user_id)
+
 def developer_only(method):
     '''Decorator that requires a developer account.'''
 

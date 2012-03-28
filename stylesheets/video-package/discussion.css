@@ -308,8 +308,15 @@ table.feedback_list th {
 .page_controls { padding: 5px 0; }
 .page_controls a.button { padding: 3px 5px; }
 
-.sig { font-style: italic; padding-left: 7px; color: #898989; }
-
+.sig {
+    padding-left: 7px;
+    color: #898989;
+}
+.author-nickname {
+    color: #069;
+    cursor: pointer;
+    display: inline-block;
+}
 span.flag_tools_show img {
     width: 14px;
     height: 14px;

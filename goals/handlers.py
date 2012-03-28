@@ -5,6 +5,12 @@ from datetime import datetime
 import random
 import logging
 
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from google.appengine.api import users
 
 from request_handler import RequestHandler
@@ -15,7 +21,6 @@ from api.auth.xsrf import ensure_xsrf_cookie
 from phantom_users.phantom_util import create_phantom
 from models import UserData, UserExercise, Exercise, Video, VideoLog
 from .models import Goal, GoalList, GoalObjective
-import simplejson as json
 
 class CreateNewGoal(RequestHandler):
 

@@ -7,8 +7,6 @@ default_expiration: "365d"
 skip_files:
 - ^(.*/)?app\.yaml
 - ^(.*/)?app\.yml
-- ^(.*/)?index\.yaml
-- ^(.*/)?index\.yml
 - ^(.*/)?#.*#
 - ^(.*/)?.*~
 - ^(.*/)?.*\.py[co]
@@ -26,6 +24,7 @@ skip_files:
 - ^requirements\.txt
 - ^agar
 - ^testutil
+- ^tools
 
 handlers:
 - url: /videos
@@ -121,6 +120,10 @@ handlers:
   script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
   login: admin
 
+- url: /_ah/queue/deferred_topics-set-default-queue
+  script: $PYTHON_LIB/google/appengine/ext/deferred/handler.py
+  login: admin
+
 - url: /admin/.*
   script: main.py
   login: admin
@@ -168,7 +171,6 @@ handlers:
 
 builtins:
 - appstats: on
-- datastore_admin: on
 - deferred: on
 - remote_api: on
 

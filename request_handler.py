@@ -1,10 +1,17 @@
 import os
 import logging
 import datetime
-import simplejson
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import sys
 import re
 import traceback
+import gae_bingo.identity
 
 from google.appengine.api import users
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
@@ -17,6 +24,7 @@ from app import App
 import cookie_util
 
 from api.jsonify import jsonify
+from gae_bingo.gae_bingo import ab_test
 
 class RequestInputHandler(object):
 
@@ -60,6 +68,17 @@ class RequestInputHandler(object):
     def request_user_data(self, key):
         email = self.request_string(key)
         return UserData.get_possibly_current_user(email)
+
+    def request_visible_student_user_data(self):
+        """ Return overridden user data allowed. Otherwise, return the
+        currently logged in user.
+        """
+        override_user_data = self.request_student_user_data()
+        return UserData.get_visible_user(override_user_data)
+
+    def request_user_data_by_user_id(self):
+        user_id = self.request_string("userID")
+        return UserData.get_from_user_id(user_id)
 
     # get the UserData instance based on the querystring. The precedence is:
     # 1. email
@@ -346,11 +365,39 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         # client-side error logging
         template_values['include_errorception'] = gandalf('errorception')
 
+        # Analytics
+        template_values['mixpanel_enabled'] = gandalf('mixpanel_enabled')
+
+        if False: # Enable for testing only
+            template_values['mixpanel_test'] = "70acc4fce4511b89477ac005639cfee1"
+            template_values['mixpanel_enabled'] = True
+            template_values['hide_analytics'] = False
+
+        if template_values['mixpanel_enabled']:
+            template_values['mixpanel_id'] = gae_bingo.identity.identity()
+
+        if not template_values['hide_analytics']:
+            superprops_list = UserData.get_analytics_properties(user_data)
+
+            # Create a superprops dict for MixPanel with a version number
+            # Bump the version number if changes are made to the client-side analytics
+            # code and we want to be able to filter by version.
+            template_values['mixpanel_superprops'] = dict(superprops_list)
+
+            # Copy over first 4 per-user properties for GA (5th is reserved for Bingo)
+            template_values['ga_custom_vars'] = superprops_list[0:4]
+
         if user_data:
             goals = GoalList.get_current_goals(user_data)
             goals_data = [g.get_visible_data() for g in goals]
             if goals_data:
                 template_values['global_goals'] = jsonify(goals_data)
+
+        # A/B test to show topic browser in the header
+        show_topic_browser = ab_test("Show topic browser in header", ["show", "hide"], ["topic_browser_clicked_link", "topic_browser_started_video", "topic_browser_completed_video"])
+        template_values['watch_topic_browser_enabled'] = (show_topic_browser == "show")
+        analytics_bingo = {"name": "Bingo: Header topic browser", "value": "Show" if show_topic_browser else "Hide"}
+        template_values['analytics_bingo'] = analytics_bingo
 
         return template_values
 
@@ -362,16 +409,16 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         return shared_jinja.get().render_template(template_name, **template_values)
 
     def render_json(self, obj):
-        json = simplejson.dumps(obj, ensure_ascii=False)
-        self.response.out.write(json)
+        json_string = json.dumps(obj, ensure_ascii=False)
+        self.response.out.write(json_string)
 
     def render_jsonp(self, obj):
-        json = obj if isinstance(obj, basestring) else simplejson.dumps(obj, ensure_ascii=False, indent=4)
+        json_string = obj if isinstance(obj, basestring) else json.dumps(obj, ensure_ascii=False, indent=4)
         callback = self.request_string("callback")
         if callback:
-            self.response.out.write("%s(%s)" % (callback, json))
+            self.response.out.write("%s(%s)" % (callback, json_string))
         else:
-            self.response.out.write(json)
+            self.response.out.write(json_string)
 
 from models import UserData
 import util

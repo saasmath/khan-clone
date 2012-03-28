@@ -228,6 +228,10 @@ var QA = {
 
         QA.loadPage($("#qa_page").val() || 0, true, $("#qa_expand_key").val());
         QA.enable();
+
+        $(".video-footer").on("mouseenter", ".author-nickname", function() {
+            HoverCard.createHoverCardQtip($(this));
+        });
     },
 
     initPagesAndQuestions: function() {

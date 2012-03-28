@@ -1,5 +1,5 @@
 import logging
-import pickle
+import cPickle as pickle
 import hashlib
 
 from google.appengine.ext import db
@@ -10,6 +10,7 @@ from google.appengine.ext.webapp import RequestHandler
 
 from .models import _GAEBingoExperiment, _GAEBingoAlternative, _GAEBingoIdentityRecord, _GAEBingoSnapshotLog
 from identity import identity
+from config import QUEUE_NAME
 
 # gae_bingo relies on the deferred library,
 # and as such it is susceptible to the same path manipulation weaknesses explained here:
@@ -308,7 +309,7 @@ class BingoIdentityCache(object):
             # If over 50 identities are waiting for persistent storage, 
             # go ahead and kick off a deferred task to do so
             # in case it'll be a while before the cron job runs.
-            deferred.defer(persist_gae_bingo_identity_records, list_identities)
+            deferred.defer(persist_gae_bingo_identity_records, list_identities, _queue=QUEUE_NAME)
 
             # There are race conditions here such that we could miss persistence
             # of some identities, but that's not a big deal as long as
@@ -327,7 +328,7 @@ class BingoIdentityCache(object):
 
         for key in dict_buckets:
             if len(dict_buckets[key]) > 0:
-                deferred.defer(persist_gae_bingo_identity_records, dict_buckets[key])
+                deferred.defer(persist_gae_bingo_identity_records, dict_buckets[key], _queue=QUEUE_NAME)
                 memcache.set(key, [])
 
     @staticmethod

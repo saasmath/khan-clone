@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import logging
 import datetime as dt
-import pickle
+import cPickle as pickle
 
 from google.appengine.ext import db, deferred
 from google.appengine.api import taskqueue

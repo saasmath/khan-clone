@@ -10,6 +10,7 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     profile: null,
+    secureUrlBase: null,
 
     /**
      * The root segment of the URL for the profile page for this user.
@@ -50,12 +51,14 @@ var Profile = {
 
         this.profileRoot = root;
         this.isDataCollectible = json.isDataCollectible;
+        this.secureUrlBase = json.secureUrlBase;
         UserCardView.countVideos = json.countVideos;
         UserCardView.countExercises = json.countExercises;
 
         Profile.render();
 
         Profile.router = new Profile.TabRouter({routes: this.getRoutes_()});
+        Profile.router.bind("all", Analytics.handleRouterNavigation);
 
         Backbone.history.start({
             pushState: true,
@@ -113,6 +116,10 @@ var Profile = {
         "/vital-statistics/problems/:exercise": "showExerciseProblems",
         "/vital-statistics/:graph/:timePeriod": "showVitalStatisticsForTimePeriod",
         "/vital-statistics/:graph": "showVitalStatistics",
+        "/coaches": "showCoaches",
+
+        // Not associated with any tab highlighting.
+        "/settings": "showSettings",
 
         "": "showDefault",
         // If the user types /profile/username/ with a trailing slash
@@ -127,7 +134,9 @@ var Profile = {
         // her username, it still shows the default profile screen. Note that
         // these routes aren't relative to the root URL, but will still work.
         "/profile": "showDefault",
-        "/profile/": "showDefault"
+        "/profile/": "showDefault",
+        // And for the mobile app... hopefully we can find a better fix.
+        "/profile?view=mobile": "showDefault"
     },
 
     /**
@@ -246,9 +255,33 @@ var Profile = {
             this.updateTitleBreadcrumbs(["Goals"]);
         },
 
+        showCoaches: function() {
+            Profile.populateCoaches();
+
+            $("#tab-content-coaches").show()
+                .siblings().hide();
+
+            this.activateRelatedTab("people coaches");
+            this.updateTitleBreadcrumbs(["Coaches"]);
+
+            if (Profile.profile.get("isPhantom")) {
+                Profile.showNotification("no-coaches-for-phantoms");
+            }
+        },
+
+        showSettings: function() {
+            // Populate HTML/reset.
+            Settings.render($("#tab-content-settings"));
+
+            // Show.
+            $("#tab-content-settings").show().siblings().hide();
+            this.activateRelatedTab("");
+            this.updateTitleBreadcrumbs(["Settings"]);
+        },
+
         activateRelatedTab: function(rel) {
             $(".profile-navigation .vertical-tab-list a").removeClass("active-tab");
-            $("a[rel$='" + rel + "']").addClass("active-tab");
+            $("a[rel='" + rel + "']").addClass("active-tab");
         },
 
         /**
@@ -579,10 +612,6 @@ var Profile = {
         );
     },
 
-    AddObjectiveHover: function(element) {
-        Profile.hoverContent(element.find(".objective"), "#profile-goals-content");
-    },
-
     render: function() {
         var profileTemplate = Templates.get("profile.profile");
         Handlebars.registerHelper("graph-date-picker-wrapper", function(block) {
@@ -881,6 +910,17 @@ var Profile = {
             fakeView = new GoalProfileView({model: fakeGoalBook});
 
         $("#profile-goals-content").append(fakeView.show().addClass("empty-chart"));
+    },
+
+    coachesDeferred_: null,
+    populateCoaches: function() {
+        if (Profile.coachesDeferred_) {
+            return Profile.coachesDeferred_;
+        }
+
+        Profile.coachesDeferred_ = Coaches.init();
+
+        return Profile.coachesDeferred_;
     },
 
     populateSuggestedActivity: function(activities) {

@@ -11,7 +11,12 @@ from google.appengine.ext.webapp import RequestHandler
 from .gae_bingo import bingo, ab_test
 from .cache import BingoCache
 from .config import can_control_experiments
-import simplejson as json
+
+# use json in Python 2.7, fallback to simplejson for Python 2.5
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 class AB_Test(RequestHandler):
     """request user alternative/state for an experiment by passing 
@@ -108,7 +113,7 @@ class Bingo(RequestHandler):
 
         self.response.headers['Content-Type'] = 'text/json'
 
-        found_experiments = all(
+        found_experiments = any(
                 bingo_cache.get_experiment_names_by_conversion_name(name)
                 for name in conversion_names)
 

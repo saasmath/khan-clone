@@ -160,7 +160,8 @@ class Badge(object):
     _serialize_whitelist = [
             "points", "badge_category", "description",
             "safe_extended_description", "name", "user_badges", "icon_src",
-            "is_owned", "objectives", "can_become_goal", "icons", "is_retired"
+            "is_owned", "objectives", "can_become_goal", "icons", "is_retired",
+            "hide_context",
             ]
 
     def __init__(self):
@@ -240,6 +241,7 @@ class Badge(object):
     def is_hidden(self):
         return self.is_hidden_if_unknown and not self.is_owned
 
+    @property
     def hide_context(self):
         """ Return true if badge shouldn't label the context
         in which it was earned.
@@ -364,7 +366,7 @@ class GroupedUserBadge(object):
                                   badge=badge,
                                   last_earned_date=user_badge.date)
 
-        target_context_name = None if badge.hide_context() else user_badge.target_context_name
+        target_context_name = None if badge.hide_context else user_badge.target_context_name
 
         result.target_context_names.append(target_context_name)
         return result
