@@ -515,6 +515,13 @@
 
         box-sizing: border-box;
     }
+    .activity-list .skill-bar-container {
+        margin-left: 48px;
+        width: 380px;
+    }
+    .activity-list .skill-bar-container .skill-bar {
+        margin-bottom: 0;
+    }
     .activity-list .activity-image {
         float: left;
         margin-right: 8px;
@@ -1170,5 +1177,3 @@ li.profile-tab {
     text-align: center;
     text-decoration: none;
 }
-
-
