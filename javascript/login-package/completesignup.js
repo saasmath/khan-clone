@@ -31,12 +31,14 @@ Login.submitCompleteSignup = function() {
     valid = Login.ensureValid_("#username", "Username required") && valid;
     valid = Login.ensureValid_("#password", "Password required") && valid;
     if (valid) {
+        Login.disableSubmitButton_();
         Login.asyncFormPost(
                 $("#signup-form"),
                 function(data) {
                     // 200 success, but the signup may have failed.
                     if (data["errors"]) {
                         Login.onCompleteSignupError(data["errors"]);
+                        Login.enableSubmitButton_();
                     } else {
                         Login.onCompleteSignupSucess(data);
                     }
@@ -44,6 +46,7 @@ Login.submitCompleteSignup = function() {
                 function(data) {
                     // Hard fail - can't seem to talk to server right now.
                     // TODO(benkomalo): handle.
+                    Login.enableSubmitButton_();
                 });
     }
 };

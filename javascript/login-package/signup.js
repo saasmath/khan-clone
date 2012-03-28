@@ -54,7 +54,6 @@ Login.initSignupPage = function() {
     $("#submit-button").click(function(e) {
         // Prevent direct form submission since we'll POST the data manually.
         e.preventDefault();
-
         Login.submitSignup();
     });
 };

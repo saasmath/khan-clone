@@ -76,14 +76,14 @@ Login.loginWithPassword = function() {
     valid = Login.ensureValid_("#password", "Password required") && valid;
 
     if (valid) {
-        Login.disableLoginButton_();
+        Login.disableSubmitButton_();
         Login.asyncFormPost(
                 $("#login-form"),
                 function(data) {
                     // Server responded with 200, but login may have failed.
                     if (data["errors"]) {
                         Login.onPasswordLoginFail(data["errors"]);
-                        Login.enableLoginButton_();
+                        Login.enableSubmitButton_();
                     } else {
                         Login.onPasswordLoginSuccess(data);
                         // Don't re-enable the login button as we're about
@@ -93,22 +93,23 @@ Login.loginWithPassword = function() {
                 function(data) {
                     // Hard failure - server is inaccessible or having issues
                     // TODO(benkomalo): handle
+                    Login.enableSubmitButton_();
                 });
     }
 };
 
 /**
- * Disables the login button on a login attempt, to prevent duplicate tries.
+ * Disables the submit button on a login attempt, to prevent duplicate tries.
  */
-Login.disableLoginButton_ = function() {
+Login.disableSubmitButton_ = function() {
     $("#submit-button").attr("disabled", true);
 };
 
 /**
- * Restores the login button, usually after a response from a server
- * from a login attempt.
+ * Restores the submit button, usually after a response from a server
+ * from a login/signup attempt.
  */
-Login.enableLoginButton_ = function() {
+Login.enableSubmitButton_ = function() {
     $("#submit-button").removeAttr("disabled");
 };
 
