@@ -1399,8 +1399,9 @@ def topic_next_exercises(topic_id):
     """
 
     user_data = models.UserData.current()
+
     if not user_data:
-        return api_invalid_param_response("User not logged in")
+        user_data = models.UserData.pre_phantom()
 
     topic = models.Topic.get_by_id(topic_id)
     if not topic:
