@@ -887,18 +887,7 @@ var Profile = {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
 
         var attachProgress = function(activity) {
-            var progress = activity["progress"] || 0;
-            var formattedProgress = progress ?
-                    (100 * progress).toPrecision(4) + "%" :
-                    "not started";
-            activity["streakBar"] = {
-                "proficient": false,
-                "suggested": true,
-                "progressDisplay": formattedProgress,
-                // TODO: is this the right width?
-                "maxWidth": 228,
-                "width": activity["progress"] * 228
-            };
+            activity["progress"] = activity["progress"] || 0;
         };
         _.each(activities["exercises"] || [], attachProgress);
         _.each(activities["videos"] || [], attachProgress);

@@ -38,6 +38,7 @@ javascript = {
 
             # application code & templates:
             "streak-bar.handlebars",
+            "skill-bar.handlebars",
             "handlebars-extras.js",
             "cookies.js",
             "pageutil.js",
@@ -213,7 +214,6 @@ javascript = {
             "card-leaves.handlebars",
             "small-exercise-icon.handlebars",
             "knowledgemap-topic.handlebars",
-            "skill-bar.handlebars",
             "problem-template.handlebars",
             "end-of-stack-card.handlebars",
             "end-of-review-card.handlebars",
@@ -304,6 +304,9 @@ stylesheets = {
             "jquery-ui-1.8.16.custom.css",
             "bootstrap-modal.css",
             "goals.css",
+        ],
+        "less": [
+            "skillbar.less",
         ]
     },
     "mobile": {
