@@ -23,7 +23,8 @@ TASK_QUEUE = 'subtitles-fetch-queue'
 
 
 class ReportHandler(request_handler.RequestHandler):
-    @user_util.admin_only
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def get(self):
         """Display reports from recent imports"""
         limit = self.request_int('limit', 25)
@@ -43,7 +44,8 @@ class ReportHandler(request_handler.RequestHandler):
 
 
 class ImportHandler(request_handler.RequestHandler):
-    @user_util.admin_only
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def get(self):
         """Start the subtitles import task chain
 
@@ -51,7 +53,8 @@ class ImportHandler(request_handler.RequestHandler):
         """
         self.post()
 
-    @user_util.admin_only
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def post(self):
         """Start the subtitles import task chain
 

@@ -64,11 +64,13 @@ def daily_graph_context(cls, key):
     return { key: filter(lambda count: hasattr(count, "delta"), counts) }
 
 class RecordStatistics(request_handler.RequestHandler):
-    @user_util.admin_only
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def get(self):
         return self.post()
 
-    @user_util.admin_only
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def post(self):
         DailyStatistic.record_all()
         self.response.out.write("Dashboard statistics recorded.")
