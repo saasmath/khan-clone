@@ -5,8 +5,8 @@
         <div class="exercise-goal-wrapper"><img class="exercise-goal-icon" style="display: none" src="/images/flag.png"></div>
 
         <h4 class="skill-bar-title">
-            <a href="{{url}}">{{display_name}}</a>
             {{#with states}}{{> small-exercise-icon}}{{/with}}
+            <a href="{{url}}" class="visited-no-recolor">{{display_name}}</a>
         </h4>
         {{{skill-bar progress 0 states}}}
     </div>
