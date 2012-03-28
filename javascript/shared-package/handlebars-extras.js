@@ -37,7 +37,24 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
     return result;
 });
 
-Handlebars.registerPartial("streak-bar", Templates.get("shared.streak-bar"));
+/**
+ * Render an exercise skill-bar with specified ending position and optional
+ * starting position, exercise states, and whether or not proficiency was just
+ * earned and should be animated.
+ */
+Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates, justEarnedProficiency) {
+
+    var template = Templates.get("shared.skill-bar"),
+        context = _.extend({
+                start: parseFloat(start) || 0,
+                end: parseFloat(end) || 0,
+                justEarnedProficiency: !!(justEarnedProficiency)
+            }, 
+            exerciseStates);
+    
+    return template(context);
+
+}); 
 
 /**
  * Return a bingo redirect url

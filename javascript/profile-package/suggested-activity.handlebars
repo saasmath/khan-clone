@@ -11,7 +11,7 @@
                 <a class="ellipsis foreground-link" title="{{name}}" href="{{toBingoHref url "suggested_activity_click_through_exercise"}}">
                     {{name}}
                 </a>
-                {{#with streakBar}}{{> streak-bar}}{{/with}}
+                {{{skill-bar progress}}}
                 <div class="suggested-activity-controls">
                     <a class="foreground-link" href="{{toBingoHref url "suggested_activity_click_through_exercise"}}">
                         <span class="simple-button action-gradient">Rock out</span>
@@ -31,7 +31,7 @@
                 <a class="ellipsis foreground-link" title="{{name}}" href="{{toBingoHref url "suggested_activity_click_through_video"}}">
                     {{name}}
                 </a>
-                {{#with streakBar}}{{> streak-bar}}{{/with}}
+                {{{skill-bar progress}}}
                 <div class="suggested-activity-controls">
                     <a class="foreground-link" href="{{toBingoHref url "suggested_activity_click_through_video"}}">
                         <span class="simple-button action-gradient">Watch on</span>

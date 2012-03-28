@@ -10,11 +10,12 @@ import object_property
 import models
 from badges.util_badges import all_badges_dict
 from badges.topic_exercise_badges import TopicExerciseBadge
+import logging
 
 NUM_SUGGESTED_TOPICS = 2
 
 def topics_layout(user_data, user_exercise_graph):
-    """ Return topics layout data with per-user topic completion 
+    """ Return topics layout data with per-user topic completion
     and suggested info already filled in.
     """
 
@@ -27,7 +28,7 @@ def topics_layout(user_data, user_exercise_graph):
     layout["polylines"] = []
 
     # Build each topic's completion/suggested status from constituent exercises
-    for topic_dict in layout["topics"]:
+    for topic_dict in list(layout["topics"]):
 
         # We currently use TopicExerciseBadge as the quickest cached list of constituent
         # exercise names in each topic. TODO: once this data is elsewhere, we don't need
@@ -35,7 +36,9 @@ def topics_layout(user_data, user_exercise_graph):
         badge_name = TopicExerciseBadge.name_for_topic_id(topic_dict["id"])
         badge = all_badges_dict().get(badge_name, None)
         if not badge:
-            raise Exception("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
+            logging.error("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
+            layout["topics"].remove(topic_dict)
+            continue
 
         proficient, suggested, total = (0, 0, 0)
 
@@ -48,7 +51,7 @@ def topics_layout(user_data, user_exercise_graph):
             if graph_dict["suggested"]:
                 suggested += 1
 
-        # Send down the number of suggested exercises as well as 
+        # Send down the number of suggested exercises as well as
         # the ratio of constituent exercises completed:total
         topic_dict["count_suggested"] = suggested
         topic_dict["count_proficient"] = proficient
@@ -61,8 +64,8 @@ def topics_layout(user_data, user_exercise_graph):
     # "Most suggested" is defined as having the highest number of suggested constituent
     # exercises.
     suggested_candidates = sorted(
-            layout["topics"], 
-            key=lambda t: t["count_suggested"], 
+            layout["topics"],
+            key=lambda t: t["count_suggested"],
             reverse=True)[:NUM_SUGGESTED_TOPICS]
 
     for topic_dict in suggested_candidates:
