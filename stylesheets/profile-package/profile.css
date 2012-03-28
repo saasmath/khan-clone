@@ -601,11 +601,6 @@
         color: #999;
         font-style: italic;
     }
-    .activity-list .streak-bar {
-        height: 10px;
-        margin-left: 48px;
-        margin-top: 4px;
-    }
     .description {
         float: left;
         width: 420px;

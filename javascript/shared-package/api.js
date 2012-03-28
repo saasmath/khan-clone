@@ -113,6 +113,9 @@ $(function() { APIActionResults.register("user_info_html",
 // show point animation above progress bar when in exercise pages
 $(function() {
 
+    // TODO: this point animation isn't hooked up to new power mode. Restore
+    // it.
+    // https://trello.com/card/restore-mario-points-coolness/4f3f43cd45533a1b3a065a1d/86
     var updatePointDisplay = function(data) {
         if (jQuery(".single-exercise").length > 0 && data.points > 0) {
             var coin = jQuery("<div>+" + data.points + "</div>").addClass("energy-points-badge");

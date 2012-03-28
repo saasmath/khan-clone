@@ -37,7 +37,6 @@ javascript = {
             "less-1.2.2.min.js",
 
             # application code & templates:
-            "streak-bar.handlebars",
             "skill-bar.handlebars",
             "handlebars-extras.js",
             "cookies.js",
