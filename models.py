@@ -1379,6 +1379,13 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
 
     @staticmethod
     def insert_for(user_id, email, username=None, password=None, **kwds):
+        """ Creates a user with the specified values, if possible, or returns
+        an existing user if the user_id has been used by an existing user.
+        
+        Returns None if user_id or email values are invalid.
+
+        """
+
         if not user_id or not email:
             return None
 

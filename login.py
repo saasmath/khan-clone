@@ -19,6 +19,7 @@ import models
 import os
 import re
 import request_handler
+import uid
 import util
 
 class Login(request_handler.RequestHandler):
@@ -523,21 +524,33 @@ class CompleteSignup(request_handler.RequestHandler):
             unverified_user = models.UnverifiedUser.get_for_value(
                     valid_token.email)
 
-            # TODO(benkomalo): actually move out user id generation to a nice,
-            # centralized place and do a double check ID collisions
-            import uuid
-            user_id = "http://id.khanacademy.org/" + uuid.uuid4().hex
-            user_data = models.UserData.insert_for(
-                    user_id,
-                    unverified_user.email,
-                    username,
-                    password,
-                    birthdate=unverified_user.birthdate,
-                    gender=gender)
+            num_tries = 0
+            user_data = None
+            while not user_data and num_tries < 2:
+                user_id = uid.new_user_id()
+                user_data = models.UserData.insert_for(
+                        user_id,
+                        unverified_user.email,
+                        username,
+                        password,
+                        birthdate=unverified_user.birthdate,
+                        gender=gender)
 
+                if not user_data:
+                    self.render_json({'errors': {'username': "Username taken."}},
+                                     camel_cased=True)
+                    return
+                elif user_data.username != username:
+                    # Something went awry - insert_for may have returned
+                    # an existing user due to an ID collision. Try again.
+                    user_data = None
+                num_tries += 1
+                
             if not user_data:
-                self.render_json({'errors': {'username': "Username taken."}},
-                                 camel_cased=True)
+                self.render_json({
+                        'errors': {'username': "Oops! Something went wrong. " +
+                                               "Please try again later."}
+                }, camel_cased=True)
                 return
 
             # Nickname is special since it requires updating external indices.
