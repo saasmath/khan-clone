@@ -35,9 +35,6 @@ class Login(request_handler.RequestHandler):
         cont = self.request_continue_url()
         direct = self.request_bool('direct', default=False)
 
-        if App.facebook_app_secret is None:
-            self.redirect(users.create_login_url(cont))
-            return
         template_values = {
                            'continue': cont,
                            'direct': direct,
