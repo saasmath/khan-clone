@@ -35,8 +35,6 @@ def class_progress_report_graph_context(user_data, list_students):
 
         student_email = student.email
 
-        student_review_exercise_names = user_exercise_graph.review_exercise_names()
-
         for (exercise, (_, exercise_display, exercise_name_js)) in izip(exercises_found, exercise_names):
 
             exercise_name = exercise.name
@@ -46,7 +44,7 @@ def class_progress_report_graph_context(user_data, list_students):
 
             if graph_dict["proficient"]:
 
-                if exercise_name in student_review_exercise_names:
+                if graph_dict["reviewing"]:
                     status = "Review"
                 else:
                     status = "Proficient"

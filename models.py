@@ -4859,6 +4859,9 @@ class UserExerciseGraph(object):
     def proficient_graph_dicts(self):
         return [graph_dict for graph_dict in self.graph_dicts() if graph_dict["proficient"]]
 
+    def review_graph_dicts(self):
+        return [graph_dict for graph_dict in self.graph_dicts() if graph_dict["reviewing"]]
+
     def recent_graph_dicts(self, n_recent=2):
         return sorted(
                 [graph_dict for graph_dict in self.graph_dicts() if graph_dict["last_done"]],
@@ -4866,7 +4869,11 @@ class UserExerciseGraph(object):
                 key=lambda graph_dict: graph_dict["last_done"],
                 )[0:n_recent]
 
-    def review_graph_dicts(self):
+    @staticmethod
+    def mark_reviewing(graph):
+        """ Mark to-be-reviewed exercise dicts as reviewing, which is used by the knowledge map
+        and the profile page.
+        """
 
         # an exercise ex should be reviewed iff all of the following are true:
         #   * ex and all of ex's covering ancestors either
@@ -4922,11 +4929,12 @@ class UserExerciseGraph(object):
 
             return graph_dict["is_ancestor_review_candidate"]
 
-        for graph_dict in self.graph_dicts():
+        for graph_dict in graph.values():
+            graph_dict["reviewing"] = False # Assume false at first
             compute_next_review(graph_dict)
 
         candidate_dicts = []
-        for graph_dict in self.graph_dicts():
+        for graph_dict in graph.values():
             if (graph_dict["proficient"] and
                     graph_dict["next_review"] <= now and
                     graph_dict["total_done"] > 0):
@@ -4935,13 +4943,10 @@ class UserExerciseGraph(object):
             else:
                 graph_dict["is_review_candidate"] = False
 
-        review_dicts = []
         for graph_dict in candidate_dicts:
             if (not compute_is_ancestor_review_candidate(graph_dict) or
                     graph_dict["streak"] == 0):
-                review_dicts.append(graph_dict)
-
-        return review_dicts
+                graph_dict["reviewing"] = True
 
     def states(self, exercise_name):
         graph_dict = self.graph_dict(exercise_name)
@@ -4950,7 +4955,7 @@ class UserExerciseGraph(object):
             "proficient": graph_dict["proficient"],
             "suggested": graph_dict["suggested"],
             "struggling": graph_dict["struggling"],
-            "reviewing": graph_dict in self.review_graph_dicts(),
+            "reviewing": graph_dict["reviewing"]
         }
 
     @staticmethod
@@ -5102,8 +5107,6 @@ class UserExerciseGraph(object):
             is_suggested = exercise_name in suggested_names
             graph[exercise_name]["suggested"] = is_suggested
 
-        return graph
-
     @staticmethod
     def generate(user_data, user_exercise_cache, exercise_dicts):
 
@@ -5168,8 +5171,9 @@ class UserExerciseGraph(object):
         for exercise_name in graph:
             set_implicit_proficiency(graph[exercise_name])
 
-        # Calculate suggested
-        graph = UserExerciseGraph.mark_suggested(graph)
+        # Calculate suggested and reviewing
+        UserExerciseGraph.mark_suggested(graph)
+        UserExerciseGraph.mark_reviewing(graph)
 
         return UserExerciseGraph(graph = graph, cache=user_exercise_cache)
 
