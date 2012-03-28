@@ -637,9 +637,13 @@ class UserExercise(db.Model):
 
         # Start off by getting all boundary exercises (those that aren't proficient
         # and aren't covered by other boundary exercises)
-        graph_dicts = [
-            graph.graph_dict(exid) for exid in UserExerciseGraph.get_boundary_names(graph.graph)
-        ]
+        frontier = set(UserExerciseGraph.get_boundary_names(graph.graph))
+        graph_dicts = [graph.graph_dict(exid) for exid in frontier]
+
+        # Add in any exercises that are up for review
+        for review_dict in graph.review_graph_dicts():
+            if review_dict["name"] not in frontier:
+                graph_dicts.append(review_dict)
 
         # If we don't have *any* boundary exercises, fill things out with the other
         # topic exercises. Note that if we have at least one boundary exercise, we don't
