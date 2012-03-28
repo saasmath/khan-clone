@@ -433,17 +433,16 @@
 .topic-exercise-badge {
     float: left;
 }
+    .topic-exercise-badge .topic-exercise-image {
+        display: block;
+    }
 .topic-exercise-image {
     width: 20px;
     height: 20px;
-    vertical-align: -4px;
+    vertical-align: middle;
     margin: -10px auto 0;
 	.border-radius(20px);
 }
-    .topic-exercise-image.inline {
-        display: inline-block;
-        margin: -50% 0; // Don't let the image affect the height of its container
-    }
 .exercises-content {
     padding-left: 0;
     padding-right: 0;
@@ -452,10 +451,13 @@
     width: 7%;
 }
 .exercises-header .topic-exercise-image {
-    display: block;
     width: 40px;
     height: 40px;
 }
+    .exercises-header .topic-exercise-image.inline {
+        display: inline-block;
+        margin: -50% 0; // Don't let the image affect the height of its container
+    }
 .exercises-header .practice-exercise-topic-context {
     .transition(opacity 0.1s ease-in-out);
     .opacity(30);
