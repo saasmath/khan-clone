@@ -887,7 +887,7 @@ var Profile = {
         var suggestedTemplate = Templates.get("profile.suggested-activity");
 
         var attachProgress = function(activity) {
-            activity["progress"] = activity["progress"] || 0;
+            activity.progress = activity.progress || 0;
         };
         _.each(activities["exercises"] || [], attachProgress);
         _.each(activities["videos"] || [], attachProgress);
