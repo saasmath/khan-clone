@@ -16,7 +16,8 @@ TIMEOUT_SECONDS = 5
 REPORT_TEMPLATE = (('status', 'started'), ('fetches', 0), ('writes', 0),
                    ('errors', 0), ('redirects', 0))
 YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
-UNISUBS_URL = 'http://www.universalsubtitles.org/api/1.0/subtitles/?language=en&video_url=%s'
+UNISUBS_URL = 'http://www.universalsubtitles.org/api/1.0/subtitles/' \
+                  '?language=en&video_url=%s'
 TASK_QUEUE = 'subtitles-fetch-queue'
 
 
