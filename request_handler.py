@@ -124,13 +124,13 @@ class RequestInputHandler(object):
 class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
     class __metaclass__(type):
-        """Enforce that subclasses of RequestHandler decorate get()/push().
+        """Enforce that subclasses of RequestHandler decorate get()/post()/etc.
 
         This metaclass enforces that whenever we create a
         RequestHandler or subclass thereof, that the class we're
-        creating has a decorator on its get() and push() methods that
-        specify the access needed to get or push (admin, moderator,
-        etc).
+        creating has a decorator on its get(), post(), and other
+        http-verb methods that specify the access needed to get or
+        post (admin, moderator, etc).
 
         It does this through a two-step process.  In step 1, we make
         all the access-control decorators set a function-global
@@ -145,7 +145,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         production.
         """
         def __new__(mcls, name, bases, attrs):
-            for fn in ("get", "post"):
+            for fn in ("get", "post", "head", "put"):
                 if fn in attrs:
                     # TODO(csilvers): remove the requirement that the
                     # access control decorator go first.  To do that,
