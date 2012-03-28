@@ -1968,16 +1968,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     border-top: none;
 }
 
-a.proficient-badge {
-    display: block;
-    position:relative;
-    z-index:10;
-}
-
-a.proficient-badge.disabled {
-    cursor: not-allowed;
-}
-
 #review-mode-title {
     position: absolute;
     top: 12px;

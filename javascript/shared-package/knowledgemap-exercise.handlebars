@@ -5,7 +5,7 @@
 
         <h4 class="skill-bar-title">
             {{#with states}}{{> small-exercise-icon}}{{/with}}
-            <a href="{{url}}" class="visited-no-recolor">{{display_name}}</a>
+            <a href="{{url}}" class="visited-no-recolor {{#if disabled}}disabled{{/if}}">{{display_name}}</a>
             <img class="exercise-goal-icon" style="display: none" src="/images/flag.png">
         </h4>
         {{{skill-bar progress 0 states}}}
