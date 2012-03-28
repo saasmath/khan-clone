@@ -346,7 +346,13 @@ input.simple-button {
 }
 
 /* Links in the header and footer don't change color when visited. */
-a:link, header a:visited, footer a:visited, .visited-no-recolor a:visited {
+a:link,
+a:visited,
+header a:visited,
+footer a:visited,
+.visited-no-recolor,
+a.visited-no-recolor:visited 
+ {
     color: #005987;
     text-decoration: none;
 }
