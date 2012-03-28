@@ -14,7 +14,7 @@ from badges.topic_exercise_badges import TopicExerciseBadge
 NUM_SUGGESTED_TOPICS = 2
 
 def topics_layout(user_data, user_exercise_graph):
-    """ Return topics layout data with per-user topic completion 
+    """ Return topics layout data with per-user topic completion
     and suggested info already filled in.
     """
 
@@ -48,7 +48,7 @@ def topics_layout(user_data, user_exercise_graph):
             if graph_dict["suggested"]:
                 suggested += 1
 
-        # Send down the number of suggested exercises as well as 
+        # Send down the number of suggested exercises as well as
         # the ratio of constituent exercises completed:total
         topic_dict["count_suggested"] = suggested
         topic_dict["count_proficient"] = proficient
@@ -61,8 +61,8 @@ def topics_layout(user_data, user_exercise_graph):
     # "Most suggested" is defined as having the highest number of suggested constituent
     # exercises.
     suggested_candidates = sorted(
-            layout["topics"], 
-            key=lambda t: t["count_suggested"], 
+            layout["topics"],
+            key=lambda t: t["count_suggested"],
             reverse=True)[:NUM_SUGGESTED_TOPICS]
 
     for topic_dict in suggested_candidates:
