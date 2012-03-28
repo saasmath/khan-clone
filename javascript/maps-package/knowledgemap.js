@@ -428,6 +428,11 @@ function KnowledgeMap(params) {
             coords = params.mapCoords;
         }
 
+        if (this.newGoal) {
+            // New Goal UI always starts at zoom one level below topics.
+            coords.zoom = KnowledgeMapGlobals.options.minZoom + 1;
+        }
+
         this.map.setCenter(new google.maps.LatLng(coords.lat, coords.lng));
         this.map.setZoom(coords.zoom);
 
@@ -707,6 +712,12 @@ function KnowledgeMap(params) {
     };
 
     this.saveMapCoords = function(){
+
+        if (this.newGoal) {
+            // Don't persist K.M. position when creating new goal
+            return;
+        }
+
         // TODO this may not work, could post synchronously to fix, but it's not critical
         $.post("/savemapcoords", this.getMapCoords());
     };
@@ -715,6 +726,11 @@ function KnowledgeMap(params) {
 
         if (!this.fCenterChanged && !this.fZoomChanged)
             return;
+
+        if (this.newGoal) {
+            // Don't persist K.M. position when creating new goal
+            return;
+        }
 
         // Panning by 0 pixels forces a redraw of our map's markers
         // in case they aren't being rendered at the correct size.
