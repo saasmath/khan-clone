@@ -119,6 +119,7 @@ def new_and_noteworthy_link_sets():
 
 class ViewHomePage(request_handler.RequestHandler):
 
+    @user_util.open_access
     def head(self):
         # Respond to HEAD requests for our homepage so twitter's tweet
         # counter will update:
