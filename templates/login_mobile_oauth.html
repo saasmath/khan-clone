@@ -21,15 +21,11 @@
             #login-page {
                 padding-top: 18px;
             }
-            #login-page .providers li .sign-in-text {
-                color: #777;
+            .providers {
+                height: 100px;
             }
-            .providers li {
-                padding: 0 10px 8px;
-                margin: 0 17px 0 0;
-            }
-            .providers li img {
-                margin: 0;
+            .providers li .img-container {
+                height: 80px;
             }
         </style>
 
@@ -40,26 +36,26 @@
     <body>
         <article id="login-page">
             <div id="login-inner-content">
-                <img width="309" height="71" src="/images/logo-no-highlight-2x.png" /><br/><br/>
+                <img width="309" height="71" src="/images/logo-no-highlight-2x.png"><br><br>
 
-                <!-- ontouchstart="" is needed to allow the :active pseudoclass to work
-                     See http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari  -->
+                {# ontouchstart="" is needed to allow the :active pseudoclass to work
+                     See http://stackoverflow.com/questions/3885018/active-pseudo-class-doesnt-work-in-mobile-safari #}
                 <ul class="providers">
                     <li class="action-gradient" title="Google">
-                        <a ontouchstart="" href="/api/auth/request_token_callback/google/{{ oauth_map_id|escape }}">
-                            <div class="sign-in-text">Login with:</div>
-                            <img width="205" height="70" src="/images/google-logo-large-2x.png" />
-                        </a>
+                        <div class="img-container">
+                            <a ontouchstart="" href="/api/auth/request_token_callback/google/{{ oauth_map_id|escape }}">
+                                <img width="180" height="65" src="/images/google-logo-large-2x.png" />
+                            </a>
+                        </div>
                     </li>
                     <li class="action-gradient facebook" title="Facebook">
-                        <a ontouchstart="" href="/api/auth/request_token_callback/facebook/{{ oauth_map_id|escape }}">
-                            <div class="sign-in-text">Login with:</div>
-                            <img width="205" height="70" src="/images/facebook-logo-large-2x.png" />
-                        </a>
+                        <div class="img-container">
+                            <a ontouchstart="" href="/api/auth/request_token_callback/facebook/{{ oauth_map_id|escape }}">
+                                <img width="180" height="65" src="/images/facebook-logo-large-2x.png" />
+                            </a>
+                        </div>
                     </li>
                 </ul>
-
-                <div class="clear">&nbsp;</div>
 
                 {% if not anointed %}
                     <p>By logging in, you agree to give this application access to your personal Khan Academy usage data.</p>
