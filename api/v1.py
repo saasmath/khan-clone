@@ -1818,6 +1818,9 @@ def hint_problem_number(exercise_name, problem_number):
                     request.remote_addr,
                     )
 
+            # TODO: this exercise_message_html functionality is currently hidden
+            # from power-mode. Restore it.
+            # https://trello.com/card/restore-you-re-ready-to-move-on-and-struggling-in-action-messages/4f3f43cd45533a1b3a065a1d/34
             user_states = user_exercise_graph.states(exercise.name)
             exercise_message_html = templatetags.exercise_message(exercise,
                     user_exercise_graph, review_mode=review_mode)
