@@ -134,11 +134,19 @@ var Exercises = {
             return null;
         }
 
+        if (this.reviewMode) {
+            // Review mode, currently, doesn't track stack or session state.
+            // It just gets you through the review. If you reload the page,
+            // your right-hand stack will go away.
+            // TODO: improve this. We didn't love the alternative of having
+            // review stacks stick around even when you ignore review for
+            // a long time.
+            return null;
+        }
+
         var contextId = null;
 
-        if (this.reviewMode) {
-            contextId = "review";
-        } else if (this.practiceMode && !!this.practiceExercise) {
+        if (this.practiceMode && !!this.practiceExercise) {
             contextId = "practice:" + this.practiceExercise.get("name");
         } else if (!!this.topic) {
             contextId = "topic:" + this.topic.get("id");

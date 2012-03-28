@@ -203,6 +203,13 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
      * Delete this stack from localStorage
      */
     clearCache: function() {
+
+        if (!this.sessionId) {
+            // Don't cache session-less pages (such as when viewing historical
+            // problems)
+            return;
+        }
+
         LocalStore.del(this.cacheKey());
     }
 
@@ -820,6 +827,13 @@ Exercises.SessionStats = Backbone.Model.extend({
     },
 
     clearCache: function() {
+
+        if (!this.sessionId) {
+            // Don't cache session-less pages (such as when viewing historical
+            // problems)
+            return;
+        }
+
         LocalStore.del(this.cacheKey());
     },
 
