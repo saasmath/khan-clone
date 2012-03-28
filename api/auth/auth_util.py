@@ -84,7 +84,8 @@ def custom_scheme_redirect(url_redirect):
     return redirect_result
 
 def requested_oauth_callback():
-    return request.values.get("oauth_callback") or ("%sapi/auth/default_callback" % request.host_url)
+    return (request.values.get("oauth_callback") or
+            ("%sapi/auth/default_callback" % request.host_url))
 
 def allow_cookie_based_auth():
 
