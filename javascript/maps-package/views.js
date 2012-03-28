@@ -241,108 +241,14 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         if (!this.parent.map.getZoom() <= KnowledgeMapGlobals.options.minZoom)
             return;
 
-        if (this.parent.admin)
-        {
-            if (evt.shiftKey)
-            {
-                if (this.nodeName in this.parent.selectedNodes)
-                {
-                    delete this.parent.selectedNodes[this.nodeName];
-                    this.parent.highlightNode(this.nodeName, false);
-                }
-                else
-                {
-                    this.parent.selectedNodes[this.nodeName] = true;
-                    this.parent.highlightNode(this.nodeName, true);
-                }
-            }
-            else
-            {
-                $.each(this.parent.selectedNodes, function(node_name) {
-                    self.parent.highlightNode(node_name, false);
-                });
-                this.parent.selectedNodes = { };
-                this.parent.selectedNodes[this.nodeName] = true;
-                this.parent.highlightNode(this.nodeName, true);
-            }
-
-            //Unbind other keydowns to prevent a spawn of hell
-            $(document).unbind("keydown");
-
-            // If keydown is an arrow key
-            $(document).keydown(function(e) {
-                var delta_v = 0, delta_h = 0;
-
-                if (e.keyCode == 37) {
-                    delta_v = -1; // Left
-                }
-                if (e.keyCode == 38) {
-                    delta_h = -1; // Up
-                }
-                if (e.keyCode == 39) {
-                    delta_v = 1; // Right
-                }
-                if (e.keyCode == 40) {
-                    delta_h = 1; // Down
-                }
-
-                if (delta_v != 0 || delta_h != 0) {
-                    var id_array = [];
-
-                    $.each(self.parent.selectedNodes, function(node_name) {
-                        var actual_node = self.parent.dictNodes[node_name];
-
-                        actual_node.v_position = parseInt(actual_node.v_position) + delta_v;
-                        actual_node.h_position = parseInt(actual_node.h_position) + delta_h;
-
-                        id_array.push(node_name);
-                    });
-                    $.post("/moveexercisemapnodes", { exercises: id_array.join(","), delta_h: delta_h, delta_v: delta_v });
-
-                    var zoom = self.parent.map.getZoom();
-                    self.parent.markers = [];
-
-                    $.each(self.parent.dictEdges, function(key, rgTargets) { // this loop lets us update the edges wand will remove the old edges
-                        for (var ix = 0; ix < rgTargets.length; ix++) {
-                            var line = rgTargets[ix].line;
-                            if (line != null) {
-                                line.setMap(null);
-                            }
-                        }
-                    });
-                    self.parent.overlay.setMap(null);
-                    self.parent.layoutGraph();
-                    self.parent.drawOverlay();
-
-                    setTimeout(function() {
-                            $.each(self.parent.selectedNodes, function(node_name) {
-                                self.parent.highlightNode(node_name, true);
-                            });
-                        }, 100);
-
-                    return false;
-                }
-            });
-
-            evt.preventDefault();
-        }
-        else
-        {
-            return this.parent.nodeClickHandler(this.model, evt);
-        }
+        return this.parent.nodeClickHandler(this.model, evt);
     },
 
     onNodeMouseover: function() {
-        if (this.nodeName in this.parent.selectedNodes)
-            return;
-
         this.parent.highlightNode(this.nodeName, true);
     },
 
     onNodeMouseout: function() {
-        if (this.nodeName in this.parent.selectedNodes)
-            return;
-
         this.parent.highlightNode(this.nodeName, false);
     }
 },

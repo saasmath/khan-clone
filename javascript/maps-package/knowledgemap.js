@@ -163,7 +163,6 @@ function KnowledgeMap(params) {
 
     var self = this;
 
-    this.selectedNodes = {};
     // This handler exists as a hook to override what happens when an
     // exercise node is clicked. By default, it does nothing.
     this.nodeClickHandler = function(exercise, evt) {
@@ -439,10 +438,9 @@ function KnowledgeMap(params) {
             new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin),
             new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax));
 
-        _.bindAll(this, "onCenterChange", "onIdle", "onClick", "finishRenderingNodes");
+        _.bindAll(this, "onCenterChange", "onIdle", "finishRenderingNodes");
         google.maps.event.addListener(this.map, "center_changed", this.onCenterChange);
         google.maps.event.addListener(this.map, "idle", this.onIdle);
-        google.maps.event.addListener(this.map, "click", this.onClick);
         google.maps.event.addListener(this.map, "center_changed", this.finishRenderingNodes);
 
         this.giveNasaCredit();
@@ -725,15 +723,6 @@ function KnowledgeMap(params) {
         if (window.localStorage && window.JSON){
             var pos = this.getMapCoords();
             window.localStorage[ "map_coords:"+USERNAME ] = JSON.stringify(pos);
-        }
-    };
-
-    this.onClick = function() {
-        if (this.admin) {
-            $.each(this.selectedNodes, function(node_name) {
-                self.highlightNode(self.dictNodes[node_name], false);
-            });
-            self.selectedNodes = { };
         }
     };
 

@@ -35,24 +35,6 @@ from exercises.handlers import ViewExercise, ViewExerciseDeprecated, ViewTopicEx
 from exercises.file_contents import raw_exercise_contents
 import util
 
-class MoveMapNodes(request_handler.RequestHandler):
-    def post(self):
-        self.get()
-
-    @user_util.developer_only
-    def get(self):
-        node_list = string.split(self.request_string('exercises'), ',')
-        delta_h = self.request_int('delta_h')
-        delta_v = self.request_int('delta_v')
-
-        for node_id in node_list:
-            exercise = models.Exercise.get_by_name(node_id)
-
-            exercise.h_position += delta_h
-            exercise.v_position += delta_v
-
-            exercise.put()
-
 def exercise_graph_dict_json(user_data, admin=False):
     user_exercise_graph = models.UserExerciseGraph.get(user_data)
     if user_data.reassess_from_graph(user_exercise_graph):

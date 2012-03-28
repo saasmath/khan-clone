@@ -618,7 +618,6 @@ application = webapp2.WSGIApplication([
     ('/viewexercisesonmap', knowledgemap.handlers.ViewKnowledgeMap),
     ('/editexercise', exercises.EditExercise),
     ('/updateexercise', exercises.UpdateExercise),
-    ('/moveexercisemapnodes', exercises.MoveMapNodes),
     ('/admin94040', exercises.ExerciseAdmin),
     ('/video/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
     ('/v/(.*)', ViewVideoDeprecated), # Backwards URL compatibility
