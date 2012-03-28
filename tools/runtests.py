@@ -3,7 +3,7 @@
 import optparse
 import os
 import sys
-# For python2.5, install the Python unittest2 package before you run this script.
+# For python2.5 install the unittest2 package
 try:   # Work under either python2.5 or python2.7
     import unittest2 as unittest
 except ImportError:
@@ -23,11 +23,14 @@ TEST_PATH   Path to package containing test modules or Python file
 
 TEST_FILE_RE = '*_test.py'
 
+
 def file_path_to_module(path):
     return path.replace('.py', '').replace(os.sep, '.')
 
+
 def discover_sdk_path():
-    # adapted from http://code.google.com/p/bcannon/source/browse/sites/py3ksupport-hrd/run_tests.py
+    # adapted from {http://code.google.com/p/bcannon/source/browse/
+    # sites/py3ksupport-hrd/run_tests.py}
 
     # Poor-man's `which` command.
     for path in os.environ['PATH'].split(':'):
@@ -42,6 +45,7 @@ def discover_sdk_path():
         raise RuntimeError('%s is not a directory' % app_engine_path)
     sys.path.append(app_engine_path)
 
+
 def main(test_path):
     if 'SERVER_SOFTWARE' not in os.environ:
         os.environ['SERVER_SOFTWARE'] = 'Development'
@@ -50,13 +54,14 @@ def main(test_path):
 
     import dev_appserver
     dev_appserver.fix_sys_path()
-    top_project_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+    top_project_dir = os.path.join(__file__, '../..')
+    sys.path.insert(0, top_project_dir)
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages"))
     sys.path.insert(0, os.path.join(top_project_dir, "api/packages/flask.zip"))
 
     loader = unittest.loader.TestLoader()
     if test_path.endswith('.py'):
-        suite =  loader.loadTestsFromName(file_path_to_module(test_path))
+        suite = loader.loadTestsFromName(file_path_to_module(test_path))
     else:
         suite = loader.discover(test_path, pattern=TEST_FILE_RE)
 

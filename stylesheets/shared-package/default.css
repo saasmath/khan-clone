@@ -741,6 +741,7 @@ footer {
         border-bottom-color: #ccc;
         top: 32px;
     }
+        #sitewide-navigation a.watch-link.selected:before {margin-top: 4px;}
         #sitewide-navigation a.practice-link.selected:before {left: 29px;}
         #sitewide-navigation a.coach-link.selected:before {left: 23px;}
         #sitewide-navigation a.contribute-link.selected:before {left: 40px;}
@@ -778,6 +779,7 @@ footer {
     border-bottom-color: #fff;
     top: 33px;
 }
+    #sitewide-navigation a.watch-link.selected:after {margin-top: 4px;}
     #sitewide-navigation a.practice-link.selected:after {left: 30px; border-bottom-color: #fafafa;}
     #sitewide-navigation a.coach-link.selected:after {left: 24px;}
     #sitewide-navigation a.contribute-link.selected:after {left: 41px;}
@@ -3787,6 +3789,22 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 
 }
 
+.demo-notification-bar { /* for demo notifications when logged in as demo user */
+    background: #6e9700 url(/images/candy-stripe.png) repeat-x; /*! data-uri(/images/candy-stripe.png) */
+    width:100%;
+    height:35px;
+    text-align:center;
+    vertical-align:middle;
+    border-bottom: 1px solid #76a005;
+    outline:solid 1px #557303;
+    color: #eee;
+    position:fixed;
+    z-index:200;
+    left:0px;
+    top:-35px;
+    font-size: 15px;
+}
+
 .notification-bar {
     background: #005987 url(/images/candy-stripe.png) repeat-x; /*! data-uri(/images/candy-stripe.png) */
     width:100%;
@@ -4151,9 +4169,9 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 .modal.generic-dialog {
   position: fixed;
   /* set the point on which top and left operate to the middle top edge*/
-  width: 450px;
-  margin: 0 0 0 -225px;
-  top: 90px;
+  width: 500px;
+  margin: 0 0 0 -250px;
+  top: 60px;
   left: 50%;
 }
 
@@ -4162,11 +4180,21 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 }
 
 .modal .generic-button {
+    display: inline-block;
     float: right;
-    margin-right: 10px;
-    margin-bottom: 10px;
-    width: 60px;
+    font-size: 90%;
+    font-weight: bold;
+    margin-left: 6px;
+    margin-right: 4px;
+    min-width: 40px;
+    padding: 3px 5px;
     text-align: center;
+    text-decoration: none;
+}
+
+.modal .generic-title {
+    color: #1054AA;
+    font-size: 21px;
 }
 
 /* For hover card tooltips */
@@ -4216,6 +4244,9 @@ div.clearFloat { overflow:hidden; height:1px; clear:both; }
 .hover-card-container {
     width: 400px;
     line-height: normal;
+}
+.hover-card-container.inaccessible {
+    width: 292px;
 }
 .hover-card-content-container {
     position: relative;

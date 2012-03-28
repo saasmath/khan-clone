@@ -104,6 +104,11 @@ class ViewClassProfile(request_handler.RequestHandler):
         if coach:
 
             user_override = self.request_user_data("coach_email")
+            if not user_override and coach.is_demo:
+                # Do not allow viewing class profile for the demo user directly, redirect via logout
+                self.redirect(util.create_logout_url(self.request.uri))
+                return
+
             if user_override and user_override.are_students_visible_to(coach):
                 # Only allow looking at a student list other than your own
                 # if you are a dev, admin, or coworker.
@@ -158,6 +163,7 @@ class ViewProfile(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     @user_util.open_access
     def get(self, email_or_username=None, subpath=None):
+
         """Render a student profile.
 
         Keyword arguments:
@@ -205,6 +211,11 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
+            if user_data.is_demo:
+                # Do not allow viewing profile for the demo user, redirect via logout
+                self.redirect(util.create_logout_url(self.request.uri))
+                return
+
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
