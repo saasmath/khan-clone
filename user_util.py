@@ -44,6 +44,7 @@ def open_access(method):
     def wrapper(self, *args, **kwargs):
         return method(self, *args, **kwargs)
 
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
     wrapper._access_control = 'open-access'   # for sanity checks
     return wrapper
 
@@ -66,6 +67,7 @@ def developer_only(method):
         else:
             return _go_to_login(self, "admin-only")
 
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
     wrapper._access_control = 'developer-only'   # checked in RequestHandler
     return wrapper
 
@@ -83,11 +85,17 @@ def moderator_only(method):
         if is_current_user_moderator():
             return method(self, *args, **kwargs)
         else:
-            return _go_to_login(self, "admin-only")
+            return _go_to_login(self, "moderator-only")
 
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
     wrapper._access_control = 'moderator-only'   # checked in RequestHandler
     return wrapper
 
+
+# TODO(csilvers): provide is_current_user_admin, which also checks
+# user_data, as per the comments in api/auth/decorators.py.  Then
+# change other is_* routines to also require user_data.  (Note: This
+# is a stronger restriction than the one in app.yaml.)
 
 def admin_only(method):
     '''Decorator checking that users of a request have an admin account.'''
@@ -99,6 +107,7 @@ def admin_only(method):
         else:
             return _go_to_login(self, "admin-only")
 
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
     wrapper._access_control = 'admin-only'   # checked in RequestHandler
     return wrapper
 
@@ -109,6 +118,7 @@ def manual_access_checking(method):
     def wrapper(self, *args, **kwargs):
         return method(self, *args, **kwargs)
 
+    assert "_access_control" not in wrapper.func_dict, "Mutiple auth decorators"
     wrapper._access_control = 'manual-access'   # checked in RequestHandler
     return wrapper
 

@@ -13,7 +13,6 @@ from google.appengine.api import memcache
 from custom_exceptions import TumblrException
 from app import App
 from about import util_about
-import request_handler
 import user_util
 
 TUMBLR_URL = "http://khanacademy.tumblr.com"
