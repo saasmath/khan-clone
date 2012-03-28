@@ -46,8 +46,8 @@ Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates, just
 
     var template = Templates.get("shared.skill-bar"),
         context = _.extend({
-                start: start || 0,
-                end: end || 0,
+                start: parseFloat(start) || 0,
+                end: parseFloat(end) || 0,
                 justEarnedProficiency: !!(justEarnedProficiency)
             }, 
             exerciseStates);
