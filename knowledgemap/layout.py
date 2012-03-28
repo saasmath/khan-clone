@@ -10,6 +10,7 @@ import object_property
 import models
 from badges.util_badges import all_badges_dict
 from badges.topic_exercise_badges import TopicExerciseBadge
+import logging
 
 NUM_SUGGESTED_TOPICS = 2
 
@@ -27,7 +28,7 @@ def topics_layout(user_data, user_exercise_graph):
     layout["polylines"] = []
 
     # Build each topic's completion/suggested status from constituent exercises
-    for topic_dict in layout["topics"]:
+    for topic_dict in list(layout["topics"]):
 
         # We currently use TopicExerciseBadge as the quickest cached list of constituent
         # exercise names in each topic. TODO: once this data is elsewhere, we don't need
@@ -35,7 +36,9 @@ def topics_layout(user_data, user_exercise_graph):
         badge_name = TopicExerciseBadge.name_for_topic_id(topic_dict["id"])
         badge = all_badges_dict().get(badge_name, None)
         if not badge:
-            raise Exception("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
+            logging.error("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
+            layout["topics"].remove(topic_dict)
+            continue
 
         proficient, suggested, total = (0, 0, 0)
 
