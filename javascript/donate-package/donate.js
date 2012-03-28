@@ -25,10 +25,21 @@ $('input[name=t3]:radio').click(function() {
 // Otherwise, the field may not be displayed properly.
 $('input:radio[name=t3]:checked').click();
 
+var submitPaypal = function() {
+    $('#paypal-form').submit();
+    console.log( "paypal bingo!" );
+};
+
 // When the user clicks the "Donate" button, get the proper values in
 // line to send to PayPal depending on what options are checked.
-$("#donation-submit").click(function() {
+$("#donation-submit").click(function(e) {
+    // Disable the form's default submit action because we do it
+    // as a callback from bingo.
+    e.preventDefault();
     var rbval = $('input:radio[name=t3]:checked').val();
+    var amount = $('#donate-amount').val();
+    var duration = "One-Time";
+
     if ( rbval == "O")
     {
         $('#paypal-cmd').val("_donations");
@@ -36,23 +47,24 @@ $("#donation-submit").click(function() {
     }
     else
     {
+        var period;
         $('#paypal-cmd').val("_xclick-subscriptions");
         $('#paypal-item-name').val("Recurring donation to Khan Academy");
-        $('#paypal-recurring-amount').val($('#donate-amount').val());
-        if ( rbval == "M") {
-            $('input[name=srt]').val($('#months-repeating').val())
-        } else {
-            $('input[name=srt]').val($('#years-repeating').val())
-        }
+        $('#paypal-recurring-amount').val(amount);
+        period = (rbval == "M" ? $('#months-repeating').val() : $('#years-repeating').val());
 
+        // Create a string for the duration to report to MixPanel.
+        duration = (period != "0" ? period : "ongoing") + " " + (rbval == "M" ? "months" : "years");
+        $('input[name=srt]').val(period);
     }
-    // Google analytics to track people's clicking the button
+    // mixpanel.com to track people's clicking the button
     // that takes them to PayPal to make a donation.
-    _gaq.push(['_trackEvent', 'Click', 'Donate-Link-Paypal']);
-
-    // Trigger result for donate button test -- did the user click
-    // the button to go to PayPal?
-    gae_bingo.bingo( "paypal" );
+    Analytics.trackSingleEvent("Donate-Link-Paypal",
+                                {"Amount": amount,
+                                 "Duration": duration});
+    // NOTE: When this bingo is turned off, we'll need to reactivate
+    // the form's submit action.
+    gae_bingo.bingo( "paypal", submitPaypal, submitPaypal);
 });
 
 // Initialize the accordion behavior.
