@@ -36,7 +36,7 @@ function KnowledgeMapInitGlobals() {
                                 });
                     },
                     tileSize: new google.maps.Size(256, 256),
-                    maxZoom: 10,
+                    maxZoom: 9,
                     minZoom: 6,
                     isPng: false
         },
