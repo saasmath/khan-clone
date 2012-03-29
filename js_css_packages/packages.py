@@ -339,10 +339,8 @@ stylesheets = {
             "bootstrap-modal.css",
             "bootstrap-dropdown.css",
             "goals.css",
-        ],
-        "less": [
             "skillbar.less",
-        ]
+        ],
     },
     "mobile": {
         "files": [
@@ -405,7 +403,7 @@ stylesheets = {
         ]
     },
     "exercises": {
-        "less": [
+        "files": [
             "stacks.less",
         ]
     },

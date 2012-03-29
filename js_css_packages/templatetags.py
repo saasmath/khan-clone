@@ -108,22 +108,22 @@ def css_package(package_name):
 
     list_css = []
     if not use_compressed_packages():
-        if "files" in package:
-            for filename in package["files"]:
+        for filename in package.get("files", []):
+            ext = os.path.splitext(filename)[1]
+            if ext == ".css":
                 list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
                     % (base_url, filename))
-        if "less" in package:
-            #TODO: Make LESS work in non-dev mode also
-            for filename in package["less"]:
+            elif ext == ".less":
                 list_css.append("<link rel='stylesheet/less' type='text/css' href='%s/%s' />" \
                     % (base_url, filename))
-    elif package_name+'-non-ie' not in packages_compressed.compressed_stylesheets:
+
+    elif package_name + '-non-ie' not in packages_compressed.compressed_stylesheets:
         list_css.append("<link rel='stylesheet' type='text/css' href='%s/%s'/>" \
             % (util.static_url(base_url), package["hashed-filename"]))
     else:
         # Thank you Jammit (https://github.com/documentcloud/jammit) for the
         # conditional comments.
-        non_ie_package = packages_compressed.compressed_stylesheets[package_name+'-non-ie']
+        non_ie_package = packages_compressed.compressed_stylesheets[package_name + '-non-ie']
 
         list_css.append("<!--[if (!IE)|(gte IE 8)]><!-->")
 

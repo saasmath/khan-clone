@@ -17,6 +17,11 @@ task :handlebars do
     system "python", "deploy/compile_handlebar_templates.py"
 end
 
+desc "Compile less stylesheets"
+task :less do
+    sh "python", "deploy/compile_less.py"
+end
+
 desc "Compile jinja templates"
 task :jinja do
     system "python", "deploy/compile_templates.py"
@@ -45,4 +50,9 @@ end
 desc "Run unit tests"
 task :unittest do
     sh "python tools/runtests.py"
+end
+
+desc "Run deploy script dryrun to build all packages"
+task :build do
+    sh "python", "deploy/deploy.py", "--dryrun", "--no-up", "--no-secrets", "--force"
 end
