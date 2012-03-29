@@ -1429,11 +1429,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     overflow: hidden;
     position: relative;
 }
-    .dark #container {
-        -webkit-box-shadow: 0 -2px 0 #1A222C;
-        -moz-box-shadow: 0 -2px 0 #1A222C;
-        box-shadow: 0 -2px 0 #1A222C;
-    }
     #container.dashboard {
         background: #fff;
         border-left: 1px solid #ddd;
@@ -1519,15 +1514,21 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
           border-left: 5px solid #C7E5f7;
         }
 
-    .pan-to {
+    .exercise-badge {
         position: relative;
-        float: right;
+    }
+        .exercise-badge .topic-exercise-image {
+            margin: -1px 5px 0 0;
+        }
+        .exercise-badge .skill-bar {
+            height: 6px;
+        }
+    .pan-to {
+        position: absolute;
         padding: 1px;
         line-height: 1px;
         z-index:20;
-    }
-    .pan-to:hover {
-        top: 1px;
+        top: -2px;
     }
 
     .exercise-goal-icon {
