@@ -6,6 +6,7 @@ from google.appengine.ext import db
 
 from app import App
 import app
+import user_util
 import util
 import util_discussion
 import request_handler
@@ -15,6 +16,7 @@ import voting
 
 class VideoFeedbackNotificationList(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         user_data = models.UserData.current()
@@ -63,6 +65,7 @@ class VideoFeedbackNotificationList(request_handler.RequestHandler):
 
 class VideoFeedbackNotificationFeed(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         user_data = self.request_user_data("email")

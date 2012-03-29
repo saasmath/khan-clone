@@ -37,7 +37,12 @@ task :css do
     system "python", "deploy/compress.py", "css"
 end
 
+desc "Run lint checks"
+task :lint do
+    sh "tools/runpep8.sh"
+end
+
 desc "Run unit tests"
 task :unittest do
-    system "python", "runtests.py"
+    sh "python tools/runtests.py"
 end

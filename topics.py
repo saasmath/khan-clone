@@ -326,6 +326,7 @@ def getSmartHistoryContent():
 
 class ImportSmartHistory(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         """update the default and edit versions of the topic tree with smarthistory (creates a new default version if there are changes)"""
         default = models.TopicVersion.get_default_version()

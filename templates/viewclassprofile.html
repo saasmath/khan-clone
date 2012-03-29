@@ -12,16 +12,16 @@
 
 {% block pagesubmenu %}
 <span class="breadcrumbs_nav">
-    <a href="/coach/resources" id="teacher-resources">Teacher Resources<span style="font-size:8px;color:orange;font-weight:bold"> NEW</span>
-    <a href="/students" id="manage-students">Manage Students</a>
-    <a href="/class_profile" id="class-stats" class="selected">Class Stats For</a>
+    <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/coach/resources" id="teacher-resources" {%if user_data.is_demo %}class="show-demo-dialog"{% endif %}>Teacher Resources<span style="font-size:8px;color:orange;font-weight:bold"> NEW</span></a>
+    <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/students" id="manage-students" {%if user_data.is_demo %}class="show-demo-dialog"{% endif %}>Manage Students</a>
+    <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/class_profile" id="class-stats" class="selected{%if user_data.is_demo %} show-demo-dialog{% endif %}">Class Stats For</a>
     <span id="studentlists_dropdown" style="display:none;">
         <a>{{ student_list.name|escape }}</a>
         <div id="studentlists_menu">
             <ol>
                 {% for list in student_lists %}
                 <li data-selected="{% if list.key == list_id %}selected{% endif %}" data-list_id={{ list.key }}>
-                    <a href="/class_profile?list_id={{ list.key }}">{{list.name|escape}}</a>
+                <a href="/class_profile?list_id={{ list.key }}">{{list.name|escape}}</a>
                 </li>
                 {% endfor %}
             </ol>

@@ -1,0 +1,20 @@
+<ul class="topic-browser-menu dropdown-menu vertical-shadow-strong none-active" data-role="listview" data-inset="true">
+  {{#each topics }}
+    {{#if children }}
+      <li class="level{{ level }} has-subtopics">
+        <a {{#if href }}href="{{ href }}"{{/if}} data-tag="TopicBrowserPulldown" class="menulink">{{ title }}
+        <div class="right-arrow"></div>
+        </a>
+        <ul class="vertical-shadow-strong">
+        {{#each children}}
+          <li class="level{{ level }} {{#if has_children }}has-children{{else}}no-children{{/if}} {{#if has_divider }}has-divider{{/if}}"><a {{#if href }}href="{{ href }}"{{/if}} data-tag="TopicBrowserPulldown" class="menulink">{{ title }}</a></li>
+        {{/each}}
+        </ul>
+      </li>
+    {{else}}
+      <li class="level{{ level }} {{#if has_children }}has-children{{else}}no-children{{/if}} {{#if has_divider }}has-divider{{/if}}"><a {{#if href }}href="{{ href }}"{{/if}} data-tag="TopicBrowserPulldown" class="menulink">{{ title }}</a></li>
+    {{/if}}
+  {{/each}}
+  <li class="no-children has-divider browse-all"><a href="/#browse" data-tag="TopicBrowserPulldownBrowse" class="menulink">Browse all content</a></li>
+</ul>
+

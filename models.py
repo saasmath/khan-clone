@@ -962,6 +962,12 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
+# Demo user khanacademy.demo2@gmail.com is a coworker of khanacademy.demo@gmail.com
+# khanacademy.demo@gmail.com is coach of a bunch of Khan staff and LASD staff, which is shared
+# with users as a demo. Access to the demo is via /api/auth/token_to_session with
+# oauth tokens for khanacademy.demo2@gmail.com supplied via secrets.py
+COACH_DEMO_COWORKER_EMAIL = "khanacademy.demo2@gmail.com"
+
 class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
@@ -1214,6 +1220,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     @property
     def is_phantom(self):
         return util.is_phantom_user(self.user_id)
+
+    @property
+    def is_demo(self):
+        return self.user_email.startswith(COACH_DEMO_COWORKER_EMAIL)
 
     @property
     def is_pre_phantom(self):
@@ -2290,7 +2300,7 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry"]
+    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", "brit-cruise"]
 
     @property
     def relative_url(self):

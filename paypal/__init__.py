@@ -7,6 +7,7 @@ from google.appengine.api import mail
 
 from app import App
 import request_handler
+import user_util
 
 #PAYPAL_IPN_URL = "https://www.sandbox.paypal.com/cgi-bin/webscr"
 PAYPAL_IPN_URL = "https://www.paypal.com/cgi-bin/webscr"
@@ -14,9 +15,11 @@ PAYPAL_IPN_URL = "https://www.paypal.com/cgi-bin/webscr"
 FROM_EMAIL = "no-reply@khan-academy.appspotmail.com"
 
 class AutoReturn(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.post()
 
+    @user_util.open_access
     def post(self):
         # For now just show the acknowledge page on the callback from paypal
         # This should be updated to add donations to the datastore and later award badges to donors
@@ -25,9 +28,11 @@ class AutoReturn(request_handler.RequestHandler):
 # See http://blog.awarelabs.com/2008/paypal-ipn-python-code/ for inspiration
 class IPN(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         self.post()
 
+    @user_util.open_access
     def post(self):
 
         if self.request_string("payment_status") != "Completed":

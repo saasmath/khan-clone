@@ -120,6 +120,12 @@
 <!--[if !IE]><!--> <body> <!--<![endif]-->
     <div id="outer-wrapper">
     {{ phantom_users.login_notifications(user_data, continue) }}
+    {% if user_data.is_demo %}
+        <div class="demo-notification-bar" style="display:none;">
+            <span class="notification-bar-content">You are logged in to the Khan Academy Demo account, access is limited! You should <a href="/logout?continue={{ continue }}" class="simple-button action-gradient orange">Remember to logout</a></span>
+            <script>$(function(){ DemoNotifications.show(); });</script>
+        </div>
+    {% endif %}
     <div id="page-container">
     <div id="page-container-inner">
         {# Facebook connect root #}
@@ -144,13 +150,15 @@
                             {% endif %}
                             <span class="separator"></span>
                             <span>
-                                <a href={{ donate_redirect_url or "/donate" }}
-                                    {% if donate_button_test == "button" %}
-                                        class="call-to-action simple-button action-gradient green donate-button"
-                                    {% elif selected_nav_link == "donate" %}
-                                        class="selected"
-                                    {% endif %}>
-                                    Donate
+                                <a href='{% if user_data.is_demo %}/logout?continue={% endif %}{{ donate_redirect_url or "/donate" }}'
+                                {% if donate_button_test == "button" %}
+                                    class="call-to-action simple-button action-gradient green donate-button{%if user_data.is_demo %} show-demo-dialog{% endif %}"
+                                {% elif selected_nav_link == "donate" %}
+                                    class="selected{%if user_data.is_demo %} show-demo-dialog{% endif %}"
+                                {% else %}
+                                    {%if user_data.is_demo %}class="show-demo-dialog"{% endif %}
+                                {% endif %}>
+                                Donate
                                 </a>
                             </span>
                         </span>
@@ -158,18 +166,25 @@
                         <div id="nav-and-search">
                             <div id="sitewide-navigation">
                                 <nav>
-                                  <span class="links">
-                                      <a href="/#browse" data-tag="Header" {% if selected_nav_link == "watch" %}class="selected watch-link"{% else %}class="watch-link"{% endif %}>Watch</a>
-                                    <a href="/exercisedashboard" data-tag="Header" {% if selected_nav_link == "practice" %}class="selected practice-link"{% endif %}>Practice</a>
-                                    <a href="/class_profile" data-tag="Header" {% if selected_nav_link == "coach" %}class="selected coach-link"{% endif %}>Coach</a>
-                                    <a href="/contribute" data-tag="Header" {% if selected_nav_link == "contribute" %}class="selected contribute-link"{% endif %}>Volunteer</a>
-                                    <a href="/about" data-tag="Header" {% if selected_nav_link == "about" %}class="selected about-link"{% endif %}>About</a>
+                                  <span class="links nav-subheader">
+                                    <span class="dropdown topic-browser-dropdown">
+                                      {% if watch_topic_browser_enabled %}
+                                      <a data-tag="Header" class="watch-link dropdown-toggle{%if user_data.is_demo %} show-demo-dialog{% endif %}">Watch <b class="caret"></b></a>
+                                      {% else %}
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/#browse" data-tag="Header" class="{% if selected_nav_link == 'watch' %}selected{% endif %} watch-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Watch</a>
+                                      {% endif %}
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/exercisedashboard" data-tag="Header" class="{% if selected_nav_link == 'practice' %}selected{% endif %} practice-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Practice</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/class_profile" data-tag="Header" class="{% if selected_nav_link == 'coach' %}selected{% endif %} coach-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Coach</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/contribute" data-tag="Header" class="{% if selected_nav_link == 'contribute' %}selected{% endif %} contribute-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">Volunteer</a>
+                                      <a href="{% if user_data.is_demo %}/logout?continue={% endif %}/about" data-tag="Header" class="{% if selected_nav_link == 'about' %}selected{% endif %} about-link{%if user_data.is_demo %} show-demo-dialog{% endif %}">About</a>
+                                      <div style="clear: both"></div>
                                     </span>
+                                  </span>
                                 </nav>
                             </div>
                             <div id="search-box">
-                                <form id="page_search" action="/search">
-                                    <input id="search-input" type="text" placeholder="Search for a video or topic" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " id="search-submit" />
+                                <form class="page-search" action="/search">
+                                    <input id="search-input" type="text" placeholder="Search for a video or topic" name="page_search_query" value='{{page_search_query|escape}}' class="ui-corner-all placeholder simple-input search-input blur-on-esc" /><input type="submit" value=" " class="search-submit" />
                                 </form>
                             </div>
                             <div class="clear"></div>
@@ -258,5 +273,31 @@
     </script>
     {%- endif -%}
 
+    {% if watch_topic_browser_enabled %}
+    <script type="text/javascript">
+    HeaderTopicBrowser.init();
+    HeaderTopicBrowser.setData({{ templatetags.topic_browser_data() }});
+    </script>
+    {% endif %}
+
+    {% if user_data.is_demo %}
+    <script>
+        $(".show-demo-dialog").click(function(e) {
+            e.preventDefault()
+            var target = e.target.href
+            if (e.target.href == undefined || e.target.href == "") {
+                target = "/logout?continue=/"
+            }
+            popupGenericMessageBox({
+                title: "Leaving Demo",
+                message: "The Demo allows you to view coach and student reports for a demo account. Navigating out of the demo area, will log you out of the demo account. Do you want to leave the demo?",
+                buttons: [
+                    { title: "No, stay within the demo", action: hideGenericMessageBox, button_color: "gray" },
+                    { title: "Yes, log me out of demo account", action: function() { hideGenericMessageBox; window.location = target }, button_color: "green" }
+                ]
+            })
+        })
+    </script>
+    {% endif %}
     </body>
 </html>

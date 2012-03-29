@@ -31,6 +31,17 @@ api_app.secret_key = App.flask_secret_key
 
 def route(rule, **options):
     def api_route_wrap(func):
+        # Verify that a previous decorator for this function set an
+        # authorization policy (we don't want to expose any API on a
+        # url without an explicit auth policy for it!)  For this to
+        # work, we need that @developer_required/etc be *right after*
+        # the last @route decorator for a given function.
+        assert '_access_control' in func.func_dict, \
+               ('FATAL ERROR: '
+                'Need to put an access control decorator '
+                '(from api.auth.decorators) on %s.%s. '
+                '(It must be the first decorator after all the @route decorators.)'
+                % (func.__module__, func.__name__))
 
         func = format_api_errors(func)
         func = allow_cross_origin(func)
@@ -42,6 +53,7 @@ def route(rule, **options):
 
         # Fix endpoint names for decorated functions by using the rule for names
         api_app.add_url_rule(rule, rule_desc, func, **options)
+
         return func
 
     return api_route_wrap

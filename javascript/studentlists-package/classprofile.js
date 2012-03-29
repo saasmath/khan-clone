@@ -11,28 +11,6 @@ var ClassProfile = {
     fLoadedGraph: false,
 
     init: function() {
-        $(".share-link").hide();
-        $(".sharepop").hide();
-
-        $(".achievement,.exercise,.video").hover(
-            function () {
-                $(this).find(".share-link").show();
-                },
-            function () {
-                $(this).find(".share-link").hide();
-                $(this).find(".sharepop").hide();
-              });
-
-        $(".share-link").click(function() {
-            if ( $.browser.msie && (parseInt($.browser.version, 10) < 8) ) {
-                $(this).next(".sharepop").toggle();
-            } else {
-                $(this).next(".sharepop").toggle(
-                        "drop", { direction:"up" }, "fast" );
-            }
-            return false;
-        });
-
         // Init Highcharts global options.
         Highcharts.setOptions({
             credits: {
@@ -89,42 +67,6 @@ var ClassProfile = {
                 }
             }
         );
-
-        $("#individual_report #achievements #achievement-list > ul").delegate("li", "click", function(e) {
-            var category = $(this).attr("id");
-            var clickedBadge = $(this);
-
-            $("#badge-container").css("display", "");
-            clickedBadge.siblings().removeClass("selected");
-
-            if ($("#badge-container > #" + category ).is(":visible")) {
-               if (clickedBadge.parents().hasClass("standard-view")) {
-                   $("#badge-container > #" + category ).slideUp(300, function(){
-                           $("#badge-container").css("display", "none");
-                           clickedBadge.removeClass("selected");
-                       });
-               }
-               else {
-                   $("#badge-container > #" + category ).hide();
-                   $("#badge-container").css("display", "none");
-                   clickedBadge.removeClass("selected");
-               }
-            }
-            else {
-               var jelContainer = $("#badge-container");
-               var oldHeight = jelContainer.height();
-               $(jelContainer).children().hide();
-               if (clickedBadge.parents().hasClass("standard-view")) {
-                   $(jelContainer).css("min-height", oldHeight);
-                   $("#" + category, jelContainer).slideDown(300, function() {
-                       $(jelContainer).animate({"min-height": 0}, 200);
-                   });
-               } else {
-                   $("#" + category, jelContainer).show();
-               }
-               clickedBadge.addClass("selected");
-            }
-        });
 
         // remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
