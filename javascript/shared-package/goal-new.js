@@ -309,8 +309,6 @@ var GoalCreator = {
                 if (exercise.name == nodeRowView.model.get("name"))
                     nodeRowView.showGoalIcon(found);
             });
-
-            self.knowledgeMap.nodeMarkerViews[exercise.name].showGoalIcon(found);
         });
     },
 

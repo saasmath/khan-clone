@@ -651,7 +651,6 @@ function KnowledgeMap(params) {
                 node.latLng,
                 [   "<a data-id='" + node.name + "' class='" + node.className + "'>" +
                     "<img class='node-icon' src='" + node.iconUrl + "'/>" +
-                    "<img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/>" +
                     "<div class='node-text'>" + node.display_name + "</div></a>"],
                 "",
                 1,

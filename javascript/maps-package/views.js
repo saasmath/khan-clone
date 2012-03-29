@@ -116,29 +116,12 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
     initialize: function() {
         this.nodeName = this.model.get("name");
         this.filtered = false;
-        this.goalIconVisible = false;
         this.parent = this.options.parent;
 
         this.updateElement(this.el);
     },
 
-    updateElement: function(el) {
-
-        this.el = el;
-        this.zoom = this.parent.map.getZoom();
-
-        if (!this.model.isVisibleAtZoom(this.zoom)) {
-
-            // Don't render nodes outside of their zoom bounds
-            this.el.css("display", "none");
-            return;
-
-        } else {
-
-            this.el.css("display", "");
-
-        }
-
+    attachEvents: function() {
         var self = this;
 
         this.el.click(
@@ -147,16 +130,30 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
                 function() {return self.onNodeMouseover();},
                 function() {return self.onNodeMouseout();}
             );
+    },
 
+    setHref: function() {
         if (this.parent.admin)
             this.el.attr("href", this.model.adminUrl());
         else
             this.el.attr("href", this.model.url());
+    },
 
-        if (this.goalIconVisible)
-            this.el.find(".exercise-goal-icon").show();
-        else
-            this.el.find(".exercise-goal-icon").hide();
+    updateElement: function(el) {
+
+        this.el = el;
+        this.zoom = this.parent.map.getZoom();
+
+        if (!this.model.isVisibleAtZoom(this.zoom)) {
+            // Don't render nodes outside of their zoom bounds
+            this.el.css("display", "none");
+        } else {
+            this.el.css("display", "");
+        }
+
+        this.attachEvents();
+        this.setHref();
+
     },
 
     setFiltered: function(filtered, bounds) {
@@ -208,16 +205,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             img.attr('src', url.replace(".png", "-faded.png"));
         } else {
             img.attr('src', url);
-        }
-    },
-
-    showGoalIcon: function(visible) {
-        if (visible != this.goalIconVisible) {
-            this.goalIconVisible = visible;
-            if (this.goalIconVisible)
-                this.el.find(".exercise-goal-icon").show();
-            else
-                this.el.find(".exercise-goal-icon").hide();
         }
     },
 

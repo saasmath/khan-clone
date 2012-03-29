@@ -130,7 +130,7 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
 
     isClickableAtZoom: function(zoom) {
         // Exercises aren't clickable at zoom level 7
-        return zoom != 7;
+        return zoom !== 7;
     }
 
 });
