@@ -93,7 +93,7 @@ def add_next_topic(topics, next_topic=None):
         )
 def library_content_html(ajax=False, version_number=None):
     """" Returns the HTML for the structure of the topics as they will be
-    populated ont he homepage. Does not actually contain the list of video
+    populated on the homepage. Does not actually contain the list of video
     names as those are filled in later asynchronously via the cache.
     """
     if version_number:
