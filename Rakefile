@@ -17,6 +17,11 @@ task :handlebars do
     system "python", "deploy/compile_handlebar_templates.py"
 end
 
+desc "Compile less stylesheets"
+task :less do
+    sh "python", "deploy/compile_less.py"
+end
+
 desc "Compile jinja templates"
 task :jinja do
     system "python", "deploy/compile_templates.py"
