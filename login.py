@@ -595,7 +595,7 @@ class CompleteSignup(request_handler.RequestHandler):
             unverified_user.delete()
 
         # TODO(benkomalo): give some kind of "congrats"/"welcome" notification
-        Login.return_login_json(self, user_data)
+        Login.return_login_json(self, user_data, cont=user_data.profile_root)
 
 class PasswordChange(request_handler.RequestHandler):
     def get(self):
