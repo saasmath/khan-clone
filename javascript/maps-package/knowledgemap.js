@@ -520,8 +520,6 @@ function KnowledgeMap(params) {
                 self.onZoomChange();
             }
 
-            var zoom = self.map.getZoom();
-
             $(self.containerID)
                 .find(".dashboard-map")
                     .attr("class", self.getMapClass())
@@ -535,15 +533,14 @@ function KnowledgeMap(params) {
 
                         if (view) {
 
-                            view.updateElement(jel, zoom);
+                            view.updateElement(jel);
 
                         } else {
 
                             view = new KnowledgeMapViews.NodeMarker({
                                 model: self.modelsByName[exerciseName],
                                 el: $(this),
-                                parent: self,
-                                zoom: zoom
+                                parent: self
                             });
                             self.nodeMarkerViews[exerciseName] = view;
 

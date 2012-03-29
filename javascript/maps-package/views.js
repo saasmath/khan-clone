@@ -112,7 +112,7 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         this.filtered = false;
         this.parent = this.options.parent;
 
-        this.updateElement(this.el, options.zoom);
+        this.updateElement(this.el);
     },
 
     attachEvents: function() {
@@ -126,17 +126,9 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             );
     },
 
-    updateElement: function(el, zoom) {
+    updateElement: function(el) {
 
         this.el = el;
-        this.zoom = zoom;
-
-        if (!this.model.isVisibleAtZoom(this.zoom)) {
-            // Don't render nodes outside of their zoom bounds
-            this.el.css("display", "none");
-            return;
-        }
-
         this.attachEvents();
 
     },

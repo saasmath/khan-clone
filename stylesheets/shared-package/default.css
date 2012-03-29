@@ -3457,6 +3457,16 @@ a.nodeLabel:hover {
     margin-left: 18px;
 }
 
+.zoom6 .nodeLabel.exercise {
+    display: none;
+}
+
+.zoom8 .nodeLabel.topic,
+.zoom9 .nodeLabel.topic,
+.zoom10 .nodeLabel.topic {
+    display: none;
+}
+
 .nodeLabel.topic .node-icon {
     -moz-border-radius: 40px;
     -webkit-border-radius: 40px;
