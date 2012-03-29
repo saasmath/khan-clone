@@ -129,11 +129,6 @@ class ViewHomePage(request_handler.RequestHandler):
     # for info on how to update the New & Noteworthy videos
     @ensure_xsrf_cookie
     def get(self):
-
-        # If accessing via demo account, logout and redirect
-        if models.UserData.current() and models.UserData.current().is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-
         version_number = None
 
         if models.UserData.current() and models.UserData.current().developer:
