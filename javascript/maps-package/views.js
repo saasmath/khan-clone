@@ -162,8 +162,8 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
     },
 
     getLabelClass: function() {
-        var classText = "nodeLabel nodeLabel" + this.model.get("status");
-
+        var classText = this.model.get("customClass") + " nodeLabel";
+        
         classText += (" nodeLabelZoom" + this.zoom);
         classText += (this.filtered ? " nodeLabelFiltered" : "");
         classText += (this.model.get("invalidForGoal") ? " goalNodeInvalid" : "");

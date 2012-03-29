@@ -37,7 +37,7 @@ function KnowledgeMapInitGlobals() {
                     },
                     tileSize: new google.maps.Size(256, 256),
                     maxZoom: 10,
-                    minZoom: 7,
+                    minZoom: 6,
                     isPng: false
         },
 
@@ -460,8 +460,8 @@ function KnowledgeMap(params) {
         var node = this.dictNodes[dataID];
 
         // Set appropriate zoom level if necessary
-        if (this.map.getZoom() != node.minZoom)
-            this.map.setZoom(node.minZoom);
+        if (this.map.getZoom() != node.minZoom + 1)
+            this.map.setZoom(node.minZoom + 1);
 
         // Move the node to the center of the view
         this.map.panTo(node.latLng);
@@ -643,10 +643,10 @@ function KnowledgeMap(params) {
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name,
                 node.latLng,
-                [   "<a data-id='" + node.name + "' class='nodeLabel'>" +
+                [   "<a data-id='" + node.name + "' class='" + node.customClass + " nodeLabel'>" +
                     "<img class='node-icon' src='" + node.iconUrl + "'/>" +
                     "<img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/>" +
-                    "<div>" + node.display_name + "</div></a>"],
+                    "<div class='node-text'>" + node.display_name + "</div></a>"],
                 "",
                 1,
                 0, 0);

@@ -19,7 +19,7 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
      * map.getZoom() functionality. This node will be invisible unless the
      * current map's zoom is within minZoom/maxZoom.
      */
-    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, minZoom, maxZoom) {
+    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, minZoom, maxZoom, customClass) {
 
         this.set({
             name: name,
@@ -31,7 +31,8 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             iconUrl: iconUrl,
             isSuggested: isSuggested,
             minZoom: minZoom,
-            maxZoom: maxZoom
+            maxZoom: maxZoom,
+            customClass: customClass || ""
         });
 
     },
@@ -60,7 +61,8 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
             this.get("icon_url"),
             this.get("suggested"),
             KnowledgeMapGlobals.options.minZoom,
-            KnowledgeMapGlobals.options.minZoom
+            KnowledgeMapGlobals.options.minZoom + 1,
+            "topic"
         );
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);
@@ -95,7 +97,8 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
             this.get("states")["suggested"] && !this.get("states")["reviewing"],
             KnowledgeMapGlobals.options.minZoom + 1,
-            KnowledgeMapGlobals.options.maxZoom
+            KnowledgeMapGlobals.options.maxZoom,
+            "exercise"
         );
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);
