@@ -1360,241 +1360,199 @@
     "topics": [
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "absolute-value", 
-            "standalone_title": "Absolute value", 
-            "x": -0.82999999999999996, 
-            "y": 10.470000000000001
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/addition-and-subtraction-40x40.png", 
             "id": "addition-subtraction", 
             "standalone_title": "Addition and subtraction", 
-            "x": 1.8700000000000001, 
-            "y": 1.73
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/basic-exponents-40x40.png", 
-            "id": "basic-exponents", 
-            "standalone_title": "Basic exponents", 
-            "x": 3.1499999999999999, 
-            "y": 9.5
+            "x": 4.0, 
+            "y": 3.0
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "basic-ratios-proportions", 
-            "standalone_title": "Basic ratios and proportions", 
-            "x": -5.25, 
-            "y": 13.25
+            "id": "multiplication-division", 
+            "standalone_title": "Multiplication and division", 
+            "x": -5, 
+            "y": 6
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "calculus", 
-            "standalone_title": "Calculus", 
-            "x": -4.0999999999999996, 
-            "y": 27.399999999999999
+            "id": "telling-time", 
+            "standalone_title": "Telling time", 
+            "x": 8, 
+            "y": 2
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "algebra-i", 
-            "standalone_title": "California Standards Test: Algebra I", 
-            "x": -0.69999999999999996, 
-            "y": 20.829999999999998
+            "id": "absolute-value", 
+            "standalone_title": "Absolute value", 
+            "x": -1, 
+            "y": 7
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "california-standards-test-algebra-2", 
-            "standalone_title": "California Standards Test: Algebra II", 
-            "x": 5.0, 
-            "y": 21.100000000000001
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "complex-numbers", 
-            "standalone_title": "Complex numbers", 
-            "x": -8.4000000000000004, 
-            "y": 18.800000000000001
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "conic-sections", 
-            "standalone_title": "Conic sections", 
-            "x": 9.1699999999999999, 
-            "y": 23.670000000000002
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/decimals-40x40.png", 
             "id": "decimals", 
             "standalone_title": "Decimals", 
-            "x": -2.77, 
-            "y": 9.2200000000000006
+            "x": 4, 
+            "y": 11
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "factors-multiples", 
+            "standalone_title": "Factors and multiples", 
+            "x": -10, 
+            "y": 12
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "order-of-operations", 
+            "standalone_title": "Order of operations", 
+            "x": -4, 
+            "y": 14
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "fractions", 
+            "standalone_title": "Fractions", 
+            "x": -8, 
+            "y": 22
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "rates-and-ratios", 
+            "standalone_title": "Rates and ratios", 
+            "x": -10, 
+            "y": 29
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "percents", 
+            "standalone_title": "Percents", 
+            "x": -5, 
+            "y": 27
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "exponents-radicals", 
-            "standalone_title": "Exponents and Radicals", 
-            "x": 5.5300000000000002, 
-            "y": 11.199999999999999
+            "standalone_title": "Exponents and radicals", 
+            "x": 4, 
+            "y": 21
         }, 
         {
-            "icon_url": "/images/power-mode/badges/factors-and-multiples-40x40.png", 
-            "id": "factors-multiples", 
-            "standalone_title": "Factors and multiples", 
-            "x": 6.4299999999999997, 
-            "y": 8.5700000000000003
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "pythagorean-theorem", 
+            "standalone_title": "Pythagorean theorem", 
+            "x": -12, 
+            "y": 38
         }, 
         {
-            "icon_url": "/images/power-mode/badges/fractions-40x40.png", 
-            "id": "fractions", 
-            "standalone_title": "Fractions", 
-            "x": -4.5300000000000002, 
-            "y": 11.199999999999999
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "solving-linear-equations-and-inequalities", 
+            "standalone_title": "Solving linear equations and inequalities", 
+            "x": 6, 
+            "y": 28
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "equation-of-a-line", 
+            "standalone_title": "Equation of a line", 
+            "x": 6, 
+            "y": 34
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "algebra-functions", 
             "standalone_title": "Functions", 
-            "x": 3.6699999999999999, 
-            "y": 14.800000000000001
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "core-geometry", 
-            "standalone_title": "Geometry", 
-            "x": 10.630000000000001, 
-            "y": 15.050000000000001
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "linear-algebra", 
-            "standalone_title": "Linear Algebra", 
-            "x": 7.2000000000000002, 
-            "y": 17.25
+            "x": 0, 
+            "y": 36
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "linear-equations-and-inequalitie", 
-            "standalone_title": "Linear equations and inequalities", 
-            "x": 5.0, 
-            "y": 17.25
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "logarithms", 
-            "standalone_title": "Logarithms", 
-            "x": 3.0, 
-            "y": 12.5
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/multiplication-and-division-40x40.png", 
-            "id": "multiplication-division", 
-            "standalone_title": "Multiplication and division", 
-            "x": 5.1699999999999999, 
-            "y": 4.4800000000000004
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/negative-numbers-40x40.png", 
-            "id": "negative-numbers", 
-            "standalone_title": "Negative numbers", 
-            "x": 1.0, 
-            "y": 5.5700000000000003
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "number-properties", 
-            "standalone_title": "Number properties", 
-            "x": -2.6000000000000001, 
-            "y": 4.4000000000000004
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/order-of-operations-40x40.png", 
-            "id": "order-of-operations", 
-            "standalone_title": "Order of operations", 
-            "x": 1.0, 
-            "y": 8.0
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/percents-40x40.png", 
-            "id": "percents", 
-            "standalone_title": "Percents", 
-            "x": -5.1299999999999999, 
-            "y": 15.880000000000001
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "polynomials", 
-            "standalone_title": "Polynomials", 
-            "x": -4.6699999999999999, 
-            "y": 17.670000000000002
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "precalculus", 
-            "standalone_title": "Precalculus", 
-            "x": -0.82999999999999996, 
-            "y": 24.030000000000001
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "probability", 
-            "standalone_title": "Probability", 
-            "x": 11.0, 
-            "y": 12.5
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "quadtratics", 
-            "standalone_title": "Quadratics", 
-            "x": -7.0, 
-            "y": 21.0
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/ratios-and-proportions-40x40.png", 
-            "id": "ratios-proportions", 
-            "standalone_title": "Ratios and proportions", 
-            "x": -7.5, 
-            "y": 15.83
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/solving-linear-equations-40x40.png", 
-            "id": "solving-linear-equations", 
-            "standalone_title": "Solving linear equations", 
-            "x": -1.7, 
-            "y": 14.5
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "solving-linear-inequalities", 
-            "standalone_title": "Solving linear inequalities", 
-            "x": 0.29999999999999999, 
-            "y": 15.75
-        }, 
-        {
-            "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "statistics", 
-            "standalone_title": "Statistics", 
-            "x": 14.08, 
-            "y": 10.83
+            "standalone_title": "Graphing linear equations and inequalities", 
+            "x": 5, 
+            "y": 40
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "systems-of-eq-and-ineq", 
             "standalone_title": "Systems of equations and inequalities", 
-            "x": 3.29, 
-            "y": 25.710000000000001
+            "x": 5, 
+            "y": 44
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "vectors", 
+            "standalone_title": "Vectors", 
+            "x": 14, 
+            "y": 30
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "complex-numbers", 
+            "standalone_title": "Complex numbers", 
+            "x": -9, 
+            "y": 44
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "polynomials-and-quadratics", 
+            "standalone_title": "Polynomials and quadratics", 
+            "x": -6, 
+            "y": 42
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "conic-sections", 
+            "standalone_title": "Conic sections", 
+            "x": -2, 
+            "y": 43
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "basic-geometry", 
+            "standalone_title": "Basic geometry", 
+            "x": -29, 
+            "y": 31
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "angles", 
+            "standalone_title": "Angles", 
+            "x": -21, 
+            "y": 27
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "triangles", 
+            "standalone_title": "Triangles", 
+            "x": -22, 
+            "y": 35
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
             "id": "trigonometry", 
             "standalone_title": "Trigonometry", 
-            "x": 8.0, 
-            "y": 13.83
+            "x": -21, 
+            "y": 43
         }, 
         {
             "icon_url": "/images/power-mode/badges/default-40x40.png", 
-            "id": "ck12-algebra-1", 
-            "standalone_title": "ck12.org Algebra 1 Examples", 
-            "x": 2.2400000000000002, 
-            "y": 18.579999999999998
+            "id": "calculus", 
+            "standalone_title": "Calculus", 
+            "x": -21, 
+            "y": 52
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "probability", 
+            "standalone_title": "Probability", 
+            "x": -18, 
+            "y": 19
+        }, 
+        {
+            "icon_url": "/images/power-mode/badges/default-40x40.png", 
+            "id": "statistics", 
+            "standalone_title": "Statistics", 
+            "x": -23, 
+            "y": 17
         }
     ]
 }
