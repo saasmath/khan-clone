@@ -57,7 +57,7 @@ def topics_layout(user_data, user_exercise_graph):
         topic_dict["count_proficient"] = proficient
         topic_dict["total"] = total
 
-        if proficient >= suggested:
+        if proficient >= total:
             topic_dict["status"] = "proficient"
 
     # Pick the two "most suggested" topics and highlight them as suggested.

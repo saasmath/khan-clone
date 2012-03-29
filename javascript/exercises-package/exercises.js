@@ -129,6 +129,11 @@ var Exercises = {
      */
     sessionId: function() {
 
+        if (this.userData.isPrePhantom) {
+            // Don't cache results for pre phantom users
+            return null;
+        }
+
         if (this.readOnly) {
             // Read only mode stores and uses no cached session state
             return null;

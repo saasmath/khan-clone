@@ -128,7 +128,7 @@ def topic_browser_tree(tree, level=0):
     class_name = "topline"
     for child in tree.children:
 
-        if not child.has_children_of_type(["Topic", "Video"]):
+        if not child.has_children_of_type(["Topic", "Video", "Url"]):
             continue
 
         if not child.children or child.id in models.Topic._super_topic_ids:
@@ -168,7 +168,7 @@ def topic_browser_get_topics(tree, level=0):
 
     for child in tree.children:
 
-        if not child.has_children_of_type(["Topic", "Video"]):
+        if not child.has_children_of_type(["Topic", "Video", "Url"]):
             continue
 
         if not child.children or child.id in models.Topic._super_topic_ids:
