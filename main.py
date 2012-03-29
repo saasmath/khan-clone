@@ -691,9 +691,7 @@ application = webapp2.WSGIApplication([
     ('/profile/(.+?)/(.*)', util_profile.ViewProfile),
     ('/profile/(.*)', util_profile.ViewProfile),
     ('/profile', util_profile.ViewProfile),
-
     ('/class_profile', util_profile.ViewClassProfile),
-    ('/class_profile/(.*)', util_profile.ViewClassProfile),
 
     ('/login', login.Login),
     ('/login/mobileoauth', login.MobileOAuthLogin),

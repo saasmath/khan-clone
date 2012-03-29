@@ -23,16 +23,49 @@ var ClassProfile = {
             }
         });
 
-        $("#nav-accordion").on("click", ".graph-link", function(evt) {
-            if (!evt.metaKey) {
-                evt.preventDefault();
+        if ($.address){
 
-                var route = $(evt.currentTarget).attr("href");
-                route = route.substring("/class_profile".length);
-
-                ClassProfile.router.navigate(route, true);
+            // this is hackish, but it prevents the change event from being fired twice on load
+            if ( $.address.value() === "/" ){
+                window.location = window.location + "#" + $(".graph-link:eq(0)").attr("href");
             }
-        });
+
+            $.address.change(function( evt ){
+
+                if ( $.address.path() !== "/"){
+                    ClassProfile.historyChange( evt );
+                }
+
+            });
+
+        }
+
+        $(".graph-link").click(
+            function(evt){
+                evt.preventDefault();
+                if($.address){
+                    // only visit the resource described by the url, leave the params unchanged
+                    var href = $( this ).attr( "href" )
+                    var path = href.split("?")[0];
+
+                    // visiting a different resource
+                    if ( path !== $.address.path() ){
+                        $.address.path( path );
+                    }
+
+                    // applying filters for same resource via querystring
+                    else{
+                        // make a dict of current qs params and merge with the link's
+                        var currentParams = {};
+                        _.map( $.address.parameterNames(), function(e){ currentParams[e] = $.address.parameter( e ); } );
+                        var linkParams = ClassProfile.parseQueryString( href );
+                        $.extend( currentParams, linkParams );
+
+                        $.address.queryString( ClassProfile.reconstructQueryString( currentParams ) );
+                    }
+                }
+            }
+        );
 
         // remove goals from IE<=8
         $(".lte8 .goals-accordion-content").remove();
@@ -44,6 +77,17 @@ var ClassProfile = {
                 autoHeight: false,
                 clearStyle: true
             });
+
+        setTimeout(function(){
+            if (!ClassProfile.fLoadingGraph && !ClassProfile.fLoadedGraph)
+            {
+                // If 1000 millis after document.ready fires we still haven't
+                // started loading a graph, load manually.
+                // The externalChange trigger may have fired before we hooked
+                // up a listener.
+                ClassProfile.historyChange();
+            }
+        }, 1000);
 
         ClassProfile.ProgressSummaryView = new ProgressSummaryView();
 
@@ -80,43 +124,7 @@ var ClassProfile = {
             var student_list = ClassProfile.getStudentListFromId(list_id);
             $dropdown.data('selected', student_list);
         }
-
-        ClassProfile.router = new ClassProfile.TabRouter();
-        Backbone.history.start({
-            pushState: true,
-            root: "/class_profile"
-        });
     },
-
-    TabRouter: Backbone.Router.extend({
-        routes: {
-            "": "showGraph",
-            "/:graph": "showGraph"
-        },
-
-        hrefLookup_: {
-            "progress-report": "/api/v1/user/students/progressreport",
-            "progress-summary": "/api/v1/user/students/progress/summary",
-            "daily-activity": "/profile/graph/classtime",
-            "exercise-progress-over-time": "/profile/graph/classexercisesovertime",
-            "points-per-minute": "/profile/graph/classenergypointsperminute",
-            "goals": "/api/v1/user/students/goals"
-        },
-
-        showGraph: function(graph) {
-            var graph = graph || "progress-report",
-                href = this.hrefLookup_[graph],
-                accordionSelector = ".graph-link-header[href$='" + graph + "']";
-
-            if (!href) {
-                return;
-            }
-
-            $("#stats-nav #nav-accordion").accordion("activate", accordionSelector);
-            ClassProfile.loadGraph(href, true);
-            ClassProfile.loadFilters(href);
-        }
-    }),
 
     collapseAccordion: function() {
         // Turn on collapsing, collapse everything, and turn off collapsing
@@ -206,7 +214,7 @@ var ClassProfile = {
         this.loadGraph(url);
     },
 
-    loadFilters: function(href){
+    loadFilters : function( href ){
         // fix the hrefs for each filter
         var a = $("#stats-filters a[href^=\"" + href + "\"]").parent();
         $("#stats-filters .filter:visible").not(a).slideUp("slow");
@@ -256,6 +264,13 @@ var ClassProfile = {
 
         this.fLoadingGraph = false;
 
+        if (!fNoHistoryEntry) {
+            // Add history entry for browser
+            //             if ($.address) {
+            //                 $.address(href);
+            // }
+        }
+
         this.showGraphThrobber(false);
         this.styleSublinkFromHref(href);
 
@@ -273,6 +288,25 @@ var ClassProfile = {
         this.fLoadingGraph = false;
         this.showGraphThrobber(false);
         $("#graph-content").html("<div class='graph-notification'>It's our fault. We ran into a problem loading this graph. Try again later, and if this continues to happen please <a href='/reportissue?type=Defect'>let us know</a>.</div>");
+    },
+
+    // TODO: move history management out to a common utility
+    historyChange: function(e) {
+        var href = ( $.address.value() === "/" ) ? this.initialGraphUrl : $.address.value();
+        var url = ( $.address.path() === "/" ) ? this.initialGraphUrl : $.address.path();
+
+        if ( href ) {
+            if ( this.expandAccordionForHref(href) ) {
+                this.loadGraph( href , true );
+                this.loadFilters( url );
+            } else {
+                // Invalid URL - just try the first link available.
+                var links = $(".graph-link");
+                if ( links.length ) {
+                    ClassProfile.loadGraphFromLink( links[0] );
+                }
+            }
+        }
     },
 
     showGraphThrobber: function(fVisible) {
