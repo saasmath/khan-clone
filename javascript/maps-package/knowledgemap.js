@@ -24,7 +24,6 @@ function KnowledgeMapInitGlobals() {
         lngMin: 180,
         lngMax: -180,
         nodeSpacing: {lat: 0.392, lng: 0.35},
-
         options: {
                     getTileUrl: function(coord, zoom) {
                         // Sky tiles example from
@@ -464,8 +463,8 @@ function KnowledgeMap(params) {
         var node = this.dictNodes[dataID];
 
         // Set appropriate zoom level if necessary
-        if (this.map.getZoom() != node.minZoom + 1)
-            this.map.setZoom(node.minZoom + 1);
+        if (this.map.getZoom() != node.preferredZoom)
+            this.map.setZoom(node.preferredZoom);
 
         // Move the node to the center of the view
         this.map.panTo(node.latLng);

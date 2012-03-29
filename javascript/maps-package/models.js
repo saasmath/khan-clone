@@ -15,11 +15,11 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
     /**
      * Set all required properties for rendering map node
      */
-    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, customClass) {
+    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested) {
 
         var className = "nodeLabel";
-        if (customClass) {
-            className += " " + customClass;
+        if (this.customClass) {
+            className += " " + this.customClass;
         }
         if (this.get("invalidForGoal")) {
             className += " goalNodeInvalid";
@@ -35,7 +35,8 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             iconUrl: iconUrl,
             isSuggested: isSuggested,
             className: className,
-            url: this.url()
+            url: this.url(),
+            preferredZoom: this.preferredZoom
         });
 
     },
@@ -52,6 +53,12 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
  * may differ from a standard Topic model.
  */
 KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
+
+    // Custom class added to each node
+    customClass: "topic",
+
+    // Preferred map zoom when automatically panning to this node
+    preferredZoom: 6,
 
     initialize: function(attributes) {
 
@@ -87,6 +94,12 @@ KnowledgeMapModels.Topic = KnowledgeMapModels.Node.extend({
  */
 KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
 
+    // Custom class added to each node
+    customClass: "exercise",
+
+    // Preferred map zoom when automatically panning to this node
+    preferredZoom: 8,
+
     initialize: function(attributes) {
 
         // Translate exercise properties to standard node properties
@@ -96,8 +109,7 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             this.get("v_position"), // v_position is actually x
             this.get("h_position"), // h_position is actually y
             KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
-            this.get("states")["suggested"] && !this.get("states")["reviewing"],
-            "exercise"
+            this.get("states")["suggested"] && !this.get("states")["reviewing"]
         );
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);
