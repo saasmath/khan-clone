@@ -46,3 +46,8 @@ desc "Run unit tests"
 task :unittest do
     sh "python tools/runtests.py"
 end
+
+desc "Run deploy script dryrun to build all packages"
+task :build do
+    sh "python", "deploy/deploy.py", "--dryrun", "--no-up", "--no-secrets", "--force"
+end
