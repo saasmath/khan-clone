@@ -24,9 +24,6 @@ def topics_layout(user_data, user_exercise_graph):
     if not layout:
         raise Exception("Missing map layout for default topic version")
 
-    # TODO: once Eater completes his work, re-enable polyline rendering
-    layout["polylines"] = []
-
     # Build each topic's completion/suggested status from constituent exercises
     for topic_dict in list(layout["topics"]):
 
