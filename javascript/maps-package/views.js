@@ -107,6 +107,12 @@ KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
  */
 KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
+    events: {
+        "click": "click",
+        "mouseenter": "mouseenter",
+        "mouseleave": "mouseout"
+    },
+
     initialize: function(options) {
         this.nodeName = this.model.get("name");
         this.filtered = false;
@@ -115,22 +121,9 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         this.updateElement(this.el);
     },
 
-    attachEvents: function() {
-        var self = this;
-
-        this.el.click(
-                function(evt) {return self.onNodeClick(evt);}
-            ).hover(
-                function() {return self.onNodeMouseover();},
-                function() {return self.onNodeMouseout();}
-            );
-    },
-
     updateElement: function(el) {
-
         this.el = el;
-        this.attachEvents();
-
+        this.delegateEvents();
     },
 
     setFiltered: function(filtered, bounds) {
@@ -192,7 +185,7 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             this.el.removeClass("nodeLabelHighlight");
     },
 
-    onNodeClick: function(evt) {
+    click: function(evt) {
 
         if (!this.model.isClickableAtZoom(this.parent.map.getZoom())) {
             // If this node isn't clickable, make sure the default click event
@@ -204,11 +197,11 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         return this.parent.nodeClickHandler(this.model, evt);
     },
 
-    onNodeMouseover: function() {
+    mouseenter: function() {
         this.parent.highlightNode(this.nodeName, true);
     },
 
-    onNodeMouseout: function() {
+    mouseout: function() {
         this.parent.highlightNode(this.nodeName, false);
     }
 },
