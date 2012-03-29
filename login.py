@@ -11,7 +11,7 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
 import auth.cookies
 import auth.passwords
-import auth.tokens
+from auth.tokens import AuthToken, EmailVerificationToken
 import cookie_util
 import datetime
 import logging
@@ -21,6 +21,8 @@ import re
 import request_handler
 import uid
 import util
+from api.auth.auth_models import OAuthMap
+from api.auth import auth_util
 
 class Login(request_handler.RequestHandler):
     def get(self):
@@ -89,7 +91,7 @@ class Login(request_handler.RequestHandler):
 
         """
 
-        auth_token = auth.tokens.AuthToken.for_user(user_data)
+        auth_token = AuthToken.for_user(user_data)
         handler.response.write(jsonify.jsonify({
                     'auth': auth_token.value,
                     'continue': cont
@@ -97,11 +99,47 @@ class Login(request_handler.RequestHandler):
 
 class MobileOAuthLogin(request_handler.RequestHandler):
     def get(self):
+        self.render_login_page()
+
+    def render_login_page(self, error=None):
         self.render_jinja2_template('login_mobile_oauth.html', {
             "oauth_map_id": self.request_string("oauth_map_id", default=""),
             "anointed": self.request_bool("an", default=False),
-            "view": self.request_string("view", default="")
+            "view": self.request_string("view", default=""),
+            "error": error,
         })
+
+    def post(self):
+        """ POST submissions are for username/password based logins to
+        acquire an OAuth access token.
+        
+        """
+
+        identifier = self.request_string('identifier')
+        password = self.request_string('password')
+        if not identifier or not password:
+            self.render_login_page("Please enter your username and password")
+            return
+
+        user_data = UserData.get_from_username_or_email(identifier.strip())
+        if not user_data or not user_data.validate_password(password):
+            # TODO(benkomalo): IP-based throttling of failed logins?
+            self.render_login_page("Username and password doesn't match")
+            return
+        
+        # Successful login - convert to an OAuth access_token
+        oauth_map_id = self.request_string("oauth_map_id", default="")
+        oauth_map = OAuthMap.get_by_id_safe(oauth_map_id)
+        if not oauth_map:
+            self.render_login_page("Unable to find OAuthMap by id.")
+            return
+
+        # Mint the token and persist to the oauth_map
+        oauth_map.khan_auth_token = AuthToken.for_user(user_data).value
+        oauth_map.put()
+
+        # Need to redirect back to the http authorize endpoint
+        return auth_util.authorize_token_redirect(oauth_map, force_http=True)
 
 def _upgrade_phantom_into(phantom_data, target_data):
     """ Attempts to merge a phantom user into a target user.
@@ -317,7 +355,7 @@ class Signup(request_handler.RequestHandler):
 
         # Success!
         unverified_user = models.UnverifiedUser.get_or_insert_for_value(email)
-        verification_token = auth.tokens.EmailVerificationToken.for_user(unverified_user)
+        verification_token = EmailVerificationToken.for_user(unverified_user)
         verification_link = CompleteSignup.build_link(unverified_user)
 
         self.send_verification_email(email, verification_link)
@@ -370,7 +408,7 @@ class CompleteSignup(request_handler.RequestHandler):
 
         return util.absolute_url(
                 "/completesignup?token=%s" %
-                auth.tokens.EmailVerificationToken.for_user(unverified_user).value)
+                EmailVerificationToken.for_user(unverified_user).value)
 
     def validated_token(self):
         """ Validates the token specified in the request parameters and returns
@@ -382,7 +420,7 @@ class CompleteSignup(request_handler.RequestHandler):
         if not token_value:
             return None
 
-        token = auth.tokens.EmailVerificationToken.for_value(token_value)
+        token = EmailVerificationToken.for_value(token_value)
 
         if not token:
             return None
@@ -600,6 +638,6 @@ class PasswordChange(request_handler.RequestHandler):
             user_data.set_password(password1)
 
             # Need to create a new auth token as the existing cookie will expire
-            auth_token = auth.tokens.AuthToken.for_user(user_data)
+            auth_token = AuthToken.for_user(user_data)
             self.redirect(util.insecure_url(
                     "/pwchange?auth=%s" % auth_token.value))

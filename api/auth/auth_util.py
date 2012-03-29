@@ -38,7 +38,7 @@ def access_token_response(oauth_map):
 
     return "oauth_token=%s&oauth_token_secret=%s" % (oauth_map.access_token, oauth_map.access_token_secret)
 
-def authorize_token_redirect(oauth_map):
+def authorize_token_redirect(oauth_map, force_http=False):
     if not oauth_map:
         raise OAuthError("Missing oauth_map while returning authorize_token_redirect")
 
@@ -50,7 +50,11 @@ def authorize_token_redirect(oauth_map):
         "oauth_token_secret": oauth_map.request_token_secret,
         "oauth_callback": oauth_map.callback_url_with_request_token_params(),
     }
-    return redirect(append_url_params("/api/auth/authorize", params))
+    url = "/api/auth/authorize"
+    if force_http:
+        import util
+        url = util.insecure_url(url)
+    return redirect(append_url_params(url, params))
 
 def custom_scheme_redirect(url_redirect):
     # urlparse.urlsplit doesn't currently handle custom schemes,
