@@ -4,6 +4,7 @@
 // TODO: clean up all event listeners. This page does not remove any
 // event listeners when tearing down the graphs.
 
+// TODO(marcia): Fix targetDatepicker referencing removed loadGraphStudentListAware
 // TODO(marcia): Fix coach_email URL param action (for debugging only? Are there other use cases?)
 // TODO(marcia): Check whether this breaks any "coworker" behavior
 
@@ -87,10 +88,6 @@ var ClassProfile = {
             $dropdown.data('selected', student_list);
         }
 
-        $("#targetDatepicker").datepicker().change(function(){
-            ClassProfile.router.trigger("change:date", this.value);
-        });
-
         ClassProfile.router = new ClassProfile.TabRouter({startingStudentList: list_id});
 
         Backbone.history.start({
@@ -117,15 +114,13 @@ var ClassProfile = {
 
         currGraph_: "progress-report",
         currStudentList_: "allstudents",
-        currDate_: "",
 
         initialize: function(options) {
             if (options && options.startingStudentList) {
                 this.currStudentList_ = options.startingStudentList;
             }
 
-            this.bind("change:studentList", this.onStudentListChange_, this);
-            this.bind("change:date", this.onDateChange_, this);
+            this.bind("studentListChange", this.onStudentListChange_, this);
         },
 
         showDefault: function() {
@@ -145,33 +140,18 @@ var ClassProfile = {
                 this.currStudentList_ = studentList;
             }
 
-            // Always have student list id in the url
+            // TODO(marcia): Treat student list id as last subroute
             this.navigate("/" + this.currGraph_ + "/" + this.currStudentList_, false);
 
-            // Expand accordion section
             $("#stats-nav #nav-accordion").accordion("activate", accordionSelector);
-            // Load sort and search UI
             ClassProfile.loadFilters(href);
 
-            // Build url from which to load graph
-            var params = {
-                "list_id": this.currStudentList_
-            };
-            if ((graph === "daily-activity") && this.currDate_) {
-                params["dt"] = this.currDate_;
-            }
-            href += "?" + $.param(params);
-
+            href += "?list_id=" + this.currStudentList_;
             ClassProfile.loadGraph(href);
         },
 
         onStudentListChange_: function(studentList) {
             this.navigate("/" + this.currGraph_ + "/" + studentList, true);
-        },
-
-        onDateChange_: function(date) {
-            this.currDate_ = date;
-            this.showGraph(this.currGraph_, this.currStudentList_);
         }
     }),
 
@@ -276,7 +256,7 @@ var ClassProfile = {
         $dropdown.data('selected', student_list);
 
         // Triggering the router event updates the url and loads the correct graph
-        ClassProfile.router.trigger("change:studentList", ui.item.data('list_id'));
+        ClassProfile.router.trigger("studentListChange", ui.item.data('list_id'));
 
         // update appearance of dropdown
         $('#studentlists_dropdown .ui-button-text').text(student_list.name);

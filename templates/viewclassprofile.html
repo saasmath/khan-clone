@@ -150,7 +150,7 @@
     {{ profile_macros.class_graph_link(user_data_coach, "Daily Activity Report", "classtime", selected_graph_type, list_id) }}
     <div class="filter-block">
         <h3>Daily Activity Report <small> for </small></h3>
-        <input type="text" id="targetDatepicker" value="Today">
+        {{ profile_macros.graph_calendar_picker(user_data_coach, "classtime") }}
     </div>
   </div>
 

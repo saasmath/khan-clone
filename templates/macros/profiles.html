@@ -16,6 +16,14 @@
 <a href="{{ profiles.get_api_url('user/students', api_function, None, user_data_coach, list_id) }}" class="graph-link graph-link-header header {% if api_function == selected_type %}graph-link-selected{% endif %}">{{ page_name|escape }}</a>
 {%- endmacro %}
 
+
+{% macro graph_calendar_picker(user_data, graph_type) -%}
+<input type="text" id="targetDatepicker" value="Today"/>
+<script>
+    $(function(){$("#targetDatepicker").datepicker().change(function(){ClassProfile.loadGraphStudentListAware("/profile/graph/{{ graph_type|escape }}?coach_email={{ user_data.email|escape }}&dt=" + this.value);});});
+</script>
+{%- endmacro %}
+
 {% macro student_highlight_control(user_data_students) -%}
 <ul>
     {% for user_data_student in user_data_students %}
