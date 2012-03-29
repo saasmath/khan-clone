@@ -429,8 +429,9 @@ function KnowledgeMap(params) {
         }
 
         if (this.newGoal) {
-            // New Goal UI always starts at zoom one level below topics.
-            coords.zoom = KnowledgeMapGlobals.options.minZoom + 1;
+            // New Goal UI always starts at exercise-level, for now, until
+            // topics are supported.
+            coords.zoom = KnowledgeMapGlobals.options.maxZoom - 2;
         }
 
         this.map.setCenter(new google.maps.LatLng(coords.lat, coords.lng));
