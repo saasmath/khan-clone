@@ -999,10 +999,11 @@ class UnverifiedUser(db.Model):
     randstring = db.StringProperty(indexed=False)
     
     @staticmethod
-    def get_or_insert_for_value(email):
+    def get_or_insert_for_value(email, birthdate):
         return UnverifiedUser.get_or_insert(
                 key_name=email,
                 email=email,
+                birthdate=birthdate,
                 randstring=os.urandom(8).encode("hex"))
 
     @staticmethod

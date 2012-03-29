@@ -369,7 +369,9 @@ class Signup(request_handler.RequestHandler):
             return
 
         # Success!
-        unverified_user = models.UnverifiedUser.get_or_insert_for_value(email)
+        unverified_user = models.UnverifiedUser.get_or_insert_for_value(
+                email,
+                birthdate)
         verification_token = EmailVerificationToken.for_user(unverified_user)
         verification_link = CompleteSignup.build_link(unverified_user)
 
