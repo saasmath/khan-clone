@@ -62,6 +62,13 @@ Login.initSignupPage = function() {
  * Submits the signup attempt if it passes pre-checks.
  */
 Login.submitSignup = function() {
+    // TODO(benkomalo): fix this at the bday-picker level.
+    // "change" events aren't entirely reliable, and the bday-picker code
+    // is prone to a bug where it doesn't properly update the hidden
+    // field value in some cases on blur. Force a change prior to signup
+    // so that the value is correct
+    $("fieldset.birthday-picker").trigger("change");
+
     // Success!
     if (Login.ensureValid_("#email", "Email required")) {
         var data = $("#signup-form").serialize();
