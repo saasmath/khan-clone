@@ -212,14 +212,13 @@ def topic_browser_get_topics(tree, level=0):
                 "has_divider": True,
                 "title": child.title
             })
-
             item_list += topic_browser_get_topics(child, level=level + 1)
 
             needs_divider = True
 
         idx += 1
 
-    return item_list if len(item_list) > 0 else None
+    return item_list
 
 @layer_cache.cache_with_key_fxn(lambda version_number=None:
     "Templatetags.topic_browser_data_%s" % (
