@@ -134,8 +134,7 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         if (!this.model.isVisibleAtZoom(this.zoom)) {
             // Don't render nodes outside of their zoom bounds
             this.el.css("display", "none");
-        } else {
-            this.el.css("display", "");
+            return;
         }
 
         this.attachEvents();
