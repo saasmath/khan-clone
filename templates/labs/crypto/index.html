@@ -1,0 +1,40 @@
+{% extends "labs/template.html" %}
+
+{% block pagescript %}
+{{ js_css_packages.css_package("bootstrap") }}
+<style>
+.row {
+    margin-top: 40px;
+}
+.placeholder {
+    display: block;
+    width: 130px;
+    height: 97px;
+    line-height: 97px;
+    font-size: 60px;
+    text-align: center;
+    color: #888;
+    background-color: #ccc;
+    font-weight: bold;
+}
+</style>
+{% endblock pagescript %}
+
+{% block pagetitle %}Cryptography Explore-a-sizes | Khan Academy Labs{% endblock pagetitle %}
+
+{% block pagecontent %}
+<h1>Cryptography Explore-a-sizes</h1>
+
+<div class="row">
+    <ul>
+        <li><a href="#">Frequency Fingerprint</a></li>
+        <li><a href="#">Frequency Stability</a></li>
+    </ul>
+</div>
+{% endblock pagecontent %}
+
+{% block bottompagescript %}
+
+<script>/*Bottom of page scripts*/</script>
+
+{% endblock bottompagescript %}

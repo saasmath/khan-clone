@@ -54,6 +54,7 @@ import common_core
 import unisubs
 import api.jsonify
 import labs
+import labs.crypto
 import socrates
 
 import models
@@ -602,6 +603,7 @@ application = webapp2.WSGIApplication([
 
     # Labs
     ('/labs', labs.LabsRequestHandler),
+    ('/labs/crypto', labs.crypto.RequestHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
