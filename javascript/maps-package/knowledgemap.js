@@ -609,13 +609,13 @@ function KnowledgeMap(params) {
         if (countProficient == 2)
         {
             color = KnowledgeMapGlobals.colors.blue;
-            weight = 5.0;
+            weight = 3.0;
             opacity = 1.0;
         }
         else if (countProficient == 1 && countSuggested == 1)
         {
             color = KnowledgeMapGlobals.colors.green;
-            weight = 5.0;
+            weight = 3.0;
             opacity = 1.0;
         }
 
