@@ -3260,10 +3260,6 @@ class Topic(Searchable, db.Model):
         return topics
 
     @staticmethod
-    def get_homepage_topics(version=None):
-        return list(set(Topic.get_content_topics() + Topic.get_super_topics()))
-
-    @staticmethod
     def get_exercise_topics(version=None):
         """ Get all topics containing live exercises as direct children.
         This does *not* currently return topics with exercise-containing subtopics.
