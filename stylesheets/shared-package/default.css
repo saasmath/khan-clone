@@ -388,7 +388,7 @@ a:link,
 a:visited,
 header a:visited,
 footer a:visited,
-.visited-no-recolor,
+.visited-no-recolor a:visited,
 a.visited-no-recolor:visited 
  {
     color: #005987;
