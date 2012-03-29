@@ -48,8 +48,12 @@ def open_access(method):
     wrapper._access_control = 'open-access'   # for sanity checks
     return wrapper
 
-# TODO(csilvers): add login_only, with
-# is_current_user_logged_in: users.is_current_user_admin() or user_data is not None
+# TODO(csilvers): add login_required, with
+# is_current_user_logged_in: users.is_current_user_admin() or user_data is not None and also 'not user_data.is_demo'.  If user_data.is_demo, do:
+#    self.redirect(util.create_logout_url(self.request.uri))
+
+# TODO(csilvers): add login_required_something(demo_user_allowed=False)
+# Also maybe something with phantom users?
 
 @request_cache.cache()
 def is_current_user_developer():
