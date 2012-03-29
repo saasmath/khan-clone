@@ -431,45 +431,6 @@ def put_maplayout(version_id = "edit"):
 
     return { "id": map_layout.id }
 
-# TODO(kamens) STOPSHIP: this hacky /populate route makes it easy to
-# prefill your default version's map layout, and topic badges
-# and it will be going away pre-shipping
-# https://trello.com/card/when-default-topic-layout-exists-in-some-current-sqllite-db-get-rid-of-layout-json/4f3f43cd45533a1b3a065a1d/149
-@route("/api/v1/maplayout/populate", methods=["GET"])
-@oauth_optional()
-@jsonp
-@jsonify
-def populate_maplayout():
-    import simplejson as json
-
-    version = models.TopicVersion.get_default_version()
-    map_layout = MapLayout.get_for_version(version)
-
-    f = open("../knowledgemap/layout.json", "r")
-    map_layout.layout = json.loads(f.read())
-    f.close()
-
-    import api.jsonify as jsonify_impl
-    import os
-    if os.environ.get('SERVER_SOFTWARE','').startswith('Dev'):
-        from google.appengine.tools.dev_appserver import FakeFile
-        FakeFile.ALLOWED_MODES = frozenset(['a','r', 'w', 'rb', 'U', 'rU'])
-
-    for t in map_layout.layout["topics"]:
-        if "key_name" in t:
-            del t["key_name"]
-
-    f = open("../knowledgemap/layout.json", "w")
-    f.write(jsonify_impl.jsonify(map_layout.layout))
-    f.close()
-
-    map_layout.put()
-
-    from badges import topic_exercise_badges
-    topic_exercise_badges.sync_with_topic_version(version)
-
-    return map_layout
-
 @route("/api/v1/topicversion/default/id", methods=["GET"])
 @oauth_optional()
 @jsonp
