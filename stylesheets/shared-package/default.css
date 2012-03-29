@@ -1517,9 +1517,12 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
     .exercise-badge {
         position: relative;
     }
-    .exercise-badge .topic-exercise-image {
-        margin: -1px 5px 0 0;
-    }
+        .exercise-badge .topic-exercise-image {
+            margin: -1px 5px 0 0;
+        }
+        .exercise-badge .skill-bar {
+            height: 6px;
+        }
     .pan-to {
         position: absolute;
         padding: 1px;

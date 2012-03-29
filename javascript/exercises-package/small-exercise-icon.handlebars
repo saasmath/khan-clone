@@ -4,13 +4,20 @@
 
 {{else}}
 
-    {{#if proficient}}
+{{#if proficient}}
 
-    <img src="/images/node-complete.png" class="small-exercise-icon" data-desc="You've earned proficiency in this skill">
+<img src="/images/node-complete.png" class="small-exercise-icon" data-desc="You've earned proficiency in this skill">
 
-    {{else}}
-	    {{#if suggested}}
-	    <img src="/images/node-suggested.png" class="small-exercise-icon" data-desc="You've earned proficiency in this skill">
-	    {{/if}}
-    {{/if}}
+{{else}}
+
+{{#if suggested}}
+
+<img src="/images/node-suggested.png" class="small-exercise-icon" data-desc="You've earned proficiency in this skill">
+
+{{else}}
+
+<img src="/images/node-not-started.png" class="small-exercise-icon" data-desc="You've earned proficiency in this skill">
+
+{{/if}}
+{{/if}}
 {{/if}}
