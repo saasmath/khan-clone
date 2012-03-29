@@ -3,5 +3,10 @@ import request_handler
 
 class RequestHandler(request_handler.RequestHandler):
     @ensure_xsrf_cookie
-    def get(self):
-        self.render_jinja2_template('labs/crypto/index.html', {})
+    def get(self, exploreasize=None):
+        if not exploreasize:
+            self.render_jinja2_template('labs/crypto/index.html', {})
+        elif exploreasize == 'frequency-fingerprint':
+            self.render_jinja2_template('labs/crypto/frequency-fingerprint.html', {})
+        else:
+            self.abort(404)
