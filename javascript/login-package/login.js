@@ -25,12 +25,16 @@ Login.initLoginPage = function() {
 
     $("#submit-button").click(function(e) {
         e.preventDefault();
-        Login.loginWithPassword();
+        if (!Login.submitDisabled_) {
+            Login.loginWithPassword();
+        }
     });
     $("#password").on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             e.preventDefault();
-            Login.loginWithPassword();
+            if (!Login.submitDisabled_) {
+                Login.loginWithPassword();
+            }
         }
     });
 };
@@ -76,14 +80,14 @@ Login.loginWithPassword = function() {
     valid = Login.ensureValid_("#password", "Password required") && valid;
 
     if (valid) {
-        Login.disableSubmitButton_();
+        Login.disableSubmit_();
         Login.asyncFormPost(
                 $("#login-form"),
                 function(data) {
                     // Server responded with 200, but login may have failed.
                     if (data["errors"]) {
                         Login.onPasswordLoginFail(data["errors"]);
-                        Login.enableSubmitButton_();
+                        Login.enableSubmit_();
                     } else {
                         Login.onPasswordLoginSuccess(data);
                         // Don't re-enable the login button as we're about
@@ -93,24 +97,28 @@ Login.loginWithPassword = function() {
                 function(data) {
                     // Hard failure - server is inaccessible or having issues
                     // TODO(benkomalo): handle
-                    Login.enableSubmitButton_();
+                    Login.enableSubmit_();
                 });
     }
 };
 
+Login.submitDisabled_ = false;
+
 /**
- * Disables the submit button on a login attempt, to prevent duplicate tries.
+ * Disables form submit on a login attempt, to prevent duplicate tries.
  */
-Login.disableSubmitButton_ = function() {
+Login.disableSubmit_ = function() {
     $("#submit-button").attr("disabled", true);
+    Login.submitDisabled_ = true;
 };
 
 /**
- * Restores the submit button, usually after a response from a server
+ * Restores form submission ability, usually after a response from a server
  * from a login/signup attempt.
  */
-Login.enableSubmitButton_ = function() {
+Login.enableSubmit_ = function() {
     $("#submit-button").removeAttr("disabled");
+    Login.submitDisabled_ = false;
 };
 
 /**

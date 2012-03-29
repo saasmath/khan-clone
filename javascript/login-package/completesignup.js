@@ -13,13 +13,17 @@ Login.initCompleteSignupPage = function() {
     $("#password").on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             e.preventDefault();
-            Login.submitCompleteSignup();
+            if (!Login.submitDisabled_) {
+                Login.submitCompleteSignup();
+            }
         }
     });
 
     $("#submit-button").click(function(e) {
         e.preventDefault();
-        Login.submitCompleteSignup();
+        if (!Login.submitDisabled_) {
+            Login.submitCompleteSignup();
+        }
     });
 };
 
@@ -31,14 +35,14 @@ Login.submitCompleteSignup = function() {
     valid = Login.ensureValid_("#username", "Username required") && valid;
     valid = Login.ensureValid_("#password", "Password required") && valid;
     if (valid) {
-        Login.disableSubmitButton_();
+        Login.disableSubmit_();
         Login.asyncFormPost(
                 $("#signup-form"),
                 function(data) {
                     // 200 success, but the signup may have failed.
                     if (data["errors"]) {
                         Login.onCompleteSignupError(data["errors"]);
-                        Login.enableSubmitButton_();
+                        Login.enableSubmit_();
                     } else {
                         Login.onCompleteSignupSucess(data);
                     }
@@ -46,7 +50,7 @@ Login.submitCompleteSignup = function() {
                 function(data) {
                     // Hard fail - can't seem to talk to server right now.
                     // TODO(benkomalo): handle.
-                    Login.enableSubmitButton_();
+                    Login.enableSubmit_();
                 });
     }
 };
