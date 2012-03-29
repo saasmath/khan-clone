@@ -127,6 +127,10 @@ def topic_browser_tree(tree, level=0):
     s = ""
     class_name = "topline"
     for child in tree.children:
+
+        if not child.has_children_of_type(["Topic", "Video"]):
+            continue
+
         if not child.children or child.id in models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
@@ -163,6 +167,10 @@ def topic_browser_get_topics(tree, level=0):
     needs_divider = False
 
     for child in tree.children:
+
+        if not child.has_children_of_type(["Topic", "Video"]):
+            continue
+
         if not child.children or child.id in models.Topic._super_topic_ids:
             # special cases
             if child.id == "new-and-noteworthy":
