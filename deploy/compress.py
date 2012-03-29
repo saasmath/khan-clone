@@ -118,6 +118,8 @@ def file_size_report():
         for file in files:
             if file in packages.transformations:
                 file = packages.transformations[file]
+                if not file:
+                    continue
             file_path = os.path.normpath(os.path.join(path, file))
             file_path_min = file_path[:-len(suffix)] + '.min' + suffix
             popen_results([uglify_path, '-b', '-i', '0', '-nc', '-o', file_path_min, file_path])
@@ -328,6 +330,8 @@ def combine_package(path, files, suffix):
     for static_filename in files:
         if static_filename in packages.transformations:
             static_filename = packages.transformations[static_filename]
+            if not static_filename:
+                continue
 
         path_static = os.path.join(path, static_filename)
         print "   ...adding %s" % path_static
