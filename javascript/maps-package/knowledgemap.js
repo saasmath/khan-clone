@@ -18,7 +18,7 @@ function KnowledgeMapInitGlobals() {
                           }
         },
 
-        coordsHome: { lat: -2.064844, lng: 0.736268, zoom: 7, when: 0 },
+        coordsHome: { lat: -2.064844, lng: 0.736268, zoom: 6, when: 0 },
         latMin: 90,
         latMax: -90,
         lngMin: 180,
