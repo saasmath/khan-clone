@@ -122,11 +122,6 @@ class ViewExercise(request_handler.RequestHandler):
 
         viewing_other = user_data_student.key_email != user_data.key_email
 
-        if not viewing_other:
-            if user_data.is_demo:
-                self.redirect(util.create_logout_url(self.request.uri))
-                return
-
         # Can't view your own problems ahead of schedule
         if not viewing_other and problem_number > user_exercise.total_done + 1:
             problem_number = user_exercise.total_done + 1
@@ -328,11 +323,6 @@ class ViewAllExercises(request_handler.RequestHandler):
 
     @user_util.open_access
     def get(self):
-        user_data = models.UserData.current()
-        # If accessing demo, do not allow knowledge map view, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
 
@@ -356,11 +346,6 @@ class ViewAllExercises(request_handler.RequestHandler):
 class RawExercise(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-        user_data = models.UserData.current()
-        # If accessing demo, do not allow, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
         self.response.headers["Content-Type"] = "text/html"

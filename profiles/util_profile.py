@@ -94,6 +94,7 @@ def get_coach_student_and_student_list(request_handler):
     return (coach, student, student_list)
 
 class ViewClassProfile(request_handler.RequestHandler):
+    # TODO(sundar) - add login_required_special(demo_allowed = True)
     @disallow_phantoms
     @ensure_xsrf_cookie
     @user_util.manual_access_checking
@@ -104,11 +105,6 @@ class ViewClassProfile(request_handler.RequestHandler):
         if coach:
 
             user_override = self.request_user_data("coach_email")
-            if not user_override and coach.is_demo:
-                # Do not allow viewing class profile for the demo user directly, redirect via logout
-                self.redirect(util.create_logout_url(self.request.uri))
-                return
-
             if user_override and user_override.are_students_visible_to(coach):
                 # Only allow looking at a student list other than your own
                 # if you are a dev, admin, or coworker.
@@ -160,6 +156,8 @@ class ViewClassProfile(request_handler.RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
 
 class ViewProfile(request_handler.RequestHandler):
+    # TODO(sundar) - add login_required_special(demo_allowed = True)
+    # However, here only the profile of the students of the demo account are allowed
     @ensure_xsrf_cookie
     @user_util.open_access
     def get(self, email_or_username=None, subpath=None):
@@ -211,11 +209,6 @@ class ViewProfile(request_handler.RequestHandler):
         show_intro = False
 
         if is_self:
-            if user_data.is_demo:
-                # Do not allow viewing profile for the demo user, redirect via logout
-                self.redirect(util.create_logout_url(self.request.uri))
-                return
-
             promo_record = models.PromoRecord.get_for_values(
                     "New Profile Promo", user_data.user_id)
 
@@ -569,41 +562,53 @@ class ProfileDateRangeGraph(ProfileDateToolsGraph):
 
         return False
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class ActivityGraph(ProfileDateRangeGraph):
     GRAPH_TYPE = "activity"
     def graph_html_and_context(self, student):
         return templatetags.profile_activity_graph(student, self.get_start_date(), self.get_end_date(), self.tz_offset())
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class FocusGraph(ProfileDateRangeGraph):
     GRAPH_TYPE = "focus"
     def graph_html_and_context(self, student):
         return templatetags.profile_focus_graph(student, self.get_start_date(), self.get_end_date())
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class ExercisesOverTimeGraph(ProfileGraph):
     GRAPH_TYPE = "exercisesovertime"
     def graph_html_and_context(self, student):
         return templatetags.profile_exercises_over_time_graph(student)
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
+# However, here only the profile of the students of the demo account are allowed
 class ExerciseProblemsGraph(ProfileGraph):
     GRAPH_TYPE = "exerciseproblems"
     def graph_html_and_context(self, student):
         return templatetags.profile_exercise_problems_graph(student, self.request_string("exercise_name"))
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassExercisesOverTimeGraph(ClassProfileGraph):
     GRAPH_TYPE = "classexercisesovertime"
     def graph_html_and_context(self, coach):
         student_list = self.get_student_list(coach)
         return templatetags.class_profile_exercises_over_time_graph(coach, student_list)
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassProgressReportGraph(ClassProfileGraph):
     GRAPH_TYPE = "progressreport"
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassTimeGraph(ClassProfileDateGraph):
     GRAPH_TYPE = "classtime"
     def graph_html_and_context(self, coach):
         student_list = self.get_student_list(coach)
         return templatetags.class_profile_time_graph(coach, self.get_date(), self.tz_offset(), student_list)
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 class ClassEnergyPointsPerMinuteGraph(ClassProfileGraph):
     GRAPH_TYPE = "classenergypointsperminute"
     def graph_html_and_context(self, coach):
