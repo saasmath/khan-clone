@@ -2300,7 +2300,8 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", "brit-cruise"]
+    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", 
+                        "brit-cruise", "california-standards-test", "gmat"]
 
     @property
     def relative_url(self):
