@@ -214,6 +214,7 @@ function KnowledgeMap(params) {
         // Initial setup of topic list
         if (params.topic_graph_json) {
             _.map(params.topic_graph_json.topics, function(dict) {
+                dict.admin = this.admin;
 
                 // Index nodes by name
                 var topic = new KnowledgeMapModels.Topic(dict);
@@ -237,6 +238,8 @@ function KnowledgeMap(params) {
             if (self.newGoal && invalidForGoal) {
                 dict.invalidForGoal = true;
             }
+
+            dict.admin = this.admin;
 
             // Index nodes by name
             var exercise = new KnowledgeMapModels.Exercise(dict);
@@ -644,7 +647,7 @@ function KnowledgeMap(params) {
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name,
                 node.latLng,
-                [   "<a data-id='" + node.name + "' class='" + node.className + "'>" +
+                [   "<a href='" + node.url + "' data-id='" + node.name + "' class='" + node.className + "'>" +
                     "<img class='node-icon' src='" + node.iconUrl + "'/>" +
                     "<div class='node-text'>" + node.display_name + "</div></a>"],
                 "",

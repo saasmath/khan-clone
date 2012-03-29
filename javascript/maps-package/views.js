@@ -28,12 +28,6 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
         var template = this.getTemplate();
         var context = this.model.toJSON();
 
-        if (this.options.admin) {
-            context.url = this.model.adminUrl();
-        } else {
-            context.url = this.model.url();
-        }
-
         context.disabled = this.model.get("invalidForGoal") || false;
 
         var newContent = $(template(context));
@@ -132,13 +126,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             );
     },
 
-    setHref: function() {
-        if (this.parent.admin)
-            this.el.attr("href", this.model.adminUrl());
-        else
-            this.el.attr("href", this.model.url());
-    },
-
     updateElement: function(el) {
 
         this.el = el;
@@ -152,7 +139,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         }
 
         this.attachEvents();
-        this.setHref();
 
     },
 

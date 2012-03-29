@@ -40,7 +40,8 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             isSuggested: isSuggested,
             minZoom: minZoom,
             maxZoom: maxZoom,
-            className: className
+            className: className,
+            url: this.url()
         });
 
     },
@@ -121,11 +122,11 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
     },
 
     url: function() {
-        return "/exercise/" + this.get("name");
-    },
-
-    adminUrl: function() {
-        return "/editexercise?name=" + this.get("name");
+        if (this.get("admin")) {
+            return "/editexercise?name=" + this.get("name");
+        } else {
+            return "/exercise/" + this.get("name");
+        }
     },
 
     isClickableAtZoom: function(zoom) {
