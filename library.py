@@ -35,7 +35,7 @@ def flatten_tree(tree, parent_topics=[]):
     tree.depth = len(parent_topics)
 
     if parent_topics:
-        if tree.depth == 1:
+        if tree.depth == 1 and len(parent_topics[0].subtopics) > 1:
             tree.homepage_title = parent_topics[0].standalone_title + ": " + tree.title
         else:
             tree.homepage_title = tree.title
