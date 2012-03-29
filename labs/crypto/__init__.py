@@ -8,5 +8,7 @@ class RequestHandler(request_handler.RequestHandler):
             self.render_jinja2_template('labs/crypto/index.html', {})
         elif exploreasize == 'frequency-fingerprint':
             self.render_jinja2_template('labs/crypto/frequency-fingerprint.html', {})
+        elif exploreasize == 'frequency-stability':
+            self.render_jinja2_template('labs/crypto/frequency-stability.html', {})
         else:
             self.abort(404)
