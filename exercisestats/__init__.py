@@ -7,7 +7,7 @@ import cPickle as pickle
 from google.appengine.ext import db, deferred
 from google.appengine.api import taskqueue
 
-from request_handler import RequestHandler
+import request_handler
 
 from models import ProblemLog, Exercise
 from .models import ExerciseStatisticShard, ExerciseStatistic
@@ -20,7 +20,8 @@ import re
 IP_ADDRESS_SAMPLE_RATE = 0.0001
 
 # handler that kicks off task chain per exercise
-class CollectFancyExerciseStatistics(RequestHandler):
+class CollectFancyExerciseStatistics(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         # task name token
         uid = self.request_string('uid', uuid.uuid4())

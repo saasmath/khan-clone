@@ -10,7 +10,7 @@ import custom_exceptions
 import facebook_util
 import util
 import user_util
-from request_handler import RequestHandler
+import request_handler
 
 from models import UserData, CoachRequest, StudentList
 from badges import util_badges
@@ -82,8 +82,9 @@ def update_requests(user_data, requester_emails):
         if coach_email not in requester_emails:
             current_request.delete()
 
-class ViewCoaches(RequestHandler):
+class ViewCoaches(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def get(self):
         """ Redirect legacy /coaches to profile page's coaches tab.
         """
@@ -94,9 +95,10 @@ class ViewCoaches(RequestHandler):
             self.redirect(util.create_login_url(self.request.uri))
 
 
-class ViewStudents(RequestHandler):
+class ViewStudents(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
         if user_data:
@@ -143,8 +145,9 @@ class ViewStudents(RequestHandler):
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
-class RequestStudent(RequestHandler):
+class RequestStudent(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.manual_access_checking
     def post(self):
         user_data = UserData.current()
 
@@ -166,8 +169,9 @@ class RequestStudent(RequestHandler):
         else:
             self.redirect("/students?invalid_student=1")
 
-class AcceptCoach(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class AcceptCoach(request_handler.RequestHandler):
+    @user_util.manual_access_checking
+    @request_handler.RequestHandler.exceptions_to_http(400)
     @disallow_phantoms
     def get(self):
         """ Only used when a coach deletes a request in studentlists.js.
@@ -202,7 +206,7 @@ class AcceptCoach(RequestHandler):
         if not self.is_ajax_request():
             self.redirect("/coaches")
 
-class UnregisterStudentCoach(RequestHandler):
+class UnregisterStudentCoach(request_handler.RequestHandler):
     @staticmethod
     def remove_student_from_coach(student, coach):
         if student.student_lists:
@@ -234,6 +238,7 @@ class UnregisterStudentCoach(RequestHandler):
 
 class UnregisterStudent(UnregisterStudentCoach):
     @disallow_phantoms
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
         return self.do_request(
@@ -242,8 +247,9 @@ class UnregisterStudent(UnregisterStudentCoach):
             "/students"
         )
 
-class AddStudentToList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class AddStudentToList(request_handler.RequestHandler):
+    @user_util.open_access
+    @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
         user_data = UserData.current()
 
@@ -255,8 +261,9 @@ class AddStudentToList(RequestHandler):
         student_data.student_lists.append(student_list.key())
         student_data.put()
 
-class RemoveStudentFromList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class RemoveStudentFromList(request_handler.RequestHandler):
+    @user_util.open_access
+    @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
         user_data = UserData.current()
 
