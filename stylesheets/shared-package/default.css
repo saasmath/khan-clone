@@ -3415,6 +3415,7 @@ a.nodeLabel:hover {
     top: -20px;
 }
 .nodeLabelZoom7.exercise {
+    cursor: inherit;
     position: relative;
     left: -5px;
     top: -5px;

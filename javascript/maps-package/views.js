@@ -241,6 +241,12 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
     },
 
     onNodeClick: function(evt) {
+
+        if (!this.model.isClickableAtZoom(this.parent.map.getZoom())) {
+            evt.preventDefault();
+            return;
+        }
+
         return this.parent.nodeClickHandler(this.model, evt);
     },
 

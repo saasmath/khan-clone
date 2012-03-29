@@ -39,6 +39,10 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
 
     isVisibleAtZoom: function(zoom) {
         return zoom >= this.get("minZoom") && zoom <= this.get("maxZoom");
+    },
+
+    isClickableAtZoom: function(zoom) {
+        return true;
     }
 
 });
@@ -114,6 +118,11 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
 
     adminUrl: function() {
         return "/editexercise?name=" + this.get("name");
+    },
+
+    isClickableAtZoom: function(zoom) {
+        // Exercises aren't clickable at zoom level 7
+        return zoom != 7;
     }
 
 });
