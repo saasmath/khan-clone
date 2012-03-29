@@ -431,10 +431,10 @@ function KnowledgeMap(params) {
             coords = params.mapCoords;
         }
 
-        if (this.newGoal) {
-            // New Goal UI always starts at exercise-level, for now, until
+        if (this.newGoal || this.admin) {
+            // Goal and admin UIs always start at exercise-level, for now, until
             // topics are supported.
-            coords.zoom = KnowledgeMapGlobals.options.maxZoom - 2;
+            coords.zoom = KnowledgeMapGlobals.options.maxZoom - 1;
         }
 
         this.map.setCenter(new google.maps.LatLng(coords.lat, coords.lng));
