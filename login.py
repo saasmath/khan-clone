@@ -402,7 +402,7 @@ class Signup(request_handler.RequestHandler):
 
         if not App.is_dev_server:
             mail.send_mail(
-                    sender='no-reply@khanacademy.org',
+                    sender='Khan Academy Accounts <no-reply@khanacademy.org>',
                     to=recipient,
                     subject="Verify your email with Khan Academy",
                     body=body)
