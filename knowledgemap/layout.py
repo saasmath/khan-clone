@@ -58,7 +58,7 @@ def topics_layout(user_data, user_exercise_graph):
         topic_dict["total"] = total
         
         # Send down the right badge icon
-        topic_dict["icon_url"] = badge.icon_src
+        topic_dict["icon_url"] = badge.compact_icon_src
 
         if proficient >= total:
             topic_dict["status"] = "proficient"
