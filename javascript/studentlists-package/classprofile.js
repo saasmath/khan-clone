@@ -4,15 +4,10 @@
 // TODO: clean up all event listeners. This page does not remove any
 // event listeners when tearing down the graphs.
 
-// TODO(marcia): Fix targetDatepicker referencing removed loadGraphStudentListAware
-// TODO(marcia): Fix coach_email URL param action (for debugging only? Are there other use cases?)
-// TODO(marcia): Check whether this breaks any "coworker" behavior
-
 var ClassProfile = {
     version: 0,
     fLoadingGraph: false,
     fLoadedGraph: false,
-    root: "/class_profile",
 
     init: function() {
         // Init Highcharts global options.
@@ -33,7 +28,7 @@ var ClassProfile = {
                 evt.preventDefault();
 
                 var route = $(evt.currentTarget).attr("href");
-                route = route.substring(ClassProfile.root.length);
+                route = route.substring("/class_profile".length);
 
                 ClassProfile.router.navigate(route, true);
             }
@@ -73,13 +68,11 @@ var ClassProfile = {
                     secondary: 'ui-icon-triangle-1-s'
                 }
             }).show().click(function(e){
-                e.preventDefault();
-
-                if (menu.css('display') == 'none') {
+                if (menu.css('display') == 'none')
                     menu.show().menu("activate", e, $('#studentlists_dropdown li[data-selected=selected]')).focus();
-                } else {
+                else
                     menu.hide();
-                }
+                e.preventDefault();
             });
 
             // get initially selected list
@@ -88,19 +81,17 @@ var ClassProfile = {
             $dropdown.data('selected', student_list);
         }
 
-        ClassProfile.router = new ClassProfile.TabRouter({startingStudentList: list_id});
-
+        ClassProfile.router = new ClassProfile.TabRouter();
         Backbone.history.start({
             pushState: true,
-            root: this.root
+            root: "/class_profile"
         });
     },
 
     TabRouter: Backbone.Router.extend({
         routes: {
-            "": "showDefault",
-            "/:graph": "showGraph",
-            "/:graph/:studentList": "showGraph"
+            "": "showGraph",
+            "/:graph": "showGraph"
         },
 
         hrefLookup_: {
@@ -112,48 +103,61 @@ var ClassProfile = {
             "goals": "/api/v1/user/students/goals"
         },
 
-        currGraph_: "progress-report",
-        currStudentList_: "allstudents",
-
-        initialize: function(options) {
-            if (options && options.startingStudentList) {
-                this.currStudentList_ = options.startingStudentList;
-            }
-
-            this.bind("studentListChange", this.onStudentListChange_, this);
-        },
-
-        showDefault: function() {
-            this.navigate("/progress-report", false);
-        },
-
-        showGraph: function(graph, studentList) {
-            var href = this.hrefLookup_[graph],
+        showGraph: function(graph) {
+            var graph = graph || "progress-report",
+                href = this.hrefLookup_[graph],
                 accordionSelector = ".graph-link-header[href$='" + graph + "']";
 
             if (!href) {
                 return;
             }
 
-            this.currGraph_ = graph;
-            if (studentList) {
-                this.currStudentList_ = studentList;
-            }
-
-            // TODO(marcia): Treat student list id as last subroute
-            this.navigate("/" + this.currGraph_ + "/" + this.currStudentList_, false);
-
             $("#stats-nav #nav-accordion").accordion("activate", accordionSelector);
+            ClassProfile.loadGraph(href, true);
             ClassProfile.loadFilters(href);
-
-            href += "?list_id=" + this.currStudentList_;
-            ClassProfile.loadGraph(href);
-        },
-
-        onStudentListChange_: function(studentList) {
-            this.navigate("/" + this.currGraph_ + "/" + studentList, true);
         }
     }),
+
+    baseGraphHref: function(href) {
+        // regex for matching scheme:// part of uri
+        // see http://tools.ietf.org/html/rfc3986#section-3.1
+        var reScheme = /^\w[\w\d+-.]*:\/\//;
+        var match = href.match(reScheme);
+        if (match) {
+            href = href.substring(match[0].length);
+        }
+
+        var ixSlash = href.indexOf("/");
+        if (ixSlash > -1)
+            href = href.substring(href.indexOf("/"));
+
+        var ixQuestionMark = href.indexOf("?");
+        if (ixQuestionMark > -1)
+            href = href.substring(0, ixQuestionMark);
+
+        return href;
+    },
+
+
+    // called whenever user clicks graph type accordion
+    loadGraphFromLink: function(el) {
+        if (!el) return;
+        ClassProfile.loadGraphStudentListAware(el.href);
+    },
+
+    loadGraphStudentListAware: function(url) {
+        var $dropdown = $('#studentlists_dropdown ol');
+        if ($dropdown.length == 1) {
+            var list_id = $dropdown.data('selected').key;
+            var qs = this.parseQueryString(url);
+            qs['list_id'] = list_id;
+            qs['version'] = ClassProfile.version;
+            qs['dt'] = $("#targetDatepicker").val();
+            url = this.baseGraphHref(url) + '?' + this.reconstructQueryString(qs);
+        }
+
+        this.loadGraph(url);
+    },
 
     loadFilters: function(href){
         // fix the hrefs for each filter
@@ -162,7 +166,7 @@ var ClassProfile = {
         a.slideDown();
     },
 
-    loadGraph: function(href) {
+    loadGraph: function(href, fNoHistoryEntry) {
         var apiCallbacksTable = {
             '/api/v1/user/students/goals': this.renderStudentGoals,
             '/api/v1/user/students/progressreport': ClassProfile.renderStudentProgressReport,
@@ -190,7 +194,7 @@ var ClassProfile = {
             data: {},
             dataType: apiCallback ? 'json' : 'html',
             success: function(data){
-                ClassProfile.finishLoadGraph(data, href, apiCallback);
+                ClassProfile.finishLoadGraph(data, href, fNoHistoryEntry, apiCallback);
             },
             error: function() {
                 ClassProfile.finishLoadGraphError();
@@ -200,7 +204,7 @@ var ClassProfile = {
         this.showGraphThrobber(true);
     },
 
-    finishLoadGraph: function(data, href, apiCallback) {
+    finishLoadGraph: function(data, href, fNoHistoryEntry, apiCallback) {
 
         this.fLoadingGraph = false;
 
@@ -232,6 +236,36 @@ var ClassProfile = {
         }
     },
 
+    // TODO: move this out to a more generic utility file.
+    parseQueryString: function(url) {
+        var qs = {};
+        var parts = url.split('?');
+        if(parts.length == 2) {
+            var querystring = parts[1].split('&');
+            for(var i = 0; i<querystring.length; i++) {
+                var kv = querystring[i].split('=');
+                if(kv[0].length > 0) { //fix trailing &
+                    key = decodeURIComponent(kv[0]);
+                    value = decodeURIComponent(kv[1]);
+                    qs[key] = value;
+                }
+            }
+        }
+        return qs;
+    },
+
+    // TODO: move this out to a more generic utility file.
+    reconstructQueryString: function(hash, kvjoin, eljoin) {
+        kvjoin = kvjoin || '=';
+        eljoin = eljoin || '&';
+        qs = [];
+        for(var key in hash) {
+            if(hash.hasOwnProperty(key))
+                qs.push(key + kvjoin + hash[key]);
+        }
+        return qs.join(eljoin);
+    },
+
     getStudentListFromId: function (list_id) {
         var student_list;
         jQuery.each(this.studentLists, function(i,l) {
@@ -255,8 +289,9 @@ var ClassProfile = {
         var student_list = ClassProfile.getStudentListFromId(ui.item.data('list_id'));
         $dropdown.data('selected', student_list);
 
-        // Triggering the router event updates the url and loads the correct graph
-        ClassProfile.router.trigger("studentListChange", ui.item.data('list_id'));
+        // update the address parameter
+        $.address.parameter("list_id",ui.item.data('list_id'))
+
 
         // update appearance of dropdown
         $('#studentlists_dropdown .ui-button-text').text(student_list.name);
