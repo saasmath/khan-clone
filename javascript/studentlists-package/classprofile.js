@@ -118,6 +118,14 @@ var ClassProfile = {
         }
     }),
 
+    collapseAccordion: function() {
+        // Turn on collapsing, collapse everything, and turn off collapsing
+        $("#stats-nav #nav-accordion").accordion(
+                "option", "collapsible", true).accordion(
+                    "activate", false).accordion(
+                        "option", "collapsible", false);
+    },
+
     baseGraphHref: function(href) {
         // regex for matching scheme:// part of uri
         // see http://tools.ietf.org/html/rfc3986#section-3.1
@@ -138,6 +146,45 @@ var ClassProfile = {
         return href;
     },
 
+    /**
+    * Expands the navigation accordion according to the link specified.
+    * @return {boolean} whether or not a link was found to be a valid link.
+    */
+    expandAccordionForHref: function(href) {
+        if (!href) {
+            return false;
+        }
+
+        href = this.baseGraphHref(href).replace(/[<>']/g, "");
+
+        href = href.replace(/[<>']/g, "");
+        var selectorAccordionSection =
+                ".graph-link-header[href*='" + href + "']";
+
+        if ( $(selectorAccordionSection).length ) {
+            $("#stats-nav #nav-accordion").accordion(
+                "activate", selectorAccordionSection);
+            return true;
+        }
+        this.collapseAccordion();
+        return false;
+    },
+
+    styleSublinkFromHref: function(href) {
+
+        if (!href) return;
+
+        var reDtStart = /dt_start=[^&]+/;
+
+        var matchStart = href.match(reDtStart);
+        var sDtStart = matchStart ? matchStart[0] : "dt_start=lastweek";
+
+        href = href.replace(/[<>']/g, "");
+
+        $(".graph-sub-link").removeClass("graph-sub-link-selected");
+        $(".graph-sub-link[href*='" + this.baseGraphHref(href) + "'][href*='" + sDtStart + "']")
+            .addClass("graph-sub-link-selected");
+    },
 
     // called whenever user clicks graph type accordion
     loadGraphFromLink: function(el) {
@@ -179,6 +226,7 @@ var ClassProfile = {
             return;
         }
 
+        this.styleSublinkFromHref(href);
         this.fLoadingGraph = true;
         this.fLoadedGraph = true;
 
@@ -209,6 +257,7 @@ var ClassProfile = {
         this.fLoadingGraph = false;
 
         this.showGraphThrobber(false);
+        this.styleSublinkFromHref(href);
 
         var start = (new Date).getTime();
         if (apiCallback) {
