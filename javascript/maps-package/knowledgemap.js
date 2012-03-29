@@ -618,12 +618,6 @@ function KnowledgeMap(params) {
             weight = 5.0;
             opacity = 1.0;
         }
-        else if (countReview > 0)
-        {
-            color = KnowledgeMapGlobals.colors.red;
-            weight = 5.0;
-            opacity = 1.0;
-        }
 
         edgeTarget.line = new google.maps.Polyline({
             path: coordinates,
