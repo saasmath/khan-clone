@@ -3209,6 +3209,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     margin-top: -4px;
     padding: 4px 10px;
 }
+#sitewide-navigation .watch-link:hover {
+    text-decoration: underline;
+}
 #sitewide-navigation .nav-subheader .topic-browser-dropdown {
     position: static;
 }
@@ -3267,6 +3270,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     display: block;
     width: 160px;
 }
+#sitewide-navigation .nav-subheader ul.topic-browser-menu li.browse-all > a {
+    font-weight: bold;
+}
 #sitewide-navigation .nav-subheader ul.topic-browser-menu li.has-divider > a {
     border-top: solid 1px #ccc;
 }
@@ -3280,18 +3286,23 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     width: 7px;
     height: 13px;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu li > a:hover,
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li:hover > a {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active > li > a:hover {
+    background-color: transparent;
+}
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.hover-active > a {
     color: #ffffff;
     text-decoration: none;
     background-color: #005987;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu li > a:hover > .right-arrow,
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li:hover > a > .right-arrow {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li > a:hover > .right-arrow,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active > li.hover-active > a > .right-arrow {
     background-position: -110px -36px;
 }
-
-#sitewide-navigation .nav-subheader ul.topic-browser-menu li.no-children > a:hover {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li.no-children > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > ul > li.no-children > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.hover-active.no-children > a {
     text-decoration: underline;
 }
 
@@ -3314,7 +3325,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 #sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li {
     width: 200px;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li.has-children:hover a {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li.has-children.hover-active a {
     background-color: #FFF;
 }
 #sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li > a {
@@ -3325,7 +3336,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     text-indent: -20px;
     width: 202px;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li:hover > ul {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > li.hover-active > ul {
     display: block;
 }
 
