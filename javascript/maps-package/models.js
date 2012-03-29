@@ -21,6 +21,14 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
      */
     setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, minZoom, maxZoom, customClass) {
 
+        var className = "nodeLabel";
+        if (customClass) {
+            className += " " + customClass;
+        }
+        if (this.get("invalidForGoal")) {
+            className += " goalNodeInvalid";
+        }
+
         this.set({
             name: name,
             x: x,
@@ -32,7 +40,7 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             isSuggested: isSuggested,
             minZoom: minZoom,
             maxZoom: maxZoom,
-            customClass: customClass || ""
+            className: className
         });
 
     },

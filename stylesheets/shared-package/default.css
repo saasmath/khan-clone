@@ -3397,67 +3397,67 @@ a.nodeLabel:hover {
     color: #444;
 }
 
-.nodeLabelZoom10 {
+.zoom10 .nodeLabel {
     position: relative;
     left: -40px;
     top: -40px;
 }
-    .nodeLabelZoom10 .node-icon {
+    .zoom10 .nodeLabel .node-icon {
         width: 80px;
         height: 80px;
     }
 
-.nodeLabelZoom6,
-.nodeLabelZoom7.topic,
-.nodeLabelZoom9 {
+.zoom6 .nodeLabel,
+.zoom7 .nodeLabel.topic,
+.zoom9 .nodeLabel {
     position: relative;
     left: -40px;
     top: -20px;
 }
-.nodeLabelZoom7.exercise {
+.zoom7 .nodeLabel.exercise {
     cursor: inherit;
     position: relative;
     left: -5px;
     top: -5px;
 }
 
-.nodeLabelZoom6 .node-icon,
-.nodeLabelZoom7.topic .node-icon,
-.nodeLabelZoom9 .node-icon {
+.zoom6 .nodeLabel .node-icon,
+.zoom7 .nodeLabel.topic .node-icon,
+.zoom9 .nodeLabel .node-icon {
     width: 40px;
     height: 40px;
 }
-.nodeLabelZoom7.exercise .node-icon {
+.zoom7 .nodeLabel.exercise .node-icon {
     width: 10px;
     height: 10px
 }
-.nodeLabelZoom7.exercise .node-text {
+.zoom7 .nodeLabel.exercise .node-text {
     display: none;
 }
 
-.lte7 .nodeLabelZoom6 .node-icon,
-.lte7 .nodeLabelZoom7.topic .node-icon,
-.lte7 .nodeLabelZoom9 .node-icon {
+.lte7 .zoom6 .nodeLabel .node-icon,
+.lte7 .zoom7 .nodeLabel.topic .node-icon,
+.lte7 .zoom9 .nodeLabel .node-icon {
     margin-left: 20px;
 }
-.lte7 .nodeLabelZoom7.exercise .node-icon {
+.lte7 .zoom7 .nodeLabel.exercise .node-icon {
     margin-left: 5px;
 }
 
-.nodeLabelZoom8 {
+.zoom8 .nodeLabel {
     position: relative;
     left: -30px;
     top: -13px;
 }
-.nodeLabelZoom8 .node-text {
+.zoom8 .nodeLabel .node-text {
     font-size: 9px;
     width: 60px;
 }
-.nodeLabelZoom8 .node-icon {
+.zoom8 .nodeLabel .node-icon {
     width: 26px;
     height: 26px;
 }
-.lte7 .nodeLabelZoom8 .node-icon {
+.lte7 .zoom8 .nodeLabel .node-icon {
     margin-left: 18px;
 }
 

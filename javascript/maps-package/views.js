@@ -148,8 +148,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
                 function() {return self.onNodeMouseout();}
             );
 
-        this.el.attr("class", this.getLabelClass());
-
         if (this.parent.admin)
             this.el.attr("href", this.model.adminUrl());
         else
@@ -159,16 +157,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             this.el.find(".exercise-goal-icon").show();
         else
             this.el.find(".exercise-goal-icon").hide();
-    },
-
-    getLabelClass: function() {
-        var classText = this.model.get("customClass") + " nodeLabel";
-        
-        classText += (" nodeLabelZoom" + this.zoom);
-        classText += (this.filtered ? " nodeLabelFiltered" : "");
-        classText += (this.model.get("invalidForGoal") ? " goalNodeInvalid" : "");
-
-        return classText;
     },
 
     setFiltered: function(filtered, bounds) {

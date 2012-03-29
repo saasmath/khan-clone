@@ -499,6 +499,10 @@ function KnowledgeMap(params) {
         this.drawTopicPolylines();
     };
 
+    this.getMapClass = function() {
+        return "dashboard-map zoom" + this.map.getZoom();
+    };
+
     this.drawOverlay = function() {
         var self = this;
         this.overlay = new com.redfin.FastMarkerOverlay(this.map, this.markers);
@@ -507,35 +511,37 @@ function KnowledgeMap(params) {
 
             this.drawOriginal();
 
-            var jrgNodes = $(self.containerID).find(".nodeLabel");
-
             if (!self.fFirstDraw)
             {
-                self.onZoomChange(jrgNodes);
+                self.onZoomChange();
             }
 
-            jrgNodes.each(function() {
+            $(self.containerID)
+                .find(".dashboard-map")
+                    .attr("class", self.getMapClass())
+                    .end()
+                .find(".nodeLabel")
+                    .each(function() {
 
-                var exerciseName = $(this).attr("data-id");
-                var exercise = self.modelsByName[exerciseName];
-                var view = self.nodeMarkerViews[exerciseName];
+                        var exerciseName = $(this).attr("data-id");
+                        var exercise = self.modelsByName[exerciseName];
+                        var view = self.nodeMarkerViews[exerciseName];
 
-                if (view) {
+                        if (view) {
 
-                    view.updateElement($(this));
+                            view.updateElement($(this));
 
-                } else {
+                        } else {
 
-                    view = new KnowledgeMapViews.NodeMarker({
-                        model: exercise,
-                        el: $(this),
-                        parent: self
+                            view = new KnowledgeMapViews.NodeMarker({
+                                model: exercise,
+                                el: $(this),
+                                parent: self
+                            });
+                            self.nodeMarkerViews[exerciseName] = view;
+
+                        }
                     });
-                    self.nodeMarkerViews[exerciseName] = view;
-
-                }
-
-            });
 
             self.fFirstDraw = false;
         };
@@ -643,7 +649,7 @@ function KnowledgeMap(params) {
         var marker = new com.redfin.FastMarker(
                 "marker-" + node.name,
                 node.latLng,
-                [   "<a data-id='" + node.name + "' class='" + node.customClass + " nodeLabel'>" +
+                [   "<a data-id='" + node.name + "' class='" + node.className + "'>" +
                     "<img class='node-icon' src='" + node.iconUrl + "'/>" +
                     "<img class='exercise-goal-icon' style='display: none' src='/images/flag.png'/>" +
                     "<div class='node-text'>" + node.display_name + "</div></a>"],
