@@ -520,6 +520,8 @@ function KnowledgeMap(params) {
                 self.onZoomChange();
             }
 
+            var zoom = self.map.getZoom();
+
             $(self.containerID)
                 .find(".dashboard-map")
                     .attr("class", self.getMapClass())
@@ -527,20 +529,21 @@ function KnowledgeMap(params) {
                 .find(".nodeLabel")
                     .each(function() {
 
-                        var exerciseName = $(this).attr("data-id");
-                        var exercise = self.modelsByName[exerciseName];
-                        var view = self.nodeMarkerViews[exerciseName];
+                        var jel = $(this),
+                            exerciseName = jel.attr("data-id"),
+                            view = self.nodeMarkerViews[exerciseName];
 
                         if (view) {
 
-                            view.updateElement($(this));
+                            view.updateElement(jel, zoom);
 
                         } else {
 
                             view = new KnowledgeMapViews.NodeMarker({
-                                model: exercise,
+                                model: self.modelsByName[exerciseName],
                                 el: $(this),
-                                parent: self
+                                parent: self,
+                                zoom: zoom
                             });
                             self.nodeMarkerViews[exerciseName] = view;
 

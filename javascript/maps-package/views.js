@@ -107,12 +107,12 @@ KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
  */
 KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
-    initialize: function() {
+    initialize: function(options) {
         this.nodeName = this.model.get("name");
         this.filtered = false;
         this.parent = this.options.parent;
 
-        this.updateElement(this.el);
+        this.updateElement(this.el, options.zoom);
     },
 
     attachEvents: function() {
@@ -126,10 +126,10 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             );
     },
 
-    updateElement: function(el) {
+    updateElement: function(el, zoom) {
 
         this.el = el;
-        this.zoom = this.parent.map.getZoom();
+        this.zoom = zoom;
 
         if (!this.model.isVisibleAtZoom(this.zoom)) {
             // Don't render nodes outside of their zoom bounds
