@@ -387,6 +387,11 @@ stylesheets = {
             "labs.css",
         ]
     },
+    "bootstrap-grids": {
+        "files": [
+            "grids.css"
+        ]
+    },
     "bootstrap": {
         "files": [
             "bootstrap.css"

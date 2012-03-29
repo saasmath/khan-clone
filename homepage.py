@@ -5,6 +5,7 @@ from jinja2.utils import escape
 
 import library
 import request_handler
+import user_util
 import models
 import layer_cache
 import templatetags
@@ -119,6 +120,7 @@ def new_and_noteworthy_link_sets():
 
 class ViewHomePage(request_handler.RequestHandler):
 
+    @user_util.open_access
     def head(self):
         # Respond to HEAD requests for our homepage so twitter's tweet
         # counter will update:
@@ -127,13 +129,9 @@ class ViewHomePage(request_handler.RequestHandler):
 
     # See https://sites.google.com/a/khanacademy.org/forge/for-team-members/how-to-use-new-and-noteworthy-content
     # for info on how to update the New & Noteworthy videos
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self):
-
-        # If accessing via demo account, logout and redirect
-        if models.UserData.current() and models.UserData.current().is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-
         version_number = None
 
         if models.UserData.current() and models.UserData.current().developer:

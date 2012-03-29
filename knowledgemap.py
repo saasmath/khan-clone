@@ -1,12 +1,14 @@
 
 from google.appengine.api import users
 
+import user_util
 import util
 import request_handler
 from models import UserData
 import time
 
 class SaveExpandedAllExercises(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         user_data = UserData.current()
 
@@ -18,9 +20,11 @@ class SaveExpandedAllExercises(request_handler.RequestHandler):
 
 class SaveMapCoords(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         return
 
+    @user_util.open_access
     def post(self):
         user_data = UserData.current()
 

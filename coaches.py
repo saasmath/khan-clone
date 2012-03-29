@@ -10,7 +10,7 @@ import custom_exceptions
 import facebook_util
 import util
 import user_util
-from request_handler import RequestHandler
+import request_handler
 
 from models import UserData, CoachRequest, StudentList
 from badges import util_badges
@@ -82,33 +82,25 @@ def update_requests(user_data, requester_emails):
         if coach_email not in requester_emails:
             current_request.delete()
 
-class ViewCoaches(RequestHandler):
+class ViewCoaches(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def get(self):
         """ Redirect legacy /coaches to profile page's coaches tab.
         """
         user_data = UserData.current()
-        # If accessing demo, do not allow viewing coaches, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-            return
-
         if user_data:
             self.redirect(user_data.profile_root + "/coaches")
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
 
-class ViewStudents(RequestHandler):
+class ViewStudents(request_handler.RequestHandler):
     @disallow_phantoms
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
-        # If accessing demo, do not allow viewing students, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-            return
-
         if user_data:
 
             user_data_override = self.request_user_data("coach_email")
@@ -153,18 +145,14 @@ class ViewStudents(RequestHandler):
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
-class RequestStudent(RequestHandler):
+class RequestStudent(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.manual_access_checking
     def post(self):
         user_data = UserData.current()
 
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
-            return
-
-        # If accessing demo, do not allow student requests, redirect via logout
-        if user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
             return
 
         user_data_student = self.request_user_data("student_email")
@@ -181,8 +169,9 @@ class RequestStudent(RequestHandler):
         else:
             self.redirect("/students?invalid_student=1")
 
-class AcceptCoach(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class AcceptCoach(request_handler.RequestHandler):
+    @user_util.manual_access_checking
+    @request_handler.RequestHandler.exceptions_to_http(400)
     @disallow_phantoms
     def get(self):
         """ Only used when a coach deletes a request in studentlists.js.
@@ -191,11 +180,6 @@ class AcceptCoach(RequestHandler):
 
         if not user_data:
             self.redirect(util.create_login_url(self.request.uri))
-            return
-
-        # If accessing demo, do not allow coach accepts, redirect via logout
-        if user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
             return
 
         accept_coach = self.request_bool("accept", default = False)
@@ -222,7 +206,7 @@ class AcceptCoach(RequestHandler):
         if not self.is_ajax_request():
             self.redirect("/coaches")
 
-class UnregisterStudentCoach(RequestHandler):
+class UnregisterStudentCoach(request_handler.RequestHandler):
     @staticmethod
     def remove_student_from_coach(student, coach):
         if student.student_lists:
@@ -254,27 +238,20 @@ class UnregisterStudentCoach(RequestHandler):
 
 class UnregisterStudent(UnregisterStudentCoach):
     @disallow_phantoms
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
-        # If accessing demo, do not allow unregistering a student, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-            return
-
         return self.do_request(
             self.request_user_data("student_email"),
             UserData.current(),
             "/students"
         )
 
-class AddStudentToList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class AddStudentToList(request_handler.RequestHandler):
+    @user_util.open_access
+    @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
         user_data = UserData.current()
-        # If accessing demo, do not allow changing student lists, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-            return
 
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
@@ -284,14 +261,11 @@ class AddStudentToList(RequestHandler):
         student_data.student_lists.append(student_list.key())
         student_data.put()
 
-class RemoveStudentFromList(RequestHandler):
-    @RequestHandler.exceptions_to_http(400)
+class RemoveStudentFromList(request_handler.RequestHandler):
+    @user_util.open_access
+    @request_handler.RequestHandler.exceptions_to_http(400)
     def post(self):
         user_data = UserData.current()
-        # If accessing demo, do not allow changing student lists, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-            return
 
         coach_data, student_data, student_list = util_profile.get_coach_student_and_student_list(self)
 
