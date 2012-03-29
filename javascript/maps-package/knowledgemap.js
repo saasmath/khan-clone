@@ -606,19 +606,16 @@ function KnowledgeMap(params) {
         var countReview = this.nodeStatusCount("Review", nodeSource, nodeTarget);
 
         var color = KnowledgeMapGlobals.colors.gray;
-        var weight = 1.0;
         var opacity = 0.48;
 
         if (countProficient == 2)
         {
             color = KnowledgeMapGlobals.colors.blue;
-            weight = 3.0;
             opacity = 1.0;
         }
         else if (countProficient == 1 && countSuggested == 1)
         {
             color = KnowledgeMapGlobals.colors.green;
-            weight = 3.0;
             opacity = 1.0;
         }
 
@@ -626,7 +623,7 @@ function KnowledgeMap(params) {
             path: coordinates,
             strokeColor: color,
             strokeOpacity: opacity,
-            strokeWeight: weight,
+            strokeWeight: 1.0,
             clickable: false,
             map: this.getMapForEdge(edgeTarget, zoom)
         });
