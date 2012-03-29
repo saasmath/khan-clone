@@ -1985,7 +1985,7 @@ class TopicVersion(db.Model):
         exercise_dict.update(exercise_changes)
         
         for exercise in [e for e in exercise_dict.values() 
-                         if e.live and not e.summative]:
+                         if e.live]:
                    
             if exercise.h_position not in location_dict:
                 location_dict[exercise.h_position] = {}
