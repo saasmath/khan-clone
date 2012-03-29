@@ -36,7 +36,7 @@ javascript = {
             "bootstrap-modal.js",
             "dropdown.js",
             "../../gae_bingo/static/js/gae_bingo.js",
-            "less-1.2.2.min.js",
+            register_conditional_file("less-1.2.2.min.js", None),
 
             # application code & templates:
             "small-exercise-icon.handlebars",
