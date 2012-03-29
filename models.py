@@ -3645,6 +3645,9 @@ class Video(Searchable, db.Model):
     description = db.TextProperty()
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default=0)
+
+    # A dict of properties that may only exist on some videos such as 
+    # original_url for smarthistory_videos.
     extra_properties = object_property.UnvalidatedObjectProperty()
 
     # Human readable, unique id that can be used in URLS.

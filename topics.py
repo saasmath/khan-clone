@@ -396,8 +396,10 @@ class ImportSmartHistory(request_handler.RequestHandler):
             if parent_title not in subtopic_dict:
                 subtopic = Topic.insert(title=parent_title,
                                  parent=topic,
-                                 standalone_title="Art History: %s" % parent_title,
+                                 standalone_title="Art History: %s" 
+                                                  % parent_title,
                                  description="")
+
                 subtopic_dict[parent_title] = subtopic
             else:
                 subtopic = subtopic_dict[parent_title]
@@ -410,12 +412,18 @@ class ImportSmartHistory(request_handler.RequestHandler):
             
             if youtube_id:
                 if youtube_id not in video_dict:
-                    # make sure it didn't get imported before, but never put into a topic
-                    video = models.Video.all().filter("youtube_id =", youtube_id).get()
+                    # make sure it didn't get imported before, but never put 
+                    # into a topic
+                    query = models.Video.all()
+                    video = query.filter("youtube_id =", youtube_id).get()
+
                     if video is None:
-                        logging.info("adding youtube video %i %s %s %s to %s" % (i, youtube_id, href, title, parent_title))
+                        logging.info("adding youtube video %i %s %s %s to %s" % 
+                                     (i, youtube_id, href, title, parent_title))
+                        
                         video_data = youtube_get_video_data_dict(youtube_id)
-                        # use the title from the webpage not from the youtube page
+                        # use the title from the webpage not from the youtube 
+                        # page
                         video = None
                         if video_data:
                             video_data["title"] = title
@@ -425,13 +433,20 @@ class ImportSmartHistory(request_handler.RequestHandler):
                                                                 version,
                                                                 video_data)
                         else:
-                            logging.error("Could not import youtube_id %s for %s %s" % (youtube_id, href, title))
-                            raise Exception("Could not import youtube_id %s for %s %s" % (youtube_id, href, title))
+                            logging.error("Could not import youtube_id %s for" +
+                                          " %s %s" % (youtube_id, href, title))
+                            
+                            raise Exception("Could not import youtube_id %s " +
+                                            " for %s %s" % (youtube_id, href, 
+                                            title))
 
                 else:
                     video = video_dict[youtube_id] 
                     if video.extra_properties != extra_properties:
-                        logging.info("changing extra properties of %i %s %s from %s to %s" % (i, href, title, video.extra_properties, extra_properties))
+                        logging.info("changing extra properties of %i %s %s " +
+                                     "from %s to %s" % (i, href, title, 
+                                     video.extra_properties, extra_properties))
+                        
                         video.extra_properties = extra_properties
                         video.put()
                                     
@@ -439,7 +454,9 @@ class ImportSmartHistory(request_handler.RequestHandler):
                     subtopic_child_keys[parent_title].append(video.key())
 
             elif href not in href_to_key_dict:
-                logging.info("adding %i %s %s to %s" % (i, href, title, parent_title))
+                logging.info("adding %i %s %s to %s" % 
+                             (i, href, title, parent_title))
+                
                 models.VersionContentChange.add_new_content(
                     models.Url, 
                     version,
@@ -451,6 +468,7 @@ class ImportSmartHistory(request_handler.RequestHandler):
                 url = Url(url=href,
                           title=title,
                           id=id)
+
                 url.put()
                 subtopic_child_keys[parent_title].append(url.key())
 
