@@ -39,6 +39,7 @@ javascript = {
             "less-1.2.2.min.js",
 
             # application code & templates:
+            "small-exercise-icon.handlebars",
             "skill-bar.handlebars",
             "handlebars-extras.js",
             "cookies.js",
@@ -237,7 +238,6 @@ javascript = {
             "card.handlebars",
             "current-card.handlebars",
             "card-leaves.handlebars",
-            "small-exercise-icon.handlebars",
             "knowledgemap-topic.handlebars",
             "problem-template.handlebars",
             "end-of-stack-card.handlebars",

@@ -42,6 +42,7 @@ Handlebars.registerHelper("reverseEach", function(context, block) {
  * starting position, exercise states, and whether or not proficiency was just
  * earned and should be animated.
  */
+Handlebars.registerPartial("small-exercise-icon", Templates.get("shared.small-exercise-icon"));
 Handlebars.registerHelper("skill-bar", function(end, start, exerciseStates, justEarnedProficiency) {
 
     var template = Templates.get("shared.skill-bar"),
