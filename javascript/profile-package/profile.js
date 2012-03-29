@@ -265,9 +265,19 @@ var Profile = {
             }
         },
 
+        settingsIframe_: null,
         showSettings: function() {
-            // Populate HTML/reset.
-            Settings.render($("#tab-content-settings"));
+            // Password change forms need to happen in an iframe since it needs
+            // to be POST'ed to a different domain (with https), and redirected
+            // back with information on error/success.
+            if (!Profile.settingsIframe_) {
+                Profile.settingsIframe_ = $("<iframe></iframe>")
+                        .attr("src", Profile.secureUrlBase + "pwchange")
+                        .attr("scrolling", "no")
+                        .attr("id", "settings-iframe")
+                        .attr("class", "settings-iframe")
+                        .appendTo($("#tab-content-settings"));
+            }
 
             // Show.
             $("#tab-content-settings").show().siblings().hide();

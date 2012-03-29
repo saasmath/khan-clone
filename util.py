@@ -19,7 +19,6 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
 
 from api.auth.google_util import get_google_user_id_and_email_from_oauth_map
 from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
-import Cookie
 import urlparse
 
 @request_cache.cache()
@@ -69,19 +68,23 @@ def is_phantom_user(user_id):
     return user_id and is_phantom_id(user_id)
 
 def create_login_url(dest_url):
-    return "/login?continue=%s" % urllib.quote(dest_url)
+    return "/login?continue=%s" % urllib.quote_plus(dest_url)
 
 def create_mobile_oauth_login_url(dest_url):
-    return "/login/mobileoauth?continue=%s" % urllib.quote(dest_url)
+    return "/login/mobileoauth?continue=%s" % urllib.quote_plus(dest_url)
 
 def create_post_login_url(dest_url):
     if dest_url.startswith("/postlogin"):
         return dest_url
     else:
-        return "/postlogin?continue=%s" % urllib.quote(dest_url)
+        if (dest_url == '/' or
+                dest_url == absolute_url('/')):
+            return "/postlogin"
+        else:
+            return "/postlogin?continue=%s" % urllib.quote_plus(dest_url)
 
 def create_logout_url(dest_url):
-    return "/logout?continue=%s" % urllib.quote(dest_url)
+    return "/logout?continue=%s" % urllib.quote_plus(dest_url)
 
 def seconds_since(dt):
     return seconds_between(dt, datetime.datetime.now())
@@ -155,19 +158,19 @@ def _get_url_parts(url):
 def secure_url(url):
     """ Given a Khan Academy URL (i.e. not to an external site), returns an
     absolute https version of the URL, if possible.
-    
+
     Abstracts away limitations of https, such as non-support in vanity domains
     and dev servers.
-    
+
     """
-    
+
     if url.startswith("https://"):
         return url
-    
+
     if App.is_dev_server:
         # Dev servers can't handle https.
         return url
-    
+
     _, netloc, path, query, fragment = _get_url_parts(url)
 
     if (netloc.lower().endswith(".khanacademy.org")):
@@ -175,18 +178,18 @@ def secure_url(url):
         # are simple CNAMEs to the default app engine instance.
         # http://code.google.com/p/googleappengine/issues/detail?id=792
         netloc = "khan-academy.appspot.com"
-        
+
     return urlparse.urlunsplit(("https", netloc, path, query, fragment))
 
 def insecure_url(url):
     """ Given a Khan Academy URL (i.e. not to an external site), returns an
     absolute http version of the URL.
-    
+
     """
 
     if url.startswith("http://"):
         return url
-    
+
     _, netloc, path, query, fragment = _get_url_parts(url)
 
     return urlparse.urlunsplit(("http", netloc, path, query, fragment))
@@ -200,10 +203,28 @@ def static_url(relative_url):
     else:
         return "http://khan-academy.appspot.com%s" % relative_url
 
+def is_khanacademy_url(url):
+    """ Determines whether or not the specified URL points to a Khan Academy
+    property.
+
+    Relative URLs are considered safe and owned by Khan Academy.
+    """
+
+    scheme, netloc, path, query, fragment = urlparse.urlsplit(url) #@UnusedVariable
+    # Check all absolute URLs
+    if (netloc and
+            not netloc.endswith(".khanacademy.org") and
+            not netloc.endswith(".khan-academy.appspot.com") and
+            not netloc == "khan-academy.appspot.com"):
+        return False
+
+    # Relative URL's are considered to be a Khan Academy URL.
+    return True
+
 def clone_entity(e, **extra_args):
     """http://stackoverflow.com/questions/2687724/copy-an-entity-in-google-app-engine-datastore-in-python-without-knowing-property
     Clones an entity, adding or overriding constructor attributes.
-    
+
     The cloned entity will have exactly the same property values as the original
     entity, except where overridden. By default it will have no parent entity or
     key name, unless supplied.
@@ -272,3 +293,20 @@ def count_with_cursors(query, max_value=None):
             query.with_cursor(cursor)
 
     return count
+
+
+def ensure_in_transaction(func, xg_on=False):
+    """ Runs the specified method in a transaction, if the current thread is
+    not currently running in a transaction already.
+    Returns the result of the specified func method.
+
+    """
+
+    if db.is_in_transaction():
+        return func()
+    
+    if xg_on:
+        options = db.create_transaction_options(xg=True)
+        return db.run_in_transaction_options(options, func)
+    else:
+        return db.run_in_transaction(func)

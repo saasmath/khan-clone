@@ -1131,19 +1131,8 @@ li.profile-tab {
     margin-top: 10px;
 }
 
-#pw-change-form .input-label-cell {
-    padding: 0.5em 2em 0.5em 0;
-}
 
-#pw-change-form .simple-input {
-    /* TODO(benkomalo): consolidate these input styles in forms across the site.
-       this is kind of copied from login-package/login.css */
-    font-size: 14px;
-    padding: 0.1em 0.3em;
-    margin: 0.1em 0;
-    width: 14em;
-}
-
-#pw-change-form .sidenote {
-    margin-left: 5px;
+.settings-iframe {
+    height: 400px;
+    width: 640px;
 }

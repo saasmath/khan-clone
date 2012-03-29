@@ -51,11 +51,26 @@ def get_count(name):
     except Exception, e:
         logging.error("Error in get_count: %s" % e)
         return 0
+    
+def _get_config(name):
+    """ A safe way to do an atomic get_or_insert that can also be run
+    inside of a transaction.
+    
+    """
+
+    if db.is_in_transaction():
+        config = ShardedCounterConfig.get_by_key_name(name)
+        if not config:
+            config = ShardedCounterConfig(key_name=name, name=name)
+            config.put()
+        return config
+    else:
+        return ShardedCounterConfig.get_or_insert(name, name=name)
 
 def add(name, n):
     '''Add n to the counter (n < 0 is valid)'''
     try:
-        config = ShardedCounterConfig.get_or_insert(name, name=name)
+        config = _get_config(name)
         def transaction():
             index = random.randint(0, config.num_shards - 1)
             shard_name = name + str(index)
@@ -65,7 +80,10 @@ def add(name, n):
             counter.count += n
             counter.put()
 
-        db.run_in_transaction(transaction)
+        if db.is_in_transaction():
+            transaction()
+        else:
+            db.run_in_transaction(transaction)
 
     except Exception, e:
         logging.error("Error in add: %s" % e)
@@ -73,7 +91,7 @@ def add(name, n):
 def change_number_of_shards(name, num):
     '''Change the number of shards to num'''
     try:
-        config = ShardedCounterConfig.get_or_insert(name, name=name)
+        config = _get_config(name)
         def transaction():
             if config.num_shards > num:
                 for i in range(num, config.num_shards):
@@ -96,7 +114,10 @@ def change_number_of_shards(name, num):
             config.num_shards = num
             config.put()
 
-        db.run_in_transaction(transaction)
+        if db.is_in_transaction():
+            transaction()
+        else:
+            db.run_in_transaction(transaction)
 
     except Exception, e:
         logging.error("Error in change_number_of_shards: %s" % e)
