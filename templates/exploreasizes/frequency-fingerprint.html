@@ -3,7 +3,7 @@
 {% block pagescript %}
 {{ js_css_packages.js_package("highcharts") }}
 {{ js_css_packages.css_package("bootstrap") }}
-<script>(function(){$(function(){var a;return a={chart:{renderTo:"chart",type:"column"},colors:["#3366cc"],credits:{enabled:!1},legend:{enabled:!1},series:[{data:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],title:{text:""},tooltip:{formatter:function(){return this.x+": "+this.y}},xAxis:{categories:["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"]},yAxis:{allowDecimals:!1,title:{text:""}}},window.chart=new Highcharts.Chart(a),$("textarea").on("keyup",function(a){var b,c,d,e,f,g,h,i;b=[],i=["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"];for(g=0,h=i.length;g<h;g++)c=i[g],e=this.value.match(new RegExp(c,"gi")),e?d=e.length:d=0,b.push(d);f=Math.max.apply(Math,b);while(b.indexOf(f)!==-1)b[b.indexOf(f)]={color:"#dc3912",y:f};return window.chart.series[0].setData(b)})})}).call(this)</script>
+<script>{% include "exploreasizes/frequency-fingerprint.js" %}</script>
 
 <style>
     .row {
