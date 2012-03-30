@@ -318,3 +318,15 @@ def ensure_in_transaction(func, xg_on=False):
         return db.run_in_transaction_options(options, func)
     else:
         return db.run_in_transaction(func)
+
+def build_params(dict):
+    """ Builds a query string given a dictionary of key/value pairs for the
+    query parameters.
+    
+    Values will be automatically encoded. If a value is None, it is ignored.
+
+    """
+    
+    return "&".join("%s=%s" % (k, urllib.quote_plus(v))
+                    for k, v in dict.iteritems()
+                    if v)
