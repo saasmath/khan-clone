@@ -97,6 +97,17 @@ class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
     def show_topic(handler, topic):
+        selected_topic = None
+        parent_topic = db.get(topic.parent_keys[0])
+
+        import logging
+        logging.info("Parent key %s" % topic.parent_keys[0])
+
+        # If the parent is a supertopic, use that instead
+        if parent_topic.id in Topic._super_topic_ids:
+            selected_topic = topic
+            topic = parent_topic
+
         (marquee_video, subtopic) = topic.get_first_video_and_topic()
 
         tree = topic.make_tree(types=["Video"])
@@ -105,6 +116,8 @@ class TopicPage(request_handler.RequestHandler):
 
         if topic_children:
             video_lists = [ t.get_library_data() for t in topic_children ]
+            if not selected_topic:
+                selected_topic = topic_children[0]
         else:
             video_lists = [ topic.get_library_data() ]
 
@@ -112,6 +125,7 @@ class TopicPage(request_handler.RequestHandler):
 
         template_values = {
             "main_topic": topic,
+            "selected_topic": selected_topic,
             "topic_children": topic_children,
             "video_lists": api.jsonify.jsonify(video_lists),
             "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),

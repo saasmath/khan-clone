@@ -2436,7 +2436,7 @@ class Topic(Searchable, db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'url': self.relative_url,
+            'url': self.topic_page_url,
             'extended_slug': self.get_extended_slug(),
             'ancestor_topics': ancestor_topics,
             'top_level_topic': db.get(self.ancestor_keys[-2]).id if len(self.ancestor_keys) > 1 else self.id,

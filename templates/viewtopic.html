@@ -52,8 +52,8 @@
     <div class="nav-pane">
       <ul>
       {% for child in topic_children %}
-        <li {% if loop.first %}class="selected"{% endif %} data-id="{{ child.id }}">
-          <a href="javascript:" data-id="{{ child.id }}">
+        <li data-id="{{ child.id }}">
+          <a href="{{ main_topic.id }}/{{ child.id }}" data-id="{{ child.id }}">
             {{ child.title|escape }}
             <div class="right-arrow"></div>
           </a>
@@ -79,7 +79,8 @@
       $(function() {
         var videoLists = {{ video_lists }};
         var marqueeVideoID = "{{ marquee_video["youtube_id"]|escapejs }}";
-        TopicPage.init(videoLists, marqueeVideoID);
+        var rootPath = "/{{ main_topic.get_extended_slug() }}";
+        TopicPage.init(videoLists, marqueeVideoID, rootPath);
       });
     </script>
 {% endblock %}

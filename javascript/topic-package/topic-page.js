@@ -4,9 +4,12 @@
 
     // The currently selected subtopic in the content pane
     var selectedTopic = null;
+
+    // The topic we fall back to if there's no subtopic selected
+    var defaultTopic = null;
     
     window.TopicPage = {
-        init: function(videoLists, marqueeVideoID) {
+        init: function(videoLists, marqueeVideoID, rootPath) {
             var selectedID = videoLists[0].id;
             var self = this;
 
@@ -14,30 +17,22 @@
                 videosByTopic[topic.id] = topic;
             });
 
-            $(".topic-page-content .nav-pane li.selected").each(function(idx, selected) {
-                selectedID = $(selected).attr("data-id");
-            });
-
-            selectedTopic = videosByTopic[selectedID];
-
-            selectedTopic.view = selectedTopic.view || new this.ContentTopicView({ model: selectedTopic });
-            selectedTopic.view.show();
+            defaultTopic = videoLists[0];
 
             $(".topic-page-content .nav-pane").on("click", "a", function() {
                 selectedID = $(this).attr("data-id");
-                selectedTopic = videosByTopic[selectedID];
-
-                selectedTopic.view = selectedTopic.view || new self.ContentTopicView({ model: selectedTopic });
-                selectedTopic.view.show();
-
-                $(".topic-page-content .nav-pane li.selected").removeClass("selected");
-                $(this).parent().addClass("selected");
+                self.router.navigate("/" + selectedID, true);
+                return false;
             });
 
             VideoControls.initPlaceholder($(".main-video-placeholder"), { "youtubeId": marqueeVideoID });
 
             $(window).resize(function() {self.resize();});
             this.resize();
+
+            this.router = new this.SubTopicRouter();
+            this.router.bind("all", Analytics.handleRouterNavigation);
+            Backbone.history.start({pushState: true, root: rootPath});
         },
 
         resize: function() {
@@ -49,6 +44,38 @@
 
             jelContent.height(newHeight);
         },
+
+        SubTopicRouter: Backbone.Router.extend({
+            routes: {
+                "*subtopicID": "subtopic"
+            },
+
+            subtopic: function(subtopicID) {
+                if (subtopicID.charAt(0) == '/') {
+                    subtopicID = subtopicID.substr(1);
+                }
+
+                KAConsole.log("Switching to subtopic: " + subtopicID);
+                if (subtopicID == "") {
+                    selectedTopic = defaultTopic;
+                } else {
+                    selectedTopic = videosByTopic[subtopicID];
+                    if (!selectedTopic) {
+                        selectedTopic = defaultTopic;
+                    }
+                }
+
+                selectedTopic.view = selectedTopic.view || new TopicPage.ContentTopicView({ model: selectedTopic });
+                selectedTopic.view.show();
+
+                $(".topic-page-content .nav-pane")
+                    .find("li.selected")
+                        .removeClass("selected")
+                        .end()
+                    .find("li[data-id=\"" + selectedTopic.id + "\"]")
+                        .addClass("selected");
+            }
+        }),
 
         ContentTopicView: Backbone.View.extend({
             template: Templates.get("topic.content-topic-videos"),
