@@ -2342,6 +2342,15 @@ class Topic(Searchable, db.Model):
                 return True
         return False
 
+    def has_children_of_type(self, types):
+        """ Return true if this Topic has at least one child of 
+        any of the passed in types.
+ 
+        Types should be an array of type strings:
+            has_children_of_type(["Topic", "Video"])
+        """
+        return any(child_key.kind() in types for child_key in self.child_keys)
+
     # Gets the slug path of this topic, including parents, i.e. math/arithmetic/fractions
     @layer_cache.cache_with_key_fxn(lambda self:
         "topic_extended_slug_%s" % self.key(),
@@ -3129,10 +3138,6 @@ class Topic(Searchable, db.Model):
             topic.children = [child_dict[key] for key in topic.child_keys if child_dict.has_key(key)]
 
         return topics
-
-    @staticmethod
-    def get_homepage_topics(version=None):
-        return list(set(Topic.get_content_topics() + Topic.get_super_topics()))
 
     @staticmethod
     def _get_children_of_kind(topic, kind, include_descendants=False, include_hidden=False):
