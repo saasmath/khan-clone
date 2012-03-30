@@ -23,12 +23,15 @@ def _from_timestamp(s):
         return None
     return result
 
-class AuthToken(object):
-    """ A secure token used to authenticate a user that has a password set.
+class BaseSecureToken(object):
+    """ A base secure token used to identify and authenticate a user.
 
     Note that instances may be created that are invalid. Clients must check
     is_valid() to ensure the contents of the token are valid.
     
+    Different token types may be created by extending and having subclasses
+    override the method to generate the token signature.
+
     """
 
     def __init__(self, user_id, timestamp, signature):
@@ -36,32 +39,29 @@ class AuthToken(object):
         self.timestamp = timestamp
         self.signature = signature
         self._value_internal = None
-    
+        
     @staticmethod
-    def for_user(user_data, clock=None):
-        """ Given a user with a password set, create a new valid AuthToken
-        for that user.
-
-        Will raise an Exception if the user has never set a password.
+    def make_token_signature(user_data, timestamp):
+        """ Subclasses should override this so to return a unique signature
+        a user given a particular token type.
 
         """
+        raise Exception("Not implemented in base class")
 
-        if not user_data.credential_version:
-            raise Exception("Cannot mint an auth token for user [%s] "
-                            " - no credential version" % user_data.user_id)
+    @classmethod
+    def for_user(cls, user_data, clock=None):
+        """ Generate a secure token for a user. """
 
         timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
-        signature = AuthToken._make_token_signature(
-                user_data.user_id,
-                timestamp,
-                user_data.credential_version)
-        return AuthToken(user_data.user_id, timestamp, signature)
-    
-    @staticmethod
-    def for_value(token_value):
-        """ Parses a string intended to be an AuthToken value.
-        
-        Returns None if the string is invalid, and an instance of AuthToken
+        signature = cls.make_token_signature(
+                user_data, timestamp)
+        return cls(user_data.user_id, timestamp, signature)
+
+    @classmethod
+    def for_value(cls, token_value):
+        """ Parses a string intended to be an secure token value.
+
+        Returns None if the string is invalid, and an instance of the token
         otherwise. Note that this essentially only checks well-formedness,
         and the token itself may be expired or invalid so clients must call
         is_valid or equivalent to verify.
@@ -81,8 +81,7 @@ class AuthToken(object):
             logging.info("Tried to decode malformed auth token")
             return None
         user_id, timestamp, signature = parts
-        return AuthToken(user_id, timestamp, signature)
-    
+        return cls(user_id, timestamp, signature)
 
     DEFAULT_EXPIRY = datetime.timedelta(days=14)
     DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 86400
@@ -100,7 +99,6 @@ class AuthToken(object):
         now = (clock or datetime.datetime).utcnow()
         return not dt or (now - dt) > time_to_expiry
 
-    
     def is_authentic(self, user_data):
         """ Determines if the token is valid for a given user.
         
@@ -111,33 +109,14 @@ class AuthToken(object):
         if self.user_id != user_data.user_id:
             return False
 
-        expected = AuthToken._make_token_signature(
-                    user_data.user_id,
-                    self.timestamp,
-                    user_data.credential_version)
+        expected = self.make_token_signature(
+                    user_data, self.timestamp)
         return expected == self.signature
     
     def is_valid(self, user_data,
                  time_to_expiry=DEFAULT_EXPIRY, clock=None):
         return (not self.is_expired(time_to_expiry, clock) and
                 self.is_authentic(user_data))
-
-    @staticmethod
-    def _make_token_signature(user_id,
-                              credential_version,
-                              timestamp,
-                              key=None):
-        """ Generates a signature to be embedded inside of an auth token.
-    	This signature serves two goals. The first is to validate the rest of
-    	the contents of the token, much like a simple hash. The second is to
-        also encode a unique, user-specific string that can be invalidated if
-        the user changes her password (the credential_version).
-        
-        """
-
-        payload = "\n".join([user_id, credential_version, timestamp])
-        secret = key or App.token_recipe_key
-        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
     def __str__(self):
         return self.value
@@ -152,3 +131,28 @@ class AuthToken(object):
                                                                self.timestamp,
                                                                self.signature]))
         return self._value_internal
+
+class AuthToken(BaseSecureToken):
+    """ A secure token used to authenticate a user that has a password set.
+
+    Note that instances may be created that are invalid. Clients must check
+    is_valid() to ensure the contents of the token are valid.
+    
+    """
+    @staticmethod
+    def make_token_signature(user_data, timestamp):
+        """ Generates a signature to be embedded inside of an auth token.
+    	This signature serves two goals. The first is to validate the rest of
+    	the contents of the token, much like a simple hash. The second is to
+        also encode a unique user-specific string that can be invalidated if
+        all existing tokens of the given type need to be invalidated.
+
+        """
+
+        payload = "\n".join([
+                user_data.user_id,
+                user_data.credential_version,
+                timestamp
+                ])
+        secret = App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
