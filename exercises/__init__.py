@@ -319,7 +319,7 @@ class EditExercise(request_handler.RequestHandler):
             self.render_jinja2_template("editexercise.html", template_values)
 
 class UpdateExercise(request_handler.RequestHandler):
-    
+
     @staticmethod
     def do_update(dict):
         user = models.UserData.current().user
@@ -335,7 +335,7 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise.covers = []
             exercise.author = user
 
-        exercise.prerequisites = dict["prerequisites"] 
+        exercise.prerequisites = dict["prerequisites"]
         exercise.covers = dict["covers"]
 
         if "v_position" in dict:
@@ -352,10 +352,10 @@ class UpdateExercise(request_handler.RequestHandler):
         exercise.put()
 
         if "related_videos" in dict and len(dict["related_videos"]):
-            UpdateExercise.do_update_related_videos(exercise, 
+            UpdateExercise.do_update_related_videos(exercise,
                                                     dict["related_videos"])
         elif "related_video_keys" in dict and len(dict["related_video_keys"]):
-            UpdateExercise.do_update_related_video_keys(exercise, 
+            UpdateExercise.do_update_related_video_keys(exercise,
                                                     dict["related_video_keys"])
         else:
             UpdateExercise.do_update_related_video_keys(exercise, [])
@@ -390,11 +390,11 @@ class UpdateExercise(request_handler.RequestHandler):
                 exercise_video.exercise = exercise
                 exercise_video.video = db.Key(video_key)
                 exercise_video.exercise_order = 0 #reordering below
-                exercise_video.put() 
+                exercise_video.put()
 
         # Start ordering
         exercise_videos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
-        
+
         # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
         topics = {}
         for exercise_video in exercise_videos:
@@ -406,8 +406,8 @@ class UpdateExercise(request_handler.RequestHandler):
                 topics[topic.key()][exercise_video] = topic.get_child_order(exercise_video.video.key())
 
         # sort the list by topics that have the most exercises in them
-        topic_list = sorted(topics.keys(), key = lambda k: len(topics[k]), reverse = True)  
-        
+        topic_list = sorted(topics.keys(), key = lambda k: len(topics[k]), reverse = True)
+
         orders = {}
         i=0
         for topic_key in topic_list:
@@ -421,7 +421,7 @@ class UpdateExercise(request_handler.RequestHandler):
 
         for exercise_video, i in orders.iteritems():
             exercise_video.exercise_order = i
-        
+
         db.put(exercise_videos)
 
     @user_util.developer_only
