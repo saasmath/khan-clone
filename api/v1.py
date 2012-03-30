@@ -405,6 +405,7 @@ def put_topic(topic_id, version_id = "edit"):
 
 @route("/api/v1/topicversion/<version_id>/maplayout", methods=["GET"])
 @route("/api/v1/maplayout", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
@@ -1655,6 +1656,7 @@ def user_playlists_specific(topic_id):
     return None
 
 @route("/api/v1/user/exercises/reviews/count", methods=["GET"])
+@open_access
 @oauth_optional()
 @jsonp
 @jsonify
