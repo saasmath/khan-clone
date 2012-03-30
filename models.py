@@ -2089,6 +2089,7 @@ def preload_default_version_data(version_number, run_code):
     from library import library_content_html
     import autocomplete
     import templatetags
+    from knowledgemap.layout import MapLayout
 
     # Preload library for upcoming version
     library_content_html(False, version.number)
@@ -2112,6 +2113,23 @@ def preload_default_version_data(version_number, run_code):
     # Sync all topic exercise badges with upcoming version
     topic_exercise_badges.sync_with_topic_version(version)
     logging.info("synced topic exercise badges")
+
+    map_layout = MapLayout.get_for_version(version)
+    if not map_layout.has_layout:
+        # Copy the previous maplayout to current version's maplayout
+        # if it doesn't already exist.
+        # TODO: this is temporary. Eventually this should be generated correctly,
+        # once the topics admin UI can send maplayout info.
+
+        previous_version = TopicVersion.get_by_id(version.copied_from_number)
+        map_layout_previous = MapLayout.get_for_version(previous_version)
+
+        if not map_layout_previous.has_layout:
+            Setting.topic_admin_task_message("Error - missing map layout and no previous version to copy from.")
+            raise deferred.PermanentTaskFailure
+
+        map_layout.layout = map_layout_previous.layout
+        map_layout.put()
 
     do_set_default_deferred_step(change_default_version,
                                  version_number,

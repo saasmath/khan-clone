@@ -98,6 +98,10 @@ class MapLayout(db.Model):
 
     @staticmethod
     def get_for_version(version):
+
+        if not version:
+            return None
+
         key = MapLayout.key_for_version(version)
         map_layout = MapLayout.get_by_key_name(key)
 
@@ -109,3 +113,7 @@ class MapLayout(db.Model):
             )
 
         return map_layout
+
+    @property
+    def has_layout(self):
+        return bool(self.layout)
