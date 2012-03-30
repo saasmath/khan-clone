@@ -135,11 +135,7 @@ def open_access(func):
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # Make sure current UserData exists as well as is_current_user_admin
-        # because UserData properly verifies xsrf token
-        user_data = models.UserData.current()
-
-        if user_data and users.is_current_user_admin():
+        if user_util.is_current_user_admin():
             return func(*args, **kwargs)
 
         return unauthorized_response()
@@ -151,8 +147,7 @@ def admin_required(func):
 def developer_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        user_data = models.UserData.current()
-        if user_data and (users.is_current_user_admin() or user_data.developer):
+        if user_util.is_current_user_developer():
             return func(*args, **kwargs)
 
         return unauthorized_response()
@@ -168,9 +163,7 @@ def developer_required(func):
 def moderator_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        user_data = models.UserData.current()
-        if user_data and (users.is_current_user_admin() or user_data.developer
-                          or user_data.moderator):
+        if user_util.is_current_user_moderator():
             return func(*args, **kwargs)
 
         return unauthorized_response()
