@@ -3337,7 +3337,7 @@ class Topic(Searchable, db.Model):
     def get_exercise_badge(self):
         """ Returns the TopicExerciseBadge associated with this topic
         """
-        badge_name = topic_exercise_badges.TopicExerciseBadge.name_for_topic_id(self.id)
+        badge_name = topic_exercise_badges.TopicExerciseBadge.name_for_topic_key_name(self.key().name())
         return util_badges.all_badges_dict().get(badge_name, None)
 
     @staticmethod

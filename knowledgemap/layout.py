@@ -8,8 +8,6 @@ from google.appengine.ext import db
 
 import object_property
 import models
-from badges.util_badges import all_badges_dict
-from badges.topic_exercise_badges import TopicExerciseBadge
 import logging
 
 NUM_SUGGESTED_TOPICS = 2
@@ -19,22 +17,28 @@ def topics_layout(user_data, user_exercise_graph):
     and suggested info already filled in.
     """
 
-    layout = MapLayout.get_for_version(models.TopicVersion.get_default_version()).layout
+    version = models.TopicVersion.get_default_version()
+    topics = models.Topic.get_visible_topics(version)
+    layout = MapLayout.get_for_version(version).layout
 
     if not layout:
         raise Exception("Missing map layout for default topic version")
 
     # Build each topic's completion/suggested status from constituent exercises
-    for topic_dict in list(layout["topics"]):
+    for topic in topics:
 
-        # We currently use TopicExerciseBadge as the quickest cached list of constituent
-        # exercise names in each topic. TODO: once this data is elsewhere, we don't need
-        # to use this badge.
-        badge_name = TopicExerciseBadge.name_for_topic_id(topic_dict["id"])
-        badge = all_badges_dict().get(badge_name, None)
+        topic_dict = layout["topics"].get(topic.id, None)
+
+        if not topic_dict:
+            # Map layout doesn't know about this topic -- skip
+            logging.error("Missing map layout info for topic: %s" % topic.id)
+            continue
+
+        badge = topic.get_exercise_badge()
+
         if not badge:
-            logging.error("Missing topic badge for topic: %s" % topic_dict["standalone_title"])
-            layout["topics"].remove(topic_dict)
+            # Missing TopicExerciseBadge for this topic -- skip
+            logging.error("Missing topic exercise badge for topic: %s" % topic.id)
             continue
 
         proficient, suggested, total = (0, 0, 0)
@@ -65,8 +69,8 @@ def topics_layout(user_data, user_exercise_graph):
     # "Most suggested" is defined as having the highest number of suggested constituent
     # exercises.
     suggested_candidates = sorted(
-            layout["topics"],
-            key=lambda t: t["count_suggested"],
+            layout["topics"].values(),
+            key=lambda t: t.get("count_suggested", 0),
             reverse=True)[:NUM_SUGGESTED_TOPICS]
 
     for topic_dict in suggested_candidates:
