@@ -623,7 +623,6 @@ class UserExercise(db.Model):
 
         return user_exercise
 
-    # TODO(kamens) unit test next_in_topic...seriously, unit test this like crazy.
     @staticmethod
     def next_in_topic(user_data, topic, n=3, queued=[]):
         """ Returns the next n suggested user exercises for this topic,
