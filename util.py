@@ -19,6 +19,7 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies, \
 
 from api.auth.google_util import get_google_user_id_and_email_from_oauth_map
 from api.auth.auth_util import current_oauth_map, allow_cookie_based_auth
+import uid
 import urlparse
 
 @request_cache.cache()
@@ -51,7 +52,7 @@ def get_current_user_id_from_cookies_unsafe():
 
     user_id = None
     if user: # if we have a google account
-        user_id = "http://googleid.khanacademy.org/" + user.user_id()
+        user_id = uid.google_user_id(user)
 
     if not user_id:
         user_id = auth.cookies.get_user_from_khan_cookies()
