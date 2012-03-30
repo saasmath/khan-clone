@@ -134,6 +134,13 @@ class TopicExerciseBadge(Badge):
         return slugify(self.topic_standalone_title)
 
     @property
+    def compact_completed_icon_src(self):
+        """ Returns the icon src for a special, "completed!" version of this topic badge
+        to be used on the knowledge map only, for now.
+        """
+        return "/images/power-mode/badges/%s-completed-40x40.png" % self.icon_filename
+
+    @property
     def compact_icon_src(self):
         return "/images/power-mode/badges/%s-40x40.png" % self.icon_filename
 
