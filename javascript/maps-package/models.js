@@ -31,7 +31,6 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             y: y,
             display_name: displayName,
             lowercaseName: displayName.toLowerCase(),
-            inAllList: false, // TODO(kamens): remove?
             iconUrl: iconUrl,
             isSuggested: isSuggested,
             className: className,
