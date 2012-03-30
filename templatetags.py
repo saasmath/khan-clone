@@ -276,3 +276,12 @@ def to_secure_url(url):
     """
     
     return util.secure_url(url)
+
+def to_insecure_url(url):
+    """ Returns the appropriate http server URL for a url
+    somewhere on Khan Academy. Note - this is not intended for links to
+    external sites.
+
+    """
+    
+    return util.insecure_url(url)

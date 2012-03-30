@@ -184,10 +184,17 @@ def secure_url(url):
 def insecure_url(url):
     """ Given a Khan Academy URL (i.e. not to an external site), returns an
     absolute http version of the URL.
+    
+    In dev servers, this always just returns the same URL since dev servers
+    never convert to/from secure URL's.
 
     """
 
     if url.startswith("http://"):
+        return url
+    
+    if App.is_dev_server:
+        # Dev servers can't handle https/http conversion
         return url
 
     _, netloc, path, query, fragment = _get_url_parts(url)
