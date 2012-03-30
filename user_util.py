@@ -59,8 +59,8 @@ def open_access(method):
 @request_cache.cache()
 def is_current_user_developer():
     user_data = models.UserData.current()
-    return (users.is_current_user_admin() or
-            bool(user_data and user_data.developer))
+    return user_data and (users.is_current_user_admin() or
+                          bool(user_data.developer))
 
 def developer_only(method):
     '''Decorator checking that users of a request are register as a developer.'''
@@ -79,8 +79,8 @@ def developer_only(method):
 @request_cache.cache()
 def is_current_user_moderator():
     user_data = models.UserData.current()
-    return (users.is_current_user_admin() or
-            bool(user_data and (user_data.moderator or user_data.developer)))
+    return user_data and (users.is_current_user_admin() or
+                          bool(user_data.moderator or user_data.developer))
 
 def moderator_only(method):
     '''Decorator checking that users of a request is registered as a moderator.'''
