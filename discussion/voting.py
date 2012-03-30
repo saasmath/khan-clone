@@ -11,6 +11,7 @@ from rate_limiter import VoteRateLimiter
 from models import UserData
 from models_discussion import FeedbackVote
 import request_handler
+import user_util
 import util
 
 from badges.badge_context import BadgeContextType
@@ -37,6 +38,7 @@ class VotingSortOrder:
         return sorted(sorted(entities, key=key_fxn, reverse=True), key=lambda entity: entity.is_visible_to_public(), reverse=True)
 
 class UpdateQASort(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
         sort = self.request_int("sort", default=VotingSortOrder.HighestPointsFirst)
@@ -54,6 +56,7 @@ class UpdateQASort(request_handler.RequestHandler):
             self.redirect("/")
 
 class VoteEntity(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         # You have to be logged in to vote
         user_data = UserData.current()
@@ -95,6 +98,7 @@ class VoteEntity(request_handler.RequestHandler):
         )
 
 class FinishVoteEntity(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
 
         user_data = self.request_user_data("email")
@@ -147,6 +151,7 @@ class FinishVoteEntity(request_handler.RequestHandler):
 
 class StartNewVoteMapReduce(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         # Admin-only restriction is handled by /admin/* URL pattern

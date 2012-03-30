@@ -11,8 +11,6 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 from google.appengine.api import memcache
 
-from api.auth.decorators import developer_required
-
 import webapp2
 from webapp2_extras.routes import DomainRoute
 
@@ -47,6 +45,7 @@ import paypal
 import smarthistory
 import topics
 import goals.handlers
+import appengine_stats
 import stories
 import summer
 import common_core
@@ -72,7 +71,6 @@ from api.auth.xsrf import ensure_xsrf_cookie
 import redirects
 import robots
 from importer.handlers import ImportHandler
-from gae_bingo.gae_bingo import ab_test
 
 from library import library_topic_html
 
@@ -181,8 +179,11 @@ class ViewVideo(request_handler.RequestHandler):
 
         return template_values
 
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, path, video_id):
+        user_data = UserData.current()
+
         if path:
             path_list = path.split('/')
 
@@ -196,8 +197,11 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
 
     # The handler itself is deprecated. The ViewVideo handler is the canonical
     # handler now.
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, readable_id=""):
+
+        user_data = UserData.current()
 
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
@@ -230,6 +234,7 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
 
 class ReportIssue(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         issue_type = self.request.get('type')
         self.write_response(issue_type, {'issue_labels': self.request.get('issue_labels'), })
@@ -259,6 +264,7 @@ class ReportIssue(request_handler.RequestHandler):
         self.render_jinja2_template(page, template_values)
 
 class Crash(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         if self.request_bool("capability_disabled", default=False):
             raise CapabilityDisabledError("Simulate scheduled GAE downtime")
@@ -267,62 +273,76 @@ class Crash(request_handler.RequestHandler):
             raise Exception("What is Toronto?")
 
 class ReadOnlyDowntime(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         raise CapabilityDisabledError("App Engine maintenance period")
 
+    @user_util.open_access
     def post(self):
         return self.get()
 
 class SendToLog(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         message = self.request_string("message", default="")
         if message:
             logging.critical("Manually sent to log: %s" % message)
 
 class MobileFullSite(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.set_mobile_full_site_cookie(True)
         self.redirect("/")
 
 class MobileSite(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.set_mobile_full_site_cookie(False)
         self.redirect("/")
 
 class ViewFAQ(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("/about/faq", True)
         return
 
 class ViewGetInvolved(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("/contribute", True)
 
 class ViewContribute(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('contribute.html', {"selected_nav_link": "contribute"})
 
 class ViewCredits(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('viewcredits.html', {"selected_nav_link": "contribute"})
 
 class Donate(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
-        self.redirect("/contribute", True)
+        self.render_jinja2_template('donate.html', {"selected_nav_link": "donate"})
 
 class ViewTOS(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('tos.html', {"selected_nav_link": "tos"})
 
 class ViewAPITOS(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('api-tos.html', {"selected_nav_link": "api-tos"})
 
 class ViewPrivacyPolicy(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('privacy-policy.html', {"selected_nav_link": "privacy-policy"})
 
 class ViewDMCA(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('dmca.html', {"selected_nav_link": "dmca"})
 
@@ -373,6 +393,7 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
             prop = "user"
         return (old_email, new_email, prop)
 
+    @user_util.admin_only
     def get(self):
         (old_email, new_email, prop) = self.get_email_params()
         if new_email == old_email:
@@ -410,6 +431,7 @@ class ChangeEmail(bulk_update.handler.UpdateKind):
 
 class Search(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         query = self.request.get('page_search_query')
         template_values = {'page_search_query': query}
@@ -526,19 +548,6 @@ class Search(request_handler.RequestHandler):
                     child_topics = topic.get_child_topics(include_descendants=True)
                     topic.child_topics = [t for t in child_topics if t.has_content()]
 
-        # A/B test showing a matching topic at the top of the page
-        if matching_topic_count > 0:
-            show_matching_topic = ab_test("Search shows matching topic 2", ["show", "hide"], ["search_topic_clicked_link", "search_topic_started_video", "search_topic_completed_video"]) == "show"
-            analytics_bingo = {"name": "Bingo: Search topic 2", "value": "Show" if show_matching_topic else "Hide"}
-
-            if not show_matching_topic:
-                for topic in topics:
-                    topic.matches = False
-                matching_topic_count = 0
-
-        else:
-            analytics_bingo = None
-
         template_values.update({
                            'topics': topics,
                            'videos': filtered_videos,
@@ -546,21 +555,23 @@ class Search(request_handler.RequestHandler):
                            'search_string': query,
                            'video_count': video_count,
                            'topic_count': topic_count,
-                           'matching_topic_count': matching_topic_count,
-                           'analytics_bingo': analytics_bingo
+                           'matching_topic_count': matching_topic_count
                            })
 
         self.render_jinja2_template("searchresults.html", template_values)
 
 class RedirectToJobvite(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("http://hire.jobvite.com/CompanyJobs/Careers.aspx?k=JobListing&c=qd69Vfw7")
 
 class RedirectToSchoolImplementationsBlog(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.redirect("http://ka-implementations.tumblr.com/")
 
 class PermanentRedirectToHome(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
 
         redirect_target = "/"
@@ -579,6 +590,7 @@ class PermanentRedirectToHome(request_handler.RequestHandler):
         self.redirect(redirect_target, True)
 
 class ServeUserVideoCss(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
         if user_data == None:
@@ -594,9 +606,9 @@ class ServeUserVideoCss(request_handler.RequestHandler):
         self.response.out.write(user_video_css.video_css)
 
 class RealtimeEntityCount(request_handler.RequestHandler):
+    @user_util.open_access
+    @user_util.dev_server_only
     def get(self):
-        if not App.is_dev_server:
-            raise Exception("Only works on dev servers.")
         default_kinds = 'Exercise'
         kinds = self.request_string("kinds", default_kinds).split(',')
         for kind in kinds:
@@ -604,7 +616,7 @@ class RealtimeEntityCount(request_handler.RequestHandler):
             self.response.out.write("%s: %d<br>" % (kind, count))
 
 class MemcacheViewer(request_handler.RequestHandler):
-    @developer_required
+    @user_util.developer_only
     def get(self):
         key = self.request_string("key", "__layer_cache_models._get_settings_dict__")
         namespace = self.request_string("namespace", App.version)
@@ -820,6 +832,11 @@ application = webapp2.WSGIApplication([
     ('/summer/paypal-ipn', summer.PaypalIPN),
     ('/summer/admin/download', summer.Download),
     ('/summer/admin/updatestudentstatus', summer.UpdateStudentStatus),
+
+    # Stats about appengine
+    ('/stats/dashboard', dashboard.Dashboard),
+    ('/stats/contentdash', dashboard.ContentDashboard),
+    ('/stats/memcache', appengine_stats.MemcacheStatus),
 
     ('/robots.txt', robots.RobotsTxt),
 

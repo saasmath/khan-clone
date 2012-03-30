@@ -20,6 +20,7 @@ import voting
 from phantom_users.phantom_util import disallow_phantoms
 
 class PageComments(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         page = 0
         try:
@@ -52,6 +53,7 @@ class PageComments(request_handler.RequestHandler):
 
 class AddComment(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def post(self):
         user_data = models.UserData.current()
 

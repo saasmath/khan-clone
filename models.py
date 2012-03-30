@@ -48,7 +48,7 @@ from auth.models import CredentialedUser
 from templatefilters import slugify
 from gae_bingo.gae_bingo import ab_test, bingo
 from gae_bingo.models import GAEBingoIdentityModel
-from experiments import StrugglingExperiment, MarqueeVideoExperiment
+from experiments import StrugglingExperiment
 import re
 
 
@@ -962,6 +962,12 @@ class NicknameIndex(db.Model):
 
 PRE_PHANTOM_EMAIL = "http://nouserid.khanacademy.org/pre-phantom-user-2"
 
+# Demo user khanacademy.demo2@gmail.com is a coworker of khanacademy.demo@gmail.com
+# khanacademy.demo@gmail.com is coach of a bunch of Khan staff and LASD staff, which is shared
+# with users as a demo. Access to the demo is via /api/auth/token_to_session with
+# oauth tokens for khanacademy.demo2@gmail.com supplied via secrets.py
+COACH_DEMO_COWORKER_EMAIL = "khanacademy.demo2@gmail.com"
+
 class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
     # as the fields of this property can change; only the ID is stable and
@@ -1216,6 +1222,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         return util.is_phantom_user(self.user_id)
 
     @property
+    def is_demo(self):
+        return self.user_email.startswith(COACH_DEMO_COWORKER_EMAIL)
+
+    @property
     def is_pre_phantom(self):
         return PRE_PHANTOM_EMAIL == self.user_email
 
@@ -1267,6 +1277,10 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
         query.order('-points') # Temporary workaround for issue 289
 
         return query.get()
+
+    @staticmethod
+    def get_from_user(user):
+        return UserData.get_from_db_key_email(user.email())
 
     @staticmethod
     def get_from_username_or_email(username_or_email):
@@ -1593,9 +1607,6 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             # See http://meta.stackoverflow.com/questions/55483/proposed-consecutive-days-badge-tracking-change
             if util.hours_between(self.last_activity, dt_activity) >= 40:
                 self.start_consecutive_activity_date = dt_activity
-
-            if util.hours_between(self.last_activity, dt_activity) >= 12:
-                bingo(['marquee_actively_returned', 'marquee_num_active_returns'])
 
             self.last_activity = dt_activity
 
@@ -1960,11 +1971,15 @@ def check_for_problems(version_number, run_code):
     content_problems = version.find_content_problems()
     for problem_type, problems in content_problems.iteritems():
         if len(problems):
+            content_problems["Version"] = version_number
+            content_problems["Date detected"] = datetime.datetime.now()
+            layer_cache.KeyValueCache.set(
+                "set_default_version_content_problem_details", content_problems)
             Setting.topic_admin_task_message(("Error - content problems " +
                 "found: %s. <a target=_blank " +
-                "href='/api/v1/dev/topictree/%i/problems'>" +
+                "href='/api/v1/dev/topictree/problems'>" +
                 "Click here to see problems.</a>") % 
-                (problem_type, version_number))
+                (problem_type))
                 
             raise deferred.PermanentTaskFailure
 
@@ -2295,7 +2310,8 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry"]
+    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", 
+                        "brit-cruise", "california-standards-test", "gmat"]
 
     @property
     def relative_url(self):
@@ -3655,6 +3671,10 @@ class Video(Searchable, db.Model):
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default=0)
 
+    # A dict of properties that may only exist on some videos such as 
+    # original_url for smarthistory_videos.
+    extra_properties = object_property.UnvalidatedObjectProperty()
+
     # Human readable, unique id that can be used in URLS.
     readable_id = db.StringProperty()
 
@@ -3916,6 +3936,7 @@ class Video(Searchable, db.Model):
 
         return {
             'title': video.title,
+            'extra_properties': video.extra_properties,
             'description': video.description,
             'youtube_id': video.youtube_id,
             'readable_id': video.readable_id,
@@ -4267,10 +4288,6 @@ class VideoLog(BackupModel):
 
         if seconds_watched > 0:
 
-            bingo('marquee_started_any_video')
-            if video.readable_id in MarqueeVideoExperiment._ab_test_alternatives and video.readable_id == MarqueeVideoExperiment.ab_test():
-                bingo('marquee_started_marquee_video')
-
             if user_video.seconds_watched == 0:
                 user_data.uservideocss_version += 1
                 UserVideoCss.set_started(user_data, user_video.video, user_data.uservideocss_version)
@@ -4323,7 +4340,6 @@ class VideoLog(BackupModel):
             bingo([
                 'videos_finished',
                 'struggling_videos_finished',
-                'marquee_num_videos_completed',
             ])
         video_log.is_video_completed = user_video.completed
 

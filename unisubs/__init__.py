@@ -9,6 +9,7 @@ from models import Video
 from models import VideoSubtitles
 from models import VideoSubtitlesFetchReport
 import request_handler
+import user_util
 
 BATCH_SIZE = 5
 DEFER_SECONDS = 1
@@ -16,11 +17,14 @@ TIMEOUT_SECONDS = 5
 REPORT_TEMPLATE = (('status', 'started'), ('fetches', 0), ('writes', 0),
                    ('errors', 0), ('redirects', 0))
 YOUTUBE_URL = 'http://www.youtube.com/watch?v=%s'
-UNISUBS_URL = 'http://www.universalsubtitles.org/api/1.0/subtitles/?language=en&video_url=%s'
+UNISUBS_URL = 'http://www.universalsubtitles.org/api/1.0/subtitles/' \
+                  '?language=en&video_url=%s'
 TASK_QUEUE = 'subtitles-fetch-queue'
 
 
 class ReportHandler(request_handler.RequestHandler):
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def get(self):
         """Display reports from recent imports"""
         limit = self.request_int('limit', 25)
@@ -40,6 +44,8 @@ class ReportHandler(request_handler.RequestHandler):
 
 
 class ImportHandler(request_handler.RequestHandler):
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def get(self):
         """Start the subtitles import task chain
 
@@ -47,6 +53,8 @@ class ImportHandler(request_handler.RequestHandler):
         """
         self.post()
 
+    # The 'manual access checking' here is app.yaml: this is under /admin/
+    @user_util.manual_access_checking
     def post(self):
         """Start the subtitles import task chain
 

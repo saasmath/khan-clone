@@ -24,6 +24,7 @@ from app import App
 import cookie_util
 
 from api.jsonify import jsonify
+from gae_bingo.gae_bingo import ab_test
 
 class RequestInputHandler(object):
 
@@ -75,6 +76,10 @@ class RequestInputHandler(object):
         override_user_data = self.request_student_user_data()
         return UserData.get_visible_user(override_user_data)
 
+    def request_user_data_by_user_id(self):
+        user_id = self.request_string("userID")
+        return UserData.get_from_user_id(user_id)
+
     # get the UserData instance based on the querystring. The precedence is:
     # 1. email
     # 2. student_email
@@ -117,6 +122,42 @@ class RequestInputHandler(object):
             return self.request_int(key, 1 if default else 0) == 1
 
 class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
+
+    class __metaclass__(type):
+        """Enforce that subclasses of RequestHandler decorate get()/post()/etc.
+
+        This metaclass enforces that whenever we create a
+        RequestHandler or subclass thereof, that the class we're
+        creating has a decorator on its get(), post(), and other
+        http-verb methods that specify the access needed to get or
+        post (admin, moderator, etc).
+
+        It does this through a two-step process.  In step 1, we make
+        all the access-control decorators set a function-global
+        variable in the method they're decorating.  (This is done in
+        the decorator definitions in user_util.py.)  In step 2, here,
+        we check that that variable is defined.  We can do this
+        because metaclass, when creating a new class, has access to
+        the functions (methods) that the class implements.
+
+        Note that this check happens at import-time, so we don't have
+        to worry about this assertion triggering surprisingly in
+        production.
+        """
+        def __new__(mcls, name, bases, attrs):
+            for fn in ("get", "post", "head", "put"):
+                if fn in attrs:
+                    # TODO(csilvers): remove the requirement that the
+                    # access control decorator go first.  To do that,
+                    # we'll have to store state somewhere other than
+                    # in func_dict (which later decorators overwrite).
+                    assert '_access_control' in attrs[fn].func_dict, \
+                           ('FATAL ERROR: '
+                            'Need to put an access control decorator '
+                            '(from user_util) on %s.%s. '
+                            '(It must be the topmost decorator for the method.)'
+                            % (name, fn))
+            return type.__new__(mcls, name, bases, attrs)
 
     def is_ajax_request(self):
         # jQuery sets X-Requested-With header for this detection.
@@ -377,9 +418,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             # Create a superprops dict for MixPanel with a version number
             # Bump the version number if changes are made to the client-side analytics
             # code and we want to be able to filter by version.
-            superprops_dict = dict(superprops_list)
-            superprops_dict["Version"] = 1
-            template_values['mixpanel_superprops'] = jsonify(superprops_dict)
+            template_values['mixpanel_superprops'] = dict(superprops_list)
 
             # Copy over first 4 per-user properties for GA (5th is reserved for Bingo)
             template_values['ga_custom_vars'] = superprops_list[0:4]
@@ -389,6 +428,15 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             goals_data = [g.get_visible_data() for g in goals]
             if goals_data:
                 template_values['global_goals'] = jsonify(goals_data)
+
+        # A/B test to show topic browser in the header (disabled on mobile)
+        if self.is_mobile_capable():
+            template_values['watch_topic_browser_enabled'] = False
+        else:
+            show_topic_browser = ab_test("Show topic browser in header", ["show", "hide"], ["topic_browser_clicked_link", "topic_browser_started_video", "topic_browser_completed_video"])
+            template_values['watch_topic_browser_enabled'] = (show_topic_browser == "show")
+            analytics_bingo = {"name": "Bingo: Header topic browser (fixed)", "value": show_topic_browser}
+            template_values['analytics_bingo'] = analytics_bingo
 
         return template_values
 

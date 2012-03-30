@@ -25,7 +25,8 @@ from unisubs import ImportHandler
 from unisubs import _task_handler
 from unisubs import _task_report_handler
 
-UNISUBS_API_URL = 'http://www.universalsubtitles.org/api/1.0/subtitles/?language=en&video_url=%s'
+UNISUBS_API_URL = 'http://www.universalsubtitles.org/api/1.0/subtitles/' \
+                      '?language=en&video_url=%s'
 
 # Hack for speed: force default queue name.  Using the correct non-default
 # queue throws an UnknownQueueError unless the testbed's root_path is set.
@@ -38,7 +39,8 @@ class ImportHandlerTest(BaseTest):
     def test_cron_handler_enqueues_task_and_does_not_redirect(self):
         handler = ImportHandler(None, Mock())
         handler.request_string = Mock(return_value='')
-        handler.redirect = Mock(side_effect=RuntimeError('should not redirect'))
+        handler.redirect = Mock(
+            side_effect=RuntimeError('should not redirect'))
 
         handler.get()
         self.assertTasksInQueue(n=1, queue_names=UNISUBS_FETCH_Q)
@@ -54,7 +56,8 @@ class ImportHandlerTest(BaseTest):
         handler.post()
         self.assertTasksInQueue(n=1, queue_names=UNISUBS_FETCH_Q)
         handler.request_string.assert_called_once_with('interactive')
-        handler.redirect.assert_called_once_with('/admin/unisubs?_started=UUID')
+        handler.redirect.assert_called_once_with(
+            '/admin/unisubs?_started=UUID')
 
 
 class TaskReportHandlerTest(BaseTest):
@@ -107,16 +110,19 @@ class TaskHandlerTest(MockUrlfetchTest):
     def test_schedule_task_after_processing_full_batch(self):
         self._set_responses_xrange(BATCH_SIZE)
         _task_handler('UUID')
-        self.assertTasksInQueue(n=1, name='UUID_1', queue_names=UNISUBS_FETCH_Q)
+        self.assertTasksInQueue(n=1, name='UUID_1',
+                                queue_names=UNISUBS_FETCH_Q)
 
     def test_schedule_report_after_processing_partial_batch(self):
         self._set_responses_xrange(1)
         _task_handler('UUID')
-        self.assertTasksInQueue(n=1, name='UUID_report', queue_names=UNISUBS_FETCH_Q)
+        self.assertTasksInQueue(n=1, name='UUID_report',
+                                queue_names=UNISUBS_FETCH_Q)
 
     def test_schedule_report_after_processing_empty_batch(self):
         _task_handler('UUID')
-        self.assertTasksInQueue(n=1, name='UUID_report', queue_names=UNISUBS_FETCH_Q)
+        self.assertTasksInQueue(n=1, name='UUID_report',
+                                queue_names=UNISUBS_FETCH_Q)
 
     def test_delay_between_batches(self):
         self._set_responses_xrange(BATCH_SIZE)
@@ -164,7 +170,8 @@ class TaskHandlerTest(MockUrlfetchTest):
         defer.side_effect = _defer
 
         _task_handler('UUID')
-        self.assertEqual(error.call_count, 1, 'download error should be logged')
+        self.assertEqual(error.call_count, 1,
+                         'download error should be logged')
         self.assertEqual(defer.call_count, 1, 'task should be enqueued')
 
     @patch('unisubs.VideoSubtitles')
@@ -224,4 +231,3 @@ class TaskHandlerTest(MockUrlfetchTest):
             key = VideoSubtitles.get_key_name('en', v.youtube_id)
             subs = VideoSubtitles.get_by_key_name(key)
             self.assertIsNotNone(subs)
-
