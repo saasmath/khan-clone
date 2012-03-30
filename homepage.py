@@ -16,13 +16,13 @@ from api.auth.xsrf import ensure_xsrf_cookie
 
 ITEMS_PER_SET = 4
 
-def thumbnail_link_dict(video = None, exercise = None, thumb_url = None):
+def thumbnail_link_dict(video = None, exercise = None, thumb_url = None, parent_topic = None):
 
     link_dict = None
 
     if video:
         link_dict = {
-            "href": "/video/%s" % video.readable_id,
+            "href": ("/video/%s" % video.readable_id) if not parent_topic else ("/%s/v/%s" % (parent_topic.get_extended_slug(), video.readable_id)),
             "thumb_urls": models.Video.youtube_thumbnail_urls(video.youtube_id),
             "title": video.title,
             "desc_html": templatetags.video_name_and_progress(video),

@@ -19,8 +19,67 @@
 {% endblock pagecss %}
 
 {% block pagecontent %}
+
 <article id="homepage">
-{{ templatetags.topic_browser("topic-browse") }}
-{{ library_content }}
+
+<div id="main-video">
+{% if is_mobile_capable %}
+  {{ youtube.player_embed(marquee_video["youtube_id"], 480, 395) }}
+{% else %}
+  <a class="main-video-link" href="{{ marquee_video["href"] }}" data-tag="Topic Page Featured">
+    <div class="main-video-placeholder" style="background-image:url('{{ marquee_video["thumb_urls"]["sd"]|escape }}')">
+      <div class="youtube-placeholder-title">{{ marquee_video["title"]|escape }}</div>
+      <img class="youtube-play" src="/images/youtube_play.png" />
+    </div>
+  </a>
+{% endif %}
+</div>
+
+<div class="topic-page-header">
+  <div data-role="header" class="library-content-header">
+    <h2 class='topic-heading'>{{ main_topic.standalone_title }}</h2>
+    <p class='topic-desc'>{{ main_topic.description }}</p>
+    <div>
+      <a href="{{ marquee_video["href"] }}" data-tag="Topic Page C2A" class="call-to-action simple-button action-gradient green watch-a-video">Watch "{{ marquee_video["title"]|escape }}"</a>
+    </div>
+  </div>
+</div>
+
+<div class="topic-page-content">
+  <div class="heading">Videos in {{ main_topic.title|escape }}</div>
+  <div class="container">
+    {% if topic_children %}
+    <div class="nav-pane">
+      <ul>
+      {% for child in topic_children %}
+        <li {% if loop.first %}class="selected"{% endif %} data-id="{{ child.id }}">
+          <a href="javascript:" data-id="{{ child.id }}">
+            {{ child.title|escape }}
+            <div class="right-arrow"></div>
+          </a>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <div class="content-pane {% if topic_children %}indent{% endif %}">
+      <div class="content-inner">
+      </div>
+    </div>
+  </div>
+</div>
+
 </article>
+{% endblock %}
+
+{% block bottompagescript %}
+    {{ js_css_packages.js_package("topic") }}
+    {{ js_css_packages.css_package("topic") }}
+    <script type="text/javascript">
+      $(function() {
+        var videoLists = {{ video_lists }};
+        var marqueeVideoID = "{{ marquee_video["youtube_id"]|escapejs }}";
+        TopicPage.init(videoLists, marqueeVideoID);
+      });
+    </script>
 {% endblock %}

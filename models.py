@@ -2347,6 +2347,25 @@ class Topic(Searchable, db.Model):
 			})
         return self
 
+    def get_library_data(self, node_dict=None):
+        if node_dict:
+            children = [ node_dict[c] for c in self.child_keys if c in node_dict ]
+        else:
+            children = db.get(self.child_keys)
+
+        ret = {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "children": [{
+                "url": "/%s/v/%s" % (self.get_extended_slug(), v.readable_id),
+                "key_id": v.key().id(),
+                "title": v.title
+            } for v in children if v.__class__.__name__ == "Video"]
+        }
+
+        return ret
+
     def get_child_order(self, child_key):
         return self.child_keys.index(child_key)
 
@@ -2408,7 +2427,7 @@ class Topic(Searchable, db.Model):
 
         ancestor_topics = [{
             "title": topic.title, 
-            "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
+            "url": (topic.topic_page_url if topic.id in Topic._super_topic_ids 
                     or topic.has_content() else None)
             } 
             for topic in db.get(self.ancestor_keys)][0:-1]

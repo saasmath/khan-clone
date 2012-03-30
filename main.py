@@ -97,9 +97,24 @@ class TopicPage(request_handler.RequestHandler):
 
     @staticmethod
     def show_topic(handler, topic):
+        (marquee_video, subtopic) = topic.get_first_video_and_topic()
+
+        tree = topic.make_tree(types=["Video"])
+
+        topic_children = [t for t in tree.children if t.kind() == "Topic"]
+
+        if topic_children:
+            video_lists = [ t.get_library_data() for t in topic_children ]
+        else:
+            video_lists = [ topic.get_library_data() ]
+
+        from homepage import thumbnail_link_dict
+
         template_values = {
             "main_topic": topic,
-            "library_content": library_topic_html(topic.id)
+            "topic_children": topic_children,
+            "video_lists": api.jsonify.jsonify(video_lists),
+            "marquee_video": thumbnail_link_dict(video=marquee_video, parent_topic=subtopic),
         }
         handler.render_jinja2_template('viewtopic.html', template_values)
 

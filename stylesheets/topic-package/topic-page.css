@@ -1,0 +1,170 @@
+.main-video-placeholder {
+    position: relative;
+    background: #000;
+    background-repeat: no-repeat;
+    background-position: center center;
+    width: 100%;
+    height: 395px;
+    cursor: pointer;
+}
+a.main-video-link:visited,
+a.main-video-link:hover {
+    color: #fff;
+}
+.main-video-placeholder .youtube-placeholder-title {
+    padding: 7px 12px;
+    font-size: 18px;
+    color: #FFF;
+    /* Fallback for web browsers that doesn't support RGBa */
+    background: rgb(0, 0, 0) transparent;
+    /* RGBa with 0.5 opacity */
+    background: rgba(0, 0, 0, 0.5);
+}
+.main-video-placeholder .youtube-play {
+    position: absolute;
+    left: 50%;
+    top: 162px;
+    width: 107px;
+    height: 73px;
+    margin-left: -53px;
+    opacity: 0.82;
+    filter:alpha(opacity=82);
+}
+.main-video-placeholder:hover .youtube-play {
+    opacity: 1.0;
+    filter:alpha(opacity=100);
+}
+
+.topic-page-header {
+    position: absolute;
+    left: 720px;
+    top: 12px;
+    margin: 10px;
+}
+
+.topic-page-header h2.topic-heading {
+    font-size: 22pt;
+    font-weight: bold;
+    margin-bottom: 18px;
+}
+.topic-page-header a.call-to-action {
+    display: inline-block;
+    font-size: 20px;
+    text-decoration: none;
+    text-align: center;
+    line-height: 44px;
+    padding: 5px 20px;
+    font-family: "MuseoSans500", Helvetica, Arial, sans-serif;
+}
+
+.topic-page-content {
+    position: absolute;
+    width: 100%;
+    height: 600px;
+    top: 440px;
+}
+.topic-page-content > .heading {
+    font-family: "MuseoSans300", sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    padding-bottom: 12px;
+}
+.topic-page-content > .container {
+    width: 100%;
+    height: 100%;
+    border: solid 1px #666;
+}
+
+.topic-page-content > .container > .nav-pane {
+    width: 260px;
+    height: 100%;
+    border-right: solid 3px #005987;
+    float: left;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+.topic-page-content > .container > .nav-pane > ul {
+    width: 260px;
+    margin-top: 0px;
+    padding: 3px 0;
+}
+.topic-page-content > .container > .nav-pane > ul > li {
+    position: relative;
+    float: left;
+    clear: both;
+    width: 260px;
+}
+.topic-page-content > .container > .nav-pane > ul > li > a {
+    display: block;
+    position: relative;
+    text-transform: none;
+    margin-left: 0;
+    border-bottom: none;
+    letter-spacing: 0;
+    font-family: MuseoSans300;
+    color: #333;
+    width: 244px;
+    font-weight: normal;
+    font-size: 16px;
+    padding: 4px 8px;
+}
+.topic-page-content > .container > .nav-pane > ul > li > a > .right-arrow {
+    background-image: url(/images/non-repeating-sprites.4.png);
+    background-position: -82px -36px;
+
+    position: absolute;
+    top: 50%;
+    margin-top: -7px;
+    right: 16px;
+    width: 7px;
+    height: 13px;
+}
+.topic-page-content > .container > .nav-pane > ul > li.selected > a {
+    color: #ffffff;
+    text-decoration: none;
+    background-color: #005987;
+}
+.topic-page-content > .container > .nav-pane > ul > li.selected > a > .right-arrow {
+    background-position: -110px -36px;
+}
+
+.topic-page-content > .container > .content-pane {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    height: 100%;
+    overflow-y: auto;
+}
+.topic-page-content > .container > .content-pane.indent {
+    left: 260px;
+}
+
+.topic-page-content > .container > .content-pane .content-inner {
+    padding: 3px 10px;
+}
+.topic-page-content > .container > .content-pane .title {
+    font-family: MuseoSans300;
+    color: #333;
+    font-weight: normal;
+    font-size: 16px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.topic-page-content > .container > .content-pane .description {
+    width: 100%;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: solid 1px #ccc;
+}
+.topic-page-content > .container > .content-pane .video-link {
+    line-height: 30px;
+    margin-left: 0px;
+    font-size: 10pt;
+}
+.topic-page-content > .container > .content-pane .video-link a:hover {
+    color: black;
+    text-decoration: none;
+}
+.topic-page-content > .container > .content-pane .vid-progress {
+    padding-left: 14px;
+}
