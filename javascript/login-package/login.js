@@ -34,7 +34,6 @@ Login.basePostLoginUrl;
  */
 Login.initLoginForm = function(options) {
     Login.basePostLoginUrl = options["basePostLoginUrl"] || "";
-    alert(Login.basePostLoginUrl);
 
     if ($("#identifier").val()) {
         // Email/username filled in from previous attempt.
