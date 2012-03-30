@@ -4,7 +4,6 @@ import logging
 import unicodedata
 import urllib2
 
-from google.appengine.api import memcache
 from google.appengine.api import urlfetch
 
 from app import App
