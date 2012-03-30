@@ -53,6 +53,7 @@ import unisubs
 import api.jsonify
 import labs
 import socrates
+import labs.explorations
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, Topic
@@ -142,9 +143,6 @@ class ViewVideo(request_handler.RequestHandler):
     @ensure_xsrf_cookie
     def get(self, path, video_id):
         user_data = UserData.current()
-        # Logout and redirect for video views when logged in to demo,
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
 
         if path:
             path_list = path.split('/')
@@ -164,9 +162,6 @@ class ViewVideoDeprecated(request_handler.RequestHandler):
     def get(self, readable_id=""):
 
         user_data = UserData.current()
-        # Logout and redirect for video views when logged in to demo,
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
 
         # This method displays a video in the context of a particular topic.
         # To do that we first need to find the appropriate topic.  If we aren't
@@ -627,6 +622,9 @@ application = webapp2.WSGIApplication([
 
     # Labs
     ('/labs', labs.LabsRequestHandler),
+
+    ('/labs/explorations', labs.explorations.RequestHandler),
+    ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
@@ -718,7 +716,7 @@ application = webapp2.WSGIApplication([
     ('/login/mobileoauth', login.MobileOAuthLogin),
     ('/postlogin', login.PostLogin),
     ('/logout', login.Logout),
-    
+
     # TODO(benkomalo): disabled until password based logins is complete.
     #('/register', login.Register),
     #('/pwchange', login.PasswordChange),

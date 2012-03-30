@@ -298,6 +298,12 @@ javascript = {
             "topics-admin.js",
         ]
     },
+
+    "highcharts": {
+        "files": [
+            "highcharts.js"
+        ]
+    }
 }
 
 stylesheets = {
@@ -385,6 +391,11 @@ stylesheets = {
     "labs": {
         "files": [
             "labs.css",
+        ]
+    },
+    "bootstrap-grids": {
+        "files": [
+            "grids.css"
         ]
     },
     "bootstrap": {

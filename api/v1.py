@@ -1386,6 +1386,7 @@ def user_exercises_all():
 
     return results
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/progress/summary", methods=["GET"])
 @oauth_required()
 @jsonp
@@ -2144,6 +2145,7 @@ def user_data():
     user_data_query.order("joined")
     return user_data_query.fetch(request.request_int("max", default=500))
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/progressreport", methods=["GET"])
 @open_access
 @oauth_optional()
@@ -2185,6 +2187,7 @@ def get_user_current_goals():
     goals = GoalList.get_current_goals(student)
     return [g.get_visible_data() for g in goals]
 
+# TODO(sundar) - add login_required_special(demo_allowed = True)
 @route("/api/v1/user/students/goals", methods=["GET"])
 @open_access
 @oauth_optional()
