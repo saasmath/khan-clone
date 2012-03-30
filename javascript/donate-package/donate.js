@@ -27,7 +27,6 @@ $('input:radio[name=t3]:checked').click();
 
 var submitPaypal = function() {
     $('#paypal-form').submit();
-    console.log( "paypal bingo!" );
 };
 
 // When the user clicks the "Donate" button, get the proper values in
@@ -40,21 +39,20 @@ $("#donation-submit").click(function(e) {
     var amount = $('#donate-amount').val();
     var duration = "One-Time";
 
-    if ( rbval == "O")
+    if ( rbval === "O")
     {
         $('#paypal-cmd').val("_donations");
         $('#paypal-item-name').val("One-time donation to Khan Academy");
     }
     else
     {
-        var period;
         $('#paypal-cmd').val("_xclick-subscriptions");
         $('#paypal-item-name').val("Recurring donation to Khan Academy");
         $('#paypal-recurring-amount').val(amount);
-        period = (rbval == "M" ? $('#months-repeating').val() : $('#years-repeating').val());
+        var period = (rbval === "M" ? $('#months-repeating').val() : $('#years-repeating').val());
 
         // Create a string for the duration to report to MixPanel.
-        duration = (period != "0" ? period : "ongoing") + " " + (rbval == "M" ? "months" : "years");
+        duration = (period !== "0" ? period : "ongoing") + " " + (rbval === "M" ? "months" : "years");
         $('input[name=srt]').val(period);
     }
     // mixpanel.com to track people's clicking the button
@@ -64,7 +62,7 @@ $("#donation-submit").click(function(e) {
                                  "Duration": duration});
     // NOTE: When this bingo is turned off, we'll need to reactivate
     // the form's submit action.
-    gae_bingo.bingo( "paypal", submitPaypal, submitPaypal);
+    gae_bingo.bingo( "hp_donate_button_paypal", submitPaypal, submitPaypal);
 });
 
 // Initialize the accordion behavior.
