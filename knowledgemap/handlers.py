@@ -6,9 +6,11 @@ import knowledgemap
 from exercises import exercise_graph_dict_json
 from layout import topics_layout
 from api.jsonify import jsonify
+import user_util
 
 class ViewKnowledgeMap(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         user_exercise_graph = models.UserExerciseGraph.get(user_data)
@@ -35,9 +37,11 @@ class ViewKnowledgeMap(request_handler.RequestHandler):
 
 class SaveMapCoords(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         return
 
+    @user_util.open_access
     def post(self):
         user_data = models.UserData.current()
 

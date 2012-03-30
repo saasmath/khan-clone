@@ -6,12 +6,14 @@ from mapreduce import control
 from mapreduce import operation as op
 
 import request_handler
+import user_util
 import models
 import consts
 
 # /admin/startnewexercisestatisticsmapreduce is called periodically by a cron job
 class StartNewExerciseStatisticsMapReduce(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         # Admin-only restriction is handled by /admin/* URL pattern

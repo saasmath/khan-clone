@@ -285,7 +285,7 @@
         $(".show-demo-dialog").click(function(e) {
             e.preventDefault()
             var target = e.target.href
-            if (e.target.href == undefined) {
+            if (e.target.href == undefined || e.target.href == "") {
                 target = "/logout?continue=/"
             }
             popupGenericMessageBox({

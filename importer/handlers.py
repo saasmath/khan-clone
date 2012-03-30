@@ -14,8 +14,8 @@ import copy
 from google.appengine.api import users
 from google.appengine.ext import db
 
-from request_handler import RequestHandler
-from user_util import dev_server_only
+import request_handler
+import user_util
 from models import UserData, UserVideo, VideoLog, UserExercise, ProblemLog
 from goals.models import Goal
 from api.jsonify import jsonify
@@ -28,7 +28,7 @@ except:
         pass
     secrets_dev = secrets
 
-class ImportHandler(RequestHandler):
+class ImportHandler(request_handler.RequestHandler):
     """Import data for a particular user to the dev datastore from production.
     Existing data will be overwritten. Please never use this in production!
     Also, don't rely on everything working. Some fields aren't exposed by the
@@ -53,7 +53,8 @@ class ImportHandler(RequestHandler):
         'Goal': 1000,
     }
 
-    @dev_server_only
+    @user_util.dev_server_only
+    @user_util.open_access
     def get(self):
         if not hasattr(secrets, 'ka_api_consumer_key') or    \
            not hasattr(secrets, 'ka_api_consumer_secret') or \

@@ -2438,7 +2438,8 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry"]
+    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", 
+                        "brit-cruise", "california-standards-test", "gmat"]
 
     @property
     def relative_url(self):
@@ -3835,6 +3836,10 @@ class Video(Searchable, db.Model):
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default=0)
 
+    # A dict of properties that may only exist on some videos such as 
+    # original_url for smarthistory_videos.
+    extra_properties = object_property.UnvalidatedObjectProperty()
+
     # Human readable, unique id that can be used in URLS.
     readable_id = db.StringProperty()
 
@@ -4096,6 +4101,7 @@ class Video(Searchable, db.Model):
 
         return {
             'title': video.title,
+            'extra_properties': video.extra_properties,
             'description': video.description,
             'youtube_id': video.youtube_id,
             'readable_id': video.readable_id,

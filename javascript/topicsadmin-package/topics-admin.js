@@ -671,7 +671,7 @@ function stringArraysEqual(ar1, ar2) {
 
             this.el = $("#details-view")
                 .html(html)
-                .find("input")
+                .find("input, textarea")
                     .change(this.handleChange)
                     .end()
                 .find("a.item-action")
@@ -713,6 +713,7 @@ function stringArraysEqual(ar1, ar2) {
         $("input[type=\"text\"]", this.el)
             .add("input[type=\"radio\"]:checked", this.el)
             .add("input[type=\"checkbox\"]", this.el)
+            .add("textarea", this.el)
             .each(function() {
                 var field = $(this).attr("name");
                 if (field) {
@@ -769,6 +770,7 @@ function stringArraysEqual(ar1, ar2) {
             $("input[type=\"text\"]", this.el)
                 .add("input[type=\"radio\"]:checked", this.el)
                 .add("input[type=\"checkbox\"]", this.el)
+                .add("textarea")
                 .each(function() {
                     var field = $(this).attr("name");
                     if (field) {

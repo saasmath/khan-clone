@@ -608,50 +608,9 @@ footer {
         text-decoration: none;
     }
 
-#user-info {
-    margin-right: 0;
-    position: relative;
-    top: -3px;
-}
     .dark #top-header #user-info {
         text-shadow: 0 1px 0 #1A222D;
     }
-    #user-info a.notification_link img {
-        position: relative;
-    }
-    #user-info .dropdown {
-        padding: 5px 0 5px 0;
-    }
-    #user-info .dropdown.open {
-        background-color: #005987;
-        padding-bottom: 10px;
-    }
-    #user-info .dropdown.open span.user-name {
-        color: #fff !important;
-    }
-    #user-info .dropdown.open .caret {
-        border-top: 4px solid #FFF;
-    }
-    #user-info .dropdown-menu:before {
-        display: none;
-    }
-    #user-info .dropdown-menu {
-        margin: 0;
-        left: 0;
-        border: 1px solid #ccc;
-        width: 100%;
-        min-width: 86px;
-        padding: 3px 0px;
-    }
-    #user-info .dropdown-menu li > .dropdown-link {
-        white-space: nowrap;
-        border: none;
-    }
-
-    #user-info .dropdown-menu li > .dropdown-link:hover {
-        color: #fff !important;
-    }
-
 #nav-and-search {
     /* We're positioning this absolutely because of the iframe jumpy nonsense from the facebook button */
     position: absolute;
@@ -877,9 +836,6 @@ footer {
     margin-left: 290px;
     min-width: 680px;
 }
-    #top-header #top-header-links span {
-        vertical-align: middle;
-    }
     #top-header #top-header-links span img {
         vertical-align: middle;
     }
@@ -890,6 +846,8 @@ footer {
         margin: 0 8px;
         display: inline-block;
         height: 20px;
+        position: relative;
+        top: 6px;
     }
     .lte7 #top-header #top-header-links span.separator, #sitewide-navigation span.separator {
         top: 0;
@@ -968,7 +926,46 @@ footer {
         height: 16px;
         padding: 0 4px;
     }
-
+    #top-header #user-info a.notification_link img {
+        position: relative;
+    }
+    #top-header #user-info .dropdown {
+        padding: 5px 0 5px 0;
+    }
+    #top-header #user-info .dropdown .caret {
+        margin-top: 13px;
+    }
+    #top-header #user-info .dropdown.open {
+        background-color: #005987;
+        padding-bottom: 10px;
+    }
+    #top-header #user-info .dropdown.open .dropdown-toggle span.user-name{
+        color: #fff;
+    }
+    #top-header #user-info .dropdown.open .dropdown-toggle a:hover {
+        color: #fff;
+    }
+    #top-header #user-info .dropdown.open .caret {
+        border-top: 4px solid #FFF;
+    }
+    #top-header #user-info .dropdown-menu:before {
+        display: none;
+    }
+    #top-header #user-info .dropdown-menu {
+        margin: 0;
+        left: 0;
+        border: 1px solid #ccc;
+        width: 100%;
+        min-width: 86px;
+        padding: 3px 0px;
+    }
+    #top-header #user-info .dropdown-menu li > a {
+        white-space: nowrap;
+        border: none;
+    }
+    #top-header #user-info .dropdown-menu li > a:hover {
+        color: #fff;
+    }
     #top-header #top-header-links .page_links a.notification_link {
         border-bottom: 0;
     }
@@ -1766,8 +1763,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
 
 .achievement-badge-counts {
     text-decoration: none;
-    position: relative;
-    top: 2px;
 }
 .achievement-badge-counts .badge {
   margin-right:4px;
@@ -2984,6 +2979,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     margin-top: -4px;
     padding: 4px 10px;
 }
+#sitewide-navigation .watch-link:hover {
+    text-decoration: underline;
+}
 #sitewide-navigation .nav-subheader .topic-browser-dropdown {
     position: static;
 }
@@ -3042,6 +3040,9 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     display: block;
     width: 160px;
 }
+#sitewide-navigation .nav-subheader ul.topic-browser-menu li.browse-all > a {
+    font-weight: bold;
+}
 #sitewide-navigation .nav-subheader ul.topic-browser-menu li.has-divider > a {
     border-top: solid 1px #ccc;
 }
@@ -3055,18 +3056,23 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     width: 7px;
     height: 13px;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu li > a:hover,
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li:hover > a {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active > li > a:hover {
+    background-color: transparent;
+}
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.hover-active > a {
     color: #ffffff;
     text-decoration: none;
     background-color: #005987;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu li > a:hover > .right-arrow,
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li:hover > a > .right-arrow {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li > a:hover > .right-arrow,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active > li.hover-active > a > .right-arrow {
     background-position: -110px -36px;
 }
-
-#sitewide-navigation .nav-subheader ul.topic-browser-menu li.no-children > a:hover {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.none-active > li.no-children > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > ul > li.no-children > a:hover,
+#sitewide-navigation .nav-subheader ul.topic-browser-menu.child-active li.hover-active.no-children > a {
     text-decoration: underline;
 }
 
@@ -3089,7 +3095,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
 #sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li {
     width: 200px;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li.has-children:hover a {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li.has-children.hover-active a {
     background-color: #FFF;
 }
 #sitewide-navigation .nav-subheader ul.topic-browser-menu > li > ul > li > a {
@@ -3100,7 +3106,7 @@ div.arrow-right-shadow, div.arrow-left-shadow {
     text-indent: -20px;
     width: 202px;
 }
-#sitewide-navigation .nav-subheader ul.topic-browser-menu > li:hover > ul {
+#sitewide-navigation .nav-subheader ul.topic-browser-menu > li.hover-active > ul {
     display: block;
 }
 

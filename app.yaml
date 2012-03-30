@@ -162,10 +162,6 @@ handlers:
 - url: /gandalf?.*
   script: gandalf/main.py
 
-- url: /backends/.*
-  script: backends/videoprogress.py
-  login: admin
-
 - url: .*
   script: main.py
 

@@ -4,6 +4,7 @@ import request_handler
 import shared_jinja
 import time
 import math
+import user_util
 
 # helpful function to see topic structure from the console.  In the console:
 # import library
@@ -34,7 +35,7 @@ def flatten_tree(tree, parent_topics=[]):
     tree.depth = len(parent_topics)
 
     if parent_topics:
-        if tree.depth == 1:
+        if tree.depth == 1 and len(parent_topics[0].subtopics) > 1:
             tree.homepage_title = parent_topics[0].standalone_title + ": " + tree.title
         else:
             tree.homepage_title = tree.title
@@ -143,10 +144,12 @@ def library_content_html(ajax=False, version_number=None):
 
 class GenerateLibraryContent(request_handler.RequestHandler):
 
+    @user_util.open_access
     def post(self):
         # We support posts so we can fire task queues at this handler
         self.get(from_task_queue = True)
 
+    @user_util.open_access
     def get(self, from_task_queue = False):
         library_content_html(ajax=True, version_number=None, bust_cache=True)
         library_content_html(ajax=False, version_number=None, bust_cache=True)

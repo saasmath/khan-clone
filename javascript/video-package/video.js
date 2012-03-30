@@ -167,6 +167,9 @@ var Video = {
         // Set up next/previous links
         if (!this.pushStateDisabled) {
             $("a.previous-video,a.next-video").click(function(event) {
+                if (self.pushStateDisabled) {
+                    return true;
+                }
                 var fragment = $(this).attr("href").substr(self.rootLength);
                 Video.router.navigate(fragment, {trigger: true});
                 event.stopPropagation();
@@ -372,6 +375,10 @@ var Video = {
     },
 
     showSubtitles: function() {
+        if (!this.pushStateDisabled) {
+            this.pushStateDisabled = true;
+        }
+
         createCookie(this.SHOW_SUBTITLES_COOKIE, true, 365);
         Video.showSubtitleElements();
 

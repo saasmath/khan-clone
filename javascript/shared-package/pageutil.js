@@ -790,12 +790,31 @@ var HeaderTopicBrowser = {
     rendered: false,
 
     init: function() {
+        // Use hoverIntent to hide the dropdown (which handles the delay)
+        // but it has to be set on the whole subheader so we still use
+        // mouseenter to show it.
+        var hoverIntentActive = false;
+        $(".nav-subheader").hoverIntent({
+            over: function() {
+                hoverIntentActive = true;
+            },
+            out: function() {
+                $(".nav-subheader .dropdown-toggle").dropdown("close");
+                hoverIntentActive = false;
+            },
+            timeout: 400
+        });
         $(".nav-subheader .dropdown-toggle")
-            .dropdown()
-            .click(function() {
-                gae_bingo.bingo(["topic_browser_clicked_link"]);
+            .on('mouseenter', function() {
                 if (!HeaderTopicBrowser.rendered) {
+                    gae_bingo.bingo(["topic_browser_clicked_link"]);
                     HeaderTopicBrowser.render();
+                }
+                $(this).dropdown("open");
+            })
+            .on('mouseleave', function() {
+                if (!hoverIntentActive) {
+                    $(this).dropdown("close");
                 }
             });
     },
@@ -804,11 +823,54 @@ var HeaderTopicBrowser = {
         this.topicBrowserData = topicBrowserData;
     },
 
+    hoverIntentHandlers: function(timeout, setActive) {
+        // Intentionally create one closure per <ul> level so each has
+        // its own selected element
+        var activeEl = null;
+        return {
+            over: function() {
+                if (activeEl) {
+                    $(activeEl).removeClass("hover-active");
+                }
+                $(this).addClass("hover-active");
+                if (setActive) {
+                    $(".nav-subheader ul.topic-browser-menu")
+                        .addClass("child-active")
+                        .removeClass("none-active");
+                }
+                activeEl = this;
+            },
+            out: function() {
+                $(this).removeClass("hover-active");
+                if (activeEl == this) {
+                    activeEl = null;
+                    if (setActive) {
+                        $(".nav-subheader ul.topic-browser-menu")
+                            .removeClass("child-active")
+                            .addClass("none-active");
+                    }
+                }
+            },
+            timeout: timeout
+        };
+    },
+
     render: function() {
         if (this.topicBrowserData) {
             var template = Templates.get("shared.topic-browser-pulldown");
             var html = template({topics: this.topicBrowserData});
-            $("#sitewide-navigation .topic-browser-dropdown").append($(html));
+            var el = $(html);
+
+            // Use hoverIntent to keep the menus selected/open
+            // even if you temporarily leave the item bounds.
+            el.children("li")
+                .hoverIntent(this.hoverIntentHandlers(200, true))
+                .children("ul")
+                    .children("li")
+                        .hoverIntent(this.hoverIntentHandlers(0, false))
+
+            $("#sitewide-navigation .topic-browser-dropdown").append(el);
+
             this.rendered = true;
         }
     }

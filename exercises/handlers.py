@@ -4,6 +4,7 @@ import urllib
 from custom_exceptions import MissingExerciseException
 import request_handler
 import models
+import user_util
 from exercises.stacks import get_problem_stack, get_review_stack, MAX_CARDS_PER_REVIEW_STACK
 from api.jsonify import jsonify
 from api.auth.xsrf import ensure_xsrf_cookie
@@ -13,6 +14,7 @@ class ViewExerciseDeprecated(request_handler.RequestHandler):
     to their newer form (/earth/forests/e/monkeys).
     """
 
+    @user_util.open_access
     def get(self, exid=None):
 
         exercise = models.Exercise.get_by_name(exid)
@@ -38,6 +40,7 @@ class ViewTopicExerciseDeprecated(request_handler.RequestHandler):
     we'll serialize the full slug when returning topics via our API and switch our knowledge map
     to link to topics appropriately.
     """
+    @user_util.open_access
     def get(self, topic_id):
 
         topic = models.Topic.get_by_id(topic_id)
@@ -51,6 +54,7 @@ class ViewTopicExerciseDeprecated(request_handler.RequestHandler):
 class ViewExercise(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
+    @user_util.open_access
     def get(self, topic_path, exid=None):
 
         title = None

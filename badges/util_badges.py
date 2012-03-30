@@ -36,6 +36,7 @@ import feedback_badges
 
 import layer_cache
 import request_handler
+import user_util
 
 # Authoritative list of all badges
 @layer_cache.cache_with_key_fxn(lambda: "all_badges:%s" % models.Setting.topic_tree_version())
@@ -284,6 +285,7 @@ def get_public_user_badges(user_data=None):
 
 class ViewBadges(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         user_data = models.UserData.current() or models.UserData.pre_phantom()
         grouped_badges = get_grouped_user_badges(user_data)
@@ -292,12 +294,14 @@ class ViewBadges(request_handler.RequestHandler):
 # /admin/badgestatistics is called periodically by a cron job
 class BadgeStatistics(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
         # Admin-only restriction is handled by /admin/* URL pattern
         # so this can be called by a cron job.
         taskqueue.add(url='/admin/badgestatistics', queue_name='badge-statistics-queue', params={'start': '1'})
         self.response.out.write("Badge statistics task started.")
 
+    @user_util.open_access
     def post(self):
         if not self.request_bool("start", default=False):
             return
@@ -313,6 +317,7 @@ class BadgeStatistics(request_handler.RequestHandler):
 # /admin/startnewbadgemapreduce is called periodically by a cron job
 class StartNewBadgeMapReduce(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         # Admin-only restriction is handled by /admin/* URL pattern

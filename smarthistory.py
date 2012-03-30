@@ -11,7 +11,8 @@ import urllib2
 
 from models import Setting
 
-from request_handler import RequestHandler
+import request_handler
+import user_util
 
 from custom_exceptions import SmartHistoryLoadException 
 
@@ -30,11 +31,12 @@ def deleteOldBlobs():
             if age.days * 86400 + age.seconds >= SMARTHISTORY_IMAGE_CACHE_EXPIRATION:
                 blob.delete()
 
-class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHandler):
+class SmartHistoryProxy(request_handler.RequestHandler, blobstore_handlers.BlobstoreDownloadHandler):
     def __init__(self, request=None, response=None):
         self.initialize(request, response)
         self.attempt_counter = 0	
 	
+    @user_util.open_access
     def get(self):
 
         if self.request.params.has_key("clearcache"):
@@ -85,6 +87,7 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
         self.response.out.write(data)
         return 
   		
+    @user_util.open_access
     def post(self):
         arguments = self.request.arguments()
         
@@ -97,8 +100,8 @@ class SmartHistoryProxy(RequestHandler, blobstore_handlers.BlobstoreDownloadHand
             else:
                 raise SmartHistoryLoadException(response.status_code)     
         except Exception, e:
-            raise SmartHistoryLoadException("Post attempt failed to SmartHsitory with :"+str(e))  
-            return      
+            raise SmartHistoryLoadException("Post attempt failed to SmartHistory with :"+str(e))  
+            return
 
         self.response.out.write(data)   
 

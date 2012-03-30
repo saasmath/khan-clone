@@ -13,7 +13,8 @@ except ImportError:
 
 from google.appengine.api import users
 
-from request_handler import RequestHandler
+import request_handler
+import user_util
 from knowledgemap import deserializeMapCoords
 from library import library_content_html
 from user_util import developer_only
@@ -22,10 +23,11 @@ from phantom_users.phantom_util import create_phantom
 from models import UserData, UserExercise, Exercise, Video, VideoLog
 from .models import Goal, GoalList, GoalObjective
 
-class CreateNewGoal(RequestHandler):
+class CreateNewGoal(request_handler.RequestHandler):
 
     @ensure_xsrf_cookie
     @create_phantom
+    @user_util.open_access
     def get(self):
         user_data = UserData.current()
 
@@ -42,7 +44,7 @@ class CreateNewGoal(RequestHandler):
         }
         self.render_jinja2_template("goals/creategoal.html", context)
 
-class CreateRandomGoalData(RequestHandler):
+class CreateRandomGoalData(request_handler.RequestHandler):
     first_names = ["Aston", "Stratford", "Leanian", "Patwin", "Renaldo",
         "Welford", "Maher", "Gregorio", "Roth", "Gawain", "Fiacre",
         "Coillcumhann", "Honi", "Westcot", "Walden", "Onfroi", "Merlow", "Atol",
@@ -56,7 +58,7 @@ class CreateRandomGoalData(RequestHandler):
         "Lee", "Gagnon", "Wilson", "Clark", "Johnson", "White", "Williams",
         "Taylor", "Campbell", "Anderson", "Cooper", "Jones", "Lambert"]
 
-    @developer_only
+    @user_util.developer_only
     def get(self):
         from exercises import attempt_problem
 

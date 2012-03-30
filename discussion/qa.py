@@ -26,6 +26,7 @@ def feedback_flag_update_map(feedback):
     yield op.db.Put(feedback)
 
 class StartNewFlagUpdateMapReduce(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         mapreduce_id = control.start_map(
                 name = "FeedbackFlagUpdate",
@@ -38,10 +39,12 @@ class StartNewFlagUpdateMapReduce(request_handler.RequestHandler):
         self.response.out.write("OK: " + str(mapreduce_id))
 
 class ExpandQuestion(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         notification.clear_question_answers_for_current_user(self.request.get("qa_expand_key"))
 
 class PageQuestions(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
 
         page = 0
@@ -83,6 +86,7 @@ class PageQuestions(request_handler.RequestHandler):
 
 class AddAnswer(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def post(self):
 
         user_data = models.UserData.current()
@@ -128,6 +132,7 @@ class AddAnswer(request_handler.RequestHandler):
         self.redirect("/discussion/answers?question_key=%s" % question_key)
 
 class Answers(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         user_data = models.UserData.current()
         question_key = self.request.get("question_key")
@@ -156,6 +161,7 @@ class Answers(request_handler.RequestHandler):
 
 class AddQuestion(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def post(self):
 
         user_data = models.UserData.current()
@@ -197,6 +203,7 @@ class AddQuestion(request_handler.RequestHandler):
 
 class EditEntity(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def post(self):
         user_data = models.UserData.current()
         if not user_data:
@@ -230,6 +237,7 @@ class EditEntity(request_handler.RequestHandler):
 
 class FlagEntity(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.open_access
     def post(self):
         # You have to at least be logged in to flag
         user_data = models.UserData.current()
@@ -253,10 +261,8 @@ class FlagEntity(request_handler.RequestHandler):
                     user_data.put()
 
 class ClearFlags(request_handler.RequestHandler):
+    @user_util.moderator_only
     def post(self):
-        if not user_util.is_current_user_moderator():
-            return
-
         key = self.request.get("entity_key")
         if key:
             entity = db.get(key)
@@ -267,6 +273,7 @@ class ClearFlags(request_handler.RequestHandler):
         self.redirect("/discussion/flaggedfeedback")
 
 class ChangeEntityType(request_handler.RequestHandler):
+    @user_util.moderator_only
     def post(self):
         # Must be a moderator to change types of anything
         if not user_util.is_current_user_moderator():
@@ -288,6 +295,7 @@ class ChangeEntityType(request_handler.RequestHandler):
 
 class DeleteEntity(request_handler.RequestHandler):
     @disallow_phantoms
+    @user_util.manual_access_checking
     def post(self):
         user_data = models.UserData.current()
         if not user_data:

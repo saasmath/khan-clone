@@ -99,12 +99,8 @@ def exercise_graph_dict_json(user_data, admin=False):
     return json.dumps(graph_dict_data)
 
 class RawExercise(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
-        user_data = models.UserData.current()
-        # If accessing demo, do not allow, redirect via logout
-        if user_data is not None and user_data.is_demo:
-            self.redirect(util.create_logout_url(self.request.uri))
-
         path = self.request.path
         exercise_file = urllib.unquote(path.rpartition('/')[2])
         self.response.headers["Content-Type"] = "text/html"
@@ -428,6 +424,7 @@ class UpdateExercise(request_handler.RequestHandler):
         
         db.put(exercise_videos)
 
+    @user_util.developer_only
     def post(self):
         self.get()
 
