@@ -48,6 +48,7 @@ def open_access(method):
     wrapper._access_control = 'open-access'   # for sanity checks
     return wrapper
 
+
 # TODO(csilvers): add login_required, with
 # is_current_user_logged_in: users.is_current_user_admin() or user_data is not None and also 'not user_data.is_demo'.  If user_data.is_demo, do:
 #    self.redirect(util.create_logout_url(self.request.uri))
@@ -95,18 +96,22 @@ def moderator_only(method):
     wrapper._access_control = 'moderator-only'   # checked in RequestHandler
     return wrapper
 
-
-# TODO(csilvers): provide is_current_user_admin, which also checks
-# user_data, as per the comments in api/auth/decorators.py.  Then
-# change other is_* routines to also require user_data.  (Note: This
-# is a stronger restriction than the one in app.yaml.)
+@request_cache.cache()
+def is_current_user_admin():
+    # Make sure current UserData exists as well as is_current_user_admin
+    # because UserData properly verifies xsrf token.
+    # TODO(csilvers): have this actually do xsrf checking for non-/api/ calls?
+    #                 c.f. api/auth/auth_util.py:allow_cookie_based_auth()
+    #                 If so, change the decorators to call ensure_xsrf_cookie.
+    user_data = models.UserData.current()
+    return user_data and users.is_current_user_admin()
 
 def admin_only(method):
     '''Decorator checking that users of a request have an admin account.'''
 
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        if users.is_current_user_admin():
+        if is_current_user_admin():
             return method(self, *args, **kwargs)
         else:
             return _go_to_login(self, "admin-only")
