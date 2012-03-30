@@ -30,11 +30,15 @@ form.auth-form {
 
 .pw-login {
     width: 430px;
-    text-align: right;
 }
 .pw-login h3 {
     text-align: left;
     margin-bottom: 2em;
+}
+
+.pw-login-contents {
+    text-align: right;
+    width: 430px;
 }
 
 #page-root .vertical-separator {
@@ -202,12 +206,12 @@ a:visited {
     margin-right: 8.2em;
 }
 
-.pw-login #submit-button {
+.pw-login-contents #submit-button {
     float: right;
     margin-right: 6px;
 }
 
-.pw-login img.tree {
+.pw-login-contents img.tree {
     float: left;
     padding-left: 2em;
 }
@@ -234,7 +238,7 @@ a.signup-link {
     padding: 2em 4em;
     width: 650px;
 }
-.completesignup-container .field-label, .signup-container .field-label {
+.completesignup-contents .field-label, .signup-container .field-label {
     width: 13em;
     text-align: right;
     display: inline-block;
@@ -287,31 +291,38 @@ a.signup-link {
 
 .completesignup-container.card-case {
     margin: 6em auto;
-    padding: 2em;
+    padding: 15px;
     width: 550px;
 }
 
-.completesignup-container .simple-input {
+.completesignup-contents {
+    width: 548px;
+}
+
+.completesignup-contents .field-label {
+    width: 15em;
+}
+.completesignup-contents .simple-input {
     width: 17em;
 }
 
 
-.completesignup-container img.tree {
+.completesignup-contents img.tree {
     float: left;
     margin-right: 1em;
 }
 
-.completesignup-container h3 {
+.completesignup-contents h3 {
     font-family: "MuseoSans300", sans-serif;
     vertical-align: middle;
 }
 
-.completesignup-container .auth-form {
+.completesignup-contents .auth-form {
     /* To clear the floated img of the tree */
     clear: both;
 }
 
-.completesignup-container .tos-area {
+.completesignup-contents .tos-area {
     display: inline-block;
     width: 18em;
     font-size: 11px;
@@ -320,16 +331,16 @@ a.signup-link {
     vertical-align: middle;
 }
 
-.completesignup-container .submit-container {
+.completesignup-contents .submit-container {
     margin-top: 2em;
 }
-.completesignup-container .submit-container,
-.completesignup-container .field-error {
+.completesignup-contents .submit-container,
+.completesignup-contents .field-error {
     text-align: right;
 
     /* HACK(benkomalo): add in enough padding on the right to right align
      * contents with the form fields */
-    padding-right: 8.4em;
+    padding-right: 5.8em;
 }
 
 /* Settings page styles */

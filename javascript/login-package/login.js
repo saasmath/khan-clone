@@ -9,12 +9,32 @@
 var Login = Login || {};
 
 /**
- * Entry point - usually called on DOMready.
+ * Initializes the host login page. Note that most of the username/password
+ * fields of the login page are hosted in an iframe so it can be sent
+ * over https. Google/FB logins are in the outer container.
  */
 Login.initLoginPage = function() {
     $("#login-facebook").click(function(e) {
         Login.connectWithFacebook();
     });
+};
+
+
+/**
+ * A base URL that represents the post login URL after a login.
+ * This is needed by inner iframes that may be hosted on https
+ * domains and need to forward the user to a normal http URL
+ * after a successful login.
+ */
+Login.basePostLoginUrl;
+
+/**
+ * Initializes the inner contents (within the iframe) of the login
+ * form.
+ */
+Login.initLoginForm = function(options) {
+    Login.basePostLoginUrl = options["basePostLoginUrl"] || "";
+    alert(Login.basePostLoginUrl);
 
     if ($("#identifier").val()) {
         // Email/username filled in from previous attempt.
@@ -25,16 +45,12 @@ Login.initLoginPage = function() {
 
     $("#submit-button").click(function(e) {
         e.preventDefault();
-        if (!Login.submitDisabled_) {
-            Login.loginWithPassword();
-        }
+        Login.loginWithPassword();
     });
     $("#password").on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
             e.preventDefault();
-            if (!Login.submitDisabled_) {
-                Login.loginWithPassword();
-            }
+            Login.loginWithPassword();
         }
     });
 };
@@ -80,14 +96,12 @@ Login.loginWithPassword = function() {
     valid = Login.ensureValid_("#password", "Password required") && valid;
 
     if (valid) {
-        Login.disableSubmit_();
         Login.asyncFormPost(
                 $("#login-form"),
                 function(data) {
                     // Server responded with 200, but login may have failed.
                     if (data["errors"]) {
                         Login.onPasswordLoginFail(data["errors"]);
-                        Login.enableSubmit_();
                     } else {
                         Login.onPasswordLoginSuccess(data);
                         // Don't re-enable the login button as we're about
@@ -97,7 +111,6 @@ Login.loginWithPassword = function() {
                 function(data) {
                     // Hard failure - server is inaccessible or having issues
                     // TODO(benkomalo): handle
-                    Login.enableSubmit_();
                 });
     }
 };
@@ -147,8 +160,9 @@ Login.onPasswordLoginFail = function(errors) {
 Login.onPasswordLoginSuccess = function(data) {
     var auth = data["auth"];
     var continueUri = data["continue"] || "/";
-    window.location.replace(
-            "/postlogin?continue=" + encodeURIComponent(continueUri) +
+    window.top.location.replace(
+            Login.basePostLoginUrl +
+            "postlogin?continue=" + encodeURIComponent(continueUri) +
             "&auth=" + encodeURIComponent(auth));
 };
 
@@ -170,11 +184,6 @@ Login.ensureValid_ = function(selector, errorText, checkFunc) {
     return true;
 };
 
-
-// TODO(benkomalo): work on a proper iframe-based transport. This is a very
-//     crude implementation that will cause browser history entries on each
-//     form post, which is probably not entirely desirable.
-
 /**
  * Submits a form in the background via a hidden iframe.
  * Only one form may be in flight at a time, since only a single iframe
@@ -187,82 +196,19 @@ Login.ensureValid_ = function(selector, errorText, checkFunc) {
  * state (on most browsers, each request will likely create a history entry).
  */
 Login.asyncFormPost = function(jelForm, success, error) {
-    if (Login.requestInFlight_) {
+    if (Login.submitDisabled_) {
         return;
     }
 
-    Login.requestInFlight_ = {
-        success: success,
-        error: error
-    };
-
-    var iframeName = "async-form-iframe";
-    if (!Login.iframeForPost_) {
-        // Note: some browsers may not load a completely hidden frame, so we
-        // make sure it has some dimension and use visibility:hidden and
-        // negative margins to minimize its impact to layout.
-        Login.iframeForPost_ = $("<iframe></iframe>")
-            .attr("name", iframeName)
-            .attr("id", iframeName)
-            .attr("src", "javascript:''")
-            .attr("style",
-                    "visibility: hidden;" +
-                    "width: 1px; height: 1px;" +
-                    "margin-top: -1px; margin-left: -1px;")
-            .appendTo(document.body)
-            .on("load", Login.handleAsyncFormLoad_);
-    }
-
-    jelForm.prop("target", iframeName);
-    jelForm.submit();
-};
-
-/**
- * The hidden iframe used to post a form in the background.
- */
-Login.iframeForPost_ = null;
-
-/**
- * An object with 'success' and 'error' callbacks (error being optional)
- * for the current request in flight.
- */
-Login.requestInFlight_ = null;
-
-/**
- * Internal callback for when an iframe finishes loading.
- */
-Login.handleAsyncFormLoad_ = function(e) {
-    var frame = e.target;
-
-    var doc;
-    if ($.browser.webkit) {
-        doc = frame.document || frame.contentWindow.document;
-    } else {
-        doc = frame.contentDocument || frame.contentWindow.document;
-    }
-    var result;
-    var success = true;
-    try {
-        // There may be reasons why we can't access the content (e.g. it
-        // doesn't exist or we're not allowed), such as in IE's default 404
-        var rawContent = doc.body.textContent || doc.body.innerText;
-
-        // TODO(benkomalo): support other content types.
-        // The content is expected to be JSON in all uses of this so far.
-        result = $.parseJSON(rawContent);
-    } catch (ex) {
-        success = false;
-    }
-    try {
-        if (success) {
-            Login.requestInFlight_.success(result);
-        } else if (Login.requestInFlight_.error) {
-            Login.requestInFlight_.error();
+    Login.disableSubmit_();
+    $.ajax({
+        "type": "POST",
+        "url": jelForm.prop("src"),
+        "data": jelForm.serialize(),
+        "dataType": "json",
+        "success": success,
+        "complete": function() {
+            Login.enableSubmit_();
         }
-    } finally {
-        // The callbacks may throw or error out but it's important we
-        // clean up the state.
-        Login.requestInFlight_ = null;
-    }
+    });
 };
-

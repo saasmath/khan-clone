@@ -28,10 +28,32 @@ from api.auth import auth_util
 class Login(request_handler.RequestHandler):
     @user_util.open_access
     def get(self):
-        self.render_login()
-
-    def render_login(self, identifier=None, errors=None):
+        if self.request_bool("form", default=False):
+            self.render_login_form()
+        else:
+            self.render_login_outer()
+        
+    def render_login_outer(self):
         """ Renders the login page.
+
+        Note that part of the contents of this page is hosted on an iframe
+        and rendered by this same RequestHandler (render_login_form)
+        """
+        cont = self.request_continue_url()
+        direct = self.request_bool('direct', default=False)
+
+        template_values = {
+                           'continue': cont,
+                           'direct': direct,
+                           'google_url': users.create_login_url(cont),
+                           }
+
+        self.render_jinja2_template('login.html', template_values)
+        
+
+    def render_login_form(self, identifier=None, errors=None):
+        """ Renders the form with the username/password fields. This is
+        hosted an in iframe in the main login page.
 
         errors - a dictionary of possible errors from a previous login that
                  can be highlighted in the UI of the login page
@@ -47,11 +69,11 @@ class Login(request_handler.RequestHandler):
                            'google_url': users.create_login_url(cont),
                            }
 
-        self.render_jinja2_template('login.html', template_values)
+        self.render_jinja2_template('login_contents.html', template_values)
 
     @user_util.open_access
     def post(self):
-        """ Handles a POST from the login page.
+        """ Handles a POST from the login form.
 
         This happens when the user attempts to login with an identifier (email
         or username) and password.
@@ -451,18 +473,49 @@ class CompleteSignup(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def get(self):
+        if self.request_bool("form", default=False):
+            return self.render_form()
+        else:
+            return self.render_outer()
+        
+    def render_outer(self):
         """ Renders the second part of the user signup step, after the user
         has verified ownership of their e-mail account.
 
         The request URI must include a valid EmailVerificationToken, and
         can be made via build_link(), or be made by a user without an existing
         password set.
+        
+        Note that the contents are actually rendered in an iframe so it
+        can be sent over https (generated in render_form).
 
         """
+        valid_token = self.validated_token()
+        user_data = UserData.current()
+        if not valid_token and not user_data:
+            # Just take them to the homepage for now.
+            self.redirect("/")
+            return
+
+        if user_data and user_data.has_password():
+            # The user already has a KA login - redirect them to their profile
+            self.redirect(user_data.profile_root)
+            return
+
+        template_values = {
+            'token': valid_token,
+        }
+        self.render_jinja2_template('completesignup.html', template_values)
+        
+    def render_form(self):
+        """ Renders the contents of the form for completing a signup. """
         
         valid_token = self.validated_token()
         user_data = UserData.current()
         if not valid_token and not user_data:
+            # TODO(benkomalo): handle this better since it's going to be in
+            # an iframe! The outer container should do this check for us though.
+
             # Just take them to the homepage for now.
             self.redirect("/")
             return
@@ -494,7 +547,7 @@ class CompleteSignup(request_handler.RequestHandler):
             'values': values,
             'token': valid_token,
         }
-        self.render_jinja2_template('completesignup.html', template_values)
+        self.render_jinja2_template('completesignup_contents.html', template_values)
 
     @user_util.manual_access_checking
     def post(self):
