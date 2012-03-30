@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from app import App
 
 import base64
+import cookie_util
 import datetime
 import hashlib
 import hmac
@@ -156,3 +157,37 @@ class AuthToken(BaseSecureToken):
                 ])
         secret = App.token_recipe_key
         return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+class GoogleUserToken(BaseSecureToken):
+    """ A short-lived authentication token that can only be minted for signed
+    in Google users. This is used to transfer identities of Google users
+    securely.
+
+    Since the cookie which identifies Google users on http requests (ACSID) is
+    not verifiable by the appengine SDK on https requests, we mint a custom
+    token so that it can be sent over https.
+
+    """
+
+    @staticmethod
+    def make_token_signature(user_data, timestamp):
+        # This signature design intentionally relies on the ACSID cookie so that
+        # only valid ACSID values can be minted on http requests, and that same
+        # valid ACSID must be match on the https response.
+        google_cookie = cookie_util.get_google_cookie()
+        payload = "\n".join([
+                user_data.user_id,
+                google_cookie,
+                timestamp
+                ])
+        secret = App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    # Force a short expiry for these tokens.
+    DEFAULT_EXPIRY = datetime.timedelta(days=1)
+    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 86400
+
+    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        dt = _from_timestamp(self.timestamp)
+        now = (clock or datetime.datetime).utcnow()
+        return not dt or (now - dt) > time_to_expiry
