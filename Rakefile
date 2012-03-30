@@ -37,6 +37,14 @@ task :css do
     system "python", "deploy/compress.py", "css"
 end
 
+desc "Commit build target in a form convenient for developers"
+task :commit => [:lint, :unittest] do
+end
+
+desc "Commit build target"
+task :build_commit => [:lint, :coverage] do
+end
+
 desc "Run lint checks"
 task :lint do
     sh "tools/runpep8.sh"
@@ -44,5 +52,23 @@ end
 
 desc "Run unit tests"
 task :unittest do
-    sh "python tools/runtests.py"
+    sh "tools/runtests.py"
+end
+
+desc "Run unit tests with XML test and code coverage reports"
+task :coverage do
+    omit = ["*_test.py",
+            "*/google_appengine/*",
+            "agar/*",
+            "api/packages/*",
+            "asynctools/*",
+            "jinja2/*",
+            "mapreduce/*",
+            "tools/*",
+            "webapp2.py",
+            "webapp2_extras/*"
+           ].join(",")
+    sh "coverage run \"--omit=#{omit}\" tools/runtests.py --xml"
+    sh "coverage xml"
+    sh "coverage html"
 end

@@ -1,64 +1,37 @@
-$(->
+$ ->
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+
     # Draw Chart
-    chartOptions = {
-        chart: {
+    chartOptions =
+        chart:
             renderTo: 'chart'
             type:     'column'
-        }
-
         colors: ['#3366cc']
-
-        credits: {
+        credits:
             enabled: no
-        }
-
-        legend: {
+        legend:
             enabled: no
-        }
-
         series: [
-            {
-                data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            }
+            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ]
-
-        title: {
+        title:
             text: ''
-        }
-
-        tooltip: {
-            formatter: ->
-                return @x + ': ' + @y
-        }
-
-        xAxis: {
-            categories: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-        }
-
-        yAxis: {
+        tooltip:
+            formatter: -> "#{@x}: #{@y}"
+        xAxis:
+            categories: alphabet
+        yAxis:
             allowDecimals: no
-
-            title: {
+            title:
                 text: ''
-            }
-        }
-    }
 
     window.chart = new Highcharts.Chart(chartOptions)
 
-    $('textarea').on('keyup', (event) ->
+    $('textarea').on 'keyup', (event) ->
         # Update Chart
-        data = []
-
-        for letter in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+        data = for letter in alphabet
             match = @value.match(new RegExp(letter, 'gi'))
-
-            if match
-                letterCount = match.length
-            else
-                letterCount = 0
-
-            data.push(letterCount)
+            match?.length or 0
 
         maxLetterCount = Math.max.apply(Math, data)
 
@@ -66,5 +39,3 @@ $(->
             data[data.indexOf(maxLetterCount)] = {color: '#dc3912', y: maxLetterCount}
 
         window.chart.series[0].setData(data)
-    )
-)
