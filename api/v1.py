@@ -138,19 +138,6 @@ def content_topics(version_id = None):
     version = models.TopicVersion.get_by_id(version_id)
     return models.Topic.get_content_topics(version)
 
-# TODO(kamens) STOPSHIP: remove this API call if it's not used in admin interface
-@route("/api/v1/topicversion/<version_id>/topics/with_exercises", methods=["GET"])
-@route("/api/v1/topics/with_exercises", methods=["GET"])
-@jsonp
-@cache_with_key_fxn_and_param(
-    "casing",
-    lambda version_id = None: "api_exercise_topics_%s_%s" % (version_id, models.Setting.topic_tree_version()),
-    layer=layer_cache.Layers.Memcache)
-@jsonify
-def exercise_content_topics(version_id = None):
-    version = models.TopicVersion.get_by_id(version_id)
-    return models.Topic.get_exercise_topics(version)
-
 # private api call used only by ajax homepage ... can remove once we remake the homepage with the topic tree
 @route("/api/v1/topics/library/compact", methods=["GET"])
 @cacheable(caching_age=(60 * 60 * 24 * 60))
