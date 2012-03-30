@@ -5,7 +5,7 @@
 # subdirectory.
 
 : ${BASE_PYTHON:=python}
-: ${RAKE:=rake}
+: ${MAKE:=make}
 : ${VIRTUALENV:=/usr/local/bin/virtualenv}
 # python and pip are available, thanks to the virtualenv
 
@@ -15,7 +15,7 @@
 
 # Set up the environment for subprocesses
 
-export PATH=env/bin:$PATH:$APPENGINE_ROOT
+export PATH="env/bin:$PATH:$APPENGINE_ROOT"
 
 # Set up a virtualenv with the necessary packages
 
@@ -23,13 +23,13 @@ if [ -d "$VIRTUALENV_ROOT" ]; then
     echo "Virtualenv already exists"
 else
     echo "Creating new virtualenv"
-    $VIRTUALENV --python=$BASE_PYTHON --no-site-packages $VIRTUALENV_ROOT
+    "$VIRTUALENV" --python="$BASE_PYTHON" --no-site-packages "$VIRTUALENV_ROOT"
 fi
 
-source $VIRTUALENV_ROOT/bin/activate
-pip install -r $WEBSITE_ROOT/requirements.txt
+source "$VIRTUALENV_ROOT/bin/activate"
+pip install -r "$WEBSITE_ROOT/requirements.txt"
 
 # Run commit build verifications
 
-cd $WEBSITE_ROOT
-$RAKE build_commit
+cd "$WEBSITE_ROOT"
+"$MAKE" check COVERAGE=1
