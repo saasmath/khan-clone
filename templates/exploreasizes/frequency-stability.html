@@ -15,6 +15,10 @@
         margin-top:    20px;
     }
 
+    .row:first-child {
+        margin-top: 0;
+    }
+
     #chart1,
     #chart2,
     #chart3 {
@@ -23,9 +27,19 @@
 </style>
 {% endblock pagescript %}
 
-{% block pagetitle %}Frequency Stability | Cryptography Explore-a-sizes | Khan Academy Labs{% endblock pagetitle %}
+{% block pagetitle %}Frequency Stability | Khan Academy Labs{% endblock pagetitle %}
 
 {% block pagecontent %}
+<div class="row">
+    <div class="span12">
+        <ul class="breadcrumb">
+            <li><a href="/labs">Labs</a> <span class="divider">/</span></li>
+            <li><a href="/labs/explore-a-sizes">Explore-A-Sizes</a> <span class="divider">/</span></li>
+            <li>Frequency Stability</li>
+        </ul>
+    </div>
+</div>
+
 <div class="row">
     <div class="span12">
         <h1>Frequency Stability</h1>
@@ -58,9 +72,3 @@
     </div>
 </div>
 {% endblock pagecontent %}
-
-{% block bottompagescript %}
-
-<script>/*Bottom of page scripts*/</script>
-
-{% endblock bottompagescript %}

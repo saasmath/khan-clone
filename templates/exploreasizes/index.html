@@ -1,0 +1,54 @@
+{% extends "labs/template.html" %}
+
+{% block pagescript %}
+{{ js_css_packages.css_package("bootstrap") }}
+<style>
+    h1 {
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        margin-bottom: 10px;
+        margin-left:   10px;
+    }
+
+    ul {
+        margin-bottom: 10px;
+        margin-left:   35px;
+    }
+
+    .row {
+        margin-bottom: 20px;
+        margin-top:    20px;
+    }
+
+    .row:first-child {
+        margin-top: 0;
+    }
+</style>
+{% endblock pagescript %}
+
+{% block pagetitle %}Explore-a-sizes | Khan Academy Labs{% endblock pagetitle %}
+
+{% block pagecontent %}
+<div class="row">
+    <div class="span12">
+        <ul class="breadcrumb">
+            <li><a href="/labs">Labs</a> <span class="divider">/</span></li>
+            <li>Explore-A-Sizes</li>
+        </ul>
+    </div>
+</div>
+
+<div class="row">
+    <div class="span12">
+        <h1>Explore-a-sizes</h1>
+        <h2>Cryptography</h2>
+
+        <ul>
+            <li><a href="/labs/explore-a-sizes/frequency-fingerprint">Frequency Fingerprint</a></li>
+            <li><a href="/labs/explore-a-sizes/frequency-stability">Frequency Stability</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock pagecontent %}
