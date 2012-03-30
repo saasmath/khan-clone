@@ -103,6 +103,7 @@ class TopicPage(request_handler.RequestHandler):
         }
         handler.render_jinja2_template('viewtopic.html', template_values)
 
+    @user_util.open_access
     @ensure_xsrf_cookie
     def get(self, path):
         path_list = path.split('/')
