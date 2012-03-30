@@ -1,11 +1,15 @@
-{% extends "exploreasizes/template.html" %}
+{% extends "labs/explorations/template.html" %}
 
 {% block pagescript %}
 {{ js_css_packages.js_package("highcharts") }}
 {{ js_css_packages.css_package("bootstrap") }}
-<script>{% include "exploreasizes/frequency-fingerprint.js" %}</script>
+<script>{% include "labs/explorations/frequency-fingerprint.js" %}</script>
 
 <style>
+    .breadcrumb a {
+        color: #678d00;
+    }
+
     .row {
         margin-bottom: 20px;
         margin-top:    20px;
@@ -32,7 +36,7 @@
     <div class="span12">
         <ul class="breadcrumb">
             <li><a href="/labs">Labs</a> <span class="divider">/</span></li>
-            <li><a href="/labs/explore-a-sizes">Explore-A-Sizes</a> <span class="divider">/</span></li>
+            <li><a href="/labs/explorations">Explorations</a> <span class="divider">/</span></li>
             <li>Frequency Fingerprint</li>
         </ul>
     </div>
@@ -47,7 +51,7 @@
 <div class="row">
     <div class="span12">
         <p>Type a few sentences of text and watch your frequency fingerprint emerge!</p>
-        <textarea style="width: 50%;"></textarea>
+        <textarea style="width: 50%;" autofocus></textarea>
     </div>
 </div>
 

@@ -1,11 +1,15 @@
-{% extends "exploreasizes/template.html" %}
+{% extends "labs/explorations/template.html" %}
 
 {% block pagescript %}
 {{ js_css_packages.js_package("highcharts") }}
 {{ js_css_packages.css_package("bootstrap") }}
-<script>{% include "exploreasizes/frequency-stability.js" %}</script>
+<script>{% include "labs/explorations/frequency-stability.js" %}</script>
 
 <style>
+    .breadcrumb a {
+        color: #678d00;
+    }
+
     .btn {
         width: 10%;
     }
@@ -33,7 +37,7 @@
     <div class="span12">
         <ul class="breadcrumb">
             <li><a href="/labs">Labs</a> <span class="divider">/</span></li>
-            <li><a href="/labs/explore-a-sizes">Explore-A-Sizes</a> <span class="divider">/</span></li>
+            <li><a href="/labs/explorations">Explorations</a> <span class="divider">/</span></li>
             <li>Frequency Stability</li>
         </ul>
     </div>

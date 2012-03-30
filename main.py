@@ -55,7 +55,7 @@ import unisubs
 import api.jsonify
 import labs
 import socrates
-import exploreasizes
+import labs.explorations
 
 import models
 from models import UserData, Video, Url, ExerciseVideo, Topic
@@ -604,8 +604,8 @@ application = webapp2.WSGIApplication([
     # Labs
     ('/labs', labs.LabsRequestHandler),
 
-    ('/labs/explore-a-sizes', exploreasizes.RequestHandler),
-    ('/labs/explore-a-sizes/([^/]+)', exploreasizes.RequestHandler),
+    ('/labs/explorations', labs.explorations.RequestHandler),
+    ('/labs/explorations/([^/]+)', labs.explorations.RequestHandler),
     ('/labs/socrates/(.*)/v/([^/]*)', socrates.SocratesHandler),
 
     # Issues a command to re-generate the library content.
