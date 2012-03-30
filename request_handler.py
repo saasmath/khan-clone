@@ -489,6 +489,7 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
 
     def render_json(self, obj, camel_cased=False):
         json_string = jsonify(obj, camel_cased=camel_cased)
+        self.response.content_type = "application/json"
         self.response.out.write(json_string)
 
     def render_jsonp(self, obj, camel_cased=False):
