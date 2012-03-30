@@ -601,11 +601,6 @@ footer {
         text-decoration: none;
     }
 
-#user-info {
-    margin-right: 0;
-    position: relative;
-    top: -3px;
-}
     .dark #top-header #user-info {
         text-shadow: 0 1px 0 #1A222D;
     }
@@ -621,6 +616,9 @@ footer {
     }
     #user-info .dropdown.open span.user-name {
         color: #fff !important;
+    }
+    #user-info .dropdown .caret {
+        margin-top: 13px;
     }
     #user-info .dropdown.open .caret {
         border-top: 4px solid #FFF;
@@ -870,9 +868,6 @@ footer {
     margin-left: 290px;
     min-width: 680px;
 }
-    #top-header #top-header-links span {
-        vertical-align: middle;
-    }
     #top-header #top-header-links span img {
         vertical-align: middle;
     }
@@ -883,6 +878,8 @@ footer {
         margin: 0 8px;
         display: inline-block;
         height: 20px;
+        position: relative;
+        top: 6px;
     }
     .lte7 #top-header #top-header-links span.separator, #sitewide-navigation span.separator {
         top: 0;
@@ -1884,8 +1881,6 @@ ul.ui-autocomplete .ui-menu-item a span.autocomplete-exercise {
 
 .achievement-badge-counts {
     text-decoration: none;
-    position: relative;
-    top: 2px;
 }
 .achievement-badge-counts .badge {
   margin-right:4px;
