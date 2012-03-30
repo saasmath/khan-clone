@@ -11,7 +11,7 @@ from phantom_users.phantom_util import get_phantom_user_id_from_cookies
 
 import auth.cookies
 import auth.passwords
-from auth.tokens import AuthToken, EmailVerificationToken
+from auth.tokens import AuthToken
 import cookie_util
 import datetime
 import logging
@@ -394,7 +394,6 @@ class Signup(request_handler.RequestHandler):
         unverified_user = models.UnverifiedUser.get_or_insert_for_value(
                 email,
                 birthdate)
-        verification_token = EmailVerificationToken.for_user(unverified_user)
         verification_link = CompleteSignup.build_link(unverified_user)
 
         self.send_verification_email(email, verification_link)
@@ -406,7 +405,7 @@ class Signup(request_handler.RequestHandler):
                 }
         
         if App.is_dev_server:
-            response_json['token'] = verification_token.value
+            response_json['token'] = unverified_user.randstring
 
         # TODO(benkomalo): since users are now blocked from further access
         #    due to requiring verification of e-mail, we need to do something
@@ -440,36 +439,32 @@ class CompleteSignup(request_handler.RequestHandler):
 
     @staticmethod
     def build_link(unverified_user):
-        """ Builds a link for an unverified user by minting a unique token
-        via auth.tokens.EmailVerificationToken and embedding it in the URL
+        """ Builds a link for an unverified user by using their unique
+        randstring as a token embedded into the URL
 
         """
 
         return util.absolute_url(
                 "/completesignup?token=%s" %
-                EmailVerificationToken.for_user(unverified_user).value)
+                unverified_user.randstring)
 
-    def validated_token(self):
+    def resolve_token(self):
         """ Validates the token specified in the request parameters and returns
-        it. Returns None if no valid token was detected.
+        a tuple of (token, UnverifiedUser) if it is a valid token.
+        Returns None if no valid token was detected.
 
         """
 
-        token_value = self.request_string("token", default=None)
-        if not token_value:
-            return None
-
-        token = EmailVerificationToken.for_value(token_value)
-
+        token = self.request_string("token", default=None)
         if not token:
             return None
 
-        unverified_user = models.UnverifiedUser.get_for_value(token.email)
-        if not unverified_user or not token.is_valid(unverified_user):
+        unverified_user = models.UnverifiedUser.get_for_token(token)
+        if not unverified_user:
             return None
 
         # Success - token does indeed point to an unverified user.
-        return token
+        return (token, unverified_user)
 
     @user_util.manual_access_checking
     def get(self):
@@ -482,7 +477,7 @@ class CompleteSignup(request_handler.RequestHandler):
         """ Renders the second part of the user signup step, after the user
         has verified ownership of their e-mail account.
 
-        The request URI must include a valid EmailVerificationToken, and
+        The request URI must include a valid token from an UnverifiedUser, and
         can be made via build_link(), or be made by a user without an existing
         password set.
         
@@ -490,7 +485,7 @@ class CompleteSignup(request_handler.RequestHandler):
         can be sent over https (generated in render_form).
 
         """
-        valid_token = self.validated_token()
+        valid_token, unverified_user = self.resolve_token()
         user_data = UserData.current()
         if not valid_token and not user_data:
             # Just take them to the homepage for now.
@@ -510,7 +505,7 @@ class CompleteSignup(request_handler.RequestHandler):
     def render_form(self):
         """ Renders the contents of the form for completing a signup. """
         
-        valid_token = self.validated_token()
+        valid_token, unverified_user = self.resolve_token()
         user_data = UserData.current()
         if not valid_token and not user_data:
             # TODO(benkomalo): handle this better since it's going to be in
@@ -528,7 +523,7 @@ class CompleteSignup(request_handler.RequestHandler):
         values = {}
         if valid_token:
             # Give priority to the token in the URL.
-            values['email'] = valid_token.email
+            values['email'] = unverified_user.email
             user_data = None
         else:
             # Must be that the user is signing in with Google/FB and wanting
@@ -551,7 +546,7 @@ class CompleteSignup(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        valid_token = self.validated_token()
+        valid_token, unverified_user = self.resolve_token()
         user_data = UserData.current()
         if not valid_token and not user_data:
             logging.warn("No valid token or user for /completesignup")
@@ -561,7 +556,7 @@ class CompleteSignup(request_handler.RequestHandler):
         if valid_token:
             if user_data:
                 logging.warn("Existing user is signed in, but also specified "
-                             "a valid EmailVerificationToken. Ignoring "
+                             "a valid UnverifiedUser's token. Ignoring "
                              " existing sign-in and using token")
             user_data = None
 
@@ -628,8 +623,7 @@ class CompleteSignup(request_handler.RequestHandler):
                 return
 
         else:
-            unverified_user = models.UnverifiedUser.get_for_value(
-                    valid_token.email)
+            # Converting unverified_user to a full UserData.
 
             num_tries = 0
             user_data = None

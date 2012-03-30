@@ -995,8 +995,8 @@ class UnverifiedUser(db.Model):
     email = db.StringProperty()
     birthdate = db.DateProperty(indexed=False)
 
-    # used to generate a unique token for completing sign up
-    randstring = db.StringProperty(indexed=False)
+    # used as a token sent in an e-mail verification link.
+    randstring = db.StringProperty(indexed=True)
     
     @staticmethod
     def get_or_insert_for_value(email, birthdate):
@@ -1004,12 +1004,16 @@ class UnverifiedUser(db.Model):
                 key_name=email,
                 email=email,
                 birthdate=birthdate,
-                randstring=os.urandom(8).encode("hex"))
+                randstring=os.urandom(20).encode("hex"))
 
     @staticmethod
     def get_for_value(email):
         # Email is also used as the db key
         return UnverifiedUser.get_by_key_name(email)
+
+    @staticmethod
+    def get_for_token(token):
+        return UnverifiedUser.all().filter("randstring =", token).get()
 
 class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
     # Canonical reference to the user entity. Avoid referencing this directly
