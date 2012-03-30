@@ -451,17 +451,17 @@ class CompleteSignup(request_handler.RequestHandler):
     def resolve_token(self):
         """ Validates the token specified in the request parameters and returns
         a tuple of (token, UnverifiedUser) if it is a valid token.
-        Returns None if no valid token was detected.
+        Returns (None, None) if no valid token was detected.
 
         """
 
         token = self.request_string("token", default=None)
         if not token:
-            return None
+            return (None, None)
 
         unverified_user = models.UnverifiedUser.get_for_token(token)
         if not unverified_user:
-            return None
+            return (None, None)
 
         # Success - token does indeed point to an unverified user.
         return (token, unverified_user)
@@ -492,7 +492,7 @@ class CompleteSignup(request_handler.RequestHandler):
             self.redirect("/")
             return
 
-        if user_data and user_data.has_password():
+        if not valid_token and user_data and user_data.has_password():
             # The user already has a KA login - redirect them to their profile
             self.redirect(user_data.profile_root)
             return
@@ -515,7 +515,7 @@ class CompleteSignup(request_handler.RequestHandler):
             self.redirect("/")
             return
 
-        if user_data and user_data.has_password():
+        if not valid_token and user_data and user_data.has_password():
             # The user already has a KA login - redirect them to their profile
             self.redirect(user_data.profile_root)
             return
