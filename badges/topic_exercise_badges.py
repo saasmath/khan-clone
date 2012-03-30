@@ -138,6 +138,8 @@ class TopicExerciseBadge(Badge):
         """ Returns the icon src for a special, "completed!" version of this topic badge
         to be used on the knowledge map only, for now.
         """
+        # TODO: unleash the new -completed- icons when @marcos finishes them!
+        return self.compact_icon_src
         return "/images/power-mode/badges/%s-completed-40x40.png" % self.icon_filename
 
     @property
