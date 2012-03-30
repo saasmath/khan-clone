@@ -1,4 +1,4 @@
-{% extends "labs/template.html" %}
+{% extends "exploreasizes/template.html" %}
 
 {% block pagescript %}
 {{ js_css_packages.js_package("highcharts") }}
@@ -17,6 +17,10 @@
 
     #chart {
         height: 225px;
+    }
+
+    form {
+        display: block;
     }
 </style>
 {% endblock pagescript %}
