@@ -14,6 +14,7 @@ from google.appengine.ext import db
 
 from models import Setting, Video, Playlist, VideoPlaylist, Topic
 import request_handler
+import user_util
 
 def youtube_get_video_data_dict(youtube_id):
     yt_service = gdata.youtube.service.YouTubeService()
@@ -91,6 +92,7 @@ class YouTubeSyncStepLog(db.Model):
 
 class YouTubeSync(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         if self.request_bool("start", default = False):
@@ -106,6 +108,7 @@ class YouTubeSync(request_handler.RequestHandler):
                 self.response.out.write("Step: %s, Generation: %s, Date: %s<br/>" % (sync_log.step, sync_log.generation, sync_log.dt))
             self.response.out.write("<br/><a href='/admin/youtubesync?start=1'>Start New Sync</a>")
 
+    @user_util.open_access
     def post(self):
         # Protected for admins only by app.yaml so taskqueue can hit this URL
         step = self.request_int("step", default = 0)

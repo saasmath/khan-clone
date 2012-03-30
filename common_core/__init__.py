@@ -2,7 +2,8 @@ from __future__ import absolute_import
 import os
 import logging
 
-from request_handler import RequestHandler
+import request_handler
+import user_util
 from google.appengine.ext.webapp import template
 from coach_resources import util_coach
 
@@ -10,6 +11,7 @@ from .models import CommonCoreMap
 
 class CommonCore(util_coach.CoachResourcesRequestHandler):
 
+    @user_util.open_access
     def get(self):
         cc_map = CommonCoreMap.get_all_structured(lightweight=True)
         

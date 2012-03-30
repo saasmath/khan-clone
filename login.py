@@ -16,6 +16,7 @@ import models
 import os
 import re
 import request_handler
+import user_util
 import util
 import urllib
 
@@ -34,6 +35,7 @@ class LoginType():
                 and type_value <= 3)
 
 class Login(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_login()
 
@@ -61,6 +63,7 @@ class Login(request_handler.RequestHandler):
         #self.render_jinja2_template('login.html', template_values)
         self.render_jinja2_template('login_legacy.html', template_values)
 
+    @user_util.open_access
     def post(self):
         """ Handles a POST from the login page. """
         cont = self.request_string('continue', default="/")
@@ -122,6 +125,7 @@ class Login(request_handler.RequestHandler):
         handler.redirect(cont)
 
 class MobileOAuthLogin(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         self.render_jinja2_template('login_mobile_oauth.html', {
             "oauth_map_id": self.request_string("oauth_map_id", default=""),
@@ -162,6 +166,7 @@ def _merge_phantom_into(phantom_data, target_data):
     return False
 
 class PostLogin(request_handler.RequestHandler):
+    @user_util.manual_access_checking
     def get(self):
         cont = self.request_string('continue', default="/")
 
@@ -230,6 +235,7 @@ class Logout(request_handler.RequestHandler):
             handler.delete_cookie_including_dot_domain('fbsr_' + App.facebook_app_id)
             handler.delete_cookie_including_dot_domain('fbm_' + App.facebook_app_id)
 
+    @user_util.open_access
     def get(self):
         google_user = users.get_current_user()
         Logout.delete_all_identifying_cookies(self)
@@ -251,6 +257,7 @@ _email_re = re.compile(
     r')@(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$', re.IGNORECASE)  # domain
 
 class Register(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         """ Renders the register for new user page.  """
 
@@ -269,6 +276,7 @@ class Register(request_handler.RequestHandler):
         }
         self.render_jinja2_template('register.html', template_values)
 
+    @user_util.manual_access_checking
     def post(self):
         """ Handles registration request on our site.
 
@@ -384,6 +392,7 @@ class Register(request_handler.RequestHandler):
         Login.redirect_with_auth_stamp(self, created_user, cont)
 
 class PasswordChange(request_handler.RequestHandler):
+    @user_util.manual_access_checking
     def post(self):
         user_data = models.UserData.current()
         if not user_data:

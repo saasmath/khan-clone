@@ -3,7 +3,7 @@
 import optparse
 import os
 import sys
-# For python2.5, install the Python unittest2 package before you run this script.
+# For python2.5 install the unittest2 package
 try:   # Work under either python2.5 or python2.7
     import unittest2 as unittest
 except ImportError:
@@ -23,11 +23,14 @@ TEST_PATH   Path to package containing test modules or Python file
 
 TEST_FILE_RE = '*_test.py'
 
+
 def file_path_to_module(path):
     return path.replace('.py', '').replace(os.sep, '.')
 
+
 def discover_sdk_path():
-    # adapted from http://code.google.com/p/bcannon/source/browse/sites/py3ksupport-hrd/run_tests.py
+    # adapted from {http://code.google.com/p/bcannon/source/browse/
+    # sites/py3ksupport-hrd/run_tests.py}
 
     # Poor-man's `which` command.
     for path in os.environ['PATH'].split(':'):
@@ -41,6 +44,7 @@ def discover_sdk_path():
     if not os.path.isdir(app_engine_path):
         raise RuntimeError('%s is not a directory' % app_engine_path)
     sys.path.append(app_engine_path)
+
 
 def main(test_path):
     if 'SERVER_SOFTWARE' not in os.environ:
@@ -57,7 +61,7 @@ def main(test_path):
 
     loader = unittest.loader.TestLoader()
     if test_path.endswith('.py'):
-        suite =  loader.loadTestsFromName(file_path_to_module(test_path))
+        suite = loader.loadTestsFromName(file_path_to_module(test_path))
     else:
         suite = loader.discover(test_path, pattern=TEST_FILE_RE)
 

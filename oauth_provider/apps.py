@@ -4,15 +4,18 @@ from oauth_provider.consts import ACCEPTED
 
 import request_handler
 import models
+import user_util
 import util
 
 class Register(request_handler.RequestHandler):
+    @user_util.open_access
     def get(self):
         if models.UserData.current():
             self.render_jinja2_template("oauth_provider/register_app.html", {})
         else:
             self.redirect(util.create_login_url(self.request.uri))
 
+    @user_util.open_access
     def post(self):
 
         user_data = models.UserData.current()
