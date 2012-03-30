@@ -48,7 +48,7 @@ def discover_sdk_path():
     sys.path.append(app_engine_path)
 
 
-def main(test_path, write_xml):
+def main(test_path, should_write_xml):
     if 'SERVER_SOFTWARE' not in os.environ:
         os.environ['SERVER_SOFTWARE'] = 'Development'
     if 'CURRENT_VERSION' not in os.environ:
@@ -67,7 +67,7 @@ def main(test_path, write_xml):
     else:
         suite = loader.discover(test_path, pattern=TEST_FILE_RE)
 
-    if write_xml:
+    if should_write_xml:
         runner = xmlrunner.XMLTestRunner(verbose=True, output='test-reports')
     else:
         runner = unittest.TextTestRunner(verbosity=2)
