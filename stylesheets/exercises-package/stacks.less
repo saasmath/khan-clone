@@ -470,6 +470,59 @@
     height: 20px;
     margin-right: 2px;
 }
+.exercises-header .streak-transition {
+    float:right;
+    font-size: 60%;
+    margin-right: 19px;
+    padding-bottom: 10px;
+    position: relative;
+}
+    .exercises-header .streak-transition .expl-image {
+        display: none;
+        background: #eee;
+        width: 800px;
+        margin-top: 3px;
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        z-index: 9000;
+
+        .transition(opacity 0.2s ease-in-out);
+        .opacity(0);
+        .box-sizing(border-box);
+    }
+        .exercises-header .streak-transition .expl-image img {
+            width: 100%;
+        }
+        .exercises-header .streak-transition:hover .expl-image,
+        .exercises-header .streak-transition .expl-image:hover {
+            .opacity(100);
+            display: block;
+        }
+
+.exercises-header .streak-transition .expl-image:before,
+.exercises-header .streak-transition .expl-image:after {
+    content: ' ';
+    display: block;
+    position: absolute;
+    z-index: 9001;
+
+    width: 0;
+    height: 15px;
+
+    /* simulate a triangle with borders */
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid #ccc; /* must be the same as badge-picker */
+
+    right: 10%;
+    margin-left: -10px;
+    top: -25px;
+}
+.exercises-header .streak-transition .expl-image:after {
+    top: -24px;
+    border-bottom: 10px solid #eee;
+}
 
 .card-type-happypicture {
     text-align: center;
@@ -481,4 +534,19 @@
 .card-type-happypicture .happy-picture {
     margin-left: auto;
     margin-right: auto;
+}
+.hover-disclosure { 
+  background: #F7F7F7;
+  padding: 0 10px;
+  .border-radius(50px);
+  border: 1px solid #DDD;
+  color: #777;
+  cursor: default;
+  display: inline-block;
+}
+.hover-disclosure:hover,
+.hover-discolsure.hover {
+  background: #777;
+  color: #fff;
+  text-decoration: none;
 }
