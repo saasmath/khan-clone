@@ -41,7 +41,7 @@ class ProblemCard(Card):
 class HappyPictureCard(Card):
     """ A surprise happy picture guaranteed to bright any student's day. """
 
-    STACK_FREQUENCY = 25 # ~1 out of every N stacks will have one happy picture card
+    STACK_FREQUENCY = 200 # ~1 out of every N stacks will have one happy picture card
 
     def __init__(self):
         Card.__init__(self)
