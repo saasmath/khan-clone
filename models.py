@@ -337,7 +337,10 @@ class Exercise(db.Model):
             return Exercise._get_all_use_cache_safe()
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda * args, **kwargs: "all_exercises_unsafe_%s" % Setting.cached_exercises_date())
+    @layer_cache.cache_with_key_fxn(
+        lambda * args, **kwargs: "all_exercises_unsafe_%s" % 
+            Setting.cached_exercises_date(),
+        layer=layer_cache.Layers.Memcache)
     def _get_all_use_cache_unsafe():
         query = Exercise.all_unsafe().order('h_position')
         return query.fetch(1000) # TODO(Ben) this limit is tenuous
@@ -347,7 +350,10 @@ class Exercise(db.Model):
         return filter(lambda exercise: exercise.live, Exercise._get_all_use_cache_unsafe())
 
     @staticmethod
-    @layer_cache.cache_with_key_fxn(lambda * args, **kwargs: "all_exercises_dict_unsafe_%s" % Setting.cached_exercises_date())
+    @layer_cache.cache_with_key_fxn(
+        lambda * args, **kwargs: "all_exercises_dict_unsafe_%s" % 
+            Setting.cached_exercises_date(),
+        layer=layer_cache.Layers.Memcache)
     def _get_dict_use_cache_unsafe():
         exercises = Exercise._get_all_use_cache_unsafe()
         dict_exercises = {}
@@ -1724,7 +1730,8 @@ class TopicVersion(db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
         "TopicVersion.get_all_content_keys_%s" %
-        Setting.cached_content_add_date())
+        Setting.cached_content_add_date(),
+        layer=layer_cache.Layers.Memcache)
     def get_all_content_keys():
         video_keys = Video.all(keys_only=True).fetch(100000)
         exercise_keys = Exercise.all(keys_only=True).fetch(100000)
@@ -2138,7 +2145,7 @@ class VersionContentChange(db.Model):
         change = query.get()
 
         if change:
-            # since we have the content lready, updating the property may save
+            # since we have the content already, updating the property may save
             # a reference lookup later
             change.content = content
 
@@ -2807,7 +2814,8 @@ class Topic(Searchable, db.Model):
     @layer_cache.cache_with_key_fxn(
     lambda self, types=[], include_hidden=False:
             "topic.make_tree_%s_%s_%s" % (
-            self.key(), types, include_hidden))
+            self.key(), types, include_hidden,
+            layer=layer_cache.Layers.Memcache))
     def make_tree(self, types=[], include_hidden=False):
         if include_hidden:
             nodes = Topic.all().filter("ancestor_keys =", self.key()).run()
@@ -2962,7 +2970,8 @@ class Topic(Searchable, db.Model):
         "topic.get_rolled_up_top_level_topics_%s_%s" % (
             (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
-            include_hidden))
+            include_hidden,
+        layer=layer_cache.Layers.Memcache))
     def get_rolled_up_top_level_topics(version=None, include_hidden=False):
         topics = Topic.get_all_topics(version, include_hidden)
 
@@ -2988,7 +2997,8 @@ class Topic(Searchable, db.Model):
         "topic.get_filled_rolled_up_top_level_topics_%s_%s" % (
             (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
-            include_hidden))
+            include_hidden,
+        layer=layer_cache.Layers.Memcache))
     def get_filled_rolled_up_top_level_topics(types=None, version=None, include_hidden=False):
         if types is None:
             types = []
@@ -3045,7 +3055,8 @@ class Topic(Searchable, db.Model):
         "topic.get_content_topics_%s_%s" % (
             (str(version.number) + str(version.updated_on))  if version
             else Setting.topic_tree_version(),
-            include_hidden))
+            include_hidden,
+        layer=layer_cache.Layers.Memcache))
     def get_content_topics(version=None, include_hidden=False):
         topics = Topic.get_all_topics(version, include_hidden)
 
@@ -3569,7 +3580,8 @@ class Url(db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(lambda :
         "Url.get_all_%s" %
-        Setting.cached_content_add_date())
+        Setting.cached_content_add_date(),
+        layer=layer_cache.Layers.Memcache)
     def get_all():
         return Url.all().fetch(100000)
 
@@ -3723,7 +3735,7 @@ class Video(Searchable, db.Model):
     @staticmethod
     @layer_cache.cache_with_key_fxn(
         lambda : "Video.get_all_%s" % (Setting.cached_content_add_date()),
-        layer=layer_cache.Layers.Datastore)
+        layer=layer_cache.Layers.Memcache)
     def get_all():
         return Video.all().fetch(100000)
 

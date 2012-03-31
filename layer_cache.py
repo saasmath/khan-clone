@@ -30,9 +30,28 @@ else:
 # Unless otherwise specified, memcache and in-memory storage are used.
 # The datastore layer must be explicitly requested.
 #
-# When using layer_cache, you can specify which layers to make use of depending on your
-# individual use and the need for speed and memory.
+# When using layer_cache, you can specify which layers to make use of depending 
+# on your individual use and the need for speed and memory.
 #
+# _____Guidelines for which layers to use:_____
+#
+# a) Is it something that is not-user-specific, used on almost every single 
+# request, and won't cause memory errors if it goes InAppMemory? 
+# If so, InAppMemory
+#
+# b) Is it something that is not-user-specific and accessed frequently across 
+# all users but doesn't match a)? Definitely memcache
+#
+# c) Is it something that is user specific, going to be accessed frequently, 
+# and absolutely needs to be as fast as possible? Try memcache <--- this one 
+# could be a mistake. It is uncertain how much our memcache perf is affected by 
+# this, but it's what we're doing now.
+#
+# d) Is it user-specific and doesn't need to be super blazing fast? Datastore
+#
+# When considering multiple layers: something that qualifies for a) almost 
+# certainly also qualifies for memcache (and maybe datastore if we *really* 
+# don't want to run the original function)
 # _____Explanation by examples:_____
 #
 # Cache in both memcache and cachepy the result of
