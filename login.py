@@ -36,6 +36,13 @@ class Login(request_handler.RequestHandler):
         else:
             self.render_login_outer()
             
+    def request_continue_url(self, key="continue", default="/"):
+        cont = super(Login, self).request_continue_url(key, default)
+
+        # Always go to /postlogin after a /login, regardless if the continue
+        # url actually specified it or not. Important things happen there.
+        return util.create_post_login_url(cont)
+
     def render_login_legacy(self):
         """ Renders the old login page with no username/password inputs. """
         cont = self.request_continue_url()
@@ -58,7 +65,8 @@ class Login(request_handler.RequestHandler):
         cont = self.request_continue_url()
         direct = self.request_bool('direct', default=False)
 
-        if UserData.current():
+        user_data = UserData.current()
+        if user_data and not user_data.is_phantom:
             # Don't let users see the login page if they're already logged in.
             # This avoids dangerous edge cases in which users have conflicting
             # Google/FB cookies, and google.appengine.api.users.get_current_user
@@ -545,12 +553,17 @@ class CompleteSignup(request_handler.RequestHandler):
         valid_token, unverified_user = self.resolve_token()
         user_data = UserData.current()
         if valid_token and user_data:
-            logging.error("User tried to verify e-mail and complete a signup " +
-                          "in a browser with an existing signed-in user. " +
-                          "Forcefully signing old user out to avoid conflicts")
-            self.redirect("/logout?continue=%s" %
-                          urllib.quote_plus(self.request.uri))
-            return
+            if not user_data.is_phantom:
+                logging.info("User tried to verify e-mail and complete a " +
+                             "signup in a browser with an existing " +
+                             "signed-in user. Forcefully signing old user " +
+                             "out to avoid conflicts")
+                self.redirect("/logout?continue=%s" %
+                              urllib.quote_plus(self.request.uri))
+                return
+
+            # Ignore phantom users.
+            user_data = None
 
         if not valid_token and not user_data:
             # Just take them to the homepage for now.
@@ -579,7 +592,7 @@ class CompleteSignup(request_handler.RequestHandler):
         }
 
         self.render_jinja2_template('completesignup.html', template_values)
-        
+
     def render_form(self):
         """ Renders the contents of the form for completing a signup. """
 

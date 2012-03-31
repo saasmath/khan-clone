@@ -1502,8 +1502,11 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             self.birthdate = new_user.birthdate
             self.gender = new_user.gender
             self.joined = new_user.joined
-            self.last_login = max(new_user.last_login,
-                                  self.last_login)
+            if new_user.last_login:
+                if self.last_login:
+                    self.last_login = max(new_user.last_login, self.last_login)
+                else:
+                    self.last_login = new_user.last_login
             self.set_password_from_user(new_user)
             UniqueUsername.transfer(new_user, self)
             
