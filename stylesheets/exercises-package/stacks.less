@@ -482,7 +482,7 @@ body {
     position: relative;
 }
     .exercises-header .streak-transition .expl-image {
-        display: none;
+        visibility: hidden;
         background: #eee;
         width: 800px;
         margin-top: 3px;
@@ -492,14 +492,16 @@ body {
         z-index: 9000;
 
         .box-sizing(border-box);
+        .opacity(0);
+        .transition(opacity 0.2s ease-in-out 0.3s);
     }
         .exercises-header .streak-transition .expl-image img {
             width: 100%;
         }
         .exercises-header .streak-transition:hover .expl-image,
-        .exercises-header .streak-transition:active .expl-image,
-        .exercises-header .streak-transition .expl-image:hover {
-            display: block;
+        .exercises-header .streak-transition:active .expl-image {
+            visibility: visible;
+            .opacity(100);
         }
 
 .exercises-header .streak-transition .expl-image:before,
