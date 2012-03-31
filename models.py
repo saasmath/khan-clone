@@ -3927,7 +3927,7 @@ class Video(Searchable, db.Model):
 
         return {
             'title': video.title,
-            'extra_properties': video.extra_properties,
+            'extra_properties': video.extra_properties or {},
             'description': video.description,
             'youtube_id': video.youtube_id,
             'readable_id': video.readable_id,
