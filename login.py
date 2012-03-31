@@ -42,6 +42,14 @@ class Login(request_handler.RequestHandler):
         cont = self.request_continue_url()
         direct = self.request_bool('direct', default=False)
 
+        if UserData.current():
+            # Don't let users see the login page if they're already logged in.
+            # This avoids dangerous edge cases in which users have conflicting
+            # Google/FB cookies, and google.appengine.api.users.get_current_user
+            # returns a different user than the actual person logged in.
+            self.redirect(cont)
+            return
+
         template_values = {
                            'continue': cont,
                            'direct': direct,
