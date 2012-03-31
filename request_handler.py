@@ -18,8 +18,6 @@ from app import App
 import cookie_util
 
 from api.jsonify import jsonify
-import auth.cookies
-import auth.tokens
 from gae_bingo.gae_bingo import ab_test
 
 class RequestInputHandler(object):
@@ -144,6 +142,12 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
         and used as the identifier for the current and future requests.
         
         """
+        
+        # TODO(benkomalo): HACK - work around some circular dependencies with
+        # imports in the method. We should probably move this method out.
+        import auth.cookies
+        import auth.tokens
+
         auth_stamp = self.request_string("auth")
         if auth_stamp:
             # If an auth stamp is provided, it means they logged in using
