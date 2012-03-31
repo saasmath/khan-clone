@@ -561,8 +561,7 @@ class CompleteSignup(request_handler.RequestHandler):
                              "signup in a browser with an existing " +
                              "signed-in user. Forcefully signing old user " +
                              "out to avoid conflicts")
-                self.redirect("/logout?continue=%s" %
-                              urllib.quote_plus(self.request.uri))
+                self.redirect(util.create_logout_url(self.request.uri))
                 return
 
             # Ignore phantom users.
