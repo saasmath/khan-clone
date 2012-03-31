@@ -3,11 +3,11 @@ from __future__ import absolute_import
 from app import App
 
 import base64
-import cookie_util
 import datetime
 import hashlib
 import hmac
 import logging
+from auth.models import UserNonce
 
 _FORMAT = "%Y%j%H%M%S"
 def _to_timestamp(dt):
@@ -30,7 +30,7 @@ class BaseSecureToken(object):
     Note that instances may be created that are invalid (it may be expired
     or an external revocation process may have invalidated it).
     Clients must check is_valid() to ensure the contents of the token are valid.
-    
+
     Different token types may be created by extending and having subclasses
     override the method to generate the token signature.
 
@@ -46,6 +46,11 @@ class BaseSecureToken(object):
     def make_token_signature(user_data, timestamp):
         """ Subclasses should override this so to return a unique signature
         a user given a particular token type.
+        
+        This may alter state for the user_data, so subclasses
+        may define behavior such that subsequent calls to
+        make_token_signature may return varying results. To ensure a signature
+        is valid, override validate_signature().
 
         """
         raise Exception("Not implemented in base class")
@@ -55,8 +60,7 @@ class BaseSecureToken(object):
         """ Generate a secure token for a user. """
 
         timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
-        signature = cls.make_token_signature(
-                user_data, timestamp)
+        signature = cls.make_token_signature(user_data, timestamp)
         return cls(user_data.user_id, timestamp, signature)
 
     @classmethod
@@ -101,6 +105,14 @@ class BaseSecureToken(object):
         now = (clock or datetime.datetime).utcnow()
         return not dt or (now - dt) > time_to_expiry
 
+    def validate_signature_for(self, user_data):
+        """ Validates the signature for this token against the expected
+        value for a token for the specified user """
+        # The default implementation is to just re-build the signature
+        # and check equivalence.
+        expected = self.make_token_signature(user_data, self.timestamp)
+        return expected == self.signature
+
     def is_authentic(self, user_data):
         """ Determines if the token is valid for a given user.
         
@@ -108,12 +120,11 @@ class BaseSecureToken(object):
         password.
         
         """
+
         if self.user_id != user_data.user_id:
             return False
 
-        expected = self.make_token_signature(
-                    user_data, self.timestamp)
-        return expected == self.signature
+        return self.validate_signature_for(user_data)
     
     def is_valid(self, user_data,
                  time_to_expiry=DEFAULT_EXPIRY, clock=None):
@@ -161,40 +172,44 @@ class AuthToken(BaseSecureToken):
         secret = App.token_recipe_key
         return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
-class GoogleUserToken(BaseSecureToken):
-    """ A short-lived authentication token that can only be minted for signed
-    in Google users. This is used to transfer identities of Google users
-    securely.
+class TransferAuthToken(BaseSecureToken):
+    """ A short-lived authentication token that can be minted for signed
+    in users to transfer identities across domains.
 
-    Since the cookie which identifies Google users on http requests (ACSID) is
-    not verifiable by the appengine SDK on https requests, we mint a custom
-    token so that it can be sent over https.
-    
-    Creation and validation of this token relies on the cookies being sent in
-    the current request being handled.
+    This is useful since Khan Academy domains on HTTP and HTTPS differ, and
+    iframes that need to be in HTTPS may not be able to read the normal auth
+    cookies on HTTP. For this purpose, TransferAuthToken's are used to
+    temporarily authenticate iframes for users.
 
     """
-    # TODO(benkomalo): I don't like this dependence on reading cookies of the
-    # request. It'd be nice to make this token utility independent of request
-    # handling.
 
     @staticmethod
     def make_token_signature(user_data, timestamp):
-        # This signature design intentionally relies on the ACSID cookie so that
-        # only valid ACSID values can be minted on http requests, and that same
-        # valid ACSID must be match on the https response.
-        google_cookie = cookie_util.get_google_cookie()
+        nonce = UserNonce.make_for(user_data, "https_transfer").value
         payload = "\n".join([
                 user_data.user_id,
-                google_cookie,
+                nonce,
                 timestamp
                 ])
         secret = App.token_recipe_key
         return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
+    def validate_signature_for(self, user_data):
+        nonce_entity = UserNonce.get_for(user_data, "https_transfer")
+        if nonce_entity is None:
+            return False
+        nonce = nonce_entity.value
+        payload = "\n".join([
+                user_data.user_id,
+                nonce,
+                self.timestamp
+                ])
+        secret = App.token_recipe_key
+        expected =  hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        return expected == self.signature
+
     # Force a short expiry for these tokens.
-    DEFAULT_EXPIRY = datetime.timedelta(days=1)
-    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 24 * 60 * 60
+    DEFAULT_EXPIRY = datetime.timedelta(hours=1)
 
     def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
         dt = _from_timestamp(self.timestamp)

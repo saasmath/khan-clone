@@ -8,11 +8,10 @@ from google.appengine.api import users
 from models import UserData
 from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
-import urllib
 
 import auth.cookies
 import auth.passwords
-from auth.tokens import AuthToken, GoogleUserToken
+from auth.tokens import AuthToken, TransferAuthToken
 import cookie_util
 import datetime
 import logging
@@ -503,37 +502,6 @@ class CompleteSignup(request_handler.RequestHandler):
         # Success - token does indeed point to an unverified user.
         return (token, unverified_user)
 
-    def resolve_logged_in_user(self):
-        """ Determines who the current, logged in user is.
-
-        This is special because it also handles recognizing a GoogleUserToken
-        as an authentication token for a Google user on https, where the normal
-        ACSID cookie that typically identifies them is not verifiable.
-        
-        """
-
-        user_data = UserData.current()
-        if user_data:
-            return user_data
-
-        if not App.is_dev_server and not self.request.uri.startswith('https'):
-            return None
-
-        # On https, Google users aren't recognized since their ACSID is
-        # not valid on http. Look for a transfer token which we minted in
-        # the outer iframe
-        token_value = self.request_string("transfer_token", default=None)
-        if not token_value:
-            return None
-
-        transfer_token = GoogleUserToken.for_value(token_value)
-        if not transfer_token:
-            return None
-
-        user_data = UserData.get_from_user_id(transfer_token.user_id)
-        if user_data and transfer_token.is_valid(user_data):
-            return user_data
-
     @user_util.manual_access_checking
     def get(self):
         if self.request_bool("form", default=False):
@@ -578,12 +546,12 @@ class CompleteSignup(request_handler.RequestHandler):
                 # The user already has a KA login - redirect them to their profile
                 self.redirect(user_data.profile_root)
                 return
-            elif users.get_current_user().user_id() == user_data.user.user_id():
+            else:
                 # Here we have a valid user, and need to transfer their identity
                 # to the inner iframe that will be hosted on https.
-                # If it's a google user, we have to do this manually since the
-                # ACSID is not recognized in https - mint a custom token.
-                transfer_token = GoogleUserToken.for_user(user_data).value
+                # Since their current cookies may not be transferred/valid in
+                # https, mint a custom, short-lived token to transfer identity.
+                transfer_token = TransferAuthToken.for_user(user_data).value
 
         template_values = {
             'params': util.build_params({
@@ -599,7 +567,7 @@ class CompleteSignup(request_handler.RequestHandler):
         """ Renders the contents of the form for completing a signup. """
 
         valid_token, unverified_user = self.resolve_token()
-        user_data = self.resolve_logged_in_user()
+        user_data = _resolve_user_in_https_frame(self)
         if not valid_token and not user_data:
             # TODO(benkomalo): handle this better since it's going to be in
             # an iframe! The outer container should do this check for us though.
@@ -640,7 +608,7 @@ class CompleteSignup(request_handler.RequestHandler):
     @user_util.manual_access_checking
     def post(self):
         valid_token, unverified_user = self.resolve_token()
-        user_data = self.resolve_logged_in_user()
+        user_data = _resolve_user_in_https_frame(self)
         if not valid_token and not user_data:
             logging.warn("No valid token or user for /completesignup")
             self.redirect("/")
@@ -804,3 +772,33 @@ class PasswordChange(request_handler.RequestHandler):
             auth_token = AuthToken.for_user(user_data)
             self.redirect(util.insecure_url(
                     "/pwchange?auth=%s" % auth_token.value))
+
+def _resolve_user_in_https_frame(handler):
+    """ Determines the current logged in user for the HTTPS request.
+    
+    This has logic in additional to UserData.current(), since it should also
+    accept TransferAuthTokens, since HTTPS requests may not have normal HTTP
+    cookies sent.
+
+    """
+
+    user_data = UserData.current()
+    if user_data:
+        return user_data
+
+    if not App.is_dev_server and not handler.request.uri.startswith('https'):
+        return None
+
+    # On https, users aren't recognized through the normal means of cookie auth
+    # since their cookies were set on HTTP domains.
+    token_value = handler.request_string("transfer_token", default=None)
+    if not token_value:
+        return None
+
+    transfer_token = TransferAuthToken.for_value(token_value)
+    if not transfer_token:
+        return None
+
+    user_data = UserData.get_from_user_id(transfer_token.user_id)
+    if user_data and transfer_token.is_valid(user_data):
+        return user_data
