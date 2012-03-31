@@ -7,9 +7,11 @@ import datetime
 import logging
 import pickle
 import zlib
+from base64 import b64encode, b64decode
 
 from google.appengine.api import memcache
 from google.appengine.ext import db
+from google.appengine.runtime.apiproxy_errors import RequestTooLargeError
 
 from app import App
 import request_cache
@@ -85,8 +87,21 @@ else:
 # Persist the cached values across different uploaded app verions (disabled by default):
 # @layer_cache.cache(... persist_across_app_versions=True)
 #
-# If key has expired or is no longer in the current cache and throws an error when trying to be recomputed, then try getting resource from permanent key that is not set to expire
-# @layer_cache.cache(... expiration=60, permanent_cache_key = lambda object: "permanent_layer_cache_key_for_object_%s" % object.id())
+# If key has expired or is no longer in the current cache and throws an error 
+# when trying to be recomputed, then try getting resource from permanent key 
+# that is not set to expire
+# @layer_cache.cache(... expiration=60, permanent_cache_key = 
+#   lambda object: "permanent_layer_cache_key_for_object_%s" % object.id())
+#
+# If you know that a function will always return something bigger than 1MB, you 
+# can set this parameter to not bother attempting to set it normally as you know
+# it will fail, hence will save 1RPC:
+# @layer_cache.cache(... use_chunks=True)
+#
+# If you know a function will return something that is > 1MB and won't compress
+# easily to something much smaller, you can set this value to False to save on
+# compression and decompression time 
+# @layer_cache.cache(... compress_chunks=False)
 #
 # _____Disabling:_____
 #
@@ -96,14 +111,17 @@ else:
 # Re-enable it with
 # layer_cache.enable()
 
+# 100000 is max for both datastore and memcache - ChunkedResult overhead
+MAX_SIZE_OF_CACHE_CHUNKS = 999900 
+MAX_NUM_CACHE_CHUNKS = 32
 
-DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 25 # Expire after 25 days by default
+# Expire after 25 days by default
+DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS = 60 * 60 * 24 * 25 
 
 class Layers:
     Datastore = 1
     Memcache = 2
     InAppMemory = 4
-    Blobstore = 8
 
 def disable():
     request_cache.set("layer_cache_disabled", True)
@@ -117,11 +135,16 @@ def is_disabled():
 def cache(
         expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
         layer = Layers.Memcache | Layers.InAppMemory,
-        persist_across_app_versions = False):
+        persist_across_app_versions = False,
+        use_chunks = False,
+        compress_chunks = True):
     def decorator(target):
         key = "__layer_cache_%s.%s__" % (target.__module__, target.__name__)
         def wrapper(*args, **kwargs):
-            return layer_cache_check_set_return(target, lambda *args, **kwargs: key, expiration, layer, persist_across_app_versions, None, *args, **kwargs)
+            return layer_cache_check_set_return(target, 
+                lambda *args, **kwargs: key, expiration, layer,
+                    persist_across_app_versions, None, use_chunks, 
+                    compress_chunks, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -130,10 +153,14 @@ def cache_with_key_fxn(
         expiration = DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS,
         layer = Layers.Memcache | Layers.InAppMemory,
         persist_across_app_versions = False,
-        permanent_key_fxn = None):
+        permanent_key_fxn = None,
+        use_chunks = False,
+        compress_chunks = True):
     def decorator(target):
         def wrapper(*args, **kwargs):
-            return layer_cache_check_set_return(target, key_fxn, expiration, layer, persist_across_app_versions, permanent_key_fxn, *args, **kwargs)
+            return layer_cache_check_set_return(target, key_fxn, expiration, 
+                layer, persist_across_app_versions, permanent_key_fxn, 
+                use_chunks, compress_chunks, *args, **kwargs)
         return wrapper
     return decorator
 
@@ -144,6 +171,8 @@ def layer_cache_check_set_return(
         layer = Layers.Memcache | Layers.InAppMemory,
         persist_across_app_versions = False,
         permanent_key_fxn = None,
+        use_chunks = False,
+        compress_chunks = True,
         *args,
         **kwargs):
 
@@ -152,72 +181,80 @@ def layer_cache_check_set_return(
         if layer & Layers.InAppMemory:
             result = cachepy.get(key)
             if result is not None:
-                if isinstance(result, CompressedResult):
-                    return result.get_result()
-                else:
-                    return result
+                return result
 
         if layer & Layers.Memcache:
             result = memcache.get(key, namespace=namespace)
             if result is not None:
+                if isinstance(result, ChunkedResult):
+                    result = result.get_result(memcache, namespace=namespace)
+
                 # Found in memcache, fill upward layers
                 if layer & Layers.InAppMemory:
                     cachepy.set(key, result, expiry=expiration)
 
-                if isinstance(result, CompressedResult):
-                    return result.get_result()
-                else:
-                    return result
+                return result
 
         if layer & Layers.Datastore:
             result = KeyValueCache.get(key, namespace=namespace)
             if result is not None:
-                # Found in datastore, fill upward layers
+                if isinstance(result, ChunkedResult):
+                    result = result.get_result(KeyValueCache, 
+                                               namespace=namespace)
+                    
+                    # Found in datastore, fill upward layers
+                    if layer & Layers.Memcache:
+                        ChunkedResult.set(key, result, expiration, namespace, 
+                                          cache_class=memcache)
+                else:
+                    if layer & Layers.Memcache:
+                        memcache.set(key, result, time=expiration, 
+                                     namespace=namespace)
+
                 if layer & Layers.InAppMemory:
                     cachepy.set(key, result, expiry=expiration)
-                if layer & Layers.Memcache:
-                    memcache.set(key, result, time=expiration, namespace=namespace)
+                
                 return result
         
-        if layer & Layers.Blobstore:
-            try:
-                result = BlobCache.get(key, namespace=namespace)
-            except Exception, e:
-                logging.warning("Reading from blobstore failed with: %s" % e)
-    
-            # TODO: fill upward layers if size of dumped result is going to be less than 1MB (might be too costly to figure that out
-            return result
-
-
-    def set_cached_result(key, namespace, expiration, layer, result):
+    def set_cached_result(key, namespace, expiration, layer, result, 
+                          use_chunks, compress_chunks):
         # Cache the result
         if layer & Layers.InAppMemory:
             cachepy.set(key, result, expiry=expiration)
 
         if layer & Layers.Memcache:
             try:
-                if not memcache.set(key, result, time=expiration, namespace=namespace):
-                    logging.error("Memcache set failed for %s" % key)
+                if not use_chunks:
+                    if not memcache.set(key, result, time=expiration, 
+                                        namespace=namespace):
+                        logging.error("Memcache set failed for %s" % key)
+                else:
+                    ChunkedResult.set(key, result, expiration, namespace, 
+                                      compress=compress_chunks,
+                                      cache_class=memcache)
             except ValueError, e:
                 if str(e).startswith("Values may not be more than"):
-                    compressed_result = CompressedResult(result)
-                    try:
-                        memcache.set(key, compressed_result, time=expiration, namespace=namespace)
-                        logging.info("Had to compress %s to size %i to store in cache" % (key, len(compressed_result.compressed_result)))
-                    except:
-                        logging.error("Can't store %s in cache. Compressed size %i > 1000000 bytes" % (key, len(compressed_result.compressed_result)))
+                    ChunkedResult.set(key, result, expiration, namespace, 
+                                      compress=compress_chunks,
+                                      cache_class=memcache)
                 else: 
                     raise
 
         if layer & Layers.Datastore:
-            KeyValueCache.set(key, result, time=expiration, namespace=namespace)
-
-        if layer & Layers.Blobstore:
             try:
-                BlobCache.set(key, result, time=expiration, namespace=namespace)
-            except:
-                logging.warning("Writing to the blobstore failed with: %s" % e)
-                
+                if not use_chunks:
+                    KeyValueCache.set(key, result, time=expiration, 
+                                      namespace=namespace)
+                else:
+                    ChunkedResult.set(key, result, time=expiration, 
+                                      namespace=namespace,
+                                      compress=compress_chunks, 
+                                      cache_class=KeyValueCache)
+            except RequestTooLargeError, e:
+                ChunkedResult.set(key, result, time=expiration, 
+                                  namespace=namespace,
+                                  compress=compress_chunks, 
+                                  cache_class=KeyValueCache)                
 
     bust_cache = False
     if "bust_cache" in kwargs:
@@ -265,7 +302,8 @@ def layer_cache_check_set_return(
                 key = key_fxn(*args, **kwargs)
 
                 #retreived item from permanent cache - save it to the more temporary cache and then return it
-                set_cached_result(key, namespace, expiration, layer, result)
+                set_cached_result(key, namespace, expiration, layer, result, 
+                                  use_chunks, compress_chunks)
                 return result
 
         # could not retrieve item from a permanent cache, raise the error on up
@@ -277,21 +315,107 @@ def layer_cache_check_set_return(
     else:
         if permanent_key_fxn is not None:
             permanent_key = permanent_key_fxn(*args, **kwargs)
-            set_cached_result(permanent_key, namespace, 0, layer, result)
+            set_cached_result(permanent_key, namespace, 0, layer, result, 
+                              use_chunks, compress_chunks)
 
         # In case the key's value has been changed by target's execution
         key = key_fxn(*args, **kwargs)
-        set_cached_result(key, namespace, expiration, layer, result)
+        set_cached_result(key, namespace, expiration, layer, result, 
+                          use_chunks, compress_chunks)
 
     return result
 
-class CompressedResult():
-    def __init__(self, result):
-        value = pickle.dumps(result)
-        self.compressed_result = zlib.compress(value)
+class ChunkedResult():
+    def __init__(self, index=None, data=None, compress=True):
+        self.index = index
+        self.data = data
+        self.compress = compress
+        
+    @staticmethod
+    def set(key, value, time=None, namespace="", cache_class=memcache, 
+            compress=True):
+        ''' This function will pickle and perhaps compress value, before then
+        breaking it up into chunks and storing it with set_multi to whatever
+        class cache_class is set to (memcache or KeyValueCache)
+        '''
+
+        result = pickle.dumps(value)
+        if compress:
+            result = zlib.compress(b64encode(result))
+        
+        size = len(result)    
+        # if now that we have compressed the item it can fit within a single
+        # 1MB object don't use the index, and it will save us from having
+        # to do an extra round-trip on the gets
+        if size < MAX_SIZE_OF_CACHE_CHUNKS:
+            mapping = {key: ChunkedResult(data=result, compress=compress)}
+        
+        else:
+            pos = 0
+            i = 1
+            mapping = {}
+            chunk_index = []
+            
+            while pos < size:
+                chunk = result[pos : pos + MAX_SIZE_OF_CACHE_CHUNKS]                           
+                pos += MAX_SIZE_OF_CACHE_CHUNKS 
+                chunk_key = key + str(i)
+                mapping[chunk_key] = chunk
+                chunk_index.append(chunk_key)
+                i += 1
+
+            mapping[key] = ChunkedResult(index=chunk_index, compress=compress)
+        
+        cache_class.set_multi(mapping, time=time, namespace=namespace)
     
-    def get_result(self):
-        return pickle.loads(zlib.decompress(self.compressed_result))
+    @staticmethod
+    def delete(key, namespace="", cache_class=memcache):
+        '''This function will first get the key.  If it is a ChunkedResult and
+        has an index, then it will delete_multi on all the items in the index
+        otherwise it will just delete the key'''
+        value = cache_class.get(key, namespace)
+        if isinstance(value, ChunkedResult) and value.index:
+            keys = value.index
+            keys.append(key)
+            cache_class.delete_multi(keys, namespace)
+        elif value:
+            cache_class.delete(key, namespace)
+
+    def get_result(self, cache_class=memcache, namespace=""):
+        '''If the results are stored within this ChunkedResult object it will 
+        decompress, depickle and return it.  Otherwise it calls get_multi on the
+        cache_class for all items in its index, combines them together and
+        returns the descompressed and depickled result
+        '''
+        if self.index:
+            chunked_results = cache_class.get_multi(self.index, namespace=namespace)
+            self.data = ""
+            for chunk_key in self.index:
+                if chunk_key not in chunked_results:
+                    # if a chunk is missing then it is impossible to depickle
+                    # so target func will need to be re-executed
+                    return None
+                self.data += chunked_results[chunk_key]          
+            
+        if self.compress:
+            try:
+                self.data = b64decode(zlib.decompress(self.data))
+            except:
+                # It is possible that we get results some from a new value of a 
+                # cached item and some from an old value of a cached item, and 
+                # hence decompression will fail, as set_multi is not atomic   
+                logging.warning("could not decompress ChunkedResult from cache")
+                return None
+             
+        try:
+            return pickle.loads(self.data)
+        except:
+            # It is possible that we get results some from a new value of a 
+            # cached item and some from an old value of a cached item, and 
+            # hence depickle will fail, as set_multi is not atomic   
+            logging.warning("could not depickle ChunkedResult from cache")
+            return None
+        
 
 # Functions can return an UncachedResult-wrapped object
 # to tell layer_cache to skip caching this specific result.
@@ -314,6 +438,7 @@ class KeyValueCache(db.Model):
     value = db.BlobProperty()
     created = db.DateTimeProperty()
     expires = db.DateTimeProperty()
+    pickled = db.BooleanProperty(indexed=False)
 
     def is_expired(self):
         return datetime.datetime.now() > self.expires
@@ -324,14 +449,40 @@ class KeyValueCache(db.Model):
 
     @staticmethod
     def get(key, namespace=""):
-
         namespaced_key = KeyValueCache.get_namespaced_key(key, namespace)
+
         key_value = KeyValueCache.get_by_key_name(namespaced_key)
 
         if key_value and not key_value.is_expired():
-            return pickle.loads(key_value.value)
+            if key_value.pickled:
+                return pickle.loads(key_value.value)
+            else:
+                return key_value.value
 
         return None
+
+    @staticmethod
+    def get_multi(keys, namespace=""):
+        ''' gets multiple KeyValueCache entries at once. It mirrors the 
+        parameters of memcache.get_multi
+        '''
+
+        namespaced_keys = []
+        for key in keys:
+            namespaced_keys.append(
+                            KeyValueCache.get_namespaced_key(key, namespace))
+
+        key_values = KeyValueCache.get_by_key_name(namespaced_keys)
+        
+        values = dict()
+        for i, key_value in enumerate(key_values):
+            if key_value and not key_value.is_expired():
+                if key_value.pickled:
+                    values[keys[i]] = pickle.loads(key_value.value)
+                else:
+                    values[keys[i]] = key_value.value
+
+        return values
 
     @staticmethod
     def set(key, result, time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, namespace=""):
@@ -343,107 +494,84 @@ class KeyValueCache(db.Model):
         if time > 0:
             dt_expires = dt + datetime.timedelta(seconds=time)
 
+        # check to see if we need to pickle the results
+        pickled = False
+        if not isinstance(result, basestring):
+            pickled = True
+            result = pickle.dumps(result)
+
         key_value = KeyValueCache.get_or_insert(
                 key_name = namespaced_key,
-                value = pickle.dumps(result),
+                value = result,
                 created = dt,
-                expires = dt_expires)
+                expires = dt_expires,
+                pickled = pickled)
 
         if key_value.created != dt:
             # Already existed, need to overwrite
-            key_value.value = pickle.dumps(result)
+            key_value.value = result
             key_value.created = dt
             key_value.expires = dt_expires
+            key_value.pickled = pickled
             key_value.put()
+
+    @staticmethod
+    def set_multi(mapping, 
+                  time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, 
+                  namespace=""):                        
+        ''' sets multiple KeyValueCache entries at once. It mirrors the 
+        parameters of memcache.set_multi
+        '''
+        
+        namespaced_mapping = dict(
+            (KeyValueCache.get_namespaced_key(key, namespace), value) 
+            for key, value in mapping.iteritems())
+
+        dt = datetime.datetime.now()
+
+        dt_expires = datetime.datetime.max
+        if time > 0:
+            dt_expires = dt + datetime.timedelta(seconds=time)
+
+        key_values = []
+        
+        for namespaced_key, value in namespaced_mapping.iteritems():    
+            
+            # check to see if we need to pickle the results
+            pickled = False
+            if not isinstance(value, basestring):
+                pickled = True
+                value = pickle.dumps(value)
+
+            key_values.append(KeyValueCache(
+                    key_name = namespaced_key,
+                    value = value,
+                    created = dt,
+                    expires = dt_expires,
+                    pickled = pickled))
+        
+        db.put(key_values)
+
+    @staticmethod
+    def delete_multi(keys, namespace=""):
+        ''' deletes multiple KeyValueCache entries at once. It mirrors the 
+        parameters of memcache.get_multi
+        '''
+
+        namespaced_keys = [
+            KeyValueCache.get_namespaced_key(key, namespace)
+            for key in keys]
+        
+        key_values = KeyValueCache.get_by_key_name(namespaced_keys)
+        key_values = [v for v in key_values if v]
+        db.delete(key_values)
 
     @staticmethod
     def delete(key, namespace=""):
 
         namespaced_key = KeyValueCache.get_namespaced_key(key, namespace)
         key_value = KeyValueCache.get_by_key_name(namespaced_key)
-
+        
         if key_value:
             db.delete(key_value)
-
-class BlobCache():
-
-    @staticmethod
-    def get_filename(key, namespace=""):
-        return "blobcache-%s-%s" % (namespace, key)
-
-    @staticmethod
-    def get_blob_infos(key, namespace=""):
-        filename = BlobCache.get_filename(key, namespace)
-        return blobstore.BlobInfo.all().filter("filename =", filename).fetch(100)
-        
-    @staticmethod
-    def get_first_blob_info(key, namespace=""):
-        infos = BlobCache.get_blob_infos(key, namespace)
-
-        if infos:
-            infos = sorted(infos, key=lambda info: info.creation)
-            return infos[-1]
-        else:
-            return None
-
-    @staticmethod
-    def get(key, namespace=""):
-        from datetime import datetime
-        start = datetime.now()
-        blob_info = BlobCache.get_first_blob_info(key, namespace)
-        end = datetime.now()
-
-        if blob_info:
-            start = datetime.now()
-            blob_reader = blob_info.open()
-            value = blob_reader.read()
-            end = datetime.now()
-
-            start = datetime.now()
-            obj = pickle.loads(value)
-            end = datetime.now()
-
-            return obj
-       
-    @staticmethod
-    def set(key, result, time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, namespace=""):
-        old_blob_infos = BlobCache.get_blob_infos(key, namespace)
-      
-        value = pickle.dumps(result)
-        
-        # Create the file
-        file_name = files.blobstore.create(mime_type='application/octet-stream', _blobinfo_uploaded_filename=BlobCache.get_filename(key, namespace))
- 
-        # might need to wrap it in an object to handle expiration time here
-        
-        # write the pickled result to the file
-        pos = 0
-        chunkSize = 65536
-        with files.open(file_name, 'a') as f:
-            while pos < len(value):
-                chunk = value[pos:pos+chunkSize]
-                pos += chunkSize
-                f.write(chunk)
-
-        # Finalize the file. Do this before attempting to read it.
-        files.finalize(file_name)
-
-        # Get the file's blob key
-        blob_key = files.blobstore.get_blob_key(file_name)
-
-        for info in old_blob_infos:
-            try:
-                info.delete()
-            except Exception, e:
-                # If deleting blob times out, don't crash the request. Just log the error.
-                logging.error("Failed to delete old blob from layer_cache: %s" % e)
-
-    @staticmethod
-    def delete(key, namespace=""):
-        for info in BlobCache.get_blob_infos(key, namespace):
-            try:
-                info.delete()
-            except Exception, e:
-                # If deleting blob times out, don't crash the request. Just log the error.
-                logging.error("Failed to delete old blob from layer_cache: %s" % e)
 
