@@ -503,7 +503,7 @@ class CompleteSignup(request_handler.RequestHandler):
         # Success - token does indeed point to an unverified user.
         return (token, unverified_user)
 
-    def resolve_user(self):
+    def resolve_logged_in_user(self):
         """ Determines who the current, logged in user is.
 
         This is special because it also handles recognizing a GoogleUserToken
@@ -527,6 +527,9 @@ class CompleteSignup(request_handler.RequestHandler):
             return None
 
         transfer_token = GoogleUserToken.for_value(token_value)
+        if not transfer_token:
+            return None
+
         user_data = UserData.get_from_user_id(transfer_token.user_id)
         if user_data and transfer_token.is_valid(user_data):
             return user_data
@@ -597,7 +600,7 @@ class CompleteSignup(request_handler.RequestHandler):
         """ Renders the contents of the form for completing a signup. """
 
         valid_token, unverified_user = self.resolve_token()
-        user_data = self.resolve_user()
+        user_data = self.resolve_logged_in_user()
         if not valid_token and not user_data:
             # TODO(benkomalo): handle this better since it's going to be in
             # an iframe! The outer container should do this check for us though.
@@ -638,7 +641,7 @@ class CompleteSignup(request_handler.RequestHandler):
     @user_util.manual_access_checking
     def post(self):
         valid_token, unverified_user = self.resolve_token()
-        user_data = self.resolve_user()
+        user_data = self.resolve_logged_in_user()
         if not valid_token and not user_data:
             logging.warn("No valid token or user for /completesignup")
             self.redirect("/")
