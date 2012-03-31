@@ -1,7 +1,7 @@
 $ ->
     defaultOptions =
         chart:
-            animation: false
+            animation: off
             type: 'column'
         colors: [
             '#3366cc'
@@ -59,4 +59,14 @@ $ ->
                     chart.series[i].setData([count], false)
                 chart.redraw()
                 return
+            return
+
+    $(".btn").on "click", ->
+        numbers = []
+        if $(@).is('#random')
+            for i in [1..1000]
+                numbers.push(Math.floor(2 * Math.random()))
+
+        $("input").val(numbers.join("")).trigger("keyup")
+        return
     return
