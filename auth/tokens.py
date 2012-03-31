@@ -27,8 +27,9 @@ def _from_timestamp(s):
 class BaseSecureToken(object):
     """ A base secure token used to identify and authenticate a user.
 
-    Note that instances may be created that are invalid. Clients must check
-    is_valid() to ensure the contents of the token are valid.
+    Note that instances may be created that are invalid (it may be expired
+    or an external revocation process may have invalidated it).
+    Clients must check is_valid() to ensure the contents of the token are valid.
     
     Different token types may be created by extending and having subclasses
     override the method to generate the token signature.
@@ -136,10 +137,12 @@ class BaseSecureToken(object):
 class AuthToken(BaseSecureToken):
     """ A secure token used to authenticate a user that has a password set.
 
-    Note that instances may be created that are invalid. Clients must check
+    Note that instances may be created that are invalid (e.g. it may be expired
+    or the user may have changed her password). Clients must check
     is_valid() to ensure the contents of the token are valid.
     
     """
+
     @staticmethod
     def make_token_signature(user_data, timestamp):
         """ Generates a signature to be embedded inside of an auth token.
@@ -166,8 +169,14 @@ class GoogleUserToken(BaseSecureToken):
     Since the cookie which identifies Google users on http requests (ACSID) is
     not verifiable by the appengine SDK on https requests, we mint a custom
     token so that it can be sent over https.
+    
+    Creation and validation of this token relies on the cookies being sent in
+    the current request being handled.
 
     """
+    # TODO(benkomalo): I don't like this dependence on reading cookies of the
+    # request. It'd be nice to make this token utility independent of request
+    # handling.
 
     @staticmethod
     def make_token_signature(user_data, timestamp):
