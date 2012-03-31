@@ -149,6 +149,8 @@ class Exercise(db.Model):
     # Non-live exercises are only visible to admins.
     live = db.BooleanProperty(default=False)
 
+    summative = db.BooleanProperty(default=False)
+
     # Teachers contribute raw html with embedded CSS and JS
     # and we sanitize it with Caja before displaying it to
     # students.
@@ -1984,7 +1986,7 @@ class TopicVersion(db.Model):
         exercise_dict.update(exercise_changes)
         
         for exercise in [e for e in exercise_dict.values() 
-                         if e.live]:
+                         if e.live and not e.summative]:
                    
             if exercise.h_position not in location_dict:
                 location_dict[exercise.h_position] = {}
