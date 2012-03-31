@@ -40,6 +40,11 @@
             .pw-login img.tree {
                 float: left;
             }
+            {% if view == "mobile" %}
+            .pw-login input {
+                -webkit-user-select: text;
+            }
+            {% endif %}
         </style>
 
         {% if view == "mobile" %}
