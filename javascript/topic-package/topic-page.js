@@ -27,22 +27,9 @@
 
             VideoControls.initPlaceholder($(".main-video-placeholder"), { "youtubeId": marqueeVideoID });
 
-            $(window).resize(function() {self.resize();});
-            this.resize();
-
             this.router = new this.SubTopicRouter();
             this.router.bind("all", Analytics.handleRouterNavigation);
             Backbone.history.start({pushState: true, root: rootPath});
-        },
-
-        resize: function() {
-            var jelContent = $(".topic-page-content");
-            var containerHeight = $(window).height();
-            var yTopPadding = jelContent.offset().top;
-            var yBottomPadding = $("#end-of-page-spacer").outerHeight(true);
-            var newHeight = containerHeight - (yTopPadding + yBottomPadding * 2 + 6);
-
-            jelContent.height(newHeight);
         },
 
         SubTopicRouter: Backbone.Router.extend({

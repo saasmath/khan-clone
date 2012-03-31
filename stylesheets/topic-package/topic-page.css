@@ -58,30 +58,21 @@ a.main-video-link:hover {
 }
 
 .topic-page-content {
-    position: absolute;
-    width: 100%;
-    height: 600px;
-    top: 440px;
-}
-.topic-page-content > .heading {
-    font-family: "MuseoSans300", sans-serif;
-    font-size: 18px;
-    font-weight: bold;
-    padding-bottom: 12px;
+    width: 1162px;
+    margin-top: 430px;
+    margin-bottom: 10px;
 }
 .topic-page-content > .container {
+    position: relative;
     width: 100%;
-    height: 100%;
     border: solid 1px #666;
 }
 
 .topic-page-content > .container > .nav-pane {
+    display: inline-block;
     width: 260px;
     height: 100%;
     border-right: solid 3px #005987;
-    float: left;
-    overflow-x: hidden;
-    overflow-y: auto;
 }
 .topic-page-content > .container > .nav-pane > ul {
     width: 260px;
@@ -90,8 +81,6 @@ a.main-video-link:hover {
 }
 .topic-page-content > .container > .nav-pane > ul > li {
     position: relative;
-    float: left;
-    clear: both;
     width: 260px;
 }
 .topic-page-content > .container > .nav-pane > ul > li > a {
@@ -115,7 +104,7 @@ a.main-video-link:hover {
     position: absolute;
     top: 50%;
     margin-top: -7px;
-    right: 16px;
+    right: 12px;
     width: 7px;
     height: 13px;
 }
@@ -129,14 +118,12 @@ a.main-video-link:hover {
 }
 
 .topic-page-content > .container > .content-pane {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    height: 100%;
-    overflow-y: auto;
+    display: inline-block;
+    vertical-align: top;
+    width: 1162px
 }
 .topic-page-content > .container > .content-pane.indent {
-    left: 260px;
+    width: 889px;
 }
 
 .topic-page-content > .container > .content-pane .content-inner {
@@ -145,16 +132,16 @@ a.main-video-link:hover {
 .topic-page-content > .container > .content-pane .title {
     font-family: MuseoSans300;
     color: #333;
-    font-weight: normal;
-    font-size: 16px;
-    margin-top: 10px;
+    font-weight: bold;
+    font-size: 16pt;
+    margin-top: 14px;
     margin-bottom: 10px;
 }
 .topic-page-content > .container > .content-pane .description {
     width: 100%;
     margin-bottom: 10px;
     padding-bottom: 10px;
-    border-bottom: solid 1px #ccc;
+    border-bottom: solid 2px #ddd;
 }
 .topic-page-content > .container > .content-pane .video-link {
     line-height: 30px;

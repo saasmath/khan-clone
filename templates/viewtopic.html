@@ -39,14 +39,10 @@
   <div data-role="header" class="library-content-header">
     <h2 class='topic-heading'>{{ main_topic.standalone_title }}</h2>
     <p class='topic-desc'>{{ main_topic.description }}</p>
-    <div>
-      <a href="{{ marquee_video["href"] }}" data-tag="Topic Page C2A" class="call-to-action simple-button action-gradient green watch-a-video">Watch "{{ marquee_video["title"]|escape }}"</a>
-    </div>
   </div>
 </div>
 
 <div class="topic-page-content">
-  <div class="heading">Videos in {{ main_topic.title|escape }}</div>
   <div class="container">
     {% if topic_children %}
     <div class="nav-pane">
@@ -60,6 +56,7 @@
         </li>
       {% endfor %}
       </ul>
+      <div style="clear: both"></div>
     </div>
     {% endif %}
     <div class="content-pane {% if topic_children %}indent{% endif %}">
