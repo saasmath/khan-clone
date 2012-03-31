@@ -485,7 +485,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 }
 
             });
-        }, 2400);
+        }, 2200);
 
     },
 
@@ -574,7 +574,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             "total": topicUserExercises.length,
                             startedExercises: startedExercises,
                             unstartedExercises: unstartedExercises,
-                            proficientExercises: proficientExercises,
+                            proficientExercises: proficientExercises
                         },
                         Exercises.sessionStats.progressStats(),
                         Exercises.completeStack.stats()
@@ -592,7 +592,15 @@ Exercises.CurrentCardView = Backbone.View.extend({
                                 $(this).hide();
                             })
                             .end()
+                        .find(".take-a-break")
+                            .click(function() {
+                                window.location = "/exercisedashboard";
+                            })
+                            .end()
                         .find(".more-stacks")
+                            .click(function() {
+                                window.location.reload();
+                            })
                             .focus();
                 }
             );

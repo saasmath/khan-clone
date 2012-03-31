@@ -8,9 +8,9 @@
     </div>
     <div class="stack-controls">
         {{#if reviewsLeft}}
-        <a href="/exercisedashboard" class="simple-button action-gradient left">Take a Break</a><a href="?" class="simple-button action-gradient green right">Keep reviewing!</a>
+        <input type="button" class="take-a-break simple-button action-gradient left" value="Take a Break"><input type="button" class="more-stacks simple-button action-gradient green right" value="Keep reviewing!">
         {{else}}
-        <a href="/exercisedashboard" class="simple-button action-gradient left">Head back to your exercise dashboard</a>
+        <input type="button" class="take-a-break simple-button action-gradient left" value="Head back to your exercise dashboard">
         {{/if}}
     </div>
 </div>
