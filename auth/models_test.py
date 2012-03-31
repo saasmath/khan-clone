@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from agar.test.base_test import BaseTest
 from app import App
+from auth.models import UserNonce
 import auth.tokens
 import models
 
@@ -43,3 +44,31 @@ class CredentialTest(BaseTest):
 
         # The old token should be invalidated
         self.assertFalse(token.is_authentic(u))
+
+class NonceTest(BaseTest):
+    def make_user(self, email):
+        u = models.UserData.insert_for(email, email)
+        u.put()
+        return u
+
+    def test_nonce_types_distinct(self):
+        u = self.make_user('bob@example.com')
+        type1 = UserNonce.make_for(u, "type1")
+        self.assertTrue(UserNonce.get_for(u, "type2") is None)
+        self.assertEquals(type1.value, UserNonce.get_for(u, "type1").value)
+
+    def test_nonce_values_are_user_specific(self):
+        bob = self.make_user('bob@example.com')
+        joe = self.make_user('joe@example.com')
+        UserNonce.make_for(bob, "type")
+
+        self.assertTrue(UserNonce.get_for(joe, "type") is None)
+
+    def test_nonces_dont_keep_growing(self):
+        u = self.make_user('bob@example.com')
+        # Subsequent calls for make_for overwrite existing nonce
+        # values of the same type.
+        value1 = UserNonce.make_for(u, "type1").value
+        value2 = UserNonce.make_for(u, "type1").value
+        self.assertNotEquals(value1, value2)
+        self.assertEquals(1, UserNonce.all().ancestor(u).count())
