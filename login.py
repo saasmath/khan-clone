@@ -31,8 +31,23 @@ class Login(request_handler.RequestHandler):
     def get(self):
         if self.request_bool("form", default=False):
             self.render_login_form()
+        elif not self.request_bool("use_new", default=False):
+            self.render_login_legacy()
         else:
             self.render_login_outer()
+            
+    def render_login_legacy(self):
+        """ Renders the old login page with no username/password inputs. """
+        cont = self.request_continue_url()
+        direct = self.request_bool('direct', default=False)
+
+        template_values = {
+                           'continue': cont,
+                           'direct': direct,
+                           'google_url': users.create_login_url(cont),
+                           }
+
+        self.render_jinja2_template('login_legacy.html', template_values)
 
     def render_login_outer(self):
         """ Renders the login page.
