@@ -121,7 +121,7 @@ class Setting(db.Model):
 
     @staticmethod
     def topic_admin_task_message(val=None):
-        return Setting._get_or_set_with_key("topic_admin_task_message", val) 
+        return Setting._get_or_set_with_key("topic_admin_task_message", val)
 
     @staticmethod
     def smarthistory_version(val=None):
@@ -636,35 +636,33 @@ class UserExercise(db.Model):
         exercises = topic.get_exercises(include_descendants=True)
         graph = UserExerciseGraph.get(user_data, exercises_allowed=exercises)
 
-        # Start off by getting all boundary exercises (those that aren't proficient
-        # and aren't covered by other boundary exercises)
-        frontier = set(UserExerciseGraph.get_boundary_names(graph.graph))
-        graph_dicts = [graph.graph_dict(exid) for exid in frontier]
+        # Start of by doing exercises that are in review
+        stack_dicts = graph.review_graph_dicts()
 
-        # Add in any exercises that are up for review
-        for review_dict in graph.review_graph_dicts():
-            if review_dict["name"] not in frontier:
-                graph_dicts.append(review_dict)
+        if len(stack_dicts) < n:
+            # Now get all boundary exercises (those that aren't proficient and
+            # aren't covered by other boundary exercises)
+            frontier = UserExerciseGraph.get_boundary_names(graph.graph)
+            frontier_dicts = [graph.graph_dict(exid) for exid in frontier]
 
-        # If we don't have *any* boundary exercises, fill things out with the other
-        # topic exercises. Note that if we have at least one boundary exercise, we don't
-        # want to add others to the mix because they may screw w/ the boundary conditions
-        # by adding a too-difficult exercise, etc.
-        if len(graph_dicts) == 0:
-            graph_dicts = graph.graph_dicts()
+            # If we don't have *any* boundary exercises, fill things out with the other
+            # topic exercises. Note that if we have at least one boundary exercise, we don't
+            # want to add others to the mix because they may screw w/ the boundary conditions
+            # by adding a too-difficult exercise, etc.
+            if len(frontier_dicts) == 0:
+                frontier_dicts = graph.graph_dicts()
 
-        # Now we sort the exercises by last_done and progress. If five exercises
-        # all have the same progress, we want to send the user the one they did
-        # least recently. Otherwise, we send the exercise that is most lacking in
-        # progress.
-        sorted_dicts = sorted(graph_dicts, key=lambda d: d.get("last_done", None) or datetime.datetime.min)
-        sorted_dicts = sorted(sorted_dicts, key=lambda d: d["progress"])
+            # Now we sort the exercises by last_done and progress. If five exercises
+            # all have the same progress, we want to send the user the one they did
+            # least recently. Otherwise, we send the exercise that is most lacking in
+            # progress.
+            sorted_dicts = sorted(frontier_dicts, key=lambda d: d.get("last_done", None) or datetime.datetime.min)
+            sorted_dicts = sorted(sorted_dicts, key=lambda d: d["progress"])
 
-        # And finally, chop off our extras
-        sorted_dicts = sorted_dicts[:n]
+            stack_dicts += sorted_dicts
 
         # Build up UserExercise objects from our graph dicts
-        user_exercises = [UserExercise.from_dict(d, user_data) for d in sorted_dicts]
+        user_exercises = [UserExercise.from_dict(d, user_data) for d in stack_dicts]
 
         return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
@@ -1144,7 +1142,7 @@ class UserData(GAEBingoIdentityModel, CredentialedUser, db.Model):
             "seconds_since_joined", "has_current_goals", "public_badges",
             "avatar_name", "username", "is_profile_public",
             "credential_version", "birthdate",
-            
+
             "conversion_test_hard_exercises",
             "conversion_test_easy_exercises",
     ]
@@ -1967,12 +1965,12 @@ class TopicVersion(db.Model):
         else:
             last_edited_by = None
         self.last_edited_by = last_edited_by
-        self.put()        
+        self.put()
 
     def find_content_problems(self):
         logging.info("checking for problems")
         version = self
-                
+
         # find exercises that are overlapping on the knowledge map
         logging.info("checking for exercises that are overlapping on the knowledge map")
         exercises = Exercise.all()
@@ -1981,13 +1979,13 @@ class TopicVersion(db.Model):
         location_dict = {}
         duplicate_positions = list()
         changes = VersionContentChange.get_updated_content_dict(version)
-        exercise_changes = dict((k,v) for k,v in changes.iteritems() 
+        exercise_changes = dict((k,v) for k,v in changes.iteritems()
                                 if v.key() in exercise_dict)
         exercise_dict.update(exercise_changes)
-        
-        for exercise in [e for e in exercise_dict.values() 
+
+        for exercise in [e for e in exercise_dict.values()
                          if e.live and not e.summative]:
-                   
+
             if exercise.h_position not in location_dict:
                 location_dict[exercise.h_position] = {}
 
@@ -2002,11 +2000,11 @@ class TopicVersion(db.Model):
         logging.info("checking for videos with 0 duration")
         zero_duration_videos = Video.all().filter("duration =", 0).fetch(10000)
         zero_duration_dict = dict((v.key(),v) for v in zero_duration_videos)
-        video_changes = dict((k,v) for k,v in changes.iteritems() 
+        video_changes = dict((k,v) for k,v in changes.iteritems()
                                 if k in zero_duration_dict or (
                                 type(v) == Video and v.duration == 0))
         zero_duration_dict.update(video_changes)
-        zero_duration_videos = [v for v in zero_duration_dict.values() 
+        zero_duration_videos = [v for v in zero_duration_dict.values()
                                 if v.duration == 0]
 
         # find videos with invalid youtube_ids that would be marked live
@@ -2016,10 +2014,10 @@ class TopicVersion(db.Model):
         bad_videos = []
         for video in videos:
             if re.search("_DUP_\d*$", video.youtube_id):
-                bad_videos.append(video) 
+                bad_videos.append(video)
 
         problems = {
-            "ExerciseVideos with topicless videos" : 
+            "ExerciseVideos with topicless videos" :
                 ExerciseVideo.get_all_with_topicless_videos(version),
             "Exercises with colliding positions" : list(duplicate_positions),
             "Zero duration videos": zero_duration_videos,
@@ -2029,17 +2027,17 @@ class TopicVersion(db.Model):
 
     def set_default_version(self):
         logging.info("starting set_default_version")
-        Setting.topic_admin_task_message("Publish: started") 
-        run_code = base64.urlsafe_b64encode(os.urandom(30))   
-        do_set_default_deferred_step(check_for_problems, 
+        Setting.topic_admin_task_message("Publish: started")
+        run_code = base64.urlsafe_b64encode(os.urandom(30))
+        do_set_default_deferred_step(check_for_problems,
                             self.number,
-                            run_code) 
+                            run_code)
 
 def do_set_default_deferred_step(func, version_number, run_code):
     taskname = "v%i_run_%s_%s" % (version_number, run_code, func.__name__)
     try:
-        deferred.defer(func, 
-                       version_number, 
+        deferred.defer(func,
+                       version_number,
                        run_code,
                        _queue = "topics-set-default-queue",
                        _name = taskname,
@@ -2060,17 +2058,17 @@ def check_for_problems(version_number, run_code):
             Setting.topic_admin_task_message(("Error - content problems " +
                 "found: %s. <a target=_blank " +
                 "href='/api/v1/dev/topictree/problems'>" +
-                "Click here to see problems.</a>") % 
+                "Click here to see problems.</a>") %
                 (problem_type))
-                
+
             raise deferred.PermanentTaskFailure
 
-    do_set_default_deferred_step(apply_version_content_changes, 
+    do_set_default_deferred_step(apply_version_content_changes,
                                  version_number,
-                                 run_code) 
+                                 run_code)
 
 def apply_version_content_changes(version_number, run_code):
-    Setting.topic_admin_task_message("Publish: applying version content changes")  
+    Setting.topic_admin_task_message("Publish: applying version content changes")
     version = TopicVersion.get_by_id(version_number)
     changes = VersionContentChange.all().filter('version =', version).fetch(10000)
     changes = util.prefetch_refprops(changes, VersionContentChange.content)
@@ -2081,10 +2079,10 @@ def apply_version_content_changes(version_number, run_code):
     logging.info("applied content changes")
     do_set_default_deferred_step(preload_default_version_data,
                                  version_number,
-                                 run_code) 
+                                 run_code)
 
 def preload_default_version_data(version_number, run_code):
-    Setting.topic_admin_task_message("Publish: preloading cache")  
+    Setting.topic_admin_task_message("Publish: preloading cache")
     version = TopicVersion.get_by_id(version_number)
 
     # Causes circular importing if put at the top
@@ -2135,10 +2133,10 @@ def preload_default_version_data(version_number, run_code):
 
     do_set_default_deferred_step(change_default_version,
                                  version_number,
-                                 run_code) 
-    
+                                 run_code)
+
 def change_default_version(version_number, run_code):
-    Setting.topic_admin_task_message("Publish: changing default version")  
+    Setting.topic_admin_task_message("Publish: changing default version")
     version = TopicVersion.get_by_id(version_number)
 
     default_version = TopicVersion.get_default_version()
@@ -2171,12 +2169,12 @@ def change_default_version(version_number, run_code):
 
     logging.info("done setting new default version")
 
-    Setting.topic_admin_task_message("Publish: reindexing new content")  
+    Setting.topic_admin_task_message("Publish: reindexing new content")
 
     Topic.reindex(version)
     logging.info("done fulltext reindexing topics")
-    
-    Setting.topic_admin_task_message("Publish: creating new edit version")  
+
+    Setting.topic_admin_task_message("Publish: creating new edit version")
 
     TopicVersion.create_edit_version()
     logging.info("done creating new edit version")
@@ -2190,14 +2188,14 @@ def change_default_version(version_number, run_code):
     do_set_default_deferred_step(rebuild_content_caches,
                                  version_number,
                                  run_code)
-   
+
 def rebuild_content_caches(version_number, run_code):
     """ Uses existing Topic structure to rebuild and recache topic_string_keys
     properties in Video, Url, and Exercise entities for easy parental Topic
     lookups.
     """
     Setting.topic_admin_task_message("Publish: rebuilding content caches")
-      
+
     version = TopicVersion.get_by_id(version_number)
 
     topics = Topic.get_all_topics(version)  # does not include hidden topics!
@@ -2253,7 +2251,7 @@ def rebuild_content_caches(version_number, run_code):
                 else:
                     logging.info("Failed to find exercise " + str(child_key))
 
-    Setting.topic_admin_task_message("Publish: putting all content caches") 
+    Setting.topic_admin_task_message("Publish: putting all content caches")
     logging.info("About to put content caches for all videos, urls, and exercises.")
     db.put(list(videos) + list(urls) + list(exercises))
     logging.info("Finished putting videos, urls, and exercises.")
@@ -2263,7 +2261,7 @@ def rebuild_content_caches(version_number, run_code):
 
     logging.info("Rebuilt content topic caches. (" + str(found_videos) + " videos)")
     logging.info("set_default_version complete")
-    Setting.topic_admin_task_message("Publish: finished successfully") 
+    Setting.topic_admin_task_message("Publish: finished successfully")
 
 class VersionContentChange(db.Model):
     """ This class keeps track of changes made in the admin/content editor
@@ -2398,7 +2396,7 @@ class VersionContentChange(db.Model):
                             prop != "related_videos" and
                             new_props[prop] != getattr(content, prop)
                         ) or (
-                            prop == "related_videos" and 
+                            prop == "related_videos" and
                             set(new_props[prop]) != set(getattr(content, prop))
                         ))
                     ):
@@ -2440,7 +2438,7 @@ class Topic(Searchable, db.Model):
     _serialize_blacklist = ["child_keys", "version", "parent_keys", "ancestor_keys", "created_on", "updated_on", "last_edited_by"]
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
-    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", 
+    _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry",
                         "brit-cruise", "california-standards-test", "gmat"]
 
     @property
@@ -2483,7 +2481,7 @@ class Topic(Searchable, db.Model):
         return False
 
     def has_children_of_type(self, types):
-        """ Return true if this Topic has at least one child of 
+        """ Return true if this Topic has at least one child of
         any of the passed in types.
 
         Types should be an array of type strings:
@@ -2542,10 +2540,10 @@ class Topic(Searchable, db.Model):
         } for v in Topic.get_cached_videos_for_topic(self)]
 
         ancestor_topics = [{
-            "title": topic.title, 
-            "url": (topic.relative_url if topic.id in Topic._super_topic_ids 
+            "title": topic.title,
+            "url": (topic.relative_url if topic.id in Topic._super_topic_ids
                     or topic.has_content() else None)
-            } 
+            }
             for topic in db.get(self.ancestor_keys)][0:-1]
         ancestor_topics.reverse()
 
@@ -3329,10 +3327,10 @@ class Topic(Searchable, db.Model):
                                            include_hidden)
 
     def get_exercises(self, include_descendants=False, include_hidden=False):
-        exercises = Topic._get_children_of_kind(self, "Exercise", 
+        exercises = Topic._get_children_of_kind(self, "Exercise",
                                            include_descendants, include_hidden)
 
-        # Topic.get_exercises should only return live exercises for now, as 
+        # Topic.get_exercises should only return live exercises for now, as
         # its results are cached and should never show users unpublished exercises.
         return [ex for ex in exercises if ex.live]
 
@@ -3587,7 +3585,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                     tree["key"] = topic.key()
                     topic_dict[tree["id"]] = topic
 
-                # if this topic is not the parent topic (ie. its not root, nor the 
+                # if this topic is not the parent topic (ie. its not root, nor the
                 # topic_id you are updating)
                 if (parent.key() != topic.key() and
                     # and this topic is not in the new parent
@@ -3598,8 +3596,8 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                     topic.parent_keys[0] != parent.key()):
 
                     # move it from that old parent topic, its position in the new
-                    # parent does not matter as child_keys will get written over 
-                    # later.  move_child is needed only to make sure that the 
+                    # parent does not matter as child_keys will get written over
+                    # later.  move_child is needed only to make sure that the
                     # parent_keys and ancestor_keys will all match up correctly
                     old_parent = topic_keys_dict[topic.parent_keys[0]]
                     logging.info("moving topic %s from %s to %s" % (topic.id,
@@ -3633,7 +3631,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
                     tree["key"] = exercise_dict[tree["name"]].key() if tree["name"] in exercise_dict else None
                 else:
                     if "related_videos" in tree:
-                        # adding keys to entity tree so we don't need to look it up 
+                        # adding keys to entity tree so we don't need to look it up
                         # again when creating the video in add_new_content
                         tree["related_video_keys"] = []
                         for readable_id in tree["related_videos"]:
@@ -3710,7 +3708,7 @@ def topictree_import_task(version_id, topic_id, publish, tree_json_compressed):
         changed_nodes = []
 
         i = 0
-        # now loop through all the nodes 
+        # now loop through all the nodes
         for key, node in nodes.iteritems():
             if node["kind"] == "Topic":
                 topic = all_entities_dict[node["key"]]
@@ -3838,7 +3836,7 @@ class Video(Searchable, db.Model):
     keywords = db.StringProperty()
     duration = db.IntegerProperty(default=0)
 
-    # A dict of properties that may only exist on some videos such as 
+    # A dict of properties that may only exist on some videos such as
     # original_url for smarthistory_videos.
     extra_properties = object_property.UnvalidatedObjectProperty()
 

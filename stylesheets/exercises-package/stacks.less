@@ -487,16 +487,14 @@
         right: 0;
         z-index: 9000;
 
-        .transition(opacity 0.2s ease-in-out);
-        .opacity(0);
         .box-sizing(border-box);
     }
         .exercises-header .streak-transition .expl-image img {
             width: 100%;
         }
         .exercises-header .streak-transition:hover .expl-image,
+        .exercises-header .streak-transition:active .expl-image,
         .exercises-header .streak-transition .expl-image:hover {
-            .opacity(100);
             display: block;
         }
 

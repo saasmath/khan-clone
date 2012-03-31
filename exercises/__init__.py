@@ -115,7 +115,8 @@ def make_wrong_attempt(user_data, user_exercise):
 
 def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
     attempt_content, sha1, seed, completed, count_hints, time_taken,
-    review_mode, topic_mode, problem_type, ip_address):
+    review_mode, topic_mode, problem_type, ip_address,
+    async_problem_log_put=True):
 
     if user_exercise and user_exercise.belongs_to(user_data):
         dt_now = datetime.datetime.now()
@@ -255,12 +256,15 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])
 
-        # Defer the put of ProblemLog for now, as we think it might be causing hot tablets
-        # and want to shift it off to an automatically-retrying task queue.
-        # http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
-        deferred.defer(models.commit_problem_log, problem_log,
-                       _queue="problem-log-queue",
-                       _url="/_ah/queue/deferred_problemlog")
+        if async_problem_log_put:
+            # Defer the put of ProblemLog for now, as we think it might be causing hot tablets
+            # and want to shift it off to an automatically-retrying task queue.
+            # http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
+            deferred.defer(models.commit_problem_log, problem_log,
+                           _queue="problem-log-queue",
+                           _url="/_ah/queue/deferred_problemlog")
+        else:
+            models.commit_problem_log(problem_log)
 
         if user_data is not None and user_data.coaches:
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used
@@ -319,7 +323,7 @@ class EditExercise(request_handler.RequestHandler):
             self.render_jinja2_template("editexercise.html", template_values)
 
 class UpdateExercise(request_handler.RequestHandler):
-    
+
     @staticmethod
     def do_update(dict):
         user = models.UserData.current().user
@@ -335,7 +339,7 @@ class UpdateExercise(request_handler.RequestHandler):
             exercise.covers = []
             exercise.author = user
 
-        exercise.prerequisites = dict["prerequisites"] 
+        exercise.prerequisites = dict["prerequisites"]
         exercise.covers = dict["covers"]
 
         if "v_position" in dict:
@@ -352,10 +356,10 @@ class UpdateExercise(request_handler.RequestHandler):
         exercise.put()
 
         if "related_videos" in dict and len(dict["related_videos"]):
-            UpdateExercise.do_update_related_videos(exercise, 
+            UpdateExercise.do_update_related_videos(exercise,
                                                     dict["related_videos"])
         elif "related_video_keys" in dict and len(dict["related_video_keys"]):
-            UpdateExercise.do_update_related_video_keys(exercise, 
+            UpdateExercise.do_update_related_video_keys(exercise,
                                                     dict["related_video_keys"])
         else:
             UpdateExercise.do_update_related_video_keys(exercise, [])
@@ -390,11 +394,11 @@ class UpdateExercise(request_handler.RequestHandler):
                 exercise_video.exercise = exercise
                 exercise_video.video = db.Key(video_key)
                 exercise_video.exercise_order = 0 #reordering below
-                exercise_video.put() 
+                exercise_video.put()
 
         # Start ordering
         exercise_videos = models.ExerciseVideo.all().filter('exercise =', exercise.key()).run()
-        
+
         # get a dict of a topic : a dict of exercises_videos and the order of their videos in that topic
         topics = {}
         for exercise_video in exercise_videos:
@@ -406,8 +410,8 @@ class UpdateExercise(request_handler.RequestHandler):
                 topics[topic.key()][exercise_video] = topic.get_child_order(exercise_video.video.key())
 
         # sort the list by topics that have the most exercises in them
-        topic_list = sorted(topics.keys(), key = lambda k: len(topics[k]), reverse = True)  
-        
+        topic_list = sorted(topics.keys(), key = lambda k: len(topics[k]), reverse = True)
+
         orders = {}
         i=0
         for topic_key in topic_list:
@@ -421,7 +425,7 @@ class UpdateExercise(request_handler.RequestHandler):
 
         for exercise_video, i in orders.iteritems():
             exercise_video.exercise_order = i
-        
+
         db.put(exercise_videos)
 
     @user_util.developer_only
