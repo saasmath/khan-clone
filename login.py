@@ -164,6 +164,7 @@ class MobileOAuthLogin(request_handler.RequestHandler):
             "anointed": self.request_bool("an", default=False),
             "view": self.request_string("view", default=""),
             "error": error,
+            "use_new": self.request_bool("use_new", default=False),
         })
 
     @user_util.manual_access_checking
