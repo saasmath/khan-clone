@@ -675,13 +675,15 @@ def playlists_library():
     def convert_tree(tree):
         topics = []
         for child in tree.children:
-            # special cases
-            if child.id == "new-and-noteworthy":
-                continue
-            elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
-                child.id = "algebra-i"
-            elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
-                child.id = "geometry-2"
+
+            if hasattr(child, "id"):
+                # special cases
+                if child.id == "new-and-noteworthy":
+                    continue
+                elif child.standalone_title == "California Standards Test: Algebra I" and child.id != "algebra-i":
+                    child.id = "algebra-i"
+                elif child.standalone_title == "California Standards Test: Geometry" and child.id != "geometry-2":
+                    child.id = "geometry-2"
 
             if child.kind() == "Topic":
                 topic = {}
