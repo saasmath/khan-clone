@@ -86,7 +86,7 @@ class BaseSecureToken(object):
         return cls(user_id, timestamp, signature)
 
     DEFAULT_EXPIRY = datetime.timedelta(days=14)
-    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 86400
+    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 24 * 60 * 60
 
     def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
         """ Determines whether or not the specified token is expired.
@@ -194,7 +194,7 @@ class GoogleUserToken(BaseSecureToken):
 
     # Force a short expiry for these tokens.
     DEFAULT_EXPIRY = datetime.timedelta(days=1)
-    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 86400
+    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 24 * 60 * 60
 
     def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
         dt = _from_timestamp(self.timestamp)
