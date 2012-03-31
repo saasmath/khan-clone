@@ -35,6 +35,10 @@
             .pw-login {
                 width: 415px;
                 height: auto;
+                text-align: right;
+            }
+            .pw-login img.tree {
+                float: left;
             }
         </style>
 
@@ -76,7 +80,7 @@
                 </div>
 
                 <div class="pw-login">
-                    <img src="/images/hand-tree.png" class="tree">
+                    <img src="/images/hand-tree.png" width="75" height="75" class="tree">
                     <div class="field-container">
                         <label class="field-label" for="identifier">Email or username</label>
                         <input tabindex=1 id="identifier" name="identifier" class="simple-input ui-corner-all" value="{{ identifier|escape }}">
