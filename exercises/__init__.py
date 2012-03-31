@@ -115,7 +115,8 @@ def make_wrong_attempt(user_data, user_exercise):
 
 def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
     attempt_content, sha1, seed, completed, count_hints, time_taken,
-    review_mode, topic_mode, problem_type, ip_address):
+    review_mode, topic_mode, problem_type, ip_address,
+    async_problem_log_put=True):
 
     if user_exercise and user_exercise.belongs_to(user_data):
         dt_now = datetime.datetime.now()
@@ -255,12 +256,15 @@ def attempt_problem(user_data, user_exercise, problem_number, attempt_number,
         # Bulk put
         db.put([user_data, user_exercise, user_exercise_graph.cache])
 
-        # Defer the put of ProblemLog for now, as we think it might be causing hot tablets
-        # and want to shift it off to an automatically-retrying task queue.
-        # http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
-        deferred.defer(models.commit_problem_log, problem_log,
-                       _queue="problem-log-queue",
-                       _url="/_ah/queue/deferred_problemlog")
+        if async_problem_log_put:
+            # Defer the put of ProblemLog for now, as we think it might be causing hot tablets
+            # and want to shift it off to an automatically-retrying task queue.
+            # http://ikaisays.com/2011/01/25/app-engine-datastore-tip-monotonically-increasing-values-are-bad/
+            deferred.defer(models.commit_problem_log, problem_log,
+                           _queue="problem-log-queue",
+                           _url="/_ah/queue/deferred_problemlog")
+        else:
+            models.commit_problem_log(problem_log)
 
         if user_data is not None and user_data.coaches:
             # Making a separate queue for the log summaries so we can clearly see how much they are getting used

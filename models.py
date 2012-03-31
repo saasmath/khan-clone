@@ -636,35 +636,33 @@ class UserExercise(db.Model):
         exercises = topic.get_exercises(include_descendants=True)
         graph = UserExerciseGraph.get(user_data, exercises_allowed=exercises)
 
-        # Start off by getting all boundary exercises (those that aren't proficient
-        # and aren't covered by other boundary exercises)
-        frontier = set(UserExerciseGraph.get_boundary_names(graph.graph))
-        graph_dicts = [graph.graph_dict(exid) for exid in frontier]
+        # Start of by doing exercises that are in review
+        stack_dicts = graph.review_graph_dicts()
 
-        # Add in any exercises that are up for review
-        for review_dict in graph.review_graph_dicts():
-            if review_dict["name"] not in frontier:
-                graph_dicts.append(review_dict)
+        if len(stack_dicts) < n:
+            # Now get all boundary exercises (those that aren't proficient and
+            # aren't covered by other boundary exercises)
+            frontier = UserExerciseGraph.get_boundary_names(graph.graph)
+            frontier_dicts = [graph.graph_dict(exid) for exid in frontier]
 
-        # If we don't have *any* boundary exercises, fill things out with the other
-        # topic exercises. Note that if we have at least one boundary exercise, we don't
-        # want to add others to the mix because they may screw w/ the boundary conditions
-        # by adding a too-difficult exercise, etc.
-        if len(graph_dicts) == 0:
-            graph_dicts = graph.graph_dicts()
+            # If we don't have *any* boundary exercises, fill things out with the other
+            # topic exercises. Note that if we have at least one boundary exercise, we don't
+            # want to add others to the mix because they may screw w/ the boundary conditions
+            # by adding a too-difficult exercise, etc.
+            if len(frontier_dicts) == 0:
+                frontier_dicts = graph.graph_dicts()
 
-        # Now we sort the exercises by last_done and progress. If five exercises
-        # all have the same progress, we want to send the user the one they did
-        # least recently. Otherwise, we send the exercise that is most lacking in
-        # progress.
-        sorted_dicts = sorted(graph_dicts, key=lambda d: d.get("last_done", None) or datetime.datetime.min)
-        sorted_dicts = sorted(sorted_dicts, key=lambda d: d["progress"])
+            # Now we sort the exercises by last_done and progress. If five exercises
+            # all have the same progress, we want to send the user the one they did
+            # least recently. Otherwise, we send the exercise that is most lacking in
+            # progress.
+            sorted_dicts = sorted(frontier_dicts, key=lambda d: d.get("last_done", None) or datetime.datetime.min)
+            sorted_dicts = sorted(sorted_dicts, key=lambda d: d["progress"])
 
-        # And finally, chop off our extras
-        sorted_dicts = sorted_dicts[:n]
+            stack_dicts += sorted_dicts
 
         # Build up UserExercise objects from our graph dicts
-        user_exercises = [UserExercise.from_dict(d, user_data) for d in sorted_dicts]
+        user_exercises = [UserExercise.from_dict(d, user_data) for d in stack_dicts]
 
         return UserExercise._prepare_for_stack_api(user_exercises, n, queued)
 
