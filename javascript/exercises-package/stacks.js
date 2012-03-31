@@ -679,7 +679,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 }
             },
             show: {
-                delay: 0,
+                delay: 200,
                 effect: {
                     length: 0
                 }
