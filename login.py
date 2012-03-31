@@ -217,6 +217,33 @@ def _upgrade_phantom_into(phantom_data, target_data):
     return False
 
 class PostLogin(request_handler.RequestHandler):
+    def consume_auth_token(self):
+        """ Checks to see if a valid auth token is specified as a param
+        in the request, so it can be converted into a cookie
+        and used as the identifier for the current and future requests.
+        
+        """
+        
+        auth_stamp = self.request_string("auth")
+        if auth_stamp:
+            # If an auth stamp is provided, it means they logged in using
+            # a password via HTTPS, and it has redirected here to postlogin
+            # to set the auth cookie from that token. We can't rely on
+            # UserData.current() yet since no cookies have yet been set.
+            token = AuthToken.for_value(auth_stamp)
+            if not token:
+                logging.error("Invalid authentication token specified")
+            else:
+                user_data = UserData.get_from_user_id(token.user_id)
+                if not user_data or not token.is_valid(user_data):
+                    logging.error("Invalid authentication token specified")
+                else:
+                    # Good auth stamp - set the cookie for the user, which
+                    # will also set it for this request.
+                    auth.cookies.set_auth_cookie(self, user_data, token)
+                    return True
+        return False
+
     @user_util.manual_access_checking
     def get(self):
         cont = self.request_continue_url()
@@ -727,11 +754,22 @@ class CompleteSignup(request_handler.RequestHandler):
         Login.return_login_json(self, user_data, cont=user_data.profile_root)
 
 class PasswordChange(request_handler.RequestHandler):
+    """ Handler for changing a user's password.
+    
+    This must always be rendered in an https form. If a request is made to
+    render the form in HTTP, this handler will automatically redirect to
+    the HTTPS version with a transfer_token to identify the user in HTTPS.
+
+    """
+
     @user_util.manual_access_checking
     def get(self):
-        if self.consume_auth_token():
-            # Just updated the auth cookie, which means we just succesfully
-            # completed a password change.
+        # Always render on https.
+        if not self.request.uri.startswith("https") and not App.is_dev_server:
+            self.redirect(self.secure_url_with_token(self.request.uri))
+            return
+        
+        if self.request_bool("success", default=False):
             self.render_form(message="Password changed", success=True)
         else:
             self.render_form()
@@ -741,6 +779,14 @@ class PasswordChange(request_handler.RequestHandler):
                                     {'message': message or "",
                                      'success': success})
         
+    def secure_url_with_token(self, url):
+        user_data = UserData.current()
+        token = TransferAuthToken.for_user(user_data).value
+        if url.find('?') == -1:
+            return "%s?transfer_token=%s" % (util.secure_url(url), token)
+        else:
+            return "%s&transfer_token=%s" % (util.secure_url(url), token)
+
     @user_util.manual_access_checking
     def post(self):
         user_data = models.UserData.current()
@@ -769,9 +815,15 @@ class PasswordChange(request_handler.RequestHandler):
             user_data.set_password(password1)
 
             # Need to create a new auth token as the existing cookie will expire
+            # Use /postlogin to set the cookie. This requires some redirects
+            # (/postlogin on http, then back to this pwchange form in https).
             auth_token = AuthToken.for_user(user_data)
-            self.redirect(util.insecure_url(
-                    "/pwchange?auth=%s" % auth_token.value))
+            self.redirect("%s?%s" % (
+                    util.insecure_url("/postlogin"),
+                    util.build_params({
+                        'auth': auth_token.value,
+                        'continue': self.secure_url_with_token("/pwchange?success=1"),
+                    })))
 
 def _resolve_user_in_https_frame(handler):
     """ Determines the current logged in user for the HTTPS request.

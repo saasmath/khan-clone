@@ -10,7 +10,6 @@ var Profile = {
     fLoadingGraph: false,
     fLoadedGraph: false,
     profile: null,
-    secureUrlBase: null,
 
     /**
      * The root segment of the URL for the profile page for this user.
@@ -272,7 +271,7 @@ var Profile = {
             // back with information on error/success.
             if (!Profile.settingsIframe_) {
                 Profile.settingsIframe_ = $("<iframe></iframe>")
-                        .attr("src", Profile.secureUrlBase + "pwchange")
+                        .attr("src", "/pwchange")
                         .attr("scrolling", "no")
                         .attr("id", "settings-iframe")
                         .attr("class", "settings-iframe")
