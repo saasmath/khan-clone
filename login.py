@@ -8,6 +8,7 @@ from google.appengine.api import users
 from models import UserData
 from notifications import UserNotifier
 from phantom_users.phantom_util import get_phantom_user_id_from_cookies
+import urllib
 
 import auth.cookies
 import auth.passwords
@@ -284,9 +285,9 @@ class Logout(request_handler.RequestHandler):
         google_user = users.get_current_user()
         Logout.delete_all_identifying_cookies(self)
 
-        next_url = "/"
+        next_url = self.request_continue_url()
         if google_user is not None:
-            next_url = users.create_logout_url(self.request_continue_url())
+            next_url = users.create_logout_url(next_url)
         self.redirect(next_url)
 
 # TODO(benkomalo): move this to a more appropriate, generic spot
@@ -522,9 +523,14 @@ class CompleteSignup(request_handler.RequestHandler):
 
         """
         valid_token, unverified_user = self.resolve_token()
-        user_data = None
-        if not valid_token:
-            user_data = UserData.current()
+        user_data = UserData.current()
+        if valid_token and user_data:
+            logging.error("User tried to verify e-mail and complete a signup " +
+                          "in a browser with an existing signed-in user. " +
+                          "Forcefully signing old user out to avoid conflicts")
+            self.redirect("/logout?continue=%s" %
+                          urllib.quote_plus(self.request.uri))
+            return
 
         if not valid_token and not user_data:
             # Just take them to the homepage for now.
@@ -676,10 +682,10 @@ class CompleteSignup(request_handler.RequestHandler):
 
         else:
             # Converting unverified_user to a full UserData.
-
             num_tries = 0
             user_data = None
             while not user_data and num_tries < 2:
+                # Double-check to ensure we don't create any duplicate ids!
                 user_id = uid.new_user_id()
                 user_data = models.UserData.insert_for(
                         user_id,
@@ -700,6 +706,8 @@ class CompleteSignup(request_handler.RequestHandler):
                 num_tries += 1
                 
             if not user_data:
+                logging.error("Tried several times to create a new user " +
+                              "unsuccessfully")
                 self.render_json({
                         'errors': {'username': "Oops! Something went wrong. " +
                                                "Please try again later."}
