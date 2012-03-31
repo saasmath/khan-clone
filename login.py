@@ -324,7 +324,12 @@ class Signup(request_handler.RequestHandler):
                 or cookie_util.get_cookie_value(auth.cookies.U13_COOKIE_NAME)):
             # User detected to be under13. Show them a sorry page.
             name = self.request_string('name', default=None)
-            self.render_jinja2_template('under13.html', {'name': name})
+            parent_registered = cookie_util.get_cookie_value('u13') == "subscribed"
+            self.render_jinja2_template(
+                    'under13.html', {
+                            'name': name,
+                            'parent_registered': parent_registered,
+                    })
             return
 
         template_values = {
