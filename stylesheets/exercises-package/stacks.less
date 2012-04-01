@@ -469,7 +469,7 @@ body {
     .transition(opacity 0.1s ease-in-out);
     .opacity(30);
 }
-.exercises-header:hover .practice-exercise-topic-context.solid-hover {
+.exercises-header .practice-exercise-topic-context.solid-hover:hover {
     .opacity(100);
 }
 .exercises-header .practice-exercise-topic-context .topic-exercise-badge {
@@ -496,13 +496,12 @@ body {
 
         .box-sizing(border-box);
         .opacity(0);
-        .transition(opacity 0.2s ease-in-out 0.3s);
+        .transition(opacity 0.2s ease-in-out);
     }
         .exercises-header .streak-transition .expl-image img {
             width: 100%;
         }
-        .exercises-header .streak-transition:hover .expl-image,
-        .exercises-header .streak-transition:active .expl-image {
+        .exercises-header .streak-transition.hover .expl-image {
             visibility: visible;
             .opacity(100);
         }
