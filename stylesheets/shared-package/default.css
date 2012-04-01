@@ -948,8 +948,7 @@ footer {
         margin: 0;
         left: 0;
         border: 1px solid #ccc;
-        width: 100%;
-        min-width: 86px;
+        min-width: 100%;
         padding: 3px 0px;
     }
     #top-header #user-info .dropdown-menu li > a {
