@@ -10,6 +10,7 @@ USER_ID_PREFIX = "http://id.khanacademy.org/"
 
 GOOGLE_USER_ID_PREFIX = "http://googleid.khanacademy.org/"
 
+
 def new_user_id():
     """
     Generates a probabilisticly new user id value.
@@ -19,6 +20,7 @@ def new_user_id():
 
     """
     return "%s%s" % (USER_ID_PREFIX, uuid.uuid4().hex)
+
 
 def google_user_id(user):
     """ Generates the user ID used in our databases given a

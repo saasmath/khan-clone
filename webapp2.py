@@ -445,7 +445,7 @@ class Response(webob.Response):
     def clear(self):
         """Clears all data written to the output stream so that it is empty."""
         self.body = ''
-        
+
     def wsgi_write(self, start_response):
         """Writes this response using using the given WSGI function.
 
