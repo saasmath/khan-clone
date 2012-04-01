@@ -766,7 +766,7 @@ class PasswordChange(request_handler.RequestHandler):
     @user_util.manual_access_checking
     def get(self):
         # Always render on https.
-        if not self.request.uri.startswith("https") and not App.is_dev_server:
+        if self.request.scheme != "https" and not App.is_dev_server:
             self.redirect(self.secure_url_with_token(self.request.uri))
             return
         
@@ -790,7 +790,7 @@ class PasswordChange(request_handler.RequestHandler):
 
     @user_util.manual_access_checking
     def post(self):
-        user_data = models.UserData.current()
+        user_data = _resolve_user_in_https_frame(self)
         if not user_data:
             self.response.unauthorized()
             return
