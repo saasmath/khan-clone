@@ -272,7 +272,9 @@ var Profile = {
             if (!Profile.settingsIframe_) {
                 Profile.settingsIframe_ = $("<iframe></iframe>")
                         .attr("src", "/pwchange")
+                        .attr("frameborder", "0")
                         .attr("scrolling", "no")
+                        .attr("allowtransparency", "yes")
                         .attr("id", "settings-iframe")
                         .attr("class", "settings-iframe")
                         .appendTo($("#tab-content-settings"));
