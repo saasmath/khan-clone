@@ -31,7 +31,6 @@ def topics_layout(user_data, user_exercise_graph):
 
         if not topic_dict:
             # Map layout doesn't know about this topic -- skip
-            logging.error("Missing map layout info for topic: %s" % topic.id)
             continue
 
         badge = topic.get_exercise_badge()
