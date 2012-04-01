@@ -6,10 +6,10 @@ Exercises.Card = Backbone.Model.extend({
     leaves: function(card) {
 
         return _.map(_.range(4), function(index) {
-            
+
             return {
                 index: index,
-                state: (this.get("leavesEarned") > index ? "earned" : 
+                state: (this.get("leavesEarned") > index ? "earned" :
                             this.get("leavesAvailable") > index ? "available" :
                                 "unavailable")
             };
@@ -77,8 +77,8 @@ Exercises.StackCollection = Backbone.Collection.extend({
     longestStreak: function(fxn, fxnSkip) {
 
         var current = 0,
-            longest = 0,
-            fxnSkip = fxnSkip || function(){ return false; };
+            longest = 0;
+        fxnSkip = fxnSkip || function() { return false; };
 
         this.each(function(card) {
 
@@ -114,16 +114,16 @@ Exercises.StackCollection = Backbone.Collection.extend({
                 return card.get("leavesEarned") >= 3;
             },
             function(card) {
-                // Skip any cards w/ 0 leaves available -- 
+                // Skip any cards w/ 0 leaves available --
                 // those don't count.
-                return card.get("leavesAvailable") == 0;
+                return card.get("leavesAvailable") === 0;
             }
         );
 
         var speedyCards = this.filter(function(card) {
             return card.get("leavesEarned") >= 4;
         }).length;
-            
+
         return {
             "longestStreak": longestStreak,
             "speedyCards": speedyCards,
@@ -181,7 +181,7 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
         if (modelAttrs) {
 
             _.each(modelAttrs, function(attrs) {
-                this.add(new Exercises.Card(attrs))
+                this.add(new Exercises.Card(attrs));
             }, this);
 
         }
@@ -237,7 +237,7 @@ Exercises.StackView = Backbone.View.extend({
                 }
 
                 return result;
-            }
+            };
         };
 
         this.collection
@@ -264,9 +264,9 @@ Exercises.StackView = Backbone.View.extend({
     },
 
     viewContext: function(card, index) {
-        return _.extend( card.toJSON(), {
+        return _.extend(card.toJSON(), {
             index: index,
-            frontVisible: this.options.frontVisible, 
+            frontVisible: this.options.frontVisible,
             cid: card.cid,
             leaves: card.leaves()
         });
@@ -371,7 +371,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     },
 
     viewContext: function() {
-        return _.extend( this.model.toJSON(), {
+        return _.extend(this.model.toJSON(), {
             leaves: this.model.leaves()
         });
     },
@@ -415,7 +415,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 fxn();
 
             }
-        };
+        }
 
         tryRun();
 
@@ -456,7 +456,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 jel.delay(1000).fadeOut(600, function() {
                     fadeInNextText(jel.next("span"));
                 });
-            })
+            });
         };
 
         fadeInNextText();
@@ -477,7 +477,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         setTimeout(function() {
             Exercises.currentCardView.runAfterAPIRequests(function() {
 
-                optionalContextFxn = optionalContextFxn || function(){};
+                optionalContextFxn = optionalContextFxn || function() {};
                 Exercises.currentCardView.renderCardContents(templateName, optionalContextFxn());
 
                 if (optionalCallbackFxn) {
@@ -485,7 +485,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 }
 
             });
-        }, 2400);
+        }, 2200);
 
     },
 
@@ -495,7 +495,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     renderProblemCard: function() {
 
         // khan-exercises currently both generates content and hooks up
-        // events to the exercise interface. This means, for now, we don't want 
+        // events to the exercise interface. This means, for now, we don't want
         // to regenerate a brand new card when transitioning between exercise
         // problems.
 
@@ -564,9 +564,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
             this.renderCardAfterAPIRequests(
                 "exercises.end-of-stack-card",
-                function() { 
+                function() {
                     var unstartedExercises = _.filter(topicUserExercises, function(userExercise) {
-                            return !userExercise.exerciseStates.proficient && userExercise.totalDone == 0;
+                            return !userExercise.exerciseStates.proficient && userExercise.totalDone === 0;
                         }),
                         proficientExercises = _.filter(topicUserExercises, function(userExercise) {
                             return userExercise.exerciseStates.proficient;
@@ -582,9 +582,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             "total": topicUserExercises.length,
                             startedExercises: startedExercises,
                             unstartedExercises: unstartedExercises,
-                            proficientExercises: proficientExercises,
+                            proficientExercises: proficientExercises
                         },
-                        Exercises.sessionStats.progressStats(), 
+                        Exercises.sessionStats.progressStats(),
                         Exercises.completeStack.stats()
                     );
                 },
@@ -595,12 +595,20 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             .each(Exercises.currentCardView.attachTooltip)
                             .end()
                         .find("#show-topic-details")
-                            .click(function(){
-                                $('.current-topic').slideDown(); 
+                            .click(function() {
+                                $(".current-topic").slideDown();
                                 $(this).hide();
                             })
                             .end()
+                        .find(".take-a-break")
+                            .click(function() {
+                                window.location = "/exercisedashboard";
+                            })
+                            .end()
                         .find(".more-stacks")
+                            .click(function() {
+                                window.location.reload();
+                            })
                             .focus();
                 }
             );
@@ -632,7 +640,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
             // rendering end of review card.
             Exercises.currentCardView.renderCardAfterAPIRequests(
                 "exercises.end-of-review-card",
-                function() { 
+                function() {
                     // Pass reviews left info into end of review card
                     return _.extend({}, Exercises.completeStack.stats(), {reviewsLeft: reviewsLeft});
                 },
@@ -864,7 +872,7 @@ Exercises.SessionStats = Backbone.Model.extend({
 
         if (userExercise) {
 
-            /** 
+            /**
              * For now, we're just keeping track of the change in progress per
              * exercise
              */

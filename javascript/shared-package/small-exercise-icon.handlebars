@@ -1,22 +1,22 @@
 {{#if reviewing}}
 
-<img src="/images/node-review.png" class="small-exercise-icon" data-desc="You should review this skill">
+<span class="small-exercise-icon node-review" data-desc="You should review this skill"></span>
 
 {{else}}
 
 {{#if proficient}}
 
-<img src="/images/node-complete.png" class="small-exercise-icon" data-desc="You've earned proficiency in this skill">
+<span class="small-exercise-icon node-complete" data-desc="You've earned proficiency in this skill"></span>
 
 {{else}}
 
 {{#if suggested}}
 
-<img src="/images/node-suggested.png" class="small-exercise-icon" data-desc="You've completed all the pre-requisites for this skill, so we think you're ready for it">
+<span class="small-exercise-icon node-suggested" data-desc="You've completed all the pre-requisites for this skill, so we think you're ready for it"></span>
 
 {{else}}
 
-<img src="/images/node-not-started.png" class="small-exercise-icon" data-desc="This is a skill you can practice">
+<span class="small-exercise-icon node-not-started" data-desc="This is a skill you can practice"></span>
 
 {{/if}}
 {{/if}}

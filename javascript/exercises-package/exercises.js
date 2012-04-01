@@ -85,8 +85,8 @@ var Exercises = {
 
             // Prepare our never-ending queue of upcoming user exercises
             Exercises.BottomlessQueue.init(
-                    this.topic, 
-                    json.userExercises, 
+                    this.topic,
+                    json.userExercises,
                     /* refillEnabled */ !this.reviewMode && !this.practiceMode
             );
 
@@ -164,7 +164,7 @@ var Exercises = {
         return [
             this.userData.keyEmail,
             contextId
-        ].join(":")
+        ].join(":");
     },
 
     render: function() {
@@ -183,13 +183,13 @@ var Exercises = {
             collection: this.incompleteStack,
             el: $(".incomplete-stack"),
             frontVisible: false
-        }); 
+        });
 
         this.completeStackView = new Exercises.StackView({
             collection: this.completeStack,
             el: $(".complete-stack"),
             frontVisible: true
-        }); 
+        });
 
         this.currentCardView = new Exercises.CurrentCardView({
             model: this.currentCard,
@@ -234,7 +234,7 @@ var Exercises = {
         $(Khan).bind("problemDone", function() {
 
             Exercises.currentCard.set({
-                done: true, 
+                done: true,
                 leavesEarned: Exercises.currentCard.get("leavesAvailable")
             });
 

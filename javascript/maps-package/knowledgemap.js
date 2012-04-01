@@ -9,13 +9,13 @@ function KnowledgeMapInitGlobals() {
             gray: "#FFFFFF"
         },
 
-        icons: {
-                Exercise: {
-                        Proficient: "/images/node-complete.png?" + KA_VERSION,
-                        Review: "/images/node-review.png?" + KA_VERSION,
-                        Suggested: "/images/node-suggested.png?" + KA_VERSION,
-                        Normal: "/images/node-not-started.png?" + KA_VERSION
-                          }
+        iconClasses: {
+            exercise: {
+                Proficient: "node-complete",
+                Review: "node-review",
+                Suggested: "node-suggested",
+                Normal: "node-not-started"
+            }
         },
 
         coordsHome: { lat: -2.064844, lng: 0.736268, zoom: 6, when: 0 },
@@ -87,7 +87,7 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
     this.isExpanded = function() {
         var sCSSLeft = $("#" + this.container + " .dashboard-drawer").css("left").toLowerCase();
-        return sCSSLeft == "0px" || sCSSLeft == "auto" || sCSSLeft == "";
+        return sCSSLeft === "0px" || sCSSLeft === "auto" || sCSSLeft === "";
     };
 
     this.toggle = function() {
@@ -190,6 +190,7 @@ function KnowledgeMap(params) {
     this.fFirstDraw = true;
     this.fCenterChanged = false;
     this.fZoomChanged = false;
+    this.fDragging = false;
 
     this.admin = !!params.admin;
     this.newGoal = !!params.newGoal;
@@ -217,7 +218,8 @@ function KnowledgeMap(params) {
 
                 // Index nodes by name
                 var topic = new KnowledgeMapModels.Topic(dict);
-                return this.modelsByName[topic.get("name")] = topic;
+                this.modelsByName[topic.get("name")] = topic;
+                return topic;
 
             }, this);
 
@@ -242,7 +244,8 @@ function KnowledgeMap(params) {
 
             // Index nodes by name
             var exercise = new KnowledgeMapModels.Exercise(dict);
-            return this.modelsByName[exercise.get("name")] = exercise;
+            this.modelsByName[exercise.get("name")] = exercise;
+            return exercise;
 
         }, this);
 
@@ -257,7 +260,7 @@ function KnowledgeMap(params) {
 
         // ensure blank elements take up the right amount of space
         var createEl = function() {
-            return $("<div>", {'class': 'exercise-badge'});
+            return $("<div>", {"class": "exercise-badge"});
         };
 
         _.each(this.modelsByName, function(model) {
@@ -422,11 +425,11 @@ function KnowledgeMap(params) {
         var coords = $.extend({}, KnowledgeMapGlobals.coordsHome);
 
         // overwrite defaults with localStorage values (if any)
-        var localCoords = $.parseJSON( window.localStorage[ "map_coords:"+USERNAME ] || "{}" );
+        var localCoords = $.parseJSON(window.localStorage["map_coords:" + USERNAME] || "{}");
         $.extend(coords, localCoords);
 
         // prefer server values if they're more fresh
-        if (params.mapCoords && params.mapCoords.when > coords.when){
+        if (params.mapCoords && params.mapCoords.when > coords.when) {
             coords = params.mapCoords;
         }
 
@@ -446,10 +449,12 @@ function KnowledgeMap(params) {
             new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin),
             new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax));
 
-        _.bindAll(this, "onCenterChange", "onIdle", "finishRenderingNodes");
+        _.bindAll(this, "onCenterChange", "onIdle", "finishRenderingNodes", "onDragStart", "onDragEnd");
         google.maps.event.addListener(this.map, "center_changed", this.onCenterChange);
         google.maps.event.addListener(this.map, "idle", this.onIdle);
         google.maps.event.addListener(this.map, "center_changed", this.finishRenderingNodes);
+        google.maps.event.addListener(this.map, "dragstart", this.onDragStart);
+        google.maps.event.addListener(this.map, "dragend", this.onDragEnd);
 
         this.giveNasaCredit();
         $(window).on("beforeunload", $.proxy(this.saveMapCoords, this));
@@ -640,15 +645,18 @@ function KnowledgeMap(params) {
         if (lng < KnowledgeMapGlobals.lngMin) KnowledgeMapGlobals.lngMin = lng;
         if (lng > KnowledgeMapGlobals.lngMax) KnowledgeMapGlobals.lngMax = lng;
 
-        var marker = new com.redfin.FastMarker(
-                "marker-" + node.name,
-                node.latLng,
-                [   "<a href='" + node.url + "' data-id='" + node.name + "' class='" + node.className + "'>" +
-                    "<img class='node-icon' src='" + node.iconUrl + "'/>" +
-                    "<div class='node-text'>" + node.display_name + "</div></a>"],
-                "",
-                1,
-                0, 0);
+        var html = [];
+        html.push("<a href='", node.url, "' data-id='", node.name, "' class='", node.className, "'>");
+        if (node.nodeType === "exercise") {
+            var classes = KnowledgeMapGlobals.iconClasses.exercise;
+            var iconClass = classes[node.status] || classes.Normal;
+            html.push("<div class='node-icon ", iconClass, "'></div>");
+        } else {
+            html.push("<img class='node-icon' src='", node.iconUrl, "'>");
+        }
+        html.push("<div class='node-text'>", node.display_name, "</div></a>");
+
+        var marker = new com.redfin.FastMarker("marker-" + node.name, node.latLng, html, "", 1, 0, 0);
 
         this.markers[this.markers.length] = marker;
     };
@@ -696,7 +704,7 @@ function KnowledgeMap(params) {
 
     };
 
-    this.getMapCoords = function(){
+    this.getMapCoords = function() {
         var center = this.map.getCenter();
 
         var coords = {
@@ -710,7 +718,7 @@ function KnowledgeMap(params) {
 
     };
 
-    this.saveMapCoords = function(){
+    this.saveMapCoords = function() {
 
         if (this.newGoal) {
             // Don't persist K.M. position when creating new goal
@@ -719,6 +727,20 @@ function KnowledgeMap(params) {
 
         // TODO this may not work, could post synchronously to fix, but it's not critical
         $.post("/savemapcoords", this.getMapCoords());
+    };
+
+    this.onDragStart = function() {
+        this.fDragging = true;
+    };
+
+    this.onDragEnd = function() {
+        // Turn off dragging flag after this event and
+        // any click event associated w/ the current mouseclick
+        // are done firing.
+        setTimeout($.proxy(function() {
+                this.fDragging = false;
+            }, this),
+        1);
     };
 
     this.onIdle = function() {
@@ -735,9 +757,9 @@ function KnowledgeMap(params) {
         // in case they aren't being rendered at the correct size.
         this.map.panBy(0, 0);
 
-        if (window.localStorage && window.JSON){
+        if (window.localStorage && window.JSON) {
             var pos = this.getMapCoords();
-            window.localStorage[ "map_coords:"+USERNAME ] = JSON.stringify(pos);
+            window.localStorage["map_coords:" + USERNAME] = JSON.stringify(pos);
         }
     };
 
@@ -822,7 +844,7 @@ function KnowledgeMap(params) {
                 counts[nodeRowView.options.type]++;
         });
 
-        if (filterText && counts.all == 0) {
+        if (filterText && counts.all === 0) {
             self.getElement("exercise-no-results").show();
         } else {
             self.getElement("exercise-no-results").hide();
@@ -857,7 +879,7 @@ function KnowledgeMap(params) {
         else
             el = $("." + id);
         this.elementTable[id] = el;
-        if (el.length == 0)
+        if (el.length === 0)
             throw new Error('Missing element: "' + id + '" in container "' + this.containerID + '"');
         return el;
     };

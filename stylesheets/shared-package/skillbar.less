@@ -50,13 +50,20 @@
 }
 
 .skill-bar-title {
-    margin: 0 0 5px;
+    margin: 0 0 5px 25px;
 }
     .skill-bar-title .small-exercise-icon {
         width: 20px;
         height: 20px;
-        vertical-align: -4px;
+        position: absolute;
+        margin: 0 0 0 -25px;
     }
     .skill-bar-title .disabled {
         cursor: not-allowed;
     }
+
+.small-exercise-icon.node-complete    { background: url(/images/node-complete-20.png); /*! data-uri(/images/node-complete-20.png) */ }
+.small-exercise-icon.node-review      { background: url(/images/node-review-20.png); /*! data-uri(/images/node-review-20.png) */ }
+.small-exercise-icon.node-suggested   { background: url(/images/node-suggested-20.png); /*! data-uri(/images/node-suggested-20.png) */ }
+.small-exercise-icon.node-not-started { background: url(/images/node-not-started-20.png); /*! data-uri(/images/node-not-started-20.png) */ }
+

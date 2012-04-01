@@ -15,7 +15,7 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
     /**
      * Set all required properties for rendering map node
      */
-    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested) {
+    setNodeAttrs: function(name, displayName, x, y, iconUrl, isSuggested, nodeType) {
 
         var className = "nodeLabel";
         if (this.customClass) {
@@ -35,7 +35,8 @@ KnowledgeMapModels.Node = Backbone.Model.extend({
             isSuggested: isSuggested,
             className: className,
             url: this.url(),
-            preferredZoom: this.preferredZoom
+            preferredZoom: this.preferredZoom,
+            nodeType: nodeType
         });
 
     },
@@ -107,8 +108,9 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             this.get("display_name"),
             this.get("v_position"), // v_position is actually x
             this.get("h_position"), // h_position is actually y
-            KnowledgeMapGlobals.icons.Exercise[this.get("status")] || KnowledgeMapGlobals.icons.Exercise.Normal,
-            this.get("states")["suggested"] && !this.get("states")["reviewing"]
+            null, // iconUrl
+            this.get("states").suggested && !this.get("states").reviewing,
+            "exercise"
         );
 
         return KnowledgeMapModels.Node.prototype.initialize.call(this, attributes);

@@ -18,7 +18,7 @@ var LocalStore = {
 
     cacheKey: function(key) {
         if (!key) {
-            throw "Attempting to use LocalStore without a key"
+            throw "Attempting to use LocalStore without a key";
         }
 
         return [this.keyPrefix, this.version, key].join(":");
@@ -48,7 +48,7 @@ var LocalStore = {
 
         try {
             window.localStorage[cacheKey] = stringified;
-        } catch(e) {
+        } catch (e) {
             // If we had trouble storing in localStorage, we may've run over
             // the browser's 5MB limit. This should be rare, but when hit, clear
             // everything out.
