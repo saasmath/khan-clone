@@ -569,10 +569,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
                     return _.extend(
                         {
-                            practiceMode: Exercises.practiceMode,
-                            proficient: proficientExercises.length,
-                            total: topicUserExercises.length,
-                            allProficient: proficientExercises.length == topicUserExercises.length,
+                            "practiceMode": Exercises.practiceMode,
+                            "proficient": proficientExercises.length,
+                            "total": topicUserExercises.length,
                             startedExercises: startedExercises,
                             unstartedExercises: unstartedExercises,
                             proficientExercises: proficientExercises
@@ -602,8 +601,6 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             .click(function() {
                                 window.location.reload();
                             })
-                            .end()
-                        .find(".simple-button.green")
                             .focus();
                 }
             );
