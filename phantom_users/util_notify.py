@@ -28,14 +28,14 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
 
     # First question
     if (numquest == 1):
-        UserNotifier.push_login_for_user_data(user_data, "You've answered your first question! You should [login]")
+        UserNotifier.push_login_for_user_data(user_data, "You&rsquo;ve answered your first question! You should [login]")
     # Every 10 questions, more than 20 every 5
     if (numquest != None and numquest % 10 == 0) or \
        (numquest != None and numquest > 20 and numquest % 5 == 0):
-        UserNotifier.push_login_for_user_data(user_data, "You've answered "+str(numquest)+" questions! You should [login]")
+        UserNotifier.push_login_for_user_data(user_data, "You&rsquo;ve answered %d questions! You should [login]" % numquest)
     #Proficiency
     if isProf:
-        UserNotifier.push_login_for_user_data(user_data, "You're proficient in "+str(prof)+". You should [login]")
+        UserNotifier.push_login_for_user_data(user_data, "You&rsquo;re proficient in %s. You should [login]" % prof)
     #First Badge
     if numbadge != None and len(numbadge) == 1 and gotBadge:
         achievements_url = "%s/achievements" % user_data.profile_root
@@ -45,11 +45,11 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
                         achievements_url)
     #Every badge after
     if numbadge != None and len(numbadge) > 1 and gotBadge:
-        UserNotifier.push_login_for_user_data(user_data, "You've earned <a href='/profile'>"+str(len(numbadge))+" badges</a> so far. You should [login]")
+        UserNotifier.push_login_for_user_data(user_data, "You&rsquo;ve earned <a href='/profile'>%d badges</a> so far. You should [login]" % len(numbadge))
     #Every 2.5k points
     if numpoint != None and threshold:
         numpoint = 2500 * (numpoint / 2500) + 2500
-        UserNotifier.push_login_for_user_data(user_data, "You've earned over <a href='/profile'>"+str(numpoint)+ " points</a>! You should [login]")
+        UserNotifier.push_login_for_user_data(user_data, "You&rsquo;ve earned over <a href='/profile'>%d points</a>! You should [login]" % numpoint)
 
 
 #Toggle Notify allows the user to close the notification bar (by deleting the memcache) until a new notification occurs.
