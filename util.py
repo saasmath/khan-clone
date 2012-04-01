@@ -174,7 +174,7 @@ def secure_url(url):
 
     _, netloc, path, query, fragment = _get_url_parts(url)
 
-    if (netloc.lower().endswith(".khanacademy.org")):
+    if netloc.lower().endswith(".khanacademy.org"):
         # Vanity domains can't handle https - but all the ones we own
         # are simple CNAMEs to the default app engine instance.
         # http://code.google.com/p/googleappengine/issues/detail?id=792
@@ -199,6 +199,11 @@ def insecure_url(url):
         return url
 
     _, netloc, path, query, fragment = _get_url_parts(url)
+
+    if netloc.lower() == "khan-academy.appspot.com":
+        # https://khan-academy.appspot.com is the HTTPS equivalent of the
+        # default appengine instance
+        netloc = "www.khanacademy.org"
 
     return urlparse.urlunsplit(("http", netloc, path, query, fragment))
 
