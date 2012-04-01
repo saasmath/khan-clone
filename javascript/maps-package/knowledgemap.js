@@ -190,6 +190,7 @@ function KnowledgeMap(params) {
     this.fFirstDraw = true;
     this.fCenterChanged = false;
     this.fZoomChanged = false;
+    this.fDragging = false;
 
     this.admin = !!params.admin;
     this.newGoal = !!params.newGoal;
@@ -446,10 +447,12 @@ function KnowledgeMap(params) {
             new google.maps.LatLng(KnowledgeMapGlobals.latMin, KnowledgeMapGlobals.lngMin),
             new google.maps.LatLng(KnowledgeMapGlobals.latMax, KnowledgeMapGlobals.lngMax));
 
-        _.bindAll(this, "onCenterChange", "onIdle", "finishRenderingNodes");
+        _.bindAll(this, "onCenterChange", "onIdle", "finishRenderingNodes", "onDragStart", "onDragEnd");
         google.maps.event.addListener(this.map, "center_changed", this.onCenterChange);
         google.maps.event.addListener(this.map, "idle", this.onIdle);
         google.maps.event.addListener(this.map, "center_changed", this.finishRenderingNodes);
+        google.maps.event.addListener(this.map, "dragstart", this.onDragStart);
+        google.maps.event.addListener(this.map, "dragend", this.onDragEnd);
 
         this.giveNasaCredit();
         $(window).on("beforeunload", $.proxy(this.saveMapCoords, this));
@@ -719,6 +722,20 @@ function KnowledgeMap(params) {
 
         // TODO this may not work, could post synchronously to fix, but it's not critical
         $.post("/savemapcoords", this.getMapCoords());
+    };
+
+    this.onDragStart = function() {
+        this.fDragging = true;
+    };
+
+    this.onDragEnd = function() {
+        // Turn off dragging flag after this event and
+        // any click event associated w/ the current mouseclick
+        // are done firing.
+        setTimeout($.proxy(function() {
+                this.fDragging = false;
+            }, this), 
+        1);
     };
 
     this.onIdle = function() {
