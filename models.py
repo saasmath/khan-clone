@@ -2453,7 +2453,8 @@ class Topic(Searchable, db.Model):
     # the ids of the topic on the homepage in which we will display their first
     # level child topics
     _super_topic_ids = ["algebra", "arithmetic", "art-history", "geometry", 
-                        "brit-cruise", "california-standards-test", "gmat"]
+                        "brit-cruise", "california-standards-test", "gmat",
+                        "linear-algebra"]
 
     @property
     def relative_url(self):
