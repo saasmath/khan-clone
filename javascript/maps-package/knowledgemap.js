@@ -218,7 +218,8 @@ function KnowledgeMap(params) {
 
                 // Index nodes by name
                 var topic = new KnowledgeMapModels.Topic(dict);
-                return this.modelsByName[topic.get("name")] = topic;
+                this.modelsByName[topic.get("name")] = topic;
+                return topic;
 
             }, this);
 
@@ -243,7 +244,8 @@ function KnowledgeMap(params) {
 
             // Index nodes by name
             var exercise = new KnowledgeMapModels.Exercise(dict);
-            return this.modelsByName[exercise.get("name")] = exercise;
+            this.modelsByName[exercise.get("name")] = exercise;
+            return exercise;
 
         }, this);
 
