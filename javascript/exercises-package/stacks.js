@@ -6,10 +6,10 @@ Exercises.Card = Backbone.Model.extend({
     leaves: function(card) {
 
         return _.map(_.range(4), function(index) {
-            
+
             return {
                 index: index,
-                state: (this.get("leavesEarned") > index ? "earned" : 
+                state: (this.get("leavesEarned") > index ? "earned" :
                             this.get("leavesAvailable") > index ? "available" :
                                 "unavailable")
             };
@@ -114,7 +114,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
                 return card.get("leavesEarned") >= 3;
             },
             function(card) {
-                // Skip any cards w/ 0 leaves available -- 
+                // Skip any cards w/ 0 leaves available --
                 // those don't count.
                 return card.get("leavesAvailable") == 0;
             }
@@ -123,7 +123,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
         var speedyCards = this.filter(function(card) {
             return card.get("leavesEarned") >= 4;
         }).length;
-            
+
         return {
             "longestStreak": longestStreak,
             "speedyCards": speedyCards,
@@ -266,7 +266,7 @@ Exercises.StackView = Backbone.View.extend({
     viewContext: function(card, index) {
         return _.extend( card.toJSON(), {
             index: index,
-            frontVisible: this.options.frontVisible, 
+            frontVisible: this.options.frontVisible,
             cid: card.cid,
             leaves: card.leaves()
         });
@@ -485,7 +485,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 }
 
             });
-        }, 2400);
+        }, 2200);
 
     },
 
@@ -495,7 +495,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     renderProblemCard: function() {
 
         // khan-exercises currently both generates content and hooks up
-        // events to the exercise interface. This means, for now, we don't want 
+        // events to the exercise interface. This means, for now, we don't want
         // to regenerate a brand new card when transitioning between exercise
         // problems.
 
@@ -556,7 +556,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
 
             this.renderCardAfterAPIRequests(
                 "exercises.end-of-stack-card",
-                function() { 
+                function() {
                     var unstartedExercises = _.filter(topicUserExercises, function(userExercise) {
                             return !userExercise.exerciseStates.proficient && userExercise.totalDone == 0;
                         }),
@@ -574,9 +574,9 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             "total": topicUserExercises.length,
                             startedExercises: startedExercises,
                             unstartedExercises: unstartedExercises,
-                            proficientExercises: proficientExercises,
+                            proficientExercises: proficientExercises
                         },
-                        Exercises.sessionStats.progressStats(), 
+                        Exercises.sessionStats.progressStats(),
                         Exercises.completeStack.stats()
                     );
                 },
@@ -588,11 +588,19 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             .end()
                         .find("#show-topic-details")
                             .click(function(){
-                                $('.current-topic').slideDown(); 
+                                $('.current-topic').slideDown();
                                 $(this).hide();
                             })
                             .end()
+                        .find(".take-a-break")
+                            .click(function() {
+                                window.location = "/exercisedashboard";
+                            })
+                            .end()
                         .find(".more-stacks")
+                            .click(function() {
+                                window.location.reload();
+                            })
                             .focus();
                 }
             );
@@ -624,7 +632,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
             // rendering end of review card.
             Exercises.currentCardView.renderCardAfterAPIRequests(
                 "exercises.end-of-review-card",
-                function() { 
+                function() {
                     // Pass reviews left info into end of review card
                     return _.extend({}, Exercises.completeStack.stats(), {reviewsLeft: reviewsLeft});
                 },
@@ -856,7 +864,7 @@ Exercises.SessionStats = Backbone.Model.extend({
 
         if (userExercise) {
 
-            /** 
+            /**
              * For now, we're just keeping track of the change in progress per
              * exercise
              */
