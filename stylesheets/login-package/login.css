@@ -51,19 +51,21 @@ form.auth-form {
     display: inline-block;
 }
 .separator-text {
-    color: #999;
-    font-family: "MuseoSans500", sans-serif;
+    color: #444;
+    font-family: "MuseoSans300", sans-serif;
+    text-transform: uppercase;
     font-size: 16px;
+    letter-spacing: 2px;
     background: #eee;
     display: inline-block;
-    padding: 0.5em;
+    padding: 0.7em;
     position: relative;
 }
 
 .vertical-separator .separator-text {
     top: 50%;
     margin-top: -0.5em;
-    margin-left: -1.25em;
+    margin-left: -1.5em;
 }
 
 #page-root .horizontal-separator {
@@ -80,7 +82,7 @@ form.auth-form {
     position: relative;
     display: inline-block;
     padding: 0 0.5em;
-    top: -0.5em;
+    top: -0.7em;
 }
 
 
@@ -420,5 +422,8 @@ a.signup-link {
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding-box;
+    border-background-clip: padding-box;
     background: #eee;
 }
