@@ -9,13 +9,13 @@ function KnowledgeMapInitGlobals() {
             gray: "#FFFFFF"
         },
 
-        icons: {
-                Exercise: {
-                        Proficient: "/images/node-complete.png?" + KA_VERSION,
-                        Review: "/images/node-review.png?" + KA_VERSION,
-                        Suggested: "/images/node-suggested.png?" + KA_VERSION,
-                        Normal: "/images/node-not-started.png?" + KA_VERSION
-                          }
+        iconClasses: {
+            exercise: {
+                Proficient: "node-complete",
+                Review: "node-review",
+                Suggested: "node-suggested",
+                Normal: "node-not-started"
+            }
         },
 
         coordsHome: { lat: -2.064844, lng: 0.736268, zoom: 6, when: 0 },
@@ -640,15 +640,18 @@ function KnowledgeMap(params) {
         if (lng < KnowledgeMapGlobals.lngMin) KnowledgeMapGlobals.lngMin = lng;
         if (lng > KnowledgeMapGlobals.lngMax) KnowledgeMapGlobals.lngMax = lng;
 
-        var marker = new com.redfin.FastMarker(
-                "marker-" + node.name,
-                node.latLng,
-                [   "<a href='" + node.url + "' data-id='" + node.name + "' class='" + node.className + "'>" +
-                    "<img class='node-icon' src='" + node.iconUrl + "'/>" +
-                    "<div class='node-text'>" + node.display_name + "</div></a>"],
-                "",
-                1,
-                0, 0);
+        var html = [];
+        html.push("<a href='", node.url, "' data-id='", node.name, "' class='", node.className, "'>");
+        if (node.nodeType === "exercise") {
+            var classes = KnowledgeMapGlobals.iconClasses.exercise;
+            var iconClass = classes[node.status] || classes.Normal;
+            html.push("<div class='node-icon ", iconClass, "'></div>");
+        } else {
+            html.push("<img class='node-icon' src='", node.iconUrl, "'>");
+        }
+        html.push("<div class='node-text'>", node.display_name, "</div></a>");
+
+        var marker = new com.redfin.FastMarker("marker-" + node.name, node.latLng, html, "", 1, 0, 0);
 
         this.markers[this.markers.length] = marker;
     };
