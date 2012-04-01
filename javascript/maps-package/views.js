@@ -187,6 +187,13 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
     click: function(evt) {
 
+        if (this.parent.fDragging) {
+            // If the map is in the middle of being dragged/panned,
+            // ignore clicks on nodes.
+            evt.preventDefault();
+            return;
+        }
+
         if (!this.model.isClickableAtZoom(this.parent.map.getZoom())) {
             // If this node isn't clickable, make sure the default click event
             // of following the node's link doesn't happen.
