@@ -87,7 +87,7 @@ function KnowledgeMapDrawer(container, knowledgeMap) {
 
     this.isExpanded = function() {
         var sCSSLeft = $("#" + this.container + " .dashboard-drawer").css("left").toLowerCase();
-        return sCSSLeft == "0px" || sCSSLeft == "auto" || sCSSLeft == "";
+        return sCSSLeft === "0px" || sCSSLeft === "auto" || sCSSLeft === "";
     };
 
     this.toggle = function() {
@@ -258,7 +258,7 @@ function KnowledgeMap(params) {
 
         // ensure blank elements take up the right amount of space
         var createEl = function() {
-            return $("<div>", {'class': 'exercise-badge'});
+            return $("<div>", {"class": "exercise-badge"});
         };
 
         _.each(this.modelsByName, function(model) {
@@ -423,11 +423,11 @@ function KnowledgeMap(params) {
         var coords = $.extend({}, KnowledgeMapGlobals.coordsHome);
 
         // overwrite defaults with localStorage values (if any)
-        var localCoords = $.parseJSON( window.localStorage[ "map_coords:"+USERNAME ] || "{}" );
+        var localCoords = $.parseJSON(window.localStorage["map_coords:" + USERNAME] || "{}");
         $.extend(coords, localCoords);
 
         // prefer server values if they're more fresh
-        if (params.mapCoords && params.mapCoords.when > coords.when){
+        if (params.mapCoords && params.mapCoords.when > coords.when) {
             coords = params.mapCoords;
         }
 
@@ -702,7 +702,7 @@ function KnowledgeMap(params) {
 
     };
 
-    this.getMapCoords = function(){
+    this.getMapCoords = function() {
         var center = this.map.getCenter();
 
         var coords = {
@@ -716,7 +716,7 @@ function KnowledgeMap(params) {
 
     };
 
-    this.saveMapCoords = function(){
+    this.saveMapCoords = function() {
 
         if (this.newGoal) {
             // Don't persist K.M. position when creating new goal
@@ -737,7 +737,7 @@ function KnowledgeMap(params) {
         // are done firing.
         setTimeout($.proxy(function() {
                 this.fDragging = false;
-            }, this), 
+            }, this),
         1);
     };
 
@@ -755,9 +755,9 @@ function KnowledgeMap(params) {
         // in case they aren't being rendered at the correct size.
         this.map.panBy(0, 0);
 
-        if (window.localStorage && window.JSON){
+        if (window.localStorage && window.JSON) {
             var pos = this.getMapCoords();
-            window.localStorage[ "map_coords:"+USERNAME ] = JSON.stringify(pos);
+            window.localStorage["map_coords:" + USERNAME] = JSON.stringify(pos);
         }
     };
 
@@ -842,7 +842,7 @@ function KnowledgeMap(params) {
                 counts[nodeRowView.options.type]++;
         });
 
-        if (filterText && counts.all == 0) {
+        if (filterText && counts.all === 0) {
             self.getElement("exercise-no-results").show();
         } else {
             self.getElement("exercise-no-results").hide();
@@ -877,7 +877,7 @@ function KnowledgeMap(params) {
         else
             el = $("." + id);
         this.elementTable[id] = el;
-        if (el.length == 0)
+        if (el.length === 0)
             throw new Error('Missing element: "' + id + '" in container "' + this.containerID + '"');
         return el;
     };

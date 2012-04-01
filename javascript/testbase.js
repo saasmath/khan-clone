@@ -63,7 +63,7 @@ var KA_TEST = {
 
             try {
                 passTest = test();
-            } catch(e) {
+            } catch (e) {
                 document.write("Error during test " + num + ": " + e.toString() + "<br>");
             }
 

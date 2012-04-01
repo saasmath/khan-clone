@@ -1,7 +1,7 @@
 
 // TODO: would be nice if this were part of a larger KnowledgeMap context
 // instead of needing the KnowledgeMap naming prefix.
-var KnowledgeMapViews = {}
+var KnowledgeMapViews = {};
 
 /**
  * NodeRow is a base view class that can be used to render
@@ -87,7 +87,7 @@ KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
             this.el.find(".exercise-goal-icon").hide();
         }
     }
-    
+
 });
 
 /**
@@ -157,8 +157,8 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         }
 
         // perf hack: instead of changing css opacity, set a whole new image
-        var img = this.el.find('img.node-icon');
-        var url = img.attr('src');
+        var img = this.el.find("img.node-icon");
+        var url = img.attr("src");
 
         if (url.indexOf("power-mode") >= 0) {
             // TODO: for now, we don't have image opacity effects on topics
@@ -172,9 +172,9 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         }
 
         if (this.filtered) {
-            img.attr('src', url.replace(".png", "-faded.png"));
+            img.attr("src", url.replace(".png", "-faded.png"));
         } else {
-            img.attr('src', url);
+            img.attr("src", url);
         }
     },
 

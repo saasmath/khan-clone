@@ -112,15 +112,14 @@ Exercises.BottomlessQueue = {
             enabled = (sessionStorage[uid] == uid);
             sessionStorage.removeItem(uid);
             return enabled;
-        }
-        catch(e) {
+        } catch (e) {
             return false;
         }
     },
 
     warnSessionStorageDisabled: function() {
         $(Exercises).trigger("warning", {
-            text: "You must enable DOM storage in your browser; see <a href='https://sites.google.com/a/khanacademy.org/forge/for-developers/how-to-enable-dom-storage'>here</a> for instructions.", 
+            text: "You must enable DOM storage in your browser; see <a href='https://sites.google.com/a/khanacademy.org/forge/for-developers/how-to-enable-dom-storage'>here</a> for instructions.",
             showClose: false
         });
     },
@@ -143,7 +142,7 @@ Exercises.BottomlessQueue = {
     },
 
     /**
-     * Make sure an upcomingExercise event has been triggered for the 
+     * Make sure an upcomingExercise event has been triggered for the
      * first this.preloadUpcoming events in currentQueue.
      */
     triggerUpcoming: function() {
@@ -240,7 +239,7 @@ Exercises.BottomlessQueue = {
         if (!this.sessionStorageEnabled) {
             return null;
         }
-        
+
         // If the queue is empty, use the recycle queue
         // to fill up w/ old problems while we wait for
         // an ajax request for more exercises to complete.
@@ -283,7 +282,7 @@ Exercises.BottomlessQueue = {
         this.triggerUpcoming();
 
         return this.userExerciseCache[this.current.exercise];
- 
+
     },
 
     refill: function() {

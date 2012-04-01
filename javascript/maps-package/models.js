@@ -109,7 +109,7 @@ KnowledgeMapModels.Exercise = KnowledgeMapModels.Node.extend({
             this.get("v_position"), // v_position is actually x
             this.get("h_position"), // h_position is actually y
             null, // iconUrl
-            this.get("states")["suggested"] && !this.get("states")["reviewing"],
+            this.get("states").suggested && !this.get("states").reviewing,
             "exercise"
         );
 

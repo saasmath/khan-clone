@@ -77,8 +77,8 @@ Exercises.StackCollection = Backbone.Collection.extend({
     longestStreak: function(fxn, fxnSkip) {
 
         var current = 0,
-            longest = 0,
-            fxnSkip = fxnSkip || function(){ return false; };
+            longest = 0;
+        fxnSkip = fxnSkip || function() { return false; };
 
         this.each(function(card) {
 
@@ -116,7 +116,7 @@ Exercises.StackCollection = Backbone.Collection.extend({
             function(card) {
                 // Skip any cards w/ 0 leaves available --
                 // those don't count.
-                return card.get("leavesAvailable") == 0;
+                return card.get("leavesAvailable") === 0;
             }
         );
 
@@ -181,7 +181,7 @@ Exercises.CachedStackCollection = Exercises.StackCollection.extend({
         if (modelAttrs) {
 
             _.each(modelAttrs, function(attrs) {
-                this.add(new Exercises.Card(attrs))
+                this.add(new Exercises.Card(attrs));
             }, this);
 
         }
@@ -237,7 +237,7 @@ Exercises.StackView = Backbone.View.extend({
                 }
 
                 return result;
-            }
+            };
         };
 
         this.collection
@@ -264,7 +264,7 @@ Exercises.StackView = Backbone.View.extend({
     },
 
     viewContext: function(card, index) {
-        return _.extend( card.toJSON(), {
+        return _.extend(card.toJSON(), {
             index: index,
             frontVisible: this.options.frontVisible,
             cid: card.cid,
@@ -371,7 +371,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
     },
 
     viewContext: function() {
-        return _.extend( this.model.toJSON(), {
+        return _.extend(this.model.toJSON(), {
             leaves: this.model.leaves()
         });
     },
@@ -415,7 +415,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 fxn();
 
             }
-        };
+        }
 
         tryRun();
 
@@ -456,7 +456,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 jel.delay(1000).fadeOut(600, function() {
                     fadeInNextText(jel.next("span"));
                 });
-            })
+            });
         };
 
         fadeInNextText();
@@ -477,7 +477,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
         setTimeout(function() {
             Exercises.currentCardView.runAfterAPIRequests(function() {
 
-                optionalContextFxn = optionalContextFxn || function(){};
+                optionalContextFxn = optionalContextFxn || function() {};
                 Exercises.currentCardView.renderCardContents(templateName, optionalContextFxn());
 
                 if (optionalCallbackFxn) {
@@ -558,7 +558,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                 "exercises.end-of-stack-card",
                 function() {
                     var unstartedExercises = _.filter(topicUserExercises, function(userExercise) {
-                            return !userExercise.exerciseStates.proficient && userExercise.totalDone == 0;
+                            return !userExercise.exerciseStates.proficient && userExercise.totalDone === 0;
                         }),
                         proficientExercises = _.filter(topicUserExercises, function(userExercise) {
                             return userExercise.exerciseStates.proficient;
@@ -587,8 +587,8 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             .each(Exercises.currentCardView.attachTooltip)
                             .end()
                         .find("#show-topic-details")
-                            .click(function(){
-                                $('.current-topic').slideDown();
+                            .click(function() {
+                                $(".current-topic").slideDown();
                                 $(this).hide();
                             })
                             .end()
