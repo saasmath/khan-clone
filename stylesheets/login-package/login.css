@@ -191,7 +191,7 @@ a:visited {
      * disable webkit-appearance. That removes the dropdown icon though. */
     -webkit-appearance: none;
 
-    background: white url("/images/dropdown.png") no-repeat right center;
+    background: #fafafa url("/images/dropdown.png") no-repeat right center;
 }
 
 .auth-form .simple-input#gender {
