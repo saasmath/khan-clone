@@ -776,9 +776,11 @@ class PasswordChange(request_handler.RequestHandler):
             self.render_form()
 
     def render_form(self, message=None, success=False):
+        transfer_token_value = self.request_string("transfer_token", default="")
         self.render_jinja2_template('password-change.html',
                                     {'message': message or "",
-                                     'success': success})
+                                     'success': success,
+                                     'transfer_token': transfer_token_value})
         
     def secure_url_with_token(self, url):
         user_data = UserData.current()
