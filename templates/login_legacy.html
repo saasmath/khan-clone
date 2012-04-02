@@ -14,7 +14,7 @@
         white-space: nowrap;
         height: auto;
     }
-    #login-page .providers li {
+    #login-page .providers .provider {
         padding: 5px;
         height: 90px;
         margin: 0 10px;
@@ -34,22 +34,22 @@
     <form method="POST" id="login-form" action="/login?continue={{continue|urlencode}}">
     <input type="hidden" name="type" id="type-input">
 
-    <div><ul class="providers">
-    <li class="direct action-gradient" id="login-google">
+    <div><div class="providers">
+    <div class="direct action-gradient provider" id="login-google">
           <div class="sign-in-text">Login with:</div>
           <a href="{{google_url}}">
             <img width="205" height="70" src="/images/google-logo-large.png" />
           </a>
-    </li>
+    </div>
 
     {% if App.facebook_app_secret %}
-    <li id="login-facebook" class="action-gradient">
+    <div id="login-facebook" class="action-gradient provider">
           <div class="sign-in-text">Login with:</div>
           <img width="205" height="70" src="/images/facebook-logo-large.png" />
-    </li>
+    </div>
     {% endif %}
 
-    </ul></div>
+    </div></div>
     <div class="clear"></div>
 
     <h5 style="margin:18px 0 0 0;">Don't have an account yet?</h5>
