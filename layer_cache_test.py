@@ -6,9 +6,10 @@ import request_cache as cachepy
 from google.appengine.api import memcache
 
 class LayerCacheTest(testutil.GAEModelTestCase):
-    """
+    
     def test_memcache(self):
-
+        ''' A basic test to make sure memcache is working
+        '''
         @layer_cache.cache(layer=layer_cache.Layers.Memcache)
         def func1(result):
             return result
@@ -40,12 +41,15 @@ class LayerCacheTest(testutil.GAEModelTestCase):
         func3("a"*1000000+"b"*1000000)
         # deleting the 2nd chunk ... next time we get it pickle.loads should 
         # throw an error and the target func will be rexecuted
-        memcache.delete("__layer_cache_layer_cache_test.func3__2")
+        memcache.delete("__layer_cache_layer_cache_test.func3____chunk2__")
         self.assertEqual(1, len(func3("a")))
 
     def test_corrupted_chunk(self):
-        ''' This will test that results are recalculated when a chunk gets 
-        somehow corrupted so depickle will fail
+        ''' Tests to make sure results are recalculated when a chunk is corrupt 
+        
+        If ChunkedResult in a race condition read from a previous version of a
+        key then depickling should fail.  This will test that it failed silently
+        and that the results are then recalculated.
         '''
         @layer_cache.cache(layer=layer_cache.Layers.Memcache, 
                            compress_chunks=False)
@@ -55,12 +59,15 @@ class LayerCacheTest(testutil.GAEModelTestCase):
         func4("a"*1000000+"b"*1000000)
         # deleting the 2nd chunk ... next time we get it pickle.loads should 
         # throw an error and the target func will be rexecuted
-        memcache.set("__layer_cache_layer_cache_test.func4__1", "depickle fail")
+        memcache.set("__layer_cache_layer_cache_test.func4____chunk0__", 
+                     "depickle fail")
         self.assertEqual(1, len(func4("a")))
-    """
-    """ Commenting out as it takes too long
+    
     def test_huge_memcache(self):
-        ''' This will test setting a value > 32 MB '''
+        ''' This will test setting a value > 32 MB 
+            Currently commented out because it takes too long
+        '''
+        return
 
         @layer_cache.cache(layer=layer_cache.Layers.Memcache,
                            compress_chunks=False)
@@ -69,11 +76,10 @@ class LayerCacheTest(testutil.GAEModelTestCase):
 
         func5("a"*33000000)
         self.assertEqual(33000000, len(func5("a")))
-    """
-    """
+    
+    
     def test_datastore(self):
-        ''' Basic sanity check to make sure datastore can be written and read 
-        from
+        ''' Basic sanity check to make sure we can read/write to datastore  
         '''
         @layer_cache.cache(layer=layer_cache.Layers.Datastore,
                            compress_chunks=False)
@@ -93,10 +99,12 @@ class LayerCacheTest(testutil.GAEModelTestCase):
 
         func7("a"*1000000+"b"*1000000)
         self.assertEqual(2000000, len(func7("a")))
-    """
-    """ Commenting out as it takes too long
+    
     def test_huge_datastore(self):
-        ''' This will test setting a value > 32 MB in the datastore '''
+        ''' This will test setting a value > 32 MB in the datastore 
+        Currently commented out because it takes too long
+        '''
+        return
 
         @layer_cache.cache(layer=layer_cache.Layers.Datastore,
                            compress_chunks=False)
@@ -105,12 +113,15 @@ class LayerCacheTest(testutil.GAEModelTestCase):
 
         func8("a"*33000000)
         self.assertEqual(33000000, len(func8("a")))
-    """
-    """
+    
     def test_bubble_up_memcache_save(self):
-        ''' This will make sure that if something is missing from inAppMemory
+        ''' Tests if missing entries in memcache gets added to higher levels
+        
+        This will make sure that if something is missing from inAppMemory
         in layercache that it will correctly save it with the values from
-        memcache '''
+        memcache.  It performs the checks on large values that will make
+        use of the ChunkedResult
+        '''
 
         @layer_cache.cache(layer=layer_cache.Layers.Memcache | 
                                  layer_cache.Layers.InAppMemory,
@@ -133,9 +144,13 @@ class LayerCacheTest(testutil.GAEModelTestCase):
                     len(cachepy.get("__layer_cache_layer_cache_test.func9__")))
 
     def test_bubble_up_datastore_save(self):
-        ''' This will make sure that if something is missing from a higher level
+        ''' Tests if missing entries in datastore gets added to higher levels
+         
+        This will make sure that if something is missing from a higher level
         in layercache that it will correctly save it with the values from
-        the lower levels '''
+        the lower levels.  It performs the checks on large values that will make
+        use of the ChunkedResult.
+        '''
 
         @layer_cache.cache(layer=layer_cache.Layers.Memcache | 
                                  layer_cache.Layers.Datastore |
@@ -185,11 +200,13 @@ class LayerCacheTest(testutil.GAEModelTestCase):
         # if compression wasn't working than 4 keys would be set including the
         # following key
         self.assertEqual(type(None), 
-            type(memcache.get("__layer_cache_layer_cache_test.func11__1")))
+            type(memcache.get(
+                "__layer_cache_layer_cache_test.func11____chunk1__")))
 
     def test_use_chunks(self):
-        '''This test makes sure that using the use_chunks parameter that it will
-        force it to use ChunkResults regardless of size
+        '''Test whether use_chunks parameter works correctly
+ 
+        Checks to make sure it saves a ChunkedResult regardless of size
         '''
         @layer_cache.cache(layer=layer_cache.Layers.Memcache, use_chunks=True)
         def func12(result):
@@ -201,20 +218,22 @@ class LayerCacheTest(testutil.GAEModelTestCase):
             layer_cache.ChunkedResult))
 
     def test_corrupted_uncompressible_chunk(self):
-        ''' This will test that results are recalculated when a chunk gets 
-        somehow corrupted so decompression will fail
+        '''Tests whether decompression fails silently if data is corrupt. 
+
+        It does an assert to see the results are recalculated when a chunk gets 
+        somehow corrupted causing decompression to fail.
         '''
         @layer_cache.cache(layer=layer_cache.Layers.Memcache)
         def func13(result):
             return result
 
         func13("stuff")
-        # deleting the 2nd chunk ... next time we get it pickle.loads should 
+        # overwriting key value ... next time we get it decompress should 
         # throw an error and the target func will be rexecuted
         memcache.set("__layer_cache_layer_cache_test.func13__", 
                      layer_cache.ChunkedResult(data = "decompress fail"))
         self.assertEqual(1, len(func13("a")))
-    """
+    
     def test_delete_datastore_chunks(self):
         ''' This will test that all chunks are deleted
         '''

@@ -7,7 +7,6 @@ import datetime
 import logging
 import pickle
 import zlib
-from base64 import b64encode, b64decode
 
 from google.appengine.api import memcache
 from google.appengine.ext import db
@@ -203,10 +202,13 @@ def layer_cache_check_set_return(
                 return result
 
         if layer & Layers.Memcache:
-            result = memcache.get(key, namespace=namespace)
-            if result is not None:
-                if isinstance(result, ChunkedResult):
-                    result = result.get_result(memcache, namespace=namespace)
+            maybe_chunked_result = memcache.get(key, namespace=namespace)
+            if maybe_chunked_result is not None:
+                if isinstance(maybe_chunked_result, ChunkedResult):
+                    result = maybe_chunked_result.get_result(memcache, 
+                                                            namespace=namespace)
+                else:
+                    result = maybe_chunked_result
 
                 # Found in memcache, fill upward layers
                 if layer & Layers.InAppMemory:
@@ -215,18 +217,24 @@ def layer_cache_check_set_return(
                 return result
 
         if layer & Layers.Datastore:
-            result = KeyValueCache.get(key, namespace=namespace)
-            if result is not None:
-                if isinstance(result, ChunkedResult):
-                    result = result.get_result(KeyValueCache, 
-                                               namespace=namespace)
+            maybe_chunked_result = KeyValueCache.get(key, namespace=namespace)
+            if maybe_chunked_result is not None:
+                # Found in datastore. Unchunk results if needed, and fill upward 
+                # layers
+                if isinstance(maybe_chunked_result, ChunkedResult):
+                    result = maybe_chunked_result.get_result(KeyValueCache, 
+                                                            namespace=namespace)
                     
-                    # Found in datastore, fill upward layers
                     if layer & Layers.Memcache:
+                        # Since the result in the datastore needed to be chunked
+                        # We will need to use ChunkedResult for memcache as well
                         ChunkedResult.set(key, result, expiration, namespace, 
                                           cache_class=memcache)
                 else:
+                    result = maybe_chunked_result
                     if layer & Layers.Memcache:
+                        # Since the datastore wasn't using a chunked result
+                        # This memcache.set should succeed as well.
                         memcache.set(key, result, time=expiration, 
                                      namespace=namespace)
 
@@ -242,38 +250,50 @@ def layer_cache_check_set_return(
             cachepy.set(key, result, expiry=expiration)
 
         if layer & Layers.Memcache:
-            try:
-                if not use_chunks:
+            
+            if not use_chunks:
+
+                try:
                     if not memcache.set(key, result, time=expiration, 
                                         namespace=namespace):
                         logging.error("Memcache set failed for %s" % key)
-                else:
-                    ChunkedResult.set(key, result, expiration, namespace, 
-                                      compress=compress_chunks,
-                                      cache_class=memcache)
-            except ValueError, e:
-                if str(e).startswith("Values may not be more than"):
-                    ChunkedResult.set(key, result, expiration, namespace, 
-                                      compress=compress_chunks,
-                                      cache_class=memcache)
-                else: 
-                    raise
+                except ValueError, e:
+                    if str(e).startswith("Values may not be more than"):
+                        # The result was too big to store in memcache.  Going  
+                        # to chunk it and try again
+                        ChunkedResult.set(key, result, expiration, namespace, 
+                                          compress=compress_chunks,
+                                          cache_class=memcache)
+                    else: 
+                        raise
 
+            else:
+                # use_chunks parameter was explicitly set, not going to even 
+                # bother trying to put it in memcache directly
+                ChunkedResult.set(key, result, expiration, namespace, 
+                                  compress=compress_chunks,
+                                  cache_class=memcache)
+            
         if layer & Layers.Datastore:
-            try:
-                if not use_chunks:
+            if not use_chunks:
+                try:
                     KeyValueCache.set(key, result, time=expiration, 
                                       namespace=namespace)
-                else:
+                except RequestTooLargeError, e:
+                    # The result was too big to store in datastore. Going to  
+                    # chunk it and try again
                     ChunkedResult.set(key, result, time=expiration, 
-                                      namespace=namespace,
-                                      compress=compress_chunks, 
-                                      cache_class=KeyValueCache)
-            except RequestTooLargeError, e:
+                                  namespace=namespace,
+                                  compress=compress_chunks, 
+                                  cache_class=KeyValueCache)  
+            else:
+                # use_chunks parameter was explicitly set, not going to even 
+                # bother trying to put it in KeyValueCache directly
                 ChunkedResult.set(key, result, time=expiration, 
                                   namespace=namespace,
                                   compress=compress_chunks, 
-                                  cache_class=KeyValueCache)                
+                                  cache_class=KeyValueCache)
+                          
 
     bust_cache = False
     if "bust_cache" in kwargs:
@@ -345,8 +365,14 @@ def layer_cache_check_set_return(
     return result
 
 class ChunkedResult():
-    def __init__(self, index=None, data=None, compress=True):
-        self.index = index
+    def __init__(self, chunk_list=None, data=None, compress=True):
+        ''' Stores the list of chunks keys that hold the separate chunks of 
+        the result.  If after compressing the result the data is able to fit
+        within a single chunk then the list won't be used and the compressed
+        result will be stored in data.  An optional compress boolean states 
+        whether or not to use compression
+        '''
+        self.chunk_list = chunk_list
         self.data = data
         self.compress = compress
         
@@ -354,47 +380,49 @@ class ChunkedResult():
     def set(key, value, time=None, namespace="", cache_class=memcache, 
             compress=True):
         ''' This function will pickle and perhaps compress value, before then
-        breaking it up into chunks and storing it with set_multi to whatever
+        breaking it up into 1MB chunks and storing it with set_multi to whatever
         class cache_class is set to (memcache or KeyValueCache)
         '''
 
         result = pickle.dumps(value)
         if compress:
-            result = zlib.compress(b64encode(result))
+            result = zlib.compress(result)
         
         size = len(result)    
         # if now that we have compressed the item it can fit within a single
-        # 1MB object don't use the index, and it will save us from having
+        # 1MB object don't use the chunk_list, and it will save us from having
         # to do an extra round-trip on the gets
         if size < MAX_SIZE_OF_CACHE_CHUNKS:
-            mapping = {key: ChunkedResult(data=result, compress=compress)}
+            return cache_class.set(key, 
+                                   ChunkedResult(data=result, 
+                                                 compress=compress),
+                                   time=time,
+                                   namespace=namespace)              
+                                    
+        mapping = {}
+        chunk_list = []
         
-        else:
-            pos = 0
-            i = 1
-            mapping = {}
-            chunk_index = []
-            
-            while pos < size:
-                chunk = result[pos : pos + MAX_SIZE_OF_CACHE_CHUNKS]                           
-                pos += MAX_SIZE_OF_CACHE_CHUNKS 
-                chunk_key = key + str(i)
-                mapping[chunk_key] = chunk
-                chunk_index.append(chunk_key)
-                i += 1
+        for i, pos in enumerate(range(0, size, MAX_SIZE_OF_CACHE_CHUNKS)):
+            chunk = result[pos : pos + MAX_SIZE_OF_CACHE_CHUNKS]                           
+            chunk_key = key + "__chunk%i__" % i
+            mapping[chunk_key] = chunk
+            chunk_list.append(chunk_key)
 
-            mapping[key] = ChunkedResult(index=chunk_index, compress=compress)
+        mapping[key] = ChunkedResult(chunk_list=chunk_list, compress=compress)
         
-        cache_class.set_multi(mapping, time=time, namespace=namespace)
+        # Note: set_multi is not atomic so when we get we will need to make sure 
+        # that all the keys are there and are part of the same set_multi 
+        # operation
+        return cache_class.set_multi(mapping, time=time, namespace=namespace)
     
     @staticmethod
     def delete(key, namespace="", cache_class=memcache):
         '''This function will first get the key.  If it is a ChunkedResult and
-        has an index, then it will delete_multi on all the items in the index
-        otherwise it will just delete the key'''
+        has an chunk_list, then it will delete_multi on all the items in that
+        list otherwise it will just delete the key'''
         value = cache_class.get(key, namespace)
-        if isinstance(value, ChunkedResult) and value.index:
-            keys = value.index
+        if isinstance(value, ChunkedResult) and value.chunk_list:
+            keys = value.chunk_list
             keys.append(key)
             cache_class.delete_multi(keys, namespace)
         elif value:
@@ -403,13 +431,14 @@ class ChunkedResult():
     def get_result(self, cache_class=memcache, namespace=""):
         '''If the results are stored within this ChunkedResult object it will 
         decompress, depickle and return it.  Otherwise it calls get_multi on the
-        cache_class for all items in its index, combines them together and
+        cache_class for all items in its chunk_list, combines them together and
         returns the descompressed and depickled result
         '''
-        if self.index:
-            chunked_results = cache_class.get_multi(self.index, namespace=namespace)
+        if self.chunk_list:
+            chunked_results = cache_class.get_multi(self.chunk_list, 
+                                                    namespace=namespace)
             self.data = ""
-            for chunk_key in self.index:
+            for chunk_key in self.chunk_list:
                 if chunk_key not in chunked_results:
                     # if a chunk is missing then it is impossible to depickle
                     # so target func will need to be re-executed
@@ -418,8 +447,8 @@ class ChunkedResult():
             
         if self.compress:
             try:
-                self.data = b64decode(zlib.decompress(self.data))
-            except:
+                self.data = zlib.decompress(self.data)
+            except zlib.error:
                 # It is possible that we get results some from a new value of a 
                 # cached item and some from an old value of a cached item, and 
                 # hence decompression will fail, as set_multi is not atomic   
@@ -428,7 +457,7 @@ class ChunkedResult():
              
         try:
             return pickle.loads(self.data)
-        except:
+        except Exception:
             # It is possible that we get results some from a new value of a 
             # cached item and some from an old value of a cached item, and 
             # hence depickle will fail, as set_multi is not atomic   
@@ -467,79 +496,50 @@ class KeyValueCache(db.Model):
         return "%s:%s" % (namespace, key)
 
     @staticmethod
+    def get_namespaced_keys(keys, namespace=""):
+        return [KeyValueCache.get_namespaced_key(key, namespace) 
+                for key in keys]
+
+    @staticmethod
     def get(key, namespace=""):
-        namespaced_key = KeyValueCache.get_namespaced_key(key, namespace)
-
-        key_value = KeyValueCache.get_by_key_name(namespaced_key)
-
-        if key_value and not key_value.is_expired():
-            if key_value.pickled:
-                return pickle.loads(key_value.value)
-            else:
-                return key_value.value
+        values = KeyValueCache.get_multi([key], namespace)
+        if key in values:
+            return values[key]
 
         return None
 
     @staticmethod
     def get_multi(keys, namespace=""):
         ''' gets multiple KeyValueCache entries at once. It mirrors the 
-        parameters of memcache.get_multi
+        parameters of memcache.get_multi and its return values (ie. it will 
+        return a dict of the original non-namepsaced keys to their values)
         '''
 
-        namespaced_keys = []
-        for key in keys:
-            namespaced_keys.append(
-                            KeyValueCache.get_namespaced_key(key, namespace))
+        namespaced_keys = KeyValueCache.get_namespaced_keys(keys, namespace)
 
         key_values = KeyValueCache.get_by_key_name(namespaced_keys)
         
-        values = dict()
-        for i, key_value in enumerate(key_values):
+        values = {}
+        for (key, key_value) in zip(keys, key_values):
             if key_value and not key_value.is_expired():
                 if key_value.pickled:
-                    values[keys[i]] = pickle.loads(key_value.value)
+                    values[key] = pickle.loads(key_value.value)
                 else:
-                    values[keys[i]] = key_value.value
+                    values[key] = key_value.value
 
         return values
 
     @staticmethod
-    def set(key, result, time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, namespace=""):
-
-        namespaced_key = KeyValueCache.get_namespaced_key(key, namespace)
-        dt = datetime.datetime.now()
-
-        dt_expires = datetime.datetime.max
-        if time > 0:
-            dt_expires = dt + datetime.timedelta(seconds=time)
-
-        # check to see if we need to pickle the results
-        pickled = False
-        if not isinstance(result, basestring):
-            pickled = True
-            result = pickle.dumps(result)
-
-        key_value = KeyValueCache.get_or_insert(
-                key_name = namespaced_key,
-                value = result,
-                created = dt,
-                expires = dt_expires,
-                pickled = pickled)
-
-        if key_value.created != dt:
-            # Already existed, need to overwrite
-            key_value.value = result
-            key_value.created = dt
-            key_value.expires = dt_expires
-            key_value.pickled = pickled
-            key_value.put()
-
+    def set(key, value, time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, namespace=""):
+        KeyValueCache.set_multi({ key: value }, time=time, 
+                                namespace=namespace)
+        
     @staticmethod
     def set_multi(mapping, 
                   time=DEFAULT_LAYER_CACHE_EXPIRATION_SECONDS, 
                   namespace=""):                        
         ''' sets multiple KeyValueCache entries at once. It mirrors the 
-        parameters of memcache.set_multi
+        parameters of memcache.set_multi. Note: set_multi is not atomic      
         '''
         
         namespaced_mapping = dict(
@@ -572,25 +572,18 @@ class KeyValueCache(db.Model):
         db.put(key_values)
 
     @staticmethod
-    def delete_multi(keys, namespace=""):
-        ''' deletes multiple KeyValueCache entries at once. It mirrors the 
-        parameters of memcache.get_multi
-        '''
-
-        namespaced_keys = [
-            KeyValueCache.get_namespaced_key(key, namespace)
-            for key in keys]
-        
-        key_values = KeyValueCache.get_by_key_name(namespaced_keys)
-        key_values = [v for v in key_values if v]
-        db.delete(key_values)
+    def delete(key, namespace=""):
+        KeyValueCache.delete_multi([key], namespace)
 
     @staticmethod
-    def delete(key, namespace=""):
+    def delete_multi(keys, namespace=""):
+        ''' deletes multiple KeyValueCache entries at once. It mirrors the 
+        parameters of memcache.delete_multi
+        '''
 
-        namespaced_key = KeyValueCache.get_namespaced_key(key, namespace)
-        key_value = KeyValueCache.get_by_key_name(namespaced_key)
+        namespaced_keys = KeyValueCache.get_namespaced_keys(keys, namespace)
         
-        if key_value:
-            db.delete(key_value)
+        key_values = KeyValueCache.get_by_key_name(namespaced_keys)
+        found_key_values = [v for v in key_values if v]
+        db.delete(found_key_values)
 
