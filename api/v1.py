@@ -2433,3 +2433,12 @@ def get_avatars():
 def get_version_id():
     return { 'version_id' : os.environ['CURRENT_VERSION_ID'] if 'CURRENT_VERSION_ID' in os.environ else None }
 
+
+@route("/api/v1/parentsignup", methods=["POST", "PUT"])
+@open_access
+@jsonify
+def signup_parent():
+    email = request.request_string("email")
+    if email:
+        models.ParentSignup(key_name=email).put()
+    return {}

@@ -5695,6 +5695,16 @@ class VideoSubtitlesFetchReport(db.Model):
     writes = db.IntegerProperty(indexed=False)
     errors = db.IntegerProperty(indexed=False)
     redirects = db.IntegerProperty(indexed=False)
+    
+class ParentSignup(db.Model):
+    """ An entity to collect an interest list for parents interested
+    in creating under-13 accounts before the feature is actually ready.
+    
+    The key_name stores the e-mail.
+
+    """
+
+    pass
 
 from badges import util_badges, last_action_cache
 from phantom_users import util_notify

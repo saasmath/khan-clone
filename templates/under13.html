@@ -60,7 +60,6 @@
 
         {% if not parent_registered %}
         <form class="auth-form" method="POST">
-            <input name="list_id" type="hidden" value="18">
             <div class="parent-field-container">
                 <label for="parent-email">Parent's email</label>
                 <input id="parent-email" name="email" class="simple-input ui-corner-all">
@@ -84,7 +83,7 @@ $("#submit-button").click(function(e) {
     $("#submit-button").attr("disabled", true);
     $.ajax({
         type: "POST",
-        url: "/mailing-lists/subscribe",
+        url: "/api/v1/parentsignup",
         data: $(".auth-form").serialize(),
         dataType: "json",
         complete: function() {
