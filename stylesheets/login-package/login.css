@@ -94,7 +94,7 @@ a:visited {
     color: #0075b1;
 }
 
-.providers li {
+.providers .provider {
     position: relative;
     display: inline-block;
     border: 1px solid #ccc;
@@ -114,17 +114,17 @@ a:visited {
     cursor: pointer;
 }
 
-.providers li .img-container {
+.providers .provider .img-container {
     display: table-cell;
     vertical-align: middle;
     height: 85px;
 }
-.providers li img {
+.providers .provider img {
     margin: 0 10px;
 }
 
-.providers li:hover,
-.providers li:active {
+.providers .provider:hover,
+.providers .provider:active {
     border-color: #aaa;
     left: 2px;
     top: 2px;
@@ -135,7 +135,7 @@ a:visited {
 }
 
 .field-container {
-    margin: 0.5em;
+    margin: 0.5em 0;
 }
 
 #login-fail-message {
@@ -146,7 +146,6 @@ a:visited {
     color: #333;
     font-family: "MuseoSans500", sans-serif;
     font-size: 14px;
-    margin-right: 0.5em;
 }
 
 .field-error {
@@ -156,9 +155,23 @@ a:visited {
 .auth-form .simple-input {
     font-size: 14px;
     padding: 0.1em 0.3em;
-    margin: 0.1em 0;
-    width: 12em;
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+    box-sizing: border-box;
 }
+.auth-form .field-label,
+.auth-form .field-error {
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+    /* to vertically align it with the simple-input text, since the input
+     * has border width */
+    padding: 0.2em 0;
+}
+
+#login-form .field-label {
+    margin-right: 0.5em;
+}
+
 
 .auth-form .simple-input:focus {
     -webkit-box-shadow: 0 0 8px rgba(115, 152, 44, .5);
@@ -187,7 +200,8 @@ a:visited {
 .auth-form .simple-input.birth-month,
 .auth-form .simple-input.birth-day,
 .auth-form .simple-input.birth-year {
-    width: 5em;
+    width: 33.333333%;
+    box-sizing: border-box;
 }
 
 .password-label {
@@ -210,7 +224,6 @@ a:visited {
 
 .pw-login-contents #submit-button {
     float: right;
-    margin-right: 6px;
 }
 
 .pw-login-contents img.tree {
@@ -220,7 +233,6 @@ a:visited {
 
 .signup-prompt-container {
     margin-top: 4em;
-    margin-right: 4px;
 }
 
 .signup-prompt {
@@ -232,7 +244,7 @@ a.signup-link {
 
 
 #birthday-picker {
-    display: inline-block;
+    text-align: center;
 }
 
 .signup-container.card-case {
@@ -240,54 +252,38 @@ a.signup-link {
     padding: 2em 4em;
     width: 650px;
 }
-.completesignup-contents .field-label, .signup-container .field-label {
-    width: 13em;
-    text-align: right;
-    display: inline-block;
-}
-.signup-container .simple-input {
-    width: 14.3em;
-}
 .signup-container .pw-signup {
-    width: 600px;
-    margin: 0 auto;
+    width: 640px;
 }
 
-.signup-container .field-error {
-    display: inline-block;
-    margin-left: 2em;
+.completesignup-contents .field-label,
+.signup-container .field-label {
+    text-align: right;
 }
 
-.signup-container .providers-container {
-    padding: 0 2em 2em;
-}
-
-.signup-container .providers-container h4 {
-    margin-bottom: 0.5em;
+.signup-container .simple-input {
+    box-sizing: border-box;
 }
 
 .signup-container .providers {
+    width: 640px;
     height: auto;
-    display: inline-block;
+}
+
+.signup-container .providers h4 {
+    margin-bottom: 0.5em;
 }
 
 .signup-container .providers-info {
-    display: inline-block;
     font-family: "MuseoSans500", sans-serif;
     font-size: 14px;
-    width: 12em;
     margin-top: 0.5em;
-    margin-left: 1em;
 }
 
-.signup-container #submit-button {
+.signup-container .submit-button-container {
     margin-top: 0.5em;
-
-    /* HACK(benkomalo): need to align with the right of the password field so
-     * we force a left margin equal to width of password field and label. */
-    margin-left: 23.5em;
+    text-align: right;
 }
-
 
 /* completesignup specific styles */
 
@@ -297,18 +293,10 @@ a.signup-link {
     width: 550px;
 }
 
-.completesignup-contents {
+.completesignup-contents,
+.completesignup-contents .auth-form {
     width: 548px;
 }
-
-.completesignup-contents .field-label {
-    width: 15em;
-}
-.completesignup-contents .simple-input {
-    width: 17em;
-}
-
-
 .completesignup-contents img.tree {
     float: left;
     margin-right: 1em;
@@ -327,6 +315,7 @@ a.signup-link {
 .completesignup-contents .tos-area {
     display: inline-block;
     width: 18em;
+    line-height: 16px;
     font-size: 11px;
     text-align: right;
     margin-right: 2em;
@@ -339,10 +328,16 @@ a.signup-link {
 .completesignup-contents .submit-container,
 .completesignup-contents .field-error {
     text-align: right;
+}
 
-    /* HACK(benkomalo): add in enough padding on the right to right align
-     * contents with the form fields */
-    padding-right: 5.8em;
+.completesignup-contents .error-container {
+    margin-top: -6px;
+}
+
+.completesignup-contents .field-error {
+    padding: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 /* Settings page styles */

@@ -10,26 +10,26 @@
 <article id="page-root">
     <div class="login-container card-case vertical-shadow">
 
-    <ul class="providers">
-    <h3>Login to Khan Academy with</h3>
-    <li class="action-gradient" id="login-google">
-        <div class="img-container">
-            <a href="{{google_url}}">
-                <img width="180" height="65" alt="Google" src="/images/google-logo-large.png" >
-            </a>
+    <div class="providers">
+        <h3>Login to Khan Academy with</h3>
+        <div id="login-google" class="action-gradient provider">
+            <div class="img-container">
+                <a href="{{google_url}}">
+                    <img width="180" height="65" alt="Google" src="/images/google-logo-large.png">
+                </a>
+            </div>
         </div>
-    </li>
 
-    <br>
+        <br>
 
-    {% if App.facebook_app_secret %}
-    <li id="login-facebook" class="action-gradient">
-        <div class="img-container">
-        <img width="180" height="65" alt="Facebook" src="/images/facebook-logo-large.png" >
+        {% if App.facebook_app_secret %}
+        <div id="login-facebook" class="action-gradient provider">
+            <div class="img-container">
+            <img width="180" height="65" alt="Facebook" src="/images/facebook-logo-large.png">
+            </div>
         </div>
-    </li>
-    {% endif %}
-    </ul>
+        {% endif %}
+    </div>
 
     <div class="vertical-separator">
         <span class="separator-text">OR</span>
