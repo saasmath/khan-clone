@@ -139,11 +139,11 @@ Login.enableSubmit_ = function() {
 Login.onPasswordLoginFail = function(errors) {
     var text;
     if (errors["badlogin"]) {
-        text = "Username and password doesn't match";
+        text = "Your login or password is incorrect.";
     } else {
         // Unexpected error. This shouldn't really happen but
         // just in case...
-        text = "Error logging in. Please try again";
+        text = "Error logging in. Please try again.";
     }
 
     $("#login-fail-message").text(text).css("visibility", "");

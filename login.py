@@ -177,13 +177,13 @@ class MobileOAuthLogin(request_handler.RequestHandler):
         identifier = self.request_string('identifier')
         password = self.request_string('password')
         if not identifier or not password:
-            self.render_login_page("Please enter your username and password")
+            self.render_login_page("Please enter your username and password.")
             return
 
         user_data = UserData.get_from_username_or_email(identifier.strip())
         if not user_data or not user_data.validate_password(password):
             # TODO(benkomalo): IP-based throttling of failed logins?
-            self.render_login_page("Username and password doesn't match")
+            self.render_login_page("Your login or password is incorrect.")
             return
         
         # Successful login - convert to an OAuth access_token
