@@ -171,6 +171,27 @@ class AuthToken(BaseSecureToken):
                 ])
         secret = App.token_recipe_key
         return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+    
+    @staticmethod
+    def get_user_for_value(token_value, id_to_model):
+        """ Retrieves a user_data object given a token_value, if it is valid.
+        Returns None if the token value is invalid.
+
+        This attempts to be somewhat model-agnostic and requires clients
+        to specify the getter to retrieve the model given a user_id
+        
+        """
+        
+        if not token_value:
+            return None
+        
+        token = AuthToken.for_value(token_value)
+        if not token:
+            return None
+        user_data = id_to_model(token.user_id)
+        if user_data and token.is_valid(user_data):
+            return user_data
+        return None
 
 class TransferAuthToken(BaseSecureToken):
     """ A short-lived authentication token that can be minted for signed

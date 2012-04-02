@@ -78,18 +78,10 @@ class OAuthMap(db.Model):
             user_id = get_facebook_user_id_from_oauth_map(self)
             email = user_id
         elif self.uses_password():
-            auth_token = auth.tokens.AuthToken.for_value(self.khan_auth_token)
             # Note that we can't "create" a user by username/password logins
             # via the oauth flow.
-            if auth_token:
-                user_id = auth_token.user_id
-                user_data = UserData.get_from_user_id(user_id)
-                if auth_token.is_valid(user_data):
-                    return user_data
-                else:
-                    return None
-            else:
-                return None
+            return auth.tokens.AuthToken.get_user_for_value(
+                    self.khan_auth_token, UserData.get_from_user_id)
 
         user_data = UserData.get_from_user_id(user_id) or \
                     UserData.get_from_db_key_email(email) or \
