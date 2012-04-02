@@ -40,7 +40,6 @@ KnowledgeMapViews.NodeRow = Backbone.View.extend({
         this.el.replaceWith(newContent);
         this.el = newContent;
         this.inflated = true;
-        this.delegateEvents();
     },
 
     onTitleClick: function(evt) {
@@ -107,12 +106,6 @@ KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
  */
 KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
-    events: {
-        "click": "click",
-        "mouseenter": "mouseenter",
-        "mouseleave": "mouseout"
-    },
-
     initialize: function(options) {
         this.nodeName = this.model.get("name");
         this.filtered = false;
@@ -123,7 +116,6 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
 
     updateElement: function(el) {
         this.el = el;
-        this.delegateEvents();
     },
 
     setFiltered: function(filtered, bounds) {
@@ -185,6 +177,10 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
             this.el.removeClass("nodeLabelHighlight");
     },
 
+    /*
+     * This event handler is delegated to the map's outer container
+     * and bound by KnowledgeMap.delegateNodeEvents.
+     */
     click: function(evt) {
 
         if (this.parent.fDragging) {
@@ -204,11 +200,19 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         return this.parent.nodeClickHandler(this.model, evt);
     },
 
+    /*
+     * This event handler is delegated to the map's outer container
+     * and bound by KnowledgeMap.delegateNodeEvents.
+     */
     mouseenter: function() {
         this.parent.highlightNode(this.nodeName, true);
     },
 
-    mouseout: function() {
+    /*
+     * This event handler is delegated to the map's outer container
+     * and bound by KnowledgeMap.delegateNodeEvents.
+     */
+    mouseleave: function() {
         this.parent.highlightNode(this.nodeName, false);
     }
 },
