@@ -609,7 +609,7 @@ Exercises.CurrentCardView = Backbone.View.extend({
                             .end()
                         .find(".more-stacks")
                             .click(function() {
-                                window.location.reload();
+                                window.location.assign(window.location.href);
                             })
                             .focus();
                 }
