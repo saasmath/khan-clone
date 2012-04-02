@@ -10,7 +10,15 @@
 Login.initCompleteSignupForm = function(options) {
     Login.basePostLoginUrl = options["basePostLoginUrl"] || "";
 
-    $("#nickname").focus();
+    var firstEmpty = _.find(
+            [$("#nickname"), $("#gender"), $("#username"), $("#password")],
+            function(jel) {
+                return !jel.val() || jel.val() === "unspecified";
+            });
+
+    if (firstEmpty) {
+        firstEmpty.focus();
+    }
 
     $("#password").on("keypress", function(e) {
         if (e.keyCode === $.ui.keyCode.ENTER) {
@@ -47,6 +55,12 @@ Login.submitCompleteSignup = function() {
                     // Hard fail - can't seem to talk to server right now.
                     // TODO(benkomalo): handle.
                 });
+    } else {
+        // Focus on the first required, empty field.
+        _.find([$("#nickname"), $("#username"), $("#password")],
+            function(jel) {
+                return !jel.val() || jel.val() === "unspecified";
+            }).focus();
     }
 };
 
