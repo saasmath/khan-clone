@@ -456,12 +456,39 @@ function KnowledgeMap(params) {
         google.maps.event.addListener(this.map, "dragstart", this.onDragStart);
         google.maps.event.addListener(this.map, "dragend", this.onDragEnd);
 
+        this.delegateNodeEvents();
+
         this.giveNasaCredit();
         $(window).on("beforeunload", $.proxy(this.saveMapCoords, this));
     };
 
     this.setNodeClickHandler = function(handler) {
         this.nodeClickHandler = handler;
+    };
+
+    /**
+     * Delegate all node event listeners to the map's outer container,
+     * which never changes. This protects us from needing to reattach
+     * node event handlers every time nodes are redrawn due to
+     * zoom and pan, which makes for a faster map.
+     */
+    this.delegateNodeEvents = function() {
+
+        var callViewHandler = function(handler) {
+            return function(evt) {
+                var view = self.nodeMarkerViews[$(this).attr("data-id")];
+                if (view) {
+                    view[handler](evt);
+                }
+            };
+        };
+
+        $(".dashboard-map").delegate(".nodeLabel", {
+            "click": callViewHandler("click"),
+            "mouseenter": callViewHandler("mouseenter"),
+            "mouseleave": callViewHandler("mouseleave")
+        });
+
     };
 
     this.panToNode = function(dataID) {
