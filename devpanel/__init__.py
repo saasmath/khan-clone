@@ -2,12 +2,12 @@ import os, logging
 
 from google.appengine.ext import db, deferred
 from google.appengine.api import users
+import user_util
 import util
 from app import App
 from models import UserData
 from common_core.models import CommonCoreMap
 import request_handler
-import user_util
 import itertools
 from api.auth.xsrf import ensure_xsrf_cookie
 

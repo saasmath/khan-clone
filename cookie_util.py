@@ -1,6 +1,7 @@
 import Cookie
 import logging
 import os
+from app import App
 
 def get_cookie_value(key):
     cookies = None
@@ -18,6 +19,19 @@ def get_cookie_value(key):
         return None
 
     return cookie.value
+
+def get_google_cookie():
+    """ Retrieves the auth cookie value used to authenticate Google users with
+    appengine over HTTP.
+
+    This does no validation of the value.
+    
+    """
+
+    if App.is_dev_server:
+        return get_cookie_value('dev_appserver_login')
+    else:
+        return get_cookie_value('ACSID')
 
 # Cookie handling from http://appengine-cookbook.appspot.com/recipe/a-simple-cookie-class/
 def set_cookie_value(key, value='', max_age=None,

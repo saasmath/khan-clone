@@ -111,7 +111,8 @@ def _is_in_progress(task_path):
     return result
     
 class UpdateKind(webapp.RequestHandler):
-    @user_util.admin_only
+    # The "access checking" here is via app.yaml: this method is under /admin/
+    @user_util.manual_access_checking
     def get(self):
         if self.request.get('cancel'):
             cancel_task(self.request.path)
@@ -125,7 +126,9 @@ class UpdateKind(webapp.RequestHandler):
                 cancel_uri = self.request.path_url + '?' + self.request.query_string + '&cancel=1'
                 self.response.out.write('To interrupt the request, <a href="%s">click here</a>.' % cancel_uri)
 
-    def post(self):        
+    # The "access checking" here is via app.yaml: this method is under /admin/
+    @user_util.manual_access_checking
+    def post(self):
         # To prevent CSRF attacks, all requests must be from the task queue
         if 'X-AppEngine-QueueName' not in self.request.headers:
             logging.error("Potential CSRF attack detected")

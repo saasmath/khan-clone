@@ -1,0 +1,90 @@
+{% extends "page_template.html" %}
+
+{# This is the initial registration form that asks a user for their birthdate
+    and e-mail. All other fields about the user are collected after they
+    verify ownership of their e-mail address in completesignup.html #}
+
+{% block meta_page_title %}Sign Up | {% endblock meta_page_title %}
+{% block pagetitle %}{% endblock pagetitle %}
+
+{% block pagecss %}
+    {{ js_css_packages.css_package("bootstrap-grids") }}
+    {{ js_css_packages.css_package("login") }}
+{% endblock pagecss %}
+
+{% block pagecontent %}
+<article id="page-root">
+    <div class="signup-container card-case vertical-shadow">
+        <form method="POST" class="auth-form" id="signup-form" action="/signup">
+
+        <h3>First time using Khan Academy?</h3>
+        <div class="pw-signup container">
+            <div class="field-container row-fluid">
+                <label class="field-label span4" for="email">Email</label>
+                <input id="email" name="email" type="email" class="simple-input ui-corner-all span4" value="{{ values['email']|escape }}">
+                <div class="field-error span4" id="email-error"></div>
+            </div>
+
+            <div class="field-container row-fluid">
+                <label class="field-label span4" for="birthday">Birthday</label>
+                <div id="birthday-picker" class="span4" data-date="{{ values['birthdate']|escape }}">{# contents filled by JS #}</div>
+
+                {# Note that the actual name of the field sent to the server is "birthdate"
+                   (it is a hidden input populated by the JS) #}
+                <div class="field-error span4" id="birthdate-error"></div>
+            </div>
+
+            <div class="field-container row-fluid">
+                <span class="span8 simple-input-container submit-button-container">
+                    <input type="button" id="submit-button" name="signup" value="Get started" class="simple-button action-gradient green">
+                </span>
+            </div>
+        </div>
+
+        <div class="horizontal-separator">
+            <span class="separator-text">OR</span>
+        </div>
+
+
+        <h3>Already using Google or Facebook to login to Khan Academy?</h3>
+        <div class="providers container">
+            <h4>Log in with</h4>
+            <div class="row-fluid">
+                <div class="span4">
+                    <div class="action-gradient provider" id="login-google">
+                        <div class="img-container">
+                            <a href="{{google_url}}">
+                                <img width="180" height="65" alt="Google" src="/images/google-logo-large.png" >
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {% if App.facebook_app_secret %}
+                <div class="span4">
+                    <div id="login-facebook" class="action-gradient provider">
+                        <div class="img-container">
+                        <img width="180" height="65" alt="Facebook" src="/images/facebook-logo-large.png" >
+                        </div>
+                    </li>
+                </div>
+                {% endif %}
+                </div>
+
+                <div class="providers-info span4">...and then we will create your Khan Academy username and password</div>
+            </div>
+        </div>
+
+        </form>
+    </div>
+</article>
+{% endblock pagecontent %}
+
+{% block bottompagescript %}
+    {{ js_css_packages.js_package("login") }}
+    <script>
+    $(Login.initSignupPage);
+    </script>
+{% endblock bottompagescript %}
+
+

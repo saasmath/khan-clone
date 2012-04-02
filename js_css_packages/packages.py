@@ -69,6 +69,7 @@ javascript = {
             "hover-card.js",
             "hover-card-view.js",
             "hover-card.handlebars",
+            "topic-browser-pulldown.handlebars",
         ]
     },
     "video": {
@@ -126,6 +127,12 @@ javascript = {
         "files": [
             "bday-picker.js",
             "login.js",
+            "signup-success.handlebars",
+            "signup.js",
+            "completesignup.js",
+
+            # Used for password change forms
+            "settings.js",
         ]
     },
     "profile": {
@@ -151,7 +158,6 @@ javascript = {
             "recent-activity-goal.handlebars",
             "graph-date-picker.handlebars",
             "vital-statistics.handlebars",
-            "settings.handlebars",
             "coaches.js",
             "coach.handlebars",
             "no-coaches.handlebars",
@@ -167,7 +173,6 @@ javascript = {
             "profile-goals.handlebars",
             "exercise_progress.handlebars",
             "profile-goals.js",
-            "settings.js",
             "profile.js",
         ]
     },
@@ -240,7 +245,10 @@ javascript = {
             "utils/d3.js",
             "utils/derivative-intuition.js",
             "utils/exponents.js",
+            "utils/expr-helpers.js",
+            "utils/expr-normal-form.js",
             "utils/expressions.js",
+            "utils/factoring-expressions.js",
             "utils/functional.js",
             "utils/graphie-geometry.js",
             "utils/graphie-helpers-arithmetic.js",
@@ -259,8 +267,11 @@ javascript = {
             "utils/probability.js",
             "utils/raphael.js",
             "utils/scratchpad.js",
+            "utils/simplify.js",
+            "utils/simplifying-expressions.js",
             "utils/slice-clone.js",
             "utils/stat.js",
+            "utils/steps-helpers.js",
             "utils/subhints.js",
             "utils/tmpl.js",
             "utils/word-problems.js",
@@ -293,6 +304,12 @@ javascript = {
             "topics-admin.js",
         ]
     },
+
+    "highcharts": {
+        "files": [
+            "highcharts.js"
+        ]
+    }
 }
 
 stylesheets = {
@@ -380,6 +397,11 @@ stylesheets = {
     "labs": {
         "files": [
             "labs.css",
+        ]
+    },
+    "bootstrap-grids": {
+        "files": [
+            "grids.css"
         ]
     },
     "bootstrap": {

@@ -1,9 +1,13 @@
+from __future__ import absolute_import
+
 from app import App
+
 import base64
 import datetime
 import hashlib
 import hmac
 import logging
+from auth.models import UserNonce
 
 _FORMAT = "%Y%j%H%M%S"
 def _to_timestamp(dt):
@@ -20,99 +24,194 @@ def _from_timestamp(s):
         return None
     return result
 
-def _make_token_signature(user_id,
-                          credential_version,
-                          timestamp,
-                          key=None):
-    """ Generates a signature to be embedded inside of an auth token.
-    This signature serves two goals. The first is to validate the rest of
-    the contents of the token, much like a simple hash. The second is to
-    also encode a unique, user-specific string that can be invalidated if the
-    user changes her password (the credential_version).
-    """
+class BaseSecureToken(object):
+    """ A base secure token used to identify and authenticate a user.
 
-    payload = "\n".join([user_id, credential_version, timestamp])
-    secret = key or App.token_recipe_key
-    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+    Note that instances may be created that are invalid (it may be expired
+    or an external revocation process may have invalidated it).
+    Clients must check is_valid() to ensure the contents of the token are valid.
 
-DEFAULT_TOKEN_EXPIRY = datetime.timedelta(days=14)
-DEFAULT_TOKEN_EXPIRY_SECONDS = DEFAULT_TOKEN_EXPIRY.days * 86400
-
-def mint_token_for_user(user_data, clock=None):
-    """ Generates a base64 encoded value to be used as an authentication token
-    for a user, that can be used in things like cookies.
-
-    The token will contain the identity of the user and timestamp of creation,
-    so expiry logic is externalized and controlled at a higher level.
-    """
-    user_id = user_data.user_id
-    timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
-    credential_version = user_data.credential_version
-    if not credential_version:
-        raise Exception("Cannot mint an auth token for user [%s] " +
-                        " - no credential version" % user_id)
-    signature = _make_token_signature(user_id, timestamp, credential_version)
-    return base64.b64encode("\n".join([user_id, timestamp, signature]))
-
-def _parse_token(token):
-    """ Returns a triple of (user_id, timestamp, signature) for the token. """
-    try:
-        contents = base64.b64decode(token)
-    except TypeError:
-        # Not proper base64 encoded value.
-        logging.info("Tried to decode auth token that isn't base64 encoded")
-        return None
-
-    parts = contents.split("\n")
-    if len(parts) != 3:
-        # Wrong number of parts / malformed.
-        logging.info("Tried to decode malformed auth token")
-        return None
-    return parts
-
-def validate_token(user_data,
-                   token,
-                   time_to_expiry=DEFAULT_TOKEN_EXPIRY,
-                   clock=None):
-    """ Determines whether or not the token is a valid authentication token
-    for the specified user.
+    Different token types may be created by extending and having subclasses
+    override the method to generate the token signature.
 
     """
 
-    parts = _parse_token(token)
-    if not parts:
-        return False
-    user_id, timestamp, signature = parts
+    def __init__(self, user_id, timestamp, signature):
+        self.user_id = user_id
+        self.timestamp = timestamp
+        self.signature = signature
+        self._value_internal = None
+        
+    @staticmethod
+    def make_token_signature(user_data, timestamp):
+        """ Subclasses should override this so to return a unique signature
+        a user given a particular token type.
+        
+        This may alter state for the user_data, so subclasses
+        may define behavior such that subsequent calls to
+        make_token_signature may return varying results. To ensure a signature
+        is valid, override validate_signature().
 
-    if user_id != user_data.user_id:
-        logging.info("Tried to decode auth token for different user." +
-                     " requestor[%s] token[%s]" % (user_data.user_id, user_id))
-        return False
+        """
+        raise Exception("Not implemented in base class")
 
-    dt = _from_timestamp(timestamp)
-    now = (clock or datetime.datetime).utcnow()
-    if not dt or (now - dt) > time_to_expiry:
-        return False
+    @classmethod
+    def for_user(cls, user_data, clock=None):
+        """ Generate a secure token for a user. """
 
-    # Contents look good - now make sure it validates against the sig.
-    expected = _make_token_signature(user_data.user_id,
-                                     timestamp,
-                                     user_data.credential_version)
-    return expected == signature
+        timestamp = _to_timestamp((clock or datetime.datetime).utcnow())
+        signature = cls.make_token_signature(user_data, timestamp)
+        return cls(user_data.user_id, timestamp, signature)
 
+    @classmethod
+    def for_value(cls, token_value):
+        """ Parses a string intended to be an secure token value.
 
-def user_id_from_token(token):
-    """ Given an auth token, determine the user_id that it's supposed to belong
-    to.
+        Returns None if the string is invalid, and an instance of the token
+        otherwise. Note that this essentially only checks well-formedness,
+        and the token itself may be expired or invalid so clients must call
+        is_valid or equivalent to verify.
+        
+        """
+
+        try:
+            contents = base64.b64decode(token_value)
+        except TypeError:
+            # Not proper base64 encoded value.
+            logging.info("Tried to decode auth token that isn't base64 encoded")
+            return None
+
+        parts = contents.split("\n")
+        if len(parts) != 3:
+            # Wrong number of parts / malformed.
+            logging.info("Tried to decode malformed auth token")
+            return None
+        user_id, timestamp, signature = parts
+        return cls(user_id, timestamp, signature)
+
+    DEFAULT_EXPIRY = datetime.timedelta(days=14)
+    DEFAULT_EXPIRY_SECONDS = DEFAULT_EXPIRY.days * 24 * 60 * 60
+
+    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        """ Determines whether or not the specified token is expired.
+        
+        Note that tokens encapsulate timestamp on creation, so the application
+        may change the expiry lengths at any time and invalidate historical
+        tokens with such changes.
+        
+        """
+
+        dt = _from_timestamp(self.timestamp)
+        now = (clock or datetime.datetime).utcnow()
+        return not dt or (now - dt) > time_to_expiry
+
+    def validate_signature_for(self, user_data):
+        """ Validates the signature for this token against the expected
+        value for a token for the specified user """
+        # The default implementation is to just re-build the signature
+        # and check equivalence.
+        expected = self.make_token_signature(user_data, self.timestamp)
+        return expected == self.signature
+
+    def is_authentic(self, user_data):
+        """ Determines if the token is valid for a given user.
+        
+        Users may invalidate all existing auth tokens by changing his/her
+        password.
+        
+        """
+
+        if self.user_id != user_data.user_id:
+            return False
+
+        return self.validate_signature_for(user_data)
     
-    Does not actually validate authenticity of the token - only well - formedness.
-    Clients are expected to call validate_token when the CredentialedUser has
-    been retrieved from the id.
+    def is_valid(self, user_data,
+                 time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        return (not self.is_expired(time_to_expiry, clock) and
+                self.is_authentic(user_data))
+
+    def __str__(self):
+        return self.value
+    
+    def __unicode__(self):
+        return self.value
+    
+    @property
+    def value(self):
+        if self._value_internal is None:
+            self._value_internal = base64.b64encode("\n".join([self.user_id,
+                                                               self.timestamp,
+                                                               self.signature]))
+        return self._value_internal
+
+class AuthToken(BaseSecureToken):
+    """ A secure token used to authenticate a user that has a password set.
+
+    Note that instances may be created that are invalid (e.g. it may be expired
+    or the user may have changed her password). Clients must check
+    is_valid() to ensure the contents of the token are valid.
     
     """
 
-    parts = _parse_token(token)
-    if not parts:
-        return None
-    return parts[0]
+    @staticmethod
+    def make_token_signature(user_data, timestamp):
+        """ Generates a signature to be embedded inside of an auth token.
+    	This signature serves two goals. The first is to validate the rest of
+    	the contents of the token, much like a simple hash. The second is to
+        also encode a unique user-specific string that can be invalidated if
+        all existing tokens of the given type need to be invalidated.
 
+        """
+
+        payload = "\n".join([
+                user_data.user_id,
+                user_data.credential_version,
+                timestamp
+                ])
+        secret = App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+class TransferAuthToken(BaseSecureToken):
+    """ A short-lived authentication token that can be minted for signed
+    in users to transfer identities across domains.
+
+    This is useful since Khan Academy domains on HTTP and HTTPS differ, and
+    iframes that need to be in HTTPS may not be able to read the normal auth
+    cookies on HTTP. For this purpose, TransferAuthToken's are used to
+    temporarily authenticate iframes for users.
+
+    """
+
+    @staticmethod
+    def make_token_signature(user_data, timestamp):
+        nonce = UserNonce.make_for(user_data, "https_transfer").value
+        payload = "\n".join([
+                user_data.user_id,
+                nonce,
+                timestamp
+                ])
+        secret = App.token_recipe_key
+        return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    def validate_signature_for(self, user_data):
+        nonce_entity = UserNonce.get_for(user_data, "https_transfer")
+        if nonce_entity is None:
+            return False
+        nonce = nonce_entity.value
+        payload = "\n".join([
+                user_data.user_id,
+                nonce,
+                self.timestamp
+                ])
+        secret = App.token_recipe_key
+        expected =  hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        return expected == self.signature
+
+    # Force a short expiry for these tokens.
+    DEFAULT_EXPIRY = datetime.timedelta(hours=1)
+
+    def is_expired(self, time_to_expiry=DEFAULT_EXPIRY, clock=None):
+        dt = _from_timestamp(self.timestamp)
+        now = (clock or datetime.datetime).utcnow()
+        return not dt or (now - dt) > time_to_expiry

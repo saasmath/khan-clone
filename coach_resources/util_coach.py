@@ -1,4 +1,5 @@
 import request_handler
+import user_util
 import util
 from models import UserData
 from oauth_provider import oauth
@@ -18,6 +19,8 @@ class CoachResourcesRequestHandler(request_handler.RequestHandler):
         request_handler.RequestHandler.render_jinja2_template(self, template_name, template_values)
 
 class ViewCoachResources(CoachResourcesRequestHandler):
+
+    @user_util.open_access
     def get(self):
         coach = UserData.current()
 
@@ -35,6 +38,7 @@ class ViewCoachResources(CoachResourcesRequestHandler):
         })
 
 class ViewToolkit(CoachResourcesRequestHandler):
+    @user_util.open_access
     def get(self, toolkit_section=None):
         
         # make /toolkit use the view_toolkit template
@@ -57,6 +61,7 @@ class ViewToolkit(CoachResourcesRequestHandler):
         })
 
 class ViewDemo(CoachResourcesRequestHandler):
+    @user_util.open_access
     def get(self):
         coach = UserData.current()
 
@@ -68,6 +73,7 @@ class ViewDemo(CoachResourcesRequestHandler):
         })
 
 class AccessDemo(CoachResourcesRequestHandler):
+    @user_util.open_access
     def post(self):
         oauth_consumer = oauth.OAuthConsumer(App.khan_demo_consumer_key, App.khan_demo_consumer_secret)
 

@@ -1,6 +1,7 @@
-import models
+import models   # TODO(csilvers): fix this circular import
 from notifications import UserNotifier
 import request_handler
+import user_util
 
 def welcome(user_data):
     if user_data == None:
@@ -52,6 +53,7 @@ def update(user_data, user_exercise, threshold=False, isProf=False, gotBadge=Fal
 
 #Toggle Notify allows the user to close the notification bar (by deleting the memcache) until a new notification occurs. 
 class ToggleNotify(request_handler.RequestHandler):
+    @user_util.open_access
     def post(self):
         UserNotifier.clear_login()
 
