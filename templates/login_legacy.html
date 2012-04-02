@@ -12,9 +12,16 @@
     }
     #login-page .providers {
         white-space: nowrap;
+        height: auto;
     }
-    #login-page .providers li {
+    #login-page .providers .provider {
         padding: 5px;
+        height: 90px;
+        margin: 0 10px;
+        width: auto;
+    }
+    #login-page h3 {
+        color: #555;
     }
     </style>
 {% endblock pagecss %}
@@ -27,23 +34,23 @@
     <form method="POST" id="login-form" action="/login?continue={{continue|urlencode}}">
     <input type="hidden" name="type" id="type-input">
 
-    <div><ul class="providers">
-    <li class="direct action-gradient" id="login-google">
+    <div><div class="providers">
+    <div class="direct action-gradient provider" id="login-google">
           <div class="sign-in-text">Login with:</div>
-          <img width="205" height="70" src="/images/google-logo-large.png" />
-    </li>
+          <a href="{{google_url}}">
+            <img width="205" height="70" src="/images/google-logo-large.png" />
+          </a>
+    </div>
 
     {% if App.facebook_app_secret %}
-    <li id="login-facebook" class="action-gradient">
+    <div id="login-facebook" class="action-gradient provider">
           <div class="sign-in-text">Login with:</div>
           <img width="205" height="70" src="/images/facebook-logo-large.png" />
-    </li>
+    </div>
     {% endif %}
 
-    </ul></div>
+    </div></div>
     <div class="clear"></div>
-
-    <div id="real_fb_button" style="display: none;"><fb:login-button></fb:login-button></div>
 
     <h5 style="margin:18px 0 0 0;">Don't have an account yet?</h5>
     <div>
@@ -68,8 +75,8 @@
 {% block bottompagescript %}
     {{ js_css_packages.js_package("login") }}
     <script>
-    $(Login.initLoginPage);
+    Login.initLoginPage({
+        continueUrl: {{ templatetags.jsonify(continue, camel_cased=True) }}
+    });
     </script>
 {% endblock bottompagescript %}
-
-

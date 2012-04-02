@@ -4,19 +4,99 @@
 
 {% block pagecss %}
     {{ js_css_packages.css_package("login") }}
+    <style>
+    .u13-container {
+        width: 420px;
+        margin: 6em auto;
+        padding: 2em;
+        font-size: 13px;
+    }
+
+    .u13-container img.tree {
+        float: left;
+    }
+    .u13-container h3 {
+        margin-top: 1em;
+        margin-left: 90px;
+    }
+
+    .u13-container .message {
+        margin: 2em 0;
+    }
+
+    .u13-container .simple-input {
+        width: 17em;
+        margin: 0 0.5em;
+    }
+
+    .u13-container .faq-link-container {
+        padding: 1em 0;
+        text-align: right;
+    }
+    .u13-container .faq-link {
+        font-size: 11px;
+    }
+    </style>
 {% endblock pagecss %}
 
 {% block pagecontent %}
-<article id="page-root">
-{# TODO(benkomalo): make this nicer and make some more helpful suggestions for this case. #}
-{% if name %}
-Sorry, {{ name|escape }}!
-{% else %}
-Sorry!
-{% endif %}
-<br>
-We can't support under 13 users yet!
-<br>
-(you have a u13 cookie set now. sorry, homestar)
+<article id="page-root" style="padding: 20px 0;">
+    <div class="u13-container card-case vertical-shadow">
+        <img src="/images/hand-tree.png" width="75" height="75" class="tree">
+        <h3>We're not ready yet.</h3>
+        <div style="clear: both"></div>
+
+        <div class="message">
+        Unfortunately, we cannot create a Khan Academy login for you today.
+        We are working to add the ability to our system.
+
+        {% if not parent_registered %}
+        <br>
+        <br>
+
+        Submit your parent's email address and we will contact them when we are able to create your account.
+        {% endif %}
+        </div>
+
+        {% if not parent_registered %}
+        <form class="auth-form" method="POST">
+            <div class="parent-field-container">
+                <label for="parent-email">Parent's email</label>
+                <input id="parent-email" name="email" class="simple-input ui-corner-all">
+                <input id="submit-button" class="simple-button action-gradient green" value="Submit" type="button">
+            </div>
+
+            <div class="faq-link-container">
+                <a class="faq-link" href="http://khanacademy.desk.com/customer/portal/articles/337876-how-do-i-login-if-my-child-is-under-age-13-">
+                    Questions about creating an account?
+                </a>
+            </div>
+        </form>
+        {% else %}
+            <div class="faq-link-container">
+                <a class="faq-link" href="http://khanacademy.desk.com/customer/portal/articles/337876-how-do-i-login-if-my-child-is-under-age-13-">
+                    Questions about creating an account?
+                </a>
+            </div>
+        {% endif %}
+    </div>
 </article>
 {% endblock pagecontent %}
+
+{% block bottompagescript %}
+<script>
+$("#submit-button").click(function(e) {
+    $("#submit-button").attr("disabled", true);
+    $.ajax({
+        type: "POST",
+        url: "/api/v1/parentsignup",
+        data: $(".auth-form").serialize(),
+        dataType: "json",
+        complete: function() {
+            createCookie("u13", "subscribed");
+            $(".auth-form").text("Submitted! Thanks for your interest.");
+        }
+    });
+});
+</script>
+{% endblock bottompagescript %}

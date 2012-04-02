@@ -87,13 +87,9 @@ var Voting = {
     },
 
     finishVoteEntity: function(data, jel, jelParent, jelVotes, votes) {
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
-        if (dict_json && dict_json.error)
-        {
+        if (data && data.error) {
             this.clearVote(jel, jelParent, jelVotes, votes);
-            QA.showInfoNote(jel.get(0), dict_json.error);
+            QA.showInfoNote(jel.get(0), data.error);
         }
     }
 
@@ -230,80 +226,8 @@ var QA = {
         QA.enable();
 
         $(".video-footer").on("mouseenter", ".author-nickname", function() {
-            QA.createHoverCardQtip($(this));
+            HoverCard.createHoverCardQtip($(this));
         });
-    },
-
-    hoverCardCache_: {},
-
-    createHoverCardQtip: function(jel) {
-        var userID = jel.data("user-id"),
-            hasQtip = jel.data("has-qtip");
-
-        if (!userID || hasQtip) {
-            return;
-        }
-
-        var cachedHtml = QA.hoverCardCache_[userID],
-            html;
-
-        if (cachedHtml) {
-            // We've hovered over the user somewhere else on the page
-            html = cachedHtml;
-        } else {
-            // Create "loading..." view
-            var view = new HoverCardView(),
-                html = view.render().el.innerHTML;
-
-            $.ajax({
-                type: "GET",
-                url: "/api/v1/user/profile",
-                data: {
-                    casing: "camel",
-                    userID: userID
-                  },
-                dataType: "json",
-                success: _.bind(QA.onHoverCardDataLoaded_, jel)
-            });
-        }
-
-        jel.data("has-qtip", true);
-
-        // Create the tooltip
-        jel.qtip({
-                content: {
-                    text: html
-                },
-                style: {
-                    classes: "custom-override"
-                },
-                hide: {
-                    delay: 100,
-                    fixed: true
-                },
-                position: {
-                    my: "top left",
-                    at: "bottom left"
-                }
-            });
-
-        jel.qtip("show");
-
-    },
-
-    onHoverCardDataLoaded_: function(data) {
-        var jel = this,
-            userID = jel.data("user-id"),
-            model = new ProfileModel(data),
-            view = new HoverCardView({model: model}),
-            html = view.render().el.innerHTML;
-
-        // Cache html for this user
-        QA.hoverCardCache_[userID] = html;
-
-        // Replace tooltip's "loading..." content
-        jel.qtip("option", "content.text", html);
-
     },
 
     initPagesAndQuestions: function() {
@@ -359,11 +283,8 @@ var QA = {
         var parent = QA.getQuestionParent(el);
         if (!parent.length) return;
 
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
         setTimeout(function(){QA.cancel.apply(el)}, 1);
-        $(".answers_container", parent).html(dict_json.html);
+        $(".answers_container", parent).html(data.html);
         VideoControls.initJumpLinks();
         Throbber.hide();
         QA.enable();
@@ -390,21 +311,20 @@ var QA = {
     },
 
     finishLoadPage: function(data, fInitialLoad) {
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
-        $(".questions_container").html(dict_json.html);
-        QA.page = dict_json.page;
+        $(".questions_container").html(data.html);
+        QA.page = data.page;
         QA.initPagesAndQuestions();
         if (!fInitialLoad) Throbber.hide();
         VideoControls.initJumpLinks();
 
         var hash = "qa";
-        if (dict_json.qa_expand_key)
-            hash = "q_" + dict_json.qa_expand_key;
+        if (data.qa_expand_key) {
+            hash = "q_" + data.qa_expand_key;
+        }
 
-        if (!fInitialLoad || hash != "qa")
+        if (!fInitialLoad || hash != "qa") {
             document.location = "#" + hash;
+        }
     },
 
     getQAParent: function(el) {
@@ -664,17 +584,15 @@ var Comments = {
     },
 
     finishLoadPage: function(data, fInitialLoad) {
-        try { eval("var dict_json = " + data); }
-        catch(e) { return; }
-
-        $(".comments_container").html(dict_json.html);
-        Comments.page = dict_json.page;
+        $(".comments_container").html(data.html);
+        Comments.page = data.page;
         Comments.initPages();
         if (!fInitialLoad) Throbber.hide();
         VideoControls.initJumpLinks();
 
-        if (!fInitialLoad)
+        if (!fInitialLoad) {
             document.location = "#comments";
+        }
     },
 
     add: function() {

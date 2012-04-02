@@ -407,6 +407,7 @@
 ./khan-exercises/build/kathjax.py
 ./knowledgemap.py
 ./labs/__init__.py
+./labs/explorations.py
 ./layer_cache.py
 ./library.py
 ./login.py
@@ -493,7 +494,6 @@
 ./request_cache.py
 ./request_handler.py
 ./robots.py
-./runtests.py
 ./sample_data/sample_data.py
 ./search/__init__.py
 ./search/pyporter2/Stemmer.py
@@ -514,8 +514,6 @@
 ./toolkit/__init__.py
 ./topics.py
 ./topics_list.py
-./unisubs/__init__.py
-./unisubs/__init___test.py
 ./user_util.py
 ./util.py
 ./util_test.py

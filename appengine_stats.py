@@ -3,6 +3,7 @@ import datetime
 import time
 
 import request_handler
+import user_util
 from google.appengine.api import memcache
 
 class MemcacheStatus(request_handler.RequestHandler):
@@ -13,6 +14,7 @@ class MemcacheStatus(request_handler.RequestHandler):
     TODO(csilvers): save the data and show a pretty graphy.
     """
 
+    @user_util.open_access
     def get(self):
         now = datetime.datetime.now()
         now_time_t = int(time.mktime(now.timetuple()))

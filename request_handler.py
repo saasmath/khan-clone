@@ -2,12 +2,6 @@ import os
 import logging
 import datetime
 
-# use json in Python 2.7, fallback to simplejson for Python 2.5
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 import sys
 import re
 import traceback
@@ -24,11 +18,31 @@ from app import App
 import cookie_util
 
 from api.jsonify import jsonify
+from gae_bingo.gae_bingo import ab_test
 
 class RequestInputHandler(object):
 
-    def request_string(self, key, default = ''):
+    def request_string(self, key, default=''):
         return self.request.get(key, default_value=default)
+    
+    def request_continue_url(self, key="continue", default="/"):
+        """ Gets the request string representing a continue URL for the current
+        request.
+        
+        This will safely filter out continue URL's that are not-served by
+        us so that users can't be tricked into going to a malicious site post
+        login or some other flow that goes through KA.
+        """
+        val = self.request_string(key, default)
+        if val and not App.is_dev_server and not util.is_khanacademy_url(val):
+            logging.warn("Invalid continue URI [%s]. Ignoring." % val)
+            if val != default and util.is_khanacademy_url(default):
+                # Make a last ditch effort to try the default, in case the
+                # explicit continue URI was the bad one
+                return default
+            return "/"
+
+        return val
 
     def request_int(self, key, default = None):
         try:
@@ -121,6 +135,41 @@ class RequestInputHandler(object):
             return self.request_int(key, 1 if default else 0) == 1
 
 class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
+
+    class __metaclass__(type):
+        """Enforce that subclasses of RequestHandler decorate get()/post()/etc.
+        This metaclass enforces that whenever we create a
+        RequestHandler or subclass thereof, that the class we're
+        creating has a decorator on its get(), post(), and other
+        http-verb methods that specify the access needed to get or
+        post (admin, moderator, etc).
+
+        It does this through a two-step process.  In step 1, we make
+        all the access-control decorators set a function-global
+        variable in the method they're decorating.  (This is done in
+        the decorator definitions in user_util.py.)  In step 2, here,
+        we check that that variable is defined.  We can do this
+        because metaclass, when creating a new class, has access to
+        the functions (methods) that the class implements.
+
+        Note that this check happens at import-time, so we don't have
+        to worry about this assertion triggering surprisingly in
+        production.
+        """
+        def __new__(mcls, name, bases, attrs):
+            for fn in ("get", "post", "head", "put"):
+                if fn in attrs:
+                    # TODO(csilvers): remove the requirement that the
+                    # access control decorator go first.  To do that,
+                    # we'll have to store state somewhere other than
+                    # in func_dict (which later decorators overwrite).
+                    assert '_access_control' in attrs[fn].func_dict, \
+                           ('FATAL ERROR: '
+                            'Need to put an access control decorator '
+                            '(from user_util) on %s.%s. '
+                            '(It must be the topmost decorator for the method.)'
+                            % (name, fn))
+            return type.__new__(mcls, name, bases, attrs)
 
     def is_ajax_request(self):
         # jQuery sets X-Requested-With header for this detection.
@@ -392,6 +441,15 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
             if goals_data:
                 template_values['global_goals'] = jsonify(goals_data)
 
+        # A/B test to show topic browser in the header (disabled on mobile)
+        if self.is_mobile_capable():
+            template_values['watch_topic_browser_enabled'] = False
+        else:
+            show_topic_browser = ab_test("Show topic browser in header", ["show", "hide"], ["topic_browser_clicked_link", "topic_browser_started_video", "topic_browser_completed_video"])
+            template_values['watch_topic_browser_enabled'] = (show_topic_browser == "show")
+            analytics_bingo = {"name": "Bingo: Header topic browser (fixed)", "value": show_topic_browser}
+            template_values['analytics_bingo'] = analytics_bingo
+
         return template_values
 
     def render_jinja2_template(self, template_name, template_values):
@@ -401,12 +459,16 @@ class RequestHandler(webapp2.RequestHandler, RequestInputHandler):
     def render_jinja2_template_to_string(self, template_name, template_values):
         return shared_jinja.get().render_template(template_name, **template_values)
 
-    def render_json(self, obj):
-        json_string = json.dumps(obj, ensure_ascii=False)
+    def render_json(self, obj, camel_cased=False):
+        json_string = jsonify(obj, camel_cased=camel_cased)
+        self.response.content_type = "application/json"
         self.response.out.write(json_string)
 
-    def render_jsonp(self, obj):
-        json_string = obj if isinstance(obj, basestring) else json.dumps(obj, ensure_ascii=False, indent=4)
+    def render_jsonp(self, obj, camel_cased=False):
+        if isinstance(obj, basestring):
+            json_string = obj
+        else:
+            json_string = jsonify(obj, camel_cased=camel_cased)
         callback = self.request_string("callback")
         if callback:
             self.response.out.write("%s(%s)" % (callback, json_string))

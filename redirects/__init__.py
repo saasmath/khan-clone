@@ -1,10 +1,10 @@
+import request_handler
 import user_util
-
-from request_handler import RequestHandler
 from redirects.models import CustomRedirect
 
-class Redirect(RequestHandler):
+class Redirect(request_handler.RequestHandler):
 
+    @user_util.open_access
     def get(self):
 
         pieces = self.request.path.split("/r/")
@@ -18,7 +18,7 @@ class Redirect(RequestHandler):
 
         self.redirect("/")
 
-class List(RequestHandler):
+class List(request_handler.RequestHandler):
 
     @user_util.developer_only
     def get(self):
@@ -29,7 +29,7 @@ class List(RequestHandler):
 
         return self.render_jinja2_template("redirects/list.html", context)
 
-class Add(RequestHandler):
+class Add(request_handler.RequestHandler):
 
     @user_util.developer_only
     def post(self):
@@ -50,7 +50,7 @@ class Add(RequestHandler):
 
         self.redirect("/redirects")
 
-class Remove(RequestHandler):
+class Remove(request_handler.RequestHandler):
 
     @user_util.developer_only
     def post(self):
