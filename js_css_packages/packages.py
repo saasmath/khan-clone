@@ -189,6 +189,7 @@ javascript = {
     "maps": {
         "files": [
             "fastmarkeroverlay.js",
+            "knowledgemap-topic.handlebars",
             "models.js",
             "views.js",
             "knowledgemap.js",
@@ -238,7 +239,6 @@ javascript = {
             "card.handlebars",
             "current-card.handlebars",
             "card-leaves.handlebars",
-            "knowledgemap-topic.handlebars",
             "problem-template.handlebars",
             "end-of-stack-card.handlebars",
             "end-of-review-card.handlebars",

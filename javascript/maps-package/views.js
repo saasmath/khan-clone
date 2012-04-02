@@ -97,7 +97,7 @@ KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
 KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
 
     getTemplate: function() {
-        return Templates.get("exercises.knowledgemap-topic");
+        return Templates.get("maps.knowledgemap-topic");
     }
 
 });
@@ -160,7 +160,7 @@ KnowledgeMapViews.NodeMarker = Backbone.View.extend({
         var img = this.el.find("img.node-icon");
         var url = img.attr("src");
 
-        if (url.indexOf("power-mode") >= 0) {
+        if (!url || url.indexOf("power-mode") >= 0) {
             // TODO: for now, we don't have image opacity effects on topics
             // during search filtering
             return;
