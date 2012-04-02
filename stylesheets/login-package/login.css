@@ -288,6 +288,13 @@ a.signup-link {
     text-align: right;
 }
 
+.signup-container #error-text {
+    /* semi hack - while the text may be multiple lines, we don't want it to affect
+     * the layout (since we know there is space below it), so force it to be a fixed
+     * height and just "bleed" outside of its layout container */
+    height: 1em;
+}
+
 /* completesignup specific styles */
 
 .completesignup-iframe-container {
