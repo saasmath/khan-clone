@@ -449,7 +449,9 @@ class Signup(request_handler.RequestHandler):
             # TODO(benkomalo): just deny signing up with username/password for
             # existing users with a Google login. In the future, we can show
             # a message to ask them to sign in with their Google login
-            errors['email'] = "There is already an account with that e-mail"
+            errors['email'] = (
+                    "There is already an account with that e-mail. " +
+                    "If it's yours, sign in with Google below.")
 
         if len(errors) > 0:
             self.render_json({'errors': errors})
