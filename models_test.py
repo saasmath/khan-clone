@@ -170,6 +170,18 @@ class UsernameTest(testutil.GAEModelTestCase):
             u.delete()
         super(UsernameTest, self).tearDown()
 
+    def validate(self, username):
+        return models.UniqueUsername.is_valid_username(username)
+
+    def test_user_name_validates_length_requirement(self):
+        # This test verifies that the multiple places that verify a username's
+        # length are in sync.
+        for i in range(10):
+            candidate = 'a' * i
+            self.assertEquals(
+                    not models.UniqueUsername.is_username_too_short(candidate),
+                    self.validate(candidate))
+
     def test_user_name_fuzzy_match(self):
         """ Tests user name search can ignore periods properly. """
         def k(n):
@@ -180,13 +192,9 @@ class UsernameTest(testutil.GAEModelTestCase):
         self.assertEqual(k('mrpants'), k('mrpants'))
         self.assertEqual(k('MrPants'), k('mrpants'))
 
-    def validate(self, username):
-        return models.UniqueUsername.is_valid_username(username)
-
     def test_bad_user_name_fails_validation(self):
         self.assertFalse(self.validate(''))
         self.assertFalse(self.validate('a')) # Too short
-        self.assertFalse(self.validate('aa')) # Still too short
         self.assertFalse(self.validate('4scoresand7years')) # Must start with letter
         self.assertFalse(self.validate('.dotsarebadtoo'))
         self.assertFalse(self.validate('!nvalid'))

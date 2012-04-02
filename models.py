@@ -825,11 +825,17 @@ class UniqueUsername(db.Model):
     VALID_KEY_NAME_RE = re.compile('^[a-z][a-z0-9]{2,}$')
 
     @staticmethod
+    def is_username_too_short(username, key_name=None):
+        if key_name is None:
+            key_name = UniqueUsername.build_key_name(username)
+        return len(key_name) < 3
+
+    @staticmethod
     def is_valid_username(username, key_name=None):
         """ Determines if a candidate for a username is valid
         according to the limitations we enforce on usernames.
 
-        Usernames must be at least 5 characters long (excluding dots), start
+        Usernames must be at least 3 characters long (excluding dots), start
         with a letter and be alphanumeric (ascii only).
         """
         if username.startswith('.'):
