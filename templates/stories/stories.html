@@ -1,5 +1,7 @@
 {% extends "stories/template.html" %}
 
+{% import 'macros/mailing_lists.html' as mailing_lists %}
+
 {% block headercontent %}
 
 <div class="row">
@@ -38,6 +40,12 @@
             <input id="name" placeholder="(optional)"/>
         </div>
 
+ 		<div class="input">
+            <label for="story">Your email address:</label>
+            <input id="email" placeholder="(optional - will not be shared)"/>
+        </div>
+
+
         <div class="input">
         <ul class="inputs-list">
             <li>
@@ -54,6 +62,10 @@
             </li>
         </ul>
         </div>
+       
+
+
+
 
         <div class="input">
             <a href="#" class="btn primary submit-story-btn">Send us your story</a>
