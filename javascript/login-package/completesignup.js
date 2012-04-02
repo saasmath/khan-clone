@@ -37,9 +37,9 @@ Login.initCompleteSignupForm = function(options) {
  * Submits the complete signup attempt if it passes pre-checks.
  */
 Login.submitCompleteSignup = function() {
-    var valid = Login.ensureValid_("#nickname", "Name required") &&
-            Login.ensureValid_("#username", "Username required") &&
-            Login.ensureValid_("#password", "Password required");
+    var valid = Login.ensureValid_("#nickname", "Please tell us your name.") &&
+            Login.ensureValid_("#username", "Please pick a username.") &&
+            Login.ensureValid_("#password", "We need a password from you.");
 
     if (valid) {
         Login.asyncFormPost(
