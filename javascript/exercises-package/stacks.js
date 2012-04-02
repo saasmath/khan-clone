@@ -511,6 +511,16 @@ Exercises.CurrentCardView = Backbone.View.extend({
             // Tell khan-exercises to setup its DOM and event listeners
             $(Exercises).trigger("problemTemplateRendered");
 
+            //TODO (jasonrr): remove this when we remove the what happened UI
+            $(".streak-transition").hoverIntent(
+                function () {
+                    $(this).addClass("hover");
+                },
+                function () {
+                    $(this).removeClass("hover");
+                }
+            );
+
         }
 
         this.renderExerciseInProblemCard();

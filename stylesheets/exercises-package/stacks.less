@@ -2,10 +2,6 @@
 @import "../shared-package/variables.less";
 @import "stack-animations.less";
 
-body {
-    -webkit-transform: translate3d(0, 0, 0);
-}
-
 .stack {
     min-height: 100px;
     margin-bottom: 10px;
@@ -436,19 +432,6 @@ body {
  /**
   * General Exercise area styling
   */
-.topic-exercise-badge {
-    float: left;
-}
-    .topic-exercise-badge .topic-exercise-image {
-        display: block;
-    }
-.topic-exercise-image {
-    width: 20px;
-    height: 20px;
-    vertical-align: middle;
-    margin: -10px auto 0;
-	.border-radius(20px);
-}
 .exercises-content {
     padding-left: 0;
     padding-right: 0;
@@ -470,8 +453,11 @@ body {
 .exercises-header .practice-exercise-topic-context {
     .transition(opacity 0.1s ease-in-out);
     .opacity(30);
+
+    // See http://stackoverflow.com/questions/5814101/css3-transition-transform-translate3d-causes-severe-flicker
+    -webkit-backface-visibility: hidden;
 }
-.exercises-header:hover .practice-exercise-topic-context.solid-hover {
+.exercises-header .practice-exercise-topic-context.solid-hover:hover {
     .opacity(100);
 }
 .exercises-header .practice-exercise-topic-context .topic-exercise-badge {
@@ -498,13 +484,12 @@ body {
 
         .box-sizing(border-box);
         .opacity(0);
-        .transition(opacity 0.2s ease-in-out 0.3s);
+        .transition(opacity 0.2s ease-in-out);
     }
         .exercises-header .streak-transition .expl-image img {
             width: 100%;
         }
-        .exercises-header .streak-transition:hover .expl-image,
-        .exercises-header .streak-transition:active .expl-image {
+        .exercises-header .streak-transition.hover .expl-image {
             visibility: visible;
             .opacity(100);
         }

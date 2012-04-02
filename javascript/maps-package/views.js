@@ -97,7 +97,7 @@ KnowledgeMapViews.ExerciseRow = KnowledgeMapViews.NodeRow.extend({
 KnowledgeMapViews.TopicRow = KnowledgeMapViews.NodeRow.extend({
 
     getTemplate: function() {
-        return Templates.get("exercises.knowledgemap-topic");
+        return Templates.get("maps.knowledgemap-topic");
     }
 
 });
