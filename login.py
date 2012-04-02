@@ -677,7 +677,7 @@ class CompleteSignup(request_handler.RequestHandler):
             # TODO(benkomalo): ask for advice on text
             if models.UniqueUsername.is_username_too_short(username):
                 errors['username'] = "Sorry, that username's too short."
-            elif models.UniqueUsername.is_valid_username(username):
+            elif not models.UniqueUsername.is_valid_username(username):
                 errors['username'] = "Usernames must start with a letter and be alphanumeric."
 
             # Only check to see if it's available if we're changing values
